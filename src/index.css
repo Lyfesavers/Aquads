@@ -1,0 +1,343 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  background: #111827;
+  overflow: hidden;
+}
+
+.bubble {
+  pointer-events: auto;
+  background: rgba(23, 25, 35, 0.8);
+  backdrop-filter: blur(8px);
+  border-radius: 50%;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  transition: all 0.3s ease;
+  animation: bubble-float 8s ease-in-out infinite;
+}
+
+.bubble:hover {
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.6);
+  background: rgba(23, 25, 35, 0.9);
+  animation-play-state: paused;
+}
+
+/* Bubble Animation */
+@keyframes bubble-float {
+  0%, 100% {
+    transform: translateY(0) scale(1) rotate(0deg);
+    filter: brightness(1);
+  }
+  25% {
+    transform: translateY(-10px) scale(1.02) rotate(1deg);
+    filter: brightness(1.1);
+  }
+  50% {
+    transform: translateY(0) scale(1) rotate(0deg);
+    filter: brightness(1);
+  }
+  75% {
+    transform: translateY(10px) scale(0.98) rotate(-1deg);
+    filter: brightness(0.9);
+  }
+}
+
+/* Add random delays for each bubble */
+.bubble:nth-child(2n) {
+  animation-delay: -1s;
+}
+.bubble:nth-child(3n) {
+  animation-delay: -2s;
+}
+.bubble:nth-child(5n) {
+  animation-delay: -3s;
+}
+.bubble:nth-child(7n) {
+  animation-delay: -4s;
+}
+
+/* Add subtle shine effect */
+.bubble::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at center, 
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 20%,
+    transparent 60%);
+  animation: bubble-shine 6s linear infinite;
+}
+
+@keyframes bubble-shine {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1) rotate(180deg);
+  }
+}
+
+/* Add subtle pulsing glow */
+.glow {
+  animation: bubble-glow 4s ease-in-out infinite;
+}
+
+@keyframes bubble-glow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.4);
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(5%, 5%) rotate(5deg);
+  }
+  50% {
+    transform: translate(0, 10%) rotate(0deg);
+  }
+  75% {
+    transform: translate(-5%, 5%) rotate(-5deg);
+  }
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 8s infinite;
+}
+
+/* Optional: Add a subtle blur effect to the background shapes */
+.mix-blend-screen {
+  mix-blend-mode: screen;
+  filter: blur(50px);
+}
+
+/* Space & Blockchain Background Styles */
+.stars-container {
+  position: absolute;
+  inset: 0;
+}
+
+.star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: white;
+  border-radius: 50%;
+  animation: twinkle 2s infinite;
+}
+
+.network-grid {
+  position: absolute;
+  inset: 0;
+}
+
+.network-node {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #4CAF50;
+  border-radius: 50%;
+  animation: pulse 3s infinite;
+}
+
+.network-node::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(76, 175, 80, 0.5), transparent);
+  transform: translate(-50%, -50%) rotate(calc(var(--rotation, 0) * 1deg));
+  transform-origin: center;
+  opacity: 0.2;
+}
+
+.nebula {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  filter: blur(50px);
+  animation: nebula-float 20s infinite;
+  mix-blend-mode: screen;
+}
+
+@keyframes twinkle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(0.5);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.5;
+  }
+}
+
+@keyframes nebula-float {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 0.3;
+  }
+  25% {
+    transform: translate(5%, -5%) rotate(5deg);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate(10%, 0%) rotate(10deg);
+    opacity: 0.3;
+  }
+  75% {
+    transform: translate(5%, 5%) rotate(5deg);
+    opacity: 0.5;
+  }
+}
+
+/* Add connection lines animation */
+@keyframes connection {
+  0% {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+}
+
+/* Optional: Add a subtle glow effect to nodes */
+.network-node::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(76, 175, 80, 0.4), transparent 70%);
+  animation: glow 3s infinite;
+}
+
+@keyframes glow {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.5);
+  }
+}
+
+/* Add these new styles */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(34, 197, 94, 0.4);
+  }
+}
+
+.bumped-ad {
+  z-index: 1;
+}
+
+.bumped-ad:hover {
+  transform: translate(-50%, -50%) scale(1.12) !important;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s infinite;
+}
+
+/* Tech Background Animations */
+.tech-lines {
+  position: absolute;
+  inset: 0;
+  background: 
+    linear-gradient(90deg, rgba(0,0,255,0.03) 1px, transparent 1px) 0 0 / 50px 50px,
+    linear-gradient(rgba(0,0,255,0.03) 1px, transparent 1px) 0 0 / 50px 50px;
+  animation: moveBg 20s linear infinite;
+}
+
+.tech-dots {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(0,100,255,0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: moveBg 15s linear infinite;
+}
+
+@keyframes moveBg {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(50px, 50px);
+  }
+}
+
+/* Glowing Effects */
+.glow {
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+  animation: pulse 2s infinite;
+}
+
+.glow-text {
+  text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+  }
+}
+
+/* Bubble Hover Effect */
+.hover\:scale-105:hover {
+  transform: scale(1.05);
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
+}
