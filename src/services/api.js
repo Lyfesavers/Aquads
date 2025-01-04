@@ -3,6 +3,11 @@ import io from 'socket.io-client';
 const API_URL = 'http://localhost:5000/api';
 export const socket = io('http://localhost:5000');
 
+const getAuthHeader = () => {
+  const token = localStorage.getItem('token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 // Fetch all ads
 export const fetchAds = async () => {
   const response = await fetch(`${API_URL}/ads`);
@@ -16,6 +21,7 @@ export const createAd = async (adData) => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      ...getAuthHeader()
     },
     body: JSON.stringify(adData),
   });
@@ -29,6 +35,7 @@ export const updateAd = async (id, adData) => {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
+      ...getAuthHeader()
     },
     body: JSON.stringify(adData),
   });
@@ -40,8 +47,16 @@ export const updateAd = async (id, adData) => {
 export const deleteAd = async (id) => {
   const response = await fetch(`${API_URL}/ads/${id}`, {
     method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader()
+    }
   });
-  if (!response.ok) throw new Error('Failed to delete ad');
+  
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to delete ad');
+  }
   return response.json();
 };
 
@@ -77,6 +92,7 @@ export const createBumpRequest = async (bumpData) => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      ...getAuthHeader()
     },
     body: JSON.stringify(bumpData),
   });

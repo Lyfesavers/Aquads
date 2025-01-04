@@ -16,11 +16,19 @@ const adSchema = new mongoose.Schema({
   },
   url: {
     type: String,
-    required: true
+    required: true,
+    validate: {
+      validator: function(v) {
+        return /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/.test(v);
+      },
+      message: props => `${props.value} is not a valid URL!`
+    }
   },
   size: {
     type: Number,
-    required: true
+    required: true,
+    min: 50,
+    max: 200
   },
   x: {
     type: Number,

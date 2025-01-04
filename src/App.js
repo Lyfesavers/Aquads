@@ -243,6 +243,7 @@ function App() {
   const handleLogin = async (credentials) => {
     try {
       const user = await loginUser(credentials);
+      localStorage.setItem('token', user.token);
       setCurrentUser(user);
       setShowLoginModal(false);
       showNotification('Logged in successfully!', 'success');
@@ -253,6 +254,7 @@ function App() {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('token');
     setCurrentUser(null);
     showNotification('Logged out successfully!', 'success');
   };

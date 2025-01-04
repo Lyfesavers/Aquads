@@ -8,6 +8,13 @@ const Ad = require('./models/Ad');
 const User = require('./models/User');
 const BumpRequest = require('./models/BumpRequest');
 const bumpRoutes = require('./routes/bumps');
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
+const winston = require('winston');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const auth = require('./middleware/auth');
+const errorHandler = require('./middleware/error');
 
 const app = express();
 const server = http.createServer(app);
@@ -19,18 +26,84 @@ const io = socketIo(server, {
 });
 
 // Middleware
-app.use(cors());
-app.use(express.json());
+const corsOptions = process.env.NODE_ENV === 'production' 
+  ? {
+      origin: process.env.CLIENT_URL,
+      methods: ['GET', 'POST', 'PUT', 'DELETE'],
+      allowedHeaders: ['Content-Type', 'Authorization']
+    }
+  : {
+      origin: "*", // Allow all origins in development
+      methods: ['GET', 'POST', 'PUT', 'DELETE'],
+      allowedHeaders: ['Content-Type', 'Authorization']
+    };
+
+app.use(cors(corsOptions));
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+
+// Add security headers
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:", "*"],
+      connectSrc: ["'self'", "wss:", "https:", "*"],
+      frameSrc: ["'self'", "*"]
+    }
+  },
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
+// Add rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: process.env.NODE_ENV === 'production' ? 100 : 1000, // More lenient in development
+  message: 'Too many requests from this IP, please try again later'
+});
+app.use(limiter);
+
+// Apply rate limiting to specific routes only
+app.use('/api/login', limiter);
+app.use('/api/register', limiter);
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI)
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+})
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
 // Socket.io connection handling
 io.on('connection', (socket) => {
   console.log('Client connected');
-  socket.on('disconnect', () => console.log('Client disconnected'));
+  
+  socket.on('error', (error) => {
+    logger.error('Socket error:', error);
+  });
+
+  socket.on('disconnect', (reason) => {
+    logger.info(`Client disconnected: ${reason}`);
+  });
+
+  // Add back real-time ad updates
+  socket.on('adUpdate', (data) => {
+    socket.broadcast.emit('adUpdated', data);
+  });
+
+  socket.on('adCreate', (data) => {
+    socket.broadcast.emit('adCreated', data);
+  });
+
+  socket.on('adDelete', (data) => {
+    socket.broadcast.emit('adDeleted', data);
+  });
 });
 
 // Routes
@@ -48,7 +121,7 @@ app.get('/api/ads', async (req, res) => {
 });
 
 // Create new ad
-app.post('/api/ads', async (req, res) => {
+app.post('/api/ads', auth, async (req, res) => {
   try {
     const ad = new Ad(req.body);
     const savedAd = await ad.save();
@@ -61,7 +134,7 @@ app.post('/api/ads', async (req, res) => {
 });
 
 // Update ad
-app.put('/api/ads/:id', async (req, res) => {
+app.put('/api/ads/:id', auth, async (req, res) => {
   try {
     const updatedAd = await Ad.findOneAndUpdate(
       { id: req.params.id },
@@ -77,7 +150,7 @@ app.put('/api/ads/:id', async (req, res) => {
 });
 
 // Delete ad
-app.delete('/api/ads/:id', async (req, res) => {
+app.delete('/api/ads/:id', auth, async (req, res) => {
   try {
     const deletedAd = await Ad.findOneAndDelete({ id: req.params.id });
     io.emit('adsUpdated', { type: 'delete', ad: deletedAd });
@@ -94,14 +167,25 @@ app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
     const user = await User.findOne({ username });
 
-    if (!user || user.password !== password) {
+    if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    res.json({
-      username: user.username,
-      isAdmin: user.isAdmin
-    });
+    if (password === user.password) { // Direct comparison for now
+      const token = jwt.sign(
+        { id: user._id, username: user.username, isAdmin: user.isAdmin },
+        process.env.JWT_SECRET || 'your-secret-key',
+        { expiresIn: '24h' }
+      );
+
+      return res.json({
+        username: user.username,
+        isAdmin: user.isAdmin,
+        token
+      });
+    }
+
+    return res.status(401).json({ error: 'Invalid credentials' });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Login failed' });
@@ -137,7 +221,27 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  transports: [
+    new winston.transports.File({ filename: 'error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'combined.log' })
+  ]
+});
+
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-}); 
+});
+
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    if (!req.secure) {
+      return res.redirect(['https://', req.get('Host'), req.url].join(''));
+    }
+    next();
+  });
+}
+
+app.use(errorHandler); 
