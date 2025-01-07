@@ -1,7 +1,7 @@
 import io from 'socket.io-client';
 
-const API_URL = 'http://localhost:5000/api';
-export const socket = io('http://localhost:5000');
+const API_URL = 'http://localhost:5001/api';
+export const socket = io('http://localhost:5001');
 
 const getAuthHeader = () => {
   const token = localStorage.getItem('token');
@@ -10,9 +10,19 @@ const getAuthHeader = () => {
 
 // Fetch all ads
 export const fetchAds = async () => {
-  const response = await fetch(`${API_URL}/ads`);
-  if (!response.ok) throw new Error('Failed to fetch ads');
-  return response.json();
+  try {
+    console.log('Fetching ads from:', API_URL);
+    const response = await fetch(`${API_URL}/ads`);
+    console.log('Response:', response);
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to fetch ads');
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Error fetching ads:', error);
+    throw error;
+  }
 };
 
 // Create new ad
@@ -62,15 +72,25 @@ export const deleteAd = async (id) => {
 
 // Login user
 export const loginUser = async (credentials) => {
-  const response = await fetch(`${API_URL}/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(credentials),
-  });
-  if (!response.ok) throw new Error('Failed to login');
-  return response.json();
+  try {
+    console.log('Attempting login with:', credentials.username);
+    const response = await fetch(`${API_URL}/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(credentials),
+    });
+    console.log('Login response:', response);
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to login');
+    }
+    return response.json();
+  } catch (error) {
+    console.error('Login error:', error);
+    throw error;
+  }
 };
 
 // Register user
