@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import TokenReviews from './TokenReviews';
 
 // Define DEX options with their details
@@ -42,6 +42,183 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   // Add loading state specifically for page changes
   const [isPageLoading, setIsPageLoading] = useState(false);
+
+  const [chartData, setChartData] = useState({});
+  const [chartPeriod, setChartPeriod] = useState('7d'); // Default to 7 days
+
+  // Add state for chart instances
+  const [chartInstances, setChartInstances] = useState({});
+
+  // Create a ref to store canvas elements
+  const chartRefs = useRef({});
+
+  // Function to fetch chart data
+  const fetchChartData = async (tokenId, days = 7) => {
+    try {
+      const response = await fetch(
+        `https://api.coingecko.com/api/v3/coins/${tokenId}/market_chart?vs_currency=usd&days=${days}`
+      );
+      
+      if (!response.ok) throw new Error('Failed to fetch chart data');
+      
+      const data = await response.json();
+      setChartData(prev => ({
+        ...prev,
+        [tokenId]: data.prices
+      }));
+    } catch (error) {
+      console.error('Error fetching chart data:', error);
+      showNotification('Failed to load chart data', 'error');
+    }
+  };
+
+  // Modify the existing token row click handler
+  const handleTokenClick = async (token) => {
+    if (expandedToken === token.id) {
+      setExpandedToken(null);
+      // Destroy chart instance when collapsing
+      if (chartInstances[token.id]) {
+        chartInstances[token.id].destroy();
+        setChartInstances(prev => {
+          const newInstances = { ...prev };
+          delete newInstances[token.id];
+          return newInstances;
+        });
+      }
+    } else {
+      setExpandedToken(token.id);
+      if (!chartData[token.id]) {
+        await fetchChartData(token.id, chartPeriod === '7d' ? 7 : chartPeriod === '30d' ? 30 : 365);
+      }
+    }
+  };
+
+  // Add chart period selector
+  const handleChartPeriodChange = async (period, tokenId) => {
+    setChartPeriod(period);
+    const days = period === '7d' ? 7 : period === '30d' ? 30 : 365;
+    await fetchChartData(tokenId, days);
+  };
+
+  // Modify renderTokenChart function
+  const renderTokenChart = (token) => {
+    const data = chartData[token.id];
+    
+    if (!data) return <div className="text-center py-4">Loading chart...</div>;
+
+    // Format data for chart
+    const chartPoints = data.map(([timestamp, price]) => ({
+      x: new Date(timestamp).toLocaleDateString(),
+      y: price
+    }));
+
+    return (
+      <div className="p-4 bg-gray-700/30 rounded-lg mt-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold text-white">Price Chart</h3>
+          <div className="flex gap-2">
+            {['7d', '30d', '1y'].map((period) => (
+              <button
+                key={period}
+                onClick={() => handleChartPeriodChange(period, token.id)}
+                className={`px-3 py-1 rounded ${
+                  chartPeriod === period
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                }`}
+              >
+                {period}
+              </button>
+            ))}
+          </div>
+        </div>
+        
+        <div className="h-[300px] w-full">
+          <canvas
+            id={`chart-${token.id}`}
+            ref={el => chartRefs.current[token.id] = el}
+          />
+        </div>
+      </div>
+    );
+  };
+
+  // Add effect to handle chart creation and updates
+  useEffect(() => {
+    Object.entries(chartData).forEach(([tokenId, data]) => {
+      const canvas = chartRefs.current[tokenId];
+      if (!canvas || !data) return;
+
+      // Destroy existing chart
+      if (chartInstances[tokenId]) {
+        chartInstances[tokenId].destroy();
+      }
+
+      const ctx = canvas.getContext('2d');
+      const chartPoints = data.map(([timestamp, price]) => ({
+        x: new Date(timestamp).toLocaleDateString(),
+        y: price
+      }));
+
+      const newChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: chartPoints.map(point => point.x),
+          datasets: [{
+            label: 'Price USD',
+            data: chartPoints.map(point => point.y),
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            x: {
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                color: '#9ca3af'
+              }
+            },
+            y: {
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                color: '#9ca3af'
+              }
+            }
+          }
+        }
+      });
+
+      setChartInstances(prev => ({
+        ...prev,
+        [tokenId]: newChart
+      }));
+    });
+  }, [chartData, expandedToken]);
+
+  // Clean up chart instances when component unmounts
+  useEffect(() => {
+    return () => {
+      Object.values(chartInstances).forEach(chart => {
+        if (chart) {
+          chart.destroy();
+        }
+      });
+    };
+  }, []);
 
   // Separate the fetch function
   const fetchTokens = async (pageNumber) => {
@@ -210,8 +387,34 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [isSwapOpen, setIsSwapOpen] = useState(false);
   const [selectedDex, setSelectedDex] = useState(DEX_OPTIONS[0]);
 
+  // Add these helper functions if not already present
+  const formatATH = (ath, athChange, athDate) => {
+    const date = new Date(athDate).toLocaleDateString();
+    return {
+      value: formatPrice(ath),
+      change: formatPercentage(athChange),
+      date: date
+    };
+  };
+
+  const formatSupply = (circulating, total, max) => {
+    const format = (num) => {
+      if (!num) return 'N/A';
+      if (num >= 1e9) return `${(num / 1e9).toFixed(2)}B`;
+      if (num >= 1e6) return `${(num / 1e6).toFixed(2)}M`;
+      if (num >= 1e3) return `${(num / 1e3).toFixed(2)}K`;
+      return num.toFixed(2);
+    };
+    
+    return {
+      circulating: format(circulating),
+      total: format(total),
+      max: format(max)
+    };
+  };
+
   return (
-    <div id="token-list" className="relative bg-gray-900/95 backdrop-blur-sm border-t border-blue-500/20 overflow-auto">
+    <div id="token-list" className="relative bg-gray-900/95 backdrop-blur-sm border-t border-blue-500/20 overflow-x-auto">
       {/* Enhanced animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {/* Matrix-like digital rain */}
@@ -237,7 +440,7 @@ const TokenList = ({ currentUser, showNotification }) => {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8 relative z-10">
+      <div className="container mx-auto px-4 py-8 relative z-10 min-w-[1280px]">
         {/* Enhanced Swap Section */}
         <div className="mb-6">
           <button
@@ -328,16 +531,20 @@ const TokenList = ({ currentUser, showNotification }) => {
           Showing {((currentPage - 1) * tokensPerPage) + 1} to {Math.min(currentPage * tokensPerPage, totalTokens)} of {totalTokens} results
         </div>
 
-        {/* Token List */}
-        <div className="bg-gray-800/90 backdrop-blur-sm rounded-lg overflow-hidden">
-          <div className="grid grid-cols-8 gap-4 p-4 border-b border-gray-700 text-gray-400 text-sm font-medium">
+        {/* Token List with adjusted column widths */}
+        <div className="bg-gray-800/90 backdrop-blur-sm rounded-lg">
+          <div className="grid grid-cols-12 gap-2 p-4 border-b border-gray-700 text-gray-400 text-sm font-medium">
             <div className="col-span-2">#  Token</div>
-            <div>Price</div>
-            <div>1h %</div>
-            <div>24h %</div>
-            <div>7d %</div>
-            <div>Market Cap</div>
-            <div>Reviews</div>
+            <div className="col-span-1">Price</div>
+            <div className="col-span-1">1h %</div>
+            <div className="col-span-1">24h %</div>
+            <div className="col-span-1">7d %</div>
+            <div className="col-span-1">24h Volume</div>
+            <div className="col-span-1">Market Cap</div>
+            <div className="col-span-1">Circulating Supply</div>
+            <div className="col-span-1">Total Supply</div>
+            <div className="col-span-1">ATH</div>
+            <div className="col-span-1">Reviews</div>
           </div>
 
           {loading ? (
@@ -346,29 +553,78 @@ const TokenList = ({ currentUser, showNotification }) => {
             filteredAndSortedTokens.map((token, index) => (
               <React.Fragment key={token.id}>
                 <div 
-                  className="grid grid-cols-8 gap-4 p-4 border-b border-gray-700 hover:bg-gray-700/50 transition-colors cursor-pointer"
-                  onClick={() => setExpandedToken(expandedToken === token.id ? null : token.id)}
+                  onClick={() => handleTokenClick(token)}
+                  className="grid grid-cols-12 gap-2 p-4 border-b border-gray-700 hover:bg-gray-700/30 cursor-pointer text-sm"
                 >
                   <div className="col-span-2 flex items-center space-x-3">
                     <span className="text-gray-500">{index + 1}</span>
                     <img src={token.image} alt={token.name} className="w-6 h-6 rounded-full" />
                     <div>
                       <div className="text-white">{token.name}</div>
-                      <div className="text-gray-400 text-sm">{token.symbol.toUpperCase()}</div>
+                      <div className="text-gray-400 text-xs">
+                        {token.symbol.toUpperCase()}
+                        {token.market_cap_rank && 
+                          <span className="ml-2 text-xs text-gray-500">Rank #{token.market_cap_rank}</span>
+                        }
+                      </div>
                     </div>
                   </div>
-                  <div className="text-white">{formatPrice(token.current_price)}</div>
-                  <div className={`${token.price_change_percentage_1h_in_currency >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {formatPercentage(token.price_change_percentage_1h_in_currency)}
+                  
+                  <div className="col-span-1 flex flex-col justify-center">
+                    <div className="text-white">{formatPrice(token.current_price)}</div>
+                    <div className="text-xs text-gray-400">{token.price_change_24h > 0 ? '+' : ''}{formatPrice(token.price_change_24h)}</div>
                   </div>
-                  <div className={`${token.price_change_percentage_24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {formatPercentage(token.price_change_percentage_24h)}
+
+                  <div className="col-span-1 flex items-center">
+                    <div className={`flex items-center ${token.price_change_percentage_1h_in_currency >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {formatPercentage(token.price_change_percentage_1h_in_currency)}
+                    </div>
                   </div>
-                  <div className={`${token.price_change_percentage_7d_in_currency >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {formatPercentage(token.price_change_percentage_7d_in_currency)}
+
+                  <div className="col-span-1 flex items-center">
+                    <div className={`flex items-center ${token.price_change_percentage_24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {formatPercentage(token.price_change_percentage_24h)}
+                    </div>
                   </div>
-                  <div className="text-white">{formatVolume(token.market_cap)}</div>
-                  <div className="flex items-center">
+
+                  <div className="col-span-1 flex items-center">
+                    <div className={`flex items-center ${token.price_change_percentage_7d_in_currency >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {formatPercentage(token.price_change_percentage_7d_in_currency)}
+                    </div>
+                  </div>
+
+                  <div className="col-span-1 flex items-center">
+                    <div className="flex items-center text-white">
+                      {formatVolume(token.total_volume)}
+                    </div>
+                  </div>
+
+                  <div className="col-span-1 flex items-center">
+                    <div className="flex items-center text-white">
+                      {formatVolume(token.market_cap)}
+                    </div>
+                  </div>
+
+                  <div className="col-span-1 flex items-center">
+                    <div className="flex items-center text-white">
+                      {formatSupply(token.circulating_supply).circulating}
+                    </div>
+                  </div>
+
+                  <div className="col-span-1 flex items-center">
+                    <div className="flex items-center text-white">
+                      {formatSupply(null, token.total_supply).total}
+                    </div>
+                  </div>
+
+                  <div className="col-span-1 flex flex-col justify-center">
+                    <div className="text-white">{formatPrice(token.ath)}</div>
+                    <div className={`text-xs ${token.ath_change_percentage >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {formatPercentage(token.ath_change_percentage)}
+                    </div>
+                  </div>
+
+                  <div className="col-span-1 flex items-center justify-center">
                     <TokenReviews 
                       tokenSymbol={token.symbol.toLowerCase()}
                       currentUser={currentUser}
@@ -376,166 +632,80 @@ const TokenList = ({ currentUser, showNotification }) => {
                     />
                   </div>
                 </div>
-                
-                {/* Expanded content */}
+
+                {/* Expanded content with additional details and chart */}
                 {expandedToken === token.id && (
-                  <div className="border-b border-gray-700 bg-gray-800/50 p-6 animate-expandDown">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                      <div>
-                        <h3 className="text-gray-400 mb-2">Price Information</h3>
-                        <div className="space-y-2">
+                  <div className="col-span-12 p-4 bg-gray-800/50">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Enhanced Token Details */}
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <p className="text-gray-400 text-sm">Current Price</p>
-                            <p className="text-white font-bold">{formatPrice(token.current_price)}</p>
+                            <h3 className="text-gray-400 mb-2">Price Statistics</h3>
+                            <div className="space-y-2">
+                              <div>
+                                <p className="text-gray-400 text-sm">Current Price</p>
+                                <p className="text-white font-bold">{formatPrice(token.current_price)}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-400 text-sm">24h Low / High</p>
+                                <p className="text-white">
+                                  {formatPrice(token.low_24h)} / {formatPrice(token.high_24h)}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-gray-400 text-sm">All Time High</p>
+                                <p className="text-white">{formatPrice(token.ath)}</p>
+                                <p className="text-xs text-gray-400">
+                                  {new Date(token.ath_date).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
                           </div>
+
                           <div>
-                            <p className="text-gray-400 text-sm">Market Cap</p>
-                            <p className="text-white font-bold">{formatVolume(token.market_cap)}</p>
+                            <h3 className="text-gray-400 mb-2">Market Stats</h3>
+                            <div className="space-y-2">
+                              <div>
+                                <p className="text-gray-400 text-sm">Market Cap Rank</p>
+                                <p className="text-white">#{token.market_cap_rank}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-400 text-sm">Market Cap</p>
+                                <p className="text-white">{formatVolume(token.market_cap)}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-400 text-sm">Volume / Market Cap</p>
+                                <p className="text-white">
+                                  {(token.total_volume / token.market_cap).toFixed(4)}
+                                </p>
+                              </div>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-gray-400 text-sm">24h Volume</p>
-                            <p className="text-white font-bold">{formatVolume(token.total_volume)}</p>
+                        </div>
+
+                        {/* Additional token information */}
+                        <div>
+                          <h3 className="text-gray-400 mb-2">Supply Information</h3>
+                          <div className="space-y-2">
+                            <div>
+                              <p className="text-gray-400 text-sm">Circulating Supply</p>
+                              <p className="text-white">{formatSupply(token.circulating_supply).circulating}</p>
+                            </div>
+                            <div>
+                              <p className="text-gray-400 text-sm">Total Supply</p>
+                              <p className="text-white">{formatSupply(null, token.total_supply).total}</p>
+                            </div>
+                            <div>
+                              <p className="text-gray-400 text-sm">Max Supply</p>
+                              <p className="text-white">{formatSupply(null, null, token.max_supply).max}</p>
+                            </div>
                           </div>
                         </div>
                       </div>
 
-                      <div>
-                        <h3 className="text-gray-400 mb-2">Price Changes</h3>
-                        <div className="space-y-2">
-                          <div>
-                            <p className="text-gray-400 text-sm">1h Change</p>
-                            <p className={`font-bold ${token.price_change_percentage_1h_in_currency >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                              {formatPercentage(token.price_change_percentage_1h_in_currency)}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-gray-400 text-sm">24h Change</p>
-                            <p className={`font-bold ${token.price_change_percentage_24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                              {formatPercentage(token.price_change_percentage_24h)}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-gray-400 text-sm">7d Change</p>
-                            <p className={`font-bold ${token.price_change_percentage_7d_in_currency >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                              {formatPercentage(token.price_change_percentage_7d_in_currency)}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <h3 className="text-gray-400 mb-2">Supply Information</h3>
-                        <div className="space-y-2">
-                          <div>
-                            <p className="text-gray-400 text-sm">Circulating Supply</p>
-                            <p className="text-white font-bold">
-                              {token.circulating_supply?.toLocaleString()} {token.symbol.toUpperCase()}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-gray-400 text-sm">Total Supply</p>
-                            <p className="text-white font-bold">
-                              {token.total_supply?.toLocaleString() || 'N/A'} {token.symbol.toUpperCase()}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <h3 className="text-gray-400 mb-2">All Time Stats</h3>
-                        <div className="space-y-2">
-                          <div>
-                            <p className="text-gray-400 text-sm">All-Time High</p>
-                            <p className="text-white font-bold">{formatPrice(token.ath)}</p>
-                            <p className="text-xs text-gray-400">{new Date(token.ath_date).toLocaleDateString()}</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-400 text-sm">All-Time Low</p>
-                            <p className="text-white font-bold">{formatPrice(token.atl)}</p>
-                            <p className="text-xs text-gray-400">{new Date(token.atl_date).toLocaleDateString()}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <h3 className="text-gray-400 mb-2">Extended Price Changes</h3>
-                        <div className="space-y-2">
-                          <div>
-                            <p className="text-gray-400 text-sm">14d Change</p>
-                            <p className={`font-bold ${token.price_change_percentage_14d >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                              {formatPercentage(token.price_change_percentage_14d)}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-gray-400 text-sm">30d Change</p>
-                            <p className={`font-bold ${token.price_change_percentage_30d >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                              {formatPercentage(token.price_change_percentage_30d)}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-gray-400 text-sm">1y Change</p>
-                            <p className={`font-bold ${token.price_change_percentage_1y >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                              {formatPercentage(token.price_change_percentage_1y)}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <h3 className="text-gray-400 mb-2">Market Stats</h3>
-                        <div className="space-y-2">
-                          <div>
-                            <p className="text-gray-400 text-sm">Market Cap Rank</p>
-                            <p className="text-white font-bold">#{token.market_cap_rank}</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-400 text-sm">Market Cap Dominance</p>
-                            <p className="text-white font-bold">
-                              {((token.market_cap / token.total_market_cap) * 100).toFixed(2)}%
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-gray-400 text-sm">Fully Diluted Valuation</p>
-                            <p className="text-white font-bold">{formatVolume(token.fully_diluted_valuation)}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <h3 className="text-gray-400 mb-2">Price Statistics</h3>
-                        <div className="space-y-2">
-                          <div>
-                            <p className="text-gray-400 text-sm">Price Change 24h</p>
-                            <p className="text-white font-bold">{formatPrice(token.price_change_24h)}</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-400 text-sm">High 24h</p>
-                            <p className="text-white font-bold">{formatPrice(token.high_24h)}</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-400 text-sm">Low 24h</p>
-                            <p className="text-white font-bold">{formatPrice(token.low_24h)}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div>
-                        <h3 className="text-gray-400 mb-2">Additional Info</h3>
-                        <div className="space-y-2">
-                          <div>
-                            <p className="text-gray-400 text-sm">Max Supply</p>
-                            <p className="text-white font-bold">
-                              {token.max_supply ? token.max_supply.toLocaleString() : 'Unlimited'} {token.symbol.toUpperCase()}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-gray-400 text-sm">Last Updated</p>
-                            <p className="text-xs text-gray-400">
-                              {new Date(token.last_updated).toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
+                      {/* Chart */}
+                      {renderTokenChart(token)}
                     </div>
                   </div>
                 )}

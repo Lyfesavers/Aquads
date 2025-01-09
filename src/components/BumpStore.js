@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import Modal from './Modal';
 
 const BUMP_OPTIONS = [
-  { duration: '24 hours', price: 0.2, durationMs: 24 * 60 * 60 * 1000 },
-  { duration: '3 days', price: 0.5, durationMs: 3 * 24 * 60 * 60 * 1000 },
-  { duration: '7 days', price: 1, durationMs: 7 * 24 * 60 * 60 * 1000 }
+  { duration: '24 hours', price: 0.5, durationMs: 24 * 60 * 60 * 1000 },
+  { duration: '3 days', price: 1, durationMs: 3 * 24 * 60 * 60 * 1000 },
+  { duration: '7 days', price: 2, durationMs: 7 * 24 * 60 * 60 * 1000 }
 ];
 
 const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
