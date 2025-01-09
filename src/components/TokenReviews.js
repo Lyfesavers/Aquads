@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaStar } from 'react-icons/fa';
 import { submitReview } from '../services/api';
 
-const ReviewsModal = ({ isOpen, onClose, reviews, averageRating }) => {
+const ReviewsModal = ({ isOpen, onClose, reviews, averageRating, currentUser, onAddReview }) => {
   if (!isOpen) return null;
   
   return (
@@ -16,17 +16,28 @@ const ReviewsModal = ({ isOpen, onClose, reviews, averageRating }) => {
         </button>
         
         <h3 className="text-xl font-bold mb-4">Reviews</h3>
-        <div className="flex items-center mb-4">
-          <div className="flex">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <FaStar
-                key={star}
-                className={star <= averageRating ? 'text-yellow-400' : 'text-gray-400'}
-                size={24}
-              />
-            ))}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center">
+            <div className="flex">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <FaStar
+                  key={star}
+                  className={star <= averageRating ? 'text-yellow-400' : 'text-gray-400'}
+                  size={24}
+                />
+              ))}
+            </div>
+            <span className="ml-2 text-lg">({reviews.length} reviews)</span>
           </div>
-          <span className="ml-2 text-lg">({reviews.length} reviews)</span>
+          
+          {currentUser && (
+            <button
+              onClick={onAddReview}
+              className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
+            >
+              Add Review
+            </button>
+          )}
         </div>
         
         <div className="space-y-4 max-h-96 overflow-y-auto">
@@ -109,7 +120,7 @@ const TokenReviews = ({ tokenSymbol, currentUser, showNotification }) => {
   };
 
   return (
-    <div className="flex items-center justify-between w-full px-2">
+    <div className="flex items-center w-full px-2">
       <div 
         className="flex items-center cursor-pointer" 
         onClick={(e) => {
@@ -128,18 +139,16 @@ const TokenReviews = ({ tokenSymbol, currentUser, showNotification }) => {
           <span className="ml-1 text-sm text-gray-400">({reviews.length})</span>
         </div>
       </div>
-      
-      {currentUser && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowReviewForm(true);
-          }}
-          className="ml-2 px-2 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 whitespace-nowrap"
-        >
-          Add Review
-        </button>
-      )}
+
+      {/* Reviews Modal */}
+      <ReviewsModal 
+        isOpen={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        reviews={reviews}
+        averageRating={averageRating}
+        currentUser={currentUser}
+        onAddReview={() => setShowReviewForm(true)}
+      />
 
       {/* Review Form Modal */}
       {showReviewForm && (
@@ -184,14 +193,6 @@ const TokenReviews = ({ tokenSymbol, currentUser, showNotification }) => {
           </div>
         </div>
       )}
-
-      {/* Reviews Modal */}
-      <ReviewsModal 
-        isOpen={showReviewModal}
-        onClose={() => setShowReviewModal(false)}
-        reviews={reviews}
-        averageRating={averageRating}
-      />
     </div>
   );
 };
