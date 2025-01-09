@@ -1,27 +1,39 @@
 import io from 'socket.io-client';
 
-const API_URL = 'http://localhost:5001/api';
-export const socket = io('http://localhost:5001');
+// Temporarily use localhost for development
+const API_URL = 'http://localhost:5000/api';
+export const socket = io('http://localhost:5000', {
+  auth: {
+    token: (() => {
+      const savedUser = localStorage.getItem('currentUser');
+      const user = savedUser ? JSON.parse(savedUser) : null;
+      return user?.token;
+    })()
+  }
+});
 
 const getAuthHeader = () => {
-  const token = localStorage.getItem('token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  const savedUser = localStorage.getItem('currentUser');
+  const user = savedUser ? JSON.parse(savedUser) : null;
+  return user?.token ? { Authorization: `Bearer ${user.token}` } : {};
 };
 
 // Fetch all ads
 export const fetchAds = async () => {
   try {
-    console.log('Fetching ads from:', API_URL);
+    console.log('Starting to fetch ads...');
     const response = await fetch(`${API_URL}/ads`);
-    console.log('Response:', response);
+    
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to fetch ads');
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-    return response.json();
+    
+    const data = await response.json();
+    console.log('Successfully fetched ads:', data);
+    return data;
   } catch (error) {
     console.error('Error fetching ads:', error);
-    throw error;
+    return [];
   }
 };
 
@@ -171,4 +183,59 @@ export const fetchBumpRequests = async (status = 'pending') => {
   }
   
   return response.json();
+};
+
+// Add connection status monitoring
+let isConnected = true;
+socket.on('connect', () => {
+  console.log('Socket connected');
+  isConnected = true;
+});
+
+socket.on('disconnect', () => {
+  console.log('Socket disconnected');
+  isConnected = false;
+  // Attempt to reconnect
+  setTimeout(() => {
+    if (!isConnected) {
+      socket.connect();
+    }
+  }, 5000);
+});
+
+// Add periodic connection check
+setInterval(async () => {
+  try {
+    const response = await fetch(`${API_URL}/health`);
+    const data = await response.json();
+    if (data.status !== 'ok') {
+      console.warn('Server connection issue detected');
+    }
+  } catch (error) {
+    console.error('Health check failed:', error);
+  }
+}, 30000); // Check every 30 seconds 
+
+// Add these review-related functions
+export const submitReview = async (reviewData, token) => {
+  try {
+    const response = await fetch(`${API_URL}/reviews`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(reviewData)
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to submit review');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error submitting review:', error);
+    throw error;
+  }
 }; 

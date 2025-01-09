@@ -20,23 +20,19 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:3000",
-    methods: ["GET", "POST"]
+    origin: ["http://localhost:3000", "http://localhost:5001"],
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
 // Middleware
-const corsOptions = process.env.NODE_ENV === 'production' 
-  ? {
-      origin: process.env.CLIENT_URL,
-      methods: ['GET', 'POST', 'PUT', 'DELETE'],
-      allowedHeaders: ['Content-Type', 'Authorization']
-    }
-  : {
-      origin: "*", // Allow all origins in development
-      methods: ['GET', 'POST', 'PUT', 'DELETE'],
-      allowedHeaders: ['Content-Type', 'Authorization']
-    };
+const corsOptions = {
+  origin: ["http://localhost:3000", "http://localhost:5001"],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
 
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '10kb' }));
@@ -71,14 +67,82 @@ app.use('/api/login', limiter);
 app.use('/api/register', limiter);
 
 // Connect to MongoDB
+const createTestData = async () => {
+  try {
+    const count = await Ad.countDocuments();
+    if (count === 0) {
+      const testAds = [
+        {
+          id: 'test-1',
+          title: 'Test Ad 1',
+          logo: 'https://picsum.photos/200',
+          url: 'https://example.com',
+          size: 150,
+          x: 100,
+          y: 100,
+          owner: 'testuser',
+          createdAt: new Date()
+        },
+        {
+          id: 'test-2',
+          title: 'Test Ad 2', 
+          logo: 'https://picsum.photos/200',
+          url: 'https://example.com',
+          size: 100,
+          x: 300,
+          y: 300,
+          owner: 'testuser',
+          createdAt: new Date()
+        }
+      ];
+      await Ad.insertMany(testAds);
+      console.log('Test data created');
+    }
+  } catch (error) {
+    console.error('Error creating test data:', error);
+  }
+};
+
 mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 5000,
+  serverSelectionTimeoutMS: 30000,
   socketTimeoutMS: 45000,
+  keepAlive: true,
+  maxPoolSize: 10,
 })
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
+.then(async () => {
+  console.log('Connected to MongoDB');
+  try {
+    const ads = await Ad.find({}).lean();
+    console.log(`Successfully loaded ${ads.length} ads from database`);
+  } catch (error) {
+    console.error('Error loading ads:', error);
+  }
+})
+.catch(err => {
+  console.error('MongoDB connection error:', err);
+  process.exit(1);
+});
+
+// Add connection monitoring
+mongoose.connection.on('connected', () => {
+  console.log('Mongoose connected to MongoDB');
+});
+
+mongoose.connection.on('error', err => {
+  console.error('Mongoose connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('Mongoose disconnected from MongoDB');
+});
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  await mongoose.connection.close();
+  process.exit(0);
+});
 
 // Socket.io connection handling
 io.on('connection', (socket) => {
@@ -108,11 +172,22 @@ io.on('connection', (socket) => {
 
 // Routes
 app.use('/api/bumps', bumpRoutes);
+app.use('/api/reviews', require('./routes/reviews'));
 
 // Get all ads
 app.get('/api/ads', async (req, res) => {
   try {
-    const ads = await Ad.find();
+    console.log('Received request for ads');
+    const ads = await Ad.find({}).lean();
+    
+    if (!ads) {
+      console.log('No ads found');
+      return res.status(200).json([]);
+    }
+
+    // Log the full response data
+    console.log('Sending ads to client:', ads);
+    
     res.json(ads);
   } catch (error) {
     console.error('Error fetching ads:', error);
@@ -245,3 +320,6 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 app.use(errorHandler); 
+
+// Add pre-flight OPTIONS handling
+app.options('*', cors(corsOptions)); 

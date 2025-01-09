@@ -8,6 +8,7 @@ module.exports = {
     extend: {
       animation: {
         'float-slow': 'floatSlow 30s infinite',
+        expandDown: 'expandDown 0.2s ease-out forwards'
       },
       keyframes: {
         floatSlow: {
@@ -28,6 +29,10 @@ module.exports = {
             opacity: 0.5
           }
         },
+        expandDown: {
+          '0%': { opacity: 0, height: 0, transform: 'scaleY(0)' },
+          '100%': { opacity: 1, height: 'auto', transform: 'scaleY(1)' }
+        }
       },
     },
   },

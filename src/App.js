@@ -20,13 +20,15 @@ import CreateAdModal from './components/CreateAdModal';
 import CreateAccountModal from './components/CreateAccountModal';
 import Dashboard from './components/Dashboard';
 import EditAdModal from './components/EditAdModal';
+import TokenBanner from './components/TokenBanner';
+import TokenList from './components/TokenList';
 
 window.Buffer = Buffer;
 
 // Constants for ad sizes and animations
-const MAX_SIZE = 200;
+const MAX_SIZE = 150;
 const MIN_SIZE = 50;
-const SHRINK_RATE = 5; // Amount to shrink by each interval
+const SHRINK_RATE = 2.5; // Amount to shrink by each interval
 const SHRINK_INTERVAL = 30000; // 30 seconds
 const SHRINK_PERCENTAGE = 0.95; // More gradual shrinking
 const TOKEN_PRICE = 0.01; // SOL per token
@@ -36,7 +38,7 @@ const FREE_AD_LIMIT = 1;
 const LAYOUT_DEBOUNCE = 200; // Debounce time for layout calculations
 const ANIMATION_DURATION = '0.3s'; // Slower animations
 const REPOSITION_INTERVAL = 5000; // 5 seconds between position updates
-const BUBBLE_PADDING = 30; // Space between bubbles
+const BUBBLE_PADDING = 10; // Space between bubbles
 const MERCHANT_WALLET = "J8ewxZwntodH8sT8LAXN5j6sAsDhtCh8sQA6GwRuLTSv"; // Replace with your wallet address
 const ADMIN_USERNAME = "admin"; // You can change this to your preferred admin username
 
@@ -44,47 +46,65 @@ const ADMIN_USERNAME = "admin"; // You can change this to your preferred admin u
 function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
   const minX = BUBBLE_PADDING;
   const maxX = windowWidth - size - BUBBLE_PADDING;
-  const minY = BUBBLE_PADDING + 64; // Account for navbar height
+  const minY = BUBBLE_PADDING + 5; // <- Decrease this value (currently accounts for navbar height)
   const maxY = windowHeight - size - BUBBLE_PADDING;
   
-  let attempts = 0;
-  const maxAttempts = 50;
+  // Grid-based approach for better distribution
+  const gridSize = Math.max(size + BUBBLE_PADDING, 100);
+  const cols = Math.floor(windowWidth / gridSize);
+  const rows = Math.floor(windowHeight / gridSize);
   
-  while (attempts < maxAttempts) {
-    const x = Math.min(Math.max(minX, Math.random() * maxX), maxX);
-    const y = Math.min(Math.max(minY, Math.random() * maxY), maxY);
-    
-    // Check if this position overlaps with any existing ads
+  // Try all grid positions in random order
+  const positions = [];
+  for(let i = 0; i < cols; i++) {
+    for(let j = 0; j < rows; j++) {
+      positions.push({
+        x: minX + (i * gridSize),
+        y: minY + (j * gridSize)
+      });
+    }
+  }
+  
+  // Shuffle positions
+  positions.sort(() => Math.random() - 0.5);
+  
+  // Try each position
+  for(const pos of positions) {
     const hasOverlap = existingAds.some(ad => {
-      const distance = calculateDistance(x + size/2, y + size/2, ad.x + ad.size/2, ad.y + ad.size/2);
+      const distance = calculateDistance(
+        pos.x + size/2, 
+        pos.y + size/2, 
+        ad.x + ad.size/2, 
+        ad.y + ad.size/2
+      );
       const minDistance = (size + ad.size) / 2 + BUBBLE_PADDING;
       return distance < minDistance;
     });
     
     if (!hasOverlap) {
-      return { x, y };
+      return pos;
     }
-    
-    attempts++;
   }
   
-  // If we couldn't find a non-overlapping position, try to find the position with minimal overlap
+  // If no free position found, find position with minimal overlap
   let bestPosition = { x: minX, y: minY };
   let minOverlap = Infinity;
   
-  for (let i = 0; i < 10; i++) {
-    const x = Math.min(Math.max(minX, Math.random() * maxX), maxX);
-    const y = Math.min(Math.max(minY, Math.random() * maxY), maxY);
-    
+  for(const pos of positions) {
     const totalOverlap = existingAds.reduce((sum, ad) => {
-      const distance = calculateDistance(x + size/2, y + size/2, ad.x + ad.size/2, ad.y + ad.size/2);
+      const distance = calculateDistance(
+        pos.x + size/2, 
+        pos.y + size/2, 
+        ad.x + ad.size/2, 
+        ad.y + ad.size/2
+      );
       const minDistance = (size + ad.size) / 2 + BUBBLE_PADDING;
       return sum + Math.max(0, minDistance - distance);
     }, 0);
     
     if (totalOverlap < minOverlap) {
       minOverlap = totalOverlap;
-      bestPosition = { x, y };
+      bestPosition = pos;
     }
   }
   
@@ -94,40 +114,48 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
 function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, currentAdId) {
   const minX = BUBBLE_PADDING;
   const maxX = windowWidth - size - BUBBLE_PADDING;
-  const minY = BUBBLE_PADDING + 64; // Account for navbar height
+  const minY = BUBBLE_PADDING + 5; // <- Decrease this value to match
   const maxY = windowHeight - size - BUBBLE_PADDING;
 
   let newX = Math.min(Math.max(x, minX), maxX);
   let newY = Math.min(Math.max(y, minY), maxY);
 
-  // Check for overlaps with other ads
   const otherAds = existingAds.filter(ad => ad.id !== currentAdId);
-  const hasOverlap = otherAds.some(ad => {
-    const distance = calculateDistance(newX + size/2, newY + size/2, ad.x + ad.size/2, ad.y + ad.size/2);
-    const minDistance = (size + ad.size) / 2 + BUBBLE_PADDING;
-    return distance < minDistance;
-  });
-
-  if (hasOverlap) {
-    // Try to find a nearby non-overlapping position
-    const angles = [0, 45, 90, 135, 180, 225, 270, 315];
-    for (const angle of angles) {
-      const radians = angle * (Math.PI / 180);
-      const testX = newX + Math.cos(radians) * (BUBBLE_PADDING * 2);
-      const testY = newY + Math.sin(radians) * (BUBBLE_PADDING * 2);
+  
+  // Check for overlaps and adjust position
+  let iterations = 0;
+  const maxIterations = 10;
+  
+  while(iterations < maxIterations) {
+    let hasOverlap = false;
+    let pushX = 0;
+    let pushY = 0;
+    
+    for(const ad of otherAds) {
+      const dx = (newX + size/2) - (ad.x + ad.size/2);
+      const dy = (newY + size/2) - (ad.y + ad.size/2);
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      const minDistance = (size + ad.size) / 2 + BUBBLE_PADDING;
       
-      if (
-        testX >= minX && testX <= maxX &&
-        testY >= minY && testY <= maxY &&
-        !otherAds.some(ad => {
-          const distance = calculateDistance(testX + size/2, testY + size/2, ad.x + ad.size/2, ad.y + ad.size/2);
-          const minDistance = (size + ad.size) / 2 + BUBBLE_PADDING;
-          return distance < minDistance;
-        })
-      ) {
-        return { x: testX, y: testY };
+      if(distance < minDistance) {
+        hasOverlap = true;
+        const angle = Math.atan2(dy, dx);
+        const push = (minDistance - distance) / 2;
+        pushX += Math.cos(angle) * push;
+        pushY += Math.sin(angle) * push;
       }
     }
+    
+    if(!hasOverlap) break;
+    
+    newX += pushX;
+    newY += pushY;
+    
+    // Keep in bounds
+    newX = Math.min(Math.max(newX, minX), maxX);
+    newY = Math.min(Math.max(newY, minY), maxY);
+    
+    iterations++;
   }
 
   return { x: newX, y: newY };
@@ -139,7 +167,11 @@ function calculateDistance(x1, y1, x2, y2) {
 
 function App() {
   const [ads, setAds] = useState([]);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(() => {
+    // Check localStorage for saved user data on initial load
+    const savedUser = localStorage.getItem('currentUser');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
@@ -153,34 +185,45 @@ function App() {
     width: window.innerWidth,
     height: window.innerHeight
   });
+  const [showScrollButtons, setShowScrollButtons] = useState(false);
 
   // Load ads on mount
   useEffect(() => {
     const loadAds = async () => {
       try {
+        console.log('Starting to fetch ads...');
         const fetchedAds = await fetchAds();
-        console.log('Fetched ads:', fetchedAds);
-        setAds(fetchedAds);
+        console.log('Raw fetched ads:', fetchedAds); // Debug log
+
+        if (Array.isArray(fetchedAds)) {
+          const processedAds = fetchedAds.map(ad => ({
+            ...ad,
+            size: Number(ad.size) || MAX_SIZE,
+            x: Number(ad.x) || 0,
+            y: Number(ad.y) || 0
+          }));
+          console.log('Processed ads:', processedAds); // Debug log
+          setAds(processedAds);
+        } else {
+          console.error('Fetched ads is not an array:', fetchedAds);
+        }
       } catch (error) {
         console.error('Error loading ads:', error);
-        showNotification('Failed to load ads', 'error');
       }
     };
 
     loadAds();
-  }, []);
+    console.log('Current ads state:', ads); // Debug log
 
-  // Socket.io event handlers
-  useEffect(() => {
+    // Set up socket listeners
     socket.on('adsUpdated', ({ type, ad }) => {
       console.log('Received adsUpdated event:', type, ad);
-      
       if (type === 'create') {
-        setAds(prevAds => [...prevAds, ad]);
+        setAds(prev => [...prev, ad]);
       } else if (type === 'update') {
-        setAds(prevAds => prevAds.map(a => a.id === ad.id ? ad : a));
+        setAds(prev => prev.map(a => a.id === ad.id ? ad : a));
       } else if (type === 'delete') {
-        setAds(prevAds => prevAds.filter(a => a.id !== ad.id));
+        setAds(prev => prev.filter(a => a.id !== ad.id));
       }
     });
 
@@ -188,6 +231,11 @@ function App() {
       socket.off('adsUpdated');
     };
   }, []);
+
+  // Debug ads state changes
+  useEffect(() => {
+    console.log('Ads state updated:', ads);
+  }, [ads]);
 
   // Clean up expired ads and shrink unbumped ads
   useEffect(() => {
@@ -242,9 +290,10 @@ function App() {
 
   const handleLogin = async (credentials) => {
     try {
-      const user = await loginUser(credentials);
-      localStorage.setItem('token', user.token);
-      setCurrentUser(user);
+      const userData = await loginUser(credentials);
+      setCurrentUser(userData);
+      // Save user data to localStorage
+      localStorage.setItem('currentUser', JSON.stringify(userData));
       setShowLoginModal(false);
       showNotification('Logged in successfully!', 'success');
     } catch (error) {
@@ -254,8 +303,9 @@ function App() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
     setCurrentUser(null);
+    // Clear user data from localStorage
+    localStorage.removeItem('currentUser');
     showNotification('Logged out successfully!', 'success');
   };
 
@@ -510,16 +560,21 @@ function App() {
     return true;
   };
 
+  // Add this to debug render issues
+  useEffect(() => {
+    console.log('Current ads state:', ads);
+  }, [ads]);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white overflow-hidden">
-      {/* Tech Background Animation */}
+    <div className="bg-gradient-to-br from-gray-900 to-black text-white overflow-y-auto h-screen">
+      {/* Background stays fixed */}
       <div className="fixed inset-0 z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-black"></div>
         <div className="tech-lines"></div>
         <div className="tech-dots"></div>
       </div>
 
-      {/* Navigation */}
+      {/* Navigation and banner stay fixed */}
       <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm shadow-lg shadow-blue-500/20 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -570,83 +625,104 @@ function App() {
         </div>
       </nav>
 
-      {/* Main content */}
-      <div className="pt-16 relative min-h-screen z-10">
-        {/* Ads */}
-        {ads.map(ad => {
-          const { x, y } = ensureInViewport(
-            ad.x,
-            ad.y,
-            ad.size,
-            windowSize.width,
-            windowSize.height,
-            ads,
-            ad.id
-          );
-          const imageSize = Math.floor(ad.size * 0.75);
+      <div className="fixed top-16 left-0 right-0 z-40 token-banner-container">
+        <TokenBanner />
+      </div>
 
-          return (
-            <div
-              key={ad.id}
-              className="absolute cursor-pointer transform transition-all hover:scale-105 bubble"
-              style={{
-                left: `${x}px`,
-                top: `${y}px`,
-                width: `${ad.size}px`,
-                height: `${ad.size}px`,
-                transition: `all ${ANIMATION_DURATION} ease-in-out`,
-                zIndex: ad.isBumped ? 2 : 1,
-                animationDuration: `${8 + Math.random() * 4}s` // Random duration between 8-12s
-              }}
-              onClick={() => {
-                if (requireAuth()) {
-                  window.open(ad.url, '_blank');
-                }
-              }}
-            >
-              <div className="relative w-full h-full flex flex-col items-center justify-center">
-                <div className="absolute inset-0 rounded-full bg-gray-800/90 backdrop-blur-sm shadow-lg shadow-blue-500/20 glow"></div>
-                <div 
-                  className="relative z-10 mb-2 rounded-full overflow-hidden flex items-center justify-center"
+      {/* Main content - allow natural scrolling */}
+      <div className="pt-28">
+        {/* Bubbles section - keep it as is, remove fixed positioning */}
+        <div className="relative min-h-screen">
+          {/* Ads */}
+          {ads && ads.length > 0 ? (
+            ads.map(ad => {
+              const { x, y } = ensureInViewport(
+                ad.x,
+                ad.y,
+                ad.size,
+                windowSize.width,
+                windowSize.height,
+                ads,
+                ad.id
+              );
+              const imageSize = Math.floor(ad.size * 0.75);
+
+              return (
+                <div
+                  key={ad.id}
+                  className="absolute cursor-pointer transform transition-all hover:scale-105 bubble"
                   style={{
-                    width: `${imageSize}px`,
-                    height: `${imageSize}px`,
+                    left: `${x}px`,
+                    top: `${y}px`,
+                    width: `${ad.size}px`,
+                    height: `${ad.size}px`,
+                    transition: `all ${ANIMATION_DURATION} ease-in-out`,
+                    zIndex: ad.isBumped ? 2 : 1,
+                    animationDuration: `${8 + Math.random() * 4}s` // Random duration between 8-12s
                   }}
-                >
-                  <img
-                    src={ad.logo}
-                    alt={ad.title}
-                    className="w-full h-full object-cover"
-                    style={{
-                      objectFit: 'cover',
-                      width: '100%',
-                      height: '100%'
-                    }}
-                  />
-                </div>
-                <div 
-                  className="relative z-10 text-center px-2 w-full"
-                  onClick={(e) => {
-                    e.stopPropagation();
+                  onClick={() => {
                     if (requireAuth()) {
-                      setSelectedAdId(ad.id);
-                      setShowBumpStore(true);
+                      window.open(ad.url, '_blank');
                     }
                   }}
                 >
-                  <span 
-                    className="text-white truncate block hover:text-blue-300 transition-colors duration-300"
-                    style={{
-                      fontSize: `${Math.max(ad.size * 0.1, 12)}px`
-                    }}
-                  >
-                    {ad.title}
-                  </span>
+                  <div className="relative w-full h-full flex flex-col items-center justify-center">
+                    <div className="absolute inset-0 rounded-full bg-gray-800/90 backdrop-blur-sm shadow-lg shadow-blue-500/20 glow"></div>
+                    <div 
+                      className="relative z-10 mb-2 rounded-full overflow-hidden flex items-center justify-center"
+                      style={{
+                        width: `${imageSize}px`,
+                        height: `${imageSize}px`,
+                      }}
+                    >
+                      <img
+                        src={ad.logo}
+                        alt={ad.title}
+                        className="w-full h-full object-cover"
+                        style={{
+                          objectFit: 'cover',
+                          width: '100%',
+                          height: '100%'
+                        }}
+                      />
+                    </div>
+                    <div 
+                      className="relative z-10 text-center px-2 w-full"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (requireAuth()) {
+                          setSelectedAdId(ad.id);
+                          setShowBumpStore(true);
+                        }
+                      }}
+                    >
+                      <span 
+                        className="text-white truncate block hover:text-blue-300 transition-colors duration-300"
+                        style={{
+                          fontSize: `${Math.max(ad.size * 0.1, 12)}px`
+                        }}
+                      >
+                        {ad.title}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              );
+            })
+          ) : (
+            <div className="flex items-center justify-center h-screen">
+              <p className="text-gray-500">Loading ads...</p>
             </div>
-          );
-        })}
+          )}
+        </div>
+
+        {/* Token list section - remove mt-screen */}
+        <div>
+          <TokenList 
+            currentUser={currentUser} 
+            showNotification={showNotification}
+          />
+        </div>
       </div>
 
       {/* Modals */}
@@ -733,6 +809,13 @@ function App() {
           </div>
         ))}
       </div>
+
+      {/* Debug info */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="fixed bottom-4 left-4 text-white text-sm z-50">
+          Ads loaded: {ads.length}
+        </div>
+      )}
     </div>
   );
 }

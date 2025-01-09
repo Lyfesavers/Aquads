@@ -1,3 +1,4 @@
+/* eslint-disable */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -16,6 +17,14 @@ body {
   box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
   transition: all 0.3s ease;
   animation: bubble-float 8s ease-in-out infinite;
+}
+
+.bubble img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 50%;
+  pointer-events: none;
 }
 
 .bubble:hover {
@@ -341,3 +350,323 @@ body {
   transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
   box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
 }
+
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-scroll {
+  animation: scroll 90s linear infinite;
+}
+
+.animate-scroll:hover {
+  animation-play-state: paused;
+}
+
+/* Add this if you want a gradient fade effect on the sides */
+.token-banner-container {
+  position: relative;
+}
+
+.token-banner-container::before,
+.token-banner-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.token-banner-container::before {
+  left: 0;
+  background: linear-gradient(to right, rgb(17, 24, 39), transparent);
+}
+
+.token-banner-container::after {
+  right: 0;
+  background: linear-gradient(to left, rgb(17, 24, 39), transparent);
+}
+
+/* Flame Effect */
+@keyframes flicker {
+  0%, 100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-2px) scale(0.98);
+  }
+}
+
+.flame {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+}
+
+.flame::before {
+  content: '🔥';
+  position: absolute;
+  animation: flicker 1.5s ease-in-out infinite;
+  font-size: 14px;
+}
+
+.flame-glow {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: radial-gradient(circle, rgba(255,69,0,0.2) 0%, rgba(255,69,0,0) 70%);
+  filter: blur(2px);
+  animation: flicker 2s ease-in-out infinite;
+}
+
+/* Add these flame background styles */
+.banner-flames {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.banner-flame {
+  position: absolute;
+  opacity: 0.15;
+  transform-origin: center bottom;
+}
+
+@keyframes floatFlame {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.15;
+  }
+  50% {
+    transform: translateY(-8px) scale(1.1);
+    opacity: 0.2;
+  }
+}
+
+.banner-flame:nth-child(1) { left: 10%; animation: floatFlame 3s infinite; }
+.banner-flame:nth-child(2) { left: 30%; animation: floatFlame 2.5s infinite 0.5s; }
+.banner-flame:nth-child(3) { left: 50%; animation: floatFlame 3.5s infinite 1s; }
+.banner-flame:nth-child(4) { left: 70%; animation: floatFlame 3s infinite 1.5s; }
+.banner-flame:nth-child(5) { left: 90%; animation: floatFlame 2.8s infinite 0.8s; }
+
+/* Hexagon Grid Animation */
+.hex-grid {
+  background-image: repeating-linear-gradient(
+    60deg,
+    rgba(59, 130, 246, 0.1) 0px,
+    transparent 1px,
+    transparent 60px
+  ),
+  repeating-linear-gradient(
+    -60deg,
+    rgba(59, 130, 246, 0.1) 0px,
+    transparent 1px,
+    transparent 60px
+  );
+  background-size: 70px 120px;
+  animation: hexMove 30s linear infinite;
+}
+
+@keyframes hexMove {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 70px 120px;
+  }
+}
+
+/* Glowing Orbs */
+.glow-orb-1,
+.glow-orb-2 {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.15;
+}
+
+.glow-orb-1 {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.6) 0%, transparent 70%);
+  top: 10%;
+  left: 5%;
+  animation: floatOrb1 20s ease-in-out infinite;
+}
+
+.glow-orb-2 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.6) 0%, transparent 70%);
+  bottom: 10%;
+  right: 5%;
+  animation: floatOrb2 25s ease-in-out infinite;
+}
+
+@keyframes floatOrb1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(100px, 50px) scale(1.1); }
+}
+
+@keyframes floatOrb2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-100px, -50px) scale(0.9); }
+}
+
+/* Data Streams */
+.data-stream-1,
+.data-stream-2 {
+  position: absolute;
+  width: 2px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(59, 130, 246, 0.3),
+    rgba(99, 102, 241, 0.3),
+    transparent
+  );
+  filter: blur(1px);
+}
+
+.data-stream-1 {
+  height: 100%;
+  left: 20%;
+  animation: dataStream1 8s linear infinite;
+}
+
+.data-stream-2 {
+  height: 70%;
+  right: 30%;
+  animation: dataStream2 6s linear infinite;
+}
+
+@keyframes dataStream1 {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(100%); }
+}
+
+@keyframes dataStream2 {
+  from { transform: translateY(100%); }
+  to { transform: translateY(-100%); }
+}
+
+/* Add subtle pulse to the list items on hover */
+.token-row:hover {
+  background: linear-gradient(
+    90deg,
+    rgba(59, 130, 246, 0.1),
+    rgba(99, 102, 241, 0.1)
+  );
+  transition: all 0.3s ease;
+}
+
+/* Digital Rain Effect */
+.digital-rain {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(59, 130, 246, 0.05) 50%,
+    transparent 100%
+  );
+  background-size: 100% 20px;
+  animation: digitalRain 20s linear infinite;
+}
+
+@keyframes digitalRain {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 1000px; }
+}
+
+/* Cyber Grid */
+.cyber-grid {
+  background-image: 
+    linear-gradient(rgba(59, 130, 246, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px);
+  background-size: 30px 30px;
+  animation: gridMove 30s linear infinite;
+}
+
+@keyframes gridMove {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(-30px, -30px); }
+}
+
+/* Floating Particles */
+.particles {
+  position: absolute;
+  inset: 0;
+}
+
+.particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: rgba(59, 130, 246, 0.3);
+  border-radius: 50%;
+  filter: blur(1px);
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(var(--tx), var(--ty)); }
+}
+
+/* Generate 20 unique particle animations */
+.particle {
+  --tx: 0px;
+  --ty: 0px;
+  animation: float 10s ease-in-out infinite;
+}
+
+/* Accent Lines */
+.accent-lines {
+  position: absolute;
+  inset: 0;
+}
+
+.accent-line {
+  position: absolute;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(59, 130, 246, 0.1),
+    rgba(99, 102, 241, 0.1),
+    transparent
+  );
+  height: 1px;
+  width: 100%;
+  transform-origin: left;
+  animation: accentPulse 8s ease-in-out infinite;
+}
+
+@keyframes accentPulse {
+  0%, 100% { opacity: 0.1; transform: scaleX(0.8); }
+  50% { opacity: 0.3; transform: scaleX(1); }
+}
+
+/* Position accent lines */
+.accent-line-0 { top: 20%; }
+.accent-line-1 { top: 40%; }
+.accent-line-2 { top: 60%; }
+.accent-line-3 { top: 80%; }
+.accent-line-4 { top: 90%; }
+
+/* Position particles randomly */
+.particle-0 { top: 10%; left: 20%; --tx: 100px; --ty: -50px; }
+.particle-1 { top: 30%; left: 80%; --tx: -80px; --ty: 60px; }
+.particle-2 { top: 50%; left: 40%; --tx: 60px; --ty: 80px; }
+/* ... add more particle positions as needed ... */
