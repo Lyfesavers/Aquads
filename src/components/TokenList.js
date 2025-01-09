@@ -1,6 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import TokenReviews from './TokenReviews';
 
+// Define DEX options with their details
+const DEX_OPTIONS = [
+  {
+    name: 'PawChain',
+    url: 'https://swap.pawchain.net',
+    icon: '🐾',
+    description: 'Native PawChain DEX'
+  },
+  {
+    name: 'Uniswap',
+    url: 'https://app.uniswap.org/#/swap',
+    icon: '🦄',
+    description: 'Leading Ethereum DEX'
+  },
+  {
+    name: 'PancakeSwap',
+    url: 'https://pancakeswap.finance/swap',
+    icon: '🥞',
+    description: 'Popular BSC DEX'
+  },
+  {
+    name: 'SushiSwap',
+    url: 'https://app.sushi.com/swap',
+    icon: '🍣',
+    description: 'Multi-chain DEX'
+  }
+];
+
 const TokenList = ({ currentUser, showNotification }) => {
   const [tokens, setTokens] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -180,6 +208,7 @@ const TokenList = ({ currentUser, showNotification }) => {
   }, [tokens, category, sortBy, order]);
 
   const [isSwapOpen, setIsSwapOpen] = useState(false);
+  const [selectedDex, setSelectedDex] = useState(DEX_OPTIONS[0]);
 
   return (
     <div id="token-list" className="relative bg-gray-900/95 backdrop-blur-sm border-t border-blue-500/20 overflow-auto">
@@ -209,13 +238,13 @@ const TokenList = ({ currentUser, showNotification }) => {
       </div>
 
       <div className="container mx-auto px-4 py-8 relative z-10">
-        {/* Add Swap Section */}
+        {/* Enhanced Swap Section */}
         <div className="mb-6">
           <button
             onClick={() => setIsSwapOpen(!isSwapOpen)}
             className="w-full flex items-center justify-between bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition-colors"
           >
-            <span className="text-xl font-bold text-white">PawChain Swap</span>
+            <span className="text-xl font-bold text-white">DEX Swap</span>
             <span className={`transform transition-transform ${isSwapOpen ? 'rotate-180' : ''}`}>
               ▼
             </span>
@@ -223,10 +252,36 @@ const TokenList = ({ currentUser, showNotification }) => {
           
           {isSwapOpen && (
             <div className="mt-4 bg-gray-800 rounded-lg p-4">
+              {/* DEX Selection Tabs */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {DEX_OPTIONS.map((dex) => (
+                  <button
+                    key={dex.name}
+                    onClick={() => setSelectedDex(dex)}
+                    className={`flex items-center px-4 py-2 rounded-lg transition-colors ${
+                      selectedDex.name === dex.name
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    }`}
+                  >
+                    <span className="mr-2">{dex.icon}</span>
+                    <span>{dex.name}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* DEX Description */}
+              <div className="mb-4 p-3 bg-gray-700/50 rounded-lg">
+                <p className="text-gray-300">
+                  {selectedDex.icon} {selectedDex.description}
+                </p>
+              </div>
+
+              {/* DEX Interface */}
               <iframe
-                src="https://swap.pawchain.net"
-                title="PawChain Swap"
-                className="w-full h-[600px] rounded-lg border border-gray-700"
+                src={selectedDex.url}
+                title={`${selectedDex.name} Swap Interface`}
+                className="w-full h-[600px] rounded-lg border border-gray-700 transition-all duration-300"
                 frameBorder="0"
                 allowTransparency="true"
                 sandbox="allow-forms allow-scripts allow-same-origin"
