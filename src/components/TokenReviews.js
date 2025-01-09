@@ -70,14 +70,14 @@ const TokenReviews = ({ tokenSymbol, currentUser, showNotification }) => {
   const fetchReviews = async () => {
     try {
       const normalizedSymbol = tokenSymbol.toLowerCase();
-      const response = await fetch(`http://localhost:5000/api/reviews/token/${normalizedSymbol}`);
+      const response = await fetch(`/api/reviews/token/${normalizedSymbol}`);
       const data = await response.json();
-      console.log('Fetched reviews for symbol:', normalizedSymbol);
-      console.log('Fetched reviews:', data);
-      setReviews(data.reviews);
-      setAverageRating(data.averageRating);
+      setReviews(data.reviews || []);
+      setAverageRating(data.averageRating || 0);
     } catch (error) {
       console.error('Error fetching reviews:', error);
+      setReviews([]);
+      setAverageRating(0);
     }
   };
 
@@ -109,7 +109,7 @@ const TokenReviews = ({ tokenSymbol, currentUser, showNotification }) => {
   };
 
   return (
-    <div className="flex items-center space-x-2 w-full">
+    <div className="flex items-center justify-between w-full px-2">
       <div 
         className="flex items-center cursor-pointer" 
         onClick={(e) => {
@@ -117,14 +117,16 @@ const TokenReviews = ({ tokenSymbol, currentUser, showNotification }) => {
           setShowReviewModal(true);
         }}
       >
-        {[1, 2, 3, 4, 5].map((star) => (
-          <FaStar
-            key={star}
-            className={star <= averageRating ? 'text-yellow-400' : 'text-gray-400'}
-            size={16}
-          />
-        ))}
-        <span className="ml-2 text-gray-400">({reviews.length})</span>
+        <div className="flex items-center">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <FaStar
+              key={star}
+              className={star <= averageRating ? 'text-yellow-400' : 'text-gray-400'}
+              size={14}
+            />
+          ))}
+          <span className="ml-1 text-sm text-gray-400">({reviews.length})</span>
+        </div>
       </div>
       
       {currentUser && (
@@ -133,7 +135,7 @@ const TokenReviews = ({ tokenSymbol, currentUser, showNotification }) => {
             e.stopPropagation();
             setShowReviewForm(true);
           }}
-          className="ml-2 px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 whitespace-nowrap"
+          className="ml-2 px-2 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 whitespace-nowrap"
         >
           Add Review
         </button>
