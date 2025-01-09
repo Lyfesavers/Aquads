@@ -4,10 +4,10 @@ import { submitReview } from '../services/api';
 
 const ReviewsModal = ({ isOpen, onClose, reviews, averageRating }) => {
   if (!isOpen) return null;
-
+  
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-      <div className="bg-gray-800 rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto relative">
+      <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full relative">
         <button 
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-white"
@@ -15,10 +15,8 @@ const ReviewsModal = ({ isOpen, onClose, reviews, averageRating }) => {
           ✕
         </button>
         
-        <h2 className="text-2xl font-bold mb-4">Reviews</h2>
-        
-        {/* Average Rating in Modal */}
-        <div className="flex items-center mb-6">
+        <h3 className="text-xl font-bold mb-4">Reviews</h3>
+        <div className="flex items-center mb-4">
           <div className="flex">
             {[1, 2, 3, 4, 5].map((star) => (
               <FaStar
@@ -30,30 +28,25 @@ const ReviewsModal = ({ isOpen, onClose, reviews, averageRating }) => {
           </div>
           <span className="ml-2 text-lg">({reviews.length} reviews)</span>
         </div>
-
-        {/* Reviews List */}
-        <div className="space-y-4">
-          {reviews.map((review) => (
-            <div key={review._id} className="border-t border-gray-700 pt-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <span className="font-bold">{review.username}</span>
-                  <div className="flex ml-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <FaStar
-                        key={star}
-                        className={star <= review.rating ? 'text-yellow-400' : 'text-gray-400'}
-                      />
-                    ))}
-                  </div>
+        
+        <div className="space-y-4 max-h-96 overflow-y-auto">
+          {reviews.map((review, index) => (
+            <div key={index} className="border-t border-gray-700 pt-4">
+              <div className="flex items-center mb-2">
+                <div className="flex">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <FaStar
+                      key={star}
+                      className={star <= review.rating ? 'text-yellow-400' : 'text-gray-400'}
+                      size={16}
+                    />
+                  ))}
                 </div>
-                <span className="text-sm text-gray-400">
-                  {new Date(review.createdAt).toLocaleDateString()}
+                <span className="ml-2 text-sm text-gray-400">
+                  by {review.username}
                 </span>
               </div>
-              {review.comment && (
-                <p className="mt-2 text-gray-300">{review.comment}</p>
-              )}
+              <p className="text-gray-300">{review.comment}</p>
             </div>
           ))}
         </div>
@@ -116,36 +109,37 @@ const TokenReviews = ({ tokenSymbol, currentUser, showNotification }) => {
   };
 
   return (
-    <div className="inline-flex items-center space-x-2">
-      {/* Compact Rating Display */}
+    <div className="flex items-center space-x-2 w-full">
       <div 
         className="flex items-center cursor-pointer" 
-        onClick={() => setShowReviewModal(true)}
-        title="Click to see all reviews"
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowReviewModal(true);
+        }}
       >
-        <div className="flex">
-          {[1, 2, 3, 4, 5].map((star) => (
-            <FaStar
-              key={star}
-              className={star <= averageRating ? 'text-yellow-400' : 'text-gray-400'}
-              size={16}
-            />
-          ))}
-        </div>
-        <span className="ml-1 text-sm text-gray-400">({reviews.length})</span>
+        {[1, 2, 3, 4, 5].map((star) => (
+          <FaStar
+            key={star}
+            className={star <= averageRating ? 'text-yellow-400' : 'text-gray-400'}
+            size={16}
+          />
+        ))}
+        <span className="ml-2 text-gray-400">({reviews.length})</span>
       </div>
-
-      {/* Add Review Button */}
-      {currentUser && !showReviewForm && (
+      
+      {currentUser && (
         <button
-          onClick={() => setShowReviewForm(true)}
-          className="text-sm text-blue-400 hover:text-blue-300"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowReviewForm(true);
+          }}
+          className="ml-2 px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 whitespace-nowrap"
         >
-          + Review
+          Add Review
         </button>
       )}
 
-      {/* Review Form Popover */}
+      {/* Review Form Modal */}
       {showReviewForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
           <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full relative">
@@ -171,7 +165,7 @@ const TokenReviews = ({ tokenSymbol, currentUser, showNotification }) => {
                 ))}
               </div>
               <textarea
-                className="w-full p-2 bg-gray-700 rounded"
+                className="w-full p-2 bg-gray-700 rounded text-white"
                 value={userReview.comment}
                 onChange={(e) => setUserReview({ ...userReview, comment: e.target.value })}
                 placeholder="Write your review..."
@@ -180,7 +174,7 @@ const TokenReviews = ({ tokenSymbol, currentUser, showNotification }) => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
+                className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full disabled:opacity-50"
               >
                 {isSubmitting ? 'Submitting...' : 'Submit Review'}
               </button>
