@@ -52,13 +52,34 @@ const TokenList = ({ currentUser, showNotification }) => {
   // Create a ref to store canvas elements
   const chartRefs = useRef({});
 
-  // Function to fetch chart data
+  const [apiLimited, setApiLimited] = useState(false);
+  const apiRequestQueue = useRef([]);
+  const apiTimeout = useRef(null);
+
+  // Add rate limiting handler
+  const handleRateLimit = () => {
+    setApiLimited(true);
+    // Reset after 1 minute
+    setTimeout(() => setApiLimited(false), 60000);
+  };
+
+  // Modified fetch chart data with rate limiting
   const fetchChartData = async (tokenId, days = 7) => {
+    if (apiLimited) {
+      showNotification('API rate limit reached. Please wait a moment...', 'warning');
+      return;
+    }
+
     try {
       const response = await fetch(
         `https://api.coingecko.com/api/v3/coins/${tokenId}/market_chart?vs_currency=usd&days=${days}`
       );
       
+      if (response.status === 429) {
+        handleRateLimit();
+        return;
+      }
+
       if (!response.ok) throw new Error('Failed to fetch chart data');
       
       const data = await response.json();
@@ -68,15 +89,17 @@ const TokenList = ({ currentUser, showNotification }) => {
       }));
     } catch (error) {
       console.error('Error fetching chart data:', error);
+      if (error.message.includes('rate limit')) {
+        handleRateLimit();
+      }
       showNotification('Failed to load chart data', 'error');
     }
   };
 
-  // Modify the existing token row click handler
+  // Modified handleTokenClick with queue
   const handleTokenClick = async (token) => {
     if (expandedToken === token.id) {
       setExpandedToken(null);
-      // Destroy chart instance when collapsing
       if (chartInstances[token.id]) {
         chartInstances[token.id].destroy();
         setChartInstances(prev => {
@@ -88,23 +111,67 @@ const TokenList = ({ currentUser, showNotification }) => {
     } else {
       setExpandedToken(token.id);
       if (!chartData[token.id]) {
+        // Add to queue if rate limited
+        if (apiLimited) {
+          apiRequestQueue.current.push({
+            tokenId: token.id,
+            days: chartPeriod === '7d' ? 7 : chartPeriod === '30d' ? 30 : 365
+          });
+          showNotification('Request queued. Will load when API limit resets...', 'info');
+          return;
+        }
         await fetchChartData(token.id, chartPeriod === '7d' ? 7 : chartPeriod === '30d' ? 30 : 365);
       }
     }
   };
 
-  // Add chart period selector
-  const handleChartPeriodChange = async (period, tokenId) => {
-    setChartPeriod(period);
-    const days = period === '7d' ? 7 : period === '30d' ? 30 : 365;
-    await fetchChartData(tokenId, days);
-  };
+  // Add queue processor
+  useEffect(() => {
+    const processQueue = async () => {
+      if (apiRequestQueue.current.length > 0 && !apiLimited) {
+        const request = apiRequestQueue.current.shift();
+        await fetchChartData(request.tokenId, request.days);
+        
+        // Process next item in queue after a delay
+        if (apiRequestQueue.current.length > 0) {
+          apiTimeout.current = setTimeout(processQueue, 6100); // Wait ~6 seconds between requests
+        }
+      }
+    };
 
-  // Modify renderTokenChart function
+    if (!apiLimited) {
+      processQueue();
+    }
+
+    return () => {
+      if (apiTimeout.current) {
+        clearTimeout(apiTimeout.current);
+      }
+    };
+  }, [apiLimited]);
+
+  // Modify renderTokenChart to show rate limit message
   const renderTokenChart = (token) => {
     const data = chartData[token.id];
     
-    if (!data) return <div className="text-center py-4">Loading chart...</div>;
+    if (apiLimited) {
+      return (
+        <div className="p-4 bg-gray-700/30 rounded-lg mt-4">
+          <div className="text-center py-4">
+            <p className="text-yellow-400 mb-2">API rate limit reached</p>
+            <p className="text-gray-400 text-sm">Please wait a moment before requesting more charts</p>
+          </div>
+        </div>
+      );
+    }
+    
+    if (!data) {
+      return (
+        <div className="text-center py-4">
+          <div className="animate-pulse">Loading chart...</div>
+        </div>
+      );
+    }
 
     // Format data for chart
     const chartPoints = data.map(([timestamp, price]) => ({
@@ -411,6 +478,13 @@ const TokenList = ({ currentUser, showNotification }) => {
       total: format(total),
       max: format(max)
     };
+  };
+
+  // Add chart period selector
+  const handleChartPeriodChange = async (period, tokenId) => {
+    setChartPeriod(period);
+    const days = period === '7d' ? 7 : period === '30d' ? 30 : 365;
+    await fetchChartData(tokenId, days);
   };
 
   return (
