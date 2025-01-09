@@ -615,10 +615,10 @@ const TokenList = ({ currentUser, showNotification }) => {
             <div className="col-span-1">7d %</div>
             <div className="col-span-1">24h Volume</div>
             <div className="col-span-1">Market Cap</div>
-            <div className="col-span-1">Circulating Supply</div>
-            <div className="col-span-1">Total Supply</div>
+            <div className="col-span-1">Circulating</div>
+            <div className="col-span-1">Total</div>
             <div className="col-span-1">ATH</div>
-            <div className="col-span-1">Reviews</div>
+            <div className="col-span-2">Reviews</div>
           </div>
 
           {loading ? (
@@ -698,7 +698,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                     </div>
                   </div>
 
-                  <div className="col-span-1 flex items-center justify-center">
+                  <div className="col-span-2 flex items-center justify-center">
                     <TokenReviews 
                       tokenSymbol={token.symbol.toLowerCase()}
                       currentUser={currentUser}
