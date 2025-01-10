@@ -5,6 +5,7 @@ const TokenReviews = ({ token, onClose, currentUser, showNotification }) => {
   const [reviews, setReviews] = useState([]);
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAddReview, setShowAddReview] = useState(false);
 
   useEffect(() => {
     fetchReviews();
@@ -48,6 +49,7 @@ const TokenReviews = ({ token, onClose, currentUser, showNotification }) => {
       
       showNotification('Review submitted successfully!', 'success');
       setNewReview({ rating: 5, comment: '' });
+      setShowAddReview(false);
       fetchReviews();
     } catch (error) {
       console.error('Error submitting review:', error);
@@ -62,15 +64,20 @@ const TokenReviews = ({ token, onClose, currentUser, showNotification }) => {
       <div className="text-white">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">Reviews for {token.name}</h2>
-          <div className="flex items-center">
-            <span className="text-yellow-400 text-2xl mr-2">★</span>
-            <span className="text-xl">{token.rating || '0.0'}</span>
-          </div>
+          {currentUser && !showAddReview && (
+            <button
+              onClick={() => setShowAddReview(true)}
+              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors"
+            >
+              Add Review
+            </button>
+          )}
         </div>
 
-        {/* Review Form */}
-        {currentUser && (
-          <form onSubmit={handleSubmitReview} className="mb-8">
+        {/* Add Review Form */}
+        {showAddReview && (
+          <form onSubmit={handleSubmitReview} className="mb-8 bg-gray-800 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold mb-4">Write a Review</h3>
             <div className="mb-4">
               <label className="block mb-2">Rating</label>
               <div className="flex space-x-2">
@@ -99,17 +106,26 @@ const TokenReviews = ({ token, onClose, currentUser, showNotification }) => {
                 required
               />
             </div>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={`w-full py-2 rounded ${
-                isSubmitting 
-                  ? 'bg-gray-500 cursor-not-allowed' 
-                  : 'bg-blue-500 hover:bg-blue-600'
-              }`}
-            >
-              {isSubmitting ? 'Submitting...' : 'Submit Review'}
-            </button>
+            <div className="flex justify-end space-x-2">
+              <button
+                type="button"
+                onClick={() => setShowAddReview(false)}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className={`px-4 py-2 rounded ${
+                  isSubmitting 
+                    ? 'bg-gray-500 cursor-not-allowed' 
+                    : 'bg-blue-500 hover:bg-blue-600'
+                }`}
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit Review'}
+              </button>
+            </div>
           </form>
         )}
 
@@ -119,7 +135,7 @@ const TokenReviews = ({ token, onClose, currentUser, showNotification }) => {
             <p className="text-gray-400 text-center">No reviews yet. Be the first to review!</p>
           ) : (
             reviews.map((review) => (
-              <div key={review._id} className="bg-gray-800 p-4 rounded">
+              <div key={review._id} className="bg-gray-800 p-4 rounded-lg">
                 <div className="flex justify-between items-start mb-2">
                   <div>
                     <div className="flex items-center">

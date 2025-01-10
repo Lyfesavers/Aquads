@@ -242,6 +242,24 @@ const TokenList = ({ currentUser, showNotification }) => {
     setShowDexFrame(true);
   };
 
+  const calculatePageRange = () => {
+    const range = [];
+    const maxButtons = 5; // Show max 5 page buttons at a time
+    let start = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+    let end = Math.min(totalPages, start + maxButtons - 1);
+
+    // Adjust start if we're near the end
+    if (end === totalPages) {
+      start = Math.max(1, end - maxButtons + 1);
+    }
+
+    for (let i = start; i <= end; i++) {
+      range.push(i);
+    }
+
+    return range;
+  };
+
   return (
     <div className="container mx-auto p-4">
       <div className="mb-6 bg-gray-800/50 backdrop-blur-sm rounded-lg p-4">
@@ -299,44 +317,41 @@ const TokenList = ({ currentUser, showNotification }) => {
           </button>
 
           {showDexFrame && (
-            <div className="border-b border-gray-700/30">
-              <div className="grid grid-cols-4 gap-0">
-                <div className="col-span-1 bg-gray-800/50 border-r border-gray-700/30">
+            <div className="bg-gray-900/80 backdrop-blur-lg border border-blue-500/30 rounded-lg overflow-hidden mb-6">
+              <div className="bg-gray-800/90 p-4 border-b border-blue-500/30">
+                <div className="flex flex-wrap gap-4">
                   {DEX_OPTIONS.map((dex) => (
-                    <div
+                    <button
                       key={dex.name}
                       onClick={() => handleDexClick(dex)}
-                      className={`flex items-center p-3 cursor-pointer transition-colors ${
-                        selectedDex?.name === dex.name 
-                          ? 'bg-blue-500/20 border-l-4 border-blue-500' 
-                          : 'hover:bg-gray-700/50'
-                      }`}
+                      className={`
+                        flex items-center space-x-2 px-4 py-2 rounded
+                        ${selectedDex?.name === dex.name 
+                          ? 'bg-blue-500/20 border-2 border-blue-500 text-blue-400' 
+                          : 'bg-gray-700/50 border border-gray-600 hover:border-blue-500/50 text-gray-300 hover:text-blue-400'
+                        }
+                        transition-all duration-300 transform hover:scale-105
+                        shadow-[0_0_15px_rgba(59,130,246,0.2)]
+                      `}
                     >
-                      <span className="text-2xl mr-2">{dex.icon}</span>
-                      <div>
-                        <div className="text-white font-medium">{dex.name}</div>
-                        <div className="text-gray-400 text-xs">{dex.description}</div>
-                      </div>
-                    </div>
+                      <span className="text-2xl">{dex.icon}</span>
+                      <span className="font-cyberpunk">{dex.name}</span>
+                    </button>
                   ))}
                 </div>
-
-                <div className="col-span-3 bg-white h-[600px]">
-                  {selectedDex ? (
-                    <iframe
-                      src={selectedDex.url}
-                      className="w-full h-full"
-                      title={`${selectedDex.name} DEX`}
-                      sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-gray-500">
-                      Select a DEX to start trading
-                    </div>
-                  )}
-                </div>
               </div>
+
+              {selectedDex && (
+                <div className="h-[600px] w-full bg-white">
+                  <iframe
+                    src={selectedDex.url}
+                    className="w-full h-full"
+                    title={`${selectedDex.name} DEX`}
+                    sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -529,49 +544,58 @@ const TokenList = ({ currentUser, showNotification }) => {
           </div>
         )}
 
-        <div className="mt-4 flex justify-center items-center space-x-2">
-          <div className="inline-flex rounded-md shadow-sm">
+        <div className="mt-6 flex justify-center items-center space-x-2">
+          <div className="inline-flex rounded-lg overflow-hidden border border-blue-500/30">
             <button
               onClick={() => paginate(1)}
               disabled={currentPage === 1}
-              className="px-3 py-1 bg-gray-800/50 hover:bg-gray-700/50 text-white rounded-l"
+              className="px-4 py-2 bg-gray-800/80 hover:bg-blue-500/20 text-gray-300 hover:text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed border-r border-blue-500/30"
             >
-              First
+              ⟪
             </button>
             <button
               onClick={() => paginate(currentPage - 1)}
               disabled={currentPage === 1}
-              className="px-3 py-1 bg-gray-800/50 hover:bg-gray-700/50 text-white rounded-l"
+              className="px-4 py-2 bg-gray-800/80 hover:bg-blue-500/20 text-gray-300 hover:text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed border-r border-blue-500/30"
             >
-              Previous
+              ⟨
             </button>
-            {[...Array(totalPages)].map((_, i) => (
+            
+            {calculatePageRange().map((pageNum) => (
               <button
-                key={i + 1}
-                onClick={() => paginate(i + 1)}
-                className="px-3 py-1 bg-gray-800/50 hover:bg-gray-700/50 text-white rounded-l"
+                key={pageNum}
+                onClick={() => paginate(pageNum)}
+                className={`
+                  px-4 py-2 border-r border-blue-500/30
+                  ${currentPage === pageNum 
+                    ? 'bg-blue-500/20 text-blue-400' 
+                    : 'bg-gray-800/80 text-gray-300 hover:bg-blue-500/20 hover:text-blue-400'
+                  }
+                `}
               >
-                {i + 1}
+                {pageNum}
               </button>
-            )).slice(Math.max(0, currentPage - 3), Math.min(totalPages, currentPage + 2))}
+            ))}
+            
             <button
               onClick={() => paginate(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="px-3 py-1 bg-gray-800/50 hover:bg-gray-700/50 text-white rounded-l"
+              className="px-4 py-2 bg-gray-800/80 hover:bg-blue-500/20 text-gray-300 hover:text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed border-r border-blue-500/30"
             >
-              Next
+              ⟩
             </button>
             <button
               onClick={() => paginate(totalPages)}
               disabled={currentPage === totalPages}
-              className="px-3 py-1 bg-gray-800/50 hover:bg-gray-700/50 text-white rounded-l"
+              className="px-4 py-2 bg-gray-800/80 hover:bg-blue-500/20 text-gray-300 hover:text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Last
+              ⟫
             </button>
           </div>
-          {isLoadingMore && (
-            <span className="text-gray-400 ml-2">Loading more tokens...</span>
-          )}
+          
+          <span className="text-gray-400 ml-2">
+            Page {currentPage} of {totalPages}
+          </span>
         </div>
       </div>
 
