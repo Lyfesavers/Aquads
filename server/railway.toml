@@ -1,5 +1,6 @@
 [build]
 builder = "nixpacks"
+buildCommand = "npm install --legacy-peer-deps --force"
 
 [deploy]
-startCommand = "npm install --legacy-peer-deps && node index.js"
+startCommand = "node index.js"
