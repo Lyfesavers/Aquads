@@ -45,7 +45,7 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'market_cap', direction: 'desc' });
   const [currentPage, setCurrentPage] = useState(1);
-  const [tokensPerPage] = useState(20);
+  const [tokensPerPage] = useState(100);
   const [showDexFrame, setShowDexFrame] = useState(false);
   const [selectedDex, setSelectedDex] = useState(null);
   const [error, setError] = useState(null);
@@ -54,6 +54,7 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [timeFilter, setTimeFilter] = useState('24h');
   const [sortFilter, setSortFilter] = useState('market_cap');
   const [orderFilter, setOrderFilter] = useState('desc');
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   useEffect(() => {
     const fetchTokens = async () => {
@@ -61,48 +62,66 @@ const TokenList = ({ currentUser, showNotification }) => {
         setIsLoadingTokens(true);
         setError(null);
         
-        // Add delay between retries
-        const fetchWithRetry = async (retries = 3, delay = 2000) => {
-          try {
-            const response = await fetch(
-              'https://api.coingecko.com/api/v3/coins/markets?' +
-              'vs_currency=usd&' +
-              'order=market_cap_desc&' +
-              'per_page=250&' + // Increased to show more tokens
-              'page=1&' +
-              'sparkline=false&' +
-              'price_change_percentage=24h'
-            );
-            
-            if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            return data;
-          } catch (error) {
-            if (retries > 0) {
-              await new Promise(resolve => setTimeout(resolve, delay));
-              return fetchWithRetry(retries - 1, delay * 1.5);
-            }
-            throw error;
+        // Fetch multiple pages of tokens
+        const fetchPage = async (page) => {
+          // Add delay between requests to avoid rate limits
+          if (page > 1) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
           }
+          
+          const response = await fetch(
+            'https://api.coingecko.com/api/v3/coins/markets?' +
+            'vs_currency=usd&' +
+            'order=market_cap_desc&' +
+            'per_page=250&' + // Maximum per page
+            `page=${page}&` +
+            'sparkline=false&' +
+            'price_change_percentage=24h'
+          );
+          
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          
+          return await response.json();
         };
 
-        const data = await fetchWithRetry();
-        setTokens(data);
-        setFilteredTokens(data);
+        // Fetch first 12 pages (3000 tokens)
+        const pages = await Promise.all([
+          fetchPage(1),
+          fetchPage(2),
+          fetchPage(3),
+          fetchPage(4),
+          fetchPage(5),
+          fetchPage(6),
+          fetchPage(7),
+          fetchPage(8),
+          fetchPage(9),
+          fetchPage(10),
+          fetchPage(11),
+          fetchPage(12)
+        ]);
+
+        // Combine all pages
+        const allTokens = pages.flat();
+        setTokens(allTokens);
+        setFilteredTokens(allTokens);
+        
       } catch (error) {
         console.error('Error fetching tokens:', error);
-        setError('Unable to load tokens. Please try again in a few minutes.');
+        if (error.message.includes('429')) {
+          setError('Rate limit reached. Please wait a moment and try again.');
+        } else {
+          setError('Unable to load tokens. Please try again in a few minutes.');
+        }
       } finally {
         setIsLoadingTokens(false);
       }
     };
 
     fetchTokens();
-    // Fetch every 2 minutes to avoid rate limits
-    const interval = setInterval(fetchTokens, 120000);
+    // Fetch every 15 minutes to avoid rate limits with larger dataset
+    const interval = setInterval(fetchTokens, 900000);
     return () => clearInterval(interval);
   }, []);
 
@@ -205,7 +224,25 @@ const TokenList = ({ currentUser, showNotification }) => {
     }
   };
 
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  const paginate = async (pageNumber) => {
+    setCurrentPage(pageNumber);
+    
+    // If we're on the last page and there might be more tokens
+    if (pageNumber === totalPages && filteredTokens.length < 1000) {
+      try {
+        setIsLoadingMore(true);
+        const nextPage = Math.floor(filteredTokens.length / 250) + 1;
+        const moreTokens = await fetchPage(nextPage);
+        
+        setTokens(prev => [...prev, ...moreTokens]);
+        setFilteredTokens(prev => [...prev, ...moreTokens]);
+      } catch (error) {
+        console.error('Error loading more tokens:', error);
+      } finally {
+        setIsLoadingMore(false);
+      }
+    }
+  };
 
   const indexOfLastToken = currentPage * tokensPerPage;
   const indexOfFirstToken = indexOfLastToken - tokensPerPage;
@@ -261,14 +298,59 @@ const TokenList = ({ currentUser, showNotification }) => {
       </div>
 
       <div className="bg-gray-900/50 backdrop-blur-sm rounded-lg overflow-hidden">
-        <div className="p-4 border-b border-gray-700/30">
+        <div className="relative">
           <button
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
+            className="w-full px-4 py-3 bg-gray-800/50 hover:bg-gray-700/50 text-white flex items-center justify-between border-b border-gray-700/30"
             onClick={() => setShowDexFrame(!showDexFrame)}
           >
-            <span className="mr-2">DEX Options</span>
+            <div className="flex items-center">
+              <span className="mr-2">🔄</span>
+              <span>Quick DEX Access</span>
+            </div>
             <span>{showDexFrame ? '▼' : '▶'}</span>
           </button>
+
+          {showDexFrame && (
+            <div className="border-b border-gray-700/30">
+              <div className="grid grid-cols-4 gap-0">
+                <div className="col-span-1 bg-gray-800/50 border-r border-gray-700/30">
+                  {DEX_OPTIONS.map((dex) => (
+                    <div
+                      key={dex.name}
+                      onClick={() => handleDexClick(dex)}
+                      className={`flex items-center p-3 cursor-pointer transition-colors ${
+                        selectedDex?.name === dex.name 
+                          ? 'bg-blue-500/20 border-l-4 border-blue-500' 
+                          : 'hover:bg-gray-700/50'
+                      }`}
+                    >
+                      <span className="text-2xl mr-2">{dex.icon}</span>
+                      <div>
+                        <div className="text-white font-medium">{dex.name}</div>
+                        <div className="text-gray-400 text-xs">{dex.description}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="col-span-3 bg-white h-[600px]">
+                  {selectedDex ? (
+                    <iframe
+                      src={selectedDex.url}
+                      className="w-full h-full"
+                      title={`${selectedDex.name} DEX`}
+                      sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-gray-500">
+                      Select a DEX to start trading
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {isLoadingTokens ? (
@@ -459,7 +541,7 @@ const TokenList = ({ currentUser, showNotification }) => {
           </div>
         )}
 
-        <div className="mt-4 flex justify-center">
+        <div className="mt-4 flex justify-center items-center space-x-2">
           <div className="inline-flex rounded-md shadow-sm">
             <button
               onClick={() => paginate(1)}
@@ -499,6 +581,9 @@ const TokenList = ({ currentUser, showNotification }) => {
               Last
             </button>
           </div>
+          {isLoadingMore && (
+            <span className="text-gray-400 ml-2">Loading more tokens...</span>
+          )}
         </div>
       </div>
 
@@ -509,66 +594,6 @@ const TokenList = ({ currentUser, showNotification }) => {
           currentUser={currentUser}
           showNotification={showNotification}
         />
-      )}
-
-      {showDexFrame && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
-          <div className="bg-gray-900 rounded-lg w-full max-w-7xl h-[90vh] flex flex-col">
-            <div className="flex justify-between items-center p-4 border-b border-gray-700">
-              <div className="flex items-center space-x-4">
-                <h3 className="text-xl font-bold text-white">DEX Options</h3>
-                {selectedDex && (
-                  <>
-                    <span className="text-gray-400">|</span>
-                    <div className="flex items-center">
-                      <span className="text-2xl mr-2">{selectedDex.icon}</span>
-                      <span className="text-white">{selectedDex.name}</span>
-                    </div>
-                  </>
-                )}
-              </div>
-              <button 
-                onClick={() => {
-                  setSelectedDex(null);
-                  setShowDexFrame(false);
-                }}
-                className="text-gray-400 hover:text-white text-2xl"
-              >
-                ×
-              </button>
-            </div>
-
-            {!selectedDex ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
-                {DEX_OPTIONS.map((dex) => (
-                  <div
-                    key={dex.name}
-                    className="p-4 bg-gray-800 rounded-lg hover:bg-gray-700 cursor-pointer transition-colors"
-                    onClick={() => handleDexClick(dex)}
-                  >
-                    <div className="flex items-center">
-                      <span className="text-2xl mr-2">{dex.icon}</span>
-                      <div>
-                        <h3 className="text-white font-bold">{dex.name}</h3>
-                        <p className="text-gray-400 text-sm">{dex.description}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex-1 bg-white rounded-b-lg overflow-hidden">
-                <iframe
-                  src={selectedDex.url}
-                  className="w-full h-full"
-                  title={`${selectedDex.name} DEX`}
-                  sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-                  referrerPolicy="no-referrer"
-                />
-              </div>
-            )}
-          </div>
-        </div>
       )}
     </div>
   );
