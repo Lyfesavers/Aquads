@@ -3,7 +3,6 @@ import TokenReviews from './TokenReviews';
 import { Chart } from 'chart.js/auto';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-console.log('Using API URL:', API_URL);
 
 // Define DEX options with their details
 const DEX_OPTIONS = [
@@ -34,7 +33,6 @@ const DEX_OPTIONS = [
 ];
 
 const TokenList = ({ currentUser, showNotification }) => {
-  // Original state variables
   const [selectedToken, setSelectedToken] = useState(null);
   const [showReviews, setShowReviews] = useState(false);
   const [chartData, setChartData] = useState(null);
@@ -42,13 +40,41 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [chartInstance, setChartInstance] = useState(null);
   const [selectedTimeRange, setSelectedTimeRange] = useState('24h');
   const [isLoading, setIsLoading] = useState(false);
-
-  // Add new state for ads
+  
+  // Just add these new states for ads
   const [ads, setAds] = useState([]);
   const [adsLoading, setAdsLoading] = useState(true);
   const [adsError, setAdsError] = useState(null);
 
-  // Load ads
+  const handleTokenClick = (token) => {
+    setSelectedToken(token);
+    setShowReviews(true);
+  };
+
+  const handleCloseReviews = () => {
+    setShowReviews(false);
+    setSelectedToken(null);
+  };
+
+  const handleTimeRangeChange = async (range) => {
+    setSelectedTimeRange(range);
+    if (selectedToken) {
+      setIsLoading(true);
+      await fetchChartData(selectedToken.id, range);
+      setIsLoading(false);
+    }
+  };
+
+  const fetchChartData = async (tokenId, days) => {
+    try {
+      // Your existing chart data fetching logic
+    } catch (error) {
+      console.error('Error fetching chart data:', error);
+      showNotification('Error fetching chart data', 'error');
+    }
+  };
+
+  // Add ads loading
   useEffect(() => {
     const loadAds = async () => {
       try {
@@ -67,14 +93,9 @@ const TokenList = ({ currentUser, showNotification }) => {
     loadAds();
   }, []);
 
-  // Keep all your original useEffect hooks and functions
-  // ... (keep all existing code)
-
-  // Add renderAds function
   const renderAds = () => {
     if (adsLoading) return <div className="text-gray-400">Loading ads...</div>;
-    if (adsError) return null;
-    if (!ads || ads.length === 0) return null;
+    if (adsError || !ads || ads.length === 0) return null;
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
@@ -88,18 +109,36 @@ const TokenList = ({ currentUser, showNotification }) => {
     );
   };
 
-  // Keep your original return statement and just add the ads section where appropriate
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Keep all your original UI code */}
-      
-      {/* Add the ads section where you want it to appear */}
+    <div className="container mx-auto px-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {DEX_OPTIONS.map((dex) => (
+          <div
+            key={dex.name}
+            className="bg-gray-800 p-6 rounded-lg shadow-lg hover:bg-gray-700 transition-colors cursor-pointer"
+            onClick={() => window.open(dex.url, '_blank')}
+          >
+            <div className="flex items-center mb-4">
+              <span className="text-2xl mr-2">{dex.icon}</span>
+              <h3 className="text-xl font-bold text-white">{dex.name}</h3>
+            </div>
+            <p className="text-gray-300">{dex.description}</p>
+          </div>
+        ))}
+      </div>
+
+      {showReviews && selectedToken && (
+        <TokenReviews
+          token={selectedToken}
+          onClose={handleCloseReviews}
+          currentUser={currentUser}
+          showNotification={showNotification}
+        />
+      )}
+
       <div className="mt-8">
-        <h2 className="text-2xl font-bold text-white mb-4">Featured Ads</h2>
         {renderAds()}
       </div>
-      
-      {/* Keep the rest of your original UI code */}
     </div>
   );
 };
