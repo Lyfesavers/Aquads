@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: bubble-ads-backend
+    env: node
+    buildCommand: npm install
+    startCommand: node index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: MONGODB_URI
+        fromGroup: bubble-ads
+      - key: JWT_SECRET
+        fromGroup: bubble-ads 
