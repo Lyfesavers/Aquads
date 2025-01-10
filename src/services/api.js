@@ -100,8 +100,7 @@ export const loginUser = async (credentials) => {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(credentials),
-      credentials: 'include'
+      body: JSON.stringify(credentials)
     });
 
     if (!response.ok) {
@@ -110,12 +109,11 @@ export const loginUser = async (credentials) => {
     }
 
     const data = await response.json();
-    // Store user data in localStorage
     localStorage.setItem('currentUser', JSON.stringify(data));
     
-    // Update socket auth
+    // Update socket auth and reconnect
     socket.auth = { token: data.token };
-    socket.connect();
+    socket.disconnect().connect();
     
     return data;
   } catch (error) {

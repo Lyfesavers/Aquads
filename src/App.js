@@ -166,7 +166,10 @@ function calculateDistance(x1, y1, x2, y2) {
 }
 
 function App() {
-  const [ads, setAds] = useState([]);
+  const [ads, setAds] = useState(() => {
+    const savedAds = localStorage.getItem('cachedAds');
+    return savedAds ? JSON.parse(savedAds) : [];
+  });
   const [currentUser, setCurrentUser] = useState(() => {
     // Check localStorage for saved user data on initial load
     const savedUser = localStorage.getItem('currentUser');
@@ -579,6 +582,13 @@ function App() {
       socket.off('reviewAdded');
       socket.off('userAuthenticated');
     };
+  }, []);
+
+  // Add this effect to periodically refresh ads
+  useEffect(() => {
+    fetchAds();
+    const interval = setInterval(fetchAds, 30000); // Refresh every 30 seconds
+    return () => clearInterval(interval);
   }, []);
 
   return (
