@@ -4,19 +4,38 @@ import { Chart } from 'chart.js/auto';
 import io from 'socket.io-client';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+console.log('Using API URL:', API_URL); // Debug log
 
-// For socket connection
+// Initialize socket with better error handling
 const socket = io(API_URL, {
   withCredentials: true,
-  transports: ['websocket']
+  transports: ['websocket'],
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000
+});
+
+socket.on('connect_error', (error) => {
+  console.error('Socket connection error:', error);
 });
 
 // For API calls
 const fetchAds = async () => {
   try {
-    const response = await fetch(`${API_URL}/api/ads`);
+    console.log('Fetching ads from:', `${API_URL}/api/ads`); // Debug log
+    const response = await fetch(`${API_URL}/api/ads`, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include'
+    });
+    
+    console.log('Response status:', response.status); // Debug log
     const data = await response.json();
-    // ...
+    console.log('Received data:', data); // Debug log
+    
+    // Update your state here
+    setAds(data);
   } catch (error) {
     console.error('Error fetching ads:', error);
   }

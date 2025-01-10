@@ -20,16 +20,17 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: ["https://aquads.netlify.app", "http://localhost:3000"],
+    origin: true,
     methods: ["GET", "POST"],
-    credentials: true
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization']
   }
 });
 
 // Middleware
 const corsOptions = {
-  origin: ["https://aquads.netlify.app", "http://localhost:3000"],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  origin: true, // Allow all origins temporarily for testing
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization']
 };
@@ -255,6 +256,11 @@ app.post('/api/register', async (req, res) => {
 // Add health check endpoint
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', dbConnected: mongoose.connection.readyState === 1 });
+});
+
+// Add test endpoint
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'Backend is working!' });
 });
 
 const logger = winston.createLogger({
