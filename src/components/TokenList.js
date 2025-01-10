@@ -4,6 +4,34 @@ import { Chart } from 'chart.js/auto';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
+// Define DEX options with their details
+const DEX_OPTIONS = [
+  {
+    name: 'PawChain',
+    url: 'https://swap.pawchain.net',
+    icon: '🐾',
+    description: 'Native PawChain DEX'
+  },
+  {
+    name: 'Uniswap',
+    url: 'https://app.uniswap.org/#/swap',
+    icon: '🦄',
+    description: 'Leading Ethereum DEX'
+  },
+  {
+    name: 'PancakeSwap',
+    url: 'https://pancakeswap.finance/swap',
+    icon: '🥞',
+    description: 'Popular BSC DEX'
+  },
+  {
+    name: 'SushiSwap',
+    url: 'https://app.sushi.com/swap',
+    icon: '🍣',
+    description: 'Multi-chain DEX'
+  }
+];
+
 const TokenList = ({ currentUser, showNotification }) => {
   const [tokens, setTokens] = useState([]);
   const [selectedToken, setSelectedToken] = useState(null);
@@ -14,7 +42,6 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [selectedTimeRange, setSelectedTimeRange] = useState('24h');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch tokens from CoinGecko
   useEffect(() => {
     const fetchTokens = async () => {
       try {
@@ -66,34 +93,52 @@ const TokenList = ({ currentUser, showNotification }) => {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="bg-gray-900 rounded-lg shadow-xl overflow-hidden">
-        <div className="flex justify-between items-center p-4 bg-gray-800">
+    <div className="container mx-auto px-4 py-8">
+      {/* DEX Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {DEX_OPTIONS.map((dex) => (
+          <div
+            key={dex.name}
+            className="bg-gray-800 p-6 rounded-lg shadow-lg hover:bg-gray-700 transition-colors cursor-pointer"
+            onClick={() => window.open(dex.url, '_blank')}
+          >
+            <div className="flex items-center mb-4">
+              <span className="text-2xl mr-2">{dex.icon}</span>
+              <h3 className="text-xl font-bold text-white">{dex.name}</h3>
+            </div>
+            <p className="text-gray-300">{dex.description}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Token List Section */}
+      <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg overflow-x-auto">
+        <div className="flex justify-between items-center p-4">
           <h2 className="text-xl font-bold text-white">Market Overview</h2>
           <div className="flex space-x-2">
             <button 
-              className={`px-3 py-1 rounded ${selectedTimeRange === '24h' ? 'bg-blue-500' : 'bg-gray-700'}`}
+              className={`px-3 py-1 rounded ${selectedTimeRange === '24h' ? 'bg-blue-500' : 'bg-gray-700'} text-white`}
               onClick={() => handleTimeRangeChange('24h')}
             >
               24h
             </button>
             <button 
-              className={`px-3 py-1 rounded ${selectedTimeRange === '7d' ? 'bg-blue-500' : 'bg-gray-700'}`}
+              className={`px-3 py-1 rounded ${selectedTimeRange === '7d' ? 'bg-blue-500' : 'bg-gray-700'} text-white`}
               onClick={() => handleTimeRangeChange('7d')}
             >
               7d
             </button>
             <button 
-              className={`px-3 py-1 rounded ${selectedTimeRange === '30d' ? 'bg-blue-500' : 'bg-gray-700'}`}
+              className={`px-3 py-1 rounded ${selectedTimeRange === '30d' ? 'bg-blue-500' : 'bg-gray-700'} text-white`}
               onClick={() => handleTimeRangeChange('30d')}
             >
               30d
             </button>
           </div>
         </div>
-        <table className="min-w-full">
+        <table className="min-w-full divide-y divide-gray-700">
           <thead>
-            <tr className="bg-gray-800">
+            <tr className="bg-gray-800/50">
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">#</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Token</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Price</th>
@@ -103,11 +148,11 @@ const TokenList = ({ currentUser, showNotification }) => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Rating</th>
             </tr>
           </thead>
-          <tbody className="bg-gray-900 divide-y divide-gray-800">
+          <tbody className="divide-y divide-gray-700">
             {tokens.map((token, index) => (
               <tr 
                 key={token.id}
-                className="hover:bg-gray-800 cursor-pointer transition-colors"
+                className="hover:bg-gray-700/50 cursor-pointer transition-colors"
                 onClick={() => handleTokenClick(token)}
               >
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{index + 1}</td>
