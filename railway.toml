@@ -2,10 +2,12 @@
 builder = "NODE"
 
 [deploy]
-startCommand = "npm run build && npm start"
+startCommand = "SKIP_PREFLIGHT_CHECK=true npm run build && npm start"
 restartPolicyType = "ON_FAILURE"
 
 [variables]
 NODE_ENV = "production"
 PORT = "3000"
-CI = "false" 
+CI = "false"
+SKIP_PREFLIGHT_CHECK = "true"
+GENERATE_SOURCEMAP = "false" 
