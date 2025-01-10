@@ -13,7 +13,8 @@ import {
   approveBumpRequest,
   rejectBumpRequest,
   fetchBumpRequests,
-  verifyToken
+  verifyToken,
+  pingServer
 } from './services/api';
 import BumpStore from './components/BumpStore';
 import LoginModal from './components/LoginModal';
@@ -299,6 +300,13 @@ function App() {
   const handleLogin = async (credentials) => {
     try {
       setIsLoading(true);
+      
+      // Check server availability first
+      const isServerAvailable = await pingServer();
+      if (!isServerAvailable) {
+        throw new Error('Server is currently unavailable. Please try again later.');
+      }
+
       const userData = await loginUser(credentials);
       
       if (userData) {
@@ -308,7 +316,7 @@ function App() {
       }
     } catch (error) {
       console.error('Login error:', error);
-      showNotification(error.message || 'Login failed. Please check your credentials.', 'error');
+      showNotification(error.message || 'Login failed. Please try again.', 'error');
     } finally {
       setIsLoading(false);
     }
