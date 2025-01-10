@@ -18,9 +18,16 @@ export const socket = io('https://aquads.onrender.com', {
 });
 
 const getAuthHeader = () => {
-  const savedUser = localStorage.getItem('currentUser');
-  const user = savedUser ? JSON.parse(savedUser) : null;
-  return user?.token ? { Authorization: `Bearer ${user.token}` } : {};
+  try {
+    const savedUser = localStorage.getItem('currentUser');
+    if (!savedUser) return {};
+    
+    const user = JSON.parse(savedUser);
+    return user?.token ? { 'Authorization': `Bearer ${user.token}` } : {};
+  } catch (error) {
+    console.error('Error getting auth header:', error);
+    return {};
+  }
 };
 
 // Fetch all ads
@@ -99,23 +106,33 @@ export const loginUser = async (credentials) => {
         'Accept': 'application/json'
       },
       body: JSON.stringify({
-        username: credentials.username.toLowerCase(), // Ensure case-insensitive
+        username: credentials.username.toLowerCase(),
         password: credentials.password
       })
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Login failed. Please check your credentials.');
+    // First check if the response is JSON
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('Server response was not JSON');
     }
 
     const data = await response.json();
-    
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Login failed');
+    }
+
+    // Validate the response data
+    if (!data.username || !data.token) {
+      throw new Error('Invalid response from server');
+    }
+
     // Store complete user data
     const userData = {
       ...data,
       username: data.username,
-      isAdmin: data.isAdmin,
+      isAdmin: Boolean(data.isAdmin),
       token: data.token
     };
 
@@ -129,6 +146,10 @@ export const loginUser = async (credentials) => {
     return userData;
   } catch (error) {
     console.error('Login error:', error);
+    // Provide a user-friendly error message
+    if (error.message.includes('JSON')) {
+      throw new Error('Server error. Please try again later.');
+    }
     throw error;
   }
 };
