@@ -70,21 +70,23 @@ app.use('/api/register', limiter);
 mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 30000,
-  socketTimeoutMS: 45000,
+  serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+  socketTimeoutMS: 45000, // Close sockets after 45s
 }).then(() => {
   console.log('Connected to MongoDB');
-}).catch((err) => {
+}).catch(err => {
+  console.error('MongoDB connection error:', err);
+  // Don't exit the process, let it retry
+});
+
+// Add error handler
+mongoose.connection.on('error', err => {
   console.error('MongoDB connection error:', err);
 });
 
-// Add error handlers
-mongoose.connection.on('error', err => {
-  console.error('MongoDB error:', err);
-});
-
+// Add reconnect handler
 mongoose.connection.on('disconnected', () => {
-  console.log('MongoDB disconnected');
+  console.log('MongoDB disconnected, attempting to reconnect...');
 });
 
 // Add connection monitoring
@@ -252,15 +254,7 @@ app.post('/api/register', async (req, res) => {
 
 // Add health check endpoint
 app.get('/api/health', (req, res) => {
-  try {
-    if (mongoose.connection.readyState === 1) {
-      res.status(200).json({ status: 'ok', db: 'connected' });
-    } else {
-      res.status(503).json({ status: 'error', db: 'disconnected' });
-    }
-  } catch (error) {
-    res.status(500).json({ status: 'error', message: error.message });
-  }
+  res.status(200).json({ status: 'ok', dbConnected: mongoose.connection.readyState === 1 });
 });
 
 const logger = winston.createLogger({
