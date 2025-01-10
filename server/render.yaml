@@ -2,7 +2,6 @@ services:
   - type: web
     name: bubble-ads-backend
     env: node
-    rootDir: server
     buildCommand: npm install --legacy-peer-deps
     startCommand: node index.js
     envVars:
