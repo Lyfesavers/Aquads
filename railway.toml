@@ -1,13 +1,10 @@
 [build]
 builder = "nixpacks"
+buildCommand = "CI=false npm install && CI=false npm run build"
 
 [deploy]
-startCommand = "npm start"
-numReplicas = 1
-healthcheckPath = "/"
-healthcheckTimeout = 100
+startCommand = "npx serve -s build"
 
 [variables]
 NODE_ENV = "production"
-PORT = "3000"
-REACT_APP_API_URL = "https://bubble-ads-backend-production.up.railway.app" 
+PORT = "3000" 
