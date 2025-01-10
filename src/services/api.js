@@ -5,7 +5,7 @@ const API_URL = process.env.NODE_ENV === 'production'
   : 'http://localhost:5000/api';
 
 export const socket = io(process.env.NODE_ENV === 'production'
-  ? '/'
+  ? 'https://bubble-ads-backend-production.up.railway.app'
   : 'http://localhost:5000', {
   auth: {
     token: (() => {
@@ -13,7 +13,8 @@ export const socket = io(process.env.NODE_ENV === 'production'
       const user = savedUser ? JSON.parse(savedUser) : null;
       return user?.token;
     })()
-  }
+  },
+  transports: ['websocket', 'polling']
 });
 
 const getAuthHeader = () => {
@@ -89,20 +90,25 @@ export const deleteAd = async (id) => {
 // Login user
 export const loginUser = async (credentials) => {
   try {
-    console.log('Attempting login with:', credentials.username);
-    const response = await fetch(`${API_URL}/login`, {
+    const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify(credentials),
+      credentials: 'include'
     });
-    console.log('Login response:', response);
+
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || 'Failed to login');
+      throw new Error(error.error || 'Login failed');
     }
-    return response.json();
+
+    const data = await response.json();
+    localStorage.setItem('currentUser', JSON.stringify(data));
+    socket.auth = { token: data.token };
+    socket.connect();
+    return data;
   } catch (error) {
     console.error('Login error:', error);
     throw error;
@@ -229,7 +235,8 @@ export const submitReview = async (reviewData, token) => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify(reviewData)
+      body: JSON.stringify(reviewData),
+      credentials: 'include'
     });
 
     if (!response.ok) {
@@ -237,9 +244,21 @@ export const submitReview = async (reviewData, token) => {
       throw new Error(error.error || 'Failed to submit review');
     }
 
-    return await response.json();
+    const data = await response.json();
+    // Emit socket event to update other clients
+    socket.emit('newReview', data);
+    return data;
   } catch (error) {
     console.error('Error submitting review:', error);
     throw error;
   }
 }; 
+
+// Add this to handle reconnection with auth
+socket.on('connect', () => {
+  const savedUser = localStorage.getItem('currentUser');
+  if (savedUser) {
+    const user = JSON.parse(savedUser);
+    socket.emit('authenticate', { token: user.token });
+  }
+}); 

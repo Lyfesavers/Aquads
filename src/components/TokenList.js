@@ -672,13 +672,6 @@ const TokenList = ({ currentUser, showNotification }) => {
             Updating token data... ({allTokensCache.length} tokens cached)
           </div>
         )}
-        
-        {/* Last update time */}
-        {lastUpdateTime && (
-          <div className="fixed bottom-4 left-4 text-gray-400 text-sm">
-            Last updated: {new Date(lastUpdateTime).toLocaleTimeString()}
-          </div>
-        )}
       </div>
     </div>
   );

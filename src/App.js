@@ -565,6 +565,29 @@ function App() {
     console.log('Current ads state:', ads);
   }, [ads]);
 
+  // Add these socket event listeners in useEffect
+  useEffect(() => {
+    socket.on('reviewAdded', (review) => {
+      // Update reviews in real-time
+      setReviews(prevReviews => [...prevReviews, review]);
+    });
+
+    socket.on('userAuthenticated', (userData) => {
+      setCurrentUser(userData);
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
+      showNotification('Connection error. Please try again.', 'error');
+    });
+
+    return () => {
+      socket.off('reviewAdded');
+      socket.off('userAuthenticated');
+      socket.off('connect_error');
+    };
+  }, []);
+
   return (
     <div className="bg-gradient-to-br from-gray-900 to-black text-white overflow-y-auto h-screen">
       {/* Background stays fixed */}
