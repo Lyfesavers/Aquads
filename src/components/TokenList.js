@@ -6,32 +6,55 @@ import io from 'socket.io-client';
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 console.log('Using API URL:', API_URL);
 
-// Initialize socket
-const socket = io(API_URL, {
-  withCredentials: true,
-  transports: ['websocket'],
-  reconnectionAttempts: 5,
-  reconnectionDelay: 1000
-});
-
-socket.on('connect_error', (error) => {
-  console.error('Socket connection error:', error);
-});
+// Define DEX options with their details
+const DEX_OPTIONS = [
+  {
+    name: 'PawChain',
+    url: 'https://swap.pawchain.net',
+    icon: '🐾',
+    description: 'Native PawChain DEX'
+  },
+  {
+    name: 'Uniswap',
+    url: 'https://app.uniswap.org/#/swap',
+    icon: '🦄',
+    description: 'Leading Ethereum DEX'
+  },
+  {
+    name: 'PancakeSwap',
+    url: 'https://pancakeswap.finance/swap',
+    icon: '🥞',
+    description: 'Popular BSC DEX'
+  },
+  {
+    name: 'SushiSwap',
+    url: 'https://app.sushi.com/swap',
+    icon: '🍣',
+    description: 'Multi-chain DEX'
+  }
+];
 
 const TokenList = ({ currentUser, showNotification }) => {
-  // Combine all state declarations at the top
+  // Original state variables
+  const [selectedToken, setSelectedToken] = useState(null);
+  const [showReviews, setShowReviews] = useState(false);
+  const [chartData, setChartData] = useState(null);
+  const chartRef = useRef(null);
+  const [chartInstance, setChartInstance] = useState(null);
+  const [selectedTimeRange, setSelectedTimeRange] = useState('24h');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Add new state for ads
   const [ads, setAds] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [isPageLoading, setIsPageLoading] = useState(false);
-  // ... other state variables ...
+  const [adsLoading, setAdsLoading] = useState(true);
+  const [adsError, setAdsError] = useState(null);
 
   // Load ads
   useEffect(() => {
     const loadAds = async () => {
       try {
-        setLoading(true);
-        setError(null);
+        setAdsLoading(true);
+        setAdsError(null);
         console.log('Fetching ads from:', `${API_URL}/api/ads`);
         
         const response = await fetch(`${API_URL}/api/ads`);
@@ -47,26 +70,29 @@ const TokenList = ({ currentUser, showNotification }) => {
         setAds(data);
       } catch (error) {
         console.error('Error loading ads:', error);
-        setError(error.message);
+        setAdsError(error.message);
         showNotification('Error loading ads: ' + error.message, 'error');
       } finally {
-        setLoading(false);
+        setAdsLoading(false);
       }
     };
 
     loadAds();
   }, [showNotification]);
 
-  // Render ads
+  // Keep all your original useEffect hooks and functions
+  // ... (keep all existing code)
+
+  // Add renderAds function
   const renderAds = () => {
-    if (loading) return <div>Loading ads...</div>;
-    if (error) return <div>Error: {error}</div>;
-    if (!ads || ads.length === 0) return <div>No ads available</div>;
+    if (adsLoading) return <div className="text-gray-400">Loading ads...</div>;
+    if (adsError) return <div className="text-red-500">Error: {adsError}</div>;
+    if (!ads || ads.length === 0) return null;
 
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
         {ads.map(ad => (
-          <div key={ad._id} className="bg-gray-800 p-4 rounded-lg">
+          <div key={ad._id} className="bg-gray-800 p-4 rounded-lg shadow-lg">
             <h3 className="text-lg font-bold text-white">{ad.title}</h3>
             <p className="text-gray-300">{ad.description}</p>
           </div>
@@ -75,16 +101,18 @@ const TokenList = ({ currentUser, showNotification }) => {
     );
   };
 
-  // ... rest of your component code ...
-
+  // Keep your original return statement and just add the ads section where appropriate
   return (
-    <div>
-      {/* Your existing content */}
+    <div className="container mx-auto px-4 py-8">
+      {/* Keep all your original UI code */}
+      
+      {/* Add the ads section where you want it to appear */}
       <div className="mt-8">
         <h2 className="text-2xl font-bold text-white mb-4">Featured Ads</h2>
         {renderAds()}
       </div>
-      {/* Rest of your component */}
+      
+      {/* Keep the rest of your original UI code */}
     </div>
   );
 };
