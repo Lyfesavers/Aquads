@@ -716,8 +716,8 @@ function App() {
           )}
         </div>
 
-        {/* Token list section - remove mt-screen */}
-        <div>
+        {/* Token list section - add z-index and proper background */}
+        <div className="relative z-10 bg-transparent">
           <TokenList 
             currentUser={currentUser} 
             showNotification={showNotification}

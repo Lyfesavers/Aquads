@@ -136,7 +136,7 @@ const TokenList = ({ currentUser, showNotification }) => {
   const totalPages = Math.ceil(filteredTokens.length / tokensPerPage);
 
   return (
-    <div className="container mx-auto p-4 bg-transparent">
+    <div className="container mx-auto p-4 relative z-10">
       <div className="mb-4 flex justify-between items-center">
         <input
           type="text"
@@ -167,7 +167,7 @@ const TokenList = ({ currentUser, showNotification }) => {
         </div>
       </div>
 
-      <div className="overflow-x-auto bg-transparent">
+      <div className="overflow-x-auto">
         <table className="min-w-full">
           <thead>
             <tr className="border-b border-gray-700/30">
@@ -205,7 +205,7 @@ const TokenList = ({ currentUser, showNotification }) => {
             {currentTokens.map((token, index) => (
               <tr 
                 key={token.id}
-                className="border-b border-gray-700/30 hover:bg-gray-800/20 cursor-pointer"
+                className="hover:bg-gray-800 cursor-pointer"
                 onClick={() => handleTokenClick(token)}
               >
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{index + 1}</td>
