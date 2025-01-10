@@ -1,8 +1,9 @@
 [build]
 builder = "NODE"
+buildCommand = "npm install --legacy-peer-deps && npm run build"
 
 [deploy]
-startCommand = "SKIP_PREFLIGHT_CHECK=true npm run build && npm start"
+startCommand = "npm start"
 restartPolicyType = "ON_FAILURE"
 
 [variables]
