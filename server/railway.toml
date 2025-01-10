@@ -1,6 +1,7 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "npm cache clean --force && rm -rf node_modules && npm install --force"
+nixpacksConfigPath = "nixpacks.toml"
+buildCommand = "npm install --legacy-peer-deps"
 
 [deploy]
 startCommand = "node index.js"
