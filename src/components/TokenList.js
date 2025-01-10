@@ -618,7 +618,7 @@ const TokenList = ({ currentUser, showNotification }) => {
             <div className="col-span-1">MCap</div>
             <div className="col-span-1">Circ</div>
             <div className="col-span-1">Total</div>
-            <div className="col-span-2">Reviews</div>
+            <div className="col-span-2">ATH</div>
           </div>
 
           {loading ? (
