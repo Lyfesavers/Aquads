@@ -95,28 +95,67 @@ export const loginUser = async (credentials) => {
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       },
-      body: JSON.stringify(credentials),
-      credentials: 'include'
+      body: JSON.stringify({
+        username: credentials.username.toLowerCase(), // Ensure case-insensitive
+        password: credentials.password
+      })
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Login failed');
+      throw new Error(errorData.message || 'Login failed. Please check your credentials.');
     }
 
     const data = await response.json();
-    localStorage.setItem('currentUser', JSON.stringify(data));
     
-    // Reconnect socket with new auth
-    socket.auth = { token: data.token };
+    // Store complete user data
+    const userData = {
+      ...data,
+      username: data.username,
+      isAdmin: data.isAdmin,
+      token: data.token
+    };
+
+    // Save to localStorage
+    localStorage.setItem('currentUser', JSON.stringify(userData));
+    
+    // Update socket connection with new auth token
+    socket.auth = { token: userData.token };
     socket.disconnect().connect();
-    
-    return data;
+
+    return userData;
   } catch (error) {
     console.error('Login error:', error);
     throw error;
+  }
+};
+
+// Add a function to verify token
+export const verifyToken = async () => {
+  const savedUser = localStorage.getItem('currentUser');
+  if (!savedUser) return null;
+
+  try {
+    const user = JSON.parse(savedUser);
+    const response = await fetch(`${API_URL}/auth/verify`, {
+      headers: {
+        'Authorization': `Bearer ${user.token}`
+      }
+    });
+
+    if (!response.ok) {
+      localStorage.removeItem('currentUser');
+      return null;
+    }
+
+    return user;
+  } catch (error) {
+    console.error('Token verification error:', error);
+    localStorage.removeItem('currentUser');
+    return null;
   }
 };
 

@@ -12,7 +12,8 @@ import {
   createBumpRequest,
   approveBumpRequest,
   rejectBumpRequest,
-  fetchBumpRequests
+  fetchBumpRequests,
+  verifyToken
 } from './services/api';
 import BumpStore from './components/BumpStore';
 import LoginModal from './components/LoginModal';
@@ -189,6 +190,7 @@ function App() {
     height: window.innerHeight
   });
   const [showScrollButtons, setShowScrollButtons] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Add this function to update ads with persistence
   const updateAds = (newAds) => {
@@ -296,15 +298,19 @@ function App() {
 
   const handleLogin = async (credentials) => {
     try {
+      setIsLoading(true);
       const userData = await loginUser(credentials);
-      setCurrentUser(userData);
-      // Save user data to localStorage
-      localStorage.setItem('currentUser', JSON.stringify(userData));
-      setShowLoginModal(false);
-      showNotification('Logged in successfully!', 'success');
+      
+      if (userData) {
+        setCurrentUser(userData);
+        setShowLoginModal(false);
+        showNotification('Logged in successfully!', 'success');
+      }
     } catch (error) {
       console.error('Login error:', error);
-      showNotification('Login failed. Please try again.', 'error');
+      showNotification(error.message || 'Login failed. Please check your credentials.', 'error');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -592,6 +598,21 @@ function App() {
     fetchAds();
     const interval = setInterval(fetchAds, 30000); // Refresh every 30 seconds
     return () => clearInterval(interval);
+  }, []);
+
+  // Add token verification on app load
+  useEffect(() => {
+    const verifySession = async () => {
+      const verifiedUser = await verifyToken();
+      if (verifiedUser) {
+        setCurrentUser(verifiedUser);
+      } else {
+        setCurrentUser(null);
+        localStorage.removeItem('currentUser');
+      }
+    };
+
+    verifySession();
   }, []);
 
   return (
