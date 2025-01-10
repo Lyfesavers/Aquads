@@ -11,11 +11,30 @@ const TokenReviews = ({ token, onClose, currentUser, showNotification }) => {
     fetchReviews();
   }, [token.symbol]);
 
+  useEffect(() => {
+    socket.on('reviewAdded', (newReview) => {
+      if (newReview.tokenSymbol === token.symbol) {
+        setReviews(prevReviews => [newReview, ...prevReviews]);
+      }
+    });
+
+    return () => {
+      socket.off('reviewAdded');
+    };
+  }, [token.symbol]);
+
   const fetchReviews = async () => {
     try {
+      console.log('Fetching reviews for token:', token.symbol); // Debug log
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/reviews/${token.symbol}`);
-      if (!response.ok) throw new Error('Failed to fetch reviews');
+      
+      if (!response.ok) {
+        console.error('Review fetch error:', response.status);
+        throw new Error('Failed to fetch reviews');
+      }
+      
       const data = await response.json();
+      console.log('Fetched reviews:', data); // Debug log
       setReviews(data);
     } catch (error) {
       console.error('Error fetching reviews:', error);

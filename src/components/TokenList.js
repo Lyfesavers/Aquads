@@ -33,8 +33,23 @@ const DEX_OPTIONS = [
 
 const INITIAL_TOKEN_COUNT = 250; // Pre-load more tokens initially
 
+const CACHE_KEY = 'tokenListCache';
+const CACHE_TIMESTAMP_KEY = 'tokenListCacheTimestamp';
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+
 const TokenList = ({ currentUser, showNotification }) => {
-  const [tokens, setTokens] = useState([]);
+  const [tokens, setTokens] = useState(() => {
+    const cachedData = localStorage.getItem(CACHE_KEY);
+    const timestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
+    
+    if (cachedData && timestamp) {
+      const age = Date.now() - parseInt(timestamp);
+      if (age < CACHE_DURATION) {
+        return JSON.parse(cachedData);
+      }
+    }
+    return [];
+  });
   const [filteredTokens, setFilteredTokens] = useState([]);
   const [selectedToken, setSelectedToken] = useState(null);
   const [showReviews, setShowReviews] = useState(false);
@@ -59,56 +74,92 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [lastUpdateTime, setLastUpdateTime] = useState(null);
   const [isBackgroundLoading, setIsBackgroundLoading] = useState(false);
 
+  const updateTokenCache = (newTokens) => {
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify(newTokens));
+      localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
+    } catch (error) {
+      console.warn('Failed to cache tokens:', error);
+    }
+  };
+
+  const fetchInitialTokens = async () => {
+    try {
+      setIsLoadingTokens(true);
+      
+      // Use cached data first if available
+      const cachedData = localStorage.getItem(CACHE_KEY);
+      const timestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
+      
+      if (cachedData && timestamp) {
+        const age = Date.now() - parseInt(timestamp);
+        if (age < CACHE_DURATION) {
+          const parsedData = JSON.parse(cachedData);
+          setTokens(parsedData);
+          setFilteredTokens(parsedData.slice(0, 20));
+          setIsLoadingTokens(false);
+        }
+      }
+
+      // Fetch fresh data
+      const response = await fetch(
+        'https://api.coingecko.com/api/v3/coins/markets?' +
+        'vs_currency=usd&' +
+        'order=market_cap_desc&' +
+        `per_page=${INITIAL_TOKEN_COUNT}&` +
+        'page=1&' +
+        'sparkline=false'
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        setTokens(data);
+        setFilteredTokens(data.slice(0, 20));
+        updateTokenCache(data);
+      }
+    } catch (error) {
+      console.error('Error fetching initial tokens:', error);
+      // If fetch fails, use cached data if available
+      const cachedData = localStorage.getItem(CACHE_KEY);
+      if (cachedData) {
+        const parsedData = JSON.parse(cachedData);
+        setTokens(parsedData);
+        setFilteredTokens(parsedData.slice(0, 20));
+      }
+    } finally {
+      setIsLoadingTokens(false);
+    }
+  };
+
   const loadAllTokensInBackground = async () => {
     if (isBackgroundLoading) return;
     
     setIsBackgroundLoading(true);
-    const timestamp = Date.now();
     const allTokens = [];
-    const totalPages = 65; // Approximately 16,250 tokens
 
     try {
-      for (let page = 1; page <= totalPages; page++) {
-        try {
-          const response = await fetch(
-            `https://api.coingecko.com/api/v3/coins/markets?` +
-            `vs_currency=usd&` +
-            `order=market_cap_desc&` +
-            `per_page=250&` +
-            `page=${page}&` +
-            `sparkline=false`
-          );
-
-          if (response.ok) {
-            const pageData = await response.json();
-            if (pageData.length === 0) break;
-            allTokens.push(...pageData);
-            
-            // Update cache progressively
-            setAllTokensCache(prev => {
-              // Merge new data with existing cache, preferring new data
-              const merged = [...prev];
-              pageData.forEach(token => {
-                const existingIndex = merged.findIndex(t => t.id === token.id);
-                if (existingIndex >= 0) {
-                  merged[existingIndex] = token;
-                } else {
-                  merged.push(token);
-                }
-              });
-              return merged;
-            });
-          }
-          
-          // Small delay to avoid rate limits
-          await new Promise(resolve => setTimeout(resolve, 100));
-        } catch (error) {
-          console.warn(`Error fetching page ${page}:`, error);
-          continue; // Continue with next page even if one fails
-        }
+      // Start with cached data if available
+      const cachedData = localStorage.getItem(CACHE_KEY);
+      if (cachedData) {
+        const parsedData = JSON.parse(cachedData);
+        setAllTokensCache(parsedData);
       }
 
-      setLastUpdateTime(timestamp);
+      // Fetch new data
+      const response = await fetch(
+        'https://api.coingecko.com/api/v3/coins/markets?' +
+        'vs_currency=usd&' +
+        'order=market_cap_desc&' +
+        'per_page=250&' +
+        'page=1&' +
+        'sparkline=false'
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setAllTokensCache(data);
+        updateTokenCache(data);
+      }
     } catch (error) {
       console.error('Background loading error:', error);
     } finally {
@@ -273,30 +324,6 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   useEffect(() => {
     // Initial load of visible tokens
-    const fetchInitialTokens = async () => {
-      try {
-        setIsLoadingTokens(true);
-        const response = await fetch(
-          'https://api.coingecko.com/api/v3/coins/markets?' +
-          'vs_currency=usd&' +
-          'order=market_cap_desc&' +
-          'per_page=20&' +
-          'page=1&' +
-          'sparkline=false'
-        );
-        
-        if (response.ok) {
-          const data = await response.json();
-          setTokens(data);
-          setFilteredTokens(data);
-        }
-      } catch (error) {
-        console.error('Error fetching initial tokens:', error);
-      } finally {
-        setIsLoadingTokens(false);
-      }
-    };
-
     fetchInitialTokens();
     
     // Start background loading

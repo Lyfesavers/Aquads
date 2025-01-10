@@ -4,39 +4,21 @@ const Review = require('../models/Review');
 const auth = require('../middleware/auth');
 
 // Get reviews for a token
-router.get('/token/:symbol', async (req, res) => {
+router.get('/:symbol', async (req, res) => {
   try {
-    console.log('Fetching reviews for token:', req.params.symbol);
     const reviews = await Review.find({ tokenSymbol: req.params.symbol })
       .sort({ createdAt: -1 });
-    
-    console.log('Found reviews:', reviews);
-    
-    // Calculate average rating
-    const avgRating = reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length;
-    
-    const response = {
-      reviews,
-      averageRating: reviews.length > 0 ? avgRating : 0,
-      totalReviews: reviews.length
-    };
-    
-    console.log('Sending response:', response);
-    res.json(response);
+    res.json(reviews);
   } catch (error) {
     console.error('Error fetching reviews:', error);
-    res.status(500).json({ error: 'Failed to fetch reviews' });
+    res.status(500).json({ error: 'Error fetching reviews' });
   }
 });
 
-// Create a review
+// Add a new review
 router.post('/', auth, async (req, res) => {
   try {
-    console.log('Received review data:', req.body);
-    console.log('User data:', req.user);
-    
     const { tokenSymbol, rating, comment } = req.body;
-    
     const review = new Review({
       tokenSymbol,
       userId: req.user.id,
@@ -44,57 +26,15 @@ router.post('/', auth, async (req, res) => {
       rating,
       comment
     });
+    const savedReview = await review.save();
     
-    console.log('Created review object:', review);
+    // Emit the new review to all connected clients
+    req.app.get('io').emit('reviewAdded', savedReview);
     
-    await review.save();
-    console.log('Review saved successfully');
-    
-    res.status(201).json(review);
+    res.status(201).json(savedReview);
   } catch (error) {
     console.error('Error creating review:', error);
-    if (error.code === 11000) {
-      res.status(400).json({ error: 'You have already reviewed this token' });
-    } else {
-      res.status(500).json({ error: 'Failed to create review', details: error.message });
-    }
-  }
-});
-
-// Update a review
-router.put('/:id', auth, async (req, res) => {
-  try {
-    const review = await Review.findOneAndUpdate(
-      { _id: req.params.id, userId: req.user.id },
-      { rating: req.body.rating, comment: req.body.comment },
-      { new: true }
-    );
-    
-    if (!review) {
-      return res.status(404).json({ error: 'Review not found' });
-    }
-    
-    res.json(review);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to update review' });
-  }
-});
-
-// Delete a review
-router.delete('/:id', auth, async (req, res) => {
-  try {
-    const review = await Review.findOneAndDelete({
-      _id: req.params.id,
-      userId: req.user.id
-    });
-    
-    if (!review) {
-      return res.status(404).json({ error: 'Review not found' });
-    }
-    
-    res.json({ message: 'Review deleted successfully' });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to delete review' });
+    res.status(500).json({ error: 'Error creating review' });
   }
 });
 

@@ -6,7 +6,8 @@ const reviewSchema = new mongoose.Schema({
     required: true
   },
   userId: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true
   },
   username: {
@@ -21,7 +22,7 @@ const reviewSchema = new mongoose.Schema({
   },
   comment: {
     type: String,
-    maxLength: 500
+    required: true
   },
   createdAt: {
     type: Date,
