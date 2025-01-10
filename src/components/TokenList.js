@@ -50,6 +50,7 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [selectedDex, setSelectedDex] = useState(null);
   const [error, setError] = useState(null);
   const [isLoadingTokens, setIsLoadingTokens] = useState(true);
+  const [expandedTokenId, setExpandedTokenId] = useState(null);
 
   useEffect(() => {
     const fetchTokens = async () => {
@@ -141,9 +142,13 @@ const TokenList = ({ currentUser, showNotification }) => {
   };
 
   const handleTokenClick = (token) => {
-    setSelectedToken(token);
-    setShowDetails(true);
-    fetchChartData(token.id, selectedTimeRange);
+    if (expandedTokenId === token.id) {
+      setExpandedTokenId(null);
+    } else {
+      setExpandedTokenId(token.id);
+      setSelectedToken(token);
+      fetchChartData(token.id, selectedTimeRange);
+    }
   };
 
   const handleCloseReviews = () => {
@@ -195,21 +200,22 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   return (
     <div className="container mx-auto p-4">
-      <div className="mb-6 flex justify-between items-center">
-        <div className="relative">
-          <button
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
-            onClick={() => setShowDexFrame(!showDexFrame)}
-          >
-            <span className="mr-2">DEX Options</span>
-            <span>{showDexFrame ? '▼' : '▶'}</span>
-          </button>
-          {showDexFrame && (
-            <div className="absolute top-full left-0 mt-2 w-96 bg-gray-800 rounded-lg shadow-xl z-50">
+      <div className="mb-6">
+        <button
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
+          onClick={() => setShowDexFrame(!showDexFrame)}
+        >
+          <span className="mr-2">DEX Options</span>
+          <span>{showDexFrame ? '▼' : '▶'}</span>
+        </button>
+        
+        {showDexFrame && (
+          <div className="mt-2 bg-gray-800 rounded-lg p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               {DEX_OPTIONS.map((dex) => (
                 <div
                   key={dex.name}
-                  className="p-4 hover:bg-gray-700 cursor-pointer"
+                  className="p-4 bg-gray-700 rounded-lg hover:bg-gray-600 cursor-pointer"
                   onClick={() => handleDexClick(dex)}
                 >
                   <div className="flex items-center">
@@ -222,32 +228,23 @@ const TokenList = ({ currentUser, showNotification }) => {
                 </div>
               ))}
             </div>
-          )}
-        </div>
-        <input
-          type="text"
-          placeholder="Search tokens..."
-          className="px-4 py-2 bg-gray-800 rounded text-white"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
-
-      {selectedDex && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
-          <div className="bg-gray-900 rounded-lg w-full max-w-4xl h-[80vh]">
-            <div className="flex justify-between items-center p-4 border-b border-gray-800">
-              <h3 className="text-xl font-bold text-white">{selectedDex.name}</h3>
-              <button onClick={() => setSelectedDex(null)} className="text-gray-500 hover:text-white">✕</button>
-            </div>
-            <iframe
-              src={selectedDex.url}
-              className="w-full h-[calc(100%-4rem)]"
-              title={selectedDex.name}
-            />
+            
+            {selectedDex && (
+              <div className="mt-4 h-96 bg-gray-900 rounded-lg overflow-hidden">
+                <div className="flex justify-between items-center p-4 border-b border-gray-700">
+                  <h3 className="text-xl font-bold text-white">{selectedDex.name}</h3>
+                  <button onClick={() => setSelectedDex(null)} className="text-gray-500 hover:text-white">✕</button>
+                </div>
+                <iframe
+                  src={selectedDex.url}
+                  className="w-full h-[calc(100%-4rem)]"
+                  title={selectedDex.name}
+                />
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <div className="bg-gray-900/50 backdrop-blur-sm rounded-lg overflow-hidden">
         <div className="mb-4 flex justify-between items-center">
@@ -318,39 +315,83 @@ const TokenList = ({ currentUser, showNotification }) => {
               </thead>
               <tbody className="divide-y divide-gray-700/30">
                 {currentTokens.map((token, index) => (
-                  <tr 
-                    key={token.id}
-                    className="hover:bg-gray-800 cursor-pointer"
-                    onClick={() => handleTokenClick(token)}
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{index + 1}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <img className="h-8 w-8 rounded-full" src={token.image} alt={token.name} />
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-white">{token.name}</div>
-                          <div className="text-sm text-gray-400">{token.symbol.toUpperCase()}</div>
+                  <>
+                    <tr 
+                      key={token.id}
+                      className="hover:bg-gray-800/40 cursor-pointer"
+                      onClick={() => handleTokenClick(token)}
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{index + 1}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <img className="h-8 w-8 rounded-full" src={token.image} alt={token.name} />
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-white">{token.name}</div>
+                            <div className="text-sm text-gray-400">{token.symbol.toUpperCase()}</div>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                      ${token.current_price.toFixed(2)}
-                    </td>
-                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${
-                      token.price_change_percentage_24h > 0 ? 'text-green-400' : 'text-red-400'
-                    }`}>
-                      {token.price_change_percentage_24h.toFixed(2)}%
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                      ${(token.market_cap / 1000000).toFixed(2)}M
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                      ${(token.total_volume / 1000000).toFixed(2)}M
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                      ⭐⭐⭐⭐⭐
-                    </td>
-                  </tr>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                        ${token.current_price.toFixed(2)}
+                      </td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                        token.price_change_percentage_24h > 0 ? 'text-green-400' : 'text-red-400'
+                      }`}>
+                        {token.price_change_percentage_24h.toFixed(2)}%
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                        ${(token.market_cap / 1000000).toFixed(2)}M
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                        ${(token.total_volume / 1000000).toFixed(2)}M
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                        ⭐⭐⭐⭐⭐
+                      </td>
+                    </tr>
+                    {expandedTokenId === token.id && (
+                      <tr>
+                        <td colSpan="7" className="bg-gray-800/40 p-6">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <h3 className="text-lg font-bold text-white mb-4">Price Chart</h3>
+                              <canvas ref={chartRef} className="w-full" />
+                            </div>
+                            <div>
+                              <div className="bg-gray-800 p-4 rounded mb-4">
+                                <h3 className="text-lg font-bold text-white mb-2">Price Statistics</h3>
+                                <div className="space-y-2">
+                                  <p className="text-gray-400">Current Price: <span className="text-white">${token.current_price}</span></p>
+                                  <p className="text-gray-400">Market Cap: <span className="text-white">${(token.market_cap / 1000000).toFixed(2)}M</span></p>
+                                  <p className="text-gray-400">24h Volume: <span className="text-white">${(token.total_volume / 1000000).toFixed(2)}M</span></p>
+                                </div>
+                              </div>
+                              <div className="flex space-x-4">
+                                <button
+                                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowReviews(true);
+                                  }}
+                                >
+                                  View Reviews
+                                </button>
+                                <button
+                                  className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDexClick(DEX_OPTIONS[0]);
+                                  }}
+                                >
+                                  Trade Token
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 ))}
               </tbody>
             </table>
@@ -399,71 +440,6 @@ const TokenList = ({ currentUser, showNotification }) => {
           </div>
         </div>
       </div>
-
-      {showDetails && selectedToken && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
-          <div className="bg-gray-900 rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex items-center">
-                <img src={selectedToken.image} alt={selectedToken.name} className="w-12 h-12 mr-4" />
-                <div>
-                  <h2 className="text-2xl font-bold text-white">{selectedToken.name}</h2>
-                  <p className="text-gray-400">{selectedToken.symbol.toUpperCase()}</p>
-                </div>
-              </div>
-              <button onClick={() => setShowDetails(false)} className="text-gray-500 hover:text-white">
-                ✕
-              </button>
-            </div>
-            
-            <div className="mb-6">
-              <canvas ref={chartRef} />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="bg-gray-800 p-4 rounded">
-                <h3 className="text-lg font-bold text-white mb-2">Price Statistics</h3>
-                <div className="space-y-2">
-                  <p className="text-gray-400">Current Price: <span className="text-white">${selectedToken.current_price}</span></p>
-                  <p className="text-gray-400">Market Cap: <span className="text-white">${(selectedToken.market_cap / 1000000).toFixed(2)}M</span></p>
-                  <p className="text-gray-400">24h Volume: <span className="text-white">${(selectedToken.total_volume / 1000000).toFixed(2)}M</span></p>
-                </div>
-              </div>
-              
-              <div className="bg-gray-800 p-4 rounded">
-                <h3 className="text-lg font-bold text-white mb-2">Price Change</h3>
-                <div className="space-y-2">
-                  <p className="text-gray-400">24h Change: 
-                    <span className={selectedToken.price_change_percentage_24h > 0 ? 'text-green-400' : 'text-red-400'}>
-                      {selectedToken.price_change_percentage_24h.toFixed(2)}%
-                    </span>
-                  </p>
-                  <p className="text-gray-400">24h High: <span className="text-white">${selectedToken.high_24h}</span></p>
-                  <p className="text-gray-400">24h Low: <span className="text-white">${selectedToken.low_24h}</span></p>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <button
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mr-4"
-                onClick={() => {
-                  setShowReviews(true);
-                  setShowDetails(false);
-                }}
-              >
-                View Reviews
-              </button>
-              <button
-                className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
-                onClick={() => handleDexClick(DEX_OPTIONS[0])}
-              >
-                Trade Token
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showReviews && selectedToken && (
         <TokenReviews
