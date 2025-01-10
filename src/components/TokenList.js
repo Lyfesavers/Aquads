@@ -62,8 +62,8 @@ const TokenList = ({ currentUser, showNotification }) => {
         setIsLoadingTokens(true);
         setError(null);
         
-        // Single page fetch first to show immediate results
-        const response = await fetch(
+        // First fetch to get initial tokens and show something quickly
+        const initialResponse = await fetch(
           'https://api.coingecko.com/api/v3/coins/markets?' +
           'vs_currency=usd&' +
           'order=market_cap_desc&' +
@@ -72,32 +72,46 @@ const TokenList = ({ currentUser, showNotification }) => {
           'sparkline=false'
         );
         
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        if (!initialResponse.ok) {
+          throw new Error(`HTTP error! status: ${initialResponse.status}`);
         }
         
-        const initialData = await response.json();
+        const initialData = await initialResponse.ok ? await initialResponse.json() : [];
         setTokens(initialData);
         setFilteredTokens(initialData);
 
-        // Then fetch additional pages
-        try {
-          const additionalPages = await Promise.all([
-            fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=2&sparkline=false').then(res => res.json()),
-            fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=3&sparkline=false').then(res => res.json()),
-            fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=4&sparkline=false').then(res => res.json())
-          ]);
+        // Then fetch all remaining pages (CoinGecko has ~65 pages of 250 tokens each)
+        const totalPages = 65; // This will get approximately 16,250 tokens
+        const allPages = [];
 
-          const allTokens = [
-            ...initialData,
-            ...additionalPages.flat()
-          ];
+        for (let page = 2; page <= totalPages; page++) {
+          try {
+            // Add delay between requests to avoid rate limits
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+            const response = await fetch(
+              `https://api.coingecko.com/api/v3/coins/markets?` +
+              `vs_currency=usd&` +
+              `order=market_cap_desc&` +
+              `per_page=250&` +
+              `page=${page}&` +
+              `sparkline=false`
+            );
 
-          setTokens(allTokens);
-          setFilteredTokens(allTokens);
-        } catch (error) {
-          console.warn('Error fetching additional pages:', error);
-          // Don't throw here - we still have initial data to show
+            if (response.ok) {
+              const pageData = await response.json();
+              if (pageData.length === 0) break; // Stop if we get an empty page
+              allPages.push(pageData);
+              
+              // Update tokens progressively as they come in
+              const updatedTokens = [...initialData, ...allPages.flat()];
+              setTokens(updatedTokens);
+              setFilteredTokens(updatedTokens);
+            }
+          } catch (error) {
+            console.warn(`Error fetching page ${page}:`, error);
+            // Continue with next page even if one fails
+          }
         }
 
       } catch (error) {
@@ -212,24 +226,10 @@ const TokenList = ({ currentUser, showNotification }) => {
     }
   };
 
-  const paginate = async (pageNumber) => {
-    setCurrentPage(pageNumber);
-    
-    // If we're on the last page and there might be more tokens
-    if (pageNumber === totalPages && filteredTokens.length < 1000) {
-      try {
-        setIsLoadingMore(true);
-        const nextPage = Math.floor(filteredTokens.length / 250) + 1;
-        const moreTokens = await fetchPage(nextPage);
-        
-        setTokens(prev => [...prev, ...moreTokens]);
-        setFilteredTokens(prev => [...prev, ...moreTokens]);
-      } catch (error) {
-        console.error('Error loading more tokens:', error);
-      } finally {
-        setIsLoadingMore(false);
-      }
-    }
+  const paginate = (pageNumber) => {
+    const maxPage = Math.ceil(filteredTokens.length / tokensPerPage);
+    const validPageNumber = Math.min(Math.max(1, pageNumber), maxPage);
+    setCurrentPage(validPageNumber);
   };
 
   const indexOfLastToken = currentPage * tokensPerPage;
@@ -628,6 +628,12 @@ const TokenList = ({ currentUser, showNotification }) => {
           currentUser={currentUser}
           showNotification={showNotification}
         />
+      )}
+
+      {isLoadingTokens && (
+        <div className="fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg">
+          Loading tokens: {tokens.length} loaded...
+        </div>
       )}
     </div>
   );
