@@ -51,6 +51,9 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [error, setError] = useState(null);
   const [isLoadingTokens, setIsLoadingTokens] = useState(true);
   const [expandedTokenId, setExpandedTokenId] = useState(null);
+  const [timeFilter, setTimeFilter] = useState('24h');
+  const [sortFilter, setSortFilter] = useState('market_cap');
+  const [orderFilter, setOrderFilter] = useState('desc');
 
   useEffect(() => {
     const fetchTokens = async () => {
@@ -144,15 +147,12 @@ const TokenList = ({ currentUser, showNotification }) => {
     setFilteredTokens(filtered);
   }, [searchTerm, tokens]);
 
-  const handleSort = (key) => {
-    let direction = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
-    }
-    setSortConfig({ key, direction });
+  const handleSort = (key, order = orderFilter) => {
+    setSortFilter(key);
+    setOrderFilter(order);
     
     const sorted = [...filteredTokens].sort((a, b) => {
-      if (direction === 'asc') {
+      if (order === 'asc') {
         return a[key] > b[key] ? 1 : -1;
       }
       return a[key] < b[key] ? 1 : -1;
@@ -219,74 +219,56 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   return (
     <div className="container mx-auto p-4">
-      <div className="mb-6">
-        <button
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
-          onClick={() => setShowDexFrame(!showDexFrame)}
-        >
-          <span className="mr-2">DEX Options</span>
-          <span>{showDexFrame ? '▼' : '▶'}</span>
-        </button>
-        
-        {showDexFrame && (
-          <div className="mt-2 bg-gray-800 rounded-lg p-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              {DEX_OPTIONS.map((dex) => (
-                <div
-                  key={dex.name}
-                  className="p-4 bg-gray-700 rounded-lg hover:bg-gray-600 cursor-pointer"
-                  onClick={() => handleDexClick(dex)}
-                >
-                  <div className="flex items-center">
-                    <span className="text-2xl mr-2">{dex.icon}</span>
-                    <div>
-                      <h3 className="text-white font-bold">{dex.name}</h3>
-                      <p className="text-gray-400 text-sm">{dex.description}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            {selectedDex && (
-              <div className="mt-4 h-96 bg-gray-900 rounded-lg overflow-hidden">
-                <div className="flex justify-between items-center p-4 border-b border-gray-700">
-                  <h3 className="text-xl font-bold text-white">{selectedDex.name}</h3>
-                  <button onClick={() => setSelectedDex(null)} className="text-gray-500 hover:text-white">✕</button>
-                </div>
-                <iframe
-                  src={selectedDex.url}
-                  className="w-full h-[calc(100%-4rem)]"
-                  title={selectedDex.name}
-                />
-              </div>
-            )}
+      <div className="mb-6 bg-gray-800/50 backdrop-blur-sm rounded-lg p-4">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1">
+            <input
+              type="text"
+              placeholder="Search tokens..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
-        )}
+
+          <div className="flex gap-2">
+            <select
+              value={sortFilter}
+              onChange={(e) => {
+                setSortFilter(e.target.value);
+                handleSort(e.target.value);
+              }}
+              className="bg-gray-700 text-white rounded px-3 py-2"
+            >
+              <option value="market_cap">Market Cap</option>
+              <option value="current_price">Price</option>
+              <option value="price_change_percentage_24h">24h Change</option>
+              <option value="total_volume">Volume</option>
+            </select>
+
+            <button
+              onClick={() => {
+                const newOrder = orderFilter === 'asc' ? 'desc' : 'asc';
+                setOrderFilter(newOrder);
+                handleSort(sortFilter, newOrder);
+              }}
+              className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded"
+            >
+              {orderFilter === 'asc' ? '↑' : '↓'}
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="bg-gray-900/50 backdrop-blur-sm rounded-lg overflow-hidden">
-        <div className="mb-4 flex justify-between items-center">
-          <div className="flex space-x-2">
-            <button 
-              className={`px-3 py-1 rounded ${selectedTimeRange === '24h' ? 'bg-blue-500' : 'bg-gray-700'} text-white`}
-              onClick={() => handleTimeRangeChange('24h')}
-            >
-              24h
-            </button>
-            <button 
-              className={`px-3 py-1 rounded ${selectedTimeRange === '7d' ? 'bg-blue-500' : 'bg-gray-700'} text-white`}
-              onClick={() => handleTimeRangeChange('7d')}
-            >
-              7d
-            </button>
-            <button 
-              className={`px-3 py-1 rounded ${selectedTimeRange === '30d' ? 'bg-blue-500' : 'bg-gray-700'} text-white`}
-              onClick={() => handleTimeRangeChange('30d')}
-            >
-              30d
-            </button>
-          </div>
+        <div className="p-4 border-b border-gray-700/30">
+          <button
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
+            onClick={() => setShowDexFrame(!showDexFrame)}
+          >
+            <span className="mr-2">DEX Options</span>
+            <span>{showDexFrame ? '▼' : '▶'}</span>
+          </button>
         </div>
 
         {isLoadingTokens ? (
@@ -302,13 +284,21 @@ const TokenList = ({ currentUser, showNotification }) => {
             <table className="min-w-full">
               <thead>
                 <tr className="border-b border-gray-700/30">
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
-                      onClick={() => handleSort('market_cap_rank')}>
-                    #
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
+                    onClick={() => handleSort('market_cap_rank')}
+                  >
+                    # {sortFilter === 'market_cap_rank' && (
+                      <span className="ml-1">{orderFilter === 'asc' ? '↑' : '↓'}</span>
+                    )}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
-                      onClick={() => handleSort('name')}>
-                    Token
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
+                    onClick={() => handleSort('name')}
+                  >
+                    Token {sortFilter === 'name' && (
+                      <span className="ml-1">{orderFilter === 'asc' ? '↑' : '↓'}</span>
+                    )}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
                       onClick={() => handleSort('current_price')}>
@@ -386,24 +376,26 @@ const TokenList = ({ currentUser, showNotification }) => {
                         <td colSpan="7" className="bg-gray-800/40 p-6">
                           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <div className="space-y-4">
-                              <h3 className="text-lg font-bold text-white">Price Chart</h3>
+                              <div className="flex justify-between items-center">
+                                <h3 className="text-lg font-bold text-white">Price Chart</h3>
+                                <div className="flex space-x-2">
+                                  {['24h', '7d', '30d', '90d'].map((period) => (
+                                    <button
+                                      key={period}
+                                      onClick={() => handleTimeRangeChange(period)}
+                                      className={`px-3 py-1 rounded ${
+                                        selectedTimeRange === period 
+                                          ? 'bg-blue-500 text-white' 
+                                          : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                      }`}
+                                    >
+                                      {period}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
                               <div className="bg-gray-800 rounded-lg p-4 h-[300px]">
                                 <canvas ref={chartRef} />
-                              </div>
-                              <div className="flex space-x-2">
-                                {['24h', '7d', '30d', '90d'].map((period) => (
-                                  <button
-                                    key={period}
-                                    onClick={() => handleTimeRangeChange(period)}
-                                    className={`px-3 py-1 rounded ${
-                                      selectedTimeRange === period 
-                                        ? 'bg-blue-500 text-white' 
-                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                    }`}
-                                  >
-                                    {period}
-                                  </button>
-                                ))}
                               </div>
                             </div>
 
@@ -519,13 +511,21 @@ const TokenList = ({ currentUser, showNotification }) => {
         />
       )}
 
-      {showDexFrame && selectedDex && (
+      {showDexFrame && (
         <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
-          <div className="bg-gray-900 rounded-lg w-full max-w-6xl h-[80vh] flex flex-col">
+          <div className="bg-gray-900 rounded-lg w-full max-w-7xl h-[90vh] flex flex-col">
             <div className="flex justify-between items-center p-4 border-b border-gray-700">
-              <div className="flex items-center">
-                <span className="text-2xl mr-2">{selectedDex.icon}</span>
-                <h3 className="text-xl font-bold text-white">{selectedDex.name}</h3>
+              <div className="flex items-center space-x-4">
+                <h3 className="text-xl font-bold text-white">DEX Options</h3>
+                {selectedDex && (
+                  <>
+                    <span className="text-gray-400">|</span>
+                    <div className="flex items-center">
+                      <span className="text-2xl mr-2">{selectedDex.icon}</span>
+                      <span className="text-white">{selectedDex.name}</span>
+                    </div>
+                  </>
+                )}
               </div>
               <button 
                 onClick={() => {
@@ -537,15 +537,36 @@ const TokenList = ({ currentUser, showNotification }) => {
                 ×
               </button>
             </div>
-            <div className="flex-1 bg-white rounded-b-lg overflow-hidden">
-              <iframe
-                src={selectedDex.url}
-                className="w-full h-full"
-                title={`${selectedDex.name} DEX`}
-                sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-                referrerPolicy="no-referrer"
-              />
-            </div>
+
+            {!selectedDex ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+                {DEX_OPTIONS.map((dex) => (
+                  <div
+                    key={dex.name}
+                    className="p-4 bg-gray-800 rounded-lg hover:bg-gray-700 cursor-pointer transition-colors"
+                    onClick={() => handleDexClick(dex)}
+                  >
+                    <div className="flex items-center">
+                      <span className="text-2xl mr-2">{dex.icon}</span>
+                      <div>
+                        <h3 className="text-white font-bold">{dex.name}</h3>
+                        <p className="text-gray-400 text-sm">{dex.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex-1 bg-white rounded-b-lg overflow-hidden">
+                <iframe
+                  src={selectedDex.url}
+                  className="w-full h-full"
+                  title={`${selectedDex.name} DEX`}
+                  sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+            )}
           </div>
         </div>
       )}
