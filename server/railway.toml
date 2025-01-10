@@ -1,13 +1,9 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm install"
 
 [deploy]
 startCommand = "node index.js"
-restartPolicyType = "ON_FAILURE"
 
 [variables]
 NODE_ENV = "production"
 PORT = "5000"
-MONGODB_URI = "mongodb+srv://lyfesaverscoin:gB5gN_4mj5YXyqS@cluster0.hgud2.mongodb.net/bubble-ads"
-JWT_SECRET = "your-secret-key-here"
