@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js --ignore 'client/*'",
+    "dev": "nodemon index.js",
     "lint": "eslint .",
     "audit": "npm audit"
   },
@@ -28,5 +28,8 @@
   },
   "devDependencies": {
     "nodemon": "^2.0.22"
+  },
+  "engines": {
+    "node": ">=16.0.0"
   }
 }

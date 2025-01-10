@@ -4,6 +4,9 @@ buildCommand = "npm install"
 
 [deploy]
 startCommand = "npm start"
-healthcheckPath = "/api/ads"
+healthcheckPath = "/api/health"
 healthcheckTimeout = 100
-restartPolicyType = "ON_FAILURE" 
+restartPolicyType = "ON_FAILURE"
+
+[variables]
+NODE_ENV = "production" 

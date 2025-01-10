@@ -298,6 +298,19 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
+// Add health check endpoint
+app.get('/api/health', (req, res) => {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      res.status(200).json({ status: 'ok', db: 'connected' });
+    } else {
+      res.status(503).json({ status: 'error', db: 'disconnected' });
+    }
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: error.message });
+  }
+});
+
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.json(),
