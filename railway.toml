@@ -1,15 +1,11 @@
 [build]
-builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
+builder = "NODE"
 
 [deploy]
-startCommand = "npm start"
-healthcheckPath = "/"
-healthcheckTimeout = 100
+startCommand = "npm run build && npm start"
 restartPolicyType = "ON_FAILURE"
 
 [variables]
 NODE_ENV = "production"
 PORT = "3000"
-DISABLE_ESLINT_PLUGIN = "true"
 CI = "false" 

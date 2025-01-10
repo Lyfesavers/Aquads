@@ -1,11 +1,8 @@
 [build]
-builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
+builder = "NODE"
 
 [deploy]
 startCommand = "node index.js"
-healthcheckPath = "/api/health"
-healthcheckTimeout = 100
 restartPolicyType = "ON_FAILURE"
 
 [variables]
