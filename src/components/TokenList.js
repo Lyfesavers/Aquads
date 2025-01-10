@@ -486,7 +486,7 @@ const TokenList = ({ currentUser, showNotification }) => {
 
                             <div className="space-y-4">
                               <h3 className="text-lg font-bold text-white">Token Information</h3>
-                              <div className="bg-gray-800 rounded-lg p-4 space-y-3">
+                              <div className="bg-gray-800 rounded-lg p-4">
                                 <div className="grid grid-cols-2 gap-4">
                                   <div>
                                     <p className="text-gray-400 text-sm">Market Cap Rank</p>
@@ -494,43 +494,65 @@ const TokenList = ({ currentUser, showNotification }) => {
                                   </div>
                                   <div>
                                     <p className="text-gray-400 text-sm">Market Cap</p>
-                                    <p className="text-white font-medium">${(token.market_cap / 1000000).toFixed(2)}M</p>
+                                    <p className="text-white font-medium">${token.market_cap?.toLocaleString()}</p>
                                   </div>
                                   <div>
                                     <p className="text-gray-400 text-sm">24h Volume</p>
-                                    <p className="text-white font-medium">${(token.total_volume / 1000000).toFixed(2)}M</p>
+                                    <p className="text-white font-medium">${token.total_volume?.toLocaleString()}</p>
                                   </div>
                                   <div>
                                     <p className="text-gray-400 text-sm">Circulating Supply</p>
-                                    <p className="text-white font-medium">{token.circulating_supply?.toLocaleString()}</p>
+                                    <p className="text-white font-medium">{token.circulating_supply?.toLocaleString()} {token.symbol.toUpperCase()}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-gray-400 text-sm">Max Supply</p>
+                                    <p className="text-white font-medium">{token.max_supply ? token.max_supply.toLocaleString() : 'Unlimited'}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-gray-400 text-sm">Total Supply</p>
+                                    <p className="text-white font-medium">{token.total_supply?.toLocaleString() || 'N/A'}</p>
                                   </div>
                                   <div>
                                     <p className="text-gray-400 text-sm">24h High</p>
-                                    <p className="text-white font-medium">${token.high_24h}</p>
+                                    <p className="text-white font-medium">${token.high_24h?.toLocaleString()}</p>
                                   </div>
                                   <div>
                                     <p className="text-gray-400 text-sm">24h Low</p>
-                                    <p className="text-white font-medium">${token.low_24h}</p>
+                                    <p className="text-white font-medium">${token.low_24h?.toLocaleString()}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-gray-400 text-sm">Price Change 24h</p>
+                                    <p className={`font-medium ${token.price_change_24h > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                      ${Math.abs(token.price_change_24h).toFixed(6)}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <p className="text-gray-400 text-sm">ATH</p>
+                                    <p className="text-white font-medium">${token.ath?.toLocaleString()}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-gray-400 text-sm">ATH Change %</p>
+                                    <p className={`font-medium ${token.ath_change_percentage > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                      {token.ath_change_percentage?.toFixed(2)}%
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <p className="text-gray-400 text-sm">ATH Date</p>
+                                    <p className="text-white font-medium">{new Date(token.ath_date).toLocaleDateString()}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-gray-400 text-sm">Market Cap Dominance</p>
+                                    <p className="text-white font-medium">
+                                      {((token.market_cap / token.total_volume) * 100).toFixed(2)}%
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <p className="text-gray-400 text-sm">Fully Diluted Valuation</p>
+                                    <p className="text-white font-medium">
+                                      ${token.fully_diluted_valuation?.toLocaleString() || 'N/A'}
+                                    </p>
                                   </div>
                                 </div>
-                              </div>
-
-                              <div className="flex space-x-4">
-                                <button
-                                  className="flex-1 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                                  onClick={() => {
-                                    setSelectedToken(token);
-                                    setShowReviews(true);
-                                  }}
-                                >
-                                  View Reviews
-                                </button>
-                                <button
-                                  className="flex-1 bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
-                                  onClick={() => handleDexClick(DEX_OPTIONS[0])}
-                                >
-                                  Trade Token
-                                </button>
                               </div>
                             </div>
                           </div>
