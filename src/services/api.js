@@ -106,13 +106,17 @@ export const loginUser = async (credentials) => {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Login failed');
+      throw new Error(error.message || 'Login failed');
     }
 
     const data = await response.json();
+    // Store user data in localStorage
     localStorage.setItem('currentUser', JSON.stringify(data));
+    
+    // Update socket auth
     socket.auth = { token: data.token };
     socket.connect();
+    
     return data;
   } catch (error) {
     console.error('Login error:', error);

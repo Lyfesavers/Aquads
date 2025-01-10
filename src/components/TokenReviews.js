@@ -6,6 +6,8 @@ const TokenReviews = ({ token, onClose, currentUser, showNotification }) => {
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAddReview, setShowAddReview] = useState(false);
+  const [averageRating, setAverageRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
 
   useEffect(() => {
     fetchReviews();
@@ -25,17 +27,21 @@ const TokenReviews = ({ token, onClose, currentUser, showNotification }) => {
 
   const fetchReviews = async () => {
     try {
-      console.log('Fetching reviews for token:', token.symbol); // Debug log
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/reviews/${token.symbol}`);
       
       if (!response.ok) {
-        console.error('Review fetch error:', response.status);
         throw new Error('Failed to fetch reviews');
       }
       
       const data = await response.json();
-      console.log('Fetched reviews:', data); // Debug log
       setReviews(data);
+
+      // Calculate average rating
+      if (data.length > 0) {
+        const avg = data.reduce((acc, review) => acc + review.rating, 0) / data.length;
+        setAverageRating(avg);
+        setTotalReviews(data.length);
+      }
     } catch (error) {
       console.error('Error fetching reviews:', error);
       showNotification('Failed to load reviews', 'error');
@@ -64,15 +70,21 @@ const TokenReviews = ({ token, onClose, currentUser, showNotification }) => {
         })
       });
 
-      if (!response.ok) throw new Error('Failed to submit review');
-      
-      showNotification('Review submitted successfully!', 'success');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to submit review');
+      }
+
+      const savedReview = await response.json();
+      setReviews(prevReviews => [savedReview, ...prevReviews]);
       setNewReview({ rating: 5, comment: '' });
-      setShowAddReview(false);
+      showNotification('Review submitted successfully!', 'success');
+      
+      // Update average rating
       fetchReviews();
     } catch (error) {
       console.error('Error submitting review:', error);
-      showNotification('Failed to submit review', 'error');
+      showNotification(error.message || 'Failed to submit review', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -83,6 +95,13 @@ const TokenReviews = ({ token, onClose, currentUser, showNotification }) => {
       <div className="text-white">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">Reviews for {token.name}</h2>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center">
+              <span className="text-yellow-400 text-2xl mr-2">★</span>
+              <span className="text-xl">{averageRating.toFixed(1)}</span>
+            </div>
+            <span className="text-gray-400">({totalReviews} reviews)</span>
+          </div>
           {currentUser && !showAddReview && (
             <button
               onClick={() => setShowAddReview(true)}
