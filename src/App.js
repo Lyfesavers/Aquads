@@ -167,8 +167,8 @@ function calculateDistance(x1, y1, x2, y2) {
 
 function App() {
   const [ads, setAds] = useState(() => {
-    const savedAds = localStorage.getItem('cachedAds');
-    return savedAds ? JSON.parse(savedAds) : [];
+    const cachedAds = localStorage.getItem('cachedAds');
+    return cachedAds ? JSON.parse(cachedAds) : [];
   });
   const [currentUser, setCurrentUser] = useState(() => {
     // Check localStorage for saved user data on initial load
@@ -190,48 +190,51 @@ function App() {
   });
   const [showScrollButtons, setShowScrollButtons] = useState(false);
 
+  // Add this function to update ads with persistence
+  const updateAds = (newAds) => {
+    setAds(newAds);
+    localStorage.setItem('cachedAds', JSON.stringify(newAds));
+  };
+
   // Load ads on mount
   useEffect(() => {
     const loadAds = async () => {
       try {
-        console.log('Starting to fetch ads...');
-        const fetchedAds = await fetchAds();
-        console.log('Raw fetched ads:', fetchedAds); // Debug log
-
-        if (Array.isArray(fetchedAds)) {
-          const processedAds = fetchedAds.map(ad => ({
-            ...ad,
-            size: Number(ad.size) || MAX_SIZE,
-            x: Number(ad.x) || 0,
-            y: Number(ad.y) || 0
-          }));
-          console.log('Processed ads:', processedAds); // Debug log
-          setAds(processedAds);
-        } else {
-          console.error('Fetched ads is not an array:', fetchedAds);
-        }
+        const data = await fetchAds();
+        updateAds(data);
       } catch (error) {
         console.error('Error loading ads:', error);
       }
     };
 
     loadAds();
-    console.log('Current ads state:', ads); // Debug log
+    const interval = setInterval(loadAds, 10000); // Check every 10 seconds
+    return () => clearInterval(interval);
+  }, []);
 
-    // Set up socket listeners
-    socket.on('adsUpdated', ({ type, ad }) => {
-      console.log('Received adsUpdated event:', type, ad);
-      if (type === 'create') {
-        setAds(prev => [...prev, ad]);
-      } else if (type === 'update') {
-        setAds(prev => prev.map(a => a.id === ad.id ? ad : a));
-      } else if (type === 'delete') {
-        setAds(prev => prev.filter(a => a.id !== ad.id));
-      }
+  // Update socket connection handling
+  useEffect(() => {
+    socket.on('adUpdated', (updatedAd) => {
+      setAds(prevAds => {
+        const newAds = prevAds.map(ad => 
+          ad.id === updatedAd.id ? updatedAd : ad
+        );
+        localStorage.setItem('cachedAds', JSON.stringify(newAds));
+        return newAds;
+      });
+    });
+
+    socket.on('adDeleted', (deletedAdId) => {
+      setAds(prevAds => {
+        const newAds = prevAds.filter(ad => ad.id !== deletedAdId);
+        localStorage.setItem('cachedAds', JSON.stringify(newAds));
+        return newAds;
+      });
     });
 
     return () => {
-      socket.off('adsUpdated');
+      socket.off('adUpdated');
+      socket.off('adDeleted');
     };
   }, []);
 

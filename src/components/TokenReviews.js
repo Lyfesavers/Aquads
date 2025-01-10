@@ -34,13 +34,11 @@ const TokenReviews = ({ token, onClose, currentUser, showNotification }) => {
       }
       
       const data = await response.json();
-      console.log('Fetched reviews:', data); // Debug log
       
-      // Store reviews in localStorage for persistence
+      // Cache the reviews
       localStorage.setItem(`reviews_${token.symbol}`, JSON.stringify(data));
-      
       setReviews(data);
-      
+
       // Calculate average rating
       if (data.length > 0) {
         const avg = data.reduce((acc, review) => acc + review.rating, 0) / data.length;
@@ -49,7 +47,7 @@ const TokenReviews = ({ token, onClose, currentUser, showNotification }) => {
       }
     } catch (error) {
       console.error('Error fetching reviews:', error);
-      // Try to get cached reviews
+      // Try to use cached reviews
       const cachedReviews = localStorage.getItem(`reviews_${token.symbol}`);
       if (cachedReviews) {
         const data = JSON.parse(cachedReviews);

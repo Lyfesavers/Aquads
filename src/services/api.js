@@ -1,12 +1,8 @@
 import io from 'socket.io-client';
 
-const API_URL = process.env.NODE_ENV === 'production'
-  ? 'https://aquads.onrender.com/api'
-  : 'http://localhost:5000/api';
+const API_URL = 'https://aquads.onrender.com/api';
 
-export const socket = io(process.env.NODE_ENV === 'production'
-  ? 'https://aquads.onrender.com'
-  : 'http://localhost:5000', {
+export const socket = io('https://aquads.onrender.com', {
   auth: {
     token: (() => {
       const savedUser = localStorage.getItem('currentUser');
@@ -15,11 +11,10 @@ export const socket = io(process.env.NODE_ENV === 'production'
     })()
   },
   transports: ['websocket', 'polling'],
-  reconnectionAttempts: 5,
-  reconnectionDelay: 5000,
-  // Don't show errors for expected disconnects
+  reconnectionAttempts: 10,
+  reconnectionDelay: 1000,
   reconnection: true,
-  timeout: 10000
+  timeout: 20000
 });
 
 const getAuthHeader = () => {
@@ -31,7 +26,6 @@ const getAuthHeader = () => {
 // Fetch all ads
 export const fetchAds = async () => {
   try {
-    console.log('Starting to fetch ads...');
     const response = await fetch(`${API_URL}/ads`);
     
     if (!response.ok) {
@@ -39,11 +33,14 @@ export const fetchAds = async () => {
     }
     
     const data = await response.json();
-    console.log('Successfully fetched ads:', data);
+    // Cache the ads
+    localStorage.setItem('cachedAds', JSON.stringify(data));
     return data;
   } catch (error) {
     console.error('Error fetching ads:', error);
-    return [];
+    // Return cached ads if available
+    const cachedAds = localStorage.getItem('cachedAds');
+    return cachedAds ? JSON.parse(cachedAds) : [];
   }
 };
 
@@ -100,18 +97,19 @@ export const loginUser = async (credentials) => {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(credentials)
+      body: JSON.stringify(credentials),
+      credentials: 'include'
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Login failed');
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Login failed');
     }
 
     const data = await response.json();
     localStorage.setItem('currentUser', JSON.stringify(data));
     
-    // Update socket auth and reconnect
+    // Reconnect socket with new auth
     socket.auth = { token: data.token };
     socket.disconnect().connect();
     
