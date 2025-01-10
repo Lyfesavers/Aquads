@@ -1,6 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm install --legacy-peer-deps && npm run build"
+nixpacksConfigPath = "nixpacks.toml"
 
 [deploy]
 startCommand = "npm start"
