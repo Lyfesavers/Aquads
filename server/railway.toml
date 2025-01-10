@@ -1,9 +1,0 @@
-[build]
-builder = "nixpacks"
-
-[deploy]
-startCommand = "npm install --legacy-peer-deps && node index.js"
-
-[variables]
-NODE_ENV = "production"
-PORT = "5000"
