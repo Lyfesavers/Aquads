@@ -57,32 +57,51 @@ const TokenList = ({ currentUser, showNotification }) => {
       try {
         setIsLoadingTokens(true);
         setError(null);
-        const response = await fetch(
-          'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1'
-        );
         
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        if (!Array.isArray(data)) {
-          throw new Error('Invalid data format received');
-        }
-        
+        // Add delay between retries
+        const fetchWithRetry = async (retries = 3, delay = 2000) => {
+          try {
+            const response = await fetch(
+              'https://api.coingecko.com/api/v3/coins/markets?' +
+              'vs_currency=usd&' +
+              'order=market_cap_desc&' +
+              'per_page=250&' + // Increased to show more tokens
+              'page=1&' +
+              'sparkline=false&' +
+              'price_change_percentage=24h'
+            );
+            
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            return data;
+          } catch (error) {
+            if (retries > 0) {
+              await new Promise(resolve => setTimeout(resolve, delay));
+              return fetchWithRetry(retries - 1, delay * 1.5);
+            }
+            throw error;
+          }
+        };
+
+        const data = await fetchWithRetry();
         setTokens(data);
         setFilteredTokens(data);
       } catch (error) {
         console.error('Error fetching tokens:', error);
-        setError('Failed to load tokens. Please try again later.');
-        showNotification('Error fetching tokens: ' + error.message, 'error');
+        setError('Unable to load tokens. Please try again in a few minutes.');
       } finally {
         setIsLoadingTokens(false);
       }
     };
 
     fetchTokens();
-  }, [showNotification]);
+    // Fetch every 2 minutes to avoid rate limits
+    const interval = setInterval(fetchTokens, 120000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (chartData && chartRef.current && selectedToken) {
@@ -345,43 +364,93 @@ const TokenList = ({ currentUser, showNotification }) => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                         ${(token.total_volume / 1000000).toFixed(2)}M
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                        ⭐⭐⭐⭐⭐
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-yellow-400">★</span>
+                          <span className="text-white">{token.rating || '0.0'}</span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedToken(token);
+                              setShowReviews(true);
+                            }}
+                            className="ml-2 text-blue-400 hover:text-blue-300 text-sm"
+                          >
+                            Reviews
+                          </button>
+                        </div>
                       </td>
                     </tr>
                     {expandedTokenId === token.id && (
                       <tr>
                         <td colSpan="7" className="bg-gray-800/40 p-6">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <h3 className="text-lg font-bold text-white mb-4">Price Chart</h3>
-                              <canvas ref={chartRef} className="w-full" />
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                              <h3 className="text-lg font-bold text-white">Price Chart</h3>
+                              <div className="bg-gray-800 rounded-lg p-4 h-[300px]">
+                                <canvas ref={chartRef} />
+                              </div>
+                              <div className="flex space-x-2">
+                                {['24h', '7d', '30d', '90d'].map((period) => (
+                                  <button
+                                    key={period}
+                                    onClick={() => handleTimeRangeChange(period)}
+                                    className={`px-3 py-1 rounded ${
+                                      selectedTimeRange === period 
+                                        ? 'bg-blue-500 text-white' 
+                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                    }`}
+                                  >
+                                    {period}
+                                  </button>
+                                ))}
+                              </div>
                             </div>
-                            <div>
-                              <div className="bg-gray-800 p-4 rounded mb-4">
-                                <h3 className="text-lg font-bold text-white mb-2">Price Statistics</h3>
-                                <div className="space-y-2">
-                                  <p className="text-gray-400">Current Price: <span className="text-white">${token.current_price}</span></p>
-                                  <p className="text-gray-400">Market Cap: <span className="text-white">${(token.market_cap / 1000000).toFixed(2)}M</span></p>
-                                  <p className="text-gray-400">24h Volume: <span className="text-white">${(token.total_volume / 1000000).toFixed(2)}M</span></p>
+
+                            <div className="space-y-4">
+                              <h3 className="text-lg font-bold text-white">Token Information</h3>
+                              <div className="bg-gray-800 rounded-lg p-4 space-y-3">
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <p className="text-gray-400 text-sm">Market Cap Rank</p>
+                                    <p className="text-white font-medium">#{token.market_cap_rank}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-gray-400 text-sm">Market Cap</p>
+                                    <p className="text-white font-medium">${(token.market_cap / 1000000).toFixed(2)}M</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-gray-400 text-sm">24h Volume</p>
+                                    <p className="text-white font-medium">${(token.total_volume / 1000000).toFixed(2)}M</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-gray-400 text-sm">Circulating Supply</p>
+                                    <p className="text-white font-medium">{token.circulating_supply?.toLocaleString()}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-gray-400 text-sm">24h High</p>
+                                    <p className="text-white font-medium">${token.high_24h}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-gray-400 text-sm">24h Low</p>
+                                    <p className="text-white font-medium">${token.low_24h}</p>
+                                  </div>
                                 </div>
                               </div>
+
                               <div className="flex space-x-4">
                                 <button
-                                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
+                                  className="flex-1 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                                  onClick={() => {
+                                    setSelectedToken(token);
                                     setShowReviews(true);
                                   }}
                                 >
                                   View Reviews
                                 </button>
                                 <button
-                                  className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDexClick(DEX_OPTIONS[0]);
-                                  }}
+                                  className="flex-1 bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
+                                  onClick={() => handleDexClick(DEX_OPTIONS[0])}
                                 >
                                   Trade Token
                                 </button>
@@ -448,6 +517,37 @@ const TokenList = ({ currentUser, showNotification }) => {
           currentUser={currentUser}
           showNotification={showNotification}
         />
+      )}
+
+      {showDexFrame && selectedDex && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
+          <div className="bg-gray-900 rounded-lg w-full max-w-6xl h-[80vh] flex flex-col">
+            <div className="flex justify-between items-center p-4 border-b border-gray-700">
+              <div className="flex items-center">
+                <span className="text-2xl mr-2">{selectedDex.icon}</span>
+                <h3 className="text-xl font-bold text-white">{selectedDex.name}</h3>
+              </div>
+              <button 
+                onClick={() => {
+                  setSelectedDex(null);
+                  setShowDexFrame(false);
+                }}
+                className="text-gray-400 hover:text-white text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            <div className="flex-1 bg-white rounded-b-lg overflow-hidden">
+              <iframe
+                src={selectedDex.url}
+                className="w-full h-full"
+                title={`${selectedDex.name} DEX`}
+                sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

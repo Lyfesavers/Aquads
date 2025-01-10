@@ -1,94 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { FaStar } from 'react-icons/fa';
-import { submitReview } from '../services/api';
+import Modal from './Modal';
 
-const ReviewsModal = ({ isOpen, onClose, reviews, averageRating, currentUser, onAddReview }) => {
-  if (!isOpen) return null;
-  
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-      <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full relative">
-        <button 
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-white"
-        >
-          ✕
-        </button>
-        
-        <h3 className="text-xl font-bold mb-4">Reviews</h3>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center">
-            <div className="flex">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <FaStar
-                  key={star}
-                  className={star <= averageRating ? 'text-yellow-400' : 'text-gray-400'}
-                  size={24}
-                />
-              ))}
-            </div>
-            <span className="ml-2 text-lg">({reviews.length} reviews)</span>
-          </div>
-          
-          {currentUser && (
-            <button
-              onClick={onAddReview}
-              className="px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
-            >
-              Add Review
-            </button>
-          )}
-        </div>
-        
-        <div className="space-y-4 max-h-96 overflow-y-auto">
-          {reviews.map((review, index) => (
-            <div key={index} className="border-t border-gray-700 pt-4">
-              <div className="flex items-center mb-2">
-                <div className="flex">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <FaStar
-                      key={star}
-                      className={star <= review.rating ? 'text-yellow-400' : 'text-gray-400'}
-                      size={16}
-                    />
-                  ))}
-                </div>
-                <span className="ml-2 text-sm text-gray-400">
-                  by {review.username}
-                </span>
-              </div>
-              <p className="text-gray-300">{review.comment}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const TokenReviews = ({ tokenSymbol, currentUser, showNotification }) => {
+const TokenReviews = ({ token, onClose, currentUser, showNotification }) => {
   const [reviews, setReviews] = useState([]);
-  const [averageRating, setAverageRating] = useState(0);
-  const [userReview, setUserReview] = useState({ rating: 5, comment: '' });
+  const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showReviewModal, setShowReviewModal] = useState(false);
-  const [showReviewForm, setShowReviewForm] = useState(false);
 
   useEffect(() => {
     fetchReviews();
-  }, [tokenSymbol]);
+  }, [token.symbol]);
 
   const fetchReviews = async () => {
     try {
-      const normalizedSymbol = tokenSymbol.toLowerCase();
-      const response = await fetch(`/api/reviews/token/${normalizedSymbol}`);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/reviews/${token.symbol}`);
+      if (!response.ok) throw new Error('Failed to fetch reviews');
       const data = await response.json();
-      setReviews(data.reviews || []);
-      setAverageRating(data.averageRating || 0);
+      setReviews(data);
     } catch (error) {
       console.error('Error fetching reviews:', error);
-      setReviews([]);
-      setAverageRating(0);
+      showNotification('Failed to load reviews', 'error');
     }
   };
 
@@ -101,99 +31,114 @@ const TokenReviews = ({ tokenSymbol, currentUser, showNotification }) => {
 
     setIsSubmitting(true);
     try {
-      await submitReview({
-        tokenSymbol: tokenSymbol.toLowerCase(),
-        rating: userReview.rating,
-        comment: userReview.comment
-      }, currentUser.token);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/reviews`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({
+          tokenSymbol: token.symbol,
+          rating: newReview.rating,
+          comment: newReview.comment
+        })
+      });
 
+      if (!response.ok) throw new Error('Failed to submit review');
+      
       showNotification('Review submitted successfully!', 'success');
-      setUserReview({ rating: 5, comment: '' });
-      setShowReviewForm(false);
-      await fetchReviews();
+      setNewReview({ rating: 5, comment: '' });
+      fetchReviews();
     } catch (error) {
       console.error('Error submitting review:', error);
-      showNotification(error.message || 'Failed to submit review', 'error');
+      showNotification('Failed to submit review', 'error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="flex items-center w-full px-2">
-      <div 
-        className="flex items-center cursor-pointer" 
-        onClick={(e) => {
-          e.stopPropagation();
-          setShowReviewModal(true);
-        }}
-      >
-        <div className="flex items-center">
-          {[1, 2, 3, 4, 5].map((star) => (
-            <FaStar
-              key={star}
-              className={star <= averageRating ? 'text-yellow-400' : 'text-gray-400'}
-              size={14}
-            />
-          ))}
-          <span className="ml-1 text-sm text-gray-400">({reviews.length})</span>
-        </div>
-      </div>
-
-      {/* Reviews Modal */}
-      <ReviewsModal 
-        isOpen={showReviewModal}
-        onClose={() => setShowReviewModal(false)}
-        reviews={reviews}
-        averageRating={averageRating}
-        currentUser={currentUser}
-        onAddReview={() => setShowReviewForm(true)}
-      />
-
-      {/* Review Form Modal */}
-      {showReviewForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-          <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full relative">
-            <button 
-              onClick={() => setShowReviewForm(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white"
-            >
-              ✕
-            </button>
-            
-            <h3 className="text-xl font-bold mb-4">Write a Review</h3>
-            <form onSubmit={handleSubmitReview}>
-              <div className="flex mb-4">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <FaStar
-                    key={star}
-                    className={`cursor-pointer ${
-                      star <= userReview.rating ? 'text-yellow-400' : 'text-gray-400'
-                    }`}
-                    size={24}
-                    onClick={() => setUserReview({ ...userReview, rating: star })}
-                  />
-                ))}
-              </div>
-              <textarea
-                className="w-full p-2 bg-gray-700 rounded text-white"
-                value={userReview.comment}
-                onChange={(e) => setUserReview({ ...userReview, comment: e.target.value })}
-                placeholder="Write your review..."
-                maxLength={500}
-              />
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full disabled:opacity-50"
-              >
-                {isSubmitting ? 'Submitting...' : 'Submit Review'}
-              </button>
-            </form>
+    <Modal onClose={onClose}>
+      <div className="text-white">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">Reviews for {token.name}</h2>
+          <div className="flex items-center">
+            <span className="text-yellow-400 text-2xl mr-2">★</span>
+            <span className="text-xl">{token.rating || '0.0'}</span>
           </div>
         </div>
-      )}
-    </div>
+
+        {/* Review Form */}
+        {currentUser && (
+          <form onSubmit={handleSubmitReview} className="mb-8">
+            <div className="mb-4">
+              <label className="block mb-2">Rating</label>
+              <div className="flex space-x-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setNewReview(prev => ({ ...prev, rating: star }))}
+                    className={`text-2xl ${
+                      star <= newReview.rating ? 'text-yellow-400' : 'text-gray-400'
+                    }`}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="mb-4">
+              <label className="block mb-2">Comment</label>
+              <textarea
+                value={newReview.comment}
+                onChange={(e) => setNewReview(prev => ({ ...prev, comment: e.target.value }))}
+                className="w-full px-3 py-2 bg-gray-700 rounded resize-none"
+                rows="4"
+                maxLength="500"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={`w-full py-2 rounded ${
+                isSubmitting 
+                  ? 'bg-gray-500 cursor-not-allowed' 
+                  : 'bg-blue-500 hover:bg-blue-600'
+              }`}
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit Review'}
+            </button>
+          </form>
+        )}
+
+        {/* Reviews List */}
+        <div className="space-y-4 max-h-[400px] overflow-y-auto">
+          {reviews.length === 0 ? (
+            <p className="text-gray-400 text-center">No reviews yet. Be the first to review!</p>
+          ) : (
+            reviews.map((review) => (
+              <div key={review._id} className="bg-gray-800 p-4 rounded">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <div className="flex items-center">
+                      <span className="text-yellow-400 mr-1">{'★'.repeat(review.rating)}</span>
+                      <span className="text-gray-400">{'★'.repeat(5 - review.rating)}</span>
+                    </div>
+                    <p className="text-sm text-gray-400">by {review.username}</p>
+                  </div>
+                  <span className="text-sm text-gray-400">
+                    {new Date(review.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+                <p className="text-gray-300">{review.comment}</p>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </Modal>
   );
 };
 
