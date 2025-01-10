@@ -1,14 +1,11 @@
 [build]
 builder = "nixpacks"
-nixpacksConfigPath = "nixpacks.toml"
 
 [deploy]
-startCommand = "npm start"
-restartPolicyType = "ON_FAILURE"
+startCommand = "serve -s build"
+numReplicas = 1
 
 [variables]
 NODE_ENV = "production"
 PORT = "3000"
-CI = "false"
-SKIP_PREFLIGHT_CHECK = "true"
-GENERATE_SOURCEMAP = "false" 
+REACT_APP_API_URL = "https://bubble-ads-backend-production.up.railway.app" 
