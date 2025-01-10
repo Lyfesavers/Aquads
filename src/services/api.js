@@ -99,13 +99,13 @@ export const deleteAd = async (id) => {
 // Login user
 export const loginUser = async (credentials) => {
   try {
-    const response = await fetch(`${API_URL}/login`, {
+    const response = await fetch(`${API_URL}/users/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        username: credentials.username.toLowerCase(),
+        username: credentials.username,
         password: credentials.password
       })
     });
@@ -117,10 +117,10 @@ export const loginUser = async (credentials) => {
 
     const data = await response.json();
     
-    // Store user data
+    // Store user data exactly as received from server
     const userData = {
       ...data,
-      username: data.username || credentials.username.toLowerCase(),
+      username: data.username,
       isAdmin: Boolean(data.isAdmin),
       token: data.token
     };
