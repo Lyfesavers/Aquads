@@ -1,7 +1,6 @@
 [build]
 builder = "NIXPACKS"
-nixpacksConfigPath = "nixpacks.toml"
-buildCommand = "npm install --legacy-peer-deps && CI=false npm run build"
+buildCommand = "npm install --legacy-peer-deps --force && CI=false npm run build"
 
 [deploy]
 startCommand = "npm start"
@@ -13,4 +12,6 @@ restartPolicyType = "ON_FAILURE"
 NODE_ENV = "production"
 PORT = "3000"
 DISABLE_ESLINT_PLUGIN = "true"
-CI = "false" 
+CI = "false"
+NODE_VERSION = "18.x"
+NPM_VERSION = "9.x" 
