@@ -137,14 +137,14 @@ app.get('/api/ads', async (req, res) => {
     console.log('Received request for ads');
     const ads = await Ad.find({}).lean();
     
-    if (!ads) {
+    console.log('Found ads:', ads);
+    
+    if (!ads || ads.length === 0) {
       console.log('No ads found');
       return res.status(200).json([]);
     }
 
-    // Log the full response data
     console.log('Sending ads to client:', ads);
-    
     res.json(ads);
   } catch (error) {
     console.error('Error fetching ads:', error);

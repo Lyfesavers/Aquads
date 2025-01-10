@@ -527,35 +527,82 @@ const TokenList = ({ currentUser, showNotification }) => {
     await fetchChartData(tokenId, days);
   };
 
-  useEffect(() => {
-    const fetchAds = async () => {
-      try {
-        setLoading(true);
-        console.log('Fetching ads from:', `${API_URL}/api/ads`);
-        
-        const response = await fetch(`${API_URL}/api/ads`, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        console.log('Response status:', response.status);
-        const data = await response.json();
-        console.log('Received data:', data);
-        
-        setAds(data);
-      } catch (error) {
-        console.error('Error fetching ads:', error);
-        showNotification('Error loading ads', 'error');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const [ads, setAds] = useState([]);
 
+  // Move fetchAds inside the component
+  const fetchAds = async () => {
+    try {
+      setLoading(true);
+      console.log('Fetching ads from:', `${API_URL}/api/ads`);
+      
+      const response = await fetch(`${API_URL}/api/ads`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Received ads data:', data);
+      
+      setAds(data);
+    } catch (error) {
+      console.error('Error fetching ads:', error);
+      showNotification('Error loading ads', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Use effect to fetch ads on mount
+  useEffect(() => {
     fetchAds();
-  }, []); // Empty dependency array means this runs once on mount
+    
+    // Setup socket listeners
+    socket.on('adCreated', (newAd) => {
+      setAds(prevAds => [...prevAds, newAd]);
+    });
+
+    socket.on('adUpdated', (updatedAd) => {
+      setAds(prevAds => prevAds.map(ad => 
+        ad._id === updatedAd._id ? updatedAd : ad
+      ));
+    });
+
+    socket.on('adDeleted', (deletedAdId) => {
+      setAds(prevAds => prevAds.filter(ad => ad._id !== deletedAdId));
+    });
+
+    return () => {
+      socket.off('adCreated');
+      socket.off('adUpdated');
+      socket.off('adDeleted');
+    };
+  }, []);
+
+  // Render ads somewhere in your component
+  const renderAds = () => {
+    if (loading) {
+      return <div>Loading ads...</div>;
+    }
+
+    if (!ads || ads.length === 0) {
+      return <div>No ads available</div>;
+    }
+
+    return ads.map(ad => (
+      <div key={ad._id} className="ad-item">
+        {/* Render your ad content here */}
+        <h3>{ad.title}</h3>
+        <p>{ad.description}</p>
+      </div>
+    ));
+  };
 
   return (
     <div id="token-list" className="relative bg-gray-900/95 backdrop-blur-sm border-t border-blue-500/20 overflow-x-auto">
@@ -901,6 +948,10 @@ const TokenList = ({ currentUser, showNotification }) => {
             </div>
           </div>
         )}
+
+        <div className="ads-container">
+          {renderAds()}
+        </div>
       </div>
     </div>
   );
