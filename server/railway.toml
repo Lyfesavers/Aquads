@@ -1,6 +1,6 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "npm install --force"
+buildCommand = "npm cache clean --force && rm -rf node_modules && npm install --force"
 
 [deploy]
 startCommand = "node index.js"

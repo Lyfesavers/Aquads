@@ -25,7 +25,7 @@
     "serve": "^14.0.0"
   },
   "scripts": {
-    "start": "serve -s build -p $PORT",
+    "start": "serve -s build",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
@@ -52,5 +52,9 @@
   "devDependencies": {
     "cross-env": "^7.0.3",
     "husky": "^8.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
   }
 }

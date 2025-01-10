@@ -1,6 +1,6 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "npm install --force && CI=false npm run build"
+buildCommand = "npm cache clean --force && rm -rf node_modules && npm install --force && CI=false npm run build"
 
 [deploy]
 startCommand = "npm start"
@@ -12,5 +12,4 @@ restartPolicyType = "ON_FAILURE"
 NODE_ENV = "production"
 PORT = "3000"
 DISABLE_ESLINT_PLUGIN = "true"
-CI = "false"
-NPM_FLAGS = "--legacy-peer-deps" 
+CI = "false" 
