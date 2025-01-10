@@ -527,6 +527,36 @@ const TokenList = ({ currentUser, showNotification }) => {
     await fetchChartData(tokenId, days);
   };
 
+  useEffect(() => {
+    const fetchAds = async () => {
+      try {
+        setLoading(true);
+        console.log('Fetching ads from:', `${API_URL}/api/ads`);
+        
+        const response = await fetch(`${API_URL}/api/ads`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        console.log('Response status:', response.status);
+        const data = await response.json();
+        console.log('Received data:', data);
+        
+        setAds(data);
+      } catch (error) {
+        console.error('Error fetching ads:', error);
+        showNotification('Error loading ads', 'error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAds();
+  }, []); // Empty dependency array means this runs once on mount
+
   return (
     <div id="token-list" className="relative bg-gray-900/95 backdrop-blur-sm border-t border-blue-500/20 overflow-x-auto">
       {/* Enhanced animated background elements */}
