@@ -136,7 +136,7 @@ const TokenList = ({ currentUser, showNotification }) => {
   const totalPages = Math.ceil(filteredTokens.length / tokensPerPage);
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto p-4 bg-transparent">
       <div className="mb-4 flex justify-between items-center">
         <input
           type="text"
@@ -167,45 +167,45 @@ const TokenList = ({ currentUser, showNotification }) => {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto bg-transparent">
         <table className="min-w-full">
           <thead>
-            <tr className="border-b border-gray-700">
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider bg-gray-800/50 cursor-pointer hover:text-white"
+            <tr className="border-b border-gray-700/30">
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
                   onClick={() => handleSort('market_cap_rank')}>
                 #
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider bg-gray-800/50 cursor-pointer hover:text-white"
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
                   onClick={() => handleSort('name')}>
                 Token
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider bg-gray-800/50 cursor-pointer hover:text-white"
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
                   onClick={() => handleSort('current_price')}>
                 Price
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider bg-gray-800/50 cursor-pointer hover:text-white"
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
                   onClick={() => handleSort('price_change_percentage_24h')}>
                 24h %
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider bg-gray-800/50 cursor-pointer hover:text-white"
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
                   onClick={() => handleSort('market_cap')}>
                 Market Cap
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider bg-gray-800/50 cursor-pointer hover:text-white"
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
                   onClick={() => handleSort('total_volume')}>
                 Volume(24h)
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider bg-gray-800/50 cursor-pointer hover:text-white"
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
                   onClick={() => handleSort('rating')}>
                 Rating
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-700">
+          <tbody className="divide-y divide-gray-700/30">
             {currentTokens.map((token, index) => (
               <tr 
                 key={token.id}
-                className="hover:bg-gray-800/40 transition-colors cursor-pointer"
+                className="border-b border-gray-700/30 hover:bg-gray-800/20 cursor-pointer"
                 onClick={() => handleTokenClick(token)}
               >
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{index + 1}</td>
@@ -242,22 +242,18 @@ const TokenList = ({ currentUser, showNotification }) => {
       </div>
 
       <div className="mt-4 flex justify-center">
-        <div className="inline-flex rounded-md shadow-sm -space-x-px">
+        <div className="inline-flex rounded-md shadow-sm">
           <button
             onClick={() => paginate(1)}
             disabled={currentPage === 1}
-            className={`relative inline-flex items-center px-2 py-2 rounded-l-md text-sm font-medium ${
-              currentPage === 1 ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-            }`}
+            className="px-3 py-1 bg-gray-800/50 hover:bg-gray-700/50 text-white rounded-l"
           >
             First
           </button>
           <button
             onClick={() => paginate(currentPage - 1)}
             disabled={currentPage === 1}
-            className={`relative inline-flex items-center px-2 py-2 rounded-l-md text-sm font-medium ${
-              currentPage === 1 ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-            }`}
+            className="px-3 py-1 bg-gray-800/50 hover:bg-gray-700/50 text-white rounded-l"
           >
             Previous
           </button>
@@ -265,9 +261,7 @@ const TokenList = ({ currentUser, showNotification }) => {
             <button
               key={i + 1}
               onClick={() => paginate(i + 1)}
-              className={`relative inline-flex items-center px-2 py-2 rounded-l-md text-sm font-medium ${
-                currentPage === i + 1 ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-              }`}
+              className="px-3 py-1 bg-gray-800/50 hover:bg-gray-700/50 text-white rounded-l"
             >
               {i + 1}
             </button>
@@ -275,18 +269,14 @@ const TokenList = ({ currentUser, showNotification }) => {
           <button
             onClick={() => paginate(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className={`relative inline-flex items-center px-2 py-2 rounded-l-md text-sm font-medium ${
-              currentPage === totalPages ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-            }`}
+            className="px-3 py-1 bg-gray-800/50 hover:bg-gray-700/50 text-white rounded-l"
           >
             Next
           </button>
           <button
             onClick={() => paginate(totalPages)}
             disabled={currentPage === totalPages}
-            className={`relative inline-flex items-center px-2 py-2 rounded-l-md text-sm font-medium ${
-              currentPage === totalPages ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-            }`}
+            className="px-3 py-1 bg-gray-800/50 hover:bg-gray-700/50 text-white rounded-l"
           >
             Last
           </button>
