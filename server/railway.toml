@@ -1,6 +1,9 @@
 [build]
-builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
+builder = "nixpacks"
 
 [deploy]
-startCommand = ""
+startCommand = "node index.js"
+
+[variables]
+NODE_ENV = "production"
+PORT = "5000"
