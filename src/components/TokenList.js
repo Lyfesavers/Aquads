@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import TokenReviews from './TokenReviews';
 import { Chart } from 'chart.js/auto';
-import io from 'socket.io-client';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 console.log('Using API URL:', API_URL);
@@ -54,31 +53,19 @@ const TokenList = ({ currentUser, showNotification }) => {
     const loadAds = async () => {
       try {
         setAdsLoading(true);
-        setAdsError(null);
-        console.log('Fetching ads from:', `${API_URL}/api/ads`);
-        
         const response = await fetch(`${API_URL}/api/ads`);
-        console.log('Response:', response);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
-        console.log('Ads data:', data);
-        
         setAds(data);
       } catch (error) {
         console.error('Error loading ads:', error);
         setAdsError(error.message);
-        showNotification('Error loading ads: ' + error.message, 'error');
       } finally {
         setAdsLoading(false);
       }
     };
-
     loadAds();
-  }, [showNotification]);
+  }, []);
 
   // Keep all your original useEffect hooks and functions
   // ... (keep all existing code)
@@ -86,7 +73,7 @@ const TokenList = ({ currentUser, showNotification }) => {
   // Add renderAds function
   const renderAds = () => {
     if (adsLoading) return <div className="text-gray-400">Loading ads...</div>;
-    if (adsError) return <div className="text-red-500">Error: {adsError}</div>;
+    if (adsError) return null;
     if (!ads || ads.length === 0) return null;
 
     return (
