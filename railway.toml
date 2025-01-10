@@ -2,8 +2,10 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "serve -s build"
+startCommand = "npm start"
 numReplicas = 1
+healthcheckPath = "/"
+healthcheckTimeout = 100
 
 [variables]
 NODE_ENV = "production"

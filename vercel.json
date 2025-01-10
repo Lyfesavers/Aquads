@@ -1,11 +1,19 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "build",
-  "framework": "create-react-app",
-  "rewrites": [
+  "version": 2,
+  "builds": [
     {
-      "source": "/api/:path*",
-      "destination": "https://your-railway-url.up.railway.app/api/:path*"
+      "src": "package.json",
+      "use": "@vercel/node",
+      "config": { "maxLambdaSize": "50mb" }
     }
-  ]
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/"
+    }
+  ],
+  "env": {
+    "REACT_APP_API_URL": "https://bubble-ads-backend-production.up.railway.app"
+  }
 } 
