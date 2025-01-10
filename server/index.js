@@ -28,9 +28,7 @@ const io = socketIo(server, {
 
 // Middleware
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production'
-    ? true  // Allow same-origin requests when hosted together
-    : ["http://localhost:3000"],
+  origin: '*', // Allow all origins temporarily
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -69,75 +67,29 @@ app.use('/api/login', limiter);
 app.use('/api/register', limiter);
 
 // Connect to MongoDB
-const createTestData = async () => {
-  try {
-    const count = await Ad.countDocuments();
-    if (count === 0) {
-      const testAds = [
-        {
-          id: 'test-1',
-          title: 'Test Ad 1',
-          logo: 'https://picsum.photos/200',
-          url: 'https://example.com',
-          size: 150,
-          x: 100,
-          y: 100,
-          owner: 'testuser',
-          createdAt: new Date()
-        },
-        {
-          id: 'test-2',
-          title: 'Test Ad 2', 
-          logo: 'https://picsum.photos/200',
-          url: 'https://example.com',
-          size: 100,
-          x: 300,
-          y: 300,
-          owner: 'testuser',
-          createdAt: new Date()
-        }
-      ];
-      await Ad.insertMany(testAds);
-      console.log('Test data created');
-    }
-  } catch (error) {
-    console.error('Error creating test data:', error);
-  }
-};
-
 mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   serverSelectionTimeoutMS: 30000,
   socketTimeoutMS: 45000,
-  keepAlive: true,
-  maxPoolSize: 10,
-})
-.then(async () => {
+}).then(() => {
   console.log('Connected to MongoDB');
-  try {
-    const ads = await Ad.find({}).lean();
-    console.log(`Successfully loaded ${ads.length} ads from database`);
-  } catch (error) {
-    console.error('Error loading ads:', error);
-  }
-})
-.catch(err => {
+}).catch((err) => {
   console.error('MongoDB connection error:', err);
-  process.exit(1);
+});
+
+// Add error handlers
+mongoose.connection.on('error', err => {
+  console.error('MongoDB error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected');
 });
 
 // Add connection monitoring
 mongoose.connection.on('connected', () => {
   console.log('Mongoose connected to MongoDB');
-});
-
-mongoose.connection.on('error', err => {
-  console.error('Mongoose connection error:', err);
-});
-
-mongoose.connection.on('disconnected', () => {
-  console.log('Mongoose disconnected from MongoDB');
 });
 
 // Graceful shutdown
