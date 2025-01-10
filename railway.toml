@@ -1,6 +1,6 @@
 [build]
-builder = "NIXPACKS"
-buildCommand = "npm install --legacy-peer-deps --force && CI=false npm run build"
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 
 [deploy]
 startCommand = "npm start"
@@ -12,6 +12,4 @@ restartPolicyType = "ON_FAILURE"
 NODE_ENV = "production"
 PORT = "3000"
 DISABLE_ESLINT_PLUGIN = "true"
-CI = "false"
-NODE_VERSION = "18.x"
-NPM_VERSION = "9.x" 
+CI = "false" 
