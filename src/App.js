@@ -568,7 +568,6 @@ function App() {
   // Add these socket event listeners in useEffect
   useEffect(() => {
     socket.on('reviewAdded', (review) => {
-      // Update reviews in real-time
       setReviews(prevReviews => [...prevReviews, review]);
     });
 
@@ -576,15 +575,9 @@ function App() {
       setCurrentUser(userData);
     });
 
-    socket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
-      showNotification('Connection error. Please try again.', 'error');
-    });
-
     return () => {
       socket.off('reviewAdded');
       socket.off('userAuthenticated');
-      socket.off('connect_error');
     };
   }, []);
 

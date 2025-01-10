@@ -1,11 +1,11 @@
 import io from 'socket.io-client';
 
 const API_URL = process.env.NODE_ENV === 'production'
-  ? '/api'
+  ? 'https://aquads.onrender.com/api'
   : 'http://localhost:5000/api';
 
 export const socket = io(process.env.NODE_ENV === 'production'
-  ? 'https://bubble-ads-backend-production.up.railway.app'
+  ? 'https://aquads.onrender.com'
   : 'http://localhost:5000', {
   auth: {
     token: (() => {
@@ -14,7 +14,12 @@ export const socket = io(process.env.NODE_ENV === 'production'
       return user?.token;
     })()
   },
-  transports: ['websocket', 'polling']
+  transports: ['websocket', 'polling'],
+  reconnectionAttempts: 5,
+  reconnectionDelay: 5000,
+  // Don't show errors for expected disconnects
+  reconnection: true,
+  timeout: 10000
 });
 
 const getAuthHeader = () => {
@@ -202,15 +207,16 @@ socket.on('connect', () => {
   isConnected = true;
 });
 
-socket.on('disconnect', () => {
-  console.log('Socket disconnected');
-  isConnected = false;
-  // Attempt to reconnect
-  setTimeout(() => {
-    if (!isConnected) {
-      socket.connect();
-    }
-  }, 5000);
+socket.on('connect_error', (error) => {
+  console.warn('Socket connection error:', error);
+  // Don't show notification for connection errors
+});
+
+socket.on('disconnect', (reason) => {
+  if (reason === 'io server disconnect') {
+    // Don't show notification for server disconnects
+    socket.connect();
+  }
 });
 
 // Add periodic connection check
