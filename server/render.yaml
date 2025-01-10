@@ -2,8 +2,8 @@ services:
   - type: web
     name: bubble-ads-backend
     env: node
-    buildCommand: npm install --legacy-peer-deps
-    startCommand: node index.js
+    buildCommand: cd server && npm install --legacy-peer-deps
+    startCommand: cd server && node index.js
     nodeVersion: 18.x
     envVars:
       - key: NODE_ENV
