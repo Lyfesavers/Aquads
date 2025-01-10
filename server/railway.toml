@@ -9,4 +9,5 @@ healthcheckTimeout = 100
 restartPolicyType = "ON_FAILURE"
 
 [variables]
-NODE_ENV = "production" 
+NODE_ENV = "production"
+PORT = "5000" 
