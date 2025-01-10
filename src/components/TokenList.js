@@ -44,8 +44,6 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'market_cap', direction: 'desc' });
-  const [currentPage, setCurrentPage] = useState(1);
-  const [tokensPerPage] = useState(100);
   const [showDexFrame, setShowDexFrame] = useState(false);
   const [selectedDex, setSelectedDex] = useState(null);
   const [error, setError] = useState(null);
@@ -57,63 +55,27 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   useEffect(() => {
-    const fetchTokens = async () => {
+    const fetchInitialTokens = async () => {
       try {
         setIsLoadingTokens(true);
         setError(null);
         
-        // First fetch to get initial tokens and show something quickly
-        const initialResponse = await fetch(
+        const response = await fetch(
           'https://api.coingecko.com/api/v3/coins/markets?' +
           'vs_currency=usd&' +
           'order=market_cap_desc&' +
-          'per_page=250&' +
+          'per_page=20&' +
           'page=1&' +
           'sparkline=false'
         );
         
-        if (!initialResponse.ok) {
-          throw new Error(`HTTP error! status: ${initialResponse.status}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        const initialData = await initialResponse.ok ? await initialResponse.json() : [];
-        setTokens(initialData);
-        setFilteredTokens(initialData);
-
-        // Then fetch all remaining pages (CoinGecko has ~65 pages of 250 tokens each)
-        const totalPages = 65; // This will get approximately 16,250 tokens
-        const allPages = [];
-
-        for (let page = 2; page <= totalPages; page++) {
-          try {
-            // Add delay between requests to avoid rate limits
-            await new Promise(resolve => setTimeout(resolve, 200));
-            
-            const response = await fetch(
-              `https://api.coingecko.com/api/v3/coins/markets?` +
-              `vs_currency=usd&` +
-              `order=market_cap_desc&` +
-              `per_page=250&` +
-              `page=${page}&` +
-              `sparkline=false`
-            );
-
-            if (response.ok) {
-              const pageData = await response.json();
-              if (pageData.length === 0) break; // Stop if we get an empty page
-              allPages.push(pageData);
-              
-              // Update tokens progressively as they come in
-              const updatedTokens = [...initialData, ...allPages.flat()];
-              setTokens(updatedTokens);
-              setFilteredTokens(updatedTokens);
-            }
-          } catch (error) {
-            console.warn(`Error fetching page ${page}:`, error);
-            // Continue with next page even if one fails
-          }
-        }
-
+        const data = await response.json();
+        setTokens(data);
+        setFilteredTokens(data);
       } catch (error) {
         console.error('Error fetching tokens:', error);
         setError('Unable to load tokens. Please try again in a few minutes.');
@@ -122,8 +84,8 @@ const TokenList = ({ currentUser, showNotification }) => {
       }
     };
 
-    fetchTokens();
-    const interval = setInterval(fetchTokens, 300000); // Refresh every 5 minutes
+    fetchInitialTokens();
+    const interval = setInterval(fetchInitialTokens, 300000);
     return () => clearInterval(interval);
   }, []);
 
@@ -160,13 +122,55 @@ const TokenList = ({ currentUser, showNotification }) => {
     }
   }, [chartData, selectedToken]);
 
-  useEffect(() => {
-    const filtered = tokens.filter(token => 
-      token.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      token.symbol.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredTokens(filtered);
-  }, [searchTerm, tokens]);
+  const handleSearch = async (searchTerm) => {
+    setSearchTerm(searchTerm);
+    
+    if (searchTerm.length < 2) {
+      setFilteredTokens(tokens);
+      return;
+    }
+
+    try {
+      setIsLoadingTokens(true);
+      const response = await fetch(
+        `https://api.coingecko.com/api/v3/search?query=${searchTerm}`
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const searchResults = await response.json();
+      
+      const detailedResults = await Promise.all(
+        searchResults.coins.slice(0, 20).map(async (coin) => {
+          const detailResponse = await fetch(
+            `https://api.coingecko.com/api/v3/coins/${coin.id}?localization=false&tickers=false&community_data=false&developer_data=false`
+          );
+          if (detailResponse.ok) {
+            const detailData = await detailResponse.json();
+            return {
+              ...detailData,
+              current_price: detailData.market_data?.current_price?.usd,
+              market_cap: detailData.market_data?.market_cap?.usd,
+              total_volume: detailData.market_data?.total_volume?.usd,
+              price_change_percentage_24h: detailData.market_data?.price_change_percentage_24h,
+              market_cap_rank: detailData.market_cap_rank,
+            };
+          }
+          return null;
+        })
+      );
+
+      const validResults = detailedResults.filter(result => result !== null);
+      setFilteredTokens(validResults);
+    } catch (error) {
+      console.error('Error searching tokens:', error);
+      setError('Unable to search tokens. Please try again in a few minutes.');
+    } finally {
+      setIsLoadingTokens(false);
+    }
+  };
 
   const handleSort = (key, order = orderFilter) => {
     setSortFilter(key);
@@ -226,38 +230,9 @@ const TokenList = ({ currentUser, showNotification }) => {
     }
   };
 
-  const paginate = (pageNumber) => {
-    const maxPage = Math.ceil(filteredTokens.length / tokensPerPage);
-    const validPageNumber = Math.min(Math.max(1, pageNumber), maxPage);
-    setCurrentPage(validPageNumber);
-  };
-
-  const indexOfLastToken = currentPage * tokensPerPage;
-  const indexOfFirstToken = indexOfLastToken - tokensPerPage;
-  const currentTokens = filteredTokens.slice(indexOfFirstToken, indexOfLastToken);
-  const totalPages = Math.ceil(filteredTokens.length / tokensPerPage);
-
   const handleDexClick = (dex) => {
     setSelectedDex(dex);
     setShowDexFrame(true);
-  };
-
-  const calculatePageRange = () => {
-    const range = [];
-    const maxButtons = 5; // Show max 5 page buttons at a time
-    let start = Math.max(1, currentPage - Math.floor(maxButtons / 2));
-    let end = Math.min(totalPages, start + maxButtons - 1);
-
-    // Adjust start if we're near the end
-    if (end === totalPages) {
-      start = Math.max(1, end - maxButtons + 1);
-    }
-
-    for (let i = start; i <= end; i++) {
-      range.push(i);
-    }
-
-    return range;
   };
 
   return (
@@ -267,9 +242,9 @@ const TokenList = ({ currentUser, showNotification }) => {
           <div className="flex-1">
             <input
               type="text"
-              placeholder="Search tokens..."
+              placeholder="Search any token..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => handleSearch(e.target.value)}
               className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -408,7 +383,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-700/30">
-                {currentTokens.map((token, index) => (
+                {filteredTokens.map((token, index) => (
                   <>
                     <tr 
                       key={token.id}
@@ -566,75 +541,21 @@ const TokenList = ({ currentUser, showNotification }) => {
           </div>
         )}
 
-        <div className="mt-6 flex justify-center items-center space-x-2">
-          <div className="inline-flex rounded-lg overflow-hidden border border-blue-500/30">
-            <button
-              onClick={() => paginate(1)}
-              disabled={currentPage === 1}
-              className="px-4 py-2 bg-gray-800/80 hover:bg-blue-500/20 text-gray-300 hover:text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed border-r border-blue-500/30"
-            >
-              ⟪
-            </button>
-            <button
-              onClick={() => paginate(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="px-4 py-2 bg-gray-800/80 hover:bg-blue-500/20 text-gray-300 hover:text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed border-r border-blue-500/30"
-            >
-              ⟨
-            </button>
-            
-            {calculatePageRange().map((pageNum) => (
-              <button
-                key={pageNum}
-                onClick={() => paginate(pageNum)}
-                className={`
-                  px-4 py-2 border-r border-blue-500/30
-                  ${currentPage === pageNum 
-                    ? 'bg-blue-500/20 text-blue-400' 
-                    : 'bg-gray-800/80 text-gray-300 hover:bg-blue-500/20 hover:text-blue-400'
-                  }
-                `}
-              >
-                {pageNum}
-              </button>
-            ))}
-            
-            <button
-              onClick={() => paginate(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="px-4 py-2 bg-gray-800/80 hover:bg-blue-500/20 text-gray-300 hover:text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed border-r border-blue-500/30"
-            >
-              ⟩
-            </button>
-            <button
-              onClick={() => paginate(totalPages)}
-              disabled={currentPage === totalPages}
-              className="px-4 py-2 bg-gray-800/80 hover:bg-blue-500/20 text-gray-300 hover:text-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              ⟫
-            </button>
+        {showReviews && selectedToken && (
+          <TokenReviews
+            token={selectedToken}
+            onClose={handleCloseReviews}
+            currentUser={currentUser}
+            showNotification={showNotification}
+          />
+        )}
+
+        {isLoadingTokens && (
+          <div className="fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg">
+            Loading tokens: {tokens.length} loaded...
           </div>
-          
-          <span className="text-gray-400 ml-2">
-            Page {currentPage} of {totalPages}
-          </span>
-        </div>
+        )}
       </div>
-
-      {showReviews && selectedToken && (
-        <TokenReviews
-          token={selectedToken}
-          onClose={handleCloseReviews}
-          currentUser={currentUser}
-          showNotification={showNotification}
-        />
-      )}
-
-      {isLoadingTokens && (
-        <div className="fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg">
-          Loading tokens: {tokens.length} loaded...
-        </div>
-      )}
     </div>
   );
 };
