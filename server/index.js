@@ -28,7 +28,9 @@ const io = socketIo(server, {
 
 // Middleware
 const corsOptions = {
-  origin: ["http://localhost:3000", "http://localhost:5001"],
+  origin: process.env.NODE_ENV === 'production'
+    ? true  // Allow same-origin requests when hosted together
+    : ["http://localhost:3000"],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization']

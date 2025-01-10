@@ -1,0 +1,15 @@
+[build]
+builder = "NIXPACKS"
+buildCommand = "npm install && npm run build"
+
+[deploy]
+startCommand = "npm start"
+healthcheckPath = "/"
+healthcheckTimeout = 100
+restartPolicyType = "ON_FAILURE"
+numReplicas = 1
+
+[variables]
+NODE_ENV = "production"
+MONGODB_URI = "${MONGODB_URI}"
+JWT_SECRET = "${JWT_SECRET}" 

@@ -1,8 +1,12 @@
 import io from 'socket.io-client';
 
-// Temporarily use localhost for development
-const API_URL = 'http://localhost:5000/api';
-export const socket = io('http://localhost:5000', {
+const API_URL = process.env.NODE_ENV === 'production' 
+  ? '/api'  // Since both frontend and backend will be on same domain
+  : 'http://localhost:5000/api';
+
+export const socket = io(process.env.NODE_ENV === 'production' 
+  ? '/'
+  : 'http://localhost:5000', {
   auth: {
     token: (() => {
       const savedUser = localStorage.getItem('currentUser');
