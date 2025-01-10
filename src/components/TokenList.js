@@ -62,66 +62,54 @@ const TokenList = ({ currentUser, showNotification }) => {
         setIsLoadingTokens(true);
         setError(null);
         
-        // Fetch multiple pages of tokens
-        const fetchPage = async (page) => {
-          // Add delay between requests to avoid rate limits
-          if (page > 1) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-          }
-          
-          const response = await fetch(
-            'https://api.coingecko.com/api/v3/coins/markets?' +
-            'vs_currency=usd&' +
-            'order=market_cap_desc&' +
-            'per_page=250&' + // Maximum per page
-            `page=${page}&` +
-            'sparkline=false&' +
-            'price_change_percentage=24h'
-          );
-          
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          
-          return await response.json();
-        };
-
-        // Fetch first 12 pages (3000 tokens)
-        const pages = await Promise.all([
-          fetchPage(1),
-          fetchPage(2),
-          fetchPage(3),
-          fetchPage(4),
-          fetchPage(5),
-          fetchPage(6),
-          fetchPage(7),
-          fetchPage(8),
-          fetchPage(9),
-          fetchPage(10),
-          fetchPage(11),
-          fetchPage(12)
-        ]);
-
-        // Combine all pages
-        const allTokens = pages.flat();
-        setTokens(allTokens);
-        setFilteredTokens(allTokens);
+        // Single page fetch first to show immediate results
+        const response = await fetch(
+          'https://api.coingecko.com/api/v3/coins/markets?' +
+          'vs_currency=usd&' +
+          'order=market_cap_desc&' +
+          'per_page=250&' +
+          'page=1&' +
+          'sparkline=false'
+        );
         
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const initialData = await response.json();
+        setTokens(initialData);
+        setFilteredTokens(initialData);
+
+        // Then fetch additional pages
+        try {
+          const additionalPages = await Promise.all([
+            fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=2&sparkline=false').then(res => res.json()),
+            fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=3&sparkline=false').then(res => res.json()),
+            fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=4&sparkline=false').then(res => res.json())
+          ]);
+
+          const allTokens = [
+            ...initialData,
+            ...additionalPages.flat()
+          ];
+
+          setTokens(allTokens);
+          setFilteredTokens(allTokens);
+        } catch (error) {
+          console.warn('Error fetching additional pages:', error);
+          // Don't throw here - we still have initial data to show
+        }
+
       } catch (error) {
         console.error('Error fetching tokens:', error);
-        if (error.message.includes('429')) {
-          setError('Rate limit reached. Please wait a moment and try again.');
-        } else {
-          setError('Unable to load tokens. Please try again in a few minutes.');
-        }
+        setError('Unable to load tokens. Please try again in a few minutes.');
       } finally {
         setIsLoadingTokens(false);
       }
     };
 
     fetchTokens();
-    // Fetch every 15 minutes to avoid rate limits with larger dataset
-    const interval = setInterval(fetchTokens, 900000);
+    const interval = setInterval(fetchTokens, 300000); // Refresh every 5 minutes
     return () => clearInterval(interval);
   }, []);
 
