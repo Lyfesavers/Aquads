@@ -1,11 +1,11 @@
 import io from 'socket.io-client';
 
 const API_URL = process.env.NODE_ENV === 'production'
-  ? 'https://your-backend-service-url.railway.app/api'
+  ? '/api'
   : 'http://localhost:5000/api';
 
 export const socket = io(process.env.NODE_ENV === 'production'
-  ? 'https://your-backend-service-url.railway.app'
+  ? '/'
   : 'http://localhost:5000', {
   auth: {
     token: (() => {
