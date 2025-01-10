@@ -4,34 +4,6 @@ import { Chart } from 'chart.js/auto';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-// Keep the DEX options
-const DEX_OPTIONS = [
-  {
-    name: 'PawChain',
-    url: 'https://swap.pawchain.net',
-    icon: '🐾',
-    description: 'Native PawChain DEX'
-  },
-  {
-    name: 'Uniswap',
-    url: 'https://app.uniswap.org/#/swap',
-    icon: '🦄',
-    description: 'Leading Ethereum DEX'
-  },
-  {
-    name: 'PancakeSwap',
-    url: 'https://pancakeswap.finance/swap',
-    icon: '🥞',
-    description: 'Popular BSC DEX'
-  },
-  {
-    name: 'SushiSwap',
-    url: 'https://app.sushi.com/swap',
-    icon: '🍣',
-    description: 'Multi-chain DEX'
-  }
-];
-
 const TokenList = ({ currentUser, showNotification }) => {
   const [tokens, setTokens] = useState([]);
   const [selectedToken, setSelectedToken] = useState(null);
@@ -41,7 +13,6 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [chartInstance, setChartInstance] = useState(null);
   const [selectedTimeRange, setSelectedTimeRange] = useState('24h');
   const [isLoading, setIsLoading] = useState(false);
-  const [ads, setAds] = useState([]);
 
   // Fetch tokens from CoinGecko
   useEffect(() => {
@@ -61,63 +32,65 @@ const TokenList = ({ currentUser, showNotification }) => {
     fetchTokens();
   }, [showNotification]);
 
-  // Fetch ads from backend
-  useEffect(() => {
-    const fetchAds = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/ads`);
-        const data = await response.json();
-        setAds(data);
-      } catch (error) {
-        console.error('Error fetching ads:', error);
-      }
-    };
+  const handleTokenClick = (token) => {
+    setSelectedToken(token);
+    setShowReviews(true);
+    fetchChartData(token.id, selectedTimeRange);
+  };
 
-    fetchAds();
-  }, []);
+  const handleCloseReviews = () => {
+    setShowReviews(false);
+    setSelectedToken(null);
+  };
 
-  // Render floating ad bubbles
-  const renderAdBubbles = () => {
-    return ads.map((ad, index) => (
-      <div
-        key={ad._id}
-        className="fixed w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white text-xs p-2 animate-float"
-        style={{
-          top: `${Math.random() * 20 + 10}%`,
-          left: `${Math.random() * 80 + 10}%`,
-          animationDelay: `${index * 0.5}s`
-        }}
-        title={ad.title}
-      >
-        {ad.title.substring(0, 3)}
-      </div>
-    ));
+  const handleTimeRangeChange = async (range) => {
+    setSelectedTimeRange(range);
+    if (selectedToken) {
+      setIsLoading(true);
+      await fetchChartData(selectedToken.id, range);
+      setIsLoading(false);
+    }
+  };
+
+  const fetchChartData = async (tokenId, days) => {
+    try {
+      const response = await fetch(
+        `https://api.coingecko.com/api/v3/coins/${tokenId}/market_chart?vs_currency=usd&days=${days}`
+      );
+      const data = await response.json();
+      setChartData(data);
+    } catch (error) {
+      console.error('Error fetching chart data:', error);
+      showNotification('Error fetching chart data', 'error');
+    }
   };
 
   return (
     <div className="container mx-auto p-4">
-      {/* Floating Ad Bubbles */}
-      {renderAdBubbles()}
-
-      {/* DEX Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {DEX_OPTIONS.map((dex) => (
-          <div
-            key={dex.name}
-            className="bg-gray-800 p-6 rounded-lg shadow-lg hover:bg-gray-700 transition-colors cursor-pointer"
-            onClick={() => window.open(dex.url, '_blank')}
-          >
-            <div className="flex items-center mb-4">
-              <span className="text-2xl mr-2">{dex.icon}</span>
-              <h3 className="text-xl font-bold text-white">{dex.name}</h3>
-            </div>
-            <p className="text-gray-300">{dex.description}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Token List Table */}
       <div className="bg-gray-900 rounded-lg shadow-xl overflow-hidden">
+        <div className="flex justify-between items-center p-4 bg-gray-800">
+          <h2 className="text-xl font-bold text-white">Market Overview</h2>
+          <div className="flex space-x-2">
+            <button 
+              className={`px-3 py-1 rounded ${selectedTimeRange === '24h' ? 'bg-blue-500' : 'bg-gray-700'}`}
+              onClick={() => handleTimeRangeChange('24h')}
+            >
+              24h
+            </button>
+            <button 
+              className={`px-3 py-1 rounded ${selectedTimeRange === '7d' ? 'bg-blue-500' : 'bg-gray-700'}`}
+              onClick={() => handleTimeRangeChange('7d')}
+            >
+              7d
+            </button>
+            <button 
+              className={`px-3 py-1 rounded ${selectedTimeRange === '30d' ? 'bg-blue-500' : 'bg-gray-700'}`}
+              onClick={() => handleTimeRangeChange('30d')}
+            >
+              30d
+            </button>
+          </div>
+        </div>
         <table className="min-w-full">
           <thead>
             <tr className="bg-gray-800">
@@ -130,11 +103,11 @@ const TokenList = ({ currentUser, showNotification }) => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Rating</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-800">
+          <tbody className="bg-gray-900 divide-y divide-gray-800">
             {tokens.map((token, index) => (
               <tr 
                 key={token.id}
-                className="hover:bg-gray-800 cursor-pointer"
+                className="hover:bg-gray-800 cursor-pointer transition-colors"
                 onClick={() => handleTokenClick(token)}
               >
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{index + 1}</td>
@@ -170,7 +143,6 @@ const TokenList = ({ currentUser, showNotification }) => {
         </table>
       </div>
 
-      {/* Reviews Modal */}
       {showReviews && selectedToken && (
         <TokenReviews
           token={selectedToken}
