@@ -33,7 +33,6 @@ const DEX_OPTIONS = [
 
 const TokenList = ({ currentUser, showNotification }) => {
   const [tokens, setTokens] = useState([]);
-  const [filteredTokens, setFilteredTokens] = useState([]);
   const [selectedToken, setSelectedToken] = useState(null);
   const [showReviews, setShowReviews] = useState(false);
   const [chartData, setChartData] = useState(null);
@@ -41,10 +40,8 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [chartInstance, setChartInstance] = useState(null);
   const [selectedTimeRange, setSelectedTimeRange] = useState('24h');
   const [isLoading, setIsLoading] = useState(false);
-  const [showTokenDetails, setShowTokenDetails] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortConfig, setSortConfig] = useState({ key: 'market_cap', direction: 'desc' });
-  const [showDexMenu, setShowDexMenu] = useState(false);
+  const [selectedDex, setSelectedDex] = useState(null);
+  const [showDexFrame, setShowDexFrame] = useState(false);
 
   useEffect(() => {
     const fetchTokens = async () => {
@@ -54,7 +51,6 @@ const TokenList = ({ currentUser, showNotification }) => {
         );
         const data = await response.json();
         setTokens(data);
-        setFilteredTokens(data);
       } catch (error) {
         console.error('Error fetching tokens:', error);
         showNotification('Error fetching tokens', 'error');
@@ -64,77 +60,25 @@ const TokenList = ({ currentUser, showNotification }) => {
     fetchTokens();
   }, [showNotification]);
 
-  useEffect(() => {
-    if (chartData && chartRef.current) {
-      if (chartInstance) {
-        chartInstance.destroy();
-      }
-
-      const ctx = chartRef.current.getContext('2d');
-      const newChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: chartData.prices.map(price => new Date(price[0]).toLocaleDateString()),
-          datasets: [{
-            label: 'Price (USD)',
-            data: chartData.prices.map(price => price[1]),
-            borderColor: 'rgb(75, 192, 192)',
-            tension: 0.1
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: {
-              position: 'top',
-            },
-            title: {
-              display: true,
-              text: `${selectedToken?.name} Price Chart`
-            }
-          }
-        }
-      });
-      setChartInstance(newChartInstance);
-    }
-  }, [chartData, selectedToken]);
-
-  useEffect(() => {
-    const filtered = tokens.filter(token => 
-      token.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      token.symbol.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredTokens(filtered);
-  }, [searchTerm, tokens]);
-
   const handleTokenClick = (token) => {
     setSelectedToken(token);
-    setShowTokenDetails(true);
+    setShowReviews(true);
     fetchChartData(token.id, selectedTimeRange);
   };
 
-  const handleSort = (key) => {
-    let direction = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
-    }
-    setSortConfig({ key, direction });
-    
-    const sorted = [...filteredTokens].sort((a, b) => {
-      if (direction === 'asc') {
-        return a[key] > b[key] ? 1 : -1;
-      }
-      return a[key] < b[key] ? 1 : -1;
-    });
-    setFilteredTokens(sorted);
+  const handleDexClick = (dex) => {
+    setSelectedDex(dex);
+    setShowDexFrame(true);
   };
 
-  const handleCloseDetails = () => {
-    setShowTokenDetails(false);
+  const handleCloseDex = () => {
+    setSelectedDex(null);
+    setShowDexFrame(false);
+  };
+
+  const handleCloseReviews = () => {
+    setShowReviews(false);
     setSelectedToken(null);
-    if (chartInstance) {
-      chartInstance.destroy();
-    }
   };
 
   const handleTimeRangeChange = async (range) => {
@@ -160,50 +104,69 @@ const TokenList = ({ currentUser, showNotification }) => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Search and Filters */}
-      <div className="mb-6 flex items-center justify-between">
-        <input
-          type="text"
-          placeholder="Search tokens..."
-          className="px-4 py-2 rounded bg-gray-800 text-white"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        <div className="relative">
-          <button
-            className="px-4 py-2 bg-blue-500 rounded text-white"
-            onClick={() => setShowDexMenu(!showDexMenu)}
-          >
-            DEX Options
-          </button>
-          {showDexMenu && (
-            <div className="absolute right-0 mt-2 w-64 bg-gray-800 rounded-lg shadow-xl z-10">
-              {DEX_OPTIONS.map((dex) => (
-                <div
-                  key={dex.name}
-                  className="p-4 hover:bg-gray-700 cursor-pointer"
-                  onClick={() => window.open(dex.url, '_blank')}
-                >
-                  <div className="flex items-center">
-                    <span className="text-2xl mr-2">{dex.icon}</span>
-                    <div>
-                      <h3 className="text-white font-bold">{dex.name}</h3>
-                      <p className="text-gray-400 text-sm">{dex.description}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+    <div className="container mx-auto p-4">
+      {/* DEX Options */}
+      <div className="mb-6">
+        <div className="flex space-x-4">
+          {DEX_OPTIONS.map((dex) => (
+            <button
+              key={dex.name}
+              className="px-4 py-2 bg-gray-800 rounded-lg hover:bg-gray-700 text-white flex items-center"
+              onClick={() => handleDexClick(dex)}
+            >
+              <span className="text-xl mr-2">{dex.icon}</span>
+              {dex.name}
+            </button>
+          ))}
         </div>
       </div>
 
+      {/* DEX iFrame Modal */}
+      {showDexFrame && selectedDex && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-900 rounded-lg w-full max-w-4xl h-[80vh]">
+            <div className="flex justify-between items-center p-4 border-b border-gray-800">
+              <h3 className="text-xl font-bold text-white">{selectedDex.name}</h3>
+              <button onClick={handleCloseDex} className="text-gray-500 hover:text-white">✕</button>
+            </div>
+            <iframe
+              src={selectedDex.url}
+              className="w-full h-[calc(100%-4rem)]"
+              title={selectedDex.name}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Token List */}
-      <div className="bg-gray-900 rounded-lg overflow-hidden">
+      <div className="bg-transparent rounded-lg overflow-hidden">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-white">Market Overview</h2>
+          <div className="flex space-x-2">
+            <button 
+              className={`px-3 py-1 rounded ${selectedTimeRange === '24h' ? 'bg-blue-500' : 'bg-gray-700'} text-white`}
+              onClick={() => handleTimeRangeChange('24h')}
+            >
+              24h
+            </button>
+            <button 
+              className={`px-3 py-1 rounded ${selectedTimeRange === '7d' ? 'bg-blue-500' : 'bg-gray-700'} text-white`}
+              onClick={() => handleTimeRangeChange('7d')}
+            >
+              7d
+            </button>
+            <button 
+              className={`px-3 py-1 rounded ${selectedTimeRange === '30d' ? 'bg-blue-500' : 'bg-gray-700'} text-white`}
+              onClick={() => handleTimeRangeChange('30d')}
+            >
+              30d
+            </button>
+          </div>
+        </div>
+
         <table className="min-w-full">
           <thead>
-            <tr className="bg-gray-800/50">
+            <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">#</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Token</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Price</th>
@@ -214,10 +177,10 @@ const TokenList = ({ currentUser, showNotification }) => {
             </tr>
           </thead>
           <tbody>
-            {filteredTokens.map((token, index) => (
+            {tokens.map((token, index) => (
               <tr 
                 key={token.id}
-                className="hover:bg-gray-800 cursor-pointer"
+                className="border-b border-gray-800 hover:bg-gray-800/30 cursor-pointer"
                 onClick={() => handleTokenClick(token)}
               >
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{index + 1}</td>
@@ -253,65 +216,13 @@ const TokenList = ({ currentUser, showNotification }) => {
         </table>
       </div>
 
-      {/* Token Details Modal */}
-      {showTokenDetails && selectedToken && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-gray-900 rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex items-center">
-                <img src={selectedToken.image} alt={selectedToken.name} className="w-12 h-12 mr-4" />
-                <div>
-                  <h2 className="text-2xl font-bold text-white">{selectedToken.name}</h2>
-                  <p className="text-gray-400">{selectedToken.symbol.toUpperCase()}</p>
-                </div>
-              </div>
-              <button
-                onClick={handleCloseDetails}
-                className="text-gray-500 hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div className="bg-gray-800 p-4 rounded">
-                <h3 className="text-lg font-bold text-white mb-2">Price Statistics</h3>
-                <div className="space-y-2">
-                  <p className="text-gray-400">Current Price: <span className="text-white">${selectedToken.current_price}</span></p>
-                  <p className="text-gray-400">Market Cap: <span className="text-white">${(selectedToken.market_cap / 1000000).toFixed(2)}M</span></p>
-                  <p className="text-gray-400">24h Volume: <span className="text-white">${(selectedToken.total_volume / 1000000).toFixed(2)}M</span></p>
-                </div>
-              </div>
-              
-              <div className="bg-gray-800 p-4 rounded">
-                <h3 className="text-lg font-bold text-white mb-2">Price Change</h3>
-                <div className="space-y-2">
-                  <p className="text-gray-400">24h Change: 
-                    <span className={selectedToken.price_change_percentage_24h > 0 ? 'text-green-400' : 'text-red-400'}>
-                      {selectedToken.price_change_percentage_24h.toFixed(2)}%
-                    </span>
-                  </p>
-                  <p className="text-gray-400">24h High: <span className="text-white">${selectedToken.high_24h}</span></p>
-                  <p className="text-gray-400">24h Low: <span className="text-white">${selectedToken.low_24h}</span></p>
-                </div>
-              </div>
-            </div>
-
-            <div className="mb-6">
-              <canvas ref={chartRef} />
-            </div>
-
-            <div className="mt-6">
-              <h3 className="text-lg font-bold text-white mb-4">Reviews</h3>
-              <TokenReviews
-                token={selectedToken}
-                onClose={() => setShowReviews(false)}
-                currentUser={currentUser}
-                showNotification={showNotification}
-              />
-            </div>
-          </div>
-        </div>
+      {showReviews && selectedToken && (
+        <TokenReviews
+          token={selectedToken}
+          onClose={handleCloseReviews}
+          currentUser={currentUser}
+          showNotification={showNotification}
+        />
       )}
     </div>
   );
