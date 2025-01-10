@@ -2,7 +2,8 @@ services:
   - type: web
     name: bubble-ads-backend
     env: node
-    buildCommand: npm install
+    rootDir: server
+    buildCommand: npm install --legacy-peer-deps
     startCommand: node index.js
     envVars:
       - key: NODE_ENV
@@ -10,6 +11,6 @@ services:
       - key: PORT
         value: 5000
       - key: MONGODB_URI
-        fromGroup: bubble-ads
+        value: mongodb+srv://lyfesaverscoin:gB5gN_4mj5YXyqS@cluster0.hgud2.mongodb.net/bubble-ads
       - key: JWT_SECRET
-        fromGroup: bubble-ads 
+        value: bubble-ads-jwt-secret-key-2024 
