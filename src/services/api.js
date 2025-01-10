@@ -99,44 +99,25 @@ export const deleteAd = async (id) => {
 // Login user
 export const loginUser = async (credentials) => {
   try {
-    console.log('Attempting login to:', `${API_URL}/auth/login`); // Debug log
-
-    const response = await fetch(`${API_URL}/auth/login`, {
+    const response = await fetch(`${API_URL}/login`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         username: credentials.username.toLowerCase(),
         password: credentials.password
-      }),
-      mode: 'cors', // Add CORS mode
-      credentials: 'include'
+      })
     });
 
-    // Log response status for debugging
-    console.log('Login response status:', response.status);
-
-    // First check if the response exists
-    if (!response) {
-      throw new Error('No response from server');
-    }
-
-    const contentType = response.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
-      console.error('Invalid content type:', contentType); // Debug log
-      throw new Error('Server response was not JSON');
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Login failed');
     }
 
     const data = await response.json();
-    console.log('Login response data:', data); // Debug log
-
-    if (!response.ok) {
-      throw new Error(data.message || 'Login failed');
-    }
-
-    // Store complete user data
+    
+    // Store user data
     const userData = {
       ...data,
       username: data.username || credentials.username.toLowerCase(),
@@ -144,19 +125,15 @@ export const loginUser = async (credentials) => {
       token: data.token
     };
 
-    // Save to localStorage
     localStorage.setItem('currentUser', JSON.stringify(userData));
     
-    // Update socket connection with new auth token
+    // Update socket auth
     socket.auth = { token: userData.token };
     socket.disconnect().connect();
 
     return userData;
   } catch (error) {
-    console.error('Detailed login error:', error); // More detailed error logging
-    if (error.message.includes('Failed to fetch')) {
-      throw new Error('Unable to connect to server. Please check your internet connection and try again.');
-    }
+    console.error('Login error:', error);
     throw error;
   }
 };
@@ -339,10 +316,7 @@ socket.on('connect', () => {
 // Add a ping function to check server availability
 export const pingServer = async () => {
   try {
-    const response = await fetch(`${API_URL}/health`, {
-      method: 'GET',
-      mode: 'cors'
-    });
+    const response = await fetch(`${API_URL}/ads`);
     return response.ok;
   } catch (error) {
     console.error('Server ping failed:', error);
