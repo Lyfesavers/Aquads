@@ -31,6 +31,8 @@ const DEX_OPTIONS = [
   }
 ];
 
+const INITIAL_TOKEN_COUNT = 250; // Pre-load more tokens initially
+
 const TokenList = ({ currentUser, showNotification }) => {
   const [tokens, setTokens] = useState([]);
   const [filteredTokens, setFilteredTokens] = useState([]);
@@ -53,83 +55,88 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [sortFilter, setSortFilter] = useState('market_cap');
   const [orderFilter, setOrderFilter] = useState('desc');
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [allTokensCache, setAllTokensCache] = useState([]); // Cache for all tokens
+  const [lastUpdateTime, setLastUpdateTime] = useState(null);
+  const [isBackgroundLoading, setIsBackgroundLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchInitialTokens = async () => {
-      try {
-        setIsLoadingTokens(true);
-        setError(null);
-        
-        const response = await fetch(
-          'https://api.coingecko.com/api/v3/coins/markets?' +
-          'vs_currency=usd&' +
-          'order=market_cap_desc&' +
-          'per_page=20&' +
-          'page=1&' +
-          'sparkline=false'
-        );
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        setTokens(data);
-        setFilteredTokens(data);
-      } catch (error) {
-        console.error('Error fetching tokens:', error);
-        setError('Unable to load tokens. Please try again in a few minutes.');
-      } finally {
-        setIsLoadingTokens(false);
-      }
-    };
+  const loadAllTokensInBackground = async () => {
+    if (isBackgroundLoading) return;
+    
+    setIsBackgroundLoading(true);
+    const timestamp = Date.now();
+    const allTokens = [];
+    const totalPages = 65; // Approximately 16,250 tokens
 
-    fetchInitialTokens();
-    const interval = setInterval(fetchInitialTokens, 300000);
-    return () => clearInterval(interval);
-  }, []);
+    try {
+      for (let page = 1; page <= totalPages; page++) {
+        try {
+          const response = await fetch(
+            `https://api.coingecko.com/api/v3/coins/markets?` +
+            `vs_currency=usd&` +
+            `order=market_cap_desc&` +
+            `per_page=250&` +
+            `page=${page}&` +
+            `sparkline=false`
+          );
 
-  useEffect(() => {
-    if (chartData && chartRef.current && selectedToken) {
-      if (chartInstance) {
-        chartInstance.destroy();
-      }
-
-      const ctx = chartRef.current.getContext('2d');
-      const newChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: chartData.prices.map(price => new Date(price[0]).toLocaleDateString()),
-          datasets: [{
-            label: `${selectedToken.name} Price (USD)`,
-            data: chartData.prices.map(price => price[1]),
-            borderColor: 'rgb(75, 192, 192)',
-            tension: 0.1
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: 'top' },
-            title: { display: true, text: 'Price History' }
-          },
-          scales: {
-            y: { beginAtZero: false }
+          if (response.ok) {
+            const pageData = await response.json();
+            if (pageData.length === 0) break;
+            allTokens.push(...pageData);
+            
+            // Update cache progressively
+            setAllTokensCache(prev => {
+              // Merge new data with existing cache, preferring new data
+              const merged = [...prev];
+              pageData.forEach(token => {
+                const existingIndex = merged.findIndex(t => t.id === token.id);
+                if (existingIndex >= 0) {
+                  merged[existingIndex] = token;
+                } else {
+                  merged.push(token);
+                }
+              });
+              return merged;
+            });
           }
+          
+          // Small delay to avoid rate limits
+          await new Promise(resolve => setTimeout(resolve, 100));
+        } catch (error) {
+          console.warn(`Error fetching page ${page}:`, error);
+          continue; // Continue with next page even if one fails
         }
-      });
-      setChartInstance(newChartInstance);
+      }
+
+      setLastUpdateTime(timestamp);
+    } catch (error) {
+      console.error('Background loading error:', error);
+    } finally {
+      setIsBackgroundLoading(false);
     }
-  }, [chartData, selectedToken]);
+  };
 
   const handleSearch = async (searchTerm) => {
     setSearchTerm(searchTerm);
     
     if (searchTerm.length < 2) {
-      setFilteredTokens(tokens);
+      setFilteredTokens(tokens.slice(0, 20));
       return;
     }
 
+    // Search in all tokens cache first
+    const localResults = allTokensCache.filter(token => 
+      token.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      token.symbol.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (localResults.length > 0) {
+      setFilteredTokens(localResults.slice(0, 50)); // Show top 50 matches
+      setError(null);
+      return;
+    }
+
+    // Fallback to API search if nothing found in cache
     try {
       setIsLoadingTokens(true);
       const response = await fetch(
@@ -142,31 +149,60 @@ const TokenList = ({ currentUser, showNotification }) => {
 
       const searchResults = await response.json();
       
+      if (searchResults.coins.length === 0) {
+        setFilteredTokens([]);
+        setError('No tokens found matching your search.');
+        return;
+      }
+
       const detailedResults = await Promise.all(
         searchResults.coins.slice(0, 20).map(async (coin) => {
-          const detailResponse = await fetch(
-            `https://api.coingecko.com/api/v3/coins/${coin.id}?localization=false&tickers=false&community_data=false&developer_data=false`
-          );
-          if (detailResponse.ok) {
-            const detailData = await detailResponse.json();
-            return {
-              ...detailData,
-              current_price: detailData.market_data?.current_price?.usd,
-              market_cap: detailData.market_data?.market_cap?.usd,
-              total_volume: detailData.market_data?.total_volume?.usd,
-              price_change_percentage_24h: detailData.market_data?.price_change_percentage_24h,
-              market_cap_rank: detailData.market_cap_rank,
-            };
+          try {
+            const detailResponse = await fetch(
+              `https://api.coingecko.com/api/v3/coins/${coin.id}?localization=false&tickers=false&community_data=false&developer_data=false`
+            );
+            if (detailResponse.ok) {
+              const detailData = await detailResponse.json();
+              return {
+                ...detailData,
+                current_price: detailData.market_data?.current_price?.usd || 0,
+                market_cap: detailData.market_data?.market_cap?.usd || 0,
+                total_volume: detailData.market_data?.total_volume?.usd || 0,
+                price_change_percentage_24h: detailData.market_data?.price_change_percentage_24h || 0,
+                market_cap_rank: detailData.market_cap_rank || 999999,
+                // Add fallback values for other required fields
+                high_24h: detailData.market_data?.high_24h?.usd || 0,
+                low_24h: detailData.market_data?.low_24h?.usd || 0,
+                image: detailData.image?.small || '',
+                symbol: detailData.symbol || '',
+              };
+            }
+            return null;
+          } catch (error) {
+            console.warn(`Error fetching details for ${coin.id}:`, error);
+            return null;
           }
-          return null;
         })
       );
 
       const validResults = detailedResults.filter(result => result !== null);
-      setFilteredTokens(validResults);
+      if (validResults.length > 0) {
+        setFilteredTokens(validResults);
+        setError(null);
+      } else {
+        setError('No detailed token information available.');
+      }
     } catch (error) {
       console.error('Error searching tokens:', error);
-      setError('Unable to search tokens. Please try again in a few minutes.');
+      // Show local results if API search fails
+      const fallbackResults = tokens.filter(token => 
+        token.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        token.symbol.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredTokens(fallbackResults);
+      if (fallbackResults.length === 0) {
+        setError('No tokens found matching your search.');
+      }
     } finally {
       setIsLoadingTokens(false);
     }
@@ -234,6 +270,80 @@ const TokenList = ({ currentUser, showNotification }) => {
     setSelectedDex(dex);
     setShowDexFrame(true);
   };
+
+  useEffect(() => {
+    // Initial load of visible tokens
+    const fetchInitialTokens = async () => {
+      try {
+        setIsLoadingTokens(true);
+        const response = await fetch(
+          'https://api.coingecko.com/api/v3/coins/markets?' +
+          'vs_currency=usd&' +
+          'order=market_cap_desc&' +
+          'per_page=20&' +
+          'page=1&' +
+          'sparkline=false'
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          setTokens(data);
+          setFilteredTokens(data);
+        }
+      } catch (error) {
+        console.error('Error fetching initial tokens:', error);
+      } finally {
+        setIsLoadingTokens(false);
+      }
+    };
+
+    fetchInitialTokens();
+    
+    // Start background loading
+    loadAllTokensInBackground();
+
+    // Set up periodic refresh
+    const refreshInterval = setInterval(() => {
+      if (!isBackgroundLoading) {
+        loadAllTokensInBackground();
+      }
+    }, 30000); // Refresh every 30 seconds
+
+    return () => clearInterval(refreshInterval);
+  }, []);
+
+  useEffect(() => {
+    if (chartData && chartRef.current && selectedToken) {
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      const ctx = chartRef.current.getContext('2d');
+      const newChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: chartData.prices.map(price => new Date(price[0]).toLocaleDateString()),
+          datasets: [{
+            label: `${selectedToken.name} Price (USD)`,
+            data: chartData.prices.map(price => price[1]),
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: 'Price History' }
+          },
+          scales: {
+            y: { beginAtZero: false }
+          }
+        }
+      });
+      setChartInstance(newChartInstance);
+    }
+  }, [chartData, selectedToken]);
 
   return (
     <div className="container mx-auto p-4">
@@ -553,6 +663,20 @@ const TokenList = ({ currentUser, showNotification }) => {
         {isLoadingTokens && (
           <div className="fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg">
             Loading tokens: {tokens.length} loaded...
+          </div>
+        )}
+
+        {/* Background loading indicator */}
+        {isBackgroundLoading && (
+          <div className="fixed bottom-4 right-4 bg-blue-500/80 text-white px-4 py-2 rounded-lg shadow-lg backdrop-blur-sm">
+            Updating token data... ({allTokensCache.length} tokens cached)
+          </div>
+        )}
+        
+        {/* Last update time */}
+        {lastUpdateTime && (
+          <div className="fixed bottom-4 left-4 text-gray-400 text-sm">
+            Last updated: {new Date(lastUpdateTime).toLocaleTimeString()}
           </div>
         )}
       </div>
