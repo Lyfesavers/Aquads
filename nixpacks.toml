@@ -5,7 +5,16 @@ nixPkgs = ["nodejs_18", "npm_9"]
 cmds = ["npm install --legacy-peer-deps"]
 
 [phases.build]
-cmds = ["SKIP_PREFLIGHT_CHECK=true CI=false npm run build"]
+cmds = [
+    "SKIP_PREFLIGHT_CHECK=true CI=false GENERATE_SOURCEMAP=false npm run build"
+]
 
 [start]
-cmd = "serve -s build" 
+cmd = "serve -s build -p $PORT"
+
+[variables]
+NODE_ENV = "production"
+PORT = "3000"
+CI = "false"
+SKIP_PREFLIGHT_CHECK = "true"
+GENERATE_SOURCEMAP = "false" 

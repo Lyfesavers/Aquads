@@ -1,5 +1,6 @@
 [phases.setup]
 nixPkgs = ["nodejs_18", "npm_9"]
+aptPkgs = ["ca-certificates"]
 
 [phases.install]
 cmds = ["npm install --legacy-peer-deps"]
@@ -8,4 +9,8 @@ cmds = ["npm install --legacy-peer-deps"]
 cmds = ["echo 'Backend build complete'"]
 
 [start]
-cmd = "node index.js" 
+cmd = "node index.js"
+
+[variables]
+NODE_ENV = "production"
+PORT = "5000" 
