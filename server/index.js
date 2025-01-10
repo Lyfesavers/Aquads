@@ -20,7 +20,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: ["https://aquads.onrender.com", "http://localhost:5001"],
+    origin: ["https://aquads.netlify.app", "http://localhost:3000"],
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -28,7 +28,7 @@ const io = socketIo(server, {
 
 // Middleware
 const corsOptions = {
-  origin: ['https://aquads.netlify.app/', 'http://localhost:3000'],
+  origin: ["https://aquads.netlify.app", "http://localhost:3000"],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization']

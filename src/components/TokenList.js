@@ -1,6 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
 import TokenReviews from './TokenReviews';
 import { Chart } from 'chart.js/auto';
+import io from 'socket.io-client';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+// For socket connection
+const socket = io(API_URL, {
+  withCredentials: true,
+  transports: ['websocket']
+});
+
+// For API calls
+const fetchAds = async () => {
+  try {
+    const response = await fetch(`${API_URL}/api/ads`);
+    const data = await response.json();
+    // ...
+  } catch (error) {
+    console.error('Error fetching ads:', error);
+  }
+};
 
 // Define DEX options with their details
 const DEX_OPTIONS = [
