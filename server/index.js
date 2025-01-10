@@ -28,7 +28,7 @@ const io = socketIo(server, {
 
 // Middleware
 const corsOptions = {
-  origin: ['https://bubble-ads.netlify.app', 'http://localhost:3000'],
+  origin: ['https://aquads.netlify.app/', 'http://localhost:3000'],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization']
