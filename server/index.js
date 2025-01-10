@@ -134,18 +134,10 @@ app.use('/api/reviews', require('./routes/reviews'));
 // Get all ads
 app.get('/api/ads', async (req, res) => {
   try {
-    console.log('Received request for ads');
+    console.log('Fetching ads...');
     const ads = await Ad.find({}).lean();
-    
     console.log('Found ads:', ads);
-    
-    if (!ads || ads.length === 0) {
-      console.log('No ads found');
-      return res.status(200).json([]);
-    }
-
-    console.log('Sending ads to client:', ads);
-    res.json(ads);
+    res.json(ads || []);
   } catch (error) {
     console.error('Error fetching ads:', error);
     res.status(500).json({ error: 'Failed to fetch ads' });
@@ -198,26 +190,23 @@ app.post('/api/login', async (req, res) => {
   try {
     const { username, password } = req.body;
     const user = await User.findOne({ username });
-
+    
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    if (password === user.password) { // Direct comparison for now
-      const token = jwt.sign(
-        { id: user._id, username: user.username, isAdmin: user.isAdmin },
-        process.env.JWT_SECRET || 'your-secret-key',
-        { expiresIn: '24h' }
-      );
-
-      return res.json({
-        username: user.username,
-        isAdmin: user.isAdmin,
-        token
-      });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    return res.status(401).json({ error: 'Invalid credentials' });
+    const token = jwt.sign(
+      { userId: user._id, username: user.username },
+      process.env.JWT_SECRET || 'bubble-ads-jwt-secret-key-2024',
+      { expiresIn: '24h' }
+    );
+
+    res.json({ token, username: user.username, isAdmin: user.isAdmin });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Login failed' });
