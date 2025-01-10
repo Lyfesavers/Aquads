@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import TokenReviews from './TokenReviews';
+import { Chart } from 'chart.js/auto';
 
 // Define DEX options with their details
 const DEX_OPTIONS = [
