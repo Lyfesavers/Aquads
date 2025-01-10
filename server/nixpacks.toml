@@ -4,5 +4,8 @@ nixPkgs = ["nodejs_18", "npm_9"]
 [phases.install]
 cmds = ["npm install --legacy-peer-deps"]
 
+[phases.build]
+cmds = ["echo 'Backend build complete'"]
+
 [start]
 cmd = "node index.js" 

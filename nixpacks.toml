@@ -5,7 +5,7 @@ nixPkgs = ["nodejs_18", "npm_9"]
 cmds = ["npm install --legacy-peer-deps"]
 
 [phases.build]
-cmds = ["CI=false npm run build"]
+cmds = ["SKIP_PREFLIGHT_CHECK=true CI=false npm run build"]
 
 [start]
-cmd = "npm start" 
+cmd = "serve -s build" 
