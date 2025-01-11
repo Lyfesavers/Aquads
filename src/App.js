@@ -24,6 +24,7 @@ import Dashboard from './components/Dashboard';
 import EditAdModal from './components/EditAdModal';
 import TokenBanner from './components/TokenBanner';
 import TokenList from './components/TokenList';
+import TokenRating from './components/TokenRating';
 
 window.Buffer = Buffer;
 
