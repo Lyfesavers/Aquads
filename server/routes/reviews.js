@@ -4,10 +4,14 @@ const Review = require('../models/Review');
 const auth = require('../middleware/auth');
 
 // Get reviews for a token
-router.get('/:tokenId', async (req, res) => {
+router.get('/:symbol', async (req, res) => {
   try {
-    const reviews = await Review.find({ tokenId: req.params.tokenId })
-      .sort({ createdAt: -1 });
+    console.log('Fetching reviews for:', req.params.symbol);
+    const reviews = await Review.find({ 
+      tokenSymbol: req.params.symbol.toLowerCase() 
+    }).sort({ createdAt: -1 });
+    
+    console.log('Found reviews:', reviews);
     res.json(reviews);
   } catch (error) {
     console.error('Error fetching reviews:', error);
@@ -18,13 +22,12 @@ router.get('/:tokenId', async (req, res) => {
 // Add a new review
 router.post('/', auth, async (req, res) => {
   try {
-    const { tokenId, rating, comment } = req.body;
-    const username = req.user.username;
-
+    const { tokenSymbol, rating, comment } = req.body;
+    
     // Check if user already reviewed this token
     const existingReview = await Review.findOne({
-      tokenId,
-      username
+      tokenSymbol: tokenSymbol.toLowerCase(),
+      username: req.user.username
     });
 
     if (existingReview) {
@@ -32,14 +35,15 @@ router.post('/', auth, async (req, res) => {
     }
 
     const review = new Review({
-      tokenId,
-      username,
+      tokenSymbol: tokenSymbol.toLowerCase(),
+      userId: req.user.userId,
+      username: req.user.username,
       rating,
       comment
     });
 
-    await review.save();
-    res.status(201).json(review);
+    const savedReview = await review.save();
+    res.status(201).json(savedReview);
   } catch (error) {
     console.error('Error creating review:', error);
     res.status(500).json({ error: 'Failed to create review' });

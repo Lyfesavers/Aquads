@@ -6,6 +6,8 @@ const TokenReviews = ({ token, onClose, currentUser, showNotification }) => {
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [averageRating, setAverageRating] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
 
   useEffect(() => {
     fetchReviews();
@@ -13,10 +15,18 @@ const TokenReviews = ({ token, onClose, currentUser, showNotification }) => {
 
   const fetchReviews = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/reviews/${token.id}`);
+      setIsLoading(true);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/reviews/${token.symbol}`);
       if (!response.ok) throw new Error('Failed to fetch reviews');
       const data = await response.json();
       setReviews(data);
+      
+      // Calculate average rating
+      if (data.length > 0) {
+        const avg = data.reduce((acc, rev) => acc + rev.rating, 0) / data.length;
+        setAverageRating(avg);
+        setTotalReviews(data.length);
+      }
     } catch (error) {
       console.error('Error fetching reviews:', error);
       setError('Failed to load reviews');
@@ -43,8 +53,9 @@ const TokenReviews = ({ token, onClose, currentUser, showNotification }) => {
           'Authorization': `Bearer ${userData.token}`
         },
         body: JSON.stringify({
-          tokenId: token.id,
-          ...newReview
+          tokenSymbol: token.symbol,
+          rating: newReview.rating,
+          comment: newReview.comment
         })
       });
 
@@ -57,6 +68,9 @@ const TokenReviews = ({ token, onClose, currentUser, showNotification }) => {
       setReviews([data, ...reviews]);
       setNewReview({ rating: 5, comment: '' });
       showNotification('Review submitted successfully!', 'success');
+      
+      // Refresh reviews to update average
+      fetchReviews();
     } catch (error) {
       console.error('Error submitting review:', error);
       showNotification(error.message || 'Failed to submit review', 'error');
