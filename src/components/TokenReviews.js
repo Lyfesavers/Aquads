@@ -22,10 +22,19 @@ const TokenReviews = ({ token, onClose, currentUser, showNotification }) => {
       setReviews(data);
       
       // Calculate average rating
-      if (data.length > 0) {
-        const avg = data.reduce((acc, rev) => acc + rev.rating, 0) / data.length;
-        setAverageRating(avg);
+      if (data && data.length > 0) {
+        const totalRating = data.reduce((sum, review) => sum + Number(review.rating), 0);
+        const avgRating = totalRating / data.length;
+        setAverageRating(avgRating);
         setTotalReviews(data.length);
+        
+        // Update the token's rating in the parent component if possible
+        if (token.onRatingUpdate) {
+          token.onRatingUpdate(token.symbol, avgRating);
+        }
+      } else {
+        setAverageRating(0);
+        setTotalReviews(0);
       }
     } catch (error) {
       console.error('Error fetching reviews:', error);
