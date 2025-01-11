@@ -9,7 +9,7 @@ const TokenRating = ({ symbol }) => {
 
   const fetchTokenRating = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/reviews/${symbol}`);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/reviews/${symbol.toLowerCase()}`);
       if (!response.ok) throw new Error('Failed to fetch reviews');
       const reviews = await response.json();
       
@@ -24,7 +24,7 @@ const TokenRating = ({ symbol }) => {
   };
 
   return (
-    <span className="text-yellow-400">
+    <span>
       {rating}
     </span>
   );

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import TokenReviews from './TokenReviews';
 import { Chart } from 'chart.js/auto';
+import TokenRating from './TokenRating';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -552,16 +553,16 @@ const TokenList = ({ currentUser, showNotification }) => {
                         ${(token.total_volume / 1000000).toFixed(2)}M
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center justify-end gap-2">
                           <span className="text-yellow-400">★</span>
-                          <span className="text-white">{token.rating || '0.0'}</span>
+                          <TokenRating symbol={token.symbol} />
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               setSelectedToken(token);
                               setShowReviews(true);
                             }}
-                            className="ml-2 text-blue-400 hover:text-blue-300 text-sm"
+                            className="text-blue-400 hover:text-blue-300 text-sm"
                           >
                             Reviews
                           </button>
