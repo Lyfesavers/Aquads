@@ -514,8 +514,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                       onClick={() => handleSort('total_volume')}>
                     Volume(24h)
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
-                      onClick={() => handleSort('rating')}>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
                     Rating
                   </th>
                 </tr>
@@ -552,7 +551,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                         ${(token.total_volume / 1000000).toFixed(2)}M
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="flex items-center justify-end gap-2">
                           <span className="text-yellow-400">★</span>
                           <TokenRating symbol={token.symbol} />
