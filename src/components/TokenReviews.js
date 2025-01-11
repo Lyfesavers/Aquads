@@ -46,25 +46,27 @@ const TokenReviews = ({ token, onClose, currentUser, showNotification }) => {
       const savedUser = localStorage.getItem('currentUser');
       const userData = JSON.parse(savedUser);
 
+      const reviewData = {
+        tokenSymbol: token.symbol,
+        rating: parseInt(newReview.rating),
+        comment: newReview.comment.trim()
+      };
+
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/reviews`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${userData.token}`
         },
-        body: JSON.stringify({
-          tokenSymbol: token.symbol,
-          rating: newReview.rating,
-          comment: newReview.comment
-        })
+        body: JSON.stringify(reviewData)
       });
 
+      const data = await response.json();
+      
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to submit review');
+        throw new Error(data.error || 'Failed to submit review');
       }
 
-      const data = await response.json();
       setReviews([data, ...reviews]);
       setNewReview({ rating: 5, comment: '' });
       showNotification('Review submitted successfully!', 'success');

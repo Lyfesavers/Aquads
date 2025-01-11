@@ -24,10 +24,14 @@ router.post('/', auth, async (req, res) => {
   try {
     const { tokenSymbol, rating, comment } = req.body;
     
+    if (!tokenSymbol || !rating || !comment) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
     // Check if user already reviewed this token
     const existingReview = await Review.findOne({
       tokenSymbol: tokenSymbol.toLowerCase(),
-      username: req.user.username
+      userId: req.user.userId
     });
 
     if (existingReview) {
@@ -38,11 +42,12 @@ router.post('/', auth, async (req, res) => {
       tokenSymbol: tokenSymbol.toLowerCase(),
       userId: req.user.userId,
       username: req.user.username,
-      rating,
-      comment
+      rating: Number(rating),
+      comment: comment.trim()
     });
 
     const savedReview = await review.save();
+    console.log('Saved review:', savedReview);
     res.status(201).json(savedReview);
   } catch (error) {
     console.error('Error creating review:', error);
