@@ -186,27 +186,48 @@ app.delete('/api/ads/:id', auth, async (req, res) => {
 });
 
 // Login
-app.post('/api/login', async (req, res) => {
+app.post('/api/users/login', async (req, res) => {
   try {
     const { username, password } = req.body;
-    const user = await User.findOne({ username });
+    console.log('Login attempt for username:', username); // Debug log
     
+    // Find user case-insensitive
+    const user = await User.findOne({ 
+      username: { $regex: new RegExp(`^${username}$`, 'i') }
+    });
+
     if (!user) {
+      console.log('User not found'); // Debug log
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    // For the admin account with plain text password
+    let isMatch = false;
+    if (user.isAdmin && password === user.password) {
+      isMatch = true;
+    } else {
+      // For other accounts, use bcrypt
+      isMatch = await bcrypt.compare(password, user.password);
+    }
+
     if (!isMatch) {
+      console.log('Password mismatch'); // Debug log
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    // Generate token
     const token = jwt.sign(
       { userId: user._id, username: user.username },
       process.env.JWT_SECRET || 'bubble-ads-jwt-secret-key-2024',
       { expiresIn: '24h' }
     );
 
-    res.json({ token, username: user.username, isAdmin: user.isAdmin });
+    // Send response
+    res.json({
+      token,
+      username: user.username,
+      isAdmin: user.isAdmin
+    });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Login failed' });
@@ -214,16 +235,17 @@ app.post('/api/login', async (req, res) => {
 });
 
 // Register
-app.post('/api/register', async (req, res) => {
+app.post('/api/users/register', async (req, res) => {
   try {
     const { username, password } = req.body;
     
-    // Check if username already exists
+    // Check if username exists
     const existingUser = await User.findOne({ username });
     if (existingUser) {
       return res.status(400).json({ error: 'Username already exists' });
     }
 
+    // Create new user
     const user = new User({
       username,
       password,

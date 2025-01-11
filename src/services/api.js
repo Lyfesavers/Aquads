@@ -99,27 +99,28 @@ export const deleteAd = async (id) => {
 // Login user
 export const loginUser = async (credentials) => {
   try {
+    console.log('Attempting login with:', credentials); // Debug log
+
     const response = await fetch(`${API_URL}/users/login`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         username: credentials.username,
         password: credentials.password
-      })
+      }),
+      credentials: 'include'
     });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Login failed');
-    }
 
     const data = await response.json();
     
-    // Store user data exactly as received from server
+    if (!response.ok) {
+      throw new Error(data.error || 'Login failed');
+    }
+
+    // Store user data
     const userData = {
-      ...data,
       username: data.username,
       isAdmin: Boolean(data.isAdmin),
       token: data.token
@@ -127,13 +128,15 @@ export const loginUser = async (credentials) => {
 
     localStorage.setItem('currentUser', JSON.stringify(userData));
     
-    // Update socket auth
-    socket.auth = { token: userData.token };
-    socket.disconnect().connect();
+    // Update socket auth if needed
+    if (socket.connected) {
+      socket.auth = { token: userData.token };
+      socket.disconnect().connect();
+    }
 
     return userData;
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Login error details:', error);
     throw error;
   }
 };
@@ -165,16 +168,29 @@ export const verifyToken = async () => {
 };
 
 // Register user
-export const registerUser = async (userData) => {
-  const response = await fetch(`${API_URL}/register`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(userData),
-  });
-  if (!response.ok) throw new Error('Failed to register');
-  return response.json();
+export const registerUser = async (credentials) => {
+  try {
+    const response = await fetch(`${API_URL}/users/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: credentials.username,
+        password: credentials.password
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Registration failed');
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Registration error:', error);
+    throw error;
+  }
 };
 
 // Create bump request
