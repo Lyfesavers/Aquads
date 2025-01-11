@@ -6,47 +6,50 @@ const Ad = require('../models/Ad');
 const checkBumpExpiration = async (ad) => {
   const now = new Date();
   if (ad.isBumped && ad.bumpExpiresAt && new Date(ad.bumpExpiresAt) < now) {
-    await Ad.updateOne(
-      { id: ad.id },
-      {
-        $set: {
-          isBumped: false,
-          status: 'active',
-          size: 50
+    console.log(`Checking bump expiration for ad: ${ad.id}`);
+    console.log(`Bump expired at: ${new Date(ad.bumpExpiresAt)}`);
+    console.log(`Current time: ${now}`);
+    
+    try {
+      // Update the document in MongoDB
+      const result = await Ad.findOneAndUpdate(
+        { id: ad.id },
+        {
+          $set: {
+            isBumped: false,
+            status: 'active',
+            size: 50
+          },
+          $unset: {
+            bumpedAt: "",
+            bumpDuration: "",
+            bumpExpiresAt: "",
+            lastBumpTx: ""
+          }
         },
-        $unset: {
-          bumpedAt: 1,
-          bumpDuration: 1,
-          bumpExpiresAt: 1,
-          lastBumpTx: 1
-        }
-      }
-    );
-    return {
-      ...ad.toObject(),
-      isBumped: false,
-      status: 'active',
-      size: 50,
-      bumpedAt: undefined,
-      bumpDuration: undefined,
-      bumpExpiresAt: undefined,
-      lastBumpTx: undefined
-    };
+        { new: true }
+      ).exec(); // Add .exec() to ensure the query executes
+      
+      console.log('Updated ad status:', result?.isBumped);
+      return result;
+    } catch (error) {
+      console.error('Error updating expired bump:', error);
+      return ad;
+    }
   }
   return ad;
 };
 
-// Keep the existing ads fetch route, just add bump expiration check
+// Single route handler for ads
 router.get('/ads', async (req, res) => {
   try {
-    // Add timeout and lean for better performance
     const ads = await Ad.find({})
       .lean()
       .maxTimeMS(20000)
       .sort({ createdAt: -1 });
 
     if (!ads || ads.length === 0) {
-      return res.status(200).json([]); // Return empty array instead of 404
+      return res.status(200).json([]);
     }
 
     // Check for expired bumps
@@ -66,4 +69,3 @@ router.get('/ads', async (req, res) => {
 });
 
 module.exports = router; 
-router.get('/ads', handleAdsError); 
