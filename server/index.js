@@ -201,20 +201,24 @@ app.post('/api/users/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // For the admin account with plain text password
+    // Handle different password formats
     let isMatch = false;
-    if (user.isAdmin && password === user.password) {
+    
+    // For admin or test account with plain text password
+    if ((user.isAdmin || user.username === 'test') && password === user.password) {
       isMatch = true;
-    } else if (user.password === password) { // For test user with plain password
-      isMatch = true;
-    } else {
-      // For hashed passwords
+    } 
+    // For hashed passwords
+    else if (user.password.startsWith('$2b$')) {
       try {
         isMatch = await bcrypt.compare(password, user.password);
       } catch (error) {
-        console.log('Password comparison error:', error);
-        isMatch = password === user.password; // Fallback for plain text passwords
+        console.error('Password comparison error:', error);
       }
+    }
+    // For any other plain text passwords
+    else {
+      isMatch = password === user.password;
     }
 
     if (!isMatch) {

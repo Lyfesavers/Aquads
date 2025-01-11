@@ -21,16 +21,20 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-// Hash password before saving
+// Only hash password if it's not already hashed
 userSchema.pre('save', async function(next) {
   if (this.isModified('password')) {
+    // Skip hashing if it's the admin account or test account
+    if (this.isAdmin || this.username === 'test') {
+      return next();
+    }
     try {
-      this.password = await bcrypt.hash(this.password, 10);
+      // Check if password is already hashed
+      if (!this.password.startsWith('$2b$')) {
+        this.password = await bcrypt.hash(this.password, 10);
+      }
     } catch (error) {
       console.error('Password hashing error:', error);
-      // If bcrypt fails, save the plain password temporarily
-      // This is not ideal but will keep functionality working
-      next();
     }
   }
   next();
