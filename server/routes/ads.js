@@ -4,16 +4,21 @@ const Ad = require('../models/Ad');
 
 // Add a function to check bump expiration
 const checkBumpExpiration = async (ad) => {
-  const now = new Date();
-  if (ad.isBumped && ad.bumpExpiresAt && new Date(ad.bumpExpiresAt) < now) {
+  const now = Date.now();
+  const expiresAt = new Date(ad.bumpExpiresAt).getTime();
+  
+  if (ad.isBumped && ad.bumpExpiresAt && now > expiresAt) {
     console.log(`Checking bump expiration for ad: ${ad.id}`);
-    console.log(`Bump expired at: ${new Date(ad.bumpExpiresAt)}`);
-    console.log(`Current time: ${now}`);
+    console.log(`Bump expired at: ${new Date(expiresAt).toISOString()}`);
+    console.log(`Current time: ${new Date(now).toISOString()}`);
     
     try {
-      // Update the document in MongoDB
+      // Force update the document in MongoDB
       const result = await Ad.findOneAndUpdate(
-        { id: ad.id },
+        { 
+          id: ad.id,
+          isBumped: true // Additional check to ensure we're updating the right document
+        },
         {
           $set: {
             isBumped: false,
@@ -21,17 +26,25 @@ const checkBumpExpiration = async (ad) => {
             size: 50
           },
           $unset: {
-            bumpedAt: "",
-            bumpDuration: "",
-            bumpExpiresAt: "",
-            lastBumpTx: ""
+            bumpedAt: 1,
+            bumpDuration: 1,
+            bumpExpiresAt: 1,
+            lastBumpTx: 1
           }
         },
-        { new: true }
-      ).exec(); // Add .exec() to ensure the query executes
+        { 
+          new: true,
+          runValidators: true
+        }
+      );
       
-      console.log('Updated ad status:', result?.isBumped);
-      return result;
+      if (result) {
+        console.log(`Successfully updated ad ${ad.id}. New isBumped status: ${result.isBumped}`);
+      } else {
+        console.log(`No update performed for ad ${ad.id}`);
+      }
+      
+      return result || ad;
     } catch (error) {
       console.error('Error updating expired bump:', error);
       return ad;
