@@ -11,7 +11,7 @@ const TokenReviews = ({ token, onClose, currentUser, showNotification }) => {
 
   useEffect(() => {
     fetchReviews();
-  }, [token.id]);
+  }, [token.symbol]);
 
   const fetchReviews = async () => {
     try {
@@ -79,36 +79,52 @@ const TokenReviews = ({ token, onClose, currentUser, showNotification }) => {
 
   return (
     <Modal onClose={onClose}>
-      <div className="text-white">
-        <h2 className="text-2xl font-bold mb-4">Reviews for {token.name}</h2>
+      <div className="text-white p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">Reviews for {token.name}</h2>
+          <div className="text-right">
+            <div className="text-yellow-400 text-xl">
+              {'★'.repeat(Math.round(averageRating))}
+              {'☆'.repeat(5 - Math.round(averageRating))}
+            </div>
+            <div className="text-sm text-gray-400">
+              {averageRating.toFixed(1)} / 5.0 ({totalReviews} reviews)
+            </div>
+          </div>
+        </div>
         
         {currentUser && (
-          <form onSubmit={handleSubmitReview} className="mb-6">
+          <form onSubmit={handleSubmitReview} className="mb-8 bg-gray-800 p-4 rounded-lg">
+            <h3 className="text-lg font-semibold mb-4">Write a Review</h3>
             <div className="mb-4">
               <label className="block mb-2">Rating</label>
-              <select
-                value={newReview.rating}
-                onChange={(e) => setNewReview(prev => ({ ...prev, rating: Number(e.target.value) }))}
-                className="w-full bg-gray-700 rounded p-2"
-              >
+              <div className="flex gap-2">
                 {[5, 4, 3, 2, 1].map(num => (
-                  <option key={num} value={num}>{num} Stars</option>
+                  <button
+                    key={num}
+                    type="button"
+                    onClick={() => setNewReview(prev => ({ ...prev, rating: num }))}
+                    className={`p-2 rounded ${
+                      newReview.rating === num ? 'bg-blue-500' : 'bg-gray-700'
+                    }`}
+                  >
+                    {num} ★
+                  </button>
                 ))}
-              </select>
+              </div>
             </div>
             <div className="mb-4">
               <label className="block mb-2">Comment</label>
               <textarea
                 value={newReview.comment}
                 onChange={(e) => setNewReview(prev => ({ ...prev, comment: e.target.value }))}
-                className="w-full bg-gray-700 rounded p-2"
-                rows="3"
+                className="w-full bg-gray-700 rounded p-2 min-h-[100px]"
                 required
               />
             </div>
             <button
               type="submit"
-              className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded"
+              className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded w-full"
             >
               Submit Review
             </button>
@@ -116,25 +132,27 @@ const TokenReviews = ({ token, onClose, currentUser, showNotification }) => {
         )}
 
         {isLoading ? (
-          <p>Loading reviews...</p>
+          <div className="text-center py-4">Loading reviews...</div>
         ) : error ? (
-          <p className="text-red-500">{error}</p>
+          <div className="text-red-500 text-center py-4">{error}</div>
         ) : reviews.length === 0 ? (
-          <p>No reviews yet. Be the first to review!</p>
+          <div className="text-center py-4 text-gray-400">No reviews yet. Be the first to review!</div>
         ) : (
           <div className="space-y-4">
             {reviews.map((review) => (
-              <div key={review._id} className="bg-gray-700 rounded p-4">
-                <div className="flex justify-between items-start">
+              <div key={review._id} className="bg-gray-800 p-4 rounded-lg">
+                <div className="flex justify-between items-start mb-2">
                   <div>
-                    <p className="font-bold">{review.username}</p>
-                    <p className="text-yellow-400">{'★'.repeat(review.rating)}{'☆'.repeat(5-review.rating)}</p>
+                    <div className="text-yellow-400">
+                      {'★'.repeat(review.rating)}{'☆'.repeat(5-review.rating)}
+                    </div>
+                    <div className="text-sm text-gray-400">by {review.username}</div>
                   </div>
-                  <span className="text-gray-400 text-sm">
+                  <div className="text-sm text-gray-400">
                     {new Date(review.createdAt).toLocaleDateString()}
-                  </span>
+                  </div>
                 </div>
-                <p className="mt-2">{review.comment}</p>
+                <p className="text-gray-300">{review.comment}</p>
               </div>
             ))}
           </div>
