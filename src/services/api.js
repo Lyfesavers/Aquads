@@ -14,7 +14,12 @@ export const socket = io('https://aquads.onrender.com', {
   reconnectionAttempts: 10,
   reconnectionDelay: 1000,
   reconnection: true,
-  timeout: 20000
+  timeout: 20000,
+  autoConnect: true,
+  reconnectionDelayMax: 5000,
+  maxRetries: 10,
+  pingTimeout: 30000,
+  pingInterval: 25000
 });
 
 const getAuthHeader = () => {
@@ -260,23 +265,69 @@ export const fetchBumpRequests = async (status = 'pending') => {
   return response.json();
 };
 
-// Add connection status monitoring
-let isConnected = true;
+// Enhanced connection monitoring
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 5;
+
 socket.on('connect', () => {
   console.log('Socket connected');
-  isConnected = true;
+  reconnectAttempts = 0;
+  
+  // Refresh authentication on successful connection
+  const savedUser = localStorage.getItem('currentUser');
+  if (savedUser) {
+    const user = JSON.parse(savedUser);
+    socket.emit('authenticate', { token: user.token });
+  }
 });
 
-socket.on('connect_error', (error) => {
-  console.warn('Socket connection error:', error);
-  // Don't show notification for connection errors
+socket.on('connect_error', async (error) => {
+  console.error('Socket connection error:', error);
+  reconnectAttempts++;
+
+  if (reconnectAttempts <= MAX_RECONNECT_ATTEMPTS) {
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser);
+        // Verify token before attempting reconnection
+        const isValid = await verifyToken();
+        if (isValid) {
+          socket.auth = { token: user.token };
+          socket.connect();
+        }
+      } catch (err) {
+        console.error('Reconnection auth error:', err);
+      }
+    }
+  }
 });
 
 socket.on('disconnect', (reason) => {
-  if (reason === 'io server disconnect') {
-    // Don't show notification for server disconnects
-    socket.connect();
+  console.log('Socket disconnected:', reason);
+  
+  if (reason === 'io server disconnect' || reason === 'transport close') {
+    // Server disconnected us, try to reconnect with auth
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+      socket.auth = { token: user.token };
+      setTimeout(() => {
+        socket.connect();
+      }, 1000); // Add slight delay before reconnecting
+    }
   }
+});
+
+// Add heartbeat to keep connection alive
+setInterval(() => {
+  if (socket.connected) {
+    socket.emit('ping');
+  }
+}, 25000);
+
+socket.on('pong', () => {
+  console.log('Server heartbeat received');
 });
 
 // Add periodic connection check
@@ -319,15 +370,6 @@ export const submitReview = async (reviewData, token) => {
     throw error;
   }
 }; 
-
-// Add this to handle reconnection with auth
-socket.on('connect', () => {
-  const savedUser = localStorage.getItem('currentUser');
-  if (savedUser) {
-    const user = JSON.parse(savedUser);
-    socket.emit('authenticate', { token: user.token });
-  }
-}); 
 
 // Add a ping function to check server availability
 export const pingServer = async () => {
