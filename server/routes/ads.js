@@ -60,26 +60,28 @@ const shrinkAd = async (ad) => {
   console.log(`\nShrink calculation for ad ${ad.id}:`, {
     currentTime: new Date(now).toISOString(),
     createdAt: new Date(createdTime).toISOString(),
-    referenceDate: new Date(REFERENCE_DATE).toISOString(),
     initialSize: MAX_SIZE
   });
 
-  // Calculate time since reference date instead of creation
-  const timeSinceReference = now - REFERENCE_DATE;
-  const shrinkIntervals = Math.floor(timeSinceReference / SHRINK_INTERVAL);
+  // Calculate new size based on time since creation
+  const timeSinceCreation = now - createdTime;
+  const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
+  
+  // Calculate new size using compound shrinking
+  let newSize = MAX_SIZE;
+  for (let i = 0; i < shrinkIntervals; i++) {
+    newSize = Math.max(MIN_SIZE, newSize * SHRINK_PERCENTAGE);
+  }
   
   console.log('Shrink details:', {
-    timeSinceReference: `${timeSinceReference/1000} seconds`,
+    timeSinceCreation: `${timeSinceCreation/1000} seconds`,
     shrinkIntervals,
     currentSize: ad.size,
+    newSize: newSize,
     shrinkPercentage: SHRINK_PERCENTAGE
   });
-  
-  let newSize = MAX_SIZE * Math.pow(SHRINK_PERCENTAGE, shrinkIntervals);
-  newSize = Math.max(newSize, MIN_SIZE);
 
-  console.log(`Calculated new size: ${newSize}`);
-
+  // Only update if size change is significant
   if (Math.abs(newSize - ad.size) > 0.1) {
     console.log(`Size difference (${Math.abs(newSize - ad.size)}) exceeds threshold, updating...`);
     
