@@ -124,9 +124,19 @@ setInterval(async () => {
     for (const ad of ads) {
       console.log(`\nProcessing ad: ${ad.id}`);
       // First check bump expiration
-      const updatedAd = await checkBumpExpiration(ad);
+      const afterBumpCheck = await checkBumpExpiration(ad);
       // Then shrink if needed
-      await shrinkAd(updatedAd);
+      const updatedAd = await shrinkAd(afterBumpCheck);
+      
+      // Force save the changes
+      if (updatedAd.size !== ad.size) {
+        await Ad.findByIdAndUpdate(
+          ad._id,
+          { $set: { size: updatedAd.size } },
+          { new: true }
+        ).exec();
+        console.log(`Forced save of new size ${updatedAd.size} for ad ${ad.id}`);
+      }
     }
     console.log('\n=== Completed periodic checks ===');
   } catch (error) {
@@ -148,12 +158,28 @@ router.get('/', async (req, res) => {
       updatedAds.push(updatedAd);
     }
 
-    console.log('Processed ads:', updatedAds.map(ad => ({
+    // Force a database save for each updated ad
+    for (const ad of updatedAds) {
+      try {
+        await Ad.findByIdAndUpdate(
+          ad._id,
+          { $set: { size: ad.size } },
+          { new: true, upsert: false }
+        ).exec();
+      } catch (err) {
+        console.error(`Error saving ad ${ad.id}:`, err);
+      }
+    }
+
+    // Fetch fresh data after updates
+    const finalAds = await Ad.find({ status: 'active' });
+    
+    console.log('Final ad sizes:', finalAds.map(ad => ({
       id: ad.id,
       size: ad.size
     })));
     
-    res.json(updatedAds);
+    res.json(finalAds);
   } catch (error) {
     console.error('Error processing ads:', error);
     res.status(500).json({ error: 'Database error', message: error.message });
