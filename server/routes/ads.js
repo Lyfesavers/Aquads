@@ -76,24 +76,37 @@ const shrinkAd = async (ad) => {
     timeSinceStart: `${timeSinceStart/1000} seconds`,
     shrinkIntervals,
     currentSize: ad.size,
-    newSize: newSize,
+    newSize: Math.round(newSize * 100) / 100,
     shrinkPercentage: SHRINK_PERCENTAGE
   });
 
   // Only update if size change is significant
   if (Math.abs(newSize - ad.size) > 0.1) {
     try {
+      console.log(`Attempting to update ad ${ad.id} in database...`);
+      
+      // Round newSize to 2 decimal places
+      newSize = Math.round(newSize * 100) / 100;
+      
       const updatedAd = await Ad.findByIdAndUpdate(
         ad._id,
         { $set: { size: newSize } },
         { new: true }
-      );
-      console.log(`Updated ad size from ${ad.size} to ${newSize}`);
-      return updatedAd;
+      ).exec(); // Add .exec() to ensure the promise resolves
+      
+      if (updatedAd) {
+        console.log(`Successfully updated ad size in database from ${ad.size} to ${updatedAd.size}`);
+        return updatedAd;
+      } else {
+        console.log(`Failed to update ad ${ad.id} - no document returned`);
+        return ad;
+      }
     } catch (error) {
-      console.error(`Error updating ad size:`, error);
+      console.error(`Error updating ad size in database:`, error);
       return ad;
     }
+  } else {
+    console.log(`Size change too small (${Math.abs(newSize - ad.size)}), skipping update`);
   }
   return ad;
 };
@@ -121,17 +134,25 @@ setInterval(async () => {
 // Single route handler for ads
 router.get('/', async (req, res) => {
   try {
+    console.log('\nFetching and processing ads...');
     const ads = await Ad.find({ status: 'active' });
     
-    const updatedAds = await Promise.all(ads.map(async (ad) => {
+    // Process ads sequentially to avoid race conditions
+    const updatedAds = [];
+    for (const ad of ads) {
       const afterBumpCheck = await checkBumpExpiration(ad);
-      return await shrinkAd(afterBumpCheck);
-    }));
+      const updatedAd = await shrinkAd(afterBumpCheck);
+      updatedAds.push(updatedAd);
+    }
 
-    console.log('Found ads:', updatedAds);
+    console.log('Processed ads:', updatedAds.map(ad => ({
+      id: ad.id,
+      size: ad.size
+    })));
+    
     res.json(updatedAds);
   } catch (error) {
-    console.error('Error fetching ads:', error);
+    console.error('Error processing ads:', error);
     res.status(500).json({ error: 'Database error', message: error.message });
   }
 });
