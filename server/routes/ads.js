@@ -59,114 +59,84 @@ const checkBumpExpiration = async (ad) => {
   return ad;
 };
 
-// Update the shrinkAd function to handle bumped vs non-bumped ads
+// Simplify the shrinkAd function to just handle size based on bump status
 const shrinkAd = async (ad) => {
-  // If ad is bumped, maintain MAX_SIZE
-  if (ad.isBumped) {
-    // Only update if size isn't already MAX_SIZE
-    if (ad.size !== MAX_SIZE) {
-      try {
-        const result = await Ad.findByIdAndUpdate(
-          ad._id,
-          { $set: { size: MAX_SIZE } },
-          { new: true }
-        ).exec();
-        console.log(`Set bumped ad ${ad.id} size to ${MAX_SIZE}`);
-        return result;
-      } catch (error) {
-        console.error(`Error updating bumped ad size:`, error);
-      }
-    }
-    return ad;
-  }
-
-  // For non-bumped ads, set to MIN_SIZE
-  if (!ad.isBumped && ad.size !== MIN_SIZE) {
+  // Determine the correct size based on bump status
+  const targetSize = ad.isBumped ? MAX_SIZE : MIN_SIZE;
+  
+  // Only update if the size needs to change
+  if (ad.size !== targetSize) {
     try {
-      const result = await Ad.findByIdAndUpdate(
-        ad._id,
-        { $set: { size: MIN_SIZE } },
-        { new: true }
-      ).exec();
-      console.log(`Set non-bumped ad ${ad.id} size to ${MIN_SIZE}`);
-      return result;
+      const result = await Ad.updateOne(
+        { _id: ad._id },
+        { $set: { size: targetSize } }
+      );
+      
+      if (result.modifiedCount > 0) {
+        console.log(`Updated ad ${ad.id} size to ${targetSize} (isBumped: ${ad.isBumped})`);
+        return {
+          ...ad.toObject(),
+          size: targetSize
+        };
+      }
     } catch (error) {
-      console.error(`Error updating non-bumped ad size:`, error);
+      console.error(`Error updating ad ${ad.id} size:`, error);
     }
   }
-
+  
   return ad;
 };
 
-// Periodic check that handles both bump expiration and shrinking
+// Simplify the periodic check
 setInterval(async () => {
   try {
-    console.log('\n=== Running periodic checks ===');
     const ads = await Ad.find({ status: 'active' });
-    console.log(`Found ${ads.length} active ads to process`);
     
     for (const ad of ads) {
-      console.log(`\nProcessing ad: ${ad.id}`);
       // First check bump expiration
-      const afterBumpCheck = await checkBumpExpiration(ad);
-      // Then shrink if needed
-      const updatedAd = await shrinkAd(afterBumpCheck);
+      await checkBumpExpiration(ad);
       
-      // Force save the changes
-      if (updatedAd.size !== ad.size) {
-        await Ad.findByIdAndUpdate(
-          ad._id,
-          { $set: { size: updatedAd.size } },
-          { new: true }
-        ).exec();
-        console.log(`Forced save of new size ${updatedAd.size} for ad ${ad.id}`);
+      // Then update size based on current bump status
+      const targetSize = ad.isBumped ? MAX_SIZE : MIN_SIZE;
+      if (ad.size !== targetSize) {
+        await Ad.updateOne(
+          { _id: ad._id },
+          { $set: { size: targetSize } }
+        );
+        console.log(`Periodic check: Updated ad ${ad.id} size to ${targetSize}`);
       }
     }
-    console.log('\n=== Completed periodic checks ===');
   } catch (error) {
-    console.error('Error in periodic checks:', error);
+    console.error('Periodic check error:', error);
   }
 }, SHRINK_INTERVAL);
 
-// Single route handler for ads
+// Update the GET route to be more direct
 router.get('/', async (req, res) => {
   try {
-    console.log('\nFetching and processing ads...');
+    console.log('\nFetching ads...');
     const ads = await Ad.find({ status: 'active' });
     
-    // Process ads sequentially to avoid race conditions
-    const updatedAds = [];
+    // Update sizes based on bump status
     for (const ad of ads) {
-      const afterBumpCheck = await checkBumpExpiration(ad);
-      const updatedAd = await shrinkAd(afterBumpCheck);
-      updatedAds.push(updatedAd);
-    }
-
-    // Force a database save for each updated ad
-    for (const ad of updatedAds) {
-      try {
-        await Ad.findByIdAndUpdate(
-          ad._id,
-          { $set: { size: ad.size } },
-          { new: true, upsert: false }
-        ).exec();
-      } catch (err) {
-        console.error(`Error saving ad ${ad.id}:`, err);
+      const targetSize = ad.isBumped ? MAX_SIZE : MIN_SIZE;
+      
+      if (ad.size !== targetSize) {
+        await Ad.updateOne(
+          { _id: ad._id },
+          { $set: { size: targetSize } }
+        );
+        console.log(`Set ad ${ad.id} size to ${targetSize} based on bump status`);
       }
     }
-
-    // Fetch fresh data after updates
-    const finalAds = await Ad.find({ status: 'active' });
     
-    console.log('Final ad sizes:', finalAds.map(ad => ({
-      id: ad.id,
-      size: ad.size
-    })));
+    // Return fresh data
+    const updatedAds = await Ad.find({ status: 'active' });
+    res.json(updatedAds);
     
-    res.json(finalAds);
   } catch (error) {
-    console.error('Error processing ads:', error);
-    res.status(500).json({ error: 'Database error', message: error.message });
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
