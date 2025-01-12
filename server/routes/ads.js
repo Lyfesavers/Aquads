@@ -1,6 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const Ad = require('../models/Ad');
+const auth = require('../middleware/auth');
+
+// Add auth middleware only to routes that need it
+router.use((req, res, next) => {
+  // Skip auth for GET requests
+  if (req.method === 'GET') {
+    return next();
+  }
+  // Apply auth middleware for all other requests
+  auth(req, res, next);
+});
 
 // Add constants for shrinking logic
 const SHRINK_INTERVAL = 30000; // 30 seconds
@@ -75,42 +86,26 @@ const shrinkAd = async (ad) => {
   // Round newSize to 2 decimal places
   newSize = Math.round(newSize * 100) / 100;
   
-  console.log('Shrink details:', {
-    timeSinceStart: `${timeSinceStart/1000} seconds`,
-    shrinkIntervals,
-    currentSize: ad.size,
-    newSize: newSize,
-    shrinkPercentage: SHRINK_PERCENTAGE
-  });
-
-  // Only update if size change is significant
-  if (Math.abs(newSize - ad.size) > 0.1) {
+  // Always try to update if size is different
+  if (newSize !== ad.size) {
     try {
-      console.log(`Attempting to update ad ${ad.id} in database...`);
+      console.log(`Attempting to update ad ${ad.id} from ${ad.size} to ${newSize}...`);
       
-      // Use updateOne for more direct control
-      const result = await Ad.updateOne(
-        { _id: ad._id },
-        { $set: { size: newSize } }
-      );
+      const result = await Ad.findByIdAndUpdate(
+        ad._id,
+        { $set: { size: newSize } },
+        { new: true }
+      ).exec();
       
-      console.log('Update result:', result);
-      
-      if (result.modifiedCount > 0) {
-        console.log(`Successfully updated ad size from ${ad.size} to ${newSize}`);
-        // Fetch the updated document
-        return await Ad.findById(ad._id);
-      } else {
-        console.log(`No changes made to ad ${ad.id}`);
-        return ad;
+      if (result) {
+        console.log(`Successfully updated ad size to ${newSize}`);
+        return result;
       }
     } catch (error) {
-      console.error(`Error updating ad size in database:`, error);
-      return ad;
+      console.error(`Error updating ad size:`, error);
     }
-  } else {
-    console.log(`Size change too small (${Math.abs(newSize - ad.size)}), skipping update`);
   }
+  
   return ad;
 };
 
