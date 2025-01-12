@@ -104,71 +104,56 @@ export const deleteAd = async (id) => {
 // Login user
 export const loginUser = async (credentials) => {
   try {
-    console.log('Attempting login with:', credentials); // Debug log
-
     const response = await fetch(`${API_URL}/users/login`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        username: credentials.username,
-        password: credentials.password
-      }),
-      credentials: 'include'
+      body: JSON.stringify(credentials)
     });
 
-    const data = await response.json();
-    
     if (!response.ok) {
-      throw new Error(data.error || 'Login failed');
+      const error = await response.json();
+      throw new Error(error.error || 'Login failed');
     }
 
-    // Store user data
-    const userData = {
-      username: data.username,
-      isAdmin: Boolean(data.isAdmin),
-      token: data.token
-    };
-
+    const userData = await response.json();
     localStorage.setItem('currentUser', JSON.stringify(userData));
     
-    // Update socket auth if needed
-    if (socket.connected) {
-      socket.auth = { token: userData.token };
-      socket.disconnect().connect();
-    }
+    // Update socket auth
+    socket.auth = { token: userData.token };
+    socket.connect();
 
     return userData;
   } catch (error) {
-    console.error('Login error details:', error);
+    console.error('Login error:', error);
     throw error;
   }
 };
 
 // Add a function to verify token
 export const verifyToken = async () => {
-  const savedUser = localStorage.getItem('currentUser');
-  if (!savedUser) return null;
-
   try {
+    const savedUser = localStorage.getItem('currentUser');
+    if (!savedUser) return false;
+
     const user = JSON.parse(savedUser);
-    const response = await fetch(`${API_URL}/auth/verify`, {
+    const response = await fetch(`${API_URL}/verify-token`, {
+      method: 'GET',
       headers: {
-        'Authorization': `Bearer ${user.token}`
+        'Authorization': `Bearer ${user.token}`,
+        'Content-Type': 'application/json'
       }
     });
 
     if (!response.ok) {
-      localStorage.removeItem('currentUser');
-      return null;
+      throw new Error('Token verification failed');
     }
 
-    return user;
+    return true;
   } catch (error) {
     console.error('Token verification error:', error);
-    localStorage.removeItem('currentUser');
-    return null;
+    return false;
   }
 };
 
@@ -276,8 +261,13 @@ socket.on('connect', () => {
   // Refresh authentication on successful connection
   const savedUser = localStorage.getItem('currentUser');
   if (savedUser) {
-    const user = JSON.parse(savedUser);
-    socket.emit('authenticate', { token: user.token });
+    try {
+      const user = JSON.parse(savedUser);
+      socket.auth = { token: user.token };
+      socket.connect();
+    } catch (error) {
+      console.error('Socket auth error:', error);
+    }
   }
 });
 
