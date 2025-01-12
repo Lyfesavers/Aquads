@@ -7,6 +7,7 @@ const SHRINK_INTERVAL = 30000; // 30 seconds
 const MAX_SIZE = 150;
 const MIN_SIZE = 50;
 const SHRINK_PERCENTAGE = 0.95;
+const REFERENCE_DATE = new Date('2024-01-01').getTime(); // Reference date for shrinking
 
 // Add a function to check bump expiration and handle shrinking
 const checkBumpExpiration = async (ad) => {
@@ -59,27 +60,16 @@ const shrinkAd = async (ad) => {
   console.log(`\nShrink calculation for ad ${ad.id}:`, {
     currentTime: new Date(now).toISOString(),
     createdAt: new Date(createdTime).toISOString(),
+    referenceDate: new Date(REFERENCE_DATE).toISOString(),
     initialSize: MAX_SIZE
   });
 
-  // If created in the future, set size to MAX_SIZE
-  if (createdTime > now) {
-    console.log('Ad created in future, setting to MAX_SIZE');
-    if (ad.size !== MAX_SIZE) {
-      return await Ad.findByIdAndUpdate(
-        ad._id,
-        { $set: { size: MAX_SIZE } },
-        { new: true }
-      );
-    }
-    return ad;
-  }
-
-  const timeSinceCreation = now - createdTime;
-  const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
+  // Calculate time since reference date instead of creation
+  const timeSinceReference = now - REFERENCE_DATE;
+  const shrinkIntervals = Math.floor(timeSinceReference / SHRINK_INTERVAL);
   
   console.log('Shrink details:', {
-    timeSinceCreation: `${timeSinceCreation/1000} seconds`,
+    timeSinceReference: `${timeSinceReference/1000} seconds`,
     shrinkIntervals,
     currentSize: ad.size,
     shrinkPercentage: SHRINK_PERCENTAGE
