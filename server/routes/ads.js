@@ -17,157 +17,75 @@ router.use((req, res, next) => {
 const SHRINK_INTERVAL = 30000; // 30 seconds
 const MAX_SIZE = 150;
 const MIN_SIZE = 50;
-const SHRINK_PERCENTAGE = 0.95;
-const FIXED_START_DATE = new Date('2024-01-01').getTime(); // Fixed start date for all ads
 
-// Add a function to check bump expiration and handle shrinking
-const checkBumpExpiration = async (ad) => {
+// Simplified check and update function
+const updateAdSize = async (ad) => {
   const now = Date.now();
-  const expiresAt = new Date(ad.bumpExpiresAt).getTime();
   
-  if (ad.isBumped && ad.bumpExpiresAt && now > expiresAt) {
-    console.log(`Bump expired for ad: ${ad.id}`);
-    
-    try {
-      // Force update when bump expires
-      const result = await Ad.findOneAndUpdate(
-        { _id: ad._id },
-        { 
-          $set: {
-            isBumped: false,
-            status: 'active',
-            size: MIN_SIZE
-          },
-          $unset: {
-            bumpedAt: "",
-            bumpDuration: "",
-            bumpExpiresAt: "",
-            lastBumpTx: ""
-          }
-        },
-        { new: true }
-      );
+  try {
+    // Check if bump has expired
+    if (ad.isBumped && ad.bumpExpiresAt && now > new Date(ad.bumpExpiresAt).getTime()) {
+      console.log(`Bump expired for ad: ${ad.id}`);
       
-      if (result) {
-        console.log(`Reset expired bump for ad ${ad.id}. New size: ${MIN_SIZE}`);
-        return result;
-      }
-    } catch (error) {
-      console.error('Error updating expired bump:', error);
+      // Update ad when bump expires
+      await Ad.findByIdAndUpdate(ad._id, {
+        $set: {
+          isBumped: false,
+          size: MIN_SIZE,
+          status: 'active'
+        },
+        $unset: {
+          bumpedAt: "",
+          bumpDuration: "",
+          bumpExpiresAt: "",
+          lastBumpTx: ""
+        }
+      });
+      console.log(`Reset expired bump for ad ${ad.id}. Size set to ${MIN_SIZE}`);
+      return;
     }
-  }
-  
-  // If ad is not bumped, ensure size is MIN_SIZE
-  if (!ad.isBumped && ad.size !== MIN_SIZE) {
-    try {
-      const result = await Ad.findOneAndUpdate(
-        { _id: ad._id },
-        { $set: { size: MIN_SIZE } },
-        { new: true }
-      );
-      console.log(`Set non-bumped ad ${ad.id} size to ${MIN_SIZE}`);
-      return result;
-    } catch (error) {
-      console.error('Error updating non-bumped ad size:', error);
+
+    // Update size based on bump status
+    const correctSize = ad.isBumped ? MAX_SIZE : MIN_SIZE;
+    if (ad.size !== correctSize) {
+      await Ad.findByIdAndUpdate(ad._id, {
+        $set: { size: correctSize }
+      });
+      console.log(`Updated ad ${ad.id} size to ${correctSize} (isBumped: ${ad.isBumped})`);
     }
+  } catch (error) {
+    console.error(`Error updating ad ${ad.id}:`, error);
   }
-  
-  return ad;
 };
 
-// Simplify the shrinkAd function to handle both bumped and non-bumped ads
-const shrinkAd = async (ad) => {
-  const now = Date.now();
-  const createdAt = new Date(ad.createdAt).getTime();
-  
-  // If ad is bumped, maintain MAX_SIZE
-  if (ad.isBumped) {
-    if (ad.size !== MAX_SIZE) {
-      try {
-        const result = await Ad.findByIdAndUpdate(
-          ad._id,
-          { $set: { size: MAX_SIZE } },
-          { new: true }
-        );
-        console.log(`Set bumped ad ${ad.id} size to ${MAX_SIZE}`);
-        return result;
-      } catch (error) {
-        console.error('Error updating bumped ad size:', error);
-      }
-    }
-    return ad;
-  }
-
-  // For non-bumped ads, calculate shrink size
-  const timeSinceCreation = now - createdAt;
-  const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
-  
-  let newSize = MAX_SIZE;
-  for (let i = 0; i < shrinkIntervals; i++) {
-    newSize = Math.max(MIN_SIZE, newSize * SHRINK_PERCENTAGE);
-  }
-  
-  // Round to 2 decimal places
-  newSize = Math.round(newSize * 100) / 100;
-  
-  // Update if size has changed
-  if (newSize !== ad.size) {
-    try {
-      const result = await Ad.findByIdAndUpdate(
-        ad._id,
-        { $set: { size: newSize } },
-        { new: true }
-      );
-      console.log(`Updated non-bumped ad ${ad.id} size to ${newSize}`);
-      return result;
-    } catch (error) {
-      console.error('Error updating non-bumped ad size:', error);
-    }
-  }
-  
-  return ad;
-};
-
-// Update the periodic check
+// Periodic check to update all ad sizes
 setInterval(async () => {
   try {
-    console.log('\n=== Running periodic checks ===');
+    console.log('\n=== Checking ad sizes ===');
     const ads = await Ad.find({ status: 'active' });
     
     for (const ad of ads) {
-      // First check bump expiration
-      const afterBumpCheck = await checkBumpExpiration(ad);
-      // Then handle shrinking
-      await shrinkAd(afterBumpCheck);
+      await updateAdSize(ad);
     }
   } catch (error) {
     console.error('Periodic check error:', error);
   }
 }, SHRINK_INTERVAL);
 
-// Update the GET route to be more direct
+// Update GET route to ensure sizes are correct when fetching
 router.get('/', async (req, res) => {
   try {
     console.log('\nFetching ads...');
     const ads = await Ad.find({ status: 'active' });
     
-    // Update sizes based on bump status
+    // Update any incorrect sizes before sending response
     for (const ad of ads) {
-      const targetSize = ad.isBumped ? MAX_SIZE : MIN_SIZE;
-      
-      if (ad.size !== targetSize) {
-        await Ad.updateOne(
-          { _id: ad._id },
-          { $set: { size: targetSize } }
-        );
-        console.log(`Set ad ${ad.id} size to ${targetSize} based on bump status`);
-      }
+      await updateAdSize(ad);
     }
     
-    // Return fresh data
+    // Get fresh data after updates
     const updatedAds = await Ad.find({ status: 'active' });
     res.json(updatedAds);
-    
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ error: 'Server error' });
