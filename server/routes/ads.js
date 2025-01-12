@@ -26,7 +26,7 @@ const updateAdSize = async (ad) => {
         await Ad.findByIdAndUpdate(ad._id, {
           $set: { size: MAX_SIZE }
         });
-        console.log(`Set bumped ad ${ad.id} size to ${MAX_SIZE}`);
+        console.log(`Reset bumped ad ${ad.id} to MAX_SIZE`);
       }
       return;
     }
@@ -52,21 +52,29 @@ const updateAdSize = async (ad) => {
     const timeSinceCreation = now - new Date(ad.createdAt).getTime();
     const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
     
-    // Start from MAX_SIZE and apply shrinking
+    // Start from MAX_SIZE and apply continuous shrinking
     let newSize = MAX_SIZE;
     for (let i = 0; i < shrinkIntervals; i++) {
       newSize *= SHRINK_PERCENTAGE;
     }
-    
-    // Ensure size doesn't go below minimum
-    newSize = Math.max(MIN_SIZE, Math.round(newSize * 100) / 100);
+
+    // Ensure size doesn't go below minimum and round to 1 decimal
+    newSize = Math.max(MIN_SIZE, Math.round(newSize * 10) / 10);
+
+    // Debug logging
+    console.log(`Shrink calculation for ad ${ad.id}:`, {
+      currentSize: ad.size,
+      newSize: newSize,
+      timeSinceCreation: Math.floor(timeSinceCreation / 1000),
+      intervals: shrinkIntervals
+    });
 
     // Update if size changed
     if (newSize !== ad.size) {
       await Ad.findByIdAndUpdate(ad._id, {
         $set: { size: newSize }
       });
-      console.log(`Shrunk ad ${ad.id} to ${newSize}`);
+      console.log(`Updated ad ${ad.id} size to ${newSize}`);
     }
   } catch (error) {
     console.error(`Error updating ad ${ad.id}:`, error);
