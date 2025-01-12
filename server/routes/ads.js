@@ -13,7 +13,7 @@ router.use((req, res, next) => {
 const SHRINK_INTERVAL = 30000; // 30 seconds
 const MAX_SIZE = 150;
 const MIN_SIZE = 50;
-const SHRINK_PERCENTAGE = 0.95; // Shrink by 5% each interval
+const SHRINK_PERCENTAGE = 0.9; // Shrink by 5% each interval
 
 // Function to calculate and update ad size
 const updateAdSize = async (ad) => {

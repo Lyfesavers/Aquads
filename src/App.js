@@ -31,9 +31,9 @@ window.Buffer = Buffer;
 // Constants for ad sizes and animations
 const MAX_SIZE = 150;
 const MIN_SIZE = 50;
-const SHRINK_RATE = 2.5; // Amount to shrink by each interval
+const SHRINK_RATE = 5; // Amount to shrink by each interval
 const SHRINK_INTERVAL = 30000; // 30 seconds
-const SHRINK_PERCENTAGE = 0.95; // More gradual shrinking
+const SHRINK_PERCENTAGE = 0.9; // More gradual shrinking
 const TOKEN_PRICE = 0.01; // SOL per token
 const AD_EXPIRATION_TIME = 7 * 24 * 60 * 60 * 1000; // 7 days
 const AD_WARNING_TIME = 24 * 60 * 60 * 1000; // 1 day
