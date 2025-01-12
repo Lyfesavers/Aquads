@@ -13,6 +13,7 @@ const checkBumpExpiration = async (ad) => {
     console.log(`Current time: ${new Date(now).toISOString()}`);
     
     try {
+      // Force immediate size reset when bump expires
       const result = await Ad.findOneAndUpdate(
         { 
           id: ad.id,
@@ -23,7 +24,7 @@ const checkBumpExpiration = async (ad) => {
           $set: {
             isBumped: false,
             status: 'active',
-            size: 50
+            size: 50  // Force size reset to 50
           },
           $unset: {
             bumpedAt: "",
@@ -34,17 +35,17 @@ const checkBumpExpiration = async (ad) => {
         },
         { 
           new: true,
-          runValidators: true
+          runValidators: true,
+          timestamps: true  // Ensure timestamps are updated
         }
       );
       
       if (result) {
-        console.log(`Successfully updated ad ${ad.id}. New isBumped status: ${result.isBumped}`);
+        console.log(`Successfully reset ad ${ad.id}. New size: ${result.size}, isBumped: ${result.isBumped}`);
         return result;
-      } else {
-        console.log(`No update performed for ad ${ad.id}`);
-        return ad;
       }
+      console.log(`No update needed for ad ${ad.id}`);
+      return ad;
     } catch (error) {
       console.error('Error updating expired bump:', error);
       return ad;
