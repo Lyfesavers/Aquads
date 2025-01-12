@@ -13,11 +13,12 @@ const checkBumpExpiration = async (ad) => {
     console.log(`Current time: ${new Date(now).toISOString()}`);
     
     try {
-      // Force update the document in MongoDB
+      // Force update the document in MongoDB with explicit conditions
       const result = await Ad.findOneAndUpdate(
         { 
           id: ad.id,
-          isBumped: true // Additional check to ensure we're updating the right document
+          isBumped: true,
+          bumpExpiresAt: { $lt: new Date(now) }  // Only update if expiration is less than current time
         },
         {
           $set: {
@@ -26,10 +27,10 @@ const checkBumpExpiration = async (ad) => {
             size: 50
           },
           $unset: {
-            bumpedAt: 1,
-            bumpDuration: 1,
-            bumpExpiresAt: 1,
-            lastBumpTx: 1
+            bumpedAt: "",
+            bumpDuration: "",
+            bumpExpiresAt: "",
+            lastBumpTx: ""
           }
         },
         { 
@@ -40,11 +41,11 @@ const checkBumpExpiration = async (ad) => {
       
       if (result) {
         console.log(`Successfully updated ad ${ad.id}. New isBumped status: ${result.isBumped}`);
+        return result;
       } else {
         console.log(`No update performed for ad ${ad.id}`);
+        return ad;
       }
-      
-      return result || ad;
     } catch (error) {
       console.error('Error updating expired bump:', error);
       return ad;
@@ -56,28 +57,22 @@ const checkBumpExpiration = async (ad) => {
 // Single route handler for ads
 router.get('/ads', async (req, res) => {
   try {
-    const ads = await Ad.find({})
-      .lean()
-      .maxTimeMS(20000)
-      .sort({ createdAt: -1 });
-
-    if (!ads || ads.length === 0) {
-      return res.status(200).json([]);
-    }
+    console.log('Fetching ads and checking bump expirations...');
+    const ads = await Ad.find({}).lean();
 
     // Check for expired bumps
     const checkedAds = await Promise.all(
-      ads.map(ad => checkBumpExpiration(ad))
+      ads.map(async (ad) => {
+        const updatedAd = await checkBumpExpiration(ad);
+        return updatedAd;
+      })
     );
 
-    console.log(`Sending ${checkedAds.length} ads to client`);
+    console.log(`Processed ${checkedAds.length} ads`);
     res.json(checkedAds);
   } catch (error) {
     console.error('Error fetching ads:', error);
-    res.status(500).json({
-      error: 'Database error',
-      message: error.message
-    });
+    res.status(500).json({ error: 'Database error', message: error.message });
   }
 });
 
