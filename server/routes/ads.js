@@ -72,11 +72,14 @@ const shrinkAd = async (ad) => {
     newSize = Math.max(MIN_SIZE, newSize * SHRINK_PERCENTAGE);
   }
   
+  // Round newSize to 2 decimal places
+  newSize = Math.round(newSize * 100) / 100;
+  
   console.log('Shrink details:', {
     timeSinceStart: `${timeSinceStart/1000} seconds`,
     shrinkIntervals,
     currentSize: ad.size,
-    newSize: Math.round(newSize * 100) / 100,
+    newSize: newSize,
     shrinkPercentage: SHRINK_PERCENTAGE
   });
 
@@ -85,20 +88,20 @@ const shrinkAd = async (ad) => {
     try {
       console.log(`Attempting to update ad ${ad.id} in database...`);
       
-      // Round newSize to 2 decimal places
-      newSize = Math.round(newSize * 100) / 100;
+      // Use updateOne for more direct control
+      const result = await Ad.updateOne(
+        { _id: ad._id },
+        { $set: { size: newSize } }
+      );
       
-      const updatedAd = await Ad.findByIdAndUpdate(
-        ad._id,
-        { $set: { size: newSize } },
-        { new: true }
-      ).exec(); // Add .exec() to ensure the promise resolves
+      console.log('Update result:', result);
       
-      if (updatedAd) {
-        console.log(`Successfully updated ad size in database from ${ad.size} to ${updatedAd.size}`);
-        return updatedAd;
+      if (result.modifiedCount > 0) {
+        console.log(`Successfully updated ad size from ${ad.size} to ${newSize}`);
+        // Fetch the updated document
+        return await Ad.findById(ad._id);
       } else {
-        console.log(`Failed to update ad ${ad.id} - no document returned`);
+        console.log(`No changes made to ad ${ad.id}`);
         return ad;
       }
     } catch (error) {
