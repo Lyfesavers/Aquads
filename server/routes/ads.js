@@ -4,54 +4,31 @@ const Ad = require('../models/Ad');
 
 // Add a function to check bump expiration
 const checkBumpExpiration = async (ad) => {
-  const now = Date.now();
-  const expiresAt = new Date(ad.bumpExpiresAt).getTime();
+  const now = new Date();
+  const timeSinceCreation = now - new Date(ad.createdAt);
+  const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
   
-  if (ad.isBumped && ad.bumpExpiresAt && now > expiresAt) {
-    console.log(`Checking bump expiration for ad: ${ad.id}`);
-    console.log(`Bump expired at: ${new Date(expiresAt).toISOString()}`);
-    console.log(`Current time: ${new Date(now).toISOString()}`);
-    
-    try {
-      // Force immediate size reset when bump expires
-      const result = await Ad.findOneAndUpdate(
-        { 
-          id: ad.id,
-          isBumped: true,
-          bumpExpiresAt: { $lt: new Date(now) }
-        },
-        {
-          $set: {
-            isBumped: false,
-            status: 'active',
-            size: 50  // Force size reset to 50
-          },
-          $unset: {
-            bumpedAt: "",
-            bumpDuration: "",
-            bumpExpiresAt: "",
-            lastBumpTx: ""
-          }
-        },
-        { 
-          new: true,
-          runValidators: true,
-          timestamps: true  // Ensure timestamps are updated
+  // Calculate new size based on intervals passed
+  let newSize = MAX_SIZE * Math.pow(SHRINK_PERCENTAGE, shrinkIntervals);
+  newSize = Math.max(newSize, MIN_SIZE); // Don't go below minimum size
+
+  try {
+    // Force immediate size reset when bump expires
+    const result = await Ad.findOneAndUpdate(
+      { _id: ad._id },
+      { 
+        $set: {
+          size: newSize,
+          isBumped: false 
         }
-      );
-      
-      if (result) {
-        console.log(`Successfully reset ad ${ad.id}. New size: ${result.size}, isBumped: ${result.isBumped}`);
-        return result;
-      }
-      console.log(`No update needed for ad ${ad.id}`);
-      return ad;
-    } catch (error) {
-      console.error('Error updating expired bump:', error);
-      return ad;
-    }
+      },
+      { new: true }
+    );
+    return result;
+  } catch (error) {
+    console.error('Error updating ad size:', error);
+    return null;
   }
-  return ad;
 };
 
 // Add periodic check for expired bumps (every minute)
@@ -71,20 +48,30 @@ setInterval(async () => {
 
 
 // Single route handler for ads
-router.get('/ads', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    console.log('Fetching ads and checking bump expirations...');
-    const ads = await Ad.find({}).lean();
+    const ads = await Ad.find({ status: 'active' });
+    
+    // Update sizes for all active ads
+    const updatedAds = await Promise.all(ads.map(async (ad) => {
+      const now = new Date();
+      const timeSinceCreation = now - new Date(ad.createdAt);
+      const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
+      
+      if (shrinkIntervals > 0) {
+        let newSize = MAX_SIZE * Math.pow(SHRINK_PERCENTAGE, shrinkIntervals);
+        newSize = Math.max(newSize, MIN_SIZE);
+        
+        if (newSize !== ad.size) {
+          ad.size = newSize;
+          await ad.save();
+        }
+      }
+      return ad;
+    }));
 
-    const checkedAds = await Promise.all(
-      ads.map(async (ad) => {
-        const updatedAd = await checkBumpExpiration(ad);
-        return updatedAd;
-      })
-    );
-
-    console.log(`Processed ${checkedAds.length} ads`);
-    res.json(checkedAds);
+    console.log('Found ads:', updatedAds);
+    res.json(updatedAds);
   } catch (error) {
     console.error('Error fetching ads:', error);
     res.status(500).json({ error: 'Database error', message: error.message });
