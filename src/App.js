@@ -174,9 +174,23 @@ function App() {
     return cachedAds ? JSON.parse(cachedAds) : [];
   });
   const [currentUser, setCurrentUser] = useState(() => {
-    // Check localStorage for saved user data on initial load
     const savedUser = localStorage.getItem('currentUser');
-    return savedUser ? JSON.parse(savedUser) : null;
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser);
+        // Verify the stored token is valid
+        verifyToken(user.token)
+          .catch(() => {
+            localStorage.removeItem('currentUser');
+            return null;
+          });
+        return user;
+      } catch (error) {
+        localStorage.removeItem('currentUser');
+        return null;
+      }
+    }
+    return null;
   });
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -300,34 +314,21 @@ function App() {
 
   const handleLogin = async (credentials) => {
     try {
-      setIsLoading(true);
-      
-      // Check server availability first
-      const isServerAvailable = await pingServer();
-      if (!isServerAvailable) {
-        throw new Error('Server is currently unavailable. Please try again later.');
-      }
-
-      const userData = await loginUser(credentials);
-      
-      if (userData) {
-        setCurrentUser(userData);
-        setShowLoginModal(false);
-        showNotification('Logged in successfully!', 'success');
-      }
+      const user = await loginUser(credentials);
+      setCurrentUser(user);
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      setShowLoginModal(false);
+      showNotification('Successfully logged in!', 'success');
     } catch (error) {
       console.error('Login error:', error);
-      showNotification(error.message || 'Login failed. Please try again.', 'error');
-    } finally {
-      setIsLoading(false);
+      showNotification(error.message || 'Login failed', 'error');
     }
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
-    // Clear user data from localStorage
     localStorage.removeItem('currentUser');
-    showNotification('Logged out successfully!', 'success');
+    showNotification('Successfully logged out!', 'success');
   };
 
   const handleCreateAccount = async (userData) => {
