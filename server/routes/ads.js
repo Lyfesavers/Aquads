@@ -14,7 +14,6 @@ const SHRINK_INTERVAL = 30000; // 30 seconds
 const MAX_SIZE = 150;
 const MIN_SIZE = 50;
 const SHRINK_PERCENTAGE = 0.95; // Shrink by 5% each interval
-const REFERENCE_TIME = new Date('2024-01-01').getTime(); // Use a fixed past date as reference
 
 // Function to calculate and update ad size
 const updateAdSize = async (ad) => {
@@ -32,26 +31,9 @@ const updateAdSize = async (ad) => {
       return;
     }
 
-    // Check if bump expired
-    if (ad.bumpExpiresAt && now > new Date(ad.bumpExpiresAt).getTime()) {
-      await Ad.findByIdAndUpdate(ad._id, {
-        $set: {
-          isBumped: false,
-          status: 'active'
-        },
-        $unset: {
-          bumpedAt: "",
-          bumpDuration: "",
-          bumpExpiresAt: "",
-          lastBumpTx: ""
-        }
-      });
-      console.log(`Bump expired for ad ${ad.id}`);
-    }
-
     // Calculate shrink size for non-bumped ads
-    const timeSinceReference = now - REFERENCE_TIME;
-    const shrinkIntervals = Math.floor(timeSinceReference / SHRINK_INTERVAL);
+    const timeSinceCreation = now - new Date(ad.createdAt).getTime();
+    const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
     
     // Start from MAX_SIZE and apply continuous shrinking
     let newSize = MAX_SIZE;
@@ -66,7 +48,7 @@ const updateAdSize = async (ad) => {
     console.log(`Shrink calculation for ad ${ad.id}:`, {
       currentSize: ad.size,
       newSize: newSize,
-      timeSinceReference: Math.floor(timeSinceReference / 1000),
+      timeSinceCreation: Math.floor(timeSinceCreation / 1000),
       intervals: shrinkIntervals
     });
 
