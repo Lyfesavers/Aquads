@@ -56,7 +56,7 @@ const LoginModal = ({ onLogin, onClose, onCreateAccount }) => {
               type="submit"
               className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded"
             >
-              Login
+              List Ad
             </button>
           </div>
         </form>
