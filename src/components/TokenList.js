@@ -33,7 +33,13 @@ const DEX_OPTIONS = [
   {
     name: 'Jupiter',
     url: 'https://jup.ag/',
-    icon: '🌟',
+    icon: '🪐',
+    description: 'Popular DEX'
+  },
+  {
+    name: 'Raydium',
+    url: 'https://raydium.io/',
+    icon: '🌌',
     description: 'Popular Solana DEX'
   }
 
