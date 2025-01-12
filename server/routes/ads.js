@@ -7,7 +7,7 @@ const SHRINK_INTERVAL = 30000; // 30 seconds
 const MAX_SIZE = 150;
 const MIN_SIZE = 50;
 const SHRINK_PERCENTAGE = 0.95;
-const REFERENCE_DATE = new Date('2024-01-01').getTime(); // Reference date for shrinking
+const FIXED_START_DATE = new Date('2024-01-01').getTime(); // Fixed start date for all ads
 
 // Add a function to check bump expiration and handle shrinking
 const checkBumpExpiration = async (ad) => {
@@ -54,18 +54,17 @@ const checkBumpExpiration = async (ad) => {
 // Separate shrinking function
 const shrinkAd = async (ad) => {
   const now = Date.now();
-  const createdTime = new Date(ad.createdAt).getTime();
   
   // Debug logging
   console.log(`\nShrink calculation for ad ${ad.id}:`, {
     currentTime: new Date(now).toISOString(),
-    createdAt: new Date(createdTime).toISOString(),
-    initialSize: MAX_SIZE
+    fixedStartDate: new Date(FIXED_START_DATE).toISOString(),
+    currentSize: ad.size
   });
 
-  // Calculate new size based on time since creation
-  const timeSinceCreation = now - createdTime;
-  const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
+  // Calculate time since fixed start date
+  const timeSinceStart = now - FIXED_START_DATE;
+  const shrinkIntervals = Math.floor(timeSinceStart / SHRINK_INTERVAL);
   
   // Calculate new size using compound shrinking
   let newSize = MAX_SIZE;
@@ -74,7 +73,7 @@ const shrinkAd = async (ad) => {
   }
   
   console.log('Shrink details:', {
-    timeSinceCreation: `${timeSinceCreation/1000} seconds`,
+    timeSinceStart: `${timeSinceStart/1000} seconds`,
     shrinkIntervals,
     currentSize: ad.size,
     newSize: newSize,
@@ -83,31 +82,18 @@ const shrinkAd = async (ad) => {
 
   // Only update if size change is significant
   if (Math.abs(newSize - ad.size) > 0.1) {
-    console.log(`Size difference (${Math.abs(newSize - ad.size)}) exceeds threshold, updating...`);
-    
     try {
       const updatedAd = await Ad.findByIdAndUpdate(
         ad._id,
-        { 
-          $set: { 
-            size: newSize,
-            lastShrinkAt: new Date(now)
-          }
-        },
+        { $set: { size: newSize } },
         { new: true }
       );
-
-      if (updatedAd) {
-        console.log(`Successfully shrunk ad ${ad.id} from ${ad.size} to ${newSize}`);
-        return updatedAd;
-      } else {
-        console.log(`No ad found with id ${ad._id}`);
-      }
+      console.log(`Updated ad size from ${ad.size} to ${newSize}`);
+      return updatedAd;
     } catch (error) {
-      console.error(`Error shrinking ad ${ad.id}:`, error);
+      console.error(`Error updating ad size:`, error);
+      return ad;
     }
-  } else {
-    console.log(`Size difference (${Math.abs(newSize - ad.size)}) too small, skipping update`);
   }
   return ad;
 };
