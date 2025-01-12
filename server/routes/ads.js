@@ -53,13 +53,32 @@ const checkBumpExpiration = async (ad) => {
 // Separate shrinking function
 const shrinkAd = async (ad) => {
   const now = Date.now();
-  const timeSinceCreation = now - new Date(ad.createdAt).getTime();
-  const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
+  const createdTime = new Date(ad.createdAt).getTime();
   
   // Debug logging
   console.log(`\nShrink calculation for ad ${ad.id}:`, {
     currentTime: new Date(now).toISOString(),
-    createdAt: new Date(ad.createdAt).toISOString(),
+    createdAt: new Date(createdTime).toISOString(),
+    initialSize: MAX_SIZE
+  });
+
+  // If created in the future, set size to MAX_SIZE
+  if (createdTime > now) {
+    console.log('Ad created in future, setting to MAX_SIZE');
+    if (ad.size !== MAX_SIZE) {
+      return await Ad.findByIdAndUpdate(
+        ad._id,
+        { $set: { size: MAX_SIZE } },
+        { new: true }
+      );
+    }
+    return ad;
+  }
+
+  const timeSinceCreation = now - createdTime;
+  const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
+  
+  console.log('Shrink details:', {
     timeSinceCreation: `${timeSinceCreation/1000} seconds`,
     shrinkIntervals,
     currentSize: ad.size,
