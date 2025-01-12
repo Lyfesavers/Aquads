@@ -56,26 +56,47 @@ const shrinkAd = async (ad) => {
   const timeSinceCreation = now - new Date(ad.createdAt).getTime();
   const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
   
-  let newSize = ad.size * Math.pow(SHRINK_PERCENTAGE, shrinkIntervals);
+  // Debug logging
+  console.log(`\nShrink calculation for ad ${ad.id}:`, {
+    currentTime: new Date(now).toISOString(),
+    createdAt: new Date(ad.createdAt).toISOString(),
+    timeSinceCreation: `${timeSinceCreation/1000} seconds`,
+    shrinkIntervals,
+    currentSize: ad.size,
+    shrinkPercentage: SHRINK_PERCENTAGE
+  });
+  
+  let newSize = MAX_SIZE * Math.pow(SHRINK_PERCENTAGE, shrinkIntervals);
   newSize = Math.max(newSize, MIN_SIZE);
 
+  console.log(`Calculated new size: ${newSize}`);
+
   if (Math.abs(newSize - ad.size) > 0.1) {
-    console.log(`Shrinking ad ${ad.id} from ${ad.size} to ${newSize}`);
+    console.log(`Size difference (${Math.abs(newSize - ad.size)}) exceeds threshold, updating...`);
     
     try {
       const updatedAd = await Ad.findByIdAndUpdate(
         ad._id,
-        { $set: { size: newSize } },
+        { 
+          $set: { 
+            size: newSize,
+            lastShrinkAt: new Date(now)
+          }
+        },
         { new: true }
       );
 
       if (updatedAd) {
-        console.log(`Successfully shrunk ad ${ad.id} to size ${newSize}`);
+        console.log(`Successfully shrunk ad ${ad.id} from ${ad.size} to ${newSize}`);
         return updatedAd;
+      } else {
+        console.log(`No ad found with id ${ad._id}`);
       }
     } catch (error) {
       console.error(`Error shrinking ad ${ad.id}:`, error);
     }
+  } else {
+    console.log(`Size difference (${Math.abs(newSize - ad.size)}) too small, skipping update`);
   }
   return ad;
 };
@@ -83,16 +104,18 @@ const shrinkAd = async (ad) => {
 // Periodic check that handles both bump expiration and shrinking
 setInterval(async () => {
   try {
-    console.log('Running periodic checks...');
+    console.log('\n=== Running periodic checks ===');
     const ads = await Ad.find({ status: 'active' });
+    console.log(`Found ${ads.length} active ads to process`);
     
     for (const ad of ads) {
+      console.log(`\nProcessing ad: ${ad.id}`);
       // First check bump expiration
       const updatedAd = await checkBumpExpiration(ad);
       // Then shrink if needed
       await shrinkAd(updatedAd);
     }
-    console.log('Completed periodic checks');
+    console.log('\n=== Completed periodic checks ===');
   } catch (error) {
     console.error('Error in periodic checks:', error);
   }
