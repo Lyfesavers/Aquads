@@ -61,33 +61,45 @@ const checkBumpExpiration = async (ad) => {
     const timeSinceCreation = now - new Date(ad.createdAt).getTime();
     const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
     
+    console.log(`Ad ${ad.id} stats:`, {
+      currentSize: ad.size,
+      timeSinceCreation: timeSinceCreation / 1000, // in seconds
+      shrinkIntervals,
+      shrinkPercentage: SHRINK_PERCENTAGE
+    });
+    
     let newSize = ad.size * Math.pow(SHRINK_PERCENTAGE, shrinkIntervals);
     newSize = Math.max(newSize, MIN_SIZE);
 
     // Only update if size has changed
-    if (Math.abs(newSize - ad.size) > 0.1) { // Add small threshold to avoid floating point issues
+    if (Math.abs(newSize - ad.size) > 0.1) {
       console.log(`Updating size for ad ${ad.id} from ${ad.size} to ${newSize}`);
       
-      // Use findByIdAndUpdate for more reliable updates
-      const updatedAd = await Ad.findByIdAndUpdate(
-        ad._id,
-        { 
-          $set: { size: newSize }
-        },
-        { 
-          new: true,
-          runValidators: true 
-        }
-      );
+      try {
+        const updatedAd = await Ad.findByIdAndUpdate(
+          ad._id,
+          { $set: { size: newSize } },
+          { 
+            new: true,
+            runValidators: true 
+          }
+        );
 
-      if (updatedAd) {
-        console.log(`Successfully updated ad size to ${updatedAd.size}`);
-        return updatedAd;
+        if (updatedAd) {
+          console.log(`Successfully updated ad size to ${updatedAd.size}`);
+          return updatedAd;
+        } else {
+          console.log(`Failed to update ad ${ad.id} - no document returned`);
+        }
+      } catch (dbError) {
+        console.error(`Database error updating ad ${ad.id}:`, dbError);
       }
+    } else {
+      console.log(`No size update needed for ad ${ad.id} (current: ${ad.size}, calculated: ${newSize})`);
     }
     return ad;
   } catch (error) {
-    console.error('Error updating ad size:', error);
+    console.error('Error in size calculation:', error);
     return ad;
   }
 };
