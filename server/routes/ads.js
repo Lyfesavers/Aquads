@@ -59,59 +59,42 @@ const checkBumpExpiration = async (ad) => {
   return ad;
 };
 
-// Separate shrinking function
+// Update the shrinkAd function to handle bumped vs non-bumped ads
 const shrinkAd = async (ad) => {
-  const now = Date.now();
-  
-  // Use either creation date or a recent past date, whichever is earlier
-  const effectiveStartTime = Math.min(
-    new Date(ad.createdAt).getTime(),
-    now - (60 * 1000) // Start shrinking from 1 minute ago if creation date is in future
-  );
-  
-  // Debug logging
-  console.log(`\nShrink calculation for ad ${ad.id}:`, {
-    currentTime: new Date(now).toISOString(),
-    effectiveStartTime: new Date(effectiveStartTime).toISOString(),
-    currentSize: ad.size,
-    timeSinceStart: (now - effectiveStartTime) / 1000 + ' seconds'
-  });
-
-  // Calculate shrink intervals
-  const timeSinceStart = now - effectiveStartTime;
-  const shrinkIntervals = Math.floor(timeSinceStart / SHRINK_INTERVAL);
-  
-  // Start from current size instead of MAX_SIZE if ad size is already set
-  let newSize = ad.size || MAX_SIZE;
-  
-  // Apply shrinking
-  for (let i = 0; i < shrinkIntervals; i++) {
-    newSize = Math.max(MIN_SIZE, newSize * SHRINK_PERCENTAGE);
+  // If ad is bumped, maintain MAX_SIZE
+  if (ad.isBumped) {
+    // Only update if size isn't already MAX_SIZE
+    if (ad.size !== MAX_SIZE) {
+      try {
+        const result = await Ad.findByIdAndUpdate(
+          ad._id,
+          { $set: { size: MAX_SIZE } },
+          { new: true }
+        ).exec();
+        console.log(`Set bumped ad ${ad.id} size to ${MAX_SIZE}`);
+        return result;
+      } catch (error) {
+        console.error(`Error updating bumped ad size:`, error);
+      }
+    }
+    return ad;
   }
-  
-  // Round newSize to 2 decimal places
-  newSize = Math.round(newSize * 100) / 100;
-  
-  // Update if size has changed
-  if (newSize !== ad.size) {
+
+  // For non-bumped ads, set to MIN_SIZE
+  if (!ad.isBumped && ad.size !== MIN_SIZE) {
     try {
-      console.log(`Updating ad ${ad.id} size from ${ad.size} to ${newSize}`);
-      
       const result = await Ad.findByIdAndUpdate(
         ad._id,
-        { $set: { size: newSize } },
+        { $set: { size: MIN_SIZE } },
         { new: true }
       ).exec();
-      
-      if (result) {
-        console.log(`Successfully updated ad size to ${newSize}`);
-        return result;
-      }
+      console.log(`Set non-bumped ad ${ad.id} size to ${MIN_SIZE}`);
+      return result;
     } catch (error) {
-      console.error(`Error updating ad size:`, error);
+      console.error(`Error updating non-bumped ad size:`, error);
     }
   }
-  
+
   return ad;
 };
 
