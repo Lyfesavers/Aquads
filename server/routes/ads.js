@@ -26,20 +26,17 @@ const checkBumpExpiration = async (ad) => {
   const expiresAt = new Date(ad.bumpExpiresAt).getTime();
   
   if (ad.isBumped && ad.bumpExpiresAt && now > expiresAt) {
-    console.log(`Checking bump expiration for ad: ${ad.id}`);
+    console.log(`Bump expired for ad: ${ad.id}`);
     
     try {
-      const result = await Ad.findOneAndUpdate(
-        { 
-          id: ad.id,
-          isBumped: true,
-          bumpExpiresAt: { $lt: new Date(now) }
-        },
+      // Update directly with findByIdAndUpdate for more reliable updates
+      const result = await Ad.findByIdAndUpdate(
+        ad._id,
         { 
           $set: {
             isBumped: false,
             status: 'active',
-            size: 50
+            size: MIN_SIZE // Use MIN_SIZE constant
           },
           $unset: {
             bumpedAt: "",
@@ -48,11 +45,11 @@ const checkBumpExpiration = async (ad) => {
             lastBumpTx: ""
           }
         },
-        { new: true, runValidators: true }
-      );
+        { new: true }
+      ).exec();
       
       if (result) {
-        console.log(`Successfully reset ad ${ad.id} after bump expiration`);
+        console.log(`Reset ad ${ad.id} after bump expiration. New size: ${result.size}`);
         return result;
       }
     } catch (error) {
