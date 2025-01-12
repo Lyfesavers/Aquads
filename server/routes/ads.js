@@ -10,13 +10,58 @@ const SHRINK_PERCENTAGE = 0.95;
 
 // Add a function to check bump expiration and handle shrinking
 const checkBumpExpiration = async (ad) => {
-  const now = new Date();
-  const timeSinceCreation = now - new Date(ad.createdAt);
+  const now = Date.now();
+  const expiresAt = new Date(ad.bumpExpiresAt).getTime();
+  
+  // First check bump expiration
+  if (ad.isBumped && ad.bumpExpiresAt && now > expiresAt) {
+    console.log(`Checking bump expiration for ad: ${ad.id}`);
+    console.log(`Bump expired at: ${new Date(expiresAt).toISOString()}`);
+    console.log(`Current time: ${new Date(now).toISOString()}`);
+    
+    try {
+      const result = await Ad.findOneAndUpdate(
+        { 
+          id: ad.id,
+          isBumped: true,
+          bumpExpiresAt: { $lt: new Date(now) }
+        },
+        { 
+          $set: {
+            isBumped: false,
+            status: 'active',
+            size: 50  // Force size reset to 50
+          },
+          $unset: {
+            bumpedAt: "",
+            bumpDuration: "",
+            bumpExpiresAt: "",
+            lastBumpTx: ""
+          }
+        },
+        { 
+          new: true,
+          runValidators: true,
+          timestamps: true
+        }
+      );
+      
+      if (result) {
+        console.log(`Successfully reset ad ${ad.id}. New size: ${result.size}, isBumped: ${result.isBumped}`);
+        return result;
+      }
+    } catch (error) {
+      console.error('Error updating expired bump:', error);
+      return ad;
+    }
+  }
+
+  // Then handle regular size shrinking
+  const timeSinceCreation = now - new Date(ad.createdAt).getTime();
   const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
   
-  // Calculate new size based on intervals passed
   let newSize = ad.size * Math.pow(SHRINK_PERCENTAGE, shrinkIntervals);
-  newSize = Math.max(newSize, MIN_SIZE); // Don't go below minimum size
+  newSize = Math.max(newSize, MIN_SIZE);
 
   try {
     if (newSize !== ad.size) {
@@ -39,18 +84,18 @@ const checkBumpExpiration = async (ad) => {
   }
 };
 
-// Add periodic check for shrinking (every 30 seconds)
+// Add periodic checks
 setInterval(async () => {
   try {
-    console.log('Running periodic size check...');
+    console.log('Running periodic checks...');
     const ads = await Ad.find({ status: 'active' }).lean();
     
     for (const ad of ads) {
       await checkBumpExpiration(ad);
     }
-    console.log('Completed periodic size check');
+    console.log('Completed periodic checks');
   } catch (error) {
-    console.error('Error in periodic size check:', error);
+    console.error('Error in periodic checks:', error);
   }
 }, SHRINK_INTERVAL);
 
@@ -59,7 +104,6 @@ router.get('/', async (req, res) => {
   try {
     const ads = await Ad.find({ status: 'active' });
     
-    // Update sizes for all active ads
     const updatedAds = await Promise.all(ads.map(async (ad) => {
       return await checkBumpExpiration(ad);
     }));
