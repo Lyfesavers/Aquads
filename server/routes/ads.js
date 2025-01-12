@@ -14,6 +14,7 @@ const SHRINK_INTERVAL = 30000; // 30 seconds
 const MAX_SIZE = 150;
 const MIN_SIZE = 50;
 const SHRINK_PERCENTAGE = 0.95; // Shrink by 5% each interval
+const REFERENCE_TIME = new Date('2024-01-01').getTime(); // Use a fixed past date as reference
 
 // Function to calculate and update ad size
 const updateAdSize = async (ad) => {
@@ -49,8 +50,8 @@ const updateAdSize = async (ad) => {
     }
 
     // Calculate shrink size for non-bumped ads
-    const timeSinceCreation = now - new Date(ad.createdAt).getTime();
-    const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
+    const timeSinceReference = now - REFERENCE_TIME;
+    const shrinkIntervals = Math.floor(timeSinceReference / SHRINK_INTERVAL);
     
     // Start from MAX_SIZE and apply continuous shrinking
     let newSize = MAX_SIZE;
@@ -65,7 +66,7 @@ const updateAdSize = async (ad) => {
     console.log(`Shrink calculation for ad ${ad.id}:`, {
       currentSize: ad.size,
       newSize: newSize,
-      timeSinceCreation: Math.floor(timeSinceCreation / 1000),
+      timeSinceReference: Math.floor(timeSinceReference / 1000),
       intervals: shrinkIntervals
     });
 
