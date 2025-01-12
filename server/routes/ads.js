@@ -107,15 +107,32 @@ const checkBumpExpiration = async (ad) => {
 // Add periodic checks
 setInterval(async () => {
   try {
-    console.log('Running periodic checks...');
-    const ads = await Ad.find({ status: 'active' }).lean();
+    console.log('Running periodic size check...');
+    const ads = await Ad.find({ status: 'active' });
     
     for (const ad of ads) {
-      await checkBumpExpiration(ad);
+      const now = Date.now();
+      const timeSinceCreation = now - new Date(ad.createdAt).getTime();
+      const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
+      
+      // Calculate new size
+      let newSize = ad.size * Math.pow(SHRINK_PERCENTAGE, shrinkIntervals);
+      newSize = Math.max(newSize, MIN_SIZE);
+
+      // Only update if size needs to change
+      if (Math.abs(newSize - ad.size) > 0.1) {
+        console.log(`Shrinking ad ${ad.id} from ${ad.size} to ${newSize}`);
+        
+        await Ad.findByIdAndUpdate(
+          ad._id,
+          { $set: { size: newSize } },
+          { new: true }
+        );
+      }
     }
-    console.log('Completed periodic checks');
+    console.log('Completed periodic size check');
   } catch (error) {
-    console.error('Error in periodic checks:', error);
+    console.error('Error in periodic size check:', error);
   }
 }, SHRINK_INTERVAL);
 
