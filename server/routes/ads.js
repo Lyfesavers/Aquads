@@ -30,7 +30,7 @@ const checkBumpExpiration = async (ad) => {
           $set: {
             isBumped: false,
             status: 'active',
-            size: 50  // Force size reset to 50
+            size: 50
           },
           $unset: {
             bumpedAt: "",
@@ -56,26 +56,36 @@ const checkBumpExpiration = async (ad) => {
     }
   }
 
-  // Then handle regular size shrinking
-  const timeSinceCreation = now - new Date(ad.createdAt).getTime();
-  const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
-  
-  let newSize = ad.size * Math.pow(SHRINK_PERCENTAGE, shrinkIntervals);
-  newSize = Math.max(newSize, MIN_SIZE);
-
+  // Then handle regular size shrinking with forced database update
   try {
+    const timeSinceCreation = now - new Date(ad.createdAt).getTime();
+    const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
+    
+    let newSize = ad.size * Math.pow(SHRINK_PERCENTAGE, shrinkIntervals);
+    newSize = Math.max(newSize, MIN_SIZE);
+
     if (newSize !== ad.size) {
-      console.log(`Updating ad ${ad.id} size from ${ad.size} to ${newSize}`);
-      const result = await Ad.findOneAndUpdate(
+      console.log(`Shrinking ad ${ad.id} from size ${ad.size} to ${newSize}`);
+      
+      // Force update in database
+      const updatedAd = await Ad.findOneAndUpdate(
         { _id: ad._id },
         { 
           $set: {
-            size: newSize
+            size: newSize,
+            lastUpdated: new Date(now)
           }
         },
-        { new: true }
+        { 
+          new: true,
+          runValidators: true
+        }
       );
-      return result;
+
+      if (updatedAd) {
+        console.log(`Successfully shrunk ad ${ad.id} to size ${updatedAd.size}`);
+        return updatedAd;
+      }
     }
     return ad;
   } catch (error) {
