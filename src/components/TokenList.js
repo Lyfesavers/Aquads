@@ -29,8 +29,16 @@ const DEX_OPTIONS = [
     url: 'https://app.sushi.com/swap',
     icon: '🍣',
     description: 'Multi-chain DEX'
+  },
+  {
+    name: 'Jupiter',
+    url: 'https://jup.ag/',
+    icon: '🌟',
+    description: 'Popular Solana DEX'
   }
+
 ];
+
 
 const INITIAL_TOKEN_COUNT = 250; // Pre-load more tokens initially
 
