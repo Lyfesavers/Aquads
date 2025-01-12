@@ -62,17 +62,18 @@ const checkBumpExpiration = async (ad) => {
 // Separate shrinking function
 const shrinkAd = async (ad) => {
   const now = Date.now();
+  const createdAt = new Date(ad.createdAt).getTime();
   
   // Debug logging
   console.log(`\nShrink calculation for ad ${ad.id}:`, {
     currentTime: new Date(now).toISOString(),
-    fixedStartDate: new Date(FIXED_START_DATE).toISOString(),
+    createdAt: new Date(createdAt).toISOString(),
     currentSize: ad.size
   });
 
-  // Calculate time since fixed start date
-  const timeSinceStart = now - FIXED_START_DATE;
-  const shrinkIntervals = Math.floor(timeSinceStart / SHRINK_INTERVAL);
+  // Calculate time since creation
+  const timeSinceCreation = now - createdAt;
+  const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
   
   // Calculate new size using compound shrinking
   let newSize = MAX_SIZE;
