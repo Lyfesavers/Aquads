@@ -13,12 +13,11 @@ const checkBumpExpiration = async (ad) => {
     console.log(`Current time: ${new Date(now).toISOString()}`);
     
     try {
-      // Force update the document in MongoDB with explicit conditions
       const result = await Ad.findOneAndUpdate(
         { 
           id: ad.id,
           isBumped: true,
-          bumpExpiresAt: { $lt: new Date(now) }  // Only update if expiration is less than current time
+          bumpExpiresAt: { $lt: new Date(now) }
         },
         {
           $set: {
@@ -60,7 +59,6 @@ router.get('/ads', async (req, res) => {
     console.log('Fetching ads and checking bump expirations...');
     const ads = await Ad.find({}).lean();
 
-    // Check for expired bumps
     const checkedAds = await Promise.all(
       ads.map(async (ad) => {
         const updatedAd = await checkBumpExpiration(ad);
