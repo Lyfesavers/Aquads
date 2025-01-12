@@ -62,21 +62,29 @@ const checkBumpExpiration = async (ad) => {
 // Separate shrinking function
 const shrinkAd = async (ad) => {
   const now = Date.now();
-  const createdAt = new Date(ad.createdAt).getTime();
+  
+  // Use either creation date or a recent past date, whichever is earlier
+  const effectiveStartTime = Math.min(
+    new Date(ad.createdAt).getTime(),
+    now - (60 * 1000) // Start shrinking from 1 minute ago if creation date is in future
+  );
   
   // Debug logging
   console.log(`\nShrink calculation for ad ${ad.id}:`, {
     currentTime: new Date(now).toISOString(),
-    createdAt: new Date(createdAt).toISOString(),
-    currentSize: ad.size
+    effectiveStartTime: new Date(effectiveStartTime).toISOString(),
+    currentSize: ad.size,
+    timeSinceStart: (now - effectiveStartTime) / 1000 + ' seconds'
   });
 
-  // Calculate time since creation
-  const timeSinceCreation = now - createdAt;
-  const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
+  // Calculate shrink intervals
+  const timeSinceStart = now - effectiveStartTime;
+  const shrinkIntervals = Math.floor(timeSinceStart / SHRINK_INTERVAL);
   
-  // Calculate new size using compound shrinking
-  let newSize = MAX_SIZE;
+  // Start from current size instead of MAX_SIZE if ad size is already set
+  let newSize = ad.size || MAX_SIZE;
+  
+  // Apply shrinking
   for (let i = 0; i < shrinkIntervals; i++) {
     newSize = Math.max(MIN_SIZE, newSize * SHRINK_PERCENTAGE);
   }
@@ -84,10 +92,10 @@ const shrinkAd = async (ad) => {
   // Round newSize to 2 decimal places
   newSize = Math.round(newSize * 100) / 100;
   
-  // Always try to update if size is different
+  // Update if size has changed
   if (newSize !== ad.size) {
     try {
-      console.log(`Attempting to update ad ${ad.id} from ${ad.size} to ${newSize}...`);
+      console.log(`Updating ad ${ad.id} size from ${ad.size} to ${newSize}`);
       
       const result = await Ad.findByIdAndUpdate(
         ad._id,
