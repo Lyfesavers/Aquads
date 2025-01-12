@@ -53,6 +53,22 @@ const checkBumpExpiration = async (ad) => {
   return ad;
 };
 
+// Add periodic check for expired bumps (every minute)
+setInterval(async () => {
+  try {
+    console.log('Running periodic bump expiration check...');
+    const ads = await Ad.find({ isBumped: true }).lean();
+    
+    for (const ad of ads) {
+      await checkBumpExpiration(ad);
+    }
+    console.log('Completed periodic bump check');
+  } catch (error) {
+    console.error('Error in periodic bump check:', error);
+  }
+}, 600000); // Check every 10 minutes
+
+
 // Single route handler for ads
 router.get('/ads', async (req, res) => {
   try {
