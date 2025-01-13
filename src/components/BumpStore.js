@@ -108,10 +108,6 @@ const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
             <h3 className="text-lg font-semibold text-white mb-2">Payment Instructions:</h3>
             <ol className="list-decimal list-inside text-gray-300 space-y-2 text-sm sm:text-base">
               <li>Send {selectedOption.price} SOL or Equivalent to the following wallet address:</li>
-              <div className="bg-gray-700 p-3 rounded mt-2 mb-4 break-all">
-
-
-              </div>
               <li>After sending the payment, copy the transaction signature</li>
               <li>Paste the transaction signature below and submit</li>
               <li>Wait for admin approval of your bump request</li>
