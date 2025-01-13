@@ -10,7 +10,12 @@ const BUMP_OPTIONS = [
 const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
   const [txSignature, setTxSignature] = useState('');
   const [selectedOption, setSelectedOption] = useState(BUMP_OPTIONS[0]);
-  const merchantWallet = 'J8ewxZwntodH8sT8LAXN5j6sAsDhtCh8sQA6GwRuLTSv';
+  const MERCHANT_WALLET = {
+  SOL: "J8ewxZwntodH8sT8LAXN5j6sAsDhtCh8sQA6GwRuLTSv",
+  ETH: "0x98BC1BEC892d9f74B606D478E6b45089D2faAB05",
+  BTC: "bc1qdh9ar2elv6cvhfqccvlf8w6rwy0r592f9a6dyt",
+  Base: "0x98BC1BEC892d9f74B606D478E6b45089D2faAB05",
+}; // Replace with your wallet address
 
   if (!ad) {
     console.error('Ad prop is required for BumpStore');
@@ -68,10 +73,13 @@ const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
           <div>
             <h3 className="text-lg font-semibold text-white mb-2">Payment Instructions:</h3>
             <ol className="list-decimal list-inside text-gray-300 space-y-2 text-sm sm:text-base">
-              <li>Send {selectedOption.price} SOL to the following wallet address:</li>
+              <li>Send {selectedOption.price} SOL or Equivalent to the following wallet address on Solana Network:</li>
               <div className="bg-gray-700 p-3 rounded mt-2 mb-4 break-all">
+
+
                 <code className="text-blue-400 text-xs sm:text-sm">{merchantWallet}</code>
                 <button
+
                   onClick={() => navigator.clipboard.writeText(merchantWallet)}
                   className="ml-2 text-sm text-gray-400 hover:text-white focus:outline-none"
                 >
