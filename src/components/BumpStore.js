@@ -10,12 +10,13 @@ const BUMP_OPTIONS = [
 const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
   const [txSignature, setTxSignature] = useState('');
   const [selectedOption, setSelectedOption] = useState(BUMP_OPTIONS[0]);
-  const merchantWallet = {
-  SOL: "J8ewxZwntodH8sT8LAXN5j6sAsDhtCh8sQA6GwRuLTSv",
-  ETH: "0x98BC1BEC892d9f74B606D478E6b45089D2faAB05",
-  BTC: "bc1qdh9ar2elv6cvhfqccvlf8w6rwy0r592f9a6dyt",
-  Base: "0x98BC1BEC892d9f74B606D478E6b45089D2faAB05"
-};
+  const merchantWallets = {
+    SOL: "J8ewxZwntodH8sT8LAXN5j6sAsDhtCh8sQA6GwRuLTSv",
+    ETH: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+    BNB: "bnb1grpf0955h0ykzq3ar5nmum7y6gdfl6lxfn46h2",
+    USDT: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
+  };
+  const [selectedWallet, setSelectedWallet] = useState('SOL');
 
   if (!ad) {
     console.error('Ad prop is required for BumpStore');
@@ -71,16 +72,49 @@ const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
           </div>
 
           <div>
+            <h3 className="text-lg font-semibold text-white mb-4">Select Payment Method:</h3>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              {Object.keys(merchantWallets).map((chain) => (
+                <button
+                  key={chain}
+                  onClick={() => setSelectedWallet(chain)}
+                  className={`p-3 rounded-lg border-2 transition-all ${
+                    selectedWallet === chain
+                      ? 'border-blue-500 bg-blue-500/20'
+                      : 'border-gray-600 hover:border-blue-400'
+                  }`}
+                >
+                  {chain}
+                </button>
+              ))}
+            </div>
+            <div className="bg-gray-700 p-3 rounded-lg">
+              <p className="text-sm text-gray-300 mb-2">Selected Wallet Address:</p>
+              <div className="flex items-center justify-between">
+                <code className="text-blue-400 text-xs sm:text-sm break-all">
+                  {merchantWallets[selectedWallet]}
+                </code>
+                <button
+                  onClick={() => navigator.clipboard.writeText(merchantWallets[selectedWallet])}
+                  className="ml-2 text-sm text-gray-400 hover:text-white focus:outline-none"
+                >
+                  Copy
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div>
             <h3 className="text-lg font-semibold text-white mb-2">Payment Instructions:</h3>
             <ol className="list-decimal list-inside text-gray-300 space-y-2 text-sm sm:text-base">
-              <li>Send {selectedOption.price} SOL or Equivalent to the following wallet address on Solana Network:</li>
+              <li>Send {selectedOption.price} SOL or Equivalent to the following wallet address:</li>
               <div className="bg-gray-700 p-3 rounded mt-2 mb-4 break-all">
 
 
-                <code className="text-blue-400 text-xs sm:text-sm">{merchantWallet}</code>
+                <code className="text-blue-400 text-xs sm:text-sm">{merchantWallets[selectedWallet]}</code>
                 <button
 
-                  onClick={() => navigator.clipboard.writeText(merchantWallet)}
+                  onClick={() => navigator.clipboard.writeText(merchantWallets[selectedWallet])}
                   className="ml-2 text-sm text-gray-400 hover:text-white focus:outline-none"
                 >
                   Copy

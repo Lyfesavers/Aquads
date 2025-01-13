@@ -42,7 +42,12 @@ const LAYOUT_DEBOUNCE = 200; // Debounce time for layout calculations
 const ANIMATION_DURATION = '0.3s'; // Slower animations
 const REPOSITION_INTERVAL = 10000; // 5 seconds between position updates
 const BUBBLE_PADDING = 10; // Space between bubbles
-const MERCHANT_WALLET = {SOL: "J8ewxZwntodH8sT8LAXN5j6sAsDhtCh8sQA6GwRuLTSv"}; // Replace with your wallet address
+const MERCHANT_WALLET = {
+    SOL: "J8ewxZwntodH8sT8LAXN5j6sAsDhtCh8sQA6GwRuLTSv",
+    ETH: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+    BNB: "bnb1grpf0955h0ykzq3ar5nmum7y6gdfl6lxfn46h2",
+    USDT: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
+}; // Replace with your wallet address
 const ADMIN_USERNAME = "admin"; // You can change this to your preferred admin username
 
 // Helper functions for responsive positioning
