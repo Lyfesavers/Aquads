@@ -44,9 +44,9 @@ const REPOSITION_INTERVAL = 10000; // 5 seconds between position updates
 const BUBBLE_PADDING = 10; // Space between bubbles
 const MERCHANT_WALLET = {
     SOL: "J8ewxZwntodH8sT8LAXN5j6sAsDhtCh8sQA6GwRuLTSv",
-    ETH: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
-    BNB: "bnb1grpf0955h0ykzq3ar5nmum7y6gdfl6lxfn46h2",
-    USDT: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
+    ETH: "0x98BC1BEC892d9f74B606D478E6b45089D2faAB05",
+    BTC: "bc1qdh9ar2elv6cvhfqccvlf8w6rwy0r592f9a6dyt",
+    BASE: "0x98BC1BEC892d9f74B606D478E6b45089D2faAB05"
 }; // Replace with your wallet address
 const ADMIN_USERNAME = "admin"; // You can change this to your preferred admin username
 

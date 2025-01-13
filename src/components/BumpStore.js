@@ -12,9 +12,9 @@ const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
   const [selectedOption, setSelectedOption] = useState(BUMP_OPTIONS[0]);
   const merchantWallets = {
     SOL: "J8ewxZwntodH8sT8LAXN5j6sAsDhtCh8sQA6GwRuLTSv",
-    ETH: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
-    BNB: "bnb1grpf0955h0ykzq3ar5nmum7y6gdfl6lxfn46h2",
-    USDT: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
+    ETH: "0x98BC1BEC892d9f74B606D478E6b45089D2faAB05",
+    BTC: "bc1qdh9ar2elv6cvhfqccvlf8w6rwy0r592f9a6dyt",
+    BASE: "0x98BC1BEC892d9f74B606D478E6b45089D2faAB05"
   };
   const [selectedWallet, setSelectedWallet] = useState('SOL');
 
@@ -111,14 +111,6 @@ const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
               <div className="bg-gray-700 p-3 rounded mt-2 mb-4 break-all">
 
 
-                <code className="text-blue-400 text-xs sm:text-sm">{merchantWallets[selectedWallet]}</code>
-                <button
-
-                  onClick={() => navigator.clipboard.writeText(merchantWallets[selectedWallet])}
-                  className="ml-2 text-sm text-gray-400 hover:text-white focus:outline-none"
-                >
-                  Copy
-                </button>
               </div>
               <li>After sending the payment, copy the transaction signature</li>
               <li>Paste the transaction signature below and submit</li>
