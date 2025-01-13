@@ -10,12 +10,7 @@ const BUMP_OPTIONS = [
 const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
   const [txSignature, setTxSignature] = useState('');
   const [selectedOption, setSelectedOption] = useState(BUMP_OPTIONS[0]);
-  const MERCHANT_WALLET = {
-  SOL: "J8ewxZwntodH8sT8LAXN5j6sAsDhtCh8sQA6GwRuLTSv",
-  ETH: "0x98BC1BEC892d9f74B606D478E6b45089D2faAB05",
-  BTC: "bc1qdh9ar2elv6cvhfqccvlf8w6rwy0r592f9a6dyt",
-  Base: "0x98BC1BEC892d9f74B606D478E6b45089D2faAB05",
-}; // Replace with your wallet address
+  const merchantWallet = 'J8ewxZwntodH8sT8LAXN5j6sAsDhtCh8sQA6GwRuLTSv';
 
   if (!ad) {
     console.error('Ad prop is required for BumpStore');
