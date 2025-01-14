@@ -85,7 +85,7 @@ const updateAdSize = async (ad) => {
 // Periodic check
 setInterval(async () => {
   try {
-    const ads = await Ad.find({ status: 'active' });
+    const ads = await Ad.find({});
     console.log(`\nChecking ${ads.length} ads for size updates...`);
     
     for (const ad of ads) {
@@ -99,7 +99,7 @@ setInterval(async () => {
 // GET route
 router.get('/', async (req, res) => {
   try {
-    const ads = await Ad.find({ status: 'active' });
+    const ads = await Ad.find({});
     
     // Update sizes before sending response
     for (const ad of ads) {
