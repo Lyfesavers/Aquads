@@ -108,10 +108,34 @@ setInterval(async () => {
   }
 }, SHRINK_INTERVAL);
 
+// At the top of the file, after the imports
+const forceUpdateExpiredAd = async () => {
+  try {
+    console.log('Forcing immediate update...');
+    const result = await Ad.updateOne(
+      { id: 'ad-1736313718692-5gyn3pt2i' },
+      {
+        $set: {
+          isBumped: false,
+          status: 'active',
+          size: MAX_SIZE
+        }
+      }
+    );
+    console.log('Force update result:', result);
+  } catch (error) {
+    console.error('Force update error:', error);
+  }
+};
+
 // GET route
 router.get('/', async (req, res) => {
   try {
+    // Force update first
+    await forceUpdateExpiredAd();
+    
     const ads = await Ad.find({});
+    console.log(`Fetching ${ads.length} ads...`);
     
     // Update sizes before sending response
     for (const ad of ads) {
