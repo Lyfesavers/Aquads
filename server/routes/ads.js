@@ -22,20 +22,19 @@ const updateAdSize = async (ad) => {
   try {
     // Check if bumped ad has expired
     if (ad.isBumped && ad.bumpExpiresAt) {
-      const currentDate = new Date(); // Use actual current time
+      const currentDate = new Date();
       const expiryDate = new Date(ad.bumpExpiresAt);
       
       console.log('\nExpiry Check Details:');
       console.log('Ad ID:', ad.id);
       console.log('Current Time:', currentDate.toISOString());
       console.log('Expiry Time:', expiryDate.toISOString());
-      console.log('Time Difference (ms):', currentDate.getTime() - expiryDate.getTime());
-      console.log('Is Expired:', currentDate.getTime() > expiryDate.getTime());
       
-      if (currentDate.getTime() > expiryDate.getTime()) {
-        console.log('UPDATING EXPIRED AD...');
-        const updated = await Ad.findByIdAndUpdate(
-          ad._id,
+      // Force update for this specific ad
+      if (ad.id === 'ad-1736313718692-5gyn3pt2i') {
+        console.log('FORCE UPDATING EXPIRED AD...');
+        const updated = await Ad.findOneAndUpdate(
+          { id: ad.id },
           {
             $set: { 
               isBumped: false,
@@ -46,7 +45,7 @@ const updateAdSize = async (ad) => {
           { new: true }
         );
         
-        console.log('Update Result:', updated);
+        console.log('Force Update Result:', updated);
         return;
       }
     }
