@@ -30,22 +30,19 @@ const updateAdSize = async (ad) => {
       console.log('Current Time:', currentDate.toISOString());
       console.log('Expiry Time:', expiryDate.toISOString());
       
-      // Force update for this specific ad
-      if (ad.id === 'ad-1736313718692-5gyn3pt2i') {
-        console.log('FORCE UPDATING EXPIRED AD...');
-        const updated = await Ad.findOneAndUpdate(
-          { id: ad.id },
+      // Direct update if expired
+      if (currentDate > expiryDate) {
+        console.log('UPDATING EXPIRED AD...');
+        await Ad.updateOne(
+          { _id: ad._id },
           {
             $set: { 
               isBumped: false,
               status: 'active',
               size: MAX_SIZE
             }
-          },
-          { new: true }
+          }
         );
-        
-        console.log('Force Update Result:', updated);
         return;
       }
     }
