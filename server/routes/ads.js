@@ -20,7 +20,25 @@ const updateAdSize = async (ad) => {
   const now = Date.now();
 
   try {
-    // If ad is bumped, ensure MAX_SIZE
+    // Check if bumped ad has expired
+    if (ad.isBumped && ad.bumpExpiresAt) {
+      const isExpired = new Date(ad.bumpExpiresAt) < new Date();
+      
+      if (isExpired) {
+        // Update expired bump status
+        await Ad.findByIdAndUpdate(ad._id, {
+          $set: { 
+            isBumped: false,
+            status: 'active',
+            size: MAX_SIZE // Reset size to max
+          }
+        });
+        console.log(`Updated expired bump for ad ${ad.id}`);
+        return;
+      }
+    }
+
+    // Rest of the existing updateAdSize logic...
     if (ad.isBumped) {
       if (ad.size !== MAX_SIZE) {
         await Ad.findByIdAndUpdate(ad._id, {
