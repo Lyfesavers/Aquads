@@ -142,8 +142,11 @@ const forceUpdateExpiredAd = async () => {
 // GET route
 router.get('/', async (req, res) => {
   try {
-    const ads = await Ad.find({ status: 'active' });
-    console.log(`Found ${ads.length} active ads`);
+    // Show both active and approved ads
+    const ads = await Ad.find({ 
+      status: { $in: ['active', 'approved'] }
+    });
+    console.log(`Found ${ads.length} ads (active & approved)`);
     res.json(ads);
   } catch (error) {
     console.error('Error:', error);
