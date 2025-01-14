@@ -130,19 +130,7 @@ io.on('connection', (socket) => {
 // Routes
 app.use('/api/bumps', bumpRoutes);
 app.use('/api/reviews', require('./routes/reviews'));
-
-// Get all ads
-app.get('/api/ads', async (req, res) => {
-  try {
-    console.log('Fetching ads...');
-    const ads = await Ad.find({}).lean();
-    console.log('Found ads:', ads);
-    res.json(ads || []);
-  } catch (error) {
-    console.error('Error fetching ads:', error);
-    res.status(500).json({ error: 'Failed to fetch ads' });
-  }
-});
+app.use('/api/ads', require('./routes/ads'));
 
 // Create new ad
 app.post('/api/ads', auth, async (req, res) => {

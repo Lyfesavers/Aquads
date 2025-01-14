@@ -5,8 +5,9 @@ const auth = require('../middleware/auth');
 
 // Skip auth for GET requests
 router.use((req, res, next) => {
-  if (req.method === 'GET') return next();
-  auth(req, res, next);
+  // if (req.method === 'GET') return next();
+  // auth(req, res, next);
+  next(); // Allow all requests for now
 });
 
 // Constants for shrinking logic
@@ -141,23 +142,48 @@ const forceUpdateExpiredAd = async () => {
 // GET route
 router.get('/', async (req, res) => {
   try {
-    // Force update first
-    await forceUpdateExpiredAd();
-    
-    const ads = await Ad.find({});
-    console.log(`Fetching ${ads.length} ads...`);
-    
-    // Update sizes before sending response
-    for (const ad of ads) {
-      await updateAdSize(ad);
-    }
-    
-    // Get fresh data
-    const updatedAds = await Ad.find({ status: 'active' });
-    res.json(updatedAds);
+    const ads = await Ad.find({ status: 'active' });
+    console.log(`Found ${ads.length} active ads`);
+    res.json(ads);
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Add this new route at the bottom before module.exports
+router.post('/force-update/:id', async (req, res) => {
+  try {
+    console.log('Received force update request for:', req.params.id);
+    
+    const ad = await Ad.findOne({ id: req.params.id });
+    if (!ad) {
+      console.log('Ad not found:', req.params.id);
+      return res.status(404).json({ error: 'Ad not found' });
+    }
+
+    console.log('\n=== FORCE UPDATE ATTEMPT ===');
+    console.log('Ad before update:', ad);
+
+    const result = await Ad.findByIdAndUpdate(
+      ad._id,
+      {
+        $set: {
+          isBumped: false,
+          status: 'active',
+          size: MAX_SIZE
+        }
+      },
+      { new: true }
+    );
+
+    console.log('Update result:', result);
+    
+    // Send a direct response, no redirects
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error('Force update error:', error);
+    return res.status(500).json({ error: error.message });
   }
 });
 
