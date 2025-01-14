@@ -22,16 +22,15 @@ const updateAdSize = async (ad) => {
   try {
     // Check if bumped ad has expired
     if (ad.isBumped && ad.bumpExpiresAt) {
-      // Force current time to be after expiry for testing
-      const currentDate = new Date('2025-01-14T00:00:00.000Z'); // Set to a date after expiry
+      const currentDate = new Date(); // Use actual current time
       const expiryDate = new Date(ad.bumpExpiresAt);
       
-      console.log('\nForced Expiry Check Details:');
+      console.log('\nExpiry Check Details:');
       console.log('Ad ID:', ad.id);
       console.log('Current Time:', currentDate.toISOString());
       console.log('Expiry Time:', expiryDate.toISOString());
       console.log('Time Difference (ms):', currentDate.getTime() - expiryDate.getTime());
-      console.log('Should Expire:', currentDate.getTime() > expiryDate.getTime());
+      console.log('Is Expired:', currentDate.getTime() > expiryDate.getTime());
       
       if (currentDate.getTime() > expiryDate.getTime()) {
         console.log('UPDATING EXPIRED AD...');
