@@ -25,25 +25,38 @@ const updateAdSize = async (ad) => {
       const currentDate = new Date();
       const expiryDate = new Date(ad.bumpExpiresAt);
       
-      console.log('\nExpiry Check Details:');
+      console.log('\n=== EXPIRY CHECK ===');
       console.log('Ad ID:', ad.id);
       console.log('Current Time:', currentDate.toISOString());
       console.log('Expiry Time:', expiryDate.toISOString());
+      console.log('Current Timestamp:', currentDate.getTime());
+      console.log('Expiry Timestamp:', expiryDate.getTime());
+      console.log('Difference (ms):', currentDate.getTime() - expiryDate.getTime());
       
-      // Direct update if expired
-      if (currentDate > expiryDate) {
-        console.log('UPDATING EXPIRED AD...');
-        await Ad.updateOne(
-          { _id: ad._id },
-          {
-            $set: { 
-              isBumped: false,
-              status: 'active',
-              size: MAX_SIZE
-            }
-          }
-        );
-        return;
+      // Force comparison using timestamps
+      const isExpired = currentDate.getTime() > expiryDate.getTime();
+      console.log('Is Expired:', isExpired);
+      
+      if (isExpired) {
+        console.log('\n=== UPDATING EXPIRED AD ===');
+        try {
+          const result = await Ad.findByIdAndUpdate(
+            ad._id,
+            {
+              $set: { 
+                isBumped: false,
+                status: 'active',
+                size: MAX_SIZE
+              }
+            },
+            { new: true }
+          );
+          console.log('Update successful:', result !== null);
+          console.log('Updated document:', result);
+          return;
+        } catch (updateError) {
+          console.error('Update failed:', updateError);
+        }
       }
     }
 
