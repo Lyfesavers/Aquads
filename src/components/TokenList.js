@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import TokenReviews from './TokenReviews';
 import { Chart } from 'chart.js/auto';
 import TokenRating from './TokenRating';
+import { FaGlobe, FaTwitter, FaTelegram, FaDiscord, FaGithub, FaReddit } from 'react-icons/fa';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
