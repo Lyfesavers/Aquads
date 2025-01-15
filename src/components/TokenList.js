@@ -380,19 +380,29 @@ const TokenList = ({ currentUser, showNotification }) => {
 
       // Fetch fresh data if cache is missing or expired
       const response = await fetch(
-        `https://api.coingecko.com/api/v3/coins/${tokenId}?localization=false&tickers=false&market_data=false&community_data=true&developer_data=true`
+        `https://api.coingecko.com/api/v3/coins/${tokenId}`
       );
       
       if (!response.ok) throw new Error('Failed to fetch token links');
       
       const data = await response.json();
+      
+      // Updated link structure to match CoinGecko's response
       const links = {
         homepage: data.links?.homepage,
-        twitter_screen_name: data.links?.twitter_screen_name,
-        telegram_channel_identifier: data.links?.telegram_channel_identifier,
-        discord_url: data.links?.chat_url?.find(url => url.includes('discord')),
-        subreddit_url: data.links?.subreddit_url,
-        github: data.links?.repos_url?.github,
+        twitter_screen_name: data.twitter_screen_name,
+        telegram_channel_identifier: data.telegram_channel_identifier,
+        discord_url: data.chat_url?.find(url => url?.includes('discord')),
+        subreddit_url: data.subreddit_url,
+        github: data.repos_url?.github?.[0],
+        links: {
+          homepage: data.links?.homepage,
+          twitter_screen_name: data.links?.twitter_screen_name,
+          telegram_channel_identifier: data.links?.telegram_channel_identifier,
+          chat_url: data.links?.chat_url,
+          subreddit_url: data.links?.subreddit_url,
+          repos_url: data.links?.repos_url
+        }
       };
 
       // Cache the links
