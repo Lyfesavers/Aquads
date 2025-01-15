@@ -59,6 +59,11 @@ const LINKS_CACHE_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 days in millisecond
 
 const CHART_CACHE_KEY = 'tokenChartCache';
 
+const DETAILED_CACHE_KEY = 'tokenDetailsCache';
+const DETAILED_TIMESTAMP_KEY = 'tokenDetailsCacheTimestamp';
+const DETAILED_CACHE_DURATION = 12 * 60 * 60 * 1000; // 12 hours
+const BATCH_SIZE = 5; // Number of tokens to fetch details for at once
+
 const TokenList = ({ currentUser, showNotification }) => {
   const [tokens, setTokens] = useState(() => {
     const cachedData = localStorage.getItem(CACHE_KEY);
@@ -297,52 +302,38 @@ const TokenList = ({ currentUser, showNotification }) => {
   const handleTokenClick = async (token) => {
     if (expandedTokenId === token.id) {
       setExpandedTokenId(null);
-      setChartData(null); // Clear chart when collapsing
+      setChartData(null);
     } else {
-      // Clear previous chart data before loading new one
       setChartData(null);
       setExpandedTokenId(token.id);
       
-      try {
-        // Fetch token details including links
-        const response = await fetch(
-          `https://api.coingecko.com/api/v3/coins/${token.id}?localization=false&tickers=false&market_data=false&community_data=true&developer_data=true`
-        );
-        
-        if (!response.ok) throw new Error('Failed to fetch token details');
-        
-        const data = await response.json();
-        
-        // Set the token with correctly mapped links data
+      // Try to get cached details first
+      const cachedDetails = localStorage.getItem(`${DETAILED_CACHE_KEY}_${token.id}`);
+      if (cachedDetails) {
+        const details = JSON.parse(cachedDetails);
         setSelectedToken({
           ...token,
-          links: {
-            homepage: data.links?.homepage,
-            twitter_screen_name: data.links?.twitter_screen_name,
-            telegram_channel_identifier: data.links?.telegram_channel_identifier,
-            discord_url: data.links?.chat_url?.[0],
-            subreddit_url: data.links?.subreddit_url,
-            github: data.links?.repos_url?.github?.[0]
-          }
+          ...details
         });
-        
-        // After setting token details, fetch chart data
-        const cachedChart = localStorage.getItem(`${CHART_CACHE_KEY}_${token.id}_${selectedTimeRange}`);
-        if (cachedChart) {
-          setChartData(JSON.parse(cachedChart));
-        }
-        fetchChartData(token.id, selectedTimeRange);
-        
-      } catch (error) {
-        console.error('Error fetching token details:', error);
-        setSelectedToken(token);
-        // Try to load cached chart data
-        const cachedChart = localStorage.getItem(`${CHART_CACHE_KEY}_${token.id}_${selectedTimeRange}`);
-        if (cachedChart) {
-          setChartData(JSON.parse(cachedChart));
-        }
-        fetchChartData(token.id, selectedTimeRange);
       }
+      
+      // Try to get cached chart data
+      const cachedChart = localStorage.getItem(`${CHART_CACHE_KEY}_${token.id}_${selectedTimeRange}`);
+      if (cachedChart) {
+        setChartData(JSON.parse(cachedChart));
+      }
+      
+      // Fetch fresh data in background
+      fetchAndCacheTokenDetails(token.id).then(details => {
+        if (details && expandedTokenId === token.id) {
+          setSelectedToken(prev => ({
+            ...prev,
+            ...details
+          }));
+        }
+      });
+      
+      fetchChartData(token.id, selectedTimeRange);
     }
   };
 
@@ -488,6 +479,73 @@ const TokenList = ({ currentUser, showNotification }) => {
     }
   };
 
+  const fetchAndCacheTokenDetails = async (tokenId) => {
+    try {
+      // Check cache first
+      const cachedDetails = localStorage.getItem(`${DETAILED_CACHE_KEY}_${tokenId}`);
+      const timestamp = localStorage.getItem(`${DETAILED_TIMESTAMP_KEY}_${tokenId}`);
+      
+      if (cachedDetails && timestamp) {
+        const age = Date.now() - parseInt(timestamp);
+        if (age < DETAILED_CACHE_DURATION) {
+          return JSON.parse(cachedDetails);
+        }
+      }
+
+      const response = await fetch(
+        `https://api.coingecko.com/api/v3/coins/${tokenId}?localization=false&tickers=false&market_data=false&community_data=true&developer_data=true`
+      );
+      
+      if (!response.ok) throw new Error('Failed to fetch token details');
+      
+      const data = await response.json();
+      const details = {
+        links: {
+          homepage: data.links?.homepage,
+          twitter_screen_name: data.links?.twitter_screen_name,
+          telegram_channel_identifier: data.links?.telegram_channel_identifier,
+          discord_url: data.links?.chat_url?.[0],
+          subreddit_url: data.links?.subreddit_url,
+          github: data.links?.repos_url?.github?.[0]
+        },
+        lastUpdated: Date.now()
+      };
+
+      // Cache the details
+      localStorage.setItem(`${DETAILED_CACHE_KEY}_${tokenId}`, JSON.stringify(details));
+      localStorage.setItem(`${DETAILED_TIMESTAMP_KEY}_${tokenId}`, Date.now().toString());
+
+      return details;
+    } catch (error) {
+      console.error(`Background detail fetch error for ${tokenId}:`, error);
+      return null;
+    }
+  };
+
+  const backgroundFetchDetails = async (tokens) => {
+    try {
+      // Process tokens in batches
+      for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
+        const batch = tokens.slice(i, i + BATCH_SIZE);
+        await Promise.all(
+          batch.map(async (token) => {
+            // Check if we need to update this token's cache
+            const timestamp = localStorage.getItem(`${DETAILED_TIMESTAMP_KEY}_${token.id}`);
+            if (!timestamp || (Date.now() - parseInt(timestamp)) > DETAILED_CACHE_DURATION) {
+              await fetchAndCacheTokenDetails(token.id);
+              // Add delay between requests to respect rate limits
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+          })
+        );
+        // Add delay between batches
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    } catch (error) {
+      console.error('Background fetch error:', error);
+    }
+  };
+
   useEffect(() => {
     // Initial load of visible tokens
     fetchInitialTokens();
@@ -495,21 +553,20 @@ const TokenList = ({ currentUser, showNotification }) => {
     // Start background loading
     loadAllTokensInBackground();
 
+    // Background fetch details for top 100 tokens initially
+    backgroundFetchDetails(tokens.slice(0, 100));
+
     // Set up periodic refresh
     const refreshInterval = setInterval(() => {
       if (!isBackgroundLoading) {
         loadAllTokensInBackground();
+        // Refresh details for top 50 tokens periodically
+        backgroundFetchDetails(tokens.slice(0, 50));
       }
-    }, 30000); // Refresh every 30 seconds
-
-    // Add background link sync
-    const linksSyncInterval = setInterval(() => {
-      syncTokenLinksInBackground();
-    }, LINKS_CACHE_DURATION);
+    }, 30000);
 
     return () => {
       clearInterval(refreshInterval);
-      clearInterval(linksSyncInterval);
     };
   }, []);
 
