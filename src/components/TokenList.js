@@ -138,13 +138,13 @@ const TokenList = ({ currentUser, showNotification }) => {
         updateTokenCache(data);
       }
     } catch (error) {
-      console.error('Error fetching initial tokens:', error);
-      // If fetch fails, use cached data if available
+      console.error('Error fetching tokens:', error);
+      // Use cached data if available instead of showing error
       const cachedData = localStorage.getItem(CACHE_KEY);
       if (cachedData) {
-        const parsedData = JSON.parse(cachedData);
-        setTokens(parsedData);
-        setFilteredTokens(parsedData.slice(0, 20));
+        const tokens = JSON.parse(cachedData);
+        setTokens(tokens);
+        setFilteredTokens(tokens);
       }
     } finally {
       setIsLoadingTokens(false);
@@ -340,8 +340,8 @@ const TokenList = ({ currentUser, showNotification }) => {
       const data = await response.json();
       setChartData(data);
     } catch (error) {
+      // Only log to console, don't show to user
       console.error('Error fetching chart data:', error);
-      showNotification('Error fetching chart data: ' + error.message, 'error');
     } finally {
       setIsLoading(false);
     }
