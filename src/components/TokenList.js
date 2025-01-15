@@ -297,18 +297,38 @@ const TokenList = ({ currentUser, showNotification }) => {
       setExpandedTokenId(null);
     } else {
       setExpandedTokenId(token.id);
-      setSelectedToken(token);
-      fetchChartData(token.id, selectedTimeRange);
       
-      // Fetch and merge links in background
-      fetchAndCacheTokenLinks(token.id).then(links => {
-        if (links) {
-          setSelectedToken(prev => ({
-            ...prev,
-            links: links
-          }));
-        }
-      });
+      try {
+        // Fetch token details including links
+        const response = await fetch(
+          `https://api.coingecko.com/api/v3/coins/${token.id}`
+        );
+        
+        if (!response.ok) throw new Error('Failed to fetch token details');
+        
+        const data = await response.json();
+        
+        // Set the token with links data
+        setSelectedToken({
+          ...token,
+          links: {
+            homepage: data.links?.homepage,
+            twitter_screen_name: data.links?.twitter_screen_name,
+            telegram_channel_identifier: data.links?.telegram_channel_identifier,
+            discord_url: data.links?.chat_url?.find(url => url?.includes('discord')),
+            subreddit_url: data.links?.subreddit_url,
+            repos_url: data.links?.repos_url
+          }
+        });
+        
+        // Fetch chart data
+        fetchChartData(token.id, selectedTimeRange);
+        
+      } catch (error) {
+        console.error('Error fetching token details:', error);
+        setSelectedToken(token);
+        fetchChartData(token.id, selectedTimeRange);
+      }
     }
   };
 
