@@ -301,23 +301,23 @@ const TokenList = ({ currentUser, showNotification }) => {
       try {
         // Fetch token details including links
         const response = await fetch(
-          `https://api.coingecko.com/api/v3/coins/${token.id}`
+          `https://api.coingecko.com/api/v3/coins/${token.id}?localization=false&tickers=false&market_data=false&community_data=true&developer_data=true`
         );
         
         if (!response.ok) throw new Error('Failed to fetch token details');
         
         const data = await response.json();
         
-        // Set the token with links data
+        // Set the token with correctly mapped links data
         setSelectedToken({
           ...token,
           links: {
             homepage: data.links?.homepage,
             twitter_screen_name: data.links?.twitter_screen_name,
             telegram_channel_identifier: data.links?.telegram_channel_identifier,
-            discord_url: data.links?.chat_url?.find(url => url?.includes('discord')),
+            discord_url: data.links?.chat_url?.[0],
             subreddit_url: data.links?.subreddit_url,
-            repos_url: data.links?.repos_url
+            github: data.links?.repos_url?.github?.[0]
           }
         });
         
