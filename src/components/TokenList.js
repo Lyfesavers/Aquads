@@ -303,8 +303,18 @@ const TokenList = ({ currentUser, showNotification }) => {
     if (expandedTokenId === token.id) {
       setExpandedTokenId(null);
       setChartData(null);
+      if (chartInstance) {
+        chartInstance.destroy();
+        setChartInstance(null);
+      }
     } else {
+      // Clear previous chart data and instance
       setChartData(null);
+      if (chartInstance) {
+        chartInstance.destroy();
+        setChartInstance(null);
+      }
+      
       setExpandedTokenId(token.id);
       
       // Try to get cached details first
@@ -317,9 +327,9 @@ const TokenList = ({ currentUser, showNotification }) => {
         });
       }
       
-      // Try to get cached chart data
+      // Try to get cached chart data for this specific token
       const cachedChart = localStorage.getItem(`${CHART_CACHE_KEY}_${token.id}_${selectedTimeRange}`);
-      if (cachedChart) {
+      if (cachedChart && expandedTokenId === token.id) {
         setChartData(JSON.parse(cachedChart));
       }
       
@@ -333,6 +343,7 @@ const TokenList = ({ currentUser, showNotification }) => {
         }
       });
       
+      // Fetch fresh chart data
       fetchChartData(token.id, selectedTimeRange);
     }
   };
@@ -355,24 +366,21 @@ const TokenList = ({ currentUser, showNotification }) => {
     try {
       setIsLoading(true);
       
-      // Check cache first
+      // Only show cached data if it's for the current token
       const cachedChart = localStorage.getItem(`${CHART_CACHE_KEY}_${tokenId}_${days}`);
-      if (cachedChart) {
+      if (cachedChart && expandedTokenId === tokenId) {
         setChartData(JSON.parse(cachedChart));
       }
 
-      // Fetch fresh data
       const response = await fetch(
         `https://api.coingecko.com/api/v3/coins/${tokenId}/market_chart?vs_currency=usd&days=${days}`
       );
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       
       const data = await response.json();
       
-      // Cache the new data
+      // Cache the new data with token ID
       localStorage.setItem(`${CHART_CACHE_KEY}_${tokenId}_${days}`, JSON.stringify(data));
       
       // Only update if this is still the selected token
@@ -381,7 +389,7 @@ const TokenList = ({ currentUser, showNotification }) => {
       }
     } catch (error) {
       console.error('Error fetching chart data:', error);
-      // Use cached data if available
+      // Use cached data if available and matches current token
       const cachedChart = localStorage.getItem(`${CHART_CACHE_KEY}_${tokenId}_${days}`);
       if (cachedChart && expandedTokenId === tokenId) {
         setChartData(JSON.parse(cachedChart));
