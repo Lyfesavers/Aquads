@@ -686,6 +686,90 @@ const TokenList = ({ currentUser, showNotification }) => {
                         </td>
                       </tr>
                     )}
+                    {expandedTokenId === token.id && (
+                      <tr>
+                        <td colSpan="7">
+                          <div className="p-4 bg-gray-800">
+                            <div className="mt-6 border-t border-gray-700 pt-4">
+                              <h3 className="text-lg font-bold text-white mb-4">Links</h3>
+                              <div className="flex flex-wrap gap-4">
+                                {token.links?.homepage?.[0] && (
+                                  <a
+                                    href={token.links.homepage[0]}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 text-gray-300 hover:text-blue-400 transition-colors"
+                                  >
+                                    <FaGlobe className="text-xl" />
+                                    <span>Website</span>
+                                  </a>
+                                )}
+                                
+                                {token.links?.twitter_screen_name && (
+                                  <a
+                                    href={`https://twitter.com/${token.links.twitter_screen_name}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 text-gray-300 hover:text-blue-400 transition-colors"
+                                  >
+                                    <FaTwitter className="text-xl" />
+                                    <span>Twitter</span>
+                                  </a>
+                                )}
+                                
+                                {token.links?.telegram_channel_identifier && (
+                                  <a
+                                    href={`https://t.me/${token.links.telegram_channel_identifier}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 text-gray-300 hover:text-blue-400 transition-colors"
+                                  >
+                                    <FaTelegram className="text-xl" />
+                                    <span>Telegram</span>
+                                  </a>
+                                )}
+                                
+                                {token.links?.discord_url && (
+                                  <a
+                                    href={token.links.discord_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 text-gray-300 hover:text-blue-400 transition-colors"
+                                  >
+                                    <FaDiscord className="text-xl" />
+                                    <span>Discord</span>
+                                  </a>
+                                )}
+
+                                {token.links?.subreddit_url && (
+                                  <a
+                                    href={token.links.subreddit_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 text-gray-300 hover:text-blue-400 transition-colors"
+                                  >
+                                    <FaReddit className="text-xl" />
+                                    <span>Reddit</span>
+                                  </a>
+                                )}
+
+                                {token.links?.repos_url?.github?.[0] && (
+                                  <a
+                                    href={token.links.repos_url.github[0]}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 text-gray-300 hover:text-blue-400 transition-colors"
+                                  >
+                                    <FaGithub className="text-xl" />
+                                    <span>GitHub</span>
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
                   </>
                 ))}
               </tbody>
