@@ -53,6 +53,10 @@ const CACHE_KEY = 'tokenListCache';
 const CACHE_TIMESTAMP_KEY = 'tokenListCacheTimestamp';
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 
+const LINKS_CACHE_KEY = 'tokenLinksCache';
+const LINKS_TIMESTAMP_KEY = 'tokenLinksCacheTimestamp';
+const LINKS_CACHE_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+
 const TokenList = ({ currentUser, showNotification }) => {
   const [tokens, setTokens] = useState(() => {
     const cachedData = localStorage.getItem(CACHE_KEY);
@@ -288,13 +292,23 @@ const TokenList = ({ currentUser, showNotification }) => {
     setFilteredTokens(sorted);
   };
 
-  const handleTokenClick = (token) => {
+  const handleTokenClick = async (token) => {
     if (expandedTokenId === token.id) {
       setExpandedTokenId(null);
     } else {
       setExpandedTokenId(token.id);
       setSelectedToken(token);
       fetchChartData(token.id, selectedTimeRange);
+      
+      // Fetch and merge links in background
+      fetchAndCacheTokenLinks(token.id).then(links => {
+        if (links) {
+          setSelectedToken(prev => ({
+            ...prev,
+            links: links
+          }));
+        }
+      });
     }
   };
 
@@ -351,6 +365,66 @@ const TokenList = ({ currentUser, showNotification }) => {
     }
   };
 
+  const fetchAndCacheTokenLinks = async (tokenId) => {
+    try {
+      // Check cache first
+      const cachedLinks = localStorage.getItem(`${LINKS_CACHE_KEY}_${tokenId}`);
+      const timestamp = localStorage.getItem(`${LINKS_TIMESTAMP_KEY}_${tokenId}`);
+      
+      if (cachedLinks && timestamp) {
+        const age = Date.now() - parseInt(timestamp);
+        if (age < LINKS_CACHE_DURATION) {
+          return JSON.parse(cachedLinks);
+        }
+      }
+
+      // Fetch fresh data if cache is missing or expired
+      const response = await fetch(
+        `https://api.coingecko.com/api/v3/coins/${tokenId}?localization=false&tickers=false&market_data=false&community_data=true&developer_data=true`
+      );
+      
+      if (!response.ok) throw new Error('Failed to fetch token links');
+      
+      const data = await response.json();
+      const links = {
+        homepage: data.links?.homepage,
+        twitter_screen_name: data.links?.twitter_screen_name,
+        telegram_channel_identifier: data.links?.telegram_channel_identifier,
+        discord_url: data.links?.chat_url?.find(url => url.includes('discord')),
+        subreddit_url: data.links?.subreddit_url,
+        github: data.links?.repos_url?.github,
+      };
+
+      // Cache the links
+      localStorage.setItem(`${LINKS_CACHE_KEY}_${tokenId}`, JSON.stringify(links));
+      localStorage.setItem(`${LINKS_TIMESTAMP_KEY}_${tokenId}`, Date.now().toString());
+
+      return links;
+    } catch (error) {
+      console.error(`Background link fetch error for ${tokenId}:`, error);
+      return null;
+    }
+  };
+
+  const syncTokenLinksInBackground = async () => {
+    try {
+      const tokens = [...filteredTokens];
+      
+      // Process in chunks to avoid rate limits
+      const chunkSize = 10;
+      for (let i = 0; i < tokens.length; i += chunkSize) {
+        const chunk = tokens.slice(i, i + chunkSize);
+        await Promise.all(
+          chunk.map(token => fetchAndCacheTokenLinks(token.id))
+        );
+        // Add delay between chunks to respect rate limits
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    } catch (error) {
+      console.error('Background link sync error:', error);
+    }
+  };
+
   useEffect(() => {
     // Initial load of visible tokens
     fetchInitialTokens();
@@ -365,7 +439,15 @@ const TokenList = ({ currentUser, showNotification }) => {
       }
     }, 30000); // Refresh every 30 seconds
 
-    return () => clearInterval(refreshInterval);
+    // Add background link sync
+    const linksSyncInterval = setInterval(() => {
+      syncTokenLinksInBackground();
+    }, LINKS_CACHE_DURATION);
+
+    return () => {
+      clearInterval(refreshInterval);
+      clearInterval(linksSyncInterval);
+    };
   }, []);
 
   useEffect(() => {
