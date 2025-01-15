@@ -338,6 +338,19 @@ const TokenList = ({ currentUser, showNotification }) => {
     setShowDexFrame(true);
   };
 
+  const fetchTokenDetails = async (id) => {
+    try {
+      const response = await fetch(
+        `https://api.coingecko.com/api/v3/coins/${id}?localization=false&tickers=false&market_data=true&community_data=true&developer_data=true&sparkline=true`
+      );
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching token details:', error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     // Initial load of visible tokens
     fetchInitialTokens();
@@ -606,7 +619,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                                   ))}
                                 </div>
                               </div>
-                              <div className="bg-gray-800 rounded-lg p-4 h-[300px]">
+                              <div className="w-full h-[400px] mb-6">
                                 <canvas ref={chartRef} />
                               </div>
                             </div>
