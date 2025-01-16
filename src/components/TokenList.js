@@ -64,6 +64,8 @@ const DETAILED_TIMESTAMP_KEY = 'tokenDetailsCacheTimestamp';
 const DETAILED_CACHE_DURATION = 12 * 60 * 60 * 1000; // 12 hours
 const BATCH_SIZE = 5; // Number of tokens to fetch details for at once
 
+const LINKS_STORAGE_KEY = 'tokenLinksStorage';
+
 const TokenList = ({ currentUser, showNotification }) => {
   const [tokens, setTokens] = useState(() => {
     const cachedData = localStorage.getItem(CACHE_KEY);
@@ -299,6 +301,60 @@ const TokenList = ({ currentUser, showNotification }) => {
     setFilteredTokens(sorted);
   };
 
+  const preloadAndStoreTokenLinks = async (tokens) => {
+    try {
+      // Get existing stored links
+      const storedLinks = JSON.parse(localStorage.getItem(LINKS_STORAGE_KEY) || '{}');
+      
+      // Process tokens in batches to respect rate limits
+      const batchSize = 10;
+      for (let i = 0; i < tokens.length; i += batchSize) {
+        const batch = tokens.slice(i, i + batchSize);
+        
+        await Promise.all(batch.map(async (token) => {
+          // Skip if we already have fresh links
+          if (storedLinks[token.id]?.timestamp > Date.now() - (7 * 24 * 60 * 60 * 1000)) {
+            return;
+          }
+
+          try {
+            const response = await fetch(
+              `https://api.coingecko.com/api/v3/coins/${token.id}?localization=false&tickers=false&market_data=false&community_data=true&developer_data=true`
+            );
+            
+            if (!response.ok) return;
+            
+            const data = await response.json();
+            
+            // Store links with timestamp
+            storedLinks[token.id] = {
+              timestamp: Date.now(),
+              links: {
+                homepage: data.links?.homepage?.[0] || null,
+                twitter_screen_name: data.links?.twitter_screen_name || null,
+                telegram_channel_identifier: data.links?.telegram_channel_identifier || null,
+                discord_url: data.links?.chat_url?.find(url => url?.toLowerCase().includes('discord')) || null,
+                subreddit_url: data.links?.subreddit_url || null,
+                github: data.links?.repos_url?.github?.[0] || null
+              }
+            };
+            
+            // Save to storage after each successful fetch
+            localStorage.setItem(LINKS_STORAGE_KEY, JSON.stringify(storedLinks));
+            
+          } catch (error) {
+            console.error(`Error fetching links for ${token.id}:`, error);
+          }
+        }));
+        
+        // Add delay between batches
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    } catch (error) {
+      console.error('Error in preloadAndStoreTokenLinks:', error);
+    }
+  };
+
   const handleTokenClick = async (token) => {
     if (expandedTokenId === token.id) {
       setExpandedTokenId(null);
@@ -316,42 +372,55 @@ const TokenList = ({ currentUser, showNotification }) => {
       
       setExpandedTokenId(token.id);
       
-      try {
-        const response = await fetch(
-          `https://api.coingecko.com/api/v3/coins/${token.id}?localization=false&tickers=false&market_data=false&community_data=true&developer_data=true`
-        );
-        
-        if (!response.ok) throw new Error('Failed to fetch token details');
-        
-        const data = await response.json();
-        
-        // Set token with properly mapped links
-        setSelectedToken({
-          ...token,
-          links: {
-            homepage: data.links?.homepage?.[0] || null,
-            twitter_screen_name: data.links?.twitter_screen_name || null,
-            telegram_channel_identifier: data.links?.telegram_channel_identifier || null,
-            discord_url: data.links?.chat_url?.find(url => url?.toLowerCase().includes('discord')) || null,
-            subreddit_url: data.links?.subreddit_url || null,
-            github: data.links?.repos_url?.github?.[0] || null,
-            // Add these as fallbacks
-            chat_url: data.links?.chat_url || [],
-            announcement_url: data.links?.announcement_url || [],
-            blockchain_site: data.links?.blockchain_site?.filter(Boolean) || []
+      // Get stored links
+      const storedLinks = JSON.parse(localStorage.getItem(LINKS_STORAGE_KEY) || '{}');
+      const tokenLinks = storedLinks[token.id]?.links;
+      
+      // Set token with stored links
+      setSelectedToken({
+        ...token,
+        links: tokenLinks || {}
+      });
+      
+      // Fetch fresh links in background if needed
+      if (!tokenLinks || storedLinks[token.id]?.timestamp < Date.now() - (7 * 24 * 60 * 60 * 1000)) {
+        try {
+          const response = await fetch(
+            `https://api.coingecko.com/api/v3/coins/${token.id}?localization=false&tickers=false&market_data=false&community_data=true&developer_data=true`
+          );
+          
+          if (response.ok) {
+            const data = await response.json();
+            const freshLinks = {
+              homepage: data.links?.homepage?.[0] || null,
+              twitter_screen_name: data.links?.twitter_screen_name || null,
+              telegram_channel_identifier: data.links?.telegram_channel_identifier || null,
+              discord_url: data.links?.chat_url?.find(url => url?.toLowerCase().includes('discord')) || null,
+              subreddit_url: data.links?.subreddit_url || null,
+              github: data.links?.repos_url?.github?.[0] || null
+            };
+            
+            // Update stored links
+            storedLinks[token.id] = {
+              timestamp: Date.now(),
+              links: freshLinks
+            };
+            localStorage.setItem(LINKS_STORAGE_KEY, JSON.stringify(storedLinks));
+            
+            // Update UI if token is still selected
+            if (expandedTokenId === token.id) {
+              setSelectedToken(prev => ({
+                ...prev,
+                links: freshLinks
+              }));
+            }
           }
-        });
-
-        // Log the links to verify data
-        console.log('Token links:', data.links);
-        
-        fetchChartData(token.id, selectedTimeRange);
-        
-      } catch (error) {
-        console.error('Error fetching token details:', error);
-        setSelectedToken(token);
-        fetchChartData(token.id, selectedTimeRange);
+        } catch (error) {
+          console.error('Error fetching fresh links:', error);
+        }
       }
+      
+      fetchChartData(token.id, selectedTimeRange);
     }
   };
 
@@ -572,12 +641,19 @@ const TokenList = ({ currentUser, showNotification }) => {
     // Background fetch details for top 100 tokens initially
     backgroundFetchDetails(tokens.slice(0, 100));
 
+    // Preload links for initial tokens
+    const preloadLinks = async () => {
+      const initialTokens = tokens.slice(0, 100); // Start with top 100 tokens
+      await preloadAndStoreTokenLinks(initialTokens);
+    };
+    preloadLinks();
+
     // Set up periodic refresh
     const refreshInterval = setInterval(() => {
       if (!isBackgroundLoading) {
         loadAllTokensInBackground();
-        // Refresh details for top 50 tokens periodically
-        backgroundFetchDetails(tokens.slice(0, 50));
+        // Refresh links for top 50 tokens
+        preloadAndStoreTokenLinks(tokens.slice(0, 50));
       }
     }, 30000);
 
