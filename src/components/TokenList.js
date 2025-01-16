@@ -372,55 +372,53 @@ const TokenList = ({ currentUser, showNotification }) => {
       
       setExpandedTokenId(token.id);
       
-      // Get stored links
-      const storedLinks = JSON.parse(localStorage.getItem(LINKS_STORAGE_KEY) || '{}');
-      const tokenLinks = storedLinks[token.id]?.links;
-      
-      // Set token with stored links
-      setSelectedToken({
-        ...token,
-        links: tokenLinks || {}
-      });
-      
-      // Fetch fresh links in background if needed
-      if (!tokenLinks || storedLinks[token.id]?.timestamp < Date.now() - (7 * 24 * 60 * 60 * 1000)) {
-        try {
-          const response = await fetch(
-            `https://api.coingecko.com/api/v3/coins/${token.id}?localization=false&tickers=false&market_data=false&community_data=true&developer_data=true`
-          );
+      try {
+        // First check stored links
+        const storedLinks = JSON.parse(localStorage.getItem(LINKS_STORAGE_KEY) || '{}');
+        const cachedLinks = storedLinks[token.id]?.links;
+        
+        // Set initial state with cached links if available
+        setSelectedToken({
+          ...token,
+          links: cachedLinks || {}
+        });
+
+        // Always fetch fresh data
+        const response = await fetch(
+          `https://api.coingecko.com/api/v3/coins/${token.id}?localization=false&tickers=false&market_data=false&community_data=true&developer_data=true`
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          const freshLinks = {
+            homepage: data.links?.homepage?.[0] || null,
+            twitter_screen_name: data.links?.twitter_screen_name || null,
+            telegram_channel_identifier: data.links?.telegram_channel_identifier || null,
+            discord_url: data.links?.chat_url?.find(url => url?.toLowerCase().includes('discord')) || null,
+            subreddit_url: data.links?.subreddit_url || null,
+            github: data.links?.repos_url?.github?.[0] || null
+          };
           
-          if (response.ok) {
-            const data = await response.json();
-            const freshLinks = {
-              homepage: data.links?.homepage?.[0] || null,
-              twitter_screen_name: data.links?.twitter_screen_name || null,
-              telegram_channel_identifier: data.links?.telegram_channel_identifier || null,
-              discord_url: data.links?.chat_url?.find(url => url?.toLowerCase().includes('discord')) || null,
-              subreddit_url: data.links?.subreddit_url || null,
-              github: data.links?.repos_url?.github?.[0] || null
-            };
-            
-            // Update stored links
-            storedLinks[token.id] = {
-              timestamp: Date.now(),
-              links: freshLinks
-            };
-            localStorage.setItem(LINKS_STORAGE_KEY, JSON.stringify(storedLinks));
-            
-            // Update UI if token is still selected
-            if (expandedTokenId === token.id) {
-              setSelectedToken(prev => ({
-                ...prev,
-                links: freshLinks
-              }));
-            }
-          }
-        } catch (error) {
-          console.error('Error fetching fresh links:', error);
+          // Update stored links
+          storedLinks[token.id] = {
+            timestamp: Date.now(),
+            links: freshLinks
+          };
+          localStorage.setItem(LINKS_STORAGE_KEY, JSON.stringify(storedLinks));
+          
+          // Update UI
+          setSelectedToken(prev => ({
+            ...prev,
+            links: freshLinks
+          }));
         }
+        
+        fetchChartData(token.id, selectedTimeRange);
+        
+      } catch (error) {
+        console.error('Error fetching token details:', error);
+        fetchChartData(token.id, selectedTimeRange);
       }
-      
-      fetchChartData(token.id, selectedTimeRange);
     }
   };
 
