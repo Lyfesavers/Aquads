@@ -308,7 +308,6 @@ const TokenList = ({ currentUser, showNotification }) => {
         setChartInstance(null);
       }
     } else {
-      // Clear previous chart data and instance
       setChartData(null);
       if (chartInstance) {
         chartInstance.destroy();
@@ -317,34 +316,38 @@ const TokenList = ({ currentUser, showNotification }) => {
       
       setExpandedTokenId(token.id);
       
-      // Try to get cached details first
-      const cachedDetails = localStorage.getItem(`${DETAILED_CACHE_KEY}_${token.id}`);
-      if (cachedDetails) {
-        const details = JSON.parse(cachedDetails);
+      // Fetch token details with links immediately
+      try {
+        const response = await fetch(
+          `https://api.coingecko.com/api/v3/coins/${token.id}`
+        );
+        
+        if (!response.ok) throw new Error('Failed to fetch token details');
+        
+        const data = await response.json();
+        
+        // Set token with links data
         setSelectedToken({
           ...token,
-          ...details
+          links: {
+            homepage: data.links?.homepage,
+            twitter_screen_name: data.links?.twitter_screen_name,
+            telegram_channel_identifier: data.links?.telegram_channel_identifier,
+            discord_url: data.links?.chat_url?.[0],
+            subreddit_url: data.links?.subreddit_url,
+            repos_url: data.links?.repos_url,
+            github: data.links?.repos_url?.github?.[0]
+          }
         });
+        
+        // Fetch chart data after setting token details
+        fetchChartData(token.id, selectedTimeRange);
+        
+      } catch (error) {
+        console.error('Error fetching token details:', error);
+        setSelectedToken(token);
+        fetchChartData(token.id, selectedTimeRange);
       }
-      
-      // Try to get cached chart data for this specific token
-      const cachedChart = localStorage.getItem(`${CHART_CACHE_KEY}_${token.id}_${selectedTimeRange}`);
-      if (cachedChart && expandedTokenId === token.id) {
-        setChartData(JSON.parse(cachedChart));
-      }
-      
-      // Fetch fresh data in background
-      fetchAndCacheTokenDetails(token.id).then(details => {
-        if (details && expandedTokenId === token.id) {
-          setSelectedToken(prev => ({
-            ...prev,
-            ...details
-          }));
-        }
-      });
-      
-      // Fetch fresh chart data
-      fetchChartData(token.id, selectedTimeRange);
     }
   };
 
