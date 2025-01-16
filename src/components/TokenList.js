@@ -507,17 +507,23 @@ const TokenList = ({ currentUser, showNotification }) => {
       if (!response.ok) throw new Error('Failed to fetch token details');
       
       const data = await response.json();
+      
+      // Extract links directly from the API response
       const details = {
         links: {
           homepage: data.links?.homepage,
           twitter_screen_name: data.links?.twitter_screen_name,
           telegram_channel_identifier: data.links?.telegram_channel_identifier,
-          discord_url: data.links?.chat_url?.[0],
+          discord_url: data.links?.chat_url?.[0], // Discord URL is usually the first chat URL
           subreddit_url: data.links?.subreddit_url,
-          github: data.links?.repos_url?.github?.[0]
-        },
-        lastUpdated: Date.now()
+          github: data.links?.repos_url?.github?.[0],
+          // Add direct access to all links
+          ...data.links
+        }
       };
+
+      // Log the links data to verify
+      console.log('Fetched token details:', data.links);
 
       // Cache the details
       localStorage.setItem(`${DETAILED_CACHE_KEY}_${tokenId}`, JSON.stringify(details));
