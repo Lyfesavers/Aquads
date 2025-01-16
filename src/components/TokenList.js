@@ -47,7 +47,7 @@ const DEX_OPTIONS = [
 ];
 
 
-const INITIAL_TOKEN_COUNT = 250; // Pre-load more tokens initially
+const INITIAL_TOKEN_COUNT = 16694; // Pre-load more tokens initially
 
 const CACHE_KEY = 'tokenListCache';
 const CACHE_TIMESTAMP_KEY = 'tokenListCacheTimestamp';
@@ -316,31 +316,35 @@ const TokenList = ({ currentUser, showNotification }) => {
       
       setExpandedTokenId(token.id);
       
-      // Fetch token details with links immediately
       try {
         const response = await fetch(
-          `https://api.coingecko.com/api/v3/coins/${token.id}`
+          `https://api.coingecko.com/api/v3/coins/${token.id}?localization=false&tickers=false&market_data=false&community_data=true&developer_data=true`
         );
         
         if (!response.ok) throw new Error('Failed to fetch token details');
         
         const data = await response.json();
         
-        // Set token with links data
+        // Set token with properly mapped links
         setSelectedToken({
           ...token,
           links: {
-            homepage: data.links?.homepage,
-            twitter_screen_name: data.links?.twitter_screen_name,
-            telegram_channel_identifier: data.links?.telegram_channel_identifier,
-            discord_url: data.links?.chat_url?.[0],
-            subreddit_url: data.links?.subreddit_url,
-            repos_url: data.links?.repos_url,
-            github: data.links?.repos_url?.github?.[0]
+            homepage: data.links?.homepage?.[0] || null,
+            twitter_screen_name: data.links?.twitter_screen_name || null,
+            telegram_channel_identifier: data.links?.telegram_channel_identifier || null,
+            discord_url: data.links?.chat_url?.find(url => url?.toLowerCase().includes('discord')) || null,
+            subreddit_url: data.links?.subreddit_url || null,
+            github: data.links?.repos_url?.github?.[0] || null,
+            // Add these as fallbacks
+            chat_url: data.links?.chat_url || [],
+            announcement_url: data.links?.announcement_url || [],
+            blockchain_site: data.links?.blockchain_site?.filter(Boolean) || []
           }
         });
+
+        // Log the links to verify data
+        console.log('Token links:', data.links);
         
-        // Fetch chart data after setting token details
         fetchChartData(token.id, selectedTimeRange);
         
       } catch (error) {
@@ -920,9 +924,9 @@ const TokenList = ({ currentUser, showNotification }) => {
                             <div className="mt-6 border-t border-gray-700 pt-4">
                               <h3 className="text-lg font-bold text-white mb-4">Links</h3>
                               <div className="flex flex-wrap gap-4">
-                                {token.links?.homepage?.[0] && (
+                                {selectedToken?.links?.homepage && (
                                   <a
-                                    href={token.links.homepage[0]}
+                                    href={selectedToken.links.homepage}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="flex items-center gap-2 text-gray-300 hover:text-blue-400 transition-colors"
@@ -932,9 +936,9 @@ const TokenList = ({ currentUser, showNotification }) => {
                                   </a>
                                 )}
                                 
-                                {token.links?.twitter_screen_name && (
+                                {selectedToken?.links?.twitter_screen_name && (
                                   <a
-                                    href={`https://twitter.com/${token.links.twitter_screen_name}`}
+                                    href={`https://twitter.com/${selectedToken.links.twitter_screen_name}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="flex items-center gap-2 text-gray-300 hover:text-blue-400 transition-colors"
@@ -944,9 +948,9 @@ const TokenList = ({ currentUser, showNotification }) => {
                                   </a>
                                 )}
                                 
-                                {token.links?.telegram_channel_identifier && (
+                                {selectedToken?.links?.telegram_channel_identifier && (
                                   <a
-                                    href={`https://t.me/${token.links.telegram_channel_identifier}`}
+                                    href={`https://t.me/${selectedToken.links.telegram_channel_identifier}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="flex items-center gap-2 text-gray-300 hover:text-blue-400 transition-colors"
@@ -956,9 +960,9 @@ const TokenList = ({ currentUser, showNotification }) => {
                                   </a>
                                 )}
                                 
-                                {token.links?.discord_url && (
+                                {selectedToken?.links?.discord_url && (
                                   <a
-                                    href={token.links.discord_url}
+                                    href={selectedToken.links.discord_url}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="flex items-center gap-2 text-gray-300 hover:text-blue-400 transition-colors"
@@ -968,9 +972,9 @@ const TokenList = ({ currentUser, showNotification }) => {
                                   </a>
                                 )}
 
-                                {token.links?.subreddit_url && (
+                                {selectedToken?.links?.subreddit_url && (
                                   <a
-                                    href={token.links.subreddit_url}
+                                    href={selectedToken.links.subreddit_url}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="flex items-center gap-2 text-gray-300 hover:text-blue-400 transition-colors"
@@ -980,9 +984,9 @@ const TokenList = ({ currentUser, showNotification }) => {
                                   </a>
                                 )}
 
-                                {token.links?.repos_url?.github?.[0] && (
+                                {selectedToken?.links?.github && (
                                   <a
-                                    href={token.links.repos_url.github[0]}
+                                    href={selectedToken.links.github}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="flex items-center gap-2 text-gray-300 hover:text-blue-400 transition-colors"
