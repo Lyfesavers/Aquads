@@ -3,6 +3,7 @@ import TokenReviews from './TokenReviews';
 import { Chart } from 'chart.js/auto';
 import TokenRating from './TokenRating';
 import { FaGlobe, FaTwitter, FaTelegram, FaDiscord, FaGithub, FaReddit } from 'react-icons/fa';
+import { Helmet } from 'react-helmet';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -303,18 +304,18 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   const preloadAndStoreTokenLinks = async (tokens) => {
     try {
-      // Get existing stored links
       const storedLinks = JSON.parse(localStorage.getItem(LINKS_STORAGE_KEY) || '{}');
       
-      // Process tokens in batches to respect rate limits
-      const batchSize = 10;
+      // Reduce batch size and increase delay
+      const batchSize = 20; // Reduced from 10 to 5
       for (let i = 0; i < tokens.length; i += batchSize) {
         const batch = tokens.slice(i, i + batchSize);
         
-        await Promise.all(batch.map(async (token) => {
+        // Process one token at a time instead of parallel requests
+        for (const token of batch) {
           // Skip if we already have fresh links
           if (storedLinks[token.id]?.timestamp > Date.now() - (7 * 24 * 60 * 60 * 1000)) {
-            return;
+            continue;
           }
 
           try {
@@ -322,11 +323,17 @@ const TokenList = ({ currentUser, showNotification }) => {
               `https://api.coingecko.com/api/v3/coins/${token.id}?localization=false&tickers=false&market_data=false&community_data=true&developer_data=true`
             );
             
-            if (!response.ok) return;
+            if (!response.ok) {
+              // Add exponential backoff if we hit rate limits
+              if (response.status === 429) {
+                await new Promise(resolve => setTimeout(resolve, 30000)); // Wait 30s on rate limit
+                continue;
+              }
+              continue;
+            }
             
             const data = await response.json();
             
-            // Store links with timestamp
             storedLinks[token.id] = {
               timestamp: Date.now(),
               links: {
@@ -339,16 +346,18 @@ const TokenList = ({ currentUser, showNotification }) => {
               }
             };
             
-            // Save to storage after each successful fetch
             localStorage.setItem(LINKS_STORAGE_KEY, JSON.stringify(storedLinks));
+            
+            // Wait 6 seconds between each request
+            await new Promise(resolve => setTimeout(resolve, 6000));
             
           } catch (error) {
             console.error(`Error fetching links for ${token.id}:`, error);
           }
-        }));
+        }
         
-        // Add delay between batches
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Wait 10 seconds between batches
+        await new Promise(resolve => setTimeout(resolve, 10000));
       }
     } catch (error) {
       console.error('Error in preloadAndStoreTokenLinks:', error);
@@ -695,6 +704,16 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   return (
     <div className="container mx-auto p-4">
+      <Helmet>
+        <title>AQUADS - Real-time Cryptocurrency Prices & Market Data</title>
+        <meta name="description" content="Track live cryptocurrency prices, market cap, volume, and detailed token information. Get real-time data for Bitcoin, Ethereum, and thousands of altcoins." />
+        <meta name="keywords" content="cryptocurrency, crypto prices, bitcoin, ethereum, market cap, trading volume, token information" />
+        <meta property="og:title" content="AQUADS - Cryptocurrency Market Data" />
+        <meta property="og:description" content="Live cryptocurrency prices, charts, and market data for thousands of tokens." />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:card" content="summary_large_image" />
+      </Helmet>
+
       <div className="mb-6 bg-gray-800/50 backdrop-blur-sm rounded-lg p-4">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
