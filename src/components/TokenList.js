@@ -67,6 +67,24 @@ const BATCH_SIZE = 5; // Number of tokens to fetch details for at once
 
 const LINKS_STORAGE_KEY = 'tokenLinksStorage';
 
+const formatCurrency = (value) => {
+  if (!value) return 'N/A';
+  
+  const trillion = 1e12;
+  const billion = 1e9;
+  const million = 1e6;
+  
+  if (value >= trillion) {
+    return `$${(value / trillion).toFixed(2)}t`;
+  } else if (value >= billion) {
+    return `$${(value / billion).toFixed(2)}b`;
+  } else if (value >= million) {
+    return `$${(value / million).toFixed(2)}m`;
+  } else {
+    return `$${value.toLocaleString()}`;
+  }
+};
+
 const TokenList = ({ currentUser, showNotification }) => {
   const [tokens, setTokens] = useState(() => {
     const cachedData = localStorage.getItem(CACHE_KEY);
@@ -885,10 +903,14 @@ const TokenList = ({ currentUser, showNotification }) => {
                         {token.price_change_percentage_24h.toFixed(2)}%
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                        ${(token.market_cap / 1000000).toFixed(2)}M
+                        <span className="text-gray-300">
+                          {formatCurrency(token.market_cap)}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                        ${(token.total_volume / 1000000).toFixed(2)}M
+                        <span className="text-gray-300">
+                          {formatCurrency(token.total_volume)}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="flex items-center justify-end gap-2">
@@ -945,11 +967,11 @@ const TokenList = ({ currentUser, showNotification }) => {
                                   </div>
                                   <div>
                                     <p className="text-gray-400 text-sm">Market Cap</p>
-                                    <p className="text-white font-medium">${token.market_cap?.toLocaleString()}</p>
+                                    <p className="text-white font-medium">{formatCurrency(token.market_cap)}</p>
                                   </div>
                                   <div>
                                     <p className="text-gray-400 text-sm">24h Volume</p>
-                                    <p className="text-white font-medium">${token.total_volume?.toLocaleString()}</p>
+                                    <p className="text-white font-medium">{formatCurrency(token.total_volume)}</p>
                                   </div>
                                   <div>
                                     <p className="text-gray-400 text-sm">Circulating Supply</p>
@@ -1000,7 +1022,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                                   <div>
                                     <p className="text-gray-400 text-sm">Fully Diluted Valuation</p>
                                     <p className="text-white font-medium">
-                                      ${token.fully_diluted_valuation?.toLocaleString() || 'N/A'}
+                                      {token.fully_diluted_valuation ? formatCurrency(token.fully_diluted_valuation) : 'N/A'}
                                     </p>
                                   </div>
                                 </div>
