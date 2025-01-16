@@ -75,11 +75,11 @@ const formatCurrency = (value) => {
   const million = 1e6;
   
   if (value >= trillion) {
-    return `$${(value / trillion).toFixed(2)}t`;
+    return `$${(value / trillion).toFixed(2)}T`;
   } else if (value >= billion) {
-    return `$${(value / billion).toFixed(2)}b`;
+    return `$${(value / billion).toFixed(2)}B`;
   } else if (value >= million) {
-    return `$${(value / million).toFixed(2)}m`;
+    return `$${(value / million).toFixed(2)}M`;
   } else {
     return `$${value.toLocaleString()}`;
   }
