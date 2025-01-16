@@ -997,13 +997,13 @@ const TokenList = ({ currentUser, showNotification }) => {
                           <div className="p-4 bg-gray-800">
                             <div className="mt-6 border-t border-gray-700 pt-4">
                               <h3 className="text-lg font-bold text-white mb-4">Links</h3>
-                              <div className="flex flex-wrap gap-4">
+                              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                                 {selectedToken?.links?.homepage && (
                                   <a
                                     href={selectedToken.links.homepage}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-2 text-gray-300 hover:text-blue-400 transition-colors"
+                                    className="flex items-center gap-2 px-4 py-2 bg-gray-700/50 rounded-lg text-gray-300 hover:bg-gray-600 hover:text-blue-400 transition-all duration-200"
                                   >
                                     <FaGlobe className="text-xl" />
                                     <span>Website</span>
@@ -1015,7 +1015,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                                     href={`https://twitter.com/${selectedToken.links.twitter_screen_name}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-2 text-gray-300 hover:text-blue-400 transition-colors"
+                                    className="flex items-center gap-2 px-4 py-2 bg-gray-700/50 rounded-lg text-gray-300 hover:bg-gray-600 hover:text-blue-400 transition-all duration-200"
                                   >
                                     <FaTwitter className="text-xl" />
                                     <span>Twitter</span>
@@ -1027,7 +1027,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                                     href={`https://t.me/${selectedToken.links.telegram_channel_identifier}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-2 text-gray-300 hover:text-blue-400 transition-colors"
+                                    className="flex items-center gap-2 px-4 py-2 bg-gray-700/50 rounded-lg text-gray-300 hover:bg-gray-600 hover:text-blue-400 transition-all duration-200"
                                   >
                                     <FaTelegram className="text-xl" />
                                     <span>Telegram</span>
@@ -1039,7 +1039,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                                     href={selectedToken.links.discord_url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-2 text-gray-300 hover:text-blue-400 transition-colors"
+                                    className="flex items-center gap-2 px-4 py-2 bg-gray-700/50 rounded-lg text-gray-300 hover:bg-gray-600 hover:text-blue-400 transition-all duration-200"
                                   >
                                     <FaDiscord className="text-xl" />
                                     <span>Discord</span>
@@ -1051,7 +1051,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                                     href={selectedToken.links.subreddit_url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-2 text-gray-300 hover:text-blue-400 transition-colors"
+                                    className="flex items-center gap-2 px-4 py-2 bg-gray-700/50 rounded-lg text-gray-300 hover:bg-gray-600 hover:text-blue-400 transition-all duration-200"
                                   >
                                     <FaReddit className="text-xl" />
                                     <span>Reddit</span>
@@ -1063,7 +1063,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                                     href={selectedToken.links.github}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center gap-2 text-gray-300 hover:text-blue-400 transition-colors"
+                                    className="flex items-center gap-2 px-4 py-2 bg-gray-700/50 rounded-lg text-gray-300 hover:bg-gray-600 hover:text-blue-400 transition-all duration-200"
                                   >
                                     <FaGithub className="text-xl" />
                                     <span>GitHub</span>
