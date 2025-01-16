@@ -324,6 +324,16 @@ const TokenList = ({ currentUser, showNotification }) => {
     try {
       const storedLinks = JSON.parse(localStorage.getItem(LINKS_STORAGE_KEY) || '{}');
       
+      // Only store links for top 100 tokens
+      const topTokens = tokens.slice(0, 100);
+      
+      // Clean up old links
+      Object.keys(storedLinks).forEach(tokenId => {
+        if (!topTokens.find(t => t.id === tokenId)) {
+          delete storedLinks[tokenId];
+        }
+      });
+      
       // Reduce batch size and increase delay
       const batchSize = 20; // Reduced from 10 to 5
       for (let i = 0; i < tokens.length; i += batchSize) {
@@ -656,35 +666,35 @@ const TokenList = ({ currentUser, showNotification }) => {
     }
   };
 
+  const cleanupStorage = () => {
+    try {
+      // Keep only essential data and remove old caches
+      const essentialKeys = [
+        'currentUser',
+        CACHE_KEY,
+        CACHE_TIMESTAMP_KEY
+      ];
+      
+      // Remove all other items
+      Object.keys(localStorage).forEach(key => {
+        if (!essentialKeys.includes(key)) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      // Clean up old token data
+      const tokenData = JSON.parse(localStorage.getItem(CACHE_KEY) || '[]');
+      const trimmedData = tokenData.slice(0, 100); // Keep only top 100 tokens
+      localStorage.setItem(CACHE_KEY, JSON.stringify(trimmedData));
+      
+    } catch (error) {
+      console.warn('Storage cleanup failed:', error);
+    }
+  };
+
   useEffect(() => {
-    // Initial load of visible tokens
+    cleanupStorage(); // Clean up on component mount
     fetchInitialTokens();
-    
-    // Start background loading
-    loadAllTokensInBackground();
-
-    // Background fetch details for top 100 tokens initially
-    backgroundFetchDetails(tokens.slice(0, 100));
-
-    // Preload links for initial tokens
-    const preloadLinks = async () => {
-      const initialTokens = tokens.slice(0, 100); // Start with top 100 tokens
-      await preloadAndStoreTokenLinks(initialTokens);
-    };
-    preloadLinks();
-
-    // Set up periodic refresh
-    const refreshInterval = setInterval(() => {
-      if (!isBackgroundLoading) {
-        loadAllTokensInBackground();
-        // Refresh links for top 50 tokens
-        preloadAndStoreTokenLinks(tokens.slice(0, 50));
-      }
-    }, 30000);
-
-    return () => {
-      clearInterval(refreshInterval);
-    };
   }, []);
 
   useEffect(() => {

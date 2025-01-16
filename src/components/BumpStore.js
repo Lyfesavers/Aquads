@@ -36,6 +36,25 @@ const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
     onSubmitPayment(ad.id, txSignature, selectedOption.durationMs);
   };
 
+  const setStorageWithFallback = (key, value) => {
+    try {
+      // Try to set in localStorage
+      localStorage.setItem(key, value);
+    } catch (error) {
+      if (error.name === 'QuotaExceededError') {
+        // Clean up storage first
+        cleanupStorage();
+        try {
+          // Try again after cleanup
+          localStorage.setItem(key, value);
+        } catch (retryError) {
+          console.error('Storage still full after cleanup:', retryError);
+          // Could implement sessionStorage fallback here if needed
+        }
+      }
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
       <div className="bg-gray-800 rounded-lg p-4 sm:p-6 w-full max-w-lg mx-auto my-8">
