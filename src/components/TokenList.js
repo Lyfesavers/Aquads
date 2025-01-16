@@ -996,79 +996,81 @@ const TokenList = ({ currentUser, showNotification }) => {
                         <td colSpan="7">
                           <div className="p-4 bg-gray-800">
                             <div className="mt-6 border-t border-gray-700 pt-4">
-                              <h3 className="text-lg font-bold text-white mb-4">Links</h3>
-                              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                                {selectedToken?.links?.homepage && (
-                                  <a
-                                    href={selectedToken.links.homepage}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2 px-4 py-2 bg-gray-700/50 rounded-lg text-gray-300 hover:bg-gray-600 hover:text-blue-400 transition-all duration-200"
-                                  >
-                                    <FaGlobe className="text-xl" />
-                                    <span>Website</span>
-                                  </a>
-                                )}
-                                
-                                {selectedToken?.links?.twitter_screen_name && (
-                                  <a
-                                    href={`https://twitter.com/${selectedToken.links.twitter_screen_name}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2 px-4 py-2 bg-gray-700/50 rounded-lg text-gray-300 hover:bg-gray-600 hover:text-blue-400 transition-all duration-200"
-                                  >
-                                    <FaTwitter className="text-xl" />
-                                    <span>Twitter</span>
-                                  </a>
-                                )}
-                                
-                                {selectedToken?.links?.telegram_channel_identifier && (
-                                  <a
-                                    href={`https://t.me/${selectedToken.links.telegram_channel_identifier}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2 px-4 py-2 bg-gray-700/50 rounded-lg text-gray-300 hover:bg-gray-600 hover:text-blue-400 transition-all duration-200"
-                                  >
-                                    <FaTelegram className="text-xl" />
-                                    <span>Telegram</span>
-                                  </a>
-                                )}
-                                
-                                {selectedToken?.links?.discord_url && (
-                                  <a
-                                    href={selectedToken.links.discord_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2 px-4 py-2 bg-gray-700/50 rounded-lg text-gray-300 hover:bg-gray-600 hover:text-blue-400 transition-all duration-200"
-                                  >
-                                    <FaDiscord className="text-xl" />
-                                    <span>Discord</span>
-                                  </a>
-                                )}
+                              <div className="flex items-center gap-4">
+                                <h3 className="text-lg font-bold text-white whitespace-nowrap">Links:</h3>
+                                <div className="flex flex-wrap gap-3">
+                                  {selectedToken?.links?.homepage && (
+                                    <a
+                                      href={selectedToken.links.homepage}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-2 px-3 py-1.5 bg-gray-700/50 rounded text-gray-300 hover:bg-gray-600 hover:text-blue-400 transition-all duration-200"
+                                    >
+                                      <FaGlobe className="text-lg" />
+                                      <span>Website</span>
+                                    </a>
+                                  )}
+                                  
+                                  {selectedToken?.links?.twitter_screen_name && (
+                                    <a
+                                      href={`https://twitter.com/${selectedToken.links.twitter_screen_name}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-2 px-3 py-1.5 bg-gray-700/50 rounded text-gray-300 hover:bg-gray-600 hover:text-blue-400 transition-all duration-200"
+                                    >
+                                      <FaTwitter className="text-lg" />
+                                      <span>Twitter</span>
+                                    </a>
+                                  )}
+                                  
+                                  {selectedToken?.links?.telegram_channel_identifier && (
+                                    <a
+                                      href={`https://t.me/${selectedToken.links.telegram_channel_identifier}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-2 px-3 py-1.5 bg-gray-700/50 rounded text-gray-300 hover:bg-gray-600 hover:text-blue-400 transition-all duration-200"
+                                    >
+                                      <FaTelegram className="text-lg" />
+                                      <span>Telegram</span>
+                                    </a>
+                                  )}
+                                  
+                                  {selectedToken?.links?.discord_url && (
+                                    <a
+                                      href={selectedToken.links.discord_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-2 px-3 py-1.5 bg-gray-700/50 rounded text-gray-300 hover:bg-gray-600 hover:text-blue-400 transition-all duration-200"
+                                    >
+                                      <FaDiscord className="text-lg" />
+                                      <span>Discord</span>
+                                    </a>
+                                  )}
 
-                                {selectedToken?.links?.subreddit_url && (
-                                  <a
-                                    href={selectedToken.links.subreddit_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2 px-4 py-2 bg-gray-700/50 rounded-lg text-gray-300 hover:bg-gray-600 hover:text-blue-400 transition-all duration-200"
-                                  >
-                                    <FaReddit className="text-xl" />
-                                    <span>Reddit</span>
-                                  </a>
-                                )}
+                                  {selectedToken?.links?.subreddit_url && (
+                                    <a
+                                      href={selectedToken.links.subreddit_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-2 px-3 py-1.5 bg-gray-700/50 rounded text-gray-300 hover:bg-gray-600 hover:text-blue-400 transition-all duration-200"
+                                    >
+                                      <FaReddit className="text-lg" />
+                                      <span>Reddit</span>
+                                    </a>
+                                  )}
 
-                                {selectedToken?.links?.github && (
-                                  <a
-                                    href={selectedToken.links.github}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2 px-4 py-2 bg-gray-700/50 rounded-lg text-gray-300 hover:bg-gray-600 hover:text-blue-400 transition-all duration-200"
-                                  >
-                                    <FaGithub className="text-xl" />
-                                    <span>GitHub</span>
-                                  </a>
-                                )}
+                                  {selectedToken?.links?.github && (
+                                    <a
+                                      href={selectedToken.links.github}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-2 px-3 py-1.5 bg-gray-700/50 rounded text-gray-300 hover:bg-gray-600 hover:text-blue-400 transition-all duration-200"
+                                    >
+                                      <FaGithub className="text-lg" />
+                                      <span>GitHub</span>
+                                    </a>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
