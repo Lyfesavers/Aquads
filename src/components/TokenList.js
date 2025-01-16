@@ -995,7 +995,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                       <tr>
                         <td colSpan="7">
                           <div className="p-4 bg-gray-800">
-                            <div className="mt-6 border-t border-gray-700 pt-4">
+                            <div className="border-t border-gray-700 pt-3">
                               <div className="flex items-center gap-4">
                                 <h3 className="text-lg font-bold text-white whitespace-nowrap">Links:</h3>
                                 <div className="flex flex-wrap gap-3">
