@@ -14,6 +14,7 @@ const tokenSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  image: String,
   currentPrice: {
     type: Number,
     default: 0
@@ -38,7 +39,6 @@ const tokenSchema = new mongoose.Schema({
   athChangePercentage: Number,
   athDate: Date,
   fullyDilutedValuation: Number,
-  logo: String,
   lastUpdated: {
     type: Date,
     default: Date.now

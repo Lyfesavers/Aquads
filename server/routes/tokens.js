@@ -25,14 +25,15 @@ const updateTokenCache = async () => {
       id: token.id,
       symbol: token.symbol.toUpperCase(),
       name: token.name,
-      currentPrice: token.current_price,
-      marketCap: token.market_cap,
+      image: token.image,
+      currentPrice: token.current_price || 0,
+      marketCap: token.market_cap || 0,
       marketCapRank: token.market_cap_rank,
-      totalVolume: token.total_volume,
+      totalVolume: token.total_volume || 0,
       high24h: token.high_24h,
       low24h: token.low_24h,
-      priceChange24h: token.price_change_24h,
-      priceChangePercentage24h: token.price_change_percentage_24h,
+      priceChange24h: token.price_change_24h || 0,
+      priceChangePercentage24h: token.price_change_percentage_24h || 0,
       circulatingSupply: token.circulating_supply,
       totalSupply: token.total_supply,
       maxSupply: token.max_supply,
@@ -40,20 +41,23 @@ const updateTokenCache = async () => {
       athChangePercentage: token.ath_change_percentage,
       athDate: token.ath_date,
       fullyDilutedValuation: token.fully_diluted_valuation,
-      logo: token.image,
       lastUpdated: new Date()
     }));
 
-    // Update or insert tokens
+    // Update or insert tokens with error handling
     for (const token of tokens) {
-      await Token.findOneAndUpdate(
-        { id: token.id },
-        token,
-        { upsert: true, new: true }
-      );
+      try {
+        await Token.findOneAndUpdate(
+          { id: token.id },
+          token,
+          { upsert: true, new: true }
+        );
+      } catch (err) {
+        console.error(`Error updating token ${token.id}:`, err);
+      }
     }
 
-    console.log('Token cache updated successfully');
+    console.log(`Token cache updated successfully with ${tokens.length} tokens`);
   } catch (error) {
     console.error('Error updating token cache:', error);
   }
@@ -63,7 +67,7 @@ const updateTokenCache = async () => {
 updateTokenCache();
 setInterval(updateTokenCache, 5 * 60 * 1000);
 
-// Get all tokens
+// Get all tokens with better error handling
 router.get('/', async (req, res) => {
   try {
     const { search } = req.query;
@@ -83,6 +87,20 @@ router.get('/', async (req, res) => {
     const tokens = await Token.find(query)
       .sort({ marketCapRank: 1 })
       .limit(100);
+
+    if (!tokens || tokens.length === 0) {
+      // If no tokens in DB, try to update cache immediately
+      await updateTokenCache();
+      // Try to fetch again
+      const retryTokens = await Token.find(query)
+        .sort({ marketCapRank: 1 })
+        .limit(100);
+      
+      if (!retryTokens || retryTokens.length === 0) {
+        return res.status(404).json({ error: 'No tokens found' });
+      }
+      return res.json(retryTokens);
+    }
       
     res.json(tokens);
   } catch (error) {
