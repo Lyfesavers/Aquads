@@ -670,3 +670,29 @@ body {
 .particle-1 { top: 30%; left: 80%; --tx: -80px; --ty: 60px; }
 .particle-2 { top: 50%; left: 40%; --tx: 60px; --ty: 80px; }
 /* ... add more particle positions as needed ... */
+
+@keyframes shine {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shine {
+  animation: shine 3s infinite;
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s infinite;
+}
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}

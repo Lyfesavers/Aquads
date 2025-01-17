@@ -786,14 +786,18 @@ const TokenList = ({ currentUser, showNotification }) => {
       <div className="bg-gray-900/50 backdrop-blur-sm rounded-lg overflow-hidden">
         <div className="relative">
           <button
-            className="w-full px-4 py-3 bg-gray-800/50 hover:bg-gray-700/50 text-white flex items-center justify-between border-b border-gray-700/30"
+            className="w-full px-4 py-3 bg-gray-800/50 hover:bg-gray-700/50 text-white flex items-center justify-between border-b border-gray-700/30 relative overflow-hidden group animate-pulse-subtle"
             onClick={() => setShowDexFrame(!showDexFrame)}
           >
-            <div className="flex items-center">
-              <span className="mr-2">🔄</span>
-              <span>Quick DEX Access</span>
+            <div className="flex items-center relative z-10">
+              <span className="mr-2 text-blue-400">🔄</span>
+              <span className="font-semibold text-blue-300">Quick DEX Access</span>
+              <span className="ml-2 text-xs text-blue-400/70 bg-blue-500/10 px-2 py-1 rounded-full">Click to toggle</span>
             </div>
-            <span>{showDexFrame ? '▼' : '▶'}</span>
+            <div className="flex items-center">
+              <span className="text-blue-400">{showDexFrame ? '▼' : '▶'}</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/10 to-blue-500/0 animate-shine"></div>
+            </div>
           </button>
 
           {showDexFrame && (
