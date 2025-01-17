@@ -86,18 +86,7 @@ const formatCurrency = (value) => {
 };
 
 const TokenList = ({ currentUser, showNotification }) => {
-  const [tokens, setTokens] = useState(() => {
-    const cachedData = localStorage.getItem(CACHE_KEY);
-    const timestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
-    
-    if (cachedData && timestamp) {
-      const age = Date.now() - parseInt(timestamp);
-      if (age < CACHE_DURATION) {
-        return JSON.parse(cachedData);
-      }
-    }
-    return [];
-  });
+  const [tokens, setTokens] = useState([]);
   const [filteredTokens, setFilteredTokens] = useState([]);
   const [selectedToken, setSelectedToken] = useState(null);
   const [showReviews, setShowReviews] = useState(false);
@@ -108,215 +97,82 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [selectedTimeRange, setSelectedTimeRange] = useState('24h');
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortConfig, setSortConfig] = useState({ key: 'market_cap', direction: 'desc' });
+  const [sortConfig, setSortConfig] = useState({ key: 'marketCap', direction: 'desc' });
   const [showDexFrame, setShowDexFrame] = useState(false);
   const [selectedDex, setSelectedDex] = useState(null);
   const [error, setError] = useState(null);
-  const [isLoadingTokens, setIsLoadingTokens] = useState(true);
   const [expandedTokenId, setExpandedTokenId] = useState(null);
   const [timeFilter, setTimeFilter] = useState('24h');
-  const [sortFilter, setSortFilter] = useState('market_cap');
+  const [sortFilter, setSortFilter] = useState('marketCap');
   const [orderFilter, setOrderFilter] = useState('desc');
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [allTokensCache, setAllTokensCache] = useState([]); // Cache for all tokens
-  const [lastUpdateTime, setLastUpdateTime] = useState(null);
-  const [isBackgroundLoading, setIsBackgroundLoading] = useState(false);
 
-  const updateTokenCache = (newTokens) => {
-    try {
-      localStorage.setItem(CACHE_KEY, JSON.stringify(newTokens));
-      localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
-    } catch (error) {
-      console.warn('Failed to cache tokens:', error);
+  useEffect(() => {
+    fetchInitialTokens();
+  }, []);
+
+  useEffect(() => {
+    if (tokens.length > 0) {
+      setFilteredTokens(tokens);
     }
-  };
+  }, [tokens]);
 
   const fetchInitialTokens = async () => {
     try {
-      setIsLoadingTokens(true);
+      setIsLoading(true);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/tokens`);
       
-      // Use cached data first if available
-      const cachedData = localStorage.getItem(CACHE_KEY);
-      const timestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
-      
-      if (cachedData && timestamp) {
-        const age = Date.now() - parseInt(timestamp);
-        if (age < CACHE_DURATION) {
-          const parsedData = JSON.parse(cachedData);
-          setTokens(parsedData);
-          setFilteredTokens(parsedData.slice(0, 20));
-          setIsLoadingTokens(false);
-        }
+      if (!response.ok) {
+        throw new Error('Failed to fetch tokens');
       }
 
-      // Fetch fresh data
-      const response = await fetch(
-        'https://api.coingecko.com/api/v3/coins/markets?' +
-        'vs_currency=usd&' +
-        'order=market_cap_desc&' +
-        `per_page=${INITIAL_TOKEN_COUNT}&` +
-        'page=1&' +
-        'sparkline=false'
-      );
-      
-      if (response.ok) {
-        const data = await response.json();
-        setTokens(data);
-        setFilteredTokens(data.slice(0, 20));
-        updateTokenCache(data);
-      }
+      const data = await response.json();
+      setTokens(data);
+      setFilteredTokens(data);
     } catch (error) {
-      console.error('Error fetching tokens:', error);
-      // Use cached data if available instead of showing error
-      const cachedData = localStorage.getItem(CACHE_KEY);
-      if (cachedData) {
-        const tokens = JSON.parse(cachedData);
-        setTokens(tokens);
-        setFilteredTokens(tokens);
-      }
+      console.error('Error fetching initial tokens:', error);
+      showNotification('Failed to load tokens', 'error');
     } finally {
-      setIsLoadingTokens(false);
-    }
-  };
-
-  const loadAllTokensInBackground = async () => {
-    if (isBackgroundLoading) return;
-    
-    setIsBackgroundLoading(true);
-    const allTokens = [];
-
-    try {
-      // Start with cached data if available
-      const cachedData = localStorage.getItem(CACHE_KEY);
-      if (cachedData) {
-        const parsedData = JSON.parse(cachedData);
-        setAllTokensCache(parsedData);
-      }
-
-      // Fetch new data
-      const response = await fetch(
-        'https://api.coingecko.com/api/v3/coins/markets?' +
-        'vs_currency=usd&' +
-        'order=market_cap_desc&' +
-        'per_page=250&' +
-        'page=1&' +
-        'sparkline=false'
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        setAllTokensCache(data);
-        updateTokenCache(data);
-      }
-    } catch (error) {
-      console.error('Background loading error:', error);
-    } finally {
-      setIsBackgroundLoading(false);
+      setIsLoading(false);
     }
   };
 
   const handleSearch = async (searchTerm) => {
     setSearchTerm(searchTerm);
     
-    if (searchTerm.length < 2) {
-      setFilteredTokens(tokens.slice(0, 20));
+    if (!searchTerm.trim()) {
+      setFilteredTokens(tokens);
       return;
     }
 
-    // Search in all tokens cache first
-    const localResults = allTokensCache.filter(token => 
-      token.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      token.symbol.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    if (localResults.length > 0) {
-      setFilteredTokens(localResults.slice(0, 50)); // Show top 50 matches
-      setError(null);
-      return;
-    }
-
-    // Fallback to API search if nothing found in cache
     try {
-      setIsLoadingTokens(true);
-      const response = await fetch(
-        `https://api.coingecko.com/api/v3/search?query=${searchTerm}`
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const searchResults = await response.json();
+      setIsLoading(true);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/tokens?search=${encodeURIComponent(searchTerm)}`);
       
-      if (searchResults.coins.length === 0) {
-        setFilteredTokens([]);
-        setError('No tokens found matching your search.');
-        return;
+      if (!response.ok) {
+        throw new Error('Failed to fetch tokens');
       }
 
-      const detailedResults = await Promise.all(
-        searchResults.coins.slice(0, 20).map(async (coin) => {
-          try {
-            const detailResponse = await fetch(
-              `https://api.coingecko.com/api/v3/coins/${coin.id}?localization=false&tickers=false&community_data=false&developer_data=false`
-            );
-            if (detailResponse.ok) {
-              const detailData = await detailResponse.json();
-              return {
-                ...detailData,
-                current_price: detailData.market_data?.current_price?.usd || 0,
-                market_cap: detailData.market_data?.market_cap?.usd || 0,
-                total_volume: detailData.market_data?.total_volume?.usd || 0,
-                price_change_percentage_24h: detailData.market_data?.price_change_percentage_24h || 0,
-                market_cap_rank: detailData.market_cap_rank || 999999,
-                // Add fallback values for other required fields
-                high_24h: detailData.market_data?.high_24h?.usd || 0,
-                low_24h: detailData.market_data?.low_24h?.usd || 0,
-                image: detailData.image?.small || '',
-                symbol: detailData.symbol || '',
-              };
-            }
-            return null;
-          } catch (error) {
-            console.warn(`Error fetching details for ${coin.id}:`, error);
-            return null;
-          }
-        })
-      );
-
-      const validResults = detailedResults.filter(result => result !== null);
-      if (validResults.length > 0) {
-        setFilteredTokens(validResults);
-        setError(null);
-      } else {
-        setError('No detailed token information available.');
-      }
+      const data = await response.json();
+      setFilteredTokens(data);
     } catch (error) {
       console.error('Error searching tokens:', error);
-      // Show local results if API search fails
-      const fallbackResults = tokens.filter(token => 
-        token.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        token.symbol.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredTokens(fallbackResults);
-      if (fallbackResults.length === 0) {
-        setError('No tokens found matching your search.');
-      }
+      showNotification('Failed to search tokens', 'error');
     } finally {
-      setIsLoadingTokens(false);
+      setIsLoading(false);
     }
   };
 
-  const handleSort = (key, order = orderFilter) => {
-    setSortFilter(key);
-    setOrderFilter(order);
+  const handleSort = (key) => {
+    const direction = sortConfig.key === key && sortConfig.direction === 'desc' ? 'asc' : 'desc';
+    setSortConfig({ key, direction });
     
     const sorted = [...filteredTokens].sort((a, b) => {
-      if (order === 'asc') {
+      if (direction === 'asc') {
         return a[key] > b[key] ? 1 : -1;
       }
       return a[key] < b[key] ? 1 : -1;
     });
+    
     setFilteredTokens(sorted);
   };
 
@@ -747,7 +603,7 @@ const TokenList = ({ currentUser, showNotification }) => {
           <div className="flex-1">
             <input
               type="text"
-              placeholder="Search any token..."
+              placeholder="Search tokens..."
               value={searchTerm}
               onChange={(e) => handleSearch(e.target.value)}
               className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -763,10 +619,10 @@ const TokenList = ({ currentUser, showNotification }) => {
               }}
               className="bg-gray-700 text-white rounded px-3 py-2"
             >
-              <option value="market_cap">Market Cap</option>
-              <option value="current_price">Price</option>
-              <option value="price_change_percentage_24h">24h Change</option>
-              <option value="total_volume">Volume</option>
+              <option value="marketCap">Market Cap</option>
+              <option value="currentPrice">Price</option>
+              <option value="priceChangePercentage24h">24h Change</option>
+              <option value="totalVolume">Volume</option>
             </select>
 
             <button
@@ -840,7 +696,7 @@ const TokenList = ({ currentUser, showNotification }) => {
           )}
         </div>
 
-        {isLoadingTokens ? (
+        {isLoading ? (
           <div className="flex items-center justify-center p-8">
             <div className="text-white">Loading tokens...</div>
           </div>
@@ -855,9 +711,9 @@ const TokenList = ({ currentUser, showNotification }) => {
                 <tr className="border-b border-gray-700/30">
                   <th 
                     className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
-                    onClick={() => handleSort('market_cap_rank')}
+                    onClick={() => handleSort('marketCapRank')}
                   >
-                    # {sortFilter === 'market_cap_rank' && (
+                    # {sortFilter === 'marketCapRank' && (
                       <span className="ml-1">{orderFilter === 'asc' ? '↑' : '↓'}</span>
                     )}
                   </th>
@@ -870,19 +726,19 @@ const TokenList = ({ currentUser, showNotification }) => {
                     )}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
-                      onClick={() => handleSort('current_price')}>
+                      onClick={() => handleSort('currentPrice')}>
                     Price
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
-                      onClick={() => handleSort('price_change_percentage_24h')}>
+                      onClick={() => handleSort('priceChangePercentage24h')}>
                     24h %
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
-                      onClick={() => handleSort('market_cap')}>
+                      onClick={() => handleSort('marketCap')}>
                     Market Cap
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
-                      onClick={() => handleSort('total_volume')}>
+                      onClick={() => handleSort('totalVolume')}>
                     Volume(24h)
                   </th>
                   <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
@@ -909,21 +765,21 @@ const TokenList = ({ currentUser, showNotification }) => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                        ${token.current_price.toFixed(2)}
+                        ${token.currentPrice.toFixed(2)}
                       </td>
                       <td className={`px-6 py-4 whitespace-nowrap text-sm ${
-                        token.price_change_percentage_24h > 0 ? 'text-green-400' : 'text-red-400'
+                        token.priceChangePercentage24h > 0 ? 'text-green-400' : 'text-red-400'
                       }`}>
-                        {token.price_change_percentage_24h.toFixed(2)}%
+                        {token.priceChangePercentage24h.toFixed(2)}%
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                         <span className="text-gray-300">
-                          {formatCurrency(token.market_cap)}
+                          {formatCurrency(token.marketCap)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                         <span className="text-gray-300">
-                          {formatCurrency(token.total_volume)}
+                          {formatCurrency(token.totalVolume)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
@@ -977,40 +833,40 @@ const TokenList = ({ currentUser, showNotification }) => {
                                 <div className="grid grid-cols-2 gap-4">
                                   <div>
                                     <p className="text-gray-400 text-sm">Market Cap Rank</p>
-                                    <p className="text-white font-medium">#{token.market_cap_rank}</p>
+                                    <p className="text-white font-medium">#{token.marketCapRank}</p>
                                   </div>
                                   <div>
                                     <p className="text-gray-400 text-sm">Market Cap</p>
-                                    <p className="text-white font-medium">{formatCurrency(token.market_cap)}</p>
+                                    <p className="text-white font-medium">{formatCurrency(token.marketCap)}</p>
                                   </div>
                                   <div>
                                     <p className="text-gray-400 text-sm">24h Volume</p>
-                                    <p className="text-white font-medium">{formatCurrency(token.total_volume)}</p>
+                                    <p className="text-white font-medium">{formatCurrency(token.totalVolume)}</p>
                                   </div>
                                   <div>
                                     <p className="text-gray-400 text-sm">Circulating Supply</p>
-                                    <p className="text-white font-medium">{token.circulating_supply?.toLocaleString()} {token.symbol.toUpperCase()}</p>
+                                    <p className="text-white font-medium">{token.circulatingSupply?.toLocaleString()} {token.symbol.toUpperCase()}</p>
                                   </div>
                                   <div>
                                     <p className="text-gray-400 text-sm">Max Supply</p>
-                                    <p className="text-white font-medium">{token.max_supply ? token.max_supply.toLocaleString() : 'Unlimited'}</p>
+                                    <p className="text-white font-medium">{token.maxSupply ? token.maxSupply.toLocaleString() : 'Unlimited'}</p>
                                   </div>
                                   <div>
                                     <p className="text-gray-400 text-sm">Total Supply</p>
-                                    <p className="text-white font-medium">{token.total_supply?.toLocaleString() || 'N/A'}</p>
+                                    <p className="text-white font-medium">{token.totalSupply?.toLocaleString() || 'N/A'}</p>
                                   </div>
                                   <div>
                                     <p className="text-gray-400 text-sm">24h High</p>
-                                    <p className="text-white font-medium">${token.high_24h?.toLocaleString()}</p>
+                                    <p className="text-white font-medium">${token.high24h?.toLocaleString()}</p>
                                   </div>
                                   <div>
                                     <p className="text-gray-400 text-sm">24h Low</p>
-                                    <p className="text-white font-medium">${token.low_24h?.toLocaleString()}</p>
+                                    <p className="text-white font-medium">${token.low24h?.toLocaleString()}</p>
                                   </div>
                                   <div>
                                     <p className="text-gray-400 text-sm">Price Change 24h</p>
-                                    <p className={`font-medium ${token.price_change_24h > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                      ${Math.abs(token.price_change_24h).toFixed(6)}
+                                    <p className={`font-medium ${token.priceChange24h > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                      ${Math.abs(token.priceChange24h).toFixed(6)}
                                     </p>
                                   </div>
                                   <div>
@@ -1019,24 +875,24 @@ const TokenList = ({ currentUser, showNotification }) => {
                                   </div>
                                   <div>
                                     <p className="text-gray-400 text-sm">ATH Change %</p>
-                                    <p className={`font-medium ${token.ath_change_percentage > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                      {token.ath_change_percentage?.toFixed(2)}%
+                                    <p className={`font-medium ${token.athChangePercentage > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                      {token.athChangePercentage?.toFixed(2)}%
                                     </p>
                                   </div>
                                   <div>
                                     <p className="text-gray-400 text-sm">ATH Date</p>
-                                    <p className="text-white font-medium">{new Date(token.ath_date).toLocaleDateString()}</p>
+                                    <p className="text-white font-medium">{new Date(token.athDate).toLocaleDateString()}</p>
                                   </div>
                                   <div>
                                     <p className="text-gray-400 text-sm">Market Cap Dominance</p>
                                     <p className="text-white font-medium">
-                                      {((token.market_cap / token.total_volume) * 100).toFixed(2)}%
+                                      {((token.marketCap / token.totalVolume) * 100).toFixed(2)}%
                                     </p>
                                   </div>
                                   <div>
                                     <p className="text-gray-400 text-sm">Fully Diluted Valuation</p>
                                     <p className="text-white font-medium">
-                                      {token.fully_diluted_valuation ? formatCurrency(token.fully_diluted_valuation) : 'N/A'}
+                                      {token.fullyDilutedValuation ? formatCurrency(token.fullyDilutedValuation) : 'N/A'}
                                     </p>
                                   </div>
                                 </div>
@@ -1148,16 +1004,13 @@ const TokenList = ({ currentUser, showNotification }) => {
           />
         )}
 
-        {isLoadingTokens && (
+        {isLoading ? (
           <div className="fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg">
             Loading tokens: {tokens.length} loaded...
           </div>
-        )}
-
-        {/* Background loading indicator */}
-        {isBackgroundLoading && (
+        ) : (
           <div className="fixed bottom-4 right-4 bg-blue-500/80 text-white px-4 py-2 rounded-lg shadow-lg backdrop-blur-sm">
-            Updating token data... ({allTokensCache.length} tokens cached)
+            Updating token data... ({tokens.length} tokens cached)
           </div>
         )}
       </div>
