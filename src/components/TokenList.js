@@ -102,34 +102,21 @@ const TokenList = ({ currentUser, showNotification }) => {
       const response = await fetch(`${API_URL}/api/tokens`);
       
       if (!response.ok) {
-        if (response.status === 429) {
-          console.log('Rate limit hit, using cached data');
-          return; // Use existing data in state
-        }
-        throw new Error(`Failed to fetch tokens: ${response.status}`);
+        throw new Error('Failed to fetch tokens');
       }
       
       const data = await response.json();
       
-      if (!data || !Array.isArray(data)) {
-        console.error('Invalid data format received:', data);
-        return;
-      }
-
-      // Only update state if we have valid data
-      if (data.length > 0) {
+      if (Array.isArray(data) && data.length > 0) {
         setTokens(data);
         setFilteredTokens(data);
         setError(null);
       }
     } catch (error) {
       console.error('Error fetching tokens:', error);
-      // Only show error if we don't have any tokens
-      if (tokens.length === 0) {
-        setError(error.message);
-        if (!isBackgroundUpdate) {
-          showNotification('Failed to load token data', 'error');
-        }
+      setError('Failed to load tokens');
+      if (!isBackgroundUpdate) {
+        showNotification('Failed to load token data', 'error');
       }
     } finally {
       if (!isBackgroundUpdate) {
