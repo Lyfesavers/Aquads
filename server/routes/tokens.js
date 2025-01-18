@@ -95,32 +95,57 @@ router.get('/', async (req, res) => {
       };
     }
     
+    // First try to get cached tokens
     let tokens = await Token.find(query)
       .sort({ marketCapRank: 1 })
-      .limit(100);
+      .limit(250);
 
-    if (!tokens || tokens.length === 0) {
-      // Force update cache if no tokens found
-      const freshTokens = await updateTokenCache(true);
-      if (freshTokens) {
-        tokens = freshTokens;
-        if (search) {
-          tokens = freshTokens.filter(token => 
-            token.symbol.match(new RegExp(search, 'i')) ||
-            token.name.match(new RegExp(search, 'i')) ||
-            token.id.match(new RegExp(search, 'i'))
-          );
-        }
-      }
-    }
-
-    if (!tokens || tokens.length === 0) {
-      return res.status(404).json({ error: 'No tokens found' });
-    }
+    // If we have cached tokens, return them immediately
+    if (tokens && tokens.length > 0) {
+      res.json(tokens);
       
-    res.json(tokens);
+      // Update cache in background if it's time
+      if (Date.now() - lastUpdateTime >= UPDATE_INTERVAL) {
+        updateTokenCache().catch(console.error);
+      }
+      return;
+    }
+
+    // If no cached tokens, force update and return fresh data
+    const freshTokens = await updateTokenCache(true);
+    if (freshTokens) {
+      if (search) {
+        tokens = freshTokens.filter(token => 
+          token.symbol.match(new RegExp(search, 'i')) ||
+          token.name.match(new RegExp(search, 'i')) ||
+          token.id.match(new RegExp(search, 'i'))
+        );
+      } else {
+        tokens = freshTokens;
+      }
+      res.json(tokens);
+      return;
+    }
+
+    // If still no tokens, return error
+    res.status(404).json({ error: 'No tokens found' });
   } catch (error) {
     console.error('Error fetching tokens:', error);
+    
+    // Try to get any cached tokens as fallback
+    try {
+      const cachedTokens = await Token.find({})
+        .sort({ marketCapRank: 1 })
+        .limit(250);
+      
+      if (cachedTokens && cachedTokens.length > 0) {
+        res.json(cachedTokens);
+        return;
+      }
+    } catch (fallbackError) {
+      console.error('Fallback error:', fallbackError);
+    }
+    
     res.status(500).json({ error: 'Failed to fetch tokens' });
   }
 });

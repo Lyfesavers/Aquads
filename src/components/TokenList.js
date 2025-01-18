@@ -132,6 +132,15 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   const fetchInitialTokens = async () => {
     try {
+      // Try to use cached data first while fetching fresh data
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const cachedData = JSON.parse(cached);
+        setTokens(cachedData);
+        setFilteredTokens(cachedData);
+        setIsLoading(false);
+      }
+
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/tokens`);
       
       if (!response.ok) {
@@ -141,22 +150,21 @@ const TokenList = ({ currentUser, showNotification }) => {
       const data = await response.json();
       if (data && data.length > 0) {
         setTokens(data);
-        setIsLoading(false);
-      } else {
-        // If no data, try to use cached data
-        const cached = localStorage.getItem(CACHE_KEY);
-        if (cached) {
-          setTokens(JSON.parse(cached));
+        setFilteredTokens(data);
+        // Update cache
+        try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+          localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
+        } catch (cacheError) {
+          console.warn('Failed to cache tokens:', cacheError);
         }
       }
     } catch (error) {
-      console.error('Error fetching initial tokens:', error);
-      // On error, try to use cached data
-      const cached = localStorage.getItem(CACHE_KEY);
-      if (cached) {
-        setTokens(JSON.parse(cached));
+      console.error('Error fetching tokens:', error);
+      // Only show notification if we don't have cached data
+      if (!tokens.length) {
+        showNotification('Failed to load fresh token data', 'warning');
       }
-      showNotification('Failed to load fresh token data, using cached data', 'warning');
     } finally {
       setIsLoading(false);
     }
