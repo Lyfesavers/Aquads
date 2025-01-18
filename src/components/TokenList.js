@@ -125,9 +125,20 @@ const TokenList = ({ currentUser, showNotification }) => {
       }
       
       const data = await response.json();
-      if (data && data.length > 0) {
-        setTokens(data);
-        setFilteredTokens(data);
+      if (Array.isArray(data) && data.length > 0) {
+        // Ensure all numeric fields are numbers
+        const processedData = data.map(token => ({
+          ...token,
+          currentPrice: parseFloat(token.currentPrice) || 0,
+          marketCap: parseFloat(token.marketCap) || 0,
+          marketCapRank: parseInt(token.marketCapRank) || 0,
+          totalVolume: parseFloat(token.totalVolume) || 0,
+          priceChange24h: parseFloat(token.priceChange24h) || 0,
+          priceChangePercentage24h: parseFloat(token.priceChangePercentage24h) || 0
+        }));
+        
+        setTokens(processedData);
+        setFilteredTokens(processedData);
       }
     } catch (error) {
       console.error('Error fetching tokens:', error);
@@ -154,7 +165,19 @@ const TokenList = ({ currentUser, showNotification }) => {
       if (!response.ok) throw new Error('Failed to fetch tokens');
       
       const data = await response.json();
-      setFilteredTokens(data);
+      if (Array.isArray(data)) {
+        // Ensure all numeric fields are numbers
+        const processedData = data.map(token => ({
+          ...token,
+          currentPrice: parseFloat(token.currentPrice) || 0,
+          marketCap: parseFloat(token.marketCap) || 0,
+          marketCapRank: parseInt(token.marketCapRank) || 0,
+          totalVolume: parseFloat(token.totalVolume) || 0,
+          priceChange24h: parseFloat(token.priceChange24h) || 0,
+          priceChangePercentage24h: parseFloat(token.priceChangePercentage24h) || 0
+        }));
+        setFilteredTokens(processedData);
+      }
     } catch (error) {
       console.error('Error searching tokens:', error);
       // Fall back to client-side filtering
