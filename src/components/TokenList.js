@@ -114,9 +114,9 @@ const TokenList = ({ currentUser, showNotification }) => {
     fetchInitialTokens();
     // Set up periodic refresh every 30 seconds
     const refreshInterval = setInterval(() => {
-      // Only refresh if the tab is visible
-      if (!document.hidden) {
-        fetchInitialTokens();
+      // Only refresh if the tab is visible and not loading
+      if (!document.hidden && !isLoading) {
+        fetchInitialTokens(true); // true means background update
       }
     }, 30000);
     return () => clearInterval(refreshInterval);
@@ -135,34 +135,13 @@ const TokenList = ({ currentUser, showNotification }) => {
     }
   }, [tokens]);
 
-  const fetchInitialTokens = async () => {
+  const fetchInitialTokens = async (isBackgroundUpdate = false) => {
     try {
-      // Always use cached data first
-      const cached = localStorage.getItem(CACHE_KEY);
-      const timestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
-      
-      if (cached && timestamp) {
-        const cachedData = JSON.parse(cached);
-        setTokens(cachedData);
-        setFilteredTokens(cachedData);
-        setIsLoading(false);
-        
-        // If cache is older than 5 minutes, update in background
-        if (Date.now() - parseInt(timestamp) > 5 * 60 * 1000) {
-          fetchFreshData();
-        }
-        return;
+      // Don't show loading state for background updates
+      if (!isBackgroundUpdate) {
+        setIsLoading(true);
       }
 
-      await fetchFreshData();
-    } catch (error) {
-      console.error('Error in fetchInitialTokens:', error);
-      setIsLoading(false);
-    }
-  };
-
-  const fetchFreshData = async () => {
-    try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/tokens`);
       if (!response.ok) throw new Error('Failed to fetch tokens');
       
@@ -170,21 +149,24 @@ const TokenList = ({ currentUser, showNotification }) => {
       if (data && data.length > 0) {
         setTokens(data);
         setFilteredTokens(data);
-        // Update cache
+        // Cache the data
         try {
           localStorage.setItem(CACHE_KEY, JSON.stringify(data));
           localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
-        } catch (cacheError) {
-          console.warn('Failed to cache tokens:', cacheError);
+        } catch (error) {
+          console.warn('Failed to cache tokens:', error);
         }
       }
     } catch (error) {
-      console.error('Error fetching fresh data:', error);
-      if (!tokens.length) {
-        showNotification('Failed to load fresh token data', 'warning');
+      console.error('Error fetching tokens:', error);
+      // Only show error for non-background updates
+      if (!isBackgroundUpdate && !tokens.length) {
+        showNotification('Failed to load token data', 'warning');
       }
     } finally {
-      setIsLoading(false);
+      if (!isBackgroundUpdate) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -197,20 +179,20 @@ const TokenList = ({ currentUser, showNotification }) => {
     }
 
     try {
-      setIsLoading(true);
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/tokens?search=${encodeURIComponent(searchTerm)}`);
+      if (!response.ok) throw new Error('Failed to fetch tokens');
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch tokens');
-      }
-
       const data = await response.json();
       setFilteredTokens(data);
     } catch (error) {
       console.error('Error searching tokens:', error);
-      showNotification('Failed to search tokens', 'error');
-    } finally {
-      setIsLoading(false);
+      // Fall back to client-side filtering if server search fails
+      const filtered = tokens.filter(token => 
+        token.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        token.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        token.id.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredTokens(filtered);
     }
   };
 

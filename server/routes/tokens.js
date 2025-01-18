@@ -95,42 +95,36 @@ router.get('/', async (req, res) => {
       };
     }
 
-    const cachedTokens = await Token.find(query)
+    // Fast database query with lean() for better performance
+    const tokens = await Token.find(query)
       .sort({ marketCapRank: 1 })
       .limit(250)
       .lean();
 
-    if (cachedTokens && cachedTokens.length > 0) {
-      // Sanitize the response data
-      const sanitizedTokens = cachedTokens.map(token => ({
-        ...token,
-        currentPrice: Number(token.currentPrice) || 0,
-        marketCap: Number(token.marketCap) || 0,
-        marketCapRank: Number(token.marketCapRank) || 0,
-        totalVolume: Number(token.totalVolume) || 0,
-        priceChange24h: Number(token.priceChange24h) || 0,
-        priceChangePercentage24h: Number(token.priceChangePercentage24h) || 0
-      }));
-
-      res.json(sanitizedTokens);
+    // Return data immediately if we have it
+    if (tokens && tokens.length > 0) {
+      res.json(tokens);
       
+      // Update cache in background only if needed
       if (Date.now() - lastUpdateTime >= UPDATE_INTERVAL) {
         updateTokenCache().catch(console.error);
       }
       return;
     }
 
+    // Only if DB is empty, try to fetch fresh data
     const freshTokens = await updateTokenCache(true);
     if (freshTokens) {
-      let tokens = freshTokens;
       if (search) {
-        tokens = freshTokens.filter(token => 
+        const filtered = freshTokens.filter(token => 
           token.symbol.match(new RegExp(search, 'i')) ||
           token.name.match(new RegExp(search, 'i')) ||
           token.id.match(new RegExp(search, 'i'))
         );
+        res.json(filtered);
+      } else {
+        res.json(freshTokens);
       }
-      res.json(tokens);
       return;
     }
 
