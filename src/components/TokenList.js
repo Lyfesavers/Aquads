@@ -113,7 +113,12 @@ const TokenList = ({ currentUser, showNotification }) => {
   useEffect(() => {
     fetchInitialTokens();
     // Set up periodic refresh every 30 seconds
-    const refreshInterval = setInterval(fetchInitialTokens, 30000);
+    const refreshInterval = setInterval(() => {
+      // Only refresh if the tab is visible
+      if (!document.hidden) {
+        fetchInitialTokens();
+      }
+    }, 30000);
     return () => clearInterval(refreshInterval);
   }, []);
 
@@ -132,21 +137,35 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   const fetchInitialTokens = async () => {
     try {
-      // Try to use cached data first while fetching fresh data
+      // Always use cached data first
       const cached = localStorage.getItem(CACHE_KEY);
-      if (cached) {
+      const timestamp = localStorage.getItem(CACHE_TIMESTAMP_KEY);
+      
+      if (cached && timestamp) {
         const cachedData = JSON.parse(cached);
         setTokens(cachedData);
         setFilteredTokens(cachedData);
         setIsLoading(false);
+        
+        // If cache is older than 5 minutes, update in background
+        if (Date.now() - parseInt(timestamp) > 5 * 60 * 1000) {
+          fetchFreshData();
+        }
+        return;
       }
 
+      await fetchFreshData();
+    } catch (error) {
+      console.error('Error in fetchInitialTokens:', error);
+      setIsLoading(false);
+    }
+  };
+
+  const fetchFreshData = async () => {
+    try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/tokens`);
+      if (!response.ok) throw new Error('Failed to fetch tokens');
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch tokens');
-      }
-
       const data = await response.json();
       if (data && data.length > 0) {
         setTokens(data);
@@ -160,8 +179,7 @@ const TokenList = ({ currentUser, showNotification }) => {
         }
       }
     } catch (error) {
-      console.error('Error fetching tokens:', error);
-      // Only show notification if we don't have cached data
+      console.error('Error fetching fresh data:', error);
       if (!tokens.length) {
         showNotification('Failed to load fresh token data', 'warning');
       }

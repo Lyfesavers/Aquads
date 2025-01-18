@@ -31,37 +31,37 @@ const updateTokenCache = async (force = false) => {
 
     const tokens = response.data.map(token => ({
       id: token.id,
-      symbol: token.symbol.toUpperCase(),
-      name: token.name,
-      image: token.image,
-      currentPrice: token.current_price || 0,
-      marketCap: token.market_cap || 0,
-      marketCapRank: token.market_cap_rank,
-      totalVolume: token.total_volume || 0,
-      high24h: token.high_24h,
-      low24h: token.low_24h,
-      priceChange24h: token.price_change_24h || 0,
-      priceChangePercentage24h: token.price_change_percentage_24h || 0,
-      circulatingSupply: token.circulating_supply,
-      totalSupply: token.total_supply,
-      maxSupply: token.max_supply,
-      ath: token.ath,
-      athChangePercentage: token.ath_change_percentage,
-      athDate: token.ath_date,
-      fullyDilutedValuation: token.fully_diluted_valuation,
+      symbol: token.symbol?.toUpperCase() || '',
+      name: token.name || '',
+      image: token.image || '',
+      currentPrice: Number(token.current_price) || 0,
+      marketCap: Number(token.market_cap) || 0,
+      marketCapRank: Number(token.market_cap_rank) || 0,
+      totalVolume: Number(token.total_volume) || 0,
+      high24h: Number(token.high_24h) || 0,
+      low24h: Number(token.low_24h) || 0,
+      priceChange24h: Number(token.price_change_24h) || 0,
+      priceChangePercentage24h: Number(token.price_change_percentage_24h) || 0,
+      circulatingSupply: Number(token.circulating_supply) || 0,
+      totalSupply: Number(token.total_supply) || 0,
+      maxSupply: Number(token.max_supply) || null,
+      ath: Number(token.ath) || 0,
+      athChangePercentage: Number(token.ath_change_percentage) || 0,
+      athDate: token.ath_date ? new Date(token.ath_date) : new Date(),
+      fullyDilutedValuation: Number(token.fully_diluted_valuation) || 0,
       lastUpdated: new Date()
     }));
 
-    // Batch update tokens
-    await Token.bulkWrite(
-      tokens.map(token => ({
-        updateOne: {
-          filter: { id: token.id },
-          update: { $set: token },
-          upsert: true
-        }
-      }))
-    );
+    // Batch update tokens with sanitized data
+    const operations = tokens.map(token => ({
+      updateOne: {
+        filter: { id: token.id },
+        update: { $set: token },
+        upsert: true
+      }
+    }));
+
+    await Token.bulkWrite(operations);
 
     lastUpdateTime = now;
     console.log(`Token cache updated successfully with ${tokens.length} tokens`);
@@ -78,7 +78,7 @@ updateTokenCache(true).catch(console.error);
 // Set up periodic updates
 setInterval(() => updateTokenCache(), UPDATE_INTERVAL);
 
-// Get all tokens with better error handling
+// Get all tokens with sanitized response
 router.get('/', async (req, res) => {
   try {
     const { search } = req.query;
@@ -94,58 +94,49 @@ router.get('/', async (req, res) => {
         ]
       };
     }
-    
-    // First try to get cached tokens
-    let tokens = await Token.find(query)
-      .sort({ marketCapRank: 1 })
-      .limit(250);
 
-    // If we have cached tokens, return them immediately
-    if (tokens && tokens.length > 0) {
-      res.json(tokens);
+    const cachedTokens = await Token.find(query)
+      .sort({ marketCapRank: 1 })
+      .limit(250)
+      .lean();
+
+    if (cachedTokens && cachedTokens.length > 0) {
+      // Sanitize the response data
+      const sanitizedTokens = cachedTokens.map(token => ({
+        ...token,
+        currentPrice: Number(token.currentPrice) || 0,
+        marketCap: Number(token.marketCap) || 0,
+        marketCapRank: Number(token.marketCapRank) || 0,
+        totalVolume: Number(token.totalVolume) || 0,
+        priceChange24h: Number(token.priceChange24h) || 0,
+        priceChangePercentage24h: Number(token.priceChangePercentage24h) || 0
+      }));
+
+      res.json(sanitizedTokens);
       
-      // Update cache in background if it's time
       if (Date.now() - lastUpdateTime >= UPDATE_INTERVAL) {
         updateTokenCache().catch(console.error);
       }
       return;
     }
 
-    // If no cached tokens, force update and return fresh data
     const freshTokens = await updateTokenCache(true);
     if (freshTokens) {
+      let tokens = freshTokens;
       if (search) {
         tokens = freshTokens.filter(token => 
           token.symbol.match(new RegExp(search, 'i')) ||
           token.name.match(new RegExp(search, 'i')) ||
           token.id.match(new RegExp(search, 'i'))
         );
-      } else {
-        tokens = freshTokens;
       }
       res.json(tokens);
       return;
     }
 
-    // If still no tokens, return error
     res.status(404).json({ error: 'No tokens found' });
   } catch (error) {
     console.error('Error fetching tokens:', error);
-    
-    // Try to get any cached tokens as fallback
-    try {
-      const cachedTokens = await Token.find({})
-        .sort({ marketCapRank: 1 })
-        .limit(250);
-      
-      if (cachedTokens && cachedTokens.length > 0) {
-        res.json(cachedTokens);
-        return;
-      }
-    } catch (fallbackError) {
-      console.error('Fallback error:', fallbackError);
-    }
-    
     res.status(500).json({ error: 'Failed to fetch tokens' });
   }
 });
