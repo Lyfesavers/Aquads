@@ -182,6 +182,93 @@ const TokenList = ({ currentUser, showNotification }) => {
     };
   }, []);
 
+  // DEX integration
+  const handleDexClick = (dex) => {
+    setSelectedDex(dex);
+    setShowDexFrame(true);
+  };
+
+  const handleCloseReviews = () => {
+    setShowReviews(false);
+    setSelectedToken(null);
+  };
+
+  const handleTimeRangeChange = async (range) => {
+    setSelectedTimeRange(range);
+    if (selectedToken) {
+      await fetchChartData(selectedToken.id, range);
+    }
+  };
+
+  const handleTokenClick = async (token) => {
+    try {
+      if (chartInstance) {
+        chartInstance.destroy();
+        setChartInstance(null);
+      }
+
+      setSelectedToken(token);
+      setShowReviews(true);
+
+      await fetchChartData(token.id, selectedTimeRange);
+    } catch (error) {
+      console.error('Error handling token click:', error);
+      showNotification('Failed to load token details', 'error');
+    }
+  };
+
+  const fetchChartData = async (tokenId, days) => {
+    try {
+      const response = await fetch(
+        `https://api.coingecko.com/api/v3/coins/${tokenId}/market_chart?vs_currency=usd&days=${days}`,
+        {
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch chart data');
+      }
+
+      const data = await response.json();
+      setChartData(data);
+      
+      if (chartRef.current) {
+        const ctx = chartRef.current.getContext('2d');
+        const newChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: data.prices.map(price => new Date(price[0]).toLocaleDateString()),
+            datasets: [{
+              label: 'Price (USD)',
+              data: data.prices.map(price => price[1]),
+              borderColor: 'rgb(75, 192, 192)',
+              tension: 0.1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'top' },
+              title: { display: true, text: 'Price History' }
+            },
+            scales: {
+              y: { beginAtZero: false }
+            }
+          }
+        });
+        setChartInstance(newChart);
+      }
+    } catch (error) {
+      console.error('Chart data error:', error);
+      showNotification('Chart data temporarily unavailable', 'warning');
+    }
+  };
+
   // Render loading state
   if (isLoading && tokens.length === 0) {
     return (
