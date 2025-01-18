@@ -116,8 +116,10 @@ router.get('/', async (req, res) => {
     if (tokens && tokens.length > 0) {
       // Clean numeric values to ensure they're numbers
       tokens = tokens.map(token => ({
-        ...token,
-        _id: token._id.toString(), // Convert ObjectId to string
+        id: token.id,
+        symbol: token.symbol,
+        name: token.name,
+        image: token.image,
         currentPrice: Number(token.currentPrice) || 0,
         marketCap: Number(token.marketCap) || 0,
         marketCapRank: Number(token.marketCapRank) || 0,
@@ -131,7 +133,8 @@ router.get('/', async (req, res) => {
         maxSupply: token.maxSupply ? Number(token.maxSupply) : null,
         ath: Number(token.ath) || 0,
         athChangePercentage: Number(token.athChangePercentage) || 0,
-        fullyDilutedValuation: Number(token.fullyDilutedValuation) || 0
+        fullyDilutedValuation: Number(token.fullyDilutedValuation) || 0,
+        lastUpdated: token.lastUpdated
       }));
 
       res.json(tokens);
