@@ -145,7 +145,35 @@ const TokenDetails = ({
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-gray-700/50 p-4 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-400 mb-2">Market Cap Rank</h4>
+              <p className="text-lg font-bold text-white">#{token.marketCapRank || 'N/A'}</p>
+            </div>
+
+            <div className="bg-gray-700/50 p-4 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-400 mb-2">Market Cap</h4>
+              <p className="text-lg font-bold text-white">
+                ${token.marketCap?.toLocaleString() || 'N/A'}
+              </p>
+            </div>
+
+            <div className="bg-gray-700/50 p-4 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-400 mb-2">Fully Diluted Valuation</h4>
+              <p className="text-lg font-bold text-white">
+                ${token.fullyDilutedValuation?.toLocaleString() || 'N/A'}
+              </p>
+            </div>
+
+            <div className="bg-gray-700/50 p-4 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-400 mb-2">Total Volume</h4>
+              <p className="text-lg font-bold text-white">
+                ${token.totalVolume?.toLocaleString() || 'N/A'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-4 mb-6">
             {token.links?.homepage && (
               <a
                 href={token.links.homepage}
@@ -188,6 +216,28 @@ const TokenDetails = ({
               >
                 <FaDiscord className="mr-2" />
                 Discord
+              </a>
+            )}
+            {token.links?.github && (
+              <a
+                href={token.links.github}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center px-4 py-2 bg-gray-700 rounded-lg text-gray-300 hover:text-white hover:bg-gray-600 transition-colors"
+              >
+                <FaGithub className="mr-2" />
+                Github
+              </a>
+            )}
+            {token.links?.subreddit_url && (
+              <a
+                href={token.links.subreddit_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center px-4 py-2 bg-gray-700 rounded-lg text-gray-300 hover:text-white hover:bg-gray-600 transition-colors"
+              >
+                <FaReddit className="mr-2" />
+                Reddit
               </a>
             )}
           </div>
