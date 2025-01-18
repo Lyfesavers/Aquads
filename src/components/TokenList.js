@@ -80,8 +80,6 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [showDexFrame, setShowDexFrame] = useState(false);
   const [selectedDex, setSelectedDex] = useState(null);
   const [error, setError] = useState(null);
-  const [lastFetchTime, setLastFetchTime] = useState(0);
-  const FETCH_COOLDOWN = 500; // Reduced to 500ms since we're using our own DB
 
   // Sorting functionality
   const handleSort = (key) => {
@@ -118,7 +116,6 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   useEffect(() => {
     fetchInitialTokens();
-    // Set up periodic refresh only when tab is visible
     const refreshInterval = setInterval(() => {
       if (!document.hidden) {
         fetchInitialTokens(true);
@@ -133,7 +130,6 @@ const TokenList = ({ currentUser, showNotification }) => {
     };
   }, []);
 
-  // Clear error when tokens are loaded successfully
   useEffect(() => {
     if (tokens.length > 0) {
       setError(null);
@@ -152,23 +148,8 @@ const TokenList = ({ currentUser, showNotification }) => {
       }
       
       const data = await response.json();
-      if (!Array.isArray(data)) {
-        throw new Error('Invalid response format');
-      }
-
-      // Process and validate each token
-      const processedData = data.map(token => ({
-        ...token,
-        currentPrice: parseFloat(token.currentPrice) || 0,
-        marketCap: parseFloat(token.marketCap) || 0,
-        marketCapRank: parseInt(token.marketCapRank) || 0,
-        totalVolume: parseFloat(token.totalVolume) || 0,
-        priceChange24h: parseFloat(token.priceChange24h) || 0,
-        priceChangePercentage24h: parseFloat(token.priceChangePercentage24h) || 0
-      }));
-
-      setTokens(processedData);
-      setFilteredTokens(processedData);
+      setTokens(data);
+      setFilteredTokens(data);
     } catch (error) {
       console.error('Error fetching tokens:', error);
       if (!isBackgroundUpdate) {
@@ -198,24 +179,9 @@ const TokenList = ({ currentUser, showNotification }) => {
       }
 
       const data = await response.json();
-      if (!Array.isArray(data)) {
-        throw new Error('Invalid search response format');
-      }
-
-      const processedData = data.map(token => ({
-        ...token,
-        currentPrice: parseFloat(token.currentPrice) || 0,
-        marketCap: parseFloat(token.marketCap) || 0,
-        marketCapRank: parseInt(token.marketCapRank) || 0,
-        totalVolume: parseFloat(token.totalVolume) || 0,
-        priceChange24h: parseFloat(token.priceChange24h) || 0,
-        priceChangePercentage24h: parseFloat(token.priceChangePercentage24h) || 0
-      }));
-
-      setFilteredTokens(processedData);
+      setFilteredTokens(data);
     } catch (error) {
       console.error('Search error:', error);
-      // Use local filtering as fallback
       const filtered = tokens.filter(token => 
         token.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
         token.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -228,14 +194,6 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   const handleTokenClick = async (token) => {
     try {
-      // Check if we're within the cooldown period
-      const now = Date.now();
-      if (now - lastFetchTime < FETCH_COOLDOWN) {
-        return; // Ignore click if too soon
-      }
-      setLastFetchTime(now);
-
-      // Clean up previous chart if it exists
       if (chartInstance) {
         chartInstance.destroy();
         setChartInstance(null);
@@ -244,7 +202,6 @@ const TokenList = ({ currentUser, showNotification }) => {
       setSelectedToken(token);
       setShowReviews(true);
 
-      // Fetch chart data in the background
       fetchChartData(token.id, selectedTimeRange).catch(error => {
         console.error('Error fetching chart data:', error);
         showNotification('Chart data temporarily unavailable', 'warning');
@@ -265,11 +222,6 @@ const TokenList = ({ currentUser, showNotification }) => {
           }
         }
       );
-
-      // Handle rate limit
-      if (response.status === 429) {
-        throw new Error('Rate limit reached. Please try again later.');
-      }
 
       if (!response.ok) {
         throw new Error('Failed to fetch chart data');
