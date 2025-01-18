@@ -10,6 +10,12 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const DEX_OPTIONS = [
   {
+    name: 'PawChain',
+    icon: '🐾',
+    url: 'https://swap.pawchain.net',
+    description: 'Native PawChain DEX'
+  },
+  {
     name: 'PancakeSwap',
     icon: '🥞',
     url: 'https://pancakeswap.finance/swap'
@@ -30,9 +36,10 @@ const DEX_OPTIONS = [
     url: 'https://raydium.io/swap/'
   },
   {
-    name: 'TraderJoe',
-    icon: '☕',
-    url: 'https://traderjoexyz.com/#/trade'
+    name: 'Jupiter',
+    icon: '🪐',
+    url: 'https://jup.ag/',
+    description: 'Popular DEX'
   }
 ];
 
@@ -217,13 +224,19 @@ const TokenList = ({ currentUser, showNotification }) => {
       }
 
       setSelectedToken(token);
-      setShowReviews(true);
+      setShowDetails(true);
 
       await fetchChartData(token.id, selectedTimeRange);
     } catch (error) {
       console.error('Error handling token click:', error);
       showNotification('Failed to load token details', 'error');
     }
+  };
+
+  const handleReviewClick = (e, token) => {
+    e.stopPropagation();
+    setSelectedToken(token);
+    setShowReviews(true);
   };
 
   const fetchChartData = async (tokenId, days) => {
@@ -498,11 +511,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                         <span className="text-yellow-400">★</span>
                         <TokenRating symbol={token.symbol} />
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedToken(token);
-                            setShowReviews(true);
-                          }}
+                          onClick={(e) => handleReviewClick(e, token)}
                           className="text-blue-400 hover:text-blue-300 text-sm"
                         >
                           Reviews
@@ -529,11 +538,11 @@ const TokenList = ({ currentUser, showNotification }) => {
           />
         )}
 
-        {selectedToken && (
+        {selectedToken && showDetails && (
           <TokenDetails
             token={selectedToken}
             showReviews={showReviews}
-            onClose={handleCloseReviews}
+            onClose={() => setShowDetails(false)}
             currentUser={currentUser}
             showNotification={showNotification}
             chartRef={chartRef}
