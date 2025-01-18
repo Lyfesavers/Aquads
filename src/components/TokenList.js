@@ -44,28 +44,7 @@ const DEX_OPTIONS = [
     icon: '🌌',
     description: 'Popular Solana DEX'
   }
-
 ];
-
-
-const INITIAL_TOKEN_COUNT = 16694; // Pre-load more tokens initially
-
-const CACHE_KEY = 'tokenListCache';
-const CACHE_TIMESTAMP_KEY = 'tokenListCacheTimestamp';
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
-
-const LINKS_CACHE_KEY = 'tokenLinksCache';
-const LINKS_TIMESTAMP_KEY = 'tokenLinksCacheTimestamp';
-const LINKS_CACHE_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
-
-const CHART_CACHE_KEY = 'tokenChartCache';
-
-const DETAILED_CACHE_KEY = 'tokenDetailsCache';
-const DETAILED_TIMESTAMP_KEY = 'tokenDetailsCacheTimestamp';
-const DETAILED_CACHE_DURATION = 12 * 60 * 60 * 1000; // 12 hours
-const BATCH_SIZE = 5; // Number of tokens to fetch details for at once
-
-const LINKS_STORAGE_KEY = 'tokenLinksStorage';
 
 const formatCurrency = (value) => {
   if (!value) return 'N/A';
@@ -102,6 +81,37 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [selectedDex, setSelectedDex] = useState(null);
   const [error, setError] = useState(null);
   const [expandedTokenId, setExpandedTokenId] = useState(null);
+
+  const handleSort = (key) => {
+    const direction = sortConfig.key === key && sortConfig.direction === 'desc' ? 'asc' : 'desc';
+    setSortConfig({ key, direction });
+    
+    const sorted = [...filteredTokens].sort((a, b) => {
+      if (direction === 'asc') {
+        return a[key] > b[key] ? 1 : -1;
+      }
+      return a[key] < b[key] ? 1 : -1;
+    });
+    
+    setFilteredTokens(sorted);
+  };
+
+  const handleDexClick = (dex) => {
+    setSelectedDex(dex);
+    setShowDexFrame(true);
+  };
+
+  const handleCloseReviews = () => {
+    setShowReviews(false);
+    setSelectedToken(null);
+  };
+
+  const handleTimeRangeChange = async (range) => {
+    setSelectedTimeRange(range);
+    if (selectedToken) {
+      await fetchChartData(selectedToken.id, range);
+    }
+  };
 
   const fetchInitialTokens = async (isBackgroundUpdate = false) => {
     try {
@@ -197,6 +207,39 @@ const TokenList = ({ currentUser, showNotification }) => {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (chartData && chartRef.current && selectedToken) {
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      const ctx = chartRef.current.getContext('2d');
+      const newChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: chartData.prices.map(price => new Date(price[0]).toLocaleDateString()),
+          datasets: [{
+            label: `${selectedToken.name} Price (USD)`,
+            data: chartData.prices.map(price => price[1]),
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: 'Price History' }
+          },
+          scales: {
+            y: { beginAtZero: false }
+          }
+        }
+      });
+      setChartInstance(newChartInstance);
+    }
+  }, [chartData, selectedToken]);
 
   useEffect(() => {
     fetchInitialTokens();
