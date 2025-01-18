@@ -102,6 +102,10 @@ const TokenList = ({ currentUser, showNotification }) => {
       const response = await fetch(`${API_URL}/api/tokens`);
       
       if (!response.ok) {
+        if (response.status === 429) {
+          console.log('Rate limit hit, using cached data');
+          return; // Use existing data in state
+        }
         throw new Error(`Failed to fetch tokens: ${response.status}`);
       }
       
@@ -109,31 +113,13 @@ const TokenList = ({ currentUser, showNotification }) => {
       
       if (!data || !Array.isArray(data)) {
         console.error('Invalid data format received:', data);
-        return; // Don't update state if data is invalid
+        return;
       }
 
       // Only update state if we have valid data
       if (data.length > 0) {
-        const processedData = data.map(token => ({
-          ...token,
-          currentPrice: Number(token.currentPrice) || 0,
-          marketCap: Number(token.marketCap) || 0,
-          marketCapRank: Number(token.marketCapRank) || 0,
-          totalVolume: Number(token.totalVolume) || 0,
-          priceChange24h: Number(token.priceChange24h) || 0,
-          priceChangePercentage24h: Number(token.priceChangePercentage24h) || 0,
-          high24h: Number(token.high24h) || 0,
-          low24h: Number(token.low24h) || 0,
-          circulatingSupply: Number(token.circulatingSupply) || 0,
-          totalSupply: Number(token.totalSupply) || 0,
-          maxSupply: token.maxSupply ? Number(token.maxSupply) : null,
-          ath: Number(token.ath) || 0,
-          athChangePercentage: Number(token.athChangePercentage) || 0,
-          fullyDilutedValuation: Number(token.fullyDilutedValuation) || 0
-        }));
-
-        setTokens(processedData);
-        setFilteredTokens(processedData);
+        setTokens(data);
+        setFilteredTokens(data);
         setError(null);
       }
     } catch (error) {
@@ -191,11 +177,12 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   useEffect(() => {
     fetchInitialTokens();
+    // Reduce the frequency of background updates to avoid rate limits
     const refreshInterval = setInterval(() => {
       if (!document.hidden) {
         fetchInitialTokens(true);
       }
-    }, 30000);
+    }, 60000); // Changed from 30s to 60s
 
     return () => {
       clearInterval(refreshInterval);
