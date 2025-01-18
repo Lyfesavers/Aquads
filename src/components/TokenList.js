@@ -125,25 +125,28 @@ const TokenList = ({ currentUser, showNotification }) => {
       }
       
       const data = await response.json();
-      if (Array.isArray(data) && data.length > 0) {
-        // Ensure all numeric fields are numbers
-        const processedData = data.map(token => ({
-          ...token,
-          currentPrice: parseFloat(token.currentPrice) || 0,
-          marketCap: parseFloat(token.marketCap) || 0,
-          marketCapRank: parseInt(token.marketCapRank) || 0,
-          totalVolume: parseFloat(token.totalVolume) || 0,
-          priceChange24h: parseFloat(token.priceChange24h) || 0,
-          priceChangePercentage24h: parseFloat(token.priceChangePercentage24h) || 0
-        }));
-        
-        setTokens(processedData);
-        setFilteredTokens(processedData);
+      if (!Array.isArray(data)) {
+        throw new Error('Invalid response format');
       }
+
+      // Process and validate each token
+      const processedData = data.map(token => ({
+        ...token,
+        currentPrice: parseFloat(token.currentPrice) || 0,
+        marketCap: parseFloat(token.marketCap) || 0,
+        marketCapRank: parseInt(token.marketCapRank) || 0,
+        totalVolume: parseFloat(token.totalVolume) || 0,
+        priceChange24h: parseFloat(token.priceChange24h) || 0,
+        priceChangePercentage24h: parseFloat(token.priceChangePercentage24h) || 0
+      }));
+
+      setTokens(processedData);
+      setFilteredTokens(processedData);
     } catch (error) {
       console.error('Error fetching tokens:', error);
+      // Don't show notification for background updates
       if (!isBackgroundUpdate) {
-        showNotification('Failed to load token data', 'warning');
+        showNotification('Failed to load fresh data, using cached data', 'error');
       }
     } finally {
       if (!isBackgroundUpdate) {
@@ -153,40 +156,44 @@ const TokenList = ({ currentUser, showNotification }) => {
   };
 
   const handleSearch = async (searchTerm) => {
-    setSearchTerm(searchTerm);
-    
-    if (!searchTerm.trim()) {
-      setFilteredTokens(tokens);
-      return;
-    }
-
     try {
-      const response = await fetch(`${API_URL}/api/tokens?search=${encodeURIComponent(searchTerm)}`);
-      if (!response.ok) throw new Error('Failed to fetch tokens');
-      
-      const data = await response.json();
-      if (Array.isArray(data)) {
-        // Ensure all numeric fields are numbers
-        const processedData = data.map(token => ({
-          ...token,
-          currentPrice: parseFloat(token.currentPrice) || 0,
-          marketCap: parseFloat(token.marketCap) || 0,
-          marketCapRank: parseInt(token.marketCapRank) || 0,
-          totalVolume: parseFloat(token.totalVolume) || 0,
-          priceChange24h: parseFloat(token.priceChange24h) || 0,
-          priceChangePercentage24h: parseFloat(token.priceChangePercentage24h) || 0
-        }));
-        setFilteredTokens(processedData);
+      setIsLoading(true);
+      if (!searchTerm.trim()) {
+        setFilteredTokens(tokens);
+        return;
       }
+
+      const response = await fetch(`${API_URL}/api/tokens?search=${encodeURIComponent(searchTerm)}`);
+      if (!response.ok) {
+        throw new Error('Search failed');
+      }
+
+      const data = await response.json();
+      if (!Array.isArray(data)) {
+        throw new Error('Invalid search response format');
+      }
+
+      const processedData = data.map(token => ({
+        ...token,
+        currentPrice: parseFloat(token.currentPrice) || 0,
+        marketCap: parseFloat(token.marketCap) || 0,
+        marketCapRank: parseInt(token.marketCapRank) || 0,
+        totalVolume: parseFloat(token.totalVolume) || 0,
+        priceChange24h: parseFloat(token.priceChange24h) || 0,
+        priceChangePercentage24h: parseFloat(token.priceChangePercentage24h) || 0
+      }));
+
+      setFilteredTokens(processedData);
     } catch (error) {
-      console.error('Error searching tokens:', error);
-      // Fall back to client-side filtering
+      console.error('Search error:', error);
+      // Use local filtering as fallback
       const filtered = tokens.filter(token => 
         token.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        token.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        token.id.toLowerCase().includes(searchTerm.toLowerCase())
+        token.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setFilteredTokens(filtered);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -254,14 +261,19 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   useEffect(() => {
     fetchInitialTokens();
-    // Set up periodic refresh every 30 seconds
+    // Set up periodic refresh only when tab is visible
     const refreshInterval = setInterval(() => {
-      // Only refresh if the tab is visible and not loading
-      if (!document.hidden && !isLoading) {
+      if (!document.hidden) {
         fetchInitialTokens(true);
       }
     }, 30000);
-    return () => clearInterval(refreshInterval);
+
+    return () => {
+      clearInterval(refreshInterval);
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+    };
   }, []);
 
   // Clear error when tokens are loaded successfully
@@ -423,11 +435,13 @@ const TokenList = ({ currentUser, showNotification }) => {
           )}
         </div>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center p-8">
+        {isLoading && (
+          <div className="absolute inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
             <div className="text-white">Loading tokens...</div>
           </div>
-        ) : error ? (
+        )}
+
+        {error ? (
           <div className="flex items-center justify-center p-8">
             <div className="text-red-500">{error}</div>
           </div>
