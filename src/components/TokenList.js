@@ -71,17 +71,19 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [showReviews, setShowReviews] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [chartData, setChartData] = useState(null);
-  const chartRef = useRef(null);
-  const [chartInstance, setChartInstance] = useState(null);
-  const [selectedTimeRange, setSelectedTimeRange] = useState('24h');
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'marketCap', direction: 'desc' });
+  const [selectedTimeRange, setSelectedTimeRange] = useState('24h');
+  const [chartInstance, setChartInstance] = useState(null);
+  const chartRef = useRef(null);
   const [showDexFrame, setShowDexFrame] = useState(false);
   const [selectedDex, setSelectedDex] = useState(null);
   const [error, setError] = useState(null);
-  const [expandedTokenId, setExpandedTokenId] = useState(null);
+  const [lastFetchTime, setLastFetchTime] = useState(0);
+  const FETCH_COOLDOWN = 500; // Reduced to 500ms since we're using our own DB
 
+  // Sorting functionality
   const handleSort = (key) => {
     const direction = sortConfig.key === key && sortConfig.direction === 'desc' ? 'asc' : 'desc';
     setSortConfig({ key, direction });
@@ -96,6 +98,7 @@ const TokenList = ({ currentUser, showNotification }) => {
     setFilteredTokens(sorted);
   };
 
+  // DEX integration
   const handleDexClick = (dex) => {
     setSelectedDex(dex);
     setShowDexFrame(true);
@@ -112,6 +115,30 @@ const TokenList = ({ currentUser, showNotification }) => {
       await fetchChartData(selectedToken.id, range);
     }
   };
+
+  useEffect(() => {
+    fetchInitialTokens();
+    // Set up periodic refresh only when tab is visible
+    const refreshInterval = setInterval(() => {
+      if (!document.hidden) {
+        fetchInitialTokens(true);
+      }
+    }, 30000);
+
+    return () => {
+      clearInterval(refreshInterval);
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+    };
+  }, []);
+
+  // Clear error when tokens are loaded successfully
+  useEffect(() => {
+    if (tokens.length > 0) {
+      setError(null);
+    }
+  }, [tokens]);
 
   const fetchInitialTokens = async (isBackgroundUpdate = false) => {
     try {
@@ -144,9 +171,8 @@ const TokenList = ({ currentUser, showNotification }) => {
       setFilteredTokens(processedData);
     } catch (error) {
       console.error('Error fetching tokens:', error);
-      // Don't show notification for background updates
       if (!isBackgroundUpdate) {
-        showNotification('Failed to load fresh data, using cached data', 'error');
+        showNotification('Failed to load token data', 'error');
       }
     } finally {
       if (!isBackgroundUpdate) {
@@ -158,8 +184,11 @@ const TokenList = ({ currentUser, showNotification }) => {
   const handleSearch = async (searchTerm) => {
     try {
       setIsLoading(true);
+      setSearchTerm(searchTerm);
+
       if (!searchTerm.trim()) {
         setFilteredTokens(tokens);
+        setIsLoading(false);
         return;
       }
 
@@ -198,38 +227,35 @@ const TokenList = ({ currentUser, showNotification }) => {
   };
 
   const handleTokenClick = async (token) => {
-    if (expandedTokenId === token.id) {
-      setExpandedTokenId(null);
-      setChartData(null);
+    try {
+      // Check if we're within the cooldown period
+      const now = Date.now();
+      if (now - lastFetchTime < FETCH_COOLDOWN) {
+        return; // Ignore click if too soon
+      }
+      setLastFetchTime(now);
+
+      // Clean up previous chart if it exists
       if (chartInstance) {
         chartInstance.destroy();
         setChartInstance(null);
       }
-    } else {
-      setChartData(null);
-      if (chartInstance) {
-        chartInstance.destroy();
-        setChartInstance(null);
-      }
-      
-      setExpandedTokenId(token.id);
+
       setSelectedToken(token);
-      try {
-        await fetchChartData(token.id, selectedTimeRange);
-      } catch (error) {
-        console.error('Error loading chart data:', error);
+      setShowReviews(true);
+
+      // Fetch chart data in the background
+      fetchChartData(token.id, selectedTimeRange).catch(error => {
+        console.error('Error fetching chart data:', error);
         showNotification('Chart data temporarily unavailable', 'warning');
-      }
+      });
+    } catch (error) {
+      console.error('Error handling token click:', error);
     }
   };
 
   const fetchChartData = async (tokenId, days) => {
     try {
-      setIsLoading(true);
-      
-      // Add delay between requests to avoid rate limits
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
       const response = await fetch(
         `https://api.coingecko.com/api/v3/coins/${tokenId}/market_chart?vs_currency=usd&days=${days}`,
         {
@@ -239,91 +265,51 @@ const TokenList = ({ currentUser, showNotification }) => {
           }
         }
       );
-      
-      if (!response.ok) {
-        if (response.status === 429) {
-          throw new Error('Rate limit reached. Please try again later.');
-        }
-        throw new Error(`HTTP error! status: ${response.status}`);
+
+      // Handle rate limit
+      if (response.status === 429) {
+        throw new Error('Rate limit reached. Please try again later.');
       }
-      
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch chart data');
+      }
+
       const data = await response.json();
-      if (expandedTokenId === tokenId) {
-        setChartData(data);
+      setChartData(data);
+      
+      if (chartRef.current) {
+        const ctx = chartRef.current.getContext('2d');
+        const newChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: data.prices.map(price => new Date(price[0]).toLocaleDateString()),
+            datasets: [{
+              label: 'Price (USD)',
+              data: data.prices.map(price => price[1]),
+              borderColor: 'rgb(75, 192, 192)',
+              tension: 0.1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'top' },
+              title: { display: true, text: 'Price History' }
+            },
+            scales: {
+              y: { beginAtZero: false }
+            }
+          }
+        });
+        setChartInstance(newChart);
       }
     } catch (error) {
-      console.error('Error fetching chart data:', error);
-      showNotification(error.message || 'Failed to load chart data', 'warning');
-    } finally {
-      setIsLoading(false);
+      console.error('Chart data error:', error);
+      throw error;
     }
   };
-
-  useEffect(() => {
-    fetchInitialTokens();
-    // Set up periodic refresh only when tab is visible
-    const refreshInterval = setInterval(() => {
-      if (!document.hidden) {
-        fetchInitialTokens(true);
-      }
-    }, 30000);
-
-    return () => {
-      clearInterval(refreshInterval);
-      if (chartInstance) {
-        chartInstance.destroy();
-      }
-    };
-  }, []);
-
-  // Clear error when tokens are loaded successfully
-  useEffect(() => {
-    if (tokens.length > 0) {
-      setError(null);
-    }
-  }, [tokens]);
-
-  // Handle chart instance cleanup
-  useEffect(() => {
-    return () => {
-      if (chartInstance) {
-        chartInstance.destroy();
-      }
-    };
-  }, [chartInstance]);
-
-  useEffect(() => {
-    if (chartData && chartRef.current && selectedToken) {
-      if (chartInstance) {
-        chartInstance.destroy();
-      }
-
-      const ctx = chartRef.current.getContext('2d');
-      const newChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: chartData.prices.map(price => new Date(price[0]).toLocaleDateString()),
-          datasets: [{
-            label: `${selectedToken.name} Price (USD)`,
-            data: chartData.prices.map(price => price[1]),
-            borderColor: 'rgb(75, 192, 192)',
-            tension: 0.1
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: 'top' },
-            title: { display: true, text: 'Price History' }
-          },
-          scales: {
-            y: { beginAtZero: false }
-          }
-        }
-      });
-      setChartInstance(newChartInstance);
-    }
-  }, [chartData, selectedToken]);
 
   return (
     <div className="container mx-auto p-4">
