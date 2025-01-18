@@ -26,7 +26,7 @@ const updateTokenCache = async (force = false) => {
           sparkline: false,
           price_change_percentage: '24h'
         },
-        timeout: 10000 // 10 second timeout
+        timeout: 10000
       }
     );
 
@@ -36,25 +36,25 @@ const updateTokenCache = async (force = false) => {
     }
 
     const tokens = response.data.map(token => ({
-      id: token.id || '',
-      symbol: (token.symbol || '').toUpperCase(),
+      id: token.id,
+      symbol: token.symbol?.toUpperCase() || '',
       name: token.name || '',
       image: token.image || '',
-      currentPrice: parseFloat(token.current_price) || 0,
-      marketCap: parseFloat(token.market_cap) || 0,
-      marketCapRank: parseInt(token.market_cap_rank) || 0,
-      totalVolume: parseFloat(token.total_volume) || 0,
-      high24h: parseFloat(token.high_24h) || 0,
-      low24h: parseFloat(token.low_24h) || 0,
-      priceChange24h: parseFloat(token.price_change_24h) || 0,
-      priceChangePercentage24h: parseFloat(token.price_change_percentage_24h) || 0,
-      circulatingSupply: parseFloat(token.circulating_supply) || 0,
-      totalSupply: parseFloat(token.total_supply) || 0,
-      maxSupply: parseFloat(token.max_supply) || null,
-      ath: parseFloat(token.ath) || 0,
-      athChangePercentage: parseFloat(token.ath_change_percentage) || 0,
+      currentPrice: token.current_price || 0,
+      marketCap: token.market_cap || 0,
+      marketCapRank: token.market_cap_rank || 0,
+      totalVolume: token.total_volume || 0,
+      high24h: token.high_24h || 0,
+      low24h: token.low_24h || 0,
+      priceChange24h: token.price_change_24h || 0,
+      priceChangePercentage24h: token.price_change_percentage_24h || 0,
+      circulatingSupply: token.circulating_supply || 0,
+      totalSupply: token.total_supply || 0,
+      maxSupply: token.max_supply || null,
+      ath: token.ath || 0,
+      athChangePercentage: token.ath_change_percentage || 0,
       athDate: token.ath_date ? new Date(token.ath_date) : new Date(),
-      fullyDilutedValuation: parseFloat(token.fully_diluted_valuation) || 0,
+      fullyDilutedValuation: token.fully_diluted_valuation || 0,
       lastUpdated: new Date()
     })).filter(token => token.id && token.symbol && token.name);
 
@@ -106,7 +106,7 @@ router.get('/', async (req, res) => {
       };
     }
 
-    // Always try to get tokens from database first
+    // Get tokens from database
     let tokens = await Token.find(query)
       .sort({ marketCapRank: 1 })
       .limit(250)
@@ -114,24 +114,31 @@ router.get('/', async (req, res) => {
 
     // If we have tokens, return them immediately
     if (tokens && tokens.length > 0) {
-      // Clean numeric values
+      // Clean numeric values to ensure they're numbers
       tokens = tokens.map(token => ({
         ...token,
-        currentPrice: parseFloat(token.currentPrice) || 0,
-        marketCap: parseFloat(token.marketCap) || 0,
-        marketCapRank: parseInt(token.marketCapRank) || 0,
-        totalVolume: parseFloat(token.totalVolume) || 0,
-        priceChange24h: parseFloat(token.priceChange24h) || 0,
-        priceChangePercentage24h: parseFloat(token.priceChangePercentage24h) || 0
+        _id: token._id.toString(), // Convert ObjectId to string
+        currentPrice: Number(token.currentPrice) || 0,
+        marketCap: Number(token.marketCap) || 0,
+        marketCapRank: Number(token.marketCapRank) || 0,
+        totalVolume: Number(token.totalVolume) || 0,
+        priceChange24h: Number(token.priceChange24h) || 0,
+        priceChangePercentage24h: Number(token.priceChangePercentage24h) || 0,
+        high24h: Number(token.high24h) || 0,
+        low24h: Number(token.low24h) || 0,
+        circulatingSupply: Number(token.circulatingSupply) || 0,
+        totalSupply: Number(token.totalSupply) || 0,
+        maxSupply: token.maxSupply ? Number(token.maxSupply) : null,
+        ath: Number(token.ath) || 0,
+        athChangePercentage: Number(token.athChangePercentage) || 0,
+        fullyDilutedValuation: Number(token.fullyDilutedValuation) || 0
       }));
 
       res.json(tokens);
       
       // Update cache in background if needed
       if (Date.now() - lastUpdateTime >= UPDATE_INTERVAL) {
-        updateTokenCache().catch(error => {
-          console.error('Background cache update failed:', error.message);
-        });
+        updateTokenCache().catch(console.error);
       }
       return;
     }
@@ -147,48 +154,36 @@ router.get('/', async (req, res) => {
       });
     }
 
-    // Filter if search query exists
-    let result = freshTokens;
-    if (search) {
-      const searchRegex = new RegExp(search, 'i');
-      result = freshTokens.filter(token => 
-        searchRegex.test(token.symbol) ||
-        searchRegex.test(token.name) ||
-        searchRegex.test(token.id)
-      );
-    }
-
-    res.json(result);
+    res.json(freshTokens);
   } catch (error) {
-    console.error('Error in /api/tokens:', error.message);
-    // Try to return any cached data we have
-    try {
-      const cachedTokens = await Token.find({})
-        .sort({ marketCapRank: 1 })
-        .limit(250)
-        .lean();
-      
-      if (cachedTokens && cachedTokens.length > 0) {
-        return res.json(cachedTokens);
-      }
-    } catch (fallbackError) {
-      console.error('Fallback error:', fallbackError.message);
-    }
-    
+    console.error('Error in /api/tokens:', error);
     res.status(500).json({ 
       error: 'Failed to fetch tokens',
-      message: error.message 
+      message: 'An unexpected error occurred'
     });
   }
 });
 
 router.get('/:id', async (req, res) => {
   try {
-    const token = await Token.findOne({ id: req.params.id });
+    const token = await Token.findOne({ id: req.params.id }).lean();
     if (!token) {
       return res.status(404).json({ error: 'Token not found' });
     }
-    res.json(token);
+    
+    // Clean numeric values
+    const cleanedToken = {
+      ...token,
+      _id: token._id.toString(),
+      currentPrice: Number(token.currentPrice) || 0,
+      marketCap: Number(token.marketCap) || 0,
+      marketCapRank: Number(token.marketCapRank) || 0,
+      totalVolume: Number(token.totalVolume) || 0,
+      priceChange24h: Number(token.priceChange24h) || 0,
+      priceChangePercentage24h: Number(token.priceChangePercentage24h) || 0
+    };
+    
+    res.json(cleanedToken);
   } catch (error) {
     console.error('Error fetching token:', error);
     res.status(500).json({ error: 'Failed to fetch token' });
