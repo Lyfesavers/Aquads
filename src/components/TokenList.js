@@ -100,43 +100,50 @@ const TokenList = ({ currentUser, showNotification }) => {
       }
 
       const response = await fetch(`${API_URL}/api/tokens`);
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch tokens');
+        throw new Error(`Failed to fetch tokens: ${response.status}`);
       }
       
       const data = await response.json();
-      if (!Array.isArray(data)) {
+      
+      if (!data || !Array.isArray(data)) {
         console.error('Invalid data format received:', data);
-        throw new Error('Invalid data format received from server');
+        return; // Don't update state if data is invalid
       }
 
-      // Ensure numeric values are properly formatted
-      const processedData = data.map(token => ({
-        ...token,
-        currentPrice: Number(token.currentPrice) || 0,
-        marketCap: Number(token.marketCap) || 0,
-        marketCapRank: Number(token.marketCapRank) || 0,
-        totalVolume: Number(token.totalVolume) || 0,
-        priceChange24h: Number(token.priceChange24h) || 0,
-        priceChangePercentage24h: Number(token.priceChangePercentage24h) || 0,
-        high24h: Number(token.high24h) || 0,
-        low24h: Number(token.low24h) || 0,
-        circulatingSupply: Number(token.circulatingSupply) || 0,
-        totalSupply: Number(token.totalSupply) || 0,
-        maxSupply: token.maxSupply ? Number(token.maxSupply) : null,
-        ath: Number(token.ath) || 0,
-        athChangePercentage: Number(token.athChangePercentage) || 0,
-        fullyDilutedValuation: Number(token.fullyDilutedValuation) || 0
-      }));
+      // Only update state if we have valid data
+      if (data.length > 0) {
+        const processedData = data.map(token => ({
+          ...token,
+          currentPrice: Number(token.currentPrice) || 0,
+          marketCap: Number(token.marketCap) || 0,
+          marketCapRank: Number(token.marketCapRank) || 0,
+          totalVolume: Number(token.totalVolume) || 0,
+          priceChange24h: Number(token.priceChange24h) || 0,
+          priceChangePercentage24h: Number(token.priceChangePercentage24h) || 0,
+          high24h: Number(token.high24h) || 0,
+          low24h: Number(token.low24h) || 0,
+          circulatingSupply: Number(token.circulatingSupply) || 0,
+          totalSupply: Number(token.totalSupply) || 0,
+          maxSupply: token.maxSupply ? Number(token.maxSupply) : null,
+          ath: Number(token.ath) || 0,
+          athChangePercentage: Number(token.athChangePercentage) || 0,
+          fullyDilutedValuation: Number(token.fullyDilutedValuation) || 0
+        }));
 
-      setTokens(processedData);
-      setFilteredTokens(processedData);
-      setError(null);
+        setTokens(processedData);
+        setFilteredTokens(processedData);
+        setError(null);
+      }
     } catch (error) {
       console.error('Error fetching tokens:', error);
-      setError(error.message);
-      if (!isBackgroundUpdate) {
-        showNotification('Failed to load token data', 'error');
+      // Only show error if we don't have any tokens
+      if (tokens.length === 0) {
+        setError(error.message);
+        if (!isBackgroundUpdate) {
+          showNotification('Failed to load token data', 'error');
+        }
       }
     } finally {
       if (!isBackgroundUpdate) {
