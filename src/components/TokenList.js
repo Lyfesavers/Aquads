@@ -86,7 +86,11 @@ const formatCurrency = (value) => {
 };
 
 const TokenList = ({ currentUser, showNotification }) => {
-  const [tokens, setTokens] = useState([]);
+  const [tokens, setTokens] = useState(() => {
+    // Try to load from localStorage first
+    const cached = localStorage.getItem(CACHE_KEY);
+    return cached ? JSON.parse(cached) : [];
+  });
   const [filteredTokens, setFilteredTokens] = useState([]);
   const [selectedToken, setSelectedToken] = useState(null);
   const [showReviews, setShowReviews] = useState(false);
@@ -95,7 +99,7 @@ const TokenList = ({ currentUser, showNotification }) => {
   const chartRef = useRef(null);
   const [chartInstance, setChartInstance] = useState(null);
   const [selectedTimeRange, setSelectedTimeRange] = useState('24h');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'marketCap', direction: 'desc' });
   const [showDexFrame, setShowDexFrame] = useState(false);
@@ -108,17 +112,26 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   useEffect(() => {
     fetchInitialTokens();
+    // Set up periodic refresh every 30 seconds
+    const refreshInterval = setInterval(fetchInitialTokens, 30000);
+    return () => clearInterval(refreshInterval);
   }, []);
 
   useEffect(() => {
     if (tokens.length > 0) {
       setFilteredTokens(tokens);
+      // Cache tokens in localStorage
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify(tokens));
+        localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
+      } catch (error) {
+        console.warn('Failed to cache tokens:', error);
+      }
     }
   }, [tokens]);
 
   const fetchInitialTokens = async () => {
     try {
-      setIsLoading(true);
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/tokens`);
       
       if (!response.ok) {
@@ -126,11 +139,24 @@ const TokenList = ({ currentUser, showNotification }) => {
       }
 
       const data = await response.json();
-      setTokens(data);
-      setFilteredTokens(data);
+      if (data && data.length > 0) {
+        setTokens(data);
+        setIsLoading(false);
+      } else {
+        // If no data, try to use cached data
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) {
+          setTokens(JSON.parse(cached));
+        }
+      }
     } catch (error) {
       console.error('Error fetching initial tokens:', error);
-      showNotification('Failed to load tokens', 'error');
+      // On error, try to use cached data
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        setTokens(JSON.parse(cached));
+      }
+      showNotification('Failed to load fresh token data, using cached data', 'warning');
     } finally {
       setIsLoading(false);
     }
@@ -1006,13 +1032,13 @@ const TokenList = ({ currentUser, showNotification }) => {
 
         {isLoading ? (
           <div className="fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg">
-            Loading tokens: {tokens.length} loaded...
+            Loading tokens...
           </div>
-        ) : (
+        ) : tokens.length > 0 ? (
           <div className="fixed bottom-4 right-4 bg-blue-500/80 text-white px-4 py-2 rounded-lg shadow-lg backdrop-blur-sm">
-            Updating token data... ({tokens.length} tokens cached)
+            {tokens.length} tokens cached
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

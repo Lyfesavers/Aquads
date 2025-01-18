@@ -3,10 +3,18 @@ const router = express.Router();
 const Token = require('../models/Token');
 const axios = require('axios');
 
+let lastUpdateTime = 0;
+const UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
 // Fetch and cache tokens from CoinGecko
-const updateTokenCache = async () => {
+const updateTokenCache = async (force = false) => {
+  const now = Date.now();
+  if (!force && now - lastUpdateTime < UPDATE_INTERVAL) {
+    return; // Skip update if not forced and within interval
+  }
+
   try {
-    // Fetch top 250 tokens by market cap
+    console.log('Updating token cache...');
     const response = await axios.get(
       'https://api.coingecko.com/api/v3/coins/markets',
       {
@@ -44,28 +52,31 @@ const updateTokenCache = async () => {
       lastUpdated: new Date()
     }));
 
-    // Update or insert tokens with error handling
-    for (const token of tokens) {
-      try {
-        await Token.findOneAndUpdate(
-          { id: token.id },
-          token,
-          { upsert: true, new: true }
-        );
-      } catch (err) {
-        console.error(`Error updating token ${token.id}:`, err);
-      }
-    }
+    // Batch update tokens
+    await Token.bulkWrite(
+      tokens.map(token => ({
+        updateOne: {
+          filter: { id: token.id },
+          update: { $set: token },
+          upsert: true
+        }
+      }))
+    );
 
+    lastUpdateTime = now;
     console.log(`Token cache updated successfully with ${tokens.length} tokens`);
+    return tokens;
   } catch (error) {
     console.error('Error updating token cache:', error);
+    return null;
   }
 };
 
-// Initialize cache and set up periodic updates (every 5 minutes)
-updateTokenCache();
-setInterval(updateTokenCache, 5 * 60 * 1000);
+// Initialize cache
+updateTokenCache(true).catch(console.error);
+
+// Set up periodic updates
+setInterval(() => updateTokenCache(), UPDATE_INTERVAL);
 
 // Get all tokens with better error handling
 router.get('/', async (req, res) => {
@@ -84,22 +95,27 @@ router.get('/', async (req, res) => {
       };
     }
     
-    const tokens = await Token.find(query)
+    let tokens = await Token.find(query)
       .sort({ marketCapRank: 1 })
       .limit(100);
 
     if (!tokens || tokens.length === 0) {
-      // If no tokens in DB, try to update cache immediately
-      await updateTokenCache();
-      // Try to fetch again
-      const retryTokens = await Token.find(query)
-        .sort({ marketCapRank: 1 })
-        .limit(100);
-      
-      if (!retryTokens || retryTokens.length === 0) {
-        return res.status(404).json({ error: 'No tokens found' });
+      // Force update cache if no tokens found
+      const freshTokens = await updateTokenCache(true);
+      if (freshTokens) {
+        tokens = freshTokens;
+        if (search) {
+          tokens = freshTokens.filter(token => 
+            token.symbol.match(new RegExp(search, 'i')) ||
+            token.name.match(new RegExp(search, 'i')) ||
+            token.id.match(new RegExp(search, 'i'))
+          );
+        }
       }
-      return res.json(retryTokens);
+    }
+
+    if (!tokens || tokens.length === 0) {
+      return res.status(404).json({ error: 'No tokens found' });
     }
       
     res.json(tokens);
