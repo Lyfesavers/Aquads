@@ -100,29 +100,23 @@ const TokenList = ({ currentUser, showNotification }) => {
       }
 
       const response = await fetch(`${API_URL}/api/tokens`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch tokens');
+      }
+      
       const data = await response.json();
       
-      // If we get a successful response with data
-      if (Array.isArray(data) && data.length > 0) {
+      if (Array.isArray(data)) {
         setTokens(data);
         setFilteredTokens(data);
         setError(null);
-        return;
       }
-      
-      // If we have existing tokens, keep them and don't show error
-      if (tokens.length > 0) {
-        return;
-      }
-
-      // Only show error if we have no tokens at all
-      setError('No tokens available. Please try again in a few minutes.');
-      
     } catch (error) {
       console.error('Error fetching tokens:', error);
-      // Only show error if we have no existing tokens
+      // Only show error if we have no tokens to display
       if (tokens.length === 0) {
-        setError('Failed to load tokens. Please try again in a few minutes.');
+        setError('Failed to load tokens');
       }
     } finally {
       if (!isBackgroundUpdate) {
