@@ -100,24 +100,22 @@ const TokenList = ({ currentUser, showNotification }) => {
       }
 
       const response = await fetch(`${API_URL}/api/tokens`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch tokens');
-      }
-      
       const data = await response.json();
       
       if (Array.isArray(data) && data.length > 0) {
         setTokens(data);
         setFilteredTokens(data);
         setError(null);
+      } else {
+        setTokens([]);
+        setFilteredTokens([]);
+        setError('No tokens available');
       }
     } catch (error) {
       console.error('Error fetching tokens:', error);
       setError('Failed to load tokens');
-      if (!isBackgroundUpdate) {
-        showNotification('Failed to load token data', 'error');
-      }
+      setTokens([]);
+      setFilteredTokens([]);
     } finally {
       if (!isBackgroundUpdate) {
         setIsLoading(false);
@@ -137,17 +135,19 @@ const TokenList = ({ currentUser, showNotification }) => {
       }
 
       const response = await fetch(`${API_URL}/api/tokens?search=${encodeURIComponent(searchTerm)}`);
-      if (!response.ok) {
-        throw new Error('Search failed');
-      }
-
       const data = await response.json();
-      if (!Array.isArray(data)) {
-        throw new Error('Invalid search response format');
+      
+      if (Array.isArray(data)) {
+        setFilteredTokens(data);
+        setError(null);
+      } else {
+        // Fallback to client-side filtering
+        const filtered = tokens.filter(token => 
+          token.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          token.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        setFilteredTokens(filtered);
       }
-
-      setFilteredTokens(data);
-      setError(null);
     } catch (error) {
       console.error('Search error:', error);
       // Fallback to client-side filtering
@@ -156,7 +156,6 @@ const TokenList = ({ currentUser, showNotification }) => {
         token.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setFilteredTokens(filtered);
-      setError(error.message);
     } finally {
       setIsLoading(false);
     }
@@ -164,12 +163,11 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   useEffect(() => {
     fetchInitialTokens();
-    // Reduce the frequency of background updates to avoid rate limits
     const refreshInterval = setInterval(() => {
       if (!document.hidden) {
         fetchInitialTokens(true);
       }
-    }, 60000); // Changed from 30s to 60s
+    }, 60000);
 
     return () => {
       clearInterval(refreshInterval);
