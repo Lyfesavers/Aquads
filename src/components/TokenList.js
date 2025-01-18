@@ -469,56 +469,74 @@ const TokenList = ({ currentUser, showNotification }) => {
               </thead>
               <tbody className="divide-y divide-gray-700/30">
                 {filteredTokens.map((token, index) => (
-                  <tr
-                    key={token.id}
-                    className="hover:bg-gray-800/40 cursor-pointer"
-                    onClick={() => handleTokenClick(token)}
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{token.marketCapRank || index + 1}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <img
-                          src={token.image}
-                          alt={token.name}
-                          className="h-8 w-8 rounded-full"
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = '/placeholder.png';
-                          }}
-                        />
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-white">{token.name}</div>
-                          <div className="text-sm text-gray-400">{token.symbol}</div>
+                  <React.Fragment key={token.id}>
+                    <tr
+                      className="hover:bg-gray-800/40 cursor-pointer"
+                      onClick={() => handleTokenClick(token)}
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{token.marketCapRank || index + 1}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <img
+                            src={token.image}
+                            alt={token.name}
+                            className="h-8 w-8 rounded-full"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = '/placeholder.png';
+                            }}
+                          />
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-white">{token.name}</div>
+                            <div className="text-sm text-gray-400">{token.symbol}</div>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                      ${token.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
-                    </td>
-                    <td className={`px-6 py-4 whitespace-nowrap text-sm ${
-                      token.priceChangePercentage24h > 0 ? 'text-green-400' : 'text-red-400'
-                    }`}>
-                      {token.priceChangePercentage24h.toFixed(2)}%
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                      ${token.marketCap.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                      ${token.totalVolume.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <span className="text-yellow-400">★</span>
-                        <TokenRating symbol={token.symbol} />
-                        <button
-                          onClick={(e) => handleReviewClick(e, token)}
-                          className="text-blue-400 hover:text-blue-300 text-sm"
-                        >
-                          Reviews
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                        ${token.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                      </td>
+                      <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                        token.priceChangePercentage24h > 0 ? 'text-green-400' : 'text-red-400'
+                      }`}>
+                        {token.priceChangePercentage24h.toFixed(2)}%
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                        ${token.marketCap.toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                        ${token.totalVolume.toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <span className="text-yellow-400">★</span>
+                          <TokenRating symbol={token.symbol} />
+                          <button
+                            onClick={(e) => handleReviewClick(e, token)}
+                            className="text-blue-400 hover:text-blue-300 text-sm"
+                          >
+                            Reviews
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    {selectedToken && showDetails && selectedToken.id === token.id && (
+                      <TokenDetails
+                        token={selectedToken}
+                        showReviews={showReviews}
+                        onClose={() => setShowDetails(false)}
+                        currentUser={currentUser}
+                        showNotification={showNotification}
+                        chartRef={chartRef}
+                        chartData={chartData}
+                        selectedTimeRange={selectedTimeRange}
+                        onTimeRangeChange={handleTimeRangeChange}
+                        showDexFrame={showDexFrame}
+                        selectedDex={selectedDex}
+                        onDexClick={handleDexClick}
+                        setShowDexFrame={setShowDexFrame}
+                      />
+                    )}
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>
@@ -535,24 +553,6 @@ const TokenList = ({ currentUser, showNotification }) => {
             onClose={handleCloseReviews}
             currentUser={currentUser}
             showNotification={showNotification}
-          />
-        )}
-
-        {selectedToken && showDetails && (
-          <TokenDetails
-            token={selectedToken}
-            showReviews={showReviews}
-            onClose={() => setShowDetails(false)}
-            currentUser={currentUser}
-            showNotification={showNotification}
-            chartRef={chartRef}
-            chartData={chartData}
-            selectedTimeRange={selectedTimeRange}
-            onTimeRangeChange={handleTimeRangeChange}
-            showDexFrame={showDexFrame}
-            selectedDex={selectedDex}
-            onDexClick={handleDexClick}
-            setShowDexFrame={setShowDexFrame}
           />
         )}
 
