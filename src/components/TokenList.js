@@ -119,7 +119,7 @@ const TokenList = ({ currentUser, showNotification }) => {
         setIsLoading(true);
       }
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/tokens`);
+      const response = await fetch(`${API_URL}/api/tokens`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -128,11 +128,13 @@ const TokenList = ({ currentUser, showNotification }) => {
       if (Array.isArray(data) && data.length > 0) {
         setTokens(data);
         setFilteredTokens(data);
+      } else {
+        throw new Error('No tokens received from server');
       }
     } catch (error) {
       console.error('Error fetching tokens:', error);
-      if (!isBackgroundUpdate && !tokens.length) {
-        showNotification('Failed to load token data', 'warning');
+      if (!isBackgroundUpdate) {
+        setError('Failed to load token data. Please try refreshing the page.');
       }
     } finally {
       if (!isBackgroundUpdate) {
@@ -150,14 +152,16 @@ const TokenList = ({ currentUser, showNotification }) => {
     }
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/tokens?search=${encodeURIComponent(searchTerm)}`);
+      const response = await fetch(`${API_URL}/api/tokens?search=${encodeURIComponent(searchTerm)}`);
       if (!response.ok) throw new Error('Failed to fetch tokens');
       
       const data = await response.json();
-      setFilteredTokens(data);
+      if (Array.isArray(data)) {
+        setFilteredTokens(data);
+      }
     } catch (error) {
       console.error('Error searching tokens:', error);
-      // Fall back to client-side filtering if server search fails
+      // Fall back to client-side filtering
       const filtered = tokens.filter(token => 
         token.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
         token.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -209,6 +213,29 @@ const TokenList = ({ currentUser, showNotification }) => {
   };
 
   useEffect(() => {
+    // Initial fetch
+    fetchInitialTokens();
+
+    // Set up periodic refresh every 30 seconds
+    const refreshInterval = setInterval(() => {
+      // Only refresh if the tab is visible and not loading
+      if (!document.hidden && !isLoading) {
+        fetchInitialTokens(true);
+      }
+    }, 30000);
+
+    // Cleanup interval on unmount
+    return () => clearInterval(refreshInterval);
+  }, []); // Empty dependency array
+
+  // Clear error when tokens are loaded successfully
+  useEffect(() => {
+    if (tokens.length > 0) {
+      setError(null);
+    }
+  }, [tokens]);
+
+  useEffect(() => {
     if (chartData && chartRef.current && selectedToken) {
       if (chartInstance) {
         chartInstance.destroy();
@@ -240,18 +267,6 @@ const TokenList = ({ currentUser, showNotification }) => {
       setChartInstance(newChartInstance);
     }
   }, [chartData, selectedToken]);
-
-  useEffect(() => {
-    fetchInitialTokens();
-    // Set up periodic refresh every 30 seconds
-    const refreshInterval = setInterval(() => {
-      // Only refresh if the tab is visible and not loading
-      if (!document.hidden && !isLoading) {
-        fetchInitialTokens(true);
-      }
-    }, 30000);
-    return () => clearInterval(refreshInterval);
-  }, []);
 
   return (
     <div className="container mx-auto p-4">

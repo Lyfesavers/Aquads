@@ -95,31 +95,35 @@ router.get('/', async (req, res) => {
       };
     }
 
-    // Fast database query with lean() for better performance
+    // Get tokens from database
     const tokens = await Token.find(query)
       .sort({ marketCapRank: 1 })
       .limit(250)
       .lean();
 
-    // Return data immediately if we have it
+    // If we have tokens in the database, return them immediately
     if (tokens && tokens.length > 0) {
       res.json(tokens);
       
-      // Update cache in background only if needed
+      // Update cache in background if needed
       if (Date.now() - lastUpdateTime >= UPDATE_INTERVAL) {
         updateTokenCache().catch(console.error);
       }
       return;
     }
 
-    // Only if DB is empty, try to fetch fresh data
+    // If no tokens in database, force an update
+    console.log('No tokens in database, forcing update...');
     const freshTokens = await updateTokenCache(true);
-    if (freshTokens) {
+    
+    if (freshTokens && freshTokens.length > 0) {
+      // If we have search query, filter the fresh tokens
       if (search) {
+        const searchRegex = new RegExp(search, 'i');
         const filtered = freshTokens.filter(token => 
-          token.symbol.match(new RegExp(search, 'i')) ||
-          token.name.match(new RegExp(search, 'i')) ||
-          token.id.match(new RegExp(search, 'i'))
+          searchRegex.test(token.symbol) ||
+          searchRegex.test(token.name) ||
+          searchRegex.test(token.id)
         );
         res.json(filtered);
       } else {
@@ -128,10 +132,18 @@ router.get('/', async (req, res) => {
       return;
     }
 
-    res.status(404).json({ error: 'No tokens found' });
+    // If still no tokens, return error
+    res.status(404).json({ 
+      error: 'No tokens found',
+      message: 'Please try again in a few minutes'
+    });
+
   } catch (error) {
-    console.error('Error fetching tokens:', error);
-    res.status(500).json({ error: 'Failed to fetch tokens' });
+    console.error('Error in /api/tokens:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch tokens',
+      message: error.message
+    });
   }
 });
 
