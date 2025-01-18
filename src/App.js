@@ -783,7 +783,10 @@ function App() {
 
         {/* Token list section - add z-index and proper background */}
         <div className="relative z-10 bg-transparent">
-          <TokenList />
+          <TokenList 
+            currentUser={currentUser}
+            showNotification={showNotification}
+          />
         </div>
       </div>
 

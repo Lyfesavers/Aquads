@@ -100,22 +100,21 @@ const TokenList = ({ currentUser, showNotification }) => {
       }
 
       const response = await fetch(`${API_URL}/api/tokens`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch tokens');
+      }
+      
       const data = await response.json();
       
       if (Array.isArray(data) && data.length > 0) {
         setTokens(data);
         setFilteredTokens(data);
         setError(null);
-      } else {
-        setTokens([]);
-        setFilteredTokens([]);
-        setError('No tokens available');
       }
     } catch (error) {
       console.error('Error fetching tokens:', error);
       setError('Failed to load tokens');
-      setTokens([]);
-      setFilteredTokens([]);
     } finally {
       if (!isBackgroundUpdate) {
         setIsLoading(false);
@@ -135,8 +134,11 @@ const TokenList = ({ currentUser, showNotification }) => {
       }
 
       const response = await fetch(`${API_URL}/api/tokens?search=${encodeURIComponent(searchTerm)}`);
+      if (!response.ok) {
+        throw new Error('Search failed');
+      }
+
       const data = await response.json();
-      
       if (Array.isArray(data)) {
         setFilteredTokens(data);
         setError(null);
