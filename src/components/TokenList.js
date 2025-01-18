@@ -110,8 +110,27 @@ const TokenList = ({ currentUser, showNotification }) => {
         throw new Error('Invalid data format received from server');
       }
 
-      setTokens(data);
-      setFilteredTokens(data);
+      // Ensure numeric values are properly formatted
+      const processedData = data.map(token => ({
+        ...token,
+        currentPrice: Number(token.currentPrice) || 0,
+        marketCap: Number(token.marketCap) || 0,
+        marketCapRank: Number(token.marketCapRank) || 0,
+        totalVolume: Number(token.totalVolume) || 0,
+        priceChange24h: Number(token.priceChange24h) || 0,
+        priceChangePercentage24h: Number(token.priceChangePercentage24h) || 0,
+        high24h: Number(token.high24h) || 0,
+        low24h: Number(token.low24h) || 0,
+        circulatingSupply: Number(token.circulatingSupply) || 0,
+        totalSupply: Number(token.totalSupply) || 0,
+        maxSupply: token.maxSupply ? Number(token.maxSupply) : null,
+        ath: Number(token.ath) || 0,
+        athChangePercentage: Number(token.athChangePercentage) || 0,
+        fullyDilutedValuation: Number(token.fullyDilutedValuation) || 0
+      }));
+
+      setTokens(processedData);
+      setFilteredTokens(processedData);
       setError(null);
     } catch (error) {
       console.error('Error fetching tokens:', error);
