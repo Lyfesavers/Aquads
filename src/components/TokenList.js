@@ -207,18 +207,38 @@ const TokenList = ({ currentUser, showNotification }) => {
       
       setExpandedTokenId(token.id);
       setSelectedToken(token);
-      fetchChartData(token.id, selectedTimeRange);
+      try {
+        await fetchChartData(token.id, selectedTimeRange);
+      } catch (error) {
+        console.error('Error loading chart data:', error);
+        showNotification('Chart data temporarily unavailable', 'warning');
+      }
     }
   };
 
   const fetchChartData = async (tokenId, days) => {
     try {
       setIsLoading(true);
+      
+      // Add delay between requests to avoid rate limits
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       const response = await fetch(
-        `https://api.coingecko.com/api/v3/coins/${tokenId}/market_chart?vs_currency=usd&days=${days}`
+        `https://api.coingecko.com/api/v3/coins/${tokenId}/market_chart?vs_currency=usd&days=${days}`,
+        {
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+          }
+        }
       );
       
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error('Rate limit reached. Please try again later.');
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       
       const data = await response.json();
       if (expandedTokenId === tokenId) {
@@ -226,6 +246,7 @@ const TokenList = ({ currentUser, showNotification }) => {
       }
     } catch (error) {
       console.error('Error fetching chart data:', error);
+      showNotification(error.message || 'Failed to load chart data', 'warning');
     } finally {
       setIsLoading(false);
     }
@@ -249,6 +270,15 @@ const TokenList = ({ currentUser, showNotification }) => {
       setError(null);
     }
   }, [tokens]);
+
+  // Handle chart instance cleanup
+  useEffect(() => {
+    return () => {
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+    };
+  }, [chartInstance]);
 
   useEffect(() => {
     if (chartData && chartRef.current && selectedToken) {

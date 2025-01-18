@@ -104,13 +104,15 @@ router.get('/', async (req, res) => {
       };
     }
 
+    // Always get tokens from database first
     let tokens = await Token.find(query)
       .sort({ marketCapRank: 1 })
       .limit(250)
       .lean();
 
+    // If we have tokens, return them immediately
     if (tokens && tokens.length > 0) {
-      // Ensure all numeric fields are numbers
+      // Clean numeric values
       tokens = tokens.map(token => ({
         ...token,
         currentPrice: parseFloat(token.currentPrice) || 0,
@@ -123,31 +125,58 @@ router.get('/', async (req, res) => {
 
       res.json(tokens);
       
+      // Only update cache in background if needed
       if (Date.now() - lastUpdateTime >= UPDATE_INTERVAL) {
-        updateTokenCache().catch(console.error);
+        updateTokenCache().catch(error => {
+          console.error('Background cache update failed:', error);
+        });
       }
       return;
     }
 
+    // If no tokens in DB, force an update
+    console.log('No tokens in database, forcing update...');
     const freshTokens = await updateTokenCache(true);
-    if (freshTokens && freshTokens.length > 0) {
-      let result = freshTokens;
-      if (search) {
-        const searchRegex = new RegExp(search, 'i');
-        result = freshTokens.filter(token => 
-          token.symbol.match(searchRegex) ||
-          token.name.match(searchRegex) ||
-          token.id.match(searchRegex)
-        );
-      }
-      res.json(result);
-      return;
+    
+    if (!freshTokens || freshTokens.length === 0) {
+      return res.status(404).json({ 
+        error: 'No tokens available',
+        message: 'Please try again in a few minutes'
+      });
     }
 
-    res.status(404).json({ error: 'No tokens found' });
+    // Filter if search query exists
+    let result = freshTokens;
+    if (search) {
+      const searchRegex = new RegExp(search, 'i');
+      result = freshTokens.filter(token => 
+        searchRegex.test(token.symbol) ||
+        searchRegex.test(token.name) ||
+        searchRegex.test(token.id)
+      );
+    }
+
+    res.json(result);
   } catch (error) {
-    console.error('Error fetching tokens:', error);
-    res.status(500).json({ error: 'Failed to fetch tokens' });
+    console.error('Error in /api/tokens:', error);
+    // Try to return any cached data we have
+    try {
+      const cachedTokens = await Token.find({})
+        .sort({ marketCapRank: 1 })
+        .limit(250)
+        .lean();
+      
+      if (cachedTokens && cachedTokens.length > 0) {
+        return res.json(cachedTokens);
+      }
+    } catch (fallbackError) {
+      console.error('Fallback error:', fallbackError);
+    }
+    
+    res.status(500).json({ 
+      error: 'Failed to fetch tokens',
+      message: error.message 
+    });
   }
 });
 
