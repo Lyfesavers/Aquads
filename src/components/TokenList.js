@@ -121,20 +121,18 @@ const TokenList = ({ currentUser, showNotification }) => {
 
       const response = await fetch(`${API_URL}/api/tokens`);
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error('Failed to fetch tokens');
       }
       
       const data = await response.json();
-      if (Array.isArray(data) && data.length > 0) {
+      if (data && data.length > 0) {
         setTokens(data);
         setFilteredTokens(data);
-      } else {
-        throw new Error('No tokens received from server');
       }
     } catch (error) {
       console.error('Error fetching tokens:', error);
       if (!isBackgroundUpdate) {
-        setError('Failed to load token data. Please try refreshing the page.');
+        showNotification('Failed to load token data', 'warning');
       }
     } finally {
       if (!isBackgroundUpdate) {
@@ -156,9 +154,7 @@ const TokenList = ({ currentUser, showNotification }) => {
       if (!response.ok) throw new Error('Failed to fetch tokens');
       
       const data = await response.json();
-      if (Array.isArray(data)) {
-        setFilteredTokens(data);
-      }
+      setFilteredTokens(data);
     } catch (error) {
       console.error('Error searching tokens:', error);
       // Fall back to client-side filtering
@@ -213,9 +209,7 @@ const TokenList = ({ currentUser, showNotification }) => {
   };
 
   useEffect(() => {
-    // Initial fetch
     fetchInitialTokens();
-
     // Set up periodic refresh every 30 seconds
     const refreshInterval = setInterval(() => {
       // Only refresh if the tab is visible and not loading
@@ -223,10 +217,8 @@ const TokenList = ({ currentUser, showNotification }) => {
         fetchInitialTokens(true);
       }
     }, 30000);
-
-    // Cleanup interval on unmount
     return () => clearInterval(refreshInterval);
-  }, []); // Empty dependency array
+  }, []);
 
   // Clear error when tokens are loaded successfully
   useEffect(() => {

@@ -6,15 +6,13 @@ const axios = require('axios');
 let lastUpdateTime = 0;
 const UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
-// Fetch and cache tokens from CoinGecko
 const updateTokenCache = async (force = false) => {
   const now = Date.now();
   if (!force && now - lastUpdateTime < UPDATE_INTERVAL) {
-    return; // Skip update if not forced and within interval
+    return;
   }
 
   try {
-    console.log('Updating token cache...');
     const response = await axios.get(
       'https://api.coingecko.com/api/v3/coins/markets',
       {
@@ -31,40 +29,40 @@ const updateTokenCache = async (force = false) => {
 
     const tokens = response.data.map(token => ({
       id: token.id,
-      symbol: token.symbol?.toUpperCase() || '',
-      name: token.name || '',
-      image: token.image || '',
-      currentPrice: Number(token.current_price) || 0,
-      marketCap: Number(token.market_cap) || 0,
-      marketCapRank: Number(token.market_cap_rank) || 0,
-      totalVolume: Number(token.total_volume) || 0,
-      high24h: Number(token.high_24h) || 0,
-      low24h: Number(token.low_24h) || 0,
-      priceChange24h: Number(token.price_change_24h) || 0,
-      priceChangePercentage24h: Number(token.price_change_percentage_24h) || 0,
-      circulatingSupply: Number(token.circulating_supply) || 0,
-      totalSupply: Number(token.total_supply) || 0,
-      maxSupply: Number(token.max_supply) || null,
-      ath: Number(token.ath) || 0,
-      athChangePercentage: Number(token.ath_change_percentage) || 0,
-      athDate: token.ath_date ? new Date(token.ath_date) : new Date(),
-      fullyDilutedValuation: Number(token.fully_diluted_valuation) || 0,
+      symbol: token.symbol.toUpperCase(),
+      name: token.name,
+      image: token.image,
+      currentPrice: token.current_price || 0,
+      marketCap: token.market_cap || 0,
+      marketCapRank: token.market_cap_rank,
+      totalVolume: token.total_volume || 0,
+      high24h: token.high_24h,
+      low24h: token.low_24h,
+      priceChange24h: token.price_change_24h || 0,
+      priceChangePercentage24h: token.price_change_percentage_24h || 0,
+      circulatingSupply: token.circulating_supply,
+      totalSupply: token.total_supply,
+      maxSupply: token.max_supply,
+      ath: token.ath,
+      athChangePercentage: token.ath_change_percentage,
+      athDate: token.ath_date,
+      fullyDilutedValuation: token.fully_diluted_valuation,
       lastUpdated: new Date()
     }));
 
-    // Batch update tokens with sanitized data
-    const operations = tokens.map(token => ({
-      updateOne: {
-        filter: { id: token.id },
-        update: { $set: token },
-        upsert: true
-      }
-    }));
-
-    await Token.bulkWrite(operations);
+    // Batch update tokens
+    await Token.bulkWrite(
+      tokens.map(token => ({
+        updateOne: {
+          filter: { id: token.id },
+          update: { $set: token },
+          upsert: true
+        }
+      }))
+    );
 
     lastUpdateTime = now;
-    console.log(`Token cache updated successfully with ${tokens.length} tokens`);
+    console.log(`Token cache updated with ${tokens.length} tokens`);
     return tokens;
   } catch (error) {
     console.error('Error updating token cache:', error);
@@ -78,7 +76,6 @@ updateTokenCache(true).catch(console.error);
 // Set up periodic updates
 setInterval(() => updateTokenCache(), UPDATE_INTERVAL);
 
-// Get all tokens with sanitized response
 router.get('/', async (req, res) => {
   try {
     const { search } = req.query;
@@ -95,14 +92,11 @@ router.get('/', async (req, res) => {
       };
     }
 
-    // Get tokens from database
     const tokens = await Token.find(query)
       .sort({ marketCapRank: 1 })
-      .limit(250)
-      .lean();
+      .limit(250);
 
-    // If we have tokens in the database, return them immediately
-    if (tokens && tokens.length > 0) {
+    if (tokens.length > 0) {
       res.json(tokens);
       
       // Update cache in background if needed
@@ -112,42 +106,28 @@ router.get('/', async (req, res) => {
       return;
     }
 
-    // If no tokens in database, force an update
-    console.log('No tokens in database, forcing update...');
     const freshTokens = await updateTokenCache(true);
-    
-    if (freshTokens && freshTokens.length > 0) {
-      // If we have search query, filter the fresh tokens
+    if (freshTokens) {
+      let result = freshTokens;
       if (search) {
         const searchRegex = new RegExp(search, 'i');
-        const filtered = freshTokens.filter(token => 
-          searchRegex.test(token.symbol) ||
-          searchRegex.test(token.name) ||
-          searchRegex.test(token.id)
+        result = freshTokens.filter(token => 
+          token.symbol.match(searchRegex) ||
+          token.name.match(searchRegex) ||
+          token.id.match(searchRegex)
         );
-        res.json(filtered);
-      } else {
-        res.json(freshTokens);
       }
+      res.json(result);
       return;
     }
 
-    // If still no tokens, return error
-    res.status(404).json({ 
-      error: 'No tokens found',
-      message: 'Please try again in a few minutes'
-    });
-
+    res.status(404).json({ error: 'No tokens found' });
   } catch (error) {
-    console.error('Error in /api/tokens:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch tokens',
-      message: error.message
-    });
+    console.error('Error fetching tokens:', error);
+    res.status(500).json({ error: 'Failed to fetch tokens' });
   }
 });
 
-// Get a specific token
 router.get('/:id', async (req, res) => {
   try {
     const token = await Token.findOne({ id: req.params.id });
