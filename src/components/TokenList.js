@@ -86,11 +86,7 @@ const formatCurrency = (value) => {
 };
 
 const TokenList = ({ currentUser, showNotification }) => {
-  const [tokens, setTokens] = useState(() => {
-    // Try to load from localStorage first
-    const cached = localStorage.getItem(CACHE_KEY);
-    return cached ? JSON.parse(cached) : [];
-  });
+  const [tokens, setTokens] = useState([]);
   const [filteredTokens, setFilteredTokens] = useState([]);
   const [selectedToken, setSelectedToken] = useState(null);
   const [showReviews, setShowReviews] = useState(false);
@@ -106,60 +102,25 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [selectedDex, setSelectedDex] = useState(null);
   const [error, setError] = useState(null);
   const [expandedTokenId, setExpandedTokenId] = useState(null);
-  const [timeFilter, setTimeFilter] = useState('24h');
-  const [sortFilter, setSortFilter] = useState('marketCap');
-  const [orderFilter, setOrderFilter] = useState('desc');
-
-  useEffect(() => {
-    fetchInitialTokens();
-    // Set up periodic refresh every 30 seconds
-    const refreshInterval = setInterval(() => {
-      // Only refresh if the tab is visible and not loading
-      if (!document.hidden && !isLoading) {
-        fetchInitialTokens(true); // true means background update
-      }
-    }, 30000);
-    return () => clearInterval(refreshInterval);
-  }, []);
-
-  useEffect(() => {
-    if (tokens.length > 0) {
-      setFilteredTokens(tokens);
-      // Cache tokens in localStorage
-      try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify(tokens));
-        localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
-      } catch (error) {
-        console.warn('Failed to cache tokens:', error);
-      }
-    }
-  }, [tokens]);
 
   const fetchInitialTokens = async (isBackgroundUpdate = false) => {
     try {
-      // Don't show loading state for background updates
       if (!isBackgroundUpdate) {
         setIsLoading(true);
       }
 
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/tokens`);
-      if (!response.ok) throw new Error('Failed to fetch tokens');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       
       const data = await response.json();
-      if (data && data.length > 0) {
+      if (Array.isArray(data) && data.length > 0) {
         setTokens(data);
         setFilteredTokens(data);
-        // Cache the data
-        try {
-          localStorage.setItem(CACHE_KEY, JSON.stringify(data));
-          localStorage.setItem(CACHE_TIMESTAMP_KEY, Date.now().toString());
-        } catch (error) {
-          console.warn('Failed to cache tokens:', error);
-        }
       }
     } catch (error) {
       console.error('Error fetching tokens:', error);
-      // Only show error for non-background updates
       if (!isBackgroundUpdate && !tokens.length) {
         showNotification('Failed to load token data', 'warning');
       }
@@ -196,92 +157,6 @@ const TokenList = ({ currentUser, showNotification }) => {
     }
   };
 
-  const handleSort = (key) => {
-    const direction = sortConfig.key === key && sortConfig.direction === 'desc' ? 'asc' : 'desc';
-    setSortConfig({ key, direction });
-    
-    const sorted = [...filteredTokens].sort((a, b) => {
-      if (direction === 'asc') {
-        return a[key] > b[key] ? 1 : -1;
-      }
-      return a[key] < b[key] ? 1 : -1;
-    });
-    
-    setFilteredTokens(sorted);
-  };
-
-  const preloadAndStoreTokenLinks = async (tokens) => {
-    try {
-      const storedLinks = JSON.parse(localStorage.getItem(LINKS_STORAGE_KEY) || '{}');
-      
-      // Only store links for top 100 tokens
-      const topTokens = tokens.slice(0, 100);
-      
-      // Clean up old links
-      Object.keys(storedLinks).forEach(tokenId => {
-        if (!topTokens.find(t => t.id === tokenId)) {
-          delete storedLinks[tokenId];
-        }
-      });
-      
-      // Reduce batch size and increase delay
-      const batchSize = 20; // Reduced from 10 to 5
-      for (let i = 0; i < tokens.length; i += batchSize) {
-        const batch = tokens.slice(i, i + batchSize);
-        
-        // Process one token at a time instead of parallel requests
-        for (const token of batch) {
-          // Skip if we already have fresh links
-          if (storedLinks[token.id]?.timestamp > Date.now() - (7 * 24 * 60 * 60 * 1000)) {
-            continue;
-          }
-
-          try {
-            const response = await fetch(
-              `https://api.coingecko.com/api/v3/coins/${token.id}?localization=false&tickers=false&market_data=false&community_data=true&developer_data=true`
-            );
-            
-            if (!response.ok) {
-              // Add exponential backoff if we hit rate limits
-              if (response.status === 429) {
-                await new Promise(resolve => setTimeout(resolve, 30000)); // Wait 30s on rate limit
-                continue;
-              }
-              continue;
-            }
-            
-            const data = await response.json();
-            
-            storedLinks[token.id] = {
-              timestamp: Date.now(),
-              links: {
-                homepage: data.links?.homepage?.[0] || null,
-                twitter_screen_name: data.links?.twitter_screen_name || null,
-                telegram_channel_identifier: data.links?.telegram_channel_identifier || null,
-                discord_url: data.links?.chat_url?.find(url => url?.toLowerCase().includes('discord')) || null,
-                subreddit_url: data.links?.subreddit_url || null,
-                github: data.links?.repos_url?.github?.[0] || null
-              }
-            };
-            
-            localStorage.setItem(LINKS_STORAGE_KEY, JSON.stringify(storedLinks));
-            
-            // Wait 6 seconds between each request
-            await new Promise(resolve => setTimeout(resolve, 6000));
-            
-          } catch (error) {
-            console.error(`Error fetching links for ${token.id}:`, error);
-          }
-        }
-        
-        // Wait 10 seconds between batches
-        await new Promise(resolve => setTimeout(resolve, 10000));
-      }
-    } catch (error) {
-      console.error('Error in preloadAndStoreTokenLinks:', error);
-    }
-  };
-
   const handleTokenClick = async (token) => {
     if (expandedTokenId === token.id) {
       setExpandedTokenId(null);
@@ -298,81 +173,14 @@ const TokenList = ({ currentUser, showNotification }) => {
       }
       
       setExpandedTokenId(token.id);
-      
-      try {
-        // First check stored links
-        const storedLinks = JSON.parse(localStorage.getItem(LINKS_STORAGE_KEY) || '{}');
-        const cachedLinks = storedLinks[token.id]?.links;
-        
-        // Set initial state with cached links if available
-        setSelectedToken({
-          ...token,
-          links: cachedLinks || {}
-        });
-
-        // Always fetch fresh data
-        const response = await fetch(
-          `https://api.coingecko.com/api/v3/coins/${token.id}?localization=false&tickers=false&market_data=false&community_data=true&developer_data=true`
-        );
-        
-        if (response.ok) {
-          const data = await response.json();
-          const freshLinks = {
-            homepage: data.links?.homepage?.[0] || null,
-            twitter_screen_name: data.links?.twitter_screen_name || null,
-            telegram_channel_identifier: data.links?.telegram_channel_identifier || null,
-            discord_url: data.links?.chat_url?.find(url => url?.toLowerCase().includes('discord')) || null,
-            subreddit_url: data.links?.subreddit_url || null,
-            github: data.links?.repos_url?.github?.[0] || null
-          };
-          
-          // Update stored links
-          storedLinks[token.id] = {
-            timestamp: Date.now(),
-            links: freshLinks
-          };
-          localStorage.setItem(LINKS_STORAGE_KEY, JSON.stringify(storedLinks));
-          
-          // Update UI
-          setSelectedToken(prev => ({
-            ...prev,
-            links: freshLinks
-          }));
-        }
-        
-        fetchChartData(token.id, selectedTimeRange);
-        
-      } catch (error) {
-        console.error('Error fetching token details:', error);
-        fetchChartData(token.id, selectedTimeRange);
-      }
-    }
-  };
-
-  const handleCloseReviews = () => {
-    setShowReviews(false);
-    setSelectedToken(null);
-  };
-
-  const handleTimeRangeChange = async (range) => {
-    setSelectedTimeRange(range);
-    if (selectedToken) {
-      setIsLoading(true);
-      await fetchChartData(selectedToken.id, range);
-      setIsLoading(false);
+      setSelectedToken(token);
+      fetchChartData(token.id, selectedTimeRange);
     }
   };
 
   const fetchChartData = async (tokenId, days) => {
     try {
       setIsLoading(true);
-      
-      // Only show cached data if it's for the current token
-      const cachedChart = localStorage.getItem(`${CHART_CACHE_KEY}_${tokenId}_${days}`);
-      if (cachedChart && expandedTokenId === tokenId) {
-        setChartData(JSON.parse(cachedChart));
-      }
-
       const response = await fetch(
         `https://api.coingecko.com/api/v3/coins/${tokenId}/market_chart?vs_currency=usd&days=${days}`
       );
@@ -380,245 +188,27 @@ const TokenList = ({ currentUser, showNotification }) => {
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       
       const data = await response.json();
-      
-      // Cache the new data with token ID
-      localStorage.setItem(`${CHART_CACHE_KEY}_${tokenId}_${days}`, JSON.stringify(data));
-      
-      // Only update if this is still the selected token
       if (expandedTokenId === tokenId) {
         setChartData(data);
       }
     } catch (error) {
       console.error('Error fetching chart data:', error);
-      // Use cached data if available and matches current token
-      const cachedChart = localStorage.getItem(`${CHART_CACHE_KEY}_${tokenId}_${days}`);
-      if (cachedChart && expandedTokenId === tokenId) {
-        setChartData(JSON.parse(cachedChart));
-      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDexClick = (dex) => {
-    setSelectedDex(dex);
-    setShowDexFrame(true);
-  };
-
-  const fetchTokenDetails = async (id) => {
-    try {
-      const response = await fetch(
-        `https://api.coingecko.com/api/v3/coins/${id}?localization=false&tickers=false&market_data=true&community_data=true&developer_data=true&sparkline=true`
-      );
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error fetching token details:', error);
-      return null;
-    }
-  };
-
-  const fetchAndCacheTokenLinks = async (tokenId) => {
-    try {
-      // Check cache first
-      const cachedLinks = localStorage.getItem(`${LINKS_CACHE_KEY}_${tokenId}`);
-      const timestamp = localStorage.getItem(`${LINKS_TIMESTAMP_KEY}_${tokenId}`);
-      
-      if (cachedLinks && timestamp) {
-        const age = Date.now() - parseInt(timestamp);
-        if (age < LINKS_CACHE_DURATION) {
-          return JSON.parse(cachedLinks);
-        }
-      }
-
-      // Fetch fresh data if cache is missing or expired
-      const response = await fetch(
-        `https://api.coingecko.com/api/v3/coins/${tokenId}`
-      );
-      
-      if (!response.ok) throw new Error('Failed to fetch token links');
-      
-      const data = await response.json();
-      
-      // Updated link structure to match CoinGecko's response
-      const links = {
-        homepage: data.links?.homepage,
-        twitter_screen_name: data.twitter_screen_name,
-        telegram_channel_identifier: data.telegram_channel_identifier,
-        discord_url: data.chat_url?.find(url => url?.includes('discord')),
-        subreddit_url: data.subreddit_url,
-        github: data.repos_url?.github?.[0],
-        links: {
-          homepage: data.links?.homepage,
-          twitter_screen_name: data.links?.twitter_screen_name,
-          telegram_channel_identifier: data.links?.telegram_channel_identifier,
-          chat_url: data.links?.chat_url,
-          subreddit_url: data.links?.subreddit_url,
-          repos_url: data.links?.repos_url
-        }
-      };
-
-      // Cache the links
-      localStorage.setItem(`${LINKS_CACHE_KEY}_${tokenId}`, JSON.stringify(links));
-      localStorage.setItem(`${LINKS_TIMESTAMP_KEY}_${tokenId}`, Date.now().toString());
-
-      return links;
-    } catch (error) {
-      console.error(`Background link fetch error for ${tokenId}:`, error);
-      return null;
-    }
-  };
-
-  const syncTokenLinksInBackground = async () => {
-    try {
-      const tokens = [...filteredTokens];
-      
-      // Process in chunks to avoid rate limits
-      const chunkSize = 10;
-      for (let i = 0; i < tokens.length; i += chunkSize) {
-        const chunk = tokens.slice(i, i + chunkSize);
-        await Promise.all(
-          chunk.map(token => fetchAndCacheTokenLinks(token.id))
-        );
-        // Add delay between chunks to respect rate limits
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
-    } catch (error) {
-      console.error('Background link sync error:', error);
-    }
-  };
-
-  const fetchAndCacheTokenDetails = async (tokenId) => {
-    try {
-      // Check cache first
-      const cachedDetails = localStorage.getItem(`${DETAILED_CACHE_KEY}_${tokenId}`);
-      const timestamp = localStorage.getItem(`${DETAILED_TIMESTAMP_KEY}_${tokenId}`);
-      
-      if (cachedDetails && timestamp) {
-        const age = Date.now() - parseInt(timestamp);
-        if (age < DETAILED_CACHE_DURATION) {
-          return JSON.parse(cachedDetails);
-        }
-      }
-
-      const response = await fetch(
-        `https://api.coingecko.com/api/v3/coins/${tokenId}?localization=false&tickers=false&market_data=false&community_data=true&developer_data=true`
-      );
-      
-      if (!response.ok) throw new Error('Failed to fetch token details');
-      
-      const data = await response.json();
-
-      // Ensure links are properly structured
-      const details = {
-        links: {
-          homepage: data.links?.homepage?.[0] || null,
-          twitter_screen_name: data.links?.twitter_screen_name || null,
-          telegram_channel_identifier: data.links?.telegram_channel_identifier || null,
-          discord_url: data.links?.chat_url?.find(url => url?.includes('discord')) || null,
-          subreddit_url: data.links?.subreddit_url || null,
-          github: data.links?.repos_url?.github?.[0] || null
-        }
-      };
-
-      // Keep existing cache logic
-      localStorage.setItem(`${DETAILED_CACHE_KEY}_${tokenId}`, JSON.stringify(details));
-      localStorage.setItem(`${DETAILED_TIMESTAMP_KEY}_${tokenId}`, Date.now().toString());
-
-      return details;
-    } catch (error) {
-      console.error(`Background detail fetch error for ${tokenId}:`, error);
-      return null;
-    }
-  };
-
-  const backgroundFetchDetails = async (tokens) => {
-    try {
-      // Process tokens in batches
-      for (let i = 0; i < tokens.length; i += BATCH_SIZE) {
-        const batch = tokens.slice(i, i + BATCH_SIZE);
-        await Promise.all(
-          batch.map(async (token) => {
-            // Check if we need to update this token's cache
-            const timestamp = localStorage.getItem(`${DETAILED_TIMESTAMP_KEY}_${token.id}`);
-            if (!timestamp || (Date.now() - parseInt(timestamp)) > DETAILED_CACHE_DURATION) {
-              await fetchAndCacheTokenDetails(token.id);
-              // Add delay between requests to respect rate limits
-              await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-          })
-        );
-        // Add delay between batches
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
-    } catch (error) {
-      console.error('Background fetch error:', error);
-    }
-  };
-
-  const cleanupStorage = () => {
-    try {
-      // Keep only essential data and remove old caches
-      const essentialKeys = [
-        'currentUser',
-        CACHE_KEY,
-        CACHE_TIMESTAMP_KEY
-      ];
-      
-      // Remove all other items
-      Object.keys(localStorage).forEach(key => {
-        if (!essentialKeys.includes(key)) {
-          localStorage.removeItem(key);
-        }
-      });
-      
-      // Clean up old token data
-      const tokenData = JSON.parse(localStorage.getItem(CACHE_KEY) || '[]');
-      const trimmedData = tokenData.slice(0, 100); // Keep only top 100 tokens
-      localStorage.setItem(CACHE_KEY, JSON.stringify(trimmedData));
-      
-    } catch (error) {
-      console.warn('Storage cleanup failed:', error);
-    }
-  };
-
   useEffect(() => {
-    cleanupStorage(); // Clean up on component mount
     fetchInitialTokens();
-  }, []);
-
-  useEffect(() => {
-    if (chartData && chartRef.current && selectedToken) {
-      if (chartInstance) {
-        chartInstance.destroy();
+    // Set up periodic refresh every 30 seconds
+    const refreshInterval = setInterval(() => {
+      // Only refresh if the tab is visible and not loading
+      if (!document.hidden && !isLoading) {
+        fetchInitialTokens(true);
       }
-
-      const ctx = chartRef.current.getContext('2d');
-      const newChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: chartData.prices.map(price => new Date(price[0]).toLocaleDateString()),
-          datasets: [{
-            label: `${selectedToken.name} Price (USD)`,
-            data: chartData.prices.map(price => price[1]),
-            borderColor: 'rgb(75, 192, 192)',
-            tension: 0.1
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: 'top' },
-            title: { display: true, text: 'Price History' }
-          },
-          scales: {
-            y: { beginAtZero: false }
-          }
-        }
-      });
-      setChartInstance(newChartInstance);
-    }
-  }, [chartData, selectedToken]);
+    }, 30000);
+    return () => clearInterval(refreshInterval);
+  }, []);
 
   return (
     <div className="container mx-auto p-4">
@@ -646,9 +236,9 @@ const TokenList = ({ currentUser, showNotification }) => {
 
           <div className="flex gap-2">
             <select
-              value={sortFilter}
+              value={sortConfig.key}
               onChange={(e) => {
-                setSortFilter(e.target.value);
+                setSortConfig({ key: e.target.value, direction: sortConfig.direction });
                 handleSort(e.target.value);
               }}
               className="bg-gray-700 text-white rounded px-3 py-2"
@@ -661,13 +251,13 @@ const TokenList = ({ currentUser, showNotification }) => {
 
             <button
               onClick={() => {
-                const newOrder = orderFilter === 'asc' ? 'desc' : 'asc';
-                setOrderFilter(newOrder);
-                handleSort(sortFilter, newOrder);
+                const newOrder = sortConfig.direction === 'asc' ? 'desc' : 'asc';
+                setSortConfig({ key: sortConfig.key, direction: newOrder });
+                handleSort(sortConfig.key, newOrder);
               }}
               className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded"
             >
-              {orderFilter === 'asc' ? '↑' : '↓'}
+              {sortConfig.direction === 'asc' ? '↑' : '↓'}
             </button>
           </div>
         </div>
@@ -747,16 +337,16 @@ const TokenList = ({ currentUser, showNotification }) => {
                     className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
                     onClick={() => handleSort('marketCapRank')}
                   >
-                    # {sortFilter === 'marketCapRank' && (
-                      <span className="ml-1">{orderFilter === 'asc' ? '↑' : '↓'}</span>
+                    # {sortConfig.key === 'marketCapRank' && (
+                      <span className="ml-1">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
                     )}
                   </th>
                   <th 
                     className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
                     onClick={() => handleSort('name')}
                   >
-                    Token {sortFilter === 'name' && (
-                      <span className="ml-1">{orderFilter === 'asc' ? '↑' : '↓'}</span>
+                    Token {sortConfig.key === 'name' && (
+                      <span className="ml-1">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
                     )}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
