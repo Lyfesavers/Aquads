@@ -26,11 +26,12 @@ const getImageUrl = (imagePath) => {
   }
 
   try {
-    // Ensure we have a clean path without any leading slashes
-    const cleanPath = imagePath.replace(/^\/+/, '');
+    // Remove any 'uploads/' prefix and leading slashes from the path
+    const cleanPath = imagePath.replace(/^uploads\/?/, '').replace(/^\/+/, '');
     
     // Construct the URL using the base API URL
-    return `${process.env.REACT_APP_API_URL || 'https://aquads.onrender.com'}/uploads/${cleanPath}`;
+    const baseUrl = process.env.REACT_APP_API_URL || 'https://aquads.onrender.com';
+    return `${baseUrl}/uploads/${cleanPath}`;
   } catch (error) {
     console.error('Error constructing image URL:', error);
     return 'https://placehold.co/400x300?text=Error';
@@ -38,31 +39,39 @@ const getImageUrl = (imagePath) => {
 };
 
 // Update image components with better error handling and logging
-const ServiceImage = ({ src, alt, className }) => (
-  <img 
-    src={getImageUrl(src)}
-    alt={alt}
-    className={className}
-    onError={(e) => {
-      console.warn(`Image failed to load: ${e.target.src}`);
-      e.target.onerror = null; // Prevent infinite loop
-      e.target.src = 'https://placehold.co/400x300?text=No+Image';
-    }}
-  />
-);
+const ServiceImage = ({ src, alt, className }) => {
+  const [imgSrc, setImgSrc] = useState(getImageUrl(src));
 
-const UserImage = ({ src, alt, className }) => (
-  <img 
-    src={getImageUrl(src)}
-    alt={alt}
-    className={className}
-    onError={(e) => {
-      console.warn(`User image failed to load: ${e.target.src}`);
-      e.target.onerror = null; // Prevent infinite loop
-      e.target.src = 'https://placehold.co/40x40?text=User';
-    }}
-  />
-);
+  return (
+    <img 
+      src={imgSrc}
+      alt={alt}
+      className={className}
+      onError={(e) => {
+        console.warn(`Image failed to load: ${imgSrc}`);
+        e.target.onerror = null;
+        setImgSrc('https://placehold.co/400x300?text=No+Image');
+      }}
+    />
+  );
+};
+
+const UserImage = ({ src, alt, className }) => {
+  const [imgSrc, setImgSrc] = useState(getImageUrl(src));
+
+  return (
+    <img 
+      src={imgSrc}
+      alt={alt}
+      className={className}
+      onError={(e) => {
+        console.warn(`User image failed to load: ${imgSrc}`);
+        e.target.onerror = null;
+        setImgSrc('https://placehold.co/40x40?text=User');
+      }}
+    />
+  );
+};
 
 const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
