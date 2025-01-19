@@ -326,6 +326,79 @@ app.get('/api/test', (req, res) => {
   res.json({ message: 'Backend is working!' });
 });
 
+// Update user profile
+app.put('/api/users/profile', auth, async (req, res) => {
+  try {
+    const { username, image, currentPassword, newPassword } = req.body;
+    console.log('Profile update request for user:', req.user.username);
+
+    // Find the user
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // If username is being changed, check if new username is available
+    if (username && username !== user.username) {
+      const existingUser = await User.findOne({
+        _id: { $ne: user._id },
+        username: { $regex: new RegExp(`^${username}$`, 'i') }
+      });
+      
+      if (existingUser) {
+        return res.status(400).json({ error: 'Username already taken' });
+      }
+      user.username = username;
+    }
+
+    // Update image if provided
+    if (image) {
+      user.image = image;
+    }
+
+    // Handle password change if both current and new passwords are provided
+    if (currentPassword && newPassword) {
+      // Verify current password
+      let isMatch = false;
+      if (user.password.startsWith('$2b$')) {
+        isMatch = await bcrypt.compare(currentPassword, user.password);
+      } else {
+        isMatch = currentPassword === user.password;
+      }
+
+      if (!isMatch) {
+        return res.status(400).json({ error: 'Current password is incorrect' });
+      }
+
+      // Hash and set new password
+      user.password = newPassword;
+    }
+
+    await user.save();
+    console.log('Profile updated successfully for user:', user.username);
+
+    // Generate new token with updated username if changed
+    const token = jwt.sign(
+      { userId: user._id, username: user.username },
+      process.env.JWT_SECRET || 'bubble-ads-jwt-secret-key-2024',
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      username: user.username,
+      image: user.image,
+      isAdmin: user.isAdmin,
+      token
+    });
+  } catch (error) {
+    console.error('Profile update error:', error);
+    res.status(500).json({ 
+      error: 'Failed to update profile',
+      message: error.message 
+    });
+  }
+});
+
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.json(),

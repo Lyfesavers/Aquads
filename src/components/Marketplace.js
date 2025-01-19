@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import CreateServiceModal from './CreateServiceModal';
 import { createService, fetchServices } from '../services/api';
 import { API_URL } from '../services/api';
+import ProfileModal from './ProfileModal';
 
 // Helper function to check if URL is valid
 const isValidUrl = (string) => {
@@ -70,6 +71,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   const categories = [
     { id: 'smart-contract', name: 'Smart Contract Development', icon: '⚡' },
@@ -119,6 +121,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     }
   };
 
+  const handleProfileUpdate = (updatedUser) => {
+    // We need to propagate this update to the parent component
+    // You may want to add an onProfileUpdate prop to handle this
+    setShowProfileModal(false);
+  };
+
   // Filter services based on selected category
   const filteredServices = selectedCategory 
     ? services.filter(service => service.category === selectedCategory)
@@ -149,6 +157,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
               {currentUser ? (
                 <>
                   <span className="text-blue-300">Welcome, {currentUser.username}!</span>
+                  <button
+                    onClick={() => setShowProfileModal(true)}
+                    className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
+                  >
+                    Edit Profile
+                  </button>
                   <button
                     onClick={onLogout}
                     className="bg-red-500/80 hover:bg-red-600/80 px-4 py-2 rounded shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm"
@@ -332,6 +346,15 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
           categories={categories}
           onClose={() => setShowCreateModal(false)}
           onCreateService={handleCreateService}
+        />
+      )}
+
+      {/* Modals */}
+      {showProfileModal && currentUser && (
+        <ProfileModal
+          currentUser={currentUser}
+          onClose={() => setShowProfileModal(false)}
+          onProfileUpdate={handleProfileUpdate}
         />
       )}
     </div>

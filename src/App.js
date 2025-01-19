@@ -26,6 +26,7 @@ import TokenBanner from './components/TokenBanner';
 import TokenList from './components/TokenList';
 import TokenRating from './components/TokenRating';
 import Marketplace from './components/Marketplace';
+import ProfileModal from './components/ProfileModal';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 
 window.Buffer = Buffer;
@@ -215,6 +216,7 @@ function App() {
   const [showScrollButtons, setShowScrollButtons] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showMarketplace, setShowMarketplace] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   // Add this function to update ads with persistence
   const updateAds = (newAds) => {
@@ -634,6 +636,11 @@ function App() {
     verifySession();
   }, []);
 
+  const handleProfileUpdate = (updatedUser) => {
+    setCurrentUser(updatedUser);
+    showNotification('Profile updated successfully!', 'success');
+  };
+
   return (
     <Router>
       <Routes>
@@ -676,6 +683,12 @@ function App() {
                           className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
                         >
                           Dashboard
+                        </button>
+                        <button
+                          onClick={() => setShowProfileModal(true)}
+                          className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
+                        >
+                          Edit Profile
                         </button>
                         <button
                           onClick={() => setShowCreateModal(true)}
@@ -820,6 +833,14 @@ function App() {
                   setShowLoginModal(false);
                   setShowCreateAccountModal(true);
                 }}
+              />
+            )}
+
+            {showProfileModal && currentUser && (
+              <ProfileModal
+                currentUser={currentUser}
+                onClose={() => setShowProfileModal(false)}
+                onProfileUpdate={handleProfileUpdate}
               />
             )}
 

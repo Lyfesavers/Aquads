@@ -461,4 +461,41 @@ export const searchServices = async (query) => {
   } catch (error) {
     throw error;
   }
+};
+
+// Update user profile
+export const updateUserProfile = async (profileData) => {
+  try {
+    console.log('Updating profile with data:', profileData);
+
+    const response = await axios.put(`${API_URL}/users/profile`, profileData, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader()
+      }
+    });
+
+    console.log('Profile update response:', response.data);
+
+    if (response.data) {
+      // Update stored user data with new information
+      const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      const updatedUser = {
+        ...currentUser,
+        ...response.data
+      };
+      localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+
+      // Update socket auth if token changed
+      if (response.data.token) {
+        socket.auth = { token: response.data.token };
+        socket.connect();
+      }
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error('Profile update error:', error.response?.data || error.message);
+    throw error.response?.data || error;
+  }
 }; 
