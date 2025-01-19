@@ -338,10 +338,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                         alt={service.title}
                         className="w-full h-48 object-cover"
                       />
-                      {console.log('Service:', service)}
-                      {console.log('Current user:', currentUser)}
-                      {console.log('Is owner?', currentUser && service.seller && currentUser.username === service.seller.username)}
-                      {currentUser && service.seller && currentUser.username === service.seller.username && (
+                      {currentUser && service.seller?.username === currentUser.username && (
                         <button
                           onClick={() => handleDeleteService(service._id)}
                           className="absolute top-2 right-2 bg-red-500/80 hover:bg-red-600/80 text-white px-3 py-1 rounded-lg shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm z-10"
