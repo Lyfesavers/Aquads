@@ -175,8 +175,30 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
             </div>
           </div>
 
-          {/* Featured Services */}
+          {/* How It Works */}
           <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6">How It Works</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg">
+                <div className="text-3xl mb-3">🔍</div>
+                <h3 className="font-medium text-lg mb-2">1. Find Services</h3>
+                <p className="text-gray-400">Browse through various crypto and blockchain services offered by professionals</p>
+              </div>
+              <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg">
+                <div className="text-3xl mb-3">💬</div>
+                <h3 className="font-medium text-lg mb-2">2. Connect</h3>
+                <p className="text-gray-400">Contact service providers and discuss your project requirements</p>
+              </div>
+              <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg">
+                <div className="text-3xl mb-3">✨</div>
+                <h3 className="font-medium text-lg mb-2">3. Get It Done</h3>
+                <p className="text-gray-400">Work with professionals and bring your crypto project to life</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Featured Services */}
+          <div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold">Featured Services</h2>
               <button className="px-4 py-2 bg-indigo-500/80 hover:bg-indigo-600/80 rounded-lg transition-colors">
@@ -235,28 +257,6 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                   <p className="text-gray-400 text-center">No services found in this category yet.</p>
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* How It Works */}
-          <div>
-            <h2 className="text-2xl font-bold mb-6">How It Works</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg">
-                <div className="text-3xl mb-3">🔍</div>
-                <h3 className="font-medium text-lg mb-2">1. Find Services</h3>
-                <p className="text-gray-400">Browse through various crypto and blockchain services offered by professionals</p>
-              </div>
-              <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg">
-                <div className="text-3xl mb-3">💬</div>
-                <h3 className="font-medium text-lg mb-2">2. Connect</h3>
-                <p className="text-gray-400">Contact service providers and discuss your project requirements</p>
-              </div>
-              <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg">
-                <div className="text-3xl mb-3">✨</div>
-                <h3 className="font-medium text-lg mb-2">3. Get It Done</h3>
-                <p className="text-gray-400">Work with professionals and bring your crypto project to life</p>
-              </div>
             </div>
           </div>
         </div>
