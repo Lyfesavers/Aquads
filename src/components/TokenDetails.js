@@ -152,9 +152,9 @@ const TokenDetails = ({
             </div>
 
             <div className="bg-gray-700/50 p-4 rounded-lg">
-              <h4 className="text-sm font-medium text-gray-400 mb-2">Market Cap</h4>
+              <h4 className="text-sm font-medium text-gray-400 mb-2">Total Supply</h4>
               <p className="text-lg font-bold text-white">
-                ${token.marketCap?.toLocaleString() || 'N/A'}
+                {token.totalSupply?.toLocaleString() || 'N/A'}
               </p>
             </div>
 
