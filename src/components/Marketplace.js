@@ -26,12 +26,21 @@ const getImageUrl = (imagePath) => {
   }
 
   try {
-    // Ensure the path starts with a forward slash and remove any double slashes
-    const normalizedPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-    const cleanPath = normalizedPath.replace(/\/+/g, '/');
+    // Remove any leading slashes and 'uploads' from the path
+    const cleanPath = imagePath.replace(/^\/+/, '').replace(/^uploads\//, '');
     
-    // Construct full URL using API_URL
-    const fullUrl = new URL(cleanPath, API_URL).toString();
+    // Construct the full URL using API_URL
+    const baseUrl = API_URL.endsWith('/') ? API_URL : `${API_URL}/`;
+    const fullUrl = `${baseUrl}uploads/${cleanPath}`;
+    
+    // Log the URL construction for debugging
+    console.debug('Image URL construction:', {
+      originalPath: imagePath,
+      cleanPath,
+      baseUrl,
+      fullUrl
+    });
+    
     return fullUrl;
   } catch (error) {
     console.error('Error constructing image URL:', error);
@@ -270,8 +279,9 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                         alt={service.title}
                         className="w-full h-48 object-cover"
                         onError={(e) => {
-                          console.warn(`Image failed to load: ${service.image}. Using fallback.`);
-                          e.target.onerror = null; // Prevent infinite loop
+                          const originalSrc = e.target.src;
+                          console.warn(`Image failed to load: ${originalSrc}. Using fallback.`);
+                          e.target.onerror = null;
                           e.target.src = 'https://placehold.co/400x300?text=No+Image';
                         }}
                       />
@@ -283,8 +293,9 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                           alt={service.seller?.username || 'Seller'}
                           className="w-10 h-10 rounded-full object-cover"
                           onError={(e) => {
-                            console.warn(`Seller image failed to load: ${service.seller?.image}. Using fallback.`);
-                            e.target.onerror = null; // Prevent infinite loop
+                            const originalSrc = e.target.src;
+                            console.warn(`Seller image failed to load: ${originalSrc}. Using fallback.`);
+                            e.target.onerror = null;
                             e.target.src = 'https://placehold.co/40x40?text=User';
                           }}
                         />
