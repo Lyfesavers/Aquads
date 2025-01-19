@@ -105,7 +105,7 @@ const TokenList = ({ currentUser, showNotification }) => {
         throw new Error(`Failed to fetch tokens: ${response.status}`);
       }
       
-      const data = await response.json();
+        const data = await response.json();
       
       if (!Array.isArray(data)) {
         throw new Error('Invalid response format');
@@ -131,13 +131,13 @@ const TokenList = ({ currentUser, showNotification }) => {
   const handleSearch = async (searchTerm) => {
     try {
       setIsLoading(true);
-      setSearchTerm(searchTerm);
-
+    setSearchTerm(searchTerm);
+    
       if (!searchTerm.trim()) {
         setFilteredTokens(tokens);
         setIsLoading(false);
-        return;
-      }
+      return;
+    }
 
       const response = await fetch(`${API_URL}/api/tokens?search=${encodeURIComponent(searchTerm)}`);
       if (!response.ok) {
@@ -245,38 +245,38 @@ const TokenList = ({ currentUser, showNotification }) => {
       if (!response.ok) {
         throw new Error('Failed to fetch chart data');
       }
-
+      
       const data = await response.json();
       setChartData(data);
       
       if (chartRef.current) {
         const ctx = chartRef.current.getContext('2d');
-        if (chartInstance) {
-          chartInstance.destroy();
-        }
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
         const newChart = new Chart(ctx, {
-          type: 'line',
-          data: {
+        type: 'line',
+        data: {
             labels: data.prices.map(price => new Date(price[0]).toLocaleDateString()),
-            datasets: [{
+          datasets: [{
               label: 'Price (USD)',
               data: data.prices.map(price => price[1]),
-              borderColor: 'rgb(75, 192, 192)',
-              tension: 0.1
-            }]
-          },
-          options: {
-            responsive: true,
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+          }]
+        },
+        options: {
+          responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-              legend: { position: 'top' },
-              title: { display: true, text: 'Price History' }
-            },
-            scales: {
-              y: { beginAtZero: false }
-            }
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: 'Price History' }
+          },
+          scales: {
+            y: { beginAtZero: false }
           }
-        });
+        }
+      });
         setChartInstance(newChart);
       }
     } catch (error) {
@@ -468,7 +468,7 @@ const TokenList = ({ currentUser, showNotification }) => {
               <tbody className="divide-y divide-gray-700/30">
                 {filteredTokens.map((token, index) => (
                   <React.Fragment key={token.id}>
-                    <tr
+                    <tr 
                       className="hover:bg-gray-800/40 cursor-pointer"
                       onClick={() => handleTokenClick(token)}
                     >

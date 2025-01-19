@@ -103,6 +103,18 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
   const handleCreateService = async (serviceData) => {
     try {
+      // Check if user already has a service in this category
+      const userServicesInCategory = services.filter(service => 
+        service.seller?.username === currentUser.username && 
+        service.category === serviceData.category
+      );
+
+      if (userServicesInCategory.length > 0) {
+        alert('You can only have one service listing per category. Please edit your existing service or choose a different category.');
+        setShowCreateModal(false);
+        return;
+      }
+
       // No need for FormData since we're just sending JSON
       console.log('Submitting service with data:', serviceData);
 

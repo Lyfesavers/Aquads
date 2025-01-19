@@ -100,6 +100,18 @@ router.post('/', auth, async (req, res) => {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
+    // Check if user already has a service in this category
+    const existingService = await Service.findOne({
+      seller: req.user.userId,
+      category: category
+    });
+
+    if (existingService) {
+      return res.status(400).json({ 
+        message: 'You can only have one service listing per category. Please edit your existing service or choose a different category.' 
+      });
+    }
+
     const service = new Service({
       title,
       description,
@@ -107,8 +119,8 @@ router.post('/', auth, async (req, res) => {
       price: parseFloat(price),
       deliveryTime,
       requirements: requirements || '',
-      image, // Use the image URL directly
-      seller: req.user.userId // Use userId from auth middleware
+      image,
+      seller: req.user.userId
     });
 
     console.log('Service object created:', service);
