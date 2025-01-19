@@ -5,7 +5,7 @@ import { createService, fetchServices } from '../services/api';
 import { API_URL } from '../services/api';
 
 const getImageUrl = (imagePath) => {
-  if (!imagePath) return ''; // Return empty string if no image
+  if (!imagePath) return 'https://via.placeholder.com/400x300?text=No+Image'; // Default image for missing images
   if (imagePath.startsWith('http')) return imagePath; // Return as is if it's already a full URL
   return `https://aquads.onrender.com${imagePath}`; // Prepend the backend URL for relative paths
 };
@@ -234,7 +234,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredServices.length > 0 ? (
                 filteredServices.map(service => (
-                  <div key={service.id} className="bg-gray-800/50 backdrop-blur-sm rounded-lg overflow-hidden group hover:shadow-lg hover:shadow-indigo-500/20 transition-all duration-300">
+                  <div key={service._id} className="bg-gray-800/50 backdrop-blur-sm rounded-lg overflow-hidden group hover:shadow-lg hover:shadow-indigo-500/20 transition-all duration-300">
                     <div className="aspect-w-16 aspect-h-9 relative">
                       <img 
                         src={getImageUrl(service.image)}
@@ -250,19 +250,19 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                       <div className="flex items-center gap-3 mb-3">
                         <img 
                           src={getImageUrl(service.seller?.image)}
-                          alt={service.seller?.username}
-                          className="w-10 h-10 rounded-full"
+                          alt={service.seller?.username || 'Seller'}
+                          className="w-10 h-10 rounded-full object-cover"
                           onError={(e) => {
                             console.error('Seller image failed to load:', service.seller?.image);
                             e.target.src = 'https://via.placeholder.com/40x40?text=User';
                           }}
                         />
                         <div>
-                          <h4 className="font-medium">{service.seller?.name}</h4>
+                          <h4 className="font-medium">{service.seller?.username}</h4>
                           <div className="flex items-center text-sm text-gray-400">
                             <span className="text-yellow-500">★</span>
-                            <span className="ml-1">{service.seller?.rating}</span>
-                            <span className="ml-1">({service.seller?.reviews})</span>
+                            <span className="ml-1">{service.seller?.rating || '0.0'}</span>
+                            <span className="ml-1">({service.seller?.reviews || '0'})</span>
                           </div>
                         </div>
                       </div>
