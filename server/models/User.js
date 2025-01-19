@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema({
   },
   image: {
     type: String,
-    default: '/uploads/default-avatar.png'
+    default: 'https://placehold.co/400x400?text=User'
   },
   isAdmin: {
     type: Boolean,

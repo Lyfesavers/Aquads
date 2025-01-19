@@ -253,11 +253,10 @@ app.post('/api/users/login', async (req, res) => {
 });
 
 // Register
-app.post('/api/users/register', upload.single('image'), async (req, res) => {
+app.post('/api/users/register', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password, image } = req.body;
     console.log('Registration attempt with username:', username);
-    console.log('File upload:', req.file);
     
     // Check if username exists (case-insensitive)
     const existingUser = await User.findOne({ 
@@ -272,7 +271,7 @@ app.post('/api/users/register', upload.single('image'), async (req, res) => {
     const user = new User({
       username,
       password,
-      image: req.file ? req.file.location : undefined,
+      image: image || 'https://placehold.co/400x400?text=User',
       isAdmin: username === 'admin'
     });
 
