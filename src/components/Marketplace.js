@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const Marketplace = () => {
+const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const categories = [
     { id: 'smart-contract', name: 'Smart Contract Development', icon: '⚡' },
     { id: 'audit', name: 'Security Auditing', icon: '🔒' },
@@ -26,8 +26,34 @@ const Marketplace = () => {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500">
-                Aquaduct
+                AQUADUCT
               </span>
+              {currentUser ? (
+                <>
+                  <span className="text-blue-300">Welcome, {currentUser.username}!</span>
+                  <button
+                    onClick={onLogout}
+                    className="bg-red-500/80 hover:bg-red-600/80 px-4 py-2 rounded shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={onLogin}
+                    className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                  >
+                    Login
+                  </button>
+                  <button
+                    onClick={onCreateAccount}
+                    className="bg-green-500/80 hover:bg-green-600/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
+                  >
+                    Create Account
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

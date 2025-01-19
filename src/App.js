@@ -636,7 +636,14 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/marketplace" element={<Marketplace />} />
+        <Route path="/marketplace" element={
+          <Marketplace 
+            currentUser={currentUser}
+            onLogin={() => setShowLoginModal(true)}
+            onLogout={handleLogout}
+            onCreateAccount={() => setShowCreateAccountModal(true)}
+          />
+        } />
         <Route path="/" element={
           <div className="bg-gradient-to-br from-gray-900 to-black text-white overflow-y-auto h-screen">
             {/* Background stays fixed */}
@@ -873,7 +880,7 @@ function App() {
             )}
 
             {/* Notifications */}
-            <div className="fixed bottom-4 right-4 space-y-2">
+            <div className="fixed bottom-4 right-4 space-y-2 z-50">
               {notifications.map(({ id, message, type }) => (
                 <div
                   key={id}
