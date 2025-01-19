@@ -8,30 +8,49 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
     price: '',
     currency: 'ETH',
     deliveryTime: '3',
-    image: null,
+    image: '',
     requirements: ''
   });
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onCreateService(formData);
+  const validateImageUrl = async (url) => {
+    try {
+      const response = await fetch(url);
+      const contentType = response.headers.get('content-type');
+      return contentType.startsWith('image/') && 
+        (contentType.includes('gif') || contentType.includes('png') || contentType.includes('jpeg') || contentType.includes('jpg'));
+    } catch (error) {
+      return false;
+    }
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData(prev => ({ ...prev, image: file }));
-      
-      // Also show preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const previewContainer = document.getElementById('imagePreview');
-        if (previewContainer) {
-          previewContainer.src = reader.result;
-        }
-      };
-      reader.readAsDataURL(file);
+  const handleImageChange = async (e) => {
+    const url = e.target.value;
+    setFormData(prev => ({ ...prev, image: url }));
+    
+    if (url) {
+      const isValid = await validateImageUrl(url);
+      if (isValid) {
+        setPreviewUrl(url);
+        setError('');
+      } else {
+        setPreviewUrl('');
+        setError('Please enter a valid image URL (JPEG, PNG, or GIF)');
+      }
+    } else {
+      setPreviewUrl('');
+      setError('');
     }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!previewUrl) {
+      setError('Please enter a valid image URL');
+      return;
+    }
+    onCreateService(formData);
   };
 
   return (
@@ -135,19 +154,21 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
                   {/* Service Image */}
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Service Image
+                      Service Image URL
                     </label>
                     <input
-                      type="file"
-                      accept="image/*"
+                      type="url"
                       required
+                      placeholder="Enter image URL (JPEG, PNG, or GIF)"
                       className="w-full px-4 py-2 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
+                      value={formData.image}
                       onChange={handleImageChange}
                     />
-                    {formData.image && (
+                    {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+                    {previewUrl && (
                       <div className="mt-2">
                         <img
-                          id="imagePreview"
+                          src={previewUrl}
                           alt="Service preview"
                           className="h-32 w-full object-cover rounded-lg"
                         />
@@ -180,7 +201,12 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
                     </button>
                     <button
                       type="submit"
-                      className="px-4 py-2 bg-indigo-500/80 hover:bg-indigo-600/80 rounded-lg transition-colors text-white"
+                      disabled={!!error}
+                      className={`px-4 py-2 rounded-lg transition-colors text-white ${
+                        error 
+                          ? 'bg-gray-500/80 cursor-not-allowed' 
+                          : 'bg-indigo-500/80 hover:bg-indigo-600/80'
+                      }`}
                     >
                       Create Service
                     </button>

@@ -5,39 +5,52 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
-    image: null
+    image: ''
   });
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const data = new FormData();
-    data.append('username', formData.username);
-    data.append('password', formData.password);
-    if (formData.image) {
-      data.append('image', formData.image);
+  const validateImageUrl = async (url) => {
+    try {
+      const response = await fetch(url);
+      const contentType = response.headers.get('content-type');
+      return contentType.startsWith('image/') && 
+        (contentType.includes('gif') || contentType.includes('png') || contentType.includes('jpeg') || contentType.includes('jpg'));
+    } catch (error) {
+      return false;
     }
-    onCreateAccount(data);
+  };
+
+  const handleImageChange = async (e) => {
+    const url = e.target.value;
+    setFormData(prev => ({ ...prev, image: url }));
+    
+    if (url) {
+      const isValid = await validateImageUrl(url);
+      if (isValid) {
+        setPreviewUrl(url);
+        setError('');
+      } else {
+        setPreviewUrl('');
+        setError('Please enter a valid image URL (JPEG, PNG, or GIF)');
+      }
+    } else {
+      setPreviewUrl('');
+      setError('');
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    onCreateAccount(formData);
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData(prev => ({ ...prev, image: file }));
-      
-      // Show preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const previewContainer = document.getElementById('profileImagePreview');
-        if (previewContainer) {
-          previewContainer.src = reader.result;
-        }
-      };
-      reader.readAsDataURL(file);
+    if (name === 'image') {
+      handleImageChange(e);
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
 
@@ -47,18 +60,20 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
         <h2 className="text-2xl font-bold mb-4">Create Account</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block mb-1">Profile Picture</label>
+            <label className="block mb-1">Profile Picture URL</label>
             <input
-              type="file"
+              type="url"
               name="image"
-              accept="image/*"
-              onChange={handleImageChange}
+              placeholder="Enter image URL (JPEG, PNG, or GIF)"
+              value={formData.image}
+              onChange={handleChange}
               className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            {formData.image && (
+            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+            {previewUrl && (
               <div className="mt-2">
                 <img
-                  id="profileImagePreview"
+                  src={previewUrl}
                   alt="Profile preview"
                   className="w-24 h-24 rounded-full object-cover mx-auto"
                 />

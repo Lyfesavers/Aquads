@@ -20,25 +20,16 @@ const getImageUrl = (imagePath) => {
     return 'https://placehold.co/400x300?text=No+Image';
   }
 
-  // If it's already a valid URL, return as is
+  // If it's already a valid URL (starts with http/https), return as is
   if (imagePath.startsWith('http')) {
     return imagePath;
   }
 
-  try {
-    // Remove any 'uploads/' prefix and leading slashes from the path
-    const cleanPath = imagePath.replace(/^uploads\/?/, '').replace(/^\/+/, '');
-    
-    // Construct the URL using the base API URL
-    const baseUrl = process.env.REACT_APP_API_URL || 'https://aquads.onrender.com';
-    return `${baseUrl}/uploads/${cleanPath}`;
-  } catch (error) {
-    console.error('Error constructing image URL:', error);
-    return 'https://placehold.co/400x300?text=Error';
-  }
+  // Return placeholder for invalid URLs
+  return 'https://placehold.co/400x300?text=No+Image';
 };
 
-// Update image components with better error handling and logging
+// Update image components with simpler URL handling
 const ServiceImage = ({ src, alt, className }) => {
   const [imgSrc, setImgSrc] = useState(getImageUrl(src));
 
@@ -110,27 +101,11 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
   const handleCreateService = async (serviceData) => {
     try {
-      const formData = new FormData();
-      
-      // Append all text fields
-      Object.keys(serviceData).forEach(key => {
-        if (key !== 'image') {
-          formData.append(key, serviceData[key]);
-        }
-      });
+      // No need for FormData since we're just sending JSON
+      console.log('Submitting service with data:', serviceData);
 
-      // Append image file
-      if (serviceData.image) {
-        formData.append('image', serviceData.image);
-      }
-
-      console.log('Submitting service with data:', {
-        ...serviceData,
-        image: serviceData.image ? 'File present' : 'No file'
-      });
-
-      // Create service
-      const newService = await createService(formData);
+      // Create service with direct data
+      const newService = await createService(serviceData);
       console.log('Service created successfully:', newService);
       
       // Update services list
