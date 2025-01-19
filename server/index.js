@@ -15,6 +15,8 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const auth = require('./middleware/auth');
 const errorHandler = require('./middleware/error');
+const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
@@ -312,4 +314,12 @@ if (process.env.NODE_ENV === 'production') {
 app.use(errorHandler); 
 
 // Add pre-flight OPTIONS handling
-app.options('*', cors(corsOptions)); 
+app.options('*', cors(corsOptions));
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); 
