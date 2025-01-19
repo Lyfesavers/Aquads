@@ -29,8 +29,9 @@ const getImageUrl = (imagePath) => {
     // Remove any leading slashes and 'uploads' from the path
     const cleanPath = imagePath.replace(/^\/+/, '').replace(/^uploads\//, '');
     
-    // Construct the full URL using API_URL
-    const baseUrl = API_URL.endsWith('/') ? API_URL : `${API_URL}/`;
+    // Remove /api/ from API_URL if it exists
+    const baseUrl = API_URL.replace('/api/', '/').endsWith('/') ? API_URL.replace('/api/', '/') : `${API_URL.replace('/api/', '/')}/`;
+    
     const fullUrl = `${baseUrl}uploads/${cleanPath}`;
     
     // Log the URL construction for debugging
