@@ -5,9 +5,11 @@ import { createService, fetchServices } from '../services/api';
 import { API_URL } from '../services/api';
 
 const getImageUrl = (imagePath) => {
-  if (!imagePath) return 'https://via.placeholder.com/400x300?text=No+Image'; // Default image for missing images
-  if (imagePath.startsWith('http')) return imagePath; // Return as is if it's already a full URL
-  return `https://aquads.onrender.com${imagePath}`; // Prepend the backend URL for relative paths
+  if (!imagePath) return 'https://placehold.co/400x300?text=No+Image'; // More reliable placeholder service
+  if (imagePath.startsWith('http')) return imagePath;
+  // Ensure the path starts with a forward slash
+  const normalizedPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+  return `${API_URL}${normalizedPath}`; // Use API_URL from api.js
 };
 
 const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
@@ -242,7 +244,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                         className="w-full h-48 object-cover"
                         onError={(e) => {
                           console.error('Image failed to load:', service.image);
-                          e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
+                          e.target.src = 'https://placehold.co/400x300?text=No+Image';
                         }}
                       />
                     </div>
@@ -254,7 +256,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                           className="w-10 h-10 rounded-full object-cover"
                           onError={(e) => {
                             console.error('Seller image failed to load:', service.seller?.image);
-                            e.target.src = 'https://via.placeholder.com/40x40?text=User';
+                            e.target.src = 'https://placehold.co/40x40?text=User';
                           }}
                         />
                         <div>
