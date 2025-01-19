@@ -307,33 +307,19 @@ server.listen(PORT, () => {
 
 if (process.env.NODE_ENV === 'production') {
   app.use((req, res, next) => {
-    if (!req.secure) {
-      return res.redirect(['https://', req.get('Host'), req.url].join(''));
+    // Skip HTTPS redirect for uploads directory
+    if (req.path.startsWith('/uploads/')) {
+      return next();
+    }
+    
+    if (!req.secure && req.get('x-forwarded-proto') !== 'https') {
+      return res.redirect(301, `https://${req.get('Host')}${req.url}`);
     }
     next();
   });
 }
 
-app.use(errorHandler); 
-
-// Add pre-flight OPTIONS handling
-app.options('*', cors(corsOptions));
-
-// Create uploads directory if it doesn't exist
-const uploadsDir = path.join(__dirname, 'uploads');
-try {
-  if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-    console.log('Created uploads directory:', uploadsDir);
-  }
-  // Ensure directory has proper permissions
-  fs.chmodSync(uploadsDir, 0o755);
-  console.log('Uploads directory ready:', uploadsDir);
-} catch (error) {
-  console.error('Error setting up uploads directory:', error);
-}
-
-// Serve static files from uploads directory with no rate limiting
+// Move static file serving before the HTTPS middleware
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Apply a more lenient rate limit to other API routes

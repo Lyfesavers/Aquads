@@ -231,7 +231,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                   <div key={service.id} className="bg-gray-800/50 backdrop-blur-sm rounded-lg overflow-hidden group hover:shadow-lg hover:shadow-indigo-500/20 transition-all duration-300">
                     <div className="aspect-w-16 aspect-h-9 relative">
                       <img 
-                        src={`${API_URL.replace('/api', '')}${service.image}`} 
+                        src={service.image.startsWith('http') ? service.image : `${API_URL.replace('/api', '')}${service.image}`} 
                         alt={service.title}
                         className="w-full h-48 object-cover"
                       />
@@ -239,7 +239,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                     <div className="p-6">
                       <div className="flex items-center gap-3 mb-3">
                         <img 
-                          src={`${API_URL.replace('/api', '')}${service.seller.image}`} 
+                          src={service.seller.image?.startsWith('http') ? service.seller.image : `${API_URL.replace('/api', '')}${service.seller.image}`} 
                           alt={service.seller.username}
                           className="w-10 h-10 rounded-full"
                         />
