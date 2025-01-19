@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import CreateServiceModal from './CreateServiceModal';
 import { createService, fetchServices } from '../services/api';
-import { API_URL } from '../services/api';
+
+const BASE_URL = 'https://aquads.onrender.com';
 
 const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -231,7 +232,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                   <div key={service.id} className="bg-gray-800/50 backdrop-blur-sm rounded-lg overflow-hidden group hover:shadow-lg hover:shadow-indigo-500/20 transition-all duration-300">
                     <div className="aspect-w-16 aspect-h-9 relative">
                       <img 
-                        src={`${API_URL}${service.image}`} 
+                        src={`${BASE_URL}${service.image}`} 
                         alt={service.title}
                         className="w-full h-48 object-cover"
                       />
@@ -239,7 +240,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                     <div className="p-6">
                       <div className="flex items-center gap-3 mb-3">
                         <img 
-                          src={`${API_URL}${service.seller.image}`} 
+                          src={`${BASE_URL}${service.seller.image}`} 
                           alt={service.seller.username}
                           className="w-10 h-10 rounded-full"
                         />

@@ -1,7 +1,7 @@
 import io from 'socket.io-client';
 import axios from 'axios';
 
-const API_URL = 'https://aquads.onrender.com/api';
+export const API_URL = 'https://aquads.onrender.com/api';
 
 export const socket = io('https://aquads.onrender.com', {
   auth: {
