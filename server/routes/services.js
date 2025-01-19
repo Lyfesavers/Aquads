@@ -49,6 +49,7 @@ router.get('/', async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('Error fetching services:', error);
     res.status(500).json({ message: 'Error fetching services', error: error.message });
   }
 });
@@ -95,6 +96,11 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
     
     const { title, description, category, price, deliveryTime, requirements } = req.body;
 
+    // Validate required fields
+    if (!title || !description || !category || !price || !deliveryTime) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
     if (!req.file) {
       console.log('No image file received');
       return res.status(400).json({ message: 'Service image is required' });
@@ -106,9 +112,9 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
       category,
       price: parseFloat(price),
       deliveryTime,
-      requirements,
-      image: req.file.location,
-      seller: req.user._id
+      requirements: requirements || '',
+      image: req.file.location, // This will be the URL path to the image
+      seller: req.user.userId // Use userId from auth middleware
     });
 
     console.log('Service object created:', service);
@@ -134,7 +140,7 @@ router.put('/:id', auth, upload.single('image'), async (req, res) => {
       return res.status(404).json({ message: 'Service not found' });
     }
 
-    if (service.seller.toString() !== req.user._id.toString()) {
+    if (service.seller.toString() !== req.user.userId) {
       return res.status(403).json({ message: 'Not authorized to update this service' });
     }
 
@@ -152,6 +158,7 @@ router.put('/:id', auth, upload.single('image'), async (req, res) => {
 
     res.json(service);
   } catch (error) {
+    console.error('Error updating service:', error);
     res.status(500).json({ message: 'Error updating service', error: error.message });
   }
 });
@@ -164,13 +171,14 @@ router.delete('/:id', auth, async (req, res) => {
       return res.status(404).json({ message: 'Service not found' });
     }
 
-    if (service.seller.toString() !== req.user._id.toString()) {
+    if (service.seller.toString() !== req.user.userId) {
       return res.status(403).json({ message: 'Not authorized to delete this service' });
     }
 
     await service.deleteOne();
     res.json({ message: 'Service deleted successfully' });
   } catch (error) {
+    console.error('Error deleting service:', error);
     res.status(500).json({ message: 'Error deleting service', error: error.message });
   }
 });
