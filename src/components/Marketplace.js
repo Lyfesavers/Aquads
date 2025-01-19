@@ -21,33 +21,48 @@ const getImageUrl = (imagePath) => {
   }
 
   // If it's already a valid URL, return as is
-  if (isValidUrl(imagePath)) {
+  if (imagePath.startsWith('http')) {
     return imagePath;
   }
 
   try {
-    // Remove any leading slashes and 'uploads' from the path
-    const cleanPath = imagePath.replace(/^\/+/, '').replace(/^uploads\//, '');
+    // Ensure we have a clean path without any leading slashes
+    const cleanPath = imagePath.replace(/^\/+/, '');
     
-    // Remove /api/ from API_URL if it exists
-    const baseUrl = API_URL.replace('/api/', '/').endsWith('/') ? API_URL.replace('/api/', '/') : `${API_URL.replace('/api/', '/')}/`;
-    
-    const fullUrl = `${baseUrl}uploads/${cleanPath}`;
-    
-    // Log the URL construction for debugging
-    console.debug('Image URL construction:', {
-      originalPath: imagePath,
-      cleanPath,
-      baseUrl,
-      fullUrl
-    });
-    
-    return fullUrl;
+    // Construct the URL using the base API URL
+    return `${process.env.REACT_APP_API_URL || 'https://aquads.onrender.com'}/uploads/${cleanPath}`;
   } catch (error) {
     console.error('Error constructing image URL:', error);
     return 'https://placehold.co/400x300?text=Error';
   }
 };
+
+// Update image components with better error handling and logging
+const ServiceImage = ({ src, alt, className }) => (
+  <img 
+    src={getImageUrl(src)}
+    alt={alt}
+    className={className}
+    onError={(e) => {
+      console.warn(`Image failed to load: ${e.target.src}`);
+      e.target.onerror = null; // Prevent infinite loop
+      e.target.src = 'https://placehold.co/400x300?text=No+Image';
+    }}
+  />
+);
+
+const UserImage = ({ src, alt, className }) => (
+  <img 
+    src={getImageUrl(src)}
+    alt={alt}
+    className={className}
+    onError={(e) => {
+      console.warn(`User image failed to load: ${e.target.src}`);
+      e.target.onerror = null; // Prevent infinite loop
+      e.target.src = 'https://placehold.co/40x40?text=User';
+    }}
+  />
+);
 
 const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -275,30 +290,18 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                 filteredServices.map(service => (
                   <div key={service._id} className="bg-gray-800/50 backdrop-blur-sm rounded-lg overflow-hidden group hover:shadow-lg hover:shadow-indigo-500/20 transition-all duration-300">
                     <div className="aspect-w-16 aspect-h-9 relative">
-                      <img 
-                        src={getImageUrl(service.image)}
+                      <ServiceImage 
+                        src={service.image}
                         alt={service.title}
                         className="w-full h-48 object-cover"
-                        onError={(e) => {
-                          const originalSrc = e.target.src;
-                          console.warn(`Image failed to load: ${originalSrc}. Using fallback.`);
-                          e.target.onerror = null;
-                          e.target.src = 'https://placehold.co/400x300?text=No+Image';
-                        }}
                       />
                     </div>
                     <div className="p-6">
                       <div className="flex items-center gap-3 mb-3">
-                        <img 
-                          src={getImageUrl(service.seller?.image)}
+                        <UserImage 
+                          src={service.seller?.image}
                           alt={service.seller?.username || 'Seller'}
                           className="w-10 h-10 rounded-full object-cover"
-                          onError={(e) => {
-                            const originalSrc = e.target.src;
-                            console.warn(`Seller image failed to load: ${originalSrc}. Using fallback.`);
-                            e.target.onerror = null;
-                            e.target.src = 'https://placehold.co/40x40?text=User';
-                          }}
                         />
                         <div>
                           <h4 className="font-medium">{service.seller?.username}</h4>
