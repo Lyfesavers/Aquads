@@ -61,12 +61,11 @@ app.use(helmet({
 // Add rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'production' ? 100 : 1000, // More lenient in development
+  max: process.env.NODE_ENV === 'production' ? 1000 : 5000, // Increased limit
   message: 'Too many requests from this IP, please try again later'
 });
-app.use(limiter);
 
-// Apply rate limiting to specific routes only
+// Apply rate limiting only to specific routes
 app.use('/api/login', limiter);
 app.use('/api/register', limiter);
 
@@ -334,5 +333,14 @@ try {
   console.error('Error setting up uploads directory:', error);
 }
 
-// Serve static files from uploads directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); 
+// Serve static files from uploads directory with no rate limiting
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Apply a more lenient rate limit to other API routes
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: process.env.NODE_ENV === 'production' ? 2000 : 10000,
+  message: 'Too many API requests from this IP, please try again later'
+});
+
+app.use('/api', apiLimiter); 
