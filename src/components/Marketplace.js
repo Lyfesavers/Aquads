@@ -140,6 +140,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   };
 
   const handleDeleteService = async (serviceId) => {
+    // First check if user is logged in
+    if (!currentUser) {
+      alert('Please log in to delete your service');
+      return;
+    }
+
     if (!window.confirm('Are you sure you want to delete this service?')) {
       return;
     }
@@ -147,7 +153,9 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        throw new Error('No authentication token found');
+        alert('You need to be logged in to delete a service. Please log in again.');
+        onLogout(); // Force logout since token is missing
+        return;
       }
 
       const response = await fetch(`${API_URL}/services/${serviceId}`, {
@@ -157,6 +165,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
           'Content-Type': 'application/json'
         }
       });
+
+      if (response.status === 401) {
+        alert('Your session has expired. Please log in again.');
+        onLogout(); // Force logout on authentication error
+        return;
+      }
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -168,7 +182,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       alert('Service deleted successfully');
     } catch (error) {
       console.error('Error deleting service:', error);
-      alert(error.message || 'Failed to delete service. Please try again.');
+      if (error.message.includes('authentication')) {
+        alert('Authentication error. Please log in again.');
+        onLogout();
+      } else {
+        alert(error.message || 'Failed to delete service. Please try again.');
+      }
     }
   };
 
