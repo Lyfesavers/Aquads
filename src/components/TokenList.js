@@ -102,21 +102,24 @@ const TokenList = ({ currentUser, showNotification }) => {
       const response = await fetch(`${API_URL}/api/tokens`);
       
       if (!response.ok) {
-        throw new Error('Failed to fetch tokens');
+        throw new Error(`Failed to fetch tokens: ${response.status}`);
       }
       
       const data = await response.json();
       
-      if (Array.isArray(data)) {
-        setTokens(data);
-        setFilteredTokens(data);
-        setError(null);
+      if (!Array.isArray(data)) {
+        throw new Error('Invalid response format');
       }
+
+      setTokens(data);
+      setFilteredTokens(data);
+      setError(null);
+
     } catch (error) {
       console.error('Error fetching tokens:', error);
-      // Only show error if we have no tokens to display
-      if (tokens.length === 0) {
-        setError('Failed to load tokens');
+      // Only show error if we have no tokens to display and this isn't a background update
+      if (tokens.length === 0 && !isBackgroundUpdate) {
+        setError('Failed to load tokens. Please try again in a few minutes.');
       }
     } finally {
       if (!isBackgroundUpdate) {
