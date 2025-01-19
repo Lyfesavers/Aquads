@@ -159,25 +159,21 @@ export const verifyToken = async () => {
 };
 
 // Register user
-export const registerUser = async (credentials) => {
+export const registerUser = async (formData) => {
   try {
-    const response = await fetch(`${API_URL}/users/register`, {
-      method: 'POST',
+    const response = await axios.post(`${API_URL}/users/register`, formData, {
       headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username: credentials.username,
-        password: credentials.password
-      })
+        'Content-Type': 'multipart/form-data'
+      }
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Registration failed');
+    if (response.data) {
+      // Update socket auth
+      socket.auth = { token: response.data.token };
+      socket.connect();
     }
 
-    return response.json();
+    return response.data;
   } catch (error) {
     console.error('Registration error:', error);
     throw error;

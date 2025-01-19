@@ -339,15 +339,16 @@ function App() {
     showNotification('Successfully logged out!', 'success');
   };
 
-  const handleCreateAccount = async (userData) => {
+  const handleCreateAccount = async (formData) => {
     try {
-      const user = await registerUser(userData);
+      const user = await registerUser(formData);
       setCurrentUser(user);
+      localStorage.setItem('currentUser', JSON.stringify(user));
       setShowCreateAccountModal(false);
       showNotification('Account created successfully!', 'success');
     } catch (error) {
       console.error('Account creation error:', error);
-      showNotification('Failed to create account. Please try again.', 'error');
+      showNotification(error.response?.data?.message || 'Failed to create account. Please try again.', 'error');
     }
   };
 
