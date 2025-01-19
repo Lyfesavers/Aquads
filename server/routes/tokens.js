@@ -138,26 +138,14 @@ router.get('/', async (req, res) => {
       }));
 
       res.json(tokens);
-      
-      // Update cache in background if needed
-      if (Date.now() - lastUpdateTime >= UPDATE_INTERVAL) {
-        updateTokenCache().catch(console.error);
-      }
       return;
     }
 
-    // If no tokens in DB, force an update
-    console.log('No tokens in database, forcing update...');
-    const freshTokens = await updateTokenCache(true);
-    
-    if (!freshTokens || freshTokens.length === 0) {
-      return res.status(404).json({ 
-        error: 'No tokens available',
-        message: 'Please try again in a few minutes'
-      });
-    }
-
-    res.json(freshTokens);
+    // If no tokens in DB, return empty array with 404
+    return res.status(404).json({ 
+      error: 'No tokens available',
+      message: 'Please try again in a few minutes'
+    });
   } catch (error) {
     console.error('Error in /api/tokens:', error);
     res.status(500).json({ 

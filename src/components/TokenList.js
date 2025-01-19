@@ -235,6 +235,10 @@ const TokenList = ({ currentUser, showNotification }) => {
         }
       );
 
+      if (response.status === 429) {
+        throw new Error('Rate limit reached. Please try again later.');
+      }
+
       if (!response.ok) {
         throw new Error('Failed to fetch chart data');
       }
@@ -244,6 +248,9 @@ const TokenList = ({ currentUser, showNotification }) => {
       
       if (chartRef.current) {
         const ctx = chartRef.current.getContext('2d');
+        if (chartInstance) {
+          chartInstance.destroy();
+        }
         const newChart = new Chart(ctx, {
           type: 'line',
           data: {
@@ -271,7 +278,11 @@ const TokenList = ({ currentUser, showNotification }) => {
       }
     } catch (error) {
       console.error('Chart data error:', error);
-      showNotification('Chart data temporarily unavailable', 'warning');
+      if (error.message.includes('Rate limit')) {
+        showNotification('Chart data temporarily unavailable due to rate limit', 'warning');
+      } else {
+        showNotification('Chart data temporarily unavailable', 'warning');
+      }
     }
   };
 
