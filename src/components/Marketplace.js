@@ -139,6 +139,31 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     setShowProfileModal(false);
   };
 
+  const handleDeleteService = async (serviceId) => {
+    if (!window.confirm('Are you sure you want to delete this service?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/services/${serviceId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete service');
+      }
+
+      // Remove the deleted service from the state
+      setServices(prevServices => prevServices.filter(service => service._id !== serviceId));
+    } catch (error) {
+      console.error('Error deleting service:', error);
+      alert('Failed to delete service. Please try again.');
+    }
+  };
+
   // Filter services based on selected category
   const filteredServices = selectedCategory 
     ? services.filter(service => service.category === selectedCategory)
@@ -305,6 +330,14 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                         alt={service.title}
                         className="w-full h-48 object-cover"
                       />
+                      {currentUser && service.seller?.username === currentUser.username && (
+                        <button
+                          onClick={() => handleDeleteService(service._id)}
+                          className="absolute top-2 right-2 bg-red-500/80 hover:bg-red-600/80 text-white px-3 py-1 rounded-lg shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm"
+                        >
+                          Delete
+                        </button>
+                      )}
                     </div>
                     <div className="p-6">
                       <div className="flex items-center gap-3 mb-3">
