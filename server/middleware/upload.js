@@ -1,19 +1,18 @@
 const multer = require('multer');
 const path = require('path');
 
-// Configure multer for handling file uploads
+// Configure storage
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, '../uploads/')); // Use absolute path
+    cb(null, path.join(__dirname, '../uploads/'));
   },
   filename: function (req, file, cb) {
-    // Create unique filename
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    cb(null, uniqueSuffix + path.extname(file.originalname));
   }
 });
 
-// File filter to only allow images
+// File filter
 const fileFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('image/')) {
     cb(null, true);
@@ -22,7 +21,7 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Create multer instance with configuration
+// Create multer instance
 const upload = multer({
   storage: storage,
   limits: {
@@ -31,25 +30,24 @@ const upload = multer({
   fileFilter: fileFilter
 });
 
-// Wrap multer's single middleware to add file URL
+// Middleware wrapper to add file URL to request
 const uploadMiddleware = (fieldName) => {
   return (req, res, next) => {
     upload.single(fieldName)(req, res, (err) => {
       if (err) {
-        console.error('Upload error:', err);
-        return res.status(400).json({ message: err.message });
+        return res.status(400).json({ error: err.message });
       }
       
       if (req.file) {
-        // Add the file URL to the request using absolute path
+        // Add the file URL to the request
         req.file.location = `/uploads/${req.file.filename}`;
-        console.log('File uploaded successfully:', req.file);
       }
+      
       next();
     });
   };
 };
 
 module.exports = {
-  single: uploadMiddleware
+  single: (fieldName) => uploadMiddleware(fieldName)
 }; 

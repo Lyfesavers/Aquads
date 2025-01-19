@@ -17,6 +17,7 @@ const auth = require('./middleware/auth');
 const errorHandler = require('./middleware/error');
 const path = require('path');
 const fs = require('fs');
+const upload = require('./middleware/upload');
 
 const app = express();
 const server = http.createServer(app);
@@ -236,9 +237,11 @@ app.post('/api/users/login', async (req, res) => {
 });
 
 // Register
-app.post('/api/users/register', async (req, res) => {
+app.post('/api/users/register', upload.single('image'), async (req, res) => {
   try {
     const { username, password } = req.body;
+    console.log('Registration attempt with username:', username);
+    console.log('File upload:', req.file);
     
     // Check if username exists (case-insensitive)
     const existingUser = await User.findOne({ 
@@ -249,14 +252,16 @@ app.post('/api/users/register', async (req, res) => {
       return res.status(400).json({ error: 'Username already exists' });
     }
 
-    // Create new user without hashing password for now
+    // Create new user
     const user = new User({
       username,
-      password, // Store password as plain text like existing users
+      password,
+      image: req.file ? req.file.location : undefined,
       isAdmin: username === 'admin'
     });
 
     await user.save();
+    console.log('User saved successfully');
 
     // Generate token for auto-login
     const token = jwt.sign(
@@ -268,6 +273,7 @@ app.post('/api/users/register', async (req, res) => {
     res.status(201).json({
       username: user.username,
       isAdmin: user.isAdmin,
+      image: user.image,
       token
     });
   } catch (error) {
