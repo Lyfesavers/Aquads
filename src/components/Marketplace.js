@@ -145,22 +145,30 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     }
 
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
       const response = await fetch(`${API_URL}/services/${serviceId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete service');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete service');
       }
 
       // Remove the deleted service from the state
       setServices(prevServices => prevServices.filter(service => service._id !== serviceId));
+      alert('Service deleted successfully');
     } catch (error) {
       console.error('Error deleting service:', error);
-      alert('Failed to delete service. Please try again.');
+      alert(error.message || 'Failed to delete service. Please try again.');
     }
   };
 
