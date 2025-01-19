@@ -42,6 +42,23 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'uploads');
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log('Created uploads directory:', uploadsDir);
+  }
+  // Ensure directory has proper permissions
+  fs.chmodSync(uploadsDir, 0o755);
+  console.log('Uploads directory ready:', uploadsDir);
+} catch (error) {
+  console.error('Error setting up uploads directory:', error);
+}
+
+// Serve static files from uploads directory - move this before other middleware
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Add security headers
 app.use(helmet({
   contentSecurityPolicy: {
@@ -318,9 +335,6 @@ if (process.env.NODE_ENV === 'production') {
     next();
   });
 }
-
-// Move static file serving before the HTTPS middleware
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Apply a more lenient rate limit to other API routes
 const apiLimiter = rateLimit({
