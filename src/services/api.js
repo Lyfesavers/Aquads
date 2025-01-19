@@ -383,30 +383,21 @@ export const fetchServices = async () => {
   }
 };
 
-export const createService = async (serviceData) => {
+export const createService = async (formData) => {
   try {
-    const formData = new FormData();
+    console.log('Creating service with data:', Object.fromEntries(formData));
     
-    // Handle image upload using the same method as your existing image uploads
-    if (serviceData.image) {
-      formData.append('image', serviceData.image);
-    }
-
-    // Append other service data
-    Object.keys(serviceData).forEach(key => {
-      if (key !== 'image') {
-        formData.append(key, serviceData[key]);
-      }
-    });
-
     const response = await axios.post(`${API_URL}/services`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        ...getAuthHeader()
       }
     });
+    
+    console.log('Service creation response:', response.data);
     return response.data;
   } catch (error) {
+    console.error('Service creation error:', error.response?.data || error.message);
     throw error;
   }
 };

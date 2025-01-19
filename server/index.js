@@ -316,8 +316,17 @@ app.options('*', cors(corsOptions));
 
 // Create uploads directory if it doesn't exist
 const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+    console.log('Created uploads directory:', uploadsDir);
+  }
+  // Ensure directory has proper permissions
+  fs.chmodSync(uploadsDir, 0o755);
+  console.log('Uploads directory ready:', uploadsDir);
+} catch (error) {
+  console.error('Error setting up uploads directory:', error);
 }
 
+// Serve static files from uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); 

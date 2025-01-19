@@ -51,14 +51,17 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
       // Append image file
       if (serviceData.image) {
-        // Convert base64 to file
-        const response = await fetch(serviceData.image);
-        const blob = await response.blob();
-        formData.append('image', blob, 'service-image.png');
+        formData.append('image', serviceData.image);
       }
+
+      console.log('Submitting service with data:', {
+        ...serviceData,
+        image: serviceData.image ? 'File present' : 'No file'
+      });
 
       // Create service
       const newService = await createService(formData);
+      console.log('Service created successfully:', newService);
       
       // Update services list
       setServices(prevServices => [newService, ...prevServices]);
@@ -67,7 +70,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       setShowCreateModal(false);
     } catch (error) {
       console.error('Error creating service:', error);
-      alert('Failed to create service. Please try again.');
+      alert(error.response?.data?.message || 'Failed to create service. Please try again.');
     }
   };
 
