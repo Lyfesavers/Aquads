@@ -20,9 +20,15 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setFormData(prev => ({ ...prev, image: file }));
+      
+      // Also show preview
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, image: reader.result }));
+        const previewContainer = document.getElementById('imagePreview');
+        if (previewContainer) {
+          previewContainer.src = reader.result;
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -141,7 +147,7 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
                     {formData.image && (
                       <div className="mt-2">
                         <img
-                          src={formData.image}
+                          id="imagePreview"
                           alt="Service preview"
                           className="h-32 w-full object-cover rounded-lg"
                         />

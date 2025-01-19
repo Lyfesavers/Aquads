@@ -89,9 +89,14 @@ router.get('/category/:categoryId', async (req, res) => {
 // Create a new service
 router.post('/', auth, upload.single('image'), async (req, res) => {
   try {
+    console.log('Service creation request received');
+    console.log('Request body:', req.body);
+    console.log('File:', req.file);
+    
     const { title, description, category, price, deliveryTime, requirements } = req.body;
 
     if (!req.file) {
+      console.log('No image file received');
       return res.status(400).json({ message: 'Service image is required' });
     }
 
@@ -106,11 +111,17 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
       seller: req.user._id
     });
 
+    console.log('Service object created:', service);
+
     await service.save();
+    console.log('Service saved successfully');
+    
     await service.populate('seller', 'username image rating reviews');
+    console.log('Service populated with seller info');
 
     res.status(201).json(service);
   } catch (error) {
+    console.error('Error creating service:', error);
     res.status(500).json({ message: 'Error creating service', error: error.message });
   }
 });

@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import CreateServiceModal from './CreateServiceModal';
+import { createService, fetchServices } from '../services/api';
 
 const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const categories = [
     { id: 'smart-contract', name: 'Smart Contract Development', icon: '⚡' },
@@ -17,71 +21,60 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     { id: 'consulting', name: 'Blockchain Consulting', icon: '💡' }
   ];
 
-  // Sample service data - in real app, this would come from your backend
-  const sampleServices = [
-    {
-      id: 1,
-      title: "I will develop a secure smart contract for your token",
-      description: "Professional smart contract development with security best practices and audit preparation",
-      seller: {
-        name: "CryptoExpert",
-        rating: 4.9,
-        reviews: 127,
-        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=CryptoExpert"
-      },
-      price: 0.5,
-      currency: "ETH",
-      deliveryTime: "3 days",
-      category: "smart-contract",
-      image: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3"
-    },
-    {
-      id: 2,
-      title: "I will audit your smart contract for vulnerabilities",
-      description: "Comprehensive security audit of your smart contracts with detailed report and recommendations",
-      seller: {
-        name: "SecurityPro",
-        rating: 5.0,
-        reviews: 89,
-        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=SecurityPro"
-      },
-      price: 1.2,
-      currency: "ETH",
-      deliveryTime: "5 days",
-      category: "audit",
-      image: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3"
-    },
-    {
-      id: 3,
-      title: "I will create a viral crypto marketing campaign",
-      description: "Strategic marketing campaign to boost your project's visibility and community engagement",
-      seller: {
-        name: "CryptoMarketer",
-        rating: 4.8,
-        reviews: 156,
-        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=CryptoMarketer"
-      },
-      price: 0.8,
-      currency: "ETH",
-      deliveryTime: "7 days",
-      category: "marketing",
-      image: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3"
+  // Load services when component mounts
+  useEffect(() => {
+    loadServices();
+  }, []);
+
+  const loadServices = async () => {
+    try {
+      const data = await fetchServices();
+      setServices(data.services || []);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error loading services:', error);
+      setError('Failed to load services');
+      setLoading(false);
     }
-  ];
+  };
+
+  const handleCreateService = async (serviceData) => {
+    try {
+      const formData = new FormData();
+      
+      // Append all text fields
+      Object.keys(serviceData).forEach(key => {
+        if (key !== 'image') {
+          formData.append(key, serviceData[key]);
+        }
+      });
+
+      // Append image file
+      if (serviceData.image) {
+        // Convert base64 to file
+        const response = await fetch(serviceData.image);
+        const blob = await response.blob();
+        formData.append('image', blob, 'service-image.png');
+      }
+
+      // Create service
+      const newService = await createService(formData);
+      
+      // Update services list
+      setServices(prevServices => [newService, ...prevServices]);
+      
+      // Close modal
+      setShowCreateModal(false);
+    } catch (error) {
+      console.error('Error creating service:', error);
+      alert('Failed to create service. Please try again.');
+    }
+  };
 
   // Filter services based on selected category
   const filteredServices = selectedCategory 
-    ? sampleServices.filter(service => service.category === selectedCategory)
-    : sampleServices;
-
-  const handleCreateService = (serviceData) => {
-    // Here you would typically:
-    // 1. Upload the image to your storage
-    // 2. Send the service data to your backend
-    // 3. Update the local state with the new service
-    console.log('Creating service:', serviceData);
-    setShowCreateModal(false);
-  };
+    ? services.filter(service => service.category === selectedCategory)
+    : services;
 
   return (
     <div className="h-screen overflow-y-auto bg-gradient-to-br from-gray-900 to-black text-white">
