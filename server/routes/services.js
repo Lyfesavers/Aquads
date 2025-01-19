@@ -88,22 +88,16 @@ router.get('/category/:categoryId', async (req, res) => {
 });
 
 // Create a new service
-router.post('/', auth, upload.single('image'), async (req, res) => {
+router.post('/', auth, async (req, res) => {
   try {
     console.log('Service creation request received');
     console.log('Request body:', req.body);
-    console.log('File:', req.file);
     
-    const { title, description, category, price, deliveryTime, requirements } = req.body;
+    const { title, description, category, price, deliveryTime, requirements, image } = req.body;
 
     // Validate required fields
-    if (!title || !description || !category || !price || !deliveryTime) {
+    if (!title || !description || !category || !price || !deliveryTime || !image) {
       return res.status(400).json({ message: 'Missing required fields' });
-    }
-
-    if (!req.file) {
-      console.log('No image file received');
-      return res.status(400).json({ message: 'Service image is required' });
     }
 
     const service = new Service({
@@ -113,7 +107,7 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
       price: parseFloat(price),
       deliveryTime,
       requirements: requirements || '',
-      image: req.file.location, // This will be the URL path to the image
+      image, // Use the image URL directly
       seller: req.user.userId // Use userId from auth middleware
     });
 

@@ -379,13 +379,13 @@ export const fetchServices = async () => {
   }
 };
 
-export const createService = async (formData) => {
+export const createService = async (serviceData) => {
   try {
-    console.log('Creating service with data:', Object.fromEntries(formData));
+    console.log('Creating service with data:', serviceData);
     
-    const response = await axios.post(`${API_URL}/services`, formData, {
+    const response = await axios.post(`${API_URL}/services`, serviceData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        'Content-Type': 'application/json',
         ...getAuthHeader()
       }
     });
