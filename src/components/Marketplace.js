@@ -4,12 +4,39 @@ import CreateServiceModal from './CreateServiceModal';
 import { createService, fetchServices } from '../services/api';
 import { API_URL } from '../services/api';
 
+// Helper function to check if URL is valid
+const isValidUrl = (string) => {
+  try {
+    new URL(string);
+    return true;
+  } catch (_) {
+    return false;
+  }
+};
+
 const getImageUrl = (imagePath) => {
-  if (!imagePath) return 'https://placehold.co/400x300?text=No+Image'; // More reliable placeholder service
-  if (imagePath.startsWith('http')) return imagePath;
-  // Ensure the path starts with a forward slash
-  const normalizedPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
-  return `${API_URL}${normalizedPath}`; // Use API_URL from api.js
+  // If no image path provided, return default placeholder
+  if (!imagePath) {
+    return 'https://placehold.co/400x300?text=No+Image';
+  }
+
+  // If it's already a valid URL, return as is
+  if (isValidUrl(imagePath)) {
+    return imagePath;
+  }
+
+  try {
+    // Ensure the path starts with a forward slash and remove any double slashes
+    const normalizedPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+    const cleanPath = normalizedPath.replace(/\/+/g, '/');
+    
+    // Construct full URL using API_URL
+    const fullUrl = new URL(cleanPath, API_URL).toString();
+    return fullUrl;
+  } catch (error) {
+    console.error('Error constructing image URL:', error);
+    return 'https://placehold.co/400x300?text=Error';
+  }
 };
 
 const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
@@ -243,7 +270,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                         alt={service.title}
                         className="w-full h-48 object-cover"
                         onError={(e) => {
-                          console.error('Image failed to load:', service.image);
+                          console.warn(`Image failed to load: ${service.image}. Using fallback.`);
+                          e.target.onerror = null; // Prevent infinite loop
                           e.target.src = 'https://placehold.co/400x300?text=No+Image';
                         }}
                       />
@@ -255,7 +283,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                           alt={service.seller?.username || 'Seller'}
                           className="w-10 h-10 rounded-full object-cover"
                           onError={(e) => {
-                            console.error('Seller image failed to load:', service.seller?.image);
+                            console.warn(`Seller image failed to load: ${service.seller?.image}. Using fallback.`);
+                            e.target.onerror = null; // Prevent infinite loop
                             e.target.src = 'https://placehold.co/40x40?text=User';
                           }}
                         />
