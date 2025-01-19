@@ -132,6 +132,7 @@ app.use('/api/bumps', bumpRoutes);
 app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/ads', require('./routes/ads'));
 app.use('/api/tokens', require('./routes/tokens'));
+app.use('/api/services', require('./routes/services'));
 
 // Create new ad
 app.post('/api/ads', auth, async (req, res) => {

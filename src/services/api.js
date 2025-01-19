@@ -1,4 +1,5 @@
 import io from 'socket.io-client';
+import axios from 'axios';
 
 const API_URL = 'https://aquads.onrender.com/api';
 
@@ -369,5 +370,101 @@ export const pingServer = async () => {
   } catch (error) {
     console.error('Server ping failed:', error);
     return false;
+  }
+}; 
+
+// Service endpoints
+export const fetchServices = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/services`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const createService = async (serviceData) => {
+  try {
+    const formData = new FormData();
+    
+    // Handle image upload using the same method as your existing image uploads
+    if (serviceData.image) {
+      formData.append('image', serviceData.image);
+    }
+
+    // Append other service data
+    Object.keys(serviceData).forEach(key => {
+      if (key !== 'image') {
+        formData.append(key, serviceData[key]);
+      }
+    });
+
+    const response = await axios.post(`${API_URL}/services`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateService = async (serviceId, serviceData) => {
+  try {
+    const formData = new FormData();
+    
+    if (serviceData.image) {
+      formData.append('image', serviceData.image);
+    }
+
+    Object.keys(serviceData).forEach(key => {
+      if (key !== 'image') {
+        formData.append(key, serviceData[key]);
+      }
+    });
+
+    const response = await axios.put(`${API_URL}/services/${serviceId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteService = async (serviceId) => {
+  try {
+    await axios.delete(`${API_URL}/services/${serviceId}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getServicesByCategory = async (categoryId) => {
+  try {
+    const response = await axios.get(`${API_URL}/services/category/${categoryId}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const searchServices = async (query) => {
+  try {
+    const response = await axios.get(`${API_URL}/services/search`, {
+      params: { q: query }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
   }
 }; 

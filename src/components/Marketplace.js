@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import CreateServiceModal from './CreateServiceModal';
 
 const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const categories = [
     { id: 'smart-contract', name: 'Smart Contract Development', icon: '⚡' },
@@ -71,6 +73,15 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const filteredServices = selectedCategory 
     ? sampleServices.filter(service => service.category === selectedCategory)
     : sampleServices;
+
+  const handleCreateService = (serviceData) => {
+    // Here you would typically:
+    // 1. Upload the image to your storage
+    // 2. Send the service data to your backend
+    // 3. Update the local state with the new service
+    console.log('Creating service:', serviceData);
+    setShowCreateModal(false);
+  };
 
   return (
     <div className="h-screen overflow-y-auto bg-gradient-to-br from-gray-900 to-black text-white">
@@ -201,9 +212,21 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
           <div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold">Featured Services</h2>
-              <button className="px-4 py-2 bg-indigo-500/80 hover:bg-indigo-600/80 rounded-lg transition-colors">
-                List Your Service
-              </button>
+              {currentUser ? (
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="px-4 py-2 bg-indigo-500/80 hover:bg-indigo-600/80 rounded-lg transition-colors"
+                >
+                  List Your Service
+                </button>
+              ) : (
+                <button
+                  onClick={onLogin}
+                  className="px-4 py-2 bg-indigo-500/80 hover:bg-indigo-600/80 rounded-lg transition-colors"
+                >
+                  Login to List Service
+                </button>
+              )}
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredServices.length > 0 ? (
@@ -261,6 +284,15 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
           </div>
         </div>
       </div>
+
+      {/* Create Service Modal */}
+      {showCreateModal && (
+        <CreateServiceModal
+          categories={categories}
+          onClose={() => setShowCreateModal(false)}
+          onCreateService={handleCreateService}
+        />
+      )}
     </div>
   );
 };
