@@ -14,7 +14,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white overflow-x-hidden">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-900 to-black text-white">
       {/* Fixed Background */}
       <div className="fixed inset-0 z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-black"></div>
@@ -67,90 +67,92 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       </nav>
 
       {/* Scrollable Content */}
-      <div className="relative pt-16 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Search and Filters */}
-          <div className="mb-8">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div className="flex-1">
-                <input
-                  type="text"
-                  placeholder="Search services..."
-                  className="w-full px-4 py-2 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-              <div className="flex gap-2">
-                <select className="px-4 py-2 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                  <option value="">All Categories</option>
-                  {categories.map(cat => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                  ))}
-                </select>
-                <select className="px-4 py-2 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                  <option value="newest">Newest First</option>
-                  <option value="rating">Highest Rated</option>
-                  <option value="price-low">Price: Low to High</option>
-                  <option value="price-high">Price: High to Low</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Categories */}
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6">Browse Categories</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {categories.map(category => (
-                <div
-                  key={category.id}
-                  className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg cursor-pointer hover:bg-gray-700/50 transition-all duration-300 group"
-                >
-                  <div className="text-4xl mb-3 transform group-hover:scale-110 transition-transform">{category.icon}</div>
-                  <h3 className="font-medium text-lg">{category.name}</h3>
-                  <p className="text-gray-400 text-sm mt-2">Find expert {category.name.toLowerCase()} services</p>
+      <main className="flex-grow relative z-10 overflow-auto">
+        <div className="pt-20 pb-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Search and Filters */}
+            <div className="mb-8">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    placeholder="Search services..."
+                    className="w-full px-4 py-2 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
                 </div>
-              ))}
+                <div className="flex gap-2">
+                  <select className="px-4 py-2 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="">All Categories</option>
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+                  <select className="px-4 py-2 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="newest">Newest First</option>
+                    <option value="rating">Highest Rated</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                  </select>
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* Featured Services */}
-          <div className="mb-12">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold">Featured Services</h2>
-              <button className="px-4 py-2 bg-indigo-500/80 hover:bg-indigo-600/80 rounded-lg transition-colors">
-                List Your Service
-              </button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg">
-                <p className="text-gray-400 text-center">No services listed yet. Be the first to offer your expertise!</p>
+            {/* Categories */}
+            <div className="mb-12">
+              <h2 className="text-2xl font-bold mb-6">Browse Categories</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {categories.map(category => (
+                  <div
+                    key={category.id}
+                    className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg cursor-pointer hover:bg-gray-700/50 transition-all duration-300 group"
+                  >
+                    <div className="text-4xl mb-3 transform group-hover:scale-110 transition-transform">{category.icon}</div>
+                    <h3 className="font-medium text-lg">{category.name}</h3>
+                    <p className="text-gray-400 text-sm mt-2">Find expert {category.name.toLowerCase()} services</p>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
 
-          {/* How It Works */}
-          <div>
-            <h2 className="text-2xl font-bold mb-6">How It Works</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg">
-                <div className="text-3xl mb-3">🔍</div>
-                <h3 className="font-medium text-lg mb-2">1. Find Services</h3>
-                <p className="text-gray-400">Browse through various crypto and blockchain services offered by professionals</p>
+            {/* Featured Services */}
+            <div className="mb-12">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold">Featured Services</h2>
+                <button className="px-4 py-2 bg-indigo-500/80 hover:bg-indigo-600/80 rounded-lg transition-colors">
+                  List Your Service
+                </button>
               </div>
-              <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg">
-                <div className="text-3xl mb-3">💬</div>
-                <h3 className="font-medium text-lg mb-2">2. Connect</h3>
-                <p className="text-gray-400">Contact service providers and discuss your project requirements</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg">
+                  <p className="text-gray-400 text-center">No services listed yet. Be the first to offer your expertise!</p>
+                </div>
               </div>
-              <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg">
-                <div className="text-3xl mb-3">✨</div>
-                <h3 className="font-medium text-lg mb-2">3. Get It Done</h3>
-                <p className="text-gray-400">Work with professionals and bring your crypto project to life</p>
+            </div>
+
+            {/* How It Works */}
+            <div>
+              <h2 className="text-2xl font-bold mb-6">How It Works</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg">
+                  <div className="text-3xl mb-3">🔍</div>
+                  <h3 className="font-medium text-lg mb-2">1. Find Services</h3>
+                  <p className="text-gray-400">Browse through various crypto and blockchain services offered by professionals</p>
+                </div>
+                <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg">
+                  <div className="text-3xl mb-3">💬</div>
+                  <h3 className="font-medium text-lg mb-2">2. Connect</h3>
+                  <p className="text-gray-400">Contact service providers and discuss your project requirements</p>
+                </div>
+                <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg">
+                  <div className="text-3xl mb-3">✨</div>
+                  <h3 className="font-medium text-lg mb-2">3. Get It Done</h3>
+                  <p className="text-gray-400">Work with professionals and bring your crypto project to life</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };
