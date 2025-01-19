@@ -159,15 +159,22 @@ export const verifyToken = async () => {
 };
 
 // Register user
-export const registerUser = async (formData) => {
+export const registerUser = async (userData) => {
   try {
-    const response = await axios.post(`${API_URL}/users/register`, formData, {
+    console.log('Registering user with data:', userData);
+
+    const response = await axios.post(`${API_URL}/users/register`, userData, {
       headers: {
-        'Content-Type': 'multipart/form-data'
+        'Content-Type': 'application/json'
       }
     });
 
+    console.log('Registration response:', response.data);
+
     if (response.data) {
+      // Store user data in localStorage
+      localStorage.setItem('currentUser', JSON.stringify(response.data));
+      
       // Update socket auth
       socket.auth = { token: response.data.token };
       socket.connect();
@@ -175,8 +182,8 @@ export const registerUser = async (formData) => {
 
     return response.data;
   } catch (error) {
-    console.error('Registration error:', error);
-    throw error;
+    console.error('Registration error:', error.response?.data || error.message);
+    throw error.response?.data || error;
   }
 };
 

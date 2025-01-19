@@ -252,12 +252,27 @@ app.post('/api/users/login', async (req, res) => {
   }
 });
 
+// Add verify token endpoint
+app.get('/api/verify-token', auth, (req, res) => {
+  try {
+    res.json({ valid: true, user: req.user });
+  } catch (error) {
+    console.error('Token verification error:', error);
+    res.status(401).json({ valid: false, error: 'Invalid token' });
+  }
+});
+
 // Register
 app.post('/api/users/register', async (req, res) => {
   try {
     const { username, password, image } = req.body;
     console.log('Registration attempt with username:', username);
+    console.log('Registration data:', { username, image });
     
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password are required' });
+    }
+
     // Check if username exists (case-insensitive)
     const existingUser = await User.findOne({ 
       username: { $regex: new RegExp(`^${username}$`, 'i') }
@@ -276,7 +291,7 @@ app.post('/api/users/register', async (req, res) => {
     });
 
     await user.save();
-    console.log('User saved successfully');
+    console.log('User saved successfully:', { username: user.username, image: user.image });
 
     // Generate token for auto-login
     const token = jwt.sign(
@@ -293,7 +308,11 @@ app.post('/api/users/register', async (req, res) => {
     });
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({ error: 'Registration failed' });
+    res.status(500).json({ 
+      error: 'Registration failed',
+      message: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 
