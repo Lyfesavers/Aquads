@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
+  const [selectedCategory, setSelectedCategory] = useState(null);
+
   const categories = [
     { id: 'smart-contract', name: 'Smart Contract Development', icon: '⚡' },
     { id: 'audit', name: 'Security Auditing', icon: '🔒' },
@@ -12,6 +14,63 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     { id: 'writing', name: 'Technical Writing', icon: '📝' },
     { id: 'consulting', name: 'Blockchain Consulting', icon: '💡' }
   ];
+
+  // Sample service data - in real app, this would come from your backend
+  const sampleServices = [
+    {
+      id: 1,
+      title: "I will develop a secure smart contract for your token",
+      description: "Professional smart contract development with security best practices and audit preparation",
+      seller: {
+        name: "CryptoExpert",
+        rating: 4.9,
+        reviews: 127,
+        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=CryptoExpert"
+      },
+      price: 0.5,
+      currency: "ETH",
+      deliveryTime: "3 days",
+      category: "smart-contract",
+      image: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3"
+    },
+    {
+      id: 2,
+      title: "I will audit your smart contract for vulnerabilities",
+      description: "Comprehensive security audit of your smart contracts with detailed report and recommendations",
+      seller: {
+        name: "SecurityPro",
+        rating: 5.0,
+        reviews: 89,
+        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=SecurityPro"
+      },
+      price: 1.2,
+      currency: "ETH",
+      deliveryTime: "5 days",
+      category: "audit",
+      image: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3"
+    },
+    {
+      id: 3,
+      title: "I will create a viral crypto marketing campaign",
+      description: "Strategic marketing campaign to boost your project's visibility and community engagement",
+      seller: {
+        name: "CryptoMarketer",
+        rating: 4.8,
+        reviews: 156,
+        image: "https://api.dicebear.com/7.x/avataaars/svg?seed=CryptoMarketer"
+      },
+      price: 0.8,
+      currency: "ETH",
+      deliveryTime: "7 days",
+      category: "marketing",
+      image: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3"
+    }
+  ];
+
+  // Filter services based on selected category
+  const filteredServices = selectedCategory 
+    ? sampleServices.filter(service => service.category === selectedCategory)
+    : sampleServices;
 
   return (
     <div className="h-screen overflow-y-auto bg-gradient-to-br from-gray-900 to-black text-white">
@@ -103,7 +162,10 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
               {categories.map(category => (
                 <div
                   key={category.id}
-                  className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg cursor-pointer hover:bg-gray-700/50 transition-all duration-300 group"
+                  className={`bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg cursor-pointer hover:bg-gray-700/50 transition-all duration-300 group ${
+                    selectedCategory === category.id ? 'ring-2 ring-indigo-500' : ''
+                  }`}
+                  onClick={() => setSelectedCategory(category.id)}
                 >
                   <div className="text-4xl mb-3 transform group-hover:scale-110 transition-transform">{category.icon}</div>
                   <h3 className="font-medium text-lg">{category.name}</h3>
@@ -122,9 +184,57 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
               </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg">
-                <p className="text-gray-400 text-center">No services listed yet. Be the first to offer your expertise!</p>
-              </div>
+              {filteredServices.length > 0 ? (
+                filteredServices.map(service => (
+                  <div key={service.id} className="bg-gray-800/50 backdrop-blur-sm rounded-lg overflow-hidden group hover:shadow-lg hover:shadow-indigo-500/20 transition-all duration-300">
+                    <div className="aspect-w-16 aspect-h-9 relative">
+                      <img 
+                        src={service.image} 
+                        alt={service.title}
+                        className="w-full h-48 object-cover"
+                      />
+                    </div>
+                    <div className="p-6">
+                      <div className="flex items-center gap-3 mb-3">
+                        <img 
+                          src={service.seller.image} 
+                          alt={service.seller.name}
+                          className="w-10 h-10 rounded-full"
+                        />
+                        <div>
+                          <h4 className="font-medium">{service.seller.name}</h4>
+                          <div className="flex items-center text-sm text-gray-400">
+                            <span className="text-yellow-500">★</span>
+                            <span className="ml-1">{service.seller.rating}</span>
+                            <span className="ml-1">({service.seller.reviews})</span>
+                          </div>
+                        </div>
+                      </div>
+                      <h3 className="text-lg font-medium mb-2 line-clamp-2 group-hover:text-indigo-400 transition-colors">
+                        {service.title}
+                      </h3>
+                      <p className="text-gray-400 text-sm mb-4 line-clamp-2">
+                        {service.description}
+                      </p>
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-700">
+                        <span className="text-gray-400 text-sm">
+                          Delivered in {service.deliveryTime}
+                        </span>
+                        <div className="text-right">
+                          <span className="text-gray-400 text-sm">Starting at</span>
+                          <p className="text-lg font-medium text-indigo-400">
+                            {service.price} {service.currency}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg">
+                  <p className="text-gray-400 text-center">No services found in this category yet.</p>
+                </div>
+              )}
             </div>
           </div>
 
