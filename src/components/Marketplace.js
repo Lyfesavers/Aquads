@@ -141,17 +141,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
   const handleDeleteService = async (serviceId) => {
     try {
-      // Get token from sessionStorage first, then localStorage as fallback
-      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
-      
+      const token = localStorage.getItem('token');
       if (!token) {
-        console.log('No token found in storage');
         alert('Please log in to delete your service');
         onLogout();
         return;
       }
-
-      console.log('Token found:', token ? 'Yes' : 'No');
 
       if (!window.confirm('Are you sure you want to delete this service?')) {
         return;
@@ -165,32 +160,31 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         }
       });
 
-      console.log('Delete response status:', response.status);
-
-      if (response.status === 401) {
-        console.log('Unauthorized - token might be invalid');
-        alert('Your session has expired. Please log in again.');
-        onLogout();
-        return;
-      }
-
       if (!response.ok) {
+        if (response.status === 401) {
+          alert('Your session has expired. Please log in again.');
+          onLogout();
+          return;
+        }
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to delete service');
       }
 
+      // If delete was successful, update the services list
       setServices(prevServices => prevServices.filter(service => service._id !== serviceId));
       alert('Service deleted successfully');
     } catch (error) {
       console.error('Error deleting service:', error);
-      if (error.message.includes('token') || error.message.includes('unauthorized')) {
-        alert('Authentication error. Please log in again.');
-        onLogout();
-      } else {
-        alert(error.message || 'Failed to delete service. Please try again.');
-      }
+      alert(error.message || 'Failed to delete service. Please try again.');
     }
   };
+
+  // Add useEffect to log token and user state
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    console.log('Current token:', token ? 'exists' : 'not found');
+    console.log('Current user state:', currentUser);
+  }, [currentUser]);
 
   // Filter services based on selected category
   const filteredServices = selectedCategory 
@@ -358,12 +352,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                         alt={service.title}
                         className="w-full h-48 object-cover"
                       />
-                      {console.log('Service owner check:', {
-                        currentUser,
-                        serviceOwner: service.seller?.username,
-                        isOwner: currentUser?.username === service.seller?.username
-                      })}
-                      {currentUser?.username && service.seller?.username && currentUser.username === service.seller.username && (
+                      {currentUser && service.seller?.username === currentUser.username && (
                         <button
                           onClick={() => handleDeleteService(service._id)}
                           className="absolute top-2 right-2 bg-red-500/80 hover:bg-red-600/80 text-white px-3 py-1 rounded-lg shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm z-10"
