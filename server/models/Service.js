@@ -46,6 +46,11 @@ const serviceSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  telegramUsername: {
+    type: String,
+    required: true,
+    trim: true
+  },
   rating: {
     type: Number,
     default: 0,

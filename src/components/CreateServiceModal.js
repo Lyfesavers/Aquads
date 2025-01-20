@@ -9,7 +9,8 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
     currency: 'ETH',
     deliveryTime: '3',
     image: '',
-    requirements: ''
+    requirements: '',
+    telegramUsername: ''
   });
   const [previewUrl, setPreviewUrl] = useState('');
   const [error, setError] = useState('');
@@ -112,6 +113,25 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
                       value={formData.description}
                       onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                     />
+                  </div>
+
+                  {/* Telegram Username */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Telegram Username
+                    </label>
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">@</span>
+                      <input
+                        type="text"
+                        required
+                        placeholder="your_telegram_username"
+                        className="w-full pl-8 px-4 py-2 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
+                        value={formData.telegramUsername}
+                        onChange={(e) => setFormData(prev => ({ ...prev, telegramUsername: e.target.value.replace('@', '') }))}
+                      />
+                    </div>
+                    <p className="text-sm text-gray-400 mt-1">This will be used for buyers to contact you</p>
                   </div>
 
                   {/* Price and Delivery Time */}
