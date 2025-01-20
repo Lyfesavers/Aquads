@@ -99,7 +99,7 @@ serviceSchema.methods.calculateBadge = function() {
     return 'gold';
   } else if (this.reviews >= 50 && this.rating >= 4.5) {
     return 'silver';
-  } else if (this.reviews >= 1 && this.rating >= 4.0) {
+  } else if (this.reviews >= 20 && this.rating >= 4.0) {
     return 'bronze';
   }
   return null;
