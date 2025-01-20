@@ -66,6 +66,29 @@ const UserImage = ({ src, alt, className }) => {
   );
 };
 
+const ServiceBadge = ({ badge }) => {
+  if (!badge) return null;
+
+  const badgeColors = {
+    bronze: 'bg-amber-600',
+    silver: 'bg-gray-400',
+    gold: 'bg-yellow-400'
+  };
+
+  const badgeIcons = {
+    bronze: '🥉',
+    silver: '🥈',
+    gold: '🥇'
+  };
+
+  return (
+    <div className={`absolute top-2 left-2 px-2 py-1 rounded-full ${badgeColors[badge]} text-white text-sm font-medium shadow-lg flex items-center gap-1 backdrop-blur-sm`}>
+      <span>{badgeIcons[badge]}</span>
+      <span className="capitalize">{badge}</span>
+    </div>
+  );
+};
+
 const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -365,6 +388,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                         alt={service.title}
                         className="w-full h-48 object-cover"
                       />
+                      <ServiceBadge badge={service.badge} />
                       {currentUser && service.seller?.username === currentUser.username && (
                         <button
                           onClick={() => handleDeleteService(service._id)}

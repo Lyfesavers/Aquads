@@ -61,6 +61,11 @@ const serviceSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  badge: {
+    type: String,
+    enum: [null, 'bronze', 'silver', 'gold'],
+    default: null
+  },
   seller: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -88,9 +93,24 @@ serviceSchema.index({ category: 1 });
 serviceSchema.index({ seller: 1 });
 serviceSchema.index({ title: 'text', description: 'text' }); // For text search
 
+// Add method to calculate badge
+serviceSchema.methods.calculateBadge = function() {
+  if (this.reviews >= 100 && this.rating >= 4.8) {
+    return 'gold';
+  } else if (this.reviews >= 50 && this.rating >= 4.5) {
+    return 'silver';
+  } else if (this.reviews >= 1 && this.rating >= 4.0) {
+    return 'bronze';
+  }
+  return null;
+};
+
 // Update the updatedAt timestamp before saving
 serviceSchema.pre('save', function(next) {
   this.updatedAt = new Date();
+  if (this.isModified('rating') || this.isModified('reviews')) {
+    this.badge = this.calculateBadge();
+  }
   next();
 });
 

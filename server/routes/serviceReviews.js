@@ -49,15 +49,16 @@ router.post('/', auth, async (req, res) => {
 
     const savedReview = await review.save();
 
-    // Update service rating and review count
+    // Update service rating, review count, and badge
     const allReviews = await ServiceReview.find({ serviceId });
     const totalRating = allReviews.reduce((sum, review) => sum + review.rating, 0);
     const averageRating = totalRating / allReviews.length;
 
-    await Service.findByIdAndUpdate(serviceId, {
-      rating: averageRating,
-      reviews: allReviews.length
-    });
+    const service = await Service.findById(serviceId);
+    service.rating = averageRating;
+    service.reviews = allReviews.length;
+    // Badge will be automatically calculated in the pre-save middleware
+    await service.save();
 
     console.log('Saved service review:', savedReview);
     res.status(201).json(savedReview);
