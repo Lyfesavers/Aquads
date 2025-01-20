@@ -141,8 +141,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
   const handleDeleteService = async (serviceId) => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
+      // Get token from currentUser object
+      if (!currentUser || !currentUser.token) {
         alert('Please log in to delete your service');
         onLogout();
         return;
@@ -155,7 +155,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       const response = await fetch(`${API_URL}/services/${serviceId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${currentUser.token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -179,11 +179,10 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     }
   };
 
-  // Add useEffect to log token and user state
+  // Update useEffect to log the correct token source
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    console.log('Current token:', token ? 'exists' : 'not found');
-    console.log('Current user state:', currentUser);
+    console.log('Current user:', currentUser);
+    console.log('Token available:', currentUser?.token ? 'yes' : 'no');
   }, [currentUser]);
 
   // Filter services based on selected category
