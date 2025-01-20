@@ -46,34 +46,21 @@ const serviceSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
-  seller: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
   rating: {
     type: Number,
     default: 0,
     min: 0,
     max: 5
   },
-  reviews: [{
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
-    },
-    rating: {
-      type: Number,
-      required: true,
-      min: 1,
-      max: 5
-    },
-    comment: String,
-    createdAt: {
-      type: Date,
-      default: Date.now
-    }
-  }],
+  reviews: {
+    type: Number,
+    default: 0
+  },
+  seller: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
   status: {
     type: String,
     enum: ['active', 'inactive', 'pending'],
@@ -87,6 +74,8 @@ const serviceSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
+}, {
+  timestamps: true
 });
 
 // Add indexes for better query performance

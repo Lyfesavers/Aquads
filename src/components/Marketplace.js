@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import CreateServiceModal from './CreateServiceModal';
+import ServiceReviews from './ServiceReviews';
 import { createService, fetchServices } from '../services/api';
 import { API_URL } from '../services/api';
 import ProfileModal from './ProfileModal';
@@ -72,6 +73,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showReviewsModal, setShowReviewsModal] = useState(false);
+  const [selectedService, setSelectedService] = useState(null);
 
   const categories = [
     { id: 'smart-contract', name: 'Smart Contract Development', icon: '⚡' },
@@ -177,6 +180,17 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       console.error('Error deleting service:', error);
       alert(error.message || 'Failed to delete service. Please try again.');
     }
+  };
+
+  const handleShowReviews = (service) => {
+    setSelectedService(service);
+    setShowReviewsModal(true);
+  };
+
+  const showNotification = (message, type = 'info') => {
+    // You can implement this function to show notifications
+    // For now, we'll just use alert
+    alert(message);
   };
 
   // Update useEffect to log the correct token source
@@ -369,11 +383,14 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                         />
                         <div>
                           <h4 className="font-medium">{service.seller?.username}</h4>
-                          <div className="flex items-center text-sm text-gray-400">
+                          <button
+                            onClick={() => handleShowReviews(service)}
+                            className="flex items-center text-sm text-gray-400 hover:text-yellow-500 transition-colors"
+                          >
                             <span className="text-yellow-500">★</span>
-                            <span className="ml-1">{service.seller?.rating || '0.0'}</span>
-                            <span className="ml-1">({service.seller?.reviews || '0'})</span>
-                          </div>
+                            <span className="ml-1">{service.rating || '0.0'}</span>
+                            <span className="ml-1">({service.reviews || '0'} reviews)</span>
+                          </button>
                         </div>
                       </div>
                       <h3 className="text-lg font-medium mb-2 line-clamp-2 group-hover:text-indigo-400 transition-colors">
@@ -421,6 +438,19 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
           currentUser={currentUser}
           onClose={() => setShowProfileModal(false)}
           onProfileUpdate={handleProfileUpdate}
+        />
+      )}
+
+      {/* Reviews Modal */}
+      {showReviewsModal && selectedService && (
+        <ServiceReviews
+          service={selectedService}
+          onClose={() => {
+            setShowReviewsModal(false);
+            setSelectedService(null);
+          }}
+          currentUser={currentUser}
+          showNotification={showNotification}
         />
       )}
     </div>
