@@ -140,21 +140,22 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   };
 
   const handleDeleteService = async (serviceId) => {
-    // First check if user is logged in
-    if (!currentUser) {
-      alert('Please log in to delete your service');
-      return;
-    }
-
-    if (!window.confirm('Are you sure you want to delete this service?')) {
-      return;
-    }
+    console.log('Delete service triggered with:', {
+      serviceId,
+      currentUser,
+      token: localStorage.getItem('token')
+    });
 
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        alert('You need to be logged in to delete a service. Please log in again.');
-        onLogout(); // Force logout since token is missing
+        console.log('No token found in localStorage');
+        alert('Please log in to delete your service');
+        onLogout();
+        return;
+      }
+
+      if (!window.confirm('Are you sure you want to delete this service?')) {
         return;
       }
 
@@ -167,8 +168,9 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       });
 
       if (response.status === 401) {
+        console.log('Unauthorized response from server');
         alert('Your session has expired. Please log in again.');
-        onLogout(); // Force logout on authentication error
+        onLogout();
         return;
       }
 
@@ -177,17 +179,11 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         throw new Error(errorData.message || 'Failed to delete service');
       }
 
-      // Remove the deleted service from the state
       setServices(prevServices => prevServices.filter(service => service._id !== serviceId));
       alert('Service deleted successfully');
     } catch (error) {
       console.error('Error deleting service:', error);
-      if (error.message.includes('authentication')) {
-        alert('Authentication error. Please log in again.');
-        onLogout();
-      } else {
-        alert(error.message || 'Failed to delete service. Please try again.');
-      }
+      alert(error.message || 'Failed to delete service. Please try again.');
     }
   };
 
@@ -357,7 +353,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                         alt={service.title}
                         className="w-full h-48 object-cover"
                       />
-                      {currentUser && service.seller?.username === currentUser.username && (
+                      {console.log('Service owner check:', {
+                        currentUser,
+                        serviceOwner: service.seller?.username,
+                        isOwner: currentUser?.username === service.seller?.username
+                      })}
+                      {currentUser?.username && service.seller?.username && currentUser.username === service.seller.username && (
                         <button
                           onClick={() => handleDeleteService(service._id)}
                           className="absolute top-2 right-2 bg-red-500/80 hover:bg-red-600/80 text-white px-3 py-1 rounded-lg shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm z-10"
