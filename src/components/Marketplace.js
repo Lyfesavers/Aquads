@@ -140,20 +140,18 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   };
 
   const handleDeleteService = async (serviceId) => {
-    console.log('Delete service triggered with:', {
-      serviceId,
-      currentUser,
-      token: localStorage.getItem('token')
-    });
-
     try {
-      const token = localStorage.getItem('token');
+      // Get token from sessionStorage first, then localStorage as fallback
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+      
       if (!token) {
-        console.log('No token found in localStorage');
+        console.log('No token found in storage');
         alert('Please log in to delete your service');
         onLogout();
         return;
       }
+
+      console.log('Token found:', token ? 'Yes' : 'No');
 
       if (!window.confirm('Are you sure you want to delete this service?')) {
         return;
@@ -167,8 +165,10 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         }
       });
 
+      console.log('Delete response status:', response.status);
+
       if (response.status === 401) {
-        console.log('Unauthorized response from server');
+        console.log('Unauthorized - token might be invalid');
         alert('Your session has expired. Please log in again.');
         onLogout();
         return;
@@ -183,7 +183,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       alert('Service deleted successfully');
     } catch (error) {
       console.error('Error deleting service:', error);
-      alert(error.message || 'Failed to delete service. Please try again.');
+      if (error.message.includes('token') || error.message.includes('unauthorized')) {
+        alert('Authentication error. Please log in again.');
+        onLogout();
+      } else {
+        alert(error.message || 'Failed to delete service. Please try again.');
+      }
     }
   };
 
