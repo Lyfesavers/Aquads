@@ -93,10 +93,10 @@ router.post('/', auth, async (req, res) => {
     console.log('Service creation request received');
     console.log('Request body:', req.body);
     
-    const { title, description, category, price, deliveryTime, requirements, image } = req.body;
+    const { title, description, category, price, deliveryTime, requirements, image, telegramUsername } = req.body;
 
     // Validate required fields
-    if (!title || !description || !category || !price || !deliveryTime || !image) {
+    if (!title || !description || !category || !price || !deliveryTime || !image || !telegramUsername) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
@@ -120,6 +120,7 @@ router.post('/', auth, async (req, res) => {
       deliveryTime,
       requirements: requirements || '',
       image,
+      telegramUsername: telegramUsername.replace('@', ''), // Remove @ if present
       seller: req.user.userId
     });
 
@@ -153,6 +154,11 @@ router.put('/:id', auth, upload.single('image'), async (req, res) => {
     const updates = { ...req.body };
     if (req.file) {
       updates.image = req.file.location;
+    }
+
+    // Handle Telegram username update
+    if (updates.telegramUsername) {
+      updates.telegramUsername = updates.telegramUsername.replace('@', '');
     }
 
     Object.keys(updates).forEach(key => {

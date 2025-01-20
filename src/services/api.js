@@ -379,28 +379,38 @@ export const pingServer = async () => {
 // Service endpoints
 export const fetchServices = async () => {
   try {
-    const response = await axios.get(`${API_URL}/services`);
-    return response.data;
+    const response = await fetch(`${API_URL}/services`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch services');
+    }
+    return response.json();
   } catch (error) {
+    console.error('Error fetching services:', error);
     throw error;
   }
 };
 
+// Create service
 export const createService = async (serviceData) => {
+  console.log('Creating service with data:', serviceData);
   try {
-    console.log('Creating service with data:', serviceData);
-    
-    const response = await axios.post(`${API_URL}/services`, serviceData, {
+    const response = await fetch(`${API_URL}/services`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         ...getAuthHeader()
-      }
+      },
+      body: JSON.stringify(serviceData)
     });
-    
-    console.log('Service creation response:', response.data);
-    return response.data;
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to create service');
+    }
+
+    return response.json();
   } catch (error) {
-    console.error('Service creation error:', error.response?.data || error.message);
+    console.error('Service creation error:', error);
     throw error;
   }
 };
