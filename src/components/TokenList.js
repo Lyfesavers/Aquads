@@ -315,7 +315,7 @@ const TokenList = ({ currentUser, showNotification }) => {
   return (
     <div className="container mx-auto p-4">
       <Helmet>
-        <title>AQUADS - Aquads - All in one Web3 crypto Hub and Freelancer marketplace!</title>
+        <title>AQUADS - All in one Web3 crypto Hub and Freelancer marketplace!</title>
         <meta name="description" content="Advertise your crypto project with our Bubble Ads for free. Track live cryptocurrency prices, market cap, volume, and detailed token information. Get real-time data for Bitcoin, Ethereum, and thousands of altcoins, Find a freelancer for your web3 project." />
         <meta name="keywords" content="cryptocurrency, crypto prices, bitcoin, ethereum, market cap, trading volume, token information" />
         <meta property="og:title" content="AQUADS - Dcentralized bubble advertising, Cryptocurrency Market Data, Freelancer marketplace plus more" />
