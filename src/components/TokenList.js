@@ -315,11 +315,11 @@ const TokenList = ({ currentUser, showNotification }) => {
   return (
     <div className="container mx-auto p-4">
       <Helmet>
-        <title>AQUADS - Decentralized Crypto Bubble Advertising - All in One Real-time Cryptocurrency Website</title>
-        <meta name="description" content="Advertise your crypto project with our Bubble Ads for free. Track live cryptocurrency prices, market cap, volume, and detailed token information. Get real-time data for Bitcoin, Ethereum, and thousands of altcoins." />
+        <title>AQUADS - Aquads - All in one Web3 crypto Hub and Freelancer marketplace!</title>
+        <meta name="description" content="Advertise your crypto project with our Bubble Ads for free. Track live cryptocurrency prices, market cap, volume, and detailed token information. Get real-time data for Bitcoin, Ethereum, and thousands of altcoins, Find a freelancer for your web3 project." />
         <meta name="keywords" content="cryptocurrency, crypto prices, bitcoin, ethereum, market cap, trading volume, token information" />
-        <meta property="og:title" content="AQUADS - Dcentralized bubble advertising and Cryptocurrency Market Data" />
-        <meta property="og:description" content="Bubble Ads and Live cryptocurrency prices, charts, and market data for thousands of tokens." />
+        <meta property="og:title" content="AQUADS - Dcentralized bubble advertising, Cryptocurrency Market Data, Freelancer marketplace plus more" />
+        <meta property="og:description" content="Bubble Ads and Live cryptocurrency prices, charts, and market data for thousands of tokens with a freelancer marketplace for all web3 professionals." />
         <meta property="og:type" content="website" />
         <meta name="twitter:card" content="summary_large_image" />
       </Helmet>
