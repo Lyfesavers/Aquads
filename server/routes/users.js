@@ -8,22 +8,33 @@ const auth = require('../middleware/auth');
 // Register new user
 router.post('/register', async (req, res) => {
   try {
+    console.log('Registration attempt with data:', { 
+      username: req.body.username,
+      email: req.body.email,
+      hasPassword: !!req.body.password,
+      image: req.body.image,
+      referralCode: req.body.referralCode
+    });
+
     const { username, email, password, image, referralCode } = req.body;
 
     // Validate required fields
     if (!username || !email || !password) {
+      console.log('Missing required fields');
       return res.status(400).json({ error: 'Username, email and password are required' });
     }
 
     // Check if username already exists
     const existingUsername = await User.findOne({ username });
     if (existingUsername) {
+      console.log('Username already exists:', username);
       return res.status(400).json({ error: 'Username already exists' });
     }
 
     // Check if email already exists
     const existingEmail = await User.findOne({ email });
     if (existingEmail) {
+      console.log('Email already exists:', email);
       return res.status(400).json({ error: 'Email already exists' });
     }
 
@@ -43,9 +54,18 @@ router.post('/register', async (req, res) => {
       }
     }
 
+    console.log('Creating new user with data:', {
+      username: userData.username,
+      email: userData.email,
+      hasImage: !!userData.image,
+      hasReferral: !!userData.referredBy
+    });
+
     // Create and save new user
     const user = new User(userData);
     await user.save();
+
+    console.log('User created successfully:', user._id);
 
     // Generate JWT token
     const token = jwt.sign(
@@ -64,8 +84,18 @@ router.post('/register', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ error: error.message });
+    console.error('Registration error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
+    
+    // Send appropriate error response
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ error: error.message });
+    }
+    
+    res.status(500).json({ error: 'Registration failed. Please try again.' });
   }
 });
 
