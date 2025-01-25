@@ -10,6 +10,8 @@ router.post('/register', async (req, res) => {
   try {
     const { username, email, password, image, referralCode } = req.body;
 
+    console.log('Registration attempt:', { username, email, hasPassword: !!password, image: !!image, hasReferralCode: !!referralCode });
+
     // Validate required fields
     if (!username || !email || !password) {
       return res.status(400).json({ error: 'Username, email, and password are required' });
@@ -46,6 +48,13 @@ router.post('/register', async (req, res) => {
       referredBy
     });
 
+    console.log('Creating user with data:', {
+      username: user.username,
+      email: user.email,
+      hasImage: !!user.image,
+      referredBy: user.referredBy
+    });
+
     await user.save();
 
     // Generate JWT token
@@ -67,8 +76,11 @@ router.post('/register', async (req, res) => {
 
     res.status(201).json(userData);
   } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ error: 'Error creating user account' });
+    console.error('Registration error details:', error);
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ error: error.message });
+    }
+    res.status(500).json({ error: 'Error creating user account: ' + error.message });
   }
 });
 
