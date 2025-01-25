@@ -343,8 +343,10 @@ function App() {
 
   const handleCreateAccount = async (formData) => {
     try {
-      console.log('Registration attempt with formData:', formData); // Debug log
+      console.log('Raw formData received:', formData); // Debug log
       const { username, email, password, image, referralCode } = formData;
+      
+      console.log('Destructured fields:', { username, email, password: '***', image, referralCode }); // Debug log
       
       // Ensure all required fields are present
       if (!username || !email || !password) {
@@ -353,14 +355,14 @@ function App() {
 
       // Create a new object with all fields to ensure they're included
       const userData = {
-        username: username,
-        email: email,
-        password: password,
-        image: image || undefined,
-        referralCode: referralCode || undefined
+        username,
+        email,
+        password,
+        ...(image && { image }),
+        ...(referralCode && { referralCode })
       };
 
-      console.log('Sending userData to register:', userData); // Debug log
+      console.log('userData object created:', { ...userData, password: '***' }); // Debug log
 
       const user = await register(userData);
       setCurrentUser(user);

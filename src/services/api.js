@@ -161,14 +161,23 @@ export const verifyToken = async () => {
 // Register user
 export const register = async (userData) => {
   try {
-    console.log('Registering with userData:', userData); // Debug log
-    
+    // Ensure we have all required fields
+    const requestBody = {
+      username: userData.username,
+      email: userData.email,
+      password: userData.password
+    };
+
+    // Add optional fields if they exist
+    if (userData.image) requestBody.image = userData.image;
+    if (userData.referralCode) requestBody.referralCode = userData.referralCode;
+
     const response = await fetch(`${API_URL}/users/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(userData)
+      body: JSON.stringify(requestBody)
     });
 
     if (!response.ok) {
