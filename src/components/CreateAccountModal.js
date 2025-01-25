@@ -52,6 +52,8 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
     e.preventDefault();
     setError('');
 
+    console.log('Form data before validation:', formData); // Debug log
+
     // Validate required fields
     if (!formData.username || !formData.email || !formData.password) {
       setError('Username, email and password are required');
@@ -69,6 +71,8 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
       setError('Passwords do not match');
       return;
     }
+
+    console.log('Form data being sent:', formData); // Debug log
 
     try {
       await onCreateAccount(formData);
