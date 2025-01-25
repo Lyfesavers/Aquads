@@ -343,6 +343,7 @@ function App() {
 
   const handleCreateAccount = async (formData) => {
     try {
+      console.log('Registration attempt with formData:', formData); // Debug log
       const user = await register(formData);
       setCurrentUser(user);
       localStorage.setItem('currentUser', JSON.stringify(user));
