@@ -3,22 +3,17 @@ import Modal from './Modal';
 
 const LoginModal = ({ onLogin, onClose, onCreateAccount }) => {
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: ''
   });
   const [error, setError] = useState('');
-
-  const validateEmail = (email) => {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
-  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
 
-    if (!validateEmail(formData.email)) {
-      setError('Please enter a valid email address');
+    if (!formData.username || !formData.password) {
+      setError('Username and password are required');
       return;
     }
 
@@ -28,6 +23,7 @@ const LoginModal = ({ onLogin, onClose, onCreateAccount }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    setError('');
   };
 
   return (
@@ -36,14 +32,14 @@ const LoginModal = ({ onLogin, onClose, onCreateAccount }) => {
         <h2 className="text-2xl font-bold mb-4">Login</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block mb-1">Email</label>
+            <label className="block mb-1">Username</label>
             <input
-              type="email"
-              name="email"
-              value={formData.email}
+              type="text"
+              name="username"
+              value={formData.username}
               onChange={handleChange}
               required
-              placeholder="your@email.com"
+              placeholder="Enter username"
               className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>

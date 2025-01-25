@@ -166,13 +166,7 @@ export const register = async (userData) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        username: userData.username,
-        email: userData.email,
-        password: userData.password,
-        image: userData.image,
-        referralCode: userData.referralCode
-      }),
+      body: JSON.stringify(userData)
     });
 
     if (!response.ok) {
@@ -181,10 +175,10 @@ export const register = async (userData) => {
     }
 
     const data = await response.json();
+    localStorage.setItem('currentUser', JSON.stringify(data));
     localStorage.setItem('token', data.token);
     localStorage.setItem('userId', data.userId);
     localStorage.setItem('username', data.username);
-    localStorage.setItem('currentUser', JSON.stringify(data));
     
     // Update socket auth
     socket.auth = { token: data.token };
