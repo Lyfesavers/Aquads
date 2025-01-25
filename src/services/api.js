@@ -163,27 +163,34 @@ export const registerUser = async (userData) => {
   try {
     console.log('Registering user with data:', userData);
 
-    const response = await axios.post(`${API_URL}/users/register`, userData, {
+    const response = await fetch(`${API_URL}/users/register`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json'
-      }
+      },
+      body: JSON.stringify(userData)
     });
 
-    console.log('Registration response:', response.data);
-
-    if (response.data) {
-      // Store user data in localStorage
-      localStorage.setItem('currentUser', JSON.stringify(response.data));
-      
-      // Update socket auth
-      socket.auth = { token: response.data.token };
-      socket.connect();
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Registration failed:', errorData);
+      throw new Error(errorData.error || 'Registration failed');
     }
 
-    return response.data;
+    const data = await response.json();
+    console.log('Registration response:', data);
+
+    // Store user data in localStorage
+    localStorage.setItem('currentUser', JSON.stringify(data));
+    
+    // Update socket auth
+    socket.auth = { token: data.token };
+    socket.connect();
+
+    return data;
   } catch (error) {
-    console.error('Registration error:', error.response?.data || error.message);
-    throw error.response?.data || error;
+    console.error('Registration error:', error);
+    throw error;
   }
 };
 
