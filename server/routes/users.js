@@ -87,7 +87,8 @@ router.post('/register', async (req, res) => {
     console.error('Registration error details:', {
       message: error.message,
       stack: error.stack,
-      name: error.name
+      name: error.name,
+      code: error.code
     });
     
     // Send appropriate error response
@@ -95,7 +96,16 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: error.message });
     }
     
-    res.status(500).json({ error: 'Registration failed. Please try again.' });
+    if (error.code === 11000) {
+      // Duplicate key error
+      const field = Object.keys(error.keyPattern)[0];
+      return res.status(400).json({ error: `${field} already exists` });
+    }
+    
+    res.status(500).json({ 
+      error: 'Registration failed. Please try again.',
+      details: error.message
+    });
   }
 });
 

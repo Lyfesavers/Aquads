@@ -161,12 +161,19 @@ export const verifyToken = async () => {
 // Register user
 export const register = async (userData) => {
   try {
+    // Store currentUser first
     const response = await fetch(`${API_URL}/users/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(userData)
+      body: JSON.stringify({
+        username: userData.username,
+        email: userData.email,
+        password: userData.password,
+        image: userData.image || undefined,
+        referralCode: userData.referralCode || undefined
+      })
     });
 
     if (!response.ok) {
@@ -175,10 +182,9 @@ export const register = async (userData) => {
     }
 
     const data = await response.json();
+    
+    // Store all user data consistently
     localStorage.setItem('currentUser', JSON.stringify(data));
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('userId', data.userId);
-    localStorage.setItem('username', data.username);
     
     // Update socket auth
     socket.auth = { token: data.token };
