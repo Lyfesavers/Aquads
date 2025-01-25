@@ -846,6 +846,7 @@ function App() {
 
             {showCreateAccountModal && (
               <CreateAccountModal
+                isOpen={showCreateAccountModal}
                 onCreateAccount={handleCreateAccount}
                 onClose={() => setShowCreateAccountModal(false)}
               />
