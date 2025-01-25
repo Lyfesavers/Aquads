@@ -351,13 +351,16 @@ function App() {
         throw new Error('Username, email and password are required');
       }
 
+      // Create a new object with all fields to ensure they're included
       const userData = {
-        username,
-        email,
-        password,
-        ...(image && { image }),
-        ...(referralCode && { referralCode })
+        username: username,
+        email: email,
+        password: password,
+        image: image || undefined,
+        referralCode: referralCode || undefined
       };
+
+      console.log('Sending userData to register:', userData); // Debug log
 
       const user = await register(userData);
       setCurrentUser(user);

@@ -161,27 +161,23 @@ export const verifyToken = async () => {
 // Register user
 export const register = async (userData) => {
   try {
-    console.log('Sending registration data:', userData); // Debug log
+    console.log('Registering with userData:', userData); // Debug log
+    
     const response = await fetch(`${API_URL}/users/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(userData) // Send the entire userData object
+      body: JSON.stringify(userData)
     });
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Registration failed');
+      throw new Error(error.message || 'Registration failed');
     }
 
     const data = await response.json();
     localStorage.setItem('currentUser', JSON.stringify(data));
-    
-    // Update socket auth
-    socket.auth = { token: data.token };
-    socket.connect();
-
     return data;
   } catch (error) {
     console.error('Registration error:', error);
