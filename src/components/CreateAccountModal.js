@@ -51,12 +51,28 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
     e.preventDefault();
     setError('');
 
-    if (!validateEmail(formData.email)) {
-      setError('Please enter a valid email address');
-      return;
-    }
+    try {
+      if (!validateEmail(formData.email)) {
+        setError('Please enter a valid email address');
+        return;
+      }
 
-    onCreateAccount(formData);
+      if (!formData.username || !formData.password) {
+        setError('Username and password are required');
+        return;
+      }
+
+      // Log the data being sent (excluding password)
+      console.log('Submitting registration data:', {
+        ...formData,
+        password: '[REDACTED]'
+      });
+
+      await onCreateAccount(formData);
+    } catch (error) {
+      console.error('Form submission error:', error);
+      setError(error.message || 'Failed to create account. Please try again.');
+    }
   };
 
   const handleChange = (e) => {

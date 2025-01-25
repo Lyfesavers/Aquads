@@ -159,28 +159,44 @@ export const verifyToken = async () => {
 };
 
 // Register user
-export const registerUser = async (userData) => {
+export const register = async (userData) => {
   try {
-    console.log('Registering user with data:', userData);
+    console.log('Registering user with data:', {
+      ...userData,
+      password: '[REDACTED]'
+    });
 
     const response = await fetch(`${API_URL}/users/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(userData)
+      body: JSON.stringify({
+        username: userData.username,
+        email: userData.email,
+        password: userData.password,
+        image: userData.image,
+        referralCode: userData.referralCode
+      })
     });
 
     if (!response.ok) {
       const errorData = await response.json();
       console.error('Registration failed:', errorData);
-      throw new Error(errorData.error || 'Registration failed');
+      throw new Error(errorData.message || errorData.error || 'Registration failed');
     }
 
     const data = await response.json();
-    console.log('Registration response:', data);
+    console.log('Registration successful:', {
+      userId: data.userId,
+      username: data.username,
+      email: data.email
+    });
 
-    // Store user data in localStorage
+    // Store user data
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('userId', data.userId);
+    localStorage.setItem('username', data.username);
     localStorage.setItem('currentUser', JSON.stringify(data));
     
     // Update socket auth
@@ -516,38 +532,6 @@ export const updateUserProfile = async (profileData) => {
     throw error.response?.data || error;
   }
 }; 
-
-export const register = async (userData) => {
-  try {
-    const response = await fetch(`${API_URL}/users/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username: userData.username,
-        email: userData.email,
-        password: userData.password,
-        image: userData.image,
-        referralCode: userData.referralCode
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Registration failed');
-    }
-
-    const data = await response.json();
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('userId', data.userId);
-    localStorage.setItem('username', data.username);
-    return data;
-  } catch (error) {
-    console.error('Registration error:', error);
-    throw error;
-  }
-};
 
 export const login = async (credentials) => {
   try {
