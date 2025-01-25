@@ -12,8 +12,7 @@ const userSchema = new mongoose.Schema({
     required: true,
     unique: true,
     trim: true,
-    lowercase: true,
-    match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email address']
+    lowercase: true
   },
   password: {
     type: String,
@@ -51,26 +50,16 @@ userSchema.pre('save', async function(next) {
   next();
 });
 
-// Only hash password if it's not already hashed
+// Hash password before saving
 userSchema.pre('save', async function(next) {
   if (this.isModified('password')) {
-    // Skip hashing if it's the admin account or test account
-    if (this.isAdmin || this.username === 'test') {
-      return next();
-    }
     try {
-      // Check if password is already hashed
-      if (!this.password.startsWith('$2b$')) {
-        this.password = await bcrypt.hash(this.password, 10);
-      }
-      next();
+      this.password = await bcrypt.hash(this.password, 10);
     } catch (error) {
-      console.error('Password hashing error:', error);
-      next(error);
+      return next(error);
     }
-  } else {
-    next();
   }
+  next();
 });
 
 module.exports = mongoose.model('User', userSchema); 

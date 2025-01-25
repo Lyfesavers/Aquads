@@ -10,17 +10,8 @@ router.post('/register', async (req, res) => {
   try {
     const { username, email, password, image, referralCode } = req.body;
 
-    console.log('Registration request body:', {
-      username,
-      email,
-      hasPassword: !!password,
-      hasImage: !!image,
-      hasReferralCode: !!referralCode
-    });
-
     // Validate required fields
     if (!username || !email || !password) {
-      console.log('Missing required fields:', { username: !!username, email: !!email, password: !!password });
       return res.status(400).json({ error: 'Username, email, and password are required' });
     }
 
@@ -47,35 +38,15 @@ router.post('/register', async (req, res) => {
     }
 
     // Create new user
-    const userData = {
+    const user = new User({
       username,
       email: email.toLowerCase(),
       password,
       image: image || undefined,
       referredBy
-    };
-
-    console.log('Creating user with data:', {
-      ...userData,
-      password: '[REDACTED]'
     });
 
-    const user = new User(userData);
-
-    try {
-      await user.save();
-      console.log('User saved successfully:', user._id);
-    } catch (saveError) {
-      console.error('Error saving user:', saveError);
-      if (saveError.name === 'ValidationError') {
-        return res.status(400).json({ 
-          error: 'Validation failed',
-          message: saveError.message,
-          details: saveError.errors
-        });
-      }
-      throw saveError;
-    }
+    await user.save();
 
     // Generate JWT token
     const token = jwt.sign(
@@ -85,7 +56,7 @@ router.post('/register', async (req, res) => {
     );
 
     // Return user data without password
-    const responseData = {
+    const userData = {
       userId: user._id,
       username: user.username,
       email: user.email,
@@ -94,20 +65,10 @@ router.post('/register', async (req, res) => {
       token
     };
 
-    console.log('Registration successful:', {
-      userId: responseData.userId,
-      username: responseData.username,
-      email: responseData.email
-    });
-
-    res.status(201).json(responseData);
+    res.status(201).json(userData);
   } catch (error) {
-    console.error('Registration error details:', error);
-    res.status(500).json({ 
-      error: 'Error creating user account',
-      message: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
+    console.error('Registration error:', error);
+    res.status(500).json({ error: 'Error creating user account' });
   }
 });
 

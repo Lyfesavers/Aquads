@@ -161,15 +161,10 @@ export const verifyToken = async () => {
 // Register user
 export const register = async (userData) => {
   try {
-    console.log('Registering user with data:', {
-      ...userData,
-      password: '[REDACTED]'
-    });
-
     const response = await fetch(`${API_URL}/users/register`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         username: userData.username,
@@ -177,23 +172,15 @@ export const register = async (userData) => {
         password: userData.password,
         image: userData.image,
         referralCode: userData.referralCode
-      })
+      }),
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Registration failed:', errorData);
-      throw new Error(errorData.message || errorData.error || 'Registration failed');
+      const error = await response.json();
+      throw new Error(error.error || 'Registration failed');
     }
 
     const data = await response.json();
-    console.log('Registration successful:', {
-      userId: data.userId,
-      username: data.username,
-      email: data.email
-    });
-
-    // Store user data
     localStorage.setItem('token', data.token);
     localStorage.setItem('userId', data.userId);
     localStorage.setItem('username', data.username);
