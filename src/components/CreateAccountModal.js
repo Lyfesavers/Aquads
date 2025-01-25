@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
 
-const CreateAccountModal = ({ onCreateAccount, onClose }) => {
+const CreateAccountModal = ({ isOpen, onClose, onCreateAccount }) => {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
     password: '',
+    confirmPassword: '',
     image: '',
     referralCode: ''
   });
@@ -51,27 +52,29 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
     e.preventDefault();
     setError('');
 
+    // Validate required fields
+    if (!formData.username || !formData.email || !formData.password) {
+      setError('Username, email and password are required');
+      return;
+    }
+
+    // Validate email format
+    if (!validateEmail(formData.email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    // Validate password match
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
     try {
-      if (!validateEmail(formData.email)) {
-        setError('Please enter a valid email address');
-        return;
-      }
-
-      if (!formData.username || !formData.password) {
-        setError('Username and password are required');
-        return;
-      }
-
-      // Log the data being sent (excluding password)
-      console.log('Submitting registration data:', {
-        ...formData,
-        password: '[REDACTED]'
-      });
-
       await onCreateAccount(formData);
+      onClose();
     } catch (error) {
-      console.error('Form submission error:', error);
-      setError(error.message || 'Failed to create account. Please try again.');
+      setError(error.message);
     }
   };
 
@@ -82,95 +85,119 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
+    setError('');
   };
 
+  if (!isOpen) return null;
+
   return (
-    <Modal onClose={onClose}>
-      <div className="text-white">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md">
         <h2 className="text-2xl font-bold mb-4">Create Account</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block mb-1">Username</label>
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              Username
+            </label>
             <input
               type="text"
               name="username"
               value={formData.username}
               onChange={handleChange}
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              placeholder="Enter username"
               required
-              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-
-          <div>
-            <label className="block mb-1">Email</label>
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              Email
+            </label>
             <input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              placeholder="Enter email"
               required
-              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="your@email.com"
             />
           </div>
-
-          <div>
-            <label className="block mb-1">Password</label>
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              Password
+            </label>
             <input
               type="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              placeholder="Enter password"
               required
-              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-
-          <div>
-            <label className="block mb-1">Profile Picture URL</label>
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              Confirm Password
+            </label>
             <input
-              type="url"
+              type="password"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              placeholder="Confirm password"
+              required
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              Profile Image URL (optional)
+            </label>
+            <input
+              type="text"
               name="image"
-              placeholder="Enter image URL (JPEG, PNG, or GIF)"
               value={formData.image}
               onChange={handleChange}
-              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              placeholder="Enter image URL"
             />
-            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
-            {previewUrl && (
-              <div className="mt-2">
-                <img
-                  src={previewUrl}
-                  alt="Profile preview"
-                  className="w-24 h-24 rounded-full object-cover mx-auto"
-                />
-              </div>
-            )}
           </div>
-
-          <div>
-            <label className="block mb-1">Referral Code (Optional)</label>
+          <div className="mb-6">
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              Referral Code (optional)
+            </label>
             <input
               type="text"
               name="referralCode"
               value={formData.referralCode}
               onChange={handleChange}
-              placeholder="Enter referral code if you have one"
-              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              placeholder="Enter referral code"
             />
           </div>
-
-          <div className="flex justify-end">
+          {error && (
+            <div className="mb-4 text-red-500 text-sm">{error}</div>
+          )}
+          <div className="flex items-center justify-between">
             <button
               type="submit"
-              className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded"
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
             >
               Create Account
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+            >
+              Cancel
             </button>
           </div>
         </form>
       </div>
-    </Modal>
+    </div>
   );
 };
 

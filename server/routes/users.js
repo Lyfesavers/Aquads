@@ -5,14 +5,14 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 
-// Register a new user
+// Register new user
 router.post('/register', async (req, res) => {
   try {
     const { username, email, password, image, referralCode } = req.body;
 
     // Validate required fields
     if (!username || !email || !password) {
-      return res.status(400).json({ error: 'Username, email, and password are required' });
+      return res.status(400).json({ error: 'Username, email and password are required' });
     }
 
     // Check if username already exists
@@ -22,30 +22,29 @@ router.post('/register', async (req, res) => {
     }
 
     // Check if email already exists
-    const existingEmail = await User.findOne({ email: email.toLowerCase() });
+    const existingEmail = await User.findOne({ email });
     if (existingEmail) {
       return res.status(400).json({ error: 'Email already exists' });
     }
 
-    // Validate referral code if provided
-    let referredBy = null;
+    // Create user object
+    const userData = {
+      username,
+      email,
+      password,
+      image: image || undefined
+    };
+
+    // If referral code provided, find referring user
     if (referralCode) {
-      const referrer = await User.findOne({ referralCode });
-      if (!referrer) {
-        return res.status(400).json({ error: 'Invalid referral code' });
+      const referringUser = await User.findOne({ referralCode });
+      if (referringUser) {
+        userData.referredBy = referringUser._id;
       }
-      referredBy = referrer.username;
     }
 
-    // Create new user
-    const user = new User({
-      username,
-      email: email.toLowerCase(),
-      password,
-      image: image || undefined,
-      referredBy
-    });
-
+    // Create and save new user
+    const user = new User(userData);
     await user.save();
 
     // Generate JWT token
@@ -55,38 +54,41 @@ router.post('/register', async (req, res) => {
       { expiresIn: '24h' }
     );
 
-    // Return user data without password
-    const userData = {
+    // Return user data and token
+    res.status(201).json({
       userId: user._id,
       username: user.username,
       email: user.email,
       image: user.image,
-      referralCode: user.referralCode,
       token
-    };
+    });
 
-    res.status(201).json(userData);
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({ error: 'Error creating user account' });
+    res.status(500).json({ error: error.message });
   }
 });
 
 // Login user
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
 
-    // Find user by email
-    const user = await User.findOne({ email: email.toLowerCase() });
+    // Validate required fields
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password are required' });
+    }
+
+    // Find user by username
+    const user = await User.findOne({ username });
     if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return res.status(401).json({ error: 'Invalid username or password' });
     }
 
     // Check password
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    if (!isValidPassword) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Invalid username or password' });
     }
 
     // Generate JWT token
@@ -96,20 +98,18 @@ router.post('/login', async (req, res) => {
       { expiresIn: '24h' }
     );
 
-    // Return user data without password
-    const userData = {
+    // Return user data and token
+    res.json({
       userId: user._id,
       username: user.username,
       email: user.email,
       image: user.image,
-      referralCode: user.referralCode,
       token
-    };
+    });
 
-    res.json(userData);
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ error: 'Error logging in' });
+    res.status(500).json({ error: error.message });
   }
 });
 

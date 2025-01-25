@@ -1,18 +1,25 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const { Schema } = require('mongoose');
 
-const userSchema = new mongoose.Schema({
+const userSchema = new Schema({
   username: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
+    trim: true
   },
   email: {
     type: String,
     required: true,
     unique: true,
     trim: true,
-    lowercase: true
+    validate: {
+      validator: function(v) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+      },
+      message: 'Please enter a valid email address'
+    }
   },
   password: {
     type: String,
@@ -20,16 +27,15 @@ const userSchema = new mongoose.Schema({
   },
   image: {
     type: String,
-    default: 'https://placehold.co/400x400?text=User'
+    default: 'https://i.imgur.com/6VBx3io.png'
   },
   isAdmin: {
     type: Boolean,
     default: false
   },
   referredBy: {
-    type: String,
-    trim: true,
-    default: null
+    type: Schema.Types.ObjectId,
+    ref: 'User'
   },
   referralCode: {
     type: String,
@@ -42,24 +48,24 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-// Generate unique referral code before saving
-userSchema.pre('save', async function(next) {
-  if (!this.referralCode) {
-    this.referralCode = this.username.toLowerCase() + '-' + Math.random().toString(36).substring(2, 8);
+// Generate referral code before saving
+userSchema.pre('save', function(next) {
+  if (this.isNew && !this.referralCode) {
+    this.referralCode = this.username + Math.random().toString(36).substring(2, 8);
   }
   next();
 });
 
 // Hash password before saving
 userSchema.pre('save', async function(next) {
-  if (this.isModified('password')) {
-    try {
+  try {
+    if (this.isModified('password')) {
       this.password = await bcrypt.hash(this.password, 10);
-    } catch (error) {
-      return next(error);
     }
+    next();
+  } catch (error) {
+    next(error);
   }
-  next();
 });
 
 module.exports = mongoose.model('User', userSchema); 
