@@ -10,10 +10,17 @@ router.post('/register', async (req, res) => {
   try {
     const { username, email, password, image, referralCode } = req.body;
 
-    console.log('Registration attempt:', { username, email, hasPassword: !!password, image: !!image, hasReferralCode: !!referralCode });
+    console.log('Registration request body:', {
+      username,
+      email,
+      hasPassword: !!password,
+      hasImage: !!image,
+      hasReferralCode: !!referralCode
+    });
 
     // Validate required fields
     if (!username || !email || !password) {
+      console.log('Missing required fields:', { username: !!username, email: !!email, password: !!password });
       return res.status(400).json({ error: 'Username, email, and password are required' });
     }
 
@@ -24,7 +31,7 @@ router.post('/register', async (req, res) => {
     }
 
     // Check if email already exists
-    const existingEmail = await User.findOne({ email });
+    const existingEmail = await User.findOne({ email: email.toLowerCase() });
     if (existingEmail) {
       return res.status(400).json({ error: 'Email already exists' });
     }
@@ -40,22 +47,35 @@ router.post('/register', async (req, res) => {
     }
 
     // Create new user
-    const user = new User({
+    const userData = {
       username,
       email: email.toLowerCase(),
       password,
       image: image || undefined,
       referredBy
-    });
+    };
 
     console.log('Creating user with data:', {
-      username: user.username,
-      email: user.email,
-      hasImage: !!user.image,
-      referredBy: user.referredBy
+      ...userData,
+      password: '[REDACTED]'
     });
 
-    await user.save();
+    const user = new User(userData);
+
+    try {
+      await user.save();
+      console.log('User saved successfully:', user._id);
+    } catch (saveError) {
+      console.error('Error saving user:', saveError);
+      if (saveError.name === 'ValidationError') {
+        return res.status(400).json({ 
+          error: 'Validation failed',
+          message: saveError.message,
+          details: saveError.errors
+        });
+      }
+      throw saveError;
+    }
 
     // Generate JWT token
     const token = jwt.sign(
@@ -65,7 +85,7 @@ router.post('/register', async (req, res) => {
     );
 
     // Return user data without password
-    const userData = {
+    const responseData = {
       userId: user._id,
       username: user.username,
       email: user.email,
@@ -74,13 +94,20 @@ router.post('/register', async (req, res) => {
       token
     };
 
-    res.status(201).json(userData);
+    console.log('Registration successful:', {
+      userId: responseData.userId,
+      username: responseData.username,
+      email: responseData.email
+    });
+
+    res.status(201).json(responseData);
   } catch (error) {
     console.error('Registration error details:', error);
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({ error: error.message });
-    }
-    res.status(500).json({ error: 'Error creating user account: ' + error.message });
+    res.status(500).json({ 
+      error: 'Error creating user account',
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 
