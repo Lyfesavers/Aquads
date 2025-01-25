@@ -3,12 +3,25 @@ import Modal from './Modal';
 
 const LoginModal = ({ onLogin, onClose, onCreateAccount }) => {
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: ''
   });
+  const [error, setError] = useState('');
+
+  const validateEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setError('');
+
+    if (!validateEmail(formData.email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
     onLogin(formData);
   };
 
@@ -23,13 +36,14 @@ const LoginModal = ({ onLogin, onClose, onCreateAccount }) => {
         <h2 className="text-2xl font-bold mb-4">Login</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block mb-1">Username</label>
+            <label className="block mb-1">Email</label>
             <input
-              type="text"
-              name="username"
-              value={formData.username}
+              type="email"
+              name="email"
+              value={formData.email}
               onChange={handleChange}
               required
+              placeholder="your@email.com"
               className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -44,6 +58,9 @@ const LoginModal = ({ onLogin, onClose, onCreateAccount }) => {
               className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+          {error && (
+            <p className="text-red-500 text-sm">{error}</p>
+          )}
           <div className="flex justify-between items-center">
             <button
               type="button"

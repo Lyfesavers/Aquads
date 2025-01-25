@@ -7,6 +7,14 @@ const userSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+    lowercase: true,
+    match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email address']
+  },
   password: {
     type: String,
     required: true
@@ -19,10 +27,28 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  referredBy: {
+    type: String,
+    trim: true,
+    default: null
+  },
+  referralCode: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
   createdAt: {
     type: Date,
     default: Date.now
   }
+});
+
+// Generate unique referral code before saving
+userSchema.pre('save', async function(next) {
+  if (!this.referralCode) {
+    this.referralCode = this.username.toLowerCase() + '-' + Math.random().toString(36).substring(2, 8);
+  }
+  next();
 });
 
 // Only hash password if it's not already hashed

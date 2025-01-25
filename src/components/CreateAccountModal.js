@@ -4,8 +4,10 @@ import Modal from './Modal';
 const CreateAccountModal = ({ onCreateAccount, onClose }) => {
   const [formData, setFormData] = useState({
     username: '',
+    email: '',
     password: '',
-    image: ''
+    image: '',
+    referralCode: ''
   });
   const [previewUrl, setPreviewUrl] = useState('');
   const [error, setError] = useState('');
@@ -40,8 +42,20 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
     }
   };
 
+  const validateEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+
+    if (!validateEmail(formData.email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
     onCreateAccount(formData);
   };
 
@@ -59,6 +73,43 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
       <div className="text-white">
         <h2 className="text-2xl font-bold mb-4">Create Account</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block mb-1">Username</label>
+            <input
+              type="text"
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1">Email</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="your@email.com"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1">Password</label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
           <div>
             <label className="block mb-1">Profile Picture URL</label>
             <input
@@ -80,28 +131,19 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
               </div>
             )}
           </div>
+
           <div>
-            <label className="block mb-1">Username</label>
+            <label className="block mb-1">Referral Code (Optional)</label>
             <input
               type="text"
-              name="username"
-              value={formData.username}
+              name="referralCode"
+              value={formData.referralCode}
               onChange={handleChange}
-              required
+              placeholder="Enter referral code if you have one"
               className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          <div>
-            <label className="block mb-1">Password</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+
           <div className="flex justify-end">
             <button
               type="submit"
