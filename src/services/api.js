@@ -161,18 +161,13 @@ export const verifyToken = async () => {
 // Register user
 export const register = async (userData) => {
   try {
+    console.log('Sending registration data:', userData); // Debug log
     const response = await fetch(`${API_URL}/users/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        username: userData.username,
-        email: userData.email,
-        password: userData.password,
-        image: userData.image || undefined,
-        referralCode: userData.referralCode || undefined
-      })
+      body: JSON.stringify(userData) // Send the entire userData object
     });
 
     if (!response.ok) {
@@ -181,8 +176,6 @@ export const register = async (userData) => {
     }
 
     const data = await response.json();
-    
-    // Store all user data consistently
     localStorage.setItem('currentUser', JSON.stringify(data));
     
     // Update socket auth
