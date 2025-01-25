@@ -344,14 +344,29 @@ function App() {
   const handleCreateAccount = async (formData) => {
     try {
       console.log('Registration attempt with formData:', formData); // Debug log
-      const user = await register(formData);
+      const { username, email, password, image, referralCode } = formData;
+      
+      // Ensure all required fields are present
+      if (!username || !email || !password) {
+        throw new Error('Username, email and password are required');
+      }
+
+      const userData = {
+        username,
+        email,
+        password,
+        ...(image && { image }),
+        ...(referralCode && { referralCode })
+      };
+
+      const user = await register(userData);
       setCurrentUser(user);
-      localStorage.setItem('currentUser', JSON.stringify(user));
       setShowCreateAccountModal(false);
       showNotification('Account created successfully!', 'success');
     } catch (error) {
       console.error('Account creation error:', error);
-      showNotification(error.response?.data?.message || 'Failed to create account. Please try again.', 'error');
+      showNotification(error.message || 'Failed to create account. Please try again.', 'error');
+      throw error;
     }
   };
 
