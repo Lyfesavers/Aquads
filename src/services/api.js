@@ -161,7 +161,6 @@ export const verifyToken = async () => {
 // Register user
 export const register = async (userData) => {
   try {
-    // Store currentUser first
     const response = await fetch(`${API_URL}/users/register`, {
       method: 'POST',
       headers: {
