@@ -8,7 +8,7 @@ import {
   updateAd as apiUpdateAd, 
   deleteAd as apiDeleteAd, 
   loginUser, 
-  registerUser,
+  register,
   createBumpRequest,
   approveBumpRequest,
   rejectBumpRequest,
@@ -343,7 +343,7 @@ function App() {
 
   const handleCreateAccount = async (formData) => {
     try {
-      const user = await registerUser(formData);
+      const user = await register(formData);
       setCurrentUser(user);
       localStorage.setItem('currentUser', JSON.stringify(user));
       setShowCreateAccountModal(false);
