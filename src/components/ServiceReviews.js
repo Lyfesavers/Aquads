@@ -9,6 +9,17 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification }) => 
   const [error, setError] = useState(null);
   const [averageRating, setAverageRating] = useState(0);
   const [totalReviews, setTotalReviews] = useState(0);
+  const [canReview, setCanReview] = useState(false);
+  const [interactionDate, setInteractionDate] = useState(null);
+
+  const validateReviewLength = (text) => {
+    if (!text) return false;
+    // Count sentences by splitting on period, exclamation, or question mark followed by space
+    const sentences = text.split(/[.!?]\s+/).filter(sentence => sentence.trim().length > 0);
+    // Count lines by splitting on newline
+    const lines = text.split('\n').filter(line => line.trim().length > 0);
+    return sentences.length >= 3 || lines.length >= 3;
+  };
 
   useEffect(() => {
     fetchReviews();
@@ -47,11 +58,23 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification }) => 
       return;
     }
 
+    if (!canReview) {
+      showNotification('You must interact with this service before leaving a review', 'error');
+      return;
+    }
+
+    const comment = newReview.comment.trim();
+    if (!validateReviewLength(comment)) {
+      showNotification('Please write at least 3 sentences or lines in your review', 'error');
+      return;
+    }
+
     try {
       const reviewData = {
         serviceId: service._id,
         rating: parseInt(newReview.rating),
-        comment: newReview.comment.trim()
+        comment: comment,
+        interactionDate: interactionDate
       };
 
       const response = await fetch(`${API_URL}/service-reviews`, {
@@ -73,7 +96,6 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification }) => 
       setNewReview({ rating: 5, comment: '' });
       showNotification('Review submitted successfully!', 'success');
       
-      // Refresh reviews to update average
       fetchReviews();
     } catch (error) {
       console.error('Error submitting review:', error);
@@ -98,41 +120,64 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification }) => 
         </div>
         
         {currentUser && currentUser.username !== service.seller?.username && (
-          <form onSubmit={handleSubmitReview} className="mb-8 bg-gray-800 p-4 rounded-lg">
-            <h3 className="text-lg font-semibold mb-4">Write a Review</h3>
-            <div className="mb-4">
-              <label className="block mb-2">Rating</label>
-              <div className="flex gap-2">
-                {[5, 4, 3, 2, 1].map(num => (
-                  <button
-                    key={num}
-                    type="button"
-                    onClick={() => setNewReview(prev => ({ ...prev, rating: num }))}
-                    className={`p-2 rounded ${
-                      newReview.rating === num ? 'bg-blue-500' : 'bg-gray-700'
-                    }`}
-                  >
-                    {num} ★
-                  </button>
-                ))}
+          <>
+            {!canReview ? (
+              <div className="mb-8 bg-gray-800 p-4 rounded-lg">
+                <p className="text-yellow-400 mb-2">⚠️ Review Requirements:</p>
+                <ul className="list-disc list-inside text-gray-400">
+                  <li>You must interact with the service provider first</li>
+                  <li>Wait 24 hours after interaction</li>
+                  <li>Submit review within 30 days of interaction</li>
+                  <li>Write at least 3 sentences or lines in your review</li>
+                </ul>
               </div>
-            </div>
-            <div className="mb-4">
-              <label className="block mb-2">Comment</label>
-              <textarea
-                value={newReview.comment}
-                onChange={(e) => setNewReview(prev => ({ ...prev, comment: e.target.value }))}
-                className="w-full bg-gray-700 rounded p-2 min-h-[100px]"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded w-full"
-            >
-              Submit Review
-            </button>
-          </form>
+            ) : (
+              <form onSubmit={handleSubmitReview} className="mb-8 bg-gray-800 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold mb-4">Write a Review</h3>
+                <div className="mb-4">
+                  <label className="block mb-2">Rating</label>
+                  <div className="flex gap-2">
+                    {[5, 4, 3, 2, 1].map(num => (
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() => setNewReview(prev => ({ ...prev, rating: num }))}
+                        className={`p-2 rounded ${
+                          newReview.rating === num ? 'bg-blue-500' : 'bg-gray-700'
+                        }`}
+                      >
+                        {num} ★
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <label className="block mb-2">Comment (minimum 3 sentences or lines)</label>
+                  <textarea
+                    value={newReview.comment}
+                    onChange={(e) => setNewReview(prev => ({ ...prev, comment: e.target.value }))}
+                    className="w-full bg-gray-700 rounded p-2 min-h-[100px]"
+                    placeholder="Please write at least 3 sentences or lines describing your experience with this service..."
+                    required
+                  />
+                  <div className="mt-2 text-sm text-gray-400">
+                    {validateReviewLength(newReview.comment) ? (
+                      <span className="text-green-400">✓ Review length requirement met</span>
+                    ) : (
+                      <span>Write at least 3 sentences or lines</span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded w-full"
+                  disabled={!validateReviewLength(newReview.comment)}
+                >
+                  Submit Review
+                </button>
+              </form>
+            )}
+          </>
         )}
 
         {isLoading ? (
