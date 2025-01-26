@@ -164,29 +164,23 @@ export const register = async (userData) => {
     const response = await fetch(`${API_URL}/users/register`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        username: userData.username,
-        email: userData.email,
-        password: userData.password,
-        image: userData.image,
-        referralCode: userData.referralCode
-      })
+      body: JSON.stringify(userData)
     });
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || 'Registration failed');
+      throw new Error(error.error || 'Registration failed');
     }
 
     const data = await response.json();
+    localStorage.setItem('currentUser', JSON.stringify(data));
     
-    // Store auth data consistently with login function
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('userId', data.userId);
-    localStorage.setItem('username', data.username);
-    
+    // Update socket auth
+    socket.auth = { token: data.token };
+    socket.connect();
+
     return data;
   } catch (error) {
     console.error('Registration error:', error);
@@ -514,34 +508,5 @@ export const updateUserProfile = async (profileData) => {
   } catch (error) {
     console.error('Profile update error:', error.response?.data || error.message);
     throw error.response?.data || error;
-  }
-}; 
-
-export const login = async (credentials) => {
-  try {
-    const response = await fetch(`${API_URL}/users/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: credentials.email,
-        password: credentials.password
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Login failed');
-    }
-
-    const data = await response.json();
-    localStorage.setItem('token', data.token);
-    localStorage.setItem('userId', data.userId);
-    localStorage.setItem('username', data.username);
-    return data;
-  } catch (error) {
-    console.error('Login error:', error);
-    throw error;
   }
 }; 

@@ -343,28 +343,8 @@ function App() {
 
   const handleCreateAccount = async (formData) => {
     try {
-      console.log('Raw formData received:', formData); // Debug log
-      const { username, email, password, image, referralCode } = formData;
-      
-      console.log('Destructured fields:', { username, email, password: '***', image, referralCode }); // Debug log
-      
-      // Ensure all required fields are present
-      if (!username || !email || !password) {
-        throw new Error('Username, email and password are required');
-      }
-
-      // Create a new object with all fields to ensure they're included
-      const userData = {
-        username,
-        email,
-        password,
-        ...(image && { image }),
-        ...(referralCode && { referralCode })
-      };
-
-      console.log('userData object created:', { ...userData, password: '***' }); // Debug log
-
-      const user = await register(userData);
+      // Pass the entire formData object directly to register
+      const user = await register(formData);
       setCurrentUser(user);
       setShowCreateAccountModal(false);
       showNotification('Account created successfully!', 'success');

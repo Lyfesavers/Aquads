@@ -19,9 +19,9 @@ router.post('/register', async (req, res) => {
     const { username, email, password, image, referralCode } = req.body;
 
     // Validate required fields
-    if (!username || !email || !password) {
+    if (!username || !password) {
       console.log('Missing required fields');
-      return res.status(400).json({ error: 'Username, email and password are required' });
+      return res.status(400).json({ error: 'Username and password are required' });
     }
 
     // Check if username already exists
@@ -31,20 +31,26 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Username already exists' });
     }
 
-    // Check if email already exists
-    const existingEmail = await User.findOne({ email });
-    if (existingEmail) {
-      console.log('Email already exists:', email);
-      return res.status(400).json({ error: 'Email already exists' });
+    // Check if email already exists (only if email is provided)
+    if (email) {
+      const existingEmail = await User.findOne({ email });
+      if (existingEmail) {
+        console.log('Email already exists:', email);
+        return res.status(400).json({ error: 'Email already exists' });
+      }
     }
 
     // Create user object
     const userData = {
       username,
-      email,
       password,
       image: image || undefined
     };
+
+    // Only add email if provided
+    if (email) {
+      userData.email = email;
+    }
 
     // If referral code provided, find referring user
     if (referralCode) {

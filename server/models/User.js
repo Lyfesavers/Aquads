@@ -11,12 +11,13 @@ const userSchema = new Schema({
   },
   email: {
     type: String,
-    required: true,
+    required: false,
     unique: true,
+    sparse: true,
     trim: true,
     validate: {
       validator: function(v) {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+        return !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
       },
       message: 'Please enter a valid email address'
     }
