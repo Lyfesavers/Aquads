@@ -98,6 +98,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showReviewsModal, setShowReviewsModal] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
+  const [expandedDescriptions, setExpandedDescriptions] = useState(new Set());
 
   const categories = [
     { id: 'smart-contract', name: 'Smart Contract Development', icon: '⚡' },
@@ -226,6 +227,18 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const filteredServices = selectedCategory 
     ? services.filter(service => service.category === selectedCategory)
     : services;
+
+  const toggleDescription = (serviceId) => {
+    setExpandedDescriptions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(serviceId)) {
+        newSet.delete(serviceId);
+      } else {
+        newSet.add(serviceId);
+      }
+      return newSet;
+    });
+  };
 
   return (
     <div className="h-screen overflow-y-auto bg-gradient-to-br from-gray-900 to-black text-white">
@@ -420,9 +433,23 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                       <h3 className="text-lg font-medium mb-2 line-clamp-2 group-hover:text-indigo-400 transition-colors">
                         {service.title}
                       </h3>
-                      <p className="text-gray-400 text-sm mb-4 line-clamp-2">
-                        {service.description}
-                      </p>
+                      <div className="relative">
+                        <p className={`text-gray-400 text-sm mb-4 ${expandedDescriptions.has(service._id) ? '' : 'line-clamp-2'}`}>
+                          {service.description?.slice(0, 1000)}
+                          {service.description?.length > 1000 && '...'}
+                        </p>
+                        {service.description?.length > 80 && (
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              toggleDescription(service._id);
+                            }}
+                            className="text-indigo-400 text-sm hover:text-indigo-300 transition-colors"
+                          >
+                            {expandedDescriptions.has(service._id) ? 'Show less' : 'Read more'}
+                          </button>
+                        )}
+                      </div>
                       <div className="flex items-center justify-between pt-4 border-t border-gray-700">
                         <span className="text-gray-400 text-sm">
                           Delivered in {service.deliveryTime}
