@@ -44,13 +44,9 @@ router.post('/register', async (req, res) => {
     const userData = {
       username,
       password,
+      email,
       image: image || undefined
     };
-
-    // Only add email if provided
-    if (email) {
-      userData.email = email;
-    }
 
     // If referral code provided, find referring user
     if (referralCode) {
