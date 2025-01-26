@@ -23,7 +23,26 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification }) => 
 
   useEffect(() => {
     fetchReviews();
-  }, [service._id]);
+    if (currentUser) {
+      checkReviewEligibility();
+    }
+  }, [service._id, currentUser]);
+
+  const checkReviewEligibility = async () => {
+    try {
+      const response = await fetch(`${API_URL}/service-interactions/${service._id}/check`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      const data = await response.json();
+      setCanReview(data.canReview);
+      setInteractionDate(data.interactionDate);
+    } catch (error) {
+      console.error('Error checking review eligibility:', error);
+      setCanReview(false);
+    }
+  };
 
   const fetchReviews = async () => {
     try {
