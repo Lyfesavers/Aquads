@@ -211,8 +211,22 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     setShowReviewsModal(true);
   };
 
-  const handleReviewsUpdate = () => {
-    loadServices(); // Refresh all services to update the ratings
+  const handleReviewsUpdate = async () => {
+    try {
+      // Fetch the updated service data
+      const response = await fetch(`${API_URL}/services/${selectedService._id}`);
+      if (!response.ok) throw new Error('Failed to fetch updated service');
+      const updatedService = await response.json();
+      
+      // Update the services array with the new data
+      setServices(prevServices => 
+        prevServices.map(service => 
+          service._id === selectedService._id ? updatedService : service
+        )
+      );
+    } catch (error) {
+      console.error('Error updating service data:', error);
+    }
   };
 
   const showNotification = (message, type = 'info') => {
