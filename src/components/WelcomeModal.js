@@ -3,7 +3,7 @@ import './WelcomeModal.css';
 
 const WelcomeModal = ({ username, onClose }) => {
   const handleShare = () => {
-    const tweetText = encodeURIComponent(`🎉 Just joined Aquads! Can't wait to explore amazing services and connect with the community! Check it out! #Aquads #Community\n\nhttps://aquads.xyz/`);
+    const tweetText = encodeURIComponent(`🎉 Just joined Aquads! Can't wait to explore amazing services and connect with the community! Check it out! #Aquads #Community\n\nhttps://aquads.xyz`);
     window.open(`https://twitter.com/intent/tweet?text=${tweetText}`, '_blank');
   };
 
