@@ -29,6 +29,12 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification }) => 
   }, [service._id, currentUser]);
 
   const checkReviewEligibility = async () => {
+    // Temporary: Allow reviews without backend check
+    setCanReview(true);
+    setInteractionDate(new Date().toISOString());
+    
+    // TODO: Uncomment when backend endpoint is implemented
+    /*
     try {
       const response = await fetch(`${API_URL}/service-interactions/${service._id}/check`, {
         headers: {
@@ -42,6 +48,7 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification }) => 
       console.error('Error checking review eligibility:', error);
       setCanReview(false);
     }
+    */
   };
 
   const fetchReviews = async () => {
