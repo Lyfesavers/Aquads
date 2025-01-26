@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { API_URL } from '../services/api';
 
-const ServiceReviews = ({ service, onClose, currentUser, showNotification }) => {
+const ServiceReviews = ({ service, onClose, currentUser, showNotification, onReviewsUpdate }) => {
   const [reviews, setReviews] = useState([]);
   const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
   const [isLoading, setIsLoading] = useState(true);
@@ -69,6 +69,9 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification }) => 
         setAverageRating(0);
         setTotalReviews(0);
       }
+
+      // Call onReviewsUpdate to refresh service data in Marketplace
+      onReviewsUpdate?.();
     } catch (error) {
       console.error('Error fetching reviews:', error);
       setError('Failed to load reviews');

@@ -211,6 +211,10 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     setShowReviewsModal(true);
   };
 
+  const handleReviewsUpdate = () => {
+    loadServices(); // Refresh all services to update the ratings
+  };
+
   const showNotification = (message, type = 'info') => {
     // You can implement this function to show notifications
     // For now, we'll just use alert
@@ -515,6 +519,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
           }}
           currentUser={currentUser}
           showNotification={showNotification}
+          onReviewsUpdate={handleReviewsUpdate}
         />
       )}
     </div>
