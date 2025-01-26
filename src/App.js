@@ -27,6 +27,7 @@ import TokenList from './components/TokenList';
 import TokenRating from './components/TokenRating';
 import Marketplace from './components/Marketplace';
 import ProfileModal from './components/ProfileModal';
+import WelcomeModal from './components/WelcomeModal';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 
 window.Buffer = Buffer;
@@ -217,6 +218,8 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [showMarketplace, setShowMarketplace] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [newUsername, setNewUsername] = useState('');
 
   // Add this function to update ads with persistence
   const updateAds = (newAds) => {
@@ -343,15 +346,14 @@ function App() {
 
   const handleCreateAccount = async (formData) => {
     try {
-      // Pass the entire formData object directly to register
       const user = await register(formData);
       setCurrentUser(user);
+      setNewUsername(user.username);
+      setShowWelcomeModal(true);
       setShowCreateAccountModal(false);
-      showNotification('Account created successfully!', 'success');
     } catch (error) {
-      console.error('Account creation error:', error);
-      showNotification(error.message || 'Failed to create account. Please try again.', 'error');
-      throw error;
+      console.error('Error creating account:', error);
+      alert(error.message || 'Failed to create account');
     }
   };
 
@@ -900,6 +902,13 @@ function App() {
                 }}
                 onRejectBump={handleRejectBump}
                 onApproveBump={handleApproveBump}
+              />
+            )}
+
+            {showWelcomeModal && (
+              <WelcomeModal
+                username={newUsername}
+                onClose={() => setShowWelcomeModal(false)}
               />
             )}
 
