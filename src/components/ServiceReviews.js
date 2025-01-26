@@ -126,7 +126,6 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification }) => 
                 <p className="text-yellow-400 mb-2">⚠️ Review Requirements:</p>
                 <ul className="list-disc list-inside text-gray-400">
                   <li>You must interact with the service provider first</li>
-                  <li>Wait 24 hours after interaction</li>
                   <li>Submit review within 30 days of interaction</li>
                   <li>Write at least 3 sentences or lines in your review</li>
                 </ul>
