@@ -55,13 +55,13 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
     console.log('Form data before validation:', formData); // Debug log
 
     // Validate required fields
-    if (!formData.username || !formData.email || !formData.password) {
-      setError('Username, email and password are required');
+    if (!formData.username || !formData.password) {
+      setError('Username and password are required');
       return;
     }
 
-    // Validate email format
-    if (!validateEmail(formData.email)) {
+    // Validate email format if provided
+    if (formData.email && !validateEmail(formData.email)) {
       setError('Please enter a valid email address');
       return;
     }
@@ -122,8 +122,7 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              required
-              placeholder="Enter email"
+              placeholder="Enter email (Required)"
               className="w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
