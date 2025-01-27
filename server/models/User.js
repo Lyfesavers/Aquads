@@ -36,7 +36,8 @@ const userSchema = new Schema({
   },
   referredBy: {
     type: Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'User',
+    default: null
   },
   referralCode: {
     type: String,

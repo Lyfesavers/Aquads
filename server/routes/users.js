@@ -57,6 +57,8 @@ router.post('/register', async (req, res) => {
       const referringUser = await User.findOne({ referralCode });
       if (referringUser) {
         userData.referredBy = referringUser._id;
+      } else {
+        console.log('Invalid referral code:', referralCode);
       }
     }
 
@@ -76,7 +78,7 @@ router.post('/register', async (req, res) => {
     // Generate JWT token
     const token = jwt.sign(
       { userId: user._id, username: user.username },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET || 'bubble-ads-jwt-secret-key-2024',
       { expiresIn: '24h' }
     );
 
@@ -86,6 +88,7 @@ router.post('/register', async (req, res) => {
       username: user.username,
       email: user.email,
       image: user.image,
+      referralCode: user.referralCode,
       token
     });
 
