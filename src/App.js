@@ -657,7 +657,7 @@ function App() {
           />
         } />
         <Route path="/" element={
-          <div className="bg-gradient-to-br from-gray-900 to-black text-white overflow-y-auto min-h-screen">
+          <div className="bg-gradient-to-br from-gray-900 to-black text-white overflow-y-auto h-screen">
             {/* Background stays fixed */}
             <div className="fixed inset-0 z-0">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-black"></div>
@@ -940,7 +940,9 @@ function App() {
             </div>
 
             {/* Footer */}
-            <Footer />
+            <div className="relative z-10">
+              <Footer />
+            </div>
           </div>
         } />
       </Routes>
