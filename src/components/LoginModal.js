@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ForgotPasswordModal from './ForgotPasswordModal';
 
 const LoginModal = ({ onLogin, onClose, onCreateAccount }) => {
   const [formData, setFormData] = useState({
@@ -6,6 +7,7 @@ const LoginModal = ({ onLogin, onClose, onCreateAccount }) => {
     password: ''
   });
   const [error, setError] = useState('');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -24,6 +26,10 @@ const LoginModal = ({ onLogin, onClose, onCreateAccount }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
     setError('');
   };
+
+  if (showForgotPassword) {
+    return <ForgotPasswordModal onClose={() => setShowForgotPassword(false)} />;
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[100]">
@@ -63,13 +69,22 @@ const LoginModal = ({ onLogin, onClose, onCreateAccount }) => {
             <p className="text-red-500 text-sm">{error}</p>
           )}
           <div className="flex justify-between items-center pt-4">
-            <button
-              type="button"
-              onClick={onCreateAccount}
-              className="text-blue-400 hover:text-blue-300 text-sm"
-            >
-              Create Account
-            </button>
+            <div className="space-x-4">
+              <button
+                type="button"
+                onClick={onCreateAccount}
+                className="text-blue-400 hover:text-blue-300 text-sm"
+              >
+                Create Account
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowForgotPassword(true)}
+                className="text-blue-400 hover:text-blue-300 text-sm"
+              >
+                Forgot Password?
+              </button>
+            </div>
             <button
               type="submit"
               className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded"

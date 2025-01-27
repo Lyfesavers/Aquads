@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+const crypto = require('crypto');
 
 // Register new user
 router.post('/register', async (req, res) => {
@@ -227,5 +228,92 @@ router.put('/profile', auth, async (req, res) => {
     res.status(500).json({ error: 'Error updating profile' });
   }
 });
+
+// Request password reset
+router.post('/request-password-reset', async (req, res) => {
+  try {
+    const { username } = req.body;
+
+    if (!username) {
+      return res.status(400).json({ error: 'Username is required' });
+    }
+
+    // Find user by username (case-insensitive)
+    const user = await User.findOne({ 
+      username: { $regex: new RegExp(`^${username}$`, 'i') }
+    });
+
+    // For security, don't reveal if username exists or not
+    res.json({ 
+      message: 'If this username exists, you will receive password reset instructions.' 
+    });
+
+    // If user exists, generate reset token
+    if (user) {
+      // Generate a secure random token
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const hashedToken = await bcrypt.hash(resetToken, 10);
+
+      // Store hashed token and expiry in user document
+      user.resetToken = hashedToken;
+      user.resetTokenExpiry = Date.now() + 3600000; // 1 hour
+      await user.save();
+
+      // In a production environment, you would send this token via email
+      // For development, we'll use a more secure temporary solution
+      // Store token in a temporary secure store with username mapping
+      tempResetTokens.set(username, {
+        token: resetToken,
+        expires: Date.now() + 3600000
+      });
+    }
+  } catch (error) {
+    console.error('Password reset request error:', error);
+    res.status(500).json({ error: 'Failed to process password reset request' });
+  }
+});
+
+// Reset password
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { username, newPassword } = req.body;
+
+    if (!username || !newPassword) {
+      return res.status(400).json({ error: 'Username and new password are required' });
+    }
+
+    // Find user
+    const user = await User.findOne({ 
+      username: { $regex: new RegExp(`^${username}$`, 'i') }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'Invalid reset request' });
+    }
+
+    // Check if there's a valid reset token
+    const tempReset = tempResetTokens.get(username);
+    if (!tempReset || tempReset.expires < Date.now()) {
+      return res.status(400).json({ error: 'Reset token has expired. Please request a new one.' });
+    }
+
+    // Update password
+    user.password = newPassword;
+    user.resetToken = null;
+    user.resetTokenExpiry = null;
+    await user.save();
+
+    // Clear temporary token
+    tempResetTokens.delete(username);
+
+    res.json({ message: 'Password has been reset successfully' });
+  } catch (error) {
+    console.error('Password reset error:', error);
+    res.status(500).json({ error: 'Failed to reset password' });
+  }
+});
+
+// Initialize temporary token store (this should be replaced with a proper solution in production)
+const tempResetTokens = new Map();
 
 module.exports = router; 

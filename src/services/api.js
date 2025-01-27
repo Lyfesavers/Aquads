@@ -509,4 +509,50 @@ export const updateUserProfile = async (profileData) => {
     console.error('Profile update error:', error.response?.data || error.message);
     throw error.response?.data || error;
   }
+};
+
+// Request password reset
+export const requestPasswordReset = async (username) => {
+  try {
+    const response = await fetch(`${API_URL}/users/request-password-reset`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ username })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to request password reset');
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Password reset request error:', error);
+    throw error;
+  }
+};
+
+// Reset password
+export const resetPassword = async (username, newPassword) => {
+  try {
+    const response = await fetch(`${API_URL}/users/reset-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ username, newPassword })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to reset password');
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Password reset error:', error);
+    throw error;
+  }
 }; 
