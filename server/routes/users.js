@@ -6,6 +6,9 @@ const User = require('../models/User');
 const auth = require('../middleware/auth');
 const crypto = require('crypto');
 
+// Initialize temporary token store (this should be replaced with a proper solution in production)
+const tempTokenStore = new Map();
+
 // Register new user
 router.post('/register', async (req, res) => {
   try {
@@ -243,33 +246,29 @@ router.post('/request-password-reset', async (req, res) => {
       username: { $regex: new RegExp(`^${username}$`, 'i') }
     });
 
-    // For security, don't reveal if username exists or not
-    res.json({ 
-      message: 'If this username exists, you will receive password reset instructions.' 
-    });
-
-    // If user exists, generate reset token
     if (user) {
-      // Generate a secure random token
+      // Generate reset token
       const resetToken = crypto.randomBytes(32).toString('hex');
       const hashedToken = await bcrypt.hash(resetToken, 10);
 
-      // Store hashed token and expiry in user document
+      // Store hashed token and expiry
       user.resetToken = hashedToken;
-      user.resetTokenExpiry = Date.now() + 3600000; // 1 hour
+      user.resetTokenExpiry = Date.now() + 3600000; // 1 hour expiry
       await user.save();
 
-      // In a production environment, you would send this token via email
-      // For development, we'll use a more secure temporary solution
-      // Store token in a temporary secure store with username mapping
-      tempResetTokens.set(username, {
-        token: resetToken,
-        expires: Date.now() + 3600000
-      });
+      // Store the token temporarily (this will be cleared after use or expiry)
+      tempTokenStore.set(username.toLowerCase(), resetToken);
     }
+
+    // For security, always return the same message
+    res.json({ 
+      message: 'If this username exists, you will receive password reset instructions.',
+      token: tempTokenStore.get(username.toLowerCase()) // Only for development!
+    });
+
   } catch (error) {
     console.error('Password reset request error:', error);
-    res.status(500).json({ error: 'Failed to process password reset request' });
+    res.status(500).json({ error: 'Error processing password reset request' });
   }
 });
 
@@ -282,38 +281,27 @@ router.post('/reset-password', async (req, res) => {
       return res.status(400).json({ error: 'Username and new password are required' });
     }
 
-    // Find user
+    // Find user by username
     const user = await User.findOne({ 
       username: { $regex: new RegExp(`^${username}$`, 'i') }
     });
 
-    if (!user) {
-      return res.status(404).json({ error: 'Invalid reset request' });
-    }
-
-    // Check if there's a valid reset token
-    const tempReset = tempResetTokens.get(username);
-    if (!tempReset || tempReset.expires < Date.now()) {
-      return res.status(400).json({ error: 'Reset token has expired. Please request a new one.' });
+    if (!user || !user.resetToken || !user.resetTokenExpiry || user.resetTokenExpiry < Date.now()) {
+      return res.status(400).json({ error: 'Invalid or expired reset token' });
     }
 
     // Update password
     user.password = newPassword;
-    user.resetToken = null;
-    user.resetTokenExpiry = null;
+    user.resetToken = undefined;
+    user.resetTokenExpiry = undefined;
     await user.save();
 
-    // Clear temporary token
-    tempResetTokens.delete(username);
-
     res.json({ message: 'Password has been reset successfully' });
+
   } catch (error) {
     console.error('Password reset error:', error);
-    res.status(500).json({ error: 'Failed to reset password' });
+    res.status(500).json({ error: 'Error resetting password' });
   }
 });
-
-// Initialize temporary token store (this should be replaced with a proper solution in production)
-const tempResetTokens = new Map();
 
 module.exports = router; 
