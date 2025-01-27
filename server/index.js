@@ -18,6 +18,7 @@ const errorHandler = require('./middleware/error');
 const path = require('path');
 const fs = require('fs');
 const upload = require('./middleware/upload');
+const usersRouter = require('./routes/users');
 
 const app = express();
 const server = http.createServer(app);
@@ -151,7 +152,7 @@ app.use('/api/ads', require('./routes/ads'));
 app.use('/api/service-reviews', require('./routes/serviceReviews'));
 app.use('/api/tokens', require('./routes/tokens'));
 app.use('/api/services', require('./routes/services'));
-app.use('/api/users', require('./routes/users'));
+app.use('/api/users', usersRouter);
 
 // Create new ad
 app.post('/api/ads', auth, async (req, res) => {
@@ -191,66 +192,6 @@ app.delete('/api/ads/:id', auth, async (req, res) => {
   } catch (error) {
     console.error('Error deleting ad:', error);
     res.status(500).json({ error: 'Failed to delete ad' });
-  }
-});
-
-// Login
-app.post('/api/users/login', async (req, res) => {
-  try {
-    const { username, password } = req.body;
-    console.log('Login attempt for username:', username);
-    
-    // Find user case-insensitive
-    const user = await User.findOne({ 
-      username: { $regex: new RegExp(`^${username}$`, 'i') }
-    });
-
-    if (!user) {
-      console.log('User not found');
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    // Handle different password formats
-    let isMatch = false;
-    
-    // For admin or test account with plain text password
-    if ((user.isAdmin || user.username === 'test') && password === user.password) {
-      isMatch = true;
-    } 
-    // For hashed passwords
-    else if (user.password.startsWith('$2b$')) {
-      try {
-        isMatch = await bcrypt.compare(password, user.password);
-      } catch (error) {
-        console.error('Password comparison error:', error);
-      }
-    }
-    // For any other plain text passwords
-    else {
-      isMatch = password === user.password;
-    }
-
-    if (!isMatch) {
-      console.log('Password mismatch');
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    // Generate token
-    const token = jwt.sign(
-      { userId: user._id, username: user.username },
-      process.env.JWT_SECRET || 'bubble-ads-jwt-secret-key-2024',
-      { expiresIn: '24h' }
-    );
-
-    // Send response
-    res.json({
-      token,
-      username: user.username,
-      isAdmin: user.isAdmin
-    });
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Login failed' });
   }
 });
 
