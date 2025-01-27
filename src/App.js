@@ -657,7 +657,7 @@ function App() {
           />
         } />
         <Route path="/" element={
-          <div className="bg-gradient-to-br from-gray-900 to-black text-white overflow-y-auto h-screen">
+          <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-900 to-black text-white">
             {/* Background stays fixed */}
             <div className="fixed inset-0 z-0">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-black"></div>
@@ -665,276 +665,281 @@ function App() {
               <div className="tech-dots"></div>
             </div>
 
-            {/* Navigation and banner stay fixed */}
-            <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm shadow-lg shadow-blue-500/20 z-50">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-16">
-                  <div className="flex items-center">
-                    <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 glow-text">AQUADS</span>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <Link
-                      to="/marketplace"
-                      className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
-                    >
-                      Aquaduct
-                    </Link>
-                    {currentUser ? (
-                      <>
-                        <span className="text-blue-300">Welcome, {currentUser.username}!</span>
-                        <button
-                          onClick={() => setShowDashboard(true)}
-                          className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
-                        >
-                          Dashboard
-                        </button>
-                        <button
-                          onClick={() => setShowProfileModal(true)}
-                          className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
-                        >
-                          Edit Profile
-                        </button>
-                        <button
-                          onClick={() => setShowCreateModal(true)}
-                          className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
-                        >
-                          Create Ad
-                        </button>
-                        <button
-                          onClick={handleLogout}
-                          className="bg-red-500/80 hover:bg-red-600/80 px-4 py-2 rounded shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm"
-                        >
-                          Logout
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => setShowLoginModal(true)}
-                          className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
-                        >
-                          Login
-                        </button>
-                        <button
-                          onClick={() => setShowCreateAccountModal(true)}
-                          className="bg-green-500/80 hover:bg-green-600/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
-                        >
-                          Create Account
-                        </button>
-                      </>
-                    )}
+            {/* Main content wrapper */}
+            <div className="flex-grow relative z-10">
+              {/* Navigation and banner stay fixed */}
+              <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm shadow-lg shadow-blue-500/20 z-50">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="flex items-center justify-between h-16">
+                    <div className="flex items-center">
+                      <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 glow-text">AQUADS</span>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <Link
+                        to="/marketplace"
+                        className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
+                      >
+                        Aquaduct
+                      </Link>
+                      {currentUser ? (
+                        <>
+                          <span className="text-blue-300">Welcome, {currentUser.username}!</span>
+                          <button
+                            onClick={() => setShowDashboard(true)}
+                            className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                          >
+                            Dashboard
+                          </button>
+                          <button
+                            onClick={() => setShowProfileModal(true)}
+                            className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
+                          >
+                            Edit Profile
+                          </button>
+                          <button
+                            onClick={() => setShowCreateModal(true)}
+                            className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
+                          >
+                            Create Ad
+                          </button>
+                          <button
+                            onClick={handleLogout}
+                            className="bg-red-500/80 hover:bg-red-600/80 px-4 py-2 rounded shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm"
+                          >
+                            Logout
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => setShowLoginModal(true)}
+                            className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                          >
+                            Login
+                          </button>
+                          <button
+                            onClick={() => setShowCreateAccountModal(true)}
+                            className="bg-green-500/80 hover:bg-green-600/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
+                          >
+                            Create Account
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
+              </nav>
+
+              <div className="fixed top-16 left-0 right-0 z-40 token-banner-container">
+                <TokenBanner />
               </div>
-            </nav>
 
-            <div className="fixed top-16 left-0 right-0 z-40 token-banner-container">
-              <TokenBanner />
-            </div>
+              {/* Main content - allow natural scrolling */}
+              <div className="pt-28">
+                {/* Bubbles section - keep it as is, remove fixed positioning */}
+                <div className="relative min-h-screen">
+                  {/* Ads */}
+                  {ads && ads.length > 0 ? (
+                    ads.map(ad => {
+                      const { x, y } = ensureInViewport(
+                        ad.x,
+                        ad.y,
+                        ad.size,
+                        windowSize.width,
+                        windowSize.height,
+                        ads,
+                        ad.id
+                      );
+                      const imageSize = Math.floor(ad.size * 0.75);
 
-            {/* Main content - allow natural scrolling */}
-            <div className="pt-28">
-              {/* Bubbles section - keep it as is, remove fixed positioning */}
-              <div className="relative min-h-screen">
-                {/* Ads */}
-                {ads && ads.length > 0 ? (
-                  ads.map(ad => {
-                    const { x, y } = ensureInViewport(
-                      ad.x,
-                      ad.y,
-                      ad.size,
-                      windowSize.width,
-                      windowSize.height,
-                      ads,
-                      ad.id
-                    );
-                    const imageSize = Math.floor(ad.size * 0.75);
-
-                    return (
-                      <div
-                        key={ad.id}
-                        className="absolute cursor-pointer transform transition-all hover:scale-105 bubble"
-                        style={{
-                          left: `${x}px`,
-                          top: `${y}px`,
-                          width: `${ad.size}px`,
-                          height: `${ad.size}px`,
-                          transition: `all ${ANIMATION_DURATION} ease-in-out`,
-                          zIndex: ad.isBumped ? 2 : 1,
-                          animationDuration: `${8 + Math.random() * 4}s` // Random duration between 8-12s
-                        }}
-                        onClick={() => {
-                          if (requireAuth()) {
-                            window.open(ad.url, '_blank');
-                          }
-                        }}
-                      >
-                        <div className="relative w-full h-full flex flex-col items-center justify-center">
-                          <div className="absolute inset-0 rounded-full bg-gray-800/90 backdrop-blur-sm shadow-lg shadow-blue-500/20 glow"></div>
-                          <div 
-                            className="relative z-10 mb-2 rounded-full overflow-hidden flex items-center justify-center"
-                            style={{
-                              width: `${imageSize}px`,
-                              height: `${imageSize}px`,
-                            }}
-                          >
-                            <img
-                              src={ad.logo}
-                              alt={ad.title}
-                              className="w-full h-full object-cover"
+                      return (
+                        <div
+                          key={ad.id}
+                          className="absolute cursor-pointer transform transition-all hover:scale-105 bubble"
+                          style={{
+                            left: `${x}px`,
+                            top: `${y}px`,
+                            width: `${ad.size}px`,
+                            height: `${ad.size}px`,
+                            transition: `all ${ANIMATION_DURATION} ease-in-out`,
+                            zIndex: ad.isBumped ? 2 : 1,
+                            animationDuration: `${8 + Math.random() * 4}s` // Random duration between 8-12s
+                          }}
+                          onClick={() => {
+                            if (requireAuth()) {
+                              window.open(ad.url, '_blank');
+                            }
+                          }}
+                        >
+                          <div className="relative w-full h-full flex flex-col items-center justify-center">
+                            <div className="absolute inset-0 rounded-full bg-gray-800/90 backdrop-blur-sm shadow-lg shadow-blue-500/20 glow"></div>
+                            <div 
+                              className="relative z-10 mb-2 rounded-full overflow-hidden flex items-center justify-center"
                               style={{
-                                objectFit: 'cover',
-                                width: '100%',
-                                height: '100%'
-                              }}
-                            />
-                          </div>
-                          <div 
-                            className="relative z-10 text-center px-2 w-full"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (requireAuth()) {
-                                setSelectedAdId(ad.id);
-                                setShowBumpStore(true);
-                              }
-                            }}
-                          >
-                            <span 
-                              className="text-white truncate block hover:text-blue-300 transition-colors duration-300"
-                              style={{
-                                fontSize: `${Math.max(ad.size * 0.1, 12)}px`
+                                width: `${imageSize}px`,
+                                height: `${imageSize}px`,
                               }}
                             >
-                              {ad.title}
-                            </span>
+                              <img
+                                src={ad.logo}
+                                alt={ad.title}
+                                className="w-full h-full object-cover"
+                                style={{
+                                  objectFit: 'cover',
+                                  width: '100%',
+                                  height: '100%'
+                                }}
+                              />
+                            </div>
+                            <div 
+                              className="relative z-10 text-center px-2 w-full"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (requireAuth()) {
+                                  setSelectedAdId(ad.id);
+                                  setShowBumpStore(true);
+                                }
+                              }}
+                            >
+                              <span 
+                                className="text-white truncate block hover:text-blue-300 transition-colors duration-300"
+                                style={{
+                                  fontSize: `${Math.max(ad.size * 0.1, 12)}px`
+                                }}
+                              >
+                                {ad.title}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="flex items-center justify-center h-screen">
-                    <p className="text-gray-500">Loading ads...</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Token list section - add z-index and proper background */}
-              <div className="relative z-10 bg-transparent">
-                <TokenList 
-                  currentUser={currentUser}
-                  showNotification={showNotification}
-                />
-              </div>
-            </div>
-
-            {/* Modals */}
-            {showLoginModal && (
-              <LoginModal
-                onLogin={handleLogin}
-                onClose={() => setShowLoginModal(false)}
-                onCreateAccount={() => {
-                  setShowLoginModal(false);
-                  setShowCreateAccountModal(true);
-                }}
-              />
-            )}
-
-            {showProfileModal && currentUser && (
-              <ProfileModal
-                currentUser={currentUser}
-                onClose={() => setShowProfileModal(false)}
-                onProfileUpdate={handleProfileUpdate}
-              />
-            )}
-
-            {showCreateAccountModal && (
-              <CreateAccountModal
-                isOpen={showCreateAccountModal}
-                onCreateAccount={handleCreateAccount}
-                onClose={() => setShowCreateAccountModal(false)}
-              />
-            )}
-
-            {showCreateModal && currentUser && (
-              <CreateAdModal
-                onCreateAd={handleCreateAd}
-                onClose={() => setShowCreateModal(false)}
-              />
-            )}
-
-            {showBumpStore && selectedAdId && currentUser && (
-              <BumpStore
-                ad={ads.find(ad => ad.id === selectedAdId)}
-                onClose={() => {
-                  setShowBumpStore(false);
-                  setSelectedAdId(null);
-                }}
-                onSubmitPayment={handleBumpPurchase}
-              />
-            )}
-
-            {showEditModal && adToEdit && currentUser && (
-              <EditAdModal
-                ad={adToEdit}
-                onEditAd={handleEditAd}
-                onClose={() => {
-                  setShowEditModal(false);
-                  setAdToEdit(null);
-                }}
-              />
-            )}
-
-            {showDashboard && currentUser && (
-              <Dashboard
-                ads={ads}
-                currentUser={currentUser}
-                onClose={() => setShowDashboard(false)}
-                onDeleteAd={handleDeleteAd}
-                onBumpAd={(adId) => {
-                  setSelectedAdId(adId);
-                  setShowBumpStore(true);
-                  setShowDashboard(false);
-                }}
-                onEditAd={(ad) => {
-                  setAdToEdit(ad);
-                  setShowEditModal(true);
-                  setShowDashboard(false);
-                }}
-                onRejectBump={handleRejectBump}
-                onApproveBump={handleApproveBump}
-              />
-            )}
-
-            {showWelcomeModal && (
-              <WelcomeModal
-                username={newUsername}
-                onClose={() => setShowWelcomeModal(false)}
-              />
-            )}
-
-            {/* Notifications */}
-            <div className="fixed bottom-4 right-4 space-y-2 z-50">
-              {notifications.map(({ id, message, type }) => (
-                <div
-                  key={id}
-                  className={`p-4 rounded shadow-lg ${
-                    type === 'error' ? 'bg-red-500' :
-                    type === 'success' ? 'bg-green-500' :
-                    'bg-blue-500'
-                  }`}
-                >
-                  {message}
+                      );
+                    })
+                  ) : (
+                    <div className="flex items-center justify-center h-screen">
+                      <p className="text-gray-500">Loading ads...</p>
+                    </div>
+                  )}
                 </div>
-              ))}
+
+                {/* Token list section - add z-index and proper background */}
+                <div className="relative z-10 bg-transparent">
+                  <TokenList 
+                    currentUser={currentUser}
+                    showNotification={showNotification}
+                  />
+                </div>
+              </div>
+
+              {/* Modals */}
+              {showLoginModal && (
+                <LoginModal
+                  onLogin={handleLogin}
+                  onClose={() => setShowLoginModal(false)}
+                  onCreateAccount={() => {
+                    setShowLoginModal(false);
+                    setShowCreateAccountModal(true);
+                  }}
+                />
+              )}
+
+              {showProfileModal && currentUser && (
+                <ProfileModal
+                  currentUser={currentUser}
+                  onClose={() => setShowProfileModal(false)}
+                  onProfileUpdate={handleProfileUpdate}
+                />
+              )}
+
+              {showCreateAccountModal && (
+                <CreateAccountModal
+                  isOpen={showCreateAccountModal}
+                  onCreateAccount={handleCreateAccount}
+                  onClose={() => setShowCreateAccountModal(false)}
+                />
+              )}
+
+              {showCreateModal && currentUser && (
+                <CreateAdModal
+                  onCreateAd={handleCreateAd}
+                  onClose={() => setShowCreateModal(false)}
+                />
+              )}
+
+              {showBumpStore && selectedAdId && currentUser && (
+                <BumpStore
+                  ad={ads.find(ad => ad.id === selectedAdId)}
+                  onClose={() => {
+                    setShowBumpStore(false);
+                    setSelectedAdId(null);
+                  }}
+                  onSubmitPayment={handleBumpPurchase}
+                />
+              )}
+
+              {showEditModal && adToEdit && currentUser && (
+                <EditAdModal
+                  ad={adToEdit}
+                  onEditAd={handleEditAd}
+                  onClose={() => {
+                    setShowEditModal(false);
+                    setAdToEdit(null);
+                  }}
+                />
+              )}
+
+              {showDashboard && currentUser && (
+                <Dashboard
+                  ads={ads}
+                  currentUser={currentUser}
+                  onClose={() => setShowDashboard(false)}
+                  onDeleteAd={handleDeleteAd}
+                  onBumpAd={(adId) => {
+                    setSelectedAdId(adId);
+                    setShowBumpStore(true);
+                    setShowDashboard(false);
+                  }}
+                  onEditAd={(ad) => {
+                    setAdToEdit(ad);
+                    setShowEditModal(true);
+                    setShowDashboard(false);
+                  }}
+                  onRejectBump={handleRejectBump}
+                  onApproveBump={handleApproveBump}
+                />
+              )}
+
+              {showWelcomeModal && (
+                <WelcomeModal
+                  username={newUsername}
+                  onClose={() => setShowWelcomeModal(false)}
+                />
+              )}
+
+              {/* Notifications */}
+              <div className="fixed bottom-4 right-4 space-y-2 z-50">
+                {notifications.map(({ id, message, type }) => (
+                  <div
+                    key={id}
+                    className={`p-4 rounded shadow-lg ${
+                      type === 'error' ? 'bg-red-500' :
+                      type === 'success' ? 'bg-green-500' :
+                      'bg-blue-500'
+                    }`}
+                  >
+                    {message}
+                  </div>
+                ))}
+              </div>
+
+              {/* Debug info */}
+              {process.env.NODE_ENV === 'development' && (
+                <div className="fixed bottom-4 left-4 text-white text-sm z-50">
+                  Ads loaded: {ads.length}
+                </div>
+              )}
             </div>
 
-            {/* Debug info */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="fixed bottom-4 left-4 text-white text-sm z-50">
-                Ads loaded: {ads.length}
-              </div>
-            )}
+            {/* Footer */}
             <Footer />
           </div>
         } />
