@@ -512,14 +512,14 @@ export const updateUserProfile = async (profileData) => {
 };
 
 // Request password reset
-export const requestPasswordReset = async (username) => {
+export const requestPasswordReset = async (username, referralCode) => {
   try {
     const response = await fetch(`${API_URL}/users/request-password-reset`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ username }),
+      body: JSON.stringify({ username, referralCode }),
     });
 
     if (!response.ok) {
@@ -535,14 +535,14 @@ export const requestPasswordReset = async (username) => {
 };
 
 // Reset password
-export const resetPassword = async (username, newPassword) => {
+export const resetPassword = async (username, referralCode, newPassword) => {
   try {
     const response = await fetch(`${API_URL}/users/reset-password`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ username, newPassword }),
+      body: JSON.stringify({ username, referralCode, newPassword }),
     });
 
     if (!response.ok) {

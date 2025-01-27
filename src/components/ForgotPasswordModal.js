@@ -5,6 +5,7 @@ import ResetPasswordModal from './ResetPasswordModal';
 
 const ForgotPasswordModal = ({ show, onHide }) => {
   const [username, setUsername] = useState('');
+  const [referralCode, setReferralCode] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
@@ -15,7 +16,7 @@ const ForgotPasswordModal = ({ show, onHide }) => {
     setIsLoading(true);
 
     try {
-      await requestPasswordReset(username);
+      await requestPasswordReset(username, referralCode);
       setShowResetModal(true);
     } catch (error) {
       setError(error.message || 'Failed to process request');
@@ -48,6 +49,19 @@ const ForgotPasswordModal = ({ show, onHide }) => {
                 placeholder="Enter your username"
               />
             </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Your Referral Code</Form.Label>
+              <Form.Control
+                type="text"
+                value={referralCode}
+                onChange={(e) => setReferralCode(e.target.value)}
+                required
+                placeholder="Enter your referral code"
+              />
+              <Form.Text className="text-muted">
+                This is the unique code generated when you created your account
+              </Form.Text>
+            </Form.Group>
             <Button
               variant="primary"
               type="submit"
@@ -64,6 +78,7 @@ const ForgotPasswordModal = ({ show, onHide }) => {
         show={showResetModal}
         onHide={handleResetComplete}
         username={username}
+        referralCode={referralCode}
       />
     </>
   );

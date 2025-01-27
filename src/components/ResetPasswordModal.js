@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Form, Button, Alert } from 'react-bootstrap';
 import { resetPassword } from '../services/api';
 
-const ResetPasswordModal = ({ show, onHide, username }) => {
+const ResetPasswordModal = ({ show, onHide, username, referralCode }) => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -21,7 +21,7 @@ const ResetPasswordModal = ({ show, onHide, username }) => {
     }
 
     try {
-      await resetPassword(username, newPassword);
+      await resetPassword(username, referralCode, newPassword);
       setSuccess(true);
       setTimeout(() => {
         onHide();

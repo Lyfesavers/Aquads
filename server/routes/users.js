@@ -238,34 +238,36 @@ router.put('/profile', auth, async (req, res) => {
 // Request password reset
 router.post('/request-password-reset', async (req, res) => {
   try {
-    const { username } = req.body;
+    const { username, referralCode } = req.body;
 
-    if (!username) {
-      return res.status(400).json({ error: 'Username is required' });
+    if (!username || !referralCode) {
+      return res.status(400).json({ error: 'Username and referral code are required' });
     }
 
-    // Find user by username (case-insensitive)
+    // Find user by username and verify referral code (case-insensitive for username)
     const user = await User.findOne({ 
       username: { $regex: new RegExp(`^${username}$`, 'i') }
     });
 
-    if (user) {
-      // Generate reset token
-      const resetToken = crypto.randomBytes(32).toString('hex');
-      const hashedToken = await bcrypt.hash(resetToken, 10);
-
-      // Store hashed token and expiry
-      user.resetToken = hashedToken;
-      user.resetTokenExpiry = Date.now() + 3600000; // 1 hour expiry
-      await user.save();
-
-      // Store the token temporarily (this will be cleared after use or expiry)
-      tempTokenStore.set(username.toLowerCase(), resetToken);
+    if (!user || user.referralCode !== referralCode) {
+      return res.status(400).json({ error: 'Invalid username or referral code' });
     }
 
-    // For security, always return the same message
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = await bcrypt.hash(resetToken, 10);
+
+    // Store hashed token and expiry
+    user.resetToken = hashedToken;
+    user.resetTokenExpiry = Date.now() + 3600000; // 1 hour expiry
+    await user.save();
+
+    // Store the token temporarily (this will be cleared after use or expiry)
+    tempTokenStore.set(username.toLowerCase(), resetToken);
+
+    // Return success with token (only for development)
     res.json({ 
-      message: 'If this username exists, you will receive password reset instructions.',
+      message: 'Password reset token generated successfully',
       token: tempTokenStore.get(username.toLowerCase()) // Only for development!
     });
 
@@ -278,19 +280,19 @@ router.post('/request-password-reset', async (req, res) => {
 // Reset password
 router.post('/reset-password', async (req, res) => {
   try {
-    const { username, newPassword } = req.body;
+    const { username, referralCode, newPassword } = req.body;
 
-    if (!username || !newPassword) {
-      return res.status(400).json({ error: 'Username and new password are required' });
+    if (!username || !newPassword || !referralCode) {
+      return res.status(400).json({ error: 'Username, referral code, and new password are required' });
     }
 
-    // Find user by username
+    // Find user by username and verify referral code
     const user = await User.findOne({ 
       username: { $regex: new RegExp(`^${username}$`, 'i') }
     });
 
-    if (!user || !user.resetToken || !user.resetTokenExpiry || user.resetTokenExpiry < Date.now()) {
-      return res.status(400).json({ error: 'Invalid or expired reset token' });
+    if (!user || user.referralCode !== referralCode || !user.resetToken || !user.resetTokenExpiry || user.resetTokenExpiry < Date.now()) {
+      return res.status(400).json({ error: 'Invalid credentials or expired reset token' });
     }
 
     // Update password
@@ -298,6 +300,9 @@ router.post('/reset-password', async (req, res) => {
     user.resetToken = undefined;
     user.resetTokenExpiry = undefined;
     await user.save();
+
+    // Clear the temporary token
+    tempTokenStore.delete(username.toLowerCase());
 
     res.json({ message: 'Password has been reset successfully' });
 
