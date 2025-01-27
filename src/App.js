@@ -657,13 +657,15 @@ function App() {
           />
         } />
         <Route path="/" element={
-          <div className="min-h-screen flex flex-col bg-gray-900">
+          <div className="bg-gradient-to-br from-gray-900 to-black text-white overflow-y-auto h-screen">
+            {/* Background stays fixed */}
             <div className="fixed inset-0 z-0">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-black"></div>
               <div className="tech-lines"></div>
               <div className="tech-dots"></div>
             </div>
 
+            {/* Navigation and banner stay fixed */}
             <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm shadow-lg shadow-blue-500/20 z-50">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
@@ -730,8 +732,11 @@ function App() {
               <TokenBanner />
             </div>
 
+            {/* Main content - allow natural scrolling */}
             <div className="pt-28">
+              {/* Bubbles section - keep it as is, remove fixed positioning */}
               <div className="relative min-h-screen">
+                {/* Ads */}
                 {ads && ads.length > 0 ? (
                   ads.map(ad => {
                     const { x, y } = ensureInViewport(
@@ -814,6 +819,7 @@ function App() {
                 )}
               </div>
 
+              {/* Token list section - add z-index and proper background */}
               <div className="relative z-10 bg-transparent">
                 <TokenList 
                   currentUser={currentUser}
@@ -822,6 +828,7 @@ function App() {
               </div>
             </div>
 
+            {/* Modals */}
             {showLoginModal && (
               <LoginModal
                 onLogin={handleLogin}
@@ -906,6 +913,7 @@ function App() {
               />
             )}
 
+            {/* Notifications */}
             <div className="fixed bottom-4 right-4 space-y-2 z-50">
               {notifications.map(({ id, message, type }) => (
                 <div
@@ -921,6 +929,7 @@ function App() {
               ))}
             </div>
 
+            {/* Debug info */}
             {process.env.NODE_ENV === 'development' && (
               <div className="fixed bottom-4 left-4 text-white text-sm z-50">
                 Ads loaded: {ads.length}
