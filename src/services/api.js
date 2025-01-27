@@ -517,14 +517,14 @@ export const requestPasswordReset = async (username) => {
     const response = await fetch(`${API_URL}/users/request-password-reset`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ username })
+      body: JSON.stringify({ username }),
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to request password reset');
+      const data = await response.json();
+      throw new Error(data.error || 'Failed to request password reset');
     }
 
     return response.json();
@@ -540,14 +540,14 @@ export const resetPassword = async (username, newPassword) => {
     const response = await fetch(`${API_URL}/users/reset-password`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ username, newPassword })
+      body: JSON.stringify({ username, newPassword }),
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to reset password');
+      const data = await response.json();
+      throw new Error(data.error || 'Failed to reset password');
     }
 
     return response.json();

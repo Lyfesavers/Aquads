@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import Modal from './Modal';
+import { Modal, Form, Button, Alert } from 'react-bootstrap';
 import { resetPassword } from '../services/api';
 
-const ResetPasswordModal = ({ username, onClose, onSuccess }) => {
+const ResetPasswordModal = ({ show, onHide, username }) => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -21,7 +22,10 @@ const ResetPasswordModal = ({ username, onClose, onSuccess }) => {
 
     try {
       await resetPassword(username, newPassword);
-      onSuccess();
+      setSuccess(true);
+      setTimeout(() => {
+        onHide();
+      }, 2000);
     } catch (error) {
       setError(error.message || 'Failed to reset password');
     } finally {
@@ -30,53 +34,49 @@ const ResetPasswordModal = ({ username, onClose, onSuccess }) => {
   };
 
   return (
-    <Modal onClose={onClose}>
-      <div className="text-white">
-        <h2 className="text-2xl font-bold mb-4">Set New Password</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block mb-1">New Password</label>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-              placeholder="Enter new password"
-              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block mb-1">Confirm Password</label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              placeholder="Confirm new password"
-              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          {error && <p className="text-red-500">{error}</p>}
-
-          <div className="flex justify-end gap-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded transition-colors"
-            >
-              Cancel
-            </button>
-            <button
+    <Modal show={show} onHide={onHide} centered>
+      <Modal.Header closeButton>
+        <Modal.Title>Reset Password</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        {success ? (
+          <Alert variant="success">
+            Password reset successful! You can now log in with your new password.
+          </Alert>
+        ) : (
+          <Form onSubmit={handleSubmit}>
+            {error && <Alert variant="danger">{error}</Alert>}
+            <Form.Group className="mb-3">
+              <Form.Label>New Password</Form.Label>
+              <Form.Control
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                minLength={6}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Confirm New Password</Form.Label>
+              <Form.Control
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={6}
+              />
+            </Form.Group>
+            <Button
+              variant="primary"
               type="submit"
               disabled={isLoading}
-              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded transition-colors disabled:opacity-50"
+              className="w-100"
             >
-              {isLoading ? 'Processing...' : 'Reset Password'}
-            </button>
-          </div>
-        </form>
-      </div>
+              {isLoading ? 'Resetting Password...' : 'Reset Password'}
+            </Button>
+          </Form>
+        )}
+      </Modal.Body>
     </Modal>
   );
 };
