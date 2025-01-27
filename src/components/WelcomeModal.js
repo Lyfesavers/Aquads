@@ -11,7 +11,7 @@ const WelcomeModal = ({ username, onClose }) => {
     <div className="modal-backdrop">
       <div className="welcome-modal">
         <h2>🎉 Welcome to Aquads, {username}!</h2>
-        <p>Your account has been successfully created. We're excited to have you join our community!</p>
+        <p>Your account has been successfully created. We're excited to have you join our community. Use the Share now button and get 24 hours free advertising!</p>
         
         <div className="welcome-actions">
           <button className="share-button" onClick={handleShare}>
