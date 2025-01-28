@@ -784,9 +784,9 @@ function App() {
                               <img
                                 src={ad.logo}
                                 alt={ad.title}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-contain"
                                 style={{
-                                  objectFit: 'cover',
+                                  objectFit: 'contain',
                                   width: '100%',
                                   height: '100%'
                                 }}
