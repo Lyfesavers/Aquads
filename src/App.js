@@ -29,6 +29,7 @@ import Marketplace from './components/Marketplace';
 import ProfileModal from './components/ProfileModal';
 import WelcomeModal from './components/WelcomeModal';
 import Footer from './components/Footer';
+import Whitepaper from './components/Whitepaper';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 
 window.Buffer = Buffer;
@@ -945,6 +946,7 @@ function App() {
             </div>
           </div>
         } />
+        <Route path="/whitepaper" element={<Whitepaper />} />
       </Routes>
     </Router>
   );

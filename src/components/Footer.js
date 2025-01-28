@@ -1,5 +1,6 @@
 import React from 'react';
-import { FaTwitter, FaTelegram, FaEnvelope } from 'react-icons/fa';
+import { FaTwitter, FaTelegram, FaEnvelope, FaFileAlt } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
@@ -32,6 +33,13 @@ const Footer = () => {
               <FaEnvelope className="mr-2" />
               <span>Email</span>
             </a>
+            <Link
+              to="/whitepaper"
+              className="hover:text-blue-400 transition-colors flex items-center"
+            >
+              <FaFileAlt className="mr-2" />
+              <span>Whitepaper</span>
+            </Link>
           </div>
           <div className="text-sm text-gray-400">
             © {new Date().getFullYear()} Aquads. All rights reserved.
