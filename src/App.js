@@ -791,6 +791,11 @@ function App() {
                                   width: '100%',
                                   height: '100%'
                                 }}
+                                onLoad={(e) => {
+                                  if (e.target.src.toLowerCase().endsWith('.gif')) {
+                                    e.target.setAttribute('loop', 'infinite');
+                                  }
+                                }}
                               />
                             </div>
                             <div 
