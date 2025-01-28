@@ -784,6 +784,7 @@ function App() {
                               <img
                                 src={ad.logo}
                                 alt={ad.title}
+                                loading="eager"
                                 className="w-full h-full object-contain"
                                 style={{
                                   objectFit: 'contain',
