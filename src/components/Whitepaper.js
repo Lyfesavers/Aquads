@@ -1,8 +1,21 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Whitepaper = () => {
   return (
-    <div className="bg-gray-900 text-white min-h-screen">
+    <div className="bg-gray-900 text-white min-h-screen overflow-y-auto">
+      <div className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
+        <div className="container mx-auto px-4 py-4">
+          <Link to="/" className="inline-block">
+            <img
+              src="https://i.imgur.com/3kCQx6G.png"
+              alt="Aquads Logo"
+              className="h-12 hover:opacity-80 transition-opacity"
+            />
+          </Link>
+        </div>
+      </div>
+      
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="prose prose-invert max-w-none">
           <h1 className="text-4xl font-bold mb-8 text-center">Aquads Whitepaper</h1>
