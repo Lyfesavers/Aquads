@@ -54,11 +54,11 @@ router.post('/register', async (req, res) => {
 
     // If referral code provided, find referring user
     if (referralCode) {
-      const referringUser = await User.findOne({ referralCode });
+      const referringUser = await User.findOne({ username: referralCode });
       if (referringUser) {
         userData.referredBy = referringUser._id;
       } else {
-        console.log('Invalid referral code:', referralCode);
+        console.log('Invalid username as referral:', referralCode);
       }
     }
 
