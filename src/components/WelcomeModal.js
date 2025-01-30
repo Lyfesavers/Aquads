@@ -20,7 +20,9 @@ const WelcomeModal = ({ username, onClose, referralCode }) => {
         
         <div className="referral-code-section">
           <h3>⚠️ IMPORTANT: Save Your Secret Code ⚠️</h3>
+          <p>Your Referral code to share is your username.</p>
           <p>This is your unique Secret code. You'll need it for:</p>
+
           <ul>
             <li>Leaving reviews</li>
             <li>Account recovery</li>
