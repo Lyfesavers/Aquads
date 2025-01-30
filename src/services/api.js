@@ -478,11 +478,17 @@ export const searchServices = async (query) => {
 export const updateUserProfile = async (profileData) => {
   try {
     console.log('Updating profile with data:', profileData);
+    
+    // Get the current user data from localStorage
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    if (!currentUser.token) {
+      throw new Error('No authentication token found');
+    }
 
     const response = await axios.put(`${API_URL}/users/profile`, profileData, {
       headers: {
         'Content-Type': 'application/json',
-        ...getAuthHeader()
+        'Authorization': `Bearer ${currentUser.token}`
       }
     });
 
@@ -490,7 +496,6 @@ export const updateUserProfile = async (profileData) => {
 
     if (response.data) {
       // Update stored user data with new information
-      const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
       const updatedUser = {
         ...currentUser,
         ...response.data
