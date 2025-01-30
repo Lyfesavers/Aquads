@@ -12,26 +12,16 @@ const tempTokenStore = new Map();
 // Register new user
 router.post('/register', async (req, res) => {
   try {
-    console.log('Registration attempt with data:', { 
-      username: req.body.username,
-      email: req.body.email,
-      hasPassword: !!req.body.password,
-      image: req.body.image,
-      referralCode: req.body.referralCode
-    });
-
     const { username, email, password, image, referralCode } = req.body;
 
     // Validate required fields
     if (!username || !password) {
-      console.log('Missing required fields');
       return res.status(400).json({ error: 'Username and password are required' });
     }
 
     // Check if username already exists
     const existingUsername = await User.findOne({ username });
     if (existingUsername) {
-      console.log('Username already exists:', username);
       return res.status(400).json({ error: 'Username already exists' });
     }
 
@@ -39,7 +29,6 @@ router.post('/register', async (req, res) => {
     if (email) {
       const existingEmail = await User.findOne({ email });
       if (existingEmail) {
-        console.log('Email already exists:', email);
         return res.status(400).json({ error: 'Email already exists' });
       }
     }
@@ -58,23 +47,12 @@ router.post('/register', async (req, res) => {
       const referringUser = await User.findOne({ username: referralCode });
       if (referringUser) {
         userData.referredBy = referringUser._id;
-      } else {
-        console.log('Invalid username as referral:', referralCode);
       }
     }
-
-    console.log('Creating new user with data:', {
-      username: userData.username,
-      email: userData.email,
-      hasImage: !!userData.image,
-      hasReferral: !!userData.referredBy
-    });
 
     // Create and save new user
     const user = new User(userData);
     await user.save();
-
-    console.log('User created successfully:', user._id);
 
     // Generate JWT token
     const token = jwt.sign(
