@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 const crypto = require('crypto');
+const { sendWelcomeEmail } = require('../utils/emailService');
 
 // Initialize temporary token store (this should be replaced with a proper solution in production)
 const tempTokenStore = new Map();
@@ -49,7 +50,8 @@ router.post('/register', async (req, res) => {
       username,
       password,
       email,
-      image: image || undefined
+      image: image || undefined,
+      referralCode: generateReferralCode()
     };
 
     // If referral code provided, find referring user
@@ -72,6 +74,9 @@ router.post('/register', async (req, res) => {
     // Create and save new user
     const user = new User(userData);
     await user.save();
+
+    // Send welcome email with referral code
+    await sendWelcomeEmail(email, username, user.referralCode);
 
     console.log('User created successfully:', user._id);
 
