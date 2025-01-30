@@ -76,7 +76,12 @@ router.post('/register', async (req, res) => {
     await user.save();
 
     // Send welcome email with referral code
-    await sendWelcomeEmail(email, username, user.referralCode);
+    try {
+      await sendWelcomeEmail(email, username, user.referralCode);
+    } catch (emailError) {
+      console.error('Error sending welcome email:', emailError);
+      // Continue with registration even if email fails
+    }
 
     console.log('User created successfully:', user._id);
 
