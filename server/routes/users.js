@@ -38,11 +38,10 @@ router.post('/register', async (req, res) => {
       username,
       password,
       email,
-      image: image || undefined,
-      referralCode: generateReferralCode()
+      image: image || undefined
     };
 
-    // If referral code provided, find referring user
+    // If referral code provided, find referring user by username
     if (referralCode) {
       const referringUser = await User.findOne({ username: referralCode });
       if (referringUser) {
@@ -63,15 +62,12 @@ router.post('/register', async (req, res) => {
 
     // Return user data and token
     res.status(201).json({
-      message: 'User registered successfully',
-      token,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        image: user.image,
-        referralCode: user.referralCode
-      }
+      userId: user._id,
+      username: user.username,
+      email: user.email,
+      image: user.image,
+      referralCode: user.referralCode,
+      token
     });
   } catch (error) {
     console.error('Registration error:', error);
