@@ -19,10 +19,10 @@ const WelcomeModal = ({ username, onClose, referralCode }) => {
         <p>Your account has been successfully created. We're excited to have you join our community. Use the Share now button and get 24 hours free advertising!</p>
         
         <div className="referral-code-section">
-          <h3>⚠️ IMPORTANT: Save Your Referral Code ⚠️</h3>
-          <p>This is your unique referral code. You'll need it for:</p>
+          <h3>⚠️ IMPORTANT: Save Your Secret Code ⚠️</h3>
+          <p>This is your unique Secret code. You'll need it for:</p>
           <ul>
-            <li>Referring friends (earn rewards)</li>
+            <li>Leaving reviews</li>
             <li>Account recovery</li>
             <li>Verification purposes</li>
           </ul>
