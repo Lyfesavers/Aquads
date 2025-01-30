@@ -5,7 +5,6 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 const crypto = require('crypto');
-const { sendWelcomeEmail } = require('../utils/emailService');
 
 // Initialize temporary token store (this should be replaced with a proper solution in production)
 const tempTokenStore = new Map();
@@ -75,14 +74,6 @@ router.post('/register', async (req, res) => {
     const user = new User(userData);
     await user.save();
 
-    // Send welcome email with referral code
-    try {
-      await sendWelcomeEmail(email, username, user.referralCode);
-    } catch (emailError) {
-      console.error('Error sending welcome email:', emailError);
-      // Continue with registration even if email fails
-    }
-
     console.log('User created successfully:', user._id);
 
     // Generate JWT token
@@ -94,37 +85,19 @@ router.post('/register', async (req, res) => {
 
     // Return user data and token
     res.status(201).json({
-      userId: user._id,
-      username: user.username,
-      email: user.email,
-      image: user.image,
-      referralCode: user.referralCode,
-      token
+      message: 'User registered successfully',
+      token,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        image: user.image,
+        referralCode: user.referralCode
+      }
     });
-
   } catch (error) {
-    console.error('Registration error details:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
-      code: error.code
-    });
-    
-    // Send appropriate error response
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({ error: error.message });
-    }
-    
-    if (error.code === 11000) {
-      // Duplicate key error
-      const field = Object.keys(error.keyPattern)[0];
-      return res.status(400).json({ error: `${field} already exists` });
-    }
-    
-    res.status(500).json({ 
-      error: 'Registration failed. Please try again.',
-      details: error.message
-    });
+    console.error('Registration error:', error);
+    res.status(500).json({ error: 'Error registering user' });
   }
 });
 

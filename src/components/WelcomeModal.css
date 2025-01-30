@@ -70,4 +70,68 @@
   background-color: rgba(204, 204, 204, 0.1);
   color: white;
   border-color: white;
+}
+
+.referral-code-section {
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 0;
+  border: 2px solid #3498db;
+}
+
+.referral-code-section h3 {
+  color: #3498db;
+  margin-top: 0;
+  text-align: center;
+}
+
+.referral-code-section ul {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+
+.referral-code-section li {
+  margin: 5px 0;
+  color: #ffffff;
+}
+
+.code-display {
+  background-color: #2d2d2d;
+  padding: 15px;
+  border-radius: 5px;
+  margin: 15px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.code-display code {
+  font-size: 18px;
+  color: #3498db;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.copy-button {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.copy-button:hover {
+  background-color: #2980b9;
+}
+
+.warning-text {
+  color: #e74c3c;
+  text-align: center;
+  font-weight: bold;
+  margin: 15px 0 0 0;
 } 

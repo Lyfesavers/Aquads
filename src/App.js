@@ -917,7 +917,8 @@ function App() {
 
               {showWelcomeModal && (
                 <WelcomeModal
-                  username={newUsername}
+                  username={currentUser.username}
+                  referralCode={currentUser.referralCode}
                   onClose={() => setShowWelcomeModal(false)}
                 />
               )}
