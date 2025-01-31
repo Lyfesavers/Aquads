@@ -119,7 +119,28 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const loadServices = async () => {
     try {
       const data = await fetchServices();
-      setServices(data.services || []);
+      const services = data.services || [];
+      
+      // Fetch initial review data for each service
+      const servicesWithReviews = await Promise.all(services.map(async (service) => {
+        try {
+          const response = await fetch(`${API_URL}/service-reviews/${service._id}`);
+          if (!response.ok) return service;
+          
+          const reviews = await response.json();
+          if (reviews && reviews.length > 0) {
+            const totalRating = reviews.reduce((sum, review) => sum + Number(review.rating), 0);
+            const avgRating = totalRating / reviews.length;
+            return { ...service, rating: avgRating, reviews: reviews.length };
+          }
+          return { ...service, rating: 0, reviews: 0 };
+        } catch (error) {
+          console.error(`Error fetching reviews for service ${service._id}:`, error);
+          return service;
+        }
+      }));
+
+      setServices(servicesWithReviews);
       setLoading(false);
     } catch (error) {
       console.error('Error loading services:', error);
