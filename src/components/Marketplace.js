@@ -211,46 +211,24 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     setShowReviewsModal(true);
   };
 
-  const handleReviewsUpdate = async () => {
-    if (!selectedService?._id) {
-      console.error('No service selected for update');
+  const handleReviewsUpdate = (updatedService) => {
+    if (!updatedService?._id) {
+      console.error('No service data provided for update');
       return;
     }
 
-    try {
-      console.log('Fetching updated service data for:', selectedService._id);
-      // Fetch the updated service data
-      const response = await fetch(`${API_URL}/services/${selectedService._id}`);
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to fetch updated service');
-      }
-      const data = await response.json();
-      console.log('Full service response:', data);
-      
-      // If the response is the service object directly
-      const updatedService = data;
-      console.log('Updated service data:', updatedService);
-      
-      if (!updatedService) {
-        console.error('Updated service not found in response');
-        return;
-      }
-      
-      // Update the services array with the new data
-      setServices(prevServices => {
-        console.log('Previous services:', prevServices);
-        const newServices = prevServices.map(service => 
-          service._id === selectedService._id 
-            ? { ...service, rating: updatedService.rating || 0, reviews: updatedService.reviews || 0 }
-            : service
-        );
-        console.log('Updated services:', newServices);
-        return newServices;
-      });
-    } catch (error) {
-      console.error('Error updating service data:', error);
-    }
+    console.log('Updating service with new data:', updatedService);
+    
+    // Update the services array with the new data
+    setServices(prevServices => {
+      const newServices = prevServices.map(service => 
+        service._id === updatedService._id 
+          ? { ...service, rating: updatedService.rating, reviews: updatedService.reviews }
+          : service
+      );
+      console.log('Updated services:', newServices);
+      return newServices;
+    });
   };
 
   const showNotification = (message, type = 'info') => {

@@ -65,13 +65,30 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
         const avgRating = totalRating / data.length;
         setAverageRating(avgRating);
         setTotalReviews(data.length);
+        
+        // Update the service's rating in the parent component
+        if (onReviewsUpdate) {
+          const updatedService = {
+            ...service,
+            rating: avgRating,
+            reviews: data.length
+          };
+          onReviewsUpdate(updatedService);
+        }
       } else {
         setAverageRating(0);
         setTotalReviews(0);
+        
+        // Update parent with zero rating when no reviews
+        if (onReviewsUpdate) {
+          const updatedService = {
+            ...service,
+            rating: 0,
+            reviews: 0
+          };
+          onReviewsUpdate(updatedService);
+        }
       }
-
-      // Call onReviewsUpdate after all state updates are complete
-      onReviewsUpdate?.();
     } catch (error) {
       console.error('Error fetching reviews:', error);
       setError('Failed to load reviews');
