@@ -220,27 +220,34 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     try {
       console.log('Fetching updated service data for:', selectedService._id);
       // Fetch the updated service data
-      const response = await fetch(`${API_URL}/services?id=${selectedService._id}`);
+      const response = await fetch(`${API_URL}/services/${selectedService._id}`);
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || 'Failed to fetch updated service');
       }
       const data = await response.json();
-      console.log('Received service data:', data);
+      console.log('Full service response:', data);
       
-      // Find the updated service in the response
-      const updatedService = data.services?.find(s => s._id === selectedService._id);
+      // If the response is the service object directly
+      const updatedService = data;
+      console.log('Updated service data:', updatedService);
+      
       if (!updatedService) {
         console.error('Updated service not found in response');
         return;
       }
       
       // Update the services array with the new data
-      setServices(prevServices => 
-        prevServices.map(service => 
-          service._id === selectedService._id ? updatedService : service
-        )
-      );
+      setServices(prevServices => {
+        console.log('Previous services:', prevServices);
+        const newServices = prevServices.map(service => 
+          service._id === selectedService._id 
+            ? { ...service, rating: updatedService.rating || 0, reviews: updatedService.reviews || 0 }
+            : service
+        );
+        console.log('Updated services:', newServices);
+        return newServices;
+      });
     } catch (error) {
       console.error('Error updating service data:', error);
     }
