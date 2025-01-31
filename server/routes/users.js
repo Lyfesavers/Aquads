@@ -305,4 +305,34 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
+// Verify referral code
+router.post('/verify-referral', auth, async (req, res) => {
+  try {
+    const { username, referralCode } = req.body;
+
+    if (!username || !referralCode) {
+      return res.status(400).json({ error: 'Username and referral code are required' });
+    }
+
+    // Find user by username
+    const user = await User.findOne({ 
+      username: { $regex: new RegExp(`^${username}$`, 'i') }
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: 'User not found' });
+    }
+
+    // Verify the referral code
+    if (user.referralCode !== referralCode) {
+      return res.status(400).json({ error: 'Invalid referral code' });
+    }
+
+    res.json({ message: 'Referral code verified successfully' });
+  } catch (error) {
+    console.error('Referral code verification error:', error);
+    res.status(500).json({ error: 'Error verifying referral code' });
+  }
+});
+
 module.exports = router; 
