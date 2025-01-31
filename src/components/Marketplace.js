@@ -218,13 +218,22 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     }
 
     try {
+      console.log('Fetching updated service data for:', selectedService._id);
       // Fetch the updated service data
-      const response = await fetch(`${API_URL}/services/${selectedService._id}`);
+      const response = await fetch(`${API_URL}/services?id=${selectedService._id}`);
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || 'Failed to fetch updated service');
       }
-      const updatedService = await response.json();
+      const data = await response.json();
+      console.log('Received service data:', data);
+      
+      // Find the updated service in the response
+      const updatedService = data.services?.find(s => s._id === selectedService._id);
+      if (!updatedService) {
+        console.error('Updated service not found in response');
+        return;
+      }
       
       // Update the services array with the new data
       setServices(prevServices => 
@@ -495,7 +504,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                           className="inline-flex items-center px-4 py-2 bg-blue-500/80 hover:bg-blue-600/80 rounded-lg transition-colors text-white"
                         >
                           <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.692-1.653-1.123-2.678-1.799-1.185-.781-.417-1.21.258-1.911.177-.184 3.247-2.977 3.307-3.23.007-.032.015-.15-.056-.212s-.041-.041-.248-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.49-1.302.481-.428-.009-1.252-.242-1.865-.442-.751-.244-1.349-.374-1.297-.789.027-.216.324-.437.892-.663 3.498-1.524 5.831-2.529 6.998-3.015 3.333-1.386 4.025-1.627 4.477-1.635.099-.002.321.023.465.141.119.098.152.228.166.331.016.122.033.391.019.603z"/>
+                            <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.692-1.653-1.123-2.678-1.799-1.185-.781-.417-1.21.258-1.911.177-.184 3.247-2.977 3.307-3.23.007-.032.015-.056-.056-.212s-.041-.041-.248-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.49-1.302.481-.428-.009-1.252-.242-1.865-.442-.751-.244-1.349-.374-1.297-.789.027-.216.324-.437.892-.663 3.498-1.524 5.831-2.529 6.998-3.015 3.333-1.386 4.025-1.627 4.477-1.635.099-.002.321.023.465.141.119.098.152.228.166.331.016.122.033.391.019.603z"/>
                           </svg>
                           Contact on Telegram
                         </a>
