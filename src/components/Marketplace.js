@@ -99,6 +99,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [showReviewsModal, setShowReviewsModal] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
   const [expandedDescriptions, setExpandedDescriptions] = useState(new Set());
+  const [sortOption, setSortOption] = useState('newest');
 
   const categories = [
     { id: 'smart-contract', name: 'Smart Contract Development', icon: '⚡' },
@@ -264,10 +265,33 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     console.log('Token available:', currentUser?.token ? 'yes' : 'no');
   }, [currentUser]);
 
-  // Filter services based on selected category
-  const filteredServices = selectedCategory 
-    ? services.filter(service => service.category === selectedCategory)
-    : services;
+  // Add sorting function
+  const sortServices = (services, option) => {
+    const servicesCopy = [...services];
+    switch (option) {
+      case 'highest-rated':
+        return servicesCopy.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      case 'price-low':
+        return servicesCopy.sort((a, b) => a.price - b.price);
+      case 'price-high':
+        return servicesCopy.sort((a, b) => b.price - a.price);
+      case 'newest':
+      default:
+        return servicesCopy; // Services are already sorted by newest from the API
+    }
+  };
+
+  // Update the filtered services to include sorting
+  const filteredServices = sortServices(
+    selectedCategory 
+      ? services.filter(service => service.category === selectedCategory)
+      : services,
+    sortOption
+  );
+
+  const handleSortChange = (e) => {
+    setSortOption(e.target.value);
+  };
 
   const toggleDescription = (serviceId) => {
     setExpandedDescriptions(prev => {
@@ -360,9 +384,13 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                     <option key={cat.id} value={cat.id}>{cat.name}</option>
                   ))}
                 </select>
-                <select className="px-4 py-2 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <select
+                  value={sortOption}
+                  onChange={handleSortChange}
+                  className="bg-gray-800/50 text-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
                   <option value="newest">Newest First</option>
-                  <option value="rating">Highest Rated</option>
+                  <option value="highest-rated">Highest Rated</option>
                   <option value="price-low">Price: Low to High</option>
                   <option value="price-high">Price: High to Low</option>
                 </select>
