@@ -212,10 +212,18 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   };
 
   const handleReviewsUpdate = async () => {
+    if (!selectedService?._id) {
+      console.error('No service selected for update');
+      return;
+    }
+
     try {
       // Fetch the updated service data
       const response = await fetch(`${API_URL}/services/${selectedService._id}`);
-      if (!response.ok) throw new Error('Failed to fetch updated service');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to fetch updated service');
+      }
       const updatedService = await response.json();
       
       // Update the services array with the new data
