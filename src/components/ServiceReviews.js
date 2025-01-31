@@ -69,15 +69,25 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
         setAverageRating(0);
         setTotalReviews(0);
       }
+
+      // Call onReviewsUpdate after all state updates are complete
+      onReviewsUpdate?.();
     } catch (error) {
       console.error('Error fetching reviews:', error);
       setError('Failed to load reviews');
     } finally {
       setIsLoading(false);
-      // Call onReviewsUpdate after all state updates are complete
-      onReviewsUpdate?.();
     }
   };
+
+  // Add polling for review updates
+  useEffect(() => {
+    const pollInterval = setInterval(() => {
+      fetchReviews();
+    }, 30000); // Poll every 30 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [service._id]);
 
   const handleSubmitReview = async (e) => {
     e.preventDefault();
