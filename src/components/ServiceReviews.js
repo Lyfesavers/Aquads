@@ -4,13 +4,15 @@ import { API_URL } from '../services/api';
 
 const ServiceReviews = ({ service, onClose, currentUser, showNotification, onReviewsUpdate }) => {
   const [reviews, setReviews] = useState([]);
-  const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
+  const [newReview, setNewReview] = useState({ rating: 5, comment: '', referralCode: '' });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [averageRating, setAverageRating] = useState(0);
   const [totalReviews, setTotalReviews] = useState(0);
   const [canReview, setCanReview] = useState(false);
   const [interactionDate, setInteractionDate] = useState(null);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
 
   const validateReviewLength = (text) => {
     if (!text) return false;
@@ -106,10 +108,52 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
     return () => clearInterval(pollInterval);
   }, [service._id]);
 
+  const verifyReferralCode = async () => {
+    if (!newReview.referralCode.trim()) {
+      showNotification('Please enter your referral code', 'error');
+      return;
+    }
+
+    setIsVerifying(true);
+    try {
+      const response = await fetch(`${API_URL}/users/verify-referral`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({
+          username: currentUser.username,
+          referralCode: newReview.referralCode
+        })
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Invalid referral code');
+      }
+
+      setIsVerified(true);
+      showNotification('Referral code verified successfully!', 'success');
+    } catch (error) {
+      console.error('Error verifying referral code:', error);
+      showNotification(error.message || 'Failed to verify referral code', 'error');
+      setIsVerified(false);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
   const handleSubmitReview = async (e) => {
     e.preventDefault();
     if (!currentUser) {
       showNotification('Please login to submit a review', 'error');
+      return;
+    }
+
+    if (!isVerified) {
+      showNotification('Please verify your referral code first', 'error');
       return;
     }
 
@@ -129,7 +173,8 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
         serviceId: service._id,
         rating: parseInt(newReview.rating),
         comment: comment,
-        interactionDate: interactionDate
+        interactionDate: interactionDate,
+        referralCode: newReview.referralCode
       };
 
       const response = await fetch(`${API_URL}/service-reviews`, {
@@ -148,7 +193,8 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
       }
 
       setReviews([data, ...reviews]);
-      setNewReview({ rating: 5, comment: '' });
+      setNewReview({ rating: 5, comment: '', referralCode: '' });
+      setIsVerified(false);
       showNotification('Review submitted successfully!', 'success');
       
       fetchReviews();
@@ -188,47 +234,74 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
             ) : (
               <form onSubmit={handleSubmitReview} className="mb-8 bg-gray-800 p-4 rounded-lg">
                 <h3 className="text-lg font-semibold mb-4">Write a Review</h3>
-                <div className="mb-4">
-                  <label className="block mb-2">Rating</label>
-                  <div className="flex gap-2">
-                    {[5, 4, 3, 2, 1].map(num => (
+                
+                {!isVerified ? (
+                  <div className="mb-4">
+                    <label className="block mb-2">Enter Your Referral Code</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newReview.referralCode}
+                        onChange={(e) => setNewReview(prev => ({ ...prev, referralCode: e.target.value }))}
+                        className="flex-1 bg-gray-700 rounded p-2"
+                        placeholder="Your referral code"
+                        required
+                      />
                       <button
-                        key={num}
                         type="button"
-                        onClick={() => setNewReview(prev => ({ ...prev, rating: num }))}
-                        className={`p-2 rounded ${
-                          newReview.rating === num ? 'bg-blue-500' : 'bg-gray-700'
-                        }`}
+                        onClick={verifyReferralCode}
+                        disabled={isVerifying}
+                        className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded"
                       >
-                        {num} ★
+                        {isVerifying ? 'Verifying...' : 'Verify'}
                       </button>
-                    ))}
+                    </div>
                   </div>
-                </div>
-                <div className="mb-4">
-                  <label className="block mb-2">Comment (minimum 3 sentences or lines)</label>
-                  <textarea
-                    value={newReview.comment}
-                    onChange={(e) => setNewReview(prev => ({ ...prev, comment: e.target.value }))}
-                    className="w-full bg-gray-700 rounded p-2 min-h-[100px]"
-                    placeholder="Please write at least 3 sentences or lines describing your experience with this service..."
-                    required
-                  />
-                  <div className="mt-2 text-sm text-gray-400">
-                    {validateReviewLength(newReview.comment) ? (
-                      <span className="text-green-400">✓ Review length requirement met</span>
-                    ) : (
-                      <span>Write at least 3 sentences or lines</span>
-                    )}
-                  </div>
-                </div>
-                <button
-                  type="submit"
-                  className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded w-full"
-                  disabled={!validateReviewLength(newReview.comment)}
-                >
-                  Submit Review
-                </button>
+                ) : (
+                  <>
+                    <div className="mb-4">
+                      <label className="block mb-2">Rating</label>
+                      <div className="flex gap-2">
+                        {[5, 4, 3, 2, 1].map(num => (
+                          <button
+                            key={num}
+                            type="button"
+                            onClick={() => setNewReview(prev => ({ ...prev, rating: num }))}
+                            className={`p-2 rounded ${
+                              newReview.rating === num ? 'bg-blue-500' : 'bg-gray-700'
+                            }`}
+                          >
+                            {num} ★
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="mb-4">
+                      <label className="block mb-2">Comment (minimum 3 sentences or lines)</label>
+                      <textarea
+                        value={newReview.comment}
+                        onChange={(e) => setNewReview(prev => ({ ...prev, comment: e.target.value }))}
+                        className="w-full bg-gray-700 rounded p-2 min-h-[100px]"
+                        placeholder="Please write at least 3 sentences or lines describing your experience with this service..."
+                        required
+                      />
+                      <div className="mt-2 text-sm text-gray-400">
+                        {validateReviewLength(newReview.comment) ? (
+                          <span className="text-green-400">✓ Review length requirement met</span>
+                        ) : (
+                          <span>Write at least 3 sentences or lines</span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="submit"
+                      className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded w-full"
+                      disabled={!validateReviewLength(newReview.comment)}
+                    >
+                      Submit Review
+                    </button>
+                  </>
+                )}
               </form>
             )}
           </>
