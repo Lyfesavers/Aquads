@@ -67,24 +67,34 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         throw new Error('Banner not found');
       }
 
-      console.log('Approving banner ad:', { bannerId, processedBy: currentUser._id });
+      const requestData = {
+        bannerId: bannerId,
+        processedBy: currentUser._id
+      };
+
+      console.log('Banner to update:', bannerToUpdate);
+      console.log('Current user:', currentUser);
+      console.log('Request data:', requestData);
+
       const response = await fetch(`${API_URL}/bannerAds/approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
         },
-        body: JSON.stringify({
-          bannerId: bannerId,
-          processedBy: currentUser._id
-        })
+        body: JSON.stringify(requestData)
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: 'Failed to parse error response' }));
         console.error('Server error:', errorData);
+        console.error('Response status:', response.status);
+        console.error('Response headers:', Object.fromEntries([...response.headers]));
         throw new Error(errorData.message || 'Failed to approve banner');
       }
+
+      const responseData = await response.json();
+      console.log('Approval successful:', responseData);
 
       // Remove the banner from local state after approval
       setBannerAds(prev => prev.filter(banner => banner._id !== bannerId));
@@ -100,24 +110,34 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         throw new Error('Banner not found');
       }
 
-      console.log('Rejecting banner ad:', { bannerId, processedBy: currentUser._id });
+      const requestData = {
+        bannerId: bannerId,
+        processedBy: currentUser._id
+      };
+
+      console.log('Banner to update:', bannerToUpdate);
+      console.log('Current user:', currentUser);
+      console.log('Request data:', requestData);
+
       const response = await fetch(`${API_URL}/bannerAds/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
         },
-        body: JSON.stringify({
-          bannerId: bannerId,
-          processedBy: currentUser._id
-        })
+        body: JSON.stringify(requestData)
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: 'Failed to parse error response' }));
         console.error('Server error:', errorData);
+        console.error('Response status:', response.status);
+        console.error('Response headers:', Object.fromEntries([...response.headers]));
         throw new Error(errorData.message || 'Failed to reject banner');
       }
+
+      const responseData = await response.json();
+      console.log('Rejection successful:', responseData);
 
       // Remove the banner from local state after rejection
       setBannerAds(prev => prev.filter(banner => banner._id !== bannerId));
