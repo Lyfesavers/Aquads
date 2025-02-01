@@ -375,13 +375,27 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   };
 
   const handleLoginSubmit = async (credentials) => {
-    await onLogin(credentials);
-    setShowLoginModal(false);
+    try {
+      await onLogin(credentials);
+      setShowLoginModal(false);
+      // No need to set currentUser or localStorage here as it's handled in App.js
+    } catch (error) {
+      console.error('Login error:', error);
+      // Show error in the LoginModal
+      // The error will be shown in the LoginModal component
+    }
   };
 
   const handleCreateAccountSubmit = async (formData) => {
-    await onCreateAccount(formData);
-    setShowCreateAccountModal(false);
+    try {
+      await onCreateAccount(formData);
+      setShowCreateAccountModal(false);
+      // The welcome modal and other state updates are handled in App.js
+      // No need to duplicate that logic here
+    } catch (error) {
+      console.error('Create account error:', error);
+      // Error will be shown in the CreateAccountModal component
+    }
   };
 
   return (
