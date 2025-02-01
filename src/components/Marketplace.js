@@ -5,6 +5,9 @@ import ServiceReviews from './ServiceReviews';
 import { createService, fetchServices } from '../services/api';
 import { API_URL } from '../services/api';
 import ProfileModal from './ProfileModal';
+import BannerDisplay from './BannerDisplay';
+import CreateBannerModal from './CreateBannerModal';
+import { Button } from 'react-bootstrap';
 
 // Helper function to check if URL is valid
 const isValidUrl = (string) => {
@@ -100,6 +103,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [selectedService, setSelectedService] = useState(null);
   const [expandedDescriptions, setExpandedDescriptions] = useState(new Set());
   const [sortOption, setSortOption] = useState('newest');
+  const [showBannerModal, setShowBannerModal] = useState(false);
 
   const categories = [
     { id: 'smart-contract', name: 'Smart Contract Development', icon: '⚡' },
@@ -305,6 +309,33 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     });
   };
 
+  const handleBannerSubmit = async (bannerData) => {
+    try {
+      const response = await fetch(`${API_URL}/bannerAds`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({
+          ...bannerData,
+          owner: currentUser._id
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create banner ad');
+      }
+
+      const data = await response.json();
+      console.log('Banner ad created:', data);
+      setShowBannerModal(false);
+    } catch (error) {
+      console.error('Error creating banner ad:', error);
+      throw error;
+    }
+  };
+
   return (
     <div className="h-screen overflow-y-auto bg-gradient-to-br from-gray-900 to-black text-white">
       {/* Fixed Background */}
@@ -367,6 +398,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       {/* Main Content */}
       <div className="relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <BannerDisplay />
           {/* Search and Filters */}
           <div className="mb-8">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -553,6 +585,15 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
               )}
             </div>
           </div>
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            {currentUser && (
+              <div className="d-flex gap-2">
+                <Button variant="outline-primary" onClick={() => setShowBannerModal(true)}>
+                  Create Banner Ad
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -585,6 +626,15 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
           currentUser={currentUser}
           showNotification={showNotification}
           onReviewsUpdate={handleReviewsUpdate}
+        />
+      )}
+
+      {/* Create Banner Modal */}
+      {showBannerModal && (
+        <CreateBannerModal
+          show={showBannerModal}
+          onHide={() => setShowBannerModal(false)}
+          onSubmit={handleBannerSubmit}
         />
       )}
     </div>
