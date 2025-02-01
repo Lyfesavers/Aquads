@@ -503,7 +503,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                         {service.title}
                       </h3>
                       <div className="relative">
-                        <p className={`text-gray-400 text-sm mb-4 ${expandedDescriptions.has(service._id) ? '' : 'line-clamp-2'}`}>
+                        <p className={`text-gray-400 text-sm mb-4 whitespace-pre-wrap ${expandedDescriptions.has(service._id) ? '' : 'line-clamp-2'}`}>
                           {service.description?.slice(0, 1000)}
                           {service.description?.length > 1000 && '...'}
                         </p>
