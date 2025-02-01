@@ -62,9 +62,20 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   // Add banner management functions
   const handleApproveBanner = async (bannerId) => {
     try {
+      // Log the current user object to see what fields are available
+      console.log('Current user object:', currentUser);
+
+      // Get the correct user ID field
+      const userId = currentUser?.userId || currentUser?.id || currentUser?._id;
+      
+      if (!userId) {
+        console.error('No user ID found in currentUser object:', currentUser);
+        throw new Error('User ID not found');
+      }
+
       const data = {
         _id: bannerId,
-        processedBy: currentUser._id
+        processedBy: userId
       };
       
       console.log('Sending approval request:', data);
@@ -100,9 +111,20 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   const handleRejectBanner = async (bannerId) => {
     try {
+      // Log the current user object to see what fields are available
+      console.log('Current user object:', currentUser);
+
+      // Get the correct user ID field
+      const userId = currentUser?.userId || currentUser?.id || currentUser?._id;
+      
+      if (!userId) {
+        console.error('No user ID found in currentUser object:', currentUser);
+        throw new Error('User ID not found');
+      }
+
       const data = {
         _id: bannerId,
-        processedBy: currentUser._id
+        processedBy: userId
       };
       
       console.log('Sending rejection request:', data);
