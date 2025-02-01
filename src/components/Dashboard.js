@@ -62,12 +62,16 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   // Add banner management functions
   const handleApproveBanner = async (bannerId) => {
     try {
-      const response = await fetch(`${API_URL}/bannerAds/${bannerId}/approve`, {
-        method: 'PUT',
+      const response = await fetch(`${API_URL}/bannerAds/approve`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
-        }
+        },
+        body: JSON.stringify({
+          bannerId,
+          processedBy: currentUser._id
+        })
       });
 
       if (!response.ok) {
@@ -77,11 +81,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       }
 
       // Update local state
-      setBannerAds(prev => prev.map(banner => 
-        banner._id === bannerId 
-          ? { ...banner, status: 'active' }
-          : banner
-      ));
+      setBannerAds(prev => prev.filter(banner => banner._id !== bannerId));
     } catch (error) {
       console.error('Error approving banner:', error);
     }
@@ -89,12 +89,16 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   const handleRejectBanner = async (bannerId) => {
     try {
-      const response = await fetch(`${API_URL}/bannerAds/${bannerId}/reject`, {
-        method: 'PUT',
+      const response = await fetch(`${API_URL}/bannerAds/reject`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
-        }
+        },
+        body: JSON.stringify({
+          bannerId,
+          processedBy: currentUser._id
+        })
       });
 
       if (!response.ok) {
@@ -104,11 +108,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       }
 
       // Update local state
-      setBannerAds(prev => prev.map(banner => 
-        banner._id === bannerId 
-          ? { ...banner, status: 'rejected' }
-          : banner
-      ));
+      setBannerAds(prev => prev.filter(banner => banner._id !== bannerId));
     } catch (error) {
       console.error('Error rejecting banner:', error);
     }
