@@ -32,7 +32,7 @@ const serviceSchema = new mongoose.Schema({
   currency: {
     type: String,
     required: true,
-    default: 'ETH'
+    default: 'USDC'
   },
   deliveryTime: {
     type: String,

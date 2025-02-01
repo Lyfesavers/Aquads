@@ -524,10 +524,10 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                           Delivered in {service.deliveryTime}
                         </span>
                         <div className="text-right">
-                          <span className="text-gray-400 text-sm">Starting at</span>
-                          <p className="text-lg font-medium text-indigo-400">
-                            {service.price} {service.currency}
-                          </p>
+                          <div className="text-gray-300 text-sm">
+                            <span className="font-semibold">Price:</span>{' '}
+                            {service.price} USDC
+                          </div>
                         </div>
                       </div>
                       <div className="mt-4 flex justify-end">
