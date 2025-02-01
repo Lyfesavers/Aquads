@@ -67,7 +67,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         throw new Error('Banner not found');
       }
 
-      console.log('Approving banner ad:', { _id: bannerId, processedBy: currentUser._id });
+      console.log('Approving banner ad:', { bannerId, processedBy: currentUser._id });
       const response = await fetch(`${API_URL}/bannerAds/approve`, {
         method: 'POST',
         headers: {
@@ -75,7 +75,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           'Authorization': `Bearer ${currentUser.token}`
         },
         body: JSON.stringify({
-          _id: bannerId,
+          bannerId: bannerId,
           processedBy: currentUser._id
         })
       });
@@ -100,7 +100,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         throw new Error('Banner not found');
       }
 
-      console.log('Rejecting banner ad:', { _id: bannerId, processedBy: currentUser._id });
+      console.log('Rejecting banner ad:', { bannerId, processedBy: currentUser._id });
       const response = await fetch(`${API_URL}/bannerAds/reject`, {
         method: 'POST',
         headers: {
@@ -108,7 +108,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           'Authorization': `Bearer ${currentUser.token}`
         },
         body: JSON.stringify({
-          _id: bannerId,
+          bannerId: bannerId,
           processedBy: currentUser._id
         })
       });
