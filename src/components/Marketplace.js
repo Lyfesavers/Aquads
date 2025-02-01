@@ -314,13 +314,23 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       // Generate a temporary transaction signature
       const tempTxSignature = 'temp_' + Date.now() + '_' + Math.random().toString(36).substring(7);
       
+      // Log current user data to debug
+      console.log('Current user data:', currentUser);
+      
+      // Get the correct owner ID (it might be in a different property)
+      const ownerId = currentUser._id || currentUser.id || currentUser.userId;
+      
+      if (!ownerId) {
+        throw new Error('User ID not found. Please try logging in again.');
+      }
+
       // Ensure all required fields are present
       const requestData = {
         title: bannerData.title,
         gif: bannerData.gif,
         url: bannerData.url,
         duration: bannerData.duration,
-        owner: currentUser._id,
+        owner: ownerId,
         txSignature: tempTxSignature,
         status: bannerData.status || 'pending'
       };

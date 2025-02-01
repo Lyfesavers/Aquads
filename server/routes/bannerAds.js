@@ -38,23 +38,36 @@ router.get('/', auth, async (req, res) => {
 router.post('/', auth, async (req, res) => {
   try {
     console.log('Creating new banner ad with data:', req.body);
+    console.log('User from auth middleware:', req.user);
+    
     const { title, gif, url, owner, txSignature, duration, status } = req.body;
+
+    // Use owner from request or fall back to authenticated user ID
+    const ownerId = owner || req.user._id || req.user.id || req.user.userId;
 
     // Detailed validation logging
     const missingFields = [];
     if (!title) missingFields.push('title');
     if (!gif) missingFields.push('gif');
     if (!url) missingFields.push('url');
-    if (!owner) missingFields.push('owner');
+    if (!ownerId) missingFields.push('owner');
     if (!txSignature) missingFields.push('txSignature');
 
     if (missingFields.length > 0) {
       console.error('Missing required fields:', missingFields);
-      console.error('Received data:', req.body);
+      console.error('Received data:', {
+        ...req.body,
+        owner: ownerId,
+        userFromAuth: req.user
+      });
       return res.status(400).json({ 
         error: 'Missing required fields', 
         missingFields,
-        receivedData: req.body 
+        receivedData: {
+          ...req.body,
+          owner: ownerId,
+          userFromAuth: req.user
+        }
       });
     }
 
@@ -63,7 +76,7 @@ router.post('/', auth, async (req, res) => {
       title,
       gif,
       url,
-      owner,
+      owner: ownerId,
       txSignature,
       duration: duration || 24 * 60 * 60 * 1000, // Default 24 hours
       status: status || 'pending'
