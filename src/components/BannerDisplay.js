@@ -30,7 +30,7 @@ const BannerDisplay = () => {
   }
 
   return (
-    <div className="banner-container w-full">
+    <div className="banner-container w-full -mt-4">
       <a 
         href={banner.url} 
         target="_blank" 
