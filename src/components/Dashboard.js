@@ -62,7 +62,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   // Add banner management functions
   const handleApproveBanner = async (bannerId) => {
     try {
-      console.log('Approving banner ad:', { bannerId });
+      console.log('Approving banner ad:', { bannerId, status: 'active' });
       const response = await fetch(`${API_URL}/bannerAds/approve`, {
         method: 'POST',
         headers: {
@@ -70,8 +70,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           'Authorization': `Bearer ${currentUser.token}`
         },
         body: JSON.stringify({
-          bannerId,
-          processedBy: currentUser._id,
+          _id: bannerId,
           status: 'active'
         })
       });
@@ -98,6 +97,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   const handleRejectBanner = async (bannerId) => {
     try {
+      console.log('Rejecting banner ad:', { bannerId, status: 'rejected' });
       const response = await fetch(`${API_URL}/bannerAds/reject`, {
         method: 'POST',
         headers: {
@@ -105,8 +105,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           'Authorization': `Bearer ${currentUser.token}`
         },
         body: JSON.stringify({
-          bannerId,
-          processedBy: currentUser._id,
+          _id: bannerId,
           status: 'rejected'
         })
       });
