@@ -40,7 +40,7 @@ const BannerDisplay = () => {
         <img
           src={banner.gif}
           alt={banner.title}
-          className="w-full h-[128px] object-cover"
+          className="w-full h-[128px] md:h-[128px] sm:h-[96px] object-contain md:object-cover"
         />
       </a>
     </div>
