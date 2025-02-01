@@ -284,7 +284,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                         <img 
                           src={banner.gif} 
                           alt={banner.title}
-                          className="max-h-32 rounded object-contain bg-gray-800"
+                          className="w-full h-[128px] rounded object-cover bg-gray-800"
                         />
                       </div>
                     </div>
