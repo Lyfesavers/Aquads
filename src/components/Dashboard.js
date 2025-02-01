@@ -62,6 +62,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   // Add banner management functions
   const handleApproveBanner = async (bannerId) => {
     try {
+      const bannerToUpdate = bannerAds.find(banner => banner._id === bannerId);
+      if (!bannerToUpdate) {
+        throw new Error('Banner not found');
+      }
+
       const response = await fetch(`${API_URL}/bannerAds/approve`, {
         method: 'POST',
         headers: {
@@ -69,9 +74,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           'Authorization': `Bearer ${currentUser.token}`
         },
         body: JSON.stringify({
-          bannerId: bannerId,
-          processedBy: currentUser._id,
-          status: 'active'
+          adId: bannerId,
+          processedBy: currentUser._id
         })
       });
 
@@ -81,12 +85,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         throw new Error(errorData.message || 'Failed to approve banner');
       }
 
-      // Update local state to change status to active
-      setBannerAds(prev => prev.map(banner => 
-        banner._id === bannerId 
-          ? { ...banner, status: 'active' }
-          : banner
-      ));
+      // Remove the banner from local state after approval
+      setBannerAds(prev => prev.filter(banner => banner._id !== bannerId));
     } catch (error) {
       console.error('Error approving banner:', error);
     }
@@ -94,6 +94,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   const handleRejectBanner = async (bannerId) => {
     try {
+      const bannerToUpdate = bannerAds.find(banner => banner._id === bannerId);
+      if (!bannerToUpdate) {
+        throw new Error('Banner not found');
+      }
+
       const response = await fetch(`${API_URL}/bannerAds/reject`, {
         method: 'POST',
         headers: {
@@ -101,9 +106,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           'Authorization': `Bearer ${currentUser.token}`
         },
         body: JSON.stringify({
-          bannerId: bannerId,
-          processedBy: currentUser._id,
-          status: 'rejected'
+          adId: bannerId,
+          processedBy: currentUser._id
         })
       });
 
@@ -113,12 +117,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         throw new Error(errorData.message || 'Failed to reject banner');
       }
 
-      // Update local state to change status to rejected
-      setBannerAds(prev => prev.map(banner => 
-        banner._id === bannerId 
-          ? { ...banner, status: 'rejected' }
-          : banner
-      ));
+      // Remove the banner from local state after rejection
+      setBannerAds(prev => prev.filter(banner => banner._id !== bannerId));
     } catch (error) {
       console.error('Error rejecting banner:', error);
     }
