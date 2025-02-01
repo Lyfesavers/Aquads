@@ -63,7 +63,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const handleApproveBanner = async (bannerId) => {
     try {
       const bannerData = {
-        bannerId: bannerId,
+        id: bannerId,
         processedBy: currentUser._id
       };
       console.log('Approving banner ad:', bannerData);
@@ -100,7 +100,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const handleRejectBanner = async (bannerId) => {
     try {
       const bannerData = {
-        bannerId: bannerId,
+        id: bannerId,
         processedBy: currentUser._id
       };
       console.log('Rejecting banner ad:', bannerData);
