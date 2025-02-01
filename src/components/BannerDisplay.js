@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { API_URL } from '../config';
+import { API_URL } from '../services/api';
 
 const BannerDisplay = () => {
   const [banner, setBanner] = useState(null);

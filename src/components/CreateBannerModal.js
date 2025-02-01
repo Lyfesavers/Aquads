@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, Button, Form, Alert } from 'react-bootstrap';
-import { API_URL } from '../config';
+import { API_URL } from '../services/api';
 
 const BANNER_OPTIONS = [
   { duration: 24 * 60 * 60 * 1000, label: '24 Hours', price: 0.5 },
