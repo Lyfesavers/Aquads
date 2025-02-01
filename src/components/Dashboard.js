@@ -62,19 +62,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   // Add banner management functions
   const handleApproveBanner = async (bannerId) => {
     try {
-      const bannerData = {
-        bannerId: bannerId,
-        processedBy: currentUser._id
-      };
-      console.log('Approving banner ad:', bannerData);
-      
-      const response = await fetch(`${API_URL}/bannerAds/approve`, {
-        method: 'POST',
+      const response = await fetch(`${API_URL}/bannerAds/${bannerId}/approve`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
-        },
-        body: JSON.stringify(bannerData)
+        }
       });
 
       if (!response.ok) {
@@ -82,9 +75,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         console.error('Server error:', errorData);
         throw new Error(errorData.message || 'Failed to approve banner');
       }
-
-      const data = await response.json();
-      console.log('Approval response:', data);
 
       // Update local state
       setBannerAds(prev => prev.map(banner => 
@@ -99,19 +89,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   const handleRejectBanner = async (bannerId) => {
     try {
-      const bannerData = {
-        bannerId: bannerId,
-        processedBy: currentUser._id
-      };
-      console.log('Rejecting banner ad:', bannerData);
-      
-      const response = await fetch(`${API_URL}/bannerAds/reject`, {
-        method: 'POST',
+      const response = await fetch(`${API_URL}/bannerAds/${bannerId}/reject`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
-        },
-        body: JSON.stringify(bannerData)
+        }
       });
 
       if (!response.ok) {
@@ -119,9 +102,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         console.error('Server error:', errorData);
         throw new Error(errorData.message || 'Failed to reject banner');
       }
-
-      const data = await response.json();
-      console.log('Rejection response:', data);
 
       // Update local state
       setBannerAds(prev => prev.map(banner => 
