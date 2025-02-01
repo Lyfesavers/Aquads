@@ -20,267 +20,241 @@ const Whitepaper = () => {
                 AQUADS
               </Link>
             </div>
-            <div className="flex items-center space-x-4">
-              <Link
-                to="/marketplace"
-                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
-              >
-                Aquaduct
-              </Link>
-            </div>
           </div>
         </div>
       </nav>
 
       {/* Main Content */}
-      <div className="relative z-10">
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
-          <div className="prose prose-invert max-w-none">
-            <h1 className="text-4xl font-bold mb-8 text-center">Aquads Whitepaper</h1>
-            <h2 className="text-2xl font-semibold mb-6 text-center">All-in-One Web3 Crypto Hub and Freelancer Marketplace</h2>
+      <div className="relative z-10 max-w-4xl mx-auto px-4 py-8">
+        <div className="prose prose-invert">
+          <h1 className="text-4xl font-bold mb-4">Aquads WhitePaper</h1>
+          <h2 className="text-2xl mb-8">All-in-One Web3 Crypto Hub and Freelancer Marketplace</h2>
+          <p className="text-yellow-400 italic mb-8">(Note: This is not a token project – no crypto or tokens will ever be created for this project.)</p>
 
-            <div className="bg-red-900/20 border border-red-500 rounded-lg p-4 mb-8">
-              <p className="text-lg font-bold text-center text-red-400">
-                THIS IS NOT A TOKEN PROJECT AND WE WILL NEVER CREATE A TOKEN OR CRYPTO FOR THIS PROJECT
-              </p>
+          <section className="mb-8">
+            <h2 className="text-2xl font-bold mb-4">1. Executive Summary</h2>
+            <p className="mb-4">
+              Aquads is an innovative platform built to serve the rapidly growing Web3 ecosystem by integrating three core components:
+            </p>
+            <ul className="list-disc pl-6 mb-4">
+              <li>A Dynamic Advertising System tailored for crypto projects</li>
+              <li>A specialized Freelancer Marketplace connecting Web3 service providers and projects</li>
+              <li>A Token Information Hub offering real-time cryptocurrency analytics and community-driven reviews</li>
+            </ul>
+            <p>Our mission is to bridge the existing gap between crypto projects and qualified Web3 professionals while maintaining the decentralized, trust-based ethos of the blockchain community. Aquads will streamline service discovery, ensure transparent advertising practices, and deliver a comprehensive information resource for token and market analytics.</p>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-bold mb-4">2. Business Description</h2>
+            <h3 className="text-xl font-semibold mb-3">2.1. Problem Statement</h3>
+            <p className="mb-2">The Web3 space is expanding rapidly, yet the ecosystem lacks a unified platform that:</p>
+            <ul className="list-disc pl-6 mb-4">
+              <li>Provides specialized services in areas such as smart contract development, security audits, and community management.</li>
+              <li>Integrates dynamic advertising solutions designed specifically for crypto projects.</li>
+              <li>Offers reliable, real-time token data and market insights for informed decision-making.</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold mb-3">2.2. The Aquads Solution</h3>
+            <p className="mb-2">Aquads combines a suite of interrelated features into one platform:</p>
+            
+            <div className="mb-4">
+              <h4 className="text-lg font-semibold mb-2">Dynamic Advertising System:</h4>
+              <ul className="list-disc pl-6 mb-4">
+                <li>Interactive ad displays with size-based visibility adjustments.</li>
+                <li>A premium "bump" mechanism that leverages verifiable crypto transactions to boost ad positioning.</li>
+                <li>Future-ready ad analytics for performance tracking.</li>
+              </ul>
             </div>
 
-            <section className="mb-8">
-              <h2 className="text-2xl font-bold mb-4">Abstract</h2>
-              <p className="mb-4">
-                Aquads is a revolutionary platform that combines a dynamic advertising ecosystem with a specialized Web3 freelancer marketplace. The platform aims to bridge the gap between crypto projects, service providers, and the broader Web3 community by offering an integrated suite of tools and services designed specifically for the blockchain and cryptocurrency space.
-              </p>
-            </section>
-
-            <section className="mb-8">
-              <h2 className="text-2xl font-bold mb-4">1. Introduction</h2>
-              <h3 className="text-xl font-semibold mb-3">1.1 Background</h3>
-              <p className="mb-4">
-                The Web3 ecosystem is rapidly evolving, creating an increasing demand for specialized services and effective advertising solutions. However, the market lacks a unified platform that combines these essential elements while maintaining the decentralized ethos of Web3. It lacks a hub where web3 freelancers and crypto projects meet in trust!
-              </p>
-
-              <h3 className="text-xl font-semibold mb-3">1.2 Vision</h3>
-              <p className="mb-4">
-                Aquads aims to become the premier destination for Web3 projects and professionals by providing a comprehensive platform that facilitates connections, enables service discovery, and offers effective advertising solutions.
-              </p>
-            </section>
-
-            <section className="mb-8">
-              <h2 className="text-2xl font-bold mb-4">2. Platform Overview</h2>
-              <h3 className="text-xl font-semibold mb-3">2.1 Core Components</h3>
-              
-              <div className="mb-4">
-                <h4 className="text-lg font-semibold mb-2">A. Dynamic Advertising System</h4>
-                <ul className="list-disc pl-6 mb-4">
-                  <li>Interactive ad display with size-based visibility</li>
-                  <li>Bump mechanism for enhanced exposure</li>
-                  <li>Real-time ad updates and management</li>
-                </ul>
-              </div>
-
-              <div className="mb-4">
-                <h4 className="text-lg font-semibold mb-2">B. Freelancer Marketplace</h4>
-                <ul className="list-disc pl-6 mb-4">
-                  <li>Specialized Web3 service categories</li>
-                  <li>Verified service providers</li>
-                  <li>Integrated review and rating system</li>
-                </ul>
-              </div>
-
-              <div className="mb-4">
-                <h4 className="text-lg font-semibold mb-2">C. Token Information Hub</h4>
-                <ul className="list-disc pl-6 mb-4">
-                  <li>Real-time cryptocurrency price tracking</li>
-                  <li>Community-driven token reviews</li>
-                  <li>Market analytics and trends</li>
-                </ul>
-              </div>
-            </section>
-
-            <section className="mb-8">
-              <h2 className="text-2xl font-bold mb-4">4. Key Features</h2>
-              
-              <h3 className="text-xl font-semibold mb-3">4.1 Advertising System</h3>
+            <div className="mb-4">
+              <h4 className="text-lg font-semibold mb-2">Freelancer Marketplace:</h4>
               <ul className="list-disc pl-6 mb-4">
-                <li>Dynamic Bubble Ad Sizing: Ads automatically shrink if not bumped (organic interaction bump coming soon)</li>
-                <li>Bump System: Premium paid positioning through verifiable crypto transactions</li>
-                <li>Ad Analytics: Real-time performance tracking and metrics (coming soon)</li>
+                <li>Categorized service listings focused on Web3 needs (e.g., smart contract development, tokenomics design, and marketing).</li>
+                <li>Verification processes to ensure quality and reliability of service providers.</li>
+                <li>Integrated review and rating system that builds trust and transparency.</li>
               </ul>
+            </div>
 
-              <h3 className="text-xl font-semibold mb-3">4.2 Freelancer Services</h3>
-              <p className="mb-2">Specialized Categories:</p>
+            <div className="mb-4">
+              <h4 className="text-lg font-semibold mb-2">Token Information Hub:</h4>
               <ul className="list-disc pl-6 mb-4">
-                <li>Smart Contract Development</li>
-                <li>Security Audits</li>
-                <li>Marketing Services</li>
-                <li>Community Management</li>
-                <li>Web3 Development</li>
-                <li>Tokenomics Design</li>
-                <li>Content Writing</li>
-                <li>Consulting Services</li>
+                <li>Real-time cryptocurrency price tracking.</li>
+                <li>Community-driven token reviews and ratings.</li>
+                <li>Market trend analysis to help users make informed decisions.</li>
+                <li>Dex Options</li>
               </ul>
+            </div>
+          </section>
 
-              <h3 className="text-xl font-semibold mb-3">4.3 Token Information System</h3>
+          <section className="mb-8">
+            <h2 className="text-2xl font-bold mb-4">3. Market Opportunity & Analysis</h2>
+            
+            <h3 className="text-xl font-semibold mb-3">3.1. Market Trends</h3>
+            <ul className="list-disc pl-6 mb-4">
+              <li><strong>Web3 Growth:</strong> With blockchain technologies and decentralized finance (DeFi) expanding, there is an increasing demand for specialized freelance talent.</li>
+              <li><strong>Service Fragmentation:</strong> Currently, crypto projects and Web3 service providers operate in silos, making it challenging to find verified and specialized talent.</li>
+              <li><strong>Advertising Gaps:</strong> Traditional advertising channels are not optimized for the unique demands of crypto projects, creating a niche for dynamic, blockchain-based ad solutions.</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold mb-3">3.2. Target Audience</h3>
+            <ul className="list-disc pl-6 mb-4">
+              <li><strong>Crypto Projects:</strong> Startups and established crypto projects looking for reliable advertising and specialized freelance support.</li>
+              <li><strong>Web3 Freelancers & Agencies:</strong> Professionals offering niche services tailored to the blockchain and cryptocurrency industries.</li>
+              <li><strong>Investors & Analysts:</strong> Users seeking up-to-date token information and market analytics.</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold mb-3">3.3. Competitive Landscape</h3>
+            <p>While several freelance marketplaces exist, none focus exclusively on Web3 or integrate a dedicated advertising system alongside real-time token information. Aquads' unique positioning is in its integrated, specialized approach that caters exclusively to the needs of the blockchain community.</p>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-bold mb-4">4. Product & Services</h2>
+            
+            <h3 className="text-xl font-semibold mb-3">4.1. Core Components</h3>
+            
+            <div className="mb-4">
+              <h4 className="text-lg font-semibold mb-2">Dynamic Advertising System:</h4>
               <ul className="list-disc pl-6 mb-4">
-                <li>Real-time price tracking</li>
-                <li>Community reviews and ratings</li>
-                <li>Market trend analysis</li>
-                <li>Token performance metrics</li>
+                <li><strong>Features:</strong> Dynamic bubble ad sizing, bump system for premium positioning, and a roadmap to include ad analytics.</li>
+                <li><strong>Benefits:</strong> Increased ad visibility for crypto projects and a performance-based advertising model.</li>
               </ul>
-            </section>
+            </div>
 
-            <section className="mb-8">
-              <h2 className="text-2xl font-bold mb-4">5. User Experience</h2>
-              
-              <h3 className="text-xl font-semibold mb-3">5.1 User Interface</h3>
+            <div className="mb-4">
+              <h4 className="text-lg font-semibold mb-2">Freelancer Marketplace:</h4>
               <ul className="list-disc pl-6 mb-4">
-                <li>Clean, intuitive design</li>
-                <li>Dark mode optimization</li>
-                <li>Mobile-responsive layout</li>
-                <li>Seamless navigation</li>
+                <li><strong>Features:</strong> Service categories (smart contract development, security audits, marketing, etc.), verified provider profiles, and integrated reviews.</li>
+                <li><strong>Benefits:</strong> Streamlined matching between projects and specialized talent, with enhanced credibility through verification and user feedback.</li>
               </ul>
+            </div>
 
-              <h3 className="text-xl font-semibold mb-3">5.2 User Management</h3>
+            <div className="mb-4">
+              <h4 className="text-lg font-semibold mb-2">Token Information Hub:</h4>
               <ul className="list-disc pl-6 mb-4">
-                <li>Streamlined registration process</li>
-                <li>Secure authentication</li>
-                <li>Profile customization</li>
-                <li>Service provider verification</li>
+                <li><strong>Features:</strong> Real-time price tracking, community reviews, and market trend analytics.</li>
+                <li><strong>Benefits:</strong> A one-stop resource for crypto market insights that fosters informed decision-making among investors and users.</li>
+                <li>Dex Options for swapping, staking, farming etc.</li>
               </ul>
-            </section>
+            </div>
+          </section>
 
-            <section className="mb-8">
-              <h2 className="text-2xl font-bold mb-4">6. Monetization Model</h2>
-              
-              <h3 className="text-xl font-semibold mb-3">6.1 Revenue Streams</h3>
-              <div className="mb-4">
-                <p className="font-semibold mb-2">1. Advertising Fees</p>
-                <ul className="list-disc pl-6 mb-4">
-                  <li>Base ad placement</li>
-                  <li>Premium bump features</li>
-                  <li>Extended visibility options</li>
-                  <li>VIP ad banners (coming soon)</li>
-                  <li>AMA hosting (coming soon)</li>
-                </ul>
-              </div>
+          <section className="mb-8">
+            <h2 className="text-2xl font-bold mb-4">5. Revenue Model</h2>
+            
+            <h3 className="text-xl font-semibold mb-3">5.1. Advertising Fees</h3>
+            <ul className="list-disc pl-6 mb-4">
+              <li>Base Ad Placement: Standard fees for placing ads on the platform.</li>
+              <li>Premium Bump Features: Enhanced positioning through paid bump mechanisms via verifiable crypto transactions.</li>
+              <li>Extended Visibility Options & VIP Banners: Planned upgrades for additional exposure and specialized advertising formats.</li>
+            </ul>
 
-              <div className="mb-4">
-                <p className="font-semibold mb-2">2. Service Commission</p>
-                <ul className="list-disc pl-6 mb-4">
-                  <li>Transaction fees from successful service delivery (coming soon)</li>
-                  <li>Premium listing fees (coming soon)</li>
-                  <li>Featured service ad placement (coming soon)</li>
-                </ul>
-              </div>
-            </section>
+            <h3 className="text-xl font-semibold mb-3">5.2. Service Commission & Fees</h3>
+            <ul className="list-disc pl-6 mb-4">
+              <li>Transaction Fees: Commission on successful service deliveries. (Planned)</li>
+              <li>Premium Listings: Fees for featured service providers and prioritized ad placements. (Planned)</li>
+              <li>Future Offerings: Additional revenue streams from AMA hosting and other value-added services.</li>
+            </ul>
 
-            <section className="mb-8">
-              <h2 className="text-2xl font-bold mb-4">7. Community and Governance</h2>
-              
-              <h3 className="text-xl font-semibold mb-3">7.1 Community Features</h3>
-              <ul className="list-disc pl-6 mb-4">
-                <li>User reviews and ratings</li>
-                <li>Service provider reputation system</li>
-                <li>Community-driven content</li>
-                <li>Social integration</li>
-              </ul>
+            <h3 className="text-xl font-semibold mb-3">5.3. KYC & KYB Fees</h3>
+            <p>Service fees from onboarding projects and freelancers into our KYC and KYB programs to create that extra layer of trust and security in our ecosystem.</p>
+          </section>
 
-              <h3 className="text-xl font-semibold mb-3">7.2 Platform Governance</h3>
-              <ul className="list-disc pl-6 mb-4">
-                <li>Transparent review system</li>
-                <li>Clear service guidelines</li>
-                <li>Fair dispute resolution (coming soon)</li>
-                <li>Community feedback integration</li>
-              </ul>
-            </section>
+          <section className="mb-8">
+            <h2 className="text-2xl font-bold mb-4">6. Marketing & Growth Strategy</h2>
+            
+            <h3 className="text-xl font-semibold mb-3">6.1. Go-to-Market Plan</h3>
+            <ul className="list-disc pl-6 mb-4">
+              <li>Initial Launch: Focus on community building and early adopter incentives within the Web3 ecosystem.</li>
+              <li>Partnerships: Collaborate with established crypto projects, blockchain influencers, and relevant industry associations.</li>
+              <li>Digital Marketing: Leverage social media (Twitter, Telegram, facebook, instagram, coinmarket cap, coingecko), targeted online advertising, and content marketing (blogs, webinars) to drive platform awareness.</li>
+            </ul>
 
-            <section className="mb-8">
-              <h2 className="text-2xl font-bold mb-4">8. Future Development</h2>
-              
-              <h3 className="text-xl font-semibold mb-3">8.1 Roadmap</h3>
-              <div className="mb-4">
-                <p className="font-semibold mb-2">1. Phase 1: Core Platform</p>
-                <ul className="list-disc pl-6 mb-4">
-                  <li>Basic advertising system</li>
-                  <li>Essential marketplace features</li>
-                  <li>User authentication</li>
-                </ul>
-              </div>
+            <h3 className="text-xl font-semibold mb-3">6.2. Community Engagement</h3>
+            <ul className="list-disc pl-6 mb-4">
+              <li>User Reviews & Ratings: Foster trust through transparent feedback mechanisms and incentive programs.</li>
+              <li>Social Integration: Enable robust community interaction to organically grow platform trust and network effects.</li>
+              <li>Governance: Establish clear dispute resolution processes and integrate community feedback to refine service guidelines.</li>
+            </ul>
+          </section>
 
-              <div className="mb-4">
-                <p className="font-semibold mb-2">2. Phase 2: Enhanced Features</p>
-                <ul className="list-disc pl-6 mb-4">
-                  <li>Advanced analytics</li>
-                  <li>Additional service categories</li>
-                  <li>Improved user interfaces</li>
-                </ul>
-              </div>
+          <section className="mb-8">
+            <h2 className="text-2xl font-bold mb-4">7. Roadmap & Future Development</h2>
+            
+            <h3 className="text-xl font-semibold mb-3">7.1. Phase 1 – Core Platform</h3>
+            <ul className="list-disc pl-6 mb-4">
+              <li>Launch the basic advertising system and freelancer marketplace.</li>
+              <li>Commence Soft Marketing to start building user database</li>
+              <li>Complete Business plans and other documentation required</li>
+              <li>Finalize Affiliate and incentive Programs</li>
+            </ul>
 
-              <div className="mb-4">
-                <p className="font-semibold mb-2">3. Phase 3: Ecosystem Expansion</p>
-                <ul className="list-disc pl-6 mb-4">
-                  <li>Mobile applications</li>
-                  <li>Additional payment options</li>
-                  <li>Enhanced security features</li>
-                </ul>
-              </div>
+            <h3 className="text-xl font-semibold mb-3">7.2. Phase 2 – Enhanced Features</h3>
+            <ul className="list-disc pl-6 mb-4">
+              <li>Roll out advanced Features like payment system and internal chat.</li>
+              <li>Improve user interfaces based on initial user feedback.</li>
+              <li>Start Hard Marketing</li>
+              <li>Start planning mobile apps</li>
+              <li>Roll out Job posting feature</li>
+            </ul>
 
-              <h3 className="text-xl font-semibold mb-3">8.2 Planned Features</h3>
-              <ul className="list-disc pl-6 mb-4">
-                <li>Mobile application development</li>
-                <li>Enhanced analytics dashboard</li>
-                <li>Advanced payment integrations with smart contracts</li>
-                <li>Expanded service categories</li>
-                <li>Job Posting Feature</li>
-                <li>Ai Job matching</li>
-                <li>Internal Communication System</li>
-                <li>KYC & KYB</li>
-              </ul>
-            </section>
+            <h3 className="text-xl font-semibold mb-3">7.3. Phase 3 – Ecosystem Expansion</h3>
+            <ul className="list-disc pl-6 mb-4">
+              <li>Develop mobile applications and additional payment integrations.</li>
+              <li>Enhance security features and add value-added services</li>
+              <li>AI-based job matching</li>
+              <li>Automate Task</li>
+            </ul>
+          </section>
 
-            <section className="mb-8">
-              <h2 className="text-2xl font-bold mb-4">9. Technical Specifications</h2>
-              <h3 className="text-xl font-semibold mb-3">9.1 Technology Stack</h3>
-              <ul className="list-disc pl-6 mb-4">
-                <li>Frontend: React, Tailwind CSS, Socket.io-client</li>
-                <li>Backend: Node.js, Express, MongoDB</li>
-                <li>Real-time: WebSocket</li>
-              </ul>
-            </section>
+          <section className="mb-8">
+            <h2 className="text-2xl font-bold mb-4">8. Financial Projections & Funding Requirements</h2>
+            
+            <h3 className="text-xl font-semibold mb-3">8.1. Funding Requirements</h3>
+            <p className="mb-2">Initial Capital: To cover platform development, marketing, and operational costs during Phase 1.</p>
+            <p className="mb-2">Use of Funds:</p>
+            <ul className="list-disc pl-6 mb-4">
+              <li>Product Development: Backend and frontend development, security enhancements, and user interface optimization.</li>
+              <li>Marketing & Partnerships: Building brand awareness and acquiring early users.</li>
+              <li>Operational Expenses: Infrastructure, staffing, and administrative costs.</li>
+            </ul>
 
-            <section className="mb-8">
-              <h2 className="text-2xl font-bold mb-4">10. Conclusion</h2>
-              <p className="mb-4">
-                Aquads represents a significant step forward in the Web3 ecosystem by providing a comprehensive platform that combines advertising, services, and community features. The platform's unique approach to integrating these elements creates a valuable resource for the cryptocurrency and blockchain community while maintaining high standards of security, usability, and functionality.
-              </p>
-            </section>
+            <h3 className="text-xl font-semibold mb-3">8.2. Revenue Forecast</h3>
+            <ul className="list-disc pl-6 mb-4">
+              <li>Short-Term: Revenue primarily from advertising fees as the user base builds.</li>
+              <li>Long-Term: Diversified income through service commissions, premium listings, and future monetized features.</li>
+              <li>Scalability: The integrated model is designed to grow alongside the expanding Web3 ecosystem, with opportunities to tap into additional revenue streams as the platform matures.</li>
+            </ul>
+          </section>
 
-            <section className="mb-8">
-              <h2 className="text-2xl font-bold mb-4">Contact Information</h2>
-              <ul className="list-none space-y-2">
-                <li>
-                  <a href="https://twitter.com/_Aquads_" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
-                    Twitter: @_Aquads_
-                  </a>
-                </li>
-                <li>
-                  <a href="https://t.co/TE6WbzWh9K" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
-                    Telegram: https://t.co/TE6WbzWh9K
-                  </a>
-                </li>
-                <li>
-                  <a href="mailto:aquads.info@gmail.com" className="text-blue-400 hover:text-blue-300">
-                    Email: aquads.info@gmail.com
-                  </a>
-                </li>
-                <li>
-                  <a href="https://aquads.xyz" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
-                    Website: https://aquads.xyz
-                  </a>
-                </li>
-              </ul>
-            </section>
-          </div>
+          <section className="mb-8">
+            <h2 className="text-2xl font-bold mb-4">9. Management & Team</h2>
+            
+            <h3 className="text-xl font-semibold mb-3">9.1. Leadership</h3>
+            <ul className="list-disc pl-6 mb-4">
+              <li>Founders & Core Team: Experienced professionals with backgrounds in blockchain, software development, marketing, and operations.</li>
+              <li>Advisory Board: Industry experts who can provide strategic guidance, particularly in the Web3 and crypto space.</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold mb-3">9.2. Talent Acquisition</h3>
+            <p>Prioritize hiring specialists in blockchain technology, cybersecurity, and UI/UX design to ensure a high-quality, secure, and user-friendly platform.</p>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-bold mb-4">10. Conclusion</h2>
+            <p className="mb-4">
+              Aquads represents a forward-thinking solution to the challenges facing the Web3 ecosystem. By unifying dynamic advertising, a specialized freelancer marketplace, and a robust token information hub, Aquads is poised to become a central hub for crypto projects and professionals. With a phased development roadmap, diversified revenue streams, and a clear focus on community and transparency, Aquads offers investors a unique opportunity to participate in the next wave of blockchain innovation.
+            </p>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-bold mb-4">Contact Information:</h2>
+            <ul className="list-none space-y-2">
+              <li>Twitter: <a href="https://twitter.com/_Aquads_" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">@_Aquads_</a></li>
+              <li>Telegram: <a href="https://t.co/TE6WbzWh9K" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">https://t.co/TE6WbzWh9K</a></li>
+              <li>Email: <a href="mailto:aquads.info@gmail.com" className="text-blue-400 hover:text-blue-300">aquads.info@gmail.com</a></li>
+              <li>Website: <a href="https://aquads.xyz" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">https://aquads.xyz</a></li>
+            </ul>
+          </section>
         </div>
       </div>
     </div>
