@@ -314,10 +314,15 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       // Generate a temporary transaction signature
       const tempTxSignature = 'temp_' + Date.now() + '_' + Math.random().toString(36).substring(7);
       
+      // Ensure all required fields are present
       const requestData = {
-        ...bannerData,
+        title: bannerData.title,
+        gif: bannerData.gif,
+        url: bannerData.url,
+        duration: bannerData.duration,
         owner: currentUser._id,
-        txSignature: tempTxSignature
+        txSignature: tempTxSignature,
+        status: bannerData.status || 'pending'
       };
 
       console.log('Submitting banner ad with data:', requestData);

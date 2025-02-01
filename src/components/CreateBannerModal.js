@@ -78,7 +78,8 @@ const CreateBannerModal = ({ show, onHide, onSubmit }) => {
         gif: formData.gif.trim(),
         url: formData.url.trim(),
         duration: parseInt(formData.duration),
-        price: selectedOption.price
+        price: selectedOption.price,
+        status: 'pending'
       };
 
       console.log('Submitting form data:', submitData);
