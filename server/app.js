@@ -1,6 +1,9 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const userRoutes = require('./routes/users');
+const serviceRoutes = require('./routes/services');
+const serviceReviewRoutes = require('./routes/serviceReviews');
 const bannerAdsRoutes = require('./routes/bannerAds');
 
 // Middleware
@@ -14,4 +17,4 @@ app.use('/api/services', serviceRoutes);
 app.use('/api/service-reviews', serviceReviewRoutes);
 app.use('/api/bannerAds', bannerAdsRoutes);
 
-app.use('/api/bannerAds', bannerAdsRoutes); 
+module.exports = app; 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Button, Form, Alert } from 'react-bootstrap';
+import { Modal, Form, Alert } from 'react-bootstrap';
 import { API_URL } from '../services/api';
 
 const BANNER_OPTIONS = [
@@ -73,7 +73,6 @@ const CreateBannerModal = ({ show, onHide, onSubmit }) => {
       setIsLoading(true);
       const selectedOption = BANNER_OPTIONS.find(opt => opt.duration === parseInt(formData.duration));
       
-      // Call parent's onSubmit with form data and price
       await onSubmit({
         ...formData,
         price: selectedOption.price
@@ -88,86 +87,106 @@ const CreateBannerModal = ({ show, onHide, onSubmit }) => {
   };
 
   return (
-    <Modal show={show} onHide={onHide} centered>
-      <Modal.Header closeButton>
-        <Modal.Title>Create Banner Advertisement</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <Form onSubmit={handleSubmit}>
-          {error && <Alert variant="danger">{error}</Alert>}
-          
-          <Form.Group className="mb-3">
-            <Form.Label>Title</Form.Label>
-            <Form.Control
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleInputChange}
-              placeholder="Enter banner title"
-              required
-            />
-          </Form.Group>
-
-          <Form.Group className="mb-3">
-            <Form.Label>GIF URL</Form.Label>
-            <Form.Control
-              type="url"
-              name="gif"
-              value={formData.gif}
-              onChange={handleInputChange}
-              placeholder="Enter GIF URL"
-              required
-            />
-          </Form.Group>
-
-          {previewUrl && (
-            <div className="text-center mb-3">
-              <img 
-                src={previewUrl} 
-                alt="Banner Preview" 
-                style={{ maxWidth: '100%', maxHeight: '200px' }}
+    <Modal show={show} onHide={onHide} centered className="banner-modal">
+      <div className="bg-gray-900 text-white rounded-lg shadow-lg">
+        <Modal.Header className="border-b border-gray-700 bg-gray-800 rounded-t-lg">
+          <Modal.Title className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+            Create Banner Advertisement
+          </Modal.Title>
+          <button
+            onClick={onHide}
+            className="text-gray-400 hover:text-white focus:outline-none"
+          >
+            ×
+          </button>
+        </Modal.Header>
+        <Modal.Body className="bg-gray-900 p-6">
+          <Form onSubmit={handleSubmit}>
+            {error && (
+              <Alert variant="danger" className="bg-red-500/10 border border-red-500/20 text-red-400 mb-4 rounded">
+                {error}
+              </Alert>
+            )}
+            
+            <Form.Group className="mb-4">
+              <Form.Label className="text-gray-300">Title</Form.Label>
+              <Form.Control
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                placeholder="Enter banner title"
+                required
+                className="bg-gray-800/50 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
-            </div>
-          )}
+            </Form.Group>
 
-          <Form.Group className="mb-3">
-            <Form.Label>Website URL</Form.Label>
-            <Form.Control
-              type="url"
-              name="url"
-              value={formData.url}
-              onChange={handleInputChange}
-              placeholder="Enter website URL"
-              required
-            />
-          </Form.Group>
+            <Form.Group className="mb-4">
+              <Form.Label className="text-gray-300">GIF URL</Form.Label>
+              <Form.Control
+                type="url"
+                name="gif"
+                value={formData.gif}
+                onChange={handleInputChange}
+                placeholder="Enter GIF URL"
+                required
+                className="bg-gray-800/50 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+            </Form.Group>
 
-          <Form.Group className="mb-3">
-            <Form.Label>Duration</Form.Label>
-            <Form.Select
-              name="duration"
-              value={formData.duration}
-              onChange={handleInputChange}
-            >
-              {BANNER_OPTIONS.map((option, index) => (
-                <option key={index} value={option.duration}>
-                  {option.label} - {option.price} SOL
-                </option>
-              ))}
-            </Form.Select>
-          </Form.Group>
+            {previewUrl && (
+              <div className="mb-4 p-2 bg-gray-800/50 rounded-lg">
+                <img 
+                  src={previewUrl} 
+                  alt="Banner Preview" 
+                  className="w-full max-h-48 object-contain rounded"
+                />
+              </div>
+            )}
 
-          <div className="d-grid gap-2">
-            <Button 
-              variant="primary" 
+            <Form.Group className="mb-4">
+              <Form.Label className="text-gray-300">Website URL</Form.Label>
+              <Form.Control
+                type="url"
+                name="url"
+                value={formData.url}
+                onChange={handleInputChange}
+                placeholder="Enter website URL"
+                required
+                className="bg-gray-800/50 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-6">
+              <Form.Label className="text-gray-300">Duration</Form.Label>
+              <Form.Select
+                name="duration"
+                value={formData.duration}
+                onChange={handleInputChange}
+                className="bg-gray-800/50 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              >
+                {BANNER_OPTIONS.map((option, index) => (
+                  <option key={index} value={option.duration} className="bg-gray-800">
+                    {option.label} - {option.price} SOL
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+
+            <button
               type="submit"
               disabled={isLoading}
+              className={`w-full py-2 px-4 rounded-lg font-medium transition-all duration-300 ${
+                isLoading
+                  ? 'bg-indigo-500/50 cursor-not-allowed'
+                  : 'bg-indigo-500 hover:bg-indigo-600 hover:shadow-lg hover:shadow-indigo-500/50'
+              }`}
             >
               {isLoading ? 'Creating...' : 'Create Banner Ad'}
-            </Button>
-          </div>
-        </Form>
-      </Modal.Body>
+            </button>
+          </Form>
+        </Modal.Body>
+      </div>
     </Modal>
   );
 };
