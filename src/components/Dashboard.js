@@ -62,16 +62,22 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   // Add banner management functions
   const handleApproveBanner = async (bannerId) => {
     try {
-      const response = await fetch(`${API_URL}/bannerAds/${bannerId}/approve`, {
-        method: 'PUT',
+      console.log('Approving banner ad:', { bannerId });
+      const response = await fetch(`${API_URL}/bannerAds/approve`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
-        }
+        },
+        body: JSON.stringify({
+          bannerId,
+          processedBy: currentUser._id,
+          status: 'active'
+        })
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({ message: 'Failed to parse error response' }));
         console.error('Server error:', errorData);
         throw new Error(errorData.message || 'Failed to approve banner');
       }
@@ -92,16 +98,21 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   const handleRejectBanner = async (bannerId) => {
     try {
-      const response = await fetch(`${API_URL}/bannerAds/${bannerId}/reject`, {
-        method: 'PUT',
+      const response = await fetch(`${API_URL}/bannerAds/reject`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
-        }
+        },
+        body: JSON.stringify({
+          bannerId,
+          processedBy: currentUser._id,
+          status: 'rejected'
+        })
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({ message: 'Failed to parse error response' }));
         console.error('Server error:', errorData);
         throw new Error(errorData.message || 'Failed to reject banner');
       }
