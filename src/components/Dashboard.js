@@ -68,8 +68,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       }
 
       const requestData = {
-        bannerId: bannerId,
-        processedBy: currentUser._id
+        bannerId: bannerToUpdate._id,
+        processedBy: currentUser._id,
+        status: 'active'
       };
 
       console.log('Banner to update:', bannerToUpdate);
@@ -96,8 +97,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       const responseData = await response.json();
       console.log('Approval successful:', responseData);
 
-      // Remove the banner from local state after approval
-      setBannerAds(prev => prev.filter(banner => banner._id !== bannerId));
+      // Update the banner status in local state
+      setBannerAds(prev => prev.map(banner => 
+        banner._id === bannerId 
+          ? { ...banner, status: 'active' }
+          : banner
+      ));
     } catch (error) {
       console.error('Error approving banner:', error);
     }
@@ -111,8 +116,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       }
 
       const requestData = {
-        bannerId: bannerId,
-        processedBy: currentUser._id
+        bannerId: bannerToUpdate._id,
+        processedBy: currentUser._id,
+        status: 'rejected'
       };
 
       console.log('Banner to update:', bannerToUpdate);
@@ -139,8 +145,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       const responseData = await response.json();
       console.log('Rejection successful:', responseData);
 
-      // Remove the banner from local state after rejection
-      setBannerAds(prev => prev.filter(banner => banner._id !== bannerId));
+      // Update the banner status in local state
+      setBannerAds(prev => prev.map(banner => 
+        banner._id === bannerId 
+          ? { ...banner, status: 'rejected' }
+          : banner
+      ));
     } catch (error) {
       console.error('Error rejecting banner:', error);
     }
