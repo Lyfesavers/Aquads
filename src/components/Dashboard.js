@@ -69,7 +69,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           'Authorization': `Bearer ${currentUser.token}`
         },
         body: JSON.stringify({
-          bannerId,
+          id: bannerId,
           processedBy: currentUser._id
         })
       });
@@ -96,7 +96,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           'Authorization': `Bearer ${currentUser.token}`
         },
         body: JSON.stringify({
-          bannerId,
+          id: bannerId,
           processedBy: currentUser._id
         })
       });
