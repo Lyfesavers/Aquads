@@ -8,6 +8,8 @@ import ProfileModal from './ProfileModal';
 import BannerDisplay from './BannerDisplay';
 import CreateBannerModal from './CreateBannerModal';
 import { Button } from 'react-bootstrap';
+import LoginModal from './LoginModal';
+import CreateAccountModal from './CreateAccountModal';
 
 // Helper function to check if URL is valid
 const isValidUrl = (string) => {
@@ -105,6 +107,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [sortOption, setSortOption] = useState('newest');
   const [showBannerModal, setShowBannerModal] = useState(false);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
 
   const categories = [
     { id: 'smart-contract', name: 'Smart Contract Development', icon: '⚡' },
@@ -362,6 +366,24 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     }
   };
 
+  const handleLoginClick = () => {
+    setShowLoginModal(true);
+  };
+
+  const handleCreateAccountClick = () => {
+    setShowCreateAccountModal(true);
+  };
+
+  const handleLoginSubmit = async (credentials) => {
+    await onLogin(credentials);
+    setShowLoginModal(false);
+  };
+
+  const handleCreateAccountSubmit = async (formData) => {
+    await onCreateAccount(formData);
+    setShowCreateAccountModal(false);
+  };
+
   return (
     <div className="h-screen overflow-y-auto bg-gradient-to-br from-gray-900 to-black text-white">
       {/* Fixed Background */}
@@ -409,13 +431,13 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
               ) : (
                 <>
                   <button
-                    onClick={onLogin}
+                    onClick={handleLoginClick}
                     className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
                   >
                     Login
                   </button>
                   <button
-                    onClick={onCreateAccount}
+                    onClick={handleCreateAccountClick}
                     className="bg-green-500/80 hover:bg-green-600/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
                   >
                     Create Account
@@ -527,7 +549,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                 </button>
               ) : (
                 <button
-                  onClick={onLogin}
+                  onClick={handleLoginClick}
                   className="px-4 py-2 bg-indigo-500/80 hover:bg-indigo-600/80 rounded-lg transition-colors"
                 >
                   Login to List Service
@@ -671,6 +693,26 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
           show={showBannerModal}
           onHide={() => setShowBannerModal(false)}
           onSubmit={handleBannerSubmit}
+        />
+      )}
+
+      {/* Login Modal */}
+      {showLoginModal && (
+        <LoginModal
+          onClose={() => setShowLoginModal(false)}
+          onLogin={handleLoginSubmit}
+          onCreateAccount={() => {
+            setShowLoginModal(false);
+            setShowCreateAccountModal(true);
+          }}
+        />
+      )}
+
+      {/* Create Account Modal */}
+      {showCreateAccountModal && (
+        <CreateAccountModal
+          onClose={() => setShowCreateAccountModal(false)}
+          onCreateAccount={handleCreateAccountSubmit}
         />
       )}
     </div>
