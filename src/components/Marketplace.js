@@ -362,6 +362,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                 <>
                   <span className="text-blue-300">Welcome, {currentUser.username}!</span>
                   <button
+                    onClick={() => setShowBannerModal(true)}
+                    className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                  >
+                    Create Banner Ad
+                  </button>
+                  <button
                     onClick={() => setShowProfileModal(true)}
                     className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
                   >
@@ -586,13 +592,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
             </div>
           </div>
           <div className="d-flex justify-content-between align-items-center mb-4">
-            {currentUser && (
-              <div className="d-flex gap-2">
-                <Button variant="outline-primary" onClick={() => setShowBannerModal(true)}>
-                  Create Banner Ad
-                </Button>
-              </div>
-            )}
+            {/* Remove the Create Banner Ad button from here */}
           </div>
         </div>
       </div>
