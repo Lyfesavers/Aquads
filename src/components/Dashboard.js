@@ -62,20 +62,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   // Add banner management functions
   const handleApproveBanner = async (bannerId) => {
     try {
-      const bannerToUpdate = bannerAds.find(banner => banner._id === bannerId);
-      if (!bannerToUpdate) {
-        throw new Error('Banner not found');
-      }
-
-      const requestData = {
-        bannerId: bannerToUpdate._id,
-        processedBy: currentUser._id,
-        status: 'active'
+      const data = {
+        _id: bannerId,
+        processedBy: currentUser._id
       };
-
-      console.log('Banner to update:', bannerToUpdate);
-      console.log('Current user:', currentUser);
-      console.log('Request data:', requestData);
+      
+      console.log('Sending approval request:', data);
 
       const response = await fetch(`${API_URL}/bannerAds/approve`, {
         method: 'POST',
@@ -83,26 +75,24 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
         },
-        body: JSON.stringify(requestData)
+        body: JSON.stringify(data)
       });
 
+      const responseData = await response.json();
+      console.log('Server response:', responseData);
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Failed to parse error response' }));
-        console.error('Server error:', errorData);
-        console.error('Response status:', response.status);
-        console.error('Response headers:', Object.fromEntries([...response.headers]));
-        throw new Error(errorData.message || 'Failed to approve banner');
+        throw new Error(responseData.error || 'Failed to approve banner');
       }
 
-      const responseData = await response.json();
-      console.log('Approval successful:', responseData);
-
-      // Update the banner status in local state
-      setBannerAds(prev => prev.map(banner => 
-        banner._id === bannerId 
-          ? { ...banner, status: 'active' }
-          : banner
-      ));
+      // Refresh banner ads list
+      const bannersResponse = await fetch(`${API_URL}/bannerAds`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      const updatedBanners = await bannersResponse.json();
+      setBannerAds(updatedBanners);
     } catch (error) {
       console.error('Error approving banner:', error);
     }
@@ -110,20 +100,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   const handleRejectBanner = async (bannerId) => {
     try {
-      const bannerToUpdate = bannerAds.find(banner => banner._id === bannerId);
-      if (!bannerToUpdate) {
-        throw new Error('Banner not found');
-      }
-
-      const requestData = {
-        bannerId: bannerToUpdate._id,
-        processedBy: currentUser._id,
-        status: 'rejected'
+      const data = {
+        _id: bannerId,
+        processedBy: currentUser._id
       };
-
-      console.log('Banner to update:', bannerToUpdate);
-      console.log('Current user:', currentUser);
-      console.log('Request data:', requestData);
+      
+      console.log('Sending rejection request:', data);
 
       const response = await fetch(`${API_URL}/bannerAds/reject`, {
         method: 'POST',
@@ -131,26 +113,24 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
         },
-        body: JSON.stringify(requestData)
+        body: JSON.stringify(data)
       });
 
+      const responseData = await response.json();
+      console.log('Server response:', responseData);
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Failed to parse error response' }));
-        console.error('Server error:', errorData);
-        console.error('Response status:', response.status);
-        console.error('Response headers:', Object.fromEntries([...response.headers]));
-        throw new Error(errorData.message || 'Failed to reject banner');
+        throw new Error(responseData.error || 'Failed to reject banner');
       }
 
-      const responseData = await response.json();
-      console.log('Rejection successful:', responseData);
-
-      // Update the banner status in local state
-      setBannerAds(prev => prev.map(banner => 
-        banner._id === bannerId 
-          ? { ...banner, status: 'rejected' }
-          : banner
-      ));
+      // Refresh banner ads list
+      const bannersResponse = await fetch(`${API_URL}/bannerAds`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      const updatedBanners = await bannersResponse.json();
+      setBannerAds(updatedBanners);
     } catch (error) {
       console.error('Error rejecting banner:', error);
     }

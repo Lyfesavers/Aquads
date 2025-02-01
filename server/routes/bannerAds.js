@@ -103,15 +103,15 @@ router.post('/', auth, async (req, res) => {
 router.post('/approve', auth, async (req, res) => {
   try {
     console.log('Approving banner ad:', req.body);
-    const { bannerId, processedBy } = req.body;
+    const { _id, processedBy } = req.body;
 
-    if (!bannerId || !processedBy) {
-      return res.status(400).json({ error: 'Missing bannerId or processedBy' });
+    if (!_id || !processedBy) {
+      return res.status(400).json({ error: 'Missing _id or processedBy' });
     }
 
-    const banner = await BannerAd.findById(bannerId);
+    const banner = await BannerAd.findById(_id);
     if (!banner) {
-      console.error('Banner not found:', bannerId);
+      console.error('Banner not found:', _id);
       return res.status(404).json({ error: 'Banner not found' });
     }
 
@@ -134,14 +134,14 @@ router.post('/approve', auth, async (req, res) => {
 router.post('/reject', auth, async (req, res) => {
   try {
     console.log('Rejecting banner ad:', req.body);
-    const { bannerId, processedBy } = req.body;
+    const { _id, processedBy } = req.body;
 
-    if (!bannerId || !processedBy) {
-      return res.status(400).json({ error: 'Missing bannerId or processedBy' });
+    if (!_id || !processedBy) {
+      return res.status(400).json({ error: 'Missing _id or processedBy' });
     }
 
     const banner = await BannerAd.findByIdAndUpdate(
-      bannerId,
+      _id,
       {
         status: 'expired',
         processedAt: new Date(),
@@ -151,7 +151,7 @@ router.post('/reject', auth, async (req, res) => {
     );
 
     if (!banner) {
-      console.error('Banner not found:', bannerId);
+      console.error('Banner not found:', _id);
       return res.status(404).json({ error: 'Banner not found' });
     }
 
