@@ -6,12 +6,15 @@ const auth = require('../middleware/auth');
 // Get active banner ad
 router.get('/active', async (req, res) => {
   try {
+    console.log('Fetching active banner ad');
     const activeBanner = await BannerAd.findOne({
       status: 'active',
       expiresAt: { $gt: new Date() }
     });
+    console.log('Active banner found:', activeBanner);
     res.json(activeBanner);
   } catch (error) {
+    console.error('Error fetching active banner:', error);
     res.status(500).json({ error: 'Failed to fetch active banner' });
   }
 });
@@ -19,11 +22,14 @@ router.get('/active', async (req, res) => {
 // Get all banner ads (for admin)
 router.get('/', auth, async (req, res) => {
   try {
+    console.log('Fetching all banner ads');
     const { status } = req.query;
     const query = status ? { status } : {};
     const banners = await BannerAd.find(query).sort({ createdAt: -1 });
+    console.log(`Found ${banners.length} banners`);
     res.json(banners);
   } catch (error) {
+    console.error('Error fetching banners:', error);
     res.status(500).json({ error: 'Failed to fetch banners' });
   }
 });
@@ -31,7 +37,13 @@ router.get('/', auth, async (req, res) => {
 // Create new banner ad request
 router.post('/', auth, async (req, res) => {
   try {
+    console.log('Creating new banner ad with data:', req.body);
     const { title, gif, url, owner, txSignature, duration } = req.body;
+
+    if (!title || !gif || !url || !owner || !txSignature) {
+      console.error('Missing required fields:', { title, gif, url, owner, txSignature });
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
 
     const bannerAd = new BannerAd({
       title,
@@ -43,8 +55,13 @@ router.post('/', auth, async (req, res) => {
     });
 
     await bannerAd.save();
+    console.log('Banner ad created successfully:', bannerAd);
     res.status(201).json(bannerAd);
   } catch (error) {
+    console.error('Error creating banner ad:', error);
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ error: error.message });
+    }
     res.status(500).json({ error: 'Failed to create banner ad request' });
   }
 });
@@ -52,10 +69,16 @@ router.post('/', auth, async (req, res) => {
 // Approve banner ad
 router.post('/approve', auth, async (req, res) => {
   try {
+    console.log('Approving banner ad:', req.body);
     const { bannerId, processedBy } = req.body;
+
+    if (!bannerId || !processedBy) {
+      return res.status(400).json({ error: 'Missing bannerId or processedBy' });
+    }
 
     const banner = await BannerAd.findById(bannerId);
     if (!banner) {
+      console.error('Banner not found:', bannerId);
       return res.status(404).json({ error: 'Banner not found' });
     }
 
@@ -66,8 +89,10 @@ router.post('/approve', auth, async (req, res) => {
     banner.expiresAt = new Date(now.getTime() + banner.duration);
 
     await banner.save();
+    console.log('Banner approved successfully:', banner);
     res.json(banner);
   } catch (error) {
+    console.error('Error approving banner:', error);
     res.status(500).json({ error: 'Failed to approve banner' });
   }
 });
@@ -75,7 +100,12 @@ router.post('/approve', auth, async (req, res) => {
 // Reject banner ad
 router.post('/reject', auth, async (req, res) => {
   try {
+    console.log('Rejecting banner ad:', req.body);
     const { bannerId, processedBy } = req.body;
+
+    if (!bannerId || !processedBy) {
+      return res.status(400).json({ error: 'Missing bannerId or processedBy' });
+    }
 
     const banner = await BannerAd.findByIdAndUpdate(
       bannerId,
@@ -88,11 +118,14 @@ router.post('/reject', auth, async (req, res) => {
     );
 
     if (!banner) {
+      console.error('Banner not found:', bannerId);
       return res.status(404).json({ error: 'Banner not found' });
     }
 
+    console.log('Banner rejected successfully:', banner);
     res.json(banner);
   } catch (error) {
+    console.error('Error rejecting banner:', error);
     res.status(500).json({ error: 'Failed to reject banner' });
   }
 });

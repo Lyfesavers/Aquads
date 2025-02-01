@@ -8,6 +8,7 @@ const Ad = require('./models/Ad');
 const User = require('./models/User');
 const BumpRequest = require('./models/BumpRequest');
 const bumpRoutes = require('./routes/bumps');
+const bannerAdsRoutes = require('./routes/bannerAds');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const winston = require('winston');
@@ -153,6 +154,7 @@ app.use('/api/service-reviews', require('./routes/serviceReviews'));
 app.use('/api/tokens', require('./routes/tokens'));
 app.use('/api/services', require('./routes/services'));
 app.use('/api/users', usersRouter);
+app.use('/api/bannerAds', bannerAdsRoutes);
 
 // Create new ad
 app.post('/api/ads', auth, async (req, res) => {
