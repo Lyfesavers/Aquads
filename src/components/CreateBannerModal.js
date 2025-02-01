@@ -73,13 +73,20 @@ const CreateBannerModal = ({ show, onHide, onSubmit }) => {
       setIsLoading(true);
       const selectedOption = BANNER_OPTIONS.find(opt => opt.duration === parseInt(formData.duration));
       
-      await onSubmit({
-        ...formData,
+      const submitData = {
+        title: formData.title.trim(),
+        gif: formData.gif.trim(),
+        url: formData.url.trim(),
+        duration: parseInt(formData.duration),
         price: selectedOption.price
-      });
+      };
+
+      console.log('Submitting form data:', submitData);
       
+      await onSubmit(submitData);
       onHide();
     } catch (err) {
+      console.error('Form submission error:', err);
       setError(err.message || 'Failed to create banner ad');
     } finally {
       setIsLoading(false);

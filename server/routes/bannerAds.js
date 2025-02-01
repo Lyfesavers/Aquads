@@ -40,9 +40,21 @@ router.post('/', auth, async (req, res) => {
     console.log('Creating new banner ad with data:', req.body);
     const { title, gif, url, owner, txSignature, duration } = req.body;
 
-    if (!title || !gif || !url || !owner || !txSignature) {
-      console.error('Missing required fields:', { title, gif, url, owner, txSignature });
-      return res.status(400).json({ error: 'Missing required fields' });
+    // Detailed validation logging
+    const missingFields = [];
+    if (!title) missingFields.push('title');
+    if (!gif) missingFields.push('gif');
+    if (!url) missingFields.push('url');
+    if (!owner) missingFields.push('owner');
+    if (!txSignature) missingFields.push('txSignature');
+
+    if (missingFields.length > 0) {
+      console.error('Missing required fields:', missingFields);
+      return res.status(400).json({ 
+        error: 'Missing required fields', 
+        missingFields,
+        receivedData: req.body 
+      });
     }
 
     const bannerAd = new BannerAd({
@@ -54,13 +66,17 @@ router.post('/', auth, async (req, res) => {
       duration: duration || 24 * 60 * 60 * 1000 // Default 24 hours
     });
 
+    console.log('Attempting to save banner ad:', bannerAd);
     await bannerAd.save();
     console.log('Banner ad created successfully:', bannerAd);
     res.status(201).json(bannerAd);
   } catch (error) {
     console.error('Error creating banner ad:', error);
     if (error.name === 'ValidationError') {
-      return res.status(400).json({ error: error.message });
+      return res.status(400).json({ 
+        error: error.message,
+        validationErrors: error.errors 
+      });
     }
     res.status(500).json({ error: 'Failed to create banner ad request' });
   }

@@ -311,8 +311,16 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
   const handleBannerSubmit = async (bannerData) => {
     try {
-      // Generate a temporary transaction signature (this should be replaced with actual blockchain transaction)
+      // Generate a temporary transaction signature
       const tempTxSignature = 'temp_' + Date.now() + '_' + Math.random().toString(36).substring(7);
+      
+      const requestData = {
+        ...bannerData,
+        owner: currentUser._id,
+        txSignature: tempTxSignature
+      };
+
+      console.log('Submitting banner ad with data:', requestData);
       
       const response = await fetch(`${API_URL}/bannerAds`, {
         method: 'POST',
@@ -320,15 +328,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
         },
-        body: JSON.stringify({
-          ...bannerData,
-          owner: currentUser._id,
-          txSignature: tempTxSignature
-        })
+        body: JSON.stringify(requestData)
       });
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Server response:', errorData);
         throw new Error(errorData.error || 'Failed to create banner ad');
       }
 
