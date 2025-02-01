@@ -652,9 +652,9 @@ function App() {
         <Route path="/marketplace" element={
           <Marketplace 
             currentUser={currentUser}
-            onLogin={() => setShowLoginModal(true)}
+            onLogin={handleLogin}
             onLogout={handleLogout}
-            onCreateAccount={() => setShowCreateAccountModal(true)}
+            onCreateAccount={handleCreateAccount}
           />
         } />
         <Route path="/" element={
