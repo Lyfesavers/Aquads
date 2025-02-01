@@ -69,8 +69,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           'Authorization': `Bearer ${currentUser.token}`
         },
         body: JSON.stringify({
-          id: bannerId,
-          processedBy: currentUser._id
+          bannerId: bannerId,
+          processedBy: currentUser._id,
+          status: 'active'
         })
       });
 
@@ -80,8 +81,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         throw new Error(errorData.message || 'Failed to approve banner');
       }
 
-      // Update local state
-      setBannerAds(prev => prev.filter(banner => banner._id !== bannerId));
+      // Update local state to change status to active
+      setBannerAds(prev => prev.map(banner => 
+        banner._id === bannerId 
+          ? { ...banner, status: 'active' }
+          : banner
+      ));
     } catch (error) {
       console.error('Error approving banner:', error);
     }
@@ -96,8 +101,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           'Authorization': `Bearer ${currentUser.token}`
         },
         body: JSON.stringify({
-          id: bannerId,
-          processedBy: currentUser._id
+          bannerId: bannerId,
+          processedBy: currentUser._id,
+          status: 'rejected'
         })
       });
 
@@ -107,8 +113,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         throw new Error(errorData.message || 'Failed to reject banner');
       }
 
-      // Update local state
-      setBannerAds(prev => prev.filter(banner => banner._id !== bannerId));
+      // Update local state to change status to rejected
+      setBannerAds(prev => prev.map(banner => 
+        banner._id === bannerId 
+          ? { ...banner, status: 'rejected' }
+          : banner
+      ));
     } catch (error) {
       console.error('Error rejecting banner:', error);
     }
