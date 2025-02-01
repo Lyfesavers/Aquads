@@ -30,22 +30,17 @@ const BannerDisplay = () => {
   }
 
   return (
-    <div className="banner-container mb-4" style={{ maxWidth: '100%', overflow: 'hidden' }}>
+    <div className="banner-container mb-4 w-full bg-gray-800">
       <a 
         href={banner.url} 
         target="_blank" 
         rel="noopener noreferrer"
-        style={{ display: 'block', textAlign: 'center' }}
+        className="block w-full"
       >
         <img
           src={banner.gif}
           alt={banner.title}
-          style={{
-            maxWidth: '100%',
-            height: 'auto',
-            maxHeight: '200px',
-            objectFit: 'contain'
-          }}
+          className="w-full h-[128px] object-cover"
         />
       </a>
     </div>
