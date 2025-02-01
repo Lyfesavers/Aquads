@@ -62,19 +62,18 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   // Add banner management functions
   const handleApproveBanner = async (bannerId) => {
     try {
-      const response = await fetch(`${API_URL}/bannerAds/approve`, {
-        method: 'POST',
+      const response = await fetch(`${API_URL}/bannerAds/${bannerId}/approve`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
-        },
-        body: JSON.stringify({
-          bannerId,
-          processedBy: currentUser._id
-        })
+        }
       });
 
-      if (!response.ok) throw new Error('Failed to approve banner');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to approve banner');
+      }
 
       // Update local state
       setBannerAds(prev => prev.map(banner => 
@@ -89,24 +88,23 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   const handleRejectBanner = async (bannerId) => {
     try {
-      const response = await fetch(`${API_URL}/bannerAds/reject`, {
-        method: 'POST',
+      const response = await fetch(`${API_URL}/bannerAds/${bannerId}/reject`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
-        },
-        body: JSON.stringify({
-          bannerId,
-          processedBy: currentUser._id
-        })
+        }
       });
 
-      if (!response.ok) throw new Error('Failed to reject banner');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to reject banner');
+      }
 
       // Update local state
       setBannerAds(prev => prev.map(banner => 
         banner._id === bannerId 
-          ? { ...banner, status: 'expired' }
+          ? { ...banner, status: 'rejected' }
           : banner
       ));
     } catch (error) {
