@@ -30,17 +30,17 @@ const BannerDisplay = () => {
   }
 
   return (
-    <div className="banner-container mb-4 w-full bg-gray-800">
+    <div className="banner-container w-full bg-gray-800">
       <a 
         href={banner.url} 
         target="_blank" 
         rel="noopener noreferrer"
-        className="block w-full"
+        className="block w-full flex items-center justify-center"
       >
         <img
           src={banner.gif}
           alt={banner.title}
-          className="w-full h-[128px] md:h-[128px] sm:h-[96px] object-contain md:object-cover"
+          className="w-full h-[64px] sm:h-[80px] md:h-[128px] object-contain"
         />
       </a>
     </div>
