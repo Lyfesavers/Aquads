@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { fetchBumpRequests } from '../services/api';
+import { fetchBumpRequests, API_URL } from '../services/api';
 
 const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, onRejectBump, onApproveBump }) => {
   const [bumpRequests, setBumpRequests] = useState([]);
+  const [bannerAds, setBannerAds] = useState([]);
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [selectedBumpRequest, setSelectedBumpRequest] = useState(null);
 
-  // Fetch bump requests when dashboard opens
+  // Fetch bump requests and banner ads when dashboard opens
   useEffect(() => {
     if (currentUser?.isAdmin) {
       fetchBumpRequests()
@@ -17,6 +18,21 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         })
         .catch(error => {
           console.error('Error fetching bump requests:', error);
+        });
+
+      // Fetch banner ads
+      fetch(`${API_URL}/bannerAds`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Fetched banner ads:', data);
+          setBannerAds(data);
+        })
+        .catch(error => {
+          console.error('Error fetching banner ads:', error);
         });
     }
   }, [currentUser]);
@@ -41,6 +57,61 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     onApproveBump(ad.id);
     // Remove the bump request from local state
     setBumpRequests(prev => prev.filter(req => req.adId !== ad.id));
+  };
+
+  // Add banner management functions
+  const handleApproveBanner = async (bannerId) => {
+    try {
+      const response = await fetch(`${API_URL}/bannerAds/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({
+          bannerId,
+          processedBy: currentUser._id
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to approve banner');
+
+      // Update local state
+      setBannerAds(prev => prev.map(banner => 
+        banner._id === bannerId 
+          ? { ...banner, status: 'active' }
+          : banner
+      ));
+    } catch (error) {
+      console.error('Error approving banner:', error);
+    }
+  };
+
+  const handleRejectBanner = async (bannerId) => {
+    try {
+      const response = await fetch(`${API_URL}/bannerAds/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({
+          bannerId,
+          processedBy: currentUser._id
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to reject banner');
+
+      // Update local state
+      setBannerAds(prev => prev.map(banner => 
+        banner._id === bannerId 
+          ? { ...banner, status: 'expired' }
+          : banner
+      ));
+    } catch (error) {
+      console.error('Error rejecting banner:', error);
+    }
   };
 
   // Separate pending bump ads for admin
@@ -69,60 +140,115 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
         {/* Pending Bump Approvals (Admin Only) */}
         {currentUser?.isAdmin && (
-          <div className="mb-8">
-            <h3 className="text-xl font-semibold text-white mb-4">Pending Bump Approvals</h3>
-            {pendingBumpAds.length === 0 ? (
-              <p className="text-gray-400 text-center py-4">No pending bump approvals.</p>
-            ) : (
-              <div className="space-y-4">
-                {pendingBumpAds.map(ad => (
-                  <div
-                    key={ad.id}
-                    className="bg-gray-700 rounded-lg p-4"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <img
-                          src={ad.logo}
-                          alt={ad.title}
-                          className="w-12 h-12 object-contain rounded"
-                        />
-                        <div>
-                          <h4 className="text-white font-semibold">{ad.title}</h4>
-                          <p className="text-gray-400 text-sm">Owner: {ad.owner}</p>
-                          <p className="text-gray-400 text-sm">Requested: {new Date(ad.bumpRequest.createdAt).toLocaleString()}</p>
+          <>
+            <div className="mb-8">
+              <h3 className="text-xl font-semibold text-white mb-4">Pending Bump Approvals</h3>
+              {pendingBumpAds.length === 0 ? (
+                <p className="text-gray-400 text-center py-4">No pending bump approvals.</p>
+              ) : (
+                <div className="space-y-4">
+                  {pendingBumpAds.map(ad => (
+                    <div
+                      key={ad.id}
+                      className="bg-gray-700 rounded-lg p-4"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <img
+                            src={ad.logo}
+                            alt={ad.title}
+                            className="w-12 h-12 object-contain rounded"
+                          />
+                          <div>
+                            <h4 className="text-white font-semibold">{ad.title}</h4>
+                            <p className="text-gray-400 text-sm">Owner: {ad.owner}</p>
+                            <p className="text-gray-400 text-sm">Requested: {new Date(ad.bumpRequest.createdAt).toLocaleString()}</p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex flex-col items-end">
-                        <a
-                          href={`https://solscan.io/tx/${ad.bumpRequest.txSignature}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-400 hover:text-blue-300 text-sm mb-2"
-                        >
-                          View Transaction
-                        </a>
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleApprove(ad)}
-                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
+                        <div className="flex flex-col items-end">
+                          <a
+                            href={`https://solscan.io/tx/${ad.bumpRequest.txSignature}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:text-blue-300 text-sm mb-2"
                           >
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => handleReject(ad)}
-                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                          >
-                            Reject
-                          </button>
+                            View Transaction
+                          </a>
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => handleApprove(ad)}
+                              className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleReject(ad)}
+                              className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                            >
+                              Reject
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Banner Ad Management Section */}
+            <div className="mb-8">
+              <h3 className="text-xl font-semibold text-white mb-4">Banner Ad Management</h3>
+              {bannerAds.length === 0 ? (
+                <p className="text-gray-400 text-center py-4">No banner ads found.</p>
+              ) : (
+                <div className="space-y-4">
+                  {bannerAds.map(banner => (
+                    <div key={banner._id} className="bg-gray-700 rounded-lg p-4">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="text-white font-semibold">{banner.title}</h4>
+                          <p className="text-gray-400 text-sm">Status: {banner.status}</p>
+                          <p className="text-gray-400 text-sm">Created: {new Date(banner.createdAt).toLocaleString()}</p>
+                          <a 
+                            href={banner.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:text-blue-300 text-sm"
+                          >
+                            {banner.url}
+                          </a>
+                        </div>
+                        {banner.status === 'pending' && (
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => handleApproveBanner(banner._id)}
+                              className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleRejectBanner(banner._id)}
+                              className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-4">
+                        <img 
+                          src={banner.gif} 
+                          alt={banner.title}
+                          className="max-h-32 rounded object-contain bg-gray-800"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
         )}
 
         {/* Reject Modal */}
