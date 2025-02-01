@@ -62,22 +62,22 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   // Add banner management functions
   const handleApproveBanner = async (bannerId) => {
     try {
-      const response = await fetch(`${API_URL}/bannerAds/approve`, {
-        method: 'POST',
+      const response = await fetch(`${API_URL}/bannerAds/${bannerId}/approve`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
-        },
-        body: JSON.stringify({
-          bannerId,
-          processedBy: currentUser._id
-        })
+        }
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to approve banner');
+        const errorData = await response.json();
+        console.error('Server error:', errorData);
+        throw new Error(errorData.message || 'Failed to approve banner');
       }
+
+      const data = await response.json();
+      console.log('Approval response:', data);
 
       // Update local state
       setBannerAds(prev => prev.map(banner => 
@@ -92,22 +92,22 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   const handleRejectBanner = async (bannerId) => {
     try {
-      const response = await fetch(`${API_URL}/bannerAds/reject`, {
-        method: 'POST',
+      const response = await fetch(`${API_URL}/bannerAds/${bannerId}/reject`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
-        },
-        body: JSON.stringify({
-          bannerId,
-          processedBy: currentUser._id
-        })
+        }
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to reject banner');
+        const errorData = await response.json();
+        console.error('Server error:', errorData);
+        throw new Error(errorData.message || 'Failed to reject banner');
       }
+
+      const data = await response.json();
+      console.log('Rejection response:', data);
 
       // Update local state
       setBannerAds(prev => prev.map(banner => 
