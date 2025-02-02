@@ -10,6 +10,7 @@ import CreateBannerModal from './CreateBannerModal';
 import { Button } from 'react-bootstrap';
 import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
+import EditServiceModal from './EditServiceModal';
 
 // Helper function to check if URL is valid
 const isValidUrl = (string) => {
@@ -109,6 +110,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [serviceToEdit, setServiceToEdit] = useState(null);
 
   const categories = [
     { id: 'smart-contract', name: 'Smart Contract Development', icon: '⚡' },
@@ -398,6 +401,45 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     }
   };
 
+  const handleEditService = async (serviceId, updatedData) => {
+    try {
+      const response = await fetch(`${API_URL}/services/${serviceId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify(updatedData)
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          alert('Your session has expired. Please log in again.');
+          onLogout();
+          return;
+        }
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update service');
+      }
+
+      const updatedService = await response.json();
+      
+      // Update the services list with the edited service
+      setServices(prevServices => 
+        prevServices.map(service => 
+          service._id === serviceId ? updatedService : service
+        )
+      );
+
+      setShowEditModal(false);
+      setServiceToEdit(null);
+      alert('Service updated successfully');
+    } catch (error) {
+      console.error('Error updating service:', error);
+      alert(error.message || 'Failed to update service. Please try again.');
+    }
+  };
+
   return (
     <div className="h-screen overflow-y-auto bg-gradient-to-br from-gray-900 to-black text-white">
       {/* Fixed Background */}
@@ -582,12 +624,23 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                       />
                       <ServiceBadge badge={service.badge} />
                       {currentUser && service.seller?.username === currentUser.username && (
-                        <button
-                          onClick={() => handleDeleteService(service._id)}
-                          className="absolute top-2 right-2 bg-red-500/80 hover:bg-red-600/80 text-white px-3 py-1 rounded-lg shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm z-10"
-                        >
-                          Delete
-                        </button>
+                        <div className="absolute top-2 right-2 flex gap-2 z-10">
+                          <button
+                            onClick={() => {
+                              setServiceToEdit(service);
+                              setShowEditModal(true);
+                            }}
+                            className="bg-blue-500/80 hover:bg-blue-600/80 text-white px-3 py-1 rounded-lg shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteService(service._id)}
+                            className="bg-red-500/80 hover:bg-red-600/80 text-white px-3 py-1 rounded-lg shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       )}
                     </div>
                     <div className="p-6">
@@ -741,6 +794,19 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         <CreateAccountModal
           onClose={() => setShowCreateAccountModal(false)}
           onCreateAccount={handleCreateAccountSubmit}
+        />
+      )}
+
+      {/* Edit Service Modal */}
+      {showEditModal && serviceToEdit && (
+        <EditServiceModal
+          service={serviceToEdit}
+          categories={categories}
+          onClose={() => {
+            setShowEditModal(false);
+            setServiceToEdit(null);
+          }}
+          onEditService={handleEditService}
         />
       )}
     </div>
