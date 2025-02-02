@@ -93,7 +93,7 @@ router.post('/', auth, async (req, res) => {
     console.log('Service creation request received');
     console.log('Request body:', req.body);
     
-    const { title, description, category, price, deliveryTime, requirements, image, telegramUsername } = req.body;
+    const { title, description, category, price, deliveryTime, requirements, image, telegramUsername, linkedin } = req.body;
 
     // Validate required fields
     if (!title || !description || !category || !price || !deliveryTime || !image || !telegramUsername) {
@@ -121,6 +121,7 @@ router.post('/', auth, async (req, res) => {
       requirements: requirements || '',
       image,
       telegramUsername: telegramUsername.replace('@', ''), // Remove @ if present
+      linkedin: linkedin || '', // Add linkedin field
       seller: req.user.userId
     });
 

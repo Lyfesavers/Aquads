@@ -51,6 +51,16 @@ const serviceSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  linkedin: {
+    type: String,
+    trim: true,
+    validate: {
+      validator: function(v) {
+        return !v || v.startsWith('https://linkedin.com/') || v.startsWith('https://www.linkedin.com/');
+      },
+      message: props => `${props.value} is not a valid LinkedIn URL!`
+    }
+  },
   rating: {
     type: Number,
     default: 0,

@@ -10,7 +10,8 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
     deliveryTime: '3',
     image: '',
     requirements: '',
-    telegramUsername: ''
+    telegramUsername: '',
+    linkedin: ''
   });
   const [previewUrl, setPreviewUrl] = useState('');
   const [error, setError] = useState('');
@@ -132,6 +133,21 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
                       />
                     </div>
                     <p className="text-sm text-gray-400 mt-1">This will be used for buyers to contact you</p>
+                  </div>
+
+                  {/* LinkedIn Profile */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      LinkedIn Profile URL (optional)
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://linkedin.com/in/your-profile"
+                      className="w-full px-4 py-2 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
+                      value={formData.linkedin}
+                      onChange={(e) => setFormData(prev => ({ ...prev, linkedin: e.target.value }))}
+                    />
+                    <p className="text-sm text-gray-400 mt-1">Add your LinkedIn profile to build trust with potential clients</p>
                   </div>
 
                   {/* Price and Delivery Time */}
