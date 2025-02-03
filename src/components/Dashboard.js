@@ -165,9 +165,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         return;
       }
 
-      const response = await fetch(`${API_URL}/api/bannerAds/${bannerId}`, {
+      const response = await fetch(`${API_URL}/bannerAds/${bannerId}`, {
         method: 'DELETE',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
         }
       });
@@ -179,6 +180,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
       // Update the local state to remove the deleted banner
       setBannerAds(prevBanners => prevBanners.filter(banner => banner._id !== bannerId));
+      alert('Banner deleted successfully');
     } catch (error) {
       console.error('Error deleting banner:', error);
       alert('Failed to delete banner ad. Please try again.');
