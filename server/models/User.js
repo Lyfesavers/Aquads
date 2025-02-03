@@ -22,6 +22,12 @@ const userSchema = new Schema({
       message: 'Please enter a valid email address'
     }
   },
+  userType: {
+    type: String,
+    required: true,
+    enum: ['freelancer', 'project'],
+    default: 'freelancer'
+  },
   password: {
     type: String,
     required: true

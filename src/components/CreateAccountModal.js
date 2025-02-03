@@ -8,7 +8,8 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
     password: '',
     confirmPassword: '',
     image: '',
-    referralCode: ''
+    referralCode: '',
+    userType: 'freelancer'
   });
   const [previewUrl, setPreviewUrl] = useState('');
   const [error, setError] = useState('');
@@ -103,6 +104,38 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
         </button>
         <h2 className="text-2xl font-bold mb-6 text-white">Create Account</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-gray-300 mb-2">Account Type</label>
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, userType: 'freelancer' }))}
+                className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                  formData.userType === 'freelancer'
+                    ? 'border-blue-500 bg-blue-500/20 text-white'
+                    : 'border-gray-600 text-gray-400 hover:border-blue-400'
+                }`}
+              >
+                Freelancer
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, userType: 'project' }))}
+                className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                  formData.userType === 'project'
+                    ? 'border-blue-500 bg-blue-500/20 text-white'
+                    : 'border-gray-600 text-gray-400 hover:border-blue-400'
+                }`}
+              >
+                Project
+              </button>
+            </div>
+            <p className="text-sm text-gray-400 mt-2">
+              {formData.userType === 'freelancer' 
+                ? 'Select this if you want to offer services'
+                : 'Select this if you want to hire freelancers'}
+            </p>
+          </div>
           <div>
             <label className="block text-gray-300 mb-2">Username</label>
             <input
