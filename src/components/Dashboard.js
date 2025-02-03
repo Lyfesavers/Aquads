@@ -158,6 +158,33 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   };
 
+  // Add handleDeleteBanner function
+  const handleDeleteBanner = async (bannerId) => {
+    try {
+      if (!window.confirm('Are you sure you want to delete this banner ad?')) {
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/bannerAds/${bannerId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete banner');
+      }
+
+      // Update the local state to remove the deleted banner
+      setBannerAds(prevBanners => prevBanners.filter(banner => banner._id !== bannerId));
+    } catch (error) {
+      console.error('Error deleting banner:', error);
+      alert('Failed to delete banner ad. Please try again.');
+    }
+  };
+
   // Separate pending bump ads for admin
   const pendingBumpAds = currentUser?.isAdmin 
     ? bumpRequests.map(request => {
@@ -287,6 +314,17 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                           className="max-h-32 rounded object-contain bg-gray-800"
                         />
                       </div>
+                      {/* Add delete button for expired banners */}
+                      {banner.status === 'active' && (
+                        <div className="mt-2">
+                          <button
+                            onClick={() => handleDeleteBanner(banner._id)}
+                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                          >
+                            Delete Banner
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
