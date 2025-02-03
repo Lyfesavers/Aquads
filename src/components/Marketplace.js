@@ -520,12 +520,6 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                 />
               </div>
               <div className="flex gap-2">
-                <select className="px-4 py-2 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                  <option value="">All Categories</option>
-                  {categories.map(cat => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                  ))}
-                </select>
                 <select
                   value={sortOption}
                   onChange={handleSortChange}
@@ -543,20 +537,30 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
           {/* Categories */}
           <div className="mb-12">
             <h2 className="text-2xl font-bold mb-6">Browse Categories</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {categories.map(category => (
-                <div
-                  key={category.id}
-                  className={`bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg cursor-pointer hover:bg-gray-700/50 transition-all duration-300 group ${
-                    selectedCategory === category.id ? 'ring-2 ring-indigo-500' : ''
-                  }`}
-                  onClick={() => setSelectedCategory(category.id)}
-                >
-                  <div className="text-4xl mb-3 transform group-hover:scale-110 transition-transform">{category.icon}</div>
-                  <h3 className="font-medium text-lg">{category.name}</h3>
-                  <p className="text-gray-400 text-sm mt-2">Find expert {category.name.toLowerCase()} services</p>
-                </div>
-              ))}
+            <div className="relative">
+              <select
+                value={selectedCategory || ''}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="w-full px-6 py-4 bg-gray-800/50 backdrop-blur-sm rounded-lg cursor-pointer
+                  border-2 border-transparent hover:border-indigo-500/50 focus:border-indigo-500
+                  focus:outline-none focus:ring-2 focus:ring-indigo-500/50
+                  transition-all duration-300
+                  text-lg font-medium
+                  appearance-none
+                  shadow-[0_0_15px_rgba(99,102,241,0.2)] hover:shadow-[0_0_20px_rgba(99,102,241,0.4)]"
+              >
+                <option value="">All Categories</option>
+                {categories.map(category => (
+                  <option key={category.id} value={category.id}>
+                    {category.icon} {category.name}
+                  </option>
+                ))}
+              </select>
+              <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none text-indigo-400">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
             </div>
           </div>
 
