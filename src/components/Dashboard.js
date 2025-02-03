@@ -161,6 +161,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   // Add handleDeleteBanner function
   const handleDeleteBanner = async (bannerId) => {
     try {
+      if (!currentUser?.isAdmin) {
+        alert('Only admins can delete banner ads');
+        return;
+      }
+
       if (!window.confirm('Are you sure you want to delete this banner ad?')) {
         return;
       }
@@ -169,7 +174,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
+          'Authorization': `Bearer ${currentUser.token}`,
+          'X-User-Role': currentUser.isAdmin ? 'admin' : 'user'
         }
       });
 
@@ -183,7 +189,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       alert('Banner deleted successfully');
     } catch (error) {
       console.error('Error deleting banner:', error);
-      alert('Failed to delete banner ad. Please try again.');
+      alert(error.message || 'Failed to delete banner ad. Please try again.');
     }
   };
 
@@ -317,7 +323,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                         />
                       </div>
                       {/* Add delete button for expired banners */}
-                      {banner.status === 'active' && (
+                      {currentUser?.isAdmin && banner.status === 'active' && (
                         <div className="mt-2">
                           <button
                             onClick={() => handleDeleteBanner(banner._id)}

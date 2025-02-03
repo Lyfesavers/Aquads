@@ -167,7 +167,8 @@ router.post('/reject', auth, async (req, res) => {
 router.delete('/:id', auth, async (req, res) => {
   try {
     // Check if user is admin
-    if (!req.user.isAdmin) {
+    if (!req.user || !req.user.isAdmin) {
+      console.log('Non-admin user attempted to delete banner:', req.user);
       return res.status(403).json({ error: 'Only admins can delete banner ads' });
     }
 
@@ -177,7 +178,7 @@ router.delete('/:id', auth, async (req, res) => {
       return res.status(404).json({ error: 'Banner not found' });
     }
 
-    console.log('Banner deleted successfully:', banner);
+    console.log('Banner deleted successfully by admin:', req.user.username);
     res.json({ message: 'Banner deleted successfully', banner });
   } catch (error) {
     console.error('Error deleting banner:', error);
