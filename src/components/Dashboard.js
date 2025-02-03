@@ -161,16 +161,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   // Add handleDeleteBanner function
   const handleDeleteBanner = async (bannerId) => {
     try {
-      if (!currentUser?.isAdmin) {
-        alert('Only admins can delete banner ads');
-        return;
-      }
-
       if (!window.confirm('Are you sure you want to delete this banner ad?')) {
         return;
       }
 
-      const response = await fetch(`${API_URL}/bannerAds/${bannerId}`, {
+      const response = await fetch(`${API_URL}/api/bannerAds/${bannerId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -178,9 +173,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         }
       });
 
-      const responseData = await response.json();
-      
       if (!response.ok) {
+        const responseData = await response.json();
         throw new Error(responseData.error || 'Failed to delete banner');
       }
 
