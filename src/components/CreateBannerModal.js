@@ -136,10 +136,11 @@ const CreateBannerModal = ({ show, onHide, onSubmit }) => {
                 name="gif"
                 value={formData.gif}
                 onChange={handleInputChange}
-                placeholder="Enter GIF URL"
+                placeholder="Enter GIF URL - H 128px x W 1920px"
                 required
                 className="bg-gray-800/50 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
+
             </Form.Group>
 
             {previewUrl && (
