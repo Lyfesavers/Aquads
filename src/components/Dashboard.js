@@ -165,7 +165,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         return;
       }
 
-      const response = await fetch(`${API_URL}/bannerAds/${bannerId}`, {
+      const response = await fetch(`${API_URL}/api/bannerAds/${bannerId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
