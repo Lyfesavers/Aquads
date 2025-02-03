@@ -174,19 +174,28 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`,
-          'X-User-Role': currentUser.isAdmin ? 'admin' : 'user'
+          'Authorization': `Bearer ${currentUser.token}`
         }
       });
 
+      const responseData = await response.json();
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete banner');
+        throw new Error(responseData.error || 'Failed to delete banner');
       }
 
       // Update the local state to remove the deleted banner
       setBannerAds(prevBanners => prevBanners.filter(banner => banner._id !== bannerId));
       alert('Banner deleted successfully');
+
+      // Refresh the banner list
+      const bannersResponse = await fetch(`${API_URL}/bannerAds`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      const updatedBanners = await bannersResponse.json();
+      setBannerAds(updatedBanners);
     } catch (error) {
       console.error('Error deleting banner:', error);
       alert(error.message || 'Failed to delete banner ad. Please try again.');
