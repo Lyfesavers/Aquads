@@ -163,4 +163,26 @@ router.post('/reject', auth, async (req, res) => {
   }
 });
 
+// Delete banner ad (admin only)
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    // Check if user is admin
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Only admins can delete banner ads' });
+    }
+
+    const banner = await BannerAd.findByIdAndDelete(req.params.id);
+    
+    if (!banner) {
+      return res.status(404).json({ error: 'Banner not found' });
+    }
+
+    console.log('Banner deleted successfully:', banner);
+    res.json({ message: 'Banner deleted successfully', banner });
+  } catch (error) {
+    console.error('Error deleting banner:', error);
+    res.status(500).json({ error: 'Failed to delete banner' });
+  }
+});
+
 module.exports = router; 
