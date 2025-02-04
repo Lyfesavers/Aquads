@@ -711,7 +711,20 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                           </div>
                         </div>
                       </div>
-                      <div className="mt-4 flex justify-end">
+                      <div className="mt-4 flex justify-end gap-2">
+                        <button
+                          onClick={() => {
+                            const url = `${window.location.origin}/services/${service._id}`;
+                            navigator.clipboard.writeText(url);
+                            alert('Service link copied to clipboard!');
+                          }}
+                          className="inline-flex items-center px-4 py-2 bg-indigo-500/80 hover:bg-indigo-600/80 rounded-lg transition-colors text-white"
+                        >
+                          <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"/>
+                          </svg>
+                          Share
+                        </button>
                         <a
                           href={`https://t.me/${service.telegramUsername}`}
                           target="_blank"
