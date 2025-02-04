@@ -129,6 +129,30 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     loadServices();
   }, []);
 
+  // Add effect to handle shared service links
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sharedServiceId = params.get('service');
+    
+    if (sharedServiceId && services.length > 0) {
+      const service = services.find(s => s._id === sharedServiceId);
+      if (service) {
+        // Expand the description of the shared service
+        setExpandedDescriptions(prev => new Set([...prev, sharedServiceId]));
+        
+        // Scroll to the service card
+        const element = document.getElementById(`service-${sharedServiceId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.classList.add('ring-2', 'ring-indigo-500', 'ring-opacity-50');
+          setTimeout(() => {
+            element.classList.remove('ring-2', 'ring-indigo-500', 'ring-opacity-50');
+          }, 3000);
+        }
+      }
+    }
+  }, [services]);
+
   const loadServices = async () => {
     try {
       const data = await fetchServices();
@@ -619,7 +643,11 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredServices.length > 0 ? (
                 filteredServices.map(service => (
-                  <div key={service._id} className="bg-gray-800/50 backdrop-blur-sm rounded-lg overflow-hidden group hover:shadow-lg hover:shadow-indigo-500/20 transition-all duration-300">
+                  <div 
+                    key={service._id} 
+                    id={`service-${service._id}`}
+                    className="bg-gray-800/50 backdrop-blur-sm rounded-lg overflow-hidden group hover:shadow-lg hover:shadow-indigo-500/20 transition-all duration-300"
+                  >
                     <div className="aspect-w-16 aspect-h-9 relative">
                       <ServiceImage 
                         src={service.image}
@@ -714,9 +742,9 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                       <div className="mt-4 flex justify-end gap-2">
                         <button
                           onClick={() => {
-                            const url = `${window.location.origin}/services/${service._id}`;
+                            const url = `${window.location.origin}?service=${service._id}#${service.title.replace(/\s+/g, '-')}`;
                             navigator.clipboard.writeText(url);
-                            alert('Service link copied to clipboard!');
+                            alert('Service link copied to clipboard! Share this link with others to help them find your service in the marketplace.');
                           }}
                           className="inline-flex items-center px-4 py-2 bg-indigo-500/80 hover:bg-indigo-600/80 rounded-lg transition-colors text-white"
                         >
