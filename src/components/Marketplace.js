@@ -742,7 +742,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                       <div className="mt-4 flex justify-end gap-2">
                         <button
                           onClick={() => {
-                            const url = `${window.location.origin}?service=${service._id}#${service.title.replace(/\s+/g, '-')}`;
+                            const url = `${window.location.origin}/marketplace?service=${service._id}#${service.title.replace(/\s+/g, '-')}`;
                             navigator.clipboard.writeText(url);
                             alert('Service link copied to clipboard! Share this link with others to help them find your service in the marketplace.');
                           }}
