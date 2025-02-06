@@ -11,6 +11,7 @@ import { Button } from 'react-bootstrap';
 import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
 import EditServiceModal from './EditServiceModal';
+import { FaTelegram, FaTwitter, FaDiscord, FaEnvelope, FaLinkedin } from 'react-icons/fa';
 
 // Helper function to check if URL is valid
 const isValidUrl = (string) => {
@@ -820,31 +821,73 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                           </div>
                         </div>
                       </div>
-                      <div className="mt-4 flex justify-end gap-2">
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {service.telegramUsername && (
+                          <a
+                            href={`https://t.me/${service.telegramUsername}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center px-3 py-1.5 text-sm bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-full transition-all duration-300"
+                          >
+                            <FaTelegram className="mr-1" />
+                            <span>Telegram</span>
+                          </a>
+                        )}
+                        {service.twitter && (
+                          <a
+                            href={service.twitter}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center px-3 py-1.5 text-sm bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 rounded-full transition-all duration-300"
+                          >
+                            <FaTwitter className="mr-1" />
+                            <span>Twitter</span>
+                          </a>
+                        )}
+                        {service.discord && (
+                          <a
+                            href={service.discord}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center px-3 py-1.5 text-sm bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 rounded-full transition-all duration-300"
+                          >
+                            <FaDiscord className="mr-1" />
+                            <span>Discord</span>
+                          </a>
+                        )}
+                        {service.email && (
+                          <a
+                            href={`mailto:${service.email}`}
+                            className="inline-flex items-center px-3 py-1.5 text-sm bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-full transition-all duration-300"
+                          >
+                            <FaEnvelope className="mr-1" />
+                            <span>Email</span>
+                          </a>
+                        )}
+                        {service.linkedin && (
+                          <a
+                            href={service.linkedin}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center px-3 py-1.5 text-sm bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded-full transition-all duration-300"
+                          >
+                            <FaLinkedin className="mr-1" />
+                            <span>LinkedIn</span>
+                          </a>
+                        )}
                         <button
                           onClick={() => {
                             const url = `${window.location.origin}/marketplace?service=${service._id}#${service.title.replace(/\s+/g, '-')}`;
                             navigator.clipboard.writeText(url);
                             alert('Service link copied to clipboard! Share this link with others to help them find your service in the marketplace.');
                           }}
-                          className="inline-flex items-center px-4 py-2 bg-indigo-500/80 hover:bg-indigo-600/80 rounded-lg transition-colors text-white"
+                          className="inline-flex items-center px-3 py-1.5 text-sm bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 rounded-full transition-all duration-300"
                         >
-                          <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                          <svg className="w-4 h-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"/>
                           </svg>
                           Share
                         </button>
-                        <a
-                          href={`https://t.me/${service.telegramUsername}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center px-4 py-2 bg-blue-500/80 hover:bg-blue-600/80 rounded-lg transition-colors text-white"
-                        >
-                          <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18 1.897-.962 6.502-1.359 8.627-.168.9-.5 1.201-.82 1.23-.697.064-1.226-.461-1.901-.903-1.056-.692-1.653-1.123-2.678-1.799-1.185-.781-.417-1.21.258-1.911.177-.184 3.247-2.977 3.307-3.23.007-.032.015-.056-.056-.212s-.041-.041-.248-.024c-.106.024-1.793 1.139-5.062 3.345-.479.329-.913.49-1.302.481-.428-.009-1.252-.242-1.865-.442-.751-.244-1.349-.374-1.297-.789.027-.216.324-.437.892-.663 3.498-1.524 5.831-2.529 6.998-3.015 3.333-1.386 4.025-1.627 4.477-1.635.099-.002.321.023.465.141.119.098.152.228.166.331.016.122.033.391.019.603z"/>
-                          </svg>
-                          Contact on Telegram
-                        </a>
                       </div>
                     </div>
                   </div>
