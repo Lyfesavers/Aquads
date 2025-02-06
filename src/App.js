@@ -222,6 +222,7 @@ function App() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [newUsername, setNewUsername] = useState('');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Add this function to update ads with persistence
   const updateAds = (newAds) => {
@@ -675,7 +676,25 @@ function App() {
                     <div className="flex items-center">
                       <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 glow-text">AQUADS</span>
                     </div>
-                    <div className="flex items-center space-x-4">
+                    
+                    {/* Mobile menu button */}
+                    <div className="md:hidden">
+                      <button
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        className="text-gray-300 hover:text-white p-2"
+                      >
+                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          {isMobileMenuOpen ? (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          ) : (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                          )}
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* Desktop menu */}
+                    <div className="hidden md:flex items-center space-x-4">
                       <Link
                         to="/marketplace"
                         className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
@@ -720,6 +739,80 @@ function App() {
                           </button>
                           <button
                             onClick={() => setShowCreateAccountModal(true)}
+                            className="bg-green-500/80 hover:bg-green-600/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
+                          >
+                            Create Account
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Mobile menu */}
+                  <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden py-2`}>
+                    <div className="flex flex-col space-y-2">
+                      <Link
+                        to="/marketplace"
+                        className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+                      >
+                        Aquaduct
+                      </Link>
+                      {currentUser ? (
+                        <>
+                          <span className="text-blue-300 text-center">Welcome, {currentUser.username}!</span>
+                          <button
+                            onClick={() => {
+                              setShowDashboard(true);
+                              setIsMobileMenuOpen(false);
+                            }}
+                            className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                          >
+                            Dashboard
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowProfileModal(true);
+                              setIsMobileMenuOpen(false);
+                            }}
+                            className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
+                          >
+                            Edit Profile
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowCreateModal(true);
+                              setIsMobileMenuOpen(false);
+                            }}
+                            className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
+                          >
+                            Create Ad
+                          </button>
+                          <button
+                            onClick={() => {
+                              handleLogout();
+                              setIsMobileMenuOpen(false);
+                            }}
+                            className="bg-red-500/80 hover:bg-red-600/80 px-4 py-2 rounded shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm"
+                          >
+                            Logout
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => {
+                              setShowLoginModal(true);
+                              setIsMobileMenuOpen(false);
+                            }}
+                            className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                          >
+                            Login
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowCreateAccountModal(true);
+                              setIsMobileMenuOpen(false);
+                            }}
                             className="bg-green-500/80 hover:bg-green-600/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
                           >
                             Create Account
