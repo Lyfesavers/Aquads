@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import Modal from './Modal';
 
 const BUMP_OPTIONS = [
-  { duration: '24 hours', price: 0.5, durationMs: 24 * 60 * 60 * 1000 },
-  { duration: '3 days', price: 1, durationMs: 3 * 24 * 60 * 60 * 1000 },
-  { duration: '7 days', price: 2, durationMs: 7 * 24 * 60 * 60 * 1000 }
+  { duration: '24 hours', solPrice: 0.5, ethPrice: 0.040, btcPrice: 0.0010, suiPrice: 30, durationMs: 24 * 60 * 60 * 1000 },
+  { duration: '3 days', solPrice: 1, ethPrice: 0.090, btcPrice: 0.030, suiPrice: 75, durationMs: 3 * 24 * 60 * 60 * 1000 },
+  { duration: '7 days', solPrice: 2, ethPrice: 0.22, btcPrice: 0.0061, suiPrice: 178, durationMs: 7 * 24 * 60 * 60 * 1000 }
 ];
 
 const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
@@ -22,6 +22,20 @@ const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
     console.error('Ad prop is required for BumpStore');
     return null;
   }
+
+  // Helper function to get price based on selected token
+  const getPrice = (option) => {
+    switch(selectedWallet) {
+      case 'ETH':
+        return option.ethPrice;
+      case 'BTC':
+        return option.btcPrice;
+      case 'SUI':
+        return option.suiPrice;
+      default:
+        return option.solPrice;
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -84,7 +98,7 @@ const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
                   }`}
                 >
                   <div className="text-white font-semibold text-sm sm:text-base">{option.duration}</div>
-                  <div className="text-blue-400 text-sm sm:text-base">{option.price} SOL</div>
+                  <div className="text-blue-400 text-sm sm:text-base">{getPrice(option)} {selectedWallet}</div>
                 </button>
               ))}
             </div>
