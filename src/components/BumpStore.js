@@ -71,8 +71,8 @@ const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-gray-800 rounded-lg p-4 sm:p-6 w-full max-w-lg mx-auto my-8">
-        <div className="flex justify-between items-center mb-6">
+      <div className="bg-gray-800 rounded-lg p-4 sm:p-6 w-full max-w-lg mx-auto my-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-6 sticky top-0 bg-gray-800 pt-2 z-10">
           <h2 className="text-2xl font-bold text-white">Bump Your Ad</h2>
           <button
             onClick={onClose}
@@ -83,7 +83,7 @@ const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
           </button>
         </div>
 
-        <div className="mb-6 space-y-6">
+        <div className="space-y-6">
           <div>
             <h3 className="text-lg font-semibold text-white mb-4">Select Bump Duration:</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -140,7 +140,7 @@ const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
           <div>
             <h3 className="text-lg font-semibold text-white mb-2">Payment Instructions:</h3>
             <ol className="list-decimal list-inside text-gray-300 space-y-2 text-sm sm:text-base">
-              <li>Send {selectedOption.price} SOL or Equivalent to the following wallet address:</li>
+              <li>Send Payment to wallet address fo your choice:</li>
               <li>After sending the payment, copy the transaction signature</li>
               <li>Paste the transaction signature below and submit</li>
               <li>Wait for admin approval of your bump request</li>
