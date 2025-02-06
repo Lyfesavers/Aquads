@@ -190,6 +190,13 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
   const handleCreateService = async (serviceData) => {
     try {
+      // Check if user is a freelancer
+      if (!currentUser || currentUser.userType !== 'freelancer') {
+        alert('Only freelancers can create service listings in the marketplace.');
+        setShowCreateModal(false);
+        return;
+      }
+
       // Check if user already has a service in this category
       const userServicesInCategory = services.filter(service => 
         service.seller?.username === currentUser.username && 

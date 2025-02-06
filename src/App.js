@@ -368,6 +368,12 @@ function App() {
         return;
       }
 
+      // Check if user is a project account
+      if (currentUser.userType !== 'project' && !currentUser.isAdmin) {
+        showNotification('Only project accounts can create bubble ads!', 'error');
+        return;
+      }
+
       const existingAd = ads.find(ad => ad.owner === currentUser.username);
       if (existingAd && !currentUser.isAdmin) {
         showNotification('You can only create one ad at a time!', 'error');
