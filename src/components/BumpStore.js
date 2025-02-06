@@ -14,7 +14,7 @@ const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
     SOL: "J8ewxZwntodH8sT8LAXN5j6sAsDhtCh8sQA6GwRuLTSv",
     ETH: "0x98BC1BEC892d9f74B606D478E6b45089D2faAB05",
     BTC: "bc1qdh9ar2elv6cvhfqccvlf8w6rwy0r592f9a6dyt",
-    BASE: "0x98BC1BEC892d9f74B606D478E6b45089D2faAB05"
+    SUI: "0xe99b659efbb9a713c494eff34cff9e614fdd8f7ca00530b62c747d5c088aa877"
   };
   const [selectedWallet, setSelectedWallet] = useState('SOL');
 
