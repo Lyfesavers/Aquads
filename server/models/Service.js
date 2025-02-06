@@ -48,8 +48,31 @@ const serviceSchema = new mongoose.Schema({
   },
   telegramUsername: {
     type: String,
-    required: true,
     trim: true
+  },
+  twitter: {
+    type: String,
+    trim: true,
+    validate: {
+      validator: function(v) {
+        return !v || v.startsWith('https://twitter.com/') || v.startsWith('https://x.com/');
+      },
+      message: props => `${props.value} is not a valid Twitter URL!`
+    }
+  },
+  discord: {
+    type: String,
+    trim: true
+  },
+  email: {
+    type: String,
+    trim: true,
+    validate: {
+      validator: function(v) {
+        return !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+      },
+      message: props => `${props.value} is not a valid email address!`
+    }
   },
   linkedin: {
     type: String,
