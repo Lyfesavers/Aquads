@@ -112,6 +112,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [serviceToEdit, setServiceToEdit] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const categories = [
     { id: 'smart-contract', name: 'Smart Contract Development', icon: '⚡' },
@@ -482,7 +483,25 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                 AQUADS
               </Link>
             </div>
-            <div className="flex items-center space-x-4">
+
+            {/* Mobile menu button */}
+            <div className="md:hidden">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="text-gray-300 hover:text-white p-2"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  {isMobileMenuOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
+              </button>
+            </div>
+
+            {/* Desktop menu */}
+            <div className="hidden md:flex items-center space-x-4">
               <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500">
                 AQUADUCT
               </span>
@@ -518,6 +537,68 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                   </button>
                   <button
                     onClick={handleCreateAccountClick}
+                    className="bg-green-500/80 hover:bg-green-600/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
+                  >
+                    Create Account
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Mobile menu */}
+          <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden py-2`}>
+            <div className="flex flex-col space-y-2">
+              <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500 text-center">
+                AQUADUCT
+              </span>
+              {currentUser ? (
+                <>
+                  <span className="text-blue-300 text-center">Welcome, {currentUser.username}!</span>
+                  <button
+                    onClick={() => {
+                      setShowBannerModal(true);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                  >
+                    Create Banner Ad
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowProfileModal(true);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
+                  >
+                    Edit Profile
+                  </button>
+                  <button
+                    onClick={() => {
+                      onLogout();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="bg-red-500/80 hover:bg-red-600/80 px-4 py-2 rounded shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => {
+                      handleLoginClick();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                  >
+                    Login
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleCreateAccountClick();
+                      setIsMobileMenuOpen(false);
+                    }}
                     className="bg-green-500/80 hover:bg-green-600/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
                   >
                     Create Account
