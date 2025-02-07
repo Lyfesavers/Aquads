@@ -16,6 +16,12 @@ const DEX_OPTIONS = [
     description: 'Native PawChain DEX'
   },
   {
+    name: 'TurboSwap',
+    icon: '🌪️',
+    url: 'https://bridge.turboctobsc.com/',
+    description: 'TurboSwap DEX'
+  },
+  {
     name: 'PancakeSwap',
     icon: '🥞',
     url: 'https://pancakeswap.finance/swap'
