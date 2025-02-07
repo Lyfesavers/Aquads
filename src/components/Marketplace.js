@@ -190,9 +190,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
   const handleCreateService = async (serviceData) => {
     try {
-      // Check if user is a freelancer
-      if (!currentUser || currentUser.userType !== 'freelancer') {
-        alert('Only freelancers can create service listings in the marketplace.');
+      if (!currentUser) {
+        alert('Please log in to create a service.');
         setShowCreateModal(false);
         return;
       }
