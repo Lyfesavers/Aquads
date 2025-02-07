@@ -667,7 +667,7 @@ function App() {
               <div className="tech-dots"></div>
             </div>
 
-            <TokenBanner />
+            {/* Remove duplicate TokenBanner */}
             
             {/* Main content wrapper */}
             <div className="relative z-10">
