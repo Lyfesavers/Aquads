@@ -925,6 +925,16 @@ function App() {
 
                 {/* Token list section - add z-index and proper background */}
                 <div className="relative z-10 bg-transparent">
+                  {/* Marketplace Banner */}
+                  <div className="w-full overflow-hidden">
+                    <Link to="/marketplace" className="block">
+                      <img
+                        src="https://i.imgur.com/3kCQx6G.png"
+                        alt="Visit Marketplace"
+                        className="w-full h-[200px] object-cover"
+                      />
+                    </Link>
+                  </div>
                   <TokenList 
                     currentUser={currentUser}
                     showNotification={showNotification}
