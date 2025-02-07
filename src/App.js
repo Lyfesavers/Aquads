@@ -659,14 +659,24 @@ function App() {
           />
         } />
         <Route path="/" element={
-          <div className="bg-gradient-to-br from-gray-900 to-black text-white overflow-y-auto h-screen">
-            {/* Background stays fixed */}
-            <div className="fixed inset-0 z-0">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-black"></div>
-              <div className="tech-lines"></div>
-              <div className="tech-dots"></div>
+          <div className="min-h-screen bg-gray-900 text-white relative overflow-hidden">
+            <div className="stars-container">
+              <div className="stars"></div>
+            </div>
+            
+            {/* Marketplace Banner */}
+            <div className="w-full">
+              <Link to="/marketplace" className="block">
+                <img 
+                  src="https://i.imgur.com/3kCQx6G.png" 
+                  alt="Access our Freelancer Hub - Find Expert Talent for your Project" 
+                  className="w-full h-[200px] object-cover"
+                />
+              </Link>
             </div>
 
+            <TokenBanner />
+            
             {/* Main content wrapper */}
             <div className="relative z-10">
               {/* Navigation and banner stay fixed */}
