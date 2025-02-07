@@ -929,7 +929,7 @@ function App() {
                   <div className="w-full overflow-hidden">
                     <Link to="/marketplace" className="block">
                       <img
-                        src="https://www.canva.com/design/DAGeYW2Yy8o/3UTMgyxZ8vhoYpPscOBjhA/view?utm_content=DAGeYW2Yy8o&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h7169ecc58f"
+                        src="/ACCESS OUR FREELANCER HUB.png"
                         alt="Visit Marketplace"
                         className="w-full h-[200px] object-cover"
                       />
