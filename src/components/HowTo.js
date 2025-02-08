@@ -1,5 +1,6 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
+import { Link } from 'react-router-dom';
 
 const HowTo = () => {
   // Replace this with your YouTube playlist ID
@@ -11,6 +12,27 @@ const HowTo = () => {
         <title>How To Guide - Aquads</title>
         <meta name="description" content="Learn how to use Aquads platform with our video tutorials" />
       </Helmet>
+
+      {/* Header */}
+      <div className="bg-gray-800/50 backdrop-blur-sm border-b border-gray-700/50">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <Link to="/" className="text-2xl font-bold text-blue-400">
+                Aquads
+              </Link>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Link
+                to="/marketplace"
+                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
+              >
+                Aquaduct
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
