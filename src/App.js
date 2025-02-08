@@ -30,6 +30,7 @@ import ProfileModal from './components/ProfileModal';
 import WelcomeModal from './components/WelcomeModal';
 import Footer from './components/Footer';
 import Whitepaper from './components/Whitepaper';
+import HowTo from './components/HowTo';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 
 window.Buffer = Buffer;
@@ -703,6 +704,12 @@ function App() {
                       >
                         Aquaduct
                       </Link>
+                      <Link
+                        to="/how-to"
+                        className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
+                      >
+                        How To
+                      </Link>
                       {currentUser ? (
                         <>
                           <span className="text-blue-300">Welcome, {currentUser.username}!</span>
@@ -758,6 +765,12 @@ function App() {
                         className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
                       >
                         Aquaduct
+                      </Link>
+                      <Link
+                        to="/how-to"
+                        className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+                      >
+                        How To
                       </Link>
                       {currentUser ? (
                         <>
@@ -1059,6 +1072,7 @@ function App() {
           </div>
         } />
         <Route path="/whitepaper" element={<Whitepaper />} />
+        <Route path="/how-to" element={<HowTo />} />
       </Routes>
     </Router>
   );
