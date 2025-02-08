@@ -116,14 +116,16 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const categories = [
-    { id: 'smart-contract', name: 'Smart Contract Development', icon: '⚡' },
-    { id: 'audit', name: 'Security Auditing', icon: '🔒' },
-    { id: 'marketing', name: 'Crypto Marketing', icon: '📢' },
-    { id: 'community', name: 'Community Management', icon: '👥' },
-    { id: 'web3', name: 'Web3 Development', icon: '🌐' },
-    { id: 'tokenomics', name: 'Tokenomics Design', icon: '📊' },
-    { id: 'writing', name: 'Technical Writing', icon: '📝' },
-    { id: 'consulting', name: 'Blockchain Consulting', icon: '💡' }
+    { id: 'smart-contract', name: 'Smart Contract', icon: '📝' },
+    { id: 'audit', name: 'Audit', icon: '🔍' },
+    { id: 'marketing', name: 'Marketing', icon: '📈' },
+    { id: 'community', name: 'Community', icon: '👥' },
+    { id: 'web3', name: 'Web3', icon: '🌐' },
+    { id: 'tokenomics', name: 'Tokenomics', icon: '📊' },
+    { id: 'writing', name: 'Writing', icon: '✍️' },
+    { id: 'consulting', name: 'Consulting', icon: '💡' },
+    { id: 'graphic-designer', name: 'Graphic Designer', icon: '🎨' },
+    { id: 'other', name: 'Other', icon: '🔧' }
   ];
 
   // Load services when component mounts

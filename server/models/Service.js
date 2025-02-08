@@ -21,7 +21,9 @@ const serviceSchema = new mongoose.Schema({
       'web3',
       'tokenomics',
       'writing',
-      'consulting'
+      'consulting',
+      'graphic-designer',
+      'other'
     ]
   },
   price: {
