@@ -31,6 +31,7 @@ import WelcomeModal from './components/WelcomeModal';
 import Footer from './components/Footer';
 import Whitepaper from './components/Whitepaper';
 import HowTo from './components/HowTo';
+import Affiliate from './components/Affiliate';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 
 window.Buffer = Buffer;
@@ -1073,6 +1074,7 @@ function App() {
         } />
         <Route path="/whitepaper" element={<Whitepaper />} />
         <Route path="/how-to" element={<HowTo />} />
+        <Route path="/affiliate" element={<Affiliate />} />
       </Routes>
     </Router>
   );
