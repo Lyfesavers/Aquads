@@ -43,14 +43,16 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   }, [currentUser]);
 
   useEffect(() => {
-    fetchAffiliateInfo();
-  }, []);
+    if (currentUser?.token) {
+      fetchAffiliateInfo();
+    }
+  }, [currentUser]);
 
   const fetchAffiliateInfo = async () => {
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/affiliates`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${currentUser?.token}`
         }
       });
       if (response.ok) {
