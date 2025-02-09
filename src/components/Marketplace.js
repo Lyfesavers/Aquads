@@ -841,7 +841,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                         </span>
                         <div className="text-right">
                           <div className="text-gray-300 text-sm">
-                            <span className="font-semibold">Price:</span>{' '}
+                            <span className="font-semibold">Starting Price:</span>{' '}
                             {service.price} USDC
                           </div>
                         </div>
