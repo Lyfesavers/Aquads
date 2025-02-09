@@ -335,4 +335,21 @@ router.post('/verify-referral', auth, async (req, res) => {
   }
 });
 
+// Add new endpoint for affiliate info
+router.get('/affiliates', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId)
+      .select('affiliates affiliateCount')
+      .populate('affiliates', 'username createdAt');
+
+    res.json({
+      affiliateCount: user.affiliateCount,
+      affiliates: user.affiliates
+    });
+  } catch (error) {
+    console.error('Error fetching affiliate info:', error);
+    res.status(500).json({ error: 'Failed to fetch affiliate information' });
+  }
+});
+
 module.exports = router; 

@@ -50,6 +50,14 @@ const userSchema = new Schema({
     unique: true,
     sparse: true
   },
+  affiliates: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  affiliateCount: {
+    type: Number,
+    default: 0
+  },
   resetToken: {
     type: String,
     default: null
@@ -88,5 +96,19 @@ userSchema.pre('save', async function(next) {
     next(error);
   }
 });
+
+// Update affiliate count when new affiliate is added
+userSchema.methods.updateAffiliateCount = async function() {
+  this.affiliateCount = this.affiliates.length;
+  await this.save();
+};
+
+// Add affiliate to user's list
+userSchema.methods.addAffiliate = async function(affiliateId) {
+  if (!this.affiliates.includes(affiliateId)) {
+    this.affiliates.push(affiliateId);
+    await this.updateAffiliateCount();
+  }
+};
 
 module.exports = mongoose.model('User', userSchema); 

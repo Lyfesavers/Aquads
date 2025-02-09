@@ -7,6 +7,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [selectedBumpRequest, setSelectedBumpRequest] = useState(null);
+  const [selectedAd, setSelectedAd] = useState(null);
+  const [showBumpStore, setShowBumpStore] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [affiliateInfo, setAffiliateInfo] = useState({ affiliateCount: 0, affiliates: [] });
+  const [isLoadingAffiliates, setIsLoadingAffiliates] = useState(true);
 
   // Fetch bump requests and banner ads when dashboard opens
   useEffect(() => {
@@ -36,6 +41,28 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         });
     }
   }, [currentUser]);
+
+  useEffect(() => {
+    fetchAffiliateInfo();
+  }, []);
+
+  const fetchAffiliateInfo = async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/affiliates`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setAffiliateInfo(data);
+      }
+    } catch (error) {
+      console.error('Error fetching affiliate info:', error);
+    } finally {
+      setIsLoadingAffiliates(false);
+    }
+  };
 
   const handleReject = (ad) => {
     setSelectedBumpRequest(ad);
@@ -206,18 +233,34 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const userAds = currentUser?.isAdmin ? ads : ads.filter(ad => ad.owner === currentUser?.username);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-gray-800 rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-white">
-            {currentUser?.isAdmin ? 'Admin Dashboard' : 'Your Ads'}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white"
-          >
-            ×
+    <div className="fixed inset-0 bg-gray-900 bg-opacity-95 overflow-y-auto">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-3xl font-bold text-white">Dashboard</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-white">
+            ✕
           </button>
+        </div>
+
+        {/* Affiliate Information Section */}
+        <div className="bg-gray-800 rounded-lg p-6 mb-8">
+          <h3 className="text-xl font-semibold text-blue-400 mb-4">Affiliate Program</h3>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-300">Total Affiliates: 
+                <span className="text-blue-400 font-bold ml-2">
+                  {isLoadingAffiliates ? '...' : affiliateInfo.affiliateCount}
+                </span>
+              </p>
+              <p className="text-sm text-gray-400 mt-2">
+                Share your referral code to earn more affiliates!
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-gray-300">Your Referral Code:</p>
+              <p className="text-blue-400 font-mono font-bold">{currentUser?.referralCode}</p>
+            </div>
+          </div>
         </div>
 
         {/* Pending Bump Approvals (Admin Only) */}
