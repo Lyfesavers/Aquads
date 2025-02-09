@@ -258,7 +258,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
             </div>
             <div className="text-right">
               <p className="text-gray-300">Your Referral Code:</p>
-              <p className="text-blue-400 font-mono font-bold">{currentUser?.referralCode}</p>
+              <p className="text-blue-400 font-mono font-bold">{currentUser?.username}</p>
             </div>
           </div>
         </div>
