@@ -233,7 +233,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const userAds = currentUser?.isAdmin ? ads : ads.filter(ad => ad.owner === currentUser?.username);
 
   return (
-    <div className="fixed inset-0 bg-gray-900 bg-opacity-95 overflow-y-auto">
+    <div className="fixed inset-0 bg-gray-900 bg-opacity-95 overflow-y-auto z-50">
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-3xl font-bold text-white">Dashboard</h2>
