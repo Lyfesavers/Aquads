@@ -338,13 +338,14 @@ router.post('/verify-referral', auth, async (req, res) => {
 // Add new endpoint for affiliate info
 router.get('/affiliates', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId)
-      .select('affiliates affiliateCount')
-      .populate('affiliates', 'username createdAt');
+    // Find all users who have the current user as their referredBy
+    const affiliates = await User.find({ referredBy: req.user.userId })
+      .select('username createdAt')
+      .sort({ createdAt: -1 });
 
     res.json({
-      affiliateCount: user.affiliateCount,
-      affiliates: user.affiliates
+      affiliateCount: affiliates.length,
+      affiliates: affiliates
     });
   } catch (error) {
     console.error('Error fetching affiliate info:', error);
