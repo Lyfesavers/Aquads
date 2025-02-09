@@ -15,7 +15,7 @@ const Affiliate = () => {
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <Link to="/" className="text-2xl font-bold text-blue-400">
+              <Link to="/" className="text-3xl font-extrabold bg-gradient-to-r from-blue-500 to-indigo-600 bg-clip-text text-transparent hover:from-blue-400 hover:to-indigo-500 transition-all duration-300">
                 Aquads
               </Link>
             </div>
@@ -44,7 +44,13 @@ const Affiliate = () => {
 
               <div className="bg-gray-700/50 rounded-lg p-6 mb-6">
                 <p className="text-sm text-gray-300">
-                  All affiliates are independent contractors—not employees—you are responsible for handling your own tax filings in your own local jurisdiction. All money earned in the affiliate program and paid to you by Aquads is considered gross income to the receiving independent contractor. Aquads does not withhold any taxes from your commission payments, and it is solely your responsibility to comply with any tax reporting or withholding requirements under the laws of your country.
+                  All affiliates are independent contractors—not employees—you are responsible for handling your own tax filings in your own local jurisdiction. All money earned in the affiliate program and paid to you by Aquads is considered gross income to the receiving independent contractor. Aquads does not withhold any taxes from your commission payments, and it is solely your responsibility to comply with any tax reporting or withholding requirements under the laws of your country. Aquads will provide you with an annual statement of your earnings, but it is your responsibility to report these earnings to your local tax authorities in accordance with your jurisdiction's requirements. Aquads reserves the right to update the commission structure or other aspects of the affiliate program with advance notice to all affiliates.
+                </p>
+              </div>
+
+              <div className="bg-gray-700/50 rounded-lg p-6">
+                <p className="text-sm text-gray-300">
+                  <strong className="text-blue-400">Liability Disclaimer:</strong> Aquads will not be liable for any claims resulting from the affiliate's actions. You agree to indemnify Aquads against any third-party claims arising from the affiliation.
                 </p>
               </div>
             </div>
@@ -70,22 +76,28 @@ const Affiliate = () => {
                 </div>
 
                 <div>
-                  <h3 className="text-xl font-semibold mb-3 text-indigo-400">Commission Structure:</h3>
+                  <h3 className="text-xl font-semibold mb-3 text-indigo-400">Earn Commission Based on Your Success:</h3>
                   <div className="bg-gray-700/50 rounded-lg p-6">
                     <ul className="space-y-4">
                       <li className="flex items-center text-gray-300">
                         <span className="text-green-400 font-bold mr-2">Tier 1:</span>
-                        $2,500, you earn a 10% commission
+                        $2,500, you earn a 10% commission.
                       </li>
                       <li className="flex items-center text-gray-300">
                         <span className="text-green-400 font-bold mr-2">Tier 2:</span>
-                        Reach $5,000 you earn a 15% commission
+                        Reach $5,000 you earn a 15% commission.
                       </li>
                       <li className="flex items-center text-gray-300">
                         <span className="text-green-400 font-bold mr-2">Tier 3:</span>
-                        Reach $25,000 and enjoy a 20% commission rate
+                        Reach $25,000 and enjoy a 20% commission rate.
                       </li>
                     </ul>
+                    <p className="mt-4 text-gray-300">
+                      The commission is paid from Aquads Profits made. Ex. if we make a $100 profit from the user you referred then 100 * 20% = $20 at a 20% commission rate.
+                    </p>
+                    <p className="mt-2 text-gray-300">
+                      Your commission rate reflects how much you have grown—and the more you earn, the better the rate!
+                    </p>
                   </div>
                 </div>
 
@@ -120,7 +132,7 @@ const Affiliate = () => {
                 <div>
                   <h3 className="text-xl font-semibold mb-3 text-indigo-400">Follow the Guidelines:</h3>
                   <p className="text-gray-300">
-                    While you're free to be creative, please keep your promotions within the Aquads brand scope. No misleading claims or activities that fall outside what we support. No editing of the logo unless approved to do so.
+                    While you're free to be creative, please keep your promotions within the Aquads brand scope. No misleading claims or activities that fall outside what we support. No editing of the logo unless approved to do so. This is just to protect everyone and keep our community strong and trustworthy and be cohesive across the board with our brand.
                   </p>
                 </div>
               </div>
@@ -142,7 +154,13 @@ const Affiliate = () => {
               <h2 className="text-2xl font-bold mb-6 text-blue-400">Ready to Get Started?</h2>
               
               <div className="space-y-4 text-gray-300">
-                <p>By Sharing and using your referral code, you are enrolling in this affiliate program and agreeing to the terms laid out here.</p>
+                <ul className="list-disc list-inside space-y-2">
+                  <li>Sign Up: Head over to aquads.xyz and create your account. Remember, your username is your referral code!</li>
+                  <li>Start Promoting: Use your referral code in your promotions and let the referrals roll in.</li>
+                  <li>Watch Your Earnings Grow: As your referred sales increase, so does your commission percentage—up to 20%!</li>
+                </ul>
+                
+                <p className="mt-4">By Sharing and using your referral code, you are enrolling in this affiliate program and agreeing to the terms laid out here.</p>
                 <p>For any questions or support, simply reach out to us at <a href="mailto:aquads.info@gmail.com" className="text-blue-400 hover:text-blue-300">aquads.info@gmail.com</a> or join our <a href="https://t.co/TE6WbzWh9K" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">Telegram community</a>.</p>
                 <p className="mt-8 text-center">We're excited to have you on board and can't wait to see how you help grow the Aquads community while building your own business success stories!</p>
                 <p className="text-center font-semibold text-blue-400">Happy promoting!</p>
