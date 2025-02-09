@@ -141,6 +141,23 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     if (sharedServiceId && services.length > 0) {
       const service = services.find(s => s._id === sharedServiceId);
       if (service) {
+        // Update meta tags for sharing
+        const dynamicTwitterImage = document.getElementById('dynamic-twitter-image');
+        const dynamicTwitterTitle = document.getElementById('dynamic-twitter-title');
+        const dynamicTwitterDesc = document.getElementById('dynamic-twitter-description');
+        const dynamicOgImage = document.getElementById('dynamic-og-image');
+        const dynamicOgTitle = document.getElementById('dynamic-og-title');
+        const dynamicOgDesc = document.getElementById('dynamic-og-description');
+        const dynamicOgUrl = document.getElementById('dynamic-og-url');
+
+        if (dynamicTwitterImage) dynamicTwitterImage.content = service.image;
+        if (dynamicTwitterTitle) dynamicTwitterTitle.content = `${service.title} - Aquads Marketplace`;
+        if (dynamicTwitterDesc) dynamicTwitterDesc.content = service.description?.slice(0, 200) + '...';
+        if (dynamicOgImage) dynamicOgImage.content = service.image;
+        if (dynamicOgTitle) dynamicOgTitle.content = `${service.title} - Aquads Marketplace`;
+        if (dynamicOgDesc) dynamicOgDesc.content = service.description?.slice(0, 200) + '...';
+        if (dynamicOgUrl) dynamicOgUrl.content = window.location.href;
+
         // Expand the description of the shared service
         setExpandedDescriptions(prev => new Set([...prev, sharedServiceId]));
         
