@@ -202,8 +202,9 @@ function awardListingPoints(userId) {
     });
 }
 
-module.exports = {
-  router,
-  awardAffiliatePoints,
-  awardListingPoints
-}; 
+// Export the helper functions
+exports.awardAffiliatePoints = awardAffiliatePoints;
+exports.awardListingPoints = awardListingPoints;
+
+// Export the router
+module.exports = router; 
