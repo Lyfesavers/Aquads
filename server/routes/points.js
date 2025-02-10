@@ -202,5 +202,8 @@ function awardListingPoints(userId) {
     });
 }
 
-// Export only the router
-module.exports = router; 
+module.exports = {
+  router,
+  awardAffiliatePoints,
+  awardListingPoints
+}; 
