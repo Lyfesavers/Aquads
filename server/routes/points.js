@@ -219,12 +219,9 @@ function awardListingPoints(userId) {
     });
 }
 
-// Create a points module that includes both the router and the helper functions
-const pointsModule = {
-  router,
-  awardAffiliatePoints,
-  awardListingPoints
-};
+// Export the router directly
+module.exports = router;
 
-// Export the entire module
-module.exports = pointsModule; 
+// Export helper functions separately
+module.exports.awardAffiliatePoints = awardAffiliatePoints;
+module.exports.awardListingPoints = awardListingPoints; 
