@@ -155,6 +155,7 @@ app.use('/api/tokens', require('./routes/tokens'));
 app.use('/api/services', require('./routes/services'));
 app.use('/api/users', usersRouter);
 app.use('/api/bannerAds', bannerAdsRoutes);
+app.use('/api/points', require('./routes/points'));
 
 // Create new ad
 app.post('/api/ads', auth, async (req, res) => {
