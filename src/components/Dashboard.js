@@ -290,9 +290,29 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           <div className="bg-gray-700 rounded-lg p-6">
             <h3 className="text-xl font-semibold mb-4 text-blue-400">Affiliate Program</h3>
             
+            {/* Existing Affiliate Info */}
+            {affiliateInfo && (
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <p className="text-gray-300">Total Affiliates: 
+                    <span className="text-blue-400 font-bold ml-2">
+                      {isLoadingAffiliates ? '...' : affiliateInfo.affiliateCount}
+                    </span>
+                  </p>
+                  <p className="text-sm text-gray-400 mt-2">
+                    Share your referral code to earn more affiliates!
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-gray-300">Your Referral Code:</p>
+                  <p className="text-blue-400 font-mono font-bold">{currentUser?.username}</p>
+                </div>
+              </div>
+            )}
+            
             {/* Points Display */}
             {pointsInfo && (
-              <div className="mb-6 bg-gray-800 rounded-lg p-4">
+              <div className="bg-gray-800 rounded-lg p-4">
                 <div className="flex justify-between items-center mb-4">
                   <div>
                     <h4 className="text-lg font-medium text-white">Your Points</h4>
@@ -341,26 +361,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                     </div>
                   </div>
                 )}
-              </div>
-            )}
-
-            {/* Existing Affiliate Info */}
-            {affiliateInfo && (
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-300">Total Affiliates: 
-                    <span className="text-blue-400 font-bold ml-2">
-                      {isLoadingAffiliates ? '...' : affiliateInfo.affiliateCount}
-                    </span>
-                  </p>
-                  <p className="text-sm text-gray-400 mt-2">
-                    Share your referral code to earn more affiliates!
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-gray-300">Your Referral Code:</p>
-                  <p className="text-blue-400 font-mono font-bold">{currentUser?.username}</p>
-                </div>
               </div>
             )}
           </div>
