@@ -172,15 +172,27 @@ router.post('/redemptions/:userId/process', auth, async (req, res) => {
 
 // Helper functions for awarding points
 function awardAffiliatePoints(referrerId, referredUserId) {
-  return User.findByIdAndUpdate(referrerId, {
-    $inc: { points: 100 },
-    $push: {
-      pointsHistory: {
-        amount: 100,
-        reason: 'New affiliate referral',
-        referredUser: referredUserId
+  console.log('Awarding affiliate points:', { referrerId, referredUserId });
+  return User.findByIdAndUpdate(
+    referrerId,
+    {
+      $inc: { points: 100 },
+      $push: {
+        pointsHistory: {
+          amount: 100,
+          reason: 'New affiliate referral',
+          referredUser: referredUserId,
+          createdAt: new Date()
+        }
       }
-    }
+    },
+    { new: true }
+  ).then(user => {
+    console.log('Points awarded successfully:', user.points);
+    return user;
+  }).catch(error => {
+    console.error('Error awarding points:', error);
+    throw error;
   });
 }
 
@@ -188,23 +200,31 @@ function awardListingPoints(userId) {
   return User.findById(userId)
     .then(user => {
       if (user && user.referredBy) {
-        return User.findByIdAndUpdate(user.referredBy, {
-          $inc: { points: 200 },
-          $push: {
-            pointsHistory: {
-              amount: 200,
-              reason: 'Referred user listed service/ad',
-              referredUser: userId
+        return User.findByIdAndUpdate(
+          user.referredBy,
+          {
+            $inc: { points: 200 },
+            $push: {
+              pointsHistory: {
+                amount: 200,
+                reason: 'Referred user listed service/ad',
+                referredUser: userId,
+                createdAt: new Date()
+              }
             }
-          }
-        });
+          },
+          { new: true }
+        );
       }
     });
 }
 
-// Export the helper functions
-exports.awardAffiliatePoints = awardAffiliatePoints;
-exports.awardListingPoints = awardListingPoints;
+// Create a points module that includes both the router and the helper functions
+const pointsModule = {
+  router,
+  awardAffiliatePoints,
+  awardListingPoints
+};
 
-// Export the router
-module.exports = router; 
+// Export the entire module
+module.exports = pointsModule; 
