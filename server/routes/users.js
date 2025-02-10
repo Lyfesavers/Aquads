@@ -6,29 +6,62 @@ const User = require('../models/User');
 const auth = require('../middleware/auth');
 const crypto = require('crypto');
 const { awardAffiliatePoints } = require('./points');
+const rateLimit = require('express-rate-limit');
+
+// Rate limiting for registration
+const registrationLimiter = rateLimit({
+  windowMs: 24 * 60 * 60 * 1000, // 24 hour window
+  max: 2, // limit each IP to 3 registrations per day
+  message: 'Too many accounts created from this IP, please try again after 24 hours'
+});
 
 // Initialize temporary token store (this should be replaced with a proper solution in production)
 const tempTokenStore = new Map();
 
 // Register new user
-router.post('/register', async (req, res) => {
+router.post('/register', registrationLimiter, async (req, res) => {
   try {
     const { username, email, password, image, referralCode } = req.body;
 
-    // Validate required fields
+    // Enhanced validation
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password are required' });
     }
 
-    // Check if username already exists
-    const existingUsername = await User.findOne({ username });
+    // Username requirements
+    if (username.length < 3 || username.length > 20) {
+      return res.status(400).json({ error: 'Username must be between 3 and 20 characters' });
+    }
+
+    if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+      return res.status(400).json({ error: 'Username can only contain letters, numbers, underscores and hyphens' });
+    }
+
+    // Password requirements
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters long' });
+    }
+
+    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(password)) {
+      return res.status(400).json({ 
+        error: 'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character' 
+      });
+    }
+
+    // Check if username already exists (case-insensitive)
+    const existingUsername = await User.findOne({ 
+      username: { $regex: new RegExp(`^${username}$`, 'i') }
+    });
     if (existingUsername) {
       return res.status(400).json({ error: 'Username already exists' });
     }
 
     // Check if email already exists (only if email is provided)
     if (email) {
-      const existingEmail = await User.findOne({ email });
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return res.status(400).json({ error: 'Invalid email format' });
+      }
+      const existingEmail = await User.findOne({ email: email.toLowerCase() });
       if (existingEmail) {
         return res.status(400).json({ error: 'Email already exists' });
       }
@@ -38,7 +71,7 @@ router.post('/register', async (req, res) => {
     const userData = {
       username,
       password,
-      email,
+      email: email ? email.toLowerCase() : undefined,
       image: image || undefined
     };
 

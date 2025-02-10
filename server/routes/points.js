@@ -40,23 +40,59 @@ router.post('/redeem', auth, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
+    // Check account age
+    const accountAge = Date.now() - user.createdAt.getTime();
+    const minimumAge = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+    
+    if (accountAge < minimumAge) {
+      return res.status(400).json({ 
+        error: 'Account must be at least 7 days old to redeem points' 
+      });
+    }
+
+    // Check if user has any previous pending redemptions
+    const hasPendingRedemption = user.giftCardRedemptions.some(
+      redemption => redemption.status === 'pending'
+    );
+
+    if (hasPendingRedemption) {
+      return res.status(400).json({ 
+        error: 'You already have a pending redemption request' 
+      });
+    }
+
     if (user.points < 10000) {
       return res.status(400).json({ 
         error: 'Insufficient points. You need 10,000 points to redeem a gift card.' 
       });
     }
 
+    // Check redemption frequency
+    const lastRedemption = user.giftCardRedemptions[user.giftCardRedemptions.length - 1];
+    if (lastRedemption) {
+      const timeSinceLastRedemption = Date.now() - lastRedemption.requestedAt.getTime();
+      const minimumInterval = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+      
+      if (timeSinceLastRedemption < minimumInterval) {
+        return res.status(400).json({ 
+          error: 'You can only redeem points once every 30 days' 
+        });
+      }
+    }
+
     // Create redemption request
     user.giftCardRedemptions.push({
       amount: 100,
-      status: 'pending'
+      status: 'pending',
+      requestedAt: new Date()
     });
 
     // Deduct points
     user.points -= 10000;
     user.pointsHistory.push({
       amount: -10000,
-      reason: 'Gift card redemption request'
+      reason: 'Gift card redemption request',
+      createdAt: new Date()
     });
 
     await user.save();
