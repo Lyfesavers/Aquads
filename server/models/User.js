@@ -58,6 +58,36 @@ const userSchema = new Schema({
     type: Number,
     default: 0
   },
+  points: {
+    type: Number,
+    default: 0
+  },
+  pointsHistory: [{
+    amount: Number,
+    reason: String,
+    referredUser: {
+      type: Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  giftCardRedemptions: [{
+    amount: Number,
+    status: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending'
+    },
+    requestedAt: {
+      type: Date,
+      default: Date.now
+    },
+    processedAt: Date,
+    processedBy: String
+  }],
   resetToken: {
     type: String,
     default: null

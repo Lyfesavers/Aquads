@@ -5,6 +5,7 @@ const userRoutes = require('./routes/users');
 const serviceRoutes = require('./routes/services');
 const serviceReviewRoutes = require('./routes/serviceReviews');
 const bannerAdsRoutes = require('./routes/bannerAds');
+const pointsRoutes = require('./routes/points').router;
 
 // Middleware
 const app = express();
@@ -16,5 +17,6 @@ app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/service-reviews', serviceReviewRoutes);
 app.use('/api/bannerAds', bannerAdsRoutes);
+app.use('/api/points', pointsRoutes);
 
 module.exports = app; 

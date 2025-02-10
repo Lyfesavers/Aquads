@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 const crypto = require('crypto');
+const { awardAffiliatePoints } = require('./points');
 
 // Initialize temporary token store (this should be replaced with a proper solution in production)
 const tempTokenStore = new Map();
@@ -52,6 +53,11 @@ router.post('/register', async (req, res) => {
     // Create and save new user
     const user = new User(userData);
     await user.save();
+
+    // If user was referred, award points to referrer
+    if (user.referredBy) {
+      await awardAffiliatePoints(user.referredBy, user._id);
+    }
 
     // Generate JWT token
     const token = jwt.sign(

@@ -10,7 +10,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [selectedAd, setSelectedAd] = useState(null);
   const [showBumpStore, setShowBumpStore] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
-  const [affiliateInfo, setAffiliateInfo] = useState({ affiliateCount: 0, affiliates: [] });
+  const [affiliateInfo, setAffiliateInfo] = useState(null);
+  const [pointsInfo, setPointsInfo] = useState(null);
+  const [isRedeeming, setIsRedeeming] = useState(false);
+  const [redeemError, setRedeemError] = useState('');
   const [isLoadingAffiliates, setIsLoadingAffiliates] = useState(true);
 
   // Fetch bump requests and banner ads when dashboard opens
@@ -50,19 +53,57 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   const fetchAffiliateInfo = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/affiliates`, {
-        headers: {
-          'Authorization': `Bearer ${currentUser?.token}`
-        }
-      });
-      if (response.ok) {
-        const data = await response.json();
+      const [affiliateResponse, pointsResponse] = await Promise.all([
+        fetch(`${process.env.REACT_APP_API_URL}/api/users/${currentUser.userId}/affiliates`),
+        fetch(`${process.env.REACT_APP_API_URL}/api/points/my-points`, {
+          headers: {
+            'Authorization': `Bearer ${currentUser.token}`
+          }
+        })
+      ]);
+
+      if (affiliateResponse.ok) {
+        const data = await affiliateResponse.json();
         setAffiliateInfo(data);
+      }
+
+      if (pointsResponse.ok) {
+        const data = await pointsResponse.json();
+        setPointsInfo(data);
       }
     } catch (error) {
       console.error('Error fetching affiliate info:', error);
     } finally {
       setIsLoadingAffiliates(false);
+    }
+  };
+
+  const handleRedeemPoints = async () => {
+    try {
+      setIsRedeeming(true);
+      setRedeemError('');
+
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/points/redeem`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to redeem points');
+      }
+
+      // Refresh points info after redemption
+      fetchAffiliateInfo();
+      alert('Redemption request submitted successfully! Our team will process your request soon.');
+    } catch (error) {
+      setRedeemError(error.message);
+    } finally {
+      setIsRedeeming(false);
     }
   };
 
@@ -244,250 +285,310 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           </button>
         </div>
 
-        {/* Affiliate Information Section */}
-        <div className="bg-gray-800 rounded-lg p-6 mb-8">
-          <h3 className="text-xl font-semibold text-blue-400 mb-4">Affiliate Program</h3>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-300">Total Affiliates: 
-                <span className="text-blue-400 font-bold ml-2">
-                  {isLoadingAffiliates ? '...' : affiliateInfo.affiliateCount}
-                </span>
-              </p>
-              <p className="text-sm text-gray-400 mt-2">
-                Share your referral code to earn more affiliates!
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-gray-300">Your Referral Code:</p>
-              <p className="text-blue-400 font-mono font-bold">{currentUser?.username}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Pending Bump Approvals (Admin Only) */}
-        {currentUser?.isAdmin && (
-          <>
-            <div className="mb-8">
-              <h3 className="text-xl font-semibold text-white mb-4">Pending Bump Approvals</h3>
-              {pendingBumpAds.length === 0 ? (
-                <p className="text-gray-400 text-center py-4">No pending bump approvals.</p>
-              ) : (
-                <div className="space-y-4">
-                  {pendingBumpAds.map(ad => (
-                    <div
-                      key={ad.id}
-                      className="bg-gray-700 rounded-lg p-4"
+        <div className="space-y-6">
+          {/* Affiliate Section */}
+          <div className="bg-gray-700 rounded-lg p-6">
+            <h3 className="text-xl font-semibold mb-4 text-blue-400">Affiliate Program</h3>
+            
+            {/* Points Display */}
+            {pointsInfo && (
+              <div className="mb-6 bg-gray-800 rounded-lg p-4">
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <h4 className="text-lg font-medium text-white">Your Points</h4>
+                    <p className="text-3xl font-bold text-blue-400">{pointsInfo.points}</p>
+                  </div>
+                  {pointsInfo.points >= 10000 && (
+                    <button
+                      onClick={handleRedeemPoints}
+                      disabled={isRedeeming}
+                      className={`px-4 py-2 rounded ${
+                        isRedeeming 
+                          ? 'bg-gray-500 cursor-not-allowed' 
+                          : 'bg-green-500 hover:bg-green-600'
+                      }`}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <img
-                            src={ad.logo}
-                            alt={ad.title}
-                            className="w-12 h-12 object-contain rounded"
-                          />
-                          <div>
-                            <h4 className="text-white font-semibold">{ad.title}</h4>
-                            <p className="text-gray-400 text-sm">Owner: {ad.owner}</p>
-                            <p className="text-gray-400 text-sm">Requested: {new Date(ad.bumpRequest.createdAt).toLocaleString()}</p>
-                          </div>
+                      {isRedeeming ? 'Processing...' : 'Redeem $100 Gift Card'}
+                    </button>
+                  )}
+                </div>
+                {redeemError && (
+                  <p className="text-red-500 text-sm mt-2">{redeemError}</p>
+                )}
+                <div className="text-sm text-gray-400">
+                  <p>• Earn 100 points for each new affiliate</p>
+                  <p>• Earn 200 points when your affiliates list a service or ad</p>
+                  <p>• Redeem 10,000 points for a $100 gift card</p>
+                </div>
+                
+                {/* Redemption History */}
+                {pointsInfo.giftCardRedemptions?.length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="text-lg font-medium text-white mb-2">Redemption History</h4>
+                    <div className="space-y-2">
+                      {pointsInfo.giftCardRedemptions.map((redemption, index) => (
+                        <div key={index} className="flex justify-between items-center bg-gray-700 p-2 rounded">
+                          <span className="text-gray-300">${redemption.amount} Gift Card</span>
+                          <span className={`px-2 py-1 rounded text-sm ${
+                            redemption.status === 'approved' ? 'bg-green-500' :
+                            redemption.status === 'rejected' ? 'bg-red-500' :
+                            'bg-yellow-500'
+                          }`}>
+                            {redemption.status}
+                          </span>
                         </div>
-                        <div className="flex flex-col items-end">
-                          <a
-                            href={`https://solscan.io/tx/${ad.bumpRequest.txSignature}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-400 hover:text-blue-300 text-sm mb-2"
-                          >
-                            View Transaction
-                          </a>
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => handleApprove(ad)}
-                              className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Existing Affiliate Info */}
+            {affiliateInfo && (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-300">Total Affiliates: 
+                    <span className="text-blue-400 font-bold ml-2">
+                      {isLoadingAffiliates ? '...' : affiliateInfo.affiliateCount}
+                    </span>
+                  </p>
+                  <p className="text-sm text-gray-400 mt-2">
+                    Share your referral code to earn more affiliates!
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-gray-300">Your Referral Code:</p>
+                  <p className="text-blue-400 font-mono font-bold">{currentUser?.username}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Pending Bump Approvals (Admin Only) */}
+          {currentUser?.isAdmin && (
+            <>
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold text-white mb-4">Pending Bump Approvals</h3>
+                {pendingBumpAds.length === 0 ? (
+                  <p className="text-gray-400 text-center py-4">No pending bump approvals.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {pendingBumpAds.map(ad => (
+                      <div
+                        key={ad.id}
+                        className="bg-gray-700 rounded-lg p-4"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <img
+                              src={ad.logo}
+                              alt={ad.title}
+                              className="w-12 h-12 object-contain rounded"
+                            />
+                            <div>
+                              <h4 className="text-white font-semibold">{ad.title}</h4>
+                              <p className="text-gray-400 text-sm">Owner: {ad.owner}</p>
+                              <p className="text-gray-400 text-sm">Requested: {new Date(ad.bumpRequest.createdAt).toLocaleString()}</p>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-end">
+                            <a
+                              href={`https://solscan.io/tx/${ad.bumpRequest.txSignature}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-400 hover:text-blue-300 text-sm mb-2"
                             >
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => handleReject(ad)}
-                              className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                            >
-                              Reject
-                            </button>
+                              View Transaction
+                            </a>
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleApprove(ad)}
+                                className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
+                              >
+                                Approve
+                              </button>
+                              <button
+                                onClick={() => handleReject(ad)}
+                                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                              >
+                                Reject
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-            {/* Banner Ad Management Section */}
-            <div className="mb-8">
-              <h3 className="text-xl font-semibold text-white mb-4">Banner Ad Management</h3>
-              {bannerAds.length === 0 ? (
-                <p className="text-gray-400 text-center py-4">No banner ads found.</p>
-              ) : (
-                <div className="space-y-4">
-                  {bannerAds.map(banner => (
-                    <div key={banner._id} className="bg-gray-700 rounded-lg p-4">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h4 className="text-white font-semibold">{banner.title}</h4>
-                          <p className="text-gray-400 text-sm">Status: {banner.status}</p>
-                          <p className="text-gray-400 text-sm">Created: {new Date(banner.createdAt).toLocaleString()}</p>
-                          <a 
-                            href={banner.url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-blue-400 hover:text-blue-300 text-sm"
-                          >
-                            {banner.url}
-                          </a>
-                        </div>
-                        {banner.status === 'pending' && (
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => handleApproveBanner(banner._id)}
-                              className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
+              {/* Banner Ad Management Section */}
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold text-white mb-4">Banner Ad Management</h3>
+                {bannerAds.length === 0 ? (
+                  <p className="text-gray-400 text-center py-4">No banner ads found.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {bannerAds.map(banner => (
+                      <div key={banner._id} className="bg-gray-700 rounded-lg p-4">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h4 className="text-white font-semibold">{banner.title}</h4>
+                            <p className="text-gray-400 text-sm">Status: {banner.status}</p>
+                            <p className="text-gray-400 text-sm">Created: {new Date(banner.createdAt).toLocaleString()}</p>
+                            <a 
+                              href={banner.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-blue-400 hover:text-blue-300 text-sm"
                             >
-                              Approve
-                            </button>
+                              {banner.url}
+                            </a>
+                          </div>
+                          {banner.status === 'pending' && (
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleApproveBanner(banner._id)}
+                                className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
+                              >
+                                Approve
+                              </button>
+                              <button
+                                onClick={() => handleRejectBanner(banner._id)}
+                                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        <div className="mt-4">
+                          <img 
+                            src={banner.gif} 
+                            alt={banner.title}
+                            className="max-h-32 rounded object-contain bg-gray-800"
+                          />
+                        </div>
+                        {/* Add delete button for expired banners */}
+                        {currentUser?.isAdmin && banner.status === 'active' && (
+                          <div className="mt-2">
                             <button
-                              onClick={() => handleRejectBanner(banner._id)}
+                              onClick={() => handleDeleteBanner(banner._id)}
                               className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
                             >
-                              Reject
+                              Delete Banner
                             </button>
                           </div>
                         )}
                       </div>
-                      <div className="mt-4">
-                        <img 
-                          src={banner.gif} 
-                          alt={banner.title}
-                          className="max-h-32 rounded object-contain bg-gray-800"
-                        />
-                      </div>
-                      {/* Add delete button for expired banners */}
-                      {currentUser?.isAdmin && banner.status === 'active' && (
-                        <div className="mt-2">
-                          <button
-                            onClick={() => handleDeleteBanner(banner._id)}
-                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                          >
-                            Delete Banner
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </>
-        )}
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
 
-        {/* Reject Modal */}
-        {showRejectModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
-            <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
-              <h3 className="text-xl font-semibold text-white mb-4">Reject Bump Request</h3>
-              <textarea
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="Enter reason for rejection (optional)"
-                className="w-full px-3 py-2 bg-gray-700 text-white rounded mb-4 focus:outline-none focus:ring-2 focus:ring-red-500"
-                rows="3"
-              />
-              <div className="flex justify-end space-x-2">
-                <button
-                  onClick={() => {
-                    setShowRejectModal(false);
-                    setRejectReason('');
-                    setSelectedBumpRequest(null);
-                  }}
-                  className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={confirmReject}
-                  className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-                >
-                  Confirm Reject
-                </button>
+          {/* Reject Modal */}
+          {showRejectModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
+              <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
+                <h3 className="text-xl font-semibold text-white mb-4">Reject Bump Request</h3>
+                <textarea
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="Enter reason for rejection (optional)"
+                  className="w-full px-3 py-2 bg-gray-700 text-white rounded mb-4 focus:outline-none focus:ring-2 focus:ring-red-500"
+                  rows="3"
+                />
+                <div className="flex justify-end space-x-2">
+                  <button
+                    onClick={() => {
+                      setShowRejectModal(false);
+                      setRejectReason('');
+                      setSelectedBumpRequest(null);
+                    }}
+                    className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmReject}
+                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+                  >
+                    Confirm Reject
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* User's Ads */}
-        <div>
-          <h3 className="text-xl font-semibold text-white mb-4">
-            {currentUser?.isAdmin ? 'All Ads' : 'Your Ads'}
-          </h3>
-          {userAds.length === 0 ? (
-            <p className="text-gray-400 text-center py-8">No ads found.</p>
-          ) : (
-            <div className="space-y-4">
-              {userAds.map(ad => (
-                <div
-                  key={ad.id}
-                  className="bg-gray-700 rounded-lg p-4 flex items-center justify-between"
-                >
-                  <div className="flex items-center space-x-4">
-                    <img
-                      src={ad.logo}
-                      alt={ad.title}
-                      className="w-12 h-12 object-contain rounded"
-                    />
-                    <div>
-                      <h3 className="text-white font-semibold">{ad.title}</h3>
-                      <p className="text-gray-400 text-sm">{ad.url}</p>
-                      {ad.status === 'pending' && (
-                        <p className="text-yellow-500 text-sm">Bump Pending</p>
+          {/* User's Ads */}
+          <div>
+            <h3 className="text-xl font-semibold text-white mb-4">
+              {currentUser?.isAdmin ? 'All Ads' : 'Your Ads'}
+            </h3>
+            {userAds.length === 0 ? (
+              <p className="text-gray-400 text-center py-8">No ads found.</p>
+            ) : (
+              <div className="space-y-4">
+                {userAds.map(ad => (
+                  <div
+                    key={ad.id}
+                    className="bg-gray-700 rounded-lg p-4 flex items-center justify-between"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <img
+                        src={ad.logo}
+                        alt={ad.title}
+                        className="w-12 h-12 object-contain rounded"
+                      />
+                      <div>
+                        <h3 className="text-white font-semibold">{ad.title}</h3>
+                        <p className="text-gray-400 text-sm">{ad.url}</p>
+                        {ad.status === 'pending' && (
+                          <p className="text-yellow-500 text-sm">Bump Pending</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      {!ad.status || ad.status !== 'pending' ? (
+                        <button
+                          onClick={() => onBumpAd(ad.id)}
+                          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+                        >
+                          Bump
+                        </button>
+                      ) : (
+                        <span className="text-yellow-500 px-3 py-1">
+                          Bump Pending
+                        </span>
+                      )}
+                      {currentUser?.isAdmin ? (
+                        <button
+                          onClick={() => {
+                            if (window.confirm('Are you sure you want to delete this ad?')) {
+                              onDeleteAd(ad.id);
+                            }
+                          }}
+                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                        >
+                          Delete
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => onEditAd(ad)}
+                          className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
+                        >
+                          Edit
+                        </button>
                       )}
                     </div>
                   </div>
-                  <div className="flex space-x-2">
-                    {!ad.status || ad.status !== 'pending' ? (
-                      <button
-                        onClick={() => onBumpAd(ad.id)}
-                        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
-                      >
-                        Bump
-                      </button>
-                    ) : (
-                      <span className="text-yellow-500 px-3 py-1">
-                        Bump Pending
-                      </span>
-                    )}
-                    {currentUser?.isAdmin ? (
-                      <button
-                        onClick={() => {
-                          if (window.confirm('Are you sure you want to delete this ad?')) {
-                            onDeleteAd(ad.id);
-                          }
-                        }}
-                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                      >
-                        Delete
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => onEditAd(ad)}
-                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
-                      >
-                        Edit
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
