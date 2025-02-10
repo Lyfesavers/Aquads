@@ -15,6 +15,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [redeemError, setRedeemError] = useState('');
   const [isLoadingAffiliates, setIsLoadingAffiliates] = useState(true);
+  const [pendingRedemptions, setPendingRedemptions] = useState([]);
 
   // Fetch bump requests and banner ads when dashboard opens
   useEffect(() => {
@@ -48,6 +49,24 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   useEffect(() => {
     if (currentUser?.token) {
       fetchAffiliateInfo();
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (currentUser?.isAdmin) {
+      fetch(`${process.env.REACT_APP_API_URL}/api/points/redemptions/pending`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Fetched pending redemptions:', data);
+          setPendingRedemptions(data);
+        })
+        .catch(error => {
+          console.error('Error fetching pending redemptions:', error);
+        });
     }
   }, [currentUser]);
 
@@ -279,6 +298,31 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     : [];
   const userAds = currentUser?.isAdmin ? ads : ads.filter(ad => ad.owner === currentUser?.username);
 
+  const handleProcessRedemption = async (userId, status) => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/points/redemptions/${userId}/process`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to process redemption');
+      }
+
+      // Remove the processed redemption from the list
+      setPendingRedemptions(prev => 
+        prev.filter(user => user._id !== userId)
+      );
+    } catch (error) {
+      console.error('Error processing redemption:', error);
+      alert('Failed to process redemption');
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-gray-900 bg-opacity-95 overflow-y-auto z-50">
       <div className="container mx-auto px-4 py-8">
@@ -493,6 +537,50 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   </div>
                 )}
               </div>
+
+              {/* Add this section after the Banner Ad Management section */}
+              {currentUser?.isAdmin && (
+                <div className="mb-8">
+                  <h3 className="text-xl font-semibold text-white mb-4">Pending Gift Card Redemptions</h3>
+                  {pendingRedemptions.length === 0 ? (
+                    <p className="text-gray-400 text-center py-4">No pending gift card redemptions.</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {pendingRedemptions.map(user => (
+                        <div key={user._id} className="bg-gray-700 rounded-lg p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="text-white font-semibold">{user.username}</h4>
+                              {user.giftCardRedemptions.map((redemption, index) => (
+                                redemption.status === 'pending' && (
+                                  <div key={index} className="text-gray-400 text-sm">
+                                    <p>Amount: ${redemption.amount}</p>
+                                    <p>Requested: {new Date(redemption.requestedAt).toLocaleString()}</p>
+                                  </div>
+                                )
+                              ))}
+                            </div>
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleProcessRedemption(user._id, 'approved')}
+                                className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
+                              >
+                                Approve
+                              </button>
+                              <button
+                                onClick={() => handleProcessRedemption(user._id, 'rejected')}
+                                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           )}
 
