@@ -86,46 +86,42 @@ router.post('/register', registrationLimiter, async (req, res) => {
 
     // Create and save new user
     const user = new User(userData);
-    
-    try {
-      await user.save();
-      console.log('User saved successfully:', { username: user.username });
+    await user.save();
+    console.log('User saved successfully:', { username: user.username });
 
-      // If user was referred, award points to referrer
-      if (user.referredBy) {
-        try {
+    // If user was referred, update affiliate relationship and award points
+    if (user.referredBy) {
+      try {
+        const referringUser = await User.findById(user.referredBy);
+        if (referringUser) {
+          // Add new user to referrer's affiliates list
+          await referringUser.addAffiliate(user._id);
+          // Award points to referrer
           await awardAffiliatePoints(user.referredBy, user._id);
           console.log('Affiliate points awarded for:', username);
-        } catch (affiliateError) {
-          console.error('Error awarding affiliate points:', affiliateError);
-          // Don't fail registration if affiliate points fail
         }
+      } catch (error) {
+        console.error('Error handling affiliate relationship:', error);
+        // Don't fail registration if affiliate handling fails
       }
-
-      // Generate JWT token
-      const token = jwt.sign(
-        { userId: user._id, username: user.username, isAdmin: user.isAdmin },
-        process.env.JWT_SECRET || 'bubble-ads-jwt-secret-key-2024',
-        { expiresIn: '24h' }
-      );
-
-      // Return user data and token
-      return res.status(201).json({
-        userId: user._id,
-        username: user.username,
-        email: user.email,
-        image: user.image,
-        referralCode: user.referralCode,
-        token
-      });
-    } catch (saveError) {
-      console.error('Error saving user:', saveError);
-      // If user was created but there was an error, try to clean up
-      if (user._id) {
-        await User.findByIdAndDelete(user._id).catch(console.error);
-      }
-      throw saveError;
     }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user._id, username: user.username, isAdmin: user.isAdmin },
+      process.env.JWT_SECRET || 'bubble-ads-jwt-secret-key-2024',
+      { expiresIn: '24h' }
+    );
+
+    // Return user data and token
+    return res.status(201).json({
+      userId: user._id,
+      username: user.username,
+      email: user.email,
+      image: user.image,
+      referralCode: user.referralCode,
+      token
+    });
   } catch (error) {
     console.error('Registration error:', error);
     return res.status(500).json({ 
