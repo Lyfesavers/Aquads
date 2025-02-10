@@ -3,6 +3,11 @@ const router = express.Router();
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 
+// Test route to verify points router is working
+router.get('/test', (req, res) => {
+  res.json({ message: 'Points router is working' });
+});
+
 // Get user's points and history
 router.get('/my-points', auth, async (req, res) => {
   try {
