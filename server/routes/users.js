@@ -22,6 +22,7 @@ const tempTokenStore = new Map();
 router.post('/register', registrationLimiter, async (req, res) => {
   try {
     const { username, email, password, image, referralCode } = req.body;
+    console.log('Registration attempt for username:', username);
 
     // Enhanced validation
     if (!username || !password) {
@@ -85,32 +86,52 @@ router.post('/register', registrationLimiter, async (req, res) => {
 
     // Create and save new user
     const user = new User(userData);
-    await user.save();
+    
+    try {
+      await user.save();
+      console.log('User saved successfully:', { username: user.username });
 
-    // If user was referred, award points to referrer
-    if (user.referredBy) {
-      await awardAffiliatePoints(user.referredBy, user._id);
+      // If user was referred, award points to referrer
+      if (user.referredBy) {
+        try {
+          await awardAffiliatePoints(user.referredBy, user._id);
+          console.log('Affiliate points awarded for:', username);
+        } catch (affiliateError) {
+          console.error('Error awarding affiliate points:', affiliateError);
+          // Don't fail registration if affiliate points fail
+        }
+      }
+
+      // Generate JWT token
+      const token = jwt.sign(
+        { userId: user._id, username: user.username, isAdmin: user.isAdmin },
+        process.env.JWT_SECRET || 'bubble-ads-jwt-secret-key-2024',
+        { expiresIn: '24h' }
+      );
+
+      // Return user data and token
+      return res.status(201).json({
+        userId: user._id,
+        username: user.username,
+        email: user.email,
+        image: user.image,
+        referralCode: user.referralCode,
+        token
+      });
+    } catch (saveError) {
+      console.error('Error saving user:', saveError);
+      // If user was created but there was an error, try to clean up
+      if (user._id) {
+        await User.findByIdAndDelete(user._id).catch(console.error);
+      }
+      throw saveError;
     }
-
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: user._id, username: user.username, isAdmin: user.isAdmin },
-      process.env.JWT_SECRET || 'bubble-ads-jwt-secret-key-2024',
-      { expiresIn: '24h' }
-    );
-
-    // Return user data and token
-    res.status(201).json({
-      userId: user._id,
-      username: user.username,
-      email: user.email,
-      image: user.image,
-      referralCode: user.referralCode,
-      token
-    });
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({ error: 'Error registering user' });
+    return res.status(500).json({ 
+      error: 'Error registering user',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
