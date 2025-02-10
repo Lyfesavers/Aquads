@@ -123,47 +123,37 @@ router.post('/redemptions/:userId/process', auth, async (req, res) => {
   }
 });
 
-// Award points for new affiliate
-const awardAffiliatePoints = async (referrerId, referredUserId) => {
-  try {
-    const referrer = await User.findById(referrerId);
-    if (referrer) {
-      referrer.points += 100;
-      referrer.pointsHistory.push({
+// Helper functions for awarding points
+function awardAffiliatePoints(referrerId, referredUserId) {
+  return User.findByIdAndUpdate(referrerId, {
+    $inc: { points: 100 },
+    $push: {
+      pointsHistory: {
         amount: 100,
         reason: 'New affiliate referral',
         referredUser: referredUserId
-      });
-      await referrer.save();
-    }
-  } catch (error) {
-    console.error('Error awarding affiliate points:', error);
-  }
-};
-
-// Award points for service/ad listing
-const awardListingPoints = async (userId) => {
-  try {
-    const user = await User.findById(userId);
-    if (user && user.referredBy) {
-      const referrer = await User.findById(user.referredBy);
-      if (referrer) {
-        referrer.points += 200;
-        referrer.pointsHistory.push({
-          amount: 200,
-          reason: 'Referred user listed service/ad',
-          referredUser: userId
-        });
-        await referrer.save();
       }
     }
-  } catch (error) {
-    console.error('Error awarding listing points:', error);
-  }
-};
+  });
+}
 
-module.exports = {
-  router,
-  awardAffiliatePoints,
-  awardListingPoints
-}; 
+function awardListingPoints(userId) {
+  return User.findById(userId)
+    .then(user => {
+      if (user && user.referredBy) {
+        return User.findByIdAndUpdate(user.referredBy, {
+          $inc: { points: 200 },
+          $push: {
+            pointsHistory: {
+              amount: 200,
+              reason: 'Referred user listed service/ad',
+              referredUser: userId
+            }
+          }
+        });
+      }
+    });
+}
+
+// Export only the router
+module.exports = router; 
