@@ -5,7 +5,7 @@ const userRoutes = require('./routes/users');
 const serviceRoutes = require('./routes/services');
 const serviceReviewRoutes = require('./routes/serviceReviews');
 const bannerAdsRoutes = require('./routes/bannerAds');
-const pointsRoutes = require('./routes/points').router;
+const { router: pointsRoutes } = require('./routes/points');
 
 // Middleware
 const app = express();

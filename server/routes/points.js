@@ -3,53 +3,23 @@ const router = express.Router();
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 
-// Award points for new affiliate
-const awardAffiliatePoints = async (referrerId, referredUserId) => {
-  try {
-    const referrer = await User.findById(referrerId);
-    if (referrer) {
-      referrer.points += 100;
-      referrer.pointsHistory.push({
-        amount: 100,
-        reason: 'New affiliate referral',
-        referredUser: referredUserId
-      });
-      await referrer.save();
-    }
-  } catch (error) {
-    console.error('Error awarding affiliate points:', error);
-  }
-};
-
-// Award points for service/ad listing
-const awardListingPoints = async (userId) => {
-  try {
-    const user = await User.findById(userId);
-    if (user && user.referredBy) {
-      const referrer = await User.findById(user.referredBy);
-      if (referrer) {
-        referrer.points += 200;
-        referrer.pointsHistory.push({
-          amount: 200,
-          reason: 'Referred user listed service/ad',
-          referredUser: userId
-        });
-        await referrer.save();
-      }
-    }
-  } catch (error) {
-    console.error('Error awarding listing points:', error);
-  }
-};
-
 // Get user's points and history
 router.get('/my-points', auth, async (req, res) => {
   try {
+    console.log('Fetching points for user:', req.user);
     const user = await User.findById(req.user.userId)
       .select('points pointsHistory giftCardRedemptions')
       .populate('pointsHistory.referredUser', 'username');
     
-    res.json(user);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({
+      points: user.points,
+      pointsHistory: user.pointsHistory,
+      giftCardRedemptions: user.giftCardRedemptions
+    });
   } catch (error) {
     console.error('Error fetching points:', error);
     res.status(500).json({ error: 'Failed to fetch points' });
@@ -152,6 +122,45 @@ router.post('/redemptions/:userId/process', auth, async (req, res) => {
     res.status(500).json({ error: 'Failed to process redemption' });
   }
 });
+
+// Award points for new affiliate
+const awardAffiliatePoints = async (referrerId, referredUserId) => {
+  try {
+    const referrer = await User.findById(referrerId);
+    if (referrer) {
+      referrer.points += 100;
+      referrer.pointsHistory.push({
+        amount: 100,
+        reason: 'New affiliate referral',
+        referredUser: referredUserId
+      });
+      await referrer.save();
+    }
+  } catch (error) {
+    console.error('Error awarding affiliate points:', error);
+  }
+};
+
+// Award points for service/ad listing
+const awardListingPoints = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+    if (user && user.referredBy) {
+      const referrer = await User.findById(user.referredBy);
+      if (referrer) {
+        referrer.points += 200;
+        referrer.pointsHistory.push({
+          amount: 200,
+          reason: 'Referred user listed service/ad',
+          referredUser: userId
+        });
+        await referrer.save();
+      }
+    }
+  } catch (error) {
+    console.error('Error awarding listing points:', error);
+  }
+};
 
 module.exports = {
   router,
