@@ -59,13 +59,23 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           'Authorization': `Bearer ${currentUser.token}`
         }
       })
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) {
+            if (response.status === 403) {
+              throw new Error('Not authorized to view redemptions');
+            }
+            throw new Error('Failed to fetch redemptions');
+          }
+          return response.json();
+        })
         .then(data => {
           console.log('Fetched pending redemptions:', data);
-          setPendingRedemptions(data);
+          // Ensure we always set an array
+          setPendingRedemptions(Array.isArray(data) ? data : []);
         })
         .catch(error => {
           console.error('Error fetching pending redemptions:', error);
+          setPendingRedemptions([]); // Set empty array on error
         });
     }
   }, [currentUser]);
@@ -542,7 +552,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
               {currentUser?.isAdmin && (
                 <div className="mb-8">
                   <h3 className="text-xl font-semibold text-white mb-4">Pending Gift Card Redemptions</h3>
-                  {pendingRedemptions.length === 0 ? (
+                  {!Array.isArray(pendingRedemptions) ? (
+                    <p className="text-gray-400 text-center py-4">Error loading redemptions. Please try again.</p>
+                  ) : pendingRedemptions.length === 0 ? (
                     <p className="text-gray-400 text-center py-4">No pending gift card redemptions.</p>
                   ) : (
                     <div className="space-y-4">
@@ -551,7 +563,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                           <div className="flex items-center justify-between">
                             <div>
                               <h4 className="text-white font-semibold">{user.username}</h4>
-                              {user.giftCardRedemptions.map((redemption, index) => (
+                              {Array.isArray(user.giftCardRedemptions) && user.giftCardRedemptions.map((redemption, index) => (
                                 redemption.status === 'pending' && (
                                   <div key={index} className="text-gray-400 text-sm">
                                     <p>Amount: ${redemption.amount}</p>

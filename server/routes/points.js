@@ -75,10 +75,16 @@ router.get('/redemptions/pending', auth, async (req, res) => {
     }
 
     const users = await User.find({
-      'giftCardRedemptions.status': 'pending'
+      'giftCardRedemptions': {
+        $elemMatch: { status: 'pending' }
+      }
     }).select('username giftCardRedemptions');
 
-    res.json(users);
+    const pendingUsers = users.filter(user => 
+      user.giftCardRedemptions.some(redemption => redemption.status === 'pending')
+    );
+
+    res.json(pendingUsers);
   } catch (error) {
     console.error('Error fetching redemptions:', error);
     res.status(500).json({ error: 'Failed to fetch redemptions' });
