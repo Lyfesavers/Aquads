@@ -23,7 +23,7 @@ const bookingSchema = new mongoose.Schema({
   },
   buyerEmail: {
     type: String,
-    required: true
+    required: false
   },
   buyerName: {
     type: String,

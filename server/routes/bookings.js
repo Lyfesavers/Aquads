@@ -24,7 +24,6 @@ router.post('/', auth, async (req, res) => {
       serviceId,
       sellerId: service.seller._id,
       buyerId: req.user.userId,
-      buyerEmail: req.user.email,
       buyerName: req.user.username,
       price: service.price,
       currency: service.currency,
