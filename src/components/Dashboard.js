@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { fetchBumpRequests, API_URL } from '../services/api';
 import BookingManagement from './BookingManagement';
+import ServiceReviews from './ServiceReviews';
 
 const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, onRejectBump, onApproveBump }) => {
   const [bumpRequests, setBumpRequests] = useState([]);
@@ -19,6 +20,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [pendingRedemptions, setPendingRedemptions] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [activeTab, setActiveTab] = useState('ads');
+  const [showReviews, setShowReviews] = useState(false);
+  const [selectedService, setSelectedService] = useState(null);
 
   // Fetch bump requests and banner ads when dashboard opens
   useEffect(() => {
@@ -390,6 +393,16 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       console.error('Error updating booking status:', error);
       throw error;
     }
+  };
+
+  const handleShowReviews = (service) => {
+    setSelectedService(service);
+    setShowReviews(true);
+  };
+
+  const handleCloseReviews = () => {
+    setShowReviews(false);
+    setSelectedService(null);
   };
 
   return (
@@ -796,6 +809,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   console.log(message); // Temporary fallback
                   alert(message);
                 }}
+                onShowReviews={handleShowReviews}
               />
             )}
 
@@ -970,6 +984,18 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           </div>
         </div>
       </div>
+
+      {showReviews && selectedService && (
+        <ServiceReviews
+          service={selectedService}
+          onClose={handleCloseReviews}
+          currentUser={currentUser}
+          showNotification={(message, type) => {
+            console.log(message); // Temporary fallback
+            alert(message);
+          }}
+        />
+      )}
     </div>
   );
 };
