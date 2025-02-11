@@ -168,7 +168,8 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                placeholder="Must have 8+ chars, 1 uppercase, 1 lowercase, 1 number, 1 special char"
+                placeholder="Password (8+ chars, mixed case, number, symbol)"
+                aria-label="Password must have at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character"
                 className="w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
