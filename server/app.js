@@ -12,17 +12,28 @@ const bookingsRoutes = require('./routes/bookings');
 const app = express();
 
 // CORS configuration
-const corsOptions = {
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'https://www.aquads.xyz');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
+  next();
+});
+
+// Apply CORS middleware
+app.use(cors({
   origin: ['https://www.aquads.xyz', 'https://aquads.xyz', 'http://localhost:3000'],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept', 'X-Requested-With'],
   credentials: true,
   preflightContinue: false,
   optionsSuccessStatus: 204
-};
-
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // Enable pre-flight for all routes
+}));
 
 app.use(express.json());
 
