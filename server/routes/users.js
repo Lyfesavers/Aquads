@@ -73,7 +73,8 @@ router.post('/register', registrationLimiter, async (req, res) => {
       username,
       password,
       email: email ? email.toLowerCase() : undefined,
-      image: image || undefined
+      image: image || undefined,
+      userType: req.body.userType || 'freelancer' // Add userType with default fallback
     };
 
     // If referral code provided, find referring user by username
