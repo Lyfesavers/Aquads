@@ -11,7 +11,7 @@ const rateLimit = require('express-rate-limit');
 // Rate limiting for registration
 const registrationLimiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000, // 24 hour window
-  max: 2, // limit each IP to 3 registrations per day
+  max: 5, // limit each IP to 3 registrations per day
   message: 'Too many accounts created from this IP, please try again after 24 hours'
 });
 
