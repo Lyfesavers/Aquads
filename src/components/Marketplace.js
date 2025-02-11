@@ -339,8 +339,9 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       case 'price-high':
         return servicesCopy.sort((a, b) => b.price - a.price);
       case 'newest':
+        return servicesCopy.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       default:
-        return servicesCopy; // Services are already sorted by newest from the API
+        return servicesCopy;
     }
   };
 
