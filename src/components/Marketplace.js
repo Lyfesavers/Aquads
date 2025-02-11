@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import CreateServiceModal from './CreateServiceModal';
 import ServiceReviews from './ServiceReviews';
@@ -12,6 +12,9 @@ import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
 import EditServiceModal from './EditServiceModal';
 import { FaTelegram, FaTwitter, FaDiscord, FaEnvelope, FaLinkedin } from 'react-icons/fa';
+import ServiceImage from './ServiceImage';
+import ServiceBadge from './ServiceBadge';
+import BookingButton from './BookingButton';
 
 // Helper function to check if URL is valid
 const isValidUrl = (string) => {
@@ -39,7 +42,7 @@ const getImageUrl = (imagePath) => {
 };
 
 // Update image components with simpler URL handling
-const ServiceImage = ({ src, alt, className }) => {
+const ServiceImageComponent = ({ src, alt, className }) => {
   const [imgSrc, setImgSrc] = useState(getImageUrl(src));
 
   return (
@@ -73,7 +76,7 @@ const UserImage = ({ src, alt, className }) => {
   );
 };
 
-const ServiceBadge = ({ badge }) => {
+const ServiceBadgeComponent = ({ badge }) => {
   if (!badge) return null;
 
   const badgeColors = {
@@ -492,6 +495,28 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     }
   };
 
+  const handleBookingCreate = async (serviceId, requirements) => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/bookings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({ serviceId, requirements })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create booking');
+      }
+
+      return await response.json();
+    } catch (error) {
+      throw error;
+    }
+  };
+
   return (
     <div className="h-screen overflow-y-auto bg-gradient-to-br from-gray-900 to-black text-white">
       {/* Fixed Background */}
@@ -757,12 +782,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                     className="bg-gray-800/50 backdrop-blur-sm rounded-lg overflow-hidden group hover:shadow-lg hover:shadow-indigo-500/20 transition-all duration-300"
                   >
                     <div className="aspect-w-16 aspect-h-9 relative">
-                      <ServiceImage 
+                      <ServiceImageComponent 
                         src={service.image}
                         alt={service.title}
                         className="w-full h-48 object-cover"
                       />
-                      <ServiceBadge badge={service.badge} />
+                      <ServiceBadgeComponent badge={service.badge} />
                       {currentUser && service.seller?.username === currentUser.username && (
                         <div className="absolute top-2 right-2 flex gap-2 z-10">
                           <button
@@ -835,6 +860,16 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                             {expandedDescriptions.has(service._id) ? 'Show less' : 'Read more'}
                           </button>
                         )}
+                      </div>
+                      <div className="mt-4">
+                        <BookingButton
+                          service={service}
+                          currentUser={currentUser}
+                          onBookingCreate={handleBookingCreate}
+                          showNotification={(message, type) => {
+                            alert(message); // Using alert for now, can be replaced with a better notification system
+                          }}
+                        />
                       </div>
                       <div className="flex items-center justify-between pt-4 border-t border-gray-700">
                         <span className="text-gray-400 text-sm">

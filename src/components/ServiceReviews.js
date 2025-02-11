@@ -131,14 +131,14 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.error || 'Invalid referral code');
+        throw new Error(data.error || 'Invalid Secret code');
       }
 
       setIsVerified(true);
-      showNotification('Referral code verified successfully!', 'success');
+      showNotification('Secret code verified successfully!', 'success');
     } catch (error) {
-      console.error('Error verifying referral code:', error);
-      showNotification(error.message || 'Failed to verify referral code', 'error');
+      console.error('Error verifying Secret code:', error);
+      showNotification(error.message || 'Failed to verify Secret code', 'error');
       setIsVerified(false);
     } finally {
       setIsVerifying(false);
@@ -153,7 +153,7 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
     }
 
     if (!isVerified) {
-      showNotification('Please verify your referral code first', 'error');
+      showNotification('Please verify your Secret code first', 'error');
       return;
     }
 
@@ -237,14 +237,14 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
                 
                 {!isVerified ? (
                   <div className="mb-4">
-                    <label className="block mb-2">Enter Your Referral Code</label>
+                    <label className="block mb-2">Enter Your Secret Code</label>
                     <div className="flex gap-2">
                       <input
                         type="text"
                         value={newReview.referralCode}
                         onChange={(e) => setNewReview(prev => ({ ...prev, referralCode: e.target.value }))}
                         className="flex-1 bg-gray-700 rounded p-2"
-                        placeholder="Your referral code"
+                        placeholder="Your Secret code"
                         required
                       />
                       <button
