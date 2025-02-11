@@ -12,8 +12,6 @@ import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
 import EditServiceModal from './EditServiceModal';
 import { FaTelegram, FaTwitter, FaDiscord, FaEnvelope, FaLinkedin } from 'react-icons/fa';
-import ServiceImage from './ServiceImage';
-import ServiceBadge from './ServiceBadge';
 import BookingButton from './BookingButton';
 
 // Helper function to check if URL is valid
