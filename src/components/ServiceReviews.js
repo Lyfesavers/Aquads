@@ -110,7 +110,7 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
 
   const verifyReferralCode = async () => {
     if (!newReview.referralCode.trim()) {
-      showNotification('Please enter your referral code', 'error');
+      showNotification('Please enter your Secret code', 'error');
       return;
     }
 
