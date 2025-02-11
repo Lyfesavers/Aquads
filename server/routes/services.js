@@ -3,6 +3,7 @@ const router = express.Router();
 const Service = require('../models/Service');
 const auth = require('../middleware/auth');
 const upload = require('../middleware/upload');
+const { awardListingPoints } = require('./points');
 
 // Get all services with optional filtering
 router.get('/', async (req, res) => {
@@ -132,6 +133,15 @@ router.post('/', auth, async (req, res) => {
 
     await service.save();
     console.log('Service saved successfully');
+    
+    // Award points for creating a listing
+    try {
+      await awardListingPoints(req.user.userId);
+      console.log('Points awarded for service listing');
+    } catch (pointsError) {
+      console.error('Error awarding points:', pointsError);
+      // Don't fail the service creation if points awarding fails
+    }
     
     await service.populate('seller', 'username image rating reviews');
     console.log('Service populated with seller info');

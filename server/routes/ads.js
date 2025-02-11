@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Ad = require('../models/Ad');
 const auth = require('../middleware/auth');
+const { awardListingPoints } = require('./points');
 
 // Skip auth for GET requests
 router.use((req, res, next) => {
@@ -185,6 +186,45 @@ router.post('/force-update/:id', async (req, res) => {
   } catch (error) {
     console.error('Force update error:', error);
     return res.status(500).json({ error: error.message });
+  }
+});
+
+// POST route for creating new ad
+router.post('/', auth, async (req, res) => {
+  try {
+    const { title, logo, url } = req.body;
+    
+    // Validate input
+    if (!title || !logo || !url) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const ad = new Ad({
+      id: `ad-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      title,
+      logo,
+      url,
+      size: MAX_SIZE,
+      x: 0,
+      y: 0,
+      owner: req.user.userId
+    });
+
+    await ad.save();
+
+    // Award points for creating a listing
+    try {
+      await awardListingPoints(req.user.userId);
+      console.log('Points awarded for ad listing');
+    } catch (pointsError) {
+      console.error('Error awarding points:', pointsError);
+      // Don't fail the ad creation if points awarding fails
+    }
+
+    res.status(201).json(ad);
+  } catch (error) {
+    console.error('Error creating ad:', error);
+    res.status(500).json({ error: 'Failed to create ad' });
   }
 });
 
