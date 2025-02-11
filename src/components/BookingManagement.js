@@ -33,27 +33,7 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
 
   const handleStatusUpdate = async (bookingId, newStatus) => {
     try {
-      const token = JSON.parse(localStorage.getItem('currentUser'))?.token;
-      if (!token) {
-        throw new Error('Authentication required');
-      }
-
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/bookings/${bookingId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ status: newStatus })
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to update booking status');
-      }
-
-      const updatedBooking = await response.json();
-      onStatusUpdate(updatedBooking);
+      await onStatusUpdate(bookingId, newStatus);
       showNotification('Booking status updated successfully', 'success');
     } catch (error) {
       showNotification(error.message || 'Failed to update booking status', 'error');

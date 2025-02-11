@@ -359,25 +359,36 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   const handleBookingStatusUpdate = async (bookingId, status) => {
     try {
+      const token = JSON.parse(localStorage.getItem('currentUser'))?.token;
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/bookings/${bookingId}/status`, {
-        method: 'PATCH',
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ status })
       });
 
-      if (!response.ok) throw new Error('Failed to update booking status');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update booking status');
+      }
+
       const updatedBooking = await response.json();
-      
       setBookings(prevBookings => 
         prevBookings.map(booking => 
           booking._id === updatedBooking._id ? updatedBooking : booking
         )
       );
+      
+      return updatedBooking;
     } catch (error) {
-      throw new Error(error.message || 'Failed to update booking status');
+      console.error('Error updating booking status:', error);
+      throw error;
     }
   };
 
