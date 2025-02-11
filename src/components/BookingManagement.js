@@ -1,6 +1,6 @@
 import React from 'react';
 
-const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotification }) => {
+const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotification, onShowReviews }) => {
   const getStatusBadgeClass = (status) => {
     switch (status) {
       case 'pending':
@@ -44,7 +44,25 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
     const isSeller = booking.sellerId._id === currentUser.userId;
     const isBuyer = booking.buyerId._id === currentUser.userId;
 
-    if (booking.status === 'completed' || booking.status === 'cancelled' || booking.status === 'declined') {
+    // For completed bookings, show review button only to buyers
+    if (booking.status === 'completed') {
+      if (isBuyer && !booking.isReviewed) {
+        return (
+          <div className="flex gap-2 mt-2">
+            <button
+              onClick={() => onShowReviews(booking.serviceId)}
+              className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/30"
+            >
+              Leave Review
+            </button>
+          </div>
+        );
+      }
+      return null;
+    }
+
+    // For cancelled or declined bookings
+    if (booking.status === 'cancelled' || booking.status === 'declined') {
       return null;
     }
 
