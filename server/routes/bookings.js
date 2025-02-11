@@ -66,12 +66,12 @@ router.get('/my-bookings', auth, async (req, res) => {
 
 // Handle OPTIONS request for the status update endpoint
 router.options('/:id/status', (req, res) => {
-  res.header('Access-Control-Allow-Methods', 'PATCH');
+  res.header('Access-Control-Allow-Methods', 'PUT');
   res.status(204).end();
 });
 
 // Update booking status
-router.patch('/:id/status', auth, async (req, res) => {
+router.put('/:id/status', auth, async (req, res) => {
   try {
     const { status } = req.body;
     const booking = await Booking.findById(req.params.id);
