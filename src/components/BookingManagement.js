@@ -142,7 +142,7 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
                 {booking.serviceId.title}
               </h3>
               <p className="text-sm text-gray-400">
-                {booking.isSeller ? 'Buyer' : 'Seller'}: {
+                {booking.sellerId._id === currentUser.userId ? 'Buyer' : 'Seller'}: {
                   booking.sellerId._id === currentUser.userId 
                     ? booking.buyerName
                     : booking.sellerId.username
