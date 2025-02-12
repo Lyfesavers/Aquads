@@ -7,6 +7,9 @@ const serviceReviewRoutes = require('./routes/serviceReviews');
 const bannerAdsRoutes = require('./routes/bannerAds');
 const pointsRoutes = require('./routes/points');
 const bookingsRoutes = require('./routes/bookings');
+const Service = require('./models/Service');
+const path = require('path');
+const fs = require('fs');
 
 // Middleware
 const app = express();
@@ -37,6 +40,38 @@ app.use(cors({
 
 app.use(express.json());
 
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, '../build')));
+
+// Dynamic meta tags middleware for service pages
+app.get('/marketplace', async (req, res, next) => {
+  try {
+    const serviceId = req.query.service;
+    if (serviceId) {
+      const service = await Service.findById(serviceId);
+      if (service) {
+        // Read the index.html file
+        let indexHtml = await fs.readFile(path.join(__dirname, '../build/index.html'), 'utf8');
+        
+        // Replace meta tags with service-specific content
+        indexHtml = indexHtml
+          .replace(/<meta name="twitter:image"[^>]*>/, `<meta name="twitter:image" content="${service.image}">`)
+          .replace(/<meta name="twitter:title"[^>]*>/, `<meta name="twitter:title" content="${service.title} - Aquads Marketplace">`)
+          .replace(/<meta name="twitter:description"[^>]*>/, `<meta name="twitter:description" content="${service.description.slice(0, 200)}...">`)
+          .replace(/<meta property="og:image"[^>]*>/, `<meta property="og:image" content="${service.image}">`)
+          .replace(/<meta property="og:title"[^>]*>/, `<meta property="og:title" content="${service.title} - Aquads Marketplace">`)
+          .replace(/<meta property="og:description"[^>]*>/, `<meta property="og:description" content="${service.description.slice(0, 200)}...">`)
+          .replace(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="https://aquads.xyz/marketplace?service=${service._id}">`);
+        
+        return res.send(indexHtml);
+      }
+    }
+  } catch (error) {
+    console.error('Error handling dynamic meta tags:', error);
+  }
+  next();
+});
+
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
@@ -44,5 +79,10 @@ app.use('/api/service-reviews', serviceReviewRoutes);
 app.use('/api/bannerAds', bannerAdsRoutes);
 app.use('/api/points', pointsRoutes);
 app.use('/api/bookings', bookingsRoutes);
+
+// Handle React routing, return all requests to React app
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../build/index.html'));
+});
 
 module.exports = app; 
