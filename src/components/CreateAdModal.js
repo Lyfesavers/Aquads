@@ -5,7 +5,8 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
   const [formData, setFormData] = useState({
     title: '',
     logo: '',
-    url: ''
+    url: '',
+    contractAddress: ''
   });
   const [previewUrl, setPreviewUrl] = useState('');
   const [error, setError] = useState('');
@@ -19,6 +20,15 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
     } catch (error) {
       return false;
     }
+  };
+
+  const validateContractAddress = (address) => {
+    // Allow any non-empty string that:
+    // 1. Has no spaces
+    // 2. Is between 20-70 characters
+    // 3. Contains only valid characters (alphanumeric, with optional 0x prefix)
+    return /^[0-9a-zA-Z]{20,70}$/.test(address) || 
+           /^0x[0-9a-fA-F]{20,70}$/.test(address);
   };
 
   const handleLogoChange = async (e) => {
@@ -46,6 +56,12 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
       setError('Please enter a valid image URL');
       return;
     }
+
+    if (!validateContractAddress(formData.contractAddress)) {
+      setError('Please enter a valid contract address');
+      return;
+    }
+
     onCreateAd(formData);
   };
 
@@ -70,6 +86,18 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
               name="title"
               value={formData.title}
               onChange={handleChange}
+              required
+              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block mb-1">Contract Address</label>
+            <input
+              type="text"
+              name="contractAddress"
+              value={formData.contractAddress}
+              onChange={handleChange}
+              placeholder="Enter contract address (0x...)"
               required
               className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />

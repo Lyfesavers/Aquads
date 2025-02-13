@@ -70,6 +70,18 @@ const adSchema = new mongoose.Schema({
     type: String,
     enum: ['active', 'pending', 'approved'],
     default: 'active'
+  },
+  contractAddress: {
+    type: String,
+    required: true,
+    validate: {
+      validator: function(v) {
+        // Match the same validation as frontend
+        return /^[0-9a-zA-Z]{20,70}$/.test(v) || 
+               /^0x[0-9a-fA-F]{20,70}$/.test(v);
+      },
+      message: props => `${props.value} is not a valid contract address!`
+    }
   }
 });
 
