@@ -77,9 +77,13 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
 
     try {
       await onCreateAccount(formData);
-      onClose();
     } catch (error) {
-      setError(error.message);
+      if (error.response?.status === 429) {
+        setError('Too many signup attempts. Please try again in 24 hours.');
+      } else {
+        setError(error.message || 'Failed to create account. Please try again.');
+      }
+      console.error('Signup error:', error);
     }
   };
 
