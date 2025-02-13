@@ -22,6 +22,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [activeTab, setActiveTab] = useState('ads');
   const [showReviews, setShowReviews] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
+  const [affiliateEarnings, setAffiliateEarnings] = useState(null);
+  const [earningsSummary, setEarningsSummary] = useState(null);
 
   // Fetch bump requests and banner ads when dashboard opens
   useEffect(() => {
@@ -89,6 +91,38 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   useEffect(() => {
     if (currentUser) {
       fetchBookings();
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (currentUser?.token) {
+      // Fetch affiliate earnings summary
+      fetch(`${process.env.REACT_APP_API_URL}/api/affiliates/summary`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      })
+        .then(response => response.json())
+        .then(data => {
+          setEarningsSummary(data);
+        })
+        .catch(error => {
+          console.error('Error fetching earnings summary:', error);
+        });
+
+      // Fetch detailed earnings
+      fetch(`${process.env.REACT_APP_API_URL}/api/affiliates/earnings`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      })
+        .then(response => response.json())
+        .then(data => {
+          setAffiliateEarnings(data);
+        })
+        .catch(error => {
+          console.error('Error fetching affiliate earnings:', error);
+        });
     }
   }, [currentUser]);
 
@@ -405,6 +439,85 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     setSelectedService(null);
   };
 
+  const renderAffiliateEarnings = () => {
+    if (!earningsSummary) return null;
+
+    return (
+      <div className="bg-gray-700 rounded-lg p-6 mt-6">
+        <h3 className="text-xl font-semibold mb-4 text-blue-400">Ad Revenue & Commissions</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="bg-gray-800 p-4 rounded-lg">
+            <p className="text-gray-400">Total Ad Revenue</p>
+            <p className="text-2xl font-bold text-blue-400">
+              ${earningsSummary.totalAdRevenue.toFixed(2)}
+            </p>
+          </div>
+          
+          <div className="bg-gray-800 p-4 rounded-lg">
+            <p className="text-gray-400">Commission Earned</p>
+            <p className="text-2xl font-bold text-green-400">
+              ${earningsSummary.totalEarned.toFixed(2)}
+            </p>
+          </div>
+          
+          <div className="bg-gray-800 p-4 rounded-lg">
+            <p className="text-gray-400">Current Commission Rate</p>
+            <p className="text-2xl font-bold text-yellow-400">
+              {(earningsSummary.currentRate * 100).toFixed(0)}%
+            </p>
+          </div>
+        </div>
+
+        {earningsSummary.nextTier && (
+          <div className="bg-gray-800 p-4 rounded-lg mb-6">
+            <p className="text-gray-400">Next Commission Tier</p>
+            <div className="mt-2">
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-white">Progress to {(earningsSummary.nextTier.rate * 100)}% rate</span>
+                <span className="text-blue-400">
+                  ${earningsSummary.totalAdRevenue.toLocaleString()} / ${earningsSummary.nextTier.amountNeeded.toLocaleString()}
+                </span>
+              </div>
+              <div className="w-full bg-gray-700 rounded-full h-2.5">
+                <div 
+                  className="bg-blue-500 h-2.5 rounded-full" 
+                  style={{ width: `${Math.min((earningsSummary.totalAdRevenue / earningsSummary.nextTier.amountNeeded) * 100, 100)}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {affiliateEarnings?.earnings?.length > 0 && (
+          <div className="mt-6">
+            <h4 className="text-lg font-medium text-white mb-4">Recent Ad Commissions</h4>
+            <div className="space-y-4">
+              {affiliateEarnings.earnings.slice(0, 5).map(earning => (
+                <div key={earning._id} className="bg-gray-800 p-4 rounded-lg flex justify-between items-center">
+                  <div>
+                    <p className="text-white">{earning.adId?.title || 'Ad'}</p>
+                    <p className="text-sm text-gray-400">
+                      {new Date(earning.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-green-400 font-bold">
+                      ${earning.commissionEarned.toFixed(2)}
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      {(earning.commissionRate * 100)}% of ${earning.adAmount}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-start justify-center z-50 overflow-y-auto p-4">
       <div className="bg-gray-800 rounded-lg w-full max-w-4xl relative my-8">
@@ -445,6 +558,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           <div className="overflow-y-auto">
             {activeTab === 'ads' && (
               <div className="space-y-6">
+                {renderAffiliateEarnings()}
+
                 {/* Affiliate Section */}
                 <div className="bg-gray-700 rounded-lg p-6">
                   <h3 className="text-xl font-semibold mb-4 text-blue-400">Affiliate Program</h3>

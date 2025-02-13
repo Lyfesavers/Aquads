@@ -7,6 +7,7 @@ const serviceReviewRoutes = require('./routes/serviceReviews');
 const bannerAdsRoutes = require('./routes/bannerAds');
 const pointsRoutes = require('./routes/points');
 const bookingsRoutes = require('./routes/bookings');
+ const affiliateRoutes = require('./routes/affiliates');
 const Service = require('./models/Service');
 const path = require('path');
 const fs = require('fs');
@@ -79,6 +80,7 @@ app.use('/api/service-reviews', serviceReviewRoutes);
 app.use('/api/bannerAds', bannerAdsRoutes);
 app.use('/api/points', pointsRoutes);
 app.use('/api/bookings', bookingsRoutes);
+app.use('/api/affiliates', affiliateRoutes);
 
 // Handle React routing, return all requests to React app
 app.get('*', (req, res) => {
