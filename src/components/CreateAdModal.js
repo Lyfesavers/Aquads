@@ -23,12 +23,18 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
   };
 
   const validateContractAddress = (address) => {
-    // Allow any non-empty string that:
-    // 1. Has no spaces
-    // 2. Is between 20-70 characters
-    // 3. Contains only valid characters (alphanumeric, with optional 0x prefix)
-    return /^[0-9a-zA-Z]{20,70}$/.test(address) || 
-           /^0x[0-9a-fA-F]{20,70}$/.test(address);
+    // Base58 format (for Solana)
+    const base58Regex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+    
+    // Hex format with 0x prefix (for ETH, BSC, SUI etc)
+    const hexRegex = /^0x[0-9a-fA-F]{40,64}$/;
+    
+    // General alphanumeric format for other chains
+    const generalRegex = /^[0-9a-zA-Z]{15,70}$/;
+
+    return base58Regex.test(address) || 
+           hexRegex.test(address) || 
+           generalRegex.test(address);
   };
 
   const handleLogoChange = async (e) => {
