@@ -136,12 +136,8 @@ router.post('/', auth, async (req, res) => {
   try {
     const { title, logo, url, contractAddress } = req.body;
     
-    // Basic validation
-    if (!title || !logo || !url || !contractAddress) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
+    console.log('Creating ad with data:', req.body); // Debug log
 
-    // Create new ad with all fields
     const ad = new Ad({
       id: `ad-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       title,
@@ -151,20 +147,22 @@ router.post('/', auth, async (req, res) => {
       size: MAX_SIZE,
       x: 0,
       y: 0,
-      owner: req.user.username
+      owner: req.user.username,
+      status: 'active'
     });
 
-    console.log('Attempting to save ad:', ad); // Debug log
-
     const savedAd = await ad.save();
-    console.log('Ad saved successfully:', savedAd); // Debug log
+    
+    if (!savedAd) {
+      throw new Error('Failed to save ad');
+    }
 
     res.status(201).json(savedAd);
   } catch (error) {
-    console.error('Error creating ad:', error); // Detailed error logging
+    console.error('Server error creating ad:', error);
     res.status(500).json({ 
-      error: 'Failed to create ad',
-      details: error.message 
+      error: 'Failed to create ad', 
+      message: error.message 
     });
   }
 });

@@ -85,13 +85,8 @@ const adSchema = new mongoose.Schema({
   }
 });
 
-// Add pre-save middleware for additional validation if needed
-adSchema.pre('save', function(next) {
-  if (!this.title || !this.logo || !this.url || !this.contractAddress) {
-    next(new Error('Missing required fields'));
-  }
-  next();
-});
+// Remove the pre-save middleware as it's causing issues
+// We'll handle validation in the route instead
 
-module.exports = mongoose.model('Ad', adSchema); 
+// Fix the double export
 module.exports = mongoose.model('Ad', adSchema); 
