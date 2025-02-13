@@ -74,24 +74,24 @@ const adSchema = new mongoose.Schema({
   contractAddress: {
     type: String,
     required: true,
+    trim: true,
     validate: {
       validator: function(v) {
-        // Base58 format (for Solana)
-        const base58Regex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
-        
-        // Hex format with 0x prefix (for ETH, BSC, SUI etc)
-        const hexRegex = /^0x[0-9a-fA-F]{40,64}$/;
-        
-        // General alphanumeric format for other chains
-        const generalRegex = /^[0-9a-zA-Z]{15,70}$/;
-
-        return base58Regex.test(v) || 
-               hexRegex.test(v) || 
-               generalRegex.test(v);
+        if (!v) return false;
+        return /^[^\s]+$/.test(v);
       },
-      message: props => `${props.value} is not a valid contract address!`
+      message: 'Contract address is required and cannot contain spaces'
     }
   }
 });
 
+// Add pre-save middleware for additional validation if needed
+adSchema.pre('save', function(next) {
+  if (!this.title || !this.logo || !this.url || !this.contractAddress) {
+    next(new Error('Missing required fields'));
+  }
+  next();
+});
+
+module.exports = mongoose.model('Ad', adSchema); 
 module.exports = mongoose.model('Ad', adSchema); 

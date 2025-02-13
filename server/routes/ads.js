@@ -134,39 +134,38 @@ router.get('/', async (req, res) => {
 // POST route for creating new ad
 router.post('/', auth, async (req, res) => {
   try {
-    const { title, logo, url } = req.body;
+    const { title, logo, url, contractAddress } = req.body;
     
-    // Validate input
-    if (!title || !logo || !url) {
+    // Basic validation
+    if (!title || !logo || !url || !contractAddress) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
+    // Create new ad with all fields
     const ad = new Ad({
       id: `ad-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       title,
       logo,
       url,
+      contractAddress,
       size: MAX_SIZE,
       x: 0,
       y: 0,
       owner: req.user.username
     });
 
-    await ad.save();
+    console.log('Attempting to save ad:', ad); // Debug log
 
-    // Award points for creating a listing
-    try {
-      await awardListingPoints(req.user.userId);
-      console.log('Points awarded for ad listing');
-    } catch (pointsError) {
-      console.error('Error awarding points:', pointsError);
-      // Don't fail the ad creation if points awarding fails
-    }
+    const savedAd = await ad.save();
+    console.log('Ad saved successfully:', savedAd); // Debug log
 
-    res.status(201).json(ad);
+    res.status(201).json(savedAd);
   } catch (error) {
-    console.error('Error creating ad:', error);
-    res.status(500).json({ error: 'Failed to create ad' });
+    console.error('Error creating ad:', error); // Detailed error logging
+    res.status(500).json({ 
+      error: 'Failed to create ad',
+      details: error.message 
+    });
   }
 });
 
