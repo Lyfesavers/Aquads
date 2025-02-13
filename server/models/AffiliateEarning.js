@@ -44,7 +44,7 @@ const affiliateEarningSchema = new Schema({
 // Calculate commission rate based on total ad revenue
 affiliateEarningSchema.statics.calculateCommissionRate = async function(affiliateId) {
   const totalEarnings = await this.aggregate([
-    { $match: { affiliateId: mongoose.Types.ObjectId(affiliateId) } },
+    { $match: { affiliateId: new mongoose.Types.ObjectId(affiliateId) } },
     { $group: { _id: null, total: { $sum: "$adAmount" } } }
   ]);
   

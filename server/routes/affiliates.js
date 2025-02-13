@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const AffiliateEarning = require('../models/AffiliateEarning');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
@@ -7,9 +8,21 @@ const auth = require('../middleware/auth');
 // Get affiliate earnings from ads
 router.get('/earnings', auth, async (req, res) => {
   try {
-    const earnings = await AffiliateEarning.find({ affiliateId: req.user.userId })
+    if (!mongoose.Types.ObjectId.isValid(req.user.userId)) {
+      return res.status(400).json({
+        error: 'Invalid user ID',
+        earnings: [],
+        totalEarnings: 0,
+        pendingEarnings: 0,
+        paidEarnings: 0,
+        currentRate: 0.10
+      });
+    }
+
+    const earnings = await AffiliateEarning.find({ affiliateId: new mongoose.Types.ObjectId(req.user.userId) })
       .populate('adId', 'title')
-      .sort({ createdAt: -1 }) || [];
+      .sort({ createdAt: -1 })
+      .lean() || [];
     
     // Calculate totals with null checks
     const totalEarnings = earnings.reduce((sum, earning) => sum + (earning.commissionEarned || 0), 0);
@@ -48,14 +61,20 @@ router.post('/record-ad-commission', auth, async (req, res) => {
   try {
     const { referredUserId, adId, adAmount } = req.body;
     
+    if (!mongoose.Types.ObjectId.isValid(req.user.userId) || 
+        !mongoose.Types.ObjectId.isValid(referredUserId) || 
+        !mongoose.Types.ObjectId.isValid(adId)) {
+      return res.status(400).json({ error: 'Invalid ID format' });
+    }
+    
     // Calculate commission rate based on total earnings
     const commissionRate = await AffiliateEarning.calculateCommissionRate(req.user.userId);
     const commissionEarned = AffiliateEarning.calculateCommission(adAmount, commissionRate);
     
     const earning = new AffiliateEarning({
-      affiliateId: req.user.userId,
-      referredUserId,
-      adId,
+      affiliateId: new mongoose.Types.ObjectId(req.user.userId),
+      referredUserId: new mongoose.Types.ObjectId(referredUserId),
+      adId: new mongoose.Types.ObjectId(adId),
       adAmount,
       commissionRate,
       commissionEarned
@@ -72,7 +91,23 @@ router.post('/record-ad-commission', auth, async (req, res) => {
 // Get earnings summary
 router.get('/summary', auth, async (req, res) => {
   try {
-    const earnings = await AffiliateEarning.find({ affiliateId: req.user.userId }) || [];
+    if (!mongoose.Types.ObjectId.isValid(req.user.userId)) {
+      return res.status(400).json({
+        error: 'Invalid user ID',
+        totalEarned: 0,
+        pendingAmount: 0,
+        totalAdRevenue: 0,
+        currentRate: 0.10,
+        nextTier: {
+          rate: 0.15,
+          amountNeeded: 5000,
+          progress: 0
+        }
+      });
+    }
+
+    const earnings = await AffiliateEarning.find({ affiliateId: new mongoose.Types.ObjectId(req.user.userId) })
+      .lean() || [];
     const currentRate = await AffiliateEarning.calculateCommissionRate(req.user.userId) || 0.10;
     
     // Calculate total ad revenue with null check
