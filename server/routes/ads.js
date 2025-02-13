@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const Ad = require('../models/Ad');
 const auth = require('../middleware/auth');
 const { awardListingPoints } = require('./points');
@@ -144,9 +145,18 @@ const forceUpdateExpiredAd = async () => {
 router.get('/', async (req, res) => {
   try {
     // Show all ads without status filter
-    const ads = await Ad.find({});
-    console.log(`Found ${ads.length} total ads`);
-    res.json(ads);
+    const ads = await Ad.find({})
+      .populate('owner', 'username')
+      .lean();
+
+    // Transform the response to include username
+    const transformedAds = ads.map(ad => ({
+      ...ad,
+      owner: ad.owner?.username || 'Unknown'
+    }));
+
+    console.log(`Found ${transformedAds.length} total ads`);
+    res.json(transformedAds);
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ error: 'Server error' });
@@ -199,6 +209,11 @@ router.post('/', auth, async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
+    // Ensure we have a valid user ID
+    if (!mongoose.Types.ObjectId.isValid(req.user.userId)) {
+      return res.status(400).json({ error: 'Invalid user ID' });
+    }
+
     const ad = new Ad({
       id: `ad-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       title,
@@ -207,10 +222,21 @@ router.post('/', auth, async (req, res) => {
       size: MAX_SIZE,
       x: 0,
       y: 0,
-      owner: req.user.userId
+      owner: new mongoose.Types.ObjectId(req.user.userId)
     });
 
     await ad.save();
+
+    // Populate owner details before sending response
+    const populatedAd = await Ad.findById(ad._id)
+      .populate('owner', 'username')
+      .lean();
+
+    // Transform response to include username directly
+    const transformedAd = {
+      ...populatedAd,
+      owner: populatedAd.owner?.username || 'Unknown'
+    };
 
     // Award points for creating a listing
     try {
@@ -221,7 +247,7 @@ router.post('/', auth, async (req, res) => {
       // Don't fail the ad creation if points awarding fails
     }
 
-    res.status(201).json(ad);
+    res.status(201).json(transformedAd);
   } catch (error) {
     console.error('Error creating ad:', error);
     res.status(500).json({ error: 'Failed to create ad' });

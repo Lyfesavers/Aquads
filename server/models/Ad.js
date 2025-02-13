@@ -47,7 +47,8 @@ const adSchema = new mongoose.Schema({
     default: false
   },
   owner: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true
   },
   lastBumpTx: {
