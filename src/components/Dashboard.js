@@ -353,7 +353,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       }).filter(Boolean)
     : [];
 
-  const userAds = currentUser?.isAdmin ? ads : ads.filter(ad => ad.owner === currentUser?.userId || ad.owner === currentUser?.id);
+  const userAds = currentUser?.isAdmin ? ads : ads.filter(ad => ad.owner === currentUser?.username);
 
   const handleProcessRedemption = async (userId, status) => {
     try {

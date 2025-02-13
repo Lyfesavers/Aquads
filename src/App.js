@@ -370,7 +370,7 @@ function App() {
         return;
       }
 
-      const existingAd = ads.find(ad => ad.owner === currentUser.userId);
+      const existingAd = ads.find(ad => ad.owner === currentUser.username);
       if (existingAd && !currentUser.isAdmin) {
         showNotification('You can only create one ad at a time!', 'error');
         return;
@@ -386,7 +386,7 @@ function App() {
         y,
         createdAt: new Date().toISOString(),
         isBumped: false,
-        owner: currentUser.userId
+        owner: currentUser.username
       };
 
       console.log('Creating new ad:', newAd);

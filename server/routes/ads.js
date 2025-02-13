@@ -1,14 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const mongoose = require('mongoose');
 const Ad = require('../models/Ad');
 const auth = require('../middleware/auth');
 const { awardListingPoints } = require('./points');
 
 // Skip auth for GET requests
 router.use((req, res, next) => {
-  // if (req.method === 'GET') return next();
-  // auth(req, res, next);
   next(); // Allow all requests for now
 });
 
@@ -121,81 +118,16 @@ setInterval(async () => {
   }
 }, SHRINK_INTERVAL);
 
-// At the top of the file, after the imports
-const forceUpdateExpiredAd = async () => {
-  try {
-    console.log('Forcing immediate update...');
-    const result = await Ad.updateOne(
-      { id: 'ad-1736313718692-5gyn3pt2i' },
-      {
-        $set: {
-          isBumped: false,
-          status: 'active',
-          size: MAX_SIZE
-        }
-      }
-    );
-    console.log('Force update result:', result);
-  } catch (error) {
-    console.error('Force update error:', error);
-  }
-};
-
 // GET route
 router.get('/', async (req, res) => {
   try {
     // Show all ads without status filter
-    const ads = await Ad.find({})
-      .populate('owner', 'username')
-      .lean();
-
-    // Transform the response to include username
-    const transformedAds = ads.map(ad => ({
-      ...ad,
-      owner: ad.owner?.username || 'Unknown'
-    }));
-
-    console.log(`Found ${transformedAds.length} total ads`);
-    res.json(transformedAds);
+    const ads = await Ad.find({});
+    console.log(`Found ${ads.length} total ads`);
+    res.json(ads);
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Add this new route at the bottom before module.exports
-router.post('/force-update/:id', async (req, res) => {
-  try {
-    console.log('Received force update request for:', req.params.id);
-    
-    const ad = await Ad.findOne({ id: req.params.id });
-    if (!ad) {
-      console.log('Ad not found:', req.params.id);
-      return res.status(404).json({ error: 'Ad not found' });
-    }
-
-    console.log('\n=== FORCE UPDATE ATTEMPT ===');
-    console.log('Ad before update:', ad);
-
-    const result = await Ad.findByIdAndUpdate(
-      ad._id,
-      {
-        $set: {
-          isBumped: false,
-          status: 'active',
-          size: MAX_SIZE
-        }
-      },
-      { new: true }
-    );
-
-    console.log('Update result:', result);
-    
-    // Send a direct response, no redirects
-    return res.status(200).json(result);
-  } catch (error) {
-    console.error('Force update error:', error);
-    return res.status(500).json({ error: error.message });
   }
 });
 
@@ -209,11 +141,6 @@ router.post('/', auth, async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Ensure we have a valid user ID
-    if (!mongoose.Types.ObjectId.isValid(req.user.userId)) {
-      return res.status(400).json({ error: 'Invalid user ID' });
-    }
-
     const ad = new Ad({
       id: `ad-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       title,
@@ -222,21 +149,10 @@ router.post('/', auth, async (req, res) => {
       size: MAX_SIZE,
       x: 0,
       y: 0,
-      owner: new mongoose.Types.ObjectId(req.user.userId)
+      owner: req.user.username
     });
 
     await ad.save();
-
-    // Populate owner details before sending response
-    const populatedAd = await Ad.findById(ad._id)
-      .populate('owner', 'username')
-      .lean();
-
-    // Transform response to include username directly
-    const transformedAd = {
-      ...populatedAd,
-      owner: populatedAd.owner?.username || 'Unknown'
-    };
 
     // Award points for creating a listing
     try {
@@ -247,7 +163,7 @@ router.post('/', auth, async (req, res) => {
       // Don't fail the ad creation if points awarding fails
     }
 
-    res.status(201).json(transformedAd);
+    res.status(201).json(ad);
   } catch (error) {
     console.error('Error creating ad:', error);
     res.status(500).json({ error: 'Failed to create ad' });
