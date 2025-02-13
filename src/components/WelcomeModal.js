@@ -3,7 +3,7 @@ import './WelcomeModal.css';
 
 const WelcomeModal = ({ username, onClose, referralCode }) => {
   const handleShare = () => {
-    const tweetText = encodeURIComponent(`🎉 Just joined Aquads! Can't wait to explore amazing services and connect with the community! Check it out! #Aquads #Community\n\nhttps://aquads.xyz`);
+    const tweetText = encodeURIComponent(`🚀 Excited to join @_Aquads_ - the premier Web3 freelancer marketplace! Ready to connect with top crypto talent and projects.\n\n💎 Join using my referral code: ${username}\n\nLet's shape the future of decentralized services together! 💫\n\nhttps://aquads.xyz`);
     window.open(`https://twitter.com/intent/tweet?text=${tweetText}`, '_blank');
   };
 
