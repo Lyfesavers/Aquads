@@ -9,6 +9,7 @@ const User = require('./models/User');
 const BumpRequest = require('./models/BumpRequest');
 const bumpRoutes = require('./routes/bumps');
 const bannerAdsRoutes = require('./routes/bannerAds');
+const affiliateRoutes = require('./routes/affiliates');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const winston = require('winston');
@@ -157,6 +158,7 @@ app.use('/api/users', usersRouter);
 app.use('/api/bannerAds', bannerAdsRoutes);
 app.use('/api/points', require('./routes/points'));
 app.use('/api/bookings', require('./routes/bookings'));
+app.use('/api/affiliates', affiliateRoutes);
 
 // Create new ad
 app.post('/api/ads', auth, async (req, res) => {
