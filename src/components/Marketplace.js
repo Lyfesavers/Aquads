@@ -947,7 +947,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                         )}
                         <button
                           onClick={() => {
-                            const url = `${window.location.origin}/marketplace?service=${service._id}#${service.title.replace(/\s+/g, '-')}`;
+                            const referralCode = currentUser?.username || ''; // Get current user's username as referral code
+                            const url = `${window.location.origin}/marketplace?service=${service._id}&ref=${referralCode}#${service.title.replace(/\s+/g, '-')}`;
                             navigator.clipboard.writeText(url);
                             alert('Service link copied to clipboard! Share this link with others to help them find your service in the marketplace.');
                           }}
