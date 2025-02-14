@@ -11,7 +11,7 @@ import { Button } from 'react-bootstrap';
 import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
 import EditServiceModal from './EditServiceModal';
-import { FaTelegram, FaTwitter, FaDiscord, FaEnvelope, FaLinkedin } from 'react-icons/fa';
+import { FaTelegram, FaTwitter, FaDiscord, FaEnvelope, FaLinkedin, FaGlobe } from 'react-icons/fa';
 import BookingButton from './BookingButton';
 
 // Helper function to check if URL is valid
@@ -932,6 +932,17 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                           >
                             <FaLinkedin className="mr-1" />
                             <span>LinkedIn</span>
+                          </a>
+                        )}
+                        {service.website && (
+                          <a
+                            href={service.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center px-3 py-1.5 text-sm bg-gray-500/20 hover:bg-gray-500/30 text-gray-400 rounded-full transition-all duration-300"
+                          >
+                            <FaGlobe className="mr-1" />
+                            <span>Website</span>
                           </a>
                         )}
                         <button
