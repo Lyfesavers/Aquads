@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 
 const CreateAccountModal = ({ onCreateAccount, onClose }) => {
@@ -13,6 +13,17 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
   });
   const [previewUrl, setPreviewUrl] = useState('');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const refCode = params.get('ref');
+    if (refCode) {
+      setFormData(prev => ({
+        ...prev,
+        referralCode: refCode
+      }));
+    }
+  }, []);
 
   const validateImageUrl = async (url) => {
     try {
