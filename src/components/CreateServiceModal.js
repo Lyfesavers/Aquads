@@ -14,7 +14,8 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
     twitter: '',
     discord: '',
     email: '',
-    linkedin: ''
+    linkedin: '',
+    website: ''
   });
   const [previewUrl, setPreviewUrl] = useState('');
   const [error, setError] = useState('');
@@ -187,6 +188,18 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
                   onChange={(e) => setFormData(prev => ({ ...prev, linkedin: e.target.value }))}
                   placeholder="https://linkedin.com/in/username"
                   className="w-full px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-1">Website</label>
+                <input
+                  type="url"
+                  name="website"
+                  value={formData.website}
+                  onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
+                  placeholder="https://yourwebsite.com"
+                  className="w-full px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
                 />
               </div>
             </div>

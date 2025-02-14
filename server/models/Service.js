@@ -86,6 +86,16 @@ const serviceSchema = new mongoose.Schema({
       message: props => `${props.value} is not a valid LinkedIn URL!`
     }
   },
+  website: {
+    type: String,
+    trim: true,
+    validate: {
+      validator: function(v) {
+        return !v || /^https?:\/\/[^\s$.?#].[^\s]*$/.test(v);
+      },
+      message: 'Please enter a valid website URL'
+    }
+  },
   rating: {
     type: Number,
     default: 0,

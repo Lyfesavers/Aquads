@@ -14,7 +14,8 @@ const EditServiceModal = ({ service, onClose, onEditService, categories }) => {
     twitter: service.twitter || '',
     discord: service.discord || '',
     email: service.email || '',
-    linkedin: service.linkedin || ''
+    linkedin: service.linkedin || '',
+    website: service.website || ''
   });
   const [previewUrl, setPreviewUrl] = useState(service.image || '');
   const [error, setError] = useState('');
@@ -194,6 +195,20 @@ const EditServiceModal = ({ service, onClose, onEditService, categories }) => {
                           className="w-full px-4 py-2 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
                           value={formData.linkedin}
                           onChange={(e) => setFormData(prev => ({ ...prev, linkedin: e.target.value }))}
+                        />
+                      </div>
+
+                      {/* Website */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Website URL
+                        </label>
+                        <input
+                          type="url"
+                          placeholder="https://yourwebsite.com"
+                          className="w-full px-4 py-2 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
+                          value={formData.website}
+                          onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
                         />
                       </div>
                     </div>
