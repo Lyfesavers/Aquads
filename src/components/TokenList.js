@@ -46,12 +46,6 @@ const DEX_OPTIONS = [
     icon: '🪐',
     url: 'https://jup.ag/',
     description: 'Popular DEX'
-  },
-  {
-    name: 'SUI Bridge',
-    icon: '💧',
-    url: 'https://bridge.sui.io/',
-    description: 'SUI Network Bridge'
   }
 ];
 
