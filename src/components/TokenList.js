@@ -80,7 +80,7 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [selectedTimeRange, setSelectedTimeRange] = useState('24h');
   const [chartInstance, setChartInstance] = useState(null);
   const chartRef = useRef(null);
-  const [showDexFrame, setShowDexFrame] = useState(false);
+  const [showDexFrame, setShowDexFrame] = useState(true);
   const [selectedDex, setSelectedDex] = useState(null);
   const [error, setError] = useState(null);
 
