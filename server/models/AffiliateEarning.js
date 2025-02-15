@@ -50,9 +50,9 @@ affiliateEarningSchema.statics.calculateCommissionRate = async function(affiliat
   
   const total = totalEarnings[0]?.total || 0;
   
-  if (total >= 25000) return 0.20;      // 20% for $25,000+
-  if (total >= 5000) return 0.15;       // 15% for $5,000+
-  return 0.10;                          // 10% base rate
+  if (total >= 128.26) return 0.20;      // 20% for 50+ SOL
+  if (total >= 25.66) return 0.15;      // 15% for 10+ SOL
+  return 0.10;                       // 10% base rate
 };
 
 // Calculate commission amount

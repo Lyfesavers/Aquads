@@ -451,14 +451,14 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           <div className="bg-gray-800 p-4 rounded-lg">
             <p className="text-gray-400">Total Ad Revenue</p>
             <p className="text-2xl font-bold text-blue-400">
-              ${earningsSummary.totalAdRevenue.toFixed(2)}
+              {earningsSummary.totalAdRevenue.toFixed(2)} SOL
             </p>
           </div>
           
           <div className="bg-gray-800 p-4 rounded-lg">
             <p className="text-gray-400">Commission Earned</p>
             <p className="text-2xl font-bold text-green-400">
-              ${earningsSummary.totalEarned.toFixed(2)}
+              {earningsSummary.totalEarned.toFixed(2)} SOL
             </p>
           </div>
           
@@ -477,7 +477,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
               <div className="flex justify-between text-sm mb-1">
                 <span className="text-white">Progress to {(earningsSummary.nextTier.rate * 100)}% rate</span>
                 <span className="text-blue-400">
-                  ${earningsSummary.totalAdRevenue.toLocaleString()} / ${earningsSummary.nextTier.amountNeeded.toLocaleString()}
+                  {earningsSummary.totalAdRevenue.toLocaleString()} SOL / {earningsSummary.nextTier.amountNeeded.toLocaleString()} SOL
                 </span>
               </div>
               <div className="w-full bg-gray-700 rounded-full h-2.5">
@@ -504,10 +504,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   </div>
                   <div className="text-right">
                     <p className="text-green-400 font-bold">
-                      ${earning.commissionEarned.toFixed(2)}
+                      {earning.commissionEarned.toFixed(2)} SOL
                     </p>
                     <p className="text-sm text-gray-400">
-                      {(earning.commissionRate * 100)}% of ${earning.adAmount}
+                      {(earning.commissionRate * 100)}% of {earning.adAmount} SOL
                     </p>
                   </div>
                 </div>
