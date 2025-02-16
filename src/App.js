@@ -730,7 +730,7 @@ function App() {
                             onClick={() => setShowCreateModal(true)}
                             className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
                           >
-                            Create Ad
+                            List Project
                           </button>
                           <button
                             onClick={handleLogout}
