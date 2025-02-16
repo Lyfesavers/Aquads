@@ -107,6 +107,25 @@ router.post('/register', registrationLimiter, async (req, res) => {
       }
     }
 
+    // If user was referred, award them points
+    if (user.referredBy) {
+      // Update the new user's points
+      await User.findByIdAndUpdate(
+        user._id,
+        {
+          $inc: { points: 1000 },
+          $push: {
+            pointsHistory: {
+              amount: 1000,
+              reason: 'Signup bonus with affiliate code',
+              createdAt: new Date()
+            }
+          }
+        },
+        { new: true }
+      );
+    }
+
     // Generate JWT token
     const token = jwt.sign(
       { userId: user._id, username: user.username, isAdmin: user.isAdmin },
