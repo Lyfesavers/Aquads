@@ -15,6 +15,7 @@ import { FaTelegram, FaTwitter, FaDiscord, FaEnvelope, FaLinkedin, FaGlobe, FaCr
 import BookingButton from './BookingButton';
 import Dashboard from './Dashboard';
 import PremiumBadge from './PremiumBadge';
+import PremiumPaymentModal from './PremiumPaymentModal';
 
 // Helper function to check if URL is valid
 const isValidUrl = (string) => {
@@ -119,6 +120,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
   const [showPremiumOnly, setShowPremiumOnly] = useState(false);
+  const [showPremiumPaymentModal, setShowPremiumPaymentModal] = useState(false);
+  const [serviceToUpgrade, setServiceToUpgrade] = useState(null);
 
   const categories = [
     { id: 'smart-contract', name: 'Smart Contract', icon: '📝' },
@@ -543,29 +546,27 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     </button>
   );
 
-  const handlePremiumUpgrade = async (serviceId) => {
+  const handlePremiumUpgrade = (serviceId) => {
+    setServiceToUpgrade(serviceId);
+    setShowPremiumPaymentModal(true);
+  };
+
+  const handlePremiumPaymentSubmit = async (paymentSignature) => {
     try {
-      const confirmed = window.confirm(
-        'Premium upgrade costs 1000 USDC. Please make the payment and provide the transaction ID. Continue?'
-      );
-      
-      if (!confirmed) return;
-      
-      const paymentId = prompt('Enter your USDC payment transaction ID:');
-      if (!paymentId) return;
-      
-      const response = await fetch(`${API_URL}/services/${serviceId}/premium-request`, {
+      const response = await fetch(`${API_URL}/services/${serviceToUpgrade}/premium-request`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
         },
-        body: JSON.stringify({ paymentId })
+        body: JSON.stringify({ paymentId: paymentSignature })
       });
 
       if (!response.ok) throw new Error('Failed to request premium status');
       
       alert('Premium request submitted successfully! Admin will review your payment.');
+      setShowPremiumPaymentModal(false);
+      setServiceToUpgrade(null);
     } catch (error) {
       console.error('Error requesting premium:', error);
       alert('Failed to request premium status');
@@ -1147,6 +1148,17 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
           currentUser={currentUser}
           onClose={() => setShowDashboard(false)}
           ads={[]}  // Pass empty array since marketplace doesn't handle ads
+        />
+      )}
+
+      {/* Premium Payment Modal */}
+      {showPremiumPaymentModal && (
+        <PremiumPaymentModal
+          onClose={() => {
+            setShowPremiumPaymentModal(false);
+            setServiceToUpgrade(null);
+          }}
+          onSubmit={handlePremiumPaymentSubmit}
         />
       )}
     </div>
