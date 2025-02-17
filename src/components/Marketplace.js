@@ -115,6 +115,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [serviceToEdit, setServiceToEdit] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
 
   const categories = [
     { id: 'smart-contract', name: 'Smart Contract', icon: '📝' },
@@ -532,6 +533,18 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
               <Link to="/" className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 glow-text">
                 AQUADS
               </Link>
+            </div>
+
+            {/* Add Dashboard button here */}
+            <div className="flex items-center space-x-4">
+              {currentUser && (
+                <button
+                  onClick={() => setShowDashboard(true)}
+                  className="px-4 py-2 bg-indigo-500/80 hover:bg-indigo-600/80 text-white rounded-lg transition-colors"
+                >
+                  Dashboard
+                </button>
+              )}
             </div>
 
             {/* Mobile menu button */}
