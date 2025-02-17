@@ -737,11 +737,32 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                   className="w-full px-4 py-2 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap items-center gap-4 mb-6">
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="bg-gray-700/80 text-white px-4 py-2 rounded-lg"
+                >
+                  <option value="">All Categories</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => setShowPremiumOnly(!showPremiumOnly)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                    showPremiumOnly 
+                      ? 'bg-yellow-500/80 text-white' 
+                      : 'bg-gray-700/80 text-gray-300'
+                  }`}
+                >
+                  <FaCrown className={showPremiumOnly ? 'text-white' : 'text-gray-300'} />
+                  {showPremiumOnly ? 'Show All' : 'Premium Only'}
+                </button>
                 <select
                   value={sortOption}
-                  onChange={handleSortChange}
-                  className="bg-gray-800/50 text-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  onChange={(e) => setSortOption(e.target.value)}
+                  className="bg-gray-700/80 text-white px-4 py-2 rounded-lg"
                 >
                   <option value="newest">Newest First</option>
                   <option value="highest-rated">Highest Rated</option>
@@ -852,6 +873,15 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                       {service.isPremium && <PremiumBadge />}
                       {currentUser && service.seller?.username === currentUser.username && (
                         <div className="absolute top-2 right-2 flex gap-2 z-10">
+                          {!service.isPremium && (
+                            <button
+                              onClick={() => handlePremiumUpgrade(service._id)}
+                              className="bg-yellow-500/80 hover:bg-yellow-600/80 text-white px-3 py-1 rounded-lg shadow-lg hover:shadow-yellow-500/50 transition-all duration-300 backdrop-blur-sm flex items-center gap-1"
+                            >
+                              <FaCrown className="text-white" />
+                              Premium
+                            </button>
+                          )}
                           <button
                             onClick={() => {
                               setServiceToEdit(service);
