@@ -209,4 +209,84 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
+// Request premium status
+router.post('/:id/premium-request', auth, async (req, res) => {
+  try {
+    const { paymentId } = req.body;
+    
+    if (!paymentId) {
+      return res.status(400).json({ error: 'Payment ID is required' });
+    }
+
+    const service = await Service.findOne({ 
+      _id: req.params.id,
+      seller: req.user.userId 
+    });
+
+    if (!service) {
+      return res.status(404).json({ error: 'Service not found' });
+    }
+
+    if (service.isPremium) {
+      return res.status(400).json({ error: 'Service is already premium' });
+    }
+
+    service.premiumPaymentId = paymentId;
+    service.premiumStatus = 'pending';
+    service.premiumRequestedAt = new Date();
+    
+    await service.save();
+
+    res.json(service);
+  } catch (error) {
+    console.error('Error requesting premium status:', error);
+    res.status(500).json({ error: 'Failed to request premium status' });
+  }
+});
+
+// Approve premium status (admin only)
+router.post('/:id/premium-approve', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Only admins can approve premium status' });
+    }
+
+    const service = await Service.findById(req.params.id);
+    
+    if (!service) {
+      return res.status(404).json({ error: 'Service not found' });
+    }
+
+    service.isPremium = true;
+    service.premiumStatus = 'active';
+    service.premiumApprovedAt = new Date();
+    
+    await service.save();
+
+    res.json(service);
+  } catch (error) {
+    console.error('Error approving premium status:', error);
+    res.status(500).json({ error: 'Failed to approve premium status' });
+  }
+});
+
+// Get pending premium requests (admin only)
+router.get('/premium-requests', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Only admins can view premium requests' });
+    }
+
+    const requests = await Service.find({
+      premiumStatus: 'pending',
+      premiumPaymentId: { $ne: null }
+    }).populate('seller', 'username');
+
+    res.json(requests);
+  } catch (error) {
+    console.error('Error fetching premium requests:', error);
+    res.status(500).json({ error: 'Failed to fetch premium requests' });
+  }
+});
+
 module.exports = router; 

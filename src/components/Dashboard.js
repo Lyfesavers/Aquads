@@ -24,6 +24,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [selectedService, setSelectedService] = useState(null);
   const [affiliateEarnings, setAffiliateEarnings] = useState(null);
   const [earningsSummary, setEarningsSummary] = useState(null);
+  const [premiumRequests, setPremiumRequests] = useState([]);
 
   // Fetch bump requests and banner ads when dashboard opens
   useEffect(() => {
@@ -124,6 +125,31 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           console.error('Error fetching affiliate earnings:', error);
         });
     }
+  }, [currentUser]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // ... existing fetch calls ...
+
+        // Fetch premium requests if user is admin
+        if (currentUser?.isAdmin) {
+          const response = await fetch(`${API_URL}/services/premium-requests`, {
+            headers: {
+              'Authorization': `Bearer ${currentUser.token}`
+            }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setPremiumRequests(data);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      }
+    };
+
+    fetchData();
   }, [currentUser]);
 
   const fetchAffiliateInfo = async () => {
@@ -519,6 +545,26 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     );
   };
 
+  const handleApprovePremium = async (serviceId) => {
+    try {
+      const response = await fetch(`${API_URL}/services/${serviceId}/premium-approve`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to approve premium status');
+
+      setPremiumRequests(prev => prev.filter(req => req._id !== serviceId));
+      showNotification('Premium status approved successfully');
+    } catch (error) {
+      console.error('Error approving premium status:', error);
+      showNotification('Failed to approve premium status', 'error');
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-start justify-center z-50 overflow-y-auto p-4">
       <div className="bg-gray-800 rounded-lg w-full max-w-4xl relative my-8">
@@ -552,6 +598,14 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                 onClick={() => setActiveTab('admin')}
               >
                 Admin
+              </button>
+            )}
+            {currentUser.isAdmin && (
+              <button
+                className={`px-4 py-2 ${activeTab === 'premium' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+                onClick={() => setActiveTab('premium')}
+              >
+                Premium Requests
               </button>
             )}
           </div>
@@ -1096,6 +1150,42 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   </div>
                 )}
               </>
+            )}
+
+            {activeTab === 'premium' && currentUser?.isAdmin && (
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold mb-4">Premium Service Requests</h3>
+                {premiumRequests.length === 0 ? (
+                  <p className="text-gray-400">No pending premium requests</p>
+                ) : (
+                  premiumRequests.map(request => (
+                    <div key={request._id} className="bg-gray-800 p-4 rounded-lg">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-medium">{request.title}</h4>
+                          <p className="text-sm text-gray-400">
+                            Seller: {request.seller?.username}
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            Payment ID: {request.premiumPaymentId}
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            Requested: {new Date(request.premiumRequestedAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleApprovePremium(request._id)}
+                            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                          >
+                            Approve
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             )}
           </div>
         </div>

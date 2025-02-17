@@ -11,9 +11,10 @@ import { Button } from 'react-bootstrap';
 import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
 import EditServiceModal from './EditServiceModal';
-import { FaTelegram, FaTwitter, FaDiscord, FaEnvelope, FaLinkedin, FaGlobe } from 'react-icons/fa';
+import { FaTelegram, FaTwitter, FaDiscord, FaEnvelope, FaLinkedin, FaGlobe, FaCrown } from 'react-icons/fa';
 import BookingButton from './BookingButton';
 import Dashboard from './Dashboard';
+import PremiumBadge from './PremiumBadge';
 
 // Helper function to check if URL is valid
 const isValidUrl = (string) => {
@@ -117,6 +118,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [serviceToEdit, setServiceToEdit] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
+  const [showPremiumOnly, setShowPremiumOnly] = useState(false);
 
   const categories = [
     { id: 'smart-contract', name: 'Smart Contract', icon: '📝' },
@@ -350,9 +352,19 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
   // Update the filtered services to include sorting
   const filteredServices = sortServices(
-    selectedCategory 
-      ? services.filter(service => service.category === selectedCategory)
-      : services,
+    services
+      .filter(service => {
+        if (showPremiumOnly) {
+          return service.isPremium;
+        }
+        return true;
+      })
+      .filter(service => {
+        if (selectedCategory) {
+          return service.category === selectedCategory;
+        }
+        return true;
+      }),
     sortOption
   );
 
@@ -794,6 +806,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                         className="w-full h-48 object-cover"
                       />
                       <ServiceBadgeComponent badge={service.badge} />
+                      {service.isPremium && <PremiumBadge />}
                       {currentUser && service.seller?.username === currentUser.username && (
                         <div className="absolute top-2 right-2 flex gap-2 z-10">
                           <button
