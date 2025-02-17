@@ -866,23 +866,29 @@ function App() {
                       return (
                         <motion.div
                           key={ad.id}
-                          className="absolute cursor-pointer transform transition-all hover:scale-105 bubble"
+                          className="absolute cursor-pointer transform hover:scale-105 bubble"
                           drag
                           dragMomentum={false}
                           dragElastic={0.1}
                           whileDrag={{ scale: 1.1 }}
-                          onDragStart={(e) => {
-                            e.stopPropagation();
+                          dragConstraints={{ left: 0, right: windowSize.width - ad.size, top: 0, bottom: windowSize.height - ad.size }}
+                          onDragEnd={(e, info) => {
+                            // Update the ad's position after drag
+                            const newX = parseFloat(e.target.style.left);
+                            const newY = parseFloat(e.target.style.top);
+                            ad.x = newX;
+                            ad.y = newY;
                           }}
                           style={{
+                            position: 'absolute',
                             left: `${x}px`,
                             top: `${y}px`,
                             width: `${ad.size}px`,
                             height: `${ad.size}px`,
-                            transition: `all ${ANIMATION_DURATION} ease-in-out`,
                             zIndex: ad.isBumped ? 2 : 1,
                             animationDuration: `${8 + Math.random() * 4}s`,
-                            cursor: 'grab'
+                            cursor: 'grab',
+                            touchAction: 'none'
                           }}
                           onClick={(e) => {
                             if (!e.defaultPrevented) {
