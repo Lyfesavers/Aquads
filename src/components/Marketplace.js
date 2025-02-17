@@ -529,6 +529,49 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     }
   };
 
+  const renderPremiumToggle = () => (
+    <button
+      onClick={() => setShowPremiumOnly(!showPremiumOnly)}
+      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+        showPremiumOnly 
+          ? 'bg-yellow-500/80 text-white' 
+          : 'bg-gray-700/80 text-gray-300'
+      }`}
+    >
+      <FaCrown className={showPremiumOnly ? 'text-white' : 'text-gray-300'} />
+      {showPremiumOnly ? 'Show All' : 'Premium Only'}
+    </button>
+  );
+
+  const handlePremiumUpgrade = async (serviceId) => {
+    try {
+      const confirmed = window.confirm(
+        'Premium upgrade costs 1000 USDC. Please make the payment and provide the transaction ID. Continue?'
+      );
+      
+      if (!confirmed) return;
+      
+      const paymentId = prompt('Enter your USDC payment transaction ID:');
+      if (!paymentId) return;
+      
+      const response = await fetch(`${API_URL}/services/${serviceId}/premium-request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({ paymentId })
+      });
+
+      if (!response.ok) throw new Error('Failed to request premium status');
+      
+      alert('Premium request submitted successfully! Admin will review your payment.');
+    } catch (error) {
+      console.error('Error requesting premium:', error);
+      alert('Failed to request premium status');
+    }
+  };
+
   return (
     <div className="h-screen overflow-y-auto bg-gradient-to-br from-gray-900 to-black text-white">
       {/* Fixed Background */}
