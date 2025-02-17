@@ -13,6 +13,7 @@ import CreateAccountModal from './CreateAccountModal';
 import EditServiceModal from './EditServiceModal';
 import { FaTelegram, FaTwitter, FaDiscord, FaEnvelope, FaLinkedin, FaGlobe } from 'react-icons/fa';
 import BookingButton from './BookingButton';
+import Dashboard from './Dashboard';
 
 // Helper function to check if URL is valid
 const isValidUrl = (string) => {
@@ -1060,6 +1061,15 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
             setServiceToEdit(null);
           }}
           onEditService={handleEditService}
+        />
+      )}
+
+      {/* Add Dashboard component */}
+      {showDashboard && (
+        <Dashboard
+          currentUser={currentUser}
+          onClose={() => setShowDashboard(false)}
+          ads={[]}  // Pass empty array since marketplace doesn't handle ads
         />
       )}
     </div>
