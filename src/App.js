@@ -871,6 +871,9 @@ function App() {
                           dragMomentum={false}
                           dragElastic={0.1}
                           whileDrag={{ scale: 1.1 }}
+                          onDragStart={(e) => {
+                            e.stopPropagation();
+                          }}
                           style={{
                             left: `${x}px`,
                             top: `${y}px`,
@@ -878,12 +881,14 @@ function App() {
                             height: `${ad.size}px`,
                             transition: `all ${ANIMATION_DURATION} ease-in-out`,
                             zIndex: ad.isBumped ? 2 : 1,
-                            animationDuration: `${8 + Math.random() * 4}s`, // Random duration between 8-12s
+                            animationDuration: `${8 + Math.random() * 4}s`,
                             cursor: 'grab'
                           }}
-                          onClick={() => {
-                            if (requireAuth()) {
-                              window.open(ad.url, '_blank');
+                          onClick={(e) => {
+                            if (!e.defaultPrevented) {
+                              if (requireAuth()) {
+                                window.open(ad.url, '_blank');
+                              }
                             }
                           }}
                         >
