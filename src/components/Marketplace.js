@@ -536,18 +536,6 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
               </Link>
             </div>
 
-            {/* Add Dashboard button here */}
-            <div className="flex items-center space-x-4">
-              {currentUser && (
-                <button
-                  onClick={() => setShowDashboard(true)}
-                  className="px-4 py-2 bg-indigo-500/80 hover:bg-indigo-600/80 text-white rounded-lg transition-colors"
-                >
-                  Dashboard
-                </button>
-              )}
-            </div>
-
             {/* Mobile menu button */}
             <div className="md:hidden">
               <button
@@ -572,6 +560,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
               {currentUser ? (
                 <>
                   <span className="text-blue-300">Welcome, {currentUser.username}!</span>
+                  <button
+                    onClick={() => setShowDashboard(true)}
+                    className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
+                  >
+                    Dashboard
+                  </button>
                   <button
                     onClick={() => setShowBannerModal(true)}
                     className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
@@ -983,9 +977,6 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                 </div>
               )}
             </div>
-          </div>
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            {/* Remove the Create Banner Ad button from here */}
           </div>
         </div>
       </div>
