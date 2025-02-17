@@ -33,6 +33,7 @@ import Whitepaper from './components/Whitepaper';
 import HowTo from './components/HowTo';
 import Affiliate from './components/Affiliate';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 window.Buffer = Buffer;
 
@@ -863,9 +864,13 @@ function App() {
                       const imageSize = Math.floor(ad.size * 0.75);
 
                       return (
-                        <div
+                        <motion.div
                           key={ad.id}
                           className="absolute cursor-pointer transform transition-all hover:scale-105 bubble"
+                          drag
+                          dragMomentum={false}
+                          dragElastic={0.1}
+                          whileDrag={{ scale: 1.1 }}
                           style={{
                             left: `${x}px`,
                             top: `${y}px`,
@@ -873,7 +878,8 @@ function App() {
                             height: `${ad.size}px`,
                             transition: `all ${ANIMATION_DURATION} ease-in-out`,
                             zIndex: ad.isBumped ? 2 : 1,
-                            animationDuration: `${8 + Math.random() * 4}s` // Random duration between 8-12s
+                            animationDuration: `${8 + Math.random() * 4}s`, // Random duration between 8-12s
+                            cursor: 'grab'
                           }}
                           onClick={() => {
                             if (requireAuth()) {
@@ -927,7 +933,7 @@ function App() {
                               </span>
                             </div>
                           </div>
-                        </div>
+                        </motion.div>
                       );
                     })
                   ) : (
