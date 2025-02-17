@@ -873,7 +873,6 @@ function App() {
                           whileDrag={{ scale: 1.1 }}
                           dragConstraints={{ left: 0, right: windowSize.width - ad.size, top: 0, bottom: windowSize.height - ad.size }}
                           onDragEnd={(e, info) => {
-                            // Update the ad's position after drag
                             const newX = parseFloat(e.target.style.left);
                             const newY = parseFloat(e.target.style.top);
                             ad.x = newX;
@@ -885,6 +884,7 @@ function App() {
                             top: `${y}px`,
                             width: `${ad.size}px`,
                             height: `${ad.size}px`,
+                            transition: `width ${ANIMATION_DURATION} ease-in-out, height ${ANIMATION_DURATION} ease-in-out`,
                             zIndex: ad.isBumped ? 2 : 1,
                             animationDuration: `${8 + Math.random() * 4}s`,
                             cursor: 'grab',
