@@ -336,21 +336,32 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     console.log('Token available:', currentUser?.token ? 'yes' : 'no');
   }, [currentUser]);
 
-  // Add sorting function
+  // Modify the sortServices function
   const sortServices = (services, option) => {
     const servicesCopy = [...services];
-    switch (option) {
-      case 'highest-rated':
-        return servicesCopy.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-      case 'price-low':
-        return servicesCopy.sort((a, b) => a.price - b.price);
-      case 'price-high':
-        return servicesCopy.sort((a, b) => b.price - a.price);
-      case 'newest':
-        return servicesCopy.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      default:
-        return servicesCopy;
-    }
+    
+    // First sort by the selected option
+    const sortedServices = servicesCopy.sort((a, b) => {
+      // First prioritize premium status
+      if (a.isPremium && !b.isPremium) return -1;
+      if (!a.isPremium && b.isPremium) return 1;
+      
+      // Then apply the selected sort option within each group
+      switch (option) {
+        case 'highest-rated':
+          return (b.rating || 0) - (a.rating || 0);
+        case 'price-low':
+          return a.price - b.price;
+        case 'price-high':
+          return b.price - a.price;
+        case 'newest':
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        default:
+          return 0;
+      }
+    });
+
+    return sortedServices;
   };
 
   // Update the filtered services to include sorting
