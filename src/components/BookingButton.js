@@ -18,11 +18,11 @@ const BookingButton = ({ service, currentUser, onBookingCreate, showNotification
       
       // Send booking notification to seller
       await emailService.sendBookingNotification(
-        response.sellerId.email,
+        service.seller.email,
         {
           sellerUsername: service.seller.username,
           serviceTitle: service.title,
-          bookingId: service._id,
+          bookingId: response._id,
           price: service.price,
           currency: service.currency,
           buyerUsername: currentUser.username,
