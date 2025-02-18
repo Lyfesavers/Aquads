@@ -35,6 +35,7 @@ import Affiliate from './components/Affiliate';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import emailService from './services/emailService';
+import emailjs from '@emailjs/browser';
 
 window.Buffer = Buffer;
 
@@ -182,6 +183,9 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
 function calculateDistance(x1, y1, x2, y2) {
   return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
 }
+
+// Add after imports
+emailjs.init(process.env.REACT_APP_EMAILJS_PUBLIC_KEY);
 
 function App() {
   const [ads, setAds] = useState(() => {
@@ -649,6 +653,48 @@ function App() {
   const handleProfileUpdate = (updatedUser) => {
     setCurrentUser(updatedUser);
     showNotification('Profile updated successfully!', 'success');
+  };
+
+  const register = async (userData) => {
+    try {
+      console.log('Starting registration...', userData); // Debug log
+      const response = await fetch(`${API_URL}/users/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
+
+      const data = await response.json();
+      console.log('Registration response:', data); // Debug log
+
+      if (response.ok) {
+        // Send welcome email if email is provided
+        if (userData.email) {
+          console.log('Attempting to send welcome email...'); // Debug log
+          try {
+            await emailService.sendWelcomeEmail(
+              userData.email,
+              userData.username,
+              data.user.referralCode
+            );
+            console.log('Welcome email sent successfully'); // Debug log
+          } catch (emailError) {
+            console.error('Failed to send welcome email:', emailError);
+          }
+        }
+
+        setCurrentUser(data.user);
+        localStorage.setItem('currentUser', JSON.stringify(data.user));
+        return data.user;
+      } else {
+        throw new Error(data.error || 'Registration failed');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      throw error;
+    }
   };
 
   return (
