@@ -34,6 +34,7 @@ import HowTo from './components/HowTo';
 import Affiliate from './components/Affiliate';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import emailService from './services/emailService';
 
 window.Buffer = Buffer;
 
