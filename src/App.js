@@ -185,8 +185,8 @@ function calculateDistance(x1, y1, x2, y2) {
   return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
 }
 
-// Change this initialization
-emailjs.init(process.env.REACT_APP_EMAILJS_PUBLIC_KEY, {
+// Add this new initialization
+emailjs.init({
   publicKey: process.env.REACT_APP_EMAILJS_PUBLIC_KEY,
 });
 
