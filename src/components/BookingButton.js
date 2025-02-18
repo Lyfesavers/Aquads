@@ -14,7 +14,8 @@ const BookingButton = ({ service, currentUser, onBookingCreate, showNotification
     try {
       const response = await onBookingCreate(service._id, requirements);
       console.log('Booking Response:', response);
-      console.log('Seller Data:', response.sellerId);
+      console.log('Service Data:', service);
+      console.log('Seller Data:', service.seller);
       
       // Send booking notification to seller
       await emailService.sendBookingNotification(
