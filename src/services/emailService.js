@@ -3,22 +3,18 @@ import emailjs from '@emailjs/browser';
 const emailService = {
   sendWelcomeEmail: async (email, username, referralCode) => {
     try {
-      console.log('Sending email with data:', {
+      const templateParams = {
         to_email: email,
         username: username,
-        secret_code: referralCode,
-        referral_link: `https://aquads.xyz?ref=${username}`
-      });
+        referralCode: referralCode
+      };
+
+      console.log('Sending email with data:', templateParams);
 
       const response = await emailjs.send(
         process.env.REACT_APP_EMAILJS_SERVICE_ID,
         process.env.REACT_APP_EMAILJS_WELCOME_TEMPLATE,
-        {
-          to_email: email,
-          username: username,
-          secret_code: referralCode,
-          referral_link: `https://aquads.xyz?ref=${username}`
-        },
+        templateParams,
         process.env.REACT_APP_EMAILJS_PUBLIC_KEY
       );
 
