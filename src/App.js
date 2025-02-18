@@ -40,6 +40,9 @@ import emailjs from '@emailjs/browser';
 
 window.Buffer = Buffer;
 
+// Initialize EmailJS right after imports
+emailjs.init(process.env.REACT_APP_EMAILJS_PUBLIC_KEY);
+
 // Constants for ad sizes and animations
 const MAX_SIZE = 150;
 const MIN_SIZE = 50;
@@ -184,11 +187,6 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
 function calculateDistance(x1, y1, x2, y2) {
   return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
 }
-
-// Add this new initialization
-emailjs.init({
-  publicKey: process.env.REACT_APP_EMAILJS_PUBLIC_KEY,
-});
 
 function App() {
   const [ads, setAds] = useState(() => {

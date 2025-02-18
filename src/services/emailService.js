@@ -11,7 +11,8 @@ const emailService = {
           username: username,
           secret_code: referralCode,
           referral_link: `https://aquads.xyz?ref=${username}`
-        }
+        },
+        process.env.REACT_APP_EMAILJS_PUBLIC_KEY
       );
       console.log('Welcome email sent:', response);
       return true;
