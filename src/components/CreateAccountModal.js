@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
+import emailService from '../services/emailService';
 
 const CreateAccountModal = ({ onCreateAccount, onClose }) => {
   const [formData, setFormData] = useState({
@@ -87,7 +88,22 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
     console.log('Form data being sent:', formData); // Debug log
 
     try {
-      await onCreateAccount(formData);
+      const response = await onCreateAccount(formData);
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Send welcome email if email is provided
+        if (formData.email) {
+          await emailService.sendWelcomeEmail(
+            formData.email,
+            formData.username,
+            data.user.referralCode
+          );
+        }
+
+        // ... rest of success handling ...
+      }
     } catch (error) {
       if (error.response?.status === 429) {
         setError('Too many signup attempts. Please try again in 24 hours.');

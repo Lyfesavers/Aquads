@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
+import emailService from '../services/emailService';
 
 const BookingButton = ({ service, currentUser, onBookingCreate, showNotification }) => {
   const [showModal, setShowModal] = useState(false);
@@ -14,6 +15,24 @@ const BookingButton = ({ service, currentUser, onBookingCreate, showNotification
       await onBookingCreate(service._id, requirements);
       setShowModal(false);
       showNotification('Booking request sent successfully!', 'success');
+
+      if (response.ok) {
+        const bookingData = await response.json();
+        
+        // Send booking notification to seller
+        await emailService.sendBookingNotification(
+          bookingData.sellerId.email,
+          {
+            sellerUsername: bookingData.sellerId.username,
+            serviceTitle: bookingData.serviceId.title,
+            bookingId: bookingData._id,
+            price: bookingData.price,
+            currency: bookingData.currency,
+            buyerUsername: bookingData.buyerName,
+            requirements: bookingData.requirements
+          }
+        );
+      }
     } catch (error) {
       showNotification(error.message || 'Failed to create booking', 'error');
     } finally {
