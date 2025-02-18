@@ -36,25 +36,39 @@ const emailService = {
 
   sendBookingNotification: async (sellerEmail, bookingDetails) => {
     try {
+      console.log('EmailJS Config for booking:', {
+        serviceId: process.env.REACT_APP_EMAILJS_SERVICE_ID,
+        templateId: process.env.REACT_APP_EMAILJS_NEW_BOOKING_TEMPLATE,
+        publicKey: process.env.REACT_APP_EMAILJS_PUBLIC_KEY
+      });
+
+      const templateParams = {
+        to_email: sellerEmail,
+        sellerUsername: bookingDetails.sellerUsername,
+        serviceTitle: bookingDetails.serviceTitle,
+        bookingId: bookingDetails.bookingId,
+        price: bookingDetails.price,
+        currency: bookingDetails.currency,
+        buyerUsername: bookingDetails.buyerUsername,
+        requirements: bookingDetails.requirements
+      };
+
+      console.log('Sending booking email with data:', templateParams);
+
       const response = await emailjs.send(
         process.env.REACT_APP_EMAILJS_SERVICE_ID,
         process.env.REACT_APP_EMAILJS_NEW_BOOKING_TEMPLATE,
-        {
-          to_email: sellerEmail,
-          sellerUsername: bookingDetails.sellerUsername,
-          serviceTitle: bookingDetails.serviceTitle,
-          bookingId: bookingDetails.bookingId,
-          price: bookingDetails.price,
-          currency: bookingDetails.currency,
-          buyerUsername: bookingDetails.buyerUsername,
-          requirements: bookingDetails.requirements
-        },
+        templateParams,
         process.env.REACT_APP_EMAILJS_PUBLIC_KEY
       );
-      console.log('Booking notification sent:', response);
-      return true;
+
+      if (response.status === 200) {
+        console.log('Booking notification sent successfully');
+        return true;
+      }
+      return false;
     } catch (error) {
-      console.error('Error sending booking notification:', error);
+      console.error('EmailJS Error for booking:', error.text || error.message);
       return false;
     }
   }
