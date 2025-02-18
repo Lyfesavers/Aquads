@@ -88,22 +88,10 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
     console.log('Form data being sent:', formData); // Debug log
 
     try {
-      const response = await onCreateAccount(formData);
-
-      if (response.ok) {
-        const data = await response.json();
-        
-        // Send welcome email if email is provided
-        if (formData.email) {
-          await emailService.sendWelcomeEmail(
-            formData.email,
-            formData.username,
-            data.user.referralCode
-          );
-        }
-
-        // ... rest of success handling ...
-      }
+      await onCreateAccount(formData);
+      
+      // The email will be sent from the backend after successful registration
+      // We don't need to handle it here
     } catch (error) {
       if (error.response?.status === 429) {
         setError('Too many signup attempts. Please try again in 24 hours.');

@@ -8,11 +8,13 @@ const crypto = require('crypto');
 const { awardAffiliatePoints } = require('./points');
 const rateLimit = require('express-rate-limit');
 
-// Rate limiting for registration
+// Modify the rate limiting for registration
 const registrationLimiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000, // 24 hour window
-  max: 5, // limit each IP to 3 registrations per day
-  message: 'Too many accounts created from this IP, please try again after 24 hours'
+  max: 10, // increase from 5 to 10 attempts per day
+  message: 'Too many accounts created from this IP, please try again after 24 hours',
+  standardHeaders: true,
+  legacyHeaders: false
 });
 
 // Initialize temporary token store (this should be replaced with a proper solution in production)
