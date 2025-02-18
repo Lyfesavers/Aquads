@@ -12,28 +12,31 @@ const BookingButton = ({ service, currentUser, onBookingCreate, showNotification
     setIsSubmitting(true);
 
     try {
-      await onBookingCreate(service._id, requirements);
-      setShowModal(false);
-      showNotification('Booking request sent successfully!', 'success');
+      const response = await onBookingCreate(service._id, requirements);
+      console.log('Booking response:', response); // Debug log
 
       if (response.ok) {
         const bookingData = await response.json();
+        console.log('Attempting to send booking email...'); // Debug log
         
-        // Send booking notification to seller
         await emailService.sendBookingNotification(
-          bookingData.sellerId.email,
+          service.seller.email, // Make sure we have the seller's email
           {
-            sellerUsername: bookingData.sellerId.username,
-            serviceTitle: bookingData.serviceId.title,
+            sellerUsername: service.seller.username,
+            serviceTitle: service.title,
             bookingId: bookingData._id,
-            price: bookingData.price,
-            currency: bookingData.currency,
-            buyerUsername: bookingData.buyerName,
-            requirements: bookingData.requirements
+            price: service.price,
+            currency: service.currency,
+            buyerUsername: currentUser.username,
+            requirements: requirements
           }
         );
+
+        setShowModal(false);
+        showNotification('Booking request sent successfully!', 'success');
       }
     } catch (error) {
+      console.error('Booking error:', error);
       showNotification(error.message || 'Failed to create booking', 'error');
     } finally {
       setIsSubmitting(false);
