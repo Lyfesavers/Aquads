@@ -8,13 +8,14 @@ import {
   updateAd as apiUpdateAd, 
   deleteAd as apiDeleteAd, 
   loginUser, 
-  register,
+  register as apiRegister,
   createBumpRequest,
   approveBumpRequest,
   rejectBumpRequest,
   fetchBumpRequests,
   verifyToken,
-  pingServer
+  pingServer,
+  API_URL
 } from './services/api';
 import BumpStore from './components/BumpStore';
 import LoginModal from './components/LoginModal';
@@ -357,11 +358,29 @@ function App() {
 
   const handleCreateAccount = async (formData) => {
     try {
-      const user = await register(formData);
-      setCurrentUser(user);
-      setNewUsername(user.username);
-      setShowWelcomeModal(true);
-      setShowCreateAccountModal(false);
+      const user = await apiRegister(formData);
+      if (user) {
+        setCurrentUser(user);
+        setNewUsername(user.username);
+        
+        // Send welcome email if email is provided
+        if (formData.email) {
+          console.log('Attempting to send welcome email...');
+          try {
+            await emailService.sendWelcomeEmail(
+              formData.email,
+              user.username,
+              user.referralCode
+            );
+            console.log('Welcome email sent successfully');
+          } catch (emailError) {
+            console.error('Failed to send welcome email:', emailError);
+          }
+        }
+        
+        setShowWelcomeModal(true);
+        setShowCreateAccountModal(false);
+      }
     } catch (error) {
       console.error('Error creating account:', error);
       alert(error.message || 'Failed to create account');
@@ -653,48 +672,6 @@ function App() {
   const handleProfileUpdate = (updatedUser) => {
     setCurrentUser(updatedUser);
     showNotification('Profile updated successfully!', 'success');
-  };
-
-  const register = async (userData) => {
-    try {
-      console.log('Starting registration...', userData); // Debug log
-      const response = await fetch(`${API_URL}/users/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
-
-      const data = await response.json();
-      console.log('Registration response:', data); // Debug log
-
-      if (response.ok) {
-        // Send welcome email if email is provided
-        if (userData.email) {
-          console.log('Attempting to send welcome email...'); // Debug log
-          try {
-            await emailService.sendWelcomeEmail(
-              userData.email,
-              userData.username,
-              data.user.referralCode
-            );
-            console.log('Welcome email sent successfully'); // Debug log
-          } catch (emailError) {
-            console.error('Failed to send welcome email:', emailError);
-          }
-        }
-
-        setCurrentUser(data.user);
-        localStorage.setItem('currentUser', JSON.stringify(data.user));
-        return data.user;
-      } else {
-        throw new Error(data.error || 'Registration failed');
-      }
-    } catch (error) {
-      console.error('Registration error:', error);
-      throw error;
-    }
   };
 
   return (
