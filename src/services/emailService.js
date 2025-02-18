@@ -3,6 +3,13 @@ import emailjs from '@emailjs/browser';
 const emailService = {
   sendWelcomeEmail: async (email, username, referralCode) => {
     try {
+      console.log('Sending email with data:', {
+        to_email: email,
+        username: username,
+        secret_code: referralCode,
+        referral_link: `https://aquads.xyz?ref=${username}`
+      });
+
       const response = await emailjs.send(
         process.env.REACT_APP_EMAILJS_SERVICE_ID,
         process.env.REACT_APP_EMAILJS_WELCOME_TEMPLATE,
@@ -14,8 +21,13 @@ const emailService = {
         },
         process.env.REACT_APP_EMAILJS_PUBLIC_KEY
       );
-      console.log('Welcome email sent:', response);
-      return true;
+
+      if (response.status === 200) {
+        console.log('Welcome email sent successfully');
+        return true;
+      } else {
+        throw new Error(`EmailJS responded with status: ${response.status}`);
+      }
     } catch (error) {
       console.error('Error sending welcome email:', error);
       return false;
