@@ -1,7 +1,7 @@
 import emailjs from '@emailjs/browser';
 
 const emailService = {
-  sendWelcomeEmail: async (email, username, secretCode) => {
+  sendWelcomeEmail: async (email, username, referralCode) => {
     try {
       const response = await emailjs.send(
         process.env.REACT_APP_EMAILJS_SERVICE_ID,
@@ -9,7 +9,7 @@ const emailService = {
         {
           to_email: email,
           username: username,
-          secret_code: secretCode,
+          secret_code: referralCode,
           referral_link: `https://aquads.xyz?ref=${username}`
         },
         process.env.REACT_APP_EMAILJS_PUBLIC_KEY
