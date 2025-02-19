@@ -64,6 +64,28 @@ app.get('/marketplace', async (req, res, next) => {
           .replace(/<meta property="og:description"[^>]*>/, `<meta property="og:description" content="${service.description.slice(0, 200)}...">`)
           .replace(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="https://aquads.xyz/marketplace?service=${service._id}">`);
         
+        // Add a small delay for mobile devices to ensure content is loaded
+        indexHtml = indexHtml
+          .replace('</head>', `
+            <script>
+              window.addEventListener('load', function() {
+                // Check if there's a service parameter in the URL
+                const params = new URLSearchParams(window.location.search);
+                const serviceId = params.get('service');
+                if (serviceId) {
+                  // Add a small delay for mobile devices
+                  setTimeout(() => {
+                    const element = document.querySelector('[data-service-id="' + serviceId + '"]');
+                    if (element) {
+                      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                  }, 1000); // 1 second delay
+                }
+              });
+            </script>
+            </head>
+          `);
+        
         return res.send(indexHtml);
       }
     }
