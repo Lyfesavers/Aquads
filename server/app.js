@@ -64,24 +64,44 @@ app.get('/marketplace', async (req, res, next) => {
           .replace(/<meta property="og:description"[^>]*>/, `<meta property="og:description" content="${service.description.slice(0, 200)}...">`)
           .replace(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="https://aquads.xyz/marketplace?service=${service._id}">`);
         
-        // Add a small delay for mobile devices to ensure content is loaded
+        // Improved mobile scroll handling
         indexHtml = indexHtml
           .replace('</head>', `
             <script>
-              window.addEventListener('load', function() {
-                // Check if there's a service parameter in the URL
+              function scrollToService() {
                 const params = new URLSearchParams(window.location.search);
                 const serviceId = params.get('service');
                 if (serviceId) {
-                  // Add a small delay for mobile devices
-                  setTimeout(() => {
+                  const maxAttempts = 10;
+                  let attempts = 0;
+                  
+                  function tryScroll() {
                     const element = document.querySelector('[data-service-id="' + serviceId + '"]');
                     if (element) {
+                      // Force layout recalculation
+                      element.getBoundingClientRect();
+                      
+                      // Scroll with native method first
                       element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      
+                      // Fallback scroll for mobile
+                      const yOffset = -100; // Adjust this value as needed
+                      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                      window.scrollTo({ top: y, behavior: 'smooth' });
+                    } else if (attempts < maxAttempts) {
+                      attempts++;
+                      setTimeout(tryScroll, 500);
                     }
-                  }, 1000); // 1 second delay
+                  }
+                  
+                  // Start first attempt after a delay
+                  setTimeout(tryScroll, 1000);
                 }
-              });
+              }
+              
+              // Try scrolling after both DOMContentLoaded and load events
+              document.addEventListener('DOMContentLoaded', scrollToService);
+              window.addEventListener('load', scrollToService);
             </script>
             </head>
           `);
