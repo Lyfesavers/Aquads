@@ -64,43 +64,43 @@ app.get('/marketplace', async (req, res, next) => {
           .replace(/<meta property="og:description"[^>]*>/, `<meta property="og:description" content="${service.description.slice(0, 200)}...">`)
           .replace(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="https://aquads.xyz/marketplace?service=${service._id}">`);
         
-        // Improved mobile scroll handling
+        // Mobile scroll fix
         indexHtml = indexHtml
           .replace('</head>', `
             <script>
               function scrollToService() {
                 const params = new URLSearchParams(window.location.search);
                 const serviceId = params.get('service');
-                if (serviceId) {
-                  const maxAttempts = 10;
-                  let attempts = 0;
-                  
-                  function tryScroll() {
-                    const element = document.querySelector('[data-service-id="' + serviceId + '"]');
-                    if (element) {
-                      // Force layout recalculation
-                      element.getBoundingClientRect();
-                      
-                      // Scroll with native method first
-                      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                      
-                      // Fallback scroll for mobile
-                      const yOffset = -100; // Adjust this value as needed
-                      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-                      window.scrollTo({ top: y, behavior: 'smooth' });
-                    } else if (attempts < maxAttempts) {
-                      attempts++;
-                      setTimeout(tryScroll, 500);
-                    }
+                if (!serviceId) return;
+
+                function forceScroll() {
+                  const element = document.querySelector('[data-service-id="' + serviceId + '"]');
+                  if (element) {
+                    // Force scroll with a delay sequence
+                    setTimeout(() => {
+                      window.scrollTo(0, 0); // Reset scroll position
+                      setTimeout(() => {
+                        const offset = element.offsetTop - 100;
+                        window.scrollTo({
+                          top: offset,
+                          behavior: 'auto'
+                        });
+                      }, 100);
+                    }, 500);
                   }
-                  
-                  // Start first attempt after a delay
-                  setTimeout(tryScroll, 1000);
                 }
+
+                // Try multiple times to ensure content is loaded
+                forceScroll();
+                setTimeout(forceScroll, 1000);
+                setTimeout(forceScroll, 2000);
               }
-              
-              // Try scrolling after both DOMContentLoaded and load events
-              document.addEventListener('DOMContentLoaded', scrollToService);
+
+              if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', scrollToService);
+              } else {
+                scrollToService();
+              }
               window.addEventListener('load', scrollToService);
             </script>
             </head>
