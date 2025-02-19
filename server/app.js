@@ -73,34 +73,45 @@ app.get('/marketplace', async (req, res, next) => {
                 const serviceId = params.get('service');
                 if (!serviceId) return;
 
-                function forceScroll() {
+                let scrollAttempts = 0;
+                const maxAttempts = 5;
+
+                function attemptScroll() {
                   const element = document.querySelector('[data-service-id="' + serviceId + '"]');
-                  if (element) {
-                    // Force scroll with a delay sequence
+                  if (element && scrollAttempts < maxAttempts) {
+                    scrollAttempts++;
+                    
+                    // First reset any existing scroll
+                    window.scrollTo(0, 0);
+                    
+                    // Wait a bit then perform the actual scroll
                     setTimeout(() => {
-                      window.scrollTo(0, 0); // Reset scroll position
-                      setTimeout(() => {
-                        const offset = element.offsetTop - 100;
-                        window.scrollTo({
-                          top: offset,
-                          behavior: 'auto'
-                        });
-                      }, 100);
-                    }, 500);
+                      const headerOffset = 100;
+                      const elementPosition = element.getBoundingClientRect().top;
+                      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+                      // Try both scroll methods
+                      window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'instant'  // Use instant instead of auto
+                      });
+
+                      // If not at correct position, try again
+                      if (Math.abs(window.pageYOffset - offsetPosition) > 50) {
+                        setTimeout(attemptScroll, 500);
+                      }
+                    }, 100);
+                  } else if (scrollAttempts < maxAttempts) {
+                    setTimeout(attemptScroll, 500);
                   }
                 }
 
-                // Try multiple times to ensure content is loaded
-                forceScroll();
-                setTimeout(forceScroll, 1000);
-                setTimeout(forceScroll, 2000);
+                // Start the scroll attempts
+                setTimeout(attemptScroll, 1000);
               }
 
-              if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', scrollToService);
-              } else {
-                scrollToService();
-              }
+              // Attach to both load events
+              document.addEventListener('DOMContentLoaded', scrollToService);
               window.addEventListener('load', scrollToService);
             </script>
             </head>
