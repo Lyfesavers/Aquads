@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Form, Alert } from 'react-bootstrap';
-import { API_URL } from '../services/api';
+import Modal from './Modal';
 import { FaCopy, FaCheck } from 'react-icons/fa';
 
 const BANNER_OPTIONS = [
@@ -36,252 +35,162 @@ const BLOCKCHAIN_OPTIONS = [
   }
 ];
 
-const CreateBannerModal = ({ show, onHide, onSubmit }) => {
-  const [formData, setFormData] = useState({
-    title: '',
-    gif: '',
-    url: '',
-    duration: BANNER_OPTIONS[0].durationMs
-  });
-  const [previewUrl, setPreviewUrl] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+const CreateBannerModal = ({ onClose, onSubmit }) => {
+  const [selectedOption, setSelectedOption] = useState(BANNER_OPTIONS[0]);
   const [selectedChain, setSelectedChain] = useState(BLOCKCHAIN_OPTIONS[0]);
   const [txSignature, setTxSignature] = useState('');
   const [copiedAddress, setCopiedAddress] = useState(false);
+  const [bannerData, setBannerData] = useState({
+    title: '',
+    gif: '',
+    url: ''
+  });
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-
-    if (name === 'gif') {
-      validateGifUrl(value);
-    }
-  };
-
-  const validateGifUrl = async (url) => {
-    if (!url) {
-      setPreviewUrl('');
-      return;
-    }
-
-    if (!url.toLowerCase().endsWith('.gif')) {
-      setError('URL must end with .gif');
-      setPreviewUrl('');
-      return;
-    }
-
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error('Invalid URL');
-      }
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('image/gif')) {
-        throw new Error('URL must point to a GIF image');
-      }
-      setPreviewUrl(url);
-      setError('');
-    } catch (err) {
-      setError('Invalid GIF URL');
-      setPreviewUrl('');
-    }
-  };
-
-  const handleCopyAddress = async () => {
-    await navigator.clipboard.writeText(selectedChain.address);
+  const handleCopyAddress = () => {
+    navigator.clipboard.writeText(selectedChain.address);
     setCopiedAddress(true);
     setTimeout(() => setCopiedAddress(false), 2000);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.gif || !formData.url || !txSignature) {
-      setError('Please fill in all fields');
+    if (!txSignature) {
+      alert('Please enter the transaction signature');
       return;
     }
 
-    try {
-      setIsLoading(true);
-      
-      const submitData = {
-        title: formData.title.trim(),
-        gif: formData.gif.trim(),
-        url: formData.url.trim(),
-        duration: parseInt(formData.duration),
-        txSignature: txSignature.trim(),
-        paymentChain: selectedChain.name,
-        chainSymbol: selectedChain.symbol,
-        chainAddress: selectedChain.address,
-        status: 'pending'
-      };
-
-      console.log('Submitting data:', submitData); // Debug log
-      await onSubmit(submitData);
-      onHide();
-    } catch (err) {
-      console.error('Form submission error:', err);
-      setError(err.message || 'Failed to create banner ad');
-    } finally {
-      setIsLoading(false);
-    }
+    onSubmit({
+      ...bannerData,
+      txSignature,
+      paymentChain: selectedChain.name,
+      chainSymbol: selectedChain.symbol,
+      chainAddress: selectedChain.address,
+      duration: selectedOption.durationMs
+    });
   };
 
   return (
-    <Modal show={show} onHide={onHide} centered className="banner-modal">
-      <div className="bg-gray-900 text-white rounded-lg shadow-lg">
-        <Modal.Header className="border-b border-gray-700 bg-gray-800 rounded-t-lg">
-          <Modal.Title className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
-            Create Banner Advertisement
-          </Modal.Title>
-          <button
-            onClick={onHide}
-            className="text-gray-400 hover:text-white focus:outline-none"
-          >
-            ×
-          </button>
-        </Modal.Header>
-        <Modal.Body className="bg-gray-900 p-6">
-          <Form onSubmit={handleSubmit}>
-            {error && (
-              <Alert variant="danger" className="bg-red-500/10 border border-red-500/20 text-red-400 mb-4 rounded">
-                {error}
-              </Alert>
-            )}
-            
-            <Form.Group className="mb-4">
-              <Form.Label className="text-gray-300">Title</Form.Label>
-              <Form.Control
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                placeholder="Enter banner title"
-                required
-                className="bg-gray-800/50 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
-            </Form.Group>
+    <Modal onClose={onClose}>
+      <div className="p-6">
+        <h2 className="text-2xl font-bold mb-6">Create Banner Ad</h2>
 
-            <Form.Group className="mb-4">
-              <Form.Label className="text-gray-300">GIF URL</Form.Label>
-              <Form.Control
-                type="url"
-                name="gif"
-                value={formData.gif}
-                onChange={handleInputChange}
-                placeholder="Enter GIF URL - H 300px x W 1920px"
-                required
-                className="bg-gray-800/50 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
-
-            </Form.Group>
-
-            {previewUrl && (
-              <div className="mb-4 p-2 bg-gray-800/50 rounded-lg">
-                <img 
-                  src={previewUrl} 
-                  alt="Banner Preview" 
-                  className="w-full max-h-48 object-contain rounded"
-                />
-              </div>
-            )}
-
-            <Form.Group className="mb-4">
-              <Form.Label className="text-gray-300">Website URL</Form.Label>
-              <Form.Control
-                type="url"
-                name="url"
-                value={formData.url}
-                onChange={handleInputChange}
-                placeholder="Enter website URL"
-                required
-                className="bg-gray-800/50 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-6">
-              <Form.Label className="text-gray-300">Duration</Form.Label>
-              <Form.Select
-                name="duration"
-                value={formData.duration}
-                onChange={handleInputChange}
-                className="bg-gray-800/50 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-4">Duration Options</h3>
+          <div className="grid grid-cols-3 gap-4">
+            {BANNER_OPTIONS.map((option) => (
+              <button
+                key={option.duration}
+                onClick={() => setSelectedOption(option)}
+                className={`p-4 rounded-lg border ${
+                  selectedOption === option
+                    ? 'border-blue-500 bg-blue-500/20'
+                    : 'border-gray-600 hover:border-blue-400'
+                }`}
               >
-                {BANNER_OPTIONS.map((option, index) => (
-                  <option key={index} value={option.durationMs} className="bg-gray-800">
-                    {option.duration} - {option.price} USDC
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
+                <div className="font-medium">{option.duration}</div>
+                <div className="text-sm text-gray-400">{option.price} USDC</div>
+              </button>
+            ))}
+          </div>
+        </div>
 
-            <Form.Group className="mb-6">
-              <Form.Label className="text-gray-300">Select Network</Form.Label>
-              <div className="grid gap-4">
-                {BLOCKCHAIN_OPTIONS.map((chain) => (
-                  <button
-                    type="button"
-                    key={chain.symbol}
-                    onClick={() => setSelectedChain(chain)}
-                    className={`p-4 rounded-lg border ${
-                      selectedChain === chain
-                        ? 'border-blue-500 bg-blue-500/20'
-                        : 'border-gray-600 hover:border-blue-400'
-                    }`}
-                  >
-                    <div className="flex justify-between items-center">
-                      <span>{chain.name}</span>
-                      <span>{chain.amount}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </Form.Group>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium mb-2">Banner Title</label>
+            <input
+              type="text"
+              value={bannerData.title}
+              onChange={(e) => setBannerData({...bannerData, title: e.target.value})}
+              required
+              className="w-full p-3 bg-gray-700 rounded"
+            />
+          </div>
 
-            <Form.Group className="mb-6">
-              <Form.Label className="text-gray-300">Payment Address</Form.Label>
-              <div className="flex items-center gap-2 p-4 bg-gray-700 rounded-lg">
-                <input
-                  type="text"
-                  value={selectedChain.address}
-                  readOnly
-                  className="bg-transparent flex-1 outline-none"
-                />
+          <div>
+            <label className="block text-sm font-medium mb-2">Banner GIF URL</label>
+            <input
+              type="url"
+              value={bannerData.gif}
+              onChange={(e) => setBannerData({...bannerData, gif: e.target.value})}
+              required
+              className="w-full p-3 bg-gray-700 rounded"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Website URL</label>
+            <input
+              type="url"
+              value={bannerData.url}
+              onChange={(e) => setBannerData({...bannerData, url: e.target.value})}
+              required
+              className="w-full p-3 bg-gray-700 rounded"
+            />
+          </div>
+
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold mb-4">Payment Options</h3>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              {BLOCKCHAIN_OPTIONS.map((chain) => (
                 <button
+                  key={chain.symbol}
                   type="button"
-                  onClick={handleCopyAddress}
-                  className="text-blue-400 hover:text-blue-300"
+                  onClick={() => setSelectedChain(chain)}
+                  className={`p-4 rounded-lg border ${
+                    selectedChain === chain
+                      ? 'border-blue-500 bg-blue-500/20'
+                      : 'border-gray-600 hover:border-blue-400'
+                  }`}
                 >
-                  {copiedAddress ? <FaCheck /> : <FaCopy />}
+                  <div className="font-medium">{chain.name}</div>
+                  <div className="text-sm text-gray-400">{selectedOption.price} {chain.amount}</div>
                 </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2 p-4 bg-gray-700 rounded-lg">
+              <div className="flex-1">
+                <div className="text-sm text-gray-400">Send payment to:</div>
+                <div className="font-mono text-sm">{selectedChain.address}</div>
               </div>
-            </Form.Group>
+              <button
+                type="button"
+                onClick={handleCopyAddress}
+                className="p-2 hover:text-blue-400"
+              >
+                {copiedAddress ? <FaCheck /> : <FaCopy />}
+              </button>
+            </div>
+          </div>
 
-            <Form.Group className="mb-6">
-              <Form.Label className="text-gray-300">Transaction Signature</Form.Label>
-              <Form.Control
-                type="text"
-                value={txSignature}
-                onChange={(e) => setTxSignature(e.target.value)}
-                placeholder="Enter transaction signature"
-                required
-                className="bg-gray-800/50 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
-            </Form.Group>
+          <div>
+            <label className="block text-sm font-medium mb-2">Transaction Signature</label>
+            <input
+              type="text"
+              value={txSignature}
+              onChange={(e) => setTxSignature(e.target.value)}
+              required
+              placeholder="Enter your transaction signature"
+              className="w-full p-3 bg-gray-700 rounded"
+            />
+          </div>
 
+          <div className="flex justify-end gap-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded"
+            >
+              Cancel
+            </button>
             <button
               type="submit"
-              disabled={isLoading}
-              className={`w-full py-2 px-4 rounded-lg font-medium transition-all duration-300 ${
-                isLoading
-                  ? 'bg-indigo-500/50 cursor-not-allowed'
-                  : 'bg-indigo-500 hover:bg-indigo-600 hover:shadow-lg hover:shadow-indigo-500/50'
-              }`}
+              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded"
             >
-              {isLoading ? 'Creating...' : 'Create Banner Ad'}
+              Create Banner
             </button>
-          </Form>
-        </Modal.Body>
+          </div>
+        </form>
       </div>
     </Modal>
   );

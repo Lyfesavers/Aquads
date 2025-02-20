@@ -14,12 +14,13 @@ const bannerAdSchema = new mongoose.Schema({
     required: true
   },
   owner: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true
   },
   status: {
     type: String,
-    enum: ['pending', 'active', 'expired'],
+    enum: ['pending', 'active', 'rejected', 'expired'],
     default: 'pending'
   },
   txSignature: {
@@ -46,15 +47,8 @@ const bannerAdSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
-  expiresAt: {
-    type: Date
-  },
-  processedAt: {
-    type: Date
-  },
-  processedBy: {
-    type: String
-  }
+  expiresAt: Date,
+  rejectionReason: String
 });
 
 module.exports = mongoose.model('BannerAd', bannerAdSchema); 

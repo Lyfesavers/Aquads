@@ -39,19 +39,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         });
 
       // Fetch banner ads
-      fetch(`${API_URL}/bannerAds`, {
-        headers: {
-          'Authorization': `Bearer ${currentUser.token}`
-        }
-      })
-        .then(response => response.json())
-        .then(data => {
-          console.log('Fetched banner ads:', data);
-          setBannerAds(data);
-        })
-        .catch(error => {
-          console.error('Error fetching banner ads:', error);
-        });
+      fetchBannerAds();
     }
   }, [currentUser]);
 
@@ -232,6 +220,54 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     onApproveBump(ad.id);
     // Remove the bump request from local state
     setBumpRequests(prev => prev.filter(req => req.adId !== ad.id));
+  };
+
+  const fetchBannerAds = async () => {
+    try {
+      const response = await fetch(`${API_URL}/bannerAds`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch banner ads');
+      const data = await response.json();
+      setBannerAds(data);
+    } catch (error) {
+      console.error('Error fetching banner ads:', error);
+    }
+  };
+
+  const handleApproveBanner = async (bannerId) => {
+    try {
+      const response = await fetch(`${API_URL}/bannerAds/${bannerId}/approve`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!response.ok) throw new Error('Failed to approve banner');
+      fetchBannerAds();
+    } catch (error) {
+      console.error('Error approving banner:', error);
+    }
+  };
+
+  const handleRejectBanner = async (bannerId, reason) => {
+    try {
+      const response = await fetch(`${API_URL}/bannerAds/${bannerId}/reject`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ reason })
+      });
+      if (!response.ok) throw new Error('Failed to reject banner');
+      fetchBannerAds();
+    } catch (error) {
+      console.error('Error rejecting banner:', error);
+    }
   };
 
   // Add banner management functions
@@ -790,7 +826,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                                     Approve
                                   </button>
                                   <button
-                                    onClick={() => handleRejectBanner(banner._id)}
+                                    onClick={() => {
+                                      const reason = prompt('Enter rejection reason:');
+                                      if (reason) handleRejectBanner(banner._id, reason);
+                                    }}
                                     className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
                                   >
                                     Reject
@@ -1075,7 +1114,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                                 Approve
                               </button>
                               <button
-                                onClick={() => handleRejectBanner(banner._id)}
+                                onClick={() => {
+                                  const reason = prompt('Enter rejection reason:');
+                                  if (reason) handleRejectBanner(banner._id, reason);
+                                }}
                                 className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
                               >
                                 Reject

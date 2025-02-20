@@ -6,12 +6,10 @@ const auth = require('../middleware/auth');
 // Get active banner ad
 router.get('/active', async (req, res) => {
   try {
-    console.log('Fetching active banner ad');
     const activeBanner = await BannerAd.findOne({
       status: 'active',
       expiresAt: { $gt: new Date() }
     });
-    console.log('Active banner found:', activeBanner);
     res.json(activeBanner);
   } catch (error) {
     console.error('Error fetching active banner:', error);
@@ -37,61 +35,44 @@ router.get('/', auth, async (req, res) => {
 // Create new banner ad request
 router.post('/', auth, async (req, res) => {
   try {
-    const { title, gif, url, duration, transactionSignature, paymentChain, chainSymbol, chainAddress } = req.body;
-    
-    // Create banner ad with owner from auth middleware
-    const bannerAd = new BannerAd({
+    const { title, gif, url, txSignature, duration, paymentChain, chainSymbol, chainAddress } = req.body;
+
+    const banner = new BannerAd({
       title,
       gif,
       url,
-      duration,
-      transactionSignature,
+      owner: req.user.userId,
+      txSignature,
       paymentChain,
       chainSymbol,
       chainAddress,
-      owner: req.user._id || req.user.id, // Try both possible ID fields
-      status: 'pending'
+      duration
     });
 
-    // Log the data for debugging
-    console.log('Creating banner ad with:', {
-      ...req.body,
-      owner: req.user._id || req.user.id,
-      user: req.user
-    });
-
-    const savedBanner = await bannerAd.save();
-    res.status(201).json(savedBanner);
+    await banner.save();
+    res.status(201).json(banner);
   } catch (error) {
-    console.error('Error creating banner ad:', error);
-    res.status(500).json({ message: error.message });
+    console.error('Error creating banner:', error);
+    res.status(500).json({ error: 'Failed to create banner' });
   }
 });
 
-// Approve banner ad
-router.post('/approve', auth, async (req, res) => {
+// Admin: Approve banner
+router.post('/:id/approve', auth, async (req, res) => {
   try {
-    console.log('Approving banner ad:', req.body);
-    const { _id, processedBy } = req.body;
-
-    if (!_id || !processedBy) {
-      return res.status(400).json({ error: 'Missing _id or processedBy' });
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Only admins can approve banners' });
     }
 
-    const banner = await BannerAd.findById(_id);
+    const banner = await BannerAd.findById(req.params.id);
     if (!banner) {
-      console.error('Banner not found:', _id);
       return res.status(404).json({ error: 'Banner not found' });
     }
 
-    const now = new Date();
     banner.status = 'active';
-    banner.processedAt = now;
-    banner.processedBy = processedBy;
-    banner.expiresAt = new Date(now.getTime() + banner.duration);
-
+    banner.expiresAt = new Date(Date.now() + banner.duration);
     await banner.save();
-    console.log('Banner approved successfully:', banner);
+
     res.json(banner);
   } catch (error) {
     console.error('Error approving banner:', error);
@@ -99,32 +80,24 @@ router.post('/approve', auth, async (req, res) => {
   }
 });
 
-// Reject banner ad
-router.post('/reject', auth, async (req, res) => {
+// Admin: Reject banner
+router.post('/:id/reject', auth, async (req, res) => {
   try {
-    console.log('Rejecting banner ad:', req.body);
-    const { _id, processedBy } = req.body;
-
-    if (!_id || !processedBy) {
-      return res.status(400).json({ error: 'Missing _id or processedBy' });
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Only admins can reject banners' });
     }
 
-    const banner = await BannerAd.findByIdAndUpdate(
-      _id,
-      {
-        status: 'expired',
-        processedAt: new Date(),
-        processedBy
-      },
-      { new: true }
-    );
-
+    const { reason } = req.body;
+    const banner = await BannerAd.findById(req.params.id);
+    
     if (!banner) {
-      console.error('Banner not found:', _id);
       return res.status(404).json({ error: 'Banner not found' });
     }
 
-    console.log('Banner rejected successfully:', banner);
+    banner.status = 'rejected';
+    banner.rejectionReason = reason;
+    await banner.save();
+
     res.json(banner);
   } catch (error) {
     console.error('Error rejecting banner:', error);
