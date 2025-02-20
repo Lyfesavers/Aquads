@@ -71,29 +71,8 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
 
   return (
     <Modal onClose={onClose}>
-      <div className="p-6">
-        <h2 className="text-2xl font-bold mb-6">Create Banner Ad</h2>
-
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-4">Duration Options</h3>
-          <div className="grid grid-cols-3 gap-4">
-            {BANNER_OPTIONS.map((option) => (
-              <button
-                key={option.duration}
-                onClick={() => setSelectedOption(option)}
-                className={`p-4 rounded-lg border ${
-                  selectedOption === option
-                    ? 'border-blue-500 bg-blue-500/20'
-                    : 'border-gray-600 hover:border-blue-400'
-                }`}
-              >
-                <div className="font-medium">{option.duration}</div>
-                <div className="text-sm text-gray-400">{option.price} USDC</div>
-              </button>
-            ))}
-          </div>
-        </div>
-
+      <div className="w-full max-w-3xl mx-auto">
+        <h2 className="text-2xl font-bold mb-6 text-center">Create Banner Ad</h2>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-medium mb-2">Banner Title</label>

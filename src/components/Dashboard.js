@@ -698,68 +698,62 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   {/* Banner Ad Management Section */}
                   <div className="mb-8">
                     <h3 className="text-xl font-semibold text-white mb-4">Banner Ad Management</h3>
-                    {bannerAds.length === 0 ? (
-                      <p className="text-gray-400 text-center py-4">No banner ads found.</p>
-                    ) : (
-                      <div className="space-y-4">
-                        {bannerAds.map(banner => (
-                          <div key={banner._id} className="bg-gray-700 rounded-lg p-4">
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <h4 className="text-white font-semibold">{banner.title}</h4>
-                                <p className="text-gray-400 text-sm">Status: {banner.status}</p>
-                                <p className="text-gray-400 text-sm">Created: {new Date(banner.createdAt).toLocaleString()}</p>
-                                <a 
-                                  href={banner.url} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="text-blue-400 hover:text-blue-300 text-sm"
-                                >
-                                  {banner.url}
-                                </a>
-                              </div>
-                              {banner.status === 'pending' && (
-                                <div className="flex space-x-2">
-                                  <button
-                                    onClick={() => handleApproveBanner(banner._id)}
-                                    className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
-                                  >
-                                    Approve
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      const reason = prompt('Enter rejection reason:');
-                                      if (reason) handleRejectBanner(banner._id, reason);
-                                    }}
-                                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                                  >
-                                    Reject
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                            <div className="mt-4">
-                              <img 
-                                src={banner.gif} 
-                                alt={banner.title}
-                                className="max-h-32 rounded object-contain bg-gray-800"
-                              />
-                            </div>
-                            {/* Add delete button for expired banners */}
-                            {currentUser?.isAdmin && banner.status === 'active' && (
-                              <div className="mt-2">
-                                <button
-                                  onClick={() => handleDeleteBanner(banner._id)}
-                                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                                >
-                                  Delete Banner
-                                </button>
-                              </div>
-                            )}
+                    {bannerAds.filter(banner => banner.status !== 'rejected').map(banner => (
+                      <div key={banner._id} className="bg-gray-700 rounded-lg p-4">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h4 className="text-white font-semibold">{banner.title}</h4>
+                            <p className="text-gray-400 text-sm">Status: {banner.status}</p>
+                            <p className="text-gray-400 text-sm">Created: {new Date(banner.createdAt).toLocaleString()}</p>
+                            <a 
+                              href={banner.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-blue-400 hover:text-blue-300 text-sm"
+                            >
+                              {banner.url}
+                            </a>
                           </div>
-                        ))}
+                          {banner.status === 'pending' && (
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleApproveBanner(banner._id)}
+                                className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
+                              >
+                                Approve
+                              </button>
+                              <button
+                                onClick={() => {
+                                  const reason = prompt('Enter rejection reason:');
+                                  if (reason) handleRejectBanner(banner._id, reason);
+                                }}
+                                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        <div className="mt-4">
+                          <img 
+                            src={banner.gif} 
+                            alt={banner.title}
+                            className="max-h-32 rounded object-contain bg-gray-800"
+                          />
+                        </div>
+                        {/* Add delete button for expired banners */}
+                        {currentUser?.isAdmin && banner.status === 'active' && (
+                          <div className="mt-2">
+                            <button
+                              onClick={() => handleDeleteBanner(banner._id)}
+                              className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                            >
+                              Delete Banner
+                            </button>
+                          </div>
+                        )}
                       </div>
-                    )}
+                    ))}
                   </div>
 
                   {/* Add this section after the Banner Ad Management section */}
@@ -986,68 +980,62 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
               {/* Banner Ad Management Section */}
               <div className="mb-8">
                 <h3 className="text-xl font-semibold text-white mb-4">Banner Ad Management</h3>
-                {bannerAds.length === 0 ? (
-                  <p className="text-gray-400 text-center py-4">No banner ads found.</p>
-                ) : (
-                  <div className="space-y-4">
-                    {bannerAds.map(banner => (
-                      <div key={banner._id} className="bg-gray-700 rounded-lg p-4">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h4 className="text-white font-semibold">{banner.title}</h4>
-                            <p className="text-gray-400 text-sm">Status: {banner.status}</p>
-                            <p className="text-gray-400 text-sm">Created: {new Date(banner.createdAt).toLocaleString()}</p>
-                            <a 
-                              href={banner.url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-blue-400 hover:text-blue-300 text-sm"
-                            >
-                              {banner.url}
-                            </a>
-                          </div>
-                          {banner.status === 'pending' && (
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() => handleApproveBanner(banner._id)}
-                                className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
-                              >
-                                Approve
-                              </button>
-                              <button
-                                onClick={() => {
-                                  const reason = prompt('Enter rejection reason:');
-                                  if (reason) handleRejectBanner(banner._id, reason);
-                                }}
-                                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                              >
-                                Reject
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                        <div className="mt-4">
-                          <img 
-                            src={banner.gif} 
-                            alt={banner.title}
-                            className="max-h-32 rounded object-contain bg-gray-800"
-                          />
-                        </div>
-                        {/* Add delete button for expired banners */}
-                        {currentUser?.isAdmin && banner.status === 'active' && (
-                          <div className="mt-2">
-                            <button
-                              onClick={() => handleDeleteBanner(banner._id)}
-                              className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                            >
-                              Delete Banner
-                            </button>
-                          </div>
-                        )}
+                {bannerAds.filter(banner => banner.status !== 'rejected').map(banner => (
+                  <div key={banner._id} className="bg-gray-700 rounded-lg p-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h4 className="text-white font-semibold">{banner.title}</h4>
+                        <p className="text-gray-400 text-sm">Status: {banner.status}</p>
+                        <p className="text-gray-400 text-sm">Created: {new Date(banner.createdAt).toLocaleString()}</p>
+                        <a 
+                          href={banner.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-400 hover:text-blue-300 text-sm"
+                        >
+                          {banner.url}
+                        </a>
                       </div>
-                    ))}
+                      {banner.status === 'pending' && (
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleApproveBanner(banner._id)}
+                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => {
+                              const reason = prompt('Enter rejection reason:');
+                              if (reason) handleRejectBanner(banner._id, reason);
+                            }}
+                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-4">
+                      <img 
+                        src={banner.gif} 
+                        alt={banner.title}
+                        className="max-h-32 rounded object-contain bg-gray-800"
+                      />
+                    </div>
+                    {/* Add delete button for expired banners */}
+                    {currentUser?.isAdmin && banner.status === 'active' && (
+                      <div className="mt-2">
+                        <button
+                          onClick={() => handleDeleteBanner(banner._id)}
+                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                        >
+                          Delete Banner
+                        </button>
+                      </div>
+                    )}
                   </div>
-                )}
+                ))}
               </div>
 
               {/* Add this section after the Banner Ad Management section */}
