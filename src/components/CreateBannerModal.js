@@ -46,6 +46,9 @@ const CreateBannerModal = ({ show, onHide, onSubmit }) => {
   const [previewUrl, setPreviewUrl] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedChain, setSelectedChain] = useState(BLOCKCHAIN_OPTIONS[0]);
+  const [txSignature, setTxSignature] = useState('');
+  const [copiedAddress, setCopiedAddress] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -85,6 +88,12 @@ const CreateBannerModal = ({ show, onHide, onSubmit }) => {
     }
   };
 
+  const handleCopyAddress = async () => {
+    await navigator.clipboard.writeText(selectedChain.address);
+    setCopiedAddress(true);
+    setTimeout(() => setCopiedAddress(false), 2000);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.title || !formData.gif || !formData.url) {
@@ -107,7 +116,8 @@ const CreateBannerModal = ({ show, onHide, onSubmit }) => {
         url: formData.url.trim(),
         duration: parseInt(formData.duration),
         price: selectedOption.price,
-        status: 'pending'
+        status: 'pending',
+        txSignature: txSignature.trim()
       };
 
       console.log('Submitting form data:', submitData);
@@ -208,6 +218,60 @@ const CreateBannerModal = ({ show, onHide, onSubmit }) => {
                   </option>
                 ))}
               </Form.Select>
+            </Form.Group>
+
+            <Form.Group className="mb-6">
+              <Form.Label className="text-gray-300">Select Network</Form.Label>
+              <div className="grid gap-4">
+                {BLOCKCHAIN_OPTIONS.map((chain) => (
+                  <button
+                    type="button"
+                    key={chain.symbol}
+                    onClick={() => setSelectedChain(chain)}
+                    className={`p-4 rounded-lg border ${
+                      selectedChain === chain
+                        ? 'border-blue-500 bg-blue-500/20'
+                        : 'border-gray-600 hover:border-blue-400'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span>{chain.name}</span>
+                      <span>{chain.amount}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </Form.Group>
+
+            <Form.Group className="mb-6">
+              <Form.Label className="text-gray-300">Payment Address</Form.Label>
+              <div className="flex items-center gap-2 p-4 bg-gray-700 rounded-lg">
+                <input
+                  type="text"
+                  value={selectedChain.address}
+                  readOnly
+                  className="bg-transparent flex-1 outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={handleCopyAddress}
+                  className="text-blue-400 hover:text-blue-300"
+                >
+                  {copiedAddress ? <FaCheck /> : <FaCopy />}
+                </button>
+              </div>
+            </Form.Group>
+
+            <Form.Group className="mb-6">
+              <Form.Label className="text-gray-300">Transaction Signature</Form.Label>
+              <Form.Control
+                type="text"
+                value={txSignature}
+                onChange={(e) => setTxSignature(e.target.value)}
+                placeholder="Enter transaction signature"
+                required
+                className="bg-gray-800/50 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
             </Form.Group>
 
             <button
