@@ -67,10 +67,17 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
       chainAddress: selectedChain.address,
       duration: selectedOption.durationMs
     });
+    onClose();
+  };
+
+  const handleClose = () => {
+    if (typeof onClose === 'function') {
+      onClose();
+    }
   };
 
   return (
-    <Modal onClose={onClose}>
+    <Modal onClose={handleClose}>
       <div className="w-full max-w-4xl mx-auto px-4 sm:px-6">
         <h2 className="text-2xl font-bold mb-6 text-center">Create Banner Ad</h2>
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -157,7 +164,7 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
           <div className="flex justify-end gap-4">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded"
             >
               Cancel
