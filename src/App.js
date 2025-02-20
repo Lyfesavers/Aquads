@@ -680,6 +680,8 @@ function App() {
         throw new Error('Please log in first!');
       }
 
+      console.log('Received banner data:', bannerData); // Debug log
+
       const response = await fetch(`${API_URL}/bannerAds`, {
         method: 'POST',
         headers: {
@@ -687,8 +689,16 @@ function App() {
           'Authorization': `Bearer ${currentUser.token}`
         },
         body: JSON.stringify({
-          ...bannerData,
-          owner: currentUser.userId
+          title: bannerData.title,
+          gif: bannerData.gif,
+          url: bannerData.url,
+          duration: bannerData.duration,
+          txSignature: bannerData.txSignature,
+          paymentChain: bannerData.paymentChain,
+          chainSymbol: bannerData.chainSymbol,
+          chainAddress: bannerData.chainAddress,
+          owner: currentUser.userId,
+          status: 'pending'
         })
       });
 
