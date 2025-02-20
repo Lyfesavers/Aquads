@@ -404,20 +404,25 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         throw new Error('Please log in to create a banner ad');
       }
 
+      // Log the current user to see what we have
+      console.log('Current user data:', currentUser);
+
       // Transform data to match the format that works in other components
       const requestData = {
         title: bannerData.title,
         gif: bannerData.gif,
         url: bannerData.url,
         duration: bannerData.duration,
-        owner: currentUser.userId,
+        owner: currentUser._id || currentUser.id || currentUser.userId, // Try all possible ID fields
         txSignature: bannerData.txSignature,
-        // Include the chain information
         paymentChain: bannerData.paymentChain,
         chainSymbol: bannerData.chainSymbol,
         chainAddress: bannerData.chainAddress,
         status: 'pending'
       };
+
+      // Log the request data before sending
+      console.log('Request data being sent:', requestData);
 
       const response = await fetch(`${API_URL}/bannerAds`, {
         method: 'POST',
@@ -430,6 +435,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
       if (!response.ok) {
         const error = await response.json();
+        console.log('Error response:', error); // Add this log
         throw new Error(error.message || 'Failed to create banner ad');
       }
 
