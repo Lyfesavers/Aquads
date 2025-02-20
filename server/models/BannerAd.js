@@ -34,7 +34,7 @@ const bannerAdSchema = new mongoose.Schema({
     enum: ['pending', 'active', 'expired'],
     default: 'pending'
   },
-  txSignature: {
+  transactionSignature: {
     type: String,
     required: true
   },
@@ -55,10 +55,6 @@ const bannerAdSchema = new mongoose.Schema({
   },
   processedBy: {
     type: String
-  },
-  transactionSignature: {
-    type: String,
-    required: true
   },
   paymentChain: {
     type: String,

@@ -44,16 +44,16 @@ router.post('/', auth, async (req, res) => {
       gif,
       url,
       duration,
-      price,
-      status,
+      status: 'pending',
       transactionSignature,
       paymentChain,
       owner: req.user.id
     });
 
-    await bannerAd.save();
-    res.status(201).json(bannerAd);
+    const savedBanner = await bannerAd.save();
+    res.status(201).json(savedBanner);
   } catch (error) {
+    console.error('Error creating banner ad:', error);
     res.status(500).json({ message: error.message });
   }
 });
