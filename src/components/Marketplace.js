@@ -404,13 +404,24 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         throw new Error('Please log in to create a banner ad');
       }
 
+      // Transform data to match the format that works in other components
+      const requestData = {
+        title: bannerData.title,
+        gif: bannerData.gif,
+        url: bannerData.url,
+        duration: bannerData.duration,
+        owner: currentUser.userId,  // This is how other components handle it
+        txSignature: bannerData.txSignature,  // Keep original field name
+        status: 'pending'
+      };
+
       const response = await fetch(`${API_URL}/bannerAds`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
         },
-        body: JSON.stringify(bannerData)
+        body: JSON.stringify(requestData)
       });
 
       if (!response.ok) {
@@ -420,7 +431,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
       const newBanner = await response.json();
       console.log('Banner ad created:', newBanner);
-      setShowBannerModal(false); // Close modal on success
+      setShowBannerModal(false);
       return newBanner;
     } catch (error) {
       console.error('Error creating banner ad:', error);
