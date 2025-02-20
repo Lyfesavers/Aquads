@@ -96,7 +96,7 @@ const CreateBannerModal = ({ show, onHide, onSubmit }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.gif || !formData.url) {
+    if (!formData.title || !formData.gif || !formData.url || !txSignature) {
       setError('Please fill in all fields');
       return;
     }
@@ -117,11 +117,11 @@ const CreateBannerModal = ({ show, onHide, onSubmit }) => {
         duration: parseInt(formData.duration),
         price: selectedOption.price,
         status: 'pending',
-        txSignature: txSignature.trim()
+        txSignature: txSignature.trim(),
+        paymentChain: selectedChain.name
       };
 
       console.log('Submitting form data:', submitData);
-      
       await onSubmit(submitData);
       onHide();
     } catch (err) {
