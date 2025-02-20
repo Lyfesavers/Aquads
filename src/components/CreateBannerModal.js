@@ -116,6 +116,11 @@ const CreateBannerModal = ({ show, onHide, onSubmit }) => {
         chainAddress: selectedChain.address
       };
 
+      delete submitData.owner;
+      delete submitData.status;
+      delete submitData.txSignature;
+      delete submitData.price;
+
       console.log('Submitting banner ad data:', submitData);
       const response = await onSubmit(submitData);
       console.log('Banner ad response:', response);
