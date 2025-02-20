@@ -62,7 +62,8 @@ app.get('/marketplace', async (req, res, next) => {
           .replace(/<meta property="og:image"[^>]*>/, `<meta property="og:image" content="${service.image}">`)
           .replace(/<meta property="og:title"[^>]*>/, `<meta property="og:title" content="${service.title} - Aquads Marketplace">`)
           .replace(/<meta property="og:description"[^>]*>/, `<meta property="og:description" content="${service.description.slice(0, 200)}...">`)
-          .replace(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="https://aquads.xyz/marketplace?service=${service._id}">`);
+          .replace(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="https://aquads.xyz/marketplace?service=${service._id}">`)
+          .replace(/Aquaduct/g, 'Freelancer Hub');
         
         // Mobile scroll fix
         indexHtml = indexHtml
