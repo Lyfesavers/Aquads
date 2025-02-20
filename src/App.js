@@ -891,11 +891,6 @@ function App() {
                         <motion.div
                           key={ad.id}
                           className="absolute cursor-pointer transform hover:scale-105 bubble"
-                          drag
-                          dragMomentum={false}
-                          dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
-                          dragElastic={0.2}
-                          whileDrag={{ scale: 1.1, cursor: 'grabbing' }}
                           style={{
                             position: 'absolute',
                             left: `${x}px`,
@@ -905,8 +900,8 @@ function App() {
                             transition: `all ${ANIMATION_DURATION} ease-in-out`,
                             zIndex: ad.isBumped ? 2 : 1,
                             animationDuration: `${8 + Math.random() * 4}s`,
-                            cursor: 'grab',
-                            touchAction: 'none'
+                            cursor: 'pointer',
+                            touchAction: 'auto'
                           }}
                           onClick={(e) => {
                             if (!e.defaultPrevented) {
