@@ -404,36 +404,24 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         throw new Error('Please log in to create a banner ad');
       }
 
-      // Log the current user to see what we have
-      console.log('Current user data:', currentUser);
-
-      // Transform data to match the format that works in other components
-      const requestData = {
-        ...bannerData,  // Keep all the banner data
-        owner: currentUser.userId,  // Changed from id to userId
-        status: 'pending'
-      };
-
-      // Log the request data before sending
-      console.log('Request data being sent:', requestData);
-
       const response = await fetch(`${API_URL}/bannerAds`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
         },
-        body: JSON.stringify(requestData)
+        body: JSON.stringify({
+          ...bannerData,
+          owner: currentUser.userId
+        })
       });
 
       if (!response.ok) {
         const error = await response.json();
-        console.log('Error response:', error);
         throw new Error(error.message || 'Failed to create banner ad');
       }
 
       const newBanner = await response.json();
-      console.log('Banner ad created:', newBanner);
       setShowBannerModal(false);
       return newBanner;
     } catch (error) {

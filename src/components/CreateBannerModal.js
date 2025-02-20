@@ -105,21 +105,17 @@ const CreateBannerModal = ({ show, onHide, onSubmit }) => {
       setIsLoading(true);
       const selectedOption = BANNER_OPTIONS.find(opt => opt.durationMs === parseInt(formData.duration));
       
-      const submitData = {
-        title: formData.title.trim(),
-        gif: formData.gif.trim(),
-        url: formData.url.trim(),
-        duration: parseInt(formData.duration),
-        txSignature: txSignature.trim(),
-        paymentChain: selectedChain.name,
-        chainSymbol: selectedChain.symbol,
-        chainAddress: selectedChain.address,
-        status: 'pending'
-      };
+      await onSubmit(
+        formData.title.trim(),
+        formData.gif.trim(),
+        formData.url.trim(),
+        formData.duration,
+        txSignature.trim(),
+        selectedChain.name,
+        selectedChain.symbol,
+        selectedChain.address
+      );
 
-      console.log('Submitting banner ad data:', submitData);
-      const response = await onSubmit(submitData);
-      console.log('Banner ad response:', response);
       onHide();
     } catch (err) {
       console.error('Form submission error:', err);
