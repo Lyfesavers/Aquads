@@ -55,6 +55,14 @@ const bannerAdSchema = new mongoose.Schema({
   },
   processedBy: {
     type: String
+  },
+  transactionSignature: {
+    type: String,
+    required: true
+  },
+  paymentChain: {
+    type: String,
+    required: true
   }
 });
 

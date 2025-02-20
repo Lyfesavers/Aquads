@@ -37,65 +37,24 @@ router.get('/', auth, async (req, res) => {
 // Create new banner ad request
 router.post('/', auth, async (req, res) => {
   try {
-    console.log('Creating new banner ad with data:', req.body);
-    console.log('User from auth middleware:', req.user);
+    const { title, gif, url, duration, price, status, transactionSignature, paymentChain } = req.body;
     
-    const { title, gif, url, owner, txSignature, duration, status } = req.body;
-
-    // Use owner from request or fall back to authenticated user ID
-    const ownerId = owner || req.user._id || req.user.id || req.user.userId;
-
-    // Detailed validation logging
-    const missingFields = [];
-    if (!title) missingFields.push('title');
-    if (!gif) missingFields.push('gif');
-    if (!url) missingFields.push('url');
-    if (!ownerId) missingFields.push('owner');
-    if (!txSignature) missingFields.push('txSignature');
-
-    if (missingFields.length > 0) {
-      console.error('Missing required fields:', missingFields);
-      console.error('Received data:', {
-        ...req.body,
-        owner: ownerId,
-        userFromAuth: req.user
-      });
-      return res.status(400).json({ 
-        error: 'Missing required fields', 
-        missingFields,
-        receivedData: {
-          ...req.body,
-          owner: ownerId,
-          userFromAuth: req.user
-        }
-      });
-    }
-
-    // Create banner ad with all fields
     const bannerAd = new BannerAd({
       title,
       gif,
       url,
-      owner: ownerId,
-      txSignature,
-      duration: duration || 24 * 60 * 60 * 1000, // Default 24 hours
-      status: status || 'pending'
+      duration,
+      price,
+      status,
+      transactionSignature,
+      paymentChain,
+      owner: req.user.id
     });
 
-    console.log('Attempting to save banner ad:', bannerAd);
     await bannerAd.save();
-    console.log('Banner ad created successfully:', bannerAd);
     res.status(201).json(bannerAd);
   } catch (error) {
-    console.error('Error creating banner ad:', error);
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({ 
-        error: error.message,
-        validationErrors: error.errors,
-        receivedData: req.body
-      });
-    }
-    res.status(500).json({ error: 'Failed to create banner ad request' });
+    res.status(500).json({ message: error.message });
   }
 });
 

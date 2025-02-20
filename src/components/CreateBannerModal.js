@@ -117,12 +117,13 @@ const CreateBannerModal = ({ show, onHide, onSubmit }) => {
         duration: parseInt(formData.duration),
         price: selectedOption.price,
         status: 'pending',
-        txSignature: txSignature.trim(),
+        transactionSignature: txSignature.trim(),
         paymentChain: selectedChain.name
       };
 
-      console.log('Submitting form data:', submitData);
-      await onSubmit(submitData);
+      console.log('Submitting banner ad data:', submitData);
+      const response = await onSubmit(submitData);
+      console.log('Banner ad response:', response);
       onHide();
     } catch (err) {
       console.error('Form submission error:', err);
