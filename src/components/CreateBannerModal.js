@@ -104,8 +104,8 @@ const CreateBannerModal = ({ show, onHide, onSubmit }) => {
     try {
       setIsLoading(true);
       
-      // Create the data object exactly as needed by the model
-      const bannerData = {
+      // Match the exact format that works in BumpStore
+      const submitData = {
         title: formData.title.trim(),
         gif: formData.gif.trim(),
         url: formData.url.trim(),
@@ -113,11 +113,11 @@ const CreateBannerModal = ({ show, onHide, onSubmit }) => {
         txSignature: txSignature.trim(),
         paymentChain: selectedChain.name,
         chainSymbol: selectedChain.symbol,
-        chainAddress: selectedChain.address
+        chainAddress: selectedChain.address,
+        status: 'pending'  // Add status here
       };
 
-      console.log('Submitting banner data:', bannerData); // Debug log
-      await onSubmit(bannerData);
+      await onSubmit(submitData);
       onHide();
     } catch (err) {
       console.error('Form submission error:', err);

@@ -680,7 +680,11 @@ function App() {
         throw new Error('Please log in first!');
       }
 
-      console.log('Received banner data:', bannerData); // Debug log
+      // Add owner to the data
+      const submitData = {
+        ...bannerData,
+        owner: currentUser.userId
+      };
 
       const response = await fetch(`${API_URL}/bannerAds`, {
         method: 'POST',
@@ -688,18 +692,7 @@ function App() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
         },
-        body: JSON.stringify({
-          title: bannerData.title,
-          gif: bannerData.gif,
-          url: bannerData.url,
-          duration: bannerData.duration,
-          txSignature: bannerData.txSignature,
-          paymentChain: bannerData.paymentChain,
-          chainSymbol: bannerData.chainSymbol,
-          chainAddress: bannerData.chainAddress,
-          owner: currentUser.userId,
-          status: 'pending'
-        })
+        body: JSON.stringify(submitData)
       });
 
       if (!response.ok) {
