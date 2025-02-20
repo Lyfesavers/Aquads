@@ -81,6 +81,27 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
       <div className="w-full max-w-4xl mx-auto px-4 sm:px-6">
         <h2 className="text-2xl font-bold mb-6 text-center">Create Banner Ad</h2>
         <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold mb-4">Duration Options</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {BANNER_OPTIONS.map((option) => (
+                <button
+                  key={option.duration}
+                  type="button"
+                  onClick={() => setSelectedOption(option)}
+                  className={`p-4 rounded-lg border ${
+                    selectedOption === option
+                      ? 'border-blue-500 bg-blue-500/20'
+                      : 'border-gray-600 hover:border-blue-400'
+                  }`}
+                >
+                  <div className="font-medium">{option.duration}</div>
+                  <div className="text-sm text-gray-400">{option.price} USDC</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium mb-2">Banner Title</label>
             <input
@@ -88,6 +109,7 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
               value={bannerData.title}
               onChange={(e) => setBannerData({...bannerData, title: e.target.value})}
               required
+              placeholder="Enter your banner title"
               className="w-full p-3 bg-gray-700 rounded"
             />
           </div>
@@ -99,6 +121,7 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
               value={bannerData.gif}
               onChange={(e) => setBannerData({...bannerData, gif: e.target.value})}
               required
+              placeholder="Enter the URL of your banner GIF"
               className="w-full p-3 bg-gray-700 rounded"
             />
           </div>
@@ -110,6 +133,7 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
               value={bannerData.url}
               onChange={(e) => setBannerData({...bannerData, url: e.target.value})}
               required
+              placeholder="Enter your website URL"
               className="w-full p-3 bg-gray-700 rounded"
             />
           </div>
