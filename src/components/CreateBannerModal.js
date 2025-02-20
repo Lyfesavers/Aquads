@@ -71,7 +71,7 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
 
   return (
     <Modal onClose={onClose}>
-      <div className="w-full max-w-3xl mx-auto">
+      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6">
         <h2 className="text-2xl font-bold mb-6 text-center">Create Banner Ad</h2>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
@@ -109,7 +109,7 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
 
           <div className="mb-6">
             <h3 className="text-lg font-semibold mb-4">Payment Options</h3>
-            <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
               {BLOCKCHAIN_OPTIONS.map((chain) => (
                 <button
                   key={chain.symbol}
@@ -126,20 +126,20 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
                 </button>
               ))}
             </div>
+          </div>
 
-            <div className="flex items-center gap-2 p-4 bg-gray-700 rounded-lg">
-              <div className="flex-1">
-                <div className="text-sm text-gray-400">Send payment to:</div>
-                <div className="font-mono text-sm">{selectedChain.address}</div>
-              </div>
-              <button
-                type="button"
-                onClick={handleCopyAddress}
-                className="p-2 hover:text-blue-400"
-              >
-                {copiedAddress ? <FaCheck /> : <FaCopy />}
-              </button>
+          <div className="flex items-center gap-2 p-3 sm:p-4 bg-gray-700 rounded-lg overflow-x-auto">
+            <div className="flex-1 min-w-0">
+              <div className="text-sm text-gray-400">Send payment to:</div>
+              <div className="font-mono text-sm truncate">{selectedChain.address}</div>
             </div>
+            <button
+              type="button"
+              onClick={handleCopyAddress}
+              className="p-2 hover:text-blue-400"
+            >
+              {copiedAddress ? <FaCheck /> : <FaCopy />}
+            </button>
           </div>
 
           <div>
