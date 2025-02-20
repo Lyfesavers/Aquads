@@ -120,6 +120,12 @@ app.use('/api/affiliates', affiliateRoutes);
 
 // Handle React routing, return all requests to React app
 app.get('*', (req, res) => {
+  // Read the index.html file
+  let indexHtml = fs.readFileSync(path.join(__dirname, '../build/index.html'), 'utf8');
+  
+  // Replace Aquaduct with Freelancer Hub
+  indexHtml = indexHtml.replace(/Aquaduct/g, 'Freelancer Hub');
+  
   res.sendFile(path.join(__dirname, '../build/index.html'));
 });
 
