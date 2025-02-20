@@ -149,14 +149,16 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
                   key={chain.symbol}
                   type="button"
                   onClick={() => setSelectedChain(chain)}
-                  className={`p-4 rounded-lg border ${
+                  className={`p-4 rounded-lg border flex flex-col items-center justify-center h-24 ${
                     selectedChain === chain
                       ? 'border-blue-500 bg-blue-500/20'
                       : 'border-gray-600 hover:border-blue-400'
                   }`}
                 >
-                  <div className="font-medium">{chain.name}</div>
-                  <div className="text-sm text-gray-400">{selectedOption.price} {chain.amount}</div>
+                  <div className="font-medium text-center">{chain.name}</div>
+                  <div className="text-sm text-gray-400 text-center mt-2">
+                    {selectedOption.price} {chain.amount}
+                  </div>
                 </button>
               ))}
             </div>
