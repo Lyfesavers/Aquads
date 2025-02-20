@@ -37,17 +37,19 @@ router.get('/', auth, async (req, res) => {
 // Create new banner ad request
 router.post('/', auth, async (req, res) => {
   try {
-    const { title, gif, url, duration, price, status, transactionSignature, paymentChain } = req.body;
+    const { title, gif, url, duration, transactionSignature, paymentChain, chainSymbol, chainAddress } = req.body;
     
     const bannerAd = new BannerAd({
       title,
       gif,
       url,
       duration,
-      status: 'pending',
       transactionSignature,
       paymentChain,
-      owner: req.user.id
+      chainSymbol,
+      chainAddress,
+      owner: req.user._id,
+      status: 'pending'
     });
 
     const savedBanner = await bannerAd.save();

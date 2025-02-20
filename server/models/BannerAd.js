@@ -26,7 +26,8 @@ const bannerAdSchema = new mongoose.Schema({
     }
   },
   owner: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true
   },
   status: {
@@ -35,6 +36,18 @@ const bannerAdSchema = new mongoose.Schema({
     default: 'pending'
   },
   transactionSignature: {
+    type: String,
+    required: true
+  },
+  paymentChain: {
+    type: String,
+    required: true
+  },
+  chainSymbol: {
+    type: String,
+    required: true
+  },
+  chainAddress: {
     type: String,
     required: true
   },
@@ -55,10 +68,6 @@ const bannerAdSchema = new mongoose.Schema({
   },
   processedBy: {
     type: String
-  },
-  paymentChain: {
-    type: String,
-    required: true
   }
 });
 

@@ -101,11 +101,6 @@ const CreateBannerModal = ({ show, onHide, onSubmit }) => {
       return;
     }
 
-    if (!previewUrl) {
-      setError('Please provide a valid GIF URL');
-      return;
-    }
-
     try {
       setIsLoading(true);
       const selectedOption = BANNER_OPTIONS.find(opt => opt.durationMs === parseInt(formData.duration));
@@ -115,10 +110,10 @@ const CreateBannerModal = ({ show, onHide, onSubmit }) => {
         gif: formData.gif.trim(),
         url: formData.url.trim(),
         duration: parseInt(formData.duration),
-        price: selectedOption.price,
-        status: 'pending',
         transactionSignature: txSignature.trim(),
-        paymentChain: selectedChain.name
+        paymentChain: selectedChain.name,
+        chainSymbol: selectedChain.symbol,
+        chainAddress: selectedChain.address
       };
 
       console.log('Submitting banner ad data:', submitData);
