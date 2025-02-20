@@ -237,100 +237,34 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   };
 
-  // Add banner management functions
   const handleApproveBanner = async (bannerId) => {
     try {
-      // Log the current user object to see what fields are available
-      console.log('Current user object:', currentUser);
-
-      // Get the correct user ID field
-      const userId = currentUser?.userId || currentUser?.id || currentUser?._id;
-      
-      if (!userId) {
-        console.error('No user ID found in currentUser object:', currentUser);
-        throw new Error('User ID not found');
-      }
-
-      const data = {
-        _id: bannerId,
-        processedBy: userId
-      };
-      
-      console.log('Sending approval request:', data);
-
-      const response = await fetch(`${API_URL}/bannerAds/approve`, {
+      const response = await fetch(`${API_URL}/bannerAds/${bannerId}/approve`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
-        },
-        body: JSON.stringify(data)
-      });
-
-      const responseData = await response.json();
-      console.log('Server response:', responseData);
-
-      if (!response.ok) {
-        throw new Error(responseData.error || 'Failed to approve banner');
-      }
-
-      // Refresh banner ads list
-      const bannersResponse = await fetch(`${API_URL}/bannerAds`, {
-        headers: {
-          'Authorization': `Bearer ${currentUser.token}`
+          'Authorization': `Bearer ${currentUser.token}`,
+          'Content-Type': 'application/json'
         }
       });
-      const updatedBanners = await bannersResponse.json();
-      setBannerAds(updatedBanners);
+      if (!response.ok) throw new Error('Failed to approve banner');
+      fetchBannerAds();
     } catch (error) {
       console.error('Error approving banner:', error);
     }
   };
 
-  const handleRejectBanner = async (bannerId) => {
+  const handleRejectBanner = async (bannerId, reason) => {
     try {
-      // Log the current user object to see what fields are available
-      console.log('Current user object:', currentUser);
-
-      // Get the correct user ID field
-      const userId = currentUser?.userId || currentUser?.id || currentUser?._id;
-      
-      if (!userId) {
-        console.error('No user ID found in currentUser object:', currentUser);
-        throw new Error('User ID not found');
-      }
-
-      const data = {
-        _id: bannerId,
-        processedBy: userId
-      };
-      
-      console.log('Sending rejection request:', data);
-
-      const response = await fetch(`${API_URL}/bannerAds/reject`, {
+      const response = await fetch(`${API_URL}/bannerAds/${bannerId}/reject`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
+          'Authorization': `Bearer ${currentUser.token}`,
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify({ reason })
       });
-
-      const responseData = await response.json();
-      console.log('Server response:', responseData);
-
-      if (!response.ok) {
-        throw new Error(responseData.error || 'Failed to reject banner');
-      }
-
-      // Refresh banner ads list
-      const bannersResponse = await fetch(`${API_URL}/bannerAds`, {
-        headers: {
-          'Authorization': `Bearer ${currentUser.token}`
-        }
-      });
-      const updatedBanners = await bannersResponse.json();
-      setBannerAds(updatedBanners);
+      if (!response.ok) throw new Error('Failed to reject banner');
+      fetchBannerAds();
     } catch (error) {
       console.error('Error rejecting banner:', error);
     }
