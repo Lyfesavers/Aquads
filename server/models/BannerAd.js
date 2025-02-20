@@ -7,23 +7,11 @@ const bannerAdSchema = new mongoose.Schema({
   },
   gif: {
     type: String,
-    required: true,
-    validate: {
-      validator: function(v) {
-        return v.endsWith('.gif');
-      },
-      message: props => `${props.value} is not a GIF file!`
-    }
+    required: true
   },
   url: {
     type: String,
-    required: true,
-    validate: {
-      validator: function(v) {
-        return /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/.test(v);
-      },
-      message: props => `${props.value} is not a valid URL!`
-    }
+    required: true
   },
   owner: {
     type: String,
@@ -52,8 +40,7 @@ const bannerAdSchema = new mongoose.Schema({
   },
   duration: {
     type: Number,
-    required: true,
-    default: 24 * 60 * 60 * 1000 // 24 hours in milliseconds
+    required: true
   },
   createdAt: {
     type: Date,

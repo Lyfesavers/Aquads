@@ -680,11 +680,13 @@ function App() {
         throw new Error('Please log in first!');
       }
 
-      // Add owner to the data
       const submitData = {
         ...bannerData,
-        owner: currentUser.userId
+        owner: currentUser.userId,
+        status: 'pending'
       };
+
+      console.log('Sending to API:', submitData); // Debug log
 
       const response = await fetch(`${API_URL}/bannerAds`, {
         method: 'POST',

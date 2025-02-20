@@ -104,7 +104,6 @@ const CreateBannerModal = ({ show, onHide, onSubmit }) => {
     try {
       setIsLoading(true);
       
-      // Match the exact format that works in BumpStore
       const submitData = {
         title: formData.title.trim(),
         gif: formData.gif.trim(),
@@ -114,9 +113,10 @@ const CreateBannerModal = ({ show, onHide, onSubmit }) => {
         paymentChain: selectedChain.name,
         chainSymbol: selectedChain.symbol,
         chainAddress: selectedChain.address,
-        status: 'pending'  // Add status here
+        status: 'pending'
       };
 
+      console.log('Submitting data:', submitData); // Debug log
       await onSubmit(submitData);
       onHide();
     } catch (err) {
