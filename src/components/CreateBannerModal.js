@@ -59,15 +59,18 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
       return;
     }
 
-    onSubmit({
-      ...bannerData,
-      txSignature,
-      paymentChain: selectedChain.name,
-      chainSymbol: selectedChain.symbol,
-      chainAddress: selectedChain.address,
-      duration: selectedOption.durationMs
-    });
-    onClose();
+    try {
+      onSubmit({
+        ...bannerData,
+        txSignature,
+        paymentChain: selectedChain.name,
+        chainSymbol: selectedChain.symbol,
+        chainAddress: selectedChain.address,
+        duration: selectedOption.durationMs
+      });
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
   const handleClose = () => {

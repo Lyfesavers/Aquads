@@ -1094,8 +1094,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       {/* Create Banner Modal */}
       {showBannerModal && (
         <CreateBannerModal
-          show={showBannerModal}
-          onHide={() => setShowBannerModal(false)}
+          onClose={() => setShowBannerModal(false)}
           onSubmit={handleBannerSubmit}
         />
       )}
