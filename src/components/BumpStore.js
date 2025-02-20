@@ -1,10 +1,38 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
+import { FaCopy, FaCheck } from 'react-icons/fa';
 
 const BUMP_OPTIONS = [
-  { duration: '24 hours', solPrice: 0.5, ethPrice: 0.040, btcPrice: 0.0010, suiPrice: 30, durationMs: 24 * 60 * 60 * 1000 },
-  { duration: '3 days', solPrice: 1, ethPrice: 0.090, btcPrice: 0.030, suiPrice: 75, durationMs: 3 * 24 * 60 * 60 * 1000 },
-  { duration: '7 days', solPrice: 2, ethPrice: 0.22, btcPrice: 0.0061, suiPrice: 178, durationMs: 7 * 24 * 60 * 60 * 1000 }
+  { duration: '24 hours', price: 20, durationMs: 24 * 60 * 60 * 1000 },
+  { duration: '3 days', price: 40, durationMs: 3 * 24 * 60 * 60 * 1000 },
+  { duration: '7 days', price: 80, durationMs: 7 * 24 * 60 * 60 * 1000 }
+];
+
+const BLOCKCHAIN_OPTIONS = [
+  {
+    name: 'Solana',
+    symbol: 'SOL',
+    address: 'F4HuQfUx5zsuQpxca4KQfX6uZPYtRp3Y7HYVGsuHdYVf',
+    amount: 'USDC'
+  },
+  {
+    name: 'Ethereum',
+    symbol: 'ETH',
+    address: '0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358',
+    amount: 'USDC'
+  },
+{
+    name: 'Base',
+    symbol: 'BASE',
+    address: '0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358',
+    amount: 'USDC'
+  },
+  {
+    name: 'Sui',
+    symbol: 'SUI',
+    address: '0xe99b659efbb9a713c494eff34cff9e614fdd8f7ca00530b62c747d5c088aa877',
+    amount: 'USDC'
+  }
 ];
 
 const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
