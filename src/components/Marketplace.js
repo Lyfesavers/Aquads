@@ -410,8 +410,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         gif: bannerData.gif,
         url: bannerData.url,
         duration: bannerData.duration,
-        owner: currentUser.userId,  // This is how other components handle it
-        txSignature: bannerData.txSignature,  // Keep original field name
+        owner: currentUser.userId,
+        txSignature: bannerData.txSignature,
+        // Include the chain information
+        paymentChain: bannerData.paymentChain,
+        chainSymbol: bannerData.chainSymbol,
+        chainAddress: bannerData.chainAddress,
         status: 'pending'
       };
 
