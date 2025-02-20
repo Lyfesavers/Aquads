@@ -237,39 +237,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   };
 
-  const handleApproveBanner = async (bannerId) => {
-    try {
-      const response = await fetch(`${API_URL}/bannerAds/${bannerId}/approve`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${currentUser.token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      if (!response.ok) throw new Error('Failed to approve banner');
-      fetchBannerAds();
-    } catch (error) {
-      console.error('Error approving banner:', error);
-    }
-  };
-
-  const handleRejectBanner = async (bannerId, reason) => {
-    try {
-      const response = await fetch(`${API_URL}/bannerAds/${bannerId}/reject`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${currentUser.token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ reason })
-      });
-      if (!response.ok) throw new Error('Failed to reject banner');
-      fetchBannerAds();
-    } catch (error) {
-      console.error('Error rejecting banner:', error);
-    }
-  };
-
   // Add banner management functions
   const handleApproveBanner = async (bannerId) => {
     try {
