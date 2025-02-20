@@ -29,7 +29,7 @@ const Footer = () => {
             </a>
             <a
               href="mailto:aquads.info@gmail.com"
-              className="hover:text-blue-400 transition-colors flex items-center"
+              className="hover:text-blue-400 transition-colors flex items-center justify-center sm:justify-start"
             >
               <FaEnvelope className="mr-2" />
               <span>Email</span>
