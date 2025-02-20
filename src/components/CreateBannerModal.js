@@ -118,7 +118,8 @@ const CreateBannerModal = ({ show, onHide, onSubmit }) => {
         price: selectedOption.price,
         status: 'pending',
         transactionSignature: txSignature.trim(),
-        paymentChain: selectedChain.name
+        paymentChain: selectedChain.name,
+        owner: req.user.id
       };
 
       console.log('Submitting banner ad data:', submitData);
