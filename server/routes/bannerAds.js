@@ -39,6 +39,7 @@ router.post('/', auth, async (req, res) => {
   try {
     const { title, gif, url, duration, transactionSignature, paymentChain, chainSymbol, chainAddress } = req.body;
     
+    // Create banner ad with owner from auth middleware
     const bannerAd = new BannerAd({
       title,
       gif,
@@ -48,8 +49,15 @@ router.post('/', auth, async (req, res) => {
       paymentChain,
       chainSymbol,
       chainAddress,
-      owner: req.user._id,
+      owner: req.user._id || req.user.id, // Try both possible ID fields
       status: 'pending'
+    });
+
+    // Log the data for debugging
+    console.log('Creating banner ad with:', {
+      ...req.body,
+      owner: req.user._id || req.user.id,
+      user: req.user
     });
 
     const savedBanner = await bannerAd.save();

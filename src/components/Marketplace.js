@@ -400,14 +400,17 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
   const handleBannerSubmit = async (bannerData) => {
     try {
-      // Send the data directly without transformation
+      if (!currentUser || !currentUser.token) {
+        throw new Error('Please log in to create a banner ad');
+      }
+
       const response = await fetch(`${API_URL}/bannerAds`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
         },
-        body: JSON.stringify(bannerData)  // Send the data as-is from CreateBannerModal
+        body: JSON.stringify(bannerData)
       });
 
       if (!response.ok) {
@@ -417,6 +420,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
       const newBanner = await response.json();
       console.log('Banner ad created:', newBanner);
+      setShowBannerModal(false); // Close modal on success
       return newBanner;
     } catch (error) {
       console.error('Error creating banner ad:', error);
