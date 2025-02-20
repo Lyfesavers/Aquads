@@ -410,7 +410,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       // Transform data to match the format that works in other components
       const requestData = {
         ...bannerData,  // Keep all the banner data
-        owner: currentUser.id,  // Just use id as in other components
+        owner: currentUser.userId,  // Changed from id to userId
         status: 'pending'
       };
 
