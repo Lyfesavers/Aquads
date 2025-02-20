@@ -409,15 +409,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
       // Transform data to match the format that works in other components
       const requestData = {
-        title: bannerData.title,
-        gif: bannerData.gif,
-        url: bannerData.url,
-        duration: bannerData.duration,
-        owner: currentUser._id || currentUser.id || currentUser.userId, // Try all possible ID fields
-        txSignature: bannerData.txSignature,
-        paymentChain: bannerData.paymentChain,
-        chainSymbol: bannerData.chainSymbol,
-        chainAddress: bannerData.chainAddress,
+        ...bannerData,  // Keep all the banner data
+        owner: currentUser.id,  // Just use id as in other components
         status: 'pending'
       };
 
@@ -435,7 +428,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
       if (!response.ok) {
         const error = await response.json();
-        console.log('Error response:', error); // Add this log
+        console.log('Error response:', error);
         throw new Error(error.message || 'Failed to create banner ad');
       }
 
