@@ -1,11 +1,39 @@
 import React, { useState } from 'react';
 import { Modal, Form, Alert } from 'react-bootstrap';
 import { API_URL } from '../services/api';
+import { FaCopy, FaCheck } from 'react-icons/fa';
 
 const BANNER_OPTIONS = [
-  { duration: 24 * 60 * 60 * 1000, label: '24 Hours', price: 0.5 },
-  { duration: 3 * 24 * 60 * 60 * 1000, label: '3 Days', price: 1 },
-  { duration: 7 * 24 * 60 * 60 * 1000, label: '7 Days', price: 2 }
+  { duration: '24 hours', price: 40, durationMs: 24 * 60 * 60 * 1000 },
+  { duration: '3 days', price: 80, durationMs: 3 * 24 * 60 * 60 * 1000 },
+  { duration: '7 days', price: 160, durationMs: 7 * 24 * 60 * 60 * 1000 }
+];
+
+const BLOCKCHAIN_OPTIONS = [
+  {
+    name: 'Solana',
+    symbol: 'SOL',
+    address: 'F4HuQfUx5zsuQpxca4KQfX6uZPYtRp3Y7HYVGsuHdYVf',
+    amount: 'USDC'
+  },
+  {
+    name: 'Ethereum',
+    symbol: 'ETH',
+    address: '0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358',
+    amount: 'USDC'
+  },
+  {
+    name: 'Base',
+    symbol: 'BASE',
+    address: '0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358',
+    amount: 'USDC'
+  },
+  {
+    name: 'Sui',
+    symbol: 'SUI',
+    address: '0xe99b659efbb9a713c494eff34cff9e614fdd8f7ca00530b62c747d5c088aa877',
+    amount: 'USDC'
+  }
 ];
 
 const CreateBannerModal = ({ show, onHide, onSubmit }) => {
@@ -13,7 +41,7 @@ const CreateBannerModal = ({ show, onHide, onSubmit }) => {
     title: '',
     gif: '',
     url: '',
-    duration: BANNER_OPTIONS[0].duration
+    duration: BANNER_OPTIONS[0].durationMs
   });
   const [previewUrl, setPreviewUrl] = useState('');
   const [error, setError] = useState('');
@@ -71,7 +99,7 @@ const CreateBannerModal = ({ show, onHide, onSubmit }) => {
 
     try {
       setIsLoading(true);
-      const selectedOption = BANNER_OPTIONS.find(opt => opt.duration === parseInt(formData.duration));
+      const selectedOption = BANNER_OPTIONS.find(opt => opt.durationMs === parseInt(formData.duration));
       
       const submitData = {
         title: formData.title.trim(),
@@ -175,8 +203,8 @@ const CreateBannerModal = ({ show, onHide, onSubmit }) => {
                 className="bg-gray-800/50 border border-gray-700 text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 {BANNER_OPTIONS.map((option, index) => (
-                  <option key={index} value={option.duration} className="bg-gray-800">
-                    {option.label} - {option.price} SOL
+                  <option key={index} value={option.durationMs} className="bg-gray-800">
+                    {option.duration} - {option.price} USDC
                   </option>
                 ))}
               </Form.Select>
