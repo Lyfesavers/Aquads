@@ -622,7 +622,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
             {/* Desktop menu */}
             <div className="hidden md:flex items-center space-x-4">
               <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500">
-                AQUADUCT
+                Freelancer Hub
               </span>
               {currentUser ? (
                 <>
@@ -675,7 +675,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
           <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden py-2`}>
             <div className="flex flex-col space-y-2">
               <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500 text-center">
-                AQUADUCT
+                Freelancer Hub
               </span>
               {currentUser ? (
                 <>
