@@ -111,6 +111,9 @@ const CreateBannerModal = ({ show, onHide, onSubmit }) => {
         url: formData.url.trim(),
         duration: parseInt(formData.duration),
         txSignature: txSignature.trim(),
+        paymentChain: selectedChain.name,
+        chainSymbol: selectedChain.symbol,
+        chainAddress: selectedChain.address,
         status: 'pending'
       };
 
