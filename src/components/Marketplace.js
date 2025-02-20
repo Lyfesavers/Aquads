@@ -400,50 +400,24 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
   const handleBannerSubmit = async (bannerData) => {
     try {
-      // Generate a temporary transaction signature
-      const tempTxSignature = 'temp_' + Date.now() + '_' + Math.random().toString(36).substring(7);
-      
-      // Log current user data to debug
-      console.log('Current user data:', currentUser);
-      
-      // Get the correct owner ID (it might be in a different property)
-      const ownerId = currentUser._id || currentUser.id || currentUser.userId;
-      
-      if (!ownerId) {
-        throw new Error('User ID not found. Please try logging in again.');
-      }
-
-      // Ensure all required fields are present
-      const requestData = {
-        title: bannerData.title,
-        gif: bannerData.gif,
-        url: bannerData.url,
-        duration: bannerData.duration,
-        owner: ownerId,
-        txSignature: tempTxSignature,
-        status: bannerData.status || 'pending'
-      };
-
-      console.log('Submitting banner ad with data:', requestData);
-      
+      // Send the data directly without transformation
       const response = await fetch(`${API_URL}/bannerAds`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
         },
-        body: JSON.stringify(requestData)
+        body: JSON.stringify(bannerData)  // Send the data as-is from CreateBannerModal
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Server response:', errorData);
-        throw new Error(errorData.error || 'Failed to create banner ad');
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create banner ad');
       }
 
-      const data = await response.json();
-      console.log('Banner ad created:', data);
-      setShowBannerModal(false);
+      const newBanner = await response.json();
+      console.log('Banner ad created:', newBanner);
+      return newBanner;
     } catch (error) {
       console.error('Error creating banner ad:', error);
       throw error;
