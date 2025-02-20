@@ -26,8 +26,7 @@ const bannerAdSchema = new mongoose.Schema({
     }
   },
   owner: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    type: String,
     required: true
   },
   status: {
@@ -35,7 +34,7 @@ const bannerAdSchema = new mongoose.Schema({
     enum: ['pending', 'active', 'expired'],
     default: 'pending'
   },
-  transactionSignature: {
+  txSignature: {
     type: String,
     required: true
   },

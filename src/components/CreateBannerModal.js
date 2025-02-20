@@ -110,16 +110,9 @@ const CreateBannerModal = ({ show, onHide, onSubmit }) => {
         gif: formData.gif.trim(),
         url: formData.url.trim(),
         duration: parseInt(formData.duration),
-        transactionSignature: txSignature.trim(),
-        paymentChain: selectedChain.name,
-        chainSymbol: selectedChain.symbol,
-        chainAddress: selectedChain.address
+        txSignature: txSignature.trim(),
+        status: 'pending'
       };
-
-      delete submitData.owner;
-      delete submitData.status;
-      delete submitData.txSignature;
-      delete submitData.price;
 
       console.log('Submitting banner ad data:', submitData);
       const response = await onSubmit(submitData);
