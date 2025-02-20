@@ -674,6 +674,39 @@ function App() {
     showNotification('Profile updated successfully!', 'success');
   };
 
+  const handleBannerSubmit = async (bannerData) => {
+    try {
+      if (!currentUser) {
+        throw new Error('Please log in first!');
+      }
+
+      const response = await fetch(`${API_URL}/bannerAds`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({
+          ...bannerData,
+          owner: currentUser.userId
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message);
+      }
+
+      const newBanner = await response.json();
+      showNotification('Banner ad created successfully!', 'success');
+      return newBanner;
+    } catch (error) {
+      console.error('Error creating banner ad:', error);
+      showNotification(error.message, 'error');
+      throw error;
+    }
+  };
+
   return (
     <Router>
       <Routes>
@@ -683,6 +716,7 @@ function App() {
             onLogin={handleLogin}
             onLogout={handleLogout}
             onCreateAccount={handleCreateAccount}
+            onBannerSubmit={handleBannerSubmit}
           />
         } />
         <Route path="/" element={
