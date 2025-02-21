@@ -45,6 +45,8 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
     gif: '',
     url: ''
   });
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [error, setError] = useState('');
 
   const handleCopyAddress = () => {
     navigator.clipboard.writeText(selectedChain.address);
@@ -76,6 +78,35 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
   const handleClose = () => {
     if (typeof onClose === 'function') {
       onClose();
+    }
+  };
+
+  const validateGifUrl = async (url) => {
+    try {
+      const response = await fetch(url);
+      const contentType = response.headers.get('content-type');
+      return contentType.startsWith('image/');
+    } catch (error) {
+      return false;
+    }
+  };
+
+  const handleGifChange = async (e) => {
+    const url = e.target.value;
+    setBannerData(prev => ({ ...prev, gif: url }));
+    
+    if (url) {
+      const isValid = await validateGifUrl(url);
+      if (isValid) {
+        setPreviewUrl(url);
+        setError('');
+      } else {
+        setPreviewUrl('');
+        setError('Please enter a valid image URL');
+      }
+    } else {
+      setPreviewUrl('');
+      setError('');
     }
   };
 
@@ -117,16 +148,32 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">Banner GIF URL</label>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-2">
+              Banner GIF URL
+            </label>
             <input
-              type="url"
+              type="text"
+              name="gif"
               value={bannerData.gif}
-              onChange={(e) => setBannerData({...bannerData, gif: e.target.value})}
+              onChange={handleGifChange}
+              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter banner GIF URL"
               required
-              placeholder="Enter the URL of your banner GIF"
-              className="w-full p-3 bg-gray-700 rounded"
             />
+            {previewUrl && (
+              <div className="mt-4">
+                <img
+                  src={previewUrl}
+                  alt="Banner preview"
+                  className="max-w-full h-auto rounded"
+                  onError={() => {
+                    setPreviewUrl('');
+                    setError('Failed to load image');
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           <div>
