@@ -595,12 +595,14 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         },
         body: JSON.stringify({
           ...jobData,
-          ownerUsername: currentUser.username
+          ownerUsername: currentUser.username,
+          ownerImage: currentUser.image
         })
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create job');
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create job');
       }
 
       const newJob = await response.json();
@@ -609,7 +611,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       showNotification('Job posted successfully', 'success');
     } catch (error) {
       console.error('Error creating job:', error);
-      showNotification('Failed to create job', 'error');
+      showNotification(error.message || 'Failed to create job', 'error');
     }
   };
 
@@ -624,13 +626,16 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         body: JSON.stringify(jobData)
       });
 
-      if (response.ok) {
-        const updatedJob = await response.json();
-        setJobs(prev => prev.map(job => 
-          job._id === updatedJob._id ? updatedJob : job
-        ));
-        showNotification('Job updated successfully', 'success');
+      if (!response.ok) {
+        throw new Error('Failed to update job');
       }
+
+      const updatedJob = await response.json();
+      setJobs(prev => prev.map(job => 
+        job._id === updatedJob._id ? updatedJob : job
+      ));
+      setJobToEdit(null);
+      showNotification('Job updated successfully', 'success');
     } catch (error) {
       console.error('Error updating job:', error);
       showNotification('Failed to update job', 'error');
@@ -648,10 +653,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         }
       });
 
-      if (response.ok) {
-        setJobs(prev => prev.filter(job => job._id !== jobId));
-        showNotification('Job deleted successfully', 'success');
+      if (!response.ok) {
+        throw new Error('Failed to delete job');
       }
+
+      setJobs(prev => prev.filter(job => job._id !== jobId));
+      showNotification('Job deleted successfully', 'success');
     } catch (error) {
       console.error('Error deleting job:', error);
       showNotification('Failed to delete job', 'error');
@@ -960,12 +967,18 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {showJobs ? (
-                <JobList
-                  jobs={jobs}
-                  currentUser={currentUser}
-                  onEditJob={setJobToEdit}
-                  onDeleteJob={handleDeleteJob}
-                />
+                jobs.length > 0 ? (
+                  <JobList
+                    jobs={jobs}
+                    currentUser={currentUser}
+                    onEditJob={setJobToEdit}
+                    onDeleteJob={handleDeleteJob}
+                  />
+                ) : (
+                  <div className="col-span-3 text-center py-8 text-gray-400">
+                    No jobs posted yet.
+                  </div>
+                )
               ) : (
                 filteredServices.map((service) => (
                   <div 
