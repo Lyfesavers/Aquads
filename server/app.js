@@ -111,19 +111,14 @@ app.get('/marketplace', async (req, res, next) => {
   next();
 });
 
-// Add these debug logs right after the requires
+// Add debug logging
 console.log('Available routes:', {
   jobs: !!jobsRoutes,
   services: !!serviceRoutes,
   users: !!userRoutes
 });
 
-// Add this before registering the jobs route
-console.log('Registering jobs route');
-app.use('/api/jobs', jobsRoutes);
-console.log('Jobs route registered');
-
-// Routes
+// Routes - register jobs route with other routes
 app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/service-reviews', serviceReviewRoutes);
@@ -131,8 +126,9 @@ app.use('/api/bannerAds', bannerAdsRoutes);
 app.use('/api/points', pointsRoutes);
 app.use('/api/bookings', bookingsRoutes);
 app.use('/api/affiliates', affiliateRoutes);
+app.use('/api/jobs', jobsRoutes);
 
-// Add this after your routes but before the React routing handler
+// Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
   res.status(500).json({ error: 'Internal server error' });
