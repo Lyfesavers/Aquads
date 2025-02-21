@@ -26,10 +26,9 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: true,
+    origin: ["https://www.aquads.xyz", "http://localhost:3000"],
     methods: ["GET", "POST"],
-    credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization']
+    credentials: true
   }
 });
 
@@ -383,23 +382,10 @@ const apiLimiter = rateLimit({
 
 app.use('/api', apiLimiter);
 
-// Add route debugging
-app.use('/api/jobs', (req, res, next) => {
-  console.log('Jobs route hit:', {
-    method: req.method,
-    path: req.path,
-    headers: req.headers
-  });
-  next();
-});
-
 // THEN start the server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
-  console.log('Available routes:', app._router.stack
-    .filter(r => r.route)
-    .map(r => r.route.path));
 });
 
 if (process.env.NODE_ENV === 'production') {

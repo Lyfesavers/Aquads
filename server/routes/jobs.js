@@ -15,12 +15,11 @@ router.get('/', async (req, res) => {
     const jobs = await Job.find().sort({ createdAt: -1 });
     res.json(jobs);
   } catch (error) {
-    console.error('Error fetching jobs:', error);
     res.status(500).json({ error: 'Failed to fetch jobs' });
   }
 });
 
-// Create job - make this more explicit
+// Create job
 router.post('/', auth, async (req, res) => {
   try {
     const job = new Job({
@@ -29,11 +28,9 @@ router.post('/', auth, async (req, res) => {
       ownerUsername: req.user.username,
       ownerImage: req.user.image || ''
     });
-
     await job.save();
     res.status(201).json(job);
   } catch (error) {
-    console.error('Error creating job:', error);
     res.status(500).json({ error: 'Failed to create job' });
   }
 });
