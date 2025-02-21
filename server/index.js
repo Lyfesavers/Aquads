@@ -21,6 +21,7 @@ const path = require('path');
 const fs = require('fs');
 const upload = require('./middleware/upload');
 const usersRouter = require('./routes/users');
+const jobsRoutes = require('./routes/jobs');
 
 const app = express();
 const server = http.createServer(app);
@@ -172,6 +173,7 @@ app.use('/api/bannerAds', bannerAdsRoutes);
 app.use('/api/points', require('./routes/points'));
 app.use('/api/bookings', require('./routes/bookings'));
 app.use('/api/affiliates', affiliateRoutes);
+app.use('/api/jobs', jobsRoutes);
 
 // Create new ad
 app.post('/api/ads', auth, async (req, res) => {
