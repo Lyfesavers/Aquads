@@ -69,18 +69,12 @@ Best regards,
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-white">{job.title}</h3>
-                  <div className="flex items-center space-x-2 text-sm text-gray-400">
-                    <span>Posted by {job.ownerUsername}</span>
-                    <span>•</span>
-                    <span>${job.payAmount}/{job.payType}</span>
-                    <span>•</span>
-                    <span>{formatDate(job.createdAt)}</span>
-                  </div>
+                  <p className="text-sm text-gray-400">Posted by {job.ownerUsername} • {formatDate(job.createdAt)}</p>
                 </div>
               </div>
               
-              {/* Add back the edit/delete buttons */}
-              {currentUser && currentUser.userId === job.owner && (
+              {/* Fix the condition here */}
+              {currentUser && (currentUser.userId === job.owner || currentUser.userId === job.owner._id) && (
                 <div className="flex space-x-2">
                   <button
                     onClick={(e) => {
