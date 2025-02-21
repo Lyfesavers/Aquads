@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Job = require('../models/Job');
 const auth = require('../middleware/auth');
+const User = require('../models/User');
 
 // Debug route
 router.get('/test', (req, res) => {
@@ -12,7 +13,9 @@ router.get('/test', (req, res) => {
 // Get all jobs
 router.get('/', async (req, res) => {
   try {
-    const jobs = await Job.find().sort({ createdAt: -1 });
+    const jobs = await Job.find()
+      .populate('owner', 'username image')
+      .sort({ createdAt: -1 });
     res.json(jobs);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch jobs' });
@@ -22,11 +25,12 @@ router.get('/', async (req, res) => {
 // Create job
 router.post('/', auth, async (req, res) => {
   try {
+    const user = await User.findById(req.user.userId);
     const job = new Job({
       ...req.body,
       owner: req.user.userId,
       ownerUsername: req.user.username,
-      ownerImage: req.user.image || ''
+      ownerImage: user.image
     });
     await job.save();
     res.status(201).json(job);
