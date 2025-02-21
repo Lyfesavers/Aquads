@@ -111,6 +111,18 @@ app.get('/marketplace', async (req, res, next) => {
   next();
 });
 
+// Add these debug logs right after the requires
+console.log('Available routes:', {
+  jobs: !!jobsRoutes,
+  services: !!serviceRoutes,
+  users: !!userRoutes
+});
+
+// Add this before registering the jobs route
+console.log('Registering jobs route');
+app.use('/api/jobs', jobsRoutes);
+console.log('Jobs route registered');
+
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
@@ -119,7 +131,6 @@ app.use('/api/bannerAds', bannerAdsRoutes);
 app.use('/api/points', pointsRoutes);
 app.use('/api/bookings', bookingsRoutes);
 app.use('/api/affiliates', affiliateRoutes);
-app.use('/api/jobs', jobsRoutes);
 
 // Add this after your routes but before the React routing handler
 app.use((err, req, res, next) => {
