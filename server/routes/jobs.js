@@ -22,25 +22,16 @@ router.get('/', async (req, res) => {
 
 // Create job - make this more explicit
 router.post('/', auth, async (req, res) => {
-  console.log('Create job request received:', req.body);
   try {
     const job = new Job({
-      title: req.body.title,
-      description: req.body.description,
-      requirements: req.body.requirements,
-      payAmount: req.body.payAmount,
-      payType: req.body.payType,
-      contactEmail: req.body.contactEmail,
-      contactTelegram: req.body.contactTelegram,
-      contactDiscord: req.body.contactDiscord,
+      ...req.body,
       owner: req.user.userId,
       ownerUsername: req.user.username,
       ownerImage: req.user.image || ''
     });
 
-    const savedJob = await job.save();
-    console.log('Job saved:', savedJob);
-    res.status(201).json(savedJob);
+    await job.save();
+    res.status(201).json(job);
   } catch (error) {
     console.error('Error creating job:', error);
     res.status(500).json({ error: 'Failed to create job' });

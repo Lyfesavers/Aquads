@@ -1,32 +1,12 @@
 const mongoose = require('mongoose');
 
 const jobSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  description: {
-    type: String,
-    required: true
-  },
-  requirements: {
-    type: String,
-    required: true
-  },
-  payAmount: {
-    type: Number,
-    required: true
-  },
-  payType: {
-    type: String,
-    enum: ['hourly', 'weekly', 'monthly'],
-    required: true
-  },
-  contactEmail: {
-    type: String,
-    required: true
-  },
+  title: { type: String, required: true },
+  description: { type: String, required: true },
+  requirements: { type: String, required: true },
+  payAmount: { type: Number, required: true },
+  payType: { type: String, required: true },
+  contactEmail: { type: String, required: true },
   contactTelegram: String,
   contactDiscord: String,
   owner: {
@@ -34,15 +14,9 @@ const jobSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  ownerUsername: {
-    type: String,
-    required: true
-  },
+  ownerUsername: { type: String, required: true },
   ownerImage: String,
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
+  createdAt: { type: Date, default: Date.now },
   status: {
     type: String,
     enum: ['active', 'filled', 'expired'],
@@ -50,5 +24,4 @@ const jobSchema = new mongoose.Schema({
   }
 });
 
-const Job = mongoose.model('Job', jobSchema);
-module.exports = Job;
+module.exports = mongoose.model('Job', jobSchema);

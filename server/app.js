@@ -120,25 +120,8 @@ app.use('/api/points', pointsRoutes);
 app.use('/api/bookings', bookingsRoutes);
 app.use('/api/affiliates', affiliateRoutes);
 
-// In the routes section, replace the current jobs route with this:
-const jobsRouter = express.Router();
-
-// Debug middleware for all jobs routes
-jobsRouter.use((req, res, next) => {
-  console.log('Jobs request:', {
-    method: req.method,
-    path: req.path,
-    body: req.body,
-    headers: req.headers
-  });
-  next();
-});
-
-// Mount the jobs routes
-jobsRouter.use('/', jobsRoutes);
-
-// Register the jobs router
-app.use('/api/jobs', jobsRouter);
+// In the routes section, BEFORE the React handler
+app.use('/api/jobs', jobsRoutes);  // Keep it simple like other working routes
 
 // Error handling middleware
 app.use((err, req, res, next) => {
