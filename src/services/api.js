@@ -562,4 +562,48 @@ export const resetPassword = async (username, referralCode, newPassword) => {
     console.error('Password reset error:', error);
     throw error;
   }
+};
+
+// Add these job-related API functions
+export const fetchJobs = async () => {
+  const response = await fetch(`${API_URL}/jobs`);
+  if (!response.ok) throw new Error('Failed to fetch jobs');
+  return response.json();
+};
+
+export const createJob = async (jobData, token) => {
+  const response = await fetch(`${API_URL}/jobs`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(jobData)
+  });
+  if (!response.ok) throw new Error('Failed to create job');
+  return response.json();
+};
+
+export const updateJob = async (jobId, jobData, token) => {
+  const response = await fetch(`${API_URL}/jobs/${jobId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(jobData)
+  });
+  if (!response.ok) throw new Error('Failed to update job');
+  return response.json();
+};
+
+export const deleteJob = async (jobId, token) => {
+  const response = await fetch(`${API_URL}/jobs/${jobId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  if (!response.ok) throw new Error('Failed to delete job');
+  return response.json();
 }; 

@@ -3,7 +3,7 @@ const router = express.Router();
 const Job = require('../models/Job');
 const auth = require('../middleware/auth');
 
-// Test route to verify it's working
+// Test route
 router.get('/test', (req, res) => {
   res.json({ message: 'Jobs route is working' });
 });
@@ -80,4 +80,4 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;

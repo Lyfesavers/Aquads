@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import CreateServiceModal from './CreateServiceModal';
 import ServiceReviews from './ServiceReviews';
-import { createService, fetchServices } from '../services/api';
+import { createService, fetchServices, fetchJobs, createJob, updateJob, deleteJob } from '../services/api';
 import { API_URL } from '../services/api';
 import ProfileModal from './ProfileModal';
 import BannerDisplay from './BannerDisplay';
@@ -570,62 +570,39 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   };
 
   useEffect(() => {
-    const fetchJobs = async () => {
+    const loadJobs = async () => {
       try {
-        const response = await fetch(`${API_URL}/jobs`);
-        if (response.ok) {
-          const data = await response.json();
-          setJobs(data);
-        }
+        const data = await fetchJobs();
+        setJobs(data);
       } catch (error) {
         console.error('Error fetching jobs:', error);
+        showNotification('Failed to load jobs', 'error');
       }
     };
 
-    fetchJobs();
+    loadJobs();
   }, []);
 
   const handleCreateJob = async (jobData) => {
+    if (!currentUser) {
+      showNotification('Please login to post a job', 'error');
+      return;
+    }
+
     try {
-      const response = await fetch(`${API_URL}/jobs`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
-        },
-        body: JSON.stringify(jobData)
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create job');
-      }
-
-      const newJob = await response.json();
+      const newJob = await createJob(jobData, currentUser.token);
       setJobs(prevJobs => [newJob, ...prevJobs]);
       setShowJobModal(false);
-      showNotification('Job posted successfully');
+      showNotification('Job posted successfully', 'success');
     } catch (error) {
       console.error('Error creating job:', error);
-      showNotification('Failed to create job');
+      showNotification(error.message || 'Failed to create job', 'error');
     }
   };
 
   const handleEditJob = async (jobData) => {
     try {
-      const response = await fetch(`${API_URL}/jobs/${jobData._id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
-        },
-        body: JSON.stringify(jobData)
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update job');
-      }
-
-      const updatedJob = await response.json();
+      const updatedJob = await updateJob(jobData._id, jobData, currentUser.token);
       setJobs(prev => prev.map(job => 
         job._id === updatedJob._id ? updatedJob : job
       ));
@@ -641,17 +618,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     if (!window.confirm('Are you sure you want to delete this job?')) return;
 
     try {
-      const response = await fetch(`${API_URL}/jobs/${jobId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${currentUser.token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete job');
-      }
-
+      await deleteJob(jobId, currentUser.token);
       setJobs(prev => prev.filter(job => job._id !== jobId));
       showNotification('Job deleted successfully', 'success');
     } catch (error) {
@@ -962,18 +929,20 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {showJobs ? (
-                jobs.length > 0 ? (
-                  <JobList
-                    jobs={jobs}
-                    currentUser={currentUser}
-                    onEditJob={setJobToEdit}
-                    onDeleteJob={handleDeleteJob}
-                  />
-                ) : (
-                  <div className="col-span-3 text-center py-8 text-gray-400">
-                    No jobs posted yet.
-                  </div>
-                )
+                <div className="col-span-3">
+                  {jobs.length > 0 ? (
+                    <JobList
+                      jobs={jobs}
+                      currentUser={currentUser}
+                      onEditJob={setJobToEdit}
+                      onDeleteJob={handleDeleteJob}
+                    />
+                  ) : (
+                    <div className="text-center py-8 text-gray-400">
+                      No jobs posted yet.
+                    </div>
+                  )}
+                </div>
               ) : (
                 filteredServices.map((service) => (
                   <div 
