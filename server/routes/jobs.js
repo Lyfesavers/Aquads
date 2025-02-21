@@ -3,6 +3,11 @@ const router = express.Router();
 const Job = require('../models/Job');
 const auth = require('../middleware/auth');
 
+// Add a simple test route first
+router.get('/ping', (req, res) => {
+  res.json({ message: 'pong' });
+});
+
 // Get all jobs
 router.get('/', async (req, res) => {
   try {

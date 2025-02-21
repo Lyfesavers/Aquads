@@ -111,13 +111,6 @@ app.get('/marketplace', async (req, res, next) => {
   next();
 });
 
-// Add debug logging
-console.log('Available routes:', {
-  jobs: !!jobsRoutes,
-  services: !!serviceRoutes,
-  users: !!userRoutes
-});
-
 // Routes - register jobs route with other routes
 app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
@@ -126,7 +119,10 @@ app.use('/api/bannerAds', bannerAdsRoutes);
 app.use('/api/points', pointsRoutes);
 app.use('/api/bookings', bookingsRoutes);
 app.use('/api/affiliates', affiliateRoutes);
-app.use('/api/jobs', jobsRoutes);
+app.use('/api/jobs', (req, res, next) => {
+  console.log('Jobs route hit:', req.method, req.path);
+  jobsRoutes(req, res, next);
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
