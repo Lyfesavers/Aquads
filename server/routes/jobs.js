@@ -36,8 +36,9 @@ router.post('/', auth, async (req, res) => {
     });
 
     await job.save();
-    res.json(job);
+    res.status(201).json(job);
   } catch (error) {
+    console.error('Error creating job:', error);
     res.status(500).json({ error: 'Failed to create job' });
   }
 });
