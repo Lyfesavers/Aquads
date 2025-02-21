@@ -78,27 +78,33 @@ const CreateJobModal = ({ onClose, onCreateJob, job = null }) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Pay Amount</label>
+              <label className="block text-sm font-medium mb-2">
+                Pay Amount
+              </label>
               <input
                 type="number"
                 name="payAmount"
-                required
                 value={formData.payAmount}
                 onChange={handleChange}
                 className="w-full px-3 py-2 bg-gray-700 rounded"
+                required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Pay Type</label>
+              <label className="block text-sm font-medium mb-2">
+                Pay Type
+              </label>
               <select
                 name="payType"
                 value={formData.payType}
                 onChange={handleChange}
                 className="w-full px-3 py-2 bg-gray-700 rounded"
+                required
               >
                 <option value="hourly">Hourly</option>
                 <option value="weekly">Weekly</option>
                 <option value="monthly">Monthly</option>
+                <option value="percentage">Percentage (%)</option>
               </select>
             </div>
           </div>
