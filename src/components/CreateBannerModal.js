@@ -161,6 +161,9 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
               placeholder="Enter banner GIF URL"
               required
             />
+            {error && (
+              <p className="mt-2 text-sm text-red-400">{error}</p>
+            )}
             {previewUrl && (
               <div className="mt-4">
                 <img
