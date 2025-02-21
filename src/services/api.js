@@ -566,11 +566,13 @@ export const resetPassword = async (username, referralCode, newPassword) => {
 
 // Add these job-related API functions
 export const fetchJobs = async () => {
+  console.log('Fetching jobs...');
   const response = await fetch(`${API_URL}/jobs`, {
     headers: {
       ...getAuthHeader()
     }
   });
+  console.log('Jobs response:', response);
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
     throw new Error(error.message || 'Failed to fetch jobs');
@@ -579,6 +581,7 @@ export const fetchJobs = async () => {
 };
 
 export const createJob = async (jobData) => {
+  console.log('Creating job:', jobData);
   const response = await fetch(`${API_URL}/jobs`, {
     method: 'POST',
     headers: {
@@ -587,6 +590,7 @@ export const createJob = async (jobData) => {
     },
     body: JSON.stringify(jobData)
   });
+  console.log('Create job response:', response);
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
     throw new Error(error.message || 'Failed to create job');
