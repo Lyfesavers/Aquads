@@ -593,14 +593,20 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
         },
-        body: JSON.stringify(jobData)
+        body: JSON.stringify({
+          ...jobData,
+          ownerUsername: currentUser.username
+        })
       });
 
-      if (response.ok) {
-        const newJob = await response.json();
-        setJobs(prev => [newJob, ...prev]);
-        showNotification('Job posted successfully', 'success');
+      if (!response.ok) {
+        throw new Error('Failed to create job');
       }
+
+      const newJob = await response.json();
+      setJobs(prevJobs => [newJob, ...prevJobs]);
+      setShowJobModal(false);
+      showNotification('Job posted successfully', 'success');
     } catch (error) {
       console.error('Error creating job:', error);
       showNotification('Failed to create job', 'error');
@@ -952,7 +958,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                 </button>
               )}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {showJobs ? (
                 <JobList
                   jobs={jobs}
