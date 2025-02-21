@@ -3,6 +3,11 @@ const router = express.Router();
 const Job = require('../models/Job');
 const auth = require('../middleware/auth');
 
+// Basic test route
+router.get('/', (req, res) => {
+  res.json({ message: 'Jobs API is working' });
+});
+
 // Test route
 router.get('/test', (req, res) => {
   res.json({ message: 'Jobs route is working' });
