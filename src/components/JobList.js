@@ -47,17 +47,14 @@ Best regards,
   return (
     <div className="space-y-4">
       {jobs.map((job) => (
-        <div 
+        <div
           key={job._id}
-          className="bg-gray-800 rounded-lg overflow-hidden border border-gray-700 hover:border-gray-600 transition-colors"
+          className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-lg overflow-hidden cursor-pointer hover:bg-gray-800/70 transition-all duration-300"
+          onClick={() => toggleExpand(job._id)}
         >
-          {/* Header - Always visible */}
-          <div 
-            className="p-4 cursor-pointer"
-            onClick={() => toggleExpand(job._id)}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
+          <div className="p-4">
+            <div className="flex justify-between items-start">
+              <div className="flex items-start space-x-4">
                 {/* Profile image circle */}
                 <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden flex-shrink-0">
                   <img
@@ -81,7 +78,32 @@ Best regards,
                   </div>
                 </div>
               </div>
-              {expandedJobId === job._id ? <FaChevronUp /> : <FaChevronDown />}
+              
+              {/* Add back the edit/delete buttons */}
+              {currentUser && currentUser.userId === job.owner && (
+                <div className="flex space-x-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditJob(job);
+                    }}
+                    className="text-blue-500 hover:text-blue-400 transition-colors"
+                  >
+                    <FaEdit size={18} />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (window.confirm('Are you sure you want to delete this job?')) {
+                        onDeleteJob(job._id);
+                      }
+                    }}
+                    className="text-red-500 hover:text-red-400 transition-colors"
+                  >
+                    <FaTrash size={18} />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -134,29 +156,6 @@ Best regards,
                     )}
                   </div>
                 </div>
-
-                {currentUser && currentUser.userId === job.owner && (
-                  <div className="flex justify-end space-x-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEditJob(job);
-                      }}
-                      className="p-2 text-blue-400 hover:text-blue-300"
-                    >
-                      <FaEdit />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDeleteJob(job._id);
-                      }}
-                      className="p-2 text-red-400 hover:text-red-300"
-                    >
-                      <FaTrash />
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
           )}
