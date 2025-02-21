@@ -848,6 +848,14 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                 >
                   Jobs
                 </button>
+                {currentUser && (
+                  <button
+                    onClick={() => setShowJobModal(true)}
+                    className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
+                  >
+                    Post Job
+                  </button>
+                )}
                 <select
                   value={sortOption}
                   onChange={(e) => setSortOption(e.target.value)}
