@@ -72,38 +72,41 @@ Best regards,
                   <div className="flex items-center space-x-2 text-sm text-gray-400">
                     <span>Posted by {job.ownerUsername}</span>
                     <span>•</span>
-                    <span>${job.payAmount}/{job.payType}</span>
-                    <span>•</span>
                     <span>{formatDate(job.createdAt)}</span>
                   </div>
                 </div>
               </div>
               
-              {/* Fix the condition here */}
-              {currentUser && (currentUser.userId === job.owner || currentUser.userId === job.owner._id) && (
-                <div className="flex space-x-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEditJob(job);
-                    }}
-                    className="text-blue-500 hover:text-blue-400 transition-colors"
-                  >
-                    <FaEdit size={18} />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (window.confirm('Are you sure you want to delete this job?')) {
-                        onDeleteJob(job._id);
-                      }
-                    }}
-                    className="text-red-500 hover:text-red-400 transition-colors"
-                  >
-                    <FaTrash size={18} />
-                  </button>
+              <div className="flex items-center space-x-4">
+                <div className="text-lg font-semibold text-green-400">
+                  ${job.payAmount}/{job.payType}
                 </div>
-              )}
+                
+                {currentUser && (currentUser.userId === job.owner || currentUser.userId === job.owner._id) && (
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditJob(job);
+                      }}
+                      className="text-blue-500 hover:text-blue-400 transition-colors"
+                    >
+                      <FaEdit size={18} />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (window.confirm('Are you sure you want to delete this job?')) {
+                          onDeleteJob(job._id);
+                        }
+                      }}
+                      className="text-red-500 hover:text-red-400 transition-colors"
+                    >
+                      <FaTrash size={18} />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
