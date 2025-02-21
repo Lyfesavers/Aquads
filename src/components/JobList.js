@@ -41,12 +41,12 @@ const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob }) => {
                 {/* Profile image circle */}
                 <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden flex-shrink-0">
                   <img
-                    src={job.ownerImage || 'https://placehold.co/40x40?text=User'}
+                    src={job.owner?.image || job.ownerImage || `https://ui-avatars.com/api/?name=${job.ownerUsername}&background=random`}
                     alt={job.ownerUsername}
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       e.target.onerror = null;
-                      e.target.src = 'https://placehold.co/40x40?text=User';
+                      e.target.src = `https://ui-avatars.com/api/?name=${job.ownerUsername}&background=random`;
                     }}
                   />
                 </div>
