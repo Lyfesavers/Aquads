@@ -111,7 +111,10 @@ app.get('/marketplace', async (req, res, next) => {
   next();
 });
 
-// Routes - register jobs route with other routes
+// Make sure this comes BEFORE any catch-all routes
+console.log('Registering routes...');
+
+// Routes
 app.use('/api/users', userRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/service-reviews', serviceReviewRoutes);
@@ -119,9 +122,9 @@ app.use('/api/bannerAds', bannerAdsRoutes);
 app.use('/api/points', pointsRoutes);
 app.use('/api/bookings', bookingsRoutes);
 app.use('/api/affiliates', affiliateRoutes);
+app.use('/api/jobs', jobsRoutes);
 
-// In the routes section, BEFORE the React handler
-app.use('/api/jobs', jobsRoutes);  // Keep it simple like other working routes
+console.log('Routes registered');
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -131,12 +134,6 @@ app.use((err, req, res, next) => {
 
 // Handle React routing, return all requests to React app
 app.get('*', (req, res) => {
-  // Read the index.html file
-  let indexHtml = fs.readFileSync(path.join(__dirname, '../build/index.html'), 'utf8');
-  
-  // Replace Aquaduct with Freelancer Hub
-  indexHtml = indexHtml.replace(/Aquaduct/g, 'Freelancer Hub');
-  
   res.sendFile(path.join(__dirname, '../build/index.html'));
 });
 

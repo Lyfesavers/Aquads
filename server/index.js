@@ -371,9 +371,15 @@ const logger = winston.createLogger({
   ]
 });
 
+// Add this to see if server is starting
+console.log('Starting server...');
+
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
+  console.log('Available routes:', app._router.stack
+    .filter(r => r.route)
+    .map(r => r.route.path));
 });
 
 if (process.env.NODE_ENV === 'production') {
