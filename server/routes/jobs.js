@@ -23,13 +23,19 @@ router.get('/', async (req, res) => {
 // Create new job
 router.post('/', auth, async (req, res) => {
   try {
-    console.log('Creating job with data:', req.body); // Debug log
+    console.log('Received job creation request:', {
+      body: req.body,
+      user: req.user,
+      headers: req.headers
+    });
 
     // Check if user has reached job limit
     const userJobCount = await Job.countDocuments({ 
       owner: req.user.userId,
       status: 'active'
     });
+
+    console.log('Current user job count:', userJobCount);
 
     if (userJobCount >= 5) {
       return res.status(400).json({ 
@@ -44,12 +50,17 @@ router.post('/', auth, async (req, res) => {
       ownerImage: req.user.image || ''
     });
 
+    console.log('Attempting to save job:', job);
+
     await job.save();
-    console.log('Job created successfully:', job); // Debug log
+    console.log('Job saved successfully:', job);
     res.status(201).json(job);
   } catch (error) {
-    console.error('Error creating job:', error);
-    res.status(500).json({ error: error.message || 'Failed to create job posting' });
+    console.error('Error in job creation:', error);
+    res.status(500).json({ 
+      error: error.message || 'Failed to create job posting',
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 

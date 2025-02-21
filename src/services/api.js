@@ -1,7 +1,9 @@
 import io from 'socket.io-client';
 import axios from 'axios';
 
-export const API_URL = 'https://aquads.onrender.com/api';
+export const API_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://aquads.onrender.com/api'
+  : 'http://localhost:5000/api';
 
 export const socket = io('https://aquads.onrender.com', {
   auth: {

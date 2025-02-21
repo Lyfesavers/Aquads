@@ -32,7 +32,7 @@ app.use((req, res, next) => {
 
 // Apply CORS middleware
 app.use(cors({
-  origin: ['https://www.aquads.xyz', 'https://aquads.xyz', 'http://localhost:3000'],
+  origin: ['https://www.aquads.xyz', 'https://aquads.xyz', 'http://localhost:3000', 'https://aquads.onrender.com'],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept', 'X-Requested-With'],
   credentials: true,
@@ -40,6 +40,7 @@ app.use(cors({
   optionsSuccessStatus: 204
 }));
 
+// Add this before your routes to handle JSON parsing
 app.use(express.json());
 
 // Serve static files from the React app
