@@ -587,16 +587,11 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
   const handleCreateJob = async (jobData) => {
     try {
-      console.log('Creating job with data:', jobData); // Debug log
-      console.log('API URL:', API_URL); // Debug log
-      console.log('Current user token:', currentUser?.token); // Debug log
-
       const response = await fetch(`${API_URL}/jobs`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`,
-          'Accept': 'application/json'
+          'Authorization': `Bearer ${currentUser.token}`
         },
         body: JSON.stringify({
           ...jobData,
@@ -605,23 +600,13 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         })
       });
 
-      console.log('Response status:', response.status); // Debug log
-
+      const data = await response.json();
+      
       if (!response.ok) {
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.indexOf("application/json") !== -1) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to create job');
-        } else {
-          const errorText = await response.text();
-          console.error('Error response:', errorText); // Debug log
-          throw new Error('Network response was not ok');
-        }
+        throw new Error(data.error || 'Failed to create job');
       }
 
-      const newJob = await response.json();
-      console.log('New job created:', newJob); // Debug log
-      setJobs(prevJobs => [newJob, ...prevJobs]);
+      setJobs(prevJobs => [data, ...prevJobs]);
       setShowJobModal(false);
       showNotification('Job posted successfully', 'success');
     } catch (error) {
