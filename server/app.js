@@ -120,6 +120,12 @@ app.use('/api/bookings', bookingsRoutes);
 app.use('/api/affiliates', affiliateRoutes);
 app.use('/api/jobs', jobsRoutes);
 
+// Add this after your routes but before the React routing handler
+app.use((err, req, res, next) => {
+  console.error('Server error:', err);
+  res.status(500).json({ error: 'Internal server error' });
+});
+
 // Handle React routing, return all requests to React app
 app.get('*', (req, res) => {
   // Read the index.html file

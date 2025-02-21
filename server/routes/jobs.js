@@ -6,10 +6,16 @@ const auth = require('../middleware/auth');
 // Get all active jobs
 router.get('/', async (req, res) => {
   try {
-    const jobs = await Job.find({ status: 'active' })
+    const query = {};
+    if (req.query.owner) {
+      query.owner = req.query.owner;
+    }
+    
+    const jobs = await Job.find(query)
       .sort({ createdAt: -1 });
     res.json(jobs);
   } catch (error) {
+    console.error('Error fetching jobs:', error);
     res.status(500).json({ error: 'Failed to fetch jobs' });
   }
 });
@@ -17,6 +23,8 @@ router.get('/', async (req, res) => {
 // Create new job
 router.post('/', auth, async (req, res) => {
   try {
+    console.log('Creating job with data:', req.body); // Debug log
+
     // Check if user has reached job limit
     const userJobCount = await Job.countDocuments({ 
       owner: req.user.userId,
@@ -32,13 +40,16 @@ router.post('/', auth, async (req, res) => {
     const job = new Job({
       ...req.body,
       owner: req.user.userId,
-      ownerUsername: req.user.username
+      ownerUsername: req.user.username,
+      ownerImage: req.user.image || ''
     });
 
     await job.save();
+    console.log('Job created successfully:', job); // Debug log
     res.status(201).json(job);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create job posting' });
+    console.error('Error creating job:', error);
+    res.status(500).json({ error: error.message || 'Failed to create job posting' });
   }
 });
 

@@ -596,13 +596,18 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         body: JSON.stringify({
           ...jobData,
           ownerUsername: currentUser.username,
-          ownerImage: currentUser.image
+          ownerImage: currentUser.image || ''
         })
       });
 
+      const contentType = response.headers.get("content-type");
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create job');
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to create job');
+        } else {
+          throw new Error('Network response was not ok');
+        }
       }
 
       const newJob = await response.json();
