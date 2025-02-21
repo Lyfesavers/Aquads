@@ -36,7 +36,7 @@ const io = socketIo(server, {
 // Middleware
 const corsOptions = {
   origin: ['https://www.aquads.xyz', 'https://aquads.xyz', 'http://localhost:3000'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept', 'X-Requested-With']
 };
@@ -46,7 +46,7 @@ app.use(cors(corsOptions));
 // Add CORS headers middleware
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', 'https://www.aquads.xyz');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   res.header('Access-Control-Allow-Credentials', 'true');
 
