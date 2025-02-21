@@ -3,9 +3,10 @@ const router = express.Router();
 const Job = require('../models/Job');
 const auth = require('../middleware/auth');
 
-// Add a simple test route first
-router.get('/ping', (req, res) => {
-  res.json({ message: 'pong' });
+// Debug route
+router.get('/test', (req, res) => {
+  console.log('Test route hit');
+  res.json({ message: 'Jobs API is working' });
 });
 
 // Get all jobs
@@ -19,12 +20,10 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Create job
+// Create job - make this more explicit
 router.post('/', auth, async (req, res) => {
+  console.log('Create job request received:', req.body);
   try {
-    console.log('Received job creation request:', req.body);
-    console.log('User:', req.user);
-
     const job = new Job({
       title: req.body.title,
       description: req.body.description,
@@ -40,7 +39,7 @@ router.post('/', auth, async (req, res) => {
     });
 
     const savedJob = await job.save();
-    console.log('Job saved successfully:', savedJob);
+    console.log('Job saved:', savedJob);
     res.status(201).json(savedJob);
   } catch (error) {
     console.error('Error creating job:', error);
