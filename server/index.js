@@ -374,6 +374,26 @@ const logger = winston.createLogger({
 // Add this to see if server is starting
 console.log('Starting server...');
 
+// Apply rate limiter BEFORE starting server
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: process.env.NODE_ENV === 'production' ? 2000 : 10000,
+  message: 'Too many API requests from this IP, please try again later'
+});
+
+app.use('/api', apiLimiter);
+
+// Add route debugging
+app.use('/api/jobs', (req, res, next) => {
+  console.log('Jobs route hit:', {
+    method: req.method,
+    path: req.path,
+    headers: req.headers
+  });
+  next();
+});
+
+// THEN start the server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
@@ -394,13 +414,4 @@ if (process.env.NODE_ENV === 'production') {
     }
     next();
   });
-}
-
-// Apply a more lenient rate limit to other API routes
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'production' ? 2000 : 10000,
-  message: 'Too many API requests from this IP, please try again later'
-});
-
-app.use('/api', apiLimiter); 
+} 
