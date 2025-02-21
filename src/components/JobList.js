@@ -52,8 +52,13 @@ const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob }) => {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-white">{job.title}</h3>
-                  {/* Username placed here, outside the image circle */}
-                  <p className="text-sm text-gray-400">Posted by {job.ownerUsername}</p>
+                  <div className="flex items-center space-x-2 text-sm text-gray-400">
+                    <span>Posted by {job.ownerUsername}</span>
+                    <span>•</span>
+                    <span>${job.payAmount}/{job.payType}</span>
+                    <span>•</span>
+                    <span>{formatDate(job.createdAt)}</span>
+                  </div>
                 </div>
               </div>
               {expandedJobId === job._id ? <FaChevronUp /> : <FaChevronDown />}
