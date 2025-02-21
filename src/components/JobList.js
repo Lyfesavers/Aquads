@@ -33,23 +33,31 @@ const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob }) => {
         >
           {/* Header - Always visible */}
           <div 
-            className="p-4 flex items-center justify-between cursor-pointer"
+            className="p-4 cursor-pointer"
             onClick={() => toggleExpand(job._id)}
           >
-            <div className="flex items-center space-x-4">
-              <img 
-                src={job.ownerImage || 'default-avatar.png'} 
-                alt={job.ownerUsername}
-                className="w-10 h-10 rounded-full"
-              />
-              <div>
-                <h3 className="font-semibold text-lg">{job.title}</h3>
-                <p className="text-sm text-gray-400">
-                  ${job.payAmount}/{job.payType} • Posted {formatDate(job.createdAt)}
-                </p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                {/* Profile image circle */}
+                <div className="w-10 h-10 rounded-full bg-gray-700 overflow-hidden flex-shrink-0">
+                  <img
+                    src={job.ownerImage || 'https://placehold.co/40x40?text=User'}
+                    alt={job.ownerUsername}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://placehold.co/40x40?text=User';
+                    }}
+                  />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">{job.title}</h3>
+                  {/* Username placed here, outside the image circle */}
+                  <p className="text-sm text-gray-400">Posted by {job.ownerUsername}</p>
+                </div>
               </div>
+              {expandedJobId === job._id ? <FaChevronUp /> : <FaChevronDown />}
             </div>
-            {expandedJobId === job._id ? <FaChevronUp /> : <FaChevronDown />}
           </div>
 
           {/* Expanded Content */}
