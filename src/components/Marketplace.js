@@ -593,25 +593,20 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
         },
-        body: JSON.stringify({
-          ...jobData,
-          ownerUsername: currentUser.username,
-          ownerImage: currentUser.image || ''
-        })
+        body: JSON.stringify(jobData)
       });
 
-      const data = await response.json();
-      
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create job');
+        throw new Error('Failed to create job');
       }
 
-      setJobs(prevJobs => [data, ...prevJobs]);
+      const newJob = await response.json();
+      setJobs(prevJobs => [newJob, ...prevJobs]);
       setShowJobModal(false);
-      showNotification('Job posted successfully', 'success');
+      showNotification('Job posted successfully');
     } catch (error) {
       console.error('Error creating job:', error);
-      showNotification(error.message || 'Failed to create job', 'error');
+      showNotification('Failed to create job');
     }
   };
 

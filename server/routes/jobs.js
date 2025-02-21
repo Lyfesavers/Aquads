@@ -21,8 +21,6 @@ router.get('/', async (req, res) => {
 // Create job
 router.post('/', auth, async (req, res) => {
   try {
-    console.log('Creating job:', req.body);
-    
     const job = new Job({
       title: req.body.title,
       description: req.body.description,
@@ -37,12 +35,10 @@ router.post('/', auth, async (req, res) => {
       ownerImage: req.user.image || ''
     });
 
-    const savedJob = await job.save();
-    console.log('Job saved:', savedJob);
-    res.status(201).json(savedJob);
+    await job.save();
+    res.json(job);
   } catch (error) {
-    console.error('Error creating job:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Failed to create job' });
   }
 });
 
