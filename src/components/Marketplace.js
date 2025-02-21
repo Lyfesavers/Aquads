@@ -16,6 +16,8 @@ import BookingButton from './BookingButton';
 import Dashboard from './Dashboard';
 import PremiumBadge from './PremiumBadge';
 import PremiumPaymentModal from './PremiumPaymentModal';
+import CreateJobModal from './CreateJobModal';
+import JobList from './JobList';
 
 // Helper function to check if URL is valid
 const isValidUrl = (string) => {
@@ -122,6 +124,10 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [showPremiumOnly, setShowPremiumOnly] = useState(false);
   const [showPremiumPaymentModal, setShowPremiumPaymentModal] = useState(false);
   const [serviceToUpgrade, setServiceToUpgrade] = useState(null);
+  const [showJobModal, setShowJobModal] = useState(false);
+  const [showJobs, setShowJobs] = useState(false);
+  const [jobs, setJobs] = useState([]);
+  const [jobToEdit, setJobToEdit] = useState(null);
 
   const categories = [
     { id: 'smart-contract', name: 'Smart Contract', icon: '📝' },
@@ -324,10 +330,9 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     });
   };
 
-  const showNotification = (message, type = 'info') => {
-    // You can implement this function to show notifications
-    // For now, we'll just use alert
-    alert(message);
+  const showNotification = (message, type = 'success') => {
+    // You can implement this with a toast library or custom notification
+    alert(message); // Basic implementation
   };
 
   // Update useEffect to log the correct token source
@@ -564,6 +569,89 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     }
   };
 
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const response = await fetch(`${API_URL}/jobs`);
+        if (response.ok) {
+          const data = await response.json();
+          setJobs(data);
+        }
+      } catch (error) {
+        console.error('Error fetching jobs:', error);
+      }
+    };
+
+    fetchJobs();
+  }, []);
+
+  const handleCreateJob = async (jobData) => {
+    try {
+      const response = await fetch(`${API_URL}/jobs`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify(jobData)
+      });
+
+      if (response.ok) {
+        const newJob = await response.json();
+        setJobs(prev => [newJob, ...prev]);
+        showNotification('Job posted successfully', 'success');
+      }
+    } catch (error) {
+      console.error('Error creating job:', error);
+      showNotification('Failed to create job', 'error');
+    }
+  };
+
+  const handleEditJob = async (jobData) => {
+    try {
+      const response = await fetch(`${API_URL}/jobs/${jobData._id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify(jobData)
+      });
+
+      if (response.ok) {
+        const updatedJob = await response.json();
+        setJobs(prev => prev.map(job => 
+          job._id === updatedJob._id ? updatedJob : job
+        ));
+        showNotification('Job updated successfully', 'success');
+      }
+    } catch (error) {
+      console.error('Error updating job:', error);
+      showNotification('Failed to update job', 'error');
+    }
+  };
+
+  const handleDeleteJob = async (jobId) => {
+    if (!window.confirm('Are you sure you want to delete this job?')) return;
+
+    try {
+      const response = await fetch(`${API_URL}/jobs/${jobId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+
+      if (response.ok) {
+        setJobs(prev => prev.filter(job => job._id !== jobId));
+        showNotification('Job deleted successfully', 'success');
+      }
+    } catch (error) {
+      console.error('Error deleting job:', error);
+      showNotification('Failed to delete job', 'error');
+    }
+  };
+
   return (
     <div className="h-screen overflow-y-auto bg-gradient-to-br from-gray-900 to-black text-white">
       {/* Fixed Background */}
@@ -742,14 +830,23 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                 </select>
                 <button
                   onClick={() => setShowPremiumOnly(!showPremiumOnly)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                  className={`px-4 py-2 rounded-lg transition-colors ${
                     showPremiumOnly 
-                      ? 'bg-yellow-500/80 text-white' 
-                      : 'bg-gray-700/80 text-gray-300'
+                      ? 'bg-yellow-500 text-white' 
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                   }`}
                 >
-                  <FaCrown className={showPremiumOnly ? 'text-white' : 'text-gray-300'} />
-                  {showPremiumOnly ? 'Show All' : 'Premium Only'}
+                  Premium
+                </button>
+                <button
+                  onClick={() => setShowJobs(!showJobs)}
+                  className={`px-4 py-2 rounded-lg transition-colors ${
+                    showJobs 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                >
+                  Jobs
                 </button>
                 <select
                   value={sortOption}
@@ -847,9 +944,16 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                 </button>
               )}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredServices.length > 0 ? (
-                filteredServices.map(service => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+              {showJobs ? (
+                <JobList
+                  jobs={jobs}
+                  currentUser={currentUser}
+                  onEditJob={setJobToEdit}
+                  onDeleteJob={handleDeleteJob}
+                />
+              ) : (
+                filteredServices.map((service) => (
                   <div 
                     key={service._id} 
                     id={`service-${service._id}`}
@@ -1049,10 +1153,6 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                     </div>
                   </div>
                 ))
-              ) : (
-                <div className="bg-gray-800/50 backdrop-blur-sm p-6 rounded-lg">
-                  <p className="text-gray-400 text-center">No services found in this category yet.</p>
-                </div>
               )}
             </div>
           </div>
@@ -1149,6 +1249,23 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
             setServiceToUpgrade(null);
           }}
           onSubmit={handlePremiumPaymentSubmit}
+        />
+      )}
+
+      {/* Job List */}
+      {showJobModal && (
+        <CreateJobModal
+          onClose={() => setShowJobModal(false)}
+          onCreateJob={handleCreateJob}
+        />
+      )}
+
+      {/* Edit Job Modal */}
+      {jobToEdit && (
+        <CreateJobModal
+          job={jobToEdit}
+          onClose={() => setJobToEdit(null)}
+          onCreateJob={handleEditJob}
         />
       )}
     </div>

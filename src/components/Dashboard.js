@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { fetchBumpRequests, API_URL } from '../services/api';
 import BookingManagement from './BookingManagement';
 import ServiceReviews from './ServiceReviews';
+import JobList from './JobList';
 
 const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, onRejectBump, onApproveBump }) => {
   const [bumpRequests, setBumpRequests] = useState([]);
@@ -25,6 +26,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [affiliateEarnings, setAffiliateEarnings] = useState(null);
   const [earningsSummary, setEarningsSummary] = useState(null);
   const [premiumRequests, setPremiumRequests] = useState([]);
+  const [userJobs, setUserJobs] = useState([]);
 
   // Fetch bump requests and banner ads when dashboard opens
   useEffect(() => {
@@ -138,6 +140,28 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     };
 
     fetchData();
+  }, [currentUser]);
+
+  useEffect(() => {
+    const fetchUserJobs = async () => {
+      try {
+        const response = await fetch(`${API_URL}/jobs?owner=${currentUser.userId}`, {
+          headers: {
+            'Authorization': `Bearer ${currentUser.token}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUserJobs(data);
+        }
+      } catch (error) {
+        console.error('Error fetching user jobs:', error);
+      }
+    };
+
+    if (currentUser) {
+      fetchUserJobs();
+    }
   }, [currentUser]);
 
   const fetchAffiliateInfo = async () => {
@@ -499,6 +523,51 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     } catch (error) {
       console.error('Error approving premium status:', error);
       showNotification('Failed to approve premium status', 'error');
+    }
+  };
+
+  const handleEditJob = async (jobData) => {
+    try {
+      const response = await fetch(`${API_URL}/jobs/${jobData._id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify(jobData)
+      });
+
+      if (response.ok) {
+        const updatedJob = await response.json();
+        setUserJobs(prev => prev.map(job => 
+          job._id === updatedJob._id ? updatedJob : job
+        ));
+        showNotification('Job updated successfully', 'success');
+      }
+    } catch (error) {
+      console.error('Error updating job:', error);
+      showNotification('Failed to update job', 'error');
+    }
+  };
+
+  const handleDeleteJob = async (jobId) => {
+    if (!window.confirm('Are you sure you want to delete this job?')) return;
+
+    try {
+      const response = await fetch(`${API_URL}/jobs/${jobId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+
+      if (response.ok) {
+        setUserJobs(prev => prev.filter(job => job._id !== jobId));
+        showNotification('Job deleted successfully', 'success');
+      }
+    } catch (error) {
+      console.error('Error deleting job:', error);
+      showNotification('Failed to delete job', 'error');
     }
   };
 
@@ -1121,6 +1190,16 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
               )}
             </div>
           )}
+
+          <div className="mb-6">
+            <h3 className="text-xl font-semibold mb-4">My Job Postings</h3>
+            <JobList
+              jobs={userJobs}
+              currentUser={currentUser}
+              onEditJob={handleEditJob}
+              onDeleteJob={handleDeleteJob}
+            />
+          </div>
         </div>
       </div>
 
