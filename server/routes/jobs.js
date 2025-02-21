@@ -3,22 +3,13 @@ const router = express.Router();
 const Job = require('../models/Job');
 const auth = require('../middleware/auth');
 
-// Basic test route
-router.get('/', (req, res) => {
-  res.json({ message: 'Jobs API is working' });
-});
-
-// Test route
-router.get('/test', (req, res) => {
-  res.json({ message: 'Jobs route is working' });
-});
-
 // Get all jobs
 router.get('/', async (req, res) => {
   try {
     const jobs = await Job.find().sort({ createdAt: -1 });
     res.json(jobs);
   } catch (error) {
+    console.error('Error fetching jobs:', error);
     res.status(500).json({ error: 'Failed to fetch jobs' });
   }
 });
@@ -26,6 +17,9 @@ router.get('/', async (req, res) => {
 // Create job
 router.post('/', auth, async (req, res) => {
   try {
+    console.log('Received job creation request:', req.body);
+    console.log('User:', req.user);
+
     const job = new Job({
       title: req.body.title,
       description: req.body.description,
@@ -40,8 +34,9 @@ router.post('/', auth, async (req, res) => {
       ownerImage: req.user.image || ''
     });
 
-    await job.save();
-    res.status(201).json(job);
+    const savedJob = await job.save();
+    console.log('Job saved successfully:', savedJob);
+    res.status(201).json(savedJob);
   } catch (error) {
     console.error('Error creating job:', error);
     res.status(500).json({ error: 'Failed to create job' });
