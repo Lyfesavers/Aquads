@@ -69,7 +69,13 @@ Best regards,
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-white">{job.title}</h3>
-                  <p className="text-sm text-gray-400">Posted by {job.ownerUsername} • {formatDate(job.createdAt)}</p>
+                  <div className="flex items-center space-x-2 text-sm text-gray-400">
+                    <span>Posted by {job.ownerUsername}</span>
+                    <span>•</span>
+                    <span>${job.payAmount}/{job.payType}</span>
+                    <span>•</span>
+                    <span>{formatDate(job.createdAt)}</span>
+                  </div>
                 </div>
               </div>
               
