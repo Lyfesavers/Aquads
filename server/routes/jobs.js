@@ -3,6 +3,11 @@ const router = express.Router();
 const Job = require('../models/Job');
 const auth = require('../middleware/auth');
 
+// Test route to verify it's working
+router.get('/test', (req, res) => {
+  res.json({ message: 'Jobs route is working' });
+});
+
 // Get all jobs
 router.get('/', async (req, res) => {
   try {
@@ -16,17 +21,28 @@ router.get('/', async (req, res) => {
 // Create job
 router.post('/', auth, async (req, res) => {
   try {
+    console.log('Creating job:', req.body);
+    
     const job = new Job({
-      ...req.body,
+      title: req.body.title,
+      description: req.body.description,
+      requirements: req.body.requirements,
+      payAmount: req.body.payAmount,
+      payType: req.body.payType,
+      contactEmail: req.body.contactEmail,
+      contactTelegram: req.body.contactTelegram,
+      contactDiscord: req.body.contactDiscord,
       owner: req.user.userId,
       ownerUsername: req.user.username,
       ownerImage: req.user.image || ''
     });
 
-    await job.save();
-    res.status(201).json(job);
+    const savedJob = await job.save();
+    console.log('Job saved:', savedJob);
+    res.status(201).json(savedJob);
   } catch (error) {
-    res.status(500).json({ error: error.message || 'Failed to create job' });
+    console.error('Error creating job:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
