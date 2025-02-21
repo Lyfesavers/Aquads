@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaChevronDown, FaChevronUp, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaChevronDown, FaChevronUp, FaEdit, FaTrash, FaEnvelope, FaTelegram, FaDiscord } from 'react-icons/fa';
 
 const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob }) => {
   const [expandedJobId, setExpandedJobId] = useState(null);
@@ -14,6 +14,26 @@ const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob }) => {
       month: 'short',
       day: 'numeric'
     });
+  };
+
+  const handleEmailClick = (job) => {
+    const emailSubject = `Application for ${job.title} position`;
+    const emailBody = `Hi ${job.ownerUsername},
+
+I am writing to apply for the ${job.title} position posted on Aquads.
+
+I have reviewed the requirements and I am confident I would be a great fit for this role.
+
+Requirements mentioned:
+${job.requirements}
+
+I look forward to discussing how my skills align with your needs.
+
+Best regards,
+[Your name]`;
+
+    const mailtoLink = `mailto:${job.contactEmail}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+    window.location.href = mailtoLink;
   };
 
   if (!jobs?.length) {
@@ -81,10 +101,37 @@ const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob }) => {
 
                 <div>
                   <h4 className="text-sm font-medium text-gray-400">Contact Information</h4>
-                  <div className="mt-1 space-y-1">
-                    <p>Email: {job.contactEmail}</p>
-                    {job.contactTelegram && <p>Telegram: {job.contactTelegram}</p>}
-                    {job.contactDiscord && <p>Discord: {job.contactDiscord}</p>}
+                  <div className="mt-2 space-y-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEmailClick(job);
+                      }}
+                      className="flex items-center space-x-2 text-blue-400 hover:text-blue-300 transition-colors"
+                    >
+                      <FaEnvelope />
+                      <span>{job.contactEmail}</span>
+                    </button>
+                    
+                    {job.contactTelegram && (
+                      <a
+                        href={`https://t.me/${job.contactTelegram.replace('@', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center space-x-2 text-blue-400 hover:text-blue-300 transition-colors"
+                      >
+                        <FaTelegram />
+                        <span>{job.contactTelegram}</span>
+                      </a>
+                    )}
+                    
+                    {job.contactDiscord && (
+                      <div className="flex items-center space-x-2 text-blue-400">
+                        <FaDiscord />
+                        <span>{job.contactDiscord}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
