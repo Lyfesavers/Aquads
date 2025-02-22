@@ -125,7 +125,7 @@ Best regards,
                 </div>
 
                 <div>
-                  <h4 className="text-sm font-medium text-gray-400">Contact Information</h4>
+                  <h4 className="text-sm font-medium text-gray-400">How to Apply</h4>
                   <div className="mt-2 space-y-2">
                     <button
                       onClick={(e) => {
