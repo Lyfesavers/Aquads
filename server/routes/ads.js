@@ -149,9 +149,9 @@ const calculateBumpAmount = (type) => {
 // POST route for creating new ad
 router.post('/', auth, async (req, res) => {
   try {
-    const { title, logo, url, contractAddress } = req.body;
+    const { title, logo, url, contractAddress, referredBy } = req.body;
     
-    console.log('Creating ad with data:', req.body); // Debug log
+    console.log('Creating ad with data:', req.body);
 
     const ad = new Ad({
       id: `ad-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -172,15 +172,16 @@ router.post('/', auth, async (req, res) => {
       throw new Error('Failed to save ad');
     }
 
-    if (referredBy) {
-      const adAmount = calculateBumpAmount(req.body.type); // Use bump-specific pricing
-      const commissionRate = await AffiliateEarning.calculateCommissionRate(referredBy._id);
+    // Check if there's a referral and handle affiliate earnings
+    if (req.body.referredBy) {
+      const adAmount = calculateBumpAmount(req.body.type);
+      const commissionRate = await AffiliateEarning.calculateCommissionRate(req.body.referredBy);
       const commissionEarned = AffiliateEarning.calculateCommission(adAmount, commissionRate);
 
       const affiliateEarning = new AffiliateEarning({
-        affiliateId: referredBy._id,
+        affiliateId: req.body.referredBy,
         referredUserId: req.user.userId,
-        adId: ad._id,
+        adId: savedAd._id,
         adAmount: adAmount,
         commissionRate,
         commissionEarned
