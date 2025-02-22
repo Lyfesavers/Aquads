@@ -152,15 +152,15 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           }
         });
         if (response.ok) {
-          const data = await response.json();
-          setUserJobs(data);
+          const jobs = await response.json();
+          setUserJobs(jobs);
         }
       } catch (error) {
         console.error('Error fetching user jobs:', error);
       }
     };
 
-    if (currentUser) {
+    if (currentUser?.userId) {
       fetchUserJobs();
     }
   }, [currentUser]);

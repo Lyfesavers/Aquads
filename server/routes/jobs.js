@@ -13,11 +13,19 @@ router.get('/test', (req, res) => {
 // Get all jobs
 router.get('/', async (req, res) => {
   try {
-    const jobs = await Job.find()
+    const query = {};
+    
+    // Add owner filter if provided
+    if (req.query.owner) {
+      query.owner = req.query.owner;
+    }
+
+    const jobs = await Job.find(query)
       .populate('owner', 'username image')
       .sort({ createdAt: -1 });
     res.json(jobs);
   } catch (error) {
+    console.error('Error fetching jobs:', error);
     res.status(500).json({ error: 'Failed to fetch jobs' });
   }
 });
