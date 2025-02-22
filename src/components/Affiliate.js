@@ -150,6 +150,33 @@ const Affiliate = () => {
               </ul>
             </div>
 
+            <div className="bg-gray-800 rounded-lg p-8 shadow-lg mb-8">
+              <h2 className="text-2xl font-bold mb-6 text-blue-400">Perks You Can Offer to New Users</h2>
+              
+              <ul className="space-y-4 text-gray-300">
+                <li className="flex items-center space-x-2">
+                  <span className="text-green-400">•</span>
+                  <span>Users that use your code get 1000 points when they sign up</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <span className="text-green-400">•</span>
+                  <span>If they leave a review they get 500 points</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <span className="text-green-400">•</span>
+                  <span>50% off First listing fee for projects only</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <span className="text-green-400">•</span>
+                  <span>50% off First advertising in banner or bubble ads</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <span className="text-green-400">•</span>
+                  <span>More to come...</span>
+                </li>
+              </ul>
+            </div>
+
             <div className="bg-gray-800 rounded-lg p-8 shadow-lg">
               <h2 className="text-2xl font-bold mb-6 text-blue-400">Ready to Get Started?</h2>
               
