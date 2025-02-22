@@ -3,6 +3,7 @@ const router = express.Router();
 const Ad = require('../models/Ad');
 const auth = require('../middleware/auth');
 const { awardListingPoints } = require('./points');
+const AffiliateEarning = require('../models/AffiliateEarning');
 
 // Skip auth for GET requests
 router.use((req, res, next) => {
@@ -131,6 +132,20 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Bump ad specific pricing
+const calculateBumpAmount = (type) => {
+  switch (type) {
+    case 'bump_24h':
+      return 20; // 20 USDC for 24h bump
+    case 'bump_3d':
+      return 40; // 40 USDC for 3 day bump
+    case 'bump_7d':
+      return 80; // 80 USDC for 7 day bump
+    default:
+      return 20;
+  }
+};
+
 // POST route for creating new ad
 router.post('/', auth, async (req, res) => {
   try {
@@ -155,6 +170,23 @@ router.post('/', auth, async (req, res) => {
     
     if (!savedAd) {
       throw new Error('Failed to save ad');
+    }
+
+    if (referredBy) {
+      const adAmount = calculateBumpAmount(req.body.type); // Use bump-specific pricing
+      const commissionRate = await AffiliateEarning.calculateCommissionRate(referredBy._id);
+      const commissionEarned = AffiliateEarning.calculateCommission(adAmount, commissionRate);
+
+      const affiliateEarning = new AffiliateEarning({
+        affiliateId: referredBy._id,
+        referredUserId: req.user.userId,
+        adId: ad._id,
+        adAmount: adAmount,
+        commissionRate,
+        commissionEarned
+      });
+
+      await affiliateEarning.save();
     }
 
     res.status(201).json(savedAd);

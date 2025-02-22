@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const BannerAd = require('../models/BannerAd');
 const auth = require('../middleware/auth');
+const AffiliateEarning = require('../models/AffiliateEarning');
 
 // Get active banner ad
 router.get('/active', async (req, res) => {
@@ -32,6 +33,20 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
+// Banner ad specific pricing
+const calculateBannerAmount = (duration) => {
+  switch (duration) {
+    case '24 hours':
+      return 40;  // 40 USDC for 24h banner
+    case '3 days':
+      return 80;  // 80 USDC for 3 day banner
+    case '7 days':
+      return 160; // 160 USDC for 7 day banner
+    default:
+      return 40;
+  }
+};
+
 // Create new banner ad request
 router.post('/', auth, async (req, res) => {
   try {
@@ -50,6 +65,24 @@ router.post('/', auth, async (req, res) => {
     });
 
     await banner.save();
+
+    if (referredBy) {
+      const bannerAmount = calculateBannerAmount(req.body.duration);
+      const commissionRate = await AffiliateEarning.calculateCommissionRate(referredBy._id);
+      const commissionEarned = AffiliateEarning.calculateCommission(bannerAmount, commissionRate);
+
+      const affiliateEarning = new AffiliateEarning({
+        affiliateId: referredBy._id,
+        referredUserId: req.user.userId,
+        adId: banner._id,
+        adAmount: bannerAmount, // Now in USDC
+        commissionRate,
+        commissionEarned
+      });
+
+      await affiliateEarning.save();
+    }
+
     res.status(201).json(banner);
   } catch (error) {
     console.error('Error creating banner:', error);
