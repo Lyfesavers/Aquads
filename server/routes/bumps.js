@@ -118,72 +118,29 @@ router.post('/approve', async (req, res) => {
 
     // Record affiliate commission if applicable
     try {
-      // Get the ad owner's user record to check for referrer
       const adOwner = await User.findOne({ username: ad.owner });
       if (adOwner && adOwner.referredBy) {
-        // Get currency and amount from the transaction signature
-        // Calculate commission based on bump duration and currency
+        // Calculate USDC amount based on bump duration
         let adAmount;
-        const currency = bumpRequest.currency || 'SOL'; // Default to SOL if not specified
-
         if (duration === 24 * 60 * 60 * 1000) { // 24 hours
-          switch(currency) {
-            case 'SOL':
-              adAmount = 0.5;
-              break;
-            case 'ETH':
-              adAmount = 0.040;
-              break;
-            case 'BTC':
-              adAmount = 0.0010;
-              break;
-            case 'SUI':
-              adAmount = 30;
-              break;
-          }
+          adAmount = 20; // 20 USDC
         } else if (duration === 3 * 24 * 60 * 60 * 1000) { // 3 days
-          switch(currency) {
-            case 'SOL':
-              adAmount = 1.0;
-              break;
-            case 'ETH':
-              adAmount = 0.090;
-              break;
-            case 'BTC':
-              adAmount = 0.030;
-              break;
-            case 'SUI':
-              adAmount = 75;
-              break;
-          }
+          adAmount = 40; // 40 USDC
         } else if (duration === 7 * 24 * 60 * 60 * 1000) { // 7 days
-          switch(currency) {
-            case 'SOL':
-              adAmount = 2.0;
-              break;
-            case 'ETH':
-              adAmount = 0.22;
-              break;
-            case 'BTC':
-              adAmount = 0.0061;
-              break;
-            case 'SUI':
-              adAmount = 178;
-              break;
-          }
+          adAmount = 80; // 80 USDC
         }
 
-        // Calculate commission rate based on total earnings
+        console.log('Calculating commission for USDC amount:', adAmount);
+
         const commissionRate = await AffiliateEarning.calculateCommissionRate(adOwner.referredBy);
         const commissionEarned = AffiliateEarning.calculateCommission(adAmount, commissionRate);
         
-        // Create and save the commission record
         const earning = new AffiliateEarning({
           affiliateId: adOwner.referredBy,
           referredUserId: adOwner._id,
           adId: ad._id,
-          adAmount,
-          currency,
+          adAmount,           // This will now be in USDC
+          currency: 'USDC',   // Specify USDC currency
           commissionRate,
           commissionEarned
         });
@@ -193,7 +150,6 @@ router.post('/approve', async (req, res) => {
       }
     } catch (commissionError) {
       console.error('Error recording affiliate commission:', commissionError);
-      // Don't fail the bump approval if commission recording fails
     }
 
     res.json({ bumpRequest, ad });

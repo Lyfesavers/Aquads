@@ -207,4 +207,37 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
+// POST route for bumping an ad
+router.post('/bump', auth, async (req, res) => {
+  try {
+    // ... existing bump validation code ...
+
+    // Get the correct USDC amount based on bump duration
+    const adAmount = calculateBumpAmount(req.body.duration);
+    console.log('Bump amount before affiliate earning:', adAmount); // Debug log
+
+    if (req.body.referredBy) {
+      const commissionRate = await AffiliateEarning.calculateCommissionRate(req.body.referredBy);
+      const commissionEarned = AffiliateEarning.calculateCommission(adAmount, commissionRate);
+
+      const affiliateEarning = new AffiliateEarning({
+        affiliateId: req.body.referredBy,
+        referredUserId: req.user.userId,
+        adId: ad._id,
+        adAmount: adAmount, // This should be 20, 40, or 80 USDC
+        commissionRate,
+        commissionEarned
+      });
+
+      console.log('Saving affiliate earning with amount:', adAmount, 'USDC'); // Debug log
+      await affiliateEarning.save();
+    }
+
+    // ... rest of bump code ...
+  } catch (error) {
+    console.error('Error processing bump:', error);
+    res.status(500).json({ error: 'Failed to process bump' });
+  }
+});
+
 module.exports = router; 
