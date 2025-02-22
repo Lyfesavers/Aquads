@@ -147,4 +147,31 @@ router.get('/summary', auth, async (req, res) => {
   }
 });
 
+// Add VIP affiliate route (admin only)
+router.post('/vip/:userId', auth, async (req, res) => {
+  try {
+    // Verify admin
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Only admins can manage VIP affiliates' });
+    }
+
+    const user = await User.findById(req.params.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Toggle VIP status
+    user.isVipAffiliate = !user.isVipAffiliate;
+    await user.save();
+
+    res.json({ 
+      message: `User ${user.username} ${user.isVipAffiliate ? 'added to' : 'removed from'} VIP affiliates`,
+      isVipAffiliate: user.isVipAffiliate 
+    });
+  } catch (error) {
+    console.error('Error managing VIP affiliate:', error);
+    res.status(500).json({ error: 'Failed to update VIP status' });
+  }
+});
+
 module.exports = router; 

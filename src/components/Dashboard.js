@@ -27,6 +27,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [earningsSummary, setEarningsSummary] = useState(null);
   const [premiumRequests, setPremiumRequests] = useState([]);
   const [userJobs, setUserJobs] = useState([]);
+  const [vipUsername, setVipUsername] = useState('');
 
   // Fetch bump requests and banner ads when dashboard opens
   useEffect(() => {
@@ -568,6 +569,33 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     } catch (error) {
       console.error('Error deleting job:', error);
       showNotification('Failed to delete job', 'error');
+    }
+  };
+
+  const handleVipAffiliateToggle = async (username) => {
+    try {
+      const response = await fetch(`${API_URL}/users/by-username/${username}`);
+      const user = await response.json();
+      
+      if (!user) {
+        alert('User not found');
+        return;
+      }
+
+      const toggleResponse = await fetch(`${API_URL}/affiliates/vip/${user._id}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const result = await toggleResponse.json();
+      alert(result.message);
+      setVipUsername('');
+    } catch (error) {
+      console.error('Error managing VIP affiliate:', error);
+      alert('Failed to update VIP status');
     }
   };
 
@@ -1200,6 +1228,27 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
               onDeleteJob={handleDeleteJob}
             />
           </div>
+
+          {currentUser?.isAdmin && (
+            <div className="bg-gray-800 p-4 rounded-lg mb-4">
+              <h3 className="text-xl font-semibold mb-4">Manage VIP Affiliates</h3>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={vipUsername}
+                  onChange={(e) => setVipUsername(e.target.value)}
+                  placeholder="Enter username"
+                  className="bg-gray-700 px-3 py-2 rounded"
+                />
+                <button
+                  onClick={() => handleVipAffiliateToggle(vipUsername)}
+                  className="bg-blue-500 px-4 py-2 rounded hover:bg-blue-600"
+                >
+                  Toggle VIP Status
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

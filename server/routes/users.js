@@ -431,4 +431,23 @@ router.get('/affiliates', auth, async (req, res) => {
   }
 });
 
+// Add this new route
+router.get('/by-username/:username', auth, async (req, res) => {
+  try {
+    // Only allow admins to access this route
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const user = await User.findOne({ username: req.params.username });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch user' });
+  }
+});
+
 module.exports = router; 

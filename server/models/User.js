@@ -99,6 +99,10 @@ const userSchema = new Schema({
   createdAt: {
     type: Date,
     default: Date.now
+  },
+  isVipAffiliate: {
+    type: Boolean,
+    default: false
   }
 });
 
