@@ -178,6 +178,12 @@ router.post('/', auth, async (req, res) => {
       const commissionRate = await AffiliateEarning.calculateCommissionRate(req.body.referredBy);
       const commissionEarned = AffiliateEarning.calculateCommission(adAmount, commissionRate);
 
+      console.log('Creating affiliate earning:', {
+        adAmount,
+        commissionRate,
+        commissionEarned
+      });
+
       const affiliateEarning = new AffiliateEarning({
         affiliateId: req.body.referredBy,
         referredUserId: req.user.userId,
