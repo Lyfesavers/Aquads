@@ -43,17 +43,21 @@ const affiliateEarningSchema = new Schema({
 
 // Calculate commission amount
 affiliateEarningSchema.statics.calculateCommission = function(amount, rate) {
-  // Make sure we're working with USDC amounts
+  console.log('Calculating commission for amount:', amount, 'USDC', 'rate:', rate);
   const commissionAmount = amount * rate;
-  return parseFloat(commissionAmount.toFixed(2));
+  const finalAmount = parseFloat(commissionAmount.toFixed(2));
+  console.log('Commission calculated:', finalAmount, 'USDC');
+  return finalAmount;
 };
 
 // When calculating total earnings, make sure we're not converting from SOL
 affiliateEarningSchema.statics.calculateCommissionRate = async function(affiliateId) {
-  // First check if user is VIP
   const user = await mongoose.model('User').findById(affiliateId);
+  console.log('Calculating commission rate for user:', user?.username);
+  
   if (user?.isVipAffiliate) {
-    return 0.30; // 30% for VIP affiliates
+    console.log('User is VIP affiliate, returning 30%');
+    return 0.30;
   }
   
   const totalEarnings = await this.aggregate([
@@ -62,10 +66,15 @@ affiliateEarningSchema.statics.calculateCommissionRate = async function(affiliat
   ]);
   
   const total = totalEarnings[0]?.total || 0;
-  // USDC thresholds
-  if (total >= 25000) return 0.20;     // 20% for 25000+ USDC
-  if (total >= 5000) return 0.15;      // 15% for 5000+ USDC
-  return 0.10;                         // 10% base rate
+  console.log('Total earnings found:', total, 'USDC');
+  
+  let rate;
+  if (total >= 25000) rate = 0.20;
+  else if (total >= 5000) rate = 0.15;
+  else rate = 0.10;
+  
+  console.log('Calculated commission rate:', rate);
+  return rate;
 };
 
 module.exports = mongoose.model('AffiliateEarning', affiliateEarningSchema); 

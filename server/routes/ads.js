@@ -175,14 +175,13 @@ router.post('/', auth, async (req, res) => {
     // Check if there's a referral and handle affiliate earnings
     if (req.body.referredBy) {
       const adAmount = calculateBumpAmount(req.body.type);
+      console.log('Bump amount calculated:', adAmount, 'USDC');
+      
       const commissionRate = await AffiliateEarning.calculateCommissionRate(req.body.referredBy);
+      console.log('Commission rate calculated:', commissionRate);
+      
       const commissionEarned = AffiliateEarning.calculateCommission(adAmount, commissionRate);
-
-      console.log('Creating affiliate earning:', {
-        adAmount,
-        commissionRate,
-        commissionEarned
-      });
+      console.log('Commission earned calculated:', commissionEarned, 'USDC');
 
       const affiliateEarning = new AffiliateEarning({
         affiliateId: req.body.referredBy,
@@ -193,7 +192,9 @@ router.post('/', auth, async (req, res) => {
         commissionEarned
       });
 
+      console.log('Saving affiliate earning:', affiliateEarning);
       await affiliateEarning.save();
+      console.log('Affiliate earning saved successfully');
     }
 
     res.status(201).json(savedAd);
