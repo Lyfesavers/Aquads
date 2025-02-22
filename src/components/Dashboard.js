@@ -574,10 +574,22 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   const handleVipAffiliateToggle = async (username) => {
     try {
-      const response = await fetch(`${API_URL}/users/by-username/${username}`);
+      // Add authorization header to the first request
+      const response = await fetch(`${API_URL}/users/by-username/${username}`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        alert('User not found or unauthorized');
+        return;
+      }
+
       const user = await response.json();
       
-      if (!user) {
+      if (!user._id) {
         alert('User not found');
         return;
       }
@@ -590,12 +602,16 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         }
       });
 
+      if (!toggleResponse.ok) {
+        throw new Error('Failed to update VIP status');
+      }
+
       const result = await toggleResponse.json();
       alert(result.message);
       setVipUsername('');
     } catch (error) {
       console.error('Error managing VIP affiliate:', error);
-      alert('Failed to update VIP status');
+      alert('Failed to update VIP status: ' + error.message);
     }
   };
 

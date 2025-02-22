@@ -439,13 +439,20 @@ router.get('/by-username/:username', auth, async (req, res) => {
       return res.status(403).json({ error: 'Admin access required' });
     }
 
-    const user = await User.findOne({ username: req.params.username });
+    // Clean up username - remove @ if present
+    const cleanUsername = req.params.username.replace('@', '');
+
+    const user = await User.findOne({ 
+      username: { $regex: new RegExp(`^${cleanUsername}$`, 'i') } 
+    });
+    
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
     res.json(user);
   } catch (error) {
+    console.error('Error finding user:', error);
     res.status(500).json({ error: 'Failed to fetch user' });
   }
 });
