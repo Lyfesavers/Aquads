@@ -439,11 +439,11 @@ router.get('/by-username/:username', auth, async (req, res) => {
       return res.status(403).json({ error: 'Admin access required' });
     }
 
-    // Clean up username - remove @ if present
-    const cleanUsername = req.params.username.replace('@', '');
+    // Don't remove the @ symbol, just trim whitespace
+    const cleanUsername = req.params.username.trim();
 
     const user = await User.findOne({ 
-      username: { $regex: new RegExp(`^${cleanUsername}$`, 'i') } 
+      username: cleanUsername  // Exact match since we know the exact username
     });
     
     if (!user) {
