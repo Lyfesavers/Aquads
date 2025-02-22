@@ -100,7 +100,7 @@ router.get('/summary', auth, async (req, res) => {
         currentRate: 0.10,
         nextTier: {
           rate: 0.15,
-          amountNeeded: 25.66,
+          amountNeeded: 5000,
           progress: 0
         }
       });
@@ -124,7 +124,7 @@ router.get('/summary', auth, async (req, res) => {
       currentRate: currentRate || 0.10,
       nextTier: currentRate < 0.20 ? {
         rate: currentRate === 0.10 ? 0.15 : 0.20,
-        amountNeeded: currentRate === 0.10 ? 25.66 : 128.26,
+        amountNeeded: currentRate === 0.10 ? 5000 : 25000,
         progress: totalAdRevenue || 0
       } : null
     };
@@ -132,7 +132,6 @@ router.get('/summary', auth, async (req, res) => {
     res.json(summary);
   } catch (error) {
     console.error('Error fetching earnings summary:', error);
-    // Return safe default values on error
     res.status(500).json({
       totalEarned: 0,
       pendingAmount: 0,
@@ -140,7 +139,7 @@ router.get('/summary', auth, async (req, res) => {
       currentRate: 0.10,
       nextTier: {
         rate: 0.15,
-        amountNeeded: 25.66,
+        amountNeeded: 5000,
         progress: 0
       }
     });

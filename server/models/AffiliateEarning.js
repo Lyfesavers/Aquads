@@ -43,6 +43,12 @@ const affiliateEarningSchema = new Schema({
 
 // Calculate commission rate based on total ad revenue
 affiliateEarningSchema.statics.calculateCommissionRate = async function(affiliateId) {
+  // First check if user is VIP
+  const user = await mongoose.model('User').findById(affiliateId);
+  if (user?.isVipAffiliate) {
+    return 0.30; // 30% for VIP affiliates
+  }
+  
   const totalEarnings = await this.aggregate([
     { $match: { affiliateId: new mongoose.Types.ObjectId(affiliateId) } },
     { $group: { _id: null, total: { $sum: "$adAmount" } } }
@@ -50,9 +56,9 @@ affiliateEarningSchema.statics.calculateCommissionRate = async function(affiliat
   
   const total = totalEarnings[0]?.total || 0;
   
-  if (total >= 128.26) return 0.20;      // 20% for 50+ SOL
-  if (total >= 25.66) return 0.15;      // 15% for 10+ SOL
-  return 0.10;                       // 10% base rate
+  if (total >= 25000) return 0.20;     // 20% for 25000+ USDC
+  if (total >= 5000) return 0.15;      // 15% for 5000+ USDC
+  return 0.10;                         // 10% base rate (up to 2500 USDC)
 };
 
 // Calculate commission amount
