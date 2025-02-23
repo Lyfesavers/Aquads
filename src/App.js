@@ -421,10 +421,10 @@ function App() {
       
       setAds(prevAds => [...prevAds, createdAd]);
       setShowCreateModal(false);
-      showNotification('Ad created successfully!', 'success');
+      showNotification('Project Listed successfully!', 'success');
     } catch (error) {
       console.error('Error creating ad:', error);
-      showNotification('Failed to create ad. Please try again.', 'error');
+      showNotification('Failed to List Project. Please try again.', 'error');
     }
   };
 
@@ -866,7 +866,7 @@ function App() {
                             }}
                             className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
                           >
-                            Create Ad
+                            List Project
                           </button>
                           <button
                             onClick={() => {
