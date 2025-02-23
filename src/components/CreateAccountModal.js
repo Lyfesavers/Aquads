@@ -180,7 +180,7 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
               />
             </div>
             <div>
-              <label className="block text-gray-300 mb-2">Password</label>
+              <label className="block text-gray-300 mb-2">Password - must have at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character"</label>
               <input
                 type="password"
                 name="password"
