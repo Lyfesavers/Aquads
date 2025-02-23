@@ -33,6 +33,7 @@ import Footer from './components/Footer';
 import Whitepaper from './components/Whitepaper';
 import HowTo from './components/HowTo';
 import Affiliate from './components/Affiliate';
+import Terms from './components/Terms';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import emailService from './services/emailService';
@@ -1144,6 +1145,7 @@ function App() {
         <Route path="/whitepaper" element={<Whitepaper />} />
         <Route path="/how-to" element={<HowTo />} />
         <Route path="/affiliate" element={<Affiliate />} />
+        <Route path="/terms" element={<Terms />} />
       </Routes>
     </Router>
   );

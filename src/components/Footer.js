@@ -48,6 +48,13 @@ const Footer = () => {
               <FaFileAlt className="mr-2" />
               <span>Affiliate</span>
             </Link>
+            <Link
+              to="/terms"
+              className="hover:text-blue-400 transition-colors flex items-center justify-center sm:justify-start"
+            >
+              <FaFileAlt className="mr-2" />
+              <span>Terms</span>
+            </Link>
           </div>
           <div className="text-sm text-gray-400 text-center md:text-right">
             © {new Date().getFullYear()} Aquads. All rights reserved.
