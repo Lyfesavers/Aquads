@@ -78,9 +78,9 @@ const adSchema = new mongoose.Schema({
     validate: {
       validator: function(v) {
         if (!v) return false;
-        return /^[^\s]+$/.test(v);
+        return /^(0x[0-9a-fA-F]+)(::[\w_]+::[\w_]+)?$/.test(v);
       },
-      message: 'Contract address is required and cannot contain spaces'
+      message: 'Invalid contract address format'
     }
   }
 });
