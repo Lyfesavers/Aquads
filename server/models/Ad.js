@@ -77,10 +77,10 @@ const adSchema = new mongoose.Schema({
     trim: true,
     validate: {
       validator: function(v) {
-        // Just check if it's not empty and has no spaces
-        return v && v.trim().length > 0 && !v.includes(' ');
+        // Only check if string exists and is not empty after trimming
+        return v && v.trim().length > 0;
       },
-      message: 'Contract address cannot be empty or contain spaces'
+      message: 'Contract address is required'
     }
   }
 });
