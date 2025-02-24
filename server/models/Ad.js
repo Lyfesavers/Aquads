@@ -77,11 +77,10 @@ const adSchema = new mongoose.Schema({
     trim: true,
     validate: {
       validator: function(v) {
-        if (!v) return false;
-        // Accept any string that starts with 0x and can include colons, letters, numbers
-        return /^0x[a-fA-F0-9:_A-Z]+$/.test(v);
+        // Just check if it's not empty and has no spaces
+        return v && v.trim().length > 0 && !v.includes(' ');
       },
-      message: 'Contract address must start with 0x and can only contain letters, numbers, colons and underscores'
+      message: 'Contract address cannot be empty or contain spaces'
     }
   }
 });
