@@ -23,16 +23,20 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
   };
 
   const validateContractAddress = (address) => {
+    // Sui format (0x...::module::TOKEN)
+    const suiRegex = /^0x[0-9a-fA-F]+::[a-zA-Z0-9_]+::[A-Z0-9_]+$/;
+    
     // Base58 format (for Solana)
     const base58Regex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
     
-    // Hex format with 0x prefix (for ETH, BSC, SUI etc)
+    // Hex format with 0x prefix (for ETH, BSC etc)
     const hexRegex = /^0x[0-9a-fA-F]{40,64}$/;
     
     // General alphanumeric format for other chains
     const generalRegex = /^[0-9a-zA-Z]{15,70}$/;
 
-    return base58Regex.test(address) || 
+    return suiRegex.test(address) || 
+           base58Regex.test(address) || 
            hexRegex.test(address) || 
            generalRegex.test(address);
   };
