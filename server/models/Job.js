@@ -6,6 +6,11 @@ const jobSchema = new mongoose.Schema({
   requirements: { type: String, required: true },
   payAmount: { type: Number, required: true },
   payType: { type: String, required: true },
+  jobType: { 
+    type: String, 
+    required: true,
+    enum: ['hiring', 'for-hire'] 
+  },
   contactEmail: { type: String, required: true },
   contactTelegram: String,
   contactDiscord: String,

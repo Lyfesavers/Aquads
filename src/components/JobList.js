@@ -68,7 +68,16 @@ Best regards,
                   />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-white">{job.title}</h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="text-lg font-semibold text-white">{job.title}</h3>
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                      job.jobType === 'hiring' 
+                        ? 'bg-green-500/20 text-green-400 border border-green-500/40' 
+                        : 'bg-blue-500/20 text-blue-400 border border-blue-500/40'
+                    }`}>
+                      {job.jobType === 'hiring' ? 'Hiring' : 'For Hire'}
+                    </span>
+                  </div>
                   <div className="flex items-center space-x-2 text-sm text-gray-400">
                     <span>Posted by {job.ownerUsername}</span>
                     <span>•</span>

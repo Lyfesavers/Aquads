@@ -8,6 +8,7 @@ const CreateJobModal = ({ onClose, onCreateJob, job = null }) => {
     requirements: job?.requirements || '',
     payAmount: job?.payAmount || '',
     payType: job?.payType || 'hourly',
+    jobType: job?.jobType || 'hiring',
     contactEmail: job?.contactEmail || '',
     contactTelegram: job?.contactTelegram || '',
     contactDiscord: job?.contactDiscord || ''
@@ -40,8 +41,32 @@ const CreateJobModal = ({ onClose, onCreateJob, job = null }) => {
   return (
     <Modal onClose={onClose}>
       <div className="p-6">
-        <h2 className="text-2xl font-bold mb-4">Create Job Posting</h2>
+        <h2 className="text-2xl font-bold mb-4">{job ? 'Edit Job' : 'Create New Job'}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="flex gap-4 mb-4">
+            <label className="flex items-center space-x-2">
+              <input
+                type="radio"
+                name="jobType"
+                value="hiring"
+                checked={formData.jobType === 'hiring'}
+                onChange={handleChange}
+                className="text-blue-500"
+              />
+              <span>Hiring</span>
+            </label>
+            <label className="flex items-center space-x-2">
+              <input
+                type="radio"
+                name="jobType"
+                value="for-hire"
+                checked={formData.jobType === 'for-hire'}
+                onChange={handleChange}
+                className="text-blue-500"
+              />
+              <span>For Hire</span>
+            </label>
+          </div>
           <div>
             <label className="block text-sm font-medium mb-1">Job Title</label>
             <input
