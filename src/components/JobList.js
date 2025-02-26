@@ -88,14 +88,12 @@ Best regards,
               
               <div className="flex items-center space-x-4">
                 {/* Pay amount display */}
-                <div className="text-gray-400">
+                <div className="text-lg font-semibold text-green-400">
                   {job.payType === 'percent' ? (
-                    <span>{job.payAmount}%</span>
+                    `${job.payAmount}%`
                   ) : (
-                    <span>${job.payAmount}</span>
+                    `$${job.payAmount}/${job.payType}`
                   )}
-                  {' '}
-                  {job.payType === 'fixed' ? 'fixed' : job.payType}
                 </div>
                 
                 {currentUser && (currentUser.userId === job.owner || currentUser.userId === job.owner._id) && (
