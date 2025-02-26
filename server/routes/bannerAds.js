@@ -4,17 +4,18 @@ const BannerAd = require('../models/BannerAd');
 const auth = require('../middleware/auth');
 const AffiliateEarning = require('../models/AffiliateEarning');
 
-// Get active banner ad
+// Get active banner ads
 router.get('/active', async (req, res) => {
   try {
-    const activeBanner = await BannerAd.findOne({
+    const activeBanners = await BannerAd.find({
       status: 'active',
       expiresAt: { $gt: new Date() }
-    });
-    res.json(activeBanner);
+    }).sort({ createdAt: -1 });
+    
+    res.json(activeBanners);
   } catch (error) {
-    console.error('Error fetching active banner:', error);
-    res.status(500).json({ error: 'Failed to fetch active banner' });
+    console.error('Error fetching active banners:', error);
+    res.status(500).json({ error: 'Failed to fetch active banners' });
   }
 });
 
