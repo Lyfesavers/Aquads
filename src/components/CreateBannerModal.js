@@ -70,8 +70,12 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
         chainAddress: selectedChain.address,
         duration: selectedOption.durationMs
       });
+      
+      alert('Banner ad created successfully!');
+      onClose();
     } catch (error) {
-      alert(error.message);
+      console.error('Error creating banner:', error);
+      alert(error.message || 'Failed to create banner ad');
     }
   };
 
