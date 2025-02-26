@@ -89,7 +89,7 @@ Best regards,
               <div className="flex items-center space-x-4">
                 {/* Pay amount display */}
                 <div className="text-lg font-semibold text-green-400">
-                  {job.payType === 'percent' ? (
+                  {job.payType === 'percentage' ? (
                     `${job.payAmount}%`
                   ) : (
                     `$${job.payAmount}/${job.payType}`
