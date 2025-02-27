@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import emailService from '../services/emailService';
+import { FaSpinner } from 'react-icons/fa';
 
 const CreateAccountModal = ({ onCreateAccount, onClose }) => {
   const [formData, setFormData] = useState({
@@ -14,6 +15,7 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
   });
   const [previewUrl, setPreviewUrl] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -87,17 +89,21 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
 
     console.log('Form data being sent:', formData); // Debug log
 
+    // Set submitting state to show loading indicator
+    setIsSubmitting(true);
+    
     try {
       await onCreateAccount(formData);
-      
-      // The email will be sent from the backend after successful registration
-      // We don't need to handle it here
+      // Reset submitting state in case of success
+      // (though the modal will likely close in this case)
+      setIsSubmitting(false);
     } catch (error) {
       if (error.response?.status === 429) {
         setError('Too many signup attempts. Please try again in 24 hours.');
       } else {
         setError(error.message || 'Failed to create account. Please try again.');
       }
+      setIsSubmitting(false);
       console.error('Signup error:', error);
     }
   };
@@ -246,15 +252,24 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
               <button
                 type="button"
                 onClick={onClose}
-                className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                disabled={isSubmitting}
+                className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                disabled={isSubmitting}
+                className="px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 flex items-center justify-center"
               >
-                Create Account
+                {isSubmitting ? (
+                  <>
+                    <FaSpinner className="animate-spin mr-2" />
+                    Creating Account...
+                  </>
+                ) : (
+                  'Create Account'
+                )}
               </button>
             </div>
           </form>
