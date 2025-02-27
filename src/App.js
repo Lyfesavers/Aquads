@@ -762,6 +762,66 @@ function App() {
     // Similarly for ad2...
   };
 
+  // Function to smoothly refresh bubbles without glitching
+  const refreshBubbles = (newAds, currentAds) => {
+    // 1. Add transition styling for smooth position changes
+    document.querySelectorAll('.bubble').forEach(bubble => {
+      bubble.style.transition = 'transform 0.5s ease-out, opacity 0.5s ease-out';
+    });
+    
+    // 2. For existing bubbles that will remain, keep their positions/velocities
+    const persistentBubbles = currentAds.filter(currentAd => 
+      newAds.some(newAd => newAd.id === currentAd.id)
+    );
+    
+    // 3. For new bubbles, start with opacity 0 and fade in
+    const newBubblesData = newAds.filter(newAd => 
+      !currentAds.some(currentAd => currentAd.id === newAd.id)
+    );
+    
+    // Apply fade-in for new bubbles
+    newBubblesData.forEach(newAd => {
+      // When creating the DOM element for this bubble
+      if (newAd.element) {
+        newAd.element.style.opacity = '0';
+        
+        // Fade in gradually
+        setTimeout(() => {
+          newAd.element.style.transition = 'opacity 0.8s ease-in-out, transform 0.5s ease-out';
+          newAd.element.style.opacity = '1';
+        }, 50);
+      }
+    });
+    
+    // 4. For bubbles that will be removed, fade them out before removal
+    const removedBubbles = currentAds.filter(currentAd => 
+      !newAds.some(newAd => newAd.id === currentAd.id)
+    );
+    
+    removedBubbles.forEach(oldAd => {
+      if (oldAd.element) {
+        oldAd.element.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
+        oldAd.element.style.opacity = '0';
+        
+        // Remove after fade-out completes
+        setTimeout(() => {
+          if (oldAd.element && oldAd.element.parentNode) {
+            oldAd.element.parentNode.removeChild(oldAd.element);
+          }
+        }, 500);
+      }
+    });
+    
+    // 5. After everything is stable, remove transitions to allow physics to work normally
+    setTimeout(() => {
+      document.querySelectorAll('.bubble').forEach(bubble => {
+        bubble.style.transition = '';
+      });
+    }, 600);
+    
+    return [...persistentBubbles, ...newBubblesData];
+  };
+
   return (
     <Router>
       <Routes>
