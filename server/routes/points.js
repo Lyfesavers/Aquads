@@ -219,9 +219,44 @@ function awardListingPoints(userId) {
     });
 }
 
+// Helper function to award points for affiliate reviews
+const awardAffiliateReviewPoints = async (userId) => {
+  try {
+    console.log('Awarding 500 points to affiliate for service review, userId:', userId);
+    
+    // Update user points and add to history
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        $inc: { points: 500 },
+        $push: {
+          pointsHistory: {
+            amount: 500,
+            reason: 'Left a service review as affiliate',
+            createdAt: new Date()
+          }
+        }
+      },
+      { new: true }
+    );
+    
+    if (!updatedUser) {
+      console.error('User not found when awarding affiliate review points');
+      return null;
+    }
+    
+    console.log('Successfully awarded 500 points to affiliate for review');
+    return updatedUser;
+  } catch (error) {
+    console.error('Error awarding affiliate review points:', error);
+    return null;
+  }
+};
+
 // Export the router directly
 module.exports = router;
 
 // Export helper functions separately
 module.exports.awardAffiliatePoints = awardAffiliatePoints;
-module.exports.awardListingPoints = awardListingPoints; 
+module.exports.awardListingPoints = awardListingPoints;
+module.exports.awardAffiliateReviewPoints = awardAffiliateReviewPoints; 

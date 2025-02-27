@@ -2,7 +2,9 @@ const express = require('express');
 const router = express.Router();
 const ServiceReview = require('../models/ServiceReview');
 const Service = require('../models/Service');
+const User = require('../models/User');
 const auth = require('../middleware/auth');
+const { awardAffiliateReviewPoints } = require('./points');
 
 // Get reviews for a service
 router.get('/:serviceId', async (req, res) => {
@@ -59,6 +61,13 @@ router.post('/', auth, async (req, res) => {
     service.reviews = allReviews.length;
     // Badge will be automatically calculated in the pre-save middleware
     await service.save();
+
+    // NEW CODE: Check if the user is an affiliate and award points
+    const user = await User.findById(req.user.userId);
+    if (user && user.referralCode) {
+      console.log('Reviewer is an affiliate, awarding points');
+      await awardAffiliateReviewPoints(req.user.userId);
+    }
 
     console.log('Saved service review:', savedReview);
     res.status(201).json(savedReview);
