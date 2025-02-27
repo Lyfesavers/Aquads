@@ -713,6 +713,55 @@ function App() {
     }
   };
 
+  // Bubble enhancement suggestions for App.js
+  // Look for the bubble creation/management code and add these improvements:
+
+  // 1. Subtle size variations for each bubble when created
+  const createBubble = (ad) => {
+    // Your existing bubble creation code
+    
+    // Add subtle size variation (5-10% difference between bubbles)
+    const sizeVariation = 0.95 + Math.random() * 0.1;
+    ad.element.style.transform = `scale(${sizeVariation})`;
+    ad.baseScale = sizeVariation; // Store base scale for animations
+    
+    return ad;
+  };
+
+  // 2. Gentler deceleration for more fluid movement
+  const updateBubblePosition = (ad) => {
+    // Your existing position update code
+    
+    // Make deceleration slightly gentler (0.98 instead of 0.95)
+    ad.vx *= 0.98;
+    ad.vy *= 0.98;
+    
+    // Add subtle wobble effect on movement
+    if (Math.abs(ad.vx) > 0.1 || Math.abs(ad.vy) > 0.1) {
+      const wobble = Math.sin(Date.now() * 0.01) * 0.03;
+      ad.element.style.transform = `scale(${ad.baseScale * (1 + wobble)})`;
+    }
+  };
+
+  // 3. Improved collision response for more "bouncy" feel
+  const handleCollision = (ad1, ad2) => {
+    // Your existing collision detection
+    
+    // Add slightly more elasticity to collisions
+    const elasticity = 1.01; // Just slightly more than 1 to add energy on collision
+    
+    // Apply elasticity to the velocity calculations
+    const velocityXTotal = ad1.vx - ad2.vx;
+    const velocityYTotal = ad1.vy - ad2.vy;
+    
+    ad1.vx = ((ad1.mass - ad2.mass) * ad1.vx + 2 * ad2.mass * ad2.vx) / 
+             (ad1.mass + ad2.mass) * elasticity;
+    ad1.vy = ((ad1.mass - ad2.mass) * ad1.vy + 2 * ad2.mass * ad2.vy) / 
+             (ad1.mass + ad2.mass) * elasticity;
+             
+    // Similarly for ad2...
+  };
+
   return (
     <Router>
       <Routes>
