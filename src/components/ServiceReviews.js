@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import { API_URL } from '../services/api';
+import { FaSpinner } from 'react-icons/fa';
 
 const ServiceReviews = ({ service, onClose, currentUser, showNotification, onReviewsUpdate }) => {
   const [reviews, setReviews] = useState([]);
   const [newReview, setNewReview] = useState({ rating: 5, comment: '', referralCode: '' });
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [averageRating, setAverageRating] = useState(0);
   const [totalReviews, setTotalReviews] = useState(0);
@@ -147,60 +149,66 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
 
   const handleSubmitReview = async (e) => {
     e.preventDefault();
-    if (!currentUser) {
-      showNotification('Please login to submit a review', 'error');
+    
+    if (!validateReviewLength(newReview.comment)) {
+      setError('Please write a more detailed review (at least 2 sentences)');
       return;
     }
 
-    if (!isVerified) {
-      showNotification('Please verify your Secret code first', 'error');
-      return;
-    }
-
-    if (!canReview) {
-      showNotification('You must interact with this service before leaving a review', 'error');
-      return;
-    }
-
-    const comment = newReview.comment.trim();
-    if (!validateReviewLength(comment)) {
-      showNotification('Please write at least 3 sentences or lines in your review', 'error');
-      return;
-    }
+    setError(null);
+    setIsSubmitting(true); // Set submitting state to true
 
     try {
-      const reviewData = {
-        serviceId: service._id,
-        rating: parseInt(newReview.rating),
-        comment: comment,
-        interactionDate: interactionDate,
-        referralCode: newReview.referralCode
-      };
+      const token = currentUser?.token;
+      if (!token) {
+        throw new Error('You must be logged in to leave a review');
+      }
 
       const response = await fetch(`${API_URL}/service-reviews`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(reviewData)
+        body: JSON.stringify({
+          serviceId: service._id,
+          rating: newReview.rating,
+          comment: newReview.comment
+        })
       });
 
-      const data = await response.json();
-      
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to submit review');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to submit review');
       }
 
-      setReviews([data, ...reviews]);
+      const savedReview = await response.json();
+      
+      // Add the new review to the list
+      setReviews(prevReviews => [savedReview, ...prevReviews]);
+      
+      // Reset the form
       setNewReview({ rating: 5, comment: '', referralCode: '' });
-      setIsVerified(false);
+      
+      // Update totals
+      setTotalReviews(prev => prev + 1);
+      
+      // Calculate new average
+      const newTotal = reviews.reduce((sum, r) => sum + r.rating, 0) + savedReview.rating;
+      setAverageRating(newTotal / (reviews.length + 1));
+      
+      // Show success notification
       showNotification('Review submitted successfully!', 'success');
       
-      fetchReviews();
+      // Call the update callback if provided
+      if (onReviewsUpdate) onReviewsUpdate();
+      
+      setIsVerified(false); // Reset verification
     } catch (error) {
+      setError(error.message);
       console.error('Error submitting review:', error);
-      showNotification(error.message || 'Failed to submit review', 'error');
+    } finally {
+      setIsSubmitting(false); // Reset submitting state regardless of outcome
     }
   };
 
@@ -293,13 +301,23 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
                         )}
                       </div>
                     </div>
-                    <button
-                      type="submit"
-                      className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded w-full"
-                      disabled={!validateReviewLength(newReview.comment)}
-                    >
-                      Submit Review
-                    </button>
+                    <div className="mt-4">
+                      <button
+                        type="submit"
+                        onClick={handleSubmitReview}
+                        disabled={isSubmitting}
+                        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <FaSpinner className="animate-spin mr-2" />
+                            Submitting...
+                          </>
+                        ) : (
+                          'Submit Review'
+                        )}
+                      </button>
+                    </div>
                   </>
                 )}
               </form>
