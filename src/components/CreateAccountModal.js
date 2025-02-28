@@ -44,7 +44,7 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
       hasUppercase: /[A-Z]/.test(password),
       hasLowercase: /[a-z]/.test(password),
       hasNumber: /[0-9]/.test(password),
-      hasSpecial: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+      hasSpecial: /[@$!%*?&]/.test(password)
     });
   }, [formData.password]);
 
@@ -262,7 +262,7 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
                   />
                   <PasswordRequirement 
                     met={passwordValidation.hasSpecial} 
-                    text="At least one special character" 
+                    text="At least one special character (@, $, !, %, *, ?, or &)" 
                   />
                 </div>
               )}
