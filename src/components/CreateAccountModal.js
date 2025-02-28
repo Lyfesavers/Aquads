@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import emailService from '../services/emailService';
-import { FaSpinner } from 'react-icons/fa';
+import { FaSpinner, FaCheck, FaTimes } from 'react-icons/fa';
 
 const CreateAccountModal = ({ onCreateAccount, onClose }) => {
   const [formData, setFormData] = useState({
@@ -16,6 +16,14 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
   const [previewUrl, setPreviewUrl] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [passwordValidation, setPasswordValidation] = useState({
+    minLength: false,
+    hasUppercase: false,
+    hasLowercase: false,
+    hasNumber: false,
+    hasSpecial: false
+  });
+  const [passwordFocused, setPasswordFocused] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -27,6 +35,18 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
       }));
     }
   }, []);
+
+  // Validate password as user types
+  useEffect(() => {
+    const password = formData.password;
+    setPasswordValidation({
+      minLength: password.length >= 8,
+      hasUppercase: /[A-Z]/.test(password),
+      hasLowercase: /[a-z]/.test(password),
+      hasNumber: /[0-9]/.test(password),
+      hasSpecial: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+    });
+  }, [formData.password]);
 
   const validateImageUrl = async (url) => {
     try {
@@ -63,11 +83,13 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
     return re.test(email);
   };
 
+  const isPasswordValid = () => {
+    return Object.values(passwordValidation).every(value => value === true);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-
-    console.log('Form data before validation:', formData); // Debug log
 
     // Validate required fields
     if (!formData.username || !formData.password) {
@@ -81,13 +103,17 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
       return;
     }
 
+    // Validate password requirements
+    if (!isPasswordValid()) {
+      setError('Password does not meet all requirements');
+      return;
+    }
+
     // Validate password match
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
     }
-
-    console.log('Form data being sent:', formData); // Debug log
 
     // Set submitting state to show loading indicator
     setIsSubmitting(true);
@@ -117,6 +143,18 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
     }
     setError('');
   };
+
+  // Password requirement item
+  const PasswordRequirement = ({ met, text }) => (
+    <div className="flex items-center gap-2 text-sm">
+      {met ? (
+        <FaCheck className="text-green-500" />
+      ) : (
+        <FaTimes className="text-red-500" />
+      )}
+      <span className={met ? "text-green-500" : "text-red-500"}>{text}</span>
+    </div>
+  );
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[100] overflow-y-auto p-4">
@@ -186,17 +224,48 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
               />
             </div>
             <div>
-              <label className="block text-gray-300 mb-2">Password - must have at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character"</label>
+              <label className="block text-gray-300 mb-2">Password</label>
               <input
                 type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
+                onFocus={() => setPasswordFocused(true)}
+                onBlur={() => setPasswordFocused(false)}
                 required
-                placeholder="Password (8+ chars, mixed case, number, symbol)"
-                aria-label="Password must have at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character"
-                className="w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Create a password"
+                className={`w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 ${
+                  formData.password && isPasswordValid() 
+                    ? "focus:ring-green-500 border border-green-500" 
+                    : "focus:ring-blue-500"
+                }`}
               />
+              
+              {/* Password requirements checklist */}
+              {(passwordFocused || formData.password) && (
+                <div className="mt-2 p-3 bg-gray-700 rounded space-y-1">
+                  <PasswordRequirement 
+                    met={passwordValidation.minLength} 
+                    text="At least 8 characters" 
+                  />
+                  <PasswordRequirement 
+                    met={passwordValidation.hasUppercase} 
+                    text="At least one uppercase letter" 
+                  />
+                  <PasswordRequirement 
+                    met={passwordValidation.hasLowercase} 
+                    text="At least one lowercase letter" 
+                  />
+                  <PasswordRequirement 
+                    met={passwordValidation.hasNumber} 
+                    text="At least one number" 
+                  />
+                  <PasswordRequirement 
+                    met={passwordValidation.hasSpecial} 
+                    text="At least one special character" 
+                  />
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-gray-300 mb-2">Confirm Password</label>
@@ -207,8 +276,15 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
                 onChange={handleChange}
                 required
                 placeholder="Confirm password"
-                className="w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 ${
+                  formData.confirmPassword && formData.password === formData.confirmPassword
+                    ? "focus:ring-green-500 border border-green-500" 
+                    : "focus:ring-blue-500"
+                }`}
               />
+              {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                <p className="text-red-500 text-sm mt-1">Passwords do not match</p>
+              )}
             </div>
             <div>
               <label className="block text-gray-300 mb-2">Profile Image URL (optional)</label>
