@@ -55,6 +55,7 @@ const BannerDisplay = () => {
           src={currentBanner.gif}
           alt={currentBanner.title}
           className="w-full h-[60px] sm:h-[80px] md:h-[200px] object-contain"
+          loading="lazy"
         />
       </a>
     </div>

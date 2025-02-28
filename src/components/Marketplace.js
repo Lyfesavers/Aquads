@@ -650,7 +650,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
             <div className="md:hidden">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="text-gray-300 hover:text-white p-2"
+                className="text-gray-300 hover:text-white p-3 rounded-md"
               >
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   {isMobileMenuOpen ? (
@@ -785,18 +785,18 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
           {/* Search and Filters */}
           <div className="mt-4 mb-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div className="flex-1">
+              <div className="flex-1 mb-4 md:mb-0">
                 <input
                   type="text"
                   placeholder="Search services..."
-                  className="w-full px-4 py-2 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-3 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
-              <div className="flex flex-wrap items-center gap-4 mb-6">
+              <div className="flex flex-wrap items-center gap-3 mb-0">
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="bg-gray-700/80 text-white px-4 py-2 rounded-lg"
+                  className="bg-gray-700/80 text-white px-3 py-3 rounded-lg text-sm w-full sm:w-auto"
                 >
                   <option value="">All Categories</option>
                   {categories.map(cat => (
@@ -805,7 +805,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                 </select>
                 <button
                   onClick={() => setShowPremiumOnly(!showPremiumOnly)}
-                  className={`px-4 py-2 rounded-lg transition-colors ${
+                  className={`px-3 py-3 rounded-lg transition-colors w-full sm:w-auto text-sm ${
                     showPremiumOnly 
                       ? 'bg-yellow-500 text-white' 
                       : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
@@ -815,7 +815,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                 </button>
                 <button
                   onClick={() => setShowJobs(!showJobs)}
-                  className={`px-4 py-2 rounded-lg transition-colors ${
+                  className={`px-3 py-3 rounded-lg transition-colors w-full sm:w-auto text-sm ${
                     showJobs 
                       ? 'bg-blue-500 text-white' 
                       : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
@@ -826,7 +826,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                 {currentUser && (
                   <button
                     onClick={() => setShowJobModal(true)}
-                    className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
+                    className="px-3 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors w-full sm:w-auto text-sm"
                   >
                     Post Job
                   </button>
@@ -834,7 +834,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                 <select
                   value={sortOption}
                   onChange={(e) => setSortOption(e.target.value)}
-                  className="bg-gray-700/80 text-white px-4 py-2 rounded-lg"
+                  className="bg-gray-700/80 text-white px-3 py-3 rounded-lg text-sm w-full sm:w-auto"
                 >
                   <option value="newest">Newest First</option>
                   <option value="highest-rated">Highest Rated</option>

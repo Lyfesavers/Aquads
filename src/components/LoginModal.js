@@ -31,10 +31,10 @@ const LoginModal = ({ onClose, onLogin, onCreateAccount }) => {
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[100]">
-        <div className="bg-gray-800 p-8 rounded-lg w-full max-w-md relative">
+        <div className="bg-gray-800 p-4 sm:p-8 rounded-lg w-full max-w-md relative mx-2 sm:mx-auto">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-white"
+            className="absolute top-4 right-4 text-gray-400 hover:text-white p-2"
           >
             ✕
           </button>
@@ -49,7 +49,8 @@ const LoginModal = ({ onClose, onLogin, onCreateAccount }) => {
                 onChange={handleChange}
                 required
                 placeholder="Enter username"
-                className="w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-3 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                autoComplete="username"
               />
             </div>
             <div>
@@ -60,7 +61,8 @@ const LoginModal = ({ onClose, onLogin, onCreateAccount }) => {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-3 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                autoComplete="current-password"
               />
             </div>
             {error && (
