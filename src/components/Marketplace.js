@@ -845,36 +845,6 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
             </div>
           </div>
 
-          {/* Categories */}
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6">Browse Categories</h2>
-            <div className="relative">
-              <select
-                value={selectedCategory || ''}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-6 py-4 bg-gray-800/50 backdrop-blur-sm rounded-lg cursor-pointer
-                  border-2 border-transparent hover:border-indigo-500/50 focus:border-indigo-500
-                  focus:outline-none focus:ring-2 focus:ring-indigo-500/50
-                  transition-all duration-300
-                  text-lg font-medium
-                  appearance-none
-                  shadow-[0_0_15px_rgba(99,102,241,0.2)] hover:shadow-[0_0_20px_rgba(99,102,241,0.4)]"
-              >
-                <option value="">All Categories</option>
-                {categories.map(category => (
-                  <option key={category.id} value={category.id}>
-                    {category.icon} {category.name}
-                  </option>
-                ))}
-              </select>
-              <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none text-indigo-400">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
           {/* How It Works */}
           <div className="mb-12 bg-gray-800/30 rounded-lg p-6">
             <div className="flex justify-between items-center mb-6">
