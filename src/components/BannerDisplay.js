@@ -44,7 +44,7 @@ const BannerDisplay = () => {
   const currentBanner = banners[currentIndex];
 
   return (
-    <div className="banner-container w-full -mt-4">
+    <div className="banner-container w-full">
       <a 
         href={currentBanner.url} 
         target="_blank" 
@@ -54,7 +54,7 @@ const BannerDisplay = () => {
         <img
           src={currentBanner.gif}
           alt={currentBanner.title}
-          className="w-full h-[80px] sm:h-[100px] md:h-[300px] object-contain"
+          className="w-full h-[60px] sm:h-[80px] md:h-[200px] object-contain"
         />
       </a>
     </div>

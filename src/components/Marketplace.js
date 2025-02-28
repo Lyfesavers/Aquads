@@ -780,10 +780,10 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
       {/* Main Content */}
       <div className="relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <BannerDisplay />
           {/* Search and Filters */}
-          <div className="mb-8">
+          <div className="mt-4 mb-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="flex-1">
                 <input
