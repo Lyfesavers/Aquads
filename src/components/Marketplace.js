@@ -910,7 +910,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
           {/* Featured Services */}
           <div>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold">Freelancer Services</h2>
+              <h2 className="text-2xl font-bold">{showJobs ? "Job Postings" : "Freelancer Services"}</h2>
               {currentUser ? (
                 <button
                   onClick={() => setShowCreateModal(true)}
