@@ -1384,14 +1384,34 @@ function App() {
                               }
                             }}
                           >
-                            <div className="relative w-full h-full flex flex-col items-center justify-center">
-                              <div className="absolute inset-0 rounded-full bg-gray-800/90 backdrop-blur-sm shadow-lg shadow-blue-500/20 glow"></div>
+                            <div className="bubble-content">
+                              {/* Background of bubble */}
+                              <div className="bubble-bg"></div>
+                              
+                              {/* Curved text at top */}
                               <div 
-                                className="relative z-10 mb-2 rounded-full overflow-hidden flex items-center justify-center"
-                                style={{
-                                  width: `${imageSize}px`,
-                                  height: `${imageSize}px`,
+                                className="bubble-text-curved"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (requireAuth()) {
+                                    setSelectedAdId(ad.id);
+                                    setShowBumpStore(true);
+                                  }
                                 }}
+                              >
+                                <span 
+                                  className="text-white truncate block hover:text-blue-300 transition-colors duration-300"
+                                  style={{
+                                    fontSize: `${Math.max(ad.size * 0.09, 10)}px`
+                                  }}
+                                >
+                                  {ad.title}
+                                </span>
+                              </div>
+                              
+                              {/* Larger Logo */}
+                              <div 
+                                className="bubble-logo-container"
                               >
                                 <img
                                   src={ad.logo}
@@ -1409,25 +1429,6 @@ function App() {
                                     }
                                   }}
                                 />
-                              </div>
-                              <div 
-                                className="relative z-10 text-center px-2 w-full"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (requireAuth()) {
-                                    setSelectedAdId(ad.id);
-                                    setShowBumpStore(true);
-                                  }
-                                }}
-                              >
-                                <span 
-                                  className="text-white truncate block hover:text-blue-300 transition-colors duration-300"
-                                  style={{
-                                    fontSize: `${Math.max(ad.size * 0.1, 12)}px`
-                                  }}
-                                >
-                                  {ad.title}
-                                </span>
                               </div>
                             </div>
                           </motion.div>

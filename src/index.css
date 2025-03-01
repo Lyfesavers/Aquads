@@ -860,3 +860,79 @@ body {
 .bubble-content {
   text-shadow: 0 0 8px rgba(190, 75, 219, 0.7);
 }
+
+/* Curved text container for bubbles */
+.bubble-text-curved {
+  position: absolute;
+  top: 8%;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  z-index: 20;
+  transform: translateY(-50%);
+  padding: 0 10%;
+}
+
+.bubble-text-curved span {
+  display: block;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 12px;
+  backdrop-filter: blur(2px);
+  transform: perspective(100px) rotateX(5deg);
+  box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.2);
+}
+
+/* Larger logo container for bubbles */
+.bubble-logo-container {
+  position: relative;
+  z-index: 10;
+  width: 85% !important; /* Override inline styles */
+  height: 85% !important; /* Override inline styles */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+/* Make sure the bubble content is positioned to allow for the curved text at top */
+.bubble-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Background glow for the bubble */
+.bubble-bg {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(23, 25, 35, 0.8);
+  backdrop-filter: blur(4px);
+}
+
+@media (max-width: 768px) {
+  .bubble-text-curved {
+    top: 10%;
+  }
+}
+
+@media (max-width: 480px) {
+  .bubble-text-curved {
+    top: 12%;
+  }
+  
+  .bubble-text-curved span {
+    font-size: 0.8em !important;
+  }
+}
