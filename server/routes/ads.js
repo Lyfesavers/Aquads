@@ -238,9 +238,13 @@ router.put('/:id', auth, async (req, res) => {
       return res.status(403).json({ message: 'You do not have permission to update this ad' });
     }
     
-    // Update the ad
-    Object.keys(updates).forEach(key => {
-      ad[key] = updates[key];
+    // Only update specific valid fields rather than all properties
+    // This prevents validation errors with unknown fields
+    const allowedUpdates = ['x', 'y', 'size', 'url', 'title', 'status'];
+    allowedUpdates.forEach(field => {
+      if (updates[field] !== undefined) {
+        ad[field] = updates[field];
+      }
     });
     
     const updatedAd = await ad.save();
