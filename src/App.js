@@ -1374,8 +1374,7 @@ function App() {
                               touchAction: 'auto',
                               position: 'absolute',
                               top: 0,
-                              left: 0,
-                              clipPath: 'circle(50%)'
+                              left: 0
                             }}
                             onClick={(e) => {
                               if (!e.defaultPrevented) {
