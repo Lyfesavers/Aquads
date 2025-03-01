@@ -106,6 +106,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [services, setServices] = useState([]);
+  const [originalServices, setOriginalServices] = useState([]); // Store original services for search reset
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -213,6 +215,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       }));
 
       setServices(servicesWithReviews);
+      setOriginalServices(servicesWithReviews);
       setLoading(false);
     } catch (error) {
       console.error('Error loading services:', error);
@@ -373,15 +376,31 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const filteredServices = sortServices(
     services
       .filter(service => {
-        if (showPremiumOnly) {
-          return service.isPremium;
+        // First check premium filter
+        if (showPremiumOnly && !service.isPremium) {
+          return false;
         }
-        return true;
-      })
-      .filter(service => {
-        if (selectedCategory) {
-          return service.category === selectedCategory;
+        
+        // Then check category filter
+        if (selectedCategory && service.category !== selectedCategory) {
+          return false;
         }
+        
+        // Then apply search term filter if there is one
+        if (searchTerm && searchTerm.trim() !== '') {
+          const searchQuery = searchTerm.toLowerCase();
+          const username = service.seller?.username?.toLowerCase() || '';
+          const title = service.title?.toLowerCase() || '';
+          const description = service.description?.toLowerCase() || '';
+          const category = service.category?.toLowerCase() || '';
+          
+          return username.includes(searchQuery) || 
+                 title.includes(searchQuery) || 
+                 description.includes(searchQuery) ||
+                 category.includes(searchQuery);
+        }
+        
+        // If we get here, show the service (it passed all filters)
         return true;
       }),
     sortOption
@@ -627,6 +646,10 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     }
   };
 
+  const handleClearSearch = () => {
+    setSearchTerm('');
+  };
+
   return (
     <div className="h-screen overflow-y-auto bg-gradient-to-br from-gray-900 to-black text-white">
       {/* Fixed Background */}
@@ -786,11 +809,23 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
           <div className="mt-4 mb-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div className="flex-1 mb-4 md:mb-0">
-                <input
-                  type="text"
-                  placeholder="Search services..."
-                  className="w-full px-4 py-3 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search services..."
+                    className="w-full px-4 py-3 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                  {searchTerm && (
+                    <button
+                      onClick={handleClearSearch}
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="flex flex-wrap items-center gap-3 mb-0">
                 <select
@@ -914,206 +949,227 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                   )}
                 </div>
               ) : (
-                filteredServices.map((service) => (
-                  <div 
-                    key={service._id} 
-                    id={`service-${service._id}`}
-                    className="bg-gray-800/50 backdrop-blur-sm rounded-lg overflow-hidden group hover:shadow-lg hover:shadow-indigo-500/20 transition-all duration-300"
-                  >
-                    <div className="aspect-w-16 aspect-h-9 relative">
-                      <ServiceImageComponent 
-                        src={service.image}
-                        alt={service.title}
-                        className="w-full h-48 object-cover"
-                      />
-                      <ServiceBadgeComponent badge={service.badge} />
-                      {service.isPremium && <PremiumBadge />}
-                      {currentUser && service.seller?.username === currentUser.username && (
-                        <div className="absolute top-2 right-2 flex gap-2 z-10">
-                          {!service.isPremium && (
-                            <button
-                              onClick={() => handlePremiumUpgrade(service._id)}
-                              className="bg-yellow-500/80 hover:bg-yellow-600/80 text-white px-3 py-1 rounded-lg shadow-lg hover:shadow-yellow-500/50 transition-all duration-300 backdrop-blur-sm flex items-center gap-1"
-                            >
-                              <FaCrown className="text-white" />
-                              Premium
-                            </button>
+                <>
+                  {filteredServices.length > 0 ? (
+                    filteredServices.map((service) => (
+                      <div 
+                        key={service._id} 
+                        id={`service-${service._id}`}
+                        className="bg-gray-800/50 backdrop-blur-sm rounded-lg overflow-hidden group hover:shadow-lg hover:shadow-indigo-500/20 transition-all duration-300"
+                      >
+                        <div className="aspect-w-16 aspect-h-9 relative">
+                          <ServiceImageComponent 
+                            src={service.image}
+                            alt={service.title}
+                            className="w-full h-48 object-cover"
+                          />
+                          <ServiceBadgeComponent badge={service.badge} />
+                          {service.isPremium && <PremiumBadge />}
+                          {currentUser && service.seller?.username === currentUser.username && (
+                            <div className="absolute top-2 right-2 flex gap-2 z-10">
+                              {!service.isPremium && (
+                                <button
+                                  onClick={() => handlePremiumUpgrade(service._id)}
+                                  className="bg-yellow-500/80 hover:bg-yellow-600/80 text-white px-3 py-1 rounded-lg shadow-lg hover:shadow-yellow-500/50 transition-all duration-300 backdrop-blur-sm flex items-center gap-1"
+                                >
+                                  <FaCrown className="text-white" />
+                                  Premium
+                                </button>
+                              )}
+                              <button
+                                onClick={() => {
+                                  setServiceToEdit(service);
+                                  setShowEditModal(true);
+                                }}
+                                className="bg-blue-500/80 hover:bg-blue-600/80 text-white px-3 py-1 rounded-lg shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteService(service._id)}
+                                className="bg-red-500/80 hover:bg-red-600/80 text-white px-3 py-1 rounded-lg shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm"
+                              >
+                                Delete
+                              </button>
+                            </div>
                           )}
-                          <button
-                            onClick={() => {
-                              setServiceToEdit(service);
-                              setShowEditModal(true);
-                            }}
-                            className="bg-blue-500/80 hover:bg-blue-600/80 text-white px-3 py-1 rounded-lg shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteService(service._id)}
-                            className="bg-red-500/80 hover:bg-red-600/80 text-white px-3 py-1 rounded-lg shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm"
-                          >
-                            Delete
-                          </button>
                         </div>
-                      )}
-                    </div>
-                    <div className="p-6">
-                      <div className="flex items-center gap-3 mb-3">
-                        <UserImage 
-                          src={service.seller?.image}
-                          alt={service.seller?.username || 'Seller'}
-                          className="w-10 h-10 rounded-full object-cover"
-                        />
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-medium">{service.seller?.username}</h4>
+                        <div className="p-6">
+                          <div className="flex items-center gap-3 mb-3">
+                            <UserImage 
+                              src={service.seller?.image}
+                              alt={service.seller?.username || 'Seller'}
+                              className="w-10 h-10 rounded-full object-cover"
+                            />
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between">
+                                <h4 className="font-medium">{service.seller?.username}</h4>
+                                {service.linkedin && (
+                                  <a
+                                    href={service.linkedin}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-400 hover:text-blue-300 transition-colors"
+                                  >
+                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                      <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                                    </svg>
+                                  </a>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => handleShowReviews(service)}
+                                className="flex items-center text-sm text-gray-400 hover:text-yellow-500 transition-colors"
+                              >
+                                <span className="text-yellow-500">★</span>
+                                <span className="ml-1">{service.rating || '0.0'}</span>
+                                <span className="ml-1">({service.reviews || '0'} reviews)</span>
+                              </button>
+                            </div>
+                          </div>
+                          <h3 className="text-lg font-medium mb-2 line-clamp-2 group-hover:text-indigo-400 transition-colors">
+                            {service.title}
+                          </h3>
+                          <div className="relative">
+                            <p className={`text-gray-400 text-sm mb-4 whitespace-pre-wrap ${expandedDescriptions.has(service._id) ? '' : 'line-clamp-2'}`}>
+                              {service.description?.slice(0, 1000)}
+                              {service.description?.length > 1000 && '...'}
+                            </p>
+                            {service.description?.length > 80 && (
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  toggleDescription(service._id);
+                                }}
+                                className="text-indigo-400 text-sm hover:text-indigo-300 transition-colors"
+                              >
+                                {expandedDescriptions.has(service._id) ? 'Show less' : 'Read more'}
+                              </button>
+                            )}
+                          </div>
+                          <div className="mt-4">
+                            <BookingButton
+                              service={service}
+                              currentUser={currentUser}
+                              onBookingCreate={handleBookingCreate}
+                              showNotification={(message, type) => {
+                                alert(message); // Using alert for now, can be replaced with a better notification system
+                              }}
+                            />
+                          </div>
+                          <div className="flex items-center justify-between pt-4 border-t border-gray-700">
+                            <span className="text-gray-400 text-sm">
+                              Delivered in {service.deliveryTime}
+                            </span>
+                            <div className="text-right">
+                              <div className="text-gray-300 text-sm">
+                                <span className="font-semibold">Starting Price:</span>{' '}
+                                {service.price} USDC
+                              </div>
+                            </div>
+                          </div>
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            {service.telegramUsername && (
+                              <a
+                                href={`https://t.me/${service.telegramUsername}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center px-3 py-1.5 text-sm bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-full transition-all duration-300"
+                              >
+                                <FaTelegram className="mr-1" />
+                                <span>Telegram</span>
+                              </a>
+                            )}
+                            {service.twitter && (
+                              <a
+                                href={service.twitter}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center px-3 py-1.5 text-sm bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 rounded-full transition-all duration-300"
+                              >
+                                <FaTwitter className="mr-1" />
+                                <span>Twitter</span>
+                              </a>
+                            )}
+                            {service.discord && (
+                              <a
+                                href={service.discord}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center px-3 py-1.5 text-sm bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 rounded-full transition-all duration-300"
+                              >
+                                <FaDiscord className="mr-1" />
+                                <span>Discord</span>
+                              </a>
+                            )}
+                            {service.email && (
+                              <a
+                                href={`mailto:${service.email}`}
+                                className="inline-flex items-center px-3 py-1.5 text-sm bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-full transition-all duration-300"
+                              >
+                                <FaEnvelope className="mr-1" />
+                                <span>Email</span>
+                              </a>
+                            )}
                             {service.linkedin && (
                               <a
                                 href={service.linkedin}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-400 hover:text-blue-300 transition-colors"
+                                className="inline-flex items-center px-3 py-1.5 text-sm bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded-full transition-all duration-300"
                               >
-                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
-                                </svg>
+                                <FaLinkedin className="mr-1" />
+                                <span>LinkedIn</span>
                               </a>
                             )}
-                          </div>
-                          <button
-                            onClick={() => handleShowReviews(service)}
-                            className="flex items-center text-sm text-gray-400 hover:text-yellow-500 transition-colors"
-                          >
-                            <span className="text-yellow-500">★</span>
-                            <span className="ml-1">{service.rating || '0.0'}</span>
-                            <span className="ml-1">({service.reviews || '0'} reviews)</span>
-                          </button>
-                        </div>
-                      </div>
-                      <h3 className="text-lg font-medium mb-2 line-clamp-2 group-hover:text-indigo-400 transition-colors">
-                        {service.title}
-                      </h3>
-                      <div className="relative">
-                        <p className={`text-gray-400 text-sm mb-4 whitespace-pre-wrap ${expandedDescriptions.has(service._id) ? '' : 'line-clamp-2'}`}>
-                          {service.description?.slice(0, 1000)}
-                          {service.description?.length > 1000 && '...'}
-                        </p>
-                        {service.description?.length > 80 && (
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              toggleDescription(service._id);
-                            }}
-                            className="text-indigo-400 text-sm hover:text-indigo-300 transition-colors"
-                          >
-                            {expandedDescriptions.has(service._id) ? 'Show less' : 'Read more'}
-                          </button>
-                        )}
-                      </div>
-                      <div className="mt-4">
-                        <BookingButton
-                          service={service}
-                          currentUser={currentUser}
-                          onBookingCreate={handleBookingCreate}
-                          showNotification={(message, type) => {
-                            alert(message); // Using alert for now, can be replaced with a better notification system
-                          }}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-700">
-                        <span className="text-gray-400 text-sm">
-                          Delivered in {service.deliveryTime}
-                        </span>
-                        <div className="text-right">
-                          <div className="text-gray-300 text-sm">
-                            <span className="font-semibold">Starting Price:</span>{' '}
-                            {service.price} USDC
+                            {service.website && (
+                              <a
+                                href={service.website}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center px-3 py-1.5 text-sm bg-gray-500/20 hover:bg-gray-500/30 text-gray-400 rounded-full transition-all duration-300"
+                              >
+                                <FaGlobe className="mr-1" />
+                                <span>Website</span>
+                              </a>
+                            )}
+                            <button
+                              onClick={() => {
+                                const referralCode = currentUser?.username || ''; // Get current user's username as referral code
+                                const url = `${window.location.origin}/marketplace?service=${service._id}&ref=${referralCode}#${service.title.replace(/\s+/g, '-')}`;
+                                navigator.clipboard.writeText(url);
+                                alert('Service link copied to clipboard! Share this link with others to help them find your service in the marketplace.');
+                              }}
+                              className="inline-flex items-center px-3 py-1.5 text-sm bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 rounded-full transition-all duration-300"
+                            >
+                              <svg className="w-4 h-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"/>
+                              </svg>
+                              Share
+                            </button>
                           </div>
                         </div>
                       </div>
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {service.telegramUsername && (
-                          <a
-                            href={`https://t.me/${service.telegramUsername}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center px-3 py-1.5 text-sm bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-full transition-all duration-300"
-                          >
-                            <FaTelegram className="mr-1" />
-                            <span>Telegram</span>
-                          </a>
-                        )}
-                        {service.twitter && (
-                          <a
-                            href={service.twitter}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center px-3 py-1.5 text-sm bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 rounded-full transition-all duration-300"
-                          >
-                            <FaTwitter className="mr-1" />
-                            <span>Twitter</span>
-                          </a>
-                        )}
-                        {service.discord && (
-                          <a
-                            href={service.discord}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center px-3 py-1.5 text-sm bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 rounded-full transition-all duration-300"
-                          >
-                            <FaDiscord className="mr-1" />
-                            <span>Discord</span>
-                          </a>
-                        )}
-                        {service.email && (
-                          <a
-                            href={`mailto:${service.email}`}
-                            className="inline-flex items-center px-3 py-1.5 text-sm bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-full transition-all duration-300"
-                          >
-                            <FaEnvelope className="mr-1" />
-                            <span>Email</span>
-                          </a>
-                        )}
-                        {service.linkedin && (
-                          <a
-                            href={service.linkedin}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center px-3 py-1.5 text-sm bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded-full transition-all duration-300"
-                          >
-                            <FaLinkedin className="mr-1" />
-                            <span>LinkedIn</span>
-                          </a>
-                        )}
-                        {service.website && (
-                          <a
-                            href={service.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center px-3 py-1.5 text-sm bg-gray-500/20 hover:bg-gray-500/30 text-gray-400 rounded-full transition-all duration-300"
-                          >
-                            <FaGlobe className="mr-1" />
-                            <span>Website</span>
-                          </a>
-                        )}
-                        <button
-                          onClick={() => {
-                            const referralCode = currentUser?.username || ''; // Get current user's username as referral code
-                            const url = `${window.location.origin}/marketplace?service=${service._id}&ref=${referralCode}#${service.title.replace(/\s+/g, '-')}`;
-                            navigator.clipboard.writeText(url);
-                            alert('Service link copied to clipboard! Share this link with others to help them find your service in the marketplace.');
-                          }}
-                          className="inline-flex items-center px-3 py-1.5 text-sm bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 rounded-full transition-all duration-300"
-                        >
-                          <svg className="w-4 h-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"/>
-                          </svg>
-                          Share
-                        </button>
-                      </div>
+                    ))
+                  ) : services.length === 0 ? (
+                    <div className="text-center py-10">
+                      <p className="text-gray-400">No services available yet. Be the first to create one!</p>
                     </div>
-                  </div>
-                ))
+                  ) : (
+                    <div className="text-center py-10">
+                      <p className="text-lg text-gray-300 mb-3">No results found{searchTerm ? ` for "${searchTerm}"` : ''}</p>
+                      <p className="text-gray-400 mb-4">Try a different search term or clear the search.</p>
+                      {searchTerm && (
+                        <button 
+                          onClick={handleClearSearch}
+                          className="px-4 py-2 bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
+                        >
+                          Clear Search
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
