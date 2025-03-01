@@ -87,6 +87,19 @@ export const updateAd = async (id, adData) => {
   return response.json();
 };
 
+// Update ad position only (no auth required)
+export const updateAdPosition = async (id, x, y) => {
+  const response = await fetch(`${API_URL}/ads/${id}/position`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ x, y }),
+  });
+  if (!response.ok) throw new Error('Failed to update ad position');
+  return response.json();
+};
+
 // Delete ad
 export const deleteAd = async (id) => {
   const response = await fetch(`${API_URL}/ads/${id}`, {

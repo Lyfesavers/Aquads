@@ -5,7 +5,8 @@ import {
   socket, 
   fetchAds, 
   createAd as apiCreateAd, 
-  updateAd as apiUpdateAd, 
+  updateAd as apiUpdateAd,
+  updateAdPosition as apiUpdateAdPosition,
   deleteAd as apiDeleteAd, 
   loginUser, 
   register as apiRegister,
@@ -373,7 +374,8 @@ function App() {
         for (const ad of repositionedAds) {
           if (ad.x !== 0 || ad.y !== 0) {
             try {
-              await apiUpdateAd(ad.id, ad);
+              // Use position-only update to avoid auth issues
+              await apiUpdateAdPosition(ad.id, ad.x, ad.y);
             } catch (error) {
               console.error('Error updating ad position:', error);
             }

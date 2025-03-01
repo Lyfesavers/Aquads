@@ -236,8 +236,13 @@ router.put('/:id', auth, async (req, res) => {
       return res.status(404).json({ message: 'Ad not found' });
     }
     
-    // Allow admin to update any ad
-    if (ad.owner !== req.user.username && !req.user.isAdmin) {
+    // Check if this is just a position update (x and y coordinates)
+    const isPositionUpdate = Object.keys(updates).every(key => 
+      ['x', 'y'].includes(key) || (updates[key] === ad[key])
+    );
+    
+    // Skip authentication check for position updates only
+    if (!isPositionUpdate && ad.owner !== req.user?.username && !req.user?.isAdmin) {
       return res.status(403).json({ message: 'You do not have permission to update this ad' });
     }
     
@@ -307,6 +312,44 @@ router.post('/bump', auth, async (req, res) => {
   } catch (error) {
     console.error('Error processing bump:', error);
     res.status(500).json({ error: 'Failed to process bump' });
+  }
+});
+
+// Special route for position updates only (no auth required)
+router.put('/:id/position', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { x, y } = req.body;
+    
+    console.log('Position update for ad:', id, 'New position:', x, y);
+    
+    if (x === undefined || y === undefined) {
+      return res.status(400).json({ message: 'Position update requires x and y coordinates' });
+    }
+
+    // Find the ad by ID
+    const ad = await Ad.findOne({ id });
+    
+    if (!ad) {
+      return res.status(404).json({ message: 'Ad not found' });
+    }
+    
+    // Update only position fields
+    const updatedAd = await Ad.findOneAndUpdate(
+      { id },
+      { $set: { x, y } },
+      { new: true, runValidators: false }
+    );
+    
+    if (!updatedAd) {
+      return res.status(404).json({ message: 'Ad not found after update attempt' });
+    }
+    
+    console.log('Ad position updated successfully');
+    res.json(updatedAd);
+  } catch (error) {
+    console.error('Error updating ad position:', error);
+    res.status(500).json({ message: 'Error updating ad position', error: error.message });
   }
 });
 
