@@ -10,14 +10,41 @@ body {
 }
 
 .bubble {
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  animation: bubble-float 8s ease-in-out infinite, 
+             neon-purple-pulse 4s ease-in-out infinite;
+  transition: all 0.3s ease-in-out;
+  clip-path: circle(50%);
   pointer-events: auto;
   background: rgba(23, 25, 35, 0.8);
-  backdrop-filter: blur(8px);
-  border-radius: 50%;
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37),
-              0 0 20px rgba(190, 75, 219, 0.5);
-  transition: all 0.3s ease;
-  animation: bubble-float 8s ease-in-out infinite, neon-purple-pulse 3s ease-in-out infinite;
+}
+
+.bubble > div {
+  pointer-events: none;
+}
+
+.bubble .text-white {
+  pointer-events: auto;
+}
+
+.bubble [onClick] {
+  pointer-events: auto;
+}
+
+/* Add this to create a parent container for bubbles */
+.bubble-container {
+  position: absolute; 
+  pointer-events: none; /* This makes the container non-clickable */
+  overflow: visible;
+  z-index: 1;
 }
 
 /* Responsive sizing for bubbles */
@@ -167,6 +194,7 @@ body {
     rgba(255, 255, 255, 0.05) 20%,
     transparent 60%);
   animation: bubble-shine 6s linear infinite;
+  pointer-events: none; /* Make shine effect non-clickable */
 }
 
 @keyframes bubble-shine {

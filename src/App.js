@@ -1352,76 +1352,87 @@ function App() {
                       const imageSize = Math.floor(ad.size * 0.75);
 
                       return (
-                        <motion.div
+                        <div 
                           key={ad.id}
-                          className="absolute cursor-pointer transform hover:scale-105 bubble"
+                          className="bubble-container"
                           style={{
-                            position: 'absolute',
                             left: `${x}px`,
                             top: `${y}px`,
                             width: `${ad.size}px`,
                             height: `${ad.size}px`,
-                            transition: `all ${ANIMATION_DURATION} ease-in-out`,
-                            zIndex: ad.isBumped ? 2 : 1,
-                            animationDuration: `${8 + Math.random() * 4}s`,
-                            cursor: 'pointer',
-                            touchAction: 'auto'
-                          }}
-                          onClick={(e) => {
-                            if (!e.defaultPrevented) {
-                              if (requireAuth()) {
-                                window.open(ad.url, '_blank');
-                              }
-                            }
                           }}
                         >
-                          <div className="relative w-full h-full flex flex-col items-center justify-center">
-                            <div className="absolute inset-0 rounded-full bg-gray-800/90 backdrop-blur-sm shadow-lg shadow-blue-500/20 glow"></div>
-                            <div 
-                              className="relative z-10 mb-2 rounded-full overflow-hidden flex items-center justify-center"
-                              style={{
-                                width: `${imageSize}px`,
-                                height: `${imageSize}px`,
-                              }}
-                            >
-                              <img
-                                src={ad.logo}
-                                alt={ad.title}
-                                loading="eager"
-                                className="w-full h-full object-contain"
-                                style={{
-                                  objectFit: 'contain',
-                                  width: '100%',
-                                  height: '100%'
-                                }}
-                                onLoad={(e) => {
-                                  if (e.target.src.toLowerCase().endsWith('.gif')) {
-                                    e.target.setAttribute('loop', 'infinite');
-                                  }
-                                }}
-                              />
-                            </div>
-                            <div 
-                              className="relative z-10 text-center px-2 w-full"
-                              onClick={(e) => {
-                                e.stopPropagation();
+                          <motion.div
+                            className="absolute transform hover:scale-105 bubble"
+                            style={{
+                              width: `${ad.size}px`,
+                              height: `${ad.size}px`,
+                              transition: `all ${ANIMATION_DURATION} ease-in-out`,
+                              zIndex: ad.isBumped ? 2 : 1,
+                              animationDuration: `${8 + Math.random() * 4}s`,
+                              cursor: 'pointer',
+                              touchAction: 'auto',
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              clipPath: 'circle(50%)'
+                            }}
+                            onClick={(e) => {
+                              if (!e.defaultPrevented) {
                                 if (requireAuth()) {
-                                  setSelectedAdId(ad.id);
-                                  setShowBumpStore(true);
+                                  window.open(ad.url, '_blank');
                                 }
-                              }}
-                            >
-                              <span 
-                                className="text-white truncate block hover:text-blue-300 transition-colors duration-300"
+                              }
+                            }}
+                          >
+                            <div className="relative w-full h-full flex flex-col items-center justify-center">
+                              <div className="absolute inset-0 rounded-full bg-gray-800/90 backdrop-blur-sm shadow-lg shadow-blue-500/20 glow"></div>
+                              <div 
+                                className="relative z-10 mb-2 rounded-full overflow-hidden flex items-center justify-center"
                                 style={{
-                                  fontSize: `${Math.max(ad.size * 0.1, 12)}px`
+                                  width: `${imageSize}px`,
+                                  height: `${imageSize}px`,
                                 }}
                               >
-                                {ad.title}
-                              </span>
+                                <img
+                                  src={ad.logo}
+                                  alt={ad.title}
+                                  loading="eager"
+                                  className="w-full h-full object-contain"
+                                  style={{
+                                    objectFit: 'contain',
+                                    width: '100%',
+                                    height: '100%'
+                                  }}
+                                  onLoad={(e) => {
+                                    if (e.target.src.toLowerCase().endsWith('.gif')) {
+                                      e.target.setAttribute('loop', 'infinite');
+                                    }
+                                  }}
+                                />
+                              </div>
+                              <div 
+                                className="relative z-10 text-center px-2 w-full"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (requireAuth()) {
+                                    setSelectedAdId(ad.id);
+                                    setShowBumpStore(true);
+                                  }
+                                }}
+                              >
+                                <span 
+                                  className="text-white truncate block hover:text-blue-300 transition-colors duration-300"
+                                  style={{
+                                    fontSize: `${Math.max(ad.size * 0.1, 12)}px`
+                                  }}
+                                >
+                                  {ad.title}
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                        </motion.div>
+                          </motion.div>
+                        </div>
                       );
                     })
                   ) : (
