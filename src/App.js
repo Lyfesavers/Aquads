@@ -57,7 +57,7 @@ const FREE_AD_LIMIT = 1;
 const LAYOUT_DEBOUNCE = 200; // Debounce time for layout calculations
 const ANIMATION_DURATION = '0.3s'; // Slower animations
 const REPOSITION_INTERVAL = 10000; // 5 seconds between position updates
-const BUBBLE_PADDING = 25; // Increased from 10 to 25 for more space between bubbles
+const BUBBLE_PADDING = 40; // Increased from 25 to 40 for much more space between bubbles
 const MERCHANT_WALLET = {
     SOL: "J8ewxZwntodH8sT8LAXN5j6sAsDhtCh8sQA6GwRuLTSv",
     ETH: "0x98BC1BEC892d9f74B606D478E6b45089D2faAB05",
@@ -74,7 +74,7 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
   const maxY = windowHeight - size - BUBBLE_PADDING;
   
   // Grid-based approach for better distribution
-  const gridSize = Math.max(size + BUBBLE_PADDING * 2, 150); // Increased grid size
+  const gridSize = Math.max(size + BUBBLE_PADDING * 3, 200); // Significantly increased grid size
   const cols = Math.floor(windowWidth / gridSize);
   const rows = Math.floor(windowHeight / gridSize);
   
@@ -106,7 +106,7 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
         ad.y + ad.size/2
       );
       // Increased minimum distance to prevent overlaps
-      const minDistance = (size + ad.size) / 2 + BUBBLE_PADDING * 1.5;
+      const minDistance = (size + ad.size) / 2 + BUBBLE_PADDING * 2;
       return distance < minDistance;
     });
     
@@ -131,7 +131,7 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
         ad.x + ad.size/2, 
         ad.y + ad.size/2
       );
-      const minDistance = (size + ad.size) / 2 + BUBBLE_PADDING * 1.5;
+      const minDistance = (size + ad.size) / 2 + BUBBLE_PADDING * 2;
       const overlap = Math.max(0, minDistance - distance);
       
       if (overlap > 0) {
@@ -161,7 +161,7 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
         ad.x + ad.size/2, 
         ad.y + ad.size/2
       );
-      const minDistance = (size + ad.size) / 2 + BUBBLE_PADDING * 1.5;
+      const minDistance = (size + ad.size) / 2 + BUBBLE_PADDING * 2;
       return distance < minDistance;
     });
     
@@ -172,7 +172,7 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
         const dx = bestPosition.x + size/2 - (ad.x + ad.size/2);
         const dy = bestPosition.y + size/2 - (ad.y + ad.size/2);
         const distance = Math.sqrt(dx * dx + dy * dy);
-        const minDistance = (size + ad.size) / 2 + BUBBLE_PADDING * 1.5;
+        const minDistance = (size + ad.size) / 2 + BUBBLE_PADDING * 2;
         const pushFactor = (minDistance - distance) / distance;
         
         pushX += dx * pushFactor;
@@ -215,7 +215,7 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
       const dx = (newX + size/2) - (ad.x + ad.size/2);
       const dy = (newY + size/2) - (ad.y + ad.size/2);
       const distance = Math.sqrt(dx * dx + dy * dy);
-      const minDistance = (size + ad.size) / 2 + BUBBLE_PADDING * 1.5; // Increased minimum distance
+      const minDistance = (size + ad.size) / 2 + BUBBLE_PADDING * 2; // Increased minimum distance
       
       if(distance < minDistance) {
         hasOverlap = true;
@@ -829,13 +829,13 @@ function App() {
     const dx = (ad1.x + ad1.size/2) - (ad2.x + ad2.size/2);
     const dy = (ad1.y + ad1.size/2) - (ad2.y + ad2.size/2);
     const distance = Math.sqrt(dx * dx + dy * dy);
-    const minDistance = (ad1.size + ad2.size) / 2 + BUBBLE_PADDING;
+    const minDistance = (ad1.size + ad2.size) / 2 + BUBBLE_PADDING * 2; // Extra padding multiplier
     
     // If bubbles are overlapping
     if (distance < minDistance) {
-      // Calculate collision normal
-      const nx = dx / distance;
-      const ny = dy / distance;
+      // Calculate normalized direction vector
+      const nx = dx / (distance || 0.001); // Avoid division by zero
+      const ny = dy / (distance || 0.001);
       
       // Calculate relative velocity
       const vx = ad1.vx - ad2.vx;
@@ -844,11 +844,8 @@ function App() {
       // Calculate dot product of velocity and normal
       const dotProduct = nx * vx + ny * vy;
       
-      // If bubbles are moving away from each other, no need to calculate collision response
-      if (dotProduct >= 0) return;
-      
-      // Increased elasticity for more bounce
-      const elasticity = 1.2;
+      // Very high elasticity for energetic bounce
+      const elasticity = 1.5; // Increased from 1.2
       
       // Calculate impulse
       const impulse = -(1 + elasticity) * dotProduct / 
@@ -860,21 +857,36 @@ function App() {
       ad2.vx -= impulse * nx / ad2.mass;
       ad2.vy -= impulse * ny / ad2.mass;
       
-      // Add additional separation to prevent bubbles from getting stuck
+      // Strong immediate separation to prevent overlaps
       const overlap = minDistance - distance;
-      const separationFactor = 0.5; // How much to separate bubbles
+      const separationFactor = 1.0; // Doubled from 0.5 for immediate full separation
       
+      // Apply immediate position correction
       ad1.x += nx * overlap * separationFactor;
       ad1.y += ny * overlap * separationFactor;
       ad2.x -= nx * overlap * separationFactor;
       ad2.y -= ny * overlap * separationFactor;
       
-      // Add random "jitter" to prevent bubbles from getting stuck together
-      const jitterAmount = 0.5;
+      // Add stronger random jitter
+      const jitterAmount = 2.0; // Increased from 0.5
       ad1.vx += (Math.random() - 0.5) * jitterAmount;
       ad1.vy += (Math.random() - 0.5) * jitterAmount;
       ad2.vx += (Math.random() - 0.5) * jitterAmount;
       ad2.vy += (Math.random() - 0.5) * jitterAmount;
+      
+      // Apply additional minimum velocity to ensure bubbles move apart
+      const minVelocity = 3.0;
+      const vxMag = Math.abs(ad1.vx);
+      const vyMag = Math.abs(ad1.vy);
+      
+      if (vxMag < minVelocity) ad1.vx += (ad1.vx >= 0 ? 1 : -1) * (minVelocity - vxMag);
+      if (vyMag < minVelocity) ad1.vy += (ad1.vy >= 0 ? 1 : -1) * (minVelocity - vyMag);
+      
+      const vxMag2 = Math.abs(ad2.vx);
+      const vyMag2 = Math.abs(ad2.vy);
+      
+      if (vxMag2 < minVelocity) ad2.vx += (ad2.vx >= 0 ? 1 : -1) * (minVelocity - vxMag2);
+      if (vyMag2 < minVelocity) ad2.vy += (ad2.vy >= 0 ? 1 : -1) * (minVelocity - vyMag2);
     }
   };
 
@@ -937,6 +949,72 @@ function App() {
     
     return [...persistentBubbles, ...newBubblesData];
   };
+
+  // Function to periodically check and fix overlapping bubbles
+  const fixOverlappingBubbles = useCallback(() => {
+    const adsCopy = [...ads];
+    let hasOverlaps = false;
+    
+    // Check each pair of bubbles for overlaps
+    for (let i = 0; i < adsCopy.length; i++) {
+      for (let j = i + 1; j < adsCopy.length; j++) {
+        const ad1 = adsCopy[i];
+        const ad2 = adsCopy[j];
+        
+        if (ad1.element && ad2.element) {
+          const dx = (ad1.x + ad1.size/2) - (ad2.x + ad2.size/2);
+          const dy = (ad1.y + ad1.size/2) - (ad2.y + ad2.size/2);
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          const minDistance = (ad1.size + ad2.size) / 2 + BUBBLE_PADDING * 2;
+          
+          if (distance < minDistance) {
+            hasOverlaps = true;
+            
+            // Calculate push direction and amount
+            const pushDirection = { 
+              x: dx / (distance || 0.001), 
+              y: dy / (distance || 0.001) 
+            };
+            const pushAmount = (minDistance - distance) + 10; // Extra 10px buffer
+            
+            // Apply strong immediate push
+            ad1.x += pushDirection.x * pushAmount * 0.6;
+            ad1.y += pushDirection.y * pushAmount * 0.6;
+            ad2.x -= pushDirection.x * pushAmount * 0.6;
+            ad2.y -= pushDirection.y * pushAmount * 0.6;
+            
+            // Update DOM elements
+            if (ad1.element) {
+              ad1.element.style.left = `${ad1.x}px`;
+              ad1.element.style.top = `${ad1.y}px`;
+            }
+            if (ad2.element) {
+              ad2.element.style.left = `${ad2.x}px`;
+              ad2.element.style.top = `${ad2.y}px`;
+            }
+            
+            // Add velocity to keep them moving apart
+            const velocityBoost = 2.0;
+            ad1.vx += pushDirection.x * velocityBoost;
+            ad1.vy += pushDirection.y * velocityBoost;
+            ad2.vx -= pushDirection.x * velocityBoost;
+            ad2.vy -= pushDirection.y * velocityBoost;
+          }
+        }
+      }
+    }
+    
+    if (hasOverlaps) {
+      // If we found overlaps, update the ads state
+      setAds(adsCopy);
+    }
+  }, [ads]);
+  
+  // Set up periodic checks to fix overlaps
+  useEffect(() => {
+    const checkInterval = setInterval(fixOverlappingBubbles, 2000);
+    return () => clearInterval(checkInterval);
+  }, [fixOverlappingBubbles]);
 
   return (
     <Router>
