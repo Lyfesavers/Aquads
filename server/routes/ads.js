@@ -5,6 +5,7 @@ const auth = require('../middleware/auth');
 const { awardListingPoints } = require('./points');
 const AffiliateEarning = require('../models/AffiliateEarning');
 const { v4: uuidv4 } = require('uuid');
+const User = require('../models/User');
 
 // Skip auth for GET requests
 router.use((req, res, next) => {
@@ -232,6 +233,22 @@ router.post('/', auth, async (req, res) => {
     
     if (!savedAd) {
       throw new Error('Failed to save ad');
+    }
+
+    // Award points to affiliate if the user was referred by someone
+    try {
+      // Find the current user to check if they were referred by an affiliate
+      const user = await User.findById(req.user.userId);
+      if (user && user.referredBy) {
+        console.log('User was referred - awarding 200 points to affiliate', user.referredBy);
+        await awardListingPoints(req.user.userId);
+        console.log('Successfully awarded 200 points to affiliate for listing');
+      } else {
+        console.log('User was not referred by an affiliate - no points awarded');
+      }
+    } catch (pointsError) {
+      console.error('Error awarding affiliate points:', pointsError);
+      // Don't fail the ad creation if points award fails
     }
 
     // Check if there's a referral and handle affiliate earnings
