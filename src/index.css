@@ -14,9 +14,10 @@ body {
   background: rgba(23, 25, 35, 0.8);
   backdrop-filter: blur(8px);
   border-radius: 50%;
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37),
+              0 0 20px rgba(190, 75, 219, 0.5);
   transition: all 0.3s ease;
-  animation: bubble-float 8s ease-in-out infinite;
+  animation: bubble-float 8s ease-in-out infinite, neon-purple-pulse 3s ease-in-out infinite;
 }
 
 /* Responsive sizing for bubbles */
@@ -27,7 +28,7 @@ body {
   }
   
   .bubble {
-    animation: bubble-float-tablet 8s ease-in-out infinite;
+    animation: bubble-float-tablet 8s ease-in-out infinite, neon-purple-pulse 3s ease-in-out infinite;
   }
   
   @keyframes bubble-float-tablet {
@@ -57,7 +58,7 @@ body {
   }
   
   .bubble {
-    animation: bubble-float-mobile 8s ease-in-out infinite;
+    animation: bubble-float-mobile 8s ease-in-out infinite, neon-purple-pulse 3s ease-in-out infinite;
   }
   
   @keyframes bubble-float-mobile {
@@ -89,7 +90,9 @@ body {
 }
 
 .bubble:hover {
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.6);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.6),
+              0 0 40px rgba(190, 75, 219, 0.8),
+              0 0 60px rgba(190, 75, 219, 0.5);
   background: rgba(23, 25, 35, 0.9);
   animation-play-state: paused;
 }
@@ -97,7 +100,9 @@ body {
 /* Make hover state consistent across device sizes */
 @media (max-width: 768px) {
   .bubble:hover {
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.6);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.6),
+                0 0 40px rgba(190, 75, 219, 0.8),
+                0 0 60px rgba(190, 75, 219, 0.5);
     background: rgba(23, 25, 35, 0.9);
     animation-play-state: paused;
     /* No additional scale change on hover for consistency */
@@ -106,7 +111,9 @@ body {
 
 @media (max-width: 480px) {
   .bubble:hover {
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.6);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.6),
+                0 0 40px rgba(190, 75, 219, 0.8),
+                0 0 60px rgba(190, 75, 219, 0.5);
     background: rgba(23, 25, 35, 0.9);
     animation-play-state: paused;
     /* No additional scale change on hover for consistency */
@@ -184,6 +191,21 @@ body {
   }
   50% {
     box-shadow: 0 0 25px rgba(59, 130, 246, 0.4);
+  }
+}
+
+/* New vibrant neon purple pulsing glow */
+@keyframes neon-purple-pulse {
+  0%, 100% {
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37),
+                0 0 20px rgba(190, 75, 219, 0.5);
+  }
+  50% {
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37),
+                0 0 35px rgba(190, 75, 219, 0.9),
+                0 0 50px rgba(190, 75, 219, 0.4),
+                0 0 70px rgba(190, 75, 219, 0.2);
+    filter: brightness(1.15);
   }
 }
 
@@ -790,4 +812,9 @@ body {
     transform: scale(0.95) !important; 
     transition: transform 0.1s ease-out;
   }
+}
+
+/* Enhance bubble content with glowing text */
+.bubble-content {
+  text-shadow: 0 0 8px rgba(190, 75, 219, 0.7);
 }
