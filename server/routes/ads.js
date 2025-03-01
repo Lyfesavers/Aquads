@@ -42,13 +42,26 @@ const updateAdSize = async (ad) => {
       if (isExpired) {
         console.log('\n=== UPDATING EXPIRED AD ===');
         try {
+          // Calculate the correct size based on time since creation
+          const timeSinceCreation = now - new Date(ad.createdAt).getTime();
+          const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
+          
+          // Start from MAX_SIZE and apply continuous shrinking
+          let newSize = MAX_SIZE;
+          for (let i = 0; i < shrinkIntervals; i++) {
+            newSize *= SHRINK_PERCENTAGE;
+          }
+          
+          // Ensure size doesn't go below minimum and round to 1 decimal
+          newSize = Math.max(MIN_SIZE, Math.round(newSize * 10) / 10);
+          
           const result = await Ad.findByIdAndUpdate(
             ad._id,
             {
               $set: { 
                 isBumped: false,
                 status: 'active',
-                size: MAX_SIZE
+                size: newSize
               }
             },
             { new: true }
@@ -126,7 +139,49 @@ router.get('/', async (req, res) => {
     // Show all ads without status filter
     const ads = await Ad.find({});
     console.log(`Found ${ads.length} total ads`);
-    res.json(ads);
+    
+    // Ensure all ad sizes are up-to-date before sending to clients
+    // This prevents the "large then small" visual bug when loading the page
+    const currentTime = Date.now();
+    const processedAds = ads.map(ad => {
+      // Don't modify the database here, just return properly sized ad objects
+      
+      // Only process non-bumped ads or expired bumped ads
+      if (ad.isBumped && ad.bumpExpiresAt) {
+        const expiryDate = new Date(ad.bumpExpiresAt);
+        if (currentTime <= expiryDate.getTime()) {
+          // Bumped ad that hasn't expired
+          return ad;
+        }
+      }
+      
+      // For non-bumped ads or expired bumped ads
+      if (!ad.isBumped) {
+        const timeSinceCreation = currentTime - new Date(ad.createdAt).getTime();
+        const shrinkIntervals = Math.floor(timeSinceCreation / SHRINK_INTERVAL);
+        
+        // Start from MAX_SIZE and apply continuous shrinking
+        let calculatedSize = MAX_SIZE;
+        for (let i = 0; i < shrinkIntervals; i++) {
+          calculatedSize *= SHRINK_PERCENTAGE;
+        }
+        
+        // Ensure size doesn't go below minimum and round to 1 decimal
+        calculatedSize = Math.max(MIN_SIZE, Math.round(calculatedSize * 10) / 10);
+        
+        // Return adjusted ad with correct size (but don't modify DB)
+        if (calculatedSize !== ad.size) {
+          // Clone the ad object and modify the size property
+          const adObject = ad.toObject();
+          adObject.size = calculatedSize;
+          return adObject;
+        }
+      }
+      
+      return ad;
+    });
+    
+    res.json(processedAds);
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ error: 'Server error' });
