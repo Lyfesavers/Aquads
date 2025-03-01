@@ -4,6 +4,7 @@ const Ad = require('../models/Ad');
 const auth = require('../middleware/auth');
 const { awardListingPoints } = require('./points');
 const AffiliateEarning = require('../models/AffiliateEarning');
+const { v4: uuidv4 } = require('uuid');
 
 // Skip auth for GET requests
 router.use((req, res, next) => {
@@ -12,7 +13,7 @@ router.use((req, res, next) => {
 
 // Constants for shrinking logic
 const SHRINK_INTERVAL = 30000; // 30 seconds
-const MAX_SIZE = 150;
+const MAX_SIZE = 150; // This will be maximum size, client may request smaller for mobile
 const MIN_SIZE = 50;
 const SHRINK_PERCENTAGE = 0.9; // Shrink by 5% each interval
 
@@ -149,7 +150,13 @@ const calculateBumpAmount = (type) => {
 // POST route for creating new ad
 router.post('/', auth, async (req, res) => {
   try {
-    const { title, logo, url, contractAddress, referredBy, x, y } = req.body;
+    const { title, logo, url, contractAddress, referredBy, x, y, preferredSize } = req.body;
+    
+    // Use client's preferred size if provided, otherwise use MAX_SIZE
+    const bubbleSize = preferredSize || MAX_SIZE;
+    
+    // Validate size is within acceptable range
+    const validatedSize = Math.min(MAX_SIZE, Math.max(MIN_SIZE, bubbleSize));
     
     console.log('Creating ad with data:', req.body);
 
@@ -159,7 +166,7 @@ router.post('/', auth, async (req, res) => {
       logo,
       url,
       contractAddress,
-      size: MAX_SIZE,
+      size: validatedSize, // Use validated size
       x: x || 0,
       y: y || 0,
       owner: req.user.username,
@@ -173,18 +180,18 @@ router.post('/', auth, async (req, res) => {
     }
 
     // Check if there's a referral and handle affiliate earnings
-    if (req.body.referredBy) {
-      const adAmount = calculateBumpAmount(req.body.type);
+    if (referredBy) {
+      const adAmount = calculateBumpAmount(referredBy);
       console.log('Bump amount calculated:', adAmount, 'USDC');
       
-      const commissionRate = await AffiliateEarning.calculateCommissionRate(req.body.referredBy);
+      const commissionRate = await AffiliateEarning.calculateCommissionRate(referredBy);
       console.log('Commission rate calculated:', commissionRate);
       
       const commissionEarned = AffiliateEarning.calculateCommission(adAmount, commissionRate);
       console.log('Commission earned calculated:', commissionEarned, 'USDC');
 
       const affiliateEarning = new AffiliateEarning({
-        affiliateId: req.body.referredBy,
+        affiliateId: referredBy,
         referredUserId: req.user.userId,
         adId: savedAd._id,
         adAmount: adAmount,
@@ -204,6 +211,44 @@ router.post('/', auth, async (req, res) => {
       error: 'Failed to create ad', 
       message: error.message 
     });
+  }
+});
+
+// PUT route for updating an ad
+router.put('/:id', auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    
+    // If preferred size is provided, use it to validate the size
+    if (updates.preferredSize) {
+      updates.size = Math.min(MAX_SIZE, Math.max(MIN_SIZE, updates.preferredSize));
+      delete updates.preferredSize; // Remove from database fields
+    }
+
+    // Find the ad by ID and ensure ownership
+    const ad = await Ad.findOne({ id });
+    
+    if (!ad) {
+      return res.status(404).json({ message: 'Ad not found' });
+    }
+    
+    // Allow admin to update any ad
+    if (ad.owner !== req.user.username && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'You do not have permission to update this ad' });
+    }
+    
+    // Update the ad
+    Object.keys(updates).forEach(key => {
+      ad[key] = updates[key];
+    });
+    
+    const updatedAd = await ad.save();
+    
+    res.json(updatedAd);
+  } catch (error) {
+    console.error('Error updating ad:', error);
+    res.status(500).json({ message: 'Error updating ad', error: error.message });
   }
 });
 

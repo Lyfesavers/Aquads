@@ -45,8 +45,29 @@ window.Buffer = Buffer;
 emailjs.init(process.env.REACT_APP_EMAILJS_PUBLIC_KEY);
 
 // Constants for ad sizes and animations
-const MAX_SIZE = 150;
+const BASE_MAX_SIZE = 150;
 const MIN_SIZE = 50;
+// Function to get responsive size based on screen width
+function getResponsiveSize(baseSize) {
+  // Get current viewport width
+  const viewportWidth = window.innerWidth;
+  
+  if (viewportWidth <= 480) {
+    // Mobile - smaller bubbles
+    return Math.floor(baseSize * 0.65);
+  } else if (viewportWidth <= 768) {
+    // Tablet - medium bubbles
+    return Math.floor(baseSize * 0.8);
+  }
+  // Desktop - normal size
+  return baseSize;
+}
+
+// Use this function to get current max size
+function getMaxSize() {
+  return getResponsiveSize(BASE_MAX_SIZE);
+}
+
 const SHRINK_RATE = 5; // Amount to shrink by each interval
 const SHRINK_INTERVAL = 30000; // 30 seconds
 const SHRINK_PERCENTAGE = 0.9; // More gradual shrinking
@@ -423,23 +444,52 @@ function App() {
     return () => clearInterval(shrinkInterval);
   }, [ads]);
 
-  // Handle window resize
+  // Effect for updating window size
   useEffect(() => {
-    function handleResize() {
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      setWindowSize({ width, height });
-
-      // Reposition ads that are outside viewport
-      setAds(prevAds => prevAds.map(ad => {
-        const { x, y } = ensureInViewport(ad.x, ad.y, ad.size, width, height, ads, ad.id);
-        return x !== ad.x || y !== ad.y ? { ...ad, x, y } : ad;
-      }));
-    }
+    const handleResize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
+      
+      // Update bubble sizes when window size changes
+      const newMaxSize = getMaxSize();
+      setAds(prevAds => {
+        const updatedAds = prevAds.map(ad => {
+          // Don't automatically resize bumped ads
+          if (!ad.isBumped) {
+            const newSize = getResponsiveSize(ad.originalSize || BASE_MAX_SIZE);
+            return {
+              ...ad,
+              size: newSize
+            };
+          }
+          return ad;
+        });
+        return updatedAds;
+      });
+    };
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // When ads are loaded, store their original size
+  useEffect(() => {
+    if (ads.length > 0) {
+      setAds(prevAds => {
+        return prevAds.map(ad => {
+          if (!ad.originalSize) {
+            return {
+              ...ad,
+              originalSize: ad.size // Store original size when first loaded
+            };
+          }
+          return ad;
+        });
+      });
+    }
+  }, [ads.length]);
 
   const showNotification = (message, type = 'info') => {
     const id = Date.now();
@@ -514,13 +564,14 @@ function App() {
       }
 
       // Calculate a safe position for the new ad
-      const position = calculateSafePosition(MAX_SIZE, windowSize.width, windowSize.height, ads);
+      const position = calculateSafePosition(getMaxSize(), windowSize.width, windowSize.height, ads);
 
       // Create the new ad object with explicit x and y coordinates
       const newAd = {
         id: `ad-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         ...adData,
-        size: MAX_SIZE,
+        size: getMaxSize(),
+        preferredSize: getMaxSize(),
         x: position.x,
         y: position.y,
         createdAt: new Date().toISOString(),
@@ -575,7 +626,7 @@ function App() {
             approveBumpRequest(adId, currentUser.username),
             apiUpdateAd(adId, {
               ...ad,
-              size: MAX_SIZE,
+              size: getMaxSize(),
               isBumped: true,
               status: 'approved',
               bumpedAt: new Date(),
@@ -716,7 +767,7 @@ function App() {
         approveBumpRequest(adId, currentUser.username),
         apiUpdateAd(adId, {
           ...ad,
-          size: MAX_SIZE,
+          size: getMaxSize(),
           isBumped: true,
           status: 'approved',
           bumpedAt: new Date(),
