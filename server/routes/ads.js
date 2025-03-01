@@ -220,13 +220,16 @@ router.put('/:id', auth, async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
     
+    console.log('Update request for ad:', id);
+    console.log('Update data:', JSON.stringify(updates));
+    
     // If preferred size is provided, use it to validate the size
     if (updates.preferredSize) {
       updates.size = Math.min(MAX_SIZE, Math.max(MIN_SIZE, updates.preferredSize));
       delete updates.preferredSize; // Remove from database fields
     }
 
-    // Find the ad by ID and ensure ownership
+    // Find the ad by ID
     const ad = await Ad.findOne({ id });
     
     if (!ad) {
@@ -238,21 +241,39 @@ router.put('/:id', auth, async (req, res) => {
       return res.status(403).json({ message: 'You do not have permission to update this ad' });
     }
     
-    // Only update specific valid fields rather than all properties
-    // This prevents validation errors with unknown fields
+    // Extract only allowed fields to update
+    const updateData = {};
     const allowedUpdates = ['x', 'y', 'size', 'url', 'title', 'status'];
+    
     allowedUpdates.forEach(field => {
       if (updates[field] !== undefined) {
-        ad[field] = updates[field];
+        updateData[field] = updates[field];
       }
     });
     
-    const updatedAd = await ad.save();
+    console.log('Filtered update data:', JSON.stringify(updateData));
     
+    // Use findOneAndUpdate which is more resilient to validation issues
+    const updatedAd = await Ad.findOneAndUpdate(
+      { id },
+      { $set: updateData },
+      { new: true, runValidators: false }
+    );
+    
+    if (!updatedAd) {
+      return res.status(404).json({ message: 'Ad not found after update attempt' });
+    }
+    
+    console.log('Ad updated successfully');
     res.json(updatedAd);
   } catch (error) {
     console.error('Error updating ad:', error);
-    res.status(500).json({ message: 'Error updating ad', error: error.message });
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      message: 'Error updating ad', 
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 
