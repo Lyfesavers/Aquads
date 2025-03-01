@@ -57,7 +57,7 @@ const FREE_AD_LIMIT = 1;
 const LAYOUT_DEBOUNCE = 200; // Debounce time for layout calculations
 const ANIMATION_DURATION = '0.3s'; // Slower animations
 const REPOSITION_INTERVAL = 10000; // 5 seconds between position updates
-const BUBBLE_PADDING = 40; // Increased from 25 to 40 for much more space between bubbles
+const BUBBLE_PADDING = 20; // Increased from 25 to 40 for much more space between bubbles
 const MERCHANT_WALLET = {
     SOL: "J8ewxZwntodH8sT8LAXN5j6sAsDhtCh8sQA6GwRuLTSv",
     ETH: "0x98BC1BEC892d9f74B606D478E6b45089D2faAB05",
@@ -321,20 +321,50 @@ function App() {
     localStorage.setItem('cachedAds', JSON.stringify(newAds));
   };
 
-  // Load ads on mount
+  // Load ads when component mounts
   useEffect(() => {
-    const loadAds = async () => {
+    const loadAdsFromApi = async () => {
       try {
+        setIsLoading(true);
         const data = await fetchAds();
-        updateAds(data);
+        
+        // Reposition any bubbles that have x=0, y=0 coordinates (fix for DB-stored bubbles)
+        const repositionedAds = data.map(ad => {
+          // Check if this ad has zero coordinates (likely from the server bug)
+          if (ad.x === 0 && ad.y === 0) {
+            console.log('Fixing ad with zero coordinates:', ad.id);
+            // Calculate a safe position for this ad
+            const position = calculateSafePosition(
+              ad.size, 
+              windowSize.width, 
+              windowSize.height, 
+              data.filter(otherAd => otherAd.id !== ad.id)
+            );
+            return { ...ad, x: position.x, y: position.y };
+          }
+          return ad;
+        });
+        
+        setAds(repositionedAds);
+        setIsLoading(false);
+        
+        // Update any repositioned ads on the server (optional)
+        for (const ad of repositionedAds) {
+          if (ad.x !== 0 || ad.y !== 0) {
+            try {
+              await apiUpdateAd(ad.id, ad);
+            } catch (error) {
+              console.error('Error updating ad position:', error);
+            }
+          }
+        }
       } catch (error) {
         console.error('Error loading ads:', error);
+        setIsLoading(false);
       }
     };
 
-    loadAds();
-    const interval = setInterval(loadAds, 10000); // Check every 10 seconds
-    return () => clearInterval(interval);
+    loadAdsFromApi();
   }, []);
 
   // Update socket connection handling
@@ -483,20 +513,25 @@ function App() {
         return;
       }
 
-      const { x, y } = calculateSafePosition(MAX_SIZE, windowSize.width, windowSize.height, ads);
+      // Calculate a safe position for the new ad
+      const position = calculateSafePosition(MAX_SIZE, windowSize.width, windowSize.height, ads);
 
+      // Create the new ad object with explicit x and y coordinates
       const newAd = {
         id: `ad-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         ...adData,
         size: MAX_SIZE,
-        x,
-        y,
+        x: position.x,
+        y: position.y,
         createdAt: new Date().toISOString(),
         isBumped: false,
         owner: currentUser.username
       };
 
-      console.log('Creating new ad:', newAd);
+      // Log the ad data being sent to the server, including position
+      console.log('Creating new ad with position:', { x: position.x, y: position.y });
+      console.log('Complete ad data:', newAd);
+      
       const createdAd = await apiCreateAd(newAd);
       console.log('Created ad:', createdAd);
       

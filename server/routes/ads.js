@@ -149,7 +149,7 @@ const calculateBumpAmount = (type) => {
 // POST route for creating new ad
 router.post('/', auth, async (req, res) => {
   try {
-    const { title, logo, url, contractAddress, referredBy } = req.body;
+    const { title, logo, url, contractAddress, referredBy, x, y } = req.body;
     
     console.log('Creating ad with data:', req.body);
 
@@ -160,8 +160,8 @@ router.post('/', auth, async (req, res) => {
       url,
       contractAddress,
       size: MAX_SIZE,
-      x: 0,
-      y: 0,
+      x: x || 0,
+      y: y || 0,
       owner: req.user.username,
       status: 'active'
     });
