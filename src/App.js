@@ -349,9 +349,18 @@ function App() {
       try {
         setIsLoading(true);
         const data = await fetchAds();
+        const currentMaxSize = getMaxSize(); // Get current max size for this screen
         
         // Reposition any bubbles that have x=0, y=0 coordinates (fix for DB-stored bubbles)
         const repositionedAds = data.map(ad => {
+          // Calculate responsive size correctly based on the current screen size
+          let adWithMetadata = {
+            ...ad,
+            originalSize: ad.size, // Store the original size from server
+            originalMaxSize: currentMaxSize, // Maximum size for current screen
+            currentMaxSize: currentMaxSize
+          };
+          
           // Check if this ad has zero coordinates (likely from the server bug)
           if (ad.x === 0 && ad.y === 0) {
             console.log('Fixing ad with zero coordinates:', ad.id);
@@ -362,9 +371,10 @@ function App() {
               windowSize.height, 
               data.filter(otherAd => otherAd.id !== ad.id)
             );
-            return { ...ad, x: position.x, y: position.y };
+            adWithMetadata = { ...adWithMetadata, x: position.x, y: position.y };
           }
-          return ad;
+          
+          return adWithMetadata;
         });
         
         setAds(repositionedAds);
@@ -458,15 +468,34 @@ function App() {
       const newMaxSize = getMaxSize();
       setAds(prevAds => {
         const updatedAds = prevAds.map(ad => {
-          // Don't automatically resize bumped ads
-          if (!ad.isBumped) {
-            const newSize = getResponsiveSize(ad.originalSize || BASE_MAX_SIZE);
+          // For bumped ads, always use the maximum size
+          if (ad.isBumped) {
+            return ad;
+          }
+          
+          // For shrunk (non-bumped) ads, we need to maintain their proportional size
+          // relative to the maximum size for the current screen
+          if (ad.originalSize && ad.originalMaxSize) {
+            // Calculate how much the ad has shrunk as a percentage of its original max size
+            const shrinkPercentage = ad.size / ad.originalMaxSize;
+            
+            // Calculate the new size based on this percentage of the new max size
+            const newSize = Math.max(MIN_SIZE, Math.round(newMaxSize * shrinkPercentage * 10) / 10);
+            
             return {
               ...ad,
-              size: newSize
+              size: newSize,
+              currentMaxSize: newMaxSize // Track current max size for reference
+            };
+          } else {
+            // First time resize - store original values
+            return {
+              ...ad,
+              originalSize: ad.size,
+              originalMaxSize: BASE_MAX_SIZE,
+              currentMaxSize: newMaxSize
             };
           }
-          return ad;
         });
         return updatedAds;
       });
@@ -476,15 +505,19 @@ function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // When ads are loaded, store their original size
+  // When ads are loaded, store their original size and max size for the screen
   useEffect(() => {
     if (ads.length > 0) {
+      const currentMaxSize = getMaxSize(); // Get max size for current screen
+      
       setAds(prevAds => {
         return prevAds.map(ad => {
           if (!ad.originalSize) {
             return {
               ...ad,
-              originalSize: ad.size // Store original size when first loaded
+              originalSize: ad.size, // Store original size when first loaded
+              originalMaxSize: currentMaxSize, // Store the max size for when this ad was loaded
+              currentMaxSize: currentMaxSize
             };
           }
           return ad;
