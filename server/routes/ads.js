@@ -234,7 +234,7 @@ router.put('/:id', auth, async (req, res) => {
     }
     
     // Allow admin to update any ad
-    if (ad.owner !== req.user.username && req.user.role !== 'admin') {
+    if (ad.owner !== req.user.username && !req.user.isAdmin) {
       return res.status(403).json({ message: 'You do not have permission to update this ad' });
     }
     
