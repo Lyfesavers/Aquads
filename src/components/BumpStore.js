@@ -3,9 +3,9 @@ import Modal from './Modal';
 import { FaCopy, FaCheck } from 'react-icons/fa';
 
 const BUMP_OPTIONS = [
-  { duration: '24 hours', price: 20, durationMs: 24 * 60 * 60 * 1000 },
-  { duration: '3 days', price: 40, durationMs: 3 * 24 * 60 * 60 * 1000 },
-  { duration: '7 days', price: 80, durationMs: 7 * 24 * 60 * 60 * 1000 }
+  { duration: '24 hours', price: 5, durationMs: 24 * 60 * 60 * 1000 },
+  { duration: '3 days', price: 15, durationMs: 3 * 24 * 60 * 60 * 1000 },
+  { duration: '7 days', price: 35, durationMs: 7 * 24 * 60 * 60 * 1000 }
 ];
 
 const BLOCKCHAIN_OPTIONS = [

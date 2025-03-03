@@ -193,13 +193,13 @@ router.get('/', async (req, res) => {
 const calculateBumpAmount = (type) => {
   switch (type) {
     case 'bump_24h':
-      return 20; // 20 USDC for 24h bump
+      return 5;  // 5 USDC for 24h bump
     case 'bump_3d':
-      return 40; // 40 USDC for 3 day bump
+      return 15; // 15 USDC for 3 day bump
     case 'bump_7d':
-      return 80; // 80 USDC for 7 day bump
+      return 35; // 35 USDC for 7 day bump
     default:
-      return 20;
+      return 5;  // Default to 24h price
   }
 };
 
