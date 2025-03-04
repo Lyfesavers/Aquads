@@ -1059,7 +1059,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                           </div>
                           <div className="flex items-center justify-between pt-4 border-t border-gray-700">
                             <span className="text-gray-400 text-sm">
-                              Delivered in {service.deliveryTime}
+                              Delivered in {service.deliveryTime} Days
                             </span>
                             <div className="text-right">
                               <div className="text-gray-300 text-sm">
