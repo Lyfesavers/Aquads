@@ -245,7 +245,7 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
           {/* Service Image */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Service Image URL https://youtu.be/gt41bzMM6Fk (W1200px X H300PX 4:1 aspect ratio)
+              Service Image URL https://youtu.be/gt41bzMM6Fk (W600PX X H240PX)
             </label>
             <input
               type="url"
