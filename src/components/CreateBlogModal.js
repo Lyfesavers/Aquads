@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import Modal from './Modal';
@@ -9,15 +9,21 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
     content: initialData?.content || '',
     bannerImage: initialData?.bannerImage || ''
   });
+  const quillRef = useRef(null);
 
   const modules = {
-    toolbar: [
-      [{ 'header': [1, 2, false] }],
-      ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-      [{'list': 'ordered'}, {'list': 'bullet'}, {'indent': '-1'}, {'indent': '+1'}],
-      ['link'],
-      ['clean']
-    ],
+    toolbar: {
+      container: [
+        [{ 'header': [1, 2, false] }],
+        ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+        [{'list': 'ordered'}, {'list': 'bullet'}, {'indent': '-1'}, {'indent': '+1'}],
+        ['link'],
+        ['clean']
+      ],
+    },
+    clipboard: {
+      matchVisual: false
+    }
   };
 
   const formats = [
@@ -26,6 +32,27 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
     'list', 'bullet', 'indent',
     'link'
   ];
+
+  useEffect(() => {
+    if (quillRef.current) {
+      const editor = quillRef.current.getEditor();
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'childList') {
+            // Handle content changes if needed
+          }
+        });
+      });
+
+      observer.observe(editor.root, {
+        childList: true,
+        subtree: true,
+        characterData: true
+      });
+
+      return () => observer.disconnect();
+    }
+  }, []);
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -82,6 +109,7 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
             <label className="block mb-1">Content</label>
             <div className="bg-gray-700 rounded">
               <ReactQuill
+                ref={quillRef}
                 theme="snow"
                 value={formData.content}
                 onChange={handleEditorChange}
