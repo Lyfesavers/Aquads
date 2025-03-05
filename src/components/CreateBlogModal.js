@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import Modal from './Modal';
+import React, { useState, useEffect, useCallback } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import Modal from './Modal';
 
 const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
   const [formData, setFormData] = useState({
@@ -9,155 +9,94 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
     content: initialData?.content || '',
     bannerImage: initialData?.bannerImage || ''
   });
-  const [previewUrl, setPreviewUrl] = useState(initialData?.bannerImage || '');
-  const [error, setError] = useState('');
-  const [wordCount, setWordCount] = useState(
-    initialData?.content ? initialData.content.trim().split(/\s+/).length : 0
-  );
 
-  const validateImageUrl = async (url) => {
-    try {
-      const response = await fetch(url);
-      const contentType = response.headers.get('content-type');
-      return contentType.startsWith('image/');
-    } catch (error) {
-      return false;
-    }
+  const modules = {
+    toolbar: [
+      [{ 'header': [1, 2, false] }],
+      ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+      [{'list': 'ordered'}, {'list': 'bullet'}, {'indent': '-1'}, {'indent': '+1'}],
+      ['link'],
+      ['clean']
+    ],
   };
 
-  const handleBannerChange = async (e) => {
-    const url = e.target.value;
-    setFormData(prev => ({ ...prev, bannerImage: url }));
-    
-    if (url) {
-      const isValid = await validateImageUrl(url);
-      if (isValid) {
-        setPreviewUrl(url);
-        setError('');
-      } else {
-        setPreviewUrl('');
-        setError('Please enter a valid image URL');
-      }
-    } else {
-      setPreviewUrl('');
-      setError('');
-    }
-  };
+  const formats = [
+    'header',
+    'bold', 'italic', 'underline', 'strike', 'blockquote',
+    'list', 'bullet', 'indent',
+    'link'
+  ];
 
-  const handleContentChange = (content) => {
-    const words = content.replace(/<[^>]*>/g, '').trim().split(/\s+/);
-    const count = words[0] === '' ? 0 : words.length;
-    setWordCount(count);
-    
-    if (count > 5000) {
-      setError('Content exceeds 5000 words limit');
-    } else {
-      setError('');
-    }
-    
+  const handleChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  }, []);
+
+  const handleEditorChange = useCallback((content) => {
     setFormData(prev => ({ ...prev, content }));
-  };
+  }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = useCallback((e) => {
     e.preventDefault();
-    if (!previewUrl) {
-      setError('Please enter a valid banner image URL');
-      return;
-    }
-    if (wordCount > 5000) {
-      setError('Content exceeds 5000 words limit');
-      return;
-    }
-    if (!formData.title.trim()) {
-      setError('Please enter a title');
-      return;
-    }
-    if (!formData.content.trim()) {
-      setError('Please enter content');
-      return;
-    }
-
     onSubmit(formData);
-  };
+  }, [formData, onSubmit]);
 
   return (
     <Modal onClose={onClose}>
       <div className="text-white">
-        <h2 className="text-2xl font-bold mb-4">
-          {initialData ? 'Edit Blog Post' : 'Create New Blog Post'}
-        </h2>
+        <h2 className="text-2xl font-bold mb-4">{initialData ? 'Edit' : 'Create'} Blog Post</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block mb-1">Title</label>
             <input
               type="text"
+              name="title"
               value={formData.title}
-              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={handleChange}
               required
+              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-
           <div>
             <label className="block mb-1">Banner Image URL</label>
             <input
               type="url"
+              name="bannerImage"
               value={formData.bannerImage}
-              onChange={handleBannerChange}
-              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={handleChange}
               required
+              placeholder="Enter image URL"
+              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            {previewUrl && (
+            {formData.bannerImage && (
               <div className="mt-2">
                 <img
-                  src={previewUrl}
+                  src={formData.bannerImage}
                   alt="Banner preview"
-                  className="w-full h-40 object-cover rounded"
+                  className="max-h-32 object-contain rounded"
                 />
               </div>
             )}
           </div>
-
           <div>
             <label className="block mb-1">Content</label>
             <div className="bg-gray-700 rounded">
               <ReactQuill
-                value={formData.content}
-                onChange={handleContentChange}
-                className="bg-gray-800 text-white"
                 theme="snow"
-                modules={{
-                  toolbar: [
-                    [{ 'header': [1, 2, 3, false] }],
-                    ['bold', 'italic', 'underline', 'strike'],
-                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                    ['link', 'image', 'blockquote', 'code-block'],
-                    [{ 'color': [] }, { 'background': [] }],
-                    ['clean']
-                  ]
-                }}
+                value={formData.content}
+                onChange={handleEditorChange}
+                modules={modules}
+                formats={formats}
+                className="bg-gray-800 text-white rounded"
               />
             </div>
-            <div className="mt-2 text-sm text-gray-400">
-              Word count: {wordCount}/5000
-            </div>
           </div>
-
-          {error && (
-            <div className="text-red-500 text-sm">{error}</div>
-          )}
-
-          <div className="flex justify-end">
+          <div className="flex justify-end pt-4">
             <button
               type="submit"
-              disabled={!!error}
-              className={`px-4 py-2 rounded ${
-                error 
-                  ? 'bg-gray-500 cursor-not-allowed' 
-                  : 'bg-blue-500 hover:bg-blue-600'
-              }`}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors"
             >
-              {initialData ? 'Update Blog' : 'Create Blog'}
+              {initialData ? 'Update' : 'Create'} Post
             </button>
           </div>
         </form>

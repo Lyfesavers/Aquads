@@ -10,6 +10,7 @@ const HowTo = ({ currentUser }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingBlog, setEditingBlog] = useState(null);
   const [error, setError] = useState(null);
+  const [videoError, setVideoError] = useState(false);
   const PLAYLIST_ID = 'PLKHtulN0_0h8hun9lEhYHPGm4Mqophidj';
 
   useEffect(() => {
@@ -167,13 +168,21 @@ const HowTo = ({ currentUser }) => {
         <div className="mb-16">
           <h2 className="text-2xl font-bold mb-6 text-white">Video Tutorials</h2>
           <div className="aspect-w-16 aspect-h-9 bg-gray-800 rounded-lg overflow-hidden">
-            <iframe
-              src={`https://www.youtube.com/embed/videoseries?list=${PLAYLIST_ID}`}
-              title="Aquads Tutorials"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              className="w-full h-full min-h-[600px]"
-            ></iframe>
+            {videoError ? (
+              <div className="flex items-center justify-center h-full text-gray-400">
+                <p>Failed to load video playlist. Please try refreshing the page.</p>
+              </div>
+            ) : (
+              <iframe
+                src={`https://www.youtube.com/embed/videoseries?list=${PLAYLIST_ID}&enablejsapi=1`}
+                title="Aquads Tutorials"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full min-h-[600px]"
+                onError={() => setVideoError(true)}
+                loading="lazy"
+              />
+            )}
           </div>
         </div>
 
