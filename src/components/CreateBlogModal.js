@@ -1,7 +1,75 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import React, { useState, useCallback } from 'react';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Link from '@tiptap/extension-link';
 import Modal from './Modal';
+
+const MenuBar = ({ editor }) => {
+  if (!editor) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1 p-2 bg-gray-700 rounded-t border-b border-gray-600">
+      <button
+        onClick={() => editor.chain().focus().toggleBold().run()}
+        className={`px-2 py-1 rounded ${editor.isActive('bold') ? 'bg-gray-600' : 'bg-gray-800'}`}
+        type="button"
+      >
+        Bold
+      </button>
+      <button
+        onClick={() => editor.chain().focus().toggleItalic().run()}
+        className={`px-2 py-1 rounded ${editor.isActive('italic') ? 'bg-gray-600' : 'bg-gray-800'}`}
+        type="button"
+      >
+        Italic
+      </button>
+      <button
+        onClick={() => editor.chain().focus().toggleStrike().run()}
+        className={`px-2 py-1 rounded ${editor.isActive('strike') ? 'bg-gray-600' : 'bg-gray-800'}`}
+        type="button"
+      >
+        Strike
+      </button>
+      <button
+        onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+        className={`px-2 py-1 rounded ${editor.isActive('heading', { level: 1 }) ? 'bg-gray-600' : 'bg-gray-800'}`}
+        type="button"
+      >
+        H1
+      </button>
+      <button
+        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+        className={`px-2 py-1 rounded ${editor.isActive('heading', { level: 2 }) ? 'bg-gray-600' : 'bg-gray-800'}`}
+        type="button"
+      >
+        H2
+      </button>
+      <button
+        onClick={() => editor.chain().focus().toggleBulletList().run()}
+        className={`px-2 py-1 rounded ${editor.isActive('bulletList') ? 'bg-gray-600' : 'bg-gray-800'}`}
+        type="button"
+      >
+        Bullet List
+      </button>
+      <button
+        onClick={() => editor.chain().focus().toggleOrderedList().run()}
+        className={`px-2 py-1 rounded ${editor.isActive('orderedList') ? 'bg-gray-600' : 'bg-gray-800'}`}
+        type="button"
+      >
+        Ordered List
+      </button>
+      <button
+        onClick={() => editor.chain().focus().toggleBlockquote().run()}
+        className={`px-2 py-1 rounded ${editor.isActive('blockquote') ? 'bg-gray-600' : 'bg-gray-800'}`}
+        type="button"
+      >
+        Quote
+      </button>
+    </div>
+  );
+};
 
 const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
   const [formData, setFormData] = useState({
@@ -9,58 +77,23 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
     content: initialData?.content || '',
     bannerImage: initialData?.bannerImage || ''
   });
-  const quillRef = useRef(null);
 
-  const modules = {
-    toolbar: {
-      container: [
-        [{ 'header': [1, 2, false] }],
-        ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-        [{'list': 'ordered'}, {'list': 'bullet'}, {'indent': '-1'}, {'indent': '+1'}],
-        ['link'],
-        ['clean']
-      ],
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Link.configure({
+        openOnClick: false,
+      }),
+    ],
+    content: formData.content,
+    onUpdate: ({ editor }) => {
+      setFormData(prev => ({ ...prev, content: editor.getHTML() }));
     },
-    clipboard: {
-      matchVisual: false
-    }
-  };
-
-  const formats = [
-    'header',
-    'bold', 'italic', 'underline', 'strike', 'blockquote',
-    'list', 'bullet', 'indent',
-    'link'
-  ];
-
-  useEffect(() => {
-    if (quillRef.current) {
-      const editor = quillRef.current.getEditor();
-      const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          if (mutation.type === 'childList') {
-            // Handle content changes if needed
-          }
-        });
-      });
-
-      observer.observe(editor.root, {
-        childList: true,
-        subtree: true,
-        characterData: true
-      });
-
-      return () => observer.disconnect();
-    }
-  }, []);
+  });
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-  }, []);
-
-  const handleEditorChange = useCallback((content) => {
-    setFormData(prev => ({ ...prev, content }));
   }, []);
 
   const handleSubmit = useCallback((e) => {
@@ -107,15 +140,11 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
           </div>
           <div>
             <label className="block mb-1">Content</label>
-            <div className="bg-gray-700 rounded">
-              <ReactQuill
-                ref={quillRef}
-                theme="snow"
-                value={formData.content}
-                onChange={handleEditorChange}
-                modules={modules}
-                formats={formats}
-                className="bg-gray-800 text-white rounded"
+            <div className="bg-gray-700 rounded overflow-hidden">
+              <MenuBar editor={editor} />
+              <EditorContent 
+                editor={editor} 
+                className="prose prose-invert max-w-none p-4 min-h-[200px] focus:outline-none"
               />
             </div>
           </div>
