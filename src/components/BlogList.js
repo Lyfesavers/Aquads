@@ -15,8 +15,8 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
 
   const handleShare = (blog) => {
     const shareUrl = `${window.location.origin}/how-to`;
-    const affiliateCode = currentUser?.referralCode ? `?ref=${currentUser.referralCode}&blogId=${blog._id}` : `?blogId=${blog._id}`;
-    const fullUrl = `${shareUrl}${affiliateCode}`;
+    const affiliateCode = currentUser?.username ? `${currentUser.username}-@` : '';
+    const fullUrl = `${affiliateCode}${shareUrl}?blogId=${blog._id}`;
     
     navigator.clipboard.writeText(fullUrl).then(() => {
       alert('Share link copied to clipboard!');
