@@ -91,7 +91,14 @@ const HowTo = ({ currentUser }) => {
 
   const handleEditBlog = async (blogData) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = currentUser?.token || localStorage.getItem('token');
+      
+      if (!token) {
+        console.error('No authentication token found');
+        setError('Authentication required. Please log in again.');
+        return;
+      }
+
       const response = await fetch(`${API_URL}/blogs/${editingBlog._id}`, {
         method: 'PATCH',
         headers: {
@@ -101,17 +108,29 @@ const HowTo = ({ currentUser }) => {
         body: JSON.stringify(blogData)
       });
 
-      if (response.ok) {
-        setEditingBlog(null);
-        fetchBlogs();
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          setError('Your session has expired. Please log in again.');
+          return;
+        }
+        throw new Error(`Failed to update blog: ${response.statusText}`);
       }
+
+      // Only update UI if edit was successful
+      await fetchBlogs();
+      setEditingBlog(null);
+      setShowCreateModal(false);
+      setError(null);
     } catch (error) {
       console.error('Error updating blog:', error);
+      setError(error.message || 'Failed to update blog. Please try again.');
     }
   };
 
   const handleDeleteBlog = async (blogId) => {
     try {
+      // Get token from both possible sources
       const token = currentUser?.token || localStorage.getItem('token');
       
       if (!token) {
@@ -130,18 +149,20 @@ const HowTo = ({ currentUser }) => {
 
       if (!response.ok) {
         if (response.status === 401) {
+          // Clear invalid token
+          localStorage.removeItem('token');
           setError('Your session has expired. Please log in again.');
           return;
         }
-        throw new Error('Failed to delete blog');
+        throw new Error(`Failed to delete blog: ${response.statusText}`);
       }
 
-      await response.json();
+      // Only update UI if deletion was successful
+      await fetchBlogs();
       setError(null);
-      fetchBlogs(); // Refresh the blog list
     } catch (error) {
       console.error('Error deleting blog:', error);
-      setError('Failed to delete blog post. Please try again.');
+      setError(error.message || 'Failed to delete blog. Please try again.');
     }
   };
 
