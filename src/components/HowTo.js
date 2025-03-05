@@ -88,7 +88,7 @@ const HowTo = ({ currentUser }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="bg-gray-900 text-white">
       <Helmet>
         <title>How To Guide - Aquads</title>
         <meta name="description" content="Learn how to use Aquads platform with our video tutorials and community blog posts" />
@@ -141,7 +141,7 @@ const HowTo = ({ currentUser }) => {
         <div className="mt-16">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-white">Community Blog Posts</h2>
-            {currentUser && (
+            {localStorage.getItem('token') && (
               <button
                 onClick={() => setShowCreateModal(true)}
                 className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors"
