@@ -32,10 +32,27 @@ const HowTo = ({ currentUser }) => {
   const handleCreateBlog = async (blogData) => {
     try {
       const token = localStorage.getItem('token');
+      console.log('Current user:', currentUser); // Debug log
+      
       if (!token) {
+        console.log('No token found'); // Debug log
         setError('You must be logged in to create a blog post');
         return;
       }
+
+      if (!currentUser) {
+        console.log('No current user found'); // Debug log
+        setError('User session expired. Please log in again.');
+        return;
+      }
+
+      const requestData = {
+        ...blogData,
+        author: currentUser.username,
+        userId: currentUser.userId
+      };
+
+      console.log('Sending blog data:', requestData); // Debug log
 
       const response = await fetch(`${API_URL}/blogs`, {
         method: 'POST',
@@ -43,26 +60,30 @@ const HowTo = ({ currentUser }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          ...blogData,
-          author: currentUser?.username
-        })
+        body: JSON.stringify(requestData)
       });
 
+      console.log('Response status:', response.status); // Debug log
+
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
         console.error('Error creating blog:', errorData);
-        setError(errorData.error || 'Failed to create blog post');
+        if (response.status === 401) {
+          setError('Your session has expired. Please log in again.');
+        } else {
+          setError(errorData.error || 'Failed to create blog post');
+        }
         return;
       }
 
-      await response.json();
+      const data = await response.json();
+      console.log('Blog created successfully:', data); // Debug log
       setShowCreateModal(false);
       setError(null);
       fetchBlogs();
     } catch (error) {
       console.error('Error creating blog:', error);
-      setError('Failed to create blog post');
+      setError('Failed to create blog post. Please try again.');
     }
   };
 
