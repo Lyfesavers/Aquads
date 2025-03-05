@@ -9,6 +9,7 @@ const HowTo = ({ currentUser }) => {
   const [blogs, setBlogs] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingBlog, setEditingBlog] = useState(null);
+  const [error, setError] = useState(null);
   const PLAYLIST_ID = 'PLKHtulN0_0h8hun9lEhYHPGm4Mqophidj';
 
   useEffect(() => {
@@ -24,27 +25,44 @@ const HowTo = ({ currentUser }) => {
       }
     } catch (error) {
       console.error('Error fetching blogs:', error);
+      setError('Failed to fetch blogs');
     }
   };
 
   const handleCreateBlog = async (blogData) => {
     try {
       const token = localStorage.getItem('token');
+      if (!token) {
+        setError('You must be logged in to create a blog post');
+        return;
+      }
+
       const response = await fetch(`${API_URL}/blogs`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(blogData)
+        body: JSON.stringify({
+          ...blogData,
+          author: currentUser?.username
+        })
       });
 
-      if (response.ok) {
-        setShowCreateModal(false);
-        fetchBlogs();
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error creating blog:', errorData);
+        setError(errorData.error || 'Failed to create blog post');
+        return;
       }
+
+      await response.json();
+      setShowCreateModal(false);
+      setError(null);
+      fetchBlogs();
     } catch (error) {
       console.error('Error creating blog:', error);
+      setError('Failed to create blog post');
     }
   };
 
@@ -150,6 +168,12 @@ const HowTo = ({ currentUser }) => {
               </button>
             )}
           </div>
+          
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-2 rounded mb-4">
+              {error}
+            </div>
+          )}
           
           <BlogList
             blogs={blogs}
