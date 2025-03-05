@@ -112,19 +112,36 @@ const HowTo = ({ currentUser }) => {
 
   const handleDeleteBlog = async (blogId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = currentUser?.token || localStorage.getItem('token');
+      
+      if (!token) {
+        console.error('No authentication token found');
+        setError('Authentication required. Please log in again.');
+        return;
+      }
+
       const response = await fetch(`${API_URL}/blogs/${blogId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
 
-      if (response.ok) {
-        fetchBlogs();
+      if (!response.ok) {
+        if (response.status === 401) {
+          setError('Your session has expired. Please log in again.');
+          return;
+        }
+        throw new Error('Failed to delete blog');
       }
+
+      await response.json();
+      setError(null);
+      fetchBlogs(); // Refresh the blog list
     } catch (error) {
       console.error('Error deleting blog:', error);
+      setError('Failed to delete blog post. Please try again.');
     }
   };
 
