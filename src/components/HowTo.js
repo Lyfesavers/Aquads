@@ -88,7 +88,7 @@ const HowTo = ({ currentUser }) => {
   };
 
   return (
-    <div className="bg-gray-900 text-white h-full overflow-y-auto">
+    <div className="h-screen overflow-y-auto bg-gray-900 text-white">
       <Helmet>
         <title>How To Guide - Aquads</title>
         <meta name="description" content="Learn how to use Aquads platform with our video tutorials and community blog posts" />
