@@ -31,18 +31,19 @@ const HowTo = ({ currentUser }) => {
 
   const handleCreateBlog = async (blogData) => {
     try {
-      const token = localStorage.getItem('token');
       console.log('Current user:', currentUser); // Debug log
       
-      if (!token) {
-        console.log('No token found'); // Debug log
+      if (!currentUser) {
+        console.log('No current user found'); // Debug log
         setError('You must be logged in to create a blog post');
         return;
       }
 
-      if (!currentUser) {
-        console.log('No current user found'); // Debug log
-        setError('User session expired. Please log in again.');
+      const token = currentUser.token || localStorage.getItem('token');
+      
+      if (!token) {
+        console.log('No token found in currentUser or localStorage'); // Debug log
+        setError('Authentication token not found. Please log in again.');
         return;
       }
 
