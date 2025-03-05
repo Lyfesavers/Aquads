@@ -83,7 +83,7 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
                 >
                   <FaShare size={18} />
                 </button>
-                {currentUser && currentUser.userId === blog.author && (
+                {currentUser && (currentUser.userId === blog.author || currentUser.isAdmin) && (
                   <>
                     <button
                       onClick={() => onEditBlog(blog)}
