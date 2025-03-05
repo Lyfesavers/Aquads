@@ -14,12 +14,11 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
   };
 
   const handleShare = (blog) => {
-    const shareUrl = `${window.location.origin}/how-to`;
-    const affiliateCode = currentUser?.username ? `${currentUser.username}-@` : '';
-    const fullUrl = `${affiliateCode}${shareUrl}?blogId=${blog._id}`;
+    const referralCode = currentUser?.username || ''; // Get current user's username as referral code
+    const url = `${window.location.origin}/how-to?blogId=${blog._id}&ref=${referralCode}`;
     
-    navigator.clipboard.writeText(fullUrl).then(() => {
-      alert('Share link copied to clipboard!');
+    navigator.clipboard.writeText(url).then(() => {
+      alert('Blog link copied to clipboard!');
     }).catch(err => {
       console.error('Failed to copy:', err);
     });
