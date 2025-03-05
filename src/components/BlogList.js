@@ -14,8 +14,8 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
   };
 
   const handleShare = (blog) => {
-    const shareUrl = `${window.location.origin}/blog/${blog._id}`;
-    const affiliateCode = currentUser?.referralCode ? `?ref=${currentUser.referralCode}` : '';
+    const shareUrl = `${window.location.origin}/how-to`;
+    const affiliateCode = currentUser?.referralCode ? `?ref=${currentUser.referralCode}&blogId=${blog._id}` : `?blogId=${blog._id}`;
     const fullUrl = `${shareUrl}${affiliateCode}`;
     
     navigator.clipboard.writeText(fullUrl).then(() => {
@@ -45,6 +45,7 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
       {blogs.map((blog) => (
         <div
           key={blog._id}
+          id={`blog-${blog._id}`}
           className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-lg overflow-hidden hover:bg-gray-800/70 transition-all duration-300"
         >
           {/* Banner Image */}

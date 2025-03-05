@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import BlogList from './BlogList';
 import CreateBlogModal from './CreateBlogModal';
 import { API_URL } from '../services/api';
@@ -11,11 +11,31 @@ const HowTo = ({ currentUser }) => {
   const [editingBlog, setEditingBlog] = useState(null);
   const [error, setError] = useState(null);
   const [videoError, setVideoError] = useState(false);
+  const location = useLocation();
+  const blogListRef = useRef(null);
   const PLAYLIST_ID = 'PLKHtulN0_0h8hun9lEhYHPGm4Mqophidj';
 
   useEffect(() => {
     fetchBlogs();
   }, []);
+
+  useEffect(() => {
+    // Handle URL parameters for shared blogs
+    const params = new URLSearchParams(location.search);
+    const blogId = params.get('blogId');
+    
+    if (blogId && blogs.length > 0) {
+      const blogElement = document.getElementById(`blog-${blogId}`);
+      if (blogElement) {
+        blogElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Highlight the shared blog post
+        blogElement.classList.add('ring-2', 'ring-blue-500');
+        setTimeout(() => {
+          blogElement.classList.remove('ring-2', 'ring-blue-500');
+        }, 2000);
+      }
+    }
+  }, [location.search, blogs]);
 
   const fetchBlogs = async () => {
     try {
@@ -225,7 +245,7 @@ const HowTo = ({ currentUser }) => {
         </div>
 
         {/* Blog Section */}
-        <div className="mt-16">
+        <div className="mt-16" ref={blogListRef}>
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-white">Community Blog Posts</h2>
             {currentUser && (
