@@ -633,4 +633,71 @@ export const deleteJob = async (jobId, token) => {
   });
   if (!response.ok) throw new Error('Failed to delete job');
   return response.json();
+};
+
+// Blog API functions
+export const fetchBlogs = async () => {
+  try {
+    const response = await fetch(`${API_URL}/blogs`);
+    if (!response.ok) throw new Error('Failed to fetch blogs');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching blogs:', error);
+    throw error;
+  }
+};
+
+export const createBlog = async (blogData) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_URL}/blogs`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(blogData)
+    });
+    if (!response.ok) throw new Error('Failed to create blog');
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating blog:', error);
+    throw error;
+  }
+};
+
+export const updateBlog = async (blogId, blogData) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_URL}/blogs/${blogId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(blogData)
+    });
+    if (!response.ok) throw new Error('Failed to update blog');
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating blog:', error);
+    throw error;
+  }
+};
+
+export const deleteBlog = async (blogId) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_URL}/blogs/${blogId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    if (!response.ok) throw new Error('Failed to delete blog');
+    return await response.json();
+  } catch (error) {
+    console.error('Error deleting blog:', error);
+    throw error;
+  }
 }; 
