@@ -25,14 +25,37 @@ const HowTo = ({ currentUser }) => {
     const blogId = params.get('blogId');
     
     if (blogId && blogs.length > 0) {
-      const blogElement = document.getElementById(`blog-${blogId}`);
-      if (blogElement) {
-        blogElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        // Highlight the shared blog post
-        blogElement.classList.add('ring-2', 'ring-blue-500');
-        setTimeout(() => {
-          blogElement.classList.remove('ring-2', 'ring-blue-500');
-        }, 2000);
+      // Find the blog post with the matching ID
+      const sharedBlog = blogs.find(blog => blog._id === blogId);
+      
+      if (sharedBlog) {
+        // Update meta tags for sharing
+        const dynamicTwitterImage = document.getElementById('dynamic-twitter-image');
+        const dynamicTwitterTitle = document.getElementById('dynamic-twitter-title');
+        const dynamicTwitterDesc = document.getElementById('dynamic-twitter-description');
+        const dynamicOgImage = document.getElementById('dynamic-og-image');
+        const dynamicOgTitle = document.getElementById('dynamic-og-title');
+        const dynamicOgDesc = document.getElementById('dynamic-og-description');
+        const dynamicOgUrl = document.getElementById('dynamic-og-url');
+
+        if (dynamicTwitterImage) dynamicTwitterImage.content = sharedBlog.bannerImage;
+        if (dynamicTwitterTitle) dynamicTwitterTitle.content = `${sharedBlog.title} - Aquads Blog`;
+        if (dynamicTwitterDesc) dynamicTwitterDesc.content = sharedBlog.content?.replace(/<[^>]*>/g, '').slice(0, 200) + '...';
+        if (dynamicOgImage) dynamicOgImage.content = sharedBlog.bannerImage;
+        if (dynamicOgTitle) dynamicOgTitle.content = `${sharedBlog.title} - Aquads Blog`;
+        if (dynamicOgDesc) dynamicOgDesc.content = sharedBlog.content?.replace(/<[^>]*>/g, '').slice(0, 200) + '...';
+        if (dynamicOgUrl) dynamicOgUrl.content = window.location.href;
+
+        // Scroll to and highlight the blog post
+        const blogElement = document.getElementById(`blog-${blogId}`);
+        if (blogElement) {
+          blogElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Highlight the shared blog post
+          blogElement.classList.add('ring-2', 'ring-blue-500');
+          setTimeout(() => {
+            blogElement.classList.remove('ring-2', 'ring-blue-500');
+          }, 2000);
+        }
       }
     }
   }, [location.search, blogs]);
@@ -186,11 +209,43 @@ const HowTo = ({ currentUser }) => {
     }
   };
 
+  // Get the currently shared blog
+  const getSharedBlog = () => {
+    const params = new URLSearchParams(location.search);
+    const blogId = params.get('blogId');
+    if (blogId && blogs.length > 0) {
+      return blogs.find(blog => blog._id === blogId);
+    }
+    return null;
+  };
+
+  const sharedBlog = getSharedBlog();
+
   return (
     <div className="h-screen overflow-y-auto bg-gray-900 text-white">
       <Helmet>
-        <title>How To Guide - Aquads</title>
-        <meta name="description" content="Learn how to use Aquads platform with our video tutorials and community blog posts" />
+        {sharedBlog ? (
+          // Dynamic meta tags for a specific blog post
+          <>
+            <title>{`${sharedBlog.title} - Aquads How To Guide`}</title>
+            <meta name="description" content={sharedBlog.content?.replace(/<[^>]*>/g, '').slice(0, 160)} />
+            <meta property="og:title" content={`${sharedBlog.title} - Aquads Blog`} />
+            <meta property="og:description" content={sharedBlog.content?.replace(/<[^>]*>/g, '').slice(0, 200) + '...'} />
+            <meta property="og:image" content={sharedBlog.bannerImage} />
+            <meta property="og:url" content={window.location.href} />
+            <meta property="og:type" content="article" />
+            <meta name="twitter:card" content="summary_large_image" />
+            <meta name="twitter:title" content={`${sharedBlog.title} - Aquads Blog`} />
+            <meta name="twitter:description" content={sharedBlog.content?.replace(/<[^>]*>/g, '').slice(0, 200) + '...'} />
+            <meta name="twitter:image" content={sharedBlog.bannerImage} />
+          </>
+        ) : (
+          // Default meta tags for the How To page
+          <>
+            <title>How To Guide - Aquads</title>
+            <meta name="description" content="Learn how to use Aquads platform with our video tutorials and community blog posts" />
+          </>
+        )}
       </Helmet>
 
       {/* Header */}
