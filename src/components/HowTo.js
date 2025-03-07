@@ -238,6 +238,35 @@ const HowTo = ({ currentUser }) => {
             <meta name="twitter:title" content={`${sharedBlog.title} - Aquads Blog`} />
             <meta name="twitter:description" content={sharedBlog.content?.replace(/<[^>]*>/g, '').slice(0, 200) + '...'} />
             <meta name="twitter:image" content={sharedBlog.bannerImage} />
+            
+            {/* JSON-LD BlogPosting schema.org structured data */}
+            <script type="application/ld+json">
+              {JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "BlogPosting",
+                "headline": sharedBlog.title,
+                "image": sharedBlog.bannerImage,
+                "datePublished": sharedBlog.createdAt,
+                "dateModified": sharedBlog.updatedAt || sharedBlog.createdAt,
+                "author": {
+                  "@type": "Person",
+                  "name": sharedBlog.authorUsername || sharedBlog.author
+                },
+                "publisher": {
+                  "@type": "Organization",
+                  "name": "Aquads",
+                  "logo": {
+                    "@type": "ImageObject",
+                    "url": "https://aquads.xyz/logo192.png"
+                  }
+                },
+                "description": sharedBlog.content?.replace(/<[^>]*>/g, '').slice(0, 160),
+                "mainEntityOfPage": {
+                  "@type": "WebPage",
+                  "@id": window.location.href
+                }
+              })}
+            </script>
           </>
         ) : (
           // Default meta tags for the How To page

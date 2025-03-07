@@ -9,6 +9,7 @@ const pointsRoutes = require('./routes/points');
 const bookingsRoutes = require('./routes/bookings');
 const affiliateRoutes = require('./routes/affiliates');
 const jobsRoutes = require('./routes/jobs');
+const sitemapRoutes = require('./routes/sitemap');
 const Service = require('./models/Service');
 const path = require('path');
 const fs = require('fs');
@@ -123,6 +124,7 @@ app.use('/api/points', pointsRoutes);
 app.use('/api/bookings', bookingsRoutes);
 app.use('/api/affiliates', affiliateRoutes);
 app.use('/api/jobs', jobsRoutes);
+app.use('/api/sitemap', sitemapRoutes);
 
 console.log('Routes registered');
 
