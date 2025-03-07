@@ -26,13 +26,24 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
   const [passwordFocused, setPasswordFocused] = useState(false);
 
   useEffect(() => {
+    // Check URL parameters first
     const params = new URLSearchParams(window.location.search);
     const refCode = params.get('ref');
-    if (refCode) {
+    
+    // Then check sessionStorage for a pending referral code
+    const pendingRefCode = sessionStorage.getItem('pendingReferralCode');
+    
+    // Use the ref code from URL or session storage
+    if (refCode || pendingRefCode) {
       setFormData(prev => ({
         ...prev,
-        referralCode: refCode
+        referralCode: refCode || pendingRefCode
       }));
+      
+      // Clear from session storage after use
+      if (pendingRefCode) {
+        sessionStorage.removeItem('pendingReferralCode');
+      }
     }
   }, []);
 

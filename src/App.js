@@ -1137,6 +1137,21 @@ function App() {
     return () => clearInterval(checkInterval);
   }, [fixOverlappingBubbles]);
 
+  // Add effect to check for showCreateAccount parameter
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('showCreateAccount') === 'true') {
+      setShowCreateAccountModal(true);
+      
+      // Clear the parameter from the URL to avoid reopening modal on refresh
+      const newUrl = window.location.pathname + 
+        (window.location.search ? 
+          window.location.search.replace('showCreateAccount=true', '').replace(/(\?|&)$/, '') : 
+          '');
+      window.history.replaceState({}, document.title, newUrl);
+    }
+  }, []);
+
   return (
     <Router>
       <Routes>
