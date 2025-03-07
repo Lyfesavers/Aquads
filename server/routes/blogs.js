@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Blog = require('../models/Blog');
 const auth = require('../middleware/auth');
+const User = require('../models/User');
 
 // Get all blogs
 router.get('/', async (req, res) => {
@@ -9,7 +10,17 @@ router.get('/', async (req, res) => {
     const blogs = await Blog.find()
       .sort({ createdAt: -1 })
       .populate('author', 'username image');
-    res.json(blogs);
+      
+    // Update authorImage field with the populated author image
+    const updatedBlogs = blogs.map(blog => {
+      // If blog has author populated with image, use it
+      if (blog.author && blog.author.image) {
+        blog.authorImage = blog.author.image;
+      }
+      return blog;
+    });
+    
+    res.json(updatedBlogs);
   } catch (error) {
     console.error('Error fetching blogs:', error);
     res.status(500).json({ error: 'Failed to fetch blogs' });
@@ -21,9 +32,16 @@ router.get('/:id', async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id)
       .populate('author', 'username image');
+      
     if (!blog) {
       return res.status(404).json({ error: 'Blog not found' });
     }
+    
+    // Update authorImage field with the populated author image
+    if (blog.author && blog.author.image) {
+      blog.authorImage = blog.author.image;
+    }
+    
     res.json(blog);
   } catch (error) {
     console.error('Error fetching blog:', error);
@@ -42,13 +60,19 @@ router.post('/', auth, async (req, res) => {
       return res.status(400).json({ error: 'Content exceeds 5000 words limit' });
     }
 
+    // Get the full user information including image
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
     const blog = new Blog({
       title,
       content,
       bannerImage,
       author: req.user.userId,
       authorUsername: req.user.username,
-      authorImage: req.user.image
+      authorImage: user.image // Use the image from the user model
     });
 
     await blog.save();
@@ -79,7 +103,21 @@ router.patch('/:id', auth, async (req, res) => {
       }
     }
 
-    Object.assign(blog, req.body);
+    // Get the user's current image
+    const user = await User.findById(req.user.userId);
+    if (user && user.image) {
+      // Make sure the authorImage stays up to date with the user's current image
+      blog.authorImage = user.image;
+    }
+
+    // Apply other updates
+    const allowedUpdates = ['title', 'content', 'bannerImage'];
+    allowedUpdates.forEach(field => {
+      if (req.body[field] !== undefined) {
+        blog[field] = req.body[field];
+      }
+    });
+
     await blog.save();
     res.json(blog);
   } catch (error) {
