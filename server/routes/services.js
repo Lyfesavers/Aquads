@@ -97,7 +97,7 @@ router.post('/', auth, async (req, res) => {
     const { title, description, category, price, deliveryTime, requirements, image, telegramUsername, twitter, discord, email, linkedin } = req.body;
 
     // Validate required fields
-    if (!title || !description || !category || !price || !deliveryTime || !image || !telegramUsername) {
+    if (!title || !description || !category || !price || !deliveryTime || !image) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
@@ -121,7 +121,7 @@ router.post('/', auth, async (req, res) => {
       deliveryTime,
       requirements: requirements || '',
       image,
-      telegramUsername: telegramUsername.replace('@', ''), // Remove @ if present
+      telegramUsername: telegramUsername ? telegramUsername.replace('@', '') : '', // Remove @ if present
       twitter,
       discord,
       email,

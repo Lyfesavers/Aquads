@@ -123,7 +123,7 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">
-                  Telegram Username <span className="text-red-500">*</span>
+                  Telegram Username
                 </label>
                 <input
                   type="text"
