@@ -14,10 +14,15 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
   };
 
   const handleShare = (blog) => {
-    const referralCode = currentUser?.username || ''; // Get current user's username as referral code
-    const url = `${window.location.origin}/how-to?blogId=${blog._id}&ref=${referralCode}`;
+    // Get the base URL for the How To page
+    const baseUrl = `${window.location.origin}/how-to`;
     
-    navigator.clipboard.writeText(url).then(() => {
+    // Format the URL with username-@ prefix if user is logged in
+    const formattedUrl = currentUser?.username 
+      ? `${currentUser.username}-@${baseUrl}?blogId=${blog._id}`
+      : `${baseUrl}?blogId=${blog._id}`;
+    
+    navigator.clipboard.writeText(formattedUrl).then(() => {
       alert('Blog link copied to clipboard!');
     }).catch(err => {
       console.error('Failed to copy:', err);

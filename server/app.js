@@ -65,14 +65,14 @@ app.get('/marketplace', async (req, res, next) => {
           .replace(/<meta property="og:image"[^>]*>/, `<meta property="og:image" content="${service.image}">`)
           .replace(/<meta property="og:title"[^>]*>/, `<meta property="og:title" content="${service.title} - Aquads Marketplace">`)
           .replace(/<meta property="og:description"[^>]*>/, `<meta property="og:description" content="${service.description.slice(0, 200)}...">`)
-          .replace(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="https://aquads.xyz/marketplace?service=${service._id}">`)
-          .replace(/Aquaduct/g, 'Freelancer Hub');
+          .replace(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="${req.protocol}://${req.get('host')}${req.originalUrl}">`)
+          .replace(/<title>.*?<\/title>/, `<title>${service.title} - Aquads Marketplace</title>`);
         
         // Mobile scroll fix
         indexHtml = indexHtml
           .replace('</head>', `
-            <script>
-              function scrollToService() {
+           <script>
+             function scrollToService() {
                 const params = new URLSearchParams(window.location.search);
                 const serviceId = params.get('service');
                 if (!serviceId) return;
@@ -94,20 +94,101 @@ app.get('/marketplace', async (req, res, next) => {
 
                 // Initial delay to ensure content is loaded
                 setTimeout(doScroll, 1500);
-              }
+               }
 
-              // Run on both events
-              window.addEventListener('load', scrollToService);
-              document.addEventListener('DOMContentLoaded', scrollToService);
-            </script>
-            </head>
-          `);
+             // Run on both events
+             window.addEventListener('load', scrollToService);
+           document.addEventListener('DOMContentLoaded', scrollToService);
+         </script>
+         </head>
+        `);
         
         return res.send(indexHtml);
       }
     }
   } catch (error) {
     console.error('Error handling dynamic meta tags:', error);
+  }
+  next();
+});
+
+// Dynamic meta tags middleware for blog posts
+app.get('/how-to', async (req, res, next) => {
+  try {
+    const blogId = req.query.blogId;
+    if (blogId) {
+      // Import Blog model here to avoid circular dependencies
+      const Blog = require('./models/Blog');
+      const blog = await Blog.findById(blogId);
+      
+      if (blog) {
+        // Read the index.html file
+        let indexHtml = await fs.readFile(path.join(__dirname, '../build/index.html'), 'utf8');
+        
+        // Strip HTML from content for meta description
+        const stripHtml = (html) => {
+          return html.replace(/<\/?[^>]+(>|$)/g, "");
+        };
+        
+        const blogContent = stripHtml(blog.content);
+        const shortDescription = blogContent.length > 160 ? blogContent.substring(0, 160) + '...' : blogContent;
+        
+        // Replace meta tags with blog-specific content
+        indexHtml = indexHtml
+          .replace(/<meta name="twitter:image"[^>]*>/, `<meta name="twitter:image" content="${blog.bannerImage}">`)
+          .replace(/<meta name="twitter:title"[^>]*>/, `<meta name="twitter:title" content="${blog.title} - Aquads Blog">`)
+          .replace(/<meta name="twitter:description"[^>]*>/, `<meta name="twitter:description" content="${shortDescription}">`)
+          .replace(/<meta property="og:image"[^>]*>/, `<meta property="og:image" content="${blog.bannerImage}">`)
+          .replace(/<meta property="og:title"[^>]*>/, `<meta property="og:title" content="${blog.title} - Aquads Blog">`)
+          .replace(/<meta property="og:description"[^>]*>/, `<meta property="og:description" content="${shortDescription}">`)
+          .replace(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="${req.protocol}://${req.get('host')}${req.originalUrl}">`)
+          .replace(/<title>.*?<\/title>/, `<title>${blog.title} - Aquads Blog</title>`);
+        
+        // Similar mobile scroll fix for blogs
+        indexHtml = indexHtml.replace('</head>', `
+          <script>
+            function scrollToBlog() {
+              const params = new URLSearchParams(window.location.search);
+              const blogId = params.get('blogId');
+              if (!blogId) return;
+
+              function doScroll() {
+                const element = document.getElementById('blog-' + blogId);
+                if (element) {
+                  // Get element position
+                  const elementTop = element.offsetTop - 100;
+                  
+                  // Add highlight effect
+                  element.classList.add('ring-2', 'ring-blue-500');
+                  setTimeout(() => {
+                    element.classList.remove('ring-2', 'ring-blue-500');
+                  }, 2000);
+                  
+                  // Force multiple scroll attempts with increasing delays
+                  [0, 100, 500, 1000, 2000].forEach(delay => {
+                    setTimeout(() => {
+                      window.scrollTo(0, elementTop);
+                    }, delay);
+                  });
+                }
+              }
+
+              // Initial delay to ensure content is loaded
+              setTimeout(doScroll, 1500);
+            }
+
+            // Run on both events
+            window.addEventListener('load', scrollToBlog);
+            document.addEventListener('DOMContentLoaded', scrollToBlog);
+          </script>
+          </head>
+        `);
+        
+        return res.send(indexHtml);
+      }
+    }
+  } catch (error) {
+    console.error('Error handling blog meta tags:', error);
   }
   next();
 });
