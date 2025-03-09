@@ -9,6 +9,27 @@ const MenuBar = ({ editor }) => {
     return null;
   }
 
+  const setLink = useCallback(() => {
+    const previousUrl = editor.getAttributes('link').href
+    const url = window.prompt('Enter the URL', previousUrl)
+
+    // cancelled
+    if (url === null) {
+      return
+    }
+
+    // empty
+    if (url === '') {
+      editor.chain().focus().extendMarkRange('link').unsetLink()
+        .run()
+      return
+    }
+
+    // update link
+    editor.chain().focus().extendMarkRange('link').setLink({ href: url })
+      .run()
+  }, [editor])
+
   return (
     <div className="flex flex-wrap gap-1 p-2 bg-gray-700 rounded-t border-b border-gray-600">
       <button
@@ -32,6 +53,24 @@ const MenuBar = ({ editor }) => {
       >
         Strike
       </button>
+      
+      {/* Link button */}
+      <button
+        onClick={setLink}
+        className={`px-2 py-1 rounded ${editor.isActive('link') ? 'bg-gray-600' : 'bg-gray-800'}`}
+        type="button"
+      >
+        Link
+      </button>
+      {editor.isActive('link') && (
+        <button
+          onClick={() => editor.chain().focus().unsetLink().run()}
+          className="px-2 py-1 rounded bg-gray-800"
+          type="button"
+        >
+          Unlink
+        </button>
+      )}
       
       {/* Heading controls */}
       <div className="flex gap-1">
@@ -149,6 +188,13 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
         autolink: true,
         // Allow validation of pasted URLs
         validate: href => /^https?:\/\//.test(href),
+        HTMLAttributes: {
+          class: 'blog-link',
+          target: '_blank',
+          rel: 'noopener noreferrer'
+        },
+        // Linkify (convert text URLs to actual links)
+        linkOnPaste: true,
       }),
     ],
     content: formData.content,
@@ -159,7 +205,7 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
     editorProps: {
       // This helps preserve line breaks in pasted content
       transformPastedHTML(html) {
-        // Replace common Microsoft Word and Google Docs artifacts
+        // Replace common Microsoft Word and Google Docs artifacts and preserve links
         const cleanedHtml = html
           // Fix Word's mso-style artifacts and normalize paragraphs
           .replace(/<o:p>(.*?)<\/o:p>/g, '$1')
@@ -169,7 +215,11 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
           // Force Google Docs spans with line-height to be blocks
           .replace(/<span style="[^"]*line-height:[^"]*">(.*?)<\/span>/g, '<div>$1</div>')
           // Clean up empty paragraphs
-          .replace(/<p>\s*<\/p>/g, '<p>&nbsp;</p>');
+          .replace(/<p>\s*<\/p>/g, '<p>&nbsp;</p>')
+          // Preserve hyperlinks attributes
+          .replace(/<a\s+href="([^"]+)"[^>]*>(.*?)<\/a>/gi, (match, url, text) => {
+            return `<a href="${url}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+          });
           
         return cleanedHtml;
       },
@@ -329,6 +379,11 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
               .ProseMirror a {
                 color: #3b82f6;
                 text-decoration: underline;
+                cursor: pointer;
+              }
+              
+              .ProseMirror a:hover {
+                color: #60a5fa;
               }
               
               /* Preserve whitespace in pre tags */
