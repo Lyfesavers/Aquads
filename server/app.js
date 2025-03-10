@@ -140,6 +140,9 @@ app.get('/how-to', async (req, res, next) => {
           const blogContent = stripHtml(blog.content);
           const shortDescription = blogContent.length > 160 ? blogContent.substring(0, 160) + '...' : blogContent;
           
+          // Use the blog banner image or fall back to the new optimized image
+          const imageUrl = blog.bannerImage || `${req.protocol}://${req.get('host')}/logo712.png`;
+          
           // Create a modified version of the HTML
           let modifiedHtml = indexHtml;
           
@@ -147,10 +150,10 @@ app.get('/how-to', async (req, res, next) => {
           const metaReplacements = [
             // Simplify by using basic string replacements
             ['<meta name="twitter:card" content="summary_large_image">', '<meta name="twitter:card" content="summary_large_image">'],
-            ['<meta name="twitter:image" content="https://i.imgur.com/3kCQx6G.png">', `<meta name="twitter:image" content="${blog.bannerImage}">`],
+            ['<meta name="twitter:image" content="https://i.imgur.com/3kCQx6G.png">', `<meta name="twitter:image" content="${imageUrl}">`],
             ['<meta name="twitter:title" content="Aquads - Web3 Crypto Hub & Freelancer Marketplace">', `<meta name="twitter:title" content="${blog.title} - Aquads Blog">`],
             ['<meta name="twitter:description" content="Join the Aquads community - Your all-in-one Web3 crypto Hub and Freelancer marketplace!">', `<meta name="twitter:description" content="${shortDescription}">`],
-            ['<meta property="og:image" content="https://i.imgur.com/3kCQx6G.png">', `<meta property="og:image" content="${blog.bannerImage}">`],
+            ['<meta property="og:image" content="https://i.imgur.com/3kCQx6G.png">', `<meta property="og:image" content="${imageUrl}">`],
             ['<meta property="og:title" content="Aquads - Web3 Crypto Hub & Freelancer Marketplace">', `<meta property="og:title" content="${blog.title} - Aquads Blog">`],
             ['<meta property="og:description" content="Join the Aquads community - Your all-in-one Web3 crypto Hub and Freelancer marketplace!">', `<meta property="og:description" content="${shortDescription}">`],
             ['<meta property="og:url" content="https://aquads.xyz">', `<meta property="og:url" content="${req.protocol}://${req.get('host')}${req.originalUrl}">`],
