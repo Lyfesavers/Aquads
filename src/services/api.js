@@ -669,7 +669,14 @@ export const createBlog = async (blogData) => {
 export const updateBlog = async (blogId, blogData) => {
   try {
     const token = localStorage.getItem('token');
-    const response = await fetch(`${API_URL}/blogs/${blogId}`, {
+    if (!token) {
+      throw new Error('Authentication required. Please log in again.');
+    }
+    
+    const url = `${API_URL}/blogs/${blogId}`;
+    console.log('Making blog update request to:', url);
+    
+    const response = await fetch(url, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -677,7 +684,21 @@ export const updateBlog = async (blogId, blogData) => {
       },
       body: JSON.stringify(blogData)
     });
-    if (!response.ok) throw new Error('Failed to update blog');
+    
+    // Handle different error status codes
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('401 - Authentication failed. Your session may have expired.');
+      } else if (response.status === 404) {
+        throw new Error('404 - Blog post not found. It may have been deleted.');
+      } else if (response.status === 403) {
+        throw new Error('403 - You do not have permission to edit this blog post.');
+      } else {
+        const errorText = await response.text();
+        throw new Error(`Failed to update blog: ${response.status} ${errorText}`);
+      }
+    }
+    
     return await response.json();
   } catch (error) {
     console.error('Error updating blog:', error);

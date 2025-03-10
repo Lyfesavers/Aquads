@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet';
 import { Link, useLocation } from 'react-router-dom';
 import BlogList from './BlogList';
 import CreateBlogModal from './CreateBlogModal';
-import { API_URL } from '../services/api';
+import { API_URL, updateBlog } from '../services/api';
 
 const HowTo = ({ currentUser }) => {
   const [blogs, setBlogs] = useState([]);
@@ -134,32 +134,13 @@ const HowTo = ({ currentUser }) => {
 
   const handleEditBlog = async (blogData) => {
     try {
-      const token = currentUser?.token || localStorage.getItem('token');
-      
-      if (!token) {
-        console.error('No authentication token found');
-        setError('Authentication required. Please log in again.');
+      if (!currentUser) {
+        setError('You must be logged in to edit a blog post.');
         return;
       }
-
-      const response = await fetch(`${API_URL}/blogs/${editingBlog._id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(blogData)
-      });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          localStorage.removeItem('token');
-          setError('Your session has expired. Please log in again.');
-          return;
-        }
-        throw new Error(`Failed to update blog: ${response.statusText}`);
-      }
-
+      
+      await updateBlog(editingBlog._id, blogData);
+      
       // Only update UI if edit was successful
       await fetchBlogs();
       setEditingBlog(null);
@@ -167,7 +148,14 @@ const HowTo = ({ currentUser }) => {
       setError(null);
     } catch (error) {
       console.error('Error updating blog:', error);
-      setError(error.message || 'Failed to update blog. Please try again.');
+      
+      // Check if this is an authentication error
+      if (error.message && error.message.includes('401')) {
+        localStorage.removeItem('token');
+        setError('Your session has expired. Please log in again.');
+      } else {
+        setError(error.message || 'Failed to update blog. Please try again.');
+      }
     }
   };
 
