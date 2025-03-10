@@ -15,14 +15,17 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
 
   const handleShare = (blog) => {
     // Get the base URL for the How To page
-    const baseUrl = `${window.location.origin}/how-to`;
+    const shareUrl = `${window.location.origin}/how-to`;
     
-    // Format the URL with username-@ prefix if user is logged in
-    const formattedUrl = currentUser?.username 
-      ? `${currentUser.username}-@${baseUrl}?blogId=${blog._id}`
-      : `${baseUrl}?blogId=${blog._id}`;
+    // Add blogId as a query parameter
+    const url = `${shareUrl}?blogId=${blog._id}`;
     
-    navigator.clipboard.writeText(formattedUrl).then(() => {
+    // Add referral code if user is logged in (as a separate parameter)
+    const finalUrl = currentUser?.username 
+      ? `${url}&ref=${currentUser.username}` 
+      : url;
+    
+    navigator.clipboard.writeText(finalUrl).then(() => {
       alert('Blog link copied to clipboard!');
     }).catch(err => {
       console.error('Failed to copy:', err);
