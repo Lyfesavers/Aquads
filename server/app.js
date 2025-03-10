@@ -10,6 +10,7 @@ const bookingsRoutes = require('./routes/bookings');
 const affiliateRoutes = require('./routes/affiliates');
 const jobsRoutes = require('./routes/jobs');
 const sitemapRoutes = require('./routes/sitemap');
+// const blogsRoutes = require('./routes/blogs'); // Handled in index.js
 const Service = require('./models/Service');
 const path = require('path');
 const fs = require('fs');
@@ -142,7 +143,7 @@ app.get('/marketplace', async (req, res, next) => {
   next();
 });
 
-// Dynamic meta tags middleware for blog posts
+// Dynamic meta tags middleware for blog posts - make it work with the existing API routes
 app.get('/how-to', async (req, res, next) => {
   try {
     const blogId = req.query.blogId;
@@ -166,12 +167,7 @@ app.get('/how-to', async (req, res, next) => {
             return html ? html.replace(/<\/?[^>]+(>|$)/g, "") : "";
           };
           
-          // Escape function for content that will be inserted into regex replacements
-          const escapeRegExp = (string) => {
-            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          };
-          
-          // Escape function for content that will be inserted into HTML
+          // Escape function for HTML safety
           const escapeHtml = (string) => {
             return string
               .replace(/&/g, '&amp;')
@@ -189,31 +185,23 @@ app.get('/how-to', async (req, res, next) => {
           const imageUrl = blog.bannerImage || `${req.protocol}://${req.get('host')}/logo712.png`;
           const fullUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
           
-          console.log('Using image URL:', imageUrl);
-          
-          // Prepare safe values for insertion into HTML
-          const safeTitle = escapeHtml(blog.title);
-          const safeDescription = escapeHtml(shortDescription);
-          const safeImageUrl = escapeHtml(imageUrl);
-          const safeFullUrl = escapeHtml(fullUrl);
-          
-          // Create injected content with debug comments to help identify issues
+          // Create injected content with meta tags
           const injectedMeta = `
 <!-- START: Dynamic Meta Tags for Blog ID: ${blogId} -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@Aquads">
-<meta name="twitter:title" content="${safeTitle} - Aquads Blog">
-<meta name="twitter:description" content="${safeDescription}">
-<meta name="twitter:image" content="${safeImageUrl}">
+<meta name="twitter:title" content="${escapeHtml(blog.title)} - Aquads Blog">
+<meta name="twitter:description" content="${escapeHtml(shortDescription)}">
+<meta name="twitter:image" content="${escapeHtml(imageUrl)}">
 
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="Aquads Blog">
-<meta property="og:url" content="${safeFullUrl}">
-<meta property="og:title" content="${safeTitle} - Aquads Blog">
-<meta property="og:description" content="${safeDescription}">
-<meta property="og:image" content="${safeImageUrl}">
+<meta property="og:url" content="${escapeHtml(fullUrl)}">
+<meta property="og:title" content="${escapeHtml(blog.title)} - Aquads Blog">
+<meta property="og:description" content="${escapeHtml(shortDescription)}">
+<meta property="og:image" content="${escapeHtml(imageUrl)}">
 
-<meta name="description" content="${safeDescription}">
+<meta name="description" content="${escapeHtml(shortDescription)}">
 <!-- END: Dynamic Meta Tags -->
 `;
           
@@ -221,15 +209,11 @@ app.get('/how-to', async (req, res, next) => {
           indexHtml = indexHtml.replace('<head>', '<head>' + injectedMeta);
           
           // Update the title
-          indexHtml = indexHtml.replace(/<title>.*?<\/title>/, `<title>${safeTitle} - Aquads Blog</title>`);
+          indexHtml = indexHtml.replace(/<title>.*?<\/title>/, `<title>${escapeHtml(blog.title)} - Aquads Blog</title>`);
           
-          // Add debug comments to identify the version
+          // Add mobile scroll fix
           indexHtml = indexHtml.replace('</head>', `
-<!-- Debug Info: Dynamic meta tags added by server for blog ID: ${blogId} at ${new Date().toISOString()} -->
 <script>
-  console.log('Dynamic meta tags injected for blog:', '${blogId}');
-  
-  // Mobile scroll fix script
   function scrollToBlog() {
     const params = new URLSearchParams(window.location.search);
     const blogId = params.get('blogId');
@@ -253,8 +237,6 @@ app.get('/how-to', async (req, res, next) => {
             window.scrollTo(0, elementTop);
           }, delay);
         });
-      } else {
-        console.log('Blog element not found:', 'blog-' + blogId);
       }
     }
 
@@ -269,7 +251,7 @@ app.get('/how-to', async (req, res, next) => {
 </head>
 `);
           
-          console.log('Sending HTML with blog meta tags for:', blog.title);
+          console.log('Sending HTML with blog meta tags');
           return res.send(indexHtml);
         } else {
           console.log('Blog not found with ID:', blogId);
