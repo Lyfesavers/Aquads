@@ -10,7 +10,6 @@ const bookingsRoutes = require('./routes/bookings');
 const affiliateRoutes = require('./routes/affiliates');
 const jobsRoutes = require('./routes/jobs');
 const sitemapRoutes = require('./routes/sitemap');
-// const blogsRoutes = require('./routes/blogs'); // Handled in index.js
 const Service = require('./models/Service');
 const path = require('path');
 const fs = require('fs');
