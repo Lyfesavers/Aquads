@@ -128,7 +128,7 @@ app.get('/how-to', async (req, res, next) => {
         if (blog) {
           console.log('Found blog:', blog.title, 'with banner:', blog.bannerImage);
           
-          // Read the index.html file (this is the key part)
+          // Read the index.html file
           const indexHtml = await fs.readFile(path.join(__dirname, '../build/index.html'), 'utf8');
           
           // Strip HTML from content for meta description
@@ -142,30 +142,60 @@ app.get('/how-to', async (req, res, next) => {
           
           // Use the blog banner image or fall back to the new optimized image
           const imageUrl = blog.bannerImage || `${req.protocol}://${req.get('host')}/logo712.png`;
+          const fullUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
           
-          // Create a modified version of the HTML
+          console.log('Using image URL:', imageUrl);
+          
+          // Hard code meta tag values without regex for testing
           let modifiedHtml = indexHtml;
           
-          // Basic find and replace approach (similar to marketplace)
-          const metaReplacements = [
-            // Simplify by using basic string replacements
-            ['<meta name="twitter:card" content="summary_large_image">', '<meta name="twitter:card" content="summary_large_image">'],
-            ['<meta name="twitter:image" content="https://i.imgur.com/3kCQx6G.png">', `<meta name="twitter:image" content="${imageUrl}">`],
-            ['<meta name="twitter:title" content="Aquads - Web3 Crypto Hub & Freelancer Marketplace">', `<meta name="twitter:title" content="${blog.title} - Aquads Blog">`],
-            ['<meta name="twitter:description" content="Join the Aquads community - Your all-in-one Web3 crypto Hub and Freelancer marketplace!">', `<meta name="twitter:description" content="${shortDescription}">`],
-            ['<meta property="og:image" content="https://i.imgur.com/3kCQx6G.png">', `<meta property="og:image" content="${imageUrl}">`],
-            ['<meta property="og:title" content="Aquads - Web3 Crypto Hub & Freelancer Marketplace">', `<meta property="og:title" content="${blog.title} - Aquads Blog">`],
-            ['<meta property="og:description" content="Join the Aquads community - Your all-in-one Web3 crypto Hub and Freelancer marketplace!">', `<meta property="og:description" content="${shortDescription}">`],
-            ['<meta property="og:url" content="https://aquads.xyz">', `<meta property="og:url" content="${req.protocol}://${req.get('host')}${req.originalUrl}">`],
-            ['<meta property="og:type" content="website">', '<meta property="og:type" content="article">'],
-            ['<title>Aquads - All in one Web3 crypto Hub and Freelancer marketplace!</title>', `<title>${blog.title} - Aquads Blog</title>`],
-            ['<meta name="description" content="Aquads - All in one Web3 crypto Hub and Freelancer marketplace!">', `<meta name="description" content="${shortDescription}">`]
-          ];
+          // Insert all new meta tags directly after the opening head tag to avoid replacement issues
+          const newMetaTags = `
+            <!-- Twitter Card meta tags -->
+            <meta name="twitter:card" content="summary_large_image">
+            <meta name="twitter:image" content="${imageUrl}">
+            <meta name="twitter:title" content="${blog.title} - Aquads Blog">
+            <meta name="twitter:description" content="${shortDescription}">
+            
+            <!-- Open Graph meta tags -->
+            <meta property="og:title" content="${blog.title} - Aquads Blog">
+            <meta property="og:description" content="${shortDescription}">
+            <meta property="og:image" content="${imageUrl}">
+            <meta property="og:url" content="${fullUrl}">
+            <meta property="og:type" content="article">
+            
+            <!-- Debugging info -->
+            <meta name="blog-id" content="${blog._id}">
+            <meta name="generated-at" content="${new Date().toISOString()}">
+            
+            <!-- Remove original tags with this script -->
+            <script>
+              document.addEventListener('DOMContentLoaded', function() {
+                // Remove the original meta tags to avoid duplication
+                const originals = [
+                  'meta[name="twitter:card"]', 'meta[name="twitter:image"]', 
+                  'meta[name="twitter:title"]', 'meta[name="twitter:description"]',
+                  'meta[property="og:title"]', 'meta[property="og:description"]',
+                  'meta[property="og:image"]', 'meta[property="og:url"]',
+                  'meta[property="og:type"]'
+                ];
+                
+                // Keep only the first instance of each tag (our injected ones)
+                originals.forEach(selector => {
+                  const elements = document.querySelectorAll(selector);
+                  for (let i = 1; i < elements.length; i++) {
+                    elements[i].parentNode.removeChild(elements[i]);
+                  }
+                });
+              });
+            </script>
+          `;
           
-          // Perform all the replacements
-          for (const [find, replace] of metaReplacements) {
-            modifiedHtml = modifiedHtml.replace(find, replace);
-          }
+          // Insert the new meta tags right after the opening head tag
+          modifiedHtml = modifiedHtml.replace('<head>', '<head>' + newMetaTags);
+          
+          // Update the title tag
+          modifiedHtml = modifiedHtml.replace(/<title>.*?<\/title>/i, `<title>${blog.title} - Aquads Blog</title>`);
           
           // Add mobile scroll fix
           modifiedHtml = modifiedHtml.replace('</head>', `
@@ -206,6 +236,21 @@ app.get('/how-to', async (req, res, next) => {
             </script>
             </head>
           `);
+          
+          // Log the head content for debugging
+          const headContent = modifiedHtml.match(/<head>[\s\S]*?<\/head>/i)[0];
+          console.log('Meta tags in modified HTML:');
+          
+          // Extract and log only meta tags for debugging
+          const metaTagsRegex = /<meta[^>]*>/gi;
+          const extractedMetaTags = headContent.match(metaTagsRegex);
+          if (extractedMetaTags) {
+            extractedMetaTags.forEach(tag => {
+              if (tag.includes('twitter') || tag.includes('og:')) {
+                console.log(tag);
+              }
+            });
+          }
           
           console.log('Sending HTML with blog meta tags');
           return res.send(modifiedHtml);
