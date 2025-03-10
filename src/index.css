@@ -936,3 +936,17 @@ body {
     font-size: 0.8em !important;
   }
 }
+
+/* Neon pink/violet styling for hyperlinks in blog content */
+.prose a {
+  color: #f700ff; /* Neon pink/violet */
+  text-decoration: underline;
+  cursor: pointer;
+  text-shadow: 0 0 5px rgba(247, 0, 255, 0.5);
+  transition: all 0.2s ease;
+}
+
+.prose a:hover {
+  color: #cb6ce6; /* Lighter neon pink/violet on hover */
+  text-shadow: 0 0 8px rgba(247, 0, 255, 0.7);
+}
