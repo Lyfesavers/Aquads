@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet';
 import { Link, useLocation } from 'react-router-dom';
 import BlogList from './BlogList';
 import CreateBlogModal from './CreateBlogModal';
-import { API_URL, updateBlog } from '../services/api';
+import { API_URL, deleteBlog } from '../services/api';
 
 const HowTo = ({ currentUser }) => {
   const [blogs, setBlogs] = useState([]);
@@ -134,42 +134,38 @@ const HowTo = ({ currentUser }) => {
 
   const handleEditBlog = async (blogData) => {
     try {
-      // Get token from both possible sources (same as handleDeleteBlog)
       const token = currentUser?.token || localStorage.getItem('token');
       
       if (!token) {
-        console.error('No authentication token found');
         setError('Authentication required. Please log in again.');
         return;
       }
 
+      // Use a simpler, more direct approach that matches the working delete function
       const response = await fetch(`${API_URL}/blogs/${editingBlog._id}`, {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(blogData)
+        body: JSON.stringify({
+          title: blogData.title,
+          content: blogData.content,
+          bannerImage: blogData.bannerImage
+        })
       });
 
       if (!response.ok) {
-        if (response.status === 401) {
-          // Clear invalid token
-          localStorage.removeItem('token');
-          setError('Your session has expired. Please log in again.');
-          return;
-        }
-        throw new Error(`Failed to update blog: ${response.statusText}`);
+        throw new Error('Failed to update blog');
       }
 
-      // Only update UI if edit was successful
       await fetchBlogs();
       setEditingBlog(null);
       setShowCreateModal(false);
       setError(null);
     } catch (error) {
       console.error('Error updating blog:', error);
-      setError(error.message || 'Failed to update blog. Please try again.');
+      setError('Failed to update blog. Please try again.');
     }
   };
 

@@ -86,13 +86,16 @@ router.post('/', auth, async (req, res) => {
 // Update blog (auth required)
 router.patch('/:id', auth, async (req, res) => {
   try {
-    const blog = await Blog.findOne({
-      _id: req.params.id,
-      author: req.user.userId
-    });
-
+    // First, try to find the blog regardless of author
+    const blog = await Blog.findById(req.params.id);
+    
     if (!blog) {
       return res.status(404).json({ error: 'Blog not found' });
+    }
+    
+    // Check if user is either the author or an admin
+    if (blog.author.toString() !== req.user.userId && !req.user.isAdmin) {
+      return res.status(403).json({ error: 'Not authorized to edit this blog' });
     }
 
     // Validate content length if it's being updated
@@ -129,14 +132,20 @@ router.patch('/:id', auth, async (req, res) => {
 // Delete blog (auth required)
 router.delete('/:id', auth, async (req, res) => {
   try {
-    const blog = await Blog.findOneAndDelete({
-      _id: req.params.id,
-      author: req.user.userId
-    });
-
+    // First find the blog to check ownership
+    const blog = await Blog.findById(req.params.id);
+    
     if (!blog) {
       return res.status(404).json({ error: 'Blog not found' });
     }
+    
+    // Check if user is either the author or an admin
+    if (blog.author.toString() !== req.user.userId && !req.user.isAdmin) {
+      return res.status(403).json({ error: 'Not authorized to delete this blog' });
+    }
+    
+    // Now delete the blog
+    await Blog.findByIdAndDelete(req.params.id);
 
     res.json({ message: 'Blog deleted successfully' });
   } catch (error) {
