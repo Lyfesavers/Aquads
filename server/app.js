@@ -176,49 +176,49 @@ app.get('/how-to', async (req, res, next) => {
           
           console.log('Using image URL:', imageUrl);
           
-          // Completely replace the head section with a new one containing all meta tags
-          const headStartIndex = indexHtml.indexOf('<head>') + 6;
-          const headEndIndex = indexHtml.indexOf('</head>');
+          // Target the dynamic meta tag elements with IDs
+          indexHtml = indexHtml
+            // Update the title tag
+            .replace(/<title>.*?<\/title>/, `<title>${blog.title} - Aquads Blog</title>`)
+            // Update the dynamic meta tags using their IDs
+            .replace(/content="[^"]*"(\s+id="dynamic-twitter-image")/, `content="${imageUrl}"$1`)
+            .replace(/content="[^"]*"(\s+id="dynamic-twitter-title")/, `content="${blog.title} - Aquads Blog"$1`)
+            .replace(/content="[^"]*"(\s+id="dynamic-twitter-description")/, `content="${shortDescription}"$1`)
+            .replace(/content="[^"]*"(\s+id="dynamic-og-image")/, `content="${imageUrl}"$1`)
+            .replace(/content="[^"]*"(\s+id="dynamic-og-title")/, `content="${blog.title} - Aquads Blog"$1`)
+            .replace(/content="[^"]*"(\s+id="dynamic-og-description")/, `content="${shortDescription}"$1`)
+            .replace(/content="[^"]*"(\s+id="dynamic-og-url")/, `content="${fullUrl}"$1`);
+
+          // Also update the regular meta tags as a fallback
+          indexHtml = indexHtml
+            .replace(/<meta\s+name="twitter:image"[^>]*>(?!\s+id)/, `<meta name="twitter:image" content="${imageUrl}">`)
+            .replace(/<meta\s+name="twitter:title"[^>]*>(?!\s+id)/, `<meta name="twitter:title" content="${blog.title} - Aquads Blog">`)
+            .replace(/<meta\s+name="twitter:description"[^>]*>(?!\s+id)/, `<meta name="twitter:description" content="${shortDescription}">`)
+            .replace(/<meta\s+property="og:image"[^>]*>(?!\s+id)/, `<meta property="og:image" content="${imageUrl}">`)
+            .replace(/<meta\s+property="og:title"[^>]*>(?!\s+id)/, `<meta property="og:title" content="${blog.title} - Aquads Blog">`)
+            .replace(/<meta\s+property="og:description"[^>]*>(?!\s+id)/, `<meta property="og:description" content="${shortDescription}">`)
+            .replace(/<meta\s+property="og:url"[^>]*>(?!\s+id)/, `<meta property="og:url" content="${fullUrl}">`);
           
-          // Keep the existing head content
-          const existingHead = indexHtml.substring(headStartIndex, headEndIndex);
-          
-          // Create a new head with the blog-specific meta tags
-          const newHead = `
-            <meta charset="utf-8" />
-            <link rel="icon" href="/favicon.ico" />
-            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-            <meta name="theme-color" content="#000000" />
-            <meta name="google-site-verification" content="UMC2vp6y4mZgNAXQYgv9nqe83JsEKOIg7Tv8tDT7_TA" />
-            
-            <!-- Primary Meta Tags -->
-            <title>${blog.title} - Aquads Blog</title>
-            <meta name="description" content="${shortDescription}">
-            
-            <!-- Twitter Card meta tags -->
-            <meta name="twitter:card" content="summary_large_image">
-            <meta name="twitter:site" content="@Aquads">
-            <meta name="twitter:title" content="${blog.title} - Aquads Blog">
-            <meta name="twitter:description" content="${shortDescription}">
-            <meta name="twitter:image" content="${imageUrl}">
-            
-            <!-- Open Graph meta tags -->
-            <meta property="og:type" content="article">
-            <meta property="og:site_name" content="Aquads Blog">
-            <meta property="og:url" content="${fullUrl}">
-            <meta property="og:title" content="${blog.title} - Aquads Blog">
-            <meta property="og:description" content="${shortDescription}">
-            <meta property="og:image" content="${imageUrl}">
-            
-            <!-- Blog ID for scrolling -->
-            <meta name="blog-id" content="${blogId}">
-            <meta name="generated-at" content="${new Date().toISOString()}">
-            
-            <!-- Keep existing head content except meta tags -->
-            ${existingHead.replace(/<meta[^>]*>/g, '').replace(/<title>.*?<\/title>/g, '')}
-            
-            <!-- Mobile scroll fix -->
+          // Add a script to ensure meta tags are updated after page load
+          indexHtml = indexHtml.replace('</head>', `
             <script>
+              // This code ensures the meta tags are set correctly
+              document.addEventListener('DOMContentLoaded', function() {
+                // Directly set the values of the dynamic meta tags
+                const setMetaContent = (id, content) => {
+                  const element = document.getElementById(id);
+                  if (element) element.setAttribute('content', content);
+                };
+
+                setMetaContent('dynamic-twitter-image', '${imageUrl}');
+                setMetaContent('dynamic-twitter-title', '${blog.title} - Aquads Blog');
+                setMetaContent('dynamic-twitter-description', '${shortDescription}');
+                setMetaContent('dynamic-og-image', '${imageUrl}');
+                setMetaContent('dynamic-og-title', '${blog.title} - Aquads Blog');
+                setMetaContent('dynamic-og-description', '${shortDescription}');
+                setMetaContent('dynamic-og-url', '${fullUrl}');
+              });
+              
               function scrollToBlog() {
                 const params = new URLSearchParams(window.location.search);
                 const blogId = params.get('blogId');
@@ -253,13 +253,11 @@ app.get('/how-to', async (req, res, next) => {
               window.addEventListener('load', scrollToBlog);
               document.addEventListener('DOMContentLoaded', scrollToBlog);
             </script>
-          `;
-          
-          // Replace the old head with the new one
-          const modifiedHtml = indexHtml.substring(0, headStartIndex) + newHead + indexHtml.substring(headEndIndex);
+            </head>
+          `);
           
           console.log('Sending HTML with blog meta tags for:', blog.title);
-          return res.send(modifiedHtml);
+          return res.send(indexHtml);
         } else {
           console.log('Blog not found with ID:', blogId);
         }
