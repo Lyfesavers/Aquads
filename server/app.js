@@ -57,53 +57,83 @@ app.get('/marketplace', async (req, res, next) => {
         // Read the index.html file
         let indexHtml = await fs.readFile(path.join(__dirname, '../build/index.html'), 'utf8');
         
-        // Replace meta tags with service-specific content
-        indexHtml = indexHtml
-          .replace(/<meta name="twitter:image"[^>]*>/, `<meta name="twitter:image" content="${service.image}">`)
-          .replace(/<meta name="twitter:title"[^>]*>/, `<meta name="twitter:title" content="${service.title} - Aquads Marketplace">`)
-          .replace(/<meta name="twitter:description"[^>]*>/, `<meta name="twitter:description" content="${service.description.slice(0, 200)}...">`)
-          .replace(/<meta property="og:image"[^>]*>/, `<meta property="og:image" content="${service.image}">`)
-          .replace(/<meta property="og:title"[^>]*>/, `<meta property="og:title" content="${service.title} - Aquads Marketplace">`)
-          .replace(/<meta property="og:description"[^>]*>/, `<meta property="og:description" content="${service.description.slice(0, 200)}...">`)
-          .replace(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="${req.protocol}://${req.get('host')}${req.originalUrl}">`)
-          .replace(/<title>.*?<\/title>/, `<title>${service.title} - Aquads Marketplace</title>`);
+        // Completely replace the head section with a new one containing all meta tags
+        const headStartIndex = indexHtml.indexOf('<head>') + 6;
+        const headEndIndex = indexHtml.indexOf('</head>');
         
-        // Mobile scroll fix
-        indexHtml = indexHtml
-          .replace('</head>', `
-           <script>
-             function scrollToService() {
-                const params = new URLSearchParams(window.location.search);
-                const serviceId = params.get('service');
-                if (!serviceId) return;
+        // Keep the existing head content
+        const existingHead = indexHtml.substring(headStartIndex, headEndIndex);
+        
+        // Create a new head with the service-specific meta tags
+        const newHead = `
+          <meta charset="utf-8" />
+          <link rel="icon" href="/favicon.ico" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+          <meta name="theme-color" content="#000000" />
+          <meta name="google-site-verification" content="UMC2vp6y4mZgNAXQYgv9nqe83JsEKOIg7Tv8tDT7_TA" />
+          
+          <!-- Primary Meta Tags -->
+          <title>${service.title} - Aquads Marketplace</title>
+          <meta name="description" content="${service.description.slice(0, 160)}...">
+          
+          <!-- Twitter Card meta tags -->
+          <meta name="twitter:card" content="summary_large_image">
+          <meta name="twitter:site" content="@Aquads">
+          <meta name="twitter:title" content="${service.title} - Aquads Marketplace">
+          <meta name="twitter:description" content="${service.description.slice(0, 160)}...">
+          <meta name="twitter:image" content="${service.image}">
+          
+          <!-- Open Graph meta tags -->
+          <meta property="og:type" content="product">
+          <meta property="og:site_name" content="Aquads Marketplace">
+          <meta property="og:url" content="${req.protocol}://${req.get('host')}${req.originalUrl}">
+          <meta property="og:title" content="${service.title} - Aquads Marketplace">
+          <meta property="og:description" content="${service.description.slice(0, 160)}...">
+          <meta property="og:image" content="${service.image}">
+          
+          <!-- Service ID for scrolling -->
+          <meta name="service-id" content="${serviceId}">
+          
+          <!-- Keep existing head content except meta tags -->
+          ${existingHead.replace(/<meta[^>]*>/g, '').replace(/<title>.*?<\/title>/g, '')}
+          
+          <!-- Mobile scroll fix -->
+          <script>
+            function scrollToService() {
+              const params = new URLSearchParams(window.location.search);
+              const serviceId = params.get('service');
+              if (!serviceId) return;
 
-                function doScroll() {
-                  const element = document.querySelector('[data-service-id="' + serviceId + '"]');
-                  if (element) {
-                    // Get element position
-                    const elementTop = element.offsetTop - 100;
-                    
-                    // Force multiple scroll attempts with increasing delays
-                    [0, 100, 500, 1000, 2000].forEach(delay => {
-                      setTimeout(() => {
-                        window.scrollTo(0, elementTop);
-                      }, delay);
-                    });
-                  }
+              function doScroll() {
+                const element = document.querySelector('[data-service-id="' + serviceId + '"]');
+                if (element) {
+                  // Get element position
+                  const elementTop = element.offsetTop - 100;
+                  
+                  // Force multiple scroll attempts with increasing delays
+                  [0, 100, 500, 1000, 2000].forEach(delay => {
+                    setTimeout(() => {
+                      window.scrollTo(0, elementTop);
+                    }, delay);
+                  });
                 }
+              }
 
-                // Initial delay to ensure content is loaded
-                setTimeout(doScroll, 1500);
-               }
+              // Initial delay to ensure content is loaded
+              setTimeout(doScroll, 1500);
+            }
 
-             // Run on both events
-             window.addEventListener('load', scrollToService);
-           document.addEventListener('DOMContentLoaded', scrollToService);
-         </script>
-         </head>
-        `);
+            // Run on both events
+            window.addEventListener('load', scrollToService);
+            document.addEventListener('DOMContentLoaded', scrollToService);
+          </script>
+        `;
         
-        return res.send(indexHtml);
+        // Replace the old head with the new one
+        const modifiedHtml = indexHtml.substring(0, headStartIndex) + newHead + indexHtml.substring(headEndIndex);
+        
+        console.log('Sending HTML with service meta tags for:', service.title);
+        return res.send(modifiedHtml);
       }
     }
   } catch (error) {
@@ -129,7 +159,7 @@ app.get('/how-to', async (req, res, next) => {
           console.log('Found blog:', blog.title, 'with banner:', blog.bannerImage);
           
           // Read the index.html file
-          const indexHtml = await fs.readFile(path.join(__dirname, '../build/index.html'), 'utf8');
+          let indexHtml = await fs.readFile(path.join(__dirname, '../build/index.html'), 'utf8');
           
           // Strip HTML from content for meta description
           const stripHtml = (html) => {
@@ -146,59 +176,48 @@ app.get('/how-to', async (req, res, next) => {
           
           console.log('Using image URL:', imageUrl);
           
-          // Hard code meta tag values without regex for testing
-          let modifiedHtml = indexHtml;
+          // Completely replace the head section with a new one containing all meta tags
+          const headStartIndex = indexHtml.indexOf('<head>') + 6;
+          const headEndIndex = indexHtml.indexOf('</head>');
           
-          // Insert all new meta tags directly after the opening head tag to avoid replacement issues
-          const newMetaTags = `
+          // Keep the existing head content
+          const existingHead = indexHtml.substring(headStartIndex, headEndIndex);
+          
+          // Create a new head with the blog-specific meta tags
+          const newHead = `
+            <meta charset="utf-8" />
+            <link rel="icon" href="/favicon.ico" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+            <meta name="theme-color" content="#000000" />
+            <meta name="google-site-verification" content="UMC2vp6y4mZgNAXQYgv9nqe83JsEKOIg7Tv8tDT7_TA" />
+            
+            <!-- Primary Meta Tags -->
+            <title>${blog.title} - Aquads Blog</title>
+            <meta name="description" content="${shortDescription}">
+            
             <!-- Twitter Card meta tags -->
             <meta name="twitter:card" content="summary_large_image">
-            <meta name="twitter:image" content="${imageUrl}">
+            <meta name="twitter:site" content="@Aquads">
             <meta name="twitter:title" content="${blog.title} - Aquads Blog">
             <meta name="twitter:description" content="${shortDescription}">
+            <meta name="twitter:image" content="${imageUrl}">
             
             <!-- Open Graph meta tags -->
+            <meta property="og:type" content="article">
+            <meta property="og:site_name" content="Aquads Blog">
+            <meta property="og:url" content="${fullUrl}">
             <meta property="og:title" content="${blog.title} - Aquads Blog">
             <meta property="og:description" content="${shortDescription}">
             <meta property="og:image" content="${imageUrl}">
-            <meta property="og:url" content="${fullUrl}">
-            <meta property="og:type" content="article">
             
-            <!-- Debugging info -->
-            <meta name="blog-id" content="${blog._id}">
+            <!-- Blog ID for scrolling -->
+            <meta name="blog-id" content="${blogId}">
             <meta name="generated-at" content="${new Date().toISOString()}">
             
-            <!-- Remove original tags with this script -->
-            <script>
-              document.addEventListener('DOMContentLoaded', function() {
-                // Remove the original meta tags to avoid duplication
-                const originals = [
-                  'meta[name="twitter:card"]', 'meta[name="twitter:image"]', 
-                  'meta[name="twitter:title"]', 'meta[name="twitter:description"]',
-                  'meta[property="og:title"]', 'meta[property="og:description"]',
-                  'meta[property="og:image"]', 'meta[property="og:url"]',
-                  'meta[property="og:type"]'
-                ];
-                
-                // Keep only the first instance of each tag (our injected ones)
-                originals.forEach(selector => {
-                  const elements = document.querySelectorAll(selector);
-                  for (let i = 1; i < elements.length; i++) {
-                    elements[i].parentNode.removeChild(elements[i]);
-                  }
-                });
-              });
-            </script>
-          `;
-          
-          // Insert the new meta tags right after the opening head tag
-          modifiedHtml = modifiedHtml.replace('<head>', '<head>' + newMetaTags);
-          
-          // Update the title tag
-          modifiedHtml = modifiedHtml.replace(/<title>.*?<\/title>/i, `<title>${blog.title} - Aquads Blog</title>`);
-          
-          // Add mobile scroll fix
-          modifiedHtml = modifiedHtml.replace('</head>', `
+            <!-- Keep existing head content except meta tags -->
+            ${existingHead.replace(/<meta[^>]*>/g, '').replace(/<title>.*?<\/title>/g, '')}
+            
+            <!-- Mobile scroll fix -->
             <script>
               function scrollToBlog() {
                 const params = new URLSearchParams(window.location.search);
@@ -234,25 +253,12 @@ app.get('/how-to', async (req, res, next) => {
               window.addEventListener('load', scrollToBlog);
               document.addEventListener('DOMContentLoaded', scrollToBlog);
             </script>
-            </head>
-          `);
+          `;
           
-          // Log the head content for debugging
-          const headContent = modifiedHtml.match(/<head>[\s\S]*?<\/head>/i)[0];
-          console.log('Meta tags in modified HTML:');
+          // Replace the old head with the new one
+          const modifiedHtml = indexHtml.substring(0, headStartIndex) + newHead + indexHtml.substring(headEndIndex);
           
-          // Extract and log only meta tags for debugging
-          const metaTagsRegex = /<meta[^>]*>/gi;
-          const extractedMetaTags = headContent.match(metaTagsRegex);
-          if (extractedMetaTags) {
-            extractedMetaTags.forEach(tag => {
-              if (tag.includes('twitter') || tag.includes('og:')) {
-                console.log(tag);
-              }
-            });
-          }
-          
-          console.log('Sending HTML with blog meta tags');
+          console.log('Sending HTML with blog meta tags for:', blog.title);
           return res.send(modifiedHtml);
         } else {
           console.log('Blog not found with ID:', blogId);
