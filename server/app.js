@@ -116,7 +116,7 @@ app.get('/marketplace', async (req, res, next) => {
 app.get('/how-to', async (req, res, next) => {
   try {
     const blogId = req.query.blogId;
-    console.log('Blog request received, blogId:', blogId); // Log all requests
+    console.log('Blog request received, blogId:', blogId);
     
     if (blogId) {
       // Import Blog model here to avoid circular dependencies
@@ -128,49 +128,44 @@ app.get('/how-to', async (req, res, next) => {
         if (blog) {
           console.log('Found blog:', blog.title, 'with banner:', blog.bannerImage);
           
-          // Read the index.html file
-          let indexHtml = await fs.readFile(path.join(__dirname, '../build/index.html'), 'utf8');
+          // Read the index.html file (this is the key part)
+          const indexHtml = await fs.readFile(path.join(__dirname, '../build/index.html'), 'utf8');
           
           // Strip HTML from content for meta description
           const stripHtml = (html) => {
-            return html.replace(/<\/?[^>]+(>|$)/g, "");
+            return html ? html.replace(/<\/?[^>]+(>|$)/g, "") : "";
           };
           
+          // Get short description from blog content
           const blogContent = stripHtml(blog.content);
           const shortDescription = blogContent.length > 160 ? blogContent.substring(0, 160) + '...' : blogContent;
-          const fullUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
           
-          console.log('Setting meta tags with:');
-          console.log('- Image:', blog.bannerImage);
-          console.log('- Title:', blog.title);
-          console.log('- URL:', fullUrl);
+          // Create a modified version of the HTML
+          let modifiedHtml = indexHtml;
           
-          // Replace meta tags with blog-specific content - use Discord-friendly Twitter card format
-          indexHtml = indexHtml
-            // Twitter card format (Discord uses this)
-            .replace(/<meta name="twitter:card"[^>]*>/, `<meta name="twitter:card" content="summary_large_image">`)
-            .replace(/<meta name="twitter:site"[^>]*>/, `<meta name="twitter:site" content="@Aquads">`)
-            .replace(/<meta name="twitter:title"[^>]*>/, `<meta name="twitter:title" content="${blog.title} - Aquads Blog">`)
-            .replace(/<meta name="twitter:description"[^>]*>/, `<meta name="twitter:description" content="${shortDescription}">`)
-            .replace(/<meta name="twitter:image"[^>]*>/, `<meta name="twitter:image" content="${blog.bannerImage}">`)
-            // Open Graph format
-            .replace(/<meta property="og:type"[^>]*>/, `<meta property="og:type" content="article">`)
-            .replace(/<meta property="og:site_name"[^>]*>/, `<meta property="og:site_name" content="Aquads">`)
-            .replace(/<meta property="og:title"[^>]*>/, `<meta property="og:title" content="${blog.title} - Aquads Blog">`)
-            .replace(/<meta property="og:description"[^>]*>/, `<meta property="og:description" content="${shortDescription}">`)
-            .replace(/<meta property="og:image"[^>]*>/, `<meta property="og:image" content="${blog.bannerImage}">`)
-            .replace(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="${fullUrl}">`)
-            // Standard HTML
-            .replace(/<title>.*?<\/title>/, `<title>${blog.title} - Aquads Blog</title>`)
-            .replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${shortDescription}">`);
+          // Basic find and replace approach (similar to marketplace)
+          const metaReplacements = [
+            // Simplify by using basic string replacements
+            ['<meta name="twitter:card" content="summary_large_image">', '<meta name="twitter:card" content="summary_large_image">'],
+            ['<meta name="twitter:image" content="https://i.imgur.com/3kCQx6G.png">', `<meta name="twitter:image" content="${blog.bannerImage}">`],
+            ['<meta name="twitter:title" content="Aquads - Web3 Crypto Hub & Freelancer Marketplace">', `<meta name="twitter:title" content="${blog.title} - Aquads Blog">`],
+            ['<meta name="twitter:description" content="Join the Aquads community - Your all-in-one Web3 crypto Hub and Freelancer marketplace!">', `<meta name="twitter:description" content="${shortDescription}">`],
+            ['<meta property="og:image" content="https://i.imgur.com/3kCQx6G.png">', `<meta property="og:image" content="${blog.bannerImage}">`],
+            ['<meta property="og:title" content="Aquads - Web3 Crypto Hub & Freelancer Marketplace">', `<meta property="og:title" content="${blog.title} - Aquads Blog">`],
+            ['<meta property="og:description" content="Join the Aquads community - Your all-in-one Web3 crypto Hub and Freelancer marketplace!">', `<meta property="og:description" content="${shortDescription}">`],
+            ['<meta property="og:url" content="https://aquads.xyz">', `<meta property="og:url" content="${req.protocol}://${req.get('host')}${req.originalUrl}">`],
+            ['<meta property="og:type" content="website">', '<meta property="og:type" content="article">'],
+            ['<title>Aquads - All in one Web3 crypto Hub and Freelancer marketplace!</title>', `<title>${blog.title} - Aquads Blog</title>`],
+            ['<meta name="description" content="Aquads - All in one Web3 crypto Hub and Freelancer marketplace!">', `<meta name="description" content="${shortDescription}">`]
+          ];
           
-          // Add meta tags if they don't exist
-          if (!indexHtml.includes('<meta property="og:site_name"')) {
-            indexHtml = indexHtml.replace('</head>', `<meta property="og:site_name" content="Aquads">\n</head>`);
+          // Perform all the replacements
+          for (const [find, replace] of metaReplacements) {
+            modifiedHtml = modifiedHtml.replace(find, replace);
           }
           
-          // Similar mobile scroll fix for blogs
-          indexHtml = indexHtml.replace('</head>', `
+          // Add mobile scroll fix
+          modifiedHtml = modifiedHtml.replace('</head>', `
             <script>
               function scrollToBlog() {
                 const params = new URLSearchParams(window.location.search);
@@ -209,8 +204,8 @@ app.get('/how-to', async (req, res, next) => {
             </head>
           `);
           
-          console.log('Sending HTML with dynamic meta tags');
-          return res.send(indexHtml);
+          console.log('Sending HTML with blog meta tags');
+          return res.send(modifiedHtml);
         } else {
           console.log('Blog not found with ID:', blogId);
         }
