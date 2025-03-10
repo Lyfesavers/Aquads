@@ -1,9 +1,28 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import BlogList from './BlogList';
 import CreateBlogModal from './CreateBlogModal';
 import { API_URL, deleteBlog } from '../services/api';
+
+// Helper function to create URL-friendly slugs
+const createSlug = (title) => {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+};
+
+// Helper function to extract blogId from slug URL
+const extractBlogIdFromPath = (pathname) => {
+  if (pathname.startsWith('/how-to/')) {
+    const slug = pathname.substring('/how-to/'.length);
+    const slugParts = slug.split('-');
+    // The ID should be the last part after the last dash
+    return slugParts[slugParts.length - 1];
+  }
+  return null;
+};
 
 const HowTo = ({ currentUser }) => {
   const [blogs, setBlogs] = useState([]);
@@ -12,12 +31,34 @@ const HowTo = ({ currentUser }) => {
   const [error, setError] = useState(null);
   const [videoError, setVideoError] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const blogListRef = useRef(null);
   const PLAYLIST_ID = 'PLKHtulN0_0h8hun9lEhYHPGm4Mqophidj';
 
   useEffect(() => {
-    fetchBlogs();
-  }, []);
+    // On component mount, check if we're coming from an SEO-friendly URL
+    const params = new URLSearchParams(location.search);
+    const queryBlogId = params.get('blogId');
+    
+    // Check if we're on a path-based URL
+    const pathBlogId = extractBlogIdFromPath(location.pathname);
+    
+    // If we have a blogId in the path but not in query params, redirect to the query param version
+    // This keeps our app's internal logic consistent while supporting SEO-friendly URLs
+    if (pathBlogId && !queryBlogId) {
+      navigate(`/how-to?blogId=${pathBlogId}`, { replace: true });
+    }
+    
+    // Use either the query param blogId or path blogId to fetch and display the blog
+    const blogIdToUse = queryBlogId || pathBlogId;
+    if (blogIdToUse) {
+      fetchBlogs().then(() => {
+        setSharedBlogId(blogIdToUse);
+      });
+    } else {
+      fetchBlogs();
+    }
+  }, [location, navigate]);
 
   useEffect(() => {
     // Handle URL parameters for shared blogs
@@ -243,6 +284,12 @@ const HowTo = ({ currentUser }) => {
             <meta name="twitter:title" content={`${sharedBlog.title} - Aquads Blog`} />
             <meta name="twitter:description" content={sharedBlog.content?.replace(/<[^>]*>/g, '').slice(0, 200) + '...'} />
             <meta name="twitter:image" content={sharedBlog.bannerImage} />
+            
+            {/* Canonical link for SEO */}
+            <link 
+              rel="canonical" 
+              href={`${window.location.origin}/how-to/${createSlug(sharedBlog.title)}-${sharedBlog._id}`} 
+            />
             
             {/* JSON-LD BlogPosting schema.org structured data */}
             <script type="application/ld+json">

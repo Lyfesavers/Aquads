@@ -4,6 +4,16 @@ const Blog = require('../models/Blog');
 const Service = require('../models/Service');
 
 /**
+ * Generate a URL-friendly slug from a title
+ */
+function createSlug(title) {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
+/**
  * Generate XML sitemap
  */
 router.get('/', async (req, res) => {
@@ -57,12 +67,13 @@ router.get('/', async (req, res) => {
   </url>`;
     });
     
-    // Add blogs with error handling
+    // Add blogs with SEO-friendly URLs
     blogs.forEach(blog => {
       try {
+        const slug = createSlug(blog.title);
         xml += `
   <url>
-    <loc>${baseUrl}/how-to?blogId=${blog._id}</loc>
+    <loc>${baseUrl}/how-to/${slug}-${blog._id}</loc>
     <lastmod>${new Date(blog.updatedAt || blog.createdAt).toISOString()}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>

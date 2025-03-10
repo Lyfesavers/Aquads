@@ -277,6 +277,7 @@ app.use('/api/points', pointsRoutes);
 app.use('/api/bookings', bookingsRoutes);
 app.use('/api/affiliates', affiliateRoutes);
 app.use('/api/jobs', jobsRoutes);
+app.use('/api/blogs', blogRoutes);
 app.use('/api/sitemap', sitemapRoutes);
 
 console.log('Routes registered');
@@ -285,6 +286,21 @@ console.log('Routes registered');
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
   res.status(500).json({ error: 'Internal server error' });
+});
+
+// SEO-friendly URL handler for blog posts
+// This needs to be before the React catch-all route
+app.get('/how-to/:slug', (req, res, next) => {
+  // Extract the ID from the slug (format: title-id)
+  const slugParts = req.params.slug.split('-');
+  const blogId = slugParts[slugParts.length - 1];
+  
+  // Redirect to the parameter-based URL but keep it internal
+  // This maintains compatibility with existing code
+  req.url = `/how-to?blogId=${blogId}`;
+  
+  // Continue to the next middleware (which will be the React app handler)
+  next();
 });
 
 // Handle React routing, return all requests to React app
