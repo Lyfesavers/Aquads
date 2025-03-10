@@ -134,13 +134,34 @@ const HowTo = ({ currentUser }) => {
 
   const handleEditBlog = async (blogData) => {
     try {
-      if (!currentUser) {
-        setError('You must be logged in to edit a blog post.');
+      // Get token from both possible sources (same as handleDeleteBlog)
+      const token = currentUser?.token || localStorage.getItem('token');
+      
+      if (!token) {
+        console.error('No authentication token found');
+        setError('Authentication required. Please log in again.');
         return;
       }
-      
-      await updateBlog(editingBlog._id, blogData);
-      
+
+      const response = await fetch(`${API_URL}/blogs/${editingBlog._id}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(blogData)
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          // Clear invalid token
+          localStorage.removeItem('token');
+          setError('Your session has expired. Please log in again.');
+          return;
+        }
+        throw new Error(`Failed to update blog: ${response.statusText}`);
+      }
+
       // Only update UI if edit was successful
       await fetchBlogs();
       setEditingBlog(null);
@@ -148,14 +169,7 @@ const HowTo = ({ currentUser }) => {
       setError(null);
     } catch (error) {
       console.error('Error updating blog:', error);
-      
-      // Check if this is an authentication error
-      if (error.message && error.message.includes('401')) {
-        localStorage.removeItem('token');
-        setError('Your session has expired. Please log in again.');
-      } else {
-        setError(error.message || 'Failed to update blog. Please try again.');
-      }
+      setError(error.message || 'Failed to update blog. Please try again.');
     }
   };
 
@@ -208,6 +222,13 @@ const HowTo = ({ currentUser }) => {
   };
 
   const sharedBlog = getSharedBlog();
+
+  // Set up a blog for editing
+  const handleBlogEdit = (blog) => {
+    console.log("Setting blog for editing:", blog); // Debug log
+    setEditingBlog(blog);
+    setShowCreateModal(true);
+  };
 
   return (
     <div className="h-screen overflow-y-auto bg-gray-900 text-white">
@@ -358,10 +379,7 @@ const HowTo = ({ currentUser }) => {
           <BlogList
             blogs={blogs}
             currentUser={currentUser}
-            onEditBlog={(blog) => {
-              setEditingBlog(blog);
-              setShowCreateModal(true);
-            }}
+            onEditBlog={handleBlogEdit}
             onDeleteBlog={handleDeleteBlog}
           />
         </div>
