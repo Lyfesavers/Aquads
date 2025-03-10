@@ -166,6 +166,21 @@ app.get('/how-to', async (req, res, next) => {
             return html ? html.replace(/<\/?[^>]+(>|$)/g, "") : "";
           };
           
+          // Escape function for content that will be inserted into regex replacements
+          const escapeRegExp = (string) => {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          };
+          
+          // Escape function for content that will be inserted into HTML
+          const escapeHtml = (string) => {
+            return string
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/"/g, '&quot;')
+              .replace(/'/g, '&#039;');
+          };
+          
           // Get short description from blog content
           const blogContent = stripHtml(blog.content);
           const shortDescription = blogContent.length > 160 ? blogContent.substring(0, 160) + '...' : blogContent;
@@ -176,85 +191,83 @@ app.get('/how-to', async (req, res, next) => {
           
           console.log('Using image URL:', imageUrl);
           
-          // Target the dynamic meta tag elements with IDs
-          indexHtml = indexHtml
-            // Update the title tag
-            .replace(/<title>.*?<\/title>/, `<title>${blog.title} - Aquads Blog</title>`)
-            // Update the dynamic meta tags using their IDs
-            .replace(/content="[^"]*"(\s+id="dynamic-twitter-image")/, `content="${imageUrl}"$1`)
-            .replace(/content="[^"]*"(\s+id="dynamic-twitter-title")/, `content="${blog.title} - Aquads Blog"$1`)
-            .replace(/content="[^"]*"(\s+id="dynamic-twitter-description")/, `content="${shortDescription}"$1`)
-            .replace(/content="[^"]*"(\s+id="dynamic-og-image")/, `content="${imageUrl}"$1`)
-            .replace(/content="[^"]*"(\s+id="dynamic-og-title")/, `content="${blog.title} - Aquads Blog"$1`)
-            .replace(/content="[^"]*"(\s+id="dynamic-og-description")/, `content="${shortDescription}"$1`)
-            .replace(/content="[^"]*"(\s+id="dynamic-og-url")/, `content="${fullUrl}"$1`);
-
-          // Also update the regular meta tags as a fallback
-          indexHtml = indexHtml
-            .replace(/<meta\s+name="twitter:image"[^>]*>(?!\s+id)/, `<meta name="twitter:image" content="${imageUrl}">`)
-            .replace(/<meta\s+name="twitter:title"[^>]*>(?!\s+id)/, `<meta name="twitter:title" content="${blog.title} - Aquads Blog">`)
-            .replace(/<meta\s+name="twitter:description"[^>]*>(?!\s+id)/, `<meta name="twitter:description" content="${shortDescription}">`)
-            .replace(/<meta\s+property="og:image"[^>]*>(?!\s+id)/, `<meta property="og:image" content="${imageUrl}">`)
-            .replace(/<meta\s+property="og:title"[^>]*>(?!\s+id)/, `<meta property="og:title" content="${blog.title} - Aquads Blog">`)
-            .replace(/<meta\s+property="og:description"[^>]*>(?!\s+id)/, `<meta property="og:description" content="${shortDescription}">`)
-            .replace(/<meta\s+property="og:url"[^>]*>(?!\s+id)/, `<meta property="og:url" content="${fullUrl}">`);
+          // Prepare safe values for insertion into HTML
+          const safeTitle = escapeHtml(blog.title);
+          const safeDescription = escapeHtml(shortDescription);
+          const safeImageUrl = escapeHtml(imageUrl);
+          const safeFullUrl = escapeHtml(fullUrl);
           
-          // Add a script to ensure meta tags are updated after page load
+          // Create injected content with debug comments to help identify issues
+          const injectedMeta = `
+<!-- START: Dynamic Meta Tags for Blog ID: ${blogId} -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@Aquads">
+<meta name="twitter:title" content="${safeTitle} - Aquads Blog">
+<meta name="twitter:description" content="${safeDescription}">
+<meta name="twitter:image" content="${safeImageUrl}">
+
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Aquads Blog">
+<meta property="og:url" content="${safeFullUrl}">
+<meta property="og:title" content="${safeTitle} - Aquads Blog">
+<meta property="og:description" content="${safeDescription}">
+<meta property="og:image" content="${safeImageUrl}">
+
+<meta name="description" content="${safeDescription}">
+<!-- END: Dynamic Meta Tags -->
+`;
+          
+          // Insert the new meta tags at the beginning of the head
+          indexHtml = indexHtml.replace('<head>', '<head>' + injectedMeta);
+          
+          // Update the title
+          indexHtml = indexHtml.replace(/<title>.*?<\/title>/, `<title>${safeTitle} - Aquads Blog</title>`);
+          
+          // Add debug comments to identify the version
           indexHtml = indexHtml.replace('</head>', `
-            <script>
-              // This code ensures the meta tags are set correctly
-              document.addEventListener('DOMContentLoaded', function() {
-                // Directly set the values of the dynamic meta tags
-                const setMetaContent = (id, content) => {
-                  const element = document.getElementById(id);
-                  if (element) element.setAttribute('content', content);
-                };
+<!-- Debug Info: Dynamic meta tags added by server for blog ID: ${blogId} at ${new Date().toISOString()} -->
+<script>
+  console.log('Dynamic meta tags injected for blog:', '${blogId}');
+  
+  // Mobile scroll fix script
+  function scrollToBlog() {
+    const params = new URLSearchParams(window.location.search);
+    const blogId = params.get('blogId');
+    if (!blogId) return;
 
-                setMetaContent('dynamic-twitter-image', '${imageUrl}');
-                setMetaContent('dynamic-twitter-title', '${blog.title} - Aquads Blog');
-                setMetaContent('dynamic-twitter-description', '${shortDescription}');
-                setMetaContent('dynamic-og-image', '${imageUrl}');
-                setMetaContent('dynamic-og-title', '${blog.title} - Aquads Blog');
-                setMetaContent('dynamic-og-description', '${shortDescription}');
-                setMetaContent('dynamic-og-url', '${fullUrl}');
-              });
-              
-              function scrollToBlog() {
-                const params = new URLSearchParams(window.location.search);
-                const blogId = params.get('blogId');
-                if (!blogId) return;
+    function doScroll() {
+      const element = document.getElementById('blog-' + blogId);
+      if (element) {
+        // Get element position
+        const elementTop = element.offsetTop - 100;
+        
+        // Add highlight effect
+        element.classList.add('ring-2', 'ring-blue-500');
+        setTimeout(() => {
+          element.classList.remove('ring-2', 'ring-blue-500');
+        }, 2000);
+        
+        // Force multiple scroll attempts with increasing delays
+        [0, 100, 500, 1000, 2000].forEach(delay => {
+          setTimeout(() => {
+            window.scrollTo(0, elementTop);
+          }, delay);
+        });
+      } else {
+        console.log('Blog element not found:', 'blog-' + blogId);
+      }
+    }
 
-                function doScroll() {
-                  const element = document.getElementById('blog-' + blogId);
-                  if (element) {
-                    // Get element position
-                    const elementTop = element.offsetTop - 100;
-                    
-                    // Add highlight effect
-                    element.classList.add('ring-2', 'ring-blue-500');
-                    setTimeout(() => {
-                      element.classList.remove('ring-2', 'ring-blue-500');
-                    }, 2000);
-                    
-                    // Force multiple scroll attempts with increasing delays
-                    [0, 100, 500, 1000, 2000].forEach(delay => {
-                      setTimeout(() => {
-                        window.scrollTo(0, elementTop);
-                      }, delay);
-                    });
-                  }
-                }
+    // Initial delay to ensure content is loaded
+    setTimeout(doScroll, 1500);
+  }
 
-                // Initial delay to ensure content is loaded
-                setTimeout(doScroll, 1500);
-              }
-
-              // Run on both events
-              window.addEventListener('load', scrollToBlog);
-              document.addEventListener('DOMContentLoaded', scrollToBlog);
-            </script>
-            </head>
-          `);
+  // Run on both events
+  window.addEventListener('load', scrollToBlog);
+  document.addEventListener('DOMContentLoaded', scrollToBlog);
+</script>
+</head>
+`);
           
           console.log('Sending HTML with blog meta tags for:', blog.title);
           return res.send(indexHtml);
