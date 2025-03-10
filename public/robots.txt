@@ -3,4 +3,4 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://www.aquads.xyz/api/sitemap
+Sitemap: https://www.aquads.xyz/sitemap.xml
