@@ -1594,6 +1594,7 @@ function App() {
         } />
         <Route path="/whitepaper" element={<Whitepaper />} />
         <Route path="/how-to" element={<HowTo currentUser={currentUser} />} />
+        <Route path="/how-to/:slug" element={<HowTo currentUser={currentUser} />} />
         <Route path="/affiliate" element={<Affiliate />} />
         <Route path="/terms" element={<Terms />} />
       </Routes>

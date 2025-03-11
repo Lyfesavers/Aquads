@@ -9,6 +9,10 @@
   ],
   "routes": [
     {
+      "src": "/how-to/(.*)",
+      "dest": "/how-to"
+    },
+    {
       "src": "/(.*)",
       "dest": "/"
     }
