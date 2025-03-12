@@ -16,6 +16,19 @@ const bookingMessageSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  attachment: {
+    type: String,
+    trim: true
+  },
+  attachmentType: {
+    type: String,
+    enum: ['image', 'file', null],
+    default: null
+  },
+  attachmentName: {
+    type: String,
+    trim: true
+  },
   createdAt: {
     type: Date,
     default: Date.now

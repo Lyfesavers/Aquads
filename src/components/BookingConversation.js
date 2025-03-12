@@ -6,7 +6,9 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [attachment, setAttachment] = useState(null);
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // Fetch messages on component mount
   useEffect(() => {
@@ -49,19 +51,54 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
     }
   };
 
+  const handleAttachmentClick = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Check file size (10MB limit)
+      if (file.size > 10 * 1024 * 1024) {
+        showNotification('File size exceeds 10MB limit', 'error');
+        return;
+      }
+      
+      setAttachment(file);
+      showNotification(`File selected: ${file.name}`, 'info');
+    }
+  };
+
+  const handleRemoveAttachment = () => {
+    setAttachment(null);
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
     
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() && !attachment) return;
     
     try {
+      // Create form data to send files
+      const formData = new FormData();
+      if (newMessage.trim()) {
+        formData.append('message', newMessage);
+      }
+      
+      if (attachment) {
+        formData.append('attachment', attachment);
+      }
+      
       const response = await fetch(`${API_URL}/bookings/${booking._id}/messages`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
         },
-        body: JSON.stringify({ message: newMessage })
+        body: formData
       });
       
       if (!response.ok) {
@@ -71,6 +108,12 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
       const sentMessage = await response.json();
       setMessages([...messages, sentMessage]);
       setNewMessage('');
+      setAttachment(null);
+      
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } catch (err) {
       console.error('Error sending message:', err);
       setError('Failed to send message. Please try again.');
@@ -93,6 +136,43 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
       minute: '2-digit',
       hour12: true
     });
+  };
+  
+  // Render message content including any attachments
+  const renderMessageContent = (msg) => {
+    return (
+      <>
+        {msg.message && <p className="text-sm whitespace-pre-wrap mb-2">{msg.message}</p>}
+        
+        {msg.attachment && msg.attachmentType === 'image' && (
+          <div className="mt-2">
+            <img 
+              src={msg.attachment} 
+              alt="Attachment" 
+              className="max-w-full rounded-lg max-h-60 object-contain cursor-pointer"
+              onClick={() => window.open(msg.attachment, '_blank')}
+            />
+            <div className="text-xs mt-1 text-gray-300">{msg.attachmentName}</div>
+          </div>
+        )}
+        
+        {msg.attachment && msg.attachmentType === 'file' && (
+          <div className="mt-2 bg-gray-800 p-2 rounded-lg border border-gray-700">
+            <a 
+              href={msg.attachment} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center text-blue-400 hover:text-blue-300"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span>{msg.attachmentName || 'Download file'}</span>
+            </a>
+          </div>
+        )}
+      </>
+    );
   };
 
   return (
@@ -141,7 +221,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
                         {formatMessageTime(msg.createdAt)}
                       </span>
                     </div>
-                    <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                    {renderMessageContent(msg)}
                   </div>
                 </div>
               ))
@@ -149,25 +229,64 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
             <div ref={messagesEndRef} />
           </div>
           
-          <form onSubmit={handleSendMessage} className="flex gap-2">
-            <textarea
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Type your message here..."
-              className="flex-grow bg-gray-700 text-white rounded p-2 resize-none h-20"
-              disabled={booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'}
-            />
-            <button
-              type="submit"
-              disabled={!newMessage.trim() || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'}
-              className={`px-4 py-2 rounded ${
-                !newMessage.trim() || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'
-                  ? 'bg-gray-600 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700'
-              } text-white self-end`}
-            >
-              Send
-            </button>
+          {/* Hidden file input */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            className="hidden"
+            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar"
+          />
+          
+          <form onSubmit={handleSendMessage} className="space-y-3">
+            {/* Show selected attachment if any */}
+            {attachment && (
+              <div className="flex items-center bg-gray-700 rounded-lg p-2">
+                <span className="text-sm text-gray-300 flex-grow truncate mr-2">
+                  {attachment.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleRemoveAttachment}
+                  className="text-red-400 hover:text-red-300"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+            
+            <div className="flex gap-2">
+              <textarea
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type your message here..."
+                className="flex-grow bg-gray-700 text-white rounded p-2 resize-none h-20"
+                disabled={booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'}
+              />
+              
+              <div className="flex flex-col gap-2 justify-end">
+                <button
+                  type="button"
+                  onClick={handleAttachmentClick}
+                  className="px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded"
+                  disabled={booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'}
+                >
+                  📎
+                </button>
+                
+                <button
+                  type="submit"
+                  disabled={(!newMessage.trim() && !attachment) || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'}
+                  className={`px-4 py-2 rounded ${
+                    (!newMessage.trim() && !attachment) || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'
+                      ? 'bg-gray-600 cursor-not-allowed'
+                      : 'bg-blue-600 hover:bg-blue-700'
+                  } text-white`}
+                >
+                  Send
+                </button>
+              </div>
+            </div>
           </form>
           
           {(booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed') && (

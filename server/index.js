@@ -417,4 +417,11 @@ app.get('/sitemap.xml', async (req, res) => {
     console.error('Error serving sitemap:', error);
     res.status(500).send('Error generating sitemap');
   }
-}); 
+});
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'uploads/bookings');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log('Created uploads directory');
+} 

@@ -4,6 +4,44 @@ const Booking = require('../models/Booking');
 const BookingMessage = require('../models/BookingMessage');
 const Service = require('../models/Service');
 const auth = require('../middleware/auth');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+// Set up storage for uploaded files
+const storage = multer.diskStorage({
+  destination: function(req, file, cb) {
+    const dir = 'uploads/bookings';
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    cb(null, dir);
+  },
+  filename: function(req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'booking-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+// File filter to only allow certain file types
+const fileFilter = (req, file, cb) => {
+  const allowedFileTypes = /jpeg|jpg|png|gif|pdf|doc|docx|xls|xlsx|txt|zip|rar/;
+  const extname = allowedFileTypes.test(path.extname(file.originalname).toLowerCase());
+  const mimetype = allowedFileTypes.test(file.mimetype);
+  
+  if (extname && mimetype) {
+    return cb(null, true);
+  } else {
+    cb(new Error('Only image, document, and archive files are allowed!'));
+  }
+};
+
+// Set up multer upload
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB file size limit
+  fileFilter: fileFilter
+});
 
 // Create a booking
 router.post('/', auth, async (req, res) => {
@@ -209,15 +247,15 @@ router.get('/:bookingId/messages', auth, async (req, res) => {
   }
 });
 
-// Send a new message
-router.post('/:bookingId/messages', auth, async (req, res) => {
+// Send a new message with optional file attachment
+router.post('/:bookingId/messages', auth, upload.single('attachment'), async (req, res) => {
   try {
     const { bookingId } = req.params;
     const { message } = req.body;
     
-    // Validate message
-    if (!message || message.trim() === '') {
-      return res.status(400).json({ error: 'Message cannot be empty' });
+    // Validate message if there's no file attachment
+    if (!req.file && (!message || message.trim() === '')) {
+      return res.status(400).json({ error: 'Message or attachment is required' });
     }
 
     // Verify the booking exists
@@ -232,11 +270,30 @@ router.post('/:bookingId/messages', auth, async (req, res) => {
       return res.status(403).json({ error: 'Not authorized to send messages for this booking' });
     }
 
+    // Handle the file attachment
+    let attachment = null;
+    let attachmentType = null;
+    let attachmentName = null;
+
+    if (req.file) {
+      // Get server URL from environment or use default
+      const serverUrl = process.env.SERVER_URL || 'http://localhost:5000';
+      attachment = `${serverUrl}/${req.file.path.replace(/\\/g, '/')}`;
+      
+      // Determine attachment type
+      const ext = path.extname(req.file.originalname).toLowerCase();
+      attachmentType = /\.(jpg|jpeg|png|gif)$/i.test(ext) ? 'image' : 'file';
+      attachmentName = req.file.originalname;
+    }
+
     // Create and save the new message
     const newMessage = new BookingMessage({
       bookingId,
       senderId: req.user.userId,
-      message: message.trim(),
+      message: message ? message.trim() : req.file ? 'Sent an attachment' : '',
+      attachment,
+      attachmentType,
+      attachmentName,
       createdAt: new Date()
     });
 
@@ -251,6 +308,12 @@ router.post('/:bookingId/messages', auth, async (req, res) => {
     console.error('Error sending message:', error);
     res.status(500).json({ error: 'Failed to send message' });
   }
+});
+
+// Add a new route to serve static files from uploads folder
+router.get('/uploads/:filename', (req, res) => {
+  const filePath = path.join(__dirname, '../uploads/bookings', req.params.filename);
+  res.sendFile(filePath);
 });
 
 module.exports = router; 
