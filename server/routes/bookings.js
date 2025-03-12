@@ -277,8 +277,12 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
 
     if (req.file) {
       // Get server URL from environment or use default
-      const serverUrl = process.env.SERVER_URL || 'http://localhost:5000';
-      attachment = `${serverUrl}/${req.file.path.replace(/\\/g, '/')}`;
+      const serverUrl = process.env.SERVER_URL || (process.env.NODE_ENV === 'production' 
+        ? 'https://aquads-backend.onrender.com' 
+        : 'http://localhost:5000');
+      
+      // Construct the path to the file
+      attachment = `${serverUrl}/uploads/${req.file.path.split('/').pop()}`;
       
       // Determine attachment type
       const ext = path.extname(req.file.originalname).toLowerCase();
@@ -312,8 +316,20 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
 
 // Add a new route to serve static files from uploads folder
 router.get('/uploads/:filename', (req, res) => {
-  const filePath = path.join(__dirname, '../uploads/bookings', req.params.filename);
-  res.sendFile(filePath);
+  try {
+    const filePath = path.join(__dirname, '../uploads/bookings', req.params.filename);
+    console.log('Serving file from:', filePath);
+    
+    if (!fs.existsSync(filePath)) {
+      console.error('File not found:', filePath);
+      return res.status(404).send('File not found');
+    }
+    
+    res.sendFile(filePath);
+  } catch (error) {
+    console.error('Error serving file:', error);
+    res.status(500).send('Error serving file');
+  }
 });
 
 module.exports = router; 

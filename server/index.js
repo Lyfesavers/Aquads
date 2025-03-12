@@ -420,8 +420,9 @@ app.get('/sitemap.xml', async (req, res) => {
 });
 
 // Create uploads directory if it doesn't exist
-const uploadsDir = path.join(__dirname, 'uploads/bookings');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-  console.log('Created uploads directory');
+// Note: Reusing existing uploadsDir variable and creating the bookings subdirectory
+const bookingsDir = path.join(__dirname, 'uploads/bookings');
+if (!fs.existsSync(bookingsDir)) {
+  fs.mkdirSync(bookingsDir, { recursive: true });
+  console.log('Created bookings uploads directory');
 } 
