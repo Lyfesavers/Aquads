@@ -3,6 +3,7 @@ import { fetchBumpRequests, API_URL } from '../services/api';
 import BookingManagement from './BookingManagement';
 import ServiceReviews from './ServiceReviews';
 import JobList from './JobList';
+import BookingConversation from './BookingConversation';
 
 const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, onRejectBump, onApproveBump }) => {
   const [bumpRequests, setBumpRequests] = useState([]);
@@ -28,6 +29,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [premiumRequests, setPremiumRequests] = useState([]);
   const [userJobs, setUserJobs] = useState([]);
   const [vipUsername, setVipUsername] = useState('');
+  const [activeBookingConversation, setActiveBookingConversation] = useState(null);
 
   // Fetch bump requests and banner ads when dashboard opens
   useEffect(() => {
@@ -582,6 +584,26 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   };
 
+  const handleOpenConversation = (booking) => {
+    setActiveBookingConversation(booking);
+  };
+
+  const handleCloseConversation = () => {
+    setActiveBookingConversation(null);
+  };
+
+  // Add a notification helper
+  const showNotification = (message, type = 'info') => {
+    // If there's a parent notification handler, use it
+    if (window.showNotification) {
+      window.showNotification(message, type);
+    } else {
+      // Fallback to a simple alert
+      console.log(`${type}: ${message}`);
+      alert(message);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-gray-900 z-50 overflow-y-auto">
       {/* Header */}
@@ -989,16 +1011,26 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           )}
 
           {activeTab === 'bookings' && (
-            <BookingManagement
-              bookings={bookings}
-              currentUser={currentUser}
-              onStatusUpdate={handleBookingStatusUpdate}
-              showNotification={(message, type) => {
-                console.log(message); // Temporary fallback
-                alert(message);
-              }}
-              onShowReviews={handleShowReviews}
-            />
+            activeBookingConversation ? (
+              <BookingConversation 
+                booking={activeBookingConversation} 
+                currentUser={currentUser} 
+                onClose={handleCloseConversation}
+                showNotification={showNotification}
+              />
+            ) : (
+              <BookingManagement
+                bookings={bookings}
+                currentUser={currentUser}
+                onStatusUpdate={handleBookingStatusUpdate}
+                showNotification={(message, type) => {
+                  console.log(message); // Temporary fallback
+                  alert(message);
+                }}
+                onShowReviews={handleShowReviews}
+                onOpenConversation={handleOpenConversation}
+              />
+            )
           )}
 
           {activeTab === 'admin' && currentUser.isAdmin && (

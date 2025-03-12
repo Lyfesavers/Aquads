@@ -1,6 +1,6 @@
 import React from 'react';
 
-const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotification, onShowReviews }) => {
+const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotification, onShowReviews, onOpenConversation }) => {
   const getStatusBadgeClass = (status) => {
     switch (status) {
       case 'pending':
@@ -169,6 +169,24 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
               <p className="text-xs text-gray-400 mt-1">
                 {new Date(booking.createdAt).toLocaleDateString()}
               </p>
+              
+              {/* Messages button */}
+              <button
+                onClick={() => onOpenConversation(booking)}
+                className="mt-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm flex items-center"
+              >
+                <span className="mr-1">💬</span> Messages
+              </button>
+              
+              {/* View service reviews button */}
+              {booking.serviceId && (
+                <button
+                  onClick={() => onShowReviews(booking.serviceId)}
+                  className="mt-2 px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm flex items-center"
+                >
+                  <span className="mr-1">⭐</span> View Reviews
+                </button>
+              )}
             </div>
           </div>
           {renderActions(booking)}

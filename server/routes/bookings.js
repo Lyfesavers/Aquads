@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Booking = require('../models/Booking');
+const BookingMessage = require('../models/BookingMessage');
 const Service = require('../models/Service');
 const auth = require('../middleware/auth');
 
@@ -141,6 +142,114 @@ router.put('/:id/status', auth, async (req, res) => {
     res.json(updatedBooking);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// NEW ROUTES FOR MESSAGING FUNCTIONALITY
+
+// Get messages for a booking
+router.get('/:bookingId/messages', auth, async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    
+    // Verify the booking exists
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+
+    // Verify user is either buyer or seller
+    if (booking.buyerId.toString() !== req.user.userId && 
+        booking.sellerId.toString() !== req.user.userId) {
+      return res.status(403).json({ error: 'Not authorized to view these messages' });
+    }
+
+    // Get messages, sorted by creation time
+    const messages = await BookingMessage.find({ bookingId })
+      .sort({ createdAt: 1 })
+      .populate('senderId', 'username image');
+
+    // Mark messages as read if the current user is the recipient
+    const unreadMessages = messages.filter(msg => 
+      !msg.isRead && msg.senderId._id.toString() !== req.user.userId
+    );
+
+    if (unreadMessages.length > 0) {
+      await BookingMessage.updateMany(
+        { 
+          _id: { $in: unreadMessages.map(msg => msg._id) }
+        },
+        { $set: { isRead: true } }
+      );
+    }
+
+    // Include initial requirements as first message if it exists
+    let allMessages = [];
+    if (booking.requirements && booking.requirements.trim() !== '') {
+      allMessages.push({
+        _id: 'initial-requirements',
+        bookingId: booking._id,
+        senderId: {
+          _id: booking.buyerId,
+          username: booking.buyerName
+        },
+        message: booking.requirements,
+        createdAt: booking.createdAt,
+        isRead: true,
+        isInitialRequirements: true
+      });
+    }
+
+    allMessages = [...allMessages, ...messages];
+    
+    res.json(allMessages);
+  } catch (error) {
+    console.error('Error fetching booking messages:', error);
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+// Send a new message
+router.post('/:bookingId/messages', auth, async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const { message } = req.body;
+    
+    // Validate message
+    if (!message || message.trim() === '') {
+      return res.status(400).json({ error: 'Message cannot be empty' });
+    }
+
+    // Verify the booking exists
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+
+    // Verify user is either buyer or seller
+    if (booking.buyerId.toString() !== req.user.userId && 
+        booking.sellerId.toString() !== req.user.userId) {
+      return res.status(403).json({ error: 'Not authorized to send messages for this booking' });
+    }
+
+    // Create and save the new message
+    const newMessage = new BookingMessage({
+      bookingId,
+      senderId: req.user.userId,
+      message: message.trim(),
+      createdAt: new Date()
+    });
+
+    await newMessage.save();
+
+    // Populate sender info
+    const populatedMessage = await BookingMessage.findById(newMessage._id)
+      .populate('senderId', 'username image');
+
+    res.status(201).json(populatedMessage);
+  } catch (error) {
+    console.error('Error sending message:', error);
+    res.status(500).json({ error: 'Failed to send message' });
   }
 });
 
