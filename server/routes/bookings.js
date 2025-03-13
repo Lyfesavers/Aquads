@@ -7,7 +7,16 @@ const auth = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const sharp = require('sharp');
+
+// Make sharp optional with a fallback
+let sharp;
+try {
+  sharp = require('sharp');
+  console.log('Sharp module loaded successfully');
+} catch (error) {
+  console.warn('Sharp module not available. Image watermarking will be disabled.', error.message);
+  sharp = null;
+}
 
 // Set up storage for uploaded files
 const storage = multer.diskStorage({
@@ -252,6 +261,13 @@ router.get('/:bookingId/messages', auth, async (req, res) => {
 // Watermark function to add overlay text to images
 async function addWatermark(inputPath, outputPath, watermarkText) {
   try {
+    // If sharp is not available, just copy the file and log a warning
+    if (!sharp) {
+      console.warn('Watermarking skipped - sharp module not available');
+      fs.copyFileSync(inputPath, outputPath);
+      return true;
+    }
+
     // Create a watermark SVG with text
     const svgBuffer = Buffer.from(`
       <svg width="500" height="500">
@@ -283,7 +299,15 @@ async function addWatermark(inputPath, outputPath, watermarkText) {
     return true;
   } catch (error) {
     console.error('Error adding watermark:', error);
-    return false;
+    // Fallback: just copy the file if watermarking fails
+    try {
+      fs.copyFileSync(inputPath, outputPath);
+      console.log('Watermarking failed, copied original file instead');
+      return true;
+    } catch (copyError) {
+      console.error('Failed to copy file as fallback:', copyError);
+      return false;
+    }
   }
 }
 
@@ -325,6 +349,7 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
     let attachmentName = null;
     let dataUrl = null;
     let originalFilePath = null;
+    let isWatermarked = false;
 
     if (req.file) {
       console.log('File uploaded successfully:', {
@@ -362,6 +387,7 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
           if (watermarkSuccess) {
             // Use watermarked file instead
             attachment = `/uploads/bookings/${watermarkedFilename}`;
+            isWatermarked = true;
             console.log('Using watermarked image:', attachment);
             
             // Store original file path for later use
@@ -378,22 +404,25 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
             fs.copyFileSync(uploadedFilePath, originalDestination);
             console.log('Original file saved at:', originalDestination);
             
-            // Store reference to original file
-            originalFilePath = watermarkedFilePath; // For data URL generation we'll use the watermarked version
+            // For data URL generation we'll use the watermarked version
+            originalFilePath = sharp ? watermarkedFilePath : uploadedFilePath;
           } else {
             // If watermarking fails, use the original file
             attachment = `/uploads/bookings/${filename}`;
             console.log('Watermarking failed, using original image');
+            isWatermarked = false;
           }
         } catch (error) {
           console.error('Error in watermarking process:', error);
           // If any error occurs, use the original file
           attachment = `/uploads/bookings/${filename}`;
+          isWatermarked = false;
         }
       } else {
         // For non-image files or if sender is buyer, use the original file
         attachment = `/uploads/bookings/${filename}`;
         originalFilePath = path.join(__dirname, '../uploads/bookings', filename);
+        isWatermarked = false;
       }
       
       console.log('Generated file URL (relative path):', attachment);
@@ -432,8 +461,8 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
       attachmentName,
       dataUrl,  // Store the data URL in the database
       createdAt: new Date(),
-      // Store whether this is a watermarked image and the sender is a seller
-      isWatermarked: (attachmentType === 'image' && isSeller && booking.status !== 'completed')
+      // Store whether this is a watermarked image
+      isWatermarked
     });
 
     await newMessage.save();
