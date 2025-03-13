@@ -281,6 +281,7 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
     let attachment = null;
     let attachmentType = null;
     let attachmentName = null;
+    let dataUrl = null;
 
     if (req.file) {
       console.log('File uploaded successfully:', {
@@ -291,22 +292,38 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
         filename: req.file.filename
       });
       
-      // IMPORTANT: Save attachment as relative URL path
-      // This makes it much more portable across environments
-      // Let the front-end construct the full URL with the API domain
+      // Save attachment as relative URL path
       const filename = req.file.filename;
       attachment = `/uploads/bookings/${filename}`;
       console.log('Generated file URL (relative path):', attachment);
       
-      // Store the filename separately to enable direct access if needed
+      // Get the absolute file path
       const savedFilePath = path.join(__dirname, '../uploads/bookings', filename);
       console.log('Checking if file exists at:', savedFilePath);
       console.log('File exists:', fs.existsSync(savedFilePath));
       
-      // Determine attachment type
+      // For images, create a data URL as a backup mechanism for display
       const ext = path.extname(req.file.originalname).toLowerCase();
       attachmentType = /\.(jpg|jpeg|png|gif)$/i.test(ext) ? 'image' : 'file';
       attachmentName = req.file.originalname;
+      
+      // If it's an image, create a data URL as fallback
+      if (attachmentType === 'image' && fs.existsSync(savedFilePath)) {
+        try {
+          // Read the file as a buffer
+          const fileBuffer = fs.readFileSync(savedFilePath);
+          
+          // Convert to base64 and create data URL
+          const base64 = fileBuffer.toString('base64');
+          const mimeType = req.file.mimetype || 'image/png';
+          dataUrl = `data:${mimeType};base64,${base64}`;
+          
+          console.log('Created data URL for image fallback (truncated):', 
+                   dataUrl.substring(0, 50) + '...');
+        } catch (error) {
+          console.error('Error creating data URL:', error);
+        }
+      }
     }
 
     // Create and save the new message
@@ -317,6 +334,7 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
       attachment,
       attachmentType,
       attachmentName,
+      dataUrl,  // Store the data URL in the database
       createdAt: new Date()
     });
 
@@ -480,6 +498,53 @@ router.get('/file-diagnostic/:filename', (req, res) => {
   } catch (error) {
     console.error('Error in file diagnostic:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Add a direct file serving route with query parameter support
+router.get('/file', (req, res) => {
+  try {
+    const { filename } = req.query;
+    
+    if (!filename) {
+      return res.status(400).json({ error: 'Filename is required' });
+    }
+    
+    // Sanitize the filename to prevent directory traversal attacks
+    const sanitizedFilename = path.basename(filename);
+    
+    // Construct the absolute path to the file
+    const filePath = path.join(__dirname, '../uploads/bookings', sanitizedFilename);
+    console.log('Serving file through query param:', filePath);
+    
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      console.error('File not found at path:', filePath);
+      return res.status(404).send('File not found');
+    }
+    
+    // Set content type based on file extension
+    const ext = path.extname(sanitizedFilename).toLowerCase();
+    if (ext === '.jpg' || ext === '.jpeg') {
+      res.set('Content-Type', 'image/jpeg');
+    } else if (ext === '.png') {
+      res.set('Content-Type', 'image/png');
+    } else if (ext === '.gif') {
+      res.set('Content-Type', 'image/gif');
+    } else if (ext === '.pdf') {
+      res.set('Content-Type', 'application/pdf');
+    }
+    
+    // Set CORS headers
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.set('Cache-Control', 'public, max-age=3600');
+    
+    // Stream the file
+    res.sendFile(filePath);
+  } catch (error) {
+    console.error('Error serving file through query param:', error);
+    res.status(500).send('Error serving file');
   }
 });
 

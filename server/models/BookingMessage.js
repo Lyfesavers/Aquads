@@ -29,6 +29,10 @@ const bookingMessageSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  dataUrl: {
+    type: String,
+    trim: true
+  },
   createdAt: {
     type: Date,
     default: Date.now
