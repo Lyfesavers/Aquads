@@ -291,16 +291,12 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
         filename: req.file.filename
       });
       
-      // Get server URL from environment or use default
-      const serverUrl = process.env.SERVER_URL || (process.env.NODE_ENV === 'production' 
-        ? 'https://aquads-backend.onrender.com' 
-        : 'http://localhost:5000');
-      
-      // Store just the filename - this makes it easier to work with in the frontend
-      // The frontend will construct the full URL based on the API endpoint
+      // IMPORTANT: Save attachment as relative URL path
+      // This makes it much more portable across environments
+      // Let the front-end construct the full URL with the API domain
       const filename = req.file.filename;
-      attachment = `${serverUrl}/uploads/bookings/${filename}`;
-      console.log('Generated file URL:', attachment);
+      attachment = `/uploads/bookings/${filename}`;
+      console.log('Generated file URL (relative path):', attachment);
       
       // Store the filename separately to enable direct access if needed
       const savedFilePath = path.join(__dirname, '../uploads/bookings', filename);
@@ -423,6 +419,67 @@ router.get('/uploads-healthcheck', (req, res) => {
   } catch (error) {
     console.error('Error in uploads healthcheck:', error);
     res.status(500).json({ error: error.message, stack: error.stack });
+  }
+});
+
+// Add a file diagnostic endpoint
+router.get('/file-diagnostic/:filename', (req, res) => {
+  try {
+    const { filename } = req.params;
+    const possiblePaths = [
+      path.join(__dirname, '../uploads/bookings', filename),
+      path.join(__dirname, '../uploads', filename),
+      path.resolve(__dirname, '../uploads/bookings', filename),
+      path.resolve(__dirname, '../uploads', filename)
+    ];
+    
+    const results = {};
+    
+    // Check each possible path
+    possiblePaths.forEach((filePath, index) => {
+      try {
+        const exists = fs.existsSync(filePath);
+        let stats = null;
+        
+        if (exists) {
+          stats = fs.statSync(filePath);
+        }
+        
+        results[`path${index+1}`] = {
+          path: filePath,
+          exists,
+          stats: exists ? {
+            size: stats.size,
+            created: stats.birthtime,
+            modified: stats.mtime,
+            isFile: stats.isFile(),
+            isDirectory: stats.isDirectory(),
+            permissions: stats.mode.toString(8)
+          } : null
+        };
+      } catch (error) {
+        results[`path${index+1}`] = {
+          path: filePath,
+          exists: false,
+          error: error.message
+        };
+      }
+    });
+    
+    // Add server information
+    results.serverInfo = {
+      workingDirectory: process.cwd(),
+      platform: process.platform,
+      env: process.env.NODE_ENV,
+      dirname: __dirname,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Return all the results
+    res.json(results);
+  } catch (error) {
+    console.error('Error in file diagnostic:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 

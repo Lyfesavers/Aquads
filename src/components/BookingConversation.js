@@ -56,15 +56,25 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
       
       const data = await response.json();
       
-      // Check if image attachments are valid
-      for (const msg of data) {
-        if (msg.attachment && msg.attachmentType === 'image') {
-          console.log('Found image attachment:', msg.attachment);
-          // We'll verify in the UI component instead of here
+      // Process attachment URLs to ensure they are properly formatted
+      const processedData = data.map(msg => {
+        if (msg.attachment) {
+          // If the attachment starts with a slash, it's a relative path
+          if (msg.attachment.startsWith('/')) {
+            // Extract the base API URL without the '/api' part
+            const baseUrl = API_URL.replace(/\/api$/, '');
+            // Create full URL
+            msg.attachmentFullUrl = `${baseUrl}${msg.attachment}`;
+            console.log('Processed attachment URL:', msg.attachmentFullUrl);
+          } else {
+            // URL is already absolute
+            msg.attachmentFullUrl = msg.attachment;
+          }
         }
-      }
+        return msg;
+      });
       
-      setMessages(data);
+      setMessages(processedData);
     } catch (err) {
       console.error('Error fetching messages:', err);
       setError('Failed to load messages. Please try again.');
@@ -163,6 +173,44 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
   
   // Render message content including any attachments
   const renderMessageContent = (msg) => {
+    // Helper function to get API base URL without "/api"
+    const getBaseUrl = () => {
+      return API_URL.replace(/\/api$/, '');
+    };
+    
+    // Helper function to extract filename from attachment URL
+    const getFilename = (url) => {
+      return url.split('/').pop();
+    };
+    
+    // Generate all possible URL formats for an attachment
+    const generateAttachmentUrls = (attachment) => {
+      const filename = getFilename(attachment);
+      const baseUrl = getBaseUrl();
+      
+      return {
+        original: attachment,
+        relative: `/uploads/bookings/${filename}`,
+        fullRelative: `${baseUrl}/uploads/bookings/${filename}`,
+        apiEndpoint: `${API_URL}/bookings/uploads/${filename}`,
+        directEndpoint: `${baseUrl}/uploads/bookings/${filename}`
+      };
+    };
+    
+    // Choose best image URL to display
+    const getBestImageUrl = () => {
+      if (!msg.attachment) return null;
+      
+      // If we've already processed the URL during fetch
+      if (msg.attachmentFullUrl) {
+        return msg.attachmentFullUrl;
+      }
+      
+      // Otherwise generate the best URL based on the attachment
+      const urls = generateAttachmentUrls(msg.attachment);
+      return urls.fullRelative;
+    };
+
     return (
       <>
         {msg.message && <p className="text-sm whitespace-pre-wrap mb-2">{msg.message}</p>}
@@ -170,28 +218,36 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
         {msg.attachment && msg.attachmentType === 'image' && (
           <div className="mt-2">
             <img 
-              src={msg.attachment} 
+              src={getBestImageUrl()} 
               alt={msg.attachmentName || "Attachment"}
               className="max-w-full rounded-lg max-h-60 object-contain cursor-pointer border border-gray-700" 
               onClick={() => {
-                // Try various URL formats if the direct one doesn't work
-                const filename = msg.attachment.split('/').pop();
-                const alternateUrl = `${API_URL}/uploads/bookings/${filename}`;
-                console.log('Opening image, alternate URL:', alternateUrl);
-                window.open(alternateUrl, '_blank');
+                const urls = generateAttachmentUrls(msg.attachment);
+                console.log('Opening image, URLs:', urls);
+                window.open(urls.directEndpoint, '_blank');
               }}
               onError={(e) => {
-                console.error("Image failed to load:", msg.attachment);
-                // Try to fix the URL
-                const filename = msg.attachment.split('/').pop();
-                const alternateUrl = `${API_URL}/uploads/bookings/${filename}`;
-                console.log('Trying alternate image URL:', alternateUrl);
+                console.error("Image failed to load:", e.target.src);
                 
-                // Only change src if we haven't already tried
-                if (e.target.src !== alternateUrl && e.target.src !== 'https://via.placeholder.com/150?text=Image+Not+Found') {
-                  e.target.src = alternateUrl;
-                } else if (e.target.src === alternateUrl) {
-                  // If alternate URL also fails, use placeholder
+                // Try different URL formats in sequence
+                const urls = generateAttachmentUrls(msg.attachment);
+                const urlsToTry = [
+                  urls.fullRelative,
+                  urls.directEndpoint,
+                  urls.apiEndpoint
+                ];
+                
+                // Find which URL we're currently using
+                const currentIndex = urlsToTry.indexOf(e.target.src);
+                
+                // Try next URL if we haven't tried them all
+                if (currentIndex < urlsToTry.length - 1) {
+                  const nextUrl = urlsToTry[currentIndex + 1];
+                  console.log(`Trying alternate URL (${currentIndex + 2}/${urlsToTry.length}):`, nextUrl);
+                  e.target.src = nextUrl;
+                } else {
+                  // We've tried all URLs, use placeholder
+                  console.log('All URLs failed, using placeholder');
                   e.target.src = 'https://via.placeholder.com/150?text=Image+Not+Found';
                   e.target.className = 'max-w-full rounded-lg max-h-40 object-contain opacity-60 border border-red-500';
                 }
@@ -200,16 +256,15 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
             <div className="text-xs mt-1 text-gray-300">
               {msg.attachmentName || "Image attachment"}
               <a 
-                href={msg.attachment} 
-                target="_blank" 
-                rel="noopener noreferrer"
+                href="#"
                 className="ml-2 text-blue-400 hover:text-blue-300"
                 onClick={(e) => {
                   e.preventDefault();
-                  // Try to use the API endpoint directly
-                  const filename = msg.attachment.split('/').pop();
-                  const directUrl = `${API_URL}/uploads/bookings/${filename}`;
-                  window.open(directUrl, '_blank');
+                  const urls = generateAttachmentUrls(msg.attachment);
+                  
+                  // Try all URLs in new tabs
+                  console.log('Opening all URLs for debugging');
+                  window.open(urls.directEndpoint, '_blank');
                 }}
               >
                 (View full image)
@@ -221,17 +276,12 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
         {msg.attachment && msg.attachmentType === 'file' && (
           <div className="mt-2 bg-gray-800 p-2 rounded-lg border border-gray-700">
             <a 
-              href={msg.attachment} 
-              target="_blank" 
-              rel="noopener noreferrer"
+              href="#"
               className="flex items-center text-blue-400 hover:text-blue-300"
-              download={msg.attachmentName}
               onClick={(e) => {
                 e.preventDefault();
-                // Try to use the direct API endpoint
-                const filename = msg.attachment.split('/').pop();
-                const directUrl = `${API_URL}/uploads/bookings/${filename}`;
-                window.open(directUrl, '_blank');
+                const urls = generateAttachmentUrls(msg.attachment);
+                window.open(urls.directEndpoint, '_blank');
               }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -57,6 +57,7 @@ app.use('/uploads', (req, res, next) => {
   // Set appropriate CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
   
   // Continue to static file middleware
   next();
@@ -73,6 +74,8 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
       res.setHeader('Content-Type', 'image/png');
     } else if (filePath.endsWith('.gif')) {
       res.setHeader('Content-Type', 'image/gif');
+    } else if (filePath.endsWith('.pdf')) {
+      res.setHeader('Content-Type', 'application/pdf');
     }
     
     // Allow cross-origin access
@@ -92,13 +95,54 @@ app.use('/uploads/bookings', express.static(path.join(__dirname, 'uploads/bookin
       res.setHeader('Content-Type', 'image/png');
     } else if (filePath.endsWith('.gif')) {
       res.setHeader('Content-Type', 'image/gif');
+    } else if (filePath.endsWith('.pdf')) {
+      res.setHeader('Content-Type', 'application/pdf');
     }
     
     // Allow cross-origin access
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
   }
-}))
+}));
+
+// API endpoint for file access - alternative to direct static file serving
+// This helps if the static file serving doesn't work in production
+app.get('/api/uploads/bookings/:filename', (req, res) => {
+  try {
+    const filePath = path.join(__dirname, 'uploads/bookings', req.params.filename);
+    console.log('API endpoint file access:', filePath);
+    
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      console.error('File not found (API endpoint):', filePath);
+      return res.status(404).send('File not found');
+    }
+    
+    // Set appropriate content type based on file extension
+    const ext = path.extname(req.params.filename).toLowerCase();
+    if (ext === '.jpg' || ext === '.jpeg') {
+      res.setHeader('Content-Type', 'image/jpeg');
+    } else if (ext === '.png') {
+      res.setHeader('Content-Type', 'image/png');
+    } else if (ext === '.gif') {
+      res.setHeader('Content-Type', 'image/gif');
+    } else if (ext === '.pdf') {
+      res.setHeader('Content-Type', 'application/pdf');
+    }
+    
+    // Allow cross-origin access and caching
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+    
+    // Send the file
+    res.sendFile(filePath);
+  } catch (error) {
+    console.error('Error serving file (API endpoint):', error);
+    res.status(500).send('Error serving file');
+  }
+});
 
 // Log all requests to uploads for debugging
 app.use('/uploads', (req, res, next) => {
@@ -395,6 +439,7 @@ app.get('/uploads/bookings/:filename', (req, res) => {
     // Allow cross-origin access
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.setHeader('Cache-Control', 'public, max-age=3600'); // Add caching
     
     // Send the file
     res.sendFile(filePath);
