@@ -634,6 +634,7 @@ function App() {
 
   const handleBumpPurchase = async (adId, txSignature, duration) => {
     try {
+      console.log(`Bump purchase initiated - Ad ID: ${adId}, Signature: ${txSignature}, Duration: ${duration}`);
       const ad = ads.find(a => a.id === adId);
       
       if (!currentUser) {
@@ -659,6 +660,7 @@ function App() {
       // If admin is approving the bump
       if (currentUser.isAdmin && ad.status === 'pending') {
         try {
+          console.log("Admin approving bump");
           const [bumpResponse, adResponse] = await Promise.all([
             approveBumpRequest(adId, currentUser.username),
             apiUpdateAd(adId, {
@@ -672,6 +674,7 @@ function App() {
             })
           ]);
 
+          console.log("Bump approved successfully:", bumpResponse);
           setAds(prevAds => prevAds.map(a => a.id === adId ? adResponse : a));
           setShowBumpStore(false);
           showNotification('Bump approved successfully!', 'success');
@@ -685,6 +688,13 @@ function App() {
 
       // If user is submitting a bump request
       try {
+        console.log("User submitting bump request:", {
+          adId,
+          owner: currentUser.username,
+          txSignature,
+          duration
+        });
+        
         const [bumpResponse, adResponse] = await Promise.all([
           createBumpRequest({
             adId,
@@ -696,6 +706,7 @@ function App() {
           apiUpdateAd(adId, { ...ad, status: 'pending' })
         ]);
 
+        console.log("Bump request submitted successfully:", bumpResponse);
         setAds(prevAds => prevAds.map(a => a.id === adId ? adResponse : a));
         setShowBumpStore(false);
         showNotification('Bump request submitted for approval!', 'success');

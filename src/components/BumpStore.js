@@ -49,14 +49,19 @@ const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!txSignature) {
+    console.log("Form submitted with signature:", txSignature);
+    
+    if (!txSignature || txSignature.trim() === '') {
       alert('Please enter the transaction signature');
       return;
     }
+    
     if (!ad?.id) {
       alert('Invalid ad data');
       return;
     }
+    
+    // Call the parent component's callback with the transaction data
     onSubmitPayment(ad.id, txSignature, selectedOption.durationMs);
   };
 
@@ -75,6 +80,7 @@ const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
               {BUMP_OPTIONS.map((option) => (
                 <button
                   key={option.duration}
+                  type="button"
                   onClick={() => setSelectedOption(option)}
                   className={`p-4 rounded-lg border ${
                     selectedOption === option
@@ -97,6 +103,7 @@ const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
               {BLOCKCHAIN_OPTIONS.map((chain) => (
                 <button
                   key={chain.symbol}
+                  type="button"
                   onClick={() => setSelectedChain(chain)}
                   className={`p-4 rounded-lg border ${
                     selectedChain === chain
@@ -123,6 +130,7 @@ const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
                 className="bg-transparent flex-1 outline-none"
               />
               <button
+                type="button"
                 onClick={handleCopyAddress}
                 className="text-blue-400 hover:text-blue-300"
               >

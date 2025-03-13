@@ -205,21 +205,38 @@ export const register = async (userData) => {
 
 // Create bump request
 export const createBumpRequest = async (bumpData) => {
-  const response = await fetch(`${API_URL}/bumps`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeader()
-    },
-    body: JSON.stringify(bumpData),
-  });
+  console.log("Creating bump request with data:", bumpData);
   
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || 'Failed to create bump request');
+  if (!bumpData.txSignature) {
+    console.error("Missing transaction signature in bump request");
+    throw new Error("Transaction signature is required");
   }
   
-  return response.json();
+  try {
+    const response = await fetch(`${API_URL}/bumps`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader()
+      },
+      body: JSON.stringify(bumpData),
+    });
+    
+    console.log("Bump request response status:", response.status);
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error("Bump request API error:", errorData);
+      throw new Error(errorData.error || 'Failed to create bump request');
+    }
+    
+    const data = await response.json();
+    console.log("Bump request created successfully:", data);
+    return data;
+  } catch (error) {
+    console.error("Error in createBumpRequest:", error);
+    throw error;
+  }
 };
 
 // Approve bump request
