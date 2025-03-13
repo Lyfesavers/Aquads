@@ -221,15 +221,47 @@ const NotificationBell = ({ currentUser }) => {
         setUnreadCount(prev => Math.max(0, prev - 1));
       }
       
-      // For link handling, try the notification redirect route
-      if (notification.link) {
+      // Extract the booking ID from the notification data if available
+      let bookingId = null;
+      
+      // Check if this is a booking-related notification
+      if (notification.relatedModel === 'Booking' && notification.relatedId) {
+        bookingId = notification.relatedId;
+      }
+      
+      // Check if the link contains a booking ID
+      if (notification.link && notification.link.includes('booking=')) {
+        const urlParams = new URLSearchParams(notification.link.split('?')[1]);
+        bookingId = urlParams.get('booking');
+      }
+      
+      console.log('Notification clicked:', notification);
+      console.log('Extracted booking ID:', bookingId);
+      
+      // Close the notification dropdown
+      setIsOpen(false);
+      
+      // Navigate to dashboard with the booking ID parameter
+      if (bookingId) {
+        // If we have window.navigateToDashboardWithBooking function available, use it
+        if (window.navigateToDashboardWithBooking) {
+          window.navigateToDashboardWithBooking(bookingId);
+          return;
+        }
+        
+        // Otherwise, navigate to dashboard with query parameter
+        window.location.href = `${window.location.origin}/dashboard?openBooking=${bookingId}`;
+      } else if (notification.link) {
+        // If no booking ID but we have a link, use it
         window.location.href = notification.link;
       } else {
-        // Use our notification redirect handler
-        window.location.href = `${API_URL}/bookings/notification/${notification._id}`;
+        // Default to dashboard
+        window.location.href = `${window.location.origin}/dashboard`;
       }
     } catch (error) {
       console.error('Error handling notification click:', error);
+      // Fallback to dashboard
+      window.location.href = `${window.location.origin}/dashboard`;
     }
   };
 
@@ -465,30 +497,31 @@ const NotificationBell = ({ currentUser }) => {
                 }`;
                 
                 return (
-                  <div key={notification._id} className={notificationClass}>
-                    <div 
-                      onClick={(e) => {
-                        e.preventDefault(); // Prevent default link behavior
-                        handleNotificationClick(notification);
-                      }}
-                      className="block cursor-pointer"
-                    >
-                      <div className="flex items-start">
-                        <div className="mr-3 text-xl">
-                          {notification.type === 'message' ? '💬' : 
-                           notification.type === 'booking' ? '📅' : 
-                           notification.type === 'review' ? '⭐' : '📣'}
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm text-white">{notification.message}</p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            {new Date(notification.createdAt).toLocaleString()}
-                          </p>
-                        </div>
-                        {!notification.isRead && (
-                          <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                        )}
+                  <div 
+                    key={notification._id} 
+                    className={notificationClass}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      console.log('Notification clicked:', notification);
+                      handleNotificationClick(notification);
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div className="flex items-start">
+                      <div className="mr-3 text-xl">
+                        {notification.type === 'message' ? '💬' : 
+                         notification.type === 'booking' ? '📅' : 
+                         notification.type === 'review' ? '⭐' : '📣'}
                       </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-white">{notification.message}</p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {new Date(notification.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                      {!notification.isRead && (
+                        <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                      )}
                     </div>
                   </div>
                 );

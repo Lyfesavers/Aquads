@@ -604,6 +604,89 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   };
 
+  // Handle the openBooking parameter when component loads
+  useEffect(() => {
+    const handleOpenBookingParam = async () => {
+      // Check if we have an openBooking parameter in the URL
+      const queryParams = new URLSearchParams(window.location.search);
+      const openBookingId = queryParams.get('openBooking');
+      
+      console.log('Checking for openBooking parameter in URL:', window.location.search);
+      console.log('Found openBooking parameter:', openBookingId);
+      
+      if (openBookingId && currentUser) {
+        console.log('Found openBooking parameter:', openBookingId);
+        
+        // Try to find this booking in our existing bookings state
+        if (bookings && bookings.length > 0) {
+          console.log('Looking for booking in existing bookings:', bookings.length, 'bookings');
+          const bookingToOpen = bookings.find(b => b._id === openBookingId);
+          if (bookingToOpen) {
+            console.log('Opening booking conversation:', bookingToOpen);
+            setActiveBookingConversation(bookingToOpen);
+            
+            // Also set the active tab to bookings
+            setActiveTab('bookings');
+            
+            // Clean up the URL to remove the parameter
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
+            return;
+          } else {
+            console.log('Booking not found in existing bookings');
+          }
+        } else {
+          console.log('No existing bookings loaded yet');
+        }
+        
+        // If not found, fetch this specific booking
+        try {
+          console.log('Fetching specific booking:', openBookingId);
+          const response = await fetch(`${API_URL}/bookings/${openBookingId}`, {
+            headers: {
+              'Authorization': `Bearer ${currentUser.token}`
+            }
+          });
+          
+          console.log('Fetch response status:', response.status);
+          
+          if (response.ok) {
+            const bookingData = await response.json();
+            console.log('Fetched booking data:', bookingData);
+            setActiveBookingConversation(bookingData);
+            
+            // Also set the active tab to bookings
+            setActiveTab('bookings');
+            
+            // Clean up the URL to remove the parameter
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
+          } else {
+            console.error('Failed to fetch booking:', response.status);
+          }
+        } catch (error) {
+          console.error('Error fetching specific booking:', error);
+        }
+      }
+    };
+    
+    // Call the function to handle the parameter
+    handleOpenBookingParam();
+  }, [currentUser, bookings, API_URL]);
+
+  // Export a function to navigate to dashboard with booking
+  useEffect(() => {
+    // Add a global function to navigate to dashboard with a booking
+    window.navigateToDashboardWithBooking = (bookingId) => {
+      window.location.href = `${window.location.origin}/dashboard?openBooking=${bookingId}`;
+    };
+    
+    return () => {
+      // Clean up when component unmounts
+      window.navigateToDashboardWithBooking = undefined;
+    };
+  }, []);
+
   return (
     <div className="fixed inset-0 bg-gray-900 z-50 overflow-y-auto">
       {/* Header */}
