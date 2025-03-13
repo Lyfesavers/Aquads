@@ -39,6 +39,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import emailService from './services/emailService';
 import emailjs from '@emailjs/browser';
+import NotificationBell from './components/NotificationBell';
 
 window.Buffer = Buffer;
 
@@ -1217,6 +1218,7 @@ function App() {
                       </Link>
                       {currentUser ? (
                         <>
+                          <NotificationBell currentUser={currentUser} />
                           <span className="text-blue-300">Welcome, {currentUser.username}!</span>
                           <button
                             onClick={() => setShowDashboard(true)}
@@ -1279,6 +1281,9 @@ function App() {
                       </Link>
                       {currentUser ? (
                         <>
+                          <div className="flex justify-center">
+                            <NotificationBell currentUser={currentUser} />
+                          </div>
                           <span className="text-blue-300 text-center">Welcome, {currentUser.username}!</span>
                           <button
                             onClick={() => {

@@ -18,6 +18,7 @@ import PremiumBadge from './PremiumBadge';
 import PremiumPaymentModal from './PremiumPaymentModal';
 import CreateJobModal from './CreateJobModal';
 import JobList from './JobList';
+import NotificationBell from './NotificationBell';
 
 // Helper function to check if URL is valid
 const isValidUrl = (string) => {
@@ -692,6 +693,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
               </span>
               {currentUser ? (
                 <>
+                  <NotificationBell currentUser={currentUser} />
                   <span className="text-blue-300">Welcome, {currentUser.username}!</span>
                   <button
                     onClick={() => setShowDashboard(true)}
@@ -745,6 +747,9 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
               </span>
               {currentUser ? (
                 <>
+                  <div className="flex justify-center">
+                    <NotificationBell currentUser={currentUser} />
+                  </div>
                   <span className="text-blue-300 text-center">Welcome, {currentUser.username}!</span>
                   <button
                     onClick={() => {

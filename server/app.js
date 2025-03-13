@@ -13,6 +13,12 @@ const sitemapRoutes = require('./routes/sitemap');
 const Service = require('./models/Service');
 const path = require('path');
 const fs = require('fs');
+const adsRoutes = require('./routes/ads');
+const bumpRoutes = require('./routes/bumps');
+const tokensRoutes = require('./routes/tokens');
+const reviewsRoutes = require('./routes/reviews');
+const blogsRoutes = require('./routes/blogs');
+const notificationsRoutes = require('./routes/notifications');
 
 // Middleware
 const app = express();
@@ -380,8 +386,9 @@ app.use('/api/points', pointsRoutes);
 app.use('/api/bookings', bookingsRoutes);
 app.use('/api/affiliates', affiliateRoutes);
 app.use('/api/jobs', jobsRoutes);
-app.use('/api/blogs', blogRoutes);
+app.use('/api/blogs', blogsRoutes);
 app.use('/api/sitemap', sitemapRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 console.log('Routes registered');
 

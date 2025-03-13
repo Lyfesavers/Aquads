@@ -7,6 +7,7 @@ const auth = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { createNotification } = require('./notifications');
 
 // Require sharp module directly (make it mandatory, not optional)
 const sharp = require('sharp');
@@ -176,6 +177,42 @@ router.put('/:id/status', auth, async (req, res) => {
     }
 
     await booking.save();
+
+    // Create notification for status change
+    const recipientUserId = req.user.userId === booking.sellerId.toString() 
+      ? booking.buyerId 
+      : booking.sellerId;
+
+    const statusLink = `/dashboard?tab=bookings&booking=${req.params.id}`;
+    let statusMessage;
+
+    switch (status) {
+      case 'accepted':
+        statusMessage = `Your booking #${req.params.id.substring(0, 6)} has been accepted`;
+        break;
+      case 'completed':
+        statusMessage = `Your booking #${req.params.id.substring(0, 6)} has been marked as completed`;
+        break;
+      case 'canceled':
+        statusMessage = `Your booking #${req.params.id.substring(0, 6)} has been canceled`;
+        break;
+      case 'in_progress':
+        statusMessage = `Your booking #${req.params.id.substring(0, 6)} is now in progress`;
+        break;
+      default:
+        statusMessage = `Your booking #${req.params.id.substring(0, 6)} status has been updated to ${status}`;
+    }
+
+    await createNotification(
+      recipientUserId,
+      'status',
+      statusMessage,
+      statusLink,
+      {
+        relatedId: booking._id,
+        relatedModel: 'Booking'
+      }
+    );
 
     const updatedBooking = await Booking.findById(booking._id)
       .populate('serviceId')
@@ -465,6 +502,37 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
     // Populate sender info
     const populatedMessage = await BookingMessage.findById(newMessage._id)
       .populate('senderId', 'username image');
+
+    // Add notification for new message 
+    // Find the other user (recipient) who should get the notification
+    const recipientId = req.user.userId === booking.buyerId.toString() 
+      ? booking.sellerId 
+      : booking.buyerId;
+
+    // Create link to the conversation
+    const conversationLink = `/dashboard?tab=bookings&booking=${bookingId}`;
+
+    // Create notification message
+    let notificationMessage;
+    if (req.file) {
+      notificationMessage = `${req.user.username} sent an attachment in booking #${bookingId.substring(0, 6)}`;
+    } else {
+      // Truncate the message if too long
+      const messagePreview = message.length > 30 ? message.substring(0, 30) + '...' : message;
+      notificationMessage = `${req.user.username}: ${messagePreview}`;
+    }
+
+    // Create the notification
+    await createNotification(
+      recipientId,
+      'message',
+      notificationMessage,
+      conversationLink,
+      {
+        relatedId: newMessage._id,
+        relatedModel: 'BookingMessage'
+      }
+    );
 
     res.status(201).json(populatedMessage);
   } catch (error) {
