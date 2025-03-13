@@ -241,27 +241,68 @@ const NotificationBell = ({ currentUser }) => {
       // Close the notification dropdown
       setIsOpen(false);
       
-      // Navigate to dashboard with the booking ID parameter
+      // Instead of navigating to a new page, use custom events to show the dashboard
       if (bookingId) {
-        // If we have window.navigateToDashboardWithBooking function available, use it
-        if (window.navigateToDashboardWithBooking) {
-          window.navigateToDashboardWithBooking(bookingId);
-          return;
-        }
+        // Dispatch a custom event to open the dashboard with this booking
+        const openDashboardEvent = new CustomEvent('openDashboardWithBooking', { 
+          detail: { bookingId: bookingId } 
+        });
+        window.dispatchEvent(openDashboardEvent);
         
-        // Otherwise, navigate to dashboard with query parameter
-        window.location.href = `${window.location.origin}/dashboard?openBooking=${bookingId}`;
+        // Also set a flag in localStorage as a fallback communication method
+        localStorage.setItem('aquads_open_booking', bookingId);
+        localStorage.setItem('aquads_open_dashboard', 'true');
+        localStorage.setItem('aquads_notification_timestamp', Date.now().toString());
+        
+        // If there's a global function to show the dashboard, use it
+        if (typeof window.showDashboard === 'function') {
+          window.showDashboard('bookings', bookingId);
+        }
       } else if (notification.link) {
-        // If no booking ID but we have a link, use it
-        window.location.href = notification.link;
+        // For non-booking links, we'll still use navigation
+        // But first check if it's an internal link we can handle
+        if (notification.link.startsWith('/dashboard')) {
+          // It's a dashboard link, show dashboard instead of navigating
+          const openDashboardEvent = new CustomEvent('openDashboard', { 
+            detail: { tab: 'default' } 
+          });
+          window.dispatchEvent(openDashboardEvent);
+          
+          // Set dashboard flag
+          localStorage.setItem('aquads_open_dashboard', 'true');
+          localStorage.setItem('aquads_notification_timestamp', Date.now().toString());
+          
+          // If there's a global function to show the dashboard, use it
+          if (typeof window.showDashboard === 'function') {
+            window.showDashboard();
+          }
+        } else {
+          // External link, use navigation
+          window.location.href = notification.link;
+        }
       } else {
-        // Default to dashboard
-        window.location.href = `${window.location.origin}/dashboard`;
+        // No booking ID or link, just show the dashboard
+        const openDashboardEvent = new CustomEvent('openDashboard', { 
+          detail: { tab: 'default' } 
+        });
+        window.dispatchEvent(openDashboardEvent);
+        
+        // Set dashboard flag
+        localStorage.setItem('aquads_open_dashboard', 'true');
+        localStorage.setItem('aquads_notification_timestamp', Date.now().toString());
+        
+        // If there's a global function to show the dashboard, use it
+        if (typeof window.showDashboard === 'function') {
+          window.showDashboard();
+        }
       }
     } catch (error) {
       console.error('Error handling notification click:', error);
-      // Fallback to dashboard
-      window.location.href = `${window.location.origin}/dashboard`;
+      
+      // Fallback to simple dashboard open
+      if (typeof window.showDashboard === 'function') {
+        window.showDashboard();
+      }
     }
   };
 

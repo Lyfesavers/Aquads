@@ -337,6 +337,7 @@ function App() {
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [newUsername, setNewUsername] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activeBookingId, setActiveBookingId] = useState(null);
 
   // Add this function to update ads with persistence
   const updateAds = (newAds) => {
@@ -1153,6 +1154,70 @@ function App() {
     }
   }, []);
 
+  // Set up event listeners for dashboard opening from notifications
+  useEffect(() => {
+    // Define handler for opening dashboard with booking
+    const handleOpenDashboardWithBooking = (event) => {
+      console.log('Opening dashboard with booking:', event.detail.bookingId);
+      setActiveBookingId(event.detail.bookingId);
+      setShowDashboard(true);
+    };
+    
+    // Define handler for opening dashboard without specific booking
+    const handleOpenDashboard = () => {
+      console.log('Opening dashboard');
+      setShowDashboard(true);
+    };
+    
+    // Add event listeners
+    window.addEventListener('openDashboardWithBooking', handleOpenDashboardWithBooking);
+    window.addEventListener('openDashboard', handleOpenDashboard);
+    
+    // Add global function to show dashboard (for use by other components)
+    window.showDashboard = (tab, bookingId) => {
+      console.log('Global showDashboard called', tab, bookingId);
+      if (bookingId) {
+        setActiveBookingId(bookingId);
+      }
+      setShowDashboard(true);
+    };
+    
+    // Check localStorage for dashboard open flag (fallback method)
+    const checkLocalStorage = () => {
+      const shouldOpenDashboard = localStorage.getItem('aquads_open_dashboard');
+      const bookingId = localStorage.getItem('aquads_open_booking');
+      const timestamp = localStorage.getItem('aquads_notification_timestamp');
+      
+      // Only process recent requests (within last 5 seconds)
+      const isRecent = timestamp && (Date.now() - parseInt(timestamp, 10)) < 5000;
+      
+      if (shouldOpenDashboard === 'true' && isRecent) {
+        console.log('Opening dashboard from localStorage flag');
+        
+        if (bookingId) {
+          setActiveBookingId(bookingId);
+        }
+        
+        setShowDashboard(true);
+        
+        // Clear the flags
+        localStorage.removeItem('aquads_open_dashboard');
+        localStorage.removeItem('aquads_open_booking');
+        localStorage.removeItem('aquads_notification_timestamp');
+      }
+    };
+    
+    // Check for localStorage flags on mount
+    checkLocalStorage();
+    
+    // Return cleanup function
+    return () => {
+      window.removeEventListener('openDashboardWithBooking', handleOpenDashboardWithBooking);
+      window.removeEventListener('openDashboard', handleOpenDashboard);
+      delete window.showDashboard;
+    };
+  }, []);
+
   return (
     <Router>
       <Routes>
@@ -1168,7 +1233,7 @@ function App() {
         <Route path="/" element={
           <div className="bg-gradient-to-br from-gray-900 to-black text-white overflow-y-auto h-screen">
             {/* Background stays fixed */}
-            <div className="fixed inset-0 z-0">
+            <div className="fixed inset-0">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-black"></div>
               <div className="tech-lines"></div>
               <div className="tech-dots"></div>
@@ -1542,20 +1607,16 @@ function App() {
                 <Dashboard
                   ads={ads}
                   currentUser={currentUser}
-                  onClose={() => setShowDashboard(false)}
+                  onClose={() => {
+                    setShowDashboard(false);
+                    setActiveBookingId(null);
+                  }}
                   onDeleteAd={handleDeleteAd}
-                  onBumpAd={(adId) => {
-                    setSelectedAdId(adId);
-                    setShowBumpStore(true);
-                    setShowDashboard(false);
-                  }}
-                  onEditAd={(ad) => {
-                    setAdToEdit(ad);
-                    setShowEditModal(true);
-                    setShowDashboard(false);
-                  }}
+                  onBumpAd={handleBumpPurchase}
+                  onEditAd={handleEditAd}
                   onRejectBump={handleRejectBump}
                   onApproveBump={handleApproveBump}
+                  initialBookingId={activeBookingId}
                 />
               )}
 
