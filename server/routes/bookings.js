@@ -8,15 +8,9 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Make sharp optional with a fallback
-let sharp;
-try {
-  sharp = require('sharp');
-  console.log('Sharp module loaded successfully');
-} catch (error) {
-  console.warn('Sharp module not available. Image watermarking will be disabled.', error.message);
-  sharp = null;
-}
+// Require sharp module directly (make it mandatory, not optional)
+const sharp = require('sharp');
+console.log('Sharp module loaded successfully');
 
 // Set up storage for uploaded files
 const storage = multer.diskStorage({
@@ -261,13 +255,6 @@ router.get('/:bookingId/messages', auth, async (req, res) => {
 // Watermark function to add overlay text to images
 async function addWatermark(inputPath, outputPath, watermarkText) {
   try {
-    // If sharp is not available, just copy the file and log a warning
-    if (!sharp) {
-      console.warn('Watermarking skipped - sharp module not available');
-      fs.copyFileSync(inputPath, outputPath);
-      return true;
-    }
-
     // Create a watermark SVG with text
     const svgBuffer = Buffer.from(`
       <svg width="500" height="500">
@@ -299,15 +286,9 @@ async function addWatermark(inputPath, outputPath, watermarkText) {
     return true;
   } catch (error) {
     console.error('Error adding watermark:', error);
-    // Fallback: just copy the file if watermarking fails
-    try {
-      fs.copyFileSync(inputPath, outputPath);
-      console.log('Watermarking failed, copied original file instead');
-      return true;
-    } catch (copyError) {
-      console.error('Failed to copy file as fallback:', copyError);
-      return false;
-    }
+    // Do not provide a fallback that would allow unwatermarked images
+    // Instead, propagate the error so the message isn't sent without watermark
+    return false;
   }
 }
 
@@ -405,18 +386,29 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
             console.log('Original file saved at:', originalDestination);
             
             // For data URL generation we'll use the watermarked version
-            originalFilePath = sharp ? watermarkedFilePath : uploadedFilePath;
+            originalFilePath = watermarkedFilePath;
           } else {
-            // If watermarking fails, use the original file
-            attachment = `/uploads/bookings/${filename}`;
-            console.log('Watermarking failed, using original image');
-            isWatermarked = false;
+            // If watermarking fails, abort the message
+            console.error('Watermarking failed, cannot send message without watermark');
+            // Delete the original uploaded file to clean up
+            try {
+              fs.unlinkSync(uploadedFilePath);
+              console.log('Deleted original file after watermarking failure');
+            } catch (deleteError) {
+              console.error('Failed to delete original file:', deleteError);
+            }
+            return res.status(500).json({ error: 'Failed to watermark image. Message not sent.' });
           }
         } catch (error) {
           console.error('Error in watermarking process:', error);
-          // If any error occurs, use the original file
-          attachment = `/uploads/bookings/${filename}`;
-          isWatermarked = false;
+          // If any error occurs, abort the message
+          try {
+            fs.unlinkSync(uploadedFilePath);
+            console.log('Deleted original file after watermarking error');
+          } catch (deleteError) {
+            console.error('Failed to delete original file:', deleteError);
+          }
+          return res.status(500).json({ error: 'Failed to process image. Message not sent.' });
         }
       } else {
         // For non-image files or if sender is buyer, use the original file
