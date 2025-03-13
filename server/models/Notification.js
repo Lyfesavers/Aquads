@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+// Check if the model already exists to prevent duplicate model errors
 const notificationSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -68,4 +69,7 @@ notificationSchema.statics.getUnreadCount = async function(userId) {
   }
 };
 
-module.exports = mongoose.model('Notification', notificationSchema); 
+// Check if model exists before creating a new one
+const Notification = mongoose.models.Notification || mongoose.model('Notification', notificationSchema);
+
+module.exports = Notification; 

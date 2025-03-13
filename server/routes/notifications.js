@@ -6,6 +6,7 @@ const auth = require('../middleware/auth');
 // Get all notifications for current user
 router.get('/', auth, async (req, res) => {
   try {
+    console.log('GET /notifications route hit for user:', req.user.userId);
     const notifications = await Notification.find({ 
       userId: req.user.userId 
     })
@@ -70,6 +71,7 @@ router.patch('/mark-all-read', auth, async (req, res) => {
 // Create a notification (internal use only, not exposed as API)
 const createNotification = async (userId, type, message, link = null, relatedData = {}) => {
   try {
+    console.log('Creating notification for user:', userId, 'type:', type);
     const notification = new Notification({
       userId,
       type,
@@ -79,6 +81,7 @@ const createNotification = async (userId, type, message, link = null, relatedDat
     });
     
     await notification.save();
+    console.log('Notification created successfully:', notification._id);
     return notification;
   } catch (error) {
     console.error('Error creating notification:', error);
@@ -86,6 +89,6 @@ const createNotification = async (userId, type, message, link = null, relatedDat
   }
 };
 
+// Export both the router and the createNotification function
 module.exports = router;
-// Export the createNotification function for use in other routes
 module.exports.createNotification = createNotification; 

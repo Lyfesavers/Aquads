@@ -768,4 +768,66 @@ router.get('/file', async (req, res) => {
   }
 });
 
+// Add a test route to verify the notification creation is working
+router.get('/test-notification', auth, async (req, res) => {
+  try {
+    console.log('Testing notification creation for user:', req.user.userId);
+    
+    // Create a test notification
+    const notification = await createNotification(
+      req.user.userId,
+      'system',
+      'This is a test notification',
+      '/dashboard',
+      {}
+    );
+    
+    res.json({ success: true, notification });
+  } catch (error) {
+    console.error('Error creating test notification:', error);
+    res.status(500).json({ error: 'Failed to create test notification' });
+  }
+});
+
+// Add after the test-notification route
+// Alternative route to get user notifications
+router.get('/user-notifications', auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    console.log(`Getting notifications for user ${userId} via bookings route`);
+    
+    // Import the Notification model directly here to avoid circular dependencies
+    const mongoose = require('mongoose');
+    let Notification;
+    
+    try {
+      Notification = mongoose.model('Notification');
+    } catch (error) {
+      // If model doesn't exist, define it here
+      const notificationSchema = new mongoose.Schema({
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+        type: { type: String, required: true },
+        message: { type: String, required: true },
+        link: { type: String },
+        relatedId: { type: mongoose.Schema.Types.ObjectId },
+        relatedModel: { type: String },
+        isRead: { type: Boolean, default: false },
+        createdAt: { type: Date, default: Date.now }
+      });
+      
+      Notification = mongoose.model('Notification', notificationSchema);
+    }
+    
+    const notifications = await Notification.find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(20);
+    
+    console.log(`Found ${notifications.length} notifications for user ${userId}`);
+    res.json(notifications);
+  } catch (error) {
+    console.error('Error in /bookings/user-notifications:', error);
+    res.status(500).json({ message: 'Error fetching notifications', error: error.message });
+  }
+});
+
 module.exports = router; 

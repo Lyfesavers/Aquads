@@ -390,12 +390,88 @@ app.use('/api/blogs', blogsRoutes);
 app.use('/api/sitemap', sitemapRoutes);
 app.use('/api/notifications', notificationsRoutes);
 
-console.log('Routes registered');
+console.log('Notifications routes registered:', typeof notificationsRoutes === 'function' ? '✓' : '✗');
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Server error:', err);
-  res.status(500).json({ error: 'Internal server error' });
+// Test route to verify API is working
+app.get('/api/test', (req, res) => {
+  console.log('Test route hit');
+  res.json({
+    message: 'API is working',
+    routes: {
+      notifications: !!notificationsRoutes,
+      bookings: !!bookingsRoutes,
+      users: !!userRoutes
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Add this before the 404 handler (after the test route)
+// Configuration endpoint to help debug the API
+app.get('/api/config', (req, res) => {
+  console.log('Configuration endpoint hit');
+  
+  // Build a list of registered routes
+  const routes = [];
+  
+  // Get all registered routes
+  app._router.stack.forEach(middleware => {
+    if (middleware.route) {
+      // Route directly on the app
+      routes.push({
+        path: middleware.route.path,
+        methods: Object.keys(middleware.route.methods)
+      });
+    } else if (middleware.name === 'router') {
+      // Mounted router
+      middleware.handle.stack.forEach(handler => {
+        if (handler.route) {
+          const path = handler.route.path;
+          const basePath = middleware.regexp.toString()
+            .replace('\\^', '')
+            .replace('\\/?(?=\\/|$)', '')
+            .replace(/\\\//g, '/');
+          
+          let fullPath = basePath + path;
+          // Clean up the path
+          fullPath = fullPath.replace(/\\/g, '');
+          
+          routes.push({
+            path: fullPath,
+            methods: Object.keys(handler.route.methods)
+          });
+        }
+      });
+    }
+  });
+  
+  // Filter for API routes
+  const apiRoutes = routes.filter(route => route.path.includes('/api/') || route.path.includes('/bookings/'));
+  
+  // Check if notification routes are accessible
+  const hasNotificationRoutes = apiRoutes.some(route => route.path.includes('notifications'));
+  const hasBookingRoutes = apiRoutes.some(route => route.path.includes('bookings'));
+  const hasUserRoutes = apiRoutes.some(route => route.path.includes('users'));
+  
+  res.json({
+    message: 'API Configuration',
+    environment: process.env.NODE_ENV || 'development',
+    routes: {
+      total: routes.length,
+      api: apiRoutes.length,
+      details: apiRoutes
+    },
+    // Check if certain routes are registered
+    modules: {
+      notifications: hasNotificationRoutes,
+      bookings: hasBookingRoutes,  
+      users: hasUserRoutes
+    },
+    serverInfo: {
+      nodeVersion: process.version,
+      startTime: new Date().toISOString()
+    }
+  });
 });
 
 // SEO-friendly URL handler for blog posts
@@ -454,6 +530,32 @@ app.get('/uploads/bookings/:filename', (req, res) => {
     console.error('Error serving file:', error);
     res.status(500).send('Error serving file');
   }
+});
+
+// Add before your 404 handler
+// Debug middleware to log 404 requests
+app.use((req, res, next) => {
+  console.log(`⚠️ Route not found: ${req.method} ${req.originalUrl}`);
+  
+  // If it's an API route that's missing, log more details
+  if (req.originalUrl.includes('/api/')) {
+    console.log('API 404 Details:', {
+      method: req.method,
+      url: req.originalUrl,
+      headers: req.headers,
+      auth: req.headers.authorization ? '✓ Token present' : '✗ No token', 
+      params: req.params,
+      query: req.query,
+    });
+  }
+  
+  next();
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Server error:', err);
+  res.status(500).json({ error: 'Internal server error' });
 });
 
 module.exports = app; 

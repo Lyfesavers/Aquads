@@ -11,56 +11,101 @@ const NotificationBell = ({ currentUser }) => {
   const dropdownRef = useRef(null);
   const hasAttemptedFetch = useRef(false); // Prevent multiple failed fetch attempts
 
-  // Fetch notifications
+  // Debug logging when component mounts
   useEffect(() => {
-    // Only fetch if user is logged in and API is available
-    if (!currentUser || !currentUser.token || !apiAvailable) return;
+    console.log('NotificationBell mounted');
+    console.log('API_URL:', API_URL);
+    console.log('Current environment:', process.env.NODE_ENV);
+    console.log('Current user logged in:', !!currentUser);
+    console.log('Token available:', currentUser?.token ? '✓' : '✗');
     
-    // If we've already determined the API is not available, don't keep trying
-    if (hasAttemptedFetch.current && !apiAvailable) return;
+    // Log the base domain
+    console.log('Current domain:', window.location.origin);
+    
+    // Check if we have a user and token before trying to fetch
+    if (currentUser && currentUser.token) {
+      console.log('User logged in, attempting notification fetch');
+      tryFetchNotifications();
+    } else {
+      console.log('User not logged in, skipping notification fetch');
+    }
+  }, [currentUser]);
 
-    const fetchNotifications = async () => {
+  // Update the tryFetchNotifications function to include the new endpoint
+  const tryFetchNotifications = async () => {
+    if (!currentUser || !currentUser.token) return;
+    
+    hasAttemptedFetch.current = true;
+    
+    // Add the new alternate path
+    const possiblePaths = [
+      `${API_URL}/notifications`,
+      `${API_URL}/api/notifications`,
+      `/api/notifications`,
+      `${API_URL}/bookings/user-notifications`, // Add this new path
+      `${window.location.origin}/api/notifications`
+    ];
+    
+    console.log('Trying notification paths with these options:', possiblePaths);
+    
+    for (const path of possiblePaths) {
       try {
-        const response = await fetch(`${API_URL}/notifications`, {
-          headers: {
-            'Authorization': `Bearer ${currentUser.token}`
-          }
+        console.log(`Attempting to fetch notifications from: ${path}`);
+        const response = await fetch(path, {
+          headers: { 'Authorization': `Bearer ${currentUser.token}` }
         });
         
-        // If endpoint doesn't exist (404) or server error, don't try to fetch again
-        if (response.status === 404 || response.status >= 500) {
-          console.log('Notifications API not available');
-          setApiAvailable(false);
-          hasAttemptedFetch.current = true;
+        console.log(`Response from ${path}:`, response.status);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Notifications fetched successfully from', path);
+          setNotifications(data);
+          const unread = data.filter(note => !note.isRead).length;
+          setUnreadCount(unread);
+          setApiAvailable(true);
+          
+          // Store the working path for future use
+          window.WORKING_NOTIFICATION_PATH = path;
           return;
         }
-        
-        if (!response.ok) throw new Error('Failed to fetch notifications');
-        
-        const data = await response.json();
-        setNotifications(data);
-        
-        // Count unread notifications
-        const unread = data.filter(note => !note.isRead).length;
-        setUnreadCount(unread);
       } catch (error) {
-        console.error('Error fetching notifications:', error);
-        // If fetch fails due to network or server issues, don't try again
-        if (error.message.includes('Failed to fetch')) {
-          setApiAvailable(false);
-          hasAttemptedFetch.current = true;
-        }
+        console.error(`Error fetching from ${path}:`, error);
       }
-    };
-
-    fetchNotifications();
-
-    // Only set up polling if API is available
-    if (apiAvailable) {
-      const intervalId = setInterval(fetchNotifications, 30000);
-      return () => clearInterval(intervalId);
     }
-  }, [currentUser, apiAvailable]);
+    
+    console.log('All notification paths failed');
+    setApiAvailable(false);
+  };
+  
+  // Use effect to try alternate paths on initial load
+  useEffect(() => {
+    if (currentUser && currentUser.token) {
+      tryFetchNotifications();
+    }
+  }, [currentUser]);
+
+  // Use this temporarily to see if we can access the API directly (remove later)
+  const testEndpoint = async () => {
+    try {
+      console.log('Testing alternative endpoint...');
+      const response = await fetch(`${API_URL}/users/me`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      console.log('Test endpoint status:', response.status);
+    } catch (error) {
+      console.error('Test endpoint error:', error);
+    }
+  };
+
+  // Only run once for debugging
+  useEffect(() => {
+    if (currentUser && currentUser.token) {
+      testEndpoint();
+    }
+  }, [currentUser]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -121,6 +166,155 @@ const NotificationBell = ({ currentUser }) => {
       console.error('Error marking all notifications as read:', error);
     }
   };
+
+  // Try the test notification endpoint
+  const tryTestNotification = async () => {
+    if (!currentUser || !currentUser.token) return;
+    
+    try {
+      console.log('Trying test notification route...');
+      const response = await fetch(`${API_URL}/bookings/test-notification`, {
+        headers: { 'Authorization': `Bearer ${currentUser.token}` }
+      });
+      
+      console.log('Test notification response:', response.status);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Test notification success:', data);
+        
+        // If test works but main notification path failed, we can use the test path to check
+        if (!apiAvailable) {
+          setApiAvailable(true);
+          console.log('Notification API appears to be working via test route');
+        }
+        
+        return true;
+      }
+    } catch (error) {
+      console.error('Error testing notification route:', error);
+    }
+    
+    return false;
+  };
+  
+  // Use effect to try the test route if normal routes fail
+  useEffect(() => {
+    if (currentUser && currentUser.token && !apiAvailable && hasAttemptedFetch.current) {
+      tryTestNotification();
+    }
+  }, [currentUser, apiAvailable]);
+  
+  // Set up polling if API is available
+  useEffect(() => {
+    if (!currentUser || !currentUser.token || !apiAvailable) return;
+    
+    console.log('Setting up notification polling');
+    
+    const pollingInterval = setInterval(() => {
+      // Use the working path if we found one
+      if (window.WORKING_NOTIFICATION_PATH) {
+        fetch(window.WORKING_NOTIFICATION_PATH, {
+          headers: { 'Authorization': `Bearer ${currentUser.token}` }
+        })
+        .then(response => {
+          if (response.ok) return response.json();
+          throw new Error('Polling failed');
+        })
+        .then(data => {
+          setNotifications(data);
+          const unread = data.filter(note => !note.isRead).length;
+          setUnreadCount(unread);
+        })
+        .catch(error => console.error('Notification polling error:', error));
+      } else {
+        // Otherwise try all paths again
+        tryFetchNotifications();
+      }
+    }, 30000);
+    
+    return () => clearInterval(pollingInterval);
+  }, [currentUser, apiAvailable]);
+
+  // Add a function to check the config endpoint
+  const checkAPIConfig = async () => {
+    if (!currentUser || !currentUser.token) return;
+    
+    try {
+      console.log('Checking API configuration...');
+      
+      // Try different possible paths to the config endpoint
+      const configPaths = [
+        `${API_URL}/config`, 
+        `${API_URL}/api/config`,
+        `/api/config`,
+        `${window.location.origin}/api/config`
+      ];
+      
+      for (const path of configPaths) {
+        try {
+          console.log(`Attempting to fetch config from: ${path}`);
+          const response = await fetch(path, {
+            headers: { 'Authorization': `Bearer ${currentUser.token}` }
+          });
+          
+          if (response.ok) {
+            const config = await response.json();
+            console.log('API Configuration:', config);
+            
+            // Check if notifications routes are available
+            if (config.modules && config.modules.notifications) {
+              console.log('Notification routes are registered on the server');
+              
+              // Find the notification route paths
+              if (config.routes && config.routes.details) {
+                const notificationRoutes = config.routes.details.filter(route => 
+                  route.path.includes('notification')
+                );
+                
+                console.log('Available notification routes:', notificationRoutes);
+                
+                // If we found routes, try using the first one
+                if (notificationRoutes.length > 0) {
+                  const route = notificationRoutes[0];
+                  const fullPath = `${window.location.origin}${route.path}`;
+                  console.log('Attempting to use route:', fullPath);
+                  
+                  // Try this path
+                  window.WORKING_NOTIFICATION_PATH = fullPath;
+                  tryFetchNotifications();
+                }
+              }
+            } else {
+              console.log('No notification routes registered on the server');
+            }
+            
+            return config;
+          }
+        } catch (error) {
+          console.error(`Error fetching config from ${path}:`, error);
+        }
+      }
+      
+      console.log('Could not access API configuration');
+      return null;
+    } catch (error) {
+      console.error('Error checking API config:', error);
+      return null;
+    }
+  };
+
+  // Add an effect to check the config if all other methods fail
+  useEffect(() => {
+    if (currentUser && currentUser.token && !apiAvailable && hasAttemptedFetch.current) {
+      // Try checking the API config after a short delay
+      const timer = setTimeout(() => {
+        checkAPIConfig();
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [currentUser, apiAvailable]);
 
   // Don't render if user is not logged in or if API is not available
   if (!currentUser || !currentUser.token || !apiAvailable) {
