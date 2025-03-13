@@ -33,6 +33,10 @@ const bookingMessageSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  isWatermarked: {
+    type: Boolean,
+    default: false
+  },
   createdAt: {
     type: Date,
     default: Date.now

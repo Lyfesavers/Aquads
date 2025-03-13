@@ -7,6 +7,7 @@ const auth = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const sharp = require('sharp');
 
 // Set up storage for uploaded files
 const storage = multer.diskStorage({
@@ -248,6 +249,44 @@ router.get('/:bookingId/messages', auth, async (req, res) => {
   }
 });
 
+// Watermark function to add overlay text to images
+async function addWatermark(inputPath, outputPath, watermarkText) {
+  try {
+    // Create a watermark SVG with text
+    const svgBuffer = Buffer.from(`
+      <svg width="500" height="500">
+        <style>
+          .watermark {
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+            font-weight: bold;
+            fill: rgba(255, 255, 255, 0.5);
+            transform: rotate(-30deg);
+          }
+        </style>
+        <text x="50%" y="50%" text-anchor="middle" class="watermark">${watermarkText}</text>
+      </svg>
+    `);
+
+    // Read input image and overlay watermark
+    await sharp(inputPath)
+      .composite([
+        {
+          input: svgBuffer,
+          gravity: 'center',
+          tile: true // Tile the watermark across the entire image
+        }
+      ])
+      .toFile(outputPath);
+    
+    console.log('Watermark added successfully');
+    return true;
+  } catch (error) {
+    console.error('Error adding watermark:', error);
+    return false;
+  }
+}
+
 // Send a new message with optional file attachment
 router.post('/:bookingId/messages', auth, upload.single('attachment'), async (req, res) => {
   try {
@@ -277,11 +316,15 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
       return res.status(403).json({ error: 'Not authorized to send messages for this booking' });
     }
 
+    // Check if sender is the seller
+    const isSeller = booking.sellerId.toString() === req.user.userId;
+
     // Handle the file attachment
     let attachment = null;
     let attachmentType = null;
     let attachmentName = null;
     let dataUrl = null;
+    let originalFilePath = null;
 
     if (req.file) {
       console.log('File uploaded successfully:', {
@@ -294,18 +337,71 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
       
       // Save attachment as relative URL path
       const filename = req.file.filename;
-      attachment = `/uploads/bookings/${filename}`;
+      const ext = path.extname(req.file.originalname).toLowerCase();
+      const isImage = /\.(jpg|jpeg|png|gif)$/i.test(ext);
+      attachmentType = isImage ? 'image' : 'file';
+      attachmentName = req.file.originalname;
+      
+      // If it's an image and the sender is the seller, add a watermark
+      if (isImage && isSeller && booking.status !== 'completed') {
+        // Get the paths
+        const uploadedFilePath = path.join(__dirname, '../uploads/bookings', filename);
+        const watermarkedFilename = 'watermarked-' + filename;
+        const watermarkedFilePath = path.join(__dirname, '../uploads/bookings', watermarkedFilename);
+        
+        // Store original file path for creating data URL later
+        originalFilePath = uploadedFilePath;
+        
+        // Add watermark
+        const watermarkText = 'Draft - Aquads Marketplace';
+        
+        try {
+          // Only add watermark if status is not completed
+          const watermarkSuccess = await addWatermark(uploadedFilePath, watermarkedFilePath, watermarkText);
+          
+          if (watermarkSuccess) {
+            // Use watermarked file instead
+            attachment = `/uploads/bookings/${watermarkedFilename}`;
+            console.log('Using watermarked image:', attachment);
+            
+            // Store original file path for later use
+            // We keep the original file so when the booking is completed, we can serve the non-watermarked version
+            const originalAttachmentPath = path.join(__dirname, '../uploads/bookings/originals');
+            if (!fs.existsSync(originalAttachmentPath)) {
+              fs.mkdirSync(originalAttachmentPath, { recursive: true });
+            }
+            
+            const originalFilename = 'original-' + filename;
+            const originalDestination = path.join(originalAttachmentPath, originalFilename);
+            
+            // Copy original file
+            fs.copyFileSync(uploadedFilePath, originalDestination);
+            console.log('Original file saved at:', originalDestination);
+            
+            // Store reference to original file
+            originalFilePath = watermarkedFilePath; // For data URL generation we'll use the watermarked version
+          } else {
+            // If watermarking fails, use the original file
+            attachment = `/uploads/bookings/${filename}`;
+            console.log('Watermarking failed, using original image');
+          }
+        } catch (error) {
+          console.error('Error in watermarking process:', error);
+          // If any error occurs, use the original file
+          attachment = `/uploads/bookings/${filename}`;
+        }
+      } else {
+        // For non-image files or if sender is buyer, use the original file
+        attachment = `/uploads/bookings/${filename}`;
+        originalFilePath = path.join(__dirname, '../uploads/bookings', filename);
+      }
+      
       console.log('Generated file URL (relative path):', attachment);
       
-      // Get the absolute file path
-      const savedFilePath = path.join(__dirname, '../uploads/bookings', filename);
+      // Check if the file exists
+      const savedFilePath = originalFilePath || path.join(__dirname, '../uploads/bookings', filename);
       console.log('Checking if file exists at:', savedFilePath);
       console.log('File exists:', fs.existsSync(savedFilePath));
-      
-      // For images, create a data URL as a backup mechanism for display
-      const ext = path.extname(req.file.originalname).toLowerCase();
-      attachmentType = /\.(jpg|jpeg|png|gif)$/i.test(ext) ? 'image' : 'file';
-      attachmentName = req.file.originalname;
       
       // If it's an image, create a data URL as fallback
       if (attachmentType === 'image' && fs.existsSync(savedFilePath)) {
@@ -335,7 +431,9 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
       attachmentType,
       attachmentName,
       dataUrl,  // Store the data URL in the database
-      createdAt: new Date()
+      createdAt: new Date(),
+      // Store whether this is a watermarked image and the sender is a seller
+      isWatermarked: (attachmentType === 'image' && isSeller && booking.status !== 'completed')
     });
 
     await newMessage.save();
@@ -502,9 +600,9 @@ router.get('/file-diagnostic/:filename', (req, res) => {
 });
 
 // Add a direct file serving route with query parameter support
-router.get('/file', (req, res) => {
+router.get('/file', async (req, res) => {
   try {
-    const { filename } = req.query;
+    const { filename, bookingId } = req.query;
     
     if (!filename) {
       return res.status(400).json({ error: 'Filename is required' });
@@ -513,9 +611,39 @@ router.get('/file', (req, res) => {
     // Sanitize the filename to prevent directory traversal attacks
     const sanitizedFilename = path.basename(filename);
     
-    // Construct the absolute path to the file
-    const filePath = path.join(__dirname, '../uploads/bookings', sanitizedFilename);
-    console.log('Serving file through query param:', filePath);
+    // Check if this is a watermarked file
+    const isWatermarked = sanitizedFilename.startsWith('watermarked-');
+    
+    // If watermarked and bookingId is provided, check if the booking is completed
+    let useOriginalFile = false;
+    
+    if (isWatermarked && bookingId) {
+      try {
+        // Find the booking
+        const booking = await Booking.findById(bookingId);
+        if (booking && booking.status === 'completed') {
+          useOriginalFile = true;
+          console.log('Booking is completed, serving original file instead of watermarked');
+        }
+      } catch (err) {
+        console.error('Error checking booking status:', err);
+        // If error, continue with watermarked file
+      }
+    }
+    
+    // Construct path to the file
+    let filePath;
+    
+    if (useOriginalFile) {
+      // If booking is completed, serve the original file
+      const originalFilename = 'original-' + sanitizedFilename.replace('watermarked-', '');
+      filePath = path.join(__dirname, '../uploads/bookings/originals', originalFilename);
+      console.log('Serving original file for completed booking:', filePath);
+    } else {
+      // Otherwise serve the requested file (watermarked or regular)
+      filePath = path.join(__dirname, '../uploads/bookings', sanitizedFilename);
+      console.log('Serving file through query param:', filePath);
+    }
     
     // Check if file exists
     if (!fs.existsSync(filePath)) {

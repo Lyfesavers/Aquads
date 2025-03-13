@@ -194,7 +194,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
         fullRelative: `${baseUrl}/uploads/bookings/${filename}`,
         apiEndpoint: `${API_URL}/bookings/uploads/${filename}`,
         directEndpoint: `${baseUrl}/uploads/bookings/${filename}`,
-        queryParam: `${API_URL}/bookings/file?filename=${filename}`
+        queryParam: `${API_URL}/bookings/file?filename=${filename}&bookingId=${booking._id}`
       };
     };
     
@@ -224,11 +224,13 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
         {msg.message && <p className="text-sm whitespace-pre-wrap mb-2">{msg.message}</p>}
         
         {msg.attachment && msg.attachmentType === 'image' && (
-          <div className="mt-2">
+          <div className="mt-2 relative">
             <img 
               src={getBestImageUrl()} 
               alt={msg.attachmentName || "Attachment"}
-              className="max-w-full rounded-lg max-h-60 object-contain cursor-pointer border border-gray-700" 
+              className={`max-w-full rounded-lg max-h-60 object-contain cursor-pointer border ${
+                msg.isWatermarked ? 'border-yellow-500' : 'border-gray-700'
+              }`}
               onClick={() => {
                 // For data URLs, open in a new window directly
                 if (msg.dataUrl) {
@@ -251,10 +253,24 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
                             max-height: 100vh;
                             object-fit: contain;
                           }
+                          .watermark-notice {
+                            position: absolute;
+                            bottom: 20px;
+                            left: 0;
+                            right: 0;
+                            text-align: center;
+                            color: #FCD34D;
+                            font-size: 14px;
+                            background-color: rgba(0,0,0,0.7);
+                            padding: 8px;
+                          }
                         </style>
                       </head>
                       <body>
                         <img src="${msg.dataUrl}" alt="${msg.attachmentName || 'Image'}" />
+                        ${msg.isWatermarked ? 
+                          '<div class="watermark-notice">Draft image with watermark. Original will be available after completion.</div>' : 
+                          ''}
                       </body>
                     </html>
                   `);
@@ -303,55 +319,81 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
                 }
               }}
             />
-            <div className="text-xs mt-1 text-gray-300">
-              {msg.attachmentName || "Image attachment"}
-              <a 
-                href="#"
-                className="ml-2 text-blue-400 hover:text-blue-300"
-                onClick={(e) => {
-                  e.preventDefault();
-                  
-                  // If we have a data URL, use it directly
-                  if (msg.dataUrl) {
-                    const newWindow = window.open();
-                    newWindow.document.write(`
-                      <html>
-                        <head>
-                          <title>${msg.attachmentName || 'Image'}</title>
-                          <style>
-                            body { 
-                              margin: 0; 
-                              display: flex; 
-                              justify-content: center; 
-                              align-items: center; 
-                              min-height: 100vh;
-                              background-color: #0f172a;
-                            }
-                            img {
-                              max-width: 100%;
-                              max-height: 100vh;
-                              object-fit: contain;
-                            }
-                          </style>
-                        </head>
-                        <body>
-                          <img src="${msg.dataUrl}" alt="${msg.attachmentName || 'Image'}" />
-                        </body>
-                      </html>
-                    `);
-                    newWindow.document.close();
-                    return;
-                  }
-                  
-                  // Otherwise try URL approach
-                  const urls = generateAttachmentUrls(msg.attachment);
-                  console.log('Opening image with most reliable method');
-                  // Try the query parameter endpoint as it's most reliable
-                  window.open(urls.queryParam, '_blank');
-                }}
-              >
-                (View full image)
-              </a>
+            {msg.isWatermarked && (
+              <div className="absolute top-0 right-0 bg-yellow-500 text-black text-xs px-2 py-1 rounded-bl-lg rounded-tr-lg">
+                DRAFT
+              </div>
+            )}
+            <div className="text-xs mt-1 text-gray-300 flex justify-between items-center">
+              <span>{msg.attachmentName || "Image attachment"}</span>
+              <div className="flex items-center">
+                {msg.isWatermarked && (
+                  <span className="text-yellow-400 text-xs mr-2">
+                    Watermarked preview
+                  </span>
+                )}
+                <a 
+                  href="#"
+                  className="ml-2 text-blue-400 hover:text-blue-300"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    
+                    // If we have a data URL, use it directly
+                    if (msg.dataUrl) {
+                      const newWindow = window.open();
+                      newWindow.document.write(`
+                        <html>
+                          <head>
+                            <title>${msg.attachmentName || 'Image'}</title>
+                            <style>
+                              body { 
+                                margin: 0; 
+                                display: flex; 
+                                justify-content: center; 
+                                align-items: center; 
+                                min-height: 100vh;
+                                background-color: #0f172a;
+                              }
+                              img {
+                                max-width: 100%;
+                                max-height: 100vh;
+                                object-fit: contain;
+                              }
+                              .watermark-notice {
+                                position: absolute;
+                                bottom: 20px;
+                                left: 0;
+                                right: 0;
+                                text-align: center;
+                                color: #FCD34D;
+                                font-size: 14px;
+                                background-color: rgba(0,0,0,0.7);
+                                padding: 8px;
+                              }
+                            </style>
+                          </head>
+                          <body>
+                            <img src="${msg.dataUrl}" alt="${msg.attachmentName || 'Image'}" />
+                            ${msg.isWatermarked ? 
+                              '<div class="watermark-notice">Draft image with watermark. Original will be available after completion.</div>' : 
+                              ''}
+                          </body>
+                        </html>
+                      `);
+                      newWindow.document.close();
+                      return;
+                    }
+                    
+                    // Otherwise try URL approach
+                    const urls = generateAttachmentUrls(msg.attachment);
+                    console.log('Opening image with most reliable method');
+                    // Try the query parameter endpoint as it's most reliable
+                    window.open(urls.queryParam, '_blank');
+                  }}
+                >
+                  (View full image)
+                </a>
+              </div>
             </div>
           </div>
         )}
