@@ -404,6 +404,39 @@ function App() {
 
   // Update socket connection handling
   useEffect(() => {
+    // Replace the current socket event listeners with a single 'adsUpdated' listener
+    socket.on('adsUpdated', (data) => {
+      console.log('Received adsUpdated event:', data);
+      
+      if (data.type === 'update') {
+        setAds(prevAds => {
+          const newAds = prevAds.map(ad => 
+            ad.id === data.ad.id ? {...ad, ...data.ad} : ad
+          );
+          localStorage.setItem('cachedAds', JSON.stringify(newAds));
+          return newAds;
+        });
+      } else if (data.type === 'delete') {
+        setAds(prevAds => {
+          const newAds = prevAds.filter(ad => ad.id !== data.ad.id);
+          localStorage.setItem('cachedAds', JSON.stringify(newAds));
+          return newAds;
+        });
+      } else if (data.type === 'create') {
+        setAds(prevAds => {
+          // Add the new ad to the list if it doesn't already exist
+          const exists = prevAds.some(ad => ad.id === data.ad.id);
+          if (!exists) {
+            const newAds = [...prevAds, data.ad];
+            localStorage.setItem('cachedAds', JSON.stringify(newAds));
+            return newAds;
+          }
+          return prevAds;
+        });
+      }
+    });
+    
+    // Keep these for backward compatibility if they're still being used elsewhere
     socket.on('adUpdated', (updatedAd) => {
       setAds(prevAds => {
         const newAds = prevAds.map(ad => 
@@ -422,9 +455,24 @@ function App() {
       });
     });
 
+    socket.on('adCreated', (newAd) => {
+      setAds(prevAds => {
+        // Add the new ad to the list if it doesn't already exist
+        const exists = prevAds.some(ad => ad.id === newAd.id);
+        if (!exists) {
+          const newAds = [...prevAds, newAd];
+          localStorage.setItem('cachedAds', JSON.stringify(newAds));
+          return newAds;
+        }
+        return prevAds;
+      });
+    });
+
     return () => {
+      socket.off('adsUpdated');
       socket.off('adUpdated');
       socket.off('adDeleted');
+      socket.off('adCreated');
     };
   }, []);
 

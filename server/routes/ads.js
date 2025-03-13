@@ -6,6 +6,7 @@ const { awardListingPoints } = require('./points');
 const AffiliateEarning = require('../models/AffiliateEarning');
 const { v4: uuidv4 } = require('uuid');
 const User = require('../models/User');
+const { emitAdEvent } = require('../utils/socketUtils');
 
 // Skip auth for GET requests
 router.use((req, res, next) => {
@@ -380,7 +381,25 @@ router.post('/bump', auth, async (req, res) => {
       await affiliateEarning.save();
     }
 
-    // ... rest of bump code ...
+    // Update the ad with bump information
+    const bumpExpiresAt = new Date(Date.now() + parseInt(req.body.duration));
+    const updatedAd = await Ad.findOneAndUpdate(
+      { _id: ad._id },
+      { 
+        isBumped: true, 
+        bumpedAt: new Date(),
+        bumpDuration: parseInt(req.body.duration),
+        bumpExpiresAt: bumpExpiresAt,
+        lastBumpTx: req.body.txSignature
+      },
+      { new: true }
+    );
+
+    // Emit socket event for real-time updates
+    const io = require('../socket').getIO();
+    io.emit('adsUpdated', { type: 'update', ad: updatedAd });
+
+    res.json(updatedAd);
   } catch (error) {
     console.error('Error processing bump:', error);
     res.status(500).json({ error: 'Failed to process bump' });
@@ -423,6 +442,11 @@ router.put('/:id/position', async (req, res) => {
     console.error('Error updating ad position:', error);
     res.status(500).json({ message: 'Error updating ad position', error: error.message });
   }
+});
+
+// DELETE route for removing an ad
+router.delete('/:id', auth, emitAdEvent('delete'), async (req, res) => {
+  // ... existing code ...
 });
 
 module.exports = router; 

@@ -3,7 +3,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const http = require('http');
-const socketIo = require('socket.io');
 const Ad = require('./models/Ad');
 const User = require('./models/User');
 const BumpRequest = require('./models/BumpRequest');
@@ -24,16 +23,11 @@ const usersRouter = require('./routes/users');
 const jobsRoutes = require('./routes/jobs');
 const blogsRoutes = require('./routes/blogs');
 const sitemapRoutes = require('./routes/sitemap');
+const socketModule = require('./socket');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server, {
-  cors: {
-    origin: ["https://www.aquads.xyz", "http://localhost:3000"],
-    methods: ["GET", "POST"],
-    credentials: true
-  }
-});
+const io = socketModule.init(server);
 
 // Middleware
 const corsOptions = {
@@ -153,32 +147,6 @@ process.on('SIGINT', async () => {
   process.exit(0);
 });
 
-// Socket.io connection handling
-io.on('connection', (socket) => {
-  console.log('Client connected');
-  
-  socket.on('error', (error) => {
-    logger.error('Socket error:', error);
-  });
-
-  socket.on('disconnect', (reason) => {
-    logger.info(`Client disconnected: ${reason}`);
-  });
-
-  // Add back real-time ad updates
-  socket.on('adUpdate', (data) => {
-    socket.broadcast.emit('adUpdated', data);
-  });
-
-  socket.on('adCreate', (data) => {
-    socket.broadcast.emit('adCreated', data);
-  });
-
-  socket.on('adDelete', (data) => {
-    socket.broadcast.emit('adDeleted', data);
-  });
-});
-
 // Routes
 app.use('/api/bumps', bumpRoutes);
 app.use('/api/reviews', require('./routes/reviews'));
@@ -233,6 +201,33 @@ app.delete('/api/ads/:id', auth, async (req, res) => {
   } catch (error) {
     console.error('Error deleting ad:', error);
     res.status(500).json({ error: 'Failed to delete ad' });
+  }
+});
+
+// Update ad position (no auth required)
+app.put('/api/ads/:id/position', async (req, res) => {
+  try {
+    const { x, y } = req.body;
+    
+    if (x === undefined || y === undefined) {
+      return res.status(400).json({ error: 'Position update requires x and y coordinates' });
+    }
+    
+    const updatedAd = await Ad.findOneAndUpdate(
+      { id: req.params.id },
+      { $set: { x, y } },
+      { new: true }
+    );
+    
+    if (!updatedAd) {
+      return res.status(404).json({ error: 'Ad not found' });
+    }
+    
+    io.emit('adsUpdated', { type: 'update', ad: updatedAd });
+    res.json(updatedAd);
+  } catch (error) {
+    console.error('Error updating ad position:', error);
+    res.status(500).json({ error: 'Failed to update ad position' });
   }
 });
 
