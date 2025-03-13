@@ -62,17 +62,33 @@ app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
 // Create uploads directory if it doesn't exist
+// Ensure both the uploads and uploads/bookings directories exist
 const uploadsDir = path.join(__dirname, 'uploads');
+const bookingsDir = path.join(__dirname, 'uploads/bookings');
+
 try {
+  // Create parent uploads directory if it doesn't exist
   if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
-    console.log('Created uploads directory:', uploadsDir);
+    console.log('Created main uploads directory:', uploadsDir);
   }
-  // Ensure directory has proper permissions
-  fs.chmodSync(uploadsDir, 0o755);
-  console.log('Uploads directory ready:', uploadsDir);
+  
+  // Create bookings subdirectory if it doesn't exist
+  if (!fs.existsSync(bookingsDir)) {
+    fs.mkdirSync(bookingsDir, { recursive: true });
+    console.log('Created bookings uploads directory:', bookingsDir);
+  }
+  
+  // Make sure permissions are set correctly (for Linux/Unix systems)
+  try {
+    fs.chmodSync(uploadsDir, 0o755);
+    fs.chmodSync(bookingsDir, 0o755);
+    console.log('Set directory permissions');
+  } catch (permError) {
+    console.log('Note: Could not set directory permissions. This is normal on Windows.');
+  }
 } catch (error) {
-  console.error('Error setting up uploads directory:', error);
+  console.error('Error creating upload directories:', error);
 }
 
 // Serve static files from uploads directory - move this before other middleware
@@ -417,12 +433,4 @@ app.get('/sitemap.xml', async (req, res) => {
     console.error('Error serving sitemap:', error);
     res.status(500).send('Error generating sitemap');
   }
-});
-
-// Create uploads directory if it doesn't exist
-// Note: Reusing existing uploadsDir variable and creating the bookings subdirectory
-const bookingsDir = path.join(__dirname, 'uploads/bookings');
-if (!fs.existsSync(bookingsDir)) {
-  fs.mkdirSync(bookingsDir, { recursive: true });
-  console.log('Created bookings uploads directory');
-} 
+}); 

@@ -48,8 +48,16 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../build')));
 
-// Serve static files from the uploads directory
+// Serve static files from the uploads directory with better path handling
+// This will handle both /uploads/ and /uploads/bookings/
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads/bookings', express.static(path.join(__dirname, 'uploads/bookings')));
+
+// Log all requests to uploads for debugging
+app.use('/uploads', (req, res, next) => {
+  console.log(`Static file request: ${req.method} ${req.url}`);
+  next();
+});
 
 // Dynamic meta tags middleware for service pages
 app.get('/marketplace', async (req, res, next) => {

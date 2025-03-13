@@ -11,9 +11,10 @@ const fs = require('fs');
 // Set up storage for uploaded files
 const storage = multer.diskStorage({
   destination: function(req, file, cb) {
-    const dir = 'uploads/bookings';
+    const dir = path.join(__dirname, '../uploads/bookings');
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
+      console.log('Created upload directory:', dir);
     }
     cb(null, dir);
   },
@@ -253,6 +254,12 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
     const { bookingId } = req.params;
     const { message } = req.body;
     
+    console.log('Received message request with data:', { 
+      bookingId, 
+      hasMessage: !!message, 
+      hasFile: !!req.file 
+    });
+    
     // Validate message if there's no file attachment
     if (!req.file && (!message || message.trim() === '')) {
       return res.status(400).json({ error: 'Message or attachment is required' });
@@ -276,13 +283,29 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
     let attachmentName = null;
 
     if (req.file) {
+      console.log('File uploaded successfully:', {
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+        size: req.file.size,
+        path: req.file.path,
+        filename: req.file.filename
+      });
+      
       // Get server URL from environment or use default
       const serverUrl = process.env.SERVER_URL || (process.env.NODE_ENV === 'production' 
         ? 'https://aquads-backend.onrender.com' 
         : 'http://localhost:5000');
       
-      // Construct the path to the file
-      attachment = `${serverUrl}/uploads/${req.file.path.split('/').pop()}`;
+      // Properly construct the file URL to point to the static file endpoint
+      // Just use the filename without paths
+      const filename = req.file.filename;
+      attachment = `${serverUrl}/uploads/bookings/${filename}`;
+      console.log('Generated file URL:', attachment);
+      
+      // Check if file exists after saving
+      const savedFilePath = path.join(__dirname, '../uploads/bookings', filename);
+      console.log('Checking if file exists at:', savedFilePath);
+      console.log('File exists:', fs.existsSync(savedFilePath));
       
       // Determine attachment type
       const ext = path.extname(req.file.originalname).toLowerCase();
@@ -317,14 +340,28 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
 // Add a new route to serve static files from uploads folder
 router.get('/uploads/:filename', (req, res) => {
   try {
-    const filePath = path.join(__dirname, '../uploads/bookings', req.params.filename);
-    console.log('Serving file from:', filePath);
+    // Use absolute path for file access
+    const filePath = path.resolve(__dirname, '../uploads/bookings', req.params.filename);
+    console.log('Serving file from (route handler):', filePath);
     
     if (!fs.existsSync(filePath)) {
-      console.error('File not found:', filePath);
+      console.error('File not found at path:', filePath);
       return res.status(404).send('File not found');
     }
     
+    // Set correct content type based on file extension
+    const ext = path.extname(req.params.filename).toLowerCase();
+    if (ext === '.jpg' || ext === '.jpeg') {
+      res.set('Content-Type', 'image/jpeg');
+    } else if (ext === '.png') {
+      res.set('Content-Type', 'image/png');
+    } else if (ext === '.gif') {
+      res.set('Content-Type', 'image/gif');
+    } else if (ext === '.pdf') {
+      res.set('Content-Type', 'application/pdf');
+    }
+    
+    // Send the file with proper headers
     res.sendFile(filePath);
   } catch (error) {
     console.error('Error serving file:', error);

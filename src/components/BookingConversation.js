@@ -25,6 +25,20 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Function to verify image URL exists
+  const verifyImage = async (url) => {
+    try {
+      console.log('Verifying image URL:', url);
+      const response = await fetch(url, { method: 'HEAD' });
+      console.log('Image verification response:', response.status, response.statusText);
+      return response.ok;
+    } catch (error) {
+      console.error('Error verifying image:', error);
+      return false;
+    }
+  };
+
+  // Update the fetchMessages function to check image URLs
   const fetchMessages = async () => {
     try {
       setLoading(true);
@@ -41,6 +55,15 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
       }
       
       const data = await response.json();
+      
+      // Check if image attachments are valid
+      for (const msg of data) {
+        if (msg.attachment && msg.attachmentType === 'image') {
+          console.log('Found image attachment:', msg.attachment);
+          // We'll verify in the UI component instead of here
+        }
+      }
+      
       setMessages(data);
     } catch (err) {
       console.error('Error fetching messages:', err);
@@ -148,11 +171,27 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
           <div className="mt-2">
             <img 
               src={msg.attachment} 
-              alt="Attachment" 
-              className="max-w-full rounded-lg max-h-60 object-contain cursor-pointer"
+              alt={msg.attachmentName || "Attachment"}
+              className="max-w-full rounded-lg max-h-60 object-contain cursor-pointer" 
               onClick={() => window.open(msg.attachment, '_blank')}
+              onError={(e) => {
+                console.error("Image failed to load:", msg.attachment);
+                e.target.onerror = null; 
+                e.target.src = 'https://via.placeholder.com/150?text=Image+Not+Found';
+                e.target.className = 'max-w-full rounded-lg max-h-40 object-contain opacity-60';
+              }}
             />
-            <div className="text-xs mt-1 text-gray-300">{msg.attachmentName}</div>
+            <div className="text-xs mt-1 text-gray-300">
+              {msg.attachmentName || "Image attachment"}
+              <a 
+                href={msg.attachment} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="ml-2 text-blue-400 hover:text-blue-300"
+              >
+                (View full image)
+              </a>
+            </div>
           </div>
         )}
         
@@ -163,6 +202,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center text-blue-400 hover:text-blue-300"
+              download={msg.attachmentName}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
