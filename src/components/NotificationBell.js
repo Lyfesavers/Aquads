@@ -8,6 +8,7 @@ const NotificationBell = ({ currentUser }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [apiAvailable, setApiAvailable] = useState(true); // Track if API is available
+  const [showReadNotifications, setShowReadNotifications] = useState(false); // New state for toggle
   const dropdownRef = useRef(null);
   const hasAttemptedFetch = useRef(false); // Prevent multiple failed fetch attempts
 
@@ -516,57 +517,67 @@ const NotificationBell = ({ currentUser }) => {
         <div className="absolute right-0 mt-2 w-80 bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-700 max-h-96 overflow-y-auto">
           <div className="px-4 py-2 border-b border-gray-700 flex justify-between items-center">
             <h3 className="text-lg font-medium text-white">Notifications</h3>
-            {unreadCount > 0 && (
+            <div className="flex space-x-2">
+              {unreadCount > 0 && (
+                <button
+                  onClick={markAllAsRead}
+                  className="text-sm text-blue-400 hover:text-blue-300 focus:outline-none"
+                >
+                  Mark all as read
+                </button>
+              )}
               <button
-                onClick={markAllAsRead}
+                onClick={() => setShowReadNotifications(!showReadNotifications)}
                 className="text-sm text-blue-400 hover:text-blue-300 focus:outline-none"
               >
-                Mark all as read
+                {showReadNotifications ? 'Hide read' : 'Show all'}
               </button>
-            )}
+            </div>
           </div>
 
-          {notifications.length === 0 ? (
+          {notifications.filter(notification => showReadNotifications || !notification.isRead).length === 0 ? (
             <div className="px-4 py-6 text-center text-gray-400">
-              No notifications
+              {showReadNotifications ? 'No notifications' : 'No unread notifications'}
             </div>
           ) : (
             <div>
-              {notifications.map((notification) => {
-                const notificationClass = `px-4 py-3 border-b border-gray-700 hover:bg-gray-700 transition-colors ${
-                  !notification.isRead ? 'bg-gray-700 bg-opacity-50' : ''
-                }`;
-                
-                return (
-                  <div 
-                    key={notification._id} 
-                    className={notificationClass}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      console.log('Notification clicked:', notification);
-                      handleNotificationClick(notification);
-                    }}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <div className="flex items-start">
-                      <div className="mr-3 text-xl">
-                        {notification.type === 'message' ? '💬' : 
-                         notification.type === 'booking' ? '📅' : 
-                         notification.type === 'review' ? '⭐' : '📣'}
+              {notifications
+                .filter(notification => showReadNotifications || !notification.isRead) // Only show unread notifications or all if toggled
+                .map((notification) => {
+                  const notificationClass = `px-4 py-3 border-b border-gray-700 hover:bg-gray-700 transition-colors ${
+                    !notification.isRead ? 'bg-gray-700 bg-opacity-50' : 'opacity-60'
+                  }`;
+                  
+                  return (
+                    <div 
+                      key={notification._id} 
+                      className={notificationClass}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        console.log('Notification clicked:', notification);
+                        handleNotificationClick(notification);
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <div className="flex items-start">
+                        <div className="mr-3 text-xl">
+                          {notification.type === 'message' ? '💬' : 
+                           notification.type === 'booking' ? '📅' : 
+                           notification.type === 'review' ? '⭐' : '📣'}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm text-white">{notification.message}</p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            {new Date(notification.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                        {!notification.isRead && (
+                          <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                        )}
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm text-white">{notification.message}</p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          {new Date(notification.createdAt).toLocaleString()}
-                        </p>
-                      </div>
-                      {!notification.isRead && (
-                        <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                      )}
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
           )}
         </div>
