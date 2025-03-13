@@ -296,13 +296,13 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
         ? 'https://aquads-backend.onrender.com' 
         : 'http://localhost:5000');
       
-      // Properly construct the file URL to point to the static file endpoint
-      // Just use the filename without paths
+      // Store just the filename - this makes it easier to work with in the frontend
+      // The frontend will construct the full URL based on the API endpoint
       const filename = req.file.filename;
       attachment = `${serverUrl}/uploads/bookings/${filename}`;
       console.log('Generated file URL:', attachment);
       
-      // Check if file exists after saving
+      // Store the filename separately to enable direct access if needed
       const savedFilePath = path.join(__dirname, '../uploads/bookings', filename);
       console.log('Checking if file exists at:', savedFilePath);
       console.log('File exists:', fs.existsSync(savedFilePath));
@@ -366,6 +366,63 @@ router.get('/uploads/:filename', (req, res) => {
   } catch (error) {
     console.error('Error serving file:', error);
     res.status(500).send('Error serving file');
+  }
+});
+
+// Add a healthcheck route for file uploads
+router.get('/uploads-healthcheck', (req, res) => {
+  try {
+    const uploadsDir = path.join(__dirname, '../uploads');
+    const bookingsDir = path.join(__dirname, '../uploads/bookings');
+    
+    const stats = {
+      uploadsExists: fs.existsSync(uploadsDir),
+      bookingsExists: fs.existsSync(bookingsDir),
+      uploadsReadable: false,
+      bookingsReadable: false,
+      uploadsWritable: false,
+      bookingsWritable: false,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Check if directories are readable and writable
+    try {
+      fs.accessSync(uploadsDir, fs.constants.R_OK);
+      stats.uploadsReadable = true;
+    } catch (e) {
+      console.error('Uploads dir not readable:', e.message);
+    }
+    
+    try {
+      fs.accessSync(bookingsDir, fs.constants.R_OK);
+      stats.bookingsReadable = true;
+    } catch (e) {
+      console.error('Bookings dir not readable:', e.message);
+    }
+    
+    try {
+      fs.accessSync(uploadsDir, fs.constants.W_OK);
+      stats.uploadsWritable = true;
+    } catch (e) {
+      console.error('Uploads dir not writable:', e.message);
+    }
+    
+    try {
+      fs.accessSync(bookingsDir, fs.constants.W_OK);
+      stats.bookingsWritable = true;
+    } catch (e) {
+      console.error('Bookings dir not writable:', e.message);
+    }
+    
+    // Get list of files in the bookings directory
+    if (stats.bookingsExists && stats.bookingsReadable) {
+      stats.bookingsFiles = fs.readdirSync(bookingsDir).slice(0, 10); // List up to 10 files
+    }
+    
+    res.json(stats);
+  } catch (error) {
+    console.error('Error in uploads healthcheck:', error);
+    res.status(500).json({ error: error.message, stack: error.stack });
   }
 });
 

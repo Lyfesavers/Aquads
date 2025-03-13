@@ -172,13 +172,29 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
             <img 
               src={msg.attachment} 
               alt={msg.attachmentName || "Attachment"}
-              className="max-w-full rounded-lg max-h-60 object-contain cursor-pointer" 
-              onClick={() => window.open(msg.attachment, '_blank')}
+              className="max-w-full rounded-lg max-h-60 object-contain cursor-pointer border border-gray-700" 
+              onClick={() => {
+                // Try various URL formats if the direct one doesn't work
+                const filename = msg.attachment.split('/').pop();
+                const alternateUrl = `${API_URL}/uploads/bookings/${filename}`;
+                console.log('Opening image, alternate URL:', alternateUrl);
+                window.open(alternateUrl, '_blank');
+              }}
               onError={(e) => {
                 console.error("Image failed to load:", msg.attachment);
-                e.target.onerror = null; 
-                e.target.src = 'https://via.placeholder.com/150?text=Image+Not+Found';
-                e.target.className = 'max-w-full rounded-lg max-h-40 object-contain opacity-60';
+                // Try to fix the URL
+                const filename = msg.attachment.split('/').pop();
+                const alternateUrl = `${API_URL}/uploads/bookings/${filename}`;
+                console.log('Trying alternate image URL:', alternateUrl);
+                
+                // Only change src if we haven't already tried
+                if (e.target.src !== alternateUrl && e.target.src !== 'https://via.placeholder.com/150?text=Image+Not+Found') {
+                  e.target.src = alternateUrl;
+                } else if (e.target.src === alternateUrl) {
+                  // If alternate URL also fails, use placeholder
+                  e.target.src = 'https://via.placeholder.com/150?text=Image+Not+Found';
+                  e.target.className = 'max-w-full rounded-lg max-h-40 object-contain opacity-60 border border-red-500';
+                }
               }}
             />
             <div className="text-xs mt-1 text-gray-300">
@@ -188,6 +204,13 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="ml-2 text-blue-400 hover:text-blue-300"
+                onClick={(e) => {
+                  e.preventDefault();
+                  // Try to use the API endpoint directly
+                  const filename = msg.attachment.split('/').pop();
+                  const directUrl = `${API_URL}/uploads/bookings/${filename}`;
+                  window.open(directUrl, '_blank');
+                }}
               >
                 (View full image)
               </a>
@@ -203,6 +226,13 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
               rel="noopener noreferrer"
               className="flex items-center text-blue-400 hover:text-blue-300"
               download={msg.attachmentName}
+              onClick={(e) => {
+                e.preventDefault();
+                // Try to use the direct API endpoint
+                const filename = msg.attachment.split('/').pop();
+                const directUrl = `${API_URL}/uploads/bookings/${filename}`;
+                window.open(directUrl, '_blank');
+              }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />

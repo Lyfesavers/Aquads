@@ -48,10 +48,57 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../build')));
 
-// Serve static files from the uploads directory with better path handling
-// This will handle both /uploads/ and /uploads/bookings/
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/uploads/bookings', express.static(path.join(__dirname, 'uploads/bookings')));
+// Enhanced static file serving for uploads
+// Make uploads directory accessible with proper headers
+app.use('/uploads', (req, res, next) => {
+  // Log request for debugging
+  console.log(`File request: ${req.path}`);
+  
+  // Set appropriate CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  
+  // Continue to static file middleware
+  next();
+});
+
+// Serve static files from uploads with higher priority
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  maxAge: '1h',
+  setHeaders: (res, filePath) => {
+    // Set appropriate content type for images
+    if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg')) {
+      res.setHeader('Content-Type', 'image/jpeg');
+    } else if (filePath.endsWith('.png')) {
+      res.setHeader('Content-Type', 'image/png');
+    } else if (filePath.endsWith('.gif')) {
+      res.setHeader('Content-Type', 'image/gif');
+    }
+    
+    // Allow cross-origin access
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  }
+}));
+
+// Serve bookings subfolder explicitly
+app.use('/uploads/bookings', express.static(path.join(__dirname, 'uploads/bookings'), {
+  maxAge: '1h',
+  setHeaders: (res, filePath) => {
+    // Set same headers as above for consistency
+    if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg')) {
+      res.setHeader('Content-Type', 'image/jpeg');
+    } else if (filePath.endsWith('.png')) {
+      res.setHeader('Content-Type', 'image/png');
+    } else if (filePath.endsWith('.gif')) {
+      res.setHeader('Content-Type', 'image/gif');
+    }
+    
+    // Allow cross-origin access
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  }
+}))
 
 // Log all requests to uploads for debugging
 app.use('/uploads', (req, res, next) => {
@@ -318,6 +365,43 @@ app.get('/how-to/:slug', (req, res, next) => {
 // Handle React routing, return all requests to React app
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../build/index.html'));
+});
+
+// Direct file access endpoint for booking attachments
+app.get('/uploads/bookings/:filename', (req, res) => {
+  try {
+    // Construct the absolute path to the file
+    const filePath = path.join(__dirname, 'uploads/bookings', req.params.filename);
+    console.log('Direct file access request:', filePath);
+    
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      console.error('File not found:', filePath);
+      return res.status(404).send('File not found');
+    }
+    
+    // Set appropriate content type based on file extension
+    const ext = path.extname(req.params.filename).toLowerCase();
+    if (ext === '.jpg' || ext === '.jpeg') {
+      res.setHeader('Content-Type', 'image/jpeg');
+    } else if (ext === '.png') {
+      res.setHeader('Content-Type', 'image/png');
+    } else if (ext === '.gif') {
+      res.setHeader('Content-Type', 'image/gif');
+    } else if (ext === '.pdf') {
+      res.setHeader('Content-Type', 'application/pdf');
+    }
+    
+    // Allow cross-origin access
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    
+    // Send the file
+    res.sendFile(filePath);
+  } catch (error) {
+    console.error('Error serving file:', error);
+    res.status(500).send('Error serving file');
+  }
 });
 
 module.exports = app; 
