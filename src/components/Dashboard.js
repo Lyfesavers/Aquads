@@ -4,6 +4,7 @@ import BookingManagement from './BookingManagement';
 import ServiceReviews from './ServiceReviews';
 import JobList from './JobList';
 import BookingConversation from './BookingConversation';
+import BumpStore from './BumpStore';
 
 const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, onRejectBump, onApproveBump, initialBookingId }) => {
   const [bumpRequests, setBumpRequests] = useState([]);
@@ -21,7 +22,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [isLoadingAffiliates, setIsLoadingAffiliates] = useState(true);
   const [pendingRedemptions, setPendingRedemptions] = useState([]);
   const [bookings, setBookings] = useState([]);
-  const [activeTab, setActiveTab] = useState('ads');
+  const [activeTab, setActiveTab] = useState('analytics');
   const [showReviews, setShowReviews] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
   const [affiliateEarnings, setAffiliateEarnings] = useState(null);
@@ -30,6 +31,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [userJobs, setUserJobs] = useState([]);
   const [vipUsername, setVipUsername] = useState('');
   const [activeBookingConversation, setActiveBookingConversation] = useState(null);
+  const [activeBooking, setActiveBooking] = useState(null);
+  const [selectedAdForBump, setSelectedAdForBump] = useState(null);
+  const [showBumpStoreModal, setShowBumpStoreModal] = useState(false);
 
   // Fetch bump requests and banner ads when dashboard opens
   useEffect(() => {
@@ -647,6 +651,25 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     loadInitialBooking();
   }, [initialBookingId, currentUser, bookings, API_URL]);
 
+  // New function to handle the bump button click
+  const handleBumpClick = (adId) => {
+    setSelectedAdForBump(ads.find(ad => ad.id === adId));
+    setShowBumpStoreModal(true);
+  };
+  
+  // New function to handle bump submission from BumpStore
+  const handleSubmitBump = (adId, txSignature, duration) => {
+    onBumpAd(adId, txSignature, duration); 
+    setShowBumpStoreModal(false);
+    setSelectedAdForBump(null);
+  };
+  
+  // New function to close the bump store
+  const handleCloseBumpStore = () => {
+    setShowBumpStoreModal(false);
+    setSelectedAdForBump(null);
+  };
+
   return (
     <div className="fixed inset-0 bg-gray-900 z-50 overflow-y-auto">
       {/* Header */}
@@ -1015,7 +1038,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                         <div className="flex space-x-2">
                           {!ad.status || ad.status !== 'pending' ? (
                             <button
-                              onClick={() => onBumpAd(ad.id)}
+                              onClick={() => handleBumpClick(ad.id)}
                               className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
                             >
                               Bump
@@ -1320,6 +1343,14 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
             console.log(message); // Temporary fallback
             alert(message);
           }}
+        />
+      )}
+
+      {selectedAdForBump && showBumpStoreModal && (
+        <BumpStore
+          ad={selectedAdForBump}
+          onSubmitPayment={handleSubmitBump}
+          onClose={handleCloseBumpStore}
         />
       )}
     </div>
