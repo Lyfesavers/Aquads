@@ -362,7 +362,7 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
         originalFilePath = uploadedFilePath;
         
         // Add watermark
-        const watermarkText = 'Draft - Aquads Marketplace';
+        const watermarkText = 'Aquads';
         
         try {
           // Only add watermark if status is not completed
