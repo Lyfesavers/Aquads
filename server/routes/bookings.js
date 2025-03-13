@@ -793,7 +793,7 @@ router.get('/test-notification', auth, async (req, res) => {
 // Alternative route to get user notifications
 router.get('/user-notifications', auth, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId;
     console.log(`Getting notifications for user ${userId} via bookings route`);
     
     // Import the Notification model directly here to avoid circular dependencies
