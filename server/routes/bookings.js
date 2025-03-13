@@ -830,4 +830,146 @@ router.get('/user-notifications', auth, async (req, res) => {
   }
 });
 
+// Add mark-all-read endpoint
+router.patch('/user-notifications/mark-all-read', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    console.log(`Marking all notifications as read for user ${userId}`);
+    
+    // Import the Notification model
+    const mongoose = require('mongoose');
+    let Notification;
+    
+    try {
+      Notification = mongoose.model('Notification');
+    } catch (error) {
+      // If model doesn't exist, define it here (same schema as above)
+      const notificationSchema = new mongoose.Schema({
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+        type: { type: String, required: true },
+        message: { type: String, required: true },
+        link: { type: String },
+        relatedId: { type: mongoose.Schema.Types.ObjectId },
+        relatedModel: { type: String },
+        isRead: { type: Boolean, default: false },
+        createdAt: { type: Date, default: Date.now }
+      });
+      
+      Notification = mongoose.model('Notification', notificationSchema);
+    }
+    
+    // Update all unread notifications for this user
+    const result = await Notification.updateMany(
+      { userId, isRead: false },
+      { $set: { isRead: true } }
+    );
+    
+    console.log(`Marked ${result.modifiedCount} notifications as read for user ${userId}`);
+    res.json({ success: true, modifiedCount: result.modifiedCount });
+  } catch (error) {
+    console.error('Error marking notifications as read:', error);
+    res.status(500).json({ message: 'Error marking notifications as read', error: error.message });
+  }
+});
+
+// Add route to mark individual notification as read
+router.patch('/user-notifications/:id', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const notificationId = req.params.id;
+    console.log(`Marking notification ${notificationId} as read for user ${userId}`);
+    
+    // Import the Notification model
+    const mongoose = require('mongoose');
+    let Notification;
+    
+    try {
+      Notification = mongoose.model('Notification');
+    } catch (error) {
+      // If model doesn't exist, handle the error
+      return res.status(404).json({ message: 'Notification model not found' });
+    }
+    
+    // Find and update the notification
+    const notification = await Notification.findOneAndUpdate(
+      { _id: notificationId, userId },
+      { $set: { isRead: true } },
+      { new: true }
+    );
+    
+    if (!notification) {
+      return res.status(404).json({ message: 'Notification not found or not owned by user' });
+    }
+    
+    console.log(`Marked notification ${notificationId} as read`);
+    res.json({ success: true, notification });
+  } catch (error) {
+    console.error('Error marking notification as read:', error);
+    res.status(500).json({ message: 'Error marking notification as read', error: error.message });
+  }
+});
+
+// Handle notification link redirects
+router.get('/notification/:id', async (req, res) => {
+  try {
+    const notificationId = req.params.id;
+    console.log(`Handling notification redirect for notification ${notificationId}`);
+    
+    // Import the Notification model
+    const mongoose = require('mongoose');
+    let Notification;
+    
+    try {
+      Notification = mongoose.model('Notification');
+    } catch (error) {
+      return res.status(404).json({ message: 'Notification model not found' });
+    }
+    
+    // Find the notification
+    const notification = await Notification.findById(notificationId);
+    
+    if (!notification) {
+      return res.status(404).json({ message: 'Notification not found' });
+    }
+    
+    // Mark as read
+    notification.isRead = true;
+    await notification.save();
+    
+    // If there's a link, redirect to it
+    if (notification.link) {
+      console.log(`Redirecting to ${notification.link}`);
+      return res.redirect(notification.link);
+    }
+    
+    // If there's a related model and ID, construct a redirect
+    if (notification.relatedModel && notification.relatedId) {
+      let redirectUrl = '';
+      
+      switch (notification.relatedModel) {
+        case 'Booking':
+          redirectUrl = `/dashboard?tab=bookings&booking=${notification.relatedId}`;
+          break;
+        case 'Service':
+          redirectUrl = `/marketplace?service=${notification.relatedId}`;
+          break;
+        case 'Ad':
+          redirectUrl = `/?ad=${notification.relatedId}`;
+          break;
+        default:
+          redirectUrl = '/dashboard';
+      }
+      
+      console.log(`Redirecting to ${redirectUrl}`);
+      return res.redirect(redirectUrl);
+    }
+    
+    // Default fallback redirect
+    return res.redirect('/dashboard');
+  } catch (error) {
+    console.error('Error handling notification redirect:', error);
+    res.status(500).json({ message: 'Error handling notification', error: error.message });
+  }
+});
+
 module.exports = router; 

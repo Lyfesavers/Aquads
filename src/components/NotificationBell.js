@@ -145,25 +145,91 @@ const NotificationBell = ({ currentUser }) => {
     }
   };
 
-  // Clear all notifications
+  // Update the markAllAsRead function to use multiple possible endpoints
   const markAllAsRead = async () => {
-    if (!currentUser || !currentUser.token || !apiAvailable) return;
-
-    try {
-      const response = await fetch(`${API_URL}/notifications/mark-all-read`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${currentUser.token}`
+    if (!currentUser || !currentUser.token) return;
+    
+    console.log('Marking all notifications as read');
+    
+    // Try different possible paths for marking all as read
+    const possibleMarkAllReadPaths = [
+      `${API_URL}/notifications/mark-all-read`,
+      `${API_URL}/bookings/user-notifications/mark-all-read`, // Add this new path
+      `/api/notifications/mark-all-read`
+    ];
+    
+    let success = false;
+    
+    for (const path of possibleMarkAllReadPaths) {
+      try {
+        console.log(`Attempting to mark all as read using: ${path}`);
+        const response = await fetch(path, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${currentUser.token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          console.log('Successfully marked all notifications as read');
+          setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+          setUnreadCount(0);
+          success = true;
+          
+          // Remember the working path for future requests
+          window.WORKING_MARK_ALL_READ_PATH = path;
+          break;
         }
-      });
-
-      if (!response.ok) throw new Error('Failed to mark all notifications as read');
-
-      // Update local state
-      setNotifications(prev => prev.map(note => ({ ...note, isRead: true })));
-      setUnreadCount(0);
+      } catch (error) {
+        console.error(`Error using ${path}:`, error);
+      }
+    }
+    
+    if (!success) {
+      console.error('Error marking all notifications as read');
+    }
+  };
+  
+  // Add a function to handle notification clicks
+  const handleNotificationClick = async (notification) => {
+    try {
+      // Try to mark the notification as read
+      if (!notification.isRead) {
+        // Use the working notification path if available
+        const basePath = window.WORKING_NOTIFICATION_PATH || `${API_URL}/bookings/user-notifications`;
+        const markReadPath = `${basePath}/${notification._id}`;
+        
+        try {
+          await fetch(markReadPath, {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${currentUser.token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ isRead: true })
+          });
+        } catch (error) {
+          console.log('Could not mark individual notification as read:', error);
+          // Continue even if this fails
+        }
+        
+        // Update local state
+        setNotifications(prev => 
+          prev.map(n => n._id === notification._id ? { ...n, isRead: true } : n)
+        );
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
+      
+      // For link handling, try the notification redirect route
+      if (notification.link) {
+        window.location.href = notification.link;
+      } else {
+        // Use our notification redirect handler
+        window.location.href = `${API_URL}/bookings/notification/${notification._id}`;
+      }
     } catch (error) {
-      console.error('Error marking all notifications as read:', error);
+      console.error('Error handling notification click:', error);
     }
   };
 
@@ -393,35 +459,40 @@ const NotificationBell = ({ currentUser }) => {
             </div>
           ) : (
             <div>
-              {notifications.map((notification) => (
-                <div
-                  key={notification._id}
-                  className={`px-4 py-3 border-b border-gray-700 hover:bg-gray-700 transition-colors ${
-                    !notification.isRead ? 'bg-gray-700 bg-opacity-50' : ''
-                  }`}
-                >
-                  <Link
-                    to={notification.link || '#'}
-                    onClick={() => markAsRead(notification._id)}
-                    className="block"
-                  >
-                    <div className="flex items-start">
-                      <div className="mr-3 text-xl">
-                        {getNotificationIcon(notification.type)}
+              {notifications.map((notification) => {
+                const notificationClass = `px-4 py-3 border-b border-gray-700 hover:bg-gray-700 transition-colors ${
+                  !notification.isRead ? 'bg-gray-700 bg-opacity-50' : ''
+                }`;
+                
+                return (
+                  <div key={notification._id} className={notificationClass}>
+                    <div 
+                      onClick={(e) => {
+                        e.preventDefault(); // Prevent default link behavior
+                        handleNotificationClick(notification);
+                      }}
+                      className="block cursor-pointer"
+                    >
+                      <div className="flex items-start">
+                        <div className="mr-3 text-xl">
+                          {notification.type === 'message' ? '💬' : 
+                           notification.type === 'booking' ? '📅' : 
+                           notification.type === 'review' ? '⭐' : '📣'}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm text-white">{notification.message}</p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            {new Date(notification.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                        {!notification.isRead && (
+                          <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                        )}
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm text-white">{notification.message}</p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          {formatDate(notification.createdAt)}
-                        </p>
-                      </div>
-                      {!notification.isRead && (
-                        <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                      )}
                     </div>
-                  </Link>
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
