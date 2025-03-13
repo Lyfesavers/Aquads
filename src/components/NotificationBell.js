@@ -7,12 +7,17 @@ const NotificationBell = ({ currentUser }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
+  const [apiAvailable, setApiAvailable] = useState(true); // Track if API is available
   const dropdownRef = useRef(null);
+  const hasAttemptedFetch = useRef(false); // Prevent multiple failed fetch attempts
 
   // Fetch notifications
   useEffect(() => {
-    // Only fetch if user is logged in
-    if (!currentUser || !currentUser.token) return;
+    // Only fetch if user is logged in and API is available
+    if (!currentUser || !currentUser.token || !apiAvailable) return;
+    
+    // If we've already determined the API is not available, don't keep trying
+    if (hasAttemptedFetch.current && !apiAvailable) return;
 
     const fetchNotifications = async () => {
       try {
@@ -21,6 +26,14 @@ const NotificationBell = ({ currentUser }) => {
             'Authorization': `Bearer ${currentUser.token}`
           }
         });
+        
+        // If endpoint doesn't exist (404) or server error, don't try to fetch again
+        if (response.status === 404 || response.status >= 500) {
+          console.log('Notifications API not available');
+          setApiAvailable(false);
+          hasAttemptedFetch.current = true;
+          return;
+        }
         
         if (!response.ok) throw new Error('Failed to fetch notifications');
         
@@ -32,16 +45,22 @@ const NotificationBell = ({ currentUser }) => {
         setUnreadCount(unread);
       } catch (error) {
         console.error('Error fetching notifications:', error);
+        // If fetch fails due to network or server issues, don't try again
+        if (error.message.includes('Failed to fetch')) {
+          setApiAvailable(false);
+          hasAttemptedFetch.current = true;
+        }
       }
     };
 
     fetchNotifications();
 
-    // Poll for new notifications every 30 seconds
-    const intervalId = setInterval(fetchNotifications, 30000);
-    
-    return () => clearInterval(intervalId);
-  }, [currentUser]);
+    // Only set up polling if API is available
+    if (apiAvailable) {
+      const intervalId = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(intervalId);
+    }
+  }, [currentUser, apiAvailable]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -57,7 +76,7 @@ const NotificationBell = ({ currentUser }) => {
 
   // Mark notification as read
   const markAsRead = async (notificationId) => {
-    if (!currentUser || !currentUser.token) return;
+    if (!currentUser || !currentUser.token || !apiAvailable) return;
 
     try {
       const response = await fetch(`${API_URL}/notifications/${notificationId}/read`, {
@@ -83,7 +102,7 @@ const NotificationBell = ({ currentUser }) => {
 
   // Clear all notifications
   const markAllAsRead = async () => {
-    if (!currentUser || !currentUser.token) return;
+    if (!currentUser || !currentUser.token || !apiAvailable) return;
 
     try {
       const response = await fetch(`${API_URL}/notifications/mark-all-read`, {
@@ -103,8 +122,8 @@ const NotificationBell = ({ currentUser }) => {
     }
   };
 
-  // Don't render if user is not logged in
-  if (!currentUser || !currentUser.token) {
+  // Don't render if user is not logged in or if API is not available
+  if (!currentUser || !currentUser.token || !apiAvailable) {
     return null;
   }
 
