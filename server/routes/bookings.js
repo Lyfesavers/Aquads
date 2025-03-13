@@ -255,34 +255,37 @@ router.get('/:bookingId/messages', auth, async (req, res) => {
 // Watermark function to add overlay text to images
 async function addWatermark(inputPath, outputPath, watermarkText) {
   try {
-    // Create a watermark SVG with text
+    // Create a small watermark SVG with text - small size ensures dense tiling
     const svgBuffer = Buffer.from(`
-      <svg width="500" height="500">
+      <svg width="120" height="60" xmlns="http://www.w3.org/2000/svg">
         <style>
           .watermark {
             font-family: Arial, sans-serif;
-            font-size: 24px;
+            font-size: 14px;
             font-weight: bold;
-            fill: rgba(255, 255, 255, 0.5);
+            fill: rgba(255, 255, 255, 0.7);
             transform: rotate(-30deg);
           }
         </style>
-        <text x="50%" y="50%" text-anchor="middle" class="watermark">${watermarkText}</text>
+        <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" class="watermark">${watermarkText}</text>
       </svg>
     `);
 
-    // Read input image and overlay watermark
+    // Apply the watermark with dense tiling
     await sharp(inputPath)
+      // Add a subtle blur to make text more readable over varied backgrounds
+      .modulate({ brightness: 0.95 }) // Slightly darken image to make watermark stand out
       .composite([
         {
           input: svgBuffer,
-          gravity: 'center',
-          tile: true // Tile the watermark across the entire image
+          blend: 'over',
+          tile: true,
+          // No gravity ensures the pattern starts from the top-left
         }
       ])
       .toFile(outputPath);
     
-    console.log('Watermark added successfully');
+    console.log('Watermark added successfully with full coverage');
     return true;
   } catch (error) {
     console.error('Error adding watermark:', error);
