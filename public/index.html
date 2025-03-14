@@ -50,6 +50,74 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
     <title>Aquads - All in one Web3 crypto Hub and Freelancer marketplace!</title>
+    
+    <!-- Script to pre-update metadata for blog shares without changing URL structure -->
+    <script type="text/javascript">
+      (function() {
+        // Check if we're on a blog page by looking for blogId parameter
+        var url = new URL(window.location.href);
+        var blogId = url.searchParams.get('blogId');
+        
+        // Only proceed if we have a blogId
+        if (blogId && window.location.pathname.includes('/how-to')) {
+          // Fetch the blog data from the API
+          fetch('https://www.aquads.xyz/api/blogs/' + blogId)
+            .then(function(response) {
+              if (response.ok) return response.json();
+              throw new Error('Failed to fetch blog data');
+            })
+            .then(function(blog) {
+              if (!blog) return;
+              
+              // Get meta tag elements
+              var titleTag = document.querySelector('title');
+              var descTag = document.querySelector('meta[name="description"]');
+              var twitterTitleTag = document.querySelector('meta[name="twitter:title"]');
+              var twitterDescTag = document.querySelector('meta[name="twitter:description"]');
+              var twitterImageTag = document.querySelector('meta[name="twitter:image"]');
+              var ogTitleTag = document.querySelector('meta[property="og:title"]');
+              var ogDescTag = document.querySelector('meta[property="og:description"]');
+              var ogImageTag = document.querySelector('meta[property="og:image"]');
+              var ogUrlTag = document.querySelector('meta[property="og:url"]');
+              
+              // Clean blog content for description (remove HTML tags and limit length)
+              var description = blog.content
+                ? blog.content.replace(/<[^>]*>/g, '').slice(0, 200) + '...'
+                : 'Read our latest blog post on Aquads!';
+              
+              // Update the meta tags with blog info
+              if (titleTag) titleTag.textContent = blog.title + ' - Aquads Blog';
+              if (descTag) descTag.content = description;
+              if (twitterTitleTag) twitterTitleTag.content = blog.title + ' - Aquads Blog';
+              if (twitterDescTag) twitterDescTag.content = description;
+              if (twitterImageTag && blog.bannerImage) twitterImageTag.content = blog.bannerImage;
+              if (ogTitleTag) ogTitleTag.content = blog.title + ' - Aquads Blog';
+              if (ogDescTag) ogDescTag.content = description;
+              if (ogImageTag && blog.bannerImage) ogImageTag.content = blog.bannerImage;
+              if (ogUrlTag) ogUrlTag.content = window.location.href;
+              
+              // If blog has a bannerImage, set image dimensions meta tags
+              if (blog.bannerImage) {
+                var img = new Image();
+                img.onload = function() {
+                  var width = this.width;
+                  var height = this.height;
+                  
+                  var ogImageWidth = document.querySelector('meta[property="og:image:width"]');
+                  var ogImageHeight = document.querySelector('meta[property="og:image:height"]');
+                  
+                  if (ogImageWidth) ogImageWidth.content = width.toString();
+                  if (ogImageHeight) ogImageHeight.content = height.toString();
+                };
+                img.src = blog.bannerImage;
+              }
+            })
+            .catch(function(error) {
+              console.error('Error updating blog metadata:', error);
+            });
+        }
+      })();
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
