@@ -14,16 +14,14 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
   };
 
   const handleShare = (blog) => {
-    // Get the base URL for the How To page
-    const shareUrl = `${window.location.origin}/how-to`;
-    
-    // Add blogId as a query parameter
-    const url = `${shareUrl}?blogId=${blog._id}`;
+    // Use the dedicated share URL for social media which contains proper metadata
+    const shareUrl = `${window.location.origin}/api/blogs/share/${blog._id}`;
     
     // Add referral code if user is logged in (as a separate parameter)
+    // This won't affect the metadata but will be preserved when redirecting
     const finalUrl = currentUser?.username 
-      ? `${url}&ref=${currentUser.username}` 
-      : url;
+      ? `${shareUrl}?ref=${currentUser.username}` 
+      : shareUrl;
     
     navigator.clipboard.writeText(finalUrl).then(() => {
       alert('Blog link copied to clipboard!');

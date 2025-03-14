@@ -154,4 +154,86 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
+// New route - HTML metadata for social sharing
+router.get('/share/:id', async (req, res) => {
+  try {
+    const blog = await Blog.findById(req.params.id)
+      .populate('author', 'username image');
+      
+    if (!blog) {
+      return res.status(404).send('Blog not found');
+    }
+    
+    // Create a clean description without HTML tags
+    const description = blog.content
+      ? blog.content.replace(/<[^>]*>/g, '').slice(0, 200) + '...'
+      : 'Read our latest blog post on Aquads!';
+      
+    // Build HTML with proper metadata
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${blog.title} - Aquads Blog</title>
+  <meta name="description" content="${description}">
+  
+  <!-- Twitter Card meta tags -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${blog.title} - Aquads Blog">
+  <meta name="twitter:description" content="${description}">
+  <meta name="twitter:image" content="${blog.bannerImage || 'https://www.aquads.xyz/logo712.png'}">
+  
+  <!-- Open Graph meta tags -->
+  <meta property="og:title" content="${blog.title} - Aquads Blog">
+  <meta property="og:description" content="${description}">
+  <meta property="og:image" content="${blog.bannerImage || 'https://www.aquads.xyz/logo712.png'}">
+  <meta property="og:url" content="https://www.aquads.xyz/how-to?blogId=${blog._id}">
+  <meta property="og:type" content="article">
+  
+  <!-- Redirect to the actual blog page -->
+  <meta http-equiv="refresh" content="0;url=https://www.aquads.xyz/how-to?blogId=${blog._id}">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+      color: #333;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #1a73e8;
+    }
+    a {
+      color: #1a73e8;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>${blog.title}</h1>
+    <p>${description}</p>
+    <p>Redirecting to blog post... <a href="https://www.aquads.xyz/how-to?blogId=${blog._id}">Click here</a> if you're not redirected automatically.</p>
+  </div>
+</body>
+</html>`;
+    
+    // Send HTML response
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+  } catch (error) {
+    console.error('Error generating blog share page:', error);
+    res.status(500).send('Error generating share page');
+  }
+});
+
 module.exports = router; 
