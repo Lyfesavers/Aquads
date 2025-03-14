@@ -101,31 +101,14 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
   const isOwnerOrAdmin = currentUser && (
     (game.owner && currentUser._id === game.owner._id) || 
     (game.owner && currentUser.userId === game.owner._id) || 
-    currentUser.isAdmin
+    (game.owner && currentUser.id === game.owner._id) ||
+    (game.createdBy && (currentUser._id === game.createdBy || currentUser.userId === game.createdBy || currentUser.id === game.createdBy)) ||
+    currentUser.isAdmin || 
+    currentUser.role === 'admin'
   );
   
   return (
     <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg border border-gray-700 hover:border-blue-500 transition-all duration-300 flex flex-col h-full">
-      {/* Admin/Owner Actions */}
-      {isOwnerOrAdmin && (
-        <div className="absolute top-2 right-2 z-10 flex space-x-2">
-          <button
-            onClick={handleEdit}
-            className="bg-yellow-600 hover:bg-yellow-700 text-white p-1 rounded"
-            title="Edit game"
-          >
-            <FaEdit />
-          </button>
-          <button
-            onClick={handleDeleteClick}
-            className="bg-red-600 hover:bg-red-700 text-white p-1 rounded"
-            title="Delete game"
-          >
-            <FaTrash />
-          </button>
-        </div>
-      )}
-      
       {/* Banner (video or image) */}
       <div className="relative w-full h-48 bg-gray-900 overflow-hidden">
         {isVideo ? (
@@ -155,7 +138,7 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
         </div>
         
         {/* Blockchain label */}
-        <div className="absolute top-2 right-20 bg-purple-600 text-white text-xs px-2 py-1 rounded-full">
+        <div className="absolute top-2 right-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full">
           {game.blockchain}
         </div>
       </div>
@@ -165,9 +148,31 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
         <div className="flex justify-between items-start mb-2">
           <h3 className="text-xl font-bold text-white">{game.title}</h3>
           
-          <div className="flex items-center bg-blue-900 text-blue-300 px-2 py-1 rounded-full text-sm">
-            <FaThumbsUp className="mr-1" />
-            <span>{voteCount}</span>
+          <div className="flex items-center">
+            {/* Owner/Admin Buttons - Moved here for better visibility */}
+            {isOwnerOrAdmin && (
+              <div className="flex space-x-2 mr-2">
+                <button
+                  onClick={handleEdit}
+                  className="bg-yellow-600 hover:bg-yellow-700 text-white p-1.5 rounded-full flex items-center justify-center"
+                  title="Edit game"
+                >
+                  <FaEdit size={14} />
+                </button>
+                <button
+                  onClick={handleDeleteClick}
+                  className="bg-red-600 hover:bg-red-700 text-white p-1.5 rounded-full flex items-center justify-center"
+                  title="Delete game"
+                >
+                  <FaTrash size={14} />
+                </button>
+              </div>
+            )}
+            
+            <div className="flex items-center bg-blue-900 text-blue-300 px-2 py-1 rounded-full text-sm">
+              <FaThumbsUp className="mr-1" />
+              <span>{voteCount}</span>
+            </div>
           </div>
         </div>
         
