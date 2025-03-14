@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { FaGamepad, FaThumbsUp, FaTrophy, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaGamepad, FaThumbsUp, FaTrophy, FaExternalLinkAlt, FaEdit, FaTrash } from 'react-icons/fa';
 import { voteForGame, checkGameVoteStatus } from '../services/api';
 
-const GameListing = ({ game, currentUser, showLoginModal, showNotification }) => {
+const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEdit, onDelete }) => {
   const [voted, setVoted] = useState(false);
   const [voteCount, setVoteCount] = useState(game.votes || 0);
   const [loading, setLoading] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   useEffect(() => {
     if (currentUser) {
@@ -49,6 +50,27 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification }) =>
     window.open(game.gameUrl, '_blank', 'noopener,noreferrer');
   };
   
+  const handleEdit = () => {
+    if (onEdit) {
+      onEdit(game);
+    }
+  };
+  
+  const handleDeleteClick = () => {
+    setShowDeleteConfirm(true);
+  };
+  
+  const handleDeleteConfirm = () => {
+    if (onDelete) {
+      onDelete(game._id);
+      setShowDeleteConfirm(false);
+    }
+  };
+  
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirm(false);
+  };
+  
   const truncateDescription = (text, length = 150) => {
     if (text.length <= length) return text;
     return text.substring(0, length) + '...';
@@ -75,8 +97,35 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification }) =>
     return url;
   };
   
+  // Check if current user is the owner or an admin
+  const isOwnerOrAdmin = currentUser && (
+    (game.owner && currentUser._id === game.owner._id) || 
+    (game.owner && currentUser.userId === game.owner._id) || 
+    currentUser.isAdmin
+  );
+  
   return (
     <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg border border-gray-700 hover:border-blue-500 transition-all duration-300 flex flex-col h-full">
+      {/* Admin/Owner Actions */}
+      {isOwnerOrAdmin && (
+        <div className="absolute top-2 right-2 z-10 flex space-x-2">
+          <button
+            onClick={handleEdit}
+            className="bg-yellow-600 hover:bg-yellow-700 text-white p-1 rounded"
+            title="Edit game"
+          >
+            <FaEdit />
+          </button>
+          <button
+            onClick={handleDeleteClick}
+            className="bg-red-600 hover:bg-red-700 text-white p-1 rounded"
+            title="Delete game"
+          >
+            <FaTrash />
+          </button>
+        </div>
+      )}
+      
       {/* Banner (video or image) */}
       <div className="relative w-full h-48 bg-gray-900 overflow-hidden">
         {isVideo ? (
@@ -106,7 +155,7 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification }) =>
         </div>
         
         {/* Blockchain label */}
-        <div className="absolute top-2 right-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full">
+        <div className="absolute top-2 right-20 bg-purple-600 text-white text-xs px-2 py-1 rounded-full">
           {game.blockchain}
         </div>
       </div>
@@ -182,6 +231,31 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification }) =>
           </button>
         </div>
       </div>
+      
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg p-6 max-w-md mx-auto">
+            <h3 className="text-xl font-bold text-white mb-4">Confirm Delete</h3>
+            <p className="text-gray-300 mb-6">Are you sure you want to delete "{game.title}"? This action cannot be undone.</p>
+            
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={handleDeleteCancel}
+                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

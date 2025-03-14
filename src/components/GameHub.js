@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { fetchGames, fetchGameCategories } from '../services/api';
+import { fetchGames, fetchGameCategories, deleteGame } from '../services/api';
 import GameListing from './GameListing';
 import CreateGameModal from './CreateGameModal';
+import EditGameModal from './EditGameModal';
 import { FaGamepad, FaPlus, FaSearch, FaFilter, FaSortAmountDown, FaTimes, FaHome } from 'react-icons/fa';
 import { addNotificationBell } from './NavUtils';
 import Modal from './Modal';
@@ -61,6 +62,8 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [gameToEdit, setGameToEdit] = useState(null);
   const [filterOpen, setFilterOpen] = useState(false);
   const [popularCategories, setPopularCategories] = useState([]);
   
@@ -159,9 +162,37 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     });
   };
   
-  const handleCreateGame = (newGame) => {
-    setGames([newGame, ...games]);
-    setShowCreateModal(false);
+  const handleCreateGame = async (gameData) => {
+    try {
+      // ... existing code ...
+    } catch (error) {
+      // ... existing code ...
+    }
+  };
+  
+  const handleEditGame = (game) => {
+    setGameToEdit(game);
+    setShowEditModal(true);
+  };
+  
+  const handleUpdateGame = (updatedGame) => {
+    setGames(prevGames => 
+      prevGames.map(game => 
+        game._id === updatedGame._id ? updatedGame : game
+      )
+    );
+    showNotification('Game updated successfully!', 'success');
+  };
+  
+  const handleDeleteGame = async (gameId) => {
+    try {
+      await deleteGame(gameId);
+      setGames(prevGames => prevGames.filter(game => game._id !== gameId));
+      showNotification('Game deleted successfully!', 'success');
+    } catch (error) {
+      console.error('Error deleting game:', error);
+      showNotification('Failed to delete game. Please try again.', 'error');
+    }
   };
   
   const handleLoginClick = () => {
@@ -182,8 +213,8 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     setShowCreateAccountModal(false);
   };
   
-  const showNotification = (message, type = 'success') => {
-    // You can implement a notification system here
+  const showNotification = (message, type = 'info') => {
+    // If you have a notification system, use it here
     alert(message);
   };
   
@@ -465,6 +496,8 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                     currentUser={currentUser}
                     showLoginModal={handleLoginClick}
                     showNotification={showNotification}
+                    onEdit={handleEditGame}
+                    onDelete={handleDeleteGame}
                   />
                 ))}
               </div>
@@ -478,6 +511,17 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         <CreateGameModal 
           onClose={() => setShowCreateModal(false)} 
           onCreateGame={handleCreateGame}
+        />
+      )}
+      
+      {showEditModal && gameToEdit && (
+        <EditGameModal 
+          game={gameToEdit}
+          onClose={() => {
+            setShowEditModal(false);
+            setGameToEdit(null);
+          }} 
+          onUpdateGame={handleUpdateGame}
         />
       )}
       
