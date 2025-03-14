@@ -14,11 +14,10 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
   };
 
   const handleShare = (blog) => {
-    // Use the dedicated share URL for social media which contains proper metadata
-    const shareUrl = `${window.location.origin}/api/blogs/share/${blog._id}`;
+    // Use the direct share URL for social media (not going through the API)
+    const shareUrl = `${window.location.origin}/share-blog/${blog._id}`;
     
     // Add referral code if user is logged in (as a separate parameter)
-    // This won't affect the metadata but will be preserved when redirecting
     const finalUrl = currentUser?.username 
       ? `${shareUrl}?ref=${currentUser.username}` 
       : shareUrl;
