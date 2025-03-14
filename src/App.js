@@ -1349,6 +1349,12 @@ function App() {
                       >
                         GameHub
                       </Link>
+                      <Link
+                        to="/how-to"
+                        className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
+                      >
+                        How To
+                      </Link>
                       {currentUser ? (
                         <>
                           <NotificationBell currentUser={currentUser} />
@@ -1411,6 +1417,12 @@ function App() {
                         className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
                       >
                         GameHub
+                      </Link>
+                      <Link
+                        to="/how-to"
+                        className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+                      >
+                        How To
                       </Link>
                       {currentUser ? (
                         <>

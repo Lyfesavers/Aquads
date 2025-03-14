@@ -773,7 +773,7 @@ export const createGame = async (gameData) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        ...getAuthHeader()
       },
       body: JSON.stringify(gameData)
     });
@@ -796,7 +796,7 @@ export const updateGame = async (gameId, gameData) => {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        ...getAuthHeader()
       },
       body: JSON.stringify(gameData)
     });
@@ -818,7 +818,7 @@ export const deleteGame = async (gameId) => {
     const response = await fetch(`${API_URL}/games/${gameId}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        ...getAuthHeader()
       }
     });
     
@@ -840,7 +840,7 @@ export const voteForGame = async (gameId) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        ...getAuthHeader()
       }
     });
     
@@ -858,10 +858,10 @@ export const voteForGame = async (gameId) => {
 
 export const checkGameVoteStatus = async (gameId) => {
   try {
-    const response = await fetch(`${API_URL}/games/${gameId}/vote-status`, {
+    const response = await fetch(`${API_URL}/games/${gameId}/voted`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+        ...getAuthHeader()
       }
     });
     
@@ -878,7 +878,7 @@ export const checkGameVoteStatus = async (gameId) => {
 
 export const fetchGameCategories = async () => {
   try {
-    const response = await fetch(`${API_URL}/games/categories`);
+    const response = await fetch(`${API_URL}/games/categories/popular`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch game categories');
