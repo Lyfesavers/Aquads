@@ -89,20 +89,16 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         if (Array.isArray(data)) {
           setGames(data);
         } else {
-          // If response is not an array, set an empty array
           console.warn('Games API returned non-array data:', data);
           setGames([]);
           setError('Game Hub is currently under development. Games will be available soon!');
         }
       } catch (error) {
-        console.error('Error fetching games:', error);
-        // Show a more user-friendly message
+        console.log('Game Hub API not ready yet:', error.message);
+        // Provide a clean user interface without error messages in console
         setGames([]);
-        setError('Game Hub is currently under development. New games will be available soon!');
+        setError('Game Hub is coming soon! Our team is currently working on bringing exciting blockchain games to Aquads.');
       }
-    } catch (error) {
-      console.error('Error loading games:', error);
-      setError('Failed to load games. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -115,16 +111,17 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         if (Array.isArray(categories)) {
           setPopularCategories(categories);
         } else {
-          // If response is not an array, set default categories
-          console.warn('Categories API returned non-array data:', categories);
+          console.log('Categories API returned non-array data');
           setDefaultCategories();
         }
       } catch (error) {
-        console.error('Error fetching game categories:', error);
+        console.log('Game categories API not ready yet');
+        // Set default categories without error messages in console
         setDefaultCategories();
       }
     } catch (error) {
-      console.error('Error loading categories:', error);
+      // Catch any unexpected errors
+      setDefaultCategories();
     }
   };
   
@@ -412,13 +409,18 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
           )}
         </div>
         
-        {/* Error message */}
+        {/* Error message - Updated to be more appealing */}
         {error && (
-          <div className="bg-blue-900/50 text-white p-6 rounded-lg mb-6 border border-blue-500/50 text-center">
-            <FaGamepad className="text-5xl text-blue-400 mx-auto mb-4" />
-            <h3 className="text-2xl font-bold mb-2">Game Hub Update</h3>
-            <p className="text-xl text-gray-300 mb-4">{error}</p>
-            <p className="text-gray-400">Check back soon for exciting new games!</p>
+          <div className="bg-gradient-to-r from-blue-900/60 to-purple-900/60 text-white p-8 rounded-lg mb-6 border border-blue-500/50 text-center">
+            <FaGamepad className="text-6xl text-blue-400 mx-auto mb-6" />
+            <h3 className="text-3xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-400 text-transparent bg-clip-text">Coming Soon!</h3>
+            <p className="text-xl text-gray-300 mb-6 max-w-2xl mx-auto">{error}</p>
+            <div className="w-16 h-1 bg-blue-500 mx-auto mb-6"></div>
+            <p className="text-gray-400">
+              We're working on creating an exciting GameHub for all blockchain games. 
+              <br className="hidden md:block" />
+              Check back soon for updates!
+            </p>
           </div>
         )}
         
