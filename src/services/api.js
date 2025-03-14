@@ -878,7 +878,7 @@ export const checkGameVoteStatus = async (gameId) => {
 
 export const fetchGameCategories = async () => {
   try {
-    const response = await fetch(`${API_URL}/games/categories/popular`);
+    const response = await fetch(`${API_URL}/games/categories`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch game categories');
