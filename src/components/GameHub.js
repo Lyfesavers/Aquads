@@ -154,9 +154,9 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   };
   
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      {/* Navigation */}
-      <nav className="bg-gray-800 shadow-md py-3">
+    <div className="min-h-screen bg-gray-900 text-white overflow-y-auto">
+      {/* Navigation - Make it sticky */}
+      <nav className="bg-gray-800 shadow-md py-3 sticky top-0 z-50">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center">
@@ -282,8 +282,8 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         </div>
       </div>
       
-      {/* Main content */}
-      <div className="container mx-auto px-4 py-8">
+      {/* Main content with padding at the bottom */}
+      <div className="container mx-auto px-4 py-8 pb-24">
         {/* Filter bar */}
         <div className="mb-8 bg-gray-800 rounded-lg p-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between">
@@ -450,6 +450,9 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
           onCreateAccount={handleCreateAccountSubmit}
         />
       )}
+      
+      {/* Add a spacer div at the bottom to ensure content can be scrolled fully */}
+      <div className="h-16"></div>
     </div>
   );
 };
