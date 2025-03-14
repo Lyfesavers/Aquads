@@ -2,6 +2,14 @@ import React, { useState } from 'react';
 import { FaShare, FaEdit, FaTrash } from 'react-icons/fa';
 import DOMPurify from 'dompurify';
 
+// Helper function to create URL-friendly slugs
+const createSlug = (title) => {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+};
+
 const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
   const [expandedBlogId, setExpandedBlogId] = useState(null);
 
@@ -14,10 +22,12 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
   };
 
   const handleShare = (blog) => {
-    // Use the direct share URL for social media (not going through the API)
-    const shareUrl = `${window.location.origin}/share-blog/${blog._id}`;
+    // Create SEO-friendly URL with slug and ID for sharing on social media
+    const slug = createSlug(blog.title);
+    const shareUrl = `${window.location.origin}/how-to/${slug}-${blog._id}`;
     
     // Add referral code if user is logged in (as a separate parameter)
+    // The redirect rule will preserve this parameter
     const finalUrl = currentUser?.username 
       ? `${shareUrl}?ref=${currentUser.username}` 
       : shareUrl;

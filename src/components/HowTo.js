@@ -46,7 +46,11 @@ const HowTo = ({ currentUser }) => {
     // If we have a blogId in the path but not in query params, redirect to the query param version
     // This keeps our app's internal logic consistent while supporting SEO-friendly URLs
     if (pathBlogId && !queryBlogId) {
-      navigate(`/how-to?blogId=${pathBlogId}`, { replace: true });
+      // Keep any existing query parameters when redirecting
+      const existingParams = location.search ? location.search : '';
+      const separator = existingParams ? '&' : '?';
+      
+      navigate(`/how-to${existingParams}${separator}blogId=${pathBlogId}`, { replace: true });
     }
     
     // Use either the query param blogId or path blogId to fetch and display the blog
@@ -70,6 +74,9 @@ const HowTo = ({ currentUser }) => {
       const sharedBlog = blogs.find(blog => blog._id === blogId);
       
       if (sharedBlog) {
+        // Update page title for SEO
+        document.title = `${sharedBlog.title} - Aquads Blog`;
+        
         // Update meta tags for sharing
         const dynamicTwitterImage = document.getElementById('dynamic-twitter-image');
         const dynamicTwitterTitle = document.getElementById('dynamic-twitter-title');
@@ -78,15 +85,33 @@ const HowTo = ({ currentUser }) => {
         const dynamicOgTitle = document.getElementById('dynamic-og-title');
         const dynamicOgDesc = document.getElementById('dynamic-og-description');
         const dynamicOgUrl = document.getElementById('dynamic-og-url');
+        
+        // Create slug for SEO-friendly URL
+        const slug = createSlug(sharedBlog.title);
+        const seoUrl = `${window.location.origin}/how-to/${slug}-${blogId}`;
+        
+        // Clean the description for social media
+        const cleanDescription = sharedBlog.content
+          ? sharedBlog.content.replace(/<[^>]*>/g, '').slice(0, 200) + '...'
+          : 'Read our latest blog post on Aquads!';
 
-        if (dynamicTwitterImage) dynamicTwitterImage.content = sharedBlog.bannerImage;
+        if (dynamicTwitterImage) dynamicTwitterImage.content = sharedBlog.bannerImage || 'https://www.aquads.xyz/logo712.png';
         if (dynamicTwitterTitle) dynamicTwitterTitle.content = `${sharedBlog.title} - Aquads Blog`;
-        if (dynamicTwitterDesc) dynamicTwitterDesc.content = sharedBlog.content?.replace(/<[^>]*>/g, '').slice(0, 200) + '...';
-        if (dynamicOgImage) dynamicOgImage.content = sharedBlog.bannerImage;
+        if (dynamicTwitterDesc) dynamicTwitterDesc.content = cleanDescription;
+        if (dynamicOgImage) dynamicOgImage.content = sharedBlog.bannerImage || 'https://www.aquads.xyz/logo712.png';
         if (dynamicOgTitle) dynamicOgTitle.content = `${sharedBlog.title} - Aquads Blog`;
-        if (dynamicOgDesc) dynamicOgDesc.content = sharedBlog.content?.replace(/<[^>]*>/g, '').slice(0, 200) + '...';
-        if (dynamicOgUrl) dynamicOgUrl.content = window.location.href;
-
+        if (dynamicOgDesc) dynamicOgDesc.content = cleanDescription;
+        if (dynamicOgUrl) dynamicOgUrl.content = seoUrl;
+        
+        // Add canonical URL for SEO
+        let canonicalUrl = document.querySelector('link[rel="canonical"]');
+        if (!canonicalUrl) {
+          canonicalUrl = document.createElement('link');
+          canonicalUrl.setAttribute('rel', 'canonical');
+          document.head.appendChild(canonicalUrl);
+        }
+        canonicalUrl.setAttribute('href', seoUrl);
+        
         // Scroll to and highlight the blog post
         const blogElement = document.getElementById(`blog-${blogId}`);
         if (blogElement) {

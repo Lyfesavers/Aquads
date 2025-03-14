@@ -7,6 +7,15 @@
   NPM_FLAGS = "--legacy-peer-deps"
   DISABLE_ESLINT_PLUGIN = "true"
 
+# SEO-friendly URL redirect for blogs
+# Captures the blog-title-123456 format and redirects to ?blogId=123456
+[[redirects]]
+  from = "/how-to/*-:id"
+  to = "/how-to?blogId=:id"
+  status = 301
+  force = true
+
+# Default SPA redirect (keep this last)
 [[redirects]]
   from = "/*"
   to = "/index.html"
