@@ -7,8 +7,19 @@
   NPM_FLAGS = "--legacy-peer-deps"
   DISABLE_ESLINT_PLUGIN = "true"
 
-# SEO-friendly URL redirect for blogs
-# Captures the blog-title-123456 format and redirects to ?blogId=123456
+# Function to prerender blog posts for social media crawlers
+[functions]
+  directory = "functions"
+
+# Serve prerendered version for bots, regular app for users
+[[redirects]]
+  from = "/how-to/*-:id"
+  to = "/.netlify/functions/prerender-blog"
+  status = 200
+  force = false
+  conditions = {Crawler = true}
+
+# Captures the blog-title-123456 format and redirects to ?blogId=123456 for normal users
 [[redirects]]
   from = "/how-to/*-:id"
   to = "/how-to?blogId=:id"
