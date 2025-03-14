@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { fetchGames, fetchGameCategories } from '../services/api';
 import GameListing from './GameListing';
 import CreateGameModal from './CreateGameModal';
-import { FaGamepad, FaPlus, FaSearch, FaFilter, FaSortAmountDown, FaTimes } from 'react-icons/fa';
+import { FaGamepad, FaPlus, FaSearch, FaFilter, FaSortAmountDown, FaTimes, FaHome } from 'react-icons/fa';
 import { addNotificationBell } from './NavUtils';
 import Modal from './Modal';
 import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
 import BannerDisplay from './BannerDisplay';
+import { Link } from 'react-router-dom';
 
 const BLOCKCHAIN_OPTIONS = [
   { label: 'All Blockchains', value: '' },
@@ -83,8 +84,15 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       // Add search term to filters if it exists
       const searchFilter = searchTerm ? { ...filters, search: searchTerm } : filters;
       
-      const data = await fetchGames(searchFilter);
-      setGames(data);
+      try {
+        const data = await fetchGames(searchFilter);
+        setGames(data);
+      } catch (error) {
+        console.error('Error fetching games:', error);
+        // Show a more user-friendly message while the API is under development
+        setGames([]);
+        setError('Game Hub is currently under development. New games will be available soon!');
+      }
     } catch (error) {
       console.error('Error loading games:', error);
       setError('Failed to load games. Please try again later.');
@@ -95,8 +103,20 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   
   const loadCategories = async () => {
     try {
-      const categories = await fetchGameCategories();
-      setPopularCategories(categories);
+      try {
+        const categories = await fetchGameCategories();
+        setPopularCategories(categories);
+      } catch (error) {
+        console.error('Error fetching game categories:', error);
+        // Set some default categories while the API is under development
+        setPopularCategories([
+          { name: 'Action', count: 0 },
+          { name: 'Adventure', count: 0 },
+          { name: 'RPG', count: 0 },
+          { name: 'Strategy', count: 0 },
+          { name: 'Puzzle', count: 0 }
+        ]);
+      }
     } catch (error) {
       console.error('Error loading categories:', error);
     }
@@ -160,6 +180,12 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center">
+              <Link to="/" className="text-white hover:text-blue-300 mr-4">
+                <span className="flex items-center">
+                  <FaHome className="mr-1" />
+                  Home
+                </span>
+              </Link>
               <div className="text-2xl font-bold text-white flex items-center">
                 <FaGamepad className="mr-2 text-blue-400" />
                 <span className="bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
@@ -371,8 +397,11 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         
         {/* Error message */}
         {error && (
-          <div className="bg-red-500 text-white p-4 rounded-lg mb-6">
-            {error}
+          <div className="bg-blue-900/50 text-white p-6 rounded-lg mb-6 border border-blue-500/50 text-center">
+            <FaGamepad className="text-5xl text-blue-400 mx-auto mb-4" />
+            <h3 className="text-2xl font-bold mb-2">Game Hub Update</h3>
+            <p className="text-xl text-gray-300 mb-4">{error}</p>
+            <p className="text-gray-400">Check back soon for exciting new games!</p>
           </div>
         )}
         
