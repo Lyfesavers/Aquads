@@ -162,6 +162,8 @@ app.use('/api/affiliates', affiliateRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/blogs', blogsRoutes);
 app.use('/api/sitemap', sitemapRoutes);
+app.use('/api/games', require('./routes/games'));
+app.use('/api/notifications', require('./routes/notifications'));
 
 // Create new ad
 app.post('/api/ads', auth, async (req, res) => {

@@ -1410,7 +1410,7 @@ function App() {
                         to="/marketplace"
                         className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
                       >
-                        Marketplace
+                        Freelancer Hub
                       </Link>
                       <Link
                         to="/games"
