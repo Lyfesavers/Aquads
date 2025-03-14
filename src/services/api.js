@@ -739,7 +739,7 @@ export const fetchGames = async (filters = {}) => {
     if (filters.sort) queryParams.append('sort', filters.sort);
     if (filters.status) queryParams.append('status', filters.status);
     
-    const response = await fetch(`${API_URL}/games?${queryParams.toString()}`);
+    const response = await fetch(`${API_URL}/game${queryParams.toString() ? `?${queryParams.toString()}` : ''}`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch games');
@@ -754,7 +754,7 @@ export const fetchGames = async (filters = {}) => {
 
 export const fetchGameById = async (gameId) => {
   try {
-    const response = await fetch(`${API_URL}/games/${gameId}`);
+    const response = await fetch(`${API_URL}/game/${gameId}`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch game details');
@@ -769,7 +769,7 @@ export const fetchGameById = async (gameId) => {
 
 export const createGame = async (gameData) => {
   try {
-    const response = await fetch(`${API_URL}/games`, {
+    const response = await fetch(`${API_URL}/game`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -792,7 +792,7 @@ export const createGame = async (gameData) => {
 
 export const updateGame = async (gameId, gameData) => {
   try {
-    const response = await fetch(`${API_URL}/games/${gameId}`, {
+    const response = await fetch(`${API_URL}/game/${gameId}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -815,7 +815,7 @@ export const updateGame = async (gameId, gameData) => {
 
 export const deleteGame = async (gameId) => {
   try {
-    const response = await fetch(`${API_URL}/games/${gameId}`, {
+    const response = await fetch(`${API_URL}/game/${gameId}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -836,7 +836,7 @@ export const deleteGame = async (gameId) => {
 
 export const voteForGame = async (gameId) => {
   try {
-    const response = await fetch(`${API_URL}/games/${gameId}/vote`, {
+    const response = await fetch(`${API_URL}/game/${gameId}/vote`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -858,15 +858,15 @@ export const voteForGame = async (gameId) => {
 
 export const checkGameVoteStatus = async (gameId) => {
   try {
-    const response = await fetch(`${API_URL}/games/${gameId}/voted`, {
+    const response = await fetch(`${API_URL}/game/${gameId}/vote-status`, {
+      method: 'GET',
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
     });
     
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to check vote status');
+      throw new Error('Failed to check vote status');
     }
     
     return await response.json();
@@ -878,7 +878,7 @@ export const checkGameVoteStatus = async (gameId) => {
 
 export const fetchGameCategories = async () => {
   try {
-    const response = await fetch(`${API_URL}/games/categories/popular`);
+    const response = await fetch(`${API_URL}/game-categories`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch game categories');

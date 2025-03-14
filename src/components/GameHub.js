@@ -86,10 +86,17 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       
       try {
         const data = await fetchGames(searchFilter);
-        setGames(data);
+        if (Array.isArray(data)) {
+          setGames(data);
+        } else {
+          // If response is not an array, set an empty array
+          console.warn('Games API returned non-array data:', data);
+          setGames([]);
+          setError('Game Hub is currently under development. Games will be available soon!');
+        }
       } catch (error) {
         console.error('Error fetching games:', error);
-        // Show a more user-friendly message while the API is under development
+        // Show a more user-friendly message
         setGames([]);
         setError('Game Hub is currently under development. New games will be available soon!');
       }
@@ -105,21 +112,31 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     try {
       try {
         const categories = await fetchGameCategories();
-        setPopularCategories(categories);
+        if (Array.isArray(categories)) {
+          setPopularCategories(categories);
+        } else {
+          // If response is not an array, set default categories
+          console.warn('Categories API returned non-array data:', categories);
+          setDefaultCategories();
+        }
       } catch (error) {
         console.error('Error fetching game categories:', error);
-        // Set some default categories while the API is under development
-        setPopularCategories([
-          { name: 'Action', count: 0 },
-          { name: 'Adventure', count: 0 },
-          { name: 'RPG', count: 0 },
-          { name: 'Strategy', count: 0 },
-          { name: 'Puzzle', count: 0 }
-        ]);
+        setDefaultCategories();
       }
     } catch (error) {
       console.error('Error loading categories:', error);
     }
+  };
+  
+  // Helper function to set default categories
+  const setDefaultCategories = () => {
+    setPopularCategories([
+      { name: 'Action', count: 0 },
+      { name: 'Adventure', count: 0 },
+      { name: 'RPG', count: 0 },
+      { name: 'Strategy', count: 0 },
+      { name: 'Puzzle', count: 0 }
+    ]);
   };
   
   const handleSearchSubmit = (e) => {
