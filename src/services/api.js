@@ -725,4 +725,168 @@ export const deleteBlog = async (blogId) => {
     console.error('Error deleting blog:', error);
     throw error;
   }
+};
+
+// Game Hub API Functions
+
+export const fetchGames = async (filters = {}) => {
+  try {
+    const queryParams = new URLSearchParams();
+    
+    if (filters.category) queryParams.append('category', filters.category);
+    if (filters.blockchain) queryParams.append('blockchain', filters.blockchain);
+    if (filters.search) queryParams.append('search', filters.search);
+    if (filters.sort) queryParams.append('sort', filters.sort);
+    if (filters.status) queryParams.append('status', filters.status);
+    
+    const response = await fetch(`${API_URL}/games?${queryParams.toString()}`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch games');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching games:', error);
+    throw error;
+  }
+};
+
+export const fetchGameById = async (gameId) => {
+  try {
+    const response = await fetch(`${API_URL}/games/${gameId}`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch game details');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching game details:', error);
+    throw error;
+  }
+};
+
+export const createGame = async (gameData) => {
+  try {
+    const response = await fetch(`${API_URL}/games`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify(gameData)
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to create game listing');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating game listing:', error);
+    throw error;
+  }
+};
+
+export const updateGame = async (gameId, gameData) => {
+  try {
+    const response = await fetch(`${API_URL}/games/${gameId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify(gameData)
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to update game listing');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating game listing:', error);
+    throw error;
+  }
+};
+
+export const deleteGame = async (gameId) => {
+  try {
+    const response = await fetch(`${API_URL}/games/${gameId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to delete game listing');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error deleting game listing:', error);
+    throw error;
+  }
+};
+
+export const voteForGame = async (gameId) => {
+  try {
+    const response = await fetch(`${API_URL}/games/${gameId}/vote`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to vote for game');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error voting for game:', error);
+    throw error;
+  }
+};
+
+export const checkGameVoteStatus = async (gameId) => {
+  try {
+    const response = await fetch(`${API_URL}/games/${gameId}/voted`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to check vote status');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error checking game vote status:', error);
+    throw error;
+  }
+};
+
+export const fetchGameCategories = async () => {
+  try {
+    const response = await fetch(`${API_URL}/games/categories/popular`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch game categories');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching game categories:', error);
+    throw error;
+  }
 }; 

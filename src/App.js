@@ -28,6 +28,7 @@ import TokenBanner from './components/TokenBanner';
 import TokenList from './components/TokenList';
 import TokenRating from './components/TokenRating';
 import Marketplace from './components/Marketplace';
+import GameHub from './components/GameHub';
 import ProfileModal from './components/ProfileModal';
 import WelcomeModal from './components/WelcomeModal';
 import Footer from './components/Footer';
@@ -1289,6 +1290,14 @@ function App() {
             onBannerSubmit={handleBannerSubmit}
           />
         } />
+        <Route path="/games" element={
+          <GameHub 
+            currentUser={currentUser}
+            onLogin={handleLogin}
+            onLogout={handleLogout}
+            onCreateAccount={handleCreateAccount}
+          />
+        } />
         <Route path="/" element={
           <div className="bg-gradient-to-br from-gray-900 to-black text-white overflow-y-auto h-screen">
             {/* Background stays fixed */}
@@ -1332,13 +1341,13 @@ function App() {
                         to="/marketplace"
                         className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
                       >
-                        Freelancer Hub
+                        Marketplace
                       </Link>
                       <Link
-                        to="/how-to"
+                        to="/games"
                         className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
                       >
-                        How To
+                        GameHub
                       </Link>
                       {currentUser ? (
                         <>
@@ -1395,13 +1404,13 @@ function App() {
                         to="/marketplace"
                         className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
                       >
-                        Freelancer Hub
+                        Marketplace
                       </Link>
                       <Link
-                        to="/how-to"
+                        to="/games"
                         className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
                       >
-                        How To
+                        GameHub
                       </Link>
                       {currentUser ? (
                         <>

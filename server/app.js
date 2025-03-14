@@ -19,6 +19,7 @@ const tokensRoutes = require('./routes/tokens');
 const reviewsRoutes = require('./routes/reviews');
 const blogsRoutes = require('./routes/blogs');
 const notificationsRoutes = require('./routes/notifications');
+const gamesRoutes = require('./routes/games');
 
 // Middleware
 const app = express();
@@ -389,8 +390,10 @@ app.use('/api/jobs', jobsRoutes);
 app.use('/api/blogs', blogsRoutes);
 app.use('/api/sitemap', sitemapRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/games', gamesRoutes);
 
 console.log('Notifications routes registered:', typeof notificationsRoutes === 'function' ? '✓' : '✗');
+console.log('Games routes registered:', typeof gamesRoutes === 'function' ? '✓' : '✗');
 
 // Test route to verify API is working
 app.get('/api/test', (req, res) => {
