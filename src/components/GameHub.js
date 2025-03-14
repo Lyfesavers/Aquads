@@ -154,7 +154,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   };
   
   return (
-    <div className="min-h-screen bg-gray-900 text-white overflow-y-auto">
+    <div className="h-screen overflow-y-auto bg-gray-900 text-white">
       {/* Navigation - Make it sticky */}
       <nav className="bg-gray-800 shadow-md py-3 sticky top-0 z-50">
         <div className="container mx-auto px-4">
