@@ -1613,7 +1613,7 @@ function App() {
                   <div className="w-full overflow-hidden">
                     <Link to="/marketplace" className="block">
                       <img
-                        src="/ACCESS OUR FREELANCER HUB.png"
+                        src="/ACCESS OUR FREELANCER HUB.svg"
                         alt="Visit Marketplace"
                         className="w-full h-[100px] sm:h-[150px] md:h-[200px] object-contain md:object-cover"
                       />

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="1848" height="200" viewBox="0 0 1848 200" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <title>ACCESS OUR FREELANCER HUB</title>
+  <desc>Find expert talent for your project</desc>
+  
+  <!-- Purple gradient background -->
+  <defs>
+    <linearGradient id="purpleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#1a1330;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2a1a40;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Diagonal lines pattern for the left side -->
+    <pattern id="diagonalLines" width="10" height="10" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="0" y2="10" stroke="#5a4a70" stroke-width="1" />
+    </pattern>
+    
+    <!-- Circular mask for the people image -->
+    <clipPath id="circleClip">
+      <circle cx="1630" cy="100" r="70" />
+    </clipPath>
+    
+    <!-- Cyan gradient for the teal shapes -->
+    <linearGradient id="cyanGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0ea5e9;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Main background -->
+  <rect width="1848" height="200" fill="url(#purpleGradient)" />
+  
+  <!-- Diagonal lines overlay on left side -->
+  <rect x="0" y="0" width="800" height="200" fill="url(#diagonalLines)" opacity="0.15" />
+  
+  <!-- Main text - ACCESS OUR FREELANCER HUB -->
+  <text x="220" y="70" font-family="Arial, sans-serif" font-weight="bold" font-size="48" fill="white">
+    ACCESS OUR FREELANCER HUB
+  </text>
+  
+  <!-- Subtitle - FIND EXPERT TALENT FOR YOUR PROJECT -->
+  <text x="220" y="125" font-family="Arial, sans-serif" font-weight="bold" font-size="38" fill="#06b6d4">
+    FIND EXPERT TALENT FOR YOUR
+  </text>
+  <text x="220" y="165" font-family="Arial, sans-serif" font-weight="bold" font-size="38" fill="#06b6d4">
+    PROJECT
+  </text>
+  
+  <!-- Cyan/teal V shape on right side -->
+  <path d="M 1440,0 L 1848,0 L 1848,200 L 1440,200 L 1530,100 Z" fill="url(#cyanGradient)" />
+  
+  <!-- People image placeholder (would be replaced with an actual image in a production SVG) -->
+  <!-- This is represented as a circle with a darker background -->
+  <circle cx="1630" cy="100" r="72" fill="#ffffff" stroke="#06b6d4" stroke-width="4" />
+  
+  <!-- Since we can't embed the actual photo directly in the SVG code, this is a placeholder -->
+  <!-- In a real implementation, you'd use an image element with the actual photo -->
+  <foreignObject x="1560" y="30" width="140" height="140" clip-path="url(#circleClip)">
+    <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;background-color:#e5e5e5;display:flex;align-items:center;justify-content:center;">
+      <span style="color:#666;font-family:Arial;font-size:12px;">Team Photo</span>
+    </div>
+  </foreignObject>
+</svg> 
