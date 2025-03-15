@@ -53,11 +53,40 @@
   <!-- This is represented as a circle with a darker background -->
   <circle cx="1630" cy="100" r="72" fill="#ffffff" stroke="#06b6d4" stroke-width="4" />
   
-  <!-- Since we can't embed the actual photo directly in the SVG code, this is a placeholder -->
-  <!-- In a real implementation, you'd use an image element with the actual photo -->
-  <foreignObject x="1560" y="30" width="140" height="140" clip-path="url(#circleClip)">
-    <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;background-color:#e5e5e5;display:flex;align-items:center;justify-content:center;">
-      <span style="color:#666;font-family:Arial;font-size:12px;">Team Photo</span>
-    </div>
-  </foreignObject>
+  <!-- Replace the placeholder with an SVG illustration of freelancers -->
+  <g clip-path="url(#circleClip)">
+    <!-- Background gradient for the freelancer illustration -->
+    <rect x="1560" y="30" width="140" height="140" fill="#f0f9ff" />
+    
+    <!-- Stylized freelancer team illustration -->
+    <!-- Person 1 (center) -->
+    <circle cx="1630" cy="70" r="20" fill="#0891b2" /> <!-- Head -->
+    <rect x="1620" y="90" width="20" height="35" rx="10" fill="#0891b2" /> <!-- Body -->
+    
+    <!-- Person 2 (left) -->
+    <circle cx="1600" cy="75" r="16" fill="#0e7490" /> <!-- Head -->
+    <rect x="1592" y="91" width="16" height="30" rx="8" fill="#0e7490" /> <!-- Body -->
+    
+    <!-- Person 3 (right) -->
+    <circle cx="1660" cy="75" r="16" fill="#06b6d4" /> <!-- Head -->
+    <rect x="1652" y="91" width="16" height="30" rx="8" fill="#06b6d4" /> <!-- Body -->
+    
+    <!-- Person 4 (bottom left) -->
+    <circle cx="1610" cy="115" r="16" fill="#0284c7" /> <!-- Head -->
+    <rect x="1602" y="131" width="16" height="25" rx="8" fill="#0284c7" /> <!-- Body -->
+    
+    <!-- Person 5 (bottom right) -->
+    <circle cx="1650" cy="115" r="16" fill="#2563eb" /> <!-- Head -->
+    <rect x="1642" y="131" width="16" height="25" rx="8" fill="#2563eb" /> <!-- Body -->
+    
+    <!-- Add laptop/work elements -->
+    <rect x="1615" y="125" width="30" height="20" rx="2" fill="#334155" /> <!-- Laptop base -->
+    <rect x="1615" y="120" width="30" height="15" rx="2" fill="#475569" transform="skewX(-10)" /> <!-- Laptop screen -->
+    
+    <!-- Add some abstract connecting lines to represent network/collaboration -->
+    <line x1="1610" y1="80" x2="1625" y2="90" stroke="#0ea5e9" stroke-width="2" />
+    <line x1="1650" y1="80" x2="1635" y2="90" stroke="#0ea5e9" stroke-width="2" />
+    <line x1="1615" y1="110" x2="1625" y2="100" stroke="#0ea5e9" stroke-width="2" />
+    <line x1="1645" y1="110" x2="1635" y2="100" stroke="#0ea5e9" stroke-width="2" />
+  </g>
 </svg> 
