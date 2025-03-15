@@ -1,6 +1,3 @@
-# Route SEO-friendly blog URLs to static HTML files
-/how-to/*-:id /blog-static/*-:id.html 200
-
 # SEO-friendly URL redirect for blogs
 /how-to/*-:id /how-to?blogId=:id 301
 

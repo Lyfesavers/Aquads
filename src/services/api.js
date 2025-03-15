@@ -70,7 +70,12 @@ export const createAd = async (adData) => {
     body: JSON.stringify(adData),
   });
   if (!response.ok) throw new Error('Failed to create ad');
-  return response.json();
+  const createdAd = await response.json();
+  
+  // Emit socket event for real-time updates
+  socket.emit('adCreate', createdAd);
+  
+  return createdAd;
 };
 
 // Update ad
@@ -84,7 +89,12 @@ export const updateAd = async (id, adData) => {
     body: JSON.stringify(adData),
   });
   if (!response.ok) throw new Error('Failed to update ad');
-  return response.json();
+  const updatedAd = await response.json();
+  
+  // Emit socket event for real-time updates
+  socket.emit('adUpdate', updatedAd);
+  
+  return updatedAd;
 };
 
 // Update ad position only (no auth required)
@@ -97,7 +107,12 @@ export const updateAdPosition = async (id, x, y) => {
     body: JSON.stringify({ x, y }),
   });
   if (!response.ok) throw new Error('Failed to update ad position');
-  return response.json();
+  const updatedAd = await response.json();
+  
+  // Emit socket event for real-time position updates
+  socket.emit('adUpdate', updatedAd);
+  
+  return updatedAd;
 };
 
 // Delete ad
@@ -114,7 +129,13 @@ export const deleteAd = async (id) => {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.error || 'Failed to delete ad');
   }
-  return response.json();
+  
+  const result = await response.json();
+  
+  // Emit socket event for real-time deletion
+  socket.emit('adDelete', id);
+  
+  return result;
 };
 
 // Login user
