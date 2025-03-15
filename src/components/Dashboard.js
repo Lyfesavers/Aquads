@@ -742,7 +742,21 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                     </div>
                     <div className="text-right">
                       <p className="text-gray-300">Your Referral Code:</p>
-                      <p className="text-blue-400 font-mono font-bold">{currentUser?.username}</p>
+                      <p 
+                        className="text-blue-400 font-mono font-bold cursor-pointer hover:underline"
+                        onClick={() => {
+                          const referralUrl = `${window.location.origin}/?ref=${currentUser?.username}`;
+                          navigator.clipboard.writeText(referralUrl).then(() => {
+                            showNotification('Referral link copied to clipboard!', 'success');
+                          }).catch(err => {
+                            console.error('Failed to copy:', err);
+                            showNotification('Failed to copy referral link', 'error');
+                          });
+                        }}
+                        title="Click to copy referral link"
+                      >
+                        {currentUser?.username}
+                      </p>
                     </div>
                   </div>
                 )}
