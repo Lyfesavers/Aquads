@@ -1615,7 +1615,7 @@ function App() {
                       <img
                         src="/ACCESS OUR FREELANCER HUB.svg"
                         alt="Visit Marketplace"
-                        className="w-full h-[100px] sm:h-[150px] md:h-[200px] object-contain md:object-cover"
+                        className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px] object-contain lg:object-cover"
                       />
                     </Link>
                   </div>
