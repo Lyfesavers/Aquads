@@ -1,5 +1,6 @@
 import React from 'react';
 import './WelcomeModal.css';
+import { FaTwitter } from 'react-icons/fa';
 
 const WelcomeModal = ({ username, onClose, referralCode }) => {
   const handleShare = () => {
@@ -41,7 +42,7 @@ const WelcomeModal = ({ username, onClose, referralCode }) => {
         
         <div className="welcome-actions">
           <button className="share-button" onClick={handleShare}>
-            Spread the word
+            <FaTwitter className="mr-2" /> Spread the word
           </button>
           <button 
             className="close-button" 
