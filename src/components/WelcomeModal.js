@@ -36,7 +36,7 @@ const WelcomeModal = ({ username, onClose, referralCode }) => {
             </button>
           </div>
           <p className="warning-text">
-            ⚠️ Please save this code before closing - you'll need it later! ⚠️
+            ⚠️ Please save this code before closing and DO NOT SHARE IT- you'll need it later! ⚠️
           </p>
         </div>
         
