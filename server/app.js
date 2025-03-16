@@ -114,7 +114,6 @@ app.use('/uploads/bookings', express.static(path.join(__dirname, 'uploads/bookin
 }));
 
 // API endpoint for file access - alternative to direct static file serving
-// This helps if the static file serving doesn't work in production
 app.get('/api/uploads/bookings/:filename', (req, res) => {
   try {
     const filePath = path.join(__dirname, 'uploads/bookings', req.params.filename);

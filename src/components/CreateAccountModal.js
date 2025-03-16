@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 import emailService from '../services/emailService';
-import { FaSpinner, FaCheck, FaTimes } from 'react-icons/fa';
+import { FaSpinner, FaCheck, FaTimes, FaImage, FaUpload } from 'react-icons/fa';
+import { API_URL } from '../services/api';
 
 const CreateAccountModal = ({ onCreateAccount, onClose }) => {
   const [formData, setFormData] = useState({
@@ -24,6 +25,9 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
     hasSpecial: false
   });
   const [passwordFocused, setPasswordFocused] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState('');
 
   useEffect(() => {
     // Check URL parameters first
@@ -153,6 +157,96 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
     setError('');
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Please select an image file (JPEG, PNG, or GIF)');
+      return;
+    }
+
+    // Check file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      setUploadError('Image size should be less than 2MB');
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadProgress(0);
+    setUploadError('');
+
+    try {
+      // Read the file as data URL
+      const reader = new FileReader();
+      
+      reader.onloadend = async () => {
+        try {
+          // The base64 string without the prefix
+          const base64Image = reader.result.split(',')[1];
+          
+          // Upload to ImgBB
+          const formData = new FormData();
+          formData.append('image', base64Image);
+          
+          // You would normally keep this key in an environment variable
+          // Using a demo key for illustration - replace with your own in production
+          const imgbbApiKey = '2d9a2f0c346a051cca6bbcf647d2a865'; // Demo key
+          
+          const response = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbApiKey}`, {
+            method: 'POST',
+            body: formData,
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            // Use the URL from ImgBB response
+            const imageUrl = data.data.url;
+            
+            // Update form data with the image URL
+            setFormData(prev => ({ ...prev, image: imageUrl }));
+            setPreviewUrl(imageUrl);
+            setIsUploading(false);
+            setUploadError('');
+          } else {
+            throw new Error(data.error?.message || 'Upload failed');
+          }
+        } catch (error) {
+          console.error('Error uploading to image host:', error);
+          setUploadError('Failed to upload image. Please try again or enter image URL manually.');
+          setIsUploading(false);
+        }
+      };
+      
+      reader.onerror = () => {
+        setUploadError('Failed to read image file.');
+        setIsUploading(false);
+      };
+      
+      // Read the file as data URL
+      reader.readAsDataURL(file);
+      
+      // Simulate progress for better UX
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          const newProgress = prev + 10;
+          if (newProgress >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return newProgress;
+        });
+      }, 200);
+      
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      setUploadError('Failed to upload image. Please try again or enter image URL manually.');
+      setIsUploading(false);
+    }
   };
 
   // Password requirement item
@@ -298,26 +392,65 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
               )}
             </div>
             <div>
-              <label className="block text-gray-300 mb-2">Profile Image URL (optional)</label>
-              <input
-                type="text"
-                name="image"
-                value={formData.image}
-                onChange={handleChange}
-                placeholder="Enter image URL"
-                className="w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              {previewUrl && (
-                <div className="mt-2">
-                  <img
-                    src={previewUrl}
-                    alt="Profile preview"
-                    className="w-20 h-20 object-cover rounded"
-                    onError={() => {
-                      setPreviewUrl('');
-                      setError('Failed to load image');
-                    }}
+              <label className="block text-gray-300 mb-2">Profile Image</label>
+              <div className="space-y-3">
+                {/* File Upload Option */}
+                <div className="border border-gray-600 rounded p-3">
+                  <label className="flex items-center justify-center p-4 cursor-pointer border-2 border-dashed border-gray-600 rounded hover:border-blue-500 transition-colors">
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      onChange={handleFileUpload}
+                      disabled={isUploading}
+                    />
+                    <div className="text-center">
+                      <FaUpload className="mx-auto text-gray-400 text-xl mb-2" />
+                      <span className="text-gray-300">
+                        {isUploading ? `Uploading: ${uploadProgress}%` : 'Click to upload image'}
+                      </span>
+                    </div>
+                  </label>
+                  
+                  {uploadError && (
+                    <p className="text-red-500 text-sm mt-1">{uploadError}</p>
+                  )}
+                </div>
+                
+                <div className="flex items-center">
+                  <div className="flex-grow h-px bg-gray-700"></div>
+                  <span className="mx-2 text-gray-500 text-sm">OR</span>
+                  <div className="flex-grow h-px bg-gray-700"></div>
+                </div>
+                
+                {/* URL Input Option */}
+                <div>
+                  <label className="block text-gray-400 text-sm mb-1">Enter Image URL</label>
+                  <input
+                    type="text"
+                    name="image"
+                    value={formData.image}
+                    onChange={handleChange}
+                    placeholder="https://example.com/image.jpg"
+                    className="w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                </div>
+              </div>
+              
+              {/* Image Preview */}
+              {previewUrl && (
+                <div className="mt-3 flex justify-center">
+                  <div className="w-24 h-24 relative rounded-full overflow-hidden border-2 border-blue-500">
+                    <img
+                      src={previewUrl}
+                      alt="Profile preview"
+                      className="w-full h-full object-cover"
+                      onError={() => {
+                        setPreviewUrl('');
+                        setError('Failed to load image');
+                      }}
+                    />
+                  </div>
                 </div>
               )}
             </div>
