@@ -41,7 +41,7 @@ const WelcomeModal = ({ username, onClose, referralCode }) => {
         
         <div className="welcome-actions">
           <button className="share-button" onClick={handleShare}>
-            Share on Twitter
+            Spread the word
           </button>
           <button 
             className="close-button" 
