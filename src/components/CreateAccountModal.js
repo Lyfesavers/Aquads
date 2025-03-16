@@ -145,13 +145,80 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
     }
   };
 
+  // Add this new function to handle the Postimages upload window
+  const openPostimagesUploader = () => {
+    // Open Postimages in a popup window
+    const postimagesWindow = window.open(
+      'https://postimages.org/',
+      'postimagesWindow',
+      'width=1000,height=800,menubar=no,toolbar=no,location=no'
+    );
+    
+    // Display a helpful message to the user
+    setFormData(prev => ({ 
+      ...prev, 
+      image: '' 
+    }));
+    setPreviewUrl('');
+    setError('Please upload your image on Postimages. Copy the "Direct Link" URL when done.');
+    
+    // Set up an interval to check if the user has completed the upload
+    const checkInterval = setInterval(() => {
+      try {
+        // If window is closed or redirected to a result page
+        if (postimagesWindow.closed) {
+          clearInterval(checkInterval);
+          return;
+        }
+        
+        // Check if we're on a result page (after upload)
+        if (postimagesWindow.location.href.includes('postimages.org/') && 
+            !postimagesWindow.location.href.includes('postimages.org/web')) {
+          
+          // Look for the direct link in the page
+          const directLinks = postimagesWindow.document.querySelectorAll('input[id*="code_direct"]');
+          
+          if (directLinks && directLinks.length > 0) {
+            // Get the direct link value
+            const directLink = directLinks[0].value;
+            
+            if (directLink && directLink.startsWith('https://')) {
+              // Set the image URL in our form
+              setFormData(prev => ({ ...prev, image: directLink }));
+              setPreviewUrl(directLink);
+              setError('');
+              
+              // Close the popup after getting the URL
+              setTimeout(() => {
+                postimagesWindow.close();
+                clearInterval(checkInterval);
+              }, 500);
+            }
+          }
+        }
+      } catch (e) {
+        // Cross-origin restrictions will prevent reading from the other domain
+        // This is expected behavior, we'll rely on the user copying the URL manually
+        console.log('Note: Cross-origin restriction detected, user will need to copy the URL manually');
+      }
+    }, 1000);
+    
+    // Set a timeout to clear the interval after 5 minutes (300000ms)
+    setTimeout(() => {
+      clearInterval(checkInterval);
+    }, 300000);
+  };
+
+  // Keep the existing handleChange function
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === 'image') {
-      handleImageChange(e);
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // If changing the image URL, update the preview
+    if (name === 'image' && value) {
+      setPreviewUrl(value);
     }
+    
     setError('');
   };
 
@@ -299,14 +366,26 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
             </div>
             <div>
               <label className="block text-gray-300 mb-2">Profile Image URL (optional)</label>
-              <input
-                type="text"
-                name="image"
-                value={formData.image}
-                onChange={handleChange}
-                placeholder="Enter image URL"
-                className="w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              <div className="flex space-x-2 mb-2">
+                <input
+                  type="text"
+                  name="image"
+                  value={formData.image}
+                  onChange={handleChange}
+                  placeholder="Enter image URL"
+                  className="flex-1 px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <button
+                  type="button"
+                  onClick={openPostimagesUploader}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded flex items-center"
+                >
+                  Upload Image
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 mb-2">
+                Click "Upload Image" to open Postimages.org. After uploading, find and copy the "Direct Link" if it's not automatically added here.
+              </p>
               {previewUrl && (
                 <div className="mt-2">
                   <img
