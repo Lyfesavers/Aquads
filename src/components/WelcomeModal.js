@@ -47,7 +47,7 @@ const WelcomeModal = ({ username, onClose, referralCode }) => {
           <button 
             className="close-button" 
             onClick={() => {
-              const confirmed = window.confirm('Have you saved your referral code? You will need it later!');
+              const confirmed = window.confirm('Have you saved your Secret code? You will need it later!');
               if (confirmed) onClose();
             }}
           >
