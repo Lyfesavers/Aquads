@@ -1611,21 +1611,46 @@ function App() {
                 <div className="relative z-10 bg-transparent">
                   {/* Multi-Section Banner (GameHub, Freelancer, Affiliate) */}
                   <div className="w-full overflow-hidden">
-                    <div className="flex w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px]">
-                      <Link to="/games" className="w-1/3 bg-gradient-to-r from-purple-900 to-purple-700 flex flex-col items-center justify-center transition-all hover:brightness-125">
-                        <div className="text-white font-bold text-lg md:text-xl lg:text-2xl">GAME HUB</div>
-                        <div className="text-purple-200 text-xs md:text-sm">DISCOVER WEB3 GAMES</div>
-                      </Link>
-                      
-                      <Link to="/marketplace" className="w-1/3 bg-gradient-to-r from-blue-900 to-blue-700 flex flex-col items-center justify-center transition-all hover:brightness-125">
-                        <div className="text-white font-bold text-lg md:text-xl lg:text-2xl">FREELANCER HUB</div>
-                        <div className="text-blue-200 text-xs md:text-sm">CONNECT WITH TOP TALENT</div>
-                      </Link>
-                      
-                      <Link to="/affiliate" className="w-1/3 bg-gradient-to-r from-green-900 to-green-700 flex flex-col items-center justify-center transition-all hover:brightness-125">
-                        <div className="text-white font-bold text-lg md:text-xl lg:text-2xl">AFFILIATE PROGRAM</div>
-                        <div className="text-green-200 text-xs md:text-sm hidden sm:block">EARN REWARDS WITH REFERRALS</div>
-                      </Link>
+                    <div className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px] bg-gradient-to-br from-purple-900 to-indigo-900 relative">
+                      {/* Left Section - Game Hub */}
+                      <div className="absolute top-0 bottom-0 left-0 w-1/3">
+                        <Link to="/games" className="absolute inset-0 block bg-gradient-to-br from-purple-900 to-indigo-800 hover:brightness-110 transition-all duration-300">
+                          <div className="absolute top-0 left-0 w-full h-full opacity-20">
+                            <div className="absolute w-24 h-24 rounded-full bg-white/5 -top-12 -left-12"></div>
+                            <div className="absolute w-12 h-12 rounded-full bg-white/5 top-1/4 right-1/4"></div>
+                          </div>
+                          <div className="flex flex-col items-center justify-center h-full">
+                            <h3 className="text-white text-lg sm:text-xl md:text-2xl font-bold">GAME HUB</h3>
+                            <p className="text-purple-300 text-xs sm:text-sm">DISCOVER WEB3 GAMES</p>
+                          </div>
+                        </Link>
+                      </div>
+
+                      {/* Middle Section - Freelancer Hub */}
+                      <div className="absolute top-0 bottom-0 left-1/3 w-1/3">
+                        <Link to="/marketplace" className="absolute inset-0 block bg-gradient-to-br from-blue-900 to-blue-800 hover:brightness-110 transition-all duration-300">
+                          <div className="absolute top-0 left-0 w-full h-full opacity-20">
+                            <div className="absolute w-32 h-32 rounded-full bg-white/5 -bottom-16 -right-16"></div>
+                          </div>
+                          <div className="flex flex-col items-center justify-center h-full">
+                            <h3 className="text-white text-lg sm:text-xl md:text-2xl font-bold">FREELANCER HUB</h3>
+                            <p className="text-blue-300 text-xs sm:text-sm">CONNECT WITH TOP TALENT</p>
+                          </div>
+                        </Link>
+                      </div>
+
+                      {/* Right Section - Affiliate Program */}
+                      <div className="absolute top-0 bottom-0 left-2/3 w-1/3">
+                        <Link to="/affiliate" className="absolute inset-0 block bg-gradient-to-br from-green-900 to-blue-800 hover:brightness-110 transition-all duration-300">
+                          <div className="absolute top-0 left-0 w-full h-full opacity-20">
+                            <div className="absolute w-24 h-24 rounded-full bg-white/5 top-1/2 left-1/4"></div>
+                          </div>
+                          <div className="flex flex-col items-center justify-center h-full">
+                            <h3 className="text-white text-lg sm:text-xl md:text-2xl font-bold">AFFILIATE PROGRAM</h3>
+                            <p className="text-green-300 text-xs sm:text-sm hidden sm:block">EARN REWARDS WITH REFERRALS</p>
+                          </div>
+                        </Link>
+                      </div>
                     </div>
                   </div>
                   <TokenList 
