@@ -1,90 +1,127 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg width="1848" height="200" viewBox="0 0 1848 200" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background gradient -->
+  <!-- Background gradients -->
   <defs>
-    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#2e1065" />
-      <stop offset="100%" stop-color="#4c1d95" />
+    <linearGradient id="gameHubGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4c1d95" />
+      <stop offset="100%" stop-color="#7e22ce" />
     </linearGradient>
-    <linearGradient id="hubGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="freelancerGradient" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#0c4a6e" />
-      <stop offset="100%" stop-color="#0369a1" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+    <linearGradient id="affiliateGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#064e3b" />
+      <stop offset="100%" stop-color="#059669" />
     </linearGradient>
     <pattern id="diagonalLines" patternUnits="userSpaceOnUse" width="40" height="40" patternTransform="rotate(45)">
       <line x1="0" y1="0" x2="0" y2="40" stroke="#4c1d95" stroke-width="2" />
     </pattern>
   </defs>
   
-  <!-- Main background -->
-  <rect width="1848" height="200" fill="url(#bgGradient)" />
+  <!-- Clickable areas with links -->
+  <a id="gamehub-link" href="/games">
+    <!-- GameHub Section (Left) -->
+    <rect x="0" y="0" width="616" height="200" fill="url(#gameHubGradient)" />
+    <rect x="0" y="0" width="616" height="200" fill="url(#diagonalLines)" opacity="0.2" />
+    
+    <!-- GameHub Text -->
+    <text x="308" y="80" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="white" text-anchor="middle">
+      GAME HUB
+    </text>
+    
+    <!-- GameHub Subtitle -->
+    <text x="308" y="120" font-family="Arial, sans-serif" font-size="20" fill="#d8b4fe" text-anchor="middle">
+      DISCOVER WEB3 GAMES
+    </text>
+    
+    <!-- GameHub Icon -->
+    <g transform="translate(308, 160) scale(0.5)">
+      <circle cx="0" cy="0" r="24" fill="#a855f7" />
+      <polygon points="-12,-12 12,-12 12,12 -12,12" fill="white" transform="rotate(45)" />
+      <circle cx="0" cy="0" r="8" fill="#a855f7" />
+      <circle cx="0" cy="0" r="5" fill="white" />
+    </g>
+  </a>
   
-  <!-- Diagonal pattern overlay on left side -->
-  <rect width="1000" height="200" fill="url(#diagonalLines)" opacity="0.2" />
+  <a id="freelancer-link" href="/marketplace">
+    <!-- Freelancer Hub Section (Middle) -->
+    <rect x="616" y="0" width="616" height="200" fill="url(#freelancerGradient)" />
+    
+    <!-- Freelancer Text -->
+    <text x="924" y="80" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="white" text-anchor="middle">
+      FREELANCER HUB
+    </text>
+    
+    <!-- Freelancer Subtitle -->
+    <text x="924" y="120" font-family="Arial, sans-serif" font-size="20" fill="#38bdf8" text-anchor="middle">
+      CONNECT WITH TOP TALENT
+    </text>
+    
+    <!-- Connection Hub Visualization -->
+    <g transform="translate(924, 160) scale(0.5)">
+      <circle cx="0" cy="0" r="24" fill="#0284c7" />
+      <circle cx="-15" cy="-15" r="8" fill="white" />
+      <circle cx="15" cy="-15" r="8" fill="white" />
+      <circle cx="0" cy="15" r="8" fill="white" />
+      <line x1="-15" y1="-15" x2="15" y2="-15" stroke="white" stroke-width="2" />
+      <line x1="-15" y1="-15" x2="0" y2="15" stroke="white" stroke-width="2" />
+      <line x1="15" y1="-15" x2="0" y2="15" stroke="white" stroke-width="2" />
+    </g>
+  </a>
   
-  <!-- Main text -->
-  <text x="118" y="90" font-family="Arial, sans-serif" font-size="60" font-weight="bold" fill="white">
-    ACCESS OUR FREELANCER HUB
-  </text>
+  <a id="affiliate-link" href="/affiliate">
+    <!-- Affiliate Program Section (Right) -->
+    <rect x="1232" y="0" width="616" height="200" fill="url(#affiliateGradient)" />
+    
+    <!-- Affiliate Text -->
+    <text x="1540" y="80" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="white" text-anchor="middle">
+      AFFILIATE PROGRAM
+    </text>
+    
+    <!-- Affiliate Subtitle -->
+    <text x="1540" y="120" font-family="Arial, sans-serif" font-size="20" fill="#34d399" text-anchor="middle">
+      EARN REWARDS WITH REFERRALS
+    </text>
+    
+    <!-- Affiliate Icon -->
+    <g transform="translate(1540, 160) scale(0.5)">
+      <circle cx="0" cy="0" r="24" fill="#10b981" />
+      <path d="M-12,-5 L0,-17 L12,-5 L5,-5 L5,17 L-5,17 L-5,-5 Z" fill="white" />
+    </g>
+  </a>
   
-  <!-- Subtitle -->
-  <text x="118" y="140" font-family="Arial, sans-serif" font-size="30" fill="#06b6d4">
-    FIND EXPERT TALENT FOR YOUR PROJECT
-  </text>
+  <!-- Interactive highlights on hover -->
+  <style>
+    a:hover rect {
+      filter: brightness(1.2);
+      transition: filter 0.3s ease;
+    }
+    
+    #gamehub-link:hover text,
+    #freelancer-link:hover text,
+    #affiliate-link:hover text {
+      filter: drop-shadow(0 0 3px white);
+    }
+    
+    /* Animated elements */
+    .particle {
+      animation: float 3s infinite ease-in-out;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+  </style>
   
-  <!-- Cyan/teal V shape on right -->
-  <polygon points="1420,0 1848,0 1848,200 1420,200" fill="#06b6d4" />
-  
-  <!-- Web3 hub visualization -->
-  <g transform="translate(1630, 100) scale(0.9)">
-    <!-- Hexagonal node network representing a web3 hub -->
-    <polygon points="0,-50 43.3,-25 43.3,25 0,50 -43.3,25 -43.3,-25" fill="url(#hubGradient)" stroke="#06b6d4" stroke-width="2" />
-    <polygon points="0,-35 30.31,-17.5 30.31,17.5 0,35 -30.31,17.5 -30.31,-17.5" fill="#0c4a6e" stroke="#0ea5e9" stroke-width="1" />
-    
-    <!-- Add a central node -->
-    <circle cx="0" cy="0" r="12" fill="#0ea5e9" />
-    
-    <!-- Connected nodes -->
-    <circle cx="-30" cy="-30" r="6" fill="#0284c7" />
-    <circle cx="30" cy="-30" r="6" fill="#0284c7" />
-    <circle cx="45" cy="0" r="6" fill="#0284c7" />
-    <circle cx="30" cy="30" r="6" fill="#0284c7" />
-    <circle cx="-30" cy="30" r="6" fill="#0284c7" />
-    <circle cx="-45" cy="0" r="6" fill="#0284c7" />
-    
-    <!-- Connection lines -->
-    <line x1="0" y1="0" x2="-30" y2="-30" stroke="#0ea5e9" stroke-width="1.5" />
-    <line x1="0" y1="0" x2="30" y2="-30" stroke="#0ea5e9" stroke-width="1.5" />
-    <line x1="0" y1="0" x2="45" y2="0" stroke="#0ea5e9" stroke-width="1.5" />
-    <line x1="0" y1="0" x2="30" y2="30" stroke="#0ea5e9" stroke-width="1.5" />
-    <line x1="0" y1="0" x2="-30" y2="30" stroke="#0ea5e9" stroke-width="1.5" />
-    <line x1="0" y1="0" x2="-45" y2="0" stroke="#0ea5e9" stroke-width="1.5" />
-    
-    <!-- Smaller connecting nodes -->
-    <circle cx="-15" cy="-15" r="3" fill="#38bdf8" />
-    <circle cx="15" cy="-15" r="3" fill="#38bdf8" />
-    <circle cx="15" cy="15" r="3" fill="#38bdf8" />
-    <circle cx="-15" cy="15" r="3" fill="#38bdf8" />
-    
-    <!-- Digital particles with animation -->
-    <circle cx="-35" cy="-10" r="1.5" fill="#7dd3fc">
-      <animate attributeName="opacity" values="0.3;0.8;0.3" dur="3s" repeatCount="indefinite" />
-    </circle>
-    <circle cx="35" cy="-10" r="1.5" fill="#7dd3fc">
-      <animate attributeName="opacity" values="0.3;0.8;0.3" dur="2.5s" repeatCount="indefinite" />
-    </circle>
-    <circle cx="-20" cy="40" r="1.5" fill="#7dd3fc">
-      <animate attributeName="opacity" values="0.3;0.8;0.3" dur="3.2s" repeatCount="indefinite" />
-    </circle>
-    <circle cx="20" cy="-40" r="1.5" fill="#7dd3fc">
-      <animate attributeName="opacity" values="0.3;0.8;0.3" dur="2.8s" repeatCount="indefinite" />
-    </circle>
-    
-    <!-- Data flow lines with animation -->
-    <path d="M-30,-30 Q-15,-15 0,0" fill="none" stroke="#7dd3fc" stroke-width="0.75" opacity="0.6" stroke-dasharray="1,12">
-      <animate attributeName="stroke-dashoffset" from="30" to="0" dur="3s" repeatCount="indefinite" />
-    </path>
-    <path d="M30,-30 Q15,-15 0,0" fill="none" stroke="#7dd3fc" stroke-width="0.75" opacity="0.6" stroke-dasharray="1,12">
-      <animate attributeName="stroke-dashoffset" from="30" to="0" dur="2.5s" repeatCount="indefinite" />
-    </path>
-  </g>
+  <!-- Animated particles -->
+  <circle class="particle" cx="308" cy="40" r="3" fill="white" opacity="0.7">
+    <animate attributeName="opacity" values="0.3;0.7;0.3" dur="3s" repeatCount="indefinite" />
+  </circle>
+  <circle class="particle" cx="924" cy="40" r="3" fill="white" opacity="0.7">
+    <animate attributeName="opacity" values="0.3;0.7;0.3" dur="2.7s" repeatCount="indefinite" />
+  </circle>
+  <circle class="particle" cx="1540" cy="40" r="3" fill="white" opacity="0.7">
+    <animate attributeName="opacity" values="0.3;0.7;0.3" dur="3.3s" repeatCount="indefinite" />
+  </circle>
 </svg> 

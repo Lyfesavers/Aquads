@@ -1609,15 +1609,20 @@ function App() {
 
                 {/* Token list section - add z-index and proper background */}
                 <div className="relative z-10 bg-transparent">
-                  {/* Marketplace Banner */}
+                  {/* Multi-Section Banner (GameHub, Freelancer, Affiliate) */}
                   <div className="w-full overflow-hidden">
-                    <Link to="/marketplace" className="block">
+                    <object
+                      data="/FREELANCER-HUB.svg"
+                      type="image/svg+xml"
+                      className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px]"
+                      aria-label="Navigation banner for GameHub, Freelancer Marketplace, and Affiliate Program"
+                    >
                       <img
                         src="/FREELANCER-HUB.svg"
-                        alt="Visit Marketplace"
-                        className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px] object-contain lg:object-cover"
+                        alt="Aquads Features"
+                        className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px]"
                       />
-                    </Link>
+                    </object>
                   </div>
                   <TokenList 
                     currentUser={currentUser}
