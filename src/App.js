@@ -1610,47 +1610,42 @@ function App() {
                 {/* Token list section - add z-index and proper background */}
                 <div className="relative z-10 bg-transparent">
                   {/* Multi-Section Banner (GameHub, Freelancer, Affiliate) */}
-                  <div className="w-full overflow-hidden">
-                    <div className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px] bg-gradient-to-br from-purple-900 to-indigo-900 relative">
-                      {/* Left Section - Game Hub */}
-                      <div className="absolute top-0 bottom-0 left-0 w-1/3">
-                        <Link to="/games" className="absolute inset-0 block bg-gradient-to-br from-purple-900 to-indigo-800 hover:brightness-110 transition-all duration-300">
-                          <div className="absolute top-0 left-0 w-full h-full opacity-20">
-                            <div className="absolute w-24 h-24 rounded-full bg-white/5 -top-12 -left-12"></div>
-                            <div className="absolute w-12 h-12 rounded-full bg-white/5 top-1/4 right-1/4"></div>
-                          </div>
-                          <div className="flex flex-col items-center justify-center h-full">
-                            <h3 className="text-white text-lg sm:text-xl md:text-2xl font-bold">GAME HUB</h3>
-                            <p className="text-purple-300 text-xs sm:text-sm">DISCOVER WEB3 GAMES</p>
-                          </div>
-                        </Link>
-                      </div>
-
-                      {/* Middle Section - Freelancer Hub */}
-                      <div className="absolute top-0 bottom-0 left-1/3 w-1/3">
-                        <Link to="/marketplace" className="absolute inset-0 block bg-gradient-to-br from-blue-900 to-blue-800 hover:brightness-110 transition-all duration-300">
-                          <div className="absolute top-0 left-0 w-full h-full opacity-20">
-                            <div className="absolute w-32 h-32 rounded-full bg-white/5 -bottom-16 -right-16"></div>
-                          </div>
-                          <div className="flex flex-col items-center justify-center h-full">
-                            <h3 className="text-white text-lg sm:text-xl md:text-2xl font-bold">FREELANCER HUB</h3>
-                            <p className="text-blue-300 text-xs sm:text-sm">CONNECT WITH TOP TALENT</p>
-                          </div>
-                        </Link>
-                      </div>
-
-                      {/* Right Section - Affiliate Program */}
-                      <div className="absolute top-0 bottom-0 left-2/3 w-1/3">
-                        <Link to="/affiliate" className="absolute inset-0 block bg-gradient-to-br from-green-900 to-blue-800 hover:brightness-110 transition-all duration-300">
-                          <div className="absolute top-0 left-0 w-full h-full opacity-20">
-                            <div className="absolute w-24 h-24 rounded-full bg-white/5 top-1/2 left-1/4"></div>
-                          </div>
-                          <div className="flex flex-col items-center justify-center h-full">
-                            <h3 className="text-white text-lg sm:text-xl md:text-2xl font-bold">AFFILIATE PROGRAM</h3>
-                            <p className="text-green-300 text-xs sm:text-sm hidden sm:block">EARN REWARDS WITH REFERRALS</p>
-                          </div>
-                        </Link>
-                      </div>
+                  <div className="w-full overflow-hidden relative">
+                    {/* SVG Banner Image */}
+                    <img
+                      src="/FREELANCER-HUB.svg"
+                      alt="Navigation Banner"
+                      className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px]"
+                    />
+                    
+                    {/* Clickable overlay areas */}
+                    <div className="absolute inset-0">
+                      {/* GameHub Section (left third) */}
+                      <Link 
+                        to="/games" 
+                        className="absolute top-0 bottom-0 left-0 w-1/3"
+                        aria-label="Go to Game Hub"
+                      >
+                        <span className="sr-only">Game Hub</span>
+                      </Link>
+                      
+                      {/* Freelancer Hub Section (middle third) */}
+                      <Link 
+                        to="/marketplace" 
+                        className="absolute top-0 bottom-0 left-1/3 w-1/3"
+                        aria-label="Go to Freelancer Hub"
+                      >
+                        <span className="sr-only">Freelancer Hub</span>
+                      </Link>
+                      
+                      {/* Affiliate Program Section (right third) */}
+                      <Link 
+                        to="/affiliate" 
+                        className="absolute top-0 bottom-0 left-2/3 w-1/3"
+                        aria-label="Go to Affiliate Program"
+                      >
+                        <span className="sr-only">Affiliate Program</span>
+                      </Link>
                     </div>
                   </div>
                   <TokenList 
