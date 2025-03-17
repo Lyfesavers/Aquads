@@ -87,7 +87,7 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
   return (
     <Modal onClose={onClose}>
       <div className="text-white">
-        <h2 className="text-2xl font-bold mb-4">Create New Ad</h2>
+        <h2 className="text-2xl font-bold mb-4">List New Project</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block mb-1">Title</label>
