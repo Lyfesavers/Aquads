@@ -164,7 +164,7 @@ const Affiliate = () => {
                 </li>
                 <li className="flex items-center space-x-2">
                   <span className="text-green-400">•</span>
-                  <span>50% off First listing fee for projects only</span>
+                  <span>Free Listing fee for projects only</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <span className="text-green-400">•</span>
