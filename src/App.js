@@ -81,7 +81,7 @@ const FREE_AD_LIMIT = 1;
 const LAYOUT_DEBOUNCE = 200; // Debounce time for layout calculations
 const ANIMATION_DURATION = '0.3s'; // Slower animations
 const REPOSITION_INTERVAL = 10000; // 5 seconds between position updates
-const BUBBLE_PADDING = 20; // Increased from 25 to 40 for much more space between bubbles
+const BUBBLE_PADDING = 10; // Increased from 25 to 40 for much more space between bubbles
 const MERCHANT_WALLET = {
     SOL: "J8ewxZwntodH8sT8LAXN5j6sAsDhtCh8sQA6GwRuLTSv",
     ETH: "0x98BC1BEC892d9f74B606D478E6b45089D2faAB05",
@@ -94,7 +94,7 @@ const ADMIN_USERNAME = "admin"; // You can change this to your preferred admin u
 function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
   const minX = BUBBLE_PADDING;
   const maxX = windowWidth - size - BUBBLE_PADDING;
-  const minY = BUBBLE_PADDING + 50; // Increased to account for navbar and prevent bubbles at very top
+  const minY = BUBBLE_PADDING + 30; // Increased to account for navbar and prevent bubbles at very top
   const maxY = windowHeight - size - BUBBLE_PADDING;
   
   // Grid-based approach for better distribution

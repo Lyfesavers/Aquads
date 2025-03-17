@@ -21,8 +21,8 @@ const WelcomeModal = ({ username, onClose, referralCode }) => {
         
         <div className="referral-code-section">
           <h3>⚠️ IMPORTANT: Save Your Secret Code ⚠️</h3>
-          <p>Your Referral code to share is your username.</p>
-          <p>This is your unique Secret code. You'll need it for:</p>
+          <p>Your Referral code to share is your username located in your Dashboard.</p>
+          <p>This is your unique Secret code. Do not share the code below with anyone. You'll need it for:</p>
 
           <ul>
             <li>Leaving reviews</li>
@@ -42,7 +42,7 @@ const WelcomeModal = ({ username, onClose, referralCode }) => {
         
         <div className="welcome-actions">
           <button className="share-button" onClick={handleShare}>
-            <FaTwitter className="mr-2" /> Spread the word
+            <FaTwitter className="mr-2" /> Share Referral
           </button>
           <button 
             className="close-button" 
