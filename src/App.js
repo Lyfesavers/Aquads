@@ -1611,18 +1611,22 @@ function App() {
                 <div className="relative z-10 bg-transparent">
                   {/* Multi-Section Banner (GameHub, Freelancer, Affiliate) */}
                   <div className="w-full overflow-hidden">
-                    <object
-                      data="/FREELANCER-HUB.svg"
-                      type="image/svg+xml"
-                      className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px]"
-                      aria-label="Navigation banner for GameHub, Freelancer Marketplace, and Affiliate Program"
-                    >
-                      <img
-                        src="/FREELANCER-HUB.svg"
-                        alt="Aquads Features"
-                        className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px]"
-                      />
-                    </object>
+                    <div className="flex w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px]">
+                      <Link to="/games" className="w-1/3 bg-gradient-to-r from-purple-900 to-purple-700 flex flex-col items-center justify-center transition-all hover:brightness-125">
+                        <div className="text-white font-bold text-lg md:text-xl lg:text-2xl">GAME HUB</div>
+                        <div className="text-purple-200 text-xs md:text-sm">DISCOVER WEB3 GAMES</div>
+                      </Link>
+                      
+                      <Link to="/marketplace" className="w-1/3 bg-gradient-to-r from-blue-900 to-blue-700 flex flex-col items-center justify-center transition-all hover:brightness-125">
+                        <div className="text-white font-bold text-lg md:text-xl lg:text-2xl">FREELANCER HUB</div>
+                        <div className="text-blue-200 text-xs md:text-sm">CONNECT WITH TOP TALENT</div>
+                      </Link>
+                      
+                      <Link to="/affiliate" className="w-1/3 bg-gradient-to-r from-green-900 to-green-700 flex flex-col items-center justify-center transition-all hover:brightness-125">
+                        <div className="text-white font-bold text-lg md:text-xl lg:text-2xl">AFFILIATE PROGRAM</div>
+                        <div className="text-green-200 text-xs md:text-sm hidden sm:block">EARN REWARDS WITH REFERRALS</div>
+                      </Link>
+                    </div>
                   </div>
                   <TokenList 
                     currentUser={currentUser}
