@@ -66,59 +66,153 @@
     // Attach resize listener
     window.addEventListener('resize', resize);
     
-    // Track mouse movement
+    // Add special CSS rules to handle close buttons in modals
+    const styleElement = document.createElement('style');
+    styleElement.textContent = `
+      .modal .close, 
+      [role="dialog"] .close, 
+      .modal-close, 
+      .close-button, 
+      [data-dismiss="modal"], 
+      [aria-label="Close"] {
+        position: relative !important;
+        z-index: 9999 !important;
+      }
+    `;
+    document.head.appendChild(styleElement);
+    
+    // Define a debounced version of cursor position update to prevent rapid toggling
+    let cursorUpdateTimeout;
+    
+    // Track mouse movement with improved handling
     document.addEventListener('mousemove', e => {
       mouseX = e.clientX;
       mouseY = e.clientY;
       
-      // Check if mouse is over a modal or close button
-      checkModalInteraction(e.target);
+      // Track elements under the cursor
+      const elementsAtPoint = document.elementsFromPoint(e.clientX, e.clientY);
       
-      // Always update cursor position
+      // Check for close buttons or modals in elements under cursor
+      let foundCloseButton = false;
+      let foundModal = false;
+      
+      for (const el of elementsAtPoint) {
+        // Check for close buttons
+        if (
+          (el.textContent === '×' || 
+           el.textContent === '✕' || 
+           el.textContent === 'X' || 
+           el.textContent === 'x' || 
+           el.innerHTML === '&times;') ||
+          (el.classList && (
+            el.classList.contains('close') ||
+            el.classList.contains('close-button') ||
+            el.classList.contains('modal-close') ||
+            el.classList.contains('closeButton')
+          )) ||
+          el.getAttribute('aria-label') === 'Close' ||
+          el.getAttribute('data-dismiss') === 'modal' ||
+          el.getAttribute('data-close') === 'true'
+        ) {
+          foundCloseButton = true;
+          break;
+        }
+        
+        // Check for modals
+        if (el.classList && (
+          el.classList.contains('modal') || 
+          el.classList.contains('modal-backdrop') ||
+          el.classList.contains('fixed') ||
+          el.classList.contains('fixed-inset') ||
+          el.classList.contains('absolute') ||
+          el.getAttribute('role') === 'dialog' || 
+          el.getAttribute('role') === 'modal'
+        )) {
+          foundModal = true;
+        }
+      }
+      
+      // Update state based on what we found
+      isOverCloseButton = foundCloseButton;
+      isOverModal = foundModal && !foundCloseButton; // Don't count as modal if it's a close button
+      
+      // Update cursor position
       cursor.style.left = `${mouseX}px`;
       cursor.style.top = `${mouseY}px`;
       
-      // Adjust cursor appearance based on modal interaction
-      if (isOverModal || isOverCloseButton) {
-        // Make cursor nearly invisible when over modal elements and close buttons
+      // Clear any pending cursor update
+      clearTimeout(cursorUpdateTimeout);
+      
+      // Set a small delay before changing cursor appearance to prevent flickering
+      cursorUpdateTimeout = setTimeout(() => {
         if (isOverCloseButton) {
-          cursor.style.opacity = '0.1';  // Nearly invisible for close buttons
-          cursor.style.transform = 'scale(0.5)';
-          cursor.style.zIndex = '5'; // Very low z-index for close buttons
-        } else {
-          cursor.style.opacity = '0.2';  // Just very transparent for other modal elements
+          // Completely hide cursor for close buttons
+          cursor.style.opacity = '0';
+          cursor.style.transform = 'scale(0)';
+        } else if (isOverModal) {
+          // Semi-transparent for modals
+          cursor.style.opacity = '0.2';
           cursor.style.transform = 'scale(0.7)';
-          cursor.style.zIndex = '10';
+        } else {
+          // Normal for everything else
+          cursor.style.opacity = '1';
+          cursor.style.transform = 'scale(1)';
         }
-      } else {
-        // Normal cursor appearance otherwise
-        cursor.style.opacity = '1';
-        cursor.style.transform = 'scale(1)';
-        cursor.style.zIndex = '1000';
-      }
+      }, 10);
     });
     
-    // Track mouse clicks to create bigger ripples
+    // Track mouse clicks to create bigger ripples with improved handling
     document.addEventListener('click', e => {
-      // Only create ripples if not over a modal or close button
-      if (!isOverModal && !isOverCloseButton) {
-        createRipple(e.clientX, e.clientY, 60); // Larger ripple on click
+      // Immediate update of modal/close button status when clicked
+      const elementsAtPoint = document.elementsFromPoint(e.clientX, e.clientY);
+      let foundCloseButton = false;
+      
+      for (const el of elementsAtPoint) {
+        // Check for close buttons
+        if (
+          (el.textContent === '×' || 
+           el.textContent === '✕' || 
+           el.textContent === 'X' || 
+           el.textContent === 'x' || 
+           el.innerHTML === '&times;') ||
+          (el.classList && (
+            el.classList.contains('close') ||
+            el.classList.contains('close-button') ||
+            el.classList.contains('modal-close') ||
+            el.classList.contains('closeButton')
+          )) ||
+          el.getAttribute('aria-label') === 'Close' ||
+          el.getAttribute('data-dismiss') === 'modal' ||
+          el.getAttribute('data-close') === 'true'
+        ) {
+          foundCloseButton = true;
+          break;
+        }
+      }
+      
+      if (foundCloseButton) {
+        // If clicking a close button, completely hide cursor for a while
+        cursor.style.opacity = '0';
+        cursor.style.transform = 'scale(0)';
         
-        // Pulse cursor on click
+        // Keep it hidden long enough for modal to close
+        setTimeout(() => {
+          if (!isOverCloseButton && !isOverModal) {
+            cursor.style.opacity = '1';
+            cursor.style.transform = 'scale(1)';
+          }
+        }, 500);
+      } else if (!isOverModal && !isOverCloseButton) {
+        // Only create ripples outside of modals
+        createRipple(e.clientX, e.clientY, 60);
+        
+        // Pulse cursor
         cursor.style.width = '30px';
         cursor.style.height = '30px';
         setTimeout(() => {
           cursor.style.width = '20px';
           cursor.style.height = '20px';
         }, 300);
-      } else if (isOverCloseButton) {
-        // Hide cursor completely when clicking close buttons to avoid any interference
-        cursor.style.opacity = '0';
-        setTimeout(() => {
-          if (!isOverCloseButton) {
-            cursor.style.opacity = '1';
-          }
-        }, 500); // Restore after a delay if no longer over close button
       }
     });
     
@@ -146,88 +240,73 @@
     const modalElements = document.querySelectorAll('.modal, .modal-backdrop, .fixed, [role="dialog"]');
     
     modalElements.forEach(modal => {
+      // Get current z-index or default to 1000
       const currentZIndex = parseInt(window.getComputedStyle(modal).zIndex) || 0;
+      
       // Only update if the z-index is too low
       if (currentZIndex < 1010 && currentZIndex !== 0) {
         // Set to a high z-index to ensure it's above our effects
         modal.style.zIndex = '1010';
       }
+      
+      // Find and fix all close buttons in this modal
+      const closeButtons = modal.querySelectorAll('.close, .close-button, .modal-close, [data-dismiss="modal"], [aria-label="Close"]');
+      closeButtons.forEach(button => {
+        button.style.position = 'relative';
+        button.style.zIndex = '9999';
+      });
     });
-  }
-  
-  // Check if an element is a modal or close button
-  function checkModalInteraction(element) {
-    // Check if current element or any parent is a modal
-    let current = element;
-    isOverModal = false;
-    isOverCloseButton = false;
-    
-    while (current) {
-      // Check for modal elements - expanded class list
-      if (current.classList && (
-          current.classList.contains('modal') || 
-          current.classList.contains('modal-backdrop') ||
-          current.classList.contains('fixed') ||
-          current.classList.contains('fixed-inset') ||
-          current.classList.contains('absolute') ||
-          current.classList.contains('fixed-inset-0') ||
-          current.getAttribute('role') === 'dialog' || 
-          current.getAttribute('role') === 'modal' ||
-          // Common modal containers
-          (current.style && (
-              current.style.position === 'fixed' || 
-              current.style.position === 'absolute'
-          )) &&
-          current.style.zIndex && parseInt(current.style.zIndex) > 100
-      )) {
-        isOverModal = true;
-      }
-      
-      // Check specifically for close buttons (X) in modals with improved detection
-      if (
-          // Text content checks
-          (current.textContent === '×' || 
-           current.textContent === '✕' || 
-           current.textContent === 'x' || 
-           current.textContent === 'X' || 
-           current.innerHTML === '&times;') ||
-          // Class checks for common close buttons
-          (current.classList && (
-              current.classList.contains('close') ||
-              current.classList.contains('close-button') ||
-              current.classList.contains('modal-close') ||
-              current.classList.contains('closeButton')
-          )) ||
-          // Attribute checks
-          current.getAttribute('aria-label') === 'Close' ||
-          current.getAttribute('data-dismiss') === 'modal' ||
-          current.getAttribute('data-close') === 'true'
-      ) {
-        isOverCloseButton = true;
-        
-        // Ensure close button has appropriate z-index
-        const currentZIndex = parseInt(window.getComputedStyle(current).zIndex) || 0;
-        if (currentZIndex < 1020) {
-          current.style.zIndex = '1020'; // Set even higher than modals
-        }
-      }
-      
-      current = current.parentElement;
-    }
   }
   
   // Setup a mutation observer to detect new modals
   function setupModalObserver() {
     const observer = new MutationObserver((mutations) => {
-      updateModalZIndexes();
-      setupInteractiveElements();
+      // For each mutation, check if we need to update modal z-indexes
+      let needsUpdate = false;
+      
+      mutations.forEach(mutation => {
+        // If nodes were added, check if any of them are modals or inside modals
+        if (mutation.addedNodes.length) {
+          Array.from(mutation.addedNodes).forEach(node => {
+            if (node.nodeType === 1) { // Element node
+              if (node.classList && 
+                  (node.classList.contains('modal') || 
+                   node.classList.contains('fixed') || 
+                   node.getAttribute('role') === 'dialog')) {
+                needsUpdate = true;
+              } else if (node.querySelector) {
+                // Check if it contains modals
+                const hasModal = node.querySelector('.modal, .fixed, [role="dialog"]');
+                if (hasModal) needsUpdate = true;
+              }
+            }
+          });
+        }
+        
+        // If attributes changed, check if it's relevant to modals
+        if (mutation.type === 'attributes') {
+          const target = mutation.target;
+          if (target.classList && 
+              (target.classList.contains('modal') || 
+               target.classList.contains('fixed') || 
+               target.getAttribute('role') === 'dialog')) {
+            needsUpdate = true;
+          }
+        }
+      });
+      
+      // If needed, update modal z-indexes
+      if (needsUpdate) {
+        updateModalZIndexes();
+        setupInteractiveElements();
+      }
     });
     
     observer.observe(document.body, {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ['class', 'style']
+      attributeFilter: ['class', 'style', 'role']
     });
   }
   
@@ -235,12 +314,43 @@
   function setupInteractiveElements() {
     // Track hover state on interactive elements
     const interactiveElements = document.querySelectorAll('a, button, [role="button"], input, select, textarea, [onclick]');
+    
     interactiveElements.forEach(el => {
       // Skip if already processed
       if (el.dataset.rippleProcessed) return;
       el.dataset.rippleProcessed = 'true';
       
+      // Check if element is a close button
+      const isCloseButton = 
+        (el.textContent === '×' || 
+         el.textContent === '✕' || 
+         el.textContent === 'x' || 
+         el.textContent === 'X' || 
+         el.innerHTML === '&times;') ||
+        (el.classList && (
+          el.classList.contains('close') ||
+          el.classList.contains('close-button') ||
+          el.classList.contains('modal-close') ||
+          el.classList.contains('closeButton')
+        )) ||
+        el.getAttribute('aria-label') === 'Close' ||
+        el.getAttribute('data-dismiss') === 'modal' ||
+        el.getAttribute('data-close') === 'true';
+      
+      if (isCloseButton) {
+        // Ensure close buttons have high z-index
+        el.style.position = 'relative';
+        el.style.zIndex = '9999';
+      }
+      
       el.addEventListener('mouseenter', () => {
+        // If this is a close button, hide cursor completely
+        if (isCloseButton) {
+          cursor.style.opacity = '0';
+          cursor.style.transform = 'scale(0)';
+          return;
+        }
+        
         // Check if element is inside a modal
         const isInModal = el.closest('.modal, .fixed, [role="dialog"]');
         
