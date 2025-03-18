@@ -31,8 +31,8 @@
   // Ripple settings
   const RIPPLE_RADIUS = 50;
   const RIPPLE_SPREAD_SPEED = 2;
-  const RIPPLE_FADE_SPEED = 0.95;
-  const RIPPLE_COLOR = 'rgba(120, 160, 255, 0.3)';
+  const RIPPLE_FADE_SPEED = 0.98;
+  const RIPPLE_COLOR = 'rgba(120, 160, 255, 0.6)';
   const MOUSE_TRAIL_LENGTH = 3;
   let frameCount = 0;
   
@@ -389,7 +389,7 @@
       y, 
       radius: 5, // Start with small radius
       maxRadius: radius,
-      alpha: 0.5, // Start semi-transparent
+      alpha: 0.8, // Increased from 0.5 to make initial ripples more visible
       expanding: true
     });
     
@@ -448,15 +448,15 @@
       // Draw ripple
       ctx.beginPath();
       ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
-      ctx.strokeStyle = RIPPLE_COLOR.replace('0.3', ripple.alpha);
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = RIPPLE_COLOR.replace('0.6', ripple.alpha);
+      ctx.lineWidth = 3;
       ctx.stroke();
       
       // Add inner ripple for more water-like effect
       ctx.beginPath();
       ctx.arc(ripple.x, ripple.y, ripple.radius * 0.8, 0, Math.PI * 2);
-      ctx.strokeStyle = RIPPLE_COLOR.replace('0.3', ripple.alpha * 0.5);
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = RIPPLE_COLOR.replace('0.6', ripple.alpha * 0.5);
+      ctx.lineWidth = 2;
       ctx.stroke();
     });
     
