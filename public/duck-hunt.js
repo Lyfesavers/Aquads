@@ -10,6 +10,7 @@
   const maxDucks = 3; // Maximum number of ducks on screen
   let feathers = []; // Track all feather particles
   let soundEnabled = false; // Track if sounds are enabled
+  let soundsCreated = false; // Track if sounds are created
   
   // Duck species (more realistic colors)
   const duckSpecies = [
@@ -49,6 +50,16 @@
   
   // Create HTML audio elements directly in the DOM
   function createSoundElements() {
+    if (soundsCreated) return true;
+    
+    console.log('Creating sound elements for duck hunt');
+    
+    // Remove existing sound container if present
+    const existingContainer = document.getElementById('duck-hunt-sounds');
+    if (existingContainer) {
+      document.body.removeChild(existingContainer);
+    }
+    
     // Create a sound container
     const soundContainer = document.createElement('div');
     soundContainer.id = 'duck-hunt-sounds';
@@ -63,17 +74,48 @@
       dogLaugh: 'https://cdn.freesound.org/previews/435/435417_8941423-lq.mp3' // Dog laugh
     };
     
+    // Alternative sources in case the primary ones fail
+    const fallbackSounds = {
+      shot: 'https://assets.mixkit.co/sfx/preview/mixkit-shotgun-shot-1662.mp3',
+      quack: 'https://assets.mixkit.co/sfx/preview/mixkit-animals-duck-quack-1217.mp3',
+      fall: 'https://assets.mixkit.co/sfx/preview/mixkit-dramatic-falling-whistle-1492.mp3',
+      gameStart: 'https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-complete-or-approved-mission-205.mp3',
+      dogLaugh: 'https://assets.mixkit.co/sfx/preview/mixkit-dog-barking-twice-1.mp3'
+    };
+    
     // Create audio elements
     for (const [name, src] of Object.entries(sounds)) {
       const audio = document.createElement('audio');
       audio.id = `duck-sound-${name}`;
-      audio.src = src;
       audio.preload = 'auto';
       audio.volume = 0.8;
+      
+      // Set primary source
+      const primarySource = document.createElement('source');
+      primarySource.src = src;
+      primarySource.type = 'audio/mpeg';
+      audio.appendChild(primarySource);
+      
+      // Set fallback source
+      if (fallbackSounds[name]) {
+        const fallbackSource = document.createElement('source');
+        fallbackSource.src = fallbackSounds[name];
+        fallbackSource.type = 'audio/mpeg';
+        audio.appendChild(fallbackSource);
+      }
+      
+      // Create a test button for debugging (hidden)
+      const testButton = document.createElement('button');
+      testButton.textContent = `Test ${name}`;
+      testButton.style.display = 'none';
+      testButton.onclick = () => audio.play();
+      
       soundContainer.appendChild(audio);
+      soundContainer.appendChild(testButton);
     }
     
     document.body.appendChild(soundContainer);
+    soundsCreated = true;
     return true;
   }
 
@@ -83,15 +125,57 @@
     
     const sound = document.getElementById(`duck-sound-${soundName}`);
     if (sound) {
-      // Clone the node to allow overlapping sounds
-      const soundClone = sound.cloneNode();
+      console.log('Playing sound:', soundName);
+      
+      // Create a new audio element for each sound to avoid conflicts
+      const soundClone = sound.cloneNode(true); // deep clone to include all source elements
       soundClone.volume = 0.8;
-      soundClone.play();
+      
+      // Add an error handler
+      soundClone.onerror = (e) => {
+        console.error('Error playing sound:', soundName, e);
+        // Try playing a built-in audio as a last resort fallback
+        try {
+          const fallbackAudio = new Audio();
+          if (soundName === 'shot') {
+            fallbackAudio.src = 'https://assets.mixkit.co/sfx/preview/mixkit-shotgun-shot-1662.mp3';
+          } else if (soundName === 'quack') {
+            fallbackAudio.src = 'https://assets.mixkit.co/sfx/preview/mixkit-animals-duck-quack-1217.mp3';
+          } else if (soundName === 'fall') {
+            fallbackAudio.src = 'https://assets.mixkit.co/sfx/preview/mixkit-dramatic-falling-whistle-1492.mp3';
+          } else if (soundName === 'gameStart') {
+            fallbackAudio.src = 'https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-complete-or-approved-mission-205.mp3';
+          } else {
+            fallbackAudio.src = 'https://assets.mixkit.co/sfx/preview/mixkit-dog-barking-twice-1.mp3';
+          }
+          
+          fallbackAudio.volume = 0.8;
+          fallbackAudio.play();
+        } catch (innerError) {
+          console.error('Even fallback audio failed:', innerError);
+        }
+      };
+      
+      // Use both play methods for better browser compatibility
+      const playPromise = soundClone.play();
+      
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          console.error('Play promise error:', error);
+          // If the promise fails, try one more time with a user interaction workaround
+          document.addEventListener('click', function tryPlayOnce() {
+            soundClone.play().catch(e => console.error('Final play attempt failed:', e));
+            document.removeEventListener('click', tryPlayOnce);
+          }, { once: true });
+        });
+      }
       
       // Remove clone when finished to prevent memory leaks
       soundClone.onended = () => {
         soundClone.remove();
       };
+    } else {
+      console.error('Sound not found:', soundName);
     }
   }
   
@@ -106,6 +190,147 @@
     gameContainer.style.pointerEvents = 'none';
     gameContainer.style.zIndex = '9998'; // Below the ripple effect
     gameContainer.style.overflow = 'hidden';
+    
+    // Create sounds in advance to ensure they're loaded
+    createSoundElements();
+    
+    // Unlock audio on first user interaction (needed for browser autoplay policies)
+    function unlockAudio() {
+      console.log('Attempting to unlock audio...');
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      
+      // Create a silent audio buffer
+      const buffer = audioContext.createBuffer(1, 1, 22050);
+      const source = audioContext.createBufferSource();
+      source.buffer = buffer;
+      source.connect(audioContext.destination);
+      
+      // Play the silent sound
+      if (source.start) {
+        source.start(0);
+      } else if (source.noteOn) {
+        source.noteOn(0);
+      }
+      
+      // Try to play each of our audio elements silently to unlock them
+      const soundIds = ['shot', 'quack', 'fall', 'gameStart', 'dogLaugh'];
+      soundIds.forEach(id => {
+        const sound = document.getElementById(`duck-sound-${id}`);
+        if (sound) {
+          sound.volume = 0.001; // Nearly silent
+          sound.play().then(() => {
+            sound.pause();
+            sound.currentTime = 0;
+            sound.volume = 0.8; // Reset volume
+            console.log(`Unlocked sound: ${id}`);
+          }).catch(e => {
+            console.log(`Failed to unlock sound: ${id}`, e);
+          });
+        }
+      });
+      
+      // Remove the event listeners once we've tried to unlock audio
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+      document.removeEventListener('keydown', unlockAudio);
+      console.log('Audio unlock attempt complete');
+    }
+    
+    // Add event listeners to unlock audio
+    document.addEventListener('click', unlockAudio);
+    document.addEventListener('touchstart', unlockAudio);
+    document.addEventListener('keydown', unlockAudio);
+    
+    // Add debug mode that can be activated with Shift+D
+    let debugMode = false;
+    document.addEventListener('keydown', function(e) {
+      // Shift+D to enter debug mode
+      if (e.shiftKey && e.key === 'D') {
+        debugMode = !debugMode;
+        console.log('Duck hunt debug mode:', debugMode ? 'ON' : 'OFF');
+        
+        // Show/hide debug controls
+        const debugControls = document.getElementById('duck-hunt-debug');
+        if (debugMode) {
+          if (!debugControls) {
+            const debug = document.createElement('div');
+            debug.id = 'duck-hunt-debug';
+            debug.style.position = 'fixed';
+            debug.style.bottom = '200px';
+            debug.style.right = '20px';
+            debug.style.backgroundColor = 'rgba(0,0,0,0.8)';
+            debug.style.color = 'white';
+            debug.style.padding = '10px';
+            debug.style.borderRadius = '5px';
+            debug.style.zIndex = '10003';
+            debug.style.width = '250px';
+            debug.style.fontFamily = 'monospace';
+            
+            debug.innerHTML = `
+              <h3>Duck Hunt Debug</h3>
+              <div>Sound Enabled: <span id="debug-sound-status">${soundEnabled ? 'YES' : 'NO'}</span></div>
+              <div>Sounds Created: <span id="debug-sounds-created">${soundsCreated ? 'YES' : 'NO'}</span></div>
+              <div>Test Sounds:</div>
+              <div id="debug-sound-buttons"></div>
+            `;
+            
+            document.body.appendChild(debug);
+            
+            // Create test sound buttons
+            const soundButtonContainer = document.getElementById('debug-sound-buttons');
+            const sounds = ['shot', 'quack', 'fall', 'gameStart', 'dogLaugh'];
+            
+            sounds.forEach(name => {
+              const btn = document.createElement('button');
+              btn.textContent = `Play ${name}`;
+              btn.style.margin = '5px';
+              btn.style.padding = '5px';
+              btn.style.display = 'block';
+              btn.style.width = '100%';
+              
+              btn.onclick = function() {
+                // Force enable sounds temporarily if disabled
+                const wasEnabled = soundEnabled;
+                soundEnabled = true;
+                
+                // Ensure sounds are created
+                if (!soundsCreated) {
+                  createSoundElements();
+                }
+                
+                // Play the sound
+                playSound(name);
+                
+                // Reset sound enabled to previous state
+                soundEnabled = wasEnabled;
+              };
+              
+              soundButtonContainer.appendChild(btn);
+            });
+            
+            // Add button to reload sounds
+            const reloadBtn = document.createElement('button');
+            reloadBtn.textContent = 'Reload All Sounds';
+            reloadBtn.style.margin = '5px';
+            reloadBtn.style.padding = '5px';
+            reloadBtn.style.width = '100%';
+            reloadBtn.style.backgroundColor = '#ff5555';
+            
+            reloadBtn.onclick = function() {
+              soundsCreated = false;
+              createSoundElements();
+              document.getElementById('debug-sounds-created').textContent = 'RELOADED';
+            };
+            
+            soundButtonContainer.appendChild(reloadBtn);
+          } else {
+            debugControls.style.display = 'block';
+          }
+        } else if (debugControls) {
+          debugControls.style.display = 'none';
+        }
+      }
+    });
     
     // Add a sound toggle button
     const soundButton = document.createElement('button');
@@ -129,6 +354,21 @@
     soundButton.innerHTML = '🔇'; // Start with sound off
     soundButton.title = "Enable Duck Hunt Sounds";
     
+    // Add pulsating animation to draw attention
+    const pulsateKeyframes = `
+      @keyframes soundButtonPulsate {
+        0% { transform: scale(1); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        50% { transform: scale(1.1); box-shadow: 0 0 20px rgba(231, 76, 60, 0.8); }
+        100% { transform: scale(1); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+      }
+    `;
+    const pulsateStyle = document.createElement('style');
+    pulsateStyle.textContent = pulsateKeyframes;
+    document.head.appendChild(pulsateStyle);
+    
+    // Add the pulsating animation initially to draw attention
+    soundButton.style.animation = 'soundButtonPulsate 1.5s infinite';
+    
     // Add text label under the button
     const soundLabel = document.createElement('div');
     soundLabel.style.position = 'fixed';
@@ -149,12 +389,19 @@
     // Toggle sound on/off when clicked
     soundButton.onclick = function() {
       if (!soundEnabled) {
-        // First enable - create the audio elements
-        createSoundElements();
+        // First enable - ensure audio elements are created
+        if (!soundsCreated) {
+          createSoundElements();
+        }
+        
         soundEnabled = true;
         soundButton.innerHTML = '🔊';
         soundButton.title = "Disable Duck Hunt Sounds";
         soundLabel.textContent = "Sound enabled!";
+        soundButton.style.backgroundColor = '#2ecc71'; // Green when enabled
+        
+        // Stop the pulsating animation once clicked
+        soundButton.style.animation = 'none';
         
         // Play game start sound
         setTimeout(() => {
@@ -171,6 +418,7 @@
         soundButton.innerHTML = '🔇';
         soundButton.title = "Enable Duck Hunt Sounds";
         soundLabel.textContent = "Sound disabled";
+        soundButton.style.backgroundColor = '#e74c3c'; // Red when disabled
         
         // Hide the label after 2 seconds
         setTimeout(() => {
