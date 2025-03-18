@@ -8,15 +8,15 @@
   const cursor = document.createElement('div');
   cursor.className = 'water-cursor';
   cursor.style.position = 'fixed';
-  cursor.style.width = '20px';
-  cursor.style.height = '20px';
+  cursor.style.width = '22px';
+  cursor.style.height = '22px';
   cursor.style.borderRadius = '50%';
-  cursor.style.background = 'rgba(120, 200, 255, 0.3)';
-  cursor.style.boxShadow = '0 0 10px rgba(120, 200, 255, 0.2)';
-  cursor.style.marginTop = '-10px';
-  cursor.style.marginLeft = '-10px';
-  cursor.style.pointerEvents = 'none'; // Ensure clicks pass through
-  cursor.style.zIndex = '1000';
+  cursor.style.background = 'rgba(120, 200, 255, 0.45)';
+  cursor.style.boxShadow = '0 0 12px rgba(120, 200, 255, 0.35)';
+  cursor.style.marginTop = '-11px';
+  cursor.style.marginLeft = '-11px';
+  cursor.style.pointerEvents = 'none';
+  cursor.style.zIndex = '100000';
   cursor.style.transition = 'transform 0.2s ease, width 0.3s ease, height 0.3s ease, background-color 0.3s ease, opacity 0.2s ease';
   
   // Array to store all ripples
@@ -84,6 +84,23 @@
     // Define a debounced version of cursor position update to prevent rapid toggling
     let cursorUpdateTimeout;
     
+    // Global mouseout and mouseover handlers to ensure cursor is always visible
+    document.addEventListener('mouseout', () => {
+      cursor.style.opacity = '1';
+    });
+    
+    document.addEventListener('mouseover', () => {
+      cursor.style.opacity = '1';
+    });
+    
+    // Check for cursor visibility periodically
+    setInterval(() => {
+      if (parseFloat(cursor.style.opacity) < 1) {
+        cursor.style.opacity = '1';
+        cursor.style.transform = 'scale(1)';
+      }
+    }, 100);
+    
     // Track mouse movement with improved handling
     document.addEventListener('mousemove', e => {
       mouseX = e.clientX;
@@ -98,6 +115,11 @@
       if (moveSpeed > 15) { // Increased threshold from 10 to 15
         createRipple(mouseX, mouseY, Math.min(25, 10 + moveSpeed * 0.25)); // Smaller ripples
       }
+      
+      // Force cursor to be visible and positioned correctly
+      cursor.style.left = `${mouseX}px`;
+      cursor.style.top = `${mouseY}px`;
+      cursor.style.opacity = '1';
       
       // Track elements under the cursor
       const elementsAtPoint = document.elementsFromPoint(e.clientX, e.clientY);
@@ -145,10 +167,6 @@
       // Update state based on what we found
       isOverCloseButton = foundCloseButton;
       isOverModal = foundModal && !foundCloseButton; // Don't count as modal if it's a close button
-      
-      // Update cursor position
-      cursor.style.left = `${mouseX}px`;
-      cursor.style.top = `${mouseY}px`;
       
       // Clear any pending cursor update
       clearTimeout(cursorUpdateTimeout);
@@ -228,9 +246,7 @@
         cursor.style.height = '28px';
         cursor.style.opacity = '1';
         setTimeout(() => {
-          cursor.style.width = '20px';
-          cursor.style.height = '20px';
-          cursor.style.opacity = '1';
+          resetCursor();
         }, 300);
       }
     });
@@ -332,7 +348,7 @@
   // Setup event listeners for interactive elements
   function setupInteractiveElements() {
     // Track hover state on interactive elements
-    const interactiveElements = document.querySelectorAll('a, button, [role="button"], input, select, textarea, [onclick]');
+    const interactiveElements = document.querySelectorAll('a, button, [role="button"], input, select, textarea, [onclick], img, svg, video, iframe, .banner, [class*="banner"], [id*="banner"]');
     
     interactiveElements.forEach(el => {
       // Skip if already processed
@@ -343,8 +359,8 @@
       const isCloseButton = 
         (el.textContent === '×' || 
          el.textContent === '✕' || 
-         el.textContent === 'x' || 
          el.textContent === 'X' || 
+         el.textContent === 'x' || 
          el.innerHTML === '&times;') ||
         (el.classList && (
           el.classList.contains('close') ||
@@ -365,6 +381,7 @@
       el.addEventListener('mouseenter', () => {
         // Always keep cursor fully visible
         cursor.style.opacity = '1';
+        cursor.style.transform = 'scale(1)';
         
         // If this is a close button, keep cursor normal
         if (isCloseButton) {
@@ -380,6 +397,7 @@
           cursor.style.width = '26px';
           cursor.style.height = '26px';
           cursor.style.backgroundColor = 'rgba(120, 200, 255, 0.35)';
+          cursor.style.opacity = '1';
         } else {
           // Keep cursor fully visible for modal elements
           cursor.style.opacity = '1';
@@ -416,6 +434,15 @@
     }
   }
   
+  // Function to reset cursor to default visible state
+  function resetCursor() {
+    cursor.style.width = '22px';
+    cursor.style.height = '22px';
+    cursor.style.backgroundColor = 'rgba(120, 200, 255, 0.45)';
+    cursor.style.opacity = '1';
+    cursor.style.transform = 'scale(1)';
+  }
+  
   // Animation loop
   function animate() {
     // Clear canvas
@@ -431,6 +458,11 @@
     if (mouseSpeed > 2 && frameCount % MOUSE_TRAIL_LENGTH === 0) {
       // For gentler movements, create smaller ripples
       createRipple(mouseX, mouseY, Math.min(40, 15 + mouseSpeed * 0.4));
+    }
+    
+    // Force cursor to remain visible
+    if (parseFloat(cursor.style.opacity) < 1) {
+      resetCursor();
     }
     
     // Update last mouse position
