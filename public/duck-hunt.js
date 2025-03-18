@@ -595,107 +595,129 @@
     duck.style.cursor = 'crosshair';
     duck.style.imageRendering = 'pixelated'; // Add pixel rendering style
     
-    // Create pixelated duck body (main rectangle)
+    // Create duck body (main part)
     const body = document.createElement('div');
     body.className = 'pixel-art';
     body.style.position = 'absolute';
-    body.style.width = '100%';
-    body.style.height = '75%';
-    body.style.top = '20%';
+    body.style.width = '80%';
+    body.style.height = '60%';
+    body.style.top = '30%';
+    body.style.left = '10%';
     body.style.backgroundColor = species.bodyColor;
     body.style.borderRadius = '0'; // Sharp corners for pixel look
     duck.appendChild(body);
     
-    // Create pixelated duck head (square)
+    // Create duck head
     const head = document.createElement('div');
     head.className = 'pixel-art';
     head.style.position = 'absolute';
     head.style.width = '40%';
-    head.style.height = '40%';
+    head.style.height = '35%';
     head.style.backgroundColor = species.headColor;
     head.style.borderRadius = '0'; // Sharp corners for pixel look
-    head.style.left = startFromLeft ? '60%' : '0%';
-    head.style.top = '0%';
+    head.style.left = startFromLeft ? '45%' : '15%';
+    head.style.top = '5%';
     head.style.zIndex = '2';
     duck.appendChild(head);
     
-    // Create duck beak (small rectangle)
-    const beak = document.createElement('div');
-    beak.className = 'pixel-art';
-    beak.style.position = 'absolute';
-    beak.style.width = '20%';
-    beak.style.height = '20%';
-    beak.style.backgroundColor = species.beakColor;
-    beak.style.borderRadius = '0'; // Sharp corners
-    beak.style.top = '15%';
-    beak.style.left = startFromLeft ? '85%' : '-5%';
-    beak.style.zIndex = '3';
-    duck.appendChild(beak);
+    // Create duck bill (more accurately shaped)
+    const bill = document.createElement('div');
+    bill.className = 'pixel-art';
+    bill.style.position = 'absolute';
+    bill.style.width = '30%';
+    bill.style.height = '15%';
+    bill.style.backgroundColor = species.beakColor;
+    bill.style.borderRadius = '0'; // Sharp corners
+    bill.style.top = '15%';
+    bill.style.left = startFromLeft ? '80%' : '-10%';
+    bill.style.zIndex = '3';
+    duck.appendChild(bill);
     
-    // Create duck eye (single pixel)
+    // Create duck eye (placed correctly on head)
     const eye = document.createElement('div');
     eye.className = 'pixel-art';
     eye.style.position = 'absolute';
     eye.style.width = '10%';
     eye.style.height = '10%';
-    eye.style.backgroundColor = '#FFFFFF'; // White eye
+    eye.style.backgroundColor = '#000000'; // Black eye like original
     eye.style.borderRadius = '0';
-    eye.style.top = '10%';
-    eye.style.left = startFromLeft ? '70%' : '15%';
-    eye.style.zIndex = '3';
+    eye.style.top = '15%';
+    eye.style.left = startFromLeft ? '70%' : '20%';
+    eye.style.zIndex = '4';
     duck.appendChild(eye);
-    
-    // Create wing (rectangular)
+
+    // Create duck wing (positioned better)
     const wing = document.createElement('div');
-    wing.className = 'pixel-art';
+    wing.className = 'pixel-art wing-element';
     wing.style.position = 'absolute';
     wing.style.width = '40%';
-    wing.style.height = '20%';
+    wing.style.height = '25%';
     wing.style.backgroundColor = species.wingColor;
     wing.style.borderRadius = '0';
-    wing.style.top = '30%';
-    wing.style.left = '30%';
-    wing.style.transformOrigin = 'center';
-    // Wing flapping animation based on old-school animation principles
-    wing.style.animation = `pixelFlapWings ${0.2 + Math.random() * 0.1}s infinite steps(2)`;
-    wing.style.zIndex = '4';
+    wing.style.top = '40%';
+    wing.style.left = '20%';
+    wing.style.transformOrigin = 'top center';
+    // No default animation - we'll control it via frames
+    wing.style.zIndex = '3';
     duck.appendChild(wing);
     
-    // Create accent pixels (white highlights characteristic of pixel art)
-    const accent1 = document.createElement('div');
-    accent1.className = 'pixel-art accent';
-    accent1.style.position = 'absolute';
-    accent1.style.width = '10%';
-    accent1.style.height = '10%';
-    accent1.style.backgroundColor = species.accentColor;
-    accent1.style.borderRadius = '0';
-    accent1.style.top = '70%';
-    accent1.style.left = startFromLeft ? '10%' : '80%';
-    accent1.style.zIndex = '5';
-    duck.appendChild(accent1);
+    // Add second wing for layered look when flapping
+    const wingBack = document.createElement('div');
+    wingBack.className = 'pixel-art';
+    wingBack.style.position = 'absolute';
+    wingBack.style.width = '30%';
+    wingBack.style.height = '20%';
+    wingBack.style.backgroundColor = darkenColor(species.wingColor, -15); // Slightly brighter
+    wingBack.style.borderRadius = '0';
+    wingBack.style.top = '45%';
+    wingBack.style.left = '25%';
+    wingBack.style.zIndex = '2';
+    duck.appendChild(wingBack);
     
-    const accent2 = document.createElement('div');
-    accent2.className = 'pixel-art accent';
-    accent2.style.position = 'absolute';
-    accent2.style.width = '10%';
-    accent2.style.height = '10%';
-    accent2.style.backgroundColor = species.accentColor;
-    accent2.style.borderRadius = '0';
-    accent2.style.top = '60%';
-    accent2.style.left = startFromLeft ? '20%' : '70%';
-    accent2.style.zIndex = '5';
-    duck.appendChild(accent2);
+    // Create tail feathers (new element)
+    const tail = document.createElement('div');
+    tail.className = 'pixel-art';
+    tail.style.position = 'absolute';
+    tail.style.width = '20%';
+    tail.style.height = '20%';
+    tail.style.backgroundColor = species.bodyColor;
+    tail.style.borderRadius = '0';
+    tail.style.top = '40%';
+    tail.style.left = startFromLeft ? '0%' : '80%';
+    tail.style.zIndex = '1';
+    duck.appendChild(tail);
     
-    // Add flapping animation
+    // Add feet (new element)
+    const feet = document.createElement('div');
+    feet.className = 'pixel-art';
+    feet.style.position = 'absolute';
+    feet.style.width = '25%';
+    feet.style.height = '10%';
+    feet.style.backgroundColor = species.beakColor; // Same color as beak
+    feet.style.borderRadius = '0';
+    feet.style.top = '90%';
+    feet.style.left = '40%';
+    feet.style.zIndex = '1';
+    duck.appendChild(feet);
+    
+    // Add white belly patch (characteristic of ducks)
+    const belly = document.createElement('div');
+    belly.className = 'pixel-art';
+    belly.style.position = 'absolute';
+    belly.style.width = '50%';
+    belly.style.height = '30%';
+    belly.style.backgroundColor = species.accentColor; // White for the belly
+    belly.style.borderRadius = '0';
+    belly.style.top = '60%';
+    belly.style.left = '25%';
+    belly.style.zIndex = '2';
+    duck.appendChild(belly);
+    
+    // Add flapping animation - just like NES version
     const keyframes = `
       @keyframes pixelFlapWings {
         0% { transform: translateY(0); }
-        50% { transform: translateY(-3px); }
-        100% { transform: translateY(0); }
-      }
-      @keyframes pixelFlapWingsDelayed {
-        0% { transform: translateY(0); }
-        50% { transform: translateY(3px); }
+        50% { transform: translateY(-5px); }
         100% { transform: translateY(0); }
       }
     `;
@@ -872,9 +894,17 @@
         // Update shot duck (falling)
         duck.fallSpeed += 0.15;
         duck.y += duck.fallSpeed;
-        // For pixel art look, round rotation to increments of 45 degrees (8-directional)
-        const rotation = Math.round(duck.rotationSpeed / 45) * 45;
+        // For pixel art look, round rotation to increments of 90 degrees (4-directional)
+        const rotation = Math.round(duck.rotationSpeed / 90) * 90;
         duck.element.style.transform = `rotate(${rotation}deg)`;
+        
+        // NES-style shot duck white flash effect
+        const flashFrame = Math.floor(duck.fallSpeed * 2) % 2; // Flash between white and normal
+        if (flashFrame === 0) {
+          Array.from(duck.element.querySelectorAll('div')).forEach(el => {
+            el.style.backgroundColor = '#FFFFFF';
+          });
+        }
         
         // Remove duck when it falls off-screen
         if (duck.y > window.innerHeight) {
@@ -886,15 +916,25 @@
         duck.x += duck.speedX;
         duck.time += 0.016; // Approximately 16ms per frame
         
-        // Wave motion (simplified for pixel art style)
-        const waveOffset = Math.round(Math.sin(duck.time * duck.waveFrequency * 10) * duck.waveAmplitude);
-        duck.y = Math.floor(duck.startY + waveOffset);
+        // NES-style flight animation with distinct wing positions
+        const wingFrame = Math.floor(duck.time * 8) % 3; // Cycle through 3 frames like NES game
+        if (wingFrame === 0) {
+          duck.element.querySelector('.wing-element').style.transform = 'translateY(0)';
+        } else if (wingFrame === 1) {
+          duck.element.querySelector('.wing-element').style.transform = 'translateY(-5px)';
+        } else {
+          duck.element.querySelector('.wing-element').style.transform = 'translateY(-10px)';
+        }
+        
+        // Wave motion with 8-bit style jumping coordinates
+        const waveAmount = Math.round(Math.sin(duck.time * 2) * 4) * 2; // Only move in 2px increments for NES style
+        duck.y = Math.floor(duck.startY + waveAmount);
         
         // Occasional quacking
         duck.quackTimer -= 16;
         if (soundEnabled && duck.quackTimer <= 0) {
           playSound('quack');
-          duck.quackTimer = 5000 + Math.random() * 8000; // Even less frequent quacking
+          duck.quackTimer = 5000 + Math.random() * 8000;
         }
         
         // Remove duck if it flies off-screen
@@ -907,8 +947,9 @@
       }
       
       // Update duck position - use Math.round for pixel-perfect positioning
-      duck.element.style.left = `${Math.round(duck.x)}px`;
-      duck.element.style.top = `${Math.round(duck.y)}px`;
+      // NES style - positions snap to 2px grid
+      duck.element.style.left = `${Math.round(duck.x / 2) * 2}px`;
+      duck.element.style.top = `${Math.round(duck.y / 2) * 2}px`;
     }
     
     // Update each feather particle
