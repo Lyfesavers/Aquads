@@ -32,7 +32,7 @@
   const RIPPLE_RADIUS = 50;
   const RIPPLE_SPREAD_SPEED = 2;
   const RIPPLE_FADE_SPEED = 0.97;
-  const RIPPLE_COLOR = 'rgba(64, 196, 255, 0.8)';
+  const RIPPLE_COLOR = 'rgba(0, 230, 255, 0.9)';
   const MOUSE_TRAIL_LENGTH = 2;
   let frameCount = 0;
   
@@ -49,7 +49,7 @@
     canvas.style.width = '100%';
     canvas.style.height = '100%';
     canvas.style.pointerEvents = 'none'; // Allow clicks to pass through
-    canvas.style.zIndex = '999'; // Place below modals but above other content
+    canvas.style.zIndex = '10000'; // Changed from 999 to ensure it's above other elements
     
     // Handle resize
     function resize() {
@@ -88,6 +88,16 @@
     document.addEventListener('mousemove', e => {
       mouseX = e.clientX;
       mouseY = e.clientY;
+      
+      // Always create a ripple on significant mouse movement, regardless of modals
+      const dx = mouseX - lastMouseX;
+      const dy = mouseY - lastMouseY;
+      const moveSpeed = Math.sqrt(dx * dx + dy * dy);
+      
+      // Create immediate ripple on fast movements
+      if (moveSpeed > 10) {
+        createRipple(mouseX, mouseY, Math.min(30, 15 + moveSpeed * 0.3));
+      }
       
       // Track elements under the cursor
       const elementsAtPoint = document.elementsFromPoint(e.clientX, e.clientY);
@@ -386,9 +396,7 @@
   
   // Create a new ripple
   function createRipple(x, y, radius = RIPPLE_RADIUS) {
-    // Don't create ripples if over a modal
-    if (isOverModal || isOverCloseButton) return;
-    
+    // Always create ripples, removing the modal check
     ripples.push({
       x, 
       y, 
@@ -414,9 +422,9 @@
     const dy = mouseY - lastMouseY;
     const mouseSpeed = Math.sqrt(dx * dx + dy * dy);
     
-    // Create ripples based on mouse movement
+    // Create ripples based on mouse movement - removed modal detection to always show ripples
     frameCount++;
-    if (mouseSpeed > 1 && frameCount % MOUSE_TRAIL_LENGTH === 0 && !isOverModal && !isOverCloseButton) {
+    if (mouseSpeed > 1 && frameCount % MOUSE_TRAIL_LENGTH === 0) {
       createRipple(mouseX, mouseY, Math.min(50, 20 + mouseSpeed * 0.5));
     }
     
@@ -455,18 +463,18 @@
       ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
       
       // Fill with semi-transparent color
-      ctx.fillStyle = RIPPLE_COLOR.replace('0.8', ripple.alpha * 0.2);
+      ctx.fillStyle = RIPPLE_COLOR.replace('0.9', ripple.alpha * 0.2);
       ctx.fill();
       
       // Stroke with more opaque color
-      ctx.strokeStyle = RIPPLE_COLOR.replace('0.8', ripple.alpha);
+      ctx.strokeStyle = RIPPLE_COLOR.replace('0.9', ripple.alpha);
       ctx.lineWidth = 3;
       ctx.stroke();
       
       // Add inner ripple for more water-like effect
       ctx.beginPath();
       ctx.arc(ripple.x, ripple.y, ripple.radius * 0.8, 0, Math.PI * 2);
-      ctx.strokeStyle = RIPPLE_COLOR.replace('0.8', ripple.alpha * 0.5);
+      ctx.strokeStyle = RIPPLE_COLOR.replace('0.9', ripple.alpha * 0.5);
       ctx.lineWidth = 2;
       ctx.stroke();
     });
