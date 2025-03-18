@@ -33,7 +33,7 @@
   const RIPPLE_SPREAD_SPEED = 2;
   const RIPPLE_FADE_SPEED = 0.95;
   const RIPPLE_COLOR = 'rgba(120, 160, 255, 0.3)';
-  const MOUSE_TRAIL_LENGTH = 5;
+  const MOUSE_TRAIL_LENGTH = 3;
   let frameCount = 0;
   
   // State tracking
@@ -411,7 +411,7 @@
     
     // Create ripples based on mouse movement
     frameCount++;
-    if (mouseSpeed > 5 && frameCount % MOUSE_TRAIL_LENGTH === 0 && !isOverModal && !isOverCloseButton) {
+    if (mouseSpeed > 2 && frameCount % MOUSE_TRAIL_LENGTH === 0 && !isOverModal && !isOverCloseButton) {
       createRipple(mouseX, mouseY, Math.min(50, 20 + mouseSpeed * 0.5));
     }
     
@@ -470,4 +470,7 @@
   } else {
     init();
   }
+
+  // Also initialize after a short delay to ensure all resources are loaded
+  setTimeout(init, 1000);
 })(); 
