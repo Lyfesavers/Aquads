@@ -15,7 +15,7 @@
   cursor.style.boxShadow = '0 0 10px rgba(120, 200, 255, 0.2)';
   cursor.style.marginTop = '-10px';
   cursor.style.marginLeft = '-10px';
-  cursor.style.pointerEvents = 'none';
+  cursor.style.pointerEvents = 'none'; // Ensure clicks pass through
   cursor.style.zIndex = '1000';
   cursor.style.transition = 'transform 0.2s ease, width 0.3s ease, height 0.3s ease, background-color 0.3s ease, opacity 0.2s ease';
   
@@ -48,8 +48,8 @@
     canvas.style.left = '0';
     canvas.style.width = '100%';
     canvas.style.height = '100%';
-    canvas.style.pointerEvents = 'none'; // Allow clicks to pass through
-    canvas.style.zIndex = '10000'; // Changed from 999 to ensure it's above other elements
+    canvas.style.pointerEvents = 'none'; // Crucial - allows clicks to pass through to elements underneath
+    canvas.style.zIndex = '10000'; // Keep above other elements but don't block interactions
     
     // Handle resize
     function resize() {
@@ -156,13 +156,13 @@
       // Set a small delay before changing cursor appearance to prevent flickering
       cursorUpdateTimeout = setTimeout(() => {
         if (isOverCloseButton) {
-          // Semi-transparent for close buttons (not completely hidden)
-          cursor.style.opacity = '0.3';
-          cursor.style.transform = 'scale(0.7)';
+          // Always keep cursor fully visible
+          cursor.style.opacity = '1';
+          cursor.style.transform = 'scale(1)';
         } else if (isOverModal) {
-          // Semi-transparent for modals
-          cursor.style.opacity = '0.5';
-          cursor.style.transform = 'scale(0.8)';
+          // Always keep cursor fully visible
+          cursor.style.opacity = '1';
+          cursor.style.transform = 'scale(1)';
         } else {
           // Normal for everything else
           cursor.style.opacity = '1';
@@ -201,16 +201,14 @@
       }
       
       if (foundCloseButton) {
-        // If clicking a close button, make cursor semi-transparent
-        cursor.style.opacity = '0.3';
-        cursor.style.transform = 'scale(0.7)';
+        // Keep cursor fully visible on close buttons
+        cursor.style.opacity = '1';
+        cursor.style.transform = 'scale(1)';
         
         // Restore cursor after a short delay
         setTimeout(() => {
-          if (!isOverCloseButton && !isOverModal) {
-            cursor.style.opacity = '1';
-            cursor.style.transform = 'scale(1)';
-          }
+          cursor.style.opacity = '1';
+          cursor.style.transform = 'scale(1)';
         }, 500);
       } else if (!isOverModal && !isOverCloseButton) {
         // Only create ripples outside of modals
@@ -225,12 +223,14 @@
           createRipple(e.clientX, e.clientY, 20);
         }, 200);
         
-        // Pulse cursor
+        // Pulse cursor size but keep full opacity
         cursor.style.width = '28px';
         cursor.style.height = '28px';
+        cursor.style.opacity = '1';
         setTimeout(() => {
           cursor.style.width = '20px';
           cursor.style.height = '20px';
+          cursor.style.opacity = '1';
         }, 300);
       }
     });
@@ -363,10 +363,12 @@
       }
       
       el.addEventListener('mouseenter', () => {
-        // If this is a close button, make cursor semi-transparent
+        // Always keep cursor fully visible
+        cursor.style.opacity = '1';
+        
+        // If this is a close button, keep cursor normal
         if (isCloseButton) {
-          cursor.style.opacity = '0.3';
-          cursor.style.transform = 'scale(0.7)';
+          cursor.style.transform = 'scale(1)';
           return;
         }
         
@@ -374,26 +376,24 @@
         const isInModal = el.closest('.modal, .fixed, [role="dialog"]');
         
         if (!isInModal) {
-          // Expand the cursor for interactive elements
+          // Expand the cursor for interactive elements but keep fully visible
           cursor.style.width = '26px';
           cursor.style.height = '26px';
           cursor.style.backgroundColor = 'rgba(120, 200, 255, 0.35)';
         } else {
-          // Semi-transparent for modal elements
-          cursor.style.opacity = '0.5';
-          cursor.style.transform = 'scale(0.8)';
+          // Keep cursor fully visible for modal elements
+          cursor.style.opacity = '1';
+          cursor.style.transform = 'scale(1)';
         }
       });
       
       el.addEventListener('mouseleave', () => {
-        // Reset cursor to default state only if not over a modal/close button
-        if (!isOverModal && !isOverCloseButton) {
-          cursor.style.width = '20px';
-          cursor.style.height = '20px';
-          cursor.style.backgroundColor = 'rgba(120, 200, 255, 0.3)';
-          cursor.style.opacity = '1';
-          cursor.style.transform = 'scale(1)';
-        }
+        // Always keep cursor fully visible
+        cursor.style.width = '20px';
+        cursor.style.height = '20px';
+        cursor.style.backgroundColor = 'rgba(120, 200, 255, 0.3)';
+        cursor.style.opacity = '1';
+        cursor.style.transform = 'scale(1)';
       });
     });
   }
