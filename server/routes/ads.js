@@ -7,7 +7,6 @@ const AffiliateEarning = require('../models/AffiliateEarning');
 const { v4: uuidv4 } = require('uuid');
 const User = require('../models/User');
 const socket = require('../socket');
-const AdVote = require('../models/AdVote');
 
 // Skip auth for GET requests
 router.use((req, res, next) => {
@@ -424,70 +423,6 @@ router.put('/:id/position', async (req, res) => {
   } catch (error) {
     console.error('Error updating ad position:', error);
     res.status(500).json({ message: 'Error updating ad position', error: error.message });
-  }
-});
-
-// Vote for an ad
-router.post('/:id/vote', auth, async (req, res) => {
-  try {
-    const adId = req.params.id;
-    const userId = req.user.userId;
-    
-    // Check if ad exists
-    const ad = await Ad.findById(adId);
-    if (!ad) {
-      return res.status(404).json({ error: 'Ad not found' });
-    }
-    
-    // Check if user already voted
-    const existingVote = await AdVote.findOne({ adId, userId });
-    
-    if (existingVote) {
-      return res.status(400).json({ error: 'Already voted for this ad' });
-    }
-    
-    // Add new vote
-    const vote = new AdVote({
-      adId,
-      userId,
-      vote: 1
-    });
-    
-    await vote.save();
-    
-    // Get updated vote count
-    const voteCount = await AdVote.countDocuments({ adId });
-    
-    return res.json({ 
-      success: true, 
-      message: 'Vote added successfully', 
-      voteCount 
-    });
-    
-  } catch (error) {
-    console.error('Error voting for ad:', error);
-    res.status(500).json({ error: 'Failed to process vote' });
-  }
-});
-
-// Get vote count for an ad
-router.get('/:id/votes', async (req, res) => {
-  try {
-    const adId = req.params.id;
-    
-    // Check if ad exists
-    const ad = await Ad.findById(adId);
-    if (!ad) {
-      return res.status(404).json({ error: 'Ad not found' });
-    }
-    
-    // Get vote count
-    const voteCount = await AdVote.countDocuments({ adId });
-    
-    res.json({ votes: voteCount });
-  } catch (error) {
-    console.error('Error getting vote count:', error);
-    res.status(500).json({ error: 'Failed to get vote count' });
   }
 });
 
