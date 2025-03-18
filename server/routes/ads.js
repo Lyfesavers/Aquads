@@ -7,8 +7,6 @@ const AffiliateEarning = require('../models/AffiliateEarning');
 const { v4: uuidv4 } = require('uuid');
 const User = require('../models/User');
 const socket = require('../socket');
-const AdVote = require('../models/AdVote');
-const jwt = require('jsonwebtoken');
 
 // Skip auth for GET requests
 router.use((req, res, next) => {
@@ -425,94 +423,6 @@ router.put('/:id/position', async (req, res) => {
   } catch (error) {
     console.error('Error updating ad position:', error);
     res.status(500).json({ message: 'Error updating ad position', error: error.message });
-  }
-});
-
-// Add vote to ad (double-click)
-router.post('/:id/vote', async (req, res) => {
-  try {
-    const adId = req.params.id;
-    
-    // Check if ad exists
-    const ad = await Ad.findOne({ id: adId });
-    if (!ad) {
-      return res.status(404).json({ error: 'Ad not found' });
-    }
-    
-    // Use IP address as identifier for anonymous users
-    const userIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    
-    // Get userId from token if available, or use "anonymous" + part of the IP
-    let userId;
-    try {
-      const token = req.headers.authorization?.split(' ')[1];
-      if (token) {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'bubble-ads-jwt-secret-key-2024');
-        userId = decoded.userId || decoded._id;
-      }
-    } catch (error) {
-      console.log('No valid auth token, using anonymous ID');
-    }
-    
-    // If no userId from token, use anonymized IP
-    if (!userId) {
-      // Hash the IP to anonymize it while keeping it consistent for the same user
-      const hash = require('crypto').createHash('md5').update(userIp).digest('hex');
-      userId = 'anon_' + hash.substring(0, 8);
-    }
-    
-    // Check if user already voted for this ad in the last 24 hours
-    const existingVote = await AdVote.findOne({
-      adId,
-      userId,
-      userIp
-    });
-    
-    if (existingVote) {
-      return res.status(400).json({ error: 'Already voted for this ad' });
-    }
-    
-    // Create vote record
-    const vote = new AdVote({
-      adId,
-      userId,
-      userIp
-    });
-    await vote.save();
-    
-    // Get current vote count for the ad
-    const voteCount = await AdVote.countDocuments({ adId });
-    
-    // Return the vote count
-    res.json({ 
-      success: true, 
-      message: 'Vote recorded successfully',
-      voteCount
-    });
-  } catch (error) {
-    console.error('Error voting for ad:', error);
-    res.status(500).json({ error: 'Failed to vote for ad' });
-  }
-});
-
-// Get vote count for ad
-router.get('/:id/votes', async (req, res) => {
-  try {
-    const adId = req.params.id;
-    
-    // Check if ad exists
-    const ad = await Ad.findOne({ id: adId });
-    if (!ad) {
-      return res.status(404).json({ error: 'Ad not found' });
-    }
-    
-    // Get vote count
-    const voteCount = await AdVote.countDocuments({ adId });
-    
-    res.json({ voteCount });
-  } catch (error) {
-    console.error('Error getting vote count:', error);
-    res.status(500).json({ error: 'Failed to get vote count' });
   }
 });
 

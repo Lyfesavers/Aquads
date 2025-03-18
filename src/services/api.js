@@ -910,44 +910,4 @@ export const fetchGameCategories = async () => {
     console.error('Error fetching game categories:', error);
     throw error;
   }
-};
-
-// Vote for ad (bubble)
-export const voteForAd = async (adId) => {
-  try {
-    const response = await fetch(`${API_URL}/ads/${adId}/vote`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...getAuthHeader()
-      }
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to vote for ad');
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Error voting for ad:', error);
-    throw error;
-  }
-};
-
-// Get vote count for ad
-export const getAdVoteCount = async (adId) => {
-  try {
-    const response = await fetch(`${API_URL}/ads/${adId}/votes`);
-    
-    if (!response.ok) {
-      throw new Error('Failed to get vote count');
-    }
-    
-    const data = await response.json();
-    return data.voteCount;
-  } catch (error) {
-    console.error('Error getting vote count:', error);
-    return 0;
-  }
 }; 
