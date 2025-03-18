@@ -16,7 +16,9 @@ import {
   fetchBumpRequests,
   verifyToken,
   pingServer,
-  API_URL
+  API_URL,
+  voteForAd,
+  getAdVoteCount
 } from './services/api';
 import BumpStore from './components/BumpStore';
 import LoginModal from './components/LoginModal';
@@ -299,6 +301,7 @@ function App() {
     const cachedAds = localStorage.getItem('cachedAds');
     return cachedAds ? JSON.parse(cachedAds) : [];
   });
+  const [adVotes, setAdVotes] = useState({});
   const [currentUser, setCurrentUser] = useState(() => {
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
@@ -985,8 +988,28 @@ function App() {
     
     // Add subtle size variation (5-10% difference between bubbles)
     const sizeVariation = 0.95 + Math.random() * 0.1;
-    ad.element.style.transform = `scale(${sizeVariation})`;
     ad.baseScale = sizeVariation; // Store base scale for animations
+    
+    // Apply initial scale with vote scaling
+    const voteCount = adVotes[ad.id] || 0;
+    const MAX_VOTES = 75;
+    const voteScale = Math.min(1 + (voteCount / MAX_VOTES) * 0.5, 1.5);
+    const initialScale = sizeVariation * voteScale;
+    
+    ad.element.style.transform = `scale(${initialScale})`;
+    
+    // Add double-click event listener for voting
+    ad.element.addEventListener('dblclick', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handleBubbleDoubleClick(ad.id);
+    });
+    
+    // Add vote counter
+    const voteCounter = document.createElement('div');
+    voteCounter.className = 'bubble-vote-counter';
+    voteCounter.textContent = `${voteCount} votes`;
+    ad.element.appendChild(voteCounter);
     
     return ad;
   };
@@ -1277,6 +1300,90 @@ function App() {
     };
   }, []);
 
+  // Add useEffect to fetch vote counts when ads change
+  useEffect(() => {
+    const fetchVoteCounts = async () => {
+      if (!ads || ads.length === 0) return;
+      
+      const votesObject = {};
+      for (const ad of ads) {
+        try {
+          const voteCount = await getAdVoteCount(ad.id);
+          votesObject[ad.id] = voteCount;
+        } catch (error) {
+          console.error(`Error fetching votes for ad ${ad.id}:`, error);
+          votesObject[ad.id] = 0;
+        }
+      }
+      
+      setAdVotes(votesObject);
+    };
+
+    fetchVoteCounts();
+  }, [ads]);
+
+  // Add function to handle bubble double-click for voting
+  const handleBubbleDoubleClick = async (adId) => {
+    if (!currentUser) {
+      showNotification('Please log in to vote for bubbles', 'info');
+      setShowLoginModal(true);
+      return;
+    }
+
+    try {
+      const result = await voteForAd(adId);
+      
+      if (result.success) {
+        // Update vote count in state
+        setAdVotes(prev => ({
+          ...prev,
+          [adId]: result.voteCount
+        }));
+        
+        // Show notification
+        showNotification('Vote recorded!', 'success');
+        
+        // Update bubble size based on new vote count
+        const adElement = document.getElementById(`bubble-${adId}`);
+        if (adElement) {
+          updateBubbleSizeByVotes(adElement, result.voteCount);
+          
+          // Update vote counter
+          const counter = adElement.querySelector('.bubble-vote-counter');
+          if (counter) {
+            counter.textContent = `${result.voteCount} votes`;
+            counter.classList.add('bubble-pulse-vote');
+            setTimeout(() => {
+              counter.classList.remove('bubble-pulse-vote');
+            }, 1000);
+          }
+        }
+      }
+    } catch (error) {
+      if (error.message.includes('Already voted')) {
+        showNotification('You have already voted for this bubble today', 'info');
+      } else {
+        showNotification('Failed to vote for this bubble', 'error');
+        console.error('Vote error:', error);
+      }
+    }
+  };
+
+  // Add function to update bubble size based on votes
+  const updateBubbleSizeByVotes = (element, voteCount) => {
+    const ad = ads.find(a => a.element === element);
+    if (!ad) return;
+    
+    const baseScale = ad.baseScale || 1;
+    
+    // Calculate vote scale: 0 votes = 100%, 75 votes = 150% (scale increases by 0.5x)
+    const MAX_VOTES = 75;
+    const voteScale = Math.min(1 + (voteCount / MAX_VOTES) * 0.5, 1.5);
+    
+    // Apply the new scale
+    element.style.transform = `scale(${baseScale * voteScale})`;
+  };
+
   return (
     <Router>
       <Routes>
@@ -1528,6 +1635,7 @@ function App() {
                         >
                           <motion.div
                             className="absolute transform hover:scale-105 bubble"
+                            id={`bubble-${ad.id}`}
                             style={{
                               width: `${ad.size}px`,
                               height: `${ad.size}px`,
