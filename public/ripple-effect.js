@@ -25,6 +25,10 @@
   const MOUSE_TRAIL_LENGTH = 5;
   let frameCount = 0;
   
+  // State tracking
+  let isOverModal = false;
+  let isOverCloseButton = false;
+  
   // Initialize the canvas
   function init() {
     // Style the canvas
@@ -56,39 +60,41 @@
       mouseX = e.clientX;
       mouseY = e.clientY;
       
-      // Update cursor position
-      cursor.style.left = `${mouseX}px`;
-      cursor.style.top = `${mouseY}px`;
+      // Check if mouse is over a modal or close button
+      checkModalInteraction(e.target);
+      
+      // Update cursor position (only if not over a modal)
+      if (!isOverModal && !isOverCloseButton) {
+        cursor.style.display = 'block';
+        cursor.style.left = `${mouseX}px`;
+        cursor.style.top = `${mouseY}px`;
+      } else {
+        // Hide cursor when over modal elements
+        cursor.style.display = 'none';
+      }
     });
     
     // Track mouse clicks to create bigger ripples
     document.addEventListener('click', e => {
-      createRipple(e.clientX, e.clientY, 60); // Larger ripple on click
-      
-      // Pulse cursor on click
-      cursor.style.width = '30px';
-      cursor.style.height = '30px';
-      setTimeout(() => {
-        cursor.style.width = '20px';
-        cursor.style.height = '20px';
-      }, 300);
-    });
-    
-    // Track hover state on interactive elements
-    const interactiveElements = document.querySelectorAll('a, button, [role="button"], input, select, textarea, [onclick]');
-    interactiveElements.forEach(el => {
-      el.addEventListener('mouseenter', () => {
+      // Only create ripples if not over a modal or close button
+      if (!isOverModal && !isOverCloseButton) {
+        createRipple(e.clientX, e.clientY, 60); // Larger ripple on click
+        
+        // Pulse cursor on click
         cursor.style.width = '30px';
         cursor.style.height = '30px';
-        cursor.style.backgroundColor = 'rgba(120, 160, 255, 0.4)';
-      });
-      
-      el.addEventListener('mouseleave', () => {
-        cursor.style.width = '20px';
-        cursor.style.height = '20px';
-        cursor.style.backgroundColor = '';
-      });
+        setTimeout(() => {
+          cursor.style.width = '20px';
+          cursor.style.height = '20px';
+        }, 300);
+      }
     });
+    
+    // Set up a mutation observer to detect dynamically added modals
+    setupModalObserver();
+    
+    // Track hover state on interactive elements
+    setupInteractiveElements();
     
     // Add to document
     document.body.appendChild(canvas);
@@ -97,8 +103,89 @@
     requestAnimationFrame(animate);
   }
   
+  // Check if an element is a modal or close button
+  function checkModalInteraction(element) {
+    // Check if current element or any parent is a modal
+    let current = element;
+    isOverModal = false;
+    isOverCloseButton = false;
+    
+    while (current) {
+      // Check for modal elements
+      if (current.classList && 
+         (current.classList.contains('modal') || 
+          current.classList.contains('modal-backdrop') ||
+          current.classList.contains('fixed'))) {
+        isOverModal = true;
+      }
+      
+      // Check specifically for close buttons (X) in modals
+      if ((current.innerText === '×' || current.innerText === '✕' || current.innerHTML === '&times;') &&
+          current.closest('.modal, .fixed, [role="dialog"]')) {
+        isOverCloseButton = true;
+      }
+      
+      // Check for close button role or data attribute
+      if (current.getAttribute('role') === 'button' && 
+         (current.classList.contains('close') || 
+          current.classList.contains('close-button') ||
+          current.getAttribute('data-dismiss') === 'modal' ||
+          current.getAttribute('aria-label') === 'Close')) {
+        isOverCloseButton = true;
+      }
+      
+      current = current.parentElement;
+    }
+  }
+  
+  // Setup a mutation observer to detect new modals
+  function setupModalObserver() {
+    const observer = new MutationObserver((mutations) => {
+      setupInteractiveElements();
+    });
+    
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  }
+  
+  // Setup event listeners for interactive elements
+  function setupInteractiveElements() {
+    // Track hover state on interactive elements
+    const interactiveElements = document.querySelectorAll('a, button, [role="button"], input, select, textarea, [onclick]');
+    interactiveElements.forEach(el => {
+      // Skip if already processed
+      if (el.dataset.rippleProcessed) return;
+      el.dataset.rippleProcessed = 'true';
+      
+      el.addEventListener('mouseenter', () => {
+        // Check if element is inside a modal
+        const isInModal = el.closest('.modal, .fixed, [role="dialog"]');
+        
+        if (!isInModal) {
+          cursor.style.width = '30px';
+          cursor.style.height = '30px';
+          cursor.style.backgroundColor = 'rgba(120, 160, 255, 0.4)';
+        } else {
+          cursor.style.display = 'none';
+        }
+      });
+      
+      el.addEventListener('mouseleave', () => {
+        cursor.style.width = '20px';
+        cursor.style.height = '20px';
+        cursor.style.backgroundColor = '';
+        cursor.style.display = 'block';
+      });
+    });
+  }
+  
   // Create a new ripple
   function createRipple(x, y, radius = RIPPLE_RADIUS) {
+    // Don't create ripples if over a modal
+    if (isOverModal || isOverCloseButton) return;
+    
     ripples.push({
       x, 
       y, 
@@ -126,7 +213,7 @@
     
     // Create ripples based on mouse movement
     frameCount++;
-    if (mouseSpeed > 5 && frameCount % MOUSE_TRAIL_LENGTH === 0) {
+    if (mouseSpeed > 5 && frameCount % MOUSE_TRAIL_LENGTH === 0 && !isOverModal && !isOverCloseButton) {
       createRipple(mouseX, mouseY, Math.min(50, 20 + mouseSpeed * 0.5));
     }
     
