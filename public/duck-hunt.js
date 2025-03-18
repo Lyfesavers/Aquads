@@ -7,13 +7,21 @@
   let ducks = [];
   let score = 0;
   let ducksCreated = 0;
-  const maxDucks = 5; // Maximum number of ducks on screen
+  const maxDucks = 3; // Reduced maximum number of ducks on screen
+  let feathers = []; // Track all feather particles
   
   // Duck properties
-  const duckColors = ['#8BC34A', '#FFEB3B', '#FF9800', '#2196F3', '#9C27B0'];
+  const duckColors = [
+    '#8B4513', // Brown
+    '#654321', // Dark brown
+    '#556B2F', // Dark olive green
+    '#006400', // Dark green
+    '#2F4F4F'  // Dark slate gray
+  ];
+  
   const duckSizes = {
-    width: 50,
-    height: 30
+    width: 60,
+    height: 35
   };
   
   // Sound effects
@@ -125,8 +133,8 @@
     // Add to document
     document.body.appendChild(gameContainer);
     
-    // Start spawning ducks occasionally
-    setInterval(spawnDuck, 3000);
+    // Start spawning ducks occasionally - less frequently (8-10 seconds)
+    setInterval(spawnDuck, 8000 + Math.random() * 2000);
     
     // Start animation loop
     requestAnimationFrame(updateGame);
@@ -148,10 +156,10 @@
     const startFromLeft = Math.random() > 0.5;
     const y = 100 + Math.random() * (window.innerHeight - 300);
     const x = startFromLeft ? -size.width : window.innerWidth;
-    const speedX = (startFromLeft ? 1 : -1) * (2 + Math.random() * 3);
+    const speedX = (startFromLeft ? 1 : -1) * (1.5 + Math.random() * 2); // Slightly slower
     const speedY = Math.sin(Date.now() / 1000) * 0.5; // Slight up/down movement
     
-    // Create duck element
+    // Create duck SVG container
     const duck = document.createElement('div');
     duck.className = 'game-duck';
     duck.style.position = 'absolute';
@@ -159,34 +167,43 @@
     duck.style.top = `${y}px`;
     duck.style.width = `${size.width}px`;
     duck.style.height = `${size.height}px`;
-    duck.style.backgroundColor = color;
-    duck.style.borderRadius = '50% 50% 50% 50% / 60% 60% 40% 40%';
     duck.style.transform = startFromLeft ? 'scaleX(1)' : 'scaleX(-1)';
     duck.style.transition = 'transform 0.1s';
     duck.style.zIndex = '9999';
     duck.style.pointerEvents = 'auto'; // Make clickable
     duck.style.cursor = 'crosshair';
     
+    // Create duck body
+    const body = document.createElement('div');
+    body.style.position = 'absolute';
+    body.style.width = '100%';
+    body.style.height = '100%';
+    body.style.backgroundColor = color;
+    body.style.borderRadius = '60% 60% 40% 40% / 60% 60% 40% 40%';
+    duck.appendChild(body);
+    
     // Create duck head
     const head = document.createElement('div');
     head.style.position = 'absolute';
     head.style.width = `${size.width * 0.4}px`;
     head.style.height = `${size.width * 0.4}px`;
-    head.style.backgroundColor = color;
+    head.style.backgroundColor = darkenColor(color, -10); // Slightly lighter
     head.style.borderRadius = '50%';
-    head.style.left = startFromLeft ? '85%' : '-15%';
-    head.style.top = '-30%';
+    head.style.left = startFromLeft ? '80%' : '-20%';
+    head.style.top = '-20%';
+    head.style.zIndex = '2';
     duck.appendChild(head);
     
     // Create duck eye
     const eye = document.createElement('div');
     eye.style.position = 'absolute';
-    eye.style.width = '4px';
-    eye.style.height = '4px';
+    eye.style.width = '5px';
+    eye.style.height = '5px';
     eye.style.backgroundColor = '#000';
     eye.style.borderRadius = '50%';
-    eye.style.top = '20%';
-    eye.style.left = startFromLeft ? '30%' : '70%';
+    eye.style.top = '30%';
+    eye.style.left = startFromLeft ? '30%' : '60%';
+    eye.style.zIndex = '3';
     head.appendChild(eye);
     
     // Create duck beak
@@ -194,31 +211,63 @@
     beak.style.position = 'absolute';
     beak.style.width = '0';
     beak.style.height = '0';
-    beak.style.borderLeft = startFromLeft ? '10px solid transparent' : '0';
-    beak.style.borderRight = startFromLeft ? '0' : '10px solid transparent';
-    beak.style.borderTop = '6px solid orange';
+    beak.style.borderLeft = startFromLeft ? '12px solid transparent' : '0';
+    beak.style.borderRight = startFromLeft ? '0' : '12px solid transparent';
+    beak.style.borderTop = '8px solid #FF8C00'; // Orange beak
     beak.style.top = '60%';
-    beak.style.left = startFromLeft ? '70%' : '10%';
+    beak.style.left = startFromLeft ? '75%' : '15%';
+    beak.style.zIndex = '3';
     head.appendChild(beak);
     
-    // Create duck wings
-    const wing = document.createElement('div');
-    wing.style.position = 'absolute';
-    wing.style.top = '10%';
-    wing.style.left = '30%';
-    wing.style.width = `${size.width * 0.5}px`;
-    wing.style.height = `${size.height * 0.6}px`;
-    wing.style.backgroundColor = darkenColor(color, 20);
-    wing.style.borderRadius = '50% 50% 50% 50% / 60% 60% 40% 40%';
-    wing.style.transformOrigin = 'top center';
-    wing.style.animation = `flapWings ${0.2 + Math.random() * 0.3}s infinite alternate`;
-    duck.appendChild(wing);
+    // Create duck tail
+    const tail = document.createElement('div');
+    tail.style.position = 'absolute';
+    tail.style.width = `${size.width * 0.3}px`;
+    tail.style.height = `${size.height * 0.6}px`;
+    tail.style.backgroundColor = darkenColor(color, 15);
+    tail.style.borderRadius = '30% 30% 50% 50%';
+    tail.style.top = '20%';
+    tail.style.left = startFromLeft ? '0%' : '70%';
+    tail.style.zIndex = '1';
+    duck.appendChild(tail);
+    
+    // Create duck top wing
+    const topWing = document.createElement('div');
+    topWing.style.position = 'absolute';
+    topWing.style.width = `${size.width * 0.6}px`;
+    topWing.style.height = `${size.height * 0.5}px`;
+    topWing.style.backgroundColor = darkenColor(color, 20);
+    topWing.style.borderRadius = '60% 60% 30% 30% / 60% 60% 40% 40%';
+    topWing.style.top = '5%';
+    topWing.style.left = '20%';
+    topWing.style.transformOrigin = 'top center';
+    topWing.style.animation = `flapWings ${0.2 + Math.random() * 0.3}s infinite alternate`;
+    topWing.style.zIndex = '4';
+    duck.appendChild(topWing);
+    
+    // Create duck bottom wing
+    const bottomWing = document.createElement('div');
+    bottomWing.style.position = 'absolute';
+    bottomWing.style.width = `${size.width * 0.5}px`;
+    bottomWing.style.height = `${size.height * 0.4}px`;
+    bottomWing.style.backgroundColor = darkenColor(color, 25);
+    bottomWing.style.borderRadius = '60% 60% 30% 30% / 60% 60% 40% 40%';
+    bottomWing.style.top = '30%';
+    bottomWing.style.left = '25%';
+    bottomWing.style.transformOrigin = 'top center';
+    bottomWing.style.animation = `flapWingsDelayed ${0.2 + Math.random() * 0.3}s infinite alternate`;
+    bottomWing.style.zIndex = '3';
+    duck.appendChild(bottomWing);
     
     // Add flapping animation
     const keyframes = `
       @keyframes flapWings {
+        0% { transform: rotate(-15deg); }
+        100% { transform: rotate(15deg); }
+      }
+      @keyframes flapWingsDelayed {
         0% { transform: rotate(-10deg); }
-        100% { transform: rotate(10deg); }
+        100% { transform: rotate(20deg); }
       }
     `;
     const style = document.createElement('style');
@@ -271,8 +320,12 @@
     duck.fallSpeed = 2 + Math.random() * 3;
     duck.rotationSpeed = (Math.random() > 0.5 ? 1 : -1) * (5 + Math.random() * 10);
     
-    // Add visual effects for shot duck
-    duck.element.style.backgroundColor = darkenColor(duck.element.style.backgroundColor, 40);
+    // Darken all child elements
+    Array.from(duck.element.querySelectorAll('div')).forEach(el => {
+      if (el.style.backgroundColor) {
+        el.style.backgroundColor = darkenColor(el.style.backgroundColor, 40);
+      }
+    });
     
     // Create feather particles
     createFeathers(duck.x, duck.y, 10);
@@ -290,47 +343,42 @@
   
   // Create feather particles when duck is shot
   function createFeathers(x, y, count) {
+    const featherColors = ['#F8F8FF', '#FFFAFA', '#F5F5F5', '#FFF5EE', '#FFFAF0'];
+    
     for (let i = 0; i < count; i++) {
       const feather = document.createElement('div');
-      feather.className = 'feather';
+      feather.className = 'feather-particle';
       feather.style.position = 'absolute';
       feather.style.left = `${x + Math.random() * 50}px`;
       feather.style.top = `${y + Math.random() * 30}px`;
-      feather.style.width = '8px';
-      feather.style.height = '8px';
-      feather.style.backgroundColor = '#fff';
-      feather.style.borderRadius = '50%';
+      feather.style.width = '6px';
+      feather.style.height = '10px';
+      feather.style.backgroundColor = featherColors[Math.floor(Math.random() * featherColors.length)];
+      feather.style.borderRadius = '50% 50% 25% 25% / 60% 60% 40% 40%';
       feather.style.opacity = '0.8';
       feather.style.pointerEvents = 'none';
+      feather.style.zIndex = '9997';
+      feather.style.transform = `rotate(${Math.random() * 360}deg)`;
       
       // Set random movement
       const speedX = Math.random() * 6 - 3;
       const speedY = -2 - Math.random() * 2;
-      let featherX = parseFloat(feather.style.left);
-      let featherY = parseFloat(feather.style.top);
-      let opacity = 0.8;
-      let gravity = 0.1;
       
-      // Animate feather falling
-      const animateFeather = () => {
-        featherX += speedX;
-        featherY += speedY;
-        speedY += gravity;
-        opacity -= 0.01;
-        
-        feather.style.left = `${featherX}px`;
-        feather.style.top = `${featherY}px`;
-        feather.style.opacity = opacity.toString();
-        
-        if (opacity > 0) {
-          requestAnimationFrame(animateFeather);
-        } else {
-          gameContainer.removeChild(feather);
-        }
+      // Track feather data
+      const featherData = {
+        element: feather,
+        x: parseFloat(feather.style.left),
+        y: parseFloat(feather.style.top),
+        speedX,
+        speedY,
+        opacity: 0.8,
+        gravity: 0.1,
+        rotation: Math.random() * 5 - 2.5
       };
       
+      // Add to game
       gameContainer.appendChild(feather);
-      requestAnimationFrame(animateFeather);
+      feathers.push(featherData);
     }
   }
   
@@ -368,7 +416,7 @@
         duck.quackTimer -= 16; // approximately 16ms per frame
         if (duck.quackTimer <= 0) {
           playSound('quack');
-          duck.quackTimer = 4000 + Math.random() * 5000; // Random interval between quacks
+          duck.quackTimer = 6000 + Math.random() * 5000; // Less frequent quacking
         }
         
         // Remove duck if it flies off-screen
@@ -385,17 +433,59 @@
       duck.element.style.top = `${duck.y}px`;
     }
     
+    // Update each feather particle
+    for (let i = feathers.length - 1; i >= 0; i--) {
+      const feather = feathers[i];
+      
+      // Update movement
+      feather.speedY += feather.gravity;
+      feather.x += feather.speedX;
+      feather.y += feather.speedY;
+      feather.opacity -= 0.01;
+      
+      // Rotate feather while falling
+      const currentRotation = parseFloat(feather.element.style.transform.replace(/[^0-9.]/g, '')) || 0;
+      feather.element.style.transform = `rotate(${currentRotation + feather.rotation}deg)`;
+      
+      // Update position
+      feather.element.style.left = `${feather.x}px`;
+      feather.element.style.top = `${feather.y}px`;
+      feather.element.style.opacity = feather.opacity.toString();
+      
+      // Remove feather when invisible or off-screen
+      if (feather.opacity <= 0 || 
+          feather.y > window.innerHeight || 
+          feather.x < 0 || 
+          feather.x > window.innerWidth) {
+        gameContainer.removeChild(feather.element);
+        feathers.splice(i, 1);
+      }
+    }
+    
     // Continue game loop
     requestAnimationFrame(updateGame);
   }
   
-  // Utility: Darken a color
+  // Utility: Darken or lighten a color
   function darkenColor(color, percent) {
+    // Handle rgb format
+    if (color.startsWith('rgb')) {
+      const rgbMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/);
+      if (rgbMatch) {
+        let [, r, g, b] = rgbMatch.map(Number);
+        r = Math.max(0, Math.min(255, r + percent * 2.55));
+        g = Math.max(0, Math.min(255, g + percent * 2.55));
+        b = Math.max(0, Math.min(255, b + percent * 2.55));
+        return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+      }
+    }
+    
+    // Handle hex format
     const num = parseInt(color.replace('#', ''), 16);
     const amt = Math.round(2.55 * percent);
-    const R = Math.max(0, (num >> 16) - amt);
-    const G = Math.max(0, ((num >> 8) & 0x00FF) - amt);
-    const B = Math.max(0, (num & 0x0000FF) - amt);
+    const R = Math.max(0, Math.min(255, (num >> 16) - amt));
+    const G = Math.max(0, Math.min(255, ((num >> 8) & 0x00FF) - amt));
+    const B = Math.max(0, Math.min(255, (num & 0x0000FF) - amt));
     return `rgb(${R}, ${G}, ${B})`;
   }
   
