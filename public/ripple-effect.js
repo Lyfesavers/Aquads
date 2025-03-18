@@ -11,8 +11,8 @@
   cursor.style.width = '20px';
   cursor.style.height = '20px';
   cursor.style.borderRadius = '50%';
-  cursor.style.background = 'rgba(120, 160, 255, 0.3)';
-  cursor.style.boxShadow = '0 0 10px rgba(120, 160, 255, 0.2)';
+  cursor.style.background = 'rgba(64, 196, 255, 0.4)';
+  cursor.style.boxShadow = '0 0 10px rgba(64, 196, 255, 0.3)';
   cursor.style.marginTop = '-10px';
   cursor.style.marginLeft = '-10px';
   cursor.style.pointerEvents = 'none';
@@ -31,9 +31,9 @@
   // Ripple settings
   const RIPPLE_RADIUS = 50;
   const RIPPLE_SPREAD_SPEED = 2;
-  const RIPPLE_FADE_SPEED = 0.98;
-  const RIPPLE_COLOR = 'rgba(120, 160, 255, 0.6)';
-  const MOUSE_TRAIL_LENGTH = 3;
+  const RIPPLE_FADE_SPEED = 0.97;
+  const RIPPLE_COLOR = 'rgba(64, 196, 255, 0.8)';
+  const MOUSE_TRAIL_LENGTH = 2;
   let frameCount = 0;
   
   // State tracking
@@ -146,13 +146,13 @@
       // Set a small delay before changing cursor appearance to prevent flickering
       cursorUpdateTimeout = setTimeout(() => {
         if (isOverCloseButton) {
-          // Completely hide cursor for close buttons
-          cursor.style.opacity = '0';
-          cursor.style.transform = 'scale(0)';
+          // Semi-transparent for close buttons (not completely hidden)
+          cursor.style.opacity = '0.3';
+          cursor.style.transform = 'scale(0.7)';
         } else if (isOverModal) {
           // Semi-transparent for modals
-          cursor.style.opacity = '0.2';
-          cursor.style.transform = 'scale(0.7)';
+          cursor.style.opacity = '0.5';
+          cursor.style.transform = 'scale(0.8)';
         } else {
           // Normal for everything else
           cursor.style.opacity = '1';
@@ -191,11 +191,11 @@
       }
       
       if (foundCloseButton) {
-        // If clicking a close button, completely hide cursor for a while
-        cursor.style.opacity = '0';
-        cursor.style.transform = 'scale(0)';
+        // If clicking a close button, make cursor semi-transparent
+        cursor.style.opacity = '0.3';
+        cursor.style.transform = 'scale(0.7)';
         
-        // Keep it hidden long enough for modal to close
+        // Restore cursor after a short delay
         setTimeout(() => {
           if (!isOverCloseButton && !isOverModal) {
             cursor.style.opacity = '1';
@@ -204,7 +204,12 @@
         }, 500);
       } else if (!isOverModal && !isOverCloseButton) {
         // Only create ripples outside of modals
-        createRipple(e.clientX, e.clientY, 60);
+        createRipple(e.clientX, e.clientY, 80); // Larger click ripple
+        
+        // Create a second, smaller ripple for more effect
+        setTimeout(() => {
+          createRipple(e.clientX, e.clientY, 40);
+        }, 50);
         
         // Pulse cursor
         cursor.style.width = '30px';
@@ -344,10 +349,10 @@
       }
       
       el.addEventListener('mouseenter', () => {
-        // If this is a close button, hide cursor completely
+        // If this is a close button, make cursor semi-transparent
         if (isCloseButton) {
-          cursor.style.opacity = '0';
-          cursor.style.transform = 'scale(0)';
+          cursor.style.opacity = '0.3';
+          cursor.style.transform = 'scale(0.7)';
           return;
         }
         
@@ -358,11 +363,11 @@
           // Expand the cursor for interactive elements
           cursor.style.width = '30px';
           cursor.style.height = '30px';
-          cursor.style.backgroundColor = 'rgba(120, 160, 255, 0.4)';
+          cursor.style.backgroundColor = 'rgba(64, 196, 255, 0.5)';
         } else {
-          // Make cursor nearly invisible for modal elements
-          cursor.style.opacity = '0.2';
-          cursor.style.transform = 'scale(0.7)';
+          // Semi-transparent for modal elements
+          cursor.style.opacity = '0.5';
+          cursor.style.transform = 'scale(0.8)';
         }
       });
       
@@ -371,7 +376,7 @@
         if (!isOverModal && !isOverCloseButton) {
           cursor.style.width = '20px';
           cursor.style.height = '20px';
-          cursor.style.backgroundColor = 'rgba(120, 160, 255, 0.3)';
+          cursor.style.backgroundColor = 'rgba(64, 196, 255, 0.4)';
           cursor.style.opacity = '1';
           cursor.style.transform = 'scale(1)';
         }
@@ -411,7 +416,7 @@
     
     // Create ripples based on mouse movement
     frameCount++;
-    if (mouseSpeed > 2 && frameCount % MOUSE_TRAIL_LENGTH === 0 && !isOverModal && !isOverCloseButton) {
+    if (mouseSpeed > 1 && frameCount % MOUSE_TRAIL_LENGTH === 0 && !isOverModal && !isOverCloseButton) {
       createRipple(mouseX, mouseY, Math.min(50, 20 + mouseSpeed * 0.5));
     }
     
@@ -445,17 +450,23 @@
         return;
       }
       
-      // Draw ripple
+      // Draw ripple with fill and stroke
       ctx.beginPath();
       ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
-      ctx.strokeStyle = RIPPLE_COLOR.replace('0.6', ripple.alpha);
+      
+      // Fill with semi-transparent color
+      ctx.fillStyle = RIPPLE_COLOR.replace('0.8', ripple.alpha * 0.2);
+      ctx.fill();
+      
+      // Stroke with more opaque color
+      ctx.strokeStyle = RIPPLE_COLOR.replace('0.8', ripple.alpha);
       ctx.lineWidth = 3;
       ctx.stroke();
       
       // Add inner ripple for more water-like effect
       ctx.beginPath();
       ctx.arc(ripple.x, ripple.y, ripple.radius * 0.8, 0, Math.PI * 2);
-      ctx.strokeStyle = RIPPLE_COLOR.replace('0.6', ripple.alpha * 0.5);
+      ctx.strokeStyle = RIPPLE_COLOR.replace('0.8', ripple.alpha * 0.5);
       ctx.lineWidth = 2;
       ctx.stroke();
     });
