@@ -11,8 +11,8 @@
   cursor.style.width = '20px';
   cursor.style.height = '20px';
   cursor.style.borderRadius = '50%';
-  cursor.style.background = 'rgba(64, 196, 255, 0.4)';
-  cursor.style.boxShadow = '0 0 10px rgba(64, 196, 255, 0.3)';
+  cursor.style.background = 'rgba(120, 200, 255, 0.3)';
+  cursor.style.boxShadow = '0 0 10px rgba(120, 200, 255, 0.2)';
   cursor.style.marginTop = '-10px';
   cursor.style.marginLeft = '-10px';
   cursor.style.pointerEvents = 'none';
@@ -30,9 +30,9 @@
   
   // Ripple settings
   const RIPPLE_RADIUS = 50;
-  const RIPPLE_SPREAD_SPEED = 2;
-  const RIPPLE_FADE_SPEED = 0.97;
-  const RIPPLE_COLOR = 'rgba(0, 230, 255, 0.9)';
+  const RIPPLE_SPREAD_SPEED = 2.5;
+  const RIPPLE_FADE_SPEED = 0.96;
+  const RIPPLE_COLOR = 'rgba(120, 200, 255, 0.5)';
   const MOUSE_TRAIL_LENGTH = 2;
   let frameCount = 0;
   
@@ -94,9 +94,9 @@
       const dy = mouseY - lastMouseY;
       const moveSpeed = Math.sqrt(dx * dx + dy * dy);
       
-      // Create immediate ripple on fast movements
-      if (moveSpeed > 10) {
-        createRipple(mouseX, mouseY, Math.min(30, 15 + moveSpeed * 0.3));
+      // Create immediate ripple only on very fast movements
+      if (moveSpeed > 15) { // Increased threshold from 10 to 15
+        createRipple(mouseX, mouseY, Math.min(25, 10 + moveSpeed * 0.25)); // Smaller ripples
       }
       
       // Track elements under the cursor
@@ -214,16 +214,20 @@
         }, 500);
       } else if (!isOverModal && !isOverCloseButton) {
         // Only create ripples outside of modals
-        createRipple(e.clientX, e.clientY, 80); // Larger click ripple
+        createRipple(e.clientX, e.clientY, 70); // Slightly smaller than before
         
-        // Create a second, smaller ripple for more effect
+        // Create a cascade of ripples for water effect
         setTimeout(() => {
           createRipple(e.clientX, e.clientY, 40);
-        }, 50);
+        }, 100);
+        
+        setTimeout(() => {
+          createRipple(e.clientX, e.clientY, 20);
+        }, 200);
         
         // Pulse cursor
-        cursor.style.width = '30px';
-        cursor.style.height = '30px';
+        cursor.style.width = '28px';
+        cursor.style.height = '28px';
         setTimeout(() => {
           cursor.style.width = '20px';
           cursor.style.height = '20px';
@@ -371,9 +375,9 @@
         
         if (!isInModal) {
           // Expand the cursor for interactive elements
-          cursor.style.width = '30px';
-          cursor.style.height = '30px';
-          cursor.style.backgroundColor = 'rgba(64, 196, 255, 0.5)';
+          cursor.style.width = '26px';
+          cursor.style.height = '26px';
+          cursor.style.backgroundColor = 'rgba(120, 200, 255, 0.35)';
         } else {
           // Semi-transparent for modal elements
           cursor.style.opacity = '0.5';
@@ -386,7 +390,7 @@
         if (!isOverModal && !isOverCloseButton) {
           cursor.style.width = '20px';
           cursor.style.height = '20px';
-          cursor.style.backgroundColor = 'rgba(64, 196, 255, 0.4)';
+          cursor.style.backgroundColor = 'rgba(120, 200, 255, 0.3)';
           cursor.style.opacity = '1';
           cursor.style.transform = 'scale(1)';
         }
@@ -400,9 +404,9 @@
     ripples.push({
       x, 
       y, 
-      radius: 5, // Start with small radius
+      radius: 2, // Start with smaller radius for more natural growth
       maxRadius: radius,
-      alpha: 0.8, // Increased from 0.5 to make initial ripples more visible
+      alpha: 0.6, // Lower initial opacity for more subtle effect
       expanding: true
     });
     
@@ -422,10 +426,11 @@
     const dy = mouseY - lastMouseY;
     const mouseSpeed = Math.sqrt(dx * dx + dy * dy);
     
-    // Create ripples based on mouse movement - removed modal detection to always show ripples
+    // Create ripples based on mouse movement with variable frequency
     frameCount++;
-    if (mouseSpeed > 1 && frameCount % MOUSE_TRAIL_LENGTH === 0) {
-      createRipple(mouseX, mouseY, Math.min(50, 20 + mouseSpeed * 0.5));
+    if (mouseSpeed > 2 && frameCount % MOUSE_TRAIL_LENGTH === 0) {
+      // For gentler movements, create smaller ripples
+      createRipple(mouseX, mouseY, Math.min(40, 15 + mouseSpeed * 0.4));
     }
     
     // Update last mouse position
@@ -463,19 +468,19 @@
       ctx.arc(ripple.x, ripple.y, ripple.radius, 0, Math.PI * 2);
       
       // Fill with semi-transparent color
-      ctx.fillStyle = RIPPLE_COLOR.replace('0.9', ripple.alpha * 0.2);
+      ctx.fillStyle = RIPPLE_COLOR.replace('0.5', ripple.alpha * 0.15);
       ctx.fill();
       
       // Stroke with more opaque color
-      ctx.strokeStyle = RIPPLE_COLOR.replace('0.9', ripple.alpha);
-      ctx.lineWidth = 3;
+      ctx.strokeStyle = RIPPLE_COLOR.replace('0.5', ripple.alpha * 0.8);
+      ctx.lineWidth = 1.5; // Thinner line for more subtle effect
       ctx.stroke();
       
       // Add inner ripple for more water-like effect
       ctx.beginPath();
-      ctx.arc(ripple.x, ripple.y, ripple.radius * 0.8, 0, Math.PI * 2);
-      ctx.strokeStyle = RIPPLE_COLOR.replace('0.9', ripple.alpha * 0.5);
-      ctx.lineWidth = 2;
+      ctx.arc(ripple.x, ripple.y, ripple.radius * 0.7, 0, Math.PI * 2);
+      ctx.strokeStyle = RIPPLE_COLOR.replace('0.5', ripple.alpha * 0.4);
+      ctx.lineWidth = 1; // Even thinner inner line
       ctx.stroke();
     });
     
