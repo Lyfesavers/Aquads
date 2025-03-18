@@ -49,7 +49,7 @@
     canvas.style.width = '100%';
     canvas.style.height = '100%';
     canvas.style.pointerEvents = 'none'; // Crucial - allows clicks to pass through to elements underneath
-    canvas.style.zIndex = '9000'; // Lower z-index to ensure it doesn't interfere with clickable elements
+    canvas.style.zIndex = '5'; // Much lower z-index to ensure it never interferes with clickable elements
     
     // Handle resize
     function resize() {
@@ -264,6 +264,38 @@
     
     // Add to document
     document.body.appendChild(canvas);
+    
+    // Add global click handler for SVGs
+    document.addEventListener('click', (e) => {
+      // Check if we clicked on or near an SVG element
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      // Check for SVG elements at this position
+      const elementsAtPoint = document.elementsFromPoint(e.clientX, e.clientY);
+      for (const el of elementsAtPoint) {
+        // If this is an SVG element or child
+        if (el.tagName === 'svg' || el.tagName === 'SVG' || 
+            el.closest('svg') || 
+            el.hasAttribute('href') || 
+            el.hasAttribute('xlink:href')) {
+          
+          // For elements with href, try to get the href and navigate
+          const href = el.getAttribute('href') || el.getAttribute('xlink:href');
+          if (href) {
+            // Special handling: Follow the link
+            const linkClicked = new MouseEvent('click', {
+              bubbles: true,
+              cancelable: true,
+              view: window
+            });
+            el.dispatchEvent(linkClicked);
+            break;
+          }
+        }
+      }
+    }, true);
     
     // Start animation loop
     requestAnimationFrame(animate);
@@ -540,7 +572,7 @@
   // Special handling for ensuring banner clicks work
   setTimeout(() => {
     // Find all banner images and ensure they're clickable
-    const bannerImages = document.querySelectorAll('.banner-container img, img.banner, [class*="banner"] img');
+    const bannerImages = document.querySelectorAll('.banner-container img, img.banner, [class*="banner"] img, svg, [class*="banner"] svg, svg path, svg rect, svg a, svg text, svg g');
     bannerImages.forEach(img => {
       img.style.position = 'relative';
       img.style.zIndex = '100001';
@@ -552,5 +584,52 @@
         parentLink.style.zIndex = '100001';
       }
     });
+
+    // Special handling for SVGs with clickable areas
+    const svgElements = document.querySelectorAll('svg');
+    svgElements.forEach(svg => {
+      // Make sure the SVG itself is clickable
+      svg.style.position = 'relative';
+      svg.style.zIndex = '100001';
+      
+      // Find all clickable elements inside the SVG
+      const clickableElements = svg.querySelectorAll('[onclick], [href], a, g[id*="link"]');
+      clickableElements.forEach(el => {
+        // Set pointer-events to auto for clickable elements
+        el.style.pointerEvents = 'auto';
+      });
+    });
+
+    // Specific fix for the FREELANCER-HUB.svg banner
+    setTimeout(() => {
+      // Target the specific svg directly
+      const bannerSvg = document.querySelector('svg[width="1848"][height="200"]');
+      if (bannerSvg) {
+        console.log('Found FREELANCER-HUB banner, applying fixes');
+        
+        // Ensure the SVG itself doesn't block clicks
+        bannerSvg.style.pointerEvents = 'none';
+        
+        // Find all clickable link areas within the SVG
+        const linkAreas = bannerSvg.querySelectorAll('a');
+        linkAreas.forEach(link => {
+          link.style.pointerEvents = 'auto';
+          link.style.cursor = 'pointer';
+          link.style.zIndex = '200000';
+          
+          // Add debug outline to verify link areas (will be invisible in production)
+          link.setAttribute('stroke', 'rgba(0,0,0,0)');
+          link.setAttribute('stroke-width', '1');
+          
+          // Add a click handler directly to the link
+          link.addEventListener('click', (e) => {
+            const href = link.getAttribute('href');
+            if (href) {
+              window.location.href = href;
+            }
+          });
+        });
+      }
+    }, 3000);
   }, 2000);
 })(); 
