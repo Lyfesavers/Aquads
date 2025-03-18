@@ -49,7 +49,7 @@
     canvas.style.width = '100%';
     canvas.style.height = '100%';
     canvas.style.pointerEvents = 'none'; // Crucial - allows clicks to pass through to elements underneath
-    canvas.style.zIndex = '10000'; // Keep above other elements but don't block interactions
+    canvas.style.zIndex = '9000'; // Lower z-index to ensure it doesn't interfere with clickable elements
     
     // Handle resize
     function resize() {
@@ -350,6 +350,17 @@
     // Track hover state on interactive elements
     const interactiveElements = document.querySelectorAll('a, button, [role="button"], input, select, textarea, [onclick], img, svg, video, iframe, .banner, [class*="banner"], [id*="banner"]');
     
+    // Special handling for banner images to ensure they're always clickable
+    const bannerElements = document.querySelectorAll('img, .banner, [class*="banner"], [id*="banner"], .banner-container img, [class*="banner"] img');
+    bannerElements.forEach(banner => {
+      // Ensure banners have higher z-index than our canvas
+      if (getComputedStyle(banner).position === 'static') {
+        banner.style.position = 'relative';
+      }
+      // Ensure clicks work on banners
+      banner.style.zIndex = '100001'; // Higher than our cursor
+    });
+    
     interactiveElements.forEach(el => {
       // Skip if already processed
       if (el.dataset.rippleProcessed) return;
@@ -406,12 +417,8 @@
       });
       
       el.addEventListener('mouseleave', () => {
-        // Always keep cursor fully visible
-        cursor.style.width = '20px';
-        cursor.style.height = '20px';
-        cursor.style.backgroundColor = 'rgba(120, 200, 255, 0.3)';
-        cursor.style.opacity = '1';
-        cursor.style.transform = 'scale(1)';
+        // Always keep cursor fully visible with correct dimensions
+        resetCursor(); // Use the reset function instead of setting values directly
       });
     });
   }
@@ -529,4 +536,21 @@
 
   // Also initialize after a short delay to ensure all resources are loaded
   setTimeout(init, 1000);
+  
+  // Special handling for ensuring banner clicks work
+  setTimeout(() => {
+    // Find all banner images and ensure they're clickable
+    const bannerImages = document.querySelectorAll('.banner-container img, img.banner, [class*="banner"] img');
+    bannerImages.forEach(img => {
+      img.style.position = 'relative';
+      img.style.zIndex = '100001';
+      
+      // Ensure parent links are also properly z-indexed
+      const parentLink = img.closest('a');
+      if (parentLink) {
+        parentLink.style.position = 'relative';
+        parentLink.style.zIndex = '100001';
+      }
+    });
+  }, 2000);
 })(); 
