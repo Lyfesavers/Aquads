@@ -950,3 +950,31 @@ body {
   color: #cb6ce6; /* Lighter neon pink/violet on hover */
   text-shadow: 0 0 8px rgba(247, 0, 255, 0.7);
 }
+
+/* Water effect cursor styles */
+html {
+  cursor: none; /* Hide default cursor */
+}
+
+.water-cursor {
+  position: fixed;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(120, 160, 255, 0.6) 0%, rgba(120, 160, 255, 0) 70%);
+  pointer-events: none;
+  z-index: 10000;
+  transform: translate(-50%, -50%);
+  mix-blend-mode: screen;
+  box-shadow: 0 0 15px rgba(120, 160, 255, 0.5);
+  backdrop-filter: blur(2px);
+  transition: width 0.1s, height 0.1s;
+}
+
+/* Add clickable elements a subtle highlight on hover to indicate interactivity */
+a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textarea:hover, [onclick]:hover {
+  cursor: pointer !important; /* Override the cursor: none from html */
+  transition: box-shadow 0.3s;
+  position: relative;
+  z-index: 1;
+}
