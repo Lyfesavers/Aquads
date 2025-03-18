@@ -50,44 +50,20 @@
   
   // Create HTML audio elements directly in the DOM
   function createSoundElements() {
-    if (soundsCreated) return true;
-    
-    console.log('Creating sound elements for duck hunt');
-    
-    // Remove existing sound container if present
-    const existingContainer = document.getElementById('duck-hunt-sounds');
-    if (existingContainer) {
-      document.body.removeChild(existingContainer);
-    }
-    
-    // Create a sound container
-    const soundContainer = document.createElement('div');
-    soundContainer.id = 'duck-hunt-sounds';
-    soundContainer.style.display = 'none';
-    
-    // Use direct URLs to sound files instead of base64
-    const soundUrls = {
-      shot: 'https://assets.mixkit.co/sfx/preview/mixkit-shotgun-shot-1662.mp3',
-      quack: 'https://assets.mixkit.co/sfx/preview/mixkit-animals-duck-quack-1217.mp3',
-      fall: 'https://assets.mixkit.co/sfx/preview/mixkit-dramatic-falling-whistle-1492.mp3',
-      gameStart: 'https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-complete-or-approved-mission-205.mp3',
-      dogLaugh: 'https://assets.mixkit.co/sfx/preview/mixkit-dog-barking-twice-1.mp3'
-    };
-    
-    // Create audio elements
-    Object.keys(soundUrls).forEach(soundName => {
-      const audio = document.createElement('audio');
-      audio.id = `duck-sound-${soundName}`;
-      audio.preload = 'auto';
-      audio.src = soundUrls[soundName];
-      audio.volume = 0.8;
-      
-      soundContainer.appendChild(audio);
-    });
-    
-    document.body.appendChild(soundContainer);
+    // No longer needed since we're using Web Audio API
     soundsCreated = true;
     return true;
+  }
+
+  // Audio context for sound generation
+  let audioContext = null;
+  
+  // Initialize audio context on first use
+  function getAudioContext() {
+    if (!audioContext) {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return audioContext;
   }
 
   // Play a sound by its ID
@@ -95,44 +71,157 @@
     if (!soundEnabled) return;
     
     try {
-      // Use a simpler approach that's more reliable
-      const audio = new Audio();
+      const ctx = getAudioContext();
+      console.log('Playing sound:', soundName, 'using Web Audio API');
       
-      // Set direct URLs based on sound name
+      // Create different sounds based on name
       switch(soundName) {
         case 'shot':
-          audio.src = 'https://assets.mixkit.co/sfx/preview/mixkit-shotgun-shot-1662.mp3';
+          playShot(ctx);
           break;
         case 'quack':
-          audio.src = 'https://assets.mixkit.co/sfx/preview/mixkit-animals-duck-quack-1217.mp3';
+          playQuack(ctx);
           break;
         case 'fall':
-          audio.src = 'https://assets.mixkit.co/sfx/preview/mixkit-dramatic-falling-whistle-1492.mp3';
+          playFall(ctx);
           break;
         case 'gameStart':
-          audio.src = 'https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-complete-or-approved-mission-205.mp3';
+          playGameStart(ctx);
           break;
         case 'dogLaugh':
-          audio.src = 'https://assets.mixkit.co/sfx/preview/mixkit-dog-barking-twice-1.mp3';
+          playDogLaugh(ctx);
           break;
         default:
           console.error('Unknown sound:', soundName);
-          return;
-      }
-      
-      audio.volume = 0.8;
-      console.log('Playing sound:', soundName, 'from URL:', audio.src);
-      
-      // Play the sound
-      const playPromise = audio.play();
-      
-      if (playPromise !== undefined) {
-        playPromise.catch(error => {
-          console.error('Error playing sound:', soundName, error);
-        });
       }
     } catch (error) {
       console.error('Failed to play sound:', soundName, error);
+    }
+  }
+  
+  // Gunshot sound
+  function playShot(ctx) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(80, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(20, ctx.currentTime + 0.1);
+    
+    gain.gain.setValueAtTime(1, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.start();
+    osc.stop(ctx.currentTime + 0.2);
+  }
+  
+  // Duck quack sound
+  function playQuack(ctx) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const lfo = ctx.createOscillator();
+    const lfoGain = ctx.createGain();
+    
+    // Set up LFO
+    lfo.frequency.value = 15;
+    lfoGain.gain.value = 100;
+    lfo.connect(lfoGain);
+    lfoGain.connect(osc.frequency);
+    
+    // Main oscillator
+    osc.type = 'triangle';
+    osc.frequency.value = 300;
+    
+    // Volume envelope
+    gain.gain.setValueAtTime(0.8, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    lfo.start();
+    osc.start();
+    
+    lfo.stop(ctx.currentTime + 0.2);
+    osc.stop(ctx.currentTime + 0.2);
+  }
+  
+  // Falling sound
+  function playFall(ctx) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.5);
+    
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.start();
+    osc.stop(ctx.currentTime + 0.5);
+  }
+  
+  // Game start sound
+  function playGameStart(ctx) {
+    const noteLength = 0.1;
+    const notes = [
+      { note: 440, time: 0 },      // A4
+      { note: 554.37, time: 0.1 }, // C#5
+      { note: 659.25, time: 0.2 }, // E5
+      { note: 880, time: 0.3 }     // A5
+    ];
+    
+    notes.forEach(note => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = 'triangle';
+      osc.frequency.value = note.note;
+      
+      gain.gain.setValueAtTime(0.3, ctx.currentTime + note.time);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + note.time + noteLength);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.start(ctx.currentTime + note.time);
+      osc.stop(ctx.currentTime + note.time + noteLength);
+    });
+  }
+  
+  // Dog laugh sound
+  function playDogLaugh(ctx) {
+    const iterations = 3;
+    const iterationDuration = 0.15;
+    
+    for (let i = 0; i < iterations; i++) {
+      const startTime = ctx.currentTime + (i * iterationDuration);
+      
+      // Main oscillator
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(300, startTime);
+      osc.frequency.setValueAtTime(400, startTime + 0.05);
+      osc.frequency.setValueAtTime(300, startTime + 0.1);
+      
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(0.3, startTime + 0.02);
+      gain.gain.linearRampToValueAtTime(0.01, startTime + iterationDuration);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.start(startTime);
+      osc.stop(startTime + iterationDuration);
     }
   }
   
@@ -151,45 +240,29 @@
     // Create sounds in advance to ensure they're loaded
     createSoundElements();
     
-    // Unlock audio on first user interaction (needed for browser autoplay policies)
+    // Initialize audio context on first user interaction
     function unlockAudio() {
       console.log('Attempting to unlock audio...');
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       
-      // Create a silent audio buffer
-      const buffer = audioContext.createBuffer(1, 1, 22050);
-      const source = audioContext.createBufferSource();
-      source.buffer = buffer;
-      source.connect(audioContext.destination);
+      // Create and initialize audio context
+      const ctx = getAudioContext();
       
-      // Play the silent sound
-      if (source.start) {
-        source.start(0);
-      } else if (source.noteOn) {
-        source.noteOn(0);
-      }
+      // Play a silent sound to unlock audio
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
       
-      // Try to play each of our audio elements silently to unlock them
-      const soundIds = ['shot', 'quack', 'fall', 'gameStart', 'dogLaugh'];
-      soundIds.forEach(id => {
-        const sound = document.getElementById(`duck-sound-${id}`);
-        if (sound) {
-          sound.volume = 0.001; // Nearly silent
-          sound.play().then(() => {
-            sound.pause();
-            sound.currentTime = 0;
-            sound.volume = 0.8; // Reset volume
-            console.log(`Unlocked sound: ${id}`);
-          }).catch(e => {
-            console.log(`Failed to unlock sound: ${id}`, e);
-          });
-        }
-      });
+      gain.gain.setValueAtTime(0.001, ctx.currentTime); // Virtually silent
+      oscillator.connect(gain);
+      gain.connect(ctx.destination);
       
-      // Remove the event listeners once we've tried to unlock audio
+      oscillator.start(0);
+      oscillator.stop(ctx.currentTime + 0.1);
+      
+      // Remove the event listeners
       document.removeEventListener('click', unlockAudio);
       document.removeEventListener('touchstart', unlockAudio);
       document.removeEventListener('keydown', unlockAudio);
+      
       console.log('Audio unlock attempt complete');
     }
     
