@@ -12,39 +12,36 @@
   let soundEnabled = false; // Track if sounds are enabled
   let soundsCreated = false; // Track if sounds are created
   
-  // Duck species (more realistic colors)
+  // Duck species (classic Duck Hunt color palettes)
   const duckSpecies = [
     {
-      // Mallard (male)
-      bodyColor: '#265C4B', // Dark green
-      headColor: '#265C4B', // Matching green head
-      neckColor: '#FFFFFF', // White neck ring
-      beakColor: '#F3DE2C', // Yellow beak
-      wingColor: '#23435C', // Blue speculum (wing patch)
-      chestColor: '#7E5835' // Brown chest
+      // Black duck (classic primary duck)
+      bodyColor: '#000000', // Black body
+      headColor: '#000000', // Black head
+      beakColor: '#FF6600', // Orange beak
+      wingColor: '#000000', // Black wings
+      accentColor: '#FFFFFF' // White accent
     },
     {
-      // Wood Duck (male)
-      bodyColor: '#4F5885', // Blue-gray
-      headColor: '#2E4045', // Dark glossy green
-      neckColor: '#FFFFFF', // White marking
-      beakColor: '#D64550', // Red and yellow
-      wingColor: '#5F6062', // Gray with white patch
-      chestColor: '#8E3B46' // Chestnut brown
+      // Red duck (classic alternate duck)
+      bodyColor: '#CC0000', // Red body
+      headColor: '#CC0000', // Red head
+      beakColor: '#FF6600', // Orange beak
+      wingColor: '#CC0000', // Red wings
+      accentColor: '#FFFFFF' // White accent
     },
     {
-      // Mandarin Duck
-      bodyColor: '#5F7470', // Olive gray
-      headColor: '#7F557D', // Purple-ish
-      neckColor: '#F3DE2C', // Yellow/white
-      beakColor: '#F3722C', // Orange
-      wingColor: '#235789', // Blue
-      chestColor: '#C75146' // Copper/rust
+      // Blue duck (NES color palette inspired)
+      bodyColor: '#0000CC', // Blue body
+      headColor: '#0000CC', // Blue head
+      beakColor: '#FF6600', // Orange beak
+      wingColor: '#0000CC', // Blue wings
+      accentColor: '#FFFFFF' // White accent
     }
   ];
   
   const duckSizes = {
-    width: 70,  // Slightly larger
+    width: 48,  // More pixel-proportioned size
     height: 40
   };
   
@@ -236,6 +233,30 @@
     gameContainer.style.pointerEvents = 'none';
     gameContainer.style.zIndex = '9998'; // Below the ripple effect
     gameContainer.style.overflow = 'hidden';
+    
+    // Add pixel art styling
+    const pixelArtStyle = document.createElement('style');
+    pixelArtStyle.textContent = `
+      .pixel-art {
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+        box-shadow: none !important;
+        transition: none !important;
+      }
+      
+      .game-duck {
+        image-rendering: pixelated;
+        transform-origin: center center;
+        will-change: transform;
+      }
+      
+      /* Disable antialiasing for pixel-perfect edges */
+      .game-duck * {
+        transform-style: flat;
+        backface-visibility: hidden;
+      }
+    `;
+    document.head.appendChild(pixelArtStyle);
     
     // Create sounds in advance to ensure they're loaded
     createSoundElements();
@@ -572,162 +593,110 @@
     duck.style.zIndex = '9999';
     duck.style.pointerEvents = 'auto';
     duck.style.cursor = 'crosshair';
+    duck.style.imageRendering = 'pixelated'; // Add pixel rendering style
     
-    // Create duck body (more oval shaped)
+    // Create pixelated duck body (main rectangle)
     const body = document.createElement('div');
+    body.className = 'pixel-art';
     body.style.position = 'absolute';
     body.style.width = '100%';
-    body.style.height = '100%';
+    body.style.height = '75%';
+    body.style.top = '20%';
     body.style.backgroundColor = species.bodyColor;
-    body.style.borderRadius = '65% 35% 45% 55% / 60% 40% 60% 40%'; // More realistic oval shape
+    body.style.borderRadius = '0'; // Sharp corners for pixel look
     duck.appendChild(body);
     
-    // Create duck chest (add detail and shading)
-    const chest = document.createElement('div');
-    chest.style.position = 'absolute';
-    chest.style.width = '60%';
-    chest.style.height = '60%';
-    chest.style.bottom = '5%';
-    chest.style.left = '20%';
-    chest.style.backgroundColor = species.chestColor;
-    chest.style.borderRadius = '50% 50% 50% 50% / 60% 60% 40% 40%';
-    chest.style.zIndex = '1';
-    body.appendChild(chest);
-    
-    // Create duck head
+    // Create pixelated duck head (square)
     const head = document.createElement('div');
+    head.className = 'pixel-art';
     head.style.position = 'absolute';
-    head.style.width = `${size.width * 0.35}px`;
-    head.style.height = `${size.width * 0.35}px`;
+    head.style.width = '40%';
+    head.style.height = '40%';
     head.style.backgroundColor = species.headColor;
-    head.style.borderRadius = '50%';
-    head.style.left = startFromLeft ? '85%' : '-20%';
-    head.style.top = '-15%';
+    head.style.borderRadius = '0'; // Sharp corners for pixel look
+    head.style.left = startFromLeft ? '60%' : '0%';
+    head.style.top = '0%';
     head.style.zIndex = '2';
     duck.appendChild(head);
     
-    // Create neck ring (for mallard)
-    if (species.neckColor) {
-      const neckRing = document.createElement('div');
-      neckRing.style.position = 'absolute';
-      neckRing.style.width = '30%';
-      neckRing.style.height = '15%';
-      neckRing.style.backgroundColor = species.neckColor;
-      neckRing.style.borderRadius = '50%';
-      neckRing.style.bottom = '0';
-      neckRing.style.left = startFromLeft ? '40%' : '30%';
-      neckRing.style.zIndex = '2';
-      head.appendChild(neckRing);
-    }
-    
-    // Create duck eye
-    const eye = document.createElement('div');
-    eye.style.position = 'absolute';
-    eye.style.width = '15%';
-    eye.style.height = '15%';
-    eye.style.backgroundColor = '#000';
-    eye.style.borderRadius = '50%';
-    eye.style.top = '30%';
-    eye.style.left = startFromLeft ? '30%' : '60%';
-    eye.style.zIndex = '3';
-    head.appendChild(eye);
-    
-    // Add eye highlight
-    const eyeHighlight = document.createElement('div');
-    eyeHighlight.style.position = 'absolute';
-    eyeHighlight.style.width = '30%';
-    eyeHighlight.style.height = '30%';
-    eyeHighlight.style.backgroundColor = '#fff';
-    eyeHighlight.style.borderRadius = '50%';
-    eyeHighlight.style.top = '20%';
-    eyeHighlight.style.left = '20%';
-    eye.appendChild(eyeHighlight);
-    
-    // Create duck beak
+    // Create duck beak (small rectangle)
     const beak = document.createElement('div');
+    beak.className = 'pixel-art';
     beak.style.position = 'absolute';
-    beak.style.width = '50%';
-    beak.style.height = '30%';
+    beak.style.width = '20%';
+    beak.style.height = '20%';
     beak.style.backgroundColor = species.beakColor;
-    beak.style.borderRadius = '50% 50% 50% 50% / 60% 60% 40% 40%';
-    beak.style.top = '60%';
-    beak.style.left = startFromLeft ? '75%' : '-20%';
+    beak.style.borderRadius = '0'; // Sharp corners
+    beak.style.top = '15%';
+    beak.style.left = startFromLeft ? '85%' : '-5%';
     beak.style.zIndex = '3';
-    head.appendChild(beak);
+    duck.appendChild(beak);
     
-    // Create duck tail
-    const tail = document.createElement('div');
-    tail.style.position = 'absolute';
-    tail.style.width = `${size.width * 0.25}px`;
-    tail.style.height = `${size.height * 0.5}px`;
-    tail.style.backgroundColor = species.bodyColor;
-    tail.style.borderRadius = '30% 70% 70% 30% / 30% 30% 70% 70%';
-    tail.style.top = '20%';
-    tail.style.left = startFromLeft ? '0%' : '75%';
-    tail.style.zIndex = '1';
-    tail.style.transform = 'rotate(20deg)';
-    duck.appendChild(tail);
+    // Create duck eye (single pixel)
+    const eye = document.createElement('div');
+    eye.className = 'pixel-art';
+    eye.style.position = 'absolute';
+    eye.style.width = '10%';
+    eye.style.height = '10%';
+    eye.style.backgroundColor = '#FFFFFF'; // White eye
+    eye.style.borderRadius = '0';
+    eye.style.top = '10%';
+    eye.style.left = startFromLeft ? '70%' : '15%';
+    eye.style.zIndex = '3';
+    duck.appendChild(eye);
     
-    // Create duck top wing with speculum (colored wing patch)
-    const topWing = document.createElement('div');
-    topWing.style.position = 'absolute';
-    topWing.style.width = `${size.width * 0.65}px`;
-    topWing.style.height = `${size.height * 0.5}px`;
-    topWing.style.backgroundColor = species.bodyColor;
-    topWing.style.borderRadius = '60% 40% 40% 60% / 70% 30% 70% 30%';
-    topWing.style.top = '5%';
-    topWing.style.left = '15%';
-    topWing.style.transformOrigin = 'top center';
-    topWing.style.animation = `flapWings ${0.15 + Math.random() * 0.2}s infinite alternate`;
-    topWing.style.zIndex = '4';
-    duck.appendChild(topWing);
+    // Create wing (rectangular)
+    const wing = document.createElement('div');
+    wing.className = 'pixel-art';
+    wing.style.position = 'absolute';
+    wing.style.width = '40%';
+    wing.style.height = '20%';
+    wing.style.backgroundColor = species.wingColor;
+    wing.style.borderRadius = '0';
+    wing.style.top = '30%';
+    wing.style.left = '30%';
+    wing.style.transformOrigin = 'center';
+    // Wing flapping animation based on old-school animation principles
+    wing.style.animation = `pixelFlapWings ${0.2 + Math.random() * 0.1}s infinite steps(2)`;
+    wing.style.zIndex = '4';
+    duck.appendChild(wing);
     
-    // Add wing speculum (the colorful patch)
-    const speculum = document.createElement('div');
-    speculum.style.position = 'absolute';
-    speculum.style.width = '70%';
-    speculum.style.height = '40%';
-    speculum.style.bottom = '0';
-    speculum.style.right = '0';
-    speculum.style.backgroundColor = species.wingColor; // Blue/colored patch
-    speculum.style.borderRadius = '60% 40% 40% 60% / 70% 30% 70% 30%';
-    topWing.appendChild(speculum);
+    // Create accent pixels (white highlights characteristic of pixel art)
+    const accent1 = document.createElement('div');
+    accent1.className = 'pixel-art accent';
+    accent1.style.position = 'absolute';
+    accent1.style.width = '10%';
+    accent1.style.height = '10%';
+    accent1.style.backgroundColor = species.accentColor;
+    accent1.style.borderRadius = '0';
+    accent1.style.top = '70%';
+    accent1.style.left = startFromLeft ? '10%' : '80%';
+    accent1.style.zIndex = '5';
+    duck.appendChild(accent1);
     
-    // Create duck bottom wing
-    const bottomWing = document.createElement('div');
-    bottomWing.style.position = 'absolute';
-    bottomWing.style.width = `${size.width * 0.5}px`;
-    bottomWing.style.height = `${size.height * 0.4}px`;
-    bottomWing.style.backgroundColor = darkenColor(species.bodyColor, 15);
-    bottomWing.style.borderRadius = '60% 40% 50% 50% / 60% 40% 60% 40%';
-    bottomWing.style.top = '35%';
-    bottomWing.style.left = '20%';
-    bottomWing.style.transformOrigin = 'top center';
-    bottomWing.style.animation = `flapWingsDelayed ${0.2 + Math.random() * 0.15}s infinite alternate`;
-    bottomWing.style.zIndex = '3';
-    duck.appendChild(bottomWing);
-    
-    // Add feather details to wings with subtle texture
-    for (let i = 0; i < 3; i++) {
-      const featherLine = document.createElement('div');
-      featherLine.style.position = 'absolute';
-      featherLine.style.width = '90%';
-      featherLine.style.height = '1px';
-      featherLine.style.backgroundColor = darkenColor(species.bodyColor, 30);
-      featherLine.style.top = `${25 + i * 20}%`;
-      featherLine.style.left = '5%';
-      topWing.appendChild(featherLine);
-    }
+    const accent2 = document.createElement('div');
+    accent2.className = 'pixel-art accent';
+    accent2.style.position = 'absolute';
+    accent2.style.width = '10%';
+    accent2.style.height = '10%';
+    accent2.style.backgroundColor = species.accentColor;
+    accent2.style.borderRadius = '0';
+    accent2.style.top = '60%';
+    accent2.style.left = startFromLeft ? '20%' : '70%';
+    accent2.style.zIndex = '5';
+    duck.appendChild(accent2);
     
     // Add flapping animation
     const keyframes = `
-      @keyframes flapWings {
-        0% { transform: rotate(-15deg); }
-        100% { transform: rotate(15deg); }
+      @keyframes pixelFlapWings {
+        0% { transform: translateY(0); }
+        50% { transform: translateY(-3px); }
+        100% { transform: translateY(0); }
       }
-      @keyframes flapWingsDelayed {
-        0% { transform: rotate(-10deg); }
-        100% { transform: rotate(20deg); }
+      @keyframes pixelFlapWingsDelayed {
+        0% { transform: translateY(0); }
+        50% { transform: translateY(3px); }
+        100% { transform: translateY(0); }
       }
     `;
     const style = document.createElement('style');
@@ -806,15 +775,13 @@
     duck.fallSpeed = 2 + Math.random() * 3;
     duck.rotationSpeed = (Math.random() > 0.5 ? 1 : -1) * (5 + Math.random() * 10);
     
-    // Darken all child elements to show it's been hit
+    // Change color to white when hit (like in original Duck Hunt)
     Array.from(duck.element.querySelectorAll('div')).forEach(el => {
-      if (el.style.backgroundColor) {
-        el.style.backgroundColor = darkenColor(el.style.backgroundColor, 40);
-      }
+      el.style.backgroundColor = '#FFFFFF';
     });
     
-    // Create feather particles
-    createFeathers(duck.x, duck.y, 15);
+    // Create pixel feather particles
+    createFeathers(duck.x, duck.y, 8); // Fewer but more noticeable pixels
     
     // Update score
     score++;
@@ -841,48 +808,31 @@
   
   // Create feather particles when duck is shot
   function createFeathers(x, y, count) {
-    // More realistic feather colors based on common duck feather colors
+    // Classic NES color palette for feathers
     const featherColors = [
-      '#A7ADBA', // Light gray
-      '#E3E1D4', // Off-white
-      '#6A4928', // Brown
-      '#4F5D75', // Blue-gray
-      '#F0EDE5'  // White
+      '#FFFFFF', // White
+      '#FF0000', // Red
+      '#0000FF', // Blue
     ];
     
     for (let i = 0; i < count; i++) {
-      // Create a more feather-like shape
+      // Create pixel square particles
       const feather = document.createElement('div');
-      feather.className = 'feather-particle';
+      feather.className = 'pixel-art feather-particle';
       feather.style.position = 'absolute';
-      feather.style.left = `${x + Math.random() * 50}px`;
-      feather.style.top = `${y + Math.random() * 30}px`;
-      feather.style.width = '4px';
-      feather.style.height = '12px';
+      feather.style.left = `${x + Math.random() * 40}px`;
+      feather.style.top = `${y + Math.random() * 20}px`;
+      feather.style.width = '6px'; // Larger pixel blocks
+      feather.style.height = '6px';
       feather.style.backgroundColor = featherColors[Math.floor(Math.random() * featherColors.length)];
-      
-      // More realistic feather shape
-      feather.style.borderRadius = '50% 50% 20% 20% / 40% 40% 60% 60%';
-      
-      // Add stem to feather
-      const stem = document.createElement('div');
-      stem.style.position = 'absolute';
-      stem.style.width = '1px';
-      stem.style.height = '100%';
-      stem.style.backgroundColor = darkenColor(feather.style.backgroundColor, 30);
-      stem.style.left = '50%';
-      stem.style.transform = 'translateX(-50%)';
-      feather.appendChild(stem);
-      
-      feather.style.opacity = '0.9';
+      feather.style.borderRadius = '0'; // Sharp corners for pixel look
+      feather.style.opacity = '1';
       feather.style.pointerEvents = 'none';
       feather.style.zIndex = '9997';
-      feather.style.transform = `rotate(${Math.random() * 360}deg)`;
-      feather.style.boxShadow = '0 0 2px rgba(0,0,0,0.2)';
       
-      // Set random movement
-      const speedX = Math.random() * 6 - 3;
-      const speedY = -3 - Math.random() * 3; // Stronger initial upward movement
+      // Set random movement - more exaggerated
+      const speedX = Math.random() * 8 - 4;
+      const speedY = -4 - Math.random() * 4; // Stronger upward movement
       
       // Track feather data
       const featherData = {
@@ -891,9 +841,10 @@
         y: parseFloat(feather.style.top),
         speedX,
         speedY,
-        opacity: 0.9,
-        gravity: 0.15,
-        rotation: Math.random() * 8 - 4,  // More rotation
+        opacity: 1,
+        gravity: 0.2,
+        // Move in 8 directions (like NES games) instead of smooth curves
+        rotation: Math.floor(Math.random() * 8) * 45,
         rotationDir: Math.random() < 0.5 ? 1 : -1
       };
       
@@ -921,7 +872,9 @@
         // Update shot duck (falling)
         duck.fallSpeed += 0.15;
         duck.y += duck.fallSpeed;
-        duck.element.style.transform = `rotate(${duck.rotationSpeed}deg)`;
+        // For pixel art look, round rotation to increments of 45 degrees (8-directional)
+        const rotation = Math.round(duck.rotationSpeed / 45) * 45;
+        duck.element.style.transform = `rotate(${rotation}deg)`;
         
         // Remove duck when it falls off-screen
         if (duck.y > window.innerHeight) {
@@ -929,12 +882,13 @@
           ducks.splice(i, 1);
         }
       } else {
-        // Update flying duck
+        // Update flying duck - round to whole pixels for pixel perfect movement
         duck.x += duck.speedX;
         duck.time += 0.016; // Approximately 16ms per frame
         
-        // Wave motion (gentle up and down)
-        duck.y = duck.startY + Math.sin(duck.time * duck.waveFrequency * 10) * duck.waveAmplitude * 10;
+        // Wave motion (simplified for pixel art style)
+        const waveOffset = Math.round(Math.sin(duck.time * duck.waveFrequency * 10) * duck.waveAmplitude);
+        duck.y = Math.floor(duck.startY + waveOffset);
         
         // Occasional quacking
         duck.quackTimer -= 16;
@@ -952,9 +906,9 @@
         }
       }
       
-      // Update duck position
-      duck.element.style.left = `${duck.x}px`;
-      duck.element.style.top = `${duck.y}px`;
+      // Update duck position - use Math.round for pixel-perfect positioning
+      duck.element.style.left = `${Math.round(duck.x)}px`;
+      duck.element.style.top = `${Math.round(duck.y)}px`;
     }
     
     // Update each feather particle
