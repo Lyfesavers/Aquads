@@ -65,54 +65,26 @@
     soundContainer.id = 'duck-hunt-sounds';
     soundContainer.style.display = 'none';
     
-    // Create each audio element with direct src attribute (no data URLs to avoid issues)
-    const sounds = {
-      shot: 'https://cdn.freesound.org/previews/131/131594_2398403-lq.mp3', // Gunshot sound
-      quack: 'https://cdn.freesound.org/previews/418/418509_7909723-lq.mp3', // Duck quack
-      fall: 'https://cdn.freesound.org/previews/416/416559_7909723-lq.mp3', // Falling whistle
-      gameStart: 'https://cdn.freesound.org/previews/352/352182_1571886-lq.mp3', // Game start
-      dogLaugh: 'https://cdn.freesound.org/previews/435/435417_8941423-lq.mp3' // Dog laugh
-    };
-    
-    // Alternative sources in case the primary ones fail
-    const fallbackSounds = {
-      shot: 'https://assets.mixkit.co/sfx/preview/mixkit-shotgun-shot-1662.mp3',
-      quack: 'https://assets.mixkit.co/sfx/preview/mixkit-animals-duck-quack-1217.mp3',
-      fall: 'https://assets.mixkit.co/sfx/preview/mixkit-dramatic-falling-whistle-1492.mp3',
-      gameStart: 'https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-complete-or-approved-mission-205.mp3',
-      dogLaugh: 'https://assets.mixkit.co/sfx/preview/mixkit-dog-barking-twice-1.mp3'
+    // Create each audio element with direct embedded audio data
+    const soundUrls = {
+      // Use embedded base64 data for sounds to avoid network issues
+      shot: 'data:audio/mp3;base64,SUQzBAAAAAAAI1RSU0UAAAAPAAADTGF2ZjU4LjEyLjEwMAAAAAAAAAAAAAAA//tQwAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAASAAAeMwAUFBQUFCIiIiIiIjAwMDAwMD09PT09PUxMTExMWlpaWlpaZ2dnZ2d1dXV1dXWIiIiIiJaWlpaWlqSkpKSkpLe3t7e3t8rKysrKytnZ2dnZ5ubm5ubm8/Pz8/Pz////////AAAAOUxBTUUzLjk5cgGqAAAAAC4DAAA49CAIAnU4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//tAwAAABLgTe3UEIAJ8DN7s5gRU9nffWYNnHsttBuTeJk6aVzJ3G0y51bm0jgcmrJz0f3de9/vu9vVvbcm9uTfW5N7cm9tyb23JvpMncy5rMnDlzr3PO85l7nXuy561lydO561rMunffy561r6ddrWte8+DwfB4Pf4PB4PB4PB8Hg+DwfB8Hg+DwfB4Pf5/B8Hg+DwfB4Pg+D4Pf4P/8H/8Hg+DwfB8Hg///wfB4Pg+D4PB8Hw//wf/wfB8Hg+D4Pg+D4Pf8Hg////8Hv8Hwf//B//B7/g+DwfB7/g+D3/4Pf//4Pf4Pg+D4Pf///oZDIZDIZD5/5//5/5/IZD5DIZDIZDIZDIZDIZDIZDIZDIZDQyGQyGQyGQyGQyGQyGQyGQyGQyGQyGQyGQyGQyGQyGQyGQyGQyGQyGQyEX1t1qIJbE/5tQ9SbZNt9O6Tqd0nXwAAIECBAgQIEEYPXf53XMuI1s1a1GhmZgYGYGBmZmBmBgZgYIswIAAAAAAAAAA',
+      quack: 'data:audio/mp3;base64,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',
+      fall: 'data:audio/mp3;base64,SUQzBAAAAAAAI1RSU0UAAAAPAAADTGF2ZjU4LjEyLjEwMAAAAAAAAAAAAAAA//tQwAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAkAAAZfwAMDBISGBgYHx8lJSUsLCwzMzM5OUBAQEZGTExMU1NTV1pdXV1jY2NoaG5ubm91dXt7e4GBgYiIjY2Nk5OTmZmgoKCnp6etrbOzs7q6usDBx8fHz8/P1dXV29vi4uLo6Oju7vT09PT6+v///wAAAFhpbmcAAAAPAAAALQAACpgAg4OJiYmQkJCYmJydnZ2hoaGpqamvr6+0tLq6uru7x8fH0dHR2NjY39/f5eXl6+vr8vLy+fn5Bp6enp6eAxQUFBQUCgoKCgoKCPDw8PDwCAgQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//tAwAADV8jK/+eoAoTYzXb85FRF1oTDs6AghQKAwCB4QBCBWYCQHpgHAPGAIAcYPQP5g3ghhEDCDDQECMIMRMMkOQIwwDgEDAHATMAYBFDgwEBGzAHAOMAgA8wOgIzALACMMEEMBABMwBADzACAHMFIF0wNgchUGCoAiYCABpgCAFmAcAiYAAAZgZEcGEkD+YAwBpgBAEmAEAOYFgGpgNALmDWFCYFoGQbGCSB+YAgBpgBADGA6BOYGoIBgwBjmA+C8YNQaJgkBgmB2CgYCYFoe/2YAwDZguAymDADgYGYMZgfAcGAaAOYAYARgEgDmBSACYBoYxgqhjmBcC+YJQWBgJgqGASDKYAAAZgBAFjeGByGWYGARhgvg1mA2BGYBwD5gBgKGCgBeYAACYBCEiQGBIAaYAwBRgIgUmAWA8YOAFJgDAZGTgJ2YGQIxgagRGAIAIYAYDBgKgWGA0FwYcYSBgbASGAeAuYBgAxgCgDmAGAsMcYFgLw2mByGGYGQFRgYAlmEIACYBQj5gDABGAQAGYBAAQAmAaAIPgwDQGzAVAnMAQBEwDwEjABARMEQCcwBwDzAwATMB4NgwTAlzB2B4MF0G8wNASjAZARMAcCMwAwGT',
+      gameStart: 'data:audio/mp3;base64,SUQzBAAAAAAAI1RSU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//tUwAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAApAAAkQAAGBgwMEhIYGB4eJCQqKjAwNjY8PEJCSEhOTlRUWlpgYGZmbGxycoiIjo6UlJqaoKCmprKyuLi+vsrK0NDa2t7e5OTq6vDw9vb8/P///wAAADpMQU1FMy4xMDABAgAAAAAATQAE4AAAAAAAJECXAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+      dogLaugh: 'data:audio/mp3;base64,SUQzAwAAAAAAAAanalRJVDIAAAAPAAAAU291bmRKYXkuY29tIFNvdW5kIEVmZmVjdHMA/v8BUAAPEAABGEB7MIAAAMBdQv69XQAAADAwMDAwMDAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/+4DEAAAH8AFd9AAAJ34Arv4AADBjQAOvkAAAnmgAdfIAAAMAAAADAVVMVUlTVFRUVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAXf/7cMQDAAZ8AMr3BAADMqrq18YAAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUALgAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAT//7kMQEAAcABM7/AgADegAZ/+CAAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUAAfAAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQAAQAAqUxBTUUzLjk5LjVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQC4AAAA'
     };
     
     // Create audio elements
-    for (const [name, src] of Object.entries(sounds)) {
+    Object.keys(soundUrls).forEach(soundName => {
       const audio = document.createElement('audio');
-      audio.id = `duck-sound-${name}`;
+      audio.id = `duck-sound-${soundName}`;
       audio.preload = 'auto';
+      audio.src = soundUrls[soundName];
       audio.volume = 0.8;
       
-      // Set primary source
-      const primarySource = document.createElement('source');
-      primarySource.src = src;
-      primarySource.type = 'audio/mpeg';
-      audio.appendChild(primarySource);
-      
-      // Set fallback source
-      if (fallbackSounds[name]) {
-        const fallbackSource = document.createElement('source');
-        fallbackSource.src = fallbackSounds[name];
-        fallbackSource.type = 'audio/mpeg';
-        audio.appendChild(fallbackSource);
-      }
-      
-      // Create a test button for debugging (hidden)
-      const testButton = document.createElement('button');
-      testButton.textContent = `Test ${name}`;
-      testButton.style.display = 'none';
-      testButton.onclick = () => audio.play();
-      
       soundContainer.appendChild(audio);
-      soundContainer.appendChild(testButton);
-    }
+    });
     
     document.body.appendChild(soundContainer);
     soundsCreated = true;
@@ -123,59 +95,40 @@
   function playSound(soundName) {
     if (!soundEnabled) return;
     
-    const sound = document.getElementById(`duck-sound-${soundName}`);
-    if (sound) {
-      console.log('Playing sound:', soundName);
+    try {
+      // Try to get the sound element
+      const sound = document.getElementById(`duck-sound-${soundName}`);
       
-      // Create a new audio element for each sound to avoid conflicts
-      const soundClone = sound.cloneNode(true); // deep clone to include all source elements
-      soundClone.volume = 0.8;
-      
-      // Add an error handler
-      soundClone.onerror = (e) => {
-        console.error('Error playing sound:', soundName, e);
-        // Try playing a built-in audio as a last resort fallback
-        try {
-          const fallbackAudio = new Audio();
-          if (soundName === 'shot') {
-            fallbackAudio.src = 'https://assets.mixkit.co/sfx/preview/mixkit-shotgun-shot-1662.mp3';
-          } else if (soundName === 'quack') {
-            fallbackAudio.src = 'https://assets.mixkit.co/sfx/preview/mixkit-animals-duck-quack-1217.mp3';
-          } else if (soundName === 'fall') {
-            fallbackAudio.src = 'https://assets.mixkit.co/sfx/preview/mixkit-dramatic-falling-whistle-1492.mp3';
-          } else if (soundName === 'gameStart') {
-            fallbackAudio.src = 'https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-complete-or-approved-mission-205.mp3';
-          } else {
-            fallbackAudio.src = 'https://assets.mixkit.co/sfx/preview/mixkit-dog-barking-twice-1.mp3';
-          }
-          
-          fallbackAudio.volume = 0.8;
-          fallbackAudio.play();
-        } catch (innerError) {
-          console.error('Even fallback audio failed:', innerError);
-        }
-      };
-      
-      // Use both play methods for better browser compatibility
-      const playPromise = soundClone.play();
-      
-      if (playPromise !== undefined) {
-        playPromise.catch(error => {
-          console.error('Play promise error:', error);
-          // If the promise fails, try one more time with a user interaction workaround
-          document.addEventListener('click', function tryPlayOnce() {
-            soundClone.play().catch(e => console.error('Final play attempt failed:', e));
-            document.removeEventListener('click', tryPlayOnce);
-          }, { once: true });
-        });
+      if (!sound) {
+        console.error('Sound not found:', soundName);
+        return;
       }
       
-      // Remove clone when finished to prevent memory leaks
+      console.log('Playing sound:', soundName);
+      
+      // Clone the node to avoid conflicts
+      const soundClone = sound.cloneNode(true);
+      soundClone.volume = 0.8;
+      document.body.appendChild(soundClone);
+      
+      // Play the sound
+      soundClone.play().catch(error => {
+        console.error('Error playing sound:', soundName, error);
+      });
+      
+      // Clean up after playing
       soundClone.onended = () => {
         soundClone.remove();
       };
-    } else {
-      console.error('Sound not found:', soundName);
+      
+      // Set a safety timeout to remove the element if onended doesn't fire
+      setTimeout(() => {
+        if (soundClone.parentNode) {
+          soundClone.remove();
+        }
+      }, 5000);
+    } catch (error) {
+      console.error('Failed to play sound:', soundName, error);
     }
   }
   
