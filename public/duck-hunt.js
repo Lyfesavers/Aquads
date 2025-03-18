@@ -9,6 +9,7 @@
   let ducksCreated = 0;
   const maxDucks = 3; // Maximum number of ducks on screen
   let feathers = []; // Track all feather particles
+  let soundsInitialized = false; // Track if sounds have been initialized
   
   // Duck species (more realistic colors)
   const duckSpecies = [
@@ -57,73 +58,110 @@
   
   // Initialize sounds with better authentic Duck Hunt-like sounds
   function initSounds() {
-    // Create audio elements
-    sounds.quack = new Audio();
-    sounds.shot = new Audio();
-    sounds.fall = new Audio();
-    sounds.gameStart = new Audio();
-    sounds.dogLaugh = new Audio();
+    if (soundsInitialized) return;
     
-    // NES-style Duck Hunt quack (base64 encoded small audio)
-    sounds.quack.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+NAwAAAAAAAAAAAAFhpbmcAAAAPAAAAAwAAA2YAlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaW9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0////////////////////////////////////////////AAAAAExhdmM1OC4xMwAAAAAAAAAAAAAAACQDQAAAAAAAAANmxbuJUwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/+MYxAAAAANIAAAAAExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxDsAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
+    console.log("Initializing Duck Hunt sounds...");
     
-    // Classic gunshot sound
-    sounds.shot.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+NAwAAAAAAAAAAAAFhpbmcAAAAPAAAAAwAAAyAAlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaW2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2trb///////////////////////////////////////////8AAAAATEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/4xjEIAAAA0gAAAAAVEFHM0MuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/4xjEVwAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
-    
-    // Duck falling sound
-    sounds.fall.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+NAwAAAAAAAAAAAAFhpbmcAAAAPAAAABAAAA+gA1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU9PT09PT09PT09PT09PT09PT09PT09PT09JeXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl8/Pz8/Pz8/Pz8/Pz8/Pz8/Pz8/Pz8/PzwAAAExhdmM1OC4xMwAAAAAAAAAAAAAAACQEQAAAAAAAAAPoSNmTtwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/+MYxAABsANIAAAAAP7kSAQBH//kQBE/5P5E9P0if/y8+ACw/5c8xP///IgeIP8sT5c/6MP/+SLoB/5N5M/q1f/y5EN//8sXLF///+MYxB4CMg+IAAAAAFy5MPf//IgmGf////JFyAZZ/+QDjP///yJqB4l/5Fnm//kS5Yf//yIF5P//5AuIK///5IP///1aqqqqqqqqTEFN/+MYxCYKycqYAZKQADMuMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
-    
-    // Duck Hunt start round sound
-    sounds.gameStart.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+NAwAAAAAAAAAAAAFhpbmcAAAAPAAAAAgAAAaQAYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgpqamqqqqqampqampqampqampqampqampqampqampqampqampqampqampqampqf/////////////////////////AAAAAExhdmM1OC4xMwAAAAAAAAAAAAAAACQDgAAAAAAAAAGkx+wSdQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/+MYxAAAAANIAAAAAExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxMwN0ZpAAEuAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
-    
-    // Duck Hunt dog laugh sound
-    sounds.dogLaugh.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+NAwAAAAAAAAAAAAFhpbmcAAAAPAAAABAAABLgAlpaWlpaWlpaWlpaWlpaWlpaWlpaWw8PDw8PDw8PDw8PDw8PDw8PDw8PDw8PD09PT09PT09PT09PT09PT09PT09PT09PT4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+PjAAAAAExhdmM1OC4xMwAAAAAAAAAAAAAAJAOAAAAAAAAAAuC5V8xgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/jGMQAAAAAAAAAAABMQU1FMy4xMDCqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/+MYxMIN4AIkAH6qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq';
-    
-    // Set volume levels
-    sounds.quack.volume = 0.25;
-    sounds.shot.volume = 0.35;
-    sounds.fall.volume = 0.3;
-    sounds.gameStart.volume = 0.2;
-    sounds.dogLaugh.volume = 0.3;
-    
-    // Preload sounds
-    Object.values(sounds).forEach(sound => {
-      sound.load();
-    });
+    try {
+      // Create audio elements
+      sounds.quack = new Audio();
+      sounds.shot = new Audio();
+      sounds.fall = new Audio();
+      sounds.gameStart = new Audio();
+      sounds.dogLaugh = new Audio();
+      
+      // NES-style Duck Hunt quack (base64 encoded small audio)
+      sounds.quack.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+NAwAAAAAAAAAAAAFhpbmcAAAAPAAAAAwAAA2YAlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaW9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0////////////////////////////////////////////AAAAAExhdmM1OC4xMwAAAAAAAAAAAAAAACQDQAAAAAAAAANmxbuJUwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/+MYxAAAAANIAAAAAExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxDsAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
+      
+      // Classic gunshot sound
+      sounds.shot.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+NAwAAAAAAAAAAAAFhpbmcAAAAPAAAAAwAAAyAAlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaWlpaW2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2trb///////////////////////////////////////////8AAAAATEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/4xjEIAAAA0gAAAAAVEFHM0MuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/4xjEVwAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
+      
+      // Duck falling sound
+      sounds.fall.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+NAwAAAAAAAAAAAAFhpbmcAAAAPAAAABAAAA+gA1NTU1NTU1NTU1NTU1NTU1NTU1NTU1NTU9PT09PT09PT09PT09PT09PT09PT09PT09JeXl5eXl5eXl5eXl5eXl5eXl5eXl5eXl8/Pz8/Pz8/Pz8/Pz8/Pz8/Pz8/Pz8/PzwAAAExhdmM1OC4xMwAAAAAAAAAAAAAAACQEQAAAAAAAAAPoSNmTtwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/+MYxAABsANIAAAAAP7kSAQBH//kQBE/5P5E9P0if/y8+ACw/5c8xP///IgeIP8sT5c/6MP/+SLoB/5N5M/q1f/y5EN//8sXLF///+MYxB4CMg+IAAAAAFy5MPf//IgmGf////JFyAZZ/+QDjP///yJqB4l/5Fnm//kS5Yf//yIF5P//5AuIK///5IP///1aqqqqqqqqTEFN/+MYxCYKycqYAZKQADMuMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
+      
+      // Duck Hunt start round sound
+      sounds.gameStart.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+NAwAAAAAAAAAAAAFhpbmcAAAAPAAAAAgAAAaQAYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgpqamqqqqqampqampqampqampqampqampqampqampqampqampqampqampqampqf/////////////////////////AAAAAExhdmM1OC4xMwAAAAAAAAAAAAAAACQDgAAAAAAAAAGkx+wSdQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/+MYxAAAAANIAAAAAExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxMwN0ZpAAEuAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
+      
+      // Duck Hunt dog laugh sound
+      sounds.dogLaugh.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+NAwAAAAAAAAAAAAFhpbmcAAAAPAAAABAAABLgAlpaWlpaWlpaWlpaWlpaWlpaWlpaWw8PDw8PDw8PDw8PDw8PDw8PDw8PDw8PD09PT09PT09PT09PT09PT09PT09PT09PT4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+Pj4+PjAAAAAExhdmM1OC4xMwAAAAAAAAAAAAAAJAOAAAAAAAAAAuC5V8xgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/jGMQAAAAAAAAAAABMQU1FMy4xMDCqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq/+MYxMIN4AIkAH6qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq';
+      
+      // Set volume levels - increased for better audibility
+      sounds.quack.volume = 0.8;
+      sounds.shot.volume = 0.8;
+      sounds.fall.volume = 0.8;
+      sounds.gameStart.volume = 0.8;
+      sounds.dogLaugh.volume = 0.8;
+      
+      // Pre-load all sounds with catch for any errors
+      Object.values(sounds).forEach(sound => {
+        sound.load();
+        
+        // Add error handling
+        sound.onerror = (e) => {
+          console.error("Error loading sound:", e);
+        };
+      });
+      
+      // Test play a silent sound to unlock audio on iOS/Safari
+      document.addEventListener('click', unlockAudio, { once: true });
+      document.addEventListener('touchstart', unlockAudio, { once: true });
+      
+      soundsInitialized = true;
+      console.log("Duck Hunt sounds initialized successfully!");
+    } catch (e) {
+      console.error("Error initializing sounds:", e);
+    }
   }
   
+  // Unlock audio on iOS and other browsers that require user interaction
+  function unlockAudio() {
+    console.log("Attempting to unlock audio...");
+    
+    // Create and play a silent sound
+    const silentSound = new Audio("data:audio/mp3;base64,SUQzBAAAAAAAI1TSU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//tUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADQADMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjU0AAAAAAAAAAAAAAAAJAAAAAAAAAAAQOhRzKnXAAAAAAAAAAAAAAAAAAAA//sUZAAP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//sUZB4P8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//sUZDQP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//sUZEoP8AAAaQAAAAgAAA0gAAABAAABpAAAACAAADSAAAAEVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV");
+    silentSound.volume = 0.001; // Almost silent
+    const playPromise = silentSound.play();
+    
+    if (playPromise !== undefined) {
+      playPromise.then(() => {
+        console.log("Audio unlocked successfully!");
+        
+        // Play game start sound to signal audio is working
+        playSound('gameStart');
+      }).catch(e => {
+        console.warn("Audio couldn't be unlocked automatically:", e);
+      });
+    }
+  }
+
   // Play a sound
   function playSound(soundName) {
-    if (!sounds[soundName]) return;
+    if (!soundsInitialized || !sounds[soundName]) {
+      console.warn(`Cannot play ${soundName} - sounds not initialized or sound not found`);
+      return;
+    }
     
-    // Clone and play to allow overlapping sounds
-    const sound = sounds[soundName].cloneNode();
-    sound.volume = sounds[soundName].volume;
-    
-    // Some browsers require user interaction before playing audio
-    const promise = sound.play();
-    if (promise !== undefined) {
-      promise.catch(e => {
-        // Auto-play was prevented, we'll ignore this error
-        console.log("Audio playback was prevented by the browser");
-      });
+    try {
+      // Clone and play to allow overlapping sounds
+      const sound = sounds[soundName].cloneNode();
+      sound.volume = sounds[soundName].volume;
+      
+      // Some browsers require user interaction before playing audio
+      const promise = sound.play();
+      if (promise !== undefined) {
+        promise.then(() => {
+          console.log(`Playing sound: ${soundName}`);
+        }).catch(e => {
+          console.warn(`Error playing ${soundName}:`, e);
+        });
+      }
+    } catch (e) {
+      console.error(`Error attempting to play ${soundName}:`, e);
     }
   }
   
   // Initialize game
   function init() {
-    // Initialize sounds
-    initSounds();
-    
-    // Play game start sound on first user interaction
-    const handleFirstInteraction = () => {
-      playSound('gameStart');
-      document.removeEventListener('click', handleFirstInteraction);
-      document.removeEventListener('keydown', handleFirstInteraction);
-    };
-    document.addEventListener('click', handleFirstInteraction);
-    document.addEventListener('keydown', handleFirstInteraction);
-    
     // Style game container
     gameContainer.style.position = 'fixed';
     gameContainer.style.top = '0';
@@ -133,6 +171,40 @@
     gameContainer.style.pointerEvents = 'none';
     gameContainer.style.zIndex = '9998'; // Below the ripple effect
     gameContainer.style.overflow = 'hidden';
+    
+    // Add a sound toggle button
+    const soundButton = document.createElement('button');
+    soundButton.id = 'duck-hunt-sound-button';
+    soundButton.style.position = 'fixed';
+    soundButton.style.bottom = '10px';
+    soundButton.style.right = '20px';
+    soundButton.style.backgroundColor = '#007BFF';
+    soundButton.style.color = 'white';
+    soundButton.style.border = 'none';
+    soundButton.style.borderRadius = '50%';
+    soundButton.style.width = '40px';
+    soundButton.style.height = '40px';
+    soundButton.style.fontSize = '20px';
+    soundButton.style.display = 'flex';
+    soundButton.style.alignItems = 'center';
+    soundButton.style.justifyContent = 'center';
+    soundButton.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
+    soundButton.style.cursor = 'pointer';
+    soundButton.style.zIndex = '10002';
+    soundButton.innerHTML = '🔊';
+    soundButton.title = "Enable Duck Hunt Sounds";
+    soundButton.onclick = function() {
+      // Initialize sounds on click
+      initSounds();
+      playSound('gameStart');
+      soundButton.innerHTML = '🔊';
+      soundButton.title = "Duck Hunt Sounds Enabled";
+      // Hide button after activation
+      setTimeout(() => {
+        soundButton.style.opacity = '0.5';
+      }, 2000);
+    };
+    document.body.appendChild(soundButton);
     
     // Add gun sight cursor
     const gunSight = document.createElement('div');
@@ -208,6 +280,8 @@
     
     // Start animation loop
     requestAnimationFrame(updateGame);
+    
+    console.log("Duck Hunt game initialized!");
   }
   
   // Create a new duck
@@ -411,6 +485,12 @@
     // Add click handler to shoot duck
     duck.addEventListener('click', (e) => {
       e.stopPropagation();
+      
+      // Initialize sounds if not already done
+      if (!soundsInitialized) {
+        initSounds();
+      }
+      
       shootDuck(duck);
       
       // Show score when first duck is shot
@@ -445,7 +525,7 @@
     ducksCreated++;
     
     // Occasionally play quack sound when a new duck appears
-    if (Math.random() < 0.4) {
+    if (soundsInitialized && Math.random() < 0.4) {
       playSound('quack');
     }
   }
@@ -474,17 +554,19 @@
     score++;
     updateScore();
     
-    // Play sound effects
-    playSound('shot');
-    setTimeout(() => {
-      playSound('fall');
-    }, 300);
-    
-    // Rarely play dog laugh when duck is shot (25% chance)
-    if (Math.random() < 0.25) {
+    // Play sound effects if initialized
+    if (soundsInitialized) {
+      playSound('shot');
       setTimeout(() => {
-        playSound('dogLaugh');
-      }, 800);
+        playSound('fall');
+      }, 300);
+      
+      // Rarely play dog laugh when duck is shot (25% chance)
+      if (Math.random() < 0.25) {
+        setTimeout(() => {
+          playSound('dogLaugh');
+        }, 800);
+      }
     }
   }
   
@@ -587,7 +669,7 @@
         
         // Occasional quacking
         duck.quackTimer -= 16;
-        if (duck.quackTimer <= 0) {
+        if (soundsInitialized && duck.quackTimer <= 0) {
           playSound('quack');
           duck.quackTimer = 5000 + Math.random() * 8000; // Even less frequent quacking
         }
