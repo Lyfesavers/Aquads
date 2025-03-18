@@ -372,9 +372,9 @@
     soundButton.style.color = 'white';
     soundButton.style.border = 'none';
     soundButton.style.borderRadius = '50%';
-    soundButton.style.width = '60px'; // Bigger button
-    soundButton.style.height = '60px'; // Bigger button
-    soundButton.style.fontSize = '24px';
+    soundButton.style.width = '40px'; // Smaller button (was 60px)
+    soundButton.style.height = '40px'; // Smaller button (was 60px)
+    soundButton.style.fontSize = '16px'; // Smaller font (was 24px)
     soundButton.style.display = 'flex';
     soundButton.style.alignItems = 'center';
     soundButton.style.justifyContent = 'center';
