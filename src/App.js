@@ -41,6 +41,7 @@ import { motion } from 'framer-motion';
 import emailService from './services/emailService';
 import emailjs from '@emailjs/browser';
 import NotificationBell from './components/NotificationBell';
+import logger from './utils/logger';
 
 window.Buffer = Buffer;
 
@@ -366,7 +367,7 @@ function App() {
           
           // Check if this ad has zero coordinates (likely from the server bug)
           if (ad.x === 0 && ad.y === 0) {
-            console.log('Fixing ad with zero coordinates:', ad.id);
+            logger.log('Fixing ad with zero coordinates:', ad.id);
             // Calculate a safe position for this ad
             const position = calculateSafePosition(
               ad.size, 
@@ -390,12 +391,12 @@ function App() {
               // Use position-only update to avoid auth issues
               await apiUpdateAdPosition(ad.id, ad.x, ad.y);
             } catch (error) {
-              console.error('Error updating ad position:', error);
+              logger.error('Error updating ad position:', error);
             }
           }
         }
       } catch (error) {
-        console.error('Error loading ads:', error);
+        logger.error('Error loading ads:', error);
         setIsLoading(false);
       }
     };
@@ -407,7 +408,7 @@ function App() {
   useEffect(() => {
     // Replace the current socket event listeners with a single 'adsUpdated' listener
     socket.on('adsUpdated', (data) => {
-      console.log('Received adsUpdated event:', data);
+      logger.log('Received adsUpdated event:', data);
       
       if (data.type === 'update') {
         setAds(prevAds => {
@@ -479,7 +480,7 @@ function App() {
 
   // Debug ads state changes
   useEffect(() => {
-    console.log('Ads state updated:', ads);
+    logger.log('Ads state updated:', ads);
   }, [ads]);
 
   // Clean up expired ads and shrink unbumped ads
@@ -494,7 +495,7 @@ function App() {
             await apiUpdateAd(ad.id, updatedAd);
             return updatedAd;
           } catch (error) {
-            console.error('Error updating ad size:', error);
+            logger.error('Error updating ad size:', error);
             return ad;
           }
         }
@@ -593,7 +594,7 @@ function App() {
       setShowLoginModal(false);
       showNotification('Successfully logged in!', 'success');
     } catch (error) {
-      console.error('Login error:', error);
+      logger.error('Login error:', error);
       showNotification(error.message || 'Login failed', 'error');
     }
   };
@@ -613,16 +614,16 @@ function App() {
         
         // Send welcome email if email is provided
         if (formData.email) {
-          console.log('Attempting to send welcome email...');
+          logger.log('Attempting to send welcome email...');
           try {
             await emailService.sendWelcomeEmail(
               formData.email,
               user.username,
               user.referralCode
             );
-            console.log('Welcome email sent successfully');
+            logger.log('Welcome email sent successfully');
           } catch (emailError) {
-            console.error('Failed to send welcome email:', emailError);
+            logger.error('Failed to send welcome email:', emailError);
           }
         }
         
@@ -630,7 +631,7 @@ function App() {
         setShowCreateAccountModal(false);
       }
     } catch (error) {
-      console.error('Error creating account:', error);
+      logger.error('Error creating account:', error);
       alert(error.message || 'Failed to create account');
     }
   };
@@ -666,24 +667,24 @@ function App() {
       };
 
       // Log the ad data being sent to the server, including position
-      console.log('Creating new ad with position:', { x: position.x, y: position.y });
-      console.log('Complete ad data:', newAd);
+      logger.log('Creating new ad with position:', { x: position.x, y: position.y });
+      logger.log('Complete ad data:', newAd);
       
       const createdAd = await apiCreateAd(newAd);
-      console.log('Created ad:', createdAd);
+      logger.log('Created ad:', createdAd);
       
       setAds(prevAds => [...prevAds, createdAd]);
       setShowCreateModal(false);
       showNotification('Project Listed successfully!', 'success');
     } catch (error) {
-      console.error('Error creating ad:', error);
+      logger.error('Error creating ad:', error);
       showNotification('Failed to List Project. Please try again.', 'error');
     }
   };
 
   const handleBumpPurchase = async (adId, txSignature, duration) => {
     try {
-      console.log(`Bump purchase initiated - Ad ID: ${adId}, Signature: ${txSignature}, Duration: ${duration}`);
+      logger.log(`Bump purchase initiated - Ad ID: ${adId}, Signature: ${txSignature}, Duration: ${duration}`);
       const ad = ads.find(a => a.id === adId);
       
       if (!currentUser) {
@@ -709,7 +710,7 @@ function App() {
       // If admin is approving the bump
       if (currentUser.isAdmin && ad.status === 'pending') {
         try {
-          console.log("Admin approving bump");
+          logger.log("Admin approving bump");
           const [bumpResponse, adResponse] = await Promise.all([
             approveBumpRequest(adId, currentUser.username),
             apiUpdateAd(adId, {
@@ -723,13 +724,13 @@ function App() {
             })
           ]);
 
-          console.log("Bump approved successfully:", bumpResponse);
+          logger.log("Bump approved successfully:", bumpResponse);
           setAds(prevAds => prevAds.map(a => a.id === adId ? adResponse : a));
           setShowBumpStore(false);
           showNotification('Bump approved successfully!', 'success');
           return;
         } catch (error) {
-          console.error('Error approving bump:', error);
+          logger.error('Error approving bump:', error);
           showNotification(error.message || 'Failed to approve bump request', 'error');
           return;
         }
@@ -737,7 +738,7 @@ function App() {
 
       // If user is submitting a bump request
       try {
-        console.log("User submitting bump request:", {
+        logger.log("User submitting bump request:", {
           adId,
           owner: currentUser.username,
           txSignature,
@@ -755,17 +756,17 @@ function App() {
           apiUpdateAd(adId, { ...ad, status: 'pending' })
         ]);
 
-        console.log("Bump request submitted successfully:", bumpResponse);
+        logger.log("Bump request submitted successfully:", bumpResponse);
         setAds(prevAds => prevAds.map(a => a.id === adId ? adResponse : a));
         setShowBumpStore(false);
         showNotification('Bump request submitted for approval!', 'success');
       } catch (error) {
-        console.error('Error submitting bump request:', error);
+        logger.error('Error submitting bump request:', error);
         const errorMessage = error.response?.data?.error || error.message || 'Failed to process bump request';
         showNotification(errorMessage, 'error');
       }
     } catch (error) {
-      console.error('Bump purchase error:', error);
+      logger.error('Bump purchase error:', error);
       showNotification(error.message || 'Failed to process bump purchase!', 'error');
     }
   };
@@ -794,7 +795,7 @@ function App() {
       setAds(prevAds => prevAds.map(a => a.id === adId ? adResponse : a));
       showNotification('Bump request rejected successfully!', 'success');
     } catch (error) {
-      console.error('Error rejecting bump:', error);
+      logger.error('Error rejecting bump:', error);
       showNotification(error.message || 'Failed to reject bump request', 'error');
     }
   };
@@ -805,7 +806,7 @@ function App() {
       setAds(prevAds => prevAds.filter(ad => ad.id !== adId));
       showNotification('Ad deleted successfully!', 'success');
     } catch (error) {
-      console.error('Error deleting ad:', error);
+      logger.error('Error deleting ad:', error);
       showNotification('Failed to delete ad. Please try again.', 'error');
     }
   };
@@ -831,7 +832,7 @@ function App() {
       setAdToEdit(null);
       showNotification('Ad updated successfully!', 'success');
     } catch (error) {
-      console.error('Error updating ad:', error);
+      logger.error('Error updating ad:', error);
       showNotification('Failed to update ad. Please try again.', 'error');
     }
   };
@@ -875,7 +876,7 @@ function App() {
       setAds(prevAds => prevAds.map(a => a.id === adId ? adResponse : a));
       showNotification('Bump approved successfully!', 'success');
     } catch (error) {
-      console.error('Error approving bump:', error);
+      logger.error('Error approving bump:', error);
       showNotification(error.message || 'Failed to approve bump request', 'error');
     }
   };
@@ -892,7 +893,7 @@ function App() {
 
   // Add this to debug render issues
   useEffect(() => {
-    console.log('Current ads state:', ads);
+    logger.log('Current ads state:', ads);
   }, [ads]);
 
   // Add these socket event listeners in useEffect
@@ -950,7 +951,7 @@ function App() {
         status: 'pending'
       };
 
-      console.log('Sending to API:', submitData); // Debug log
+      logger.log('Sending to API:', submitData); // Debug log
 
       const response = await fetch(`${API_URL}/bannerAds`, {
         method: 'POST',
@@ -970,7 +971,7 @@ function App() {
       showNotification('Banner ad created successfully!', 'success');
       return newBanner;
     } catch (error) {
-      console.error('Error creating banner ad:', error);
+      logger.error('Error creating banner ad:', error);
       showNotification(error.message, 'error');
       throw error;
     }
@@ -1217,14 +1218,14 @@ function App() {
   useEffect(() => {
     // Define handler for opening dashboard with booking
     const handleOpenDashboardWithBooking = (event) => {
-      console.log('Opening dashboard with booking:', event.detail.bookingId);
+      logger.log('Opening dashboard with booking:', event.detail.bookingId);
       setActiveBookingId(event.detail.bookingId);
       setShowDashboard(true);
     };
     
     // Define handler for opening dashboard without specific booking
     const handleOpenDashboard = () => {
-      console.log('Opening dashboard');
+      logger.log('Opening dashboard');
       setShowDashboard(true);
     };
     
@@ -1234,7 +1235,7 @@ function App() {
     
     // Add global function to show dashboard (for use by other components)
     window.showDashboard = (tab, bookingId) => {
-      console.log('Global showDashboard called', tab, bookingId);
+      logger.log('Global showDashboard called', tab, bookingId);
       if (bookingId) {
         setActiveBookingId(bookingId);
       }
@@ -1251,7 +1252,7 @@ function App() {
       const isRecent = timestamp && (Date.now() - parseInt(timestamp, 10)) < 5000;
       
       if (shouldOpenDashboard === 'true' && isRecent) {
-        console.log('Opening dashboard from localStorage flag');
+        logger.log('Opening dashboard from localStorage flag');
         
         if (bookingId) {
           setActiveBookingId(bookingId);

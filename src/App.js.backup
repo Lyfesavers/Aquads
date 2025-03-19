@@ -446,6 +446,7 @@ function App() {
         localStorage.setItem('cachedAds', JSON.stringify(newAds));
         return newAds;
       });
+    });
 
     socket.on('adDeleted', (deletedAdId) => {
       setAds(prevAds => {
@@ -453,6 +454,7 @@ function App() {
         localStorage.setItem('cachedAds', JSON.stringify(newAds));
         return newAds;
       });
+    });
 
     socket.on('adCreated', (newAd) => {
       setAds(prevAds => {
@@ -465,6 +467,7 @@ function App() {
         }
         return prevAds;
       });
+    });
 
     return () => {
       socket.off('adsUpdated');
@@ -584,17 +587,13 @@ function App() {
 
   const handleLogin = async (credentials) => {
     try {
-      setIsLoading(true);
       const user = await loginUser(credentials);
       setCurrentUser(user);
       localStorage.setItem('currentUser', JSON.stringify(user));
       setShowLoginModal(false);
-      setShowCreateModal(false); // Close both modals in case they're open
-      setIsLoading(false);
-      showNotification('Logged in successfully!', 'success');
+      showNotification('Successfully logged in!', 'success');
     } catch (error) {
       console.error('Login error:', error);
-      setIsLoading(false);
       showNotification(error.message || 'Login failed', 'error');
     }
   };
@@ -1470,25 +1469,26 @@ function App() {
                       ) : (
                         <>
                           <button
-                          onClick={() => {
-                            setShowLoginModal(true);
-                            setIsMobileMenuOpen(false);
-                          }}
-                          className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
-                        >
-                          Login
-                        </button>
-                        <button
-                          onClick={() => {
-                            setShowCreateAccountModal(true);
-                            setIsMobileMenuOpen(false);
-                          }}
-                          className="bg-green-500/80 hover:bg-green-600/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
-                        >
-                          Create Account
-                        </button>
-                      </>
-                    )}
+                            onClick={() => {
+                              setShowLoginModal(true);
+                              setIsMobileMenuOpen(false);
+                            }}
+                            className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                          >
+                            Login
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowCreateAccountModal(true);
+                              setIsMobileMenuOpen(false);
+                            }}
+                            className="bg-green-500/80 hover:bg-green-600/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
+                          >
+                            Create Account
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </nav>
@@ -1777,4 +1777,3 @@ function App() {
 }
 
 export default App;
-}
