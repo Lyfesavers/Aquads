@@ -87,28 +87,6 @@ const NotificationBell = ({ currentUser }) => {
     }
   }, [currentUser]);
 
-  // Use this temporarily to see if we can access the API directly (remove later)
-  const testEndpoint = async () => {
-    try {
-      logger.log('Testing alternative endpoint...');
-      const response = await fetch(`${API_URL}/users/me`, {
-        headers: {
-          'Authorization': `Bearer ${currentUser.token}`
-        }
-      });
-      logger.log('Test endpoint status:', response.status);
-    } catch (error) {
-      logger.error('Test endpoint error:', error);
-    }
-  };
-
-  // Only run once for debugging
-  useEffect(() => {
-    if (currentUser && currentUser.token) {
-      testEndpoint();
-    }
-  }, [currentUser]);
-
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
