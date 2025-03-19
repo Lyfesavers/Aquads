@@ -600,10 +600,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         setIsLoading(prevState => ({ ...prevState, jobs: false }));
       } catch (error) {
         logger.error('Error fetching jobs:', error);
-        // Don't show notification for auth errors as they may just need a moment to initialize
-        if (!error.message?.includes('auth') && !error.message?.includes('unauthorized')) {
-          showNotification('Failed to load jobs. Will retry automatically.', 'error');
-        }
+        // No notification needed here - we'll just retry silently
         
         // Set up a retry after a slight delay
         setTimeout(() => {
