@@ -571,11 +571,43 @@
       height: duckSizes.height + Math.random() * 10
     };
     
-    // Determine starting position and direction
-    const startFromLeft = Math.random() > 0.5;
-    const y = 100 + Math.random() * (window.innerHeight - 300);
-    const x = startFromLeft ? -size.width : window.innerWidth;
-    const speedX = (startFromLeft ? 1 : -1) * (1.5 + Math.random() * 2);
+    // New spawn positioning - random locations and directions
+    const spawnMode = Math.floor(Math.random() * 4); // 0: left, 1: right, 2: bottom, 3: random position
+    let x, y, speedX, speedY, startFromLeft;
+    
+    switch (spawnMode) {
+      case 0: // Left side
+        x = -size.width;
+        y = 100 + Math.random() * (window.innerHeight - 300);
+        speedX = 1.5 + Math.random() * 2;
+        speedY = (Math.random() - 0.5) * 2; // Slight vertical component
+        startFromLeft = true;
+        break;
+      case 1: // Right side
+        x = window.innerWidth;
+        y = 100 + Math.random() * (window.innerHeight - 300);
+        speedX = -(1.5 + Math.random() * 2);
+        speedY = (Math.random() - 0.5) * 2; // Slight vertical component
+        startFromLeft = false;
+        break;
+      case 2: // Bottom (flying up)
+        x = Math.random() * (window.innerWidth - size.width);
+        y = window.innerHeight;
+        speedX = (Math.random() - 0.5) * 3; // Random horizontal direction
+        speedY = -(1.5 + Math.random() * 2); // Upward movement
+        startFromLeft = speedX >= 0; // Face direction of movement
+        break;
+      case 3: // Random position on screen (surprise pop-up)
+        x = 50 + Math.random() * (window.innerWidth - size.width - 100);
+        y = Math.max(50, window.innerHeight - 300 + Math.random() * 100);
+        // Random direction with more variations
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 1.5 + Math.random() * 2;
+        speedX = Math.cos(angle) * speed;
+        speedY = Math.sin(angle) * speed;
+        startFromLeft = speedX >= 0;
+        break;
+    }
     
     // Add slight wave motion
     const waveAmplitude = Math.random() * 1.5 + 0.5; // Random amplitude between 0.5 and 2
@@ -763,6 +795,7 @@
       x,
       y,
       speedX,
+      speedY,
       startY: y,
       waveAmplitude,
       waveFrequency,
@@ -914,6 +947,8 @@
       } else {
         // Update flying duck - round to whole pixels for pixel perfect movement
         duck.x += duck.speedX;
+        // Apply vertical movement
+        duck.y += duck.speedY;
         duck.time += 0.016; // Approximately 16ms per frame
         
         // NES-style flight animation with distinct wing positions
@@ -926,9 +961,11 @@
           duck.element.querySelector('.wing-element').style.transform = 'translateY(-10px)';
         }
         
-        // Wave motion with 8-bit style jumping coordinates
-        const waveAmount = Math.round(Math.sin(duck.time * 2) * 4) * 2; // Only move in 2px increments for NES style
-        duck.y = Math.floor(duck.startY + waveAmount);
+        // Wave motion with 8-bit style jumping coordinates - only apply if duck is not flying up
+        if (Math.abs(duck.speedY) < 1) {
+          const waveAmount = Math.round(Math.sin(duck.time * 2) * 4) * 2; 
+          duck.y += waveAmount / 10; // Reduced wave effect since we have direct vertical movement
+        }
         
         // Occasional quacking
         duck.quackTimer -= 16;
@@ -937,9 +974,28 @@
           duck.quackTimer = 5000 + Math.random() * 8000;
         }
         
-        // Remove duck if it flies off-screen
-        if ((duck.speedX > 0 && duck.x > window.innerWidth + 100) || 
-            (duck.speedX < 0 && duck.x < -duck.size.width - 100)) {
+        // Change direction if hitting screen edges (for ducks that spawn on screen)
+        // Add a small chance to change direction randomly for more realistic movement
+        if (duck.x < 0 || duck.x > window.innerWidth - duck.size.width) {
+          duck.speedX *= -1;
+          duck.element.style.transform = duck.speedX > 0 ? 'scaleX(1)' : 'scaleX(-1)';
+        }
+        
+        if (duck.y < 0 || duck.y > window.innerHeight - duck.size.height) {
+          duck.speedY *= -1;
+        }
+        
+        // Small chance to change direction randomly (5% chance per second)
+        if (Math.random() < 0.0008) {
+          duck.speedX *= -1;
+          duck.element.style.transform = duck.speedX > 0 ? 'scaleX(1)' : 'scaleX(-1)';
+        }
+        
+        // Remove duck if it flies too far off-screen
+        if (duck.x < -duck.size.width * 2 || 
+            duck.x > window.innerWidth + duck.size.width * 2 ||
+            duck.y < -duck.size.height * 2 || 
+            duck.y > window.innerHeight + duck.size.height * 2) {
           gameContainer.removeChild(duck.element);
           ducks.splice(i, 1);
           continue;
