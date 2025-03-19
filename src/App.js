@@ -16,7 +16,8 @@ import {
   fetchBumpRequests,
   verifyToken,
   pingServer,
-  API_URL
+  API_URL,
+  reconnectSocket
 } from './services/api';
 import BumpStore from './components/BumpStore';
 import LoginModal from './components/LoginModal';
@@ -295,6 +296,41 @@ function calculateDistance(x1, y1, x2, y2) {
   return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
 }
 
+// Add Auth Context near the top of the file - outside the App component
+const AuthContext = React.createContext();
+
+// Create a custom NavigationListener component to track navigation events
+const NavigationListener = ({ onNavigate }) => {
+  useEffect(() => {
+    // Handle initial navigation
+    onNavigate();
+    
+    // Use MutationObserver to detect navigation changes through component unmounts/mounts
+    // This works with both history API navigation and Link component navigation
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === 'childList' && 
+            (mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0)) {
+          // Route change detected
+          onNavigate();
+          break;
+        }
+      }
+    });
+    
+    // Observe the main app container
+    const container = document.getElementById('root');
+    if (container) {
+      observer.observe(container, { childList: true, subtree: true });
+    }
+    
+    // Clean up
+    return () => observer.disconnect();
+  }, [onNavigate]);
+  
+  return null; // This component doesn't render anything
+};
+
 function App() {
   const [ads, setAds] = useState(() => {
     const cachedAds = localStorage.getItem('cachedAds');
@@ -305,13 +341,7 @@ function App() {
     if (savedUser) {
       try {
         const user = JSON.parse(savedUser);
-        // Verify the stored token is valid
-        verifyToken(user.token)
-          .catch(() => {
-            localStorage.removeItem('currentUser');
-            return null;
-          });
-        return user;
+        return user; // Return user immediately for initial state
       } catch (error) {
         localStorage.removeItem('currentUser');
         return null;
@@ -919,20 +949,59 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // Add token verification on app load
+  // Then add a special hook to handle route changes inside the App component
   useEffect(() => {
-    const verifySession = async () => {
-      const verifiedUser = await verifyToken();
-      if (verifiedUser) {
-        setCurrentUser(verifiedUser);
-      } else {
-        setCurrentUser(null);
-        localStorage.removeItem('currentUser');
+    // Periodic token validation function
+    const validateToken = async () => {
+      if (currentUser && currentUser.token) {
+        try {
+          const verifiedUser = await verifyToken(currentUser.token);
+          if (verifiedUser) {
+            // Only update if there are actual changes to avoid unnecessary re-renders
+            if (JSON.stringify(verifiedUser) !== JSON.stringify(currentUser)) {
+              setCurrentUser(verifiedUser);
+            }
+          } else {
+            // Token invalid, log out
+            setCurrentUser(null);
+            localStorage.removeItem('currentUser');
+          }
+        } catch (error) {
+          logger.error('Periodic token validation failed:', error);
+        }
       }
     };
 
-    verifySession();
-  }, []);
+    // Listen for router navigation events to maintain authentication across routes
+    const handleRouteChange = () => {
+      if (currentUser) {
+        // Reconnect socket when changing routes
+        reconnectSocket();
+        
+        // Also verify token on route change
+        validateToken();
+      }
+    };
+
+    // Listen for route changes
+    window.addEventListener('popstate', handleRouteChange);
+    
+    // Also ensure authentication on initial load
+    if (currentUser) {
+      reconnectSocket();
+    }
+
+    // Set up periodic validation (every 5 minutes)
+    const interval = setInterval(validateToken, 5 * 60 * 1000);
+    
+    // Initial validation
+    validateToken();
+
+    return () => {
+      window.removeEventListener('popstate', handleRouteChange);
+      clearInterval(interval);
+    };
+  }, [currentUser]);
 
   const handleProfileUpdate = (updatedUser) => {
     setCurrentUser(updatedUser);
@@ -1278,502 +1347,521 @@ function App() {
     };
   }, []);
 
+  // Modify the return statement to wrap everything in the Auth context provider
   return (
-    <Router>
-      <Routes>
-        <Route path="/marketplace" element={
-          <Marketplace 
-            currentUser={currentUser}
-            onLogin={handleLogin}
-            onLogout={handleLogout}
-            onCreateAccount={handleCreateAccount}
-            onBannerSubmit={handleBannerSubmit}
-          />
-        } />
-        <Route path="/games" element={
-          <GameHub 
-            currentUser={currentUser}
-            onLogin={handleLogin}
-            onLogout={handleLogout}
-            onCreateAccount={handleCreateAccount}
-          />
-        } />
-        <Route path="/" element={
-          <div className="bg-gradient-to-br from-gray-900 to-black text-white overflow-y-auto h-screen">
-            {/* Background stays fixed */}
-            <div className="fixed inset-0">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-black"></div>
-              <div className="tech-lines"></div>
-              <div className="tech-dots"></div>
-            </div>
-
-            {/* Remove duplicate TokenBanner */}
-            
-            {/* Main content wrapper */}
-            <div className="relative z-10">
-              {/* Navigation and banner stay fixed */}
-              <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm shadow-lg shadow-blue-500/20 z-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <div className="flex items-center justify-between h-16">
-                    <div className="flex items-center">
-                      <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 glow-text">AQUADS</span>
-                    </div>
-                    
-                    {/* Mobile menu button */}
-                    <div className="md:hidden">
-                      <button
-                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        className="text-gray-300 hover:text-white p-2"
-                      >
-                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          {isMobileMenuOpen ? (
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          ) : (
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                          )}
-                        </svg>
-                      </button>
-                    </div>
-
-                    {/* Desktop menu */}
-                    <div className="hidden md:flex items-center space-x-4">
-                      <Link
-                        to="/marketplace"
-                        className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
-                      >
-                        Freelancer Hub
-                      </Link>
-                      <Link
-                        to="/games"
-                        className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
-                      >
-                        GameHub
-                      </Link>
-                      <Link
-                        to="/how-to"
-                        className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
-                      >
-                        How To
-                      </Link>
-                      {currentUser ? (
-                        <>
-                          <NotificationBell currentUser={currentUser} />
-                          <span className="text-blue-300">Welcome, {currentUser.username}!</span>
-                          <button
-                            onClick={() => setShowDashboard(true)}
-                            className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
-                          >
-                            Dashboard
-                          </button>
-                          <button
-                            onClick={() => setShowProfileModal(true)}
-                            className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
-                          >
-                            Edit Profile
-                          </button>
-                          <button
-                            onClick={() => setShowCreateModal(true)}
-                            className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
-                          >
-                            List Project
-                          </button>
-                          <button
-                            onClick={handleLogout}
-                            className="bg-red-500/80 hover:bg-red-600/80 px-4 py-2 rounded shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm"
-                          >
-                            Logout
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => setShowLoginModal(true)}
-                            className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
-                          >
-                            Login
-                          </button>
-                          <button
-                            onClick={() => setShowCreateAccountModal(true)}
-                            className="bg-green-500/80 hover:bg-green-600/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
-                          >
-                            Create Account
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Mobile menu */}
-                  <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden py-2`}>
-                    <div className="flex flex-col space-y-2">
-                      <Link
-                        to="/marketplace"
-                        className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
-                      >
-                        Freelancer Hub
-                      </Link>
-                      <Link
-                        to="/games"
-                        className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
-                      >
-                        GameHub
-                      </Link>
-                      <Link
-                        to="/how-to"
-                        className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
-                      >
-                        How To
-                      </Link>
-                      {currentUser ? (
-                        <>
-                          <div className="flex justify-center">
-                            <NotificationBell currentUser={currentUser} />
-                          </div>
-                          <span className="text-blue-300 text-center">Welcome, {currentUser.username}!</span>
-                          <button
-                            onClick={() => {
-                              setShowDashboard(true);
-                              setIsMobileMenuOpen(false);
-                            }}
-                            className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
-                          >
-                            Dashboard
-                          </button>
-                          <button
-                            onClick={() => {
-                              setShowProfileModal(true);
-                              setIsMobileMenuOpen(false);
-                            }}
-                            className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
-                          >
-                            Edit Profile
-                          </button>
-                          <button
-                            onClick={() => {
-                              setShowCreateModal(true);
-                              setIsMobileMenuOpen(false);
-                            }}
-                            className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
-                          >
-                            List Project
-                          </button>
-                          <button
-                            onClick={() => {
-                              handleLogout();
-                              setIsMobileMenuOpen(false);
-                            }}
-                            className="bg-red-500/80 hover:bg-red-600/80 px-4 py-2 rounded shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm"
-                          >
-                            Logout
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => {
-                              setShowLoginModal(true);
-                              setIsMobileMenuOpen(false);
-                            }}
-                            className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
-                          >
-                            Login
-                          </button>
-                          <button
-                            onClick={() => {
-                              setShowCreateAccountModal(true);
-                              setIsMobileMenuOpen(false);
-                            }}
-                            className="bg-green-500/80 hover:bg-green-600/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
-                          >
-                            Create Account
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </nav>
-
-              <div className="fixed top-16 left-0 right-0 z-40 token-banner-container">
-                <TokenBanner />
+    <AuthContext.Provider value={{ currentUser, setCurrentUser }}>
+      <Router>
+        <NavigationListener 
+          onNavigate={() => {
+            if (currentUser) {
+              reconnectSocket();
+              verifyToken(currentUser.token)
+                .then(verifiedUser => {
+                  if (verifiedUser && JSON.stringify(verifiedUser) !== JSON.stringify(currentUser)) {
+                    setCurrentUser(verifiedUser);
+                  }
+                })
+                .catch(err => {
+                  logger.error('Route navigation token verification error:', err);
+                });
+            }
+          }} 
+        />
+        <Routes>
+          <Route path="/marketplace" element={
+            <Marketplace 
+              currentUser={currentUser}
+              onLogin={handleLogin}
+              onLogout={handleLogout}
+              onCreateAccount={handleCreateAccount}
+              onBannerSubmit={handleBannerSubmit}
+            />
+          } />
+          <Route path="/games" element={
+            <GameHub 
+              currentUser={currentUser}
+              onLogin={handleLogin}
+              onLogout={handleLogout}
+              onCreateAccount={handleCreateAccount}
+            />
+          } />
+          <Route path="/" element={
+            <div className="bg-gradient-to-br from-gray-900 to-black text-white overflow-y-auto h-screen">
+              {/* Background stays fixed */}
+              <div className="fixed inset-0">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-black to-black"></div>
+                <div className="tech-lines"></div>
+                <div className="tech-dots"></div>
               </div>
 
-              {/* Main content - allow natural scrolling */}
-              <div className="pt-28">
-                {/* Bubbles section - keep it as is, remove fixed positioning */}
-                <div className="relative min-h-screen">
-                  {/* Ads */}
-                  {ads && ads.length > 0 ? (
-                    ads.map(ad => {
-                      const { x, y } = ensureInViewport(
-                        ad.x,
-                        ad.y,
-                        ad.size,
-                        windowSize.width,
-                        windowSize.height,
-                        ads,
-                        ad.id
-                      );
-                      const imageSize = Math.floor(ad.size * 0.75);
-
-                      return (
-                        <div 
-                          key={ad.id}
-                          className="bubble-container"
-                          style={{
-                            left: `${x}px`,
-                            top: `${y}px`,
-                            width: `${ad.size}px`,
-                            height: `${ad.size}px`,
-                          }}
+              {/* Remove duplicate TokenBanner */}
+              
+              {/* Main content wrapper */}
+              <div className="relative z-10">
+                {/* Navigation and banner stay fixed */}
+                <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm shadow-lg shadow-blue-500/20 z-50">
+                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex items-center justify-between h-16">
+                      <div className="flex items-center">
+                        <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 glow-text">AQUADS</span>
+                      </div>
+                      
+                      {/* Mobile menu button */}
+                      <div className="md:hidden">
+                        <button
+                          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                          className="text-gray-300 hover:text-white p-2"
                         >
-                          <motion.div
-                            className="absolute transform hover:scale-105 bubble"
+                          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            {isMobileMenuOpen ? (
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            ) : (
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                            )}
+                          </svg>
+                        </button>
+                      </div>
+
+                      {/* Desktop menu */}
+                      <div className="hidden md:flex items-center space-x-4">
+                        <Link
+                          to="/marketplace"
+                          className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
+                        >
+                          Freelancer Hub
+                        </Link>
+                        <Link
+                          to="/games"
+                          className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
+                        >
+                          GameHub
+                        </Link>
+                        <Link
+                          to="/how-to"
+                          className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
+                        >
+                          How To
+                        </Link>
+                        {currentUser ? (
+                          <>
+                            <NotificationBell currentUser={currentUser} />
+                            <span className="text-blue-300">Welcome, {currentUser.username}!</span>
+                            <button
+                              onClick={() => setShowDashboard(true)}
+                              className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                            >
+                              Dashboard
+                            </button>
+                            <button
+                              onClick={() => setShowProfileModal(true)}
+                              className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
+                            >
+                              Edit Profile
+                            </button>
+                            <button
+                              onClick={() => setShowCreateModal(true)}
+                              className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
+                            >
+                              List Project
+                            </button>
+                            <button
+                              onClick={handleLogout}
+                              className="bg-red-500/80 hover:bg-red-600/80 px-4 py-2 rounded shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm"
+                            >
+                              Logout
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => setShowLoginModal(true)}
+                              className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                            >
+                              Login
+                            </button>
+                            <button
+                              onClick={() => setShowCreateAccountModal(true)}
+                              className="bg-green-500/80 hover:bg-green-600/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
+                            >
+                              Create Account
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Mobile menu */}
+                    <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden py-2`}>
+                      <div className="flex flex-col space-y-2">
+                        <Link
+                          to="/marketplace"
+                          className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+                        >
+                          Freelancer Hub
+                        </Link>
+                        <Link
+                          to="/games"
+                          className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+                        >
+                          GameHub
+                        </Link>
+                        <Link
+                          to="/how-to"
+                          className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+                        >
+                          How To
+                        </Link>
+                        {currentUser ? (
+                          <>
+                            <div className="flex justify-center">
+                              <NotificationBell currentUser={currentUser} />
+                            </div>
+                            <span className="text-blue-300 text-center">Welcome, {currentUser.username}!</span>
+                            <button
+                              onClick={() => {
+                                setShowDashboard(true);
+                                setIsMobileMenuOpen(false);
+                              }}
+                              className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                            >
+                              Dashboard
+                            </button>
+                            <button
+                              onClick={() => {
+                                setShowProfileModal(true);
+                                setIsMobileMenuOpen(false);
+                              }}
+                              className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
+                            >
+                              Edit Profile
+                            </button>
+                            <button
+                              onClick={() => {
+                                setShowCreateModal(true);
+                                setIsMobileMenuOpen(false);
+                              }}
+                              className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
+                            >
+                              List Project
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleLogout();
+                                setIsMobileMenuOpen(false);
+                              }}
+                              className="bg-red-500/80 hover:bg-red-600/80 px-4 py-2 rounded shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm"
+                            >
+                              Logout
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => {
+                                setShowLoginModal(true);
+                                setIsMobileMenuOpen(false);
+                              }}
+                              className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                            >
+                              Login
+                            </button>
+                            <button
+                              onClick={() => {
+                                setShowCreateAccountModal(true);
+                                setIsMobileMenuOpen(false);
+                              }}
+                              className="bg-green-500/80 hover:bg-green-600/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
+                            >
+                              Create Account
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </nav>
+
+                <div className="fixed top-16 left-0 right-0 z-40 token-banner-container">
+                  <TokenBanner />
+                </div>
+
+                {/* Main content - allow natural scrolling */}
+                <div className="pt-28">
+                  {/* Bubbles section - keep it as is, remove fixed positioning */}
+                  <div className="relative min-h-screen">
+                    {/* Ads */}
+                    {ads && ads.length > 0 ? (
+                      ads.map(ad => {
+                        const { x, y } = ensureInViewport(
+                          ad.x,
+                          ad.y,
+                          ad.size,
+                          windowSize.width,
+                          windowSize.height,
+                          ads,
+                          ad.id
+                        );
+                        const imageSize = Math.floor(ad.size * 0.75);
+
+                        return (
+                          <div 
+                            key={ad.id}
+                            className="bubble-container"
                             style={{
+                              left: `${x}px`,
+                              top: `${y}px`,
                               width: `${ad.size}px`,
                               height: `${ad.size}px`,
-                              transition: `all ${ANIMATION_DURATION} ease-in-out`,
-                              zIndex: ad.isBumped ? 2 : 1,
-                              animationDuration: `${8 + Math.random() * 4}s`,
-                              cursor: 'pointer',
-                              touchAction: 'auto',
-                              position: 'absolute',
-                              top: 0,
-                              left: 0
-                            }}
-                            onClick={(e) => {
-                              if (!e.defaultPrevented) {
-                                if (requireAuth()) {
-                                  window.open(ad.url, '_blank');
-                                }
-                              }
                             }}
                           >
-                            <div className="bubble-content">
-                              {/* Background of bubble */}
-                              <div className="bubble-bg"></div>
-                              
-                              {/* Curved text at top */}
-                              <div 
-                                className="bubble-text-curved"
-                                onClick={(e) => {
-                                  e.stopPropagation();
+                            <motion.div
+                              className="absolute transform hover:scale-105 bubble"
+                              style={{
+                                width: `${ad.size}px`,
+                                height: `${ad.size}px`,
+                                transition: `all ${ANIMATION_DURATION} ease-in-out`,
+                                zIndex: ad.isBumped ? 2 : 1,
+                                animationDuration: `${8 + Math.random() * 4}s`,
+                                cursor: 'pointer',
+                                touchAction: 'auto',
+                                position: 'absolute',
+                                top: 0,
+                                left: 0
+                              }}
+                              onClick={(e) => {
+                                if (!e.defaultPrevented) {
                                   if (requireAuth()) {
-                                    setSelectedAdId(ad.id);
-                                    setShowBumpStore(true);
+                                    window.open(ad.url, '_blank');
                                   }
-                                }}
-                              >
-                                <span 
-                                  className="text-white truncate block hover:text-blue-300 transition-colors duration-300"
-                                  style={{
-                                    fontSize: `${Math.max(ad.size * 0.09, 10)}px`
-                                  }}
-                                >
-                                  {ad.title}
-                                </span>
-                              </div>
-                              
-                              {/* Larger Logo */}
-                              <div 
-                                className="bubble-logo-container"
-                              >
-                                <img
-                                  src={ad.logo}
-                                  alt={ad.title}
-                                  loading="eager"
-                                  className="w-full h-full object-contain"
-                                  style={{
-                                    objectFit: 'contain',
-                                    width: '100%',
-                                    height: '100%'
-                                  }}
-                                  onLoad={(e) => {
-                                    if (e.target.src.toLowerCase().endsWith('.gif')) {
-                                      e.target.setAttribute('loop', 'infinite');
+                                }
+                              }}
+                            >
+                              <div className="bubble-content">
+                                {/* Background of bubble */}
+                                <div className="bubble-bg"></div>
+                                
+                                {/* Curved text at top */}
+                                <div 
+                                  className="bubble-text-curved"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (requireAuth()) {
+                                      setSelectedAdId(ad.id);
+                                      setShowBumpStore(true);
                                     }
                                   }}
-                                />
+                                >
+                                  <span 
+                                    className="text-white truncate block hover:text-blue-300 transition-colors duration-300"
+                                    style={{
+                                      fontSize: `${Math.max(ad.size * 0.09, 10)}px`
+                                    }}
+                                  >
+                                    {ad.title}
+                                  </span>
+                                </div>
+                                
+                                {/* Larger Logo */}
+                                <div 
+                                  className="bubble-logo-container"
+                                >
+                                  <img
+                                    src={ad.logo}
+                                    alt={ad.title}
+                                    loading="eager"
+                                    className="w-full h-full object-contain"
+                                    style={{
+                                      objectFit: 'contain',
+                                      width: '100%',
+                                      height: '100%'
+                                    }}
+                                    onLoad={(e) => {
+                                      if (e.target.src.toLowerCase().endsWith('.gif')) {
+                                        e.target.setAttribute('loop', 'infinite');
+                                      }
+                                    }}
+                                  />
+                                </div>
                               </div>
-                            </div>
-                          </motion.div>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="flex items-center justify-center h-screen">
-                      <p className="text-gray-500">Loading ads...</p>
-                    </div>
-                  )}
-                </div>
+                            </motion.div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="flex items-center justify-center h-screen">
+                        <p className="text-gray-500">Loading ads...</p>
+                      </div>
+                    )}
+                  </div>
 
-                {/* Token list section - add z-index and proper background */}
-                <div className="relative z-10 bg-transparent">
-                  {/* Multi-Section Banner (GameHub, Freelancer, Affiliate) */}
-                  <div className="w-full overflow-hidden relative">
-                    {/* SVG Banner Image */}
-                    <img
-                      src="/FREELANCER-HUB.svg"
-                      alt="Navigation Banner"
-                      className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px]"
+                  {/* Token list section - add z-index and proper background */}
+                  <div className="relative z-10 bg-transparent">
+                    {/* Multi-Section Banner (GameHub, Freelancer, Affiliate) */}
+                    <div className="w-full overflow-hidden relative">
+                      {/* SVG Banner Image */}
+                      <img
+                        src="/FREELANCER-HUB.svg"
+                        alt="Navigation Banner"
+                        className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px]"
+                      />
+                      
+                      {/* Clickable overlay areas */}
+                      <div className="absolute inset-0">
+                        {/* GameHub Section (left third) */}
+                        <Link 
+                          to="/games" 
+                          className="absolute top-0 bottom-0 left-0 w-1/3"
+                          aria-label="Go to Game Hub"
+                        >
+                          <span className="sr-only">Game Hub</span>
+                        </Link>
+                        
+                        {/* Freelancer Hub Section (middle third) */}
+                        <Link 
+                          to="/marketplace" 
+                          className="absolute top-0 bottom-0 left-1/3 w-1/3"
+                          aria-label="Go to Freelancer Hub"
+                        >
+                          <span className="sr-only">Freelancer Hub</span>
+                        </Link>
+                        
+                        {/* Affiliate Program Section (right third) */}
+                        <Link 
+                          to="/affiliate" 
+                          className="absolute top-0 bottom-0 left-2/3 w-1/3"
+                          aria-label="Go to Affiliate Program"
+                        >
+                          <span className="sr-only">Affiliate Program</span>
+                        </Link>
+                      </div>
+                    </div>
+                    <TokenList 
+                      currentUser={currentUser}
+                      showNotification={showNotification}
                     />
-                    
-                    {/* Clickable overlay areas */}
-                    <div className="absolute inset-0">
-                      {/* GameHub Section (left third) */}
-                      <Link 
-                        to="/games" 
-                        className="absolute top-0 bottom-0 left-0 w-1/3"
-                        aria-label="Go to Game Hub"
-                      >
-                        <span className="sr-only">Game Hub</span>
-                      </Link>
-                      
-                      {/* Freelancer Hub Section (middle third) */}
-                      <Link 
-                        to="/marketplace" 
-                        className="absolute top-0 bottom-0 left-1/3 w-1/3"
-                        aria-label="Go to Freelancer Hub"
-                      >
-                        <span className="sr-only">Freelancer Hub</span>
-                      </Link>
-                      
-                      {/* Affiliate Program Section (right third) */}
-                      <Link 
-                        to="/affiliate" 
-                        className="absolute top-0 bottom-0 left-2/3 w-1/3"
-                        aria-label="Go to Affiliate Program"
-                      >
-                        <span className="sr-only">Affiliate Program</span>
-                      </Link>
-                    </div>
                   </div>
-                  <TokenList 
-                    currentUser={currentUser}
-                    showNotification={showNotification}
+                </div>
+
+                {/* Modals */}
+                {showLoginModal && (
+                  <LoginModal
+                    onLogin={handleLogin}
+                    onClose={() => setShowLoginModal(false)}
+                    onCreateAccount={() => {
+                      setShowLoginModal(false);
+                      setShowCreateAccountModal(true);
+                    }}
                   />
+                )}
+
+                {showProfileModal && currentUser && (
+                  <ProfileModal
+                    currentUser={currentUser}
+                    onClose={() => setShowProfileModal(false)}
+                    onProfileUpdate={handleProfileUpdate}
+                  />
+                )}
+
+                {showCreateAccountModal && (
+                  <CreateAccountModal
+                    isOpen={showCreateAccountModal}
+                    onCreateAccount={handleCreateAccount}
+                    onClose={() => setShowCreateAccountModal(false)}
+                  />
+                )}
+
+                {showCreateModal && currentUser && (
+                  <CreateAdModal
+                    onCreateAd={handleCreateAd}
+                    onClose={() => setShowCreateModal(false)}
+                  />
+                )}
+
+                {showBumpStore && selectedAdId && currentUser && (
+                  <BumpStore
+                    ad={ads.find(ad => ad.id === selectedAdId)}
+                    onClose={() => {
+                      setShowBumpStore(false);
+                      setSelectedAdId(null);
+                    }}
+                    onSubmitPayment={handleBumpPurchase}
+                  />
+                )}
+
+                {showEditModal && adToEdit && currentUser && (
+                  <EditAdModal
+                    ad={adToEdit}
+                    onEditAd={handleEditAd}
+                    onClose={() => {
+                      setShowEditModal(false);
+                      setAdToEdit(null);
+                    }}
+                  />
+                )}
+
+                {showDashboard && currentUser && (
+                  <Dashboard
+                    ads={ads}
+                    currentUser={currentUser}
+                    onClose={() => {
+                      setShowDashboard(false);
+                      setActiveBookingId(null);
+                    }}
+                    onDeleteAd={handleDeleteAd}
+                    onBumpAd={handleBumpPurchase}
+                    onEditAd={handleEditAd}
+                    onRejectBump={handleRejectBump}
+                    onApproveBump={handleApproveBump}
+                    initialBookingId={activeBookingId}
+                  />
+                )}
+
+                {showWelcomeModal && (
+                  <WelcomeModal
+                    username={currentUser.username}
+                    referralCode={currentUser.referralCode}
+                    onClose={() => setShowWelcomeModal(false)}
+                  />
+                )}
+
+                {/* Notifications */}
+                <div className="fixed bottom-4 right-4 space-y-2 z-50">
+                  {notifications.map(({ id, message, type }) => (
+                    <div
+                      key={id}
+                      className={`p-4 rounded shadow-lg ${
+                        type === 'error' ? 'bg-red-500' :
+                        type === 'success' ? 'bg-green-500' :
+                        'bg-blue-500'
+                      }`}
+                    >
+                      {message}
+                    </div>
+                  ))}
                 </div>
-              </div>
 
-              {/* Modals */}
-              {showLoginModal && (
-                <LoginModal
-                  onLogin={handleLogin}
-                  onClose={() => setShowLoginModal(false)}
-                  onCreateAccount={() => {
-                    setShowLoginModal(false);
-                    setShowCreateAccountModal(true);
-                  }}
-                />
-              )}
-
-              {showProfileModal && currentUser && (
-                <ProfileModal
-                  currentUser={currentUser}
-                  onClose={() => setShowProfileModal(false)}
-                  onProfileUpdate={handleProfileUpdate}
-                />
-              )}
-
-              {showCreateAccountModal && (
-                <CreateAccountModal
-                  isOpen={showCreateAccountModal}
-                  onCreateAccount={handleCreateAccount}
-                  onClose={() => setShowCreateAccountModal(false)}
-                />
-              )}
-
-              {showCreateModal && currentUser && (
-                <CreateAdModal
-                  onCreateAd={handleCreateAd}
-                  onClose={() => setShowCreateModal(false)}
-                />
-              )}
-
-              {showBumpStore && selectedAdId && currentUser && (
-                <BumpStore
-                  ad={ads.find(ad => ad.id === selectedAdId)}
-                  onClose={() => {
-                    setShowBumpStore(false);
-                    setSelectedAdId(null);
-                  }}
-                  onSubmitPayment={handleBumpPurchase}
-                />
-              )}
-
-              {showEditModal && adToEdit && currentUser && (
-                <EditAdModal
-                  ad={adToEdit}
-                  onEditAd={handleEditAd}
-                  onClose={() => {
-                    setShowEditModal(false);
-                    setAdToEdit(null);
-                  }}
-                />
-              )}
-
-              {showDashboard && currentUser && (
-                <Dashboard
-                  ads={ads}
-                  currentUser={currentUser}
-                  onClose={() => {
-                    setShowDashboard(false);
-                    setActiveBookingId(null);
-                  }}
-                  onDeleteAd={handleDeleteAd}
-                  onBumpAd={handleBumpPurchase}
-                  onEditAd={handleEditAd}
-                  onRejectBump={handleRejectBump}
-                  onApproveBump={handleApproveBump}
-                  initialBookingId={activeBookingId}
-                />
-              )}
-
-              {showWelcomeModal && (
-                <WelcomeModal
-                  username={currentUser.username}
-                  referralCode={currentUser.referralCode}
-                  onClose={() => setShowWelcomeModal(false)}
-                />
-              )}
-
-              {/* Notifications */}
-              <div className="fixed bottom-4 right-4 space-y-2 z-50">
-                {notifications.map(({ id, message, type }) => (
-                  <div
-                    key={id}
-                    className={`p-4 rounded shadow-lg ${
-                      type === 'error' ? 'bg-red-500' :
-                      type === 'success' ? 'bg-green-500' :
-                      'bg-blue-500'
-                    }`}
-                  >
-                    {message}
+                {/* Debug info */}
+                {process.env.NODE_ENV === 'development' && (
+                  <div className="fixed bottom-4 left-4 text-white text-sm z-50">
+                    Ads loaded: {ads.length}
                   </div>
-                ))}
+                )}
               </div>
 
-              {/* Debug info */}
-              {process.env.NODE_ENV === 'development' && (
-                <div className="fixed bottom-4 left-4 text-white text-sm z-50">
-                  Ads loaded: {ads.length}
-                </div>
-              )}
+              {/* Footer */}
+              <div className="relative z-10">
+                <Footer />
+              </div>
             </div>
-
-            {/* Footer */}
-            <div className="relative z-10">
-              <Footer />
-            </div>
-          </div>
-        } />
-        <Route path="/whitepaper" element={<Whitepaper />} />
-        <Route path="/how-to" element={<HowTo currentUser={currentUser} />} />
-        <Route path="/how-to/:slug" element={<HowTo currentUser={currentUser} />} />
-        <Route path="/affiliate" element={<Affiliate />} />
-        <Route path="/terms" element={<Terms />} />
-      </Routes>
-    </Router>
+          } />
+          <Route path="/whitepaper" element={<Whitepaper />} />
+          <Route path="/how-to" element={<HowTo currentUser={currentUser} />} />
+          <Route path="/how-to/:slug" element={<HowTo currentUser={currentUser} />} />
+          <Route path="/affiliate" element={<Affiliate />} />
+          <Route path="/terms" element={<Terms />} />
+        </Routes>
+      </Router>
+    </AuthContext.Provider>
   );
 }
 

@@ -156,11 +156,21 @@ export const loginUser = async (credentials) => {
     }
 
     const userData = await response.json();
-    localStorage.setItem('currentUser', JSON.stringify(userData));
+    
+    // Store user data in a more robust way
+    try {
+      localStorage.setItem('currentUser', JSON.stringify(userData));
+    } catch (storageError) {
+      logger.error('Error storing user data in localStorage:', storageError);
+    }
     
     // Update socket auth
     socket.auth = { token: userData.token };
-    socket.connect();
+    
+    // Ensure socket is connected
+    if (!socket.connected) {
+      socket.connect();
+    }
 
     return userData;
   } catch (error) {
@@ -169,17 +179,23 @@ export const loginUser = async (credentials) => {
   }
 };
 
-// Add a function to verify token
-export const verifyToken = async () => {
+// Update the verifyToken function to return user data and handle token parameter
+export const verifyToken = async (token = null) => {
   try {
-    const savedUser = localStorage.getItem('currentUser');
-    if (!savedUser) return false;
-
-    const user = JSON.parse(savedUser);
+    // If token is not provided, try to get it from localStorage
+    if (!token) {
+      const savedUser = localStorage.getItem('currentUser');
+      if (!savedUser) return null;
+      
+      const user = JSON.parse(savedUser);
+      token = user.token;
+    }
+    
+    // Use the token to verify
     const response = await fetch(`${API_URL}/verify-token`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${user.token}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     });
@@ -188,10 +204,38 @@ export const verifyToken = async () => {
       throw new Error('Token verification failed');
     }
 
-    return true;
+    // If verifyToken returns user data from server, parse it
+    const data = await response.json();
+    
+    // If the server returns user data, use it and ensure socket connection
+    if (data && data.userId) {
+      // Make sure socket is connected with current token
+      socket.auth = { token: data.token || token };
+      if (!socket.connected) {
+        socket.connect();
+      }
+      
+      // Store updated user data
+      localStorage.setItem('currentUser', JSON.stringify(data));
+      return data;
+    }
+    
+    // Otherwise, get the user data from localStorage and ensure socket connection
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+      const userData = JSON.parse(savedUser);
+      // Make sure socket is connected with current token
+      socket.auth = { token: userData.token };
+      if (!socket.connected) {
+        socket.connect();
+      }
+      return userData;
+    }
+    
+    return null;
   } catch (error) {
     logger.error('Token verification error:', error);
-    return false;
+    return null;
   }
 };
 
@@ -910,5 +954,24 @@ export const fetchGameCategories = async () => {
   } catch (error) {
     logger.error('Error fetching game categories:', error);
     throw error;
+  }
+};
+
+// Add a function to reconnect to socket with current token
+export const reconnectSocket = () => {
+  const savedUser = localStorage.getItem('currentUser');
+  if (savedUser) {
+    try {
+      const user = JSON.parse(savedUser);
+      // Update socket auth
+      socket.auth = { token: user.token };
+      
+      // Check if socket is disconnected, and reconnect if needed
+      if (!socket.connected) {
+        socket.connect();
+      }
+    } catch (error) {
+      logger.error('Socket reconnection error:', error);
+    }
   }
 }; 
