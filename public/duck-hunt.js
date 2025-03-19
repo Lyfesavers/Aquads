@@ -12,6 +12,18 @@
   let soundEnabled = false; // Track if sounds are enabled
   let soundsCreated = false; // Track if sounds are created
   
+  // Create a silent logger that only logs in development
+  const isDev = window.location.hostname === 'localhost' || 
+                window.location.hostname === '127.0.0.1' || 
+                window.location.hostname.includes('dev');
+  
+  // Create a silent logger
+  const logger = {
+    log: isDev ? console.log.bind(console) : function(){},
+    error: isDev ? console.error.bind(console) : function(){},
+    warn: isDev ? console.warn.bind(console) : function(){}
+  };
+  
   // Duck species (classic Duck Hunt color palettes)
   const duckSpecies = [
     {
@@ -69,7 +81,7 @@
     
     try {
       const ctx = getAudioContext();
-      console.log('Playing sound:', soundName, 'using Web Audio API');
+      logger.log('Playing sound:', soundName, 'using Web Audio API');
       
       // Create different sounds based on name
       switch(soundName) {
@@ -89,10 +101,10 @@
           playDogLaugh(ctx);
           break;
         default:
-          console.error('Unknown sound:', soundName);
+          logger.error('Unknown sound:', soundName);
       }
     } catch (error) {
-      console.error('Failed to play sound:', soundName, error);
+      logger.error('Failed to play sound:', soundName, error);
     }
   }
   
@@ -263,7 +275,7 @@
     
     // Initialize audio context on first user interaction
     function unlockAudio() {
-      console.log('Attempting to unlock audio...');
+      logger.log('Attempting to unlock audio...');
       
       // Create and initialize audio context
       const ctx = getAudioContext();
@@ -284,7 +296,7 @@
       document.removeEventListener('touchstart', unlockAudio);
       document.removeEventListener('keydown', unlockAudio);
       
-      console.log('Audio unlock attempt complete');
+      logger.log('Audio unlock attempt complete');
     }
     
     // Add event listeners to unlock audio
@@ -298,7 +310,7 @@
       // Shift+D to enter debug mode
       if (e.shiftKey && e.key === 'D') {
         debugMode = !debugMode;
-        console.log('Duck hunt debug mode:', debugMode ? 'ON' : 'OFF');
+        logger.log('Duck hunt debug mode:', debugMode ? 'ON' : 'OFF');
         
         // Show/hide debug controls
         const debugControls = document.getElementById('duck-hunt-debug');

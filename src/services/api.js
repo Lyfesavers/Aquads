@@ -1,5 +1,6 @@
 import io from 'socket.io-client';
 import axios from 'axios';
+import logger from '../utils/logger';
 
 export const API_URL = process.env.NODE_ENV === 'production' 
   ? 'https://aquads.onrender.com/api'
@@ -33,7 +34,7 @@ const getAuthHeader = () => {
     const user = JSON.parse(savedUser);
     return user?.token ? { 'Authorization': `Bearer ${user.token}` } : {};
   } catch (error) {
-    console.error('Error getting auth header:', error);
+    logger.error('Error getting auth header:', error);
     return {};
   }
 };
@@ -52,7 +53,7 @@ export const fetchAds = async () => {
     localStorage.setItem('cachedAds', JSON.stringify(data));
     return data;
   } catch (error) {
-    console.error('Error fetching ads:', error);
+    logger.error('Error fetching ads:', error);
     // Return cached ads if available
     const cachedAds = localStorage.getItem('cachedAds');
     return cachedAds ? JSON.parse(cachedAds) : [];
@@ -163,7 +164,7 @@ export const loginUser = async (credentials) => {
 
     return userData;
   } catch (error) {
-    console.error('Login error:', error);
+    logger.error('Login error:', error);
     throw error;
   }
 };
@@ -189,7 +190,7 @@ export const verifyToken = async () => {
 
     return true;
   } catch (error) {
-    console.error('Token verification error:', error);
+    logger.error('Token verification error:', error);
     return false;
   }
 };
@@ -219,17 +220,17 @@ export const register = async (userData) => {
 
     return data;
   } catch (error) {
-    console.error('Registration error:', error);
+    logger.error('Registration error:', error);
     throw error;
   }
 };
 
 // Create bump request
 export const createBumpRequest = async (bumpData) => {
-  console.log("Creating bump request with data:", bumpData);
+  logger.log("Creating bump request with data:", bumpData);
   
   if (!bumpData.txSignature) {
-    console.error("Missing transaction signature in bump request");
+    logger.error("Missing transaction signature in bump request");
     throw new Error("Transaction signature is required");
   }
   
@@ -243,19 +244,19 @@ export const createBumpRequest = async (bumpData) => {
       body: JSON.stringify(bumpData),
     });
     
-    console.log("Bump request response status:", response.status);
+    logger.log("Bump request response status:", response.status);
     
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.error("Bump request API error:", errorData);
+      logger.error("Bump request API error:", errorData);
       throw new Error(errorData.error || 'Failed to create bump request');
     }
     
     const data = await response.json();
-    console.log("Bump request created successfully:", data);
+    logger.log("Bump request created successfully:", data);
     return data;
   } catch (error) {
-    console.error("Error in createBumpRequest:", error);
+    logger.error("Error in createBumpRequest:", error);
     throw error;
   }
 };
@@ -313,7 +314,7 @@ let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
 
 socket.on('connect', () => {
-  console.log('Socket connected');
+  logger.log('Socket connected');
   reconnectAttempts = 0;
   
   // Refresh authentication on successful connection
@@ -324,13 +325,13 @@ socket.on('connect', () => {
       socket.auth = { token: user.token };
       socket.connect();
     } catch (error) {
-      console.error('Socket auth error:', error);
+      logger.error('Socket auth error:', error);
     }
   }
 });
 
 socket.on('connect_error', async (error) => {
-  console.error('Socket connection error:', error);
+  logger.error('Socket connection error:', error);
   reconnectAttempts++;
 
   if (reconnectAttempts <= MAX_RECONNECT_ATTEMPTS) {
@@ -345,14 +346,14 @@ socket.on('connect_error', async (error) => {
           socket.connect();
         }
       } catch (err) {
-        console.error('Reconnection auth error:', err);
+        logger.error('Reconnection auth error:', err);
       }
     }
   }
 });
 
 socket.on('disconnect', (reason) => {
-  console.log('Socket disconnected:', reason);
+  logger.log('Socket disconnected:', reason);
   
   if (reason === 'io server disconnect' || reason === 'transport close') {
     // Server disconnected us, try to reconnect with auth
@@ -375,7 +376,7 @@ setInterval(() => {
 }, 25000);
 
 socket.on('pong', () => {
-  console.log('Server heartbeat received');
+  logger.log('Server heartbeat received');
 });
 
 // Add periodic connection check
@@ -384,12 +385,12 @@ setInterval(async () => {
     const response = await fetch(`${API_URL}/health`);
     const data = await response.json();
     if (data.status !== 'ok') {
-      console.warn('Server connection issue detected');
+      logger.warn('Server connection issue detected');
     }
   } catch (error) {
-    console.error('Health check failed:', error);
+    logger.error('Health check failed:', error);
   }
-}, 30000); // Check every 30 seconds 
+}, 30000); // Check every 30 seconds
 
 // Add these review-related functions
 export const submitReview = async (reviewData, token) => {
@@ -414,7 +415,7 @@ export const submitReview = async (reviewData, token) => {
     socket.emit('newReview', data);
     return data;
   } catch (error) {
-    console.error('Error submitting review:', error);
+    logger.error('Error submitting review:', error);
     throw error;
   }
 }; 
@@ -425,7 +426,7 @@ export const pingServer = async () => {
     const response = await fetch(`${API_URL}/ads`);
     return response.ok;
   } catch (error) {
-    console.error('Server ping failed:', error);
+    logger.error('Server ping failed:', error);
     return false;
   }
 }; 
@@ -439,14 +440,14 @@ export const fetchServices = async () => {
     }
     return response.json();
   } catch (error) {
-    console.error('Error fetching services:', error);
+    logger.error('Error fetching services:', error);
     throw error;
   }
 };
 
 // Create service
 export const createService = async (serviceData) => {
-  console.log('Creating service with data:', serviceData);
+  logger.log('Creating service with data:', serviceData);
   try {
     const response = await fetch(`${API_URL}/services`, {
       method: 'POST',
@@ -464,7 +465,7 @@ export const createService = async (serviceData) => {
 
     return response.json();
   } catch (error) {
-    console.error('Service creation error:', error);
+    logger.error('Service creation error:', error);
     throw error;
   }
 };
@@ -530,7 +531,7 @@ export const searchServices = async (query) => {
 // Update user profile
 export const updateUserProfile = async (profileData) => {
   try {
-    console.log('Updating profile with data:', profileData);
+    logger.log('Updating profile with data:', profileData);
     
     // Get the current user data from localStorage
     const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
@@ -545,7 +546,7 @@ export const updateUserProfile = async (profileData) => {
       }
     });
 
-    console.log('Profile update response:', response.data);
+    logger.log('Profile update response:', response.data);
 
     if (response.data) {
       // Update stored user data with new information
@@ -564,7 +565,7 @@ export const updateUserProfile = async (profileData) => {
 
     return response.data;
   } catch (error) {
-    console.error('Profile update error:', error.response?.data || error.message);
+    logger.error('Profile update error:', error.response?.data || error.message);
     throw error.response?.data || error;
   }
 };
@@ -587,7 +588,7 @@ export const requestPasswordReset = async (username, referralCode) => {
 
     return response.json();
   } catch (error) {
-    console.error('Password reset request error:', error);
+    logger.error('Password reset request error:', error);
     throw error;
   }
 };
@@ -610,20 +611,20 @@ export const resetPassword = async (username, referralCode, newPassword) => {
 
     return response.json();
   } catch (error) {
-    console.error('Password reset error:', error);
+    logger.error('Password reset error:', error);
     throw error;
   }
 };
 
 // Add these job-related API functions
 export const fetchJobs = async () => {
-  console.log('Fetching jobs...');
+  logger.log('Fetching jobs...');
   const response = await fetch(`${API_URL}/jobs`, {
     headers: {
       ...getAuthHeader()
     }
   });
-  console.log('Jobs response:', response);
+  logger.log('Jobs response:', response);
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
     throw new Error(error.message || 'Failed to fetch jobs');
@@ -632,7 +633,7 @@ export const fetchJobs = async () => {
 };
 
 export const createJob = async (jobData) => {
-  console.log('Creating job:', jobData);
+  logger.log('Creating job:', jobData);
   const response = await fetch(`${API_URL}/jobs`, {
     method: 'POST',
     headers: {
@@ -641,7 +642,7 @@ export const createJob = async (jobData) => {
     },
     body: JSON.stringify(jobData)
   });
-  console.log('Create job response:', response);
+  logger.log('Create job response:', response);
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
     throw new Error(error.message || 'Failed to create job');
@@ -680,7 +681,7 @@ export const fetchBlogs = async () => {
     if (!response.ok) throw new Error('Failed to fetch blogs');
     return await response.json();
   } catch (error) {
-    console.error('Error fetching blogs:', error);
+    logger.error('Error fetching blogs:', error);
     throw error;
   }
 };
@@ -699,7 +700,7 @@ export const createBlog = async (blogData) => {
     if (!response.ok) throw new Error('Failed to create blog');
     return await response.json();
   } catch (error) {
-    console.error('Error creating blog:', error);
+    logger.error('Error creating blog:', error);
     throw error;
   }
 };
@@ -726,7 +727,7 @@ export const updateBlog = async (blogId, blogData) => {
     
     return await response.json();
   } catch (error) {
-    console.error('Error updating blog:', error);
+    logger.error('Error updating blog:', error);
     throw error;
   }
 };
@@ -743,7 +744,7 @@ export const deleteBlog = async (blogId) => {
     if (!response.ok) throw new Error('Failed to delete blog');
     return await response.json();
   } catch (error) {
-    console.error('Error deleting blog:', error);
+    logger.error('Error deleting blog:', error);
     throw error;
   }
 };
@@ -768,7 +769,7 @@ export const fetchGames = async (filters = {}) => {
     
     return await response.json();
   } catch (error) {
-    console.error('Error fetching games:', error);
+    logger.error('Error fetching games:', error);
     throw error;
   }
 };
@@ -783,7 +784,7 @@ export const fetchGameById = async (gameId) => {
     
     return await response.json();
   } catch (error) {
-    console.error('Error fetching game details:', error);
+    logger.error('Error fetching game details:', error);
     throw error;
   }
 };
@@ -806,7 +807,7 @@ export const createGame = async (gameData) => {
     
     return await response.json();
   } catch (error) {
-    console.error('Error creating game listing:', error);
+    logger.error('Error creating game listing:', error);
     throw error;
   }
 };
@@ -829,7 +830,7 @@ export const updateGame = async (gameId, gameData) => {
     
     return await response.json();
   } catch (error) {
-    console.error('Error updating game listing:', error);
+    logger.error('Error updating game listing:', error);
     throw error;
   }
 };
@@ -850,7 +851,7 @@ export const deleteGame = async (gameId) => {
     
     return await response.json();
   } catch (error) {
-    console.error('Error deleting game listing:', error);
+    logger.error('Error deleting game listing:', error);
     throw error;
   }
 };
@@ -872,7 +873,7 @@ export const voteForGame = async (gameId) => {
     
     return await response.json();
   } catch (error) {
-    console.error('Error voting for game:', error);
+    logger.error('Error voting for game:', error);
     throw error;
   }
 };
@@ -892,7 +893,7 @@ export const checkGameVoteStatus = async (gameId) => {
     
     return await response.json();
   } catch (error) {
-    console.error('Error checking game vote status:', error);
+    logger.error('Error checking game vote status:', error);
     throw error;
   }
 };
@@ -907,7 +908,7 @@ export const fetchGameCategories = async () => {
     
     return await response.json();
   } catch (error) {
-    console.error('Error fetching game categories:', error);
+    logger.error('Error fetching game categories:', error);
     throw error;
   }
 }; 

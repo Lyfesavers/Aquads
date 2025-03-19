@@ -19,6 +19,7 @@ import PremiumPaymentModal from './PremiumPaymentModal';
 import CreateJobModal from './CreateJobModal';
 import JobList from './JobList';
 import NotificationBell from './NotificationBell';
+import logger from '../utils/logger';
 
 // Helper function to check if URL is valid
 const isValidUrl = (string) => {
@@ -55,7 +56,7 @@ const ServiceImageComponent = ({ src, alt, className }) => {
       alt={alt}
       className={className}
       onError={(e) => {
-        console.warn(`Image failed to load: ${imgSrc}`);
+        logger.warn(`Image failed to load: ${imgSrc}`);
         e.target.onerror = null;
         setImgSrc('https://placehold.co/400x300?text=No+Image');
       }}
@@ -72,7 +73,7 @@ const UserImage = ({ src, alt, className }) => {
       alt={alt}
       className={className}
       onError={(e) => {
-        console.warn(`User image failed to load: ${imgSrc}`);
+        logger.warn(`User image failed to load: ${imgSrc}`);
         e.target.onerror = null;
         setImgSrc('https://placehold.co/40x40?text=User');
       }}
@@ -210,7 +211,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
           }
           return { ...service, rating: 0, reviews: 0 };
         } catch (error) {
-          console.error(`Error fetching reviews for service ${service._id}:`, error);
+          logger.error(`Error fetching reviews for service ${service._id}:`, error);
           return service;
         }
       }));
@@ -219,7 +220,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       setOriginalServices(servicesWithReviews);
       setLoading(false);
     } catch (error) {
-      console.error('Error loading services:', error);
+      logger.error('Error loading services:', error);
       setError('Failed to load services');
       setLoading(false);
     }
@@ -246,11 +247,11 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       }
 
       // No need for FormData since we're just sending JSON
-      console.log('Submitting service with data:', serviceData);
+      logger.log('Submitting service with data:', serviceData);
 
       // Create service with direct data
       const newService = await createService(serviceData);
-      console.log('Service created successfully:', newService);
+      logger.log('Service created successfully:', newService);
       
       // Update services list
       setServices(prevServices => [newService, ...prevServices]);
@@ -258,7 +259,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       // Close modal
       setShowCreateModal(false);
     } catch (error) {
-      console.error('Error creating service:', error);
+      logger.error('Error creating service:', error);
       alert(error.response?.data?.message || 'Failed to create service. Please try again.');
     }
   };
@@ -304,7 +305,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       setServices(prevServices => prevServices.filter(service => service._id !== serviceId));
       alert('Service deleted successfully');
     } catch (error) {
-      console.error('Error deleting service:', error);
+      logger.error('Error deleting service:', error);
       alert(error.message || 'Failed to delete service. Please try again.');
     }
   };
@@ -316,11 +317,11 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
   const handleReviewsUpdate = (updatedService) => {
     if (!updatedService?._id) {
-      console.error('No service data provided for update');
+      logger.error('No service data provided for update');
       return;
     }
 
-    console.log('Updating service with new data:', updatedService);
+    logger.log('Updating service with new data:', updatedService);
     
     // Update the services array with the new data
     setServices(prevServices => {
@@ -329,7 +330,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
           ? { ...service, rating: updatedService.rating, reviews: updatedService.reviews }
           : service
       );
-      console.log('Updated services:', newServices);
+      logger.log('Updated services:', newServices);
       return newServices;
     });
   };
@@ -341,8 +342,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
   // Update useEffect to log the correct token source
   useEffect(() => {
-    console.log('Current user:', currentUser);
-    console.log('Token available:', currentUser?.token ? 'yes' : 'no');
+    logger.log('Current user:', currentUser);
+    logger.log('Token available:', currentUser?.token ? 'yes' : 'no');
   }, [currentUser]);
 
   // Modify the sortServices function
@@ -450,7 +451,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       setShowBannerModal(false);
       return newBanner;
     } catch (error) {
-      console.error('Error creating banner ad:', error);
+      logger.error('Error creating banner ad:', error);
       throw error;
     }
   };
@@ -469,7 +470,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       setShowLoginModal(false);
       // No need to set currentUser or localStorage here as it's handled in App.js
     } catch (error) {
-      console.error('Login error:', error);
+      logger.error('Login error:', error);
       // Show error in the LoginModal
       // The error will be shown in the LoginModal component
     }
@@ -482,7 +483,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       // The welcome modal and other state updates are handled in App.js
       // No need to duplicate that logic here
     } catch (error) {
-      console.error('Create account error:', error);
+      logger.error('Create account error:', error);
       // Error will be shown in the CreateAccountModal component
     }
   };
@@ -521,7 +522,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       setServiceToEdit(null);
       alert('Service updated successfully');
     } catch (error) {
-      console.error('Error updating service:', error);
+      logger.error('Error updating service:', error);
       alert(error.message || 'Failed to update service. Please try again.');
     }
   };
@@ -584,7 +585,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       setShowPremiumPaymentModal(false);
       setServiceToUpgrade(null);
     } catch (error) {
-      console.error('Error requesting premium:', error);
+      logger.error('Error requesting premium:', error);
       alert('Failed to request premium status');
     }
   };
@@ -595,7 +596,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         const data = await fetchJobs();
         setJobs(data);
       } catch (error) {
-        console.error('Error fetching jobs:', error);
+        logger.error('Error fetching jobs:', error);
         showNotification('Failed to load jobs', 'error');
       }
     };
@@ -615,7 +616,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       setShowJobModal(false);
       showNotification('Job posted successfully', 'success');
     } catch (error) {
-      console.error('Error creating job:', error);
+      logger.error('Error creating job:', error);
       showNotification(error.message || 'Failed to create job', 'error');
     }
   };
@@ -629,7 +630,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       setJobToEdit(null);
       showNotification('Job updated successfully', 'success');
     } catch (error) {
-      console.error('Error updating job:', error);
+      logger.error('Error updating job:', error);
       showNotification('Failed to update job', 'error');
     }
   };
@@ -642,7 +643,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       setJobs(prev => prev.filter(job => job._id !== jobId));
       showNotification('Job deleted successfully', 'success');
     } catch (error) {
-      console.error('Error deleting job:', error);
+      logger.error('Error deleting job:', error);
       showNotification('Failed to delete job', 'error');
     }
   };

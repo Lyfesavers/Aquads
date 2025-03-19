@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
 import { FaCopy, FaCheck } from 'react-icons/fa';
+import logger from '../utils/logger';
 
 const BUMP_OPTIONS = [
   { duration: '24 hours', price: 5, durationMs: 24 * 60 * 60 * 1000 },
@@ -49,7 +50,7 @@ const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Form submitted with signature:", txSignature);
+    logger.log("Form submitted with signature:", txSignature);
     
     if (!txSignature || txSignature.trim() === '') {
       alert('Please enter the transaction signature');

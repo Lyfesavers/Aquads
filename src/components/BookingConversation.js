@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { API_URL } from '../services/api';
+import logger from '../utils/logger';
 
 const BookingConversation = ({ booking, currentUser, onClose, showNotification }) => {
   const [messages, setMessages] = useState([]);
@@ -28,12 +29,12 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
   // Function to verify image URL exists
   const verifyImage = async (url) => {
     try {
-      console.log('Verifying image URL:', url);
+      logger.log('Verifying image URL:', url);
       const response = await fetch(url, { method: 'HEAD' });
-      console.log('Image verification response:', response.status, response.statusText);
+      logger.log('Image verification response:', response.status, response.statusText);
       return response.ok;
     } catch (error) {
-      console.error('Error verifying image:', error);
+      logger.error('Error verifying image:', error);
       return false;
     }
   };
@@ -65,7 +66,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
             const baseUrl = API_URL.replace(/\/api$/, '');
             // Create full URL
             msg.attachmentFullUrl = `${baseUrl}${msg.attachment}`;
-            console.log('Processed attachment URL:', msg.attachmentFullUrl);
+            logger.log('Processed attachment URL:', msg.attachmentFullUrl);
           } else {
             // URL is already absolute
             msg.attachmentFullUrl = msg.attachment;
@@ -76,7 +77,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
       
       setMessages(processedData);
     } catch (err) {
-      console.error('Error fetching messages:', err);
+      logger.error('Error fetching messages:', err);
       setError('Failed to load messages. Please try again.');
       showNotification('Failed to load messages. Please try again.', 'error');
     } finally {
@@ -148,7 +149,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
         fileInputRef.current.value = '';
       }
     } catch (err) {
-      console.error('Error sending message:', err);
+      logger.error('Error sending message:', err);
       setError('Failed to send message. Please try again.');
       showNotification('Failed to send message. Please try again.', 'error');
     }
@@ -202,7 +203,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
     const getBestImageUrl = () => {
       // If we have a data URL, use it as the most reliable source
       if (msg.dataUrl) {
-        console.log('Using embedded data URL for image');
+        logger.log('Using embedded data URL for image');
         return msg.dataUrl;
       }
       
@@ -280,16 +281,16 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
                 
                 // Otherwise try URL approach
                 const urls = generateAttachmentUrls(msg.attachment);
-                console.log('Opening image with most reliable method');
+                logger.log('Opening image with most reliable method');
                 // Try the query parameter endpoint as it's most reliable
                 window.open(urls.queryParam, '_blank');
               }}
               onError={(e) => {
-                console.error("Image failed to load:", e.target.src);
+                logger.error("Image failed to load:", e.target.src);
                 
                 // If we have a data URL and aren't already using it, switch to it
                 if (msg.dataUrl && e.target.src !== msg.dataUrl) {
-                  console.log('Switching to embedded data URL');
+                  logger.log('Switching to embedded data URL');
                   e.target.src = msg.dataUrl;
                   return;
                 }
@@ -309,11 +310,11 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
                 // Try next URL if we haven't tried them all
                 if (currentIndex < urlsToTry.length - 1) {
                   const nextUrl = urlsToTry[currentIndex + 1];
-                  console.log(`Trying alternate URL (${currentIndex + 2}/${urlsToTry.length}):`, nextUrl);
+                  logger.log(`Trying alternate URL (${currentIndex + 2}/${urlsToTry.length}):`, nextUrl);
                   e.target.src = nextUrl;
                 } else {
                   // We've tried all URLs, use placeholder
-                  console.log('All URLs failed, using placeholder');
+                  logger.log('All URLs failed, using placeholder');
                   e.target.src = 'https://via.placeholder.com/150?text=Image+Not+Found';
                   e.target.className = 'max-w-full rounded-lg max-h-40 object-contain opacity-60 border border-red-500';
                 }
@@ -386,7 +387,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
                     
                     // Otherwise try URL approach
                     const urls = generateAttachmentUrls(msg.attachment);
-                    console.log('Opening image with most reliable method');
+                    logger.log('Opening image with most reliable method');
                     // Try the query parameter endpoint as it's most reliable
                     window.open(urls.queryParam, '_blank');
                   }}
