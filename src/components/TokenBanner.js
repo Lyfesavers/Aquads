@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import logger from '../utils/logger';
 
 const TokenBanner = () => {
   const [tokens, setTokens] = useState([]);
@@ -75,7 +76,7 @@ const TokenBanner = () => {
         }
 
         const trendingData = await response.json();
-        console.log('Trending Response:', trendingData);
+        logger.info('Trending Response:', trendingData);
 
         // Get the IDs of trending coins
         const trendingIds = trendingData.coins.map(coin => coin.item.id).join(',');
@@ -103,10 +104,10 @@ const TokenBanner = () => {
           };
         });
 
-        console.log('Formatted Trending Tokens:', formattedTokens);
+        logger.info('Formatted Trending Tokens:', formattedTokens);
         setTokens(formattedTokens);
       } catch (error) {
-        console.error('Error fetching trending tokens:', error);
+        logger.error('Error fetching trending tokens:', error);
       } finally {
         setLoading(false);
       }

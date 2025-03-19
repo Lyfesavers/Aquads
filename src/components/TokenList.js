@@ -5,6 +5,7 @@ import TokenRating from './TokenRating';
 import { FaGlobe, FaTwitter, FaTelegram, FaDiscord, FaGithub, FaReddit } from 'react-icons/fa';
 import { Helmet } from 'react-helmet';
 import TokenDetails from './TokenDetails';
+import logger from '../utils/logger';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -122,7 +123,7 @@ const TokenList = ({ currentUser, showNotification }) => {
       setError(null);
 
     } catch (error) {
-      console.error('Error fetching tokens:', error);
+      logger.error('Error fetching tokens:', error);
       // Only show error if we have no tokens to display and this isn't a background update
       if (tokens.length === 0 && !isBackgroundUpdate) {
         setError('Failed to load tokens. Please try again in a few minutes.');
@@ -163,7 +164,7 @@ const TokenList = ({ currentUser, showNotification }) => {
         setFilteredTokens(filtered);
       }
     } catch (error) {
-      console.error('Search error:', error);
+      logger.error('Search error:', error);
       // Fallback to client-side filtering
       const filtered = tokens.filter(token => 
         token.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -221,7 +222,7 @@ const TokenList = ({ currentUser, showNotification }) => {
 
       await fetchChartData(token.id, selectedTimeRange);
     } catch (error) {
-      console.error('Error handling token click:', error);
+      logger.error('Error handling token click:', error);
       showNotification('Failed to load token details', 'error');
     }
   };
@@ -286,7 +287,7 @@ const TokenList = ({ currentUser, showNotification }) => {
         setChartInstance(newChart);
       }
     } catch (error) {
-      console.error('Chart data error:', error);
+      logger.error('Chart data error:', error);
       if (error.message.includes('Rate limit')) {
         showNotification('Chart data temporarily unavailable due to rate limit', 'warning');
       } else {

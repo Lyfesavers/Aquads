@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FaBell } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { API_URL } from '../services/api';
+import logger from '../utils/logger';
 
 const NotificationBell = ({ currentUser }) => {
   const [notifications, setNotifications] = useState([]);
@@ -14,21 +15,21 @@ const NotificationBell = ({ currentUser }) => {
 
   // Debug logging when component mounts
   useEffect(() => {
-    console.log('NotificationBell mounted');
-    console.log('API_URL:', API_URL);
-    console.log('Current environment:', process.env.NODE_ENV);
-    console.log('Current user logged in:', !!currentUser);
-    console.log('Token available:', currentUser?.token ? '✓' : '✗');
+    logger.log('NotificationBell mounted');
+    logger.log('API_URL:', API_URL);
+    logger.log('Current environment:', process.env.NODE_ENV);
+    logger.log('Current user logged in:', !!currentUser);
+    logger.log('Token available:', currentUser?.token ? '✓' : '✗');
     
     // Log the base domain
-    console.log('Current domain:', window.location.origin);
+    logger.log('Current domain:', window.location.origin);
     
     // Check if we have a user and token before trying to fetch
     if (currentUser && currentUser.token) {
-      console.log('User logged in, attempting notification fetch');
+      logger.log('User logged in, attempting notification fetch');
       tryFetchNotifications();
     } else {
-      console.log('User not logged in, skipping notification fetch');
+      logger.log('User not logged in, skipping notification fetch');
     }
   }, [currentUser]);
 
@@ -47,20 +48,20 @@ const NotificationBell = ({ currentUser }) => {
       `${window.location.origin}/api/notifications`
     ];
     
-    console.log('Trying notification paths with these options:', possiblePaths);
+    logger.log('Trying notification paths with these options:', possiblePaths);
     
     for (const path of possiblePaths) {
       try {
-        console.log(`Attempting to fetch notifications from: ${path}`);
+        logger.log(`Attempting to fetch notifications from: ${path}`);
         const response = await fetch(path, {
           headers: { 'Authorization': `Bearer ${currentUser.token}` }
         });
         
-        console.log(`Response from ${path}:`, response.status);
+        logger.log(`Response from ${path}:`, response.status);
         
         if (response.ok) {
           const data = await response.json();
-          console.log('Notifications fetched successfully from', path);
+          logger.log('Notifications fetched successfully from', path);
           setNotifications(data);
           const unread = data.filter(note => !note.isRead).length;
           setUnreadCount(unread);
@@ -71,11 +72,11 @@ const NotificationBell = ({ currentUser }) => {
           return;
         }
       } catch (error) {
-        console.error(`Error fetching from ${path}:`, error);
+        logger.error(`Error fetching from ${path}:`, error);
       }
     }
     
-    console.log('All notification paths failed');
+    logger.log('All notification paths failed');
     setApiAvailable(false);
   };
   
@@ -89,15 +90,15 @@ const NotificationBell = ({ currentUser }) => {
   // Use this temporarily to see if we can access the API directly (remove later)
   const testEndpoint = async () => {
     try {
-      console.log('Testing alternative endpoint...');
+      logger.log('Testing alternative endpoint...');
       const response = await fetch(`${API_URL}/users/me`, {
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
         }
       });
-      console.log('Test endpoint status:', response.status);
+      logger.log('Test endpoint status:', response.status);
     } catch (error) {
-      console.error('Test endpoint error:', error);
+      logger.error('Test endpoint error:', error);
     }
   };
 
@@ -142,7 +143,7 @@ const NotificationBell = ({ currentUser }) => {
       // Update unread count
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      logger.error('Error marking notification as read:', error);
     }
   };
 
@@ -150,7 +151,7 @@ const NotificationBell = ({ currentUser }) => {
   const markAllAsRead = async () => {
     if (!currentUser || !currentUser.token) return;
     
-    console.log('Marking all notifications as read');
+    logger.log('Marking all notifications as read');
     
     // Try different possible paths for marking all as read
     const possibleMarkAllReadPaths = [
@@ -163,7 +164,7 @@ const NotificationBell = ({ currentUser }) => {
     
     for (const path of possibleMarkAllReadPaths) {
       try {
-        console.log(`Attempting to mark all as read using: ${path}`);
+        logger.log(`Attempting to mark all as read using: ${path}`);
         const response = await fetch(path, {
           method: 'PATCH',
           headers: {
@@ -173,7 +174,7 @@ const NotificationBell = ({ currentUser }) => {
         });
         
         if (response.ok) {
-          console.log('Successfully marked all notifications as read');
+          logger.log('Successfully marked all notifications as read');
           setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
           setUnreadCount(0);
           success = true;
@@ -183,12 +184,12 @@ const NotificationBell = ({ currentUser }) => {
           break;
         }
       } catch (error) {
-        console.error(`Error using ${path}:`, error);
+        logger.error(`Error using ${path}:`, error);
       }
     }
     
     if (!success) {
-      console.error('Error marking all notifications as read');
+      logger.error('Error marking all notifications as read');
     }
   };
   
@@ -211,7 +212,7 @@ const NotificationBell = ({ currentUser }) => {
             body: JSON.stringify({ isRead: true })
           });
         } catch (error) {
-          console.log('Could not mark individual notification as read:', error);
+          logger.log('Could not mark individual notification as read:', error);
           // Continue even if this fails
         }
         
@@ -236,8 +237,8 @@ const NotificationBell = ({ currentUser }) => {
         bookingId = urlParams.get('booking');
       }
       
-      console.log('Notification clicked:', notification);
-      console.log('Extracted booking ID:', bookingId);
+      logger.log('Notification clicked:', notification);
+      logger.log('Extracted booking ID:', bookingId);
       
       // Close the notification dropdown
       setIsOpen(false);
@@ -298,7 +299,7 @@ const NotificationBell = ({ currentUser }) => {
         }
       }
     } catch (error) {
-      console.error('Error handling notification click:', error);
+      logger.error('Error handling notification click:', error);
       
       // Fallback to simple dashboard open
       if (typeof window.showDashboard === 'function') {
@@ -312,27 +313,27 @@ const NotificationBell = ({ currentUser }) => {
     if (!currentUser || !currentUser.token) return;
     
     try {
-      console.log('Trying test notification route...');
+      logger.log('Trying test notification route...');
       const response = await fetch(`${API_URL}/bookings/test-notification`, {
         headers: { 'Authorization': `Bearer ${currentUser.token}` }
       });
       
-      console.log('Test notification response:', response.status);
+      logger.log('Test notification response:', response.status);
       
       if (response.ok) {
         const data = await response.json();
-        console.log('Test notification success:', data);
+        logger.log('Test notification success:', data);
         
         // If test works but main notification path failed, we can use the test path to check
         if (!apiAvailable) {
           setApiAvailable(true);
-          console.log('Notification API appears to be working via test route');
+          logger.log('Notification API appears to be working via test route');
         }
         
         return true;
       }
     } catch (error) {
-      console.error('Error testing notification route:', error);
+      logger.error('Error testing notification route:', error);
     }
     
     return false;
@@ -349,7 +350,7 @@ const NotificationBell = ({ currentUser }) => {
   useEffect(() => {
     if (!currentUser || !currentUser.token || !apiAvailable) return;
     
-    console.log('Setting up notification polling');
+    logger.log('Setting up notification polling');
     
     const pollingInterval = setInterval(() => {
       // Use the working path if we found one
@@ -366,7 +367,7 @@ const NotificationBell = ({ currentUser }) => {
           const unread = data.filter(note => !note.isRead).length;
           setUnreadCount(unread);
         })
-        .catch(error => console.error('Notification polling error:', error));
+        .catch(error => logger.error('Notification polling error:', error));
       } else {
         // Otherwise try all paths again
         tryFetchNotifications();
@@ -381,7 +382,7 @@ const NotificationBell = ({ currentUser }) => {
     if (!currentUser || !currentUser.token) return;
     
     try {
-      console.log('Checking API configuration...');
+      logger.log('Checking API configuration...');
       
       // Try different possible paths to the config endpoint
       const configPaths = [
@@ -393,18 +394,18 @@ const NotificationBell = ({ currentUser }) => {
       
       for (const path of configPaths) {
         try {
-          console.log(`Attempting to fetch config from: ${path}`);
+          logger.log(`Attempting to fetch config from: ${path}`);
           const response = await fetch(path, {
             headers: { 'Authorization': `Bearer ${currentUser.token}` }
           });
           
           if (response.ok) {
             const config = await response.json();
-            console.log('API Configuration:', config);
+            logger.log('API Configuration:', config);
             
             // Check if notifications routes are available
             if (config.modules && config.modules.notifications) {
-              console.log('Notification routes are registered on the server');
+              logger.log('Notification routes are registered on the server');
               
               // Find the notification route paths
               if (config.routes && config.routes.details) {
@@ -412,13 +413,13 @@ const NotificationBell = ({ currentUser }) => {
                   route.path.includes('notification')
                 );
                 
-                console.log('Available notification routes:', notificationRoutes);
+                logger.log('Available notification routes:', notificationRoutes);
                 
                 // If we found routes, try using the first one
                 if (notificationRoutes.length > 0) {
                   const route = notificationRoutes[0];
                   const fullPath = `${window.location.origin}${route.path}`;
-                  console.log('Attempting to use route:', fullPath);
+                  logger.log('Attempting to use route:', fullPath);
                   
                   // Try this path
                   window.WORKING_NOTIFICATION_PATH = fullPath;
@@ -426,20 +427,20 @@ const NotificationBell = ({ currentUser }) => {
                 }
               }
             } else {
-              console.log('No notification routes registered on the server');
+              logger.log('No notification routes registered on the server');
             }
             
             return config;
           }
         } catch (error) {
-          console.error(`Error fetching config from ${path}:`, error);
+          logger.error(`Error fetching config from ${path}:`, error);
         }
       }
       
-      console.log('Could not access API configuration');
+      logger.log('Could not access API configuration');
       return null;
     } catch (error) {
-      console.error('Error checking API config:', error);
+      logger.error('Error checking API config:', error);
       return null;
     }
   };
@@ -554,7 +555,7 @@ const NotificationBell = ({ currentUser }) => {
                       className={notificationClass}
                       onClick={(e) => {
                         e.preventDefault();
-                        console.log('Notification clicked:', notification);
+                        logger.log('Notification clicked:', notification);
                         handleNotificationClick(notification);
                       }}
                       style={{ cursor: 'pointer' }}
