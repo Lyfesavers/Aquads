@@ -663,17 +663,54 @@ export const resetPassword = async (username, referralCode, newPassword) => {
 // Add these job-related API functions
 export const fetchJobs = async () => {
   logger.log('Fetching jobs...');
-  const response = await fetch(`${API_URL}/jobs`, {
-    headers: {
-      ...getAuthHeader()
+  try {
+    // Check for auth token - this might be needed for some job listings
+    const authHeader = getAuthHeader();
+    
+    const response = await fetch(`${API_URL}/jobs`, {
+      headers: {
+        ...authHeader
+      }
+    });
+    
+    logger.log('Jobs response:', response);
+    
+    if (!response.ok) {
+      // If unauthorized and we have auth headers, try to refresh auth and retry once
+      if (response.status === 401 && authHeader.Authorization) {
+        logger.log('Authentication needed for jobs, attempting to refresh auth...');
+        
+        // Wait a moment for auth to potentially initialize
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Try reconnecting the socket in case that's the issue
+        reconnectSocket();
+        
+        // Retry the request with fresh auth headers
+        const retryResponse = await fetch(`${API_URL}/jobs`, {
+          headers: {
+            ...getAuthHeader() // Get fresh auth headers
+          }
+        });
+        
+        if (!retryResponse.ok) {
+          const error = await retryResponse.json().catch(() => ({}));
+          throw new Error(error.message || 'Failed to fetch jobs after retry');
+        }
+        
+        return retryResponse.json();
+      }
+      
+      // For other errors, just throw the error
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || 'Failed to fetch jobs');
     }
-  });
-  logger.log('Jobs response:', response);
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || 'Failed to fetch jobs');
+    
+    return response.json();
+  } catch (error) {
+    logger.error('Error fetching jobs:', error);
+    throw error;
   }
-  return response.json();
 };
 
 export const createJob = async (jobData) => {

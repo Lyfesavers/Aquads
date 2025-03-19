@@ -132,6 +132,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [showJobs, setShowJobs] = useState(false);
   const [jobs, setJobs] = useState([]);
   const [jobToEdit, setJobToEdit] = useState(null);
+  const [isLoading, setIsLoading] = useState({ jobs: true });
 
   const categories = [
     { id: 'smart-contract', name: 'Smart Contract', icon: '📝' },
@@ -593,11 +594,23 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   useEffect(() => {
     const loadJobs = async () => {
       try {
+        setIsLoading(prevState => ({ ...prevState, jobs: true }));
         const data = await fetchJobs();
         setJobs(data);
+        setIsLoading(prevState => ({ ...prevState, jobs: false }));
       } catch (error) {
         logger.error('Error fetching jobs:', error);
-        showNotification('Failed to load jobs', 'error');
+        // Don't show notification for auth errors as they may just need a moment to initialize
+        if (!error.message?.includes('auth') && !error.message?.includes('unauthorized')) {
+          showNotification('Failed to load jobs. Will retry automatically.', 'error');
+        }
+        
+        // Set up a retry after a slight delay
+        setTimeout(() => {
+          loadJobs();
+        }, 2000);
+        
+        setIsLoading(prevState => ({ ...prevState, jobs: false }));
       }
     };
 
@@ -941,7 +954,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {showJobs ? (
                 <div className="col-span-3">
-                  {jobs.length > 0 ? (
+                  {isLoading?.jobs ? (
+                    <div className="text-center py-8">
+                      <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mb-2"></div>
+                      <p className="text-gray-400">Loading jobs...</p>
+                    </div>
+                  ) : jobs.length > 0 ? (
                     <JobList
                       jobs={jobs}
                       currentUser={currentUser}
@@ -950,7 +968,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                     />
                   ) : (
                     <div className="text-center py-8 text-gray-400">
-                      No jobs posted yet.
+                      No jobs found. <a href="#" onClick={(e) => {e.preventDefault(); setShowJobModal(true);}} className="text-blue-400 hover:underline">Post a job?</a>
                     </div>
                   )}
                 </div>
