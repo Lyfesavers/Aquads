@@ -572,41 +572,38 @@
     };
     
     // New spawn positioning - random locations and directions
-    const spawnMode = Math.floor(Math.random() * 4); // 0: left, 1: right, 2: bottom, 3: random position
+    const spawnMode = Math.floor(Math.random() * 10); // Weight probabilities
     let x, y, speedX, speedY, startFromLeft;
     
-    switch (spawnMode) {
-      case 0: // Left side
-        x = -size.width;
-        y = 100 + Math.random() * (window.innerHeight - 300);
-        speedX = 1.5 + Math.random() * 2;
-        speedY = (Math.random() - 0.5) * 2; // Slight vertical component
-        startFromLeft = true;
-        break;
-      case 1: // Right side
-        x = window.innerWidth;
-        y = 100 + Math.random() * (window.innerHeight - 300);
-        speedX = -(1.5 + Math.random() * 2);
-        speedY = (Math.random() - 0.5) * 2; // Slight vertical component
-        startFromLeft = false;
-        break;
-      case 2: // Bottom (flying up)
-        x = Math.random() * (window.innerWidth - size.width);
-        y = window.innerHeight;
-        speedX = (Math.random() - 0.5) * 3; // Random horizontal direction
-        speedY = -(1.5 + Math.random() * 2); // Upward movement
-        startFromLeft = speedX >= 0; // Face direction of movement
-        break;
-      case 3: // Random position on screen (surprise pop-up)
-        x = 50 + Math.random() * (window.innerWidth - size.width - 100);
-        y = Math.max(50, window.innerHeight - 300 + Math.random() * 100);
-        // Random direction with more variations
-        const angle = Math.random() * Math.PI * 2;
-        const speed = 1.5 + Math.random() * 2;
-        speedX = Math.cos(angle) * speed;
-        speedY = Math.sin(angle) * speed;
-        startFromLeft = speedX >= 0;
-        break;
+    // Mostly spawn from sides to ensure ducks cross the screen (60% chance)
+    if (spawnMode < 3) { // Left side - 30% chance
+      x = -size.width;
+      y = 100 + Math.random() * (window.innerHeight - 300);
+      speedX = 3 + Math.random() * 3; // Faster horizontal speed
+      speedY = (Math.random() - 0.5) * 1; // Reduced vertical component
+      startFromLeft = true;
+    } 
+    else if (spawnMode < 6) { // Right side - 30% chance
+      x = window.innerWidth;
+      y = 100 + Math.random() * (window.innerHeight - 300);
+      speedX = -(3 + Math.random() * 3); // Faster horizontal speed
+      speedY = (Math.random() - 0.5) * 1; // Reduced vertical component
+      startFromLeft = false;
+    }
+    else if (spawnMode < 8) { // Bottom (flying up) - 20% chance
+      x = Math.random() * (window.innerWidth - size.width);
+      y = window.innerHeight;
+      speedX = (Math.random() - 0.5) * 2; // Reduced horizontal direction
+      speedY = -(3 + Math.random() * 2); // Stronger upward movement
+      startFromLeft = speedX >= 0; // Face direction of movement
+    }
+    else { // Random position on screen - 20% chance
+      x = 50 + Math.random() * (window.innerWidth - size.width - 100);
+      y = Math.max(50, window.innerHeight - 200);
+      // Move in clear direction (mostly upward)
+      speedX = (Math.random() - 0.5) * 4; // Stronger horizontal component
+      speedY = -(2 + Math.random() * 3); // Ensure upward movement
+      startFromLeft = speedX >= 0;
     }
     
     // Add slight wave motion
@@ -974,28 +971,18 @@
           duck.quackTimer = 5000 + Math.random() * 8000;
         }
         
-        // Change direction if hitting screen edges (for ducks that spawn on screen)
-        // Add a small chance to change direction randomly for more realistic movement
-        if (duck.x < 0 || duck.x > window.innerWidth - duck.size.width) {
+        // Don't change direction at screen edges - let ducks fly across screen
+        // Only small chance to change direction randomly for more unpredictable movement
+        if (Math.random() < 0.0005) { // Reduced to make it more rare
           duck.speedX *= -1;
           duck.element.style.transform = duck.speedX > 0 ? 'scaleX(1)' : 'scaleX(-1)';
         }
         
-        if (duck.y < 0 || duck.y > window.innerHeight - duck.size.height) {
-          duck.speedY *= -1;
-        }
-        
-        // Small chance to change direction randomly (5% chance per second)
-        if (Math.random() < 0.0008) {
-          duck.speedX *= -1;
-          duck.element.style.transform = duck.speedX > 0 ? 'scaleX(1)' : 'scaleX(-1)';
-        }
-        
-        // Remove duck if it flies too far off-screen
-        if (duck.x < -duck.size.width * 2 || 
-            duck.x > window.innerWidth + duck.size.width * 2 ||
-            duck.y < -duck.size.height * 2 || 
-            duck.y > window.innerHeight + duck.size.height * 2) {
+        // Remove duck if it flies too far off-screen (increased distance to ensure they cross full screen)
+        if (duck.x < -duck.size.width * 3 || 
+            duck.x > window.innerWidth + duck.size.width * 3 ||
+            duck.y < -duck.size.height * 3 || 
+            duck.y > window.innerHeight + duck.size.height * 3) {
           gameContainer.removeChild(duck.element);
           ducks.splice(i, 1);
           continue;
