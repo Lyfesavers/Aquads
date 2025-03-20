@@ -118,6 +118,47 @@
         }
       })();
     </script>
+    
+    <!-- Preload critical resources -->
+    <link rel="preconnect" href="https://aquads.onrender.com" />
+    <link rel="preload" href="%PUBLIC_URL%/logo192.png" as="image" />
+    <link rel="preload" href="%PUBLIC_URL%/FREELANCER-HUB.svg" as="image" />
+    
+    <!-- Performance Optimization Script -->
+    <script>
+      // Use passive event listeners for touch and scroll events
+      // This tells the browser it doesn't need to wait for JS before scrolling
+      window.addEventListener("load", function() {
+        const passiveEvents = ["touchstart", "touchmove", "scroll", "wheel"];
+        const eventOpts = { passive: true };
+        
+        passiveEvents.forEach(function(eventName) {
+          window.addEventListener(eventName, function(){}, eventOpts);
+        });
+        
+        // Throttle scroll and resize events
+        function throttle(fn, delay) {
+          let lastCall = 0;
+          return function(...args) {
+            const now = new Date().getTime();
+            if (now - lastCall < delay) return;
+            lastCall = now;
+            return fn(...args);
+          }
+        }
+        
+        // Replace global scroll/resize handlers with throttled versions
+        if (window.onscroll) {
+          const originalScroll = window.onscroll;
+          window.onscroll = throttle(originalScroll, 100);
+        }
+        
+        if (window.onresize) {
+          const originalResize = window.onresize;
+          window.onresize = throttle(originalResize, 100);
+        }
+      });
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

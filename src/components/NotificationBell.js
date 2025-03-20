@@ -17,64 +17,83 @@ const debounce = (func, wait) => {
   };
 };
 
+// Cache for notification data to prevent redundant processing
+const notificationCache = {
+  data: null,
+  timestamp: 0,
+  isValid: function() {
+    // Consider cache valid if less than 10 seconds old
+    return this.data && (Date.now() - this.timestamp < 10000);
+  },
+  set: function(data) {
+    this.data = data;
+    this.timestamp = Date.now();
+  }
+};
+
 const NotificationBell = ({ currentUser }) => {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
-  const [apiAvailable, setApiAvailable] = useState(true); // Track if API is available
-  const [showReadNotifications, setShowReadNotifications] = useState(false); // New state for toggle
+  const [apiAvailable, setApiAvailable] = useState(true);
+  const [showReadNotifications, setShowReadNotifications] = useState(false);
   const dropdownRef = useRef(null);
-  const hasAttemptedFetch = useRef(false); // Prevent multiple failed fetch attempts
+  const hasAttemptedFetch = useRef(false);
+  const isInitialMount = useRef(true);
 
-  // Debug logging when component mounts
-  useEffect(() => {
-    logger.log('NotificationBell mounted');
-    logger.log('API_URL:', API_URL);
-    logger.log('Current environment:', process.env.NODE_ENV);
-    logger.log('Current user logged in:', !!currentUser);
-    logger.log('Token available:', currentUser?.token ? '✓' : '✗');
-    
-    // Log the base domain
-    logger.log('Current domain:', window.location.origin);
-    
-    // Check if we have a user and token before trying to fetch
-    if (currentUser && currentUser.token) {
-      logger.log('User logged in, attempting notification fetch');
-      tryFetchNotifications();
-    } else {
-      logger.log('User not logged in, skipping notification fetch');
+  // Reduce logging in production
+  const safeLog = (message, data) => {
+    if (process.env.NODE_ENV !== 'production') {
+      logger.log(message, data);
     }
-  }, [currentUser]);
+  };
 
   // Use callback for tryFetchNotifications to prevent recreation
   const tryFetchNotifications = useCallback(async () => {
     if (!currentUser || !currentUser.token) return;
     
+    // Check cache first
+    if (notificationCache.isValid()) {
+      safeLog('Using cached notification data');
+      setNotifications(notificationCache.data);
+      const unread = notificationCache.data.filter(note => !note.isRead).length;
+      setUnreadCount(unread);
+      return;
+    }
+    
     hasAttemptedFetch.current = true;
     
-    // Add the new alternate path
+    // Only log on initial attempt
+    if (isInitialMount.current) {
+      safeLog('Trying notification paths with these options', [
+        `${API_URL}/notifications`, 
+        `${API_URL}/api/notifications`,
+        `/api/notifications`
+      ]);
+      isInitialMount.current = false;
+    }
+    
     const possiblePaths = [
       `${API_URL}/notifications`,
       `${API_URL}/api/notifications`,
       `/api/notifications`,
-      `${API_URL}/bookings/user-notifications`, // Add this new path
+      `${API_URL}/bookings/user-notifications`,
       `${window.location.origin}/api/notifications`
     ];
     
-    logger.log('Trying notification paths with these options:', possiblePaths);
-    
     for (const path of possiblePaths) {
       try {
-        logger.log(`Attempting to fetch notifications from: ${path}`);
         const response = await fetch(path, {
           headers: { 'Authorization': `Bearer ${currentUser.token}` }
         });
         
-        logger.log(`Response from ${path}:`, response.status);
-        
         if (response.ok) {
           const data = await response.json();
-          logger.log('Notifications fetched successfully from', path);
+          safeLog('Notifications fetched successfully');
+          
+          // Cache the response
+          notificationCache.set(data);
+          
           setNotifications(data);
           const unread = data.filter(note => !note.isRead).length;
           setUnreadCount(unread);
@@ -85,11 +104,14 @@ const NotificationBell = ({ currentUser }) => {
           return;
         }
       } catch (error) {
-        logger.error(`Error fetching from ${path}:`, error);
+        // Only log in development
+        if (process.env.NODE_ENV !== 'production') {
+          logger.error(`Error fetching from ${path}:`, error);
+        }
       }
     }
     
-    logger.log('All notification paths failed');
+    safeLog('All notification paths failed');
     setApiAvailable(false);
   }, [currentUser]);
   
@@ -348,11 +370,11 @@ const NotificationBell = ({ currentUser }) => {
     }
   }, [currentUser, apiAvailable]);
   
-  // Set up polling if API is available
+  // Update the polling interval to reduce API calls
   useEffect(() => {
     if (!currentUser || !currentUser.token || !apiAvailable) return;
     
-    logger.log('Setting up notification polling');
+    safeLog('Setting up notification polling');
     
     const pollingInterval = setInterval(() => {
       // Use the working path if we found one
@@ -365,19 +387,28 @@ const NotificationBell = ({ currentUser }) => {
           throw new Error('Polling failed');
         })
         .then(data => {
-          setNotifications(data);
-          const unread = data.filter(note => !note.isRead).length;
-          setUnreadCount(unread);
+          // Only update state if data has changed
+          if (JSON.stringify(data) !== JSON.stringify(notifications)) {
+            setNotifications(data);
+            const unread = data.filter(note => !note.isRead).length;
+            setUnreadCount(unread);
+            // Update cache
+            notificationCache.set(data);
+          }
         })
-        .catch(error => logger.error('Notification polling error:', error));
+        .catch(error => {
+          if (process.env.NODE_ENV !== 'production') {
+            logger.error('Notification polling error:', error);
+          }
+        });
       } else {
         // Otherwise try all paths again
         tryFetchNotifications();
       }
-    }, 30000);
+    }, 60000); // Increased from 30s to 60s to reduce API calls
     
     return () => clearInterval(pollingInterval);
-  }, [currentUser, apiAvailable]);
+  }, [currentUser, apiAvailable, notifications]);
 
   // Add a function to check the config endpoint
   const checkAPIConfig = async () => {
