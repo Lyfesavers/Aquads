@@ -9,42 +9,6 @@ body {
   overflow: hidden;
 }
 
-/* Add critical performance optimizations at the top */
-/* Use CSS containment to isolate components and reduce rendering work */
-.bubble, 
-.tech-lines, 
-.tech-dots,
-.token-banner-container,
-.token-row,
-.service-card,
-.game-card {
-  content-visibility: auto;
-  contain: layout style paint;
-  contain-intrinsic-size: auto 200px;
-}
-
-/* Improve animations by telling browser to optimize them */
-.animate-scroll,
-.animate-pulse,
-.animate-float,
-.bubble:hover,
-.animate-shine,
-.banner-flame {
-  will-change: transform;
-  transform: translateZ(0);
-}
-
-/* Reduce animation complexity by using more efficient properties */
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
 .bubble {
   border-radius: 50%;
   position: relative;
