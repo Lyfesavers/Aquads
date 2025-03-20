@@ -1,8 +1,21 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { FaBell } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { API_URL } from '../services/api';
 import logger from '../utils/logger';
+
+// Debounce utility function - placed outside component to avoid recreation
+const debounce = (func, wait) => {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+};
 
 const NotificationBell = ({ currentUser }) => {
   const [notifications, setNotifications] = useState([]);
@@ -33,8 +46,8 @@ const NotificationBell = ({ currentUser }) => {
     }
   }, [currentUser]);
 
-  // Update the tryFetchNotifications function to include the new endpoint
-  const tryFetchNotifications = async () => {
+  // Use callback for tryFetchNotifications to prevent recreation
+  const tryFetchNotifications = useCallback(async () => {
     if (!currentUser || !currentUser.token) return;
     
     hasAttemptedFetch.current = true;
@@ -78,26 +91,37 @@ const NotificationBell = ({ currentUser }) => {
     
     logger.log('All notification paths failed');
     setApiAvailable(false);
-  };
-  
-  // Use effect to try alternate paths on initial load
-  useEffect(() => {
-    if (currentUser && currentUser.token) {
-      tryFetchNotifications();
-    }
   }, [currentUser]);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
+  
+  // Use memoized debounced version of fetch
+  const debouncedFetchNotifications = useCallback(
+    debounce(() => {
+      if (currentUser && currentUser.token) {
+        tryFetchNotifications();
       }
-    };
+    }, 300),
+    [tryFetchNotifications]
+  );
 
+  // Handle click outside with useCallback to prevent recreation on each render
+  const handleClickOutside = useCallback((event) => {
+    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      setIsOpen(false);
+    }
+  }, []);
+
+  // Optimize this effect with proper dependencies
+  useEffect(() => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [handleClickOutside]);
+  
+  // Use effect to try alternate paths on initial load with dependency
+  useEffect(() => {
+    if (currentUser && currentUser.token) {
+      debouncedFetchNotifications();
+    }
+  }, [currentUser, debouncedFetchNotifications]);
 
   // Mark notification as read
   const markAsRead = async (notificationId) => {
@@ -565,4 +589,5 @@ const NotificationBell = ({ currentUser }) => {
   );
 };
 
-export default NotificationBell; 
+// Export as memoized component to prevent unnecessary re-renders
+export default memo(NotificationBell); 

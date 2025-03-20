@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { FaCrown } from 'react-icons/fa';
 
 const PremiumBadge = () => {
@@ -10,4 +10,5 @@ const PremiumBadge = () => {
   );
 };
 
-export default PremiumBadge; 
+// Use memo to prevent unnecessary re-renders since this is a simple presentational component
+export default memo(PremiumBadge); 
