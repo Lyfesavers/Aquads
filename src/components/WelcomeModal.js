@@ -32,7 +32,7 @@ const WelcomeModal = ({ username, onClose, referralCode }) => {
           <div className="code-display">
             <code>{referralCode}</code>
             <button className="copy-button" onClick={handleCopyCode}>
-              Copy Code
+              Save Secret Code
             </button>
           </div>
           <p className="warning-text">
