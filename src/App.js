@@ -119,20 +119,86 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
     };
   }
   
-  // Minimum distance between bubbles (just slightly more than touching)
-  const bubbleSpacing = 1.05; // 5% extra space between bubbles
+  // Reduced spacing between bubbles for tighter packing
+  const bubbleSpacing = 1.02; // Only 2% extra space between bubbles (reduced from 1.05)
   
-  // Calculate spiral position
-  // We'll use the Fibonacci spiral approach for a natural-looking pattern
+  // Calculate spiral position with optimized parameters
+  // Using Fermat's spiral for better packing density
   const goldenAngle = Math.PI * (3 - Math.sqrt(5)); // Golden angle ~137.5 degrees
-  const startRadius = size/2; // Start close to center
+  const startRadius = size/3; // Start closer to center for tighter packing
+  const scaleFactor = 0.7; // Scale factor for more compact layout
   
-  // Try positions along the spiral until we find one with no overlaps
+  // Create a grid-based optimization for larger numbers of bubbles
+  const useGridApproach = existingAds.length > 12;
+  
+  if (useGridApproach) {
+    // Calculate an approximate grid cell size based on bubble size
+    const cellSize = size * bubbleSpacing;
+    const gridColumns = Math.floor((windowWidth - 2 * BUBBLE_PADDING) / cellSize);
+    const gridRows = Math.floor((windowHeight - 2 * BUBBLE_PADDING - 30) / cellSize);
+    
+    // Create a grid occupancy map
+    const grid = Array(gridRows).fill().map(() => Array(gridColumns).fill(false));
+    
+    // Mark occupied grid cells
+    existingAds.forEach(ad => {
+      const col = Math.floor((ad.x - BUBBLE_PADDING) / cellSize);
+      const row = Math.floor((ad.y - BUBBLE_PADDING - 30) / cellSize);
+      
+      if (col >= 0 && col < gridColumns && row >= 0 && row < gridRows) {
+        grid[row][col] = true;
+        
+        // Mark neighboring cells as occupied too (for spacing)
+        for (let r = Math.max(0, row-1); r <= Math.min(gridRows-1, row+1); r++) {
+          for (let c = Math.max(0, col-1); c <= Math.min(gridColumns-1, col+1); c++) {
+            if (Math.sqrt(Math.pow(r-row, 2) + Math.pow(c-col, 2)) <= 1) {
+              grid[r][c] = true;
+            }
+          }
+        }
+      }
+    });
+    
+    // Find the first available grid cell
+    for (let row = 0; row < gridRows; row++) {
+      for (let col = 0; col < gridColumns; col++) {
+        if (!grid[row][col]) {
+          const x = BUBBLE_PADDING + col * cellSize;
+          const y = BUBBLE_PADDING + 30 + row * cellSize;
+          
+          // Verify no actual overlaps with any bubbles
+          let hasOverlap = false;
+          for (const ad of existingAds) {
+            const distance = calculateDistance(
+              x + size/2, 
+              y + size/2, 
+              ad.x + ad.size/2, 
+              ad.y + ad.size/2
+            );
+            
+            const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
+            
+            if (distance < minDistance) {
+              hasOverlap = true;
+              break;
+            }
+          }
+          
+          if (!hasOverlap) {
+            return { x, y };
+          }
+        }
+      }
+    }
+  }
+  
+  // If grid approach failed or we're not using it, fall back to optimized spiral
   for (let i = 0; i < 1000; i++) { // Try up to 1000 positions along spiral
     // Calculate angle and radius for this position
     const angle = goldenAngle * i;
     // Radius increases with square root of i for more uniform distribution
-    const radius = startRadius * Math.sqrt(i + 1);
+    // Scale factor makes the spiral tighter
+    const radius = startRadius * scaleFactor * Math.sqrt(i + 1);
     
     // Convert to cartesian coordinates
     const x = centerX + radius * Math.cos(angle) - size/2;
@@ -170,7 +236,6 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
   }
   
   // Fallback if we can't find a non-overlapping position
-  // This should rarely happen with 1000 attempts
   return {
     x: Math.max(BUBBLE_PADDING, Math.min(windowWidth - size - BUBBLE_PADDING, Math.random() * windowWidth)),
     y: Math.max(BUBBLE_PADDING + 30, Math.min(windowHeight - size - BUBBLE_PADDING, Math.random() * windowHeight))
@@ -188,9 +253,17 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
 
   const otherAds = existingAds.filter(ad => ad.id !== currentAdId);
   
+  // Skip collision resolution if there are no other ads
+  if (otherAds.length === 0) {
+    return { x: newX, y: newY };
+  }
+  
+  // Reduced spacing between bubbles for tighter packing (matching calculateSafePosition)
+  const bubbleSpacing = 1.02;
+  
   // Check for overlaps and adjust position
   let iterations = 0;
-  const maxIterations = 20; // Increased from 15 to ensure more chances to resolve overlaps
+  const maxIterations = 25; // Increased to ensure more chances to resolve overlaps
   
   while(iterations < maxIterations) {
     let hasOverlap = false;
@@ -198,71 +271,129 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
     let totalPushY = 0;
     let overlappingAds = 0;
     
-    for(const ad of otherAds) {
-      const dx = (newX + size/2) - (ad.x + ad.size/2);
-      const dy = (newY + size/2) - (ad.y + ad.size/2);
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      const minDistance = (size + ad.size) / 2 + BUBBLE_PADDING * 2.5; // Increased minimum distance
+    for (const ad of otherAds) {
+      const distance = calculateDistance(
+        newX + size/2, 
+        newY + size/2, 
+        ad.x + ad.size/2, 
+        ad.y + ad.size/2
+      );
       
-      if(distance < minDistance) {
+      // Minimum distance to avoid overlap (sum of radii * spacing factor)
+      const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
+      
+      if (distance < minDistance) {
         hasOverlap = true;
         overlappingAds++;
         
-        // Calculate push direction with increasing push strength for stubborn overlaps
-        const pushStrength = 1.2 + (iterations * 0.1); // Gradually increase strength
-        const angle = Math.atan2(dy, dx);
-        const push = (minDistance - distance) * pushStrength;
+        // Calculate direction from this ad to the other ad
+        const dx = (ad.x + ad.size/2) - (newX + size/2);
+        const dy = (ad.y + ad.size/2) - (newY + size/2);
         
-        // Calculate push components
-        const pushX = Math.cos(angle) * push;
-        const pushY = Math.sin(angle) * push;
+        // Normalize the direction
+        const magnitude = Math.sqrt(dx * dx + dy * dy);
+        const pushX = dx === 0 ? 0 : dx / magnitude;
+        const pushY = dy === 0 ? 0 : dy / magnitude;
         
-        // Add to total push
-        totalPushX += pushX;
-        totalPushY += pushY;
+        // Calculate how much we need to push
+        const pushAmount = minDistance - distance;
+        
+        // Add to total push, but with diminishing effect for each overlap
+        // This prevents excessive movement when there are many overlaps
+        const multiplier = 1 / Math.sqrt(overlappingAds);
+        totalPushX -= pushX * pushAmount * multiplier;
+        totalPushY -= pushY * pushAmount * multiplier;
       }
     }
     
-    if(!hasOverlap) break;
-    
-    // Apply average push to avoid extreme movements when there are multiple overlaps
-    if(overlappingAds > 0) {
-      newX += totalPushX / overlappingAds;
-      newY += totalPushY / overlappingAds;
+    if (!hasOverlap) {
+      break;
     }
     
-    // Add small random jitter to break symmetrical deadlocks
-    if(iterations > 5) {
-      newX += (Math.random() - 0.5) * 10;
-      newY += (Math.random() - 0.5) * 10;
-    }
+    // Apply the push with dampening factor to prevent oscillation
+    const dampening = 0.8;
+    newX += totalPushX * dampening;
+    newY += totalPushY * dampening;
     
-    // Keep in bounds with improved boundary handling
+    // Ensure we stay within viewport bounds
     newX = Math.min(Math.max(newX, minX), maxX);
     newY = Math.min(Math.max(newY, minY), maxY);
     
     iterations++;
   }
-
-  // If we still have overlaps after maximum iterations,
-  // try positioning based on quadrant to spread bubbles to corners
+  
+  // If we still have overlaps after exhausting iterations, 
+  // try to find an available position using the grid approach from calculateSafePosition
   if (iterations >= maxIterations) {
-    const centerX = windowWidth / 2;
-    const centerY = windowHeight / 2;
-    const bubbleX = newX + size/2;
-    const bubbleY = newY + size/2;
+    const cellSize = size * bubbleSpacing;
+    const gridColumns = Math.floor((windowWidth - 2 * BUBBLE_PADDING) / cellSize);
+    const gridRows = Math.floor((windowHeight - 2 * BUBBLE_PADDING - 30) / cellSize);
     
-    // Determine which quadrant the bubble is in
-    const quadrantX = bubbleX < centerX ? 0 : 1;
-    const quadrantY = bubbleY < centerY ? 0 : 1;
+    // Create a grid occupancy map
+    const grid = Array(gridRows).fill().map(() => Array(gridColumns).fill(false));
     
-    // Push toward the corner of that quadrant
-    const targetX = quadrantX === 0 ? minX : maxX;
-    const targetY = quadrantY === 0 ? minY : maxY;
+    // Mark occupied grid cells
+    existingAds.forEach(ad => {
+      if (ad.id === currentAdId) return; // Skip current ad
+      
+      const col = Math.floor((ad.x - BUBBLE_PADDING) / cellSize);
+      const row = Math.floor((ad.y - BUBBLE_PADDING - 30) / cellSize);
+      
+      if (col >= 0 && col < gridColumns && row >= 0 && row < gridRows) {
+        grid[row][col] = true;
+        
+        // Mark neighboring cells too
+        for (let r = Math.max(0, row-1); r <= Math.min(gridRows-1, row+1); r++) {
+          for (let c = Math.max(0, col-1); c <= Math.min(gridColumns-1, col+1); c++) {
+            grid[r][c] = true;
+          }
+        }
+      }
+    });
     
-    // Move 20% closer to the target corner
-    newX = newX + (targetX - newX) * 0.2;
-    newY = newY + (targetY - newY) * 0.2;
+    // Find the closest available grid cell to our current position
+    let bestDistance = Infinity;
+    let bestX = newX;
+    let bestY = newY;
+    
+    for (let row = 0; row < gridRows; row++) {
+      for (let col = 0; col < gridColumns; col++) {
+        if (!grid[row][col]) {
+          const gridX = BUBBLE_PADDING + col * cellSize;
+          const gridY = BUBBLE_PADDING + 30 + row * cellSize;
+          
+          const distanceToOriginal = calculateDistance(x, y, gridX, gridY);
+          
+          if (distanceToOriginal < bestDistance) {
+            // Check for actual overlaps
+            let hasOverlap = false;
+            for (const ad of otherAds) {
+              const distance = calculateDistance(
+                gridX + size/2, 
+                gridY + size/2, 
+                ad.x + ad.size/2, 
+                ad.y + ad.size/2
+              );
+              
+              const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
+              
+              if (distance < minDistance) {
+                hasOverlap = true;
+                break;
+              }
+            }
+            
+            if (!hasOverlap) {
+              bestDistance = distanceToOriginal;
+              bestX = gridX;
+              bestY = gridY;
+            }
+          }
+        }
+      }
+    }
+    
+    return { x: bestX, y: bestY };
   }
 
   return { x: newX, y: newY };
@@ -1054,106 +1185,197 @@ function App() {
 
   // 3. Improved collision response for spiral layout
   const handleCollision = (ad1, ad2) => {
-    const dx = (ad1.x + ad1.size/2) - (ad2.x + ad2.size/2);
-    const dy = (ad1.y + ad1.size/2) - (ad2.y + ad2.size/2);
-    const distance = Math.sqrt(dx * dx + dy * dy);
+    // Skip collision handling if either ad doesn't have a position yet
+    if (!ad1 || !ad2 || !ad1.x || !ad2.x) return;
     
-    // We'll use a smaller collision distance to allow bubbles to be packed more tightly
-    const minDistance = (ad1.size + ad2.size) / 2 * 1.05; // Just 5% extra space
+    // Get centers of both bubbles
+    const x1 = ad1.x + ad1.size / 2;
+    const y1 = ad1.y + ad1.size / 2;
+    const x2 = ad2.x + ad2.size / 2;
+    const y2 = ad2.y + ad2.size / 2;
     
-    // If bubbles are overlapping
+    // Calculate distance between centers
+    const distance = calculateDistance(x1, y1, x2, y2);
+    
+    // Use consistent bubble spacing factor
+    const bubbleSpacing = 1.02;
+    
+    // Calculate minimum distance needed to avoid overlap
+    const minDistance = ((ad1.size + ad2.size) / 2) * bubbleSpacing;
+    
+    // Check if bubbles are overlapping
     if (distance < minDistance) {
-      // Calculate normalized direction vector
-      const nx = dx / (distance || 0.001); // Avoid division by zero
-      const ny = dy / (distance || 0.001);
-      
-      // Calculate overlap amount
+      // Calculate displacement needed
       const overlap = minDistance - distance;
       
-      // Apply minimal separation - just enough to prevent overlap
-      // This maintains the spiral layout without excessive bouncing
-      ad1.x += nx * overlap * 0.5;
-      ad1.y += ny * overlap * 0.5;
-      ad2.x -= nx * overlap * 0.5;
-      ad2.y -= ny * overlap * 0.5;
+      // Direction from ad1 to ad2
+      const dx = x2 - x1;
+      const dy = y2 - y1;
       
-      // Add very small velocity change to prevent sticking
-      const smallVelocity = 0.5;
-      ad1.vx += nx * smallVelocity;
-      ad1.vy += ny * smallVelocity;
-      ad2.vx -= nx * smallVelocity;
-      ad2.vy -= ny * smallVelocity;
+      // Normalize direction vector
+      const magnitude = Math.max(0.001, Math.sqrt(dx * dx + dy * dy)); // Avoid division by zero
+      const dirX = dx / magnitude;
+      const dirY = dy / magnitude;
       
-      // Update DOM elements immediately
-      if (ad1.element) {
-        ad1.element.style.left = `${ad1.x}px`;
-        ad1.element.style.top = `${ad1.y}px`;
+      // Calculate push amounts - giving priority to fixed bubbles
+      let push1 = 0.5;
+      let push2 = 0.5;
+      
+      // If one is fixed (like during dragging), push the other one more
+      if (ad1.isDragging) {
+        push1 = 0.1; // Minimal push for dragged bubble
+        push2 = 0.9; // Push the other one more
+      } else if (ad2.isDragging) {
+        push1 = 0.9;
+        push2 = 0.1;
       }
-      if (ad2.element) {
-        ad2.element.style.left = `${ad2.x}px`;
-        ad2.element.style.top = `${ad2.y}px`;
+      
+      // Calculate new positions
+      let newAd1X = ad1.x - dirX * overlap * push1;
+      let newAd1Y = ad1.y - dirY * overlap * push1;
+      let newAd2X = ad2.x + dirX * overlap * push2;
+      let newAd2Y = ad2.y + dirY * overlap * push2;
+      
+      // Ensure new positions stay within viewport
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
+      
+      // Check and adjust boundaries for ad1
+      newAd1X = Math.max(BUBBLE_PADDING, Math.min(windowWidth - ad1.size - BUBBLE_PADDING, newAd1X));
+      newAd1Y = Math.max(BUBBLE_PADDING, Math.min(windowHeight - ad1.size - BUBBLE_PADDING, newAd1Y));
+      
+      // Check and adjust boundaries for ad2
+      newAd2X = Math.max(BUBBLE_PADDING, Math.min(windowWidth - ad2.size - BUBBLE_PADDING, newAd2X));
+      newAd2Y = Math.max(BUBBLE_PADDING, Math.min(windowHeight - ad2.size - BUBBLE_PADDING, newAd2Y));
+      
+      // Apply the new positions but don't affect dragged bubbles
+      if (!ad1.isDragging) {
+        ad1.x = newAd1X;
+        ad1.y = newAd1Y;
       }
+      
+      if (!ad2.isDragging) {
+        ad2.x = newAd2X;
+        ad2.y = newAd2Y;
+      }
+      
+      return true; // Collision was handled
     }
+    
+    return false; // No collision
   };
 
   // Function to smoothly refresh bubbles without glitching
   const refreshBubbles = (newAds, currentAds) => {
-    // 1. Add transition styling for smooth position changes
-    document.querySelectorAll('.bubble').forEach(bubble => {
-      bubble.style.transition = 'transform 0.5s ease-out, opacity 0.5s ease-out';
-    });
+    // Safety check
+    if (!newAds || !currentAds) return currentAds || [];
     
-    // 2. For existing bubbles that will remain, keep their positions/velocities
-    const persistentBubbles = currentAds.filter(currentAd => 
-      newAds.some(newAd => newAd.id === currentAd.id)
-    );
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    const updatedAds = [...currentAds];
     
-    // 3. For new bubbles, start with opacity 0 and fade in
-    const newBubblesData = newAds.filter(newAd => 
-      !currentAds.some(currentAd => currentAd.id === newAd.id)
-    );
+    // Track all processed ads to avoid duplicates
+    const processedAdIds = new Set(updatedAds.map(ad => ad.id));
     
-    // Apply fade-in for new bubbles
-    newBubblesData.forEach(newAd => {
-      // When creating the DOM element for this bubble
-      if (newAd.element) {
-        newAd.element.style.opacity = '0';
+    // Process new ads first
+    for (const newAd of newAds) {
+      // Skip if already processed
+      if (processedAdIds.has(newAd.id)) continue;
+      
+      const existingAdIndex = updatedAds.findIndex(ad => ad.id === newAd.id);
+      
+      if (existingAdIndex !== -1) {
+        // Update existing ad
+        const existingAd = updatedAds[existingAdIndex];
         
-        // Fade in gradually
-        setTimeout(() => {
-          newAd.element.style.transition = 'opacity 0.8s ease-in-out, transform 0.5s ease-out';
-          newAd.element.style.opacity = '1';
-        }, 50);
-      }
-    });
-    
-    // 4. For bubbles that will be removed, fade them out before removal
-    const removedBubbles = currentAds.filter(currentAd => 
-      !newAds.some(newAd => newAd.id === currentAd.id)
-    );
-    
-    removedBubbles.forEach(oldAd => {
-      if (oldAd.element) {
-        oldAd.element.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
-        oldAd.element.style.opacity = '0';
+        // Keep position if it exists and is valid, otherwise calculate new position
+        if (existingAd.x !== undefined && 
+            existingAd.y !== undefined && 
+            existingAd.x >= 0 && 
+            existingAd.y >= 0 &&
+            existingAd.x + existingAd.size <= windowWidth &&
+            existingAd.y + existingAd.size <= windowHeight) {
+          // Keep the existing position
+          newAd.x = existingAd.x;
+          newAd.y = existingAd.y;
+        } else {
+          // Calculate new safe position
+          const size = getResponsiveSize(newAd.baseSize || 140);
+          const { x, y } = calculateSafePosition(size, windowWidth, windowHeight, updatedAds);
+          newAd.x = x;
+          newAd.y = y;
+        }
         
-        // Remove after fade-out completes
-        setTimeout(() => {
-          if (oldAd.element && oldAd.element.parentNode) {
-            oldAd.element.parentNode.removeChild(oldAd.element);
-          }
-        }, 500);
+        // Keep other existing properties we want to preserve
+        newAd.element = existingAd.element;
+        newAd.vx = existingAd.vx || 0;
+        newAd.vy = existingAd.vy || 0;
+        newAd.isDragging = existingAd.isDragging || false;
+        
+        // Replace with updated ad
+        updatedAds[existingAdIndex] = { ...newAd };
+      } else {
+        // Add new ad with calculated position
+        const size = getResponsiveSize(newAd.baseSize || 140);
+        const { x, y } = calculateSafePosition(size, windowWidth, windowHeight, updatedAds);
+        
+        updatedAds.push({
+          ...newAd,
+          x,
+          y,
+          size,
+          vx: 0,
+          vy: 0,
+          isDragging: false
+        });
       }
+      
+      processedAdIds.add(newAd.id);
+    }
+    
+    // Check if any bubbles are now off-screen or overlapping due to window resize
+    // and adjust their positions accordingly
+    const finalAdjustedAds = updatedAds.map(ad => {
+      // Skip undefined positions
+      if (ad.x === undefined || ad.y === undefined) {
+        return ad;
+      }
+      
+      // Check if bubble is partially or fully off-screen
+      const isOffScreen = 
+        ad.x < BUBBLE_PADDING || 
+        ad.y < BUBBLE_PADDING + 30 || 
+        ad.x + ad.size > windowWidth - BUBBLE_PADDING || 
+        ad.y + ad.size > windowHeight - BUBBLE_PADDING;
+      
+      if (isOffScreen) {
+        // Adjust position to ensure it's within viewport bounds
+        const { x, y } = ensureInViewport(ad.x, ad.y, ad.size, windowWidth, windowHeight, updatedAds, ad.id);
+        return { ...ad, x, y };
+      }
+      
+      return ad;
     });
     
-    // 5. After everything is stable, remove transitions to allow physics to work normally
-    setTimeout(() => {
-      document.querySelectorAll('.bubble').forEach(bubble => {
-        bubble.style.transition = '';
-      });
-    }, 600);
+    // Run one final collision detection pass to resolve any remaining overlaps
+    let hasCollisions = true;
+    let collisionPasses = 0;
+    const maxCollisionPasses = 3;
     
-    return [...persistentBubbles, ...newBubblesData];
+    while (hasCollisions && collisionPasses < maxCollisionPasses) {
+      hasCollisions = false;
+      collisionPasses++;
+      
+      // Detect and resolve collisions between all pairs of bubbles
+      for (let i = 0; i < finalAdjustedAds.length; i++) {
+        for (let j = i + 1; j < finalAdjustedAds.length; j++) {
+          const collisionHandled = handleCollision(finalAdjustedAds[i], finalAdjustedAds[j]);
+          hasCollisions = hasCollisions || collisionHandled;
+        }
+      }
+    }
+    
+    return finalAdjustedAds;
   };
 
   // Function to periodically check and fix overlapping bubbles
