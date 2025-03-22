@@ -1156,15 +1156,32 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                             )}
                             <button
                               onClick={() => {
-                                const referralCode = currentUser?.username || ''; // Get current user's username as referral code
-                                const url = `${window.location.origin}/marketplace?service=${service._id}&ref=${referralCode}#${service.title.replace(/\s+/g, '-')}`;
-                                navigator.clipboard.writeText(url);
-                                alert('Service link copied to clipboard! Share this link with others to help them find your service in the marketplace.');
+                                // Generate shareable URL
+                                const slug = service.title
+                                  .toLowerCase()
+                                  .replace(/[^a-z0-9]+/g, '-')
+                                  .replace(/(^-|-$)/g, '');
+                                const shareUrl = `${window.location.origin}/service/${slug}-${service._id}`;
+                                
+                                // Create share data
+                                if (navigator.share) {
+                                  navigator.share({
+                                    title: `${service.title} | ${service.seller?.username} on Aquads`,
+                                    text: `Check out this service: ${service.title}`,
+                                    url: shareUrl,
+                                  }).catch(err => {
+                                    navigator.clipboard.writeText(shareUrl);
+                                    alert('Link copied to clipboard!');
+                                  });
+                                } else {
+                                  navigator.clipboard.writeText(shareUrl);
+                                  alert('Link copied to clipboard!');
+                                }
                               }}
-                              className="inline-flex items-center px-3 py-1.5 text-sm bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 rounded-full transition-all duration-300"
+                              className="inline-flex items-center px-3 py-1.5 text-sm bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-full transition-all duration-300"
                             >
-                              <svg className="w-4 h-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"/>
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                               </svg>
                               Share
                             </button>
