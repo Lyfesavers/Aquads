@@ -112,7 +112,7 @@ function getServiceHtml(service, description, seoUrl) {
     <title>${metaTitle}</title>
     <script>
       // Redirect to the app URL
-      window.location.href = '/marketplace?serviceId=${service._id}';
+      window.location.href = '/marketplace?service=${service._id}';
     </script>
   </head>
   <body>
@@ -123,7 +123,7 @@ function getServiceHtml(service, description, seoUrl) {
     <script>
       // Backup redirect
       setTimeout(function() {
-        window.location.href = '/marketplace?serviceId=${service._id}';
+        window.location.href = '/marketplace?service=${service._id}';
       }, 100);
     </script>
   </body>

@@ -37,7 +37,7 @@
 # Captures the service-title-123456 format and redirects to ?serviceId=123456 for normal users
 [[redirects]]
   from = "/service/*-:id"
-  to = "/marketplace?serviceId=:id"
+  to = "/marketplace?service=:id"
   status = 301
   force = true
 
