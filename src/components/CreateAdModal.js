@@ -130,7 +130,31 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
               <option value="optimism">Optimism</option>
               <option value="base">Base</option>
               <option value="sui">Sui</option>
-              <option value="other">Other</option>
+              <option value="near">NEAR</option>
+              <option value="fantom">Fantom</option>
+              <option value="tron">TRON</option>
+              <option value="cronos">Cronos</option>
+              <option value="celo">Celo</option>
+              <option value="harmony">Harmony</option>
+              <option value="moonbeam">Moonbeam</option>
+              <option value="moonriver">Moonriver</option>
+              <option value="cosmos">Cosmos</option>
+              <option value="polkadot">Polkadot</option>
+              <option value="hedera">Hedera</option>
+              <option value="kadena">Kadena</option>
+              <option value="stacks">Stacks</option>
+              <option value="oasis">Oasis</option>
+              <option value="zilliqa">Zilliqa</option>
+              <option value="elrond">MultiversX (Elrond)</option>
+              <option value="kava">Kava</option>
+              <option value="injective">Injective</option>
+              <option value="aptos">Aptos</option>
+              <option value="algorand">Algorand</option>
+              <option value="stellar">Stellar</option>
+              <option value="flow">Flow</option>
+              <option value="cardano">Cardano</option>
+              <option value="ton">TON</option>
+              <option value="tezos">Tezos</option>
             </select>
           </div>
           <div>

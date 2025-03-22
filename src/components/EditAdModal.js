@@ -5,7 +5,8 @@ const EditAdModal = ({ ad, onEditAd, onClose }) => {
   const [formData, setFormData] = useState({
     title: ad.title,
     logo: ad.logo,
-    url: ad.url
+    url: ad.url,
+    blockchain: ad.blockchain || 'ethereum'
   });
   const [previewUrl, setPreviewUrl] = useState(ad.logo);
   const [error, setError] = useState('');
@@ -73,6 +74,50 @@ const EditAdModal = ({ ad, onEditAd, onClose }) => {
               required
               className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+          </div>
+          <div>
+            <label className="block mb-1">Blockchain</label>
+            <select
+              name="blockchain"
+              value={formData.blockchain}
+              onChange={handleChange}
+              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="ethereum">Ethereum</option>
+              <option value="bsc">Binance Smart Chain</option>
+              <option value="polygon">Polygon</option>
+              <option value="solana">Solana</option>
+              <option value="avalanche">Avalanche</option>
+              <option value="arbitrum">Arbitrum</option>
+              <option value="optimism">Optimism</option>
+              <option value="base">Base</option>
+              <option value="sui">Sui</option>
+              <option value="near">NEAR</option>
+              <option value="fantom">Fantom</option>
+              <option value="tron">TRON</option>
+              <option value="cronos">Cronos</option>
+              <option value="celo">Celo</option>
+              <option value="harmony">Harmony</option>
+              <option value="moonbeam">Moonbeam</option>
+              <option value="moonriver">Moonriver</option>
+              <option value="cosmos">Cosmos</option>
+              <option value="polkadot">Polkadot</option>
+              <option value="hedera">Hedera</option>
+              <option value="kadena">Kadena</option>
+              <option value="stacks">Stacks</option>
+              <option value="oasis">Oasis</option>
+              <option value="zilliqa">Zilliqa</option>
+              <option value="elrond">MultiversX (Elrond)</option>
+              <option value="kava">Kava</option>
+              <option value="injective">Injective</option>
+              <option value="aptos">Aptos</option>
+              <option value="algorand">Algorand</option>
+              <option value="stellar">Stellar</option>
+              <option value="flow">Flow</option>
+              <option value="cardano">Cardano</option>
+              <option value="ton">TON</option>
+              <option value="tezos">Tezos</option>
+            </select>
           </div>
           <div>
             <label className="block mb-1">Logo URL (GIF or PNG)</label>
