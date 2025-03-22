@@ -19,25 +19,10 @@
   force = false
   conditions = {Crawler = true}
 
-# Prerender services for social media crawlers
-[[redirects]]
-  from = "/service/*-:id"
-  to = "/.netlify/functions/prerender-service"
-  status = 200
-  force = false
-  conditions = {Crawler = true}
-
 # Captures the blog-title-123456 format and redirects to ?blogId=123456 for normal users
 [[redirects]]
   from = "/how-to/*-:id"
   to = "/how-to?blogId=:id"
-  status = 301
-  force = true
-
-# Captures the service-title-123456 format and redirects to ?serviceId=123456 for normal users
-[[redirects]]
-  from = "/service/*-:id"
-  to = "/marketplace?service=:id"
   status = 301
   force = true
 
