@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aquads Freelancer Service</title>
+  
+  <!-- Social Media Meta Tags -->
+  <meta name="description" content="Check out this freelance service on Aquads - the premier Web3 freelancer marketplace">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" id="og-url" content="https://www.aquads.xyz">
+  <meta property="og:title" content="Aquads Freelancer Service">
+  <meta property="og:description" content="Check out this freelance service on Aquads - the premier Web3 freelancer marketplace">
+  <meta property="og:image" content="https://www.aquads.xyz/logo712.png">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" id="twitter-url" content="https://www.aquads.xyz">
+  <meta property="twitter:title" content="Aquads Freelancer Service">
+  <meta property="twitter:description" content="Check out this freelance service on Aquads - the premier Web3 freelancer marketplace">
+  <meta property="twitter:image" content="https://www.aquads.xyz/logo712.png">
+  
+  <script>
+    // Extract service ID from the URL path
+    function extractIdFromPath() {
+      const path = window.location.pathname;
+      // Match the last segment which should be something like "title-title-ID"
+      const match = path.match(/\/service\/(.+)-([a-zA-Z0-9]+)$/);
+      if (match && match[2]) {
+        return match[2]; // Return just the ID part
+      }
+      // If no match, try to get the last segment
+      const segments = path.split('/');
+      const lastSegment = segments[segments.length - 1];
+      // Extract the ID (assuming it's the part after the last dash)
+      const parts = lastSegment.split('-');
+      return parts[parts.length - 1]; 
+    }
+
+    // Update meta tags with current URL
+    document.getElementById('og-url').content = window.location.href;
+    document.getElementById('twitter-url').content = window.location.href;
+
+    // Redirect to the marketplace with the correct service ID
+    window.onload = function() {
+      const serviceId = extractIdFromPath();
+      if (serviceId) {
+        window.location.href = `/marketplace?service=${serviceId}`;
+      } else {
+        // If no ID found, redirect to the marketplace
+        window.location.href = '/marketplace';
+      }
+    }
+  </script>
+</head>
+<body>
+  <div style="display: flex; justify-content: center; align-items: center; height: 100vh; font-family: Arial, sans-serif;">
+    <div style="text-align: center;">
+      <h2>Redirecting to Aquads Marketplace...</h2>
+      <p>If you are not redirected automatically, <a href="/marketplace">click here</a>.</p>
+    </div>
+  </div>
+</body>
+</html> 
