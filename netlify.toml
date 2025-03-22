@@ -19,12 +19,6 @@
   force = false
   conditions = {Crawler = true}
 
-# Redirect service URLs to our static service.html which will handle the redirect client-side
-[[redirects]]
-  from = "/service/*"
-  to = "/service.html"
-  status = 200
-
 # Captures the blog-title-123456 format and redirects to ?blogId=123456 for normal users
 [[redirects]]
   from = "/how-to/*-:id"
