@@ -6,7 +6,8 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
     title: '',
     logo: '',
     url: '',
-    contractAddress: ''
+    contractAddress: '',
+    blockchain: 'ethereum'
   });
   const [previewUrl, setPreviewUrl] = useState('');
   const [error, setError] = useState('');
@@ -111,6 +112,26 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
               required
               className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+          </div>
+          <div>
+            <label className="block mb-1">Blockchain</label>
+            <select
+              name="blockchain"
+              value={formData.blockchain}
+              onChange={handleChange}
+              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="ethereum">Ethereum</option>
+              <option value="bsc">Binance Smart Chain</option>
+              <option value="polygon">Polygon</option>
+              <option value="solana">Solana</option>
+              <option value="avalanche">Avalanche</option>
+              <option value="arbitrum">Arbitrum</option>
+              <option value="optimism">Optimism</option>
+              <option value="base">Base</option>
+              <option value="sui">Sui</option>
+              <option value="other">Other</option>
+            </select>
           </div>
           <div>
             <label className="block mb-1">Logo URL (GIF or PNG)</label>

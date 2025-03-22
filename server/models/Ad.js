@@ -82,6 +82,11 @@ const adSchema = new mongoose.Schema({
       },
       message: 'Contract address is required'
     }
+  },
+  blockchain: {
+    type: String,
+    default: 'ethereum',
+    trim: true
   }
 });
 
