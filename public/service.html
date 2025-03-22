@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Redirecting to Aquads Service</title>
+  <meta name="description" content="View this service on Aquads - the premier Web3 freelancer marketplace">
+  <meta property="og:title" content="Aquads Freelancer Service">
+  <meta property="og:description" content="Check out this freelance service on Aquads">
+  <meta property="og:image" content="https://www.aquads.xyz/logo712.png">
+  <script>
+    // Simple redirect
+    window.onload = function() {
+      // Look for MongoDB ObjectID format (24 hex characters)
+      var path = window.location.pathname;
+      var matches = path.match(/([a-f0-9]{24})/i);
+      
+      if (matches && matches[1]) {
+        // Found the ID, redirect
+        window.location.href = "/marketplace?service=" + matches[1];
+      } else {
+        // No ID found, redirect to marketplace
+        window.location.href = "/marketplace";
+      }
+    };
+  </script>
+</head>
+<body>
+  <p>Redirecting to service page...</p>
+</body>
+</html> 
