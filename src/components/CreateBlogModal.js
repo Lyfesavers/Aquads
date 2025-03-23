@@ -295,7 +295,7 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
         </div>
         
         <div>
-          <label className="block text-sm font-medium mb-1">Content</label>
+          <label className="block text-sm font-medium mb-1">Content (Max 5000 words)</label>
           <div className="border border-gray-600 rounded overflow-hidden">
             <MenuBar editor={editor} />
             <EditorContent 
