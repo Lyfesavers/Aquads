@@ -78,7 +78,6 @@ router.post('/', auth, async (req, res) => {
     await blog.save();
     res.status(201).json(blog);
   } catch (error) {
-    console.error('Error creating blog:', error);
     res.status(500).json({ error: 'Failed to create blog' });
   }
 });
