@@ -22,7 +22,6 @@ router.get('/', async (req, res) => {
     
     res.json(updatedBlogs);
   } catch (error) {
-    console.error('Error fetching blogs:', error);
     res.status(500).json({ error: 'Failed to fetch blogs' });
   }
 });
@@ -44,7 +43,6 @@ router.get('/:id', async (req, res) => {
     
     res.json(blog);
   } catch (error) {
-    console.error('Error fetching blog:', error);
     res.status(500).json({ error: 'Failed to fetch blog' });
   }
 });
@@ -123,7 +121,6 @@ router.patch('/:id', auth, async (req, res) => {
     await blog.save();
     res.json(blog);
   } catch (error) {
-    console.error('Error updating blog:', error);
     res.status(500).json({ error: 'Failed to update blog' });
   }
 });
@@ -148,7 +145,6 @@ router.delete('/:id', auth, async (req, res) => {
 
     res.json({ message: 'Blog deleted successfully' });
   } catch (error) {
-    console.error('Error deleting blog:', error);
     res.status(500).json({ error: 'Failed to delete blog' });
   }
 });
@@ -230,7 +226,6 @@ router.get('/share/:id', async (req, res) => {
     res.setHeader('Content-Type', 'text/html');
     res.send(html);
   } catch (error) {
-    console.error('Error generating blog share page:', error);
     res.status(500).send('Error generating share page');
   }
 });
