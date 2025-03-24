@@ -71,11 +71,11 @@ function getResponsiveSize(baseSize) {
   const viewportWidth = window.innerWidth;
   
   if (viewportWidth <= 480) {
-    // Mobile - smaller bubbles
-    return Math.floor(baseSize * 0.65);
+    // Mobile - smaller bubbles (reduced from 0.65 to 0.5)
+    return Math.floor(baseSize * 0.5);
   } else if (viewportWidth <= 768) {
-    // Tablet - medium bubbles
-    return Math.floor(baseSize * 0.8);
+    // Tablet - medium bubbles (reduced from 0.8 to 0.7)
+    return Math.floor(baseSize * 0.7);
   }
   // Desktop - normal size
   return baseSize;
