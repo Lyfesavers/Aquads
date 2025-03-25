@@ -65,35 +65,23 @@ emailjs.init(process.env.REACT_APP_EMAILJS_PUBLIC_KEY);
 // Constants for ad sizes and animations
 const BASE_MAX_SIZE = 150;
 const MIN_SIZE = 50;
-
 // Function to get responsive size based on screen width
 function getResponsiveSize(baseSize) {
+  // Get current viewport width
   const viewportWidth = window.innerWidth;
   
   if (viewportWidth <= 480) {
-    // Mobile - smaller bubbles with more spacing
-    return Math.floor(baseSize * 0.45);
+    // Mobile - smaller bubbles (reduced from 0.65 to 0.5)
+    return Math.floor(baseSize * 0.5);
   } else if (viewportWidth <= 768) {
-    // Tablet - medium bubbles
+    // Tablet - medium bubbles (reduced from 0.8 to 0.7)
     return Math.floor(baseSize * 0.7);
   }
   // Desktop - normal size
   return baseSize;
 }
 
-// Adjust bubble padding based on screen size
-function getResponsivePadding() {
-  const viewportWidth = window.innerWidth;
-  
-  if (viewportWidth <= 480) {
-    return 30; // Increased padding for mobile
-  } else if (viewportWidth <= 768) {
-    return 20; // Medium padding for tablet
-  }
-  return 15; // Default padding for desktop
-}
-
-// Function to get current max size
+// Use this function to get current max size
 function getMaxSize() {
   return getResponsiveSize(BASE_MAX_SIZE);
 }
@@ -121,60 +109,115 @@ const ADMIN_USERNAME = "admin"; // You can change this to your preferred admin u
 
 // Helper functions for responsive positioning
 function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
-  const padding = getResponsivePadding();
-  const minX = padding;
-  const maxX = windowWidth - size - padding;
-  const minY = padding + 60; // Increased to account for navbar
-  const maxY = windowHeight - size - padding;
+  // Center of the available space (excluding banner)
+  const centerX = windowWidth / 2;
+  const centerY = (windowHeight - TOP_PADDING) / 2 + TOP_PADDING;
   
-  // Grid-based approach with responsive cell size
-  const gridSize = Math.max(size + padding * 2, windowWidth <= 480 ? 150 : 200);
-  const cols = Math.floor(windowWidth / gridSize);
-  const rows = Math.floor(windowHeight / gridSize);
+  // Increase minimum distance between bubbles, especially on mobile
+  const minDistance = Math.max(size * 1.5, windowWidth < 768 ? 100 : 60);
   
-  // Try all grid positions in random order
-  const positions = [];
-  for(let i = 0; i < cols; i++) {
-    for(let j = 0; j < rows; j++) {
-      const randomOffsetX = Math.random() * (gridSize / 4);
-      const randomOffsetY = Math.random() * (gridSize / 4);
-      
-      positions.push({
-        x: minX + (i * gridSize) + randomOffsetX,
-        y: minY + (j * gridSize) + randomOffsetY
-      });
-    }
+  // If this is the first bubble, place it directly in the center of available space
+  if (existingAds.length === 0) {
+    return {
+      x: centerX - size / 2,
+      y: centerY - size / 2
+    };
   }
-  
-  // Shuffle positions
-  positions.sort(() => Math.random() - 0.5);
-  
-  // Try each position with increased minimum distance on mobile
-  for(const pos of positions) {
-    const hasOverlap = existingAds.some(ad => {
-      const distance = calculateDistance(
-        pos.x + size/2, 
-        pos.y + size/2, 
-        ad.x + ad.size/2, 
-        ad.y + ad.size/2
-      );
-      const minDistance = (size + ad.size) / 2 + padding * (window.innerWidth <= 480 ? 2.5 : 2);
-      return distance < minDistance;
-    });
-    
-    if (!hasOverlap) {
-      return pos;
+
+  // Grid-based positioning for better space utilization
+  const gridSize = Math.min(windowWidth, windowHeight - TOP_PADDING) / 4;
+  const possiblePositions = [];
+
+  // Generate possible positions in a grid pattern
+  for (let i = 0; i < 4; i++) {
+    for (let j = 0; j < 4; j++) {
+      const x = (gridSize * i) + (gridSize / 2) - (size / 2);
+      const y = (gridSize * j) + TOP_PADDING + (gridSize / 2) - (size / 2);
+      
+      // Ensure position is within viewport bounds
+      if (x >= BUBBLE_PADDING && 
+          x + size <= windowWidth - BUBBLE_PADDING &&
+          y >= TOP_PADDING + BUBBLE_PADDING && 
+          y + size <= windowHeight - BUBBLE_PADDING) {
+        
+        // Check if this position overlaps with any existing ads
+        let isValid = true;
+        for (const ad of existingAds) {
+          const distance = calculateDistance(
+            x + size/2,
+            y + size/2,
+            ad.x + ad.size/2,
+            ad.y + ad.size/2
+          );
+          if (distance < minDistance) {
+            isValid = false;
+            break;
+          }
+        }
+        
+        if (isValid) {
+          possiblePositions.push({ x, y });
+        }
+      }
     }
   }
 
-  // If no free position found, return a position with minimal overlap
-  return positions[0];
+  // If we found valid positions, choose one randomly
+  if (possiblePositions.length > 0) {
+    return possiblePositions[Math.floor(Math.random() * possiblePositions.length)];
+  }
+
+  // Fallback: Find position with spiral pattern
+  const spiralPositions = [];
+  const maxRadius = Math.min(windowWidth, windowHeight - TOP_PADDING) / 2;
+  const angleStep = Math.PI / 8;
+  
+  for (let radius = minDistance; radius <= maxRadius; radius += minDistance) {
+    for (let angle = 0; angle < Math.PI * 2; angle += angleStep) {
+      const x = centerX + radius * Math.cos(angle) - size / 2;
+      const y = centerY + radius * Math.sin(angle) - size / 2;
+      
+      if (x >= BUBBLE_PADDING && 
+          x + size <= windowWidth - BUBBLE_PADDING &&
+          y >= TOP_PADDING + BUBBLE_PADDING && 
+          y + size <= windowHeight - BUBBLE_PADDING) {
+        
+        let isValid = true;
+        for (const ad of existingAds) {
+          const distance = calculateDistance(
+            x + size/2,
+            y + size/2,
+            ad.x + ad.size/2,
+            ad.y + ad.size/2
+          );
+          if (distance < minDistance) {
+            isValid = false;
+            break;
+          }
+        }
+        
+        if (isValid) {
+          spiralPositions.push({ x, y });
+        }
+      }
+    }
+  }
+
+  if (spiralPositions.length > 0) {
+    return spiralPositions[Math.floor(Math.random() * spiralPositions.length)];
+  }
+
+  // Last resort: Return a random position
+  return {
+    x: Math.random() * (windowWidth - size - BUBBLE_PADDING * 2) + BUBBLE_PADDING,
+    y: Math.random() * (windowHeight - size - TOP_PADDING - BUBBLE_PADDING * 2) + TOP_PADDING + BUBBLE_PADDING
+  };
 }
 
 function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, currentAdId) {
   const minX = BUBBLE_PADDING;
   const maxX = windowWidth - size - BUBBLE_PADDING;
-  const minY = TOP_PADDING;
+  const minY = TOP_PADDING + BUBBLE_PADDING;
   const maxY = windowHeight - size - BUBBLE_PADDING;
 
   let newX = Math.min(Math.max(x, minX), maxX);
@@ -186,9 +229,10 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
     return { x: newX, y: newY };
   }
   
-  const bubbleSpacing = 1.02;
+  // Increase minimum distance between bubbles on mobile
+  const minDistance = Math.max(size * 1.5, windowWidth < 768 ? 100 : 60);
   let iterations = 0;
-  const maxIterations = 25;
+  const maxIterations = 50;
   
   while(iterations < maxIterations) {
     let hasOverlap = false;
@@ -204,24 +248,23 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
         ad.y + ad.size/2
       );
       
-      const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
-      
       if (distance < minDistance) {
         hasOverlap = true;
         overlappingAds++;
         
-        const dx = (ad.x + ad.size/2) - (newX + size/2);
-        const dy = (ad.y + ad.size/2) - (newY + size/2);
+        // Calculate push direction with increased force
+        const dx = (newX + size/2) - (ad.x + ad.size/2);
+        const dy = (newY + size/2) - (ad.y + ad.size/2);
+        const pushAmount = (minDistance - distance) * 1.2; // Increase push force by 20%
         
-        const magnitude = Math.sqrt(dx * dx + dy * dy);
-        const pushX = dx === 0 ? 0 : dx / magnitude;
-        const pushY = dy === 0 ? 0 : dy / magnitude;
+        // Normalize the push vector
+        const magnitude = Math.sqrt(dx * dx + dy * dy) || 1;
+        const pushX = (dx / magnitude) * pushAmount;
+        const pushY = (dy / magnitude) * pushAmount;
         
-        const pushAmount = minDistance - distance;
-        
-        const multiplier = 1 / Math.sqrt(overlappingAds);
-        totalPushX -= pushX * pushAmount * multiplier;
-        totalPushY -= pushY * pushAmount * multiplier;
+        // Add to total push with reduced dampening for overlapping bubbles
+        totalPushX += pushX;
+        totalPushY += pushY;
       }
     }
     
@@ -229,10 +272,12 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
       break;
     }
     
-    const dampening = 0.8;
+    // Apply push forces with less dampening
+    const dampening = 0.9; // Increased from 0.8
     newX += totalPushX * dampening;
     newY += totalPushY * dampening;
     
+    // Ensure we stay within bounds
     newX = Math.min(Math.max(newX, minX), maxX);
     newY = Math.min(Math.max(newY, minY), maxY);
     
@@ -1630,7 +1675,7 @@ function App() {
 
                 {/* Main content - allow natural scrolling */}
                 <div className="pt-28">
-                  {/* Bubbles section */}
+                  {/* Bubbles section - keep it as is, remove fixed positioning */}
                   <div className="relative min-h-screen overflow-hidden">
                     {/* Ads */}
                     {ads && ads.length > 0 ? (
@@ -1656,10 +1701,7 @@ function App() {
                               width: `${ad.size}px`,
                               height: `${ad.size}px`,
                               transition: 'transform 0.3s ease-out',
-                              zIndex: ad.isBumped ? 2 : 1,
-                              willChange: 'transform', // Optimize performance
-                              touchAction: 'none', // Prevent default touch behaviors
-                              padding: window.innerWidth <= 480 ? '15px' : '10px' // Add padding for mobile
+                              zIndex: ad.isBumped ? 2 : 1
                             }}
                           >
                             <motion.div
@@ -1670,7 +1712,7 @@ function App() {
                                 transition: `all ${ANIMATION_DURATION} ease-in-out`,
                                 animationDuration: `${8 + Math.random() * 4}s`,
                                 cursor: 'pointer',
-                                touchAction: 'none'
+                                touchAction: 'auto'
                               }}
                               onClick={(e) => {
                                 if (!e.defaultPrevented) {
