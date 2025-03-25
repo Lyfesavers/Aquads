@@ -113,111 +113,124 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
   const centerX = windowWidth / 2;
   const centerY = (windowHeight - TOP_PADDING) / 2 + TOP_PADDING;
   
-  // Increase minimum distance between bubbles, especially on mobile
-  const minDistance = Math.max(size * 1.5, windowWidth < 768 ? 100 : 60);
-  
   // If this is the first bubble, place it directly in the center of available space
   if (existingAds.length === 0) {
     return {
-      x: centerX - size / 2,
-      y: centerY - size / 2
+      x: centerX - size/2,
+      y: centerY - size/2
     };
   }
-
-  // Grid-based positioning for better space utilization
-  const gridSize = Math.min(windowWidth, windowHeight - TOP_PADDING) / 4;
-  const possiblePositions = [];
-
-  // Generate possible positions in a grid pattern
-  for (let i = 0; i < 4; i++) {
-    for (let j = 0; j < 4; j++) {
-      const x = (gridSize * i) + (gridSize / 2) - (size / 2);
-      const y = (gridSize * j) + TOP_PADDING + (gridSize / 2) - (size / 2);
-      
-      // Ensure position is within viewport bounds
-      if (x >= BUBBLE_PADDING && 
-          x + size <= windowWidth - BUBBLE_PADDING &&
-          y >= TOP_PADDING + BUBBLE_PADDING && 
-          y + size <= windowHeight - BUBBLE_PADDING) {
-        
-        // Check if this position overlaps with any existing ads
-        let isValid = true;
-        for (const ad of existingAds) {
-          const distance = calculateDistance(
-            x + size/2,
-            y + size/2,
-            ad.x + ad.size/2,
-            ad.y + ad.size/2
-          );
-          if (distance < minDistance) {
-            isValid = false;
-            break;
-          }
-        }
-        
-        if (isValid) {
-          possiblePositions.push({ x, y });
-        }
-      }
-    }
-  }
-
-  // If we found valid positions, choose one randomly
-  if (possiblePositions.length > 0) {
-    return possiblePositions[Math.floor(Math.random() * possiblePositions.length)];
-  }
-
-  // Fallback: Find position with spiral pattern
-  const spiralPositions = [];
-  const maxRadius = Math.min(windowWidth, windowHeight - TOP_PADDING) / 2;
-  const angleStep = Math.PI / 8;
   
-  for (let radius = minDistance; radius <= maxRadius; radius += minDistance) {
-    for (let angle = 0; angle < Math.PI * 2; angle += angleStep) {
-      const x = centerX + radius * Math.cos(angle) - size / 2;
-      const y = centerY + radius * Math.sin(angle) - size / 2;
+  // Reduced spacing between bubbles for tighter packing
+  const bubbleSpacing = 1.02;
+  
+  // Calculate spiral position with optimized parameters
+  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+  const startRadius = size/3;
+  const scaleFactor = 0.7;
+  
+  // Create a grid-based optimization for larger numbers of bubbles
+  const useGridApproach = existingAds.length > 12;
+  
+  if (useGridApproach) {
+    const cellSize = size * bubbleSpacing;
+    const gridColumns = Math.floor((windowWidth - 2 * BUBBLE_PADDING) / cellSize);
+    const gridRows = Math.floor((windowHeight - TOP_PADDING - BUBBLE_PADDING) / cellSize);
+    
+    const grid = Array(gridRows).fill().map(() => Array(gridColumns).fill(false));
+    
+    existingAds.forEach(ad => {
+      const col = Math.floor((ad.x - BUBBLE_PADDING) / cellSize);
+      const row = Math.floor((ad.y - TOP_PADDING) / cellSize);
       
-      if (x >= BUBBLE_PADDING && 
-          x + size <= windowWidth - BUBBLE_PADDING &&
-          y >= TOP_PADDING + BUBBLE_PADDING && 
-          y + size <= windowHeight - BUBBLE_PADDING) {
+      if (col >= 0 && col < gridColumns && row >= 0 && row < gridRows) {
+        grid[row][col] = true;
         
-        let isValid = true;
-        for (const ad of existingAds) {
-          const distance = calculateDistance(
-            x + size/2,
-            y + size/2,
-            ad.x + ad.size/2,
-            ad.y + ad.size/2
-          );
-          if (distance < minDistance) {
-            isValid = false;
-            break;
+        for (let r = Math.max(0, row-1); r <= Math.min(gridRows-1, row+1); r++) {
+          for (let c = Math.max(0, col-1); c <= Math.min(gridColumns-1, col+1); c++) {
+            if (Math.sqrt(Math.pow(r-row, 2) + Math.pow(c-col, 2)) <= 1) {
+              grid[r][c] = true;
+            }
           }
         }
-        
-        if (isValid) {
-          spiralPositions.push({ x, y });
+      }
+    });
+    
+    for (let row = 0; row < gridRows; row++) {
+      for (let col = 0; col < gridColumns; col++) {
+        if (!grid[row][col]) {
+          const x = BUBBLE_PADDING + col * cellSize;
+          const y = TOP_PADDING + row * cellSize;
+          
+          let hasOverlap = false;
+          for (const ad of existingAds) {
+            const distance = calculateDistance(
+              x + size/2, 
+              y + size/2, 
+              ad.x + ad.size/2, 
+              ad.y + ad.size/2
+            );
+            
+            const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
+            
+            if (distance < minDistance) {
+              hasOverlap = true;
+              break;
+            }
+          }
+          
+          if (!hasOverlap) {
+            return { x, y };
+          }
         }
       }
     }
   }
-
-  if (spiralPositions.length > 0) {
-    return spiralPositions[Math.floor(Math.random() * spiralPositions.length)];
+  
+  for (let i = 0; i < 1000; i++) {
+    const angle = goldenAngle * i;
+    const radius = startRadius * scaleFactor * Math.sqrt(i + 1);
+    
+    const x = centerX + radius * Math.cos(angle) - size/2;
+    const y = centerY + radius * Math.sin(angle) - size/2;
+    
+    if (x < BUBBLE_PADDING || x + size > windowWidth - BUBBLE_PADDING || 
+        y < TOP_PADDING || y + size > windowHeight - BUBBLE_PADDING) {
+      continue;
+    }
+    
+    let hasOverlap = false;
+    for (const ad of existingAds) {
+      const distance = calculateDistance(
+        x + size/2, 
+        y + size/2, 
+        ad.x + ad.size/2, 
+        ad.y + ad.size/2
+      );
+      
+      const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
+      
+      if (distance < minDistance) {
+        hasOverlap = true;
+        break;
+      }
+    }
+    
+    if (!hasOverlap) {
+      return { x, y };
+    }
   }
-
-  // Last resort: Return a random position
+  
   return {
-    x: Math.random() * (windowWidth - size - BUBBLE_PADDING * 2) + BUBBLE_PADDING,
-    y: Math.random() * (windowHeight - size - TOP_PADDING - BUBBLE_PADDING * 2) + TOP_PADDING + BUBBLE_PADDING
+    x: Math.max(BUBBLE_PADDING, Math.min(windowWidth - size - BUBBLE_PADDING, Math.random() * windowWidth)),
+    y: Math.max(TOP_PADDING, Math.min(windowHeight - size - BUBBLE_PADDING, Math.random() * (windowHeight - TOP_PADDING)))
   };
 }
 
 function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, currentAdId) {
   const minX = BUBBLE_PADDING;
   const maxX = windowWidth - size - BUBBLE_PADDING;
-  const minY = TOP_PADDING + BUBBLE_PADDING;
+  const minY = TOP_PADDING;
   const maxY = windowHeight - size - BUBBLE_PADDING;
 
   let newX = Math.min(Math.max(x, minX), maxX);
@@ -229,10 +242,9 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
     return { x: newX, y: newY };
   }
   
-  // Increase minimum distance between bubbles on mobile
-  const minDistance = Math.max(size * 1.5, windowWidth < 768 ? 100 : 60);
+  const bubbleSpacing = 1.02;
   let iterations = 0;
-  const maxIterations = 50;
+  const maxIterations = 25;
   
   while(iterations < maxIterations) {
     let hasOverlap = false;
@@ -248,23 +260,24 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
         ad.y + ad.size/2
       );
       
+      const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
+      
       if (distance < minDistance) {
         hasOverlap = true;
         overlappingAds++;
         
-        // Calculate push direction with increased force
-        const dx = (newX + size/2) - (ad.x + ad.size/2);
-        const dy = (newY + size/2) - (ad.y + ad.size/2);
-        const pushAmount = (minDistance - distance) * 1.2; // Increase push force by 20%
+        const dx = (ad.x + ad.size/2) - (newX + size/2);
+        const dy = (ad.y + ad.size/2) - (newY + size/2);
         
-        // Normalize the push vector
-        const magnitude = Math.sqrt(dx * dx + dy * dy) || 1;
-        const pushX = (dx / magnitude) * pushAmount;
-        const pushY = (dy / magnitude) * pushAmount;
+        const magnitude = Math.sqrt(dx * dx + dy * dy);
+        const pushX = dx === 0 ? 0 : dx / magnitude;
+        const pushY = dy === 0 ? 0 : dy / magnitude;
         
-        // Add to total push with reduced dampening for overlapping bubbles
-        totalPushX += pushX;
-        totalPushY += pushY;
+        const pushAmount = minDistance - distance;
+        
+        const multiplier = 1 / Math.sqrt(overlappingAds);
+        totalPushX -= pushX * pushAmount * multiplier;
+        totalPushY -= pushY * pushAmount * multiplier;
       }
     }
     
@@ -272,12 +285,10 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
       break;
     }
     
-    // Apply push forces with less dampening
-    const dampening = 0.9; // Increased from 0.8
+    const dampening = 0.8;
     newX += totalPushX * dampening;
     newY += totalPushY * dampening;
     
-    // Ensure we stay within bounds
     newX = Math.min(Math.max(newX, minX), maxX);
     newY = Math.min(Math.max(newY, minY), maxY);
     
