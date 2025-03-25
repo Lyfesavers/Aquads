@@ -99,7 +99,7 @@ body {
 @media (max-width: 480px) {
   .bubble {
     transform-origin: center;
-    transform: scale(0.5) !important;
+    transform: scale(0.45) !important;
   }
   
   .bubble {
@@ -108,21 +108,26 @@ body {
   
   @keyframes bubble-float-mobile {
     0%, 100% {
-      transform: scale(0.5) translateY(0) rotate(0deg) !important;
+      transform: scale(0.45) translateY(0) rotate(0deg) !important;
       filter: brightness(1);
     }
     25% {
-      transform: scale(0.5) translateY(-10px) rotate(1deg) !important;
+      transform: scale(0.45) translateY(-10px) rotate(1deg) !important;
       filter: brightness(1.1);
     }
     50% {
-      transform: scale(0.5) translateY(0) rotate(0deg) !important;
+      transform: scale(0.45) translateY(0) rotate(0deg) !important;
       filter: brightness(1);
     }
     75% {
-      transform: scale(0.5) translateY(10px) rotate(-1deg) !important;
+      transform: scale(0.45) translateY(10px) rotate(-1deg) !important;
       filter: brightness(0.9);
     }
+  }
+  
+  /* Increase spacing between bubbles on mobile */
+  .bubble-container {
+    margin: 15px !important;
   }
 }
 
