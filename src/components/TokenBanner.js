@@ -138,7 +138,7 @@ const TokenBanner = () => {
         <div className="banner-flame">🔥</div>
       </div>
 
-      <div className="flex items-center h-full overflow-hidden relative z-10">
+      <div className="flex items-center h-full overflow-hidden relative z-1">
         <div className="flex animate-scroll whitespace-nowrap">
           {tokens.concat(tokens).map((token, index) => (
             <a

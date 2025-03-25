@@ -524,7 +524,7 @@ body {
   top: 0;
   bottom: 0;
   width: 50px;
-  z-index: 2;
+  z-index: 1;
   pointer-events: none;
 }
 
