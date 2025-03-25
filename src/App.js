@@ -948,8 +948,20 @@ function App() {
     }
   };
 
-  const handleEditAd = async (adId, editedData) => {
+  const handleEditAd = async (adIdOrAd, editedData) => {
     try {
+      // Handle case where first parameter is the entire ad object
+      let adId, updatedFields;
+      if (typeof adIdOrAd === 'object') {
+        adId = adIdOrAd.id;
+        setAdToEdit(adIdOrAd);
+        setShowEditModal(true);
+        return; // Exit early as we're just opening the modal
+      } else {
+        adId = adIdOrAd;
+        updatedFields = editedData;
+      }
+
       const ad = ads.find(a => a.id === adId);
       if (!ad) {
         showNotification('Ad not found!', 'error');
@@ -958,7 +970,7 @@ function App() {
 
       const updatedAd = {
         ...ad,
-        ...editedData,
+        ...updatedFields,
         size: ad.size, // Preserve the current size
         isBumped: ad.isBumped // Preserve the bumped status
       };
