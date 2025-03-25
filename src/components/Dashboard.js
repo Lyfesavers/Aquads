@@ -671,7 +671,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900 z-50 overflow-y-auto" style={{ position: 'absolute' }}>
+    <div className="fixed inset-0 bg-gray-900 z-50 overflow-y-auto">
       {/* Header */}
       <div className="sticky top-0 bg-gray-800/80 backdrop-blur-sm shadow-lg z-10 p-4">
         <div className="flex justify-between items-center max-w-7xl mx-auto">
