@@ -97,8 +97,8 @@ const LAYOUT_DEBOUNCE = 200; // Debounce time for layout calculations
 const ANIMATION_DURATION = '0.3s'; // Slower animations
 const REPOSITION_INTERVAL = 10000; // 5 seconds between position updates
 const BUBBLE_PADDING = 10; // Padding from edges
-const BANNER_HEIGHT = 0; // Height of the banner area including nav and token banner
-const TOP_PADDING = BANNER_HEIGHT + -1; // Additional padding from top to account for banner
+const BANNER_HEIGHT = 1; // Height of the banner area including nav and token banner
+const TOP_PADDING = BANNER_HEIGHT + 1; // Additional padding from top to account for banner
 const MERCHANT_WALLET = {
     SOL: "J8ewxZwntodH8sT8LAXN5j6sAsDhtCh8sQA6GwRuLTSv",
     ETH: "0x98BC1BEC892d9f74B606D478E6b45089D2faAB05",
@@ -111,7 +111,7 @@ const ADMIN_USERNAME = "admin"; // You can change this to your preferred admin u
 function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
   // Center of the available space (excluding banner)
   const centerX = windowWidth / 2;
-  const centerY = (windowHeight - TOP_PADDING) / 2 + TOP_PADDING;
+  const centerY = (windowHeight - TOP_PADDING) / 0 + TOP_PADDING;
   
   // If this is the first bubble, place it directly in the center of available space
   if (existingAds.length === 0) {
