@@ -1197,229 +1197,137 @@ function App() {
 
   // 3. Improved collision response for spiral layout
   const handleCollision = (ad1, ad2) => {
-    // Skip collision handling if either ad doesn't have a position yet
-    if (!ad1 || !ad2 || !ad1.x || !ad2.x) return;
+    const dx = ad2.x - ad1.x;
+    const dy = ad2.y - ad1.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
     
-    // Get centers of both bubbles
-    const x1 = ad1.x + ad1.size / 2;
-    const y1 = ad1.y + ad1.size / 2;
-    const x2 = ad2.x + ad2.size / 2;
-    const y2 = ad2.y + ad2.size / 2;
+    // Calculate minimum distance based on bubble sizes plus a buffer
+    const minDistance = (ad1.size + ad2.size) / 2 + 15; // Added 15px buffer
     
-    // Calculate distance between centers
-    const distance = calculateDistance(x1, y1, x2, y2);
-    
-    // Use consistent bubble spacing factor - increase to ensure bubbles never touch
-    const bubbleSpacing = 1.05; // Increased from 1.02 to create more space between bubbles
-    
-    // Calculate minimum distance needed to avoid overlap
-    const minDistance = ((ad1.size + ad2.size) / 2) * bubbleSpacing;
-    
-    // Check if bubbles are overlapping
     if (distance < minDistance) {
-      // Calculate displacement needed - add a small buffer for safety
-      const overlap = (minDistance - distance) + 2;
+      // Calculate the overlap amount
+      const overlap = minDistance - distance;
       
-      // Direction from ad1 to ad2
-      const dx = x2 - x1;
-      const dy = y2 - y1;
+      // Calculate normalized direction vector
+      const nx = dx / distance;
+      const ny = dy / distance;
       
-      // Normalize direction vector
-      const magnitude = Math.max(0.001, Math.sqrt(dx * dx + dy * dy)); // Avoid division by zero
-      const dirX = dx / magnitude;
-      const dirY = dy / magnitude;
+      // Move bubbles apart with more force
+      const moveAmount = overlap * 0.6; // 60% of overlap for smoother separation
       
-      // Calculate push amounts - giving priority to fixed bubbles
-      let push1 = 0.5;
-      let push2 = 0.5;
+      // Apply stronger separation for bumped bubbles
+      const ad1Move = ad1.isBumped ? 0.3 : 0.5;
+      const ad2Move = ad2.isBumped ? 0.3 : 0.5;
       
-      // If one is fixed (like during dragging), push the other one more
-      if (ad1.isDragging) {
-        push1 = 0.1; // Minimal push for dragged bubble
-        push2 = 0.9; // Push the other one more
-      } else if (ad2.isDragging) {
-        push1 = 0.9;
-        push2 = 0.1;
+      // Update positions
+      if (!ad1.isBumped) {
+        ad1.x -= nx * moveAmount * ad1Move;
+        ad1.y -= ny * moveAmount * ad1Move;
       }
       
-      // If one is a bumped ad, give it priority
-      if (ad1.isBumped) {
-        push1 = 0.1;
-        push2 = 0.9;
-      } else if (ad2.isBumped) {
-        push1 = 0.9;
-        push2 = 0.1;
+      if (!ad2.isBumped) {
+        ad2.x += nx * moveAmount * ad2Move;
+        ad2.y += ny * moveAmount * ad2Move;
       }
       
-      // Additional velocity adjustment to help separate overlapping bubbles
-      if (!ad1.isDragging) {
-        ad1.vx -= dirX * 0.5;
-        ad1.vy -= dirY * 0.5;
+      // Add velocity components to help bubbles naturally separate
+      const velocityFactor = 0.5;
+      ad1.velocityX = -nx * velocityFactor;
+      ad1.velocityY = -ny * velocityFactor;
+      ad2.velocityX = nx * velocityFactor;
+      ad2.velocityY = ny * velocityFactor;
+      
+      // Update DOM immediately to prevent visual overlap
+      const element1 = document.getElementById(ad1.id);
+      const element2 = document.getElementById(ad2.id);
+      
+      if (element1) {
+        element1.style.transform = `translate(${ad1.x}px, ${ad1.y}px)`;
+        element1.style.transition = 'transform 0.3s ease-out';
       }
       
-      if (!ad2.isDragging) {
-        ad2.vx += dirX * 0.5;
-        ad2.vy += dirY * 0.5;
+      if (element2) {
+        element2.style.transform = `translate(${ad2.x}px, ${ad2.y}px)`;
+        element2.style.transition = 'transform 0.3s ease-out';
       }
       
-      // Calculate new positions
-      let newAd1X = ad1.x - dirX * overlap * push1;
-      let newAd1Y = ad1.y - dirY * overlap * push1;
-      let newAd2X = ad2.x + dirX * overlap * push2;
-      let newAd2Y = ad2.y + dirY * overlap * push2;
-      
-      // Ensure new positions stay within viewport
-      const windowWidth = window.innerWidth;
-      const windowHeight = window.innerHeight;
-      
-      // Check and adjust boundaries for ad1
-      newAd1X = Math.max(BUBBLE_PADDING, Math.min(windowWidth - ad1.size - BUBBLE_PADDING, newAd1X));
-      newAd1Y = Math.max(BUBBLE_PADDING, Math.min(windowHeight - ad1.size - BUBBLE_PADDING, newAd1Y));
-      
-      // Check and adjust boundaries for ad2
-      newAd2X = Math.max(BUBBLE_PADDING, Math.min(windowWidth - ad2.size - BUBBLE_PADDING, newAd2X));
-      newAd2Y = Math.max(BUBBLE_PADDING, Math.min(windowHeight - ad2.size - BUBBLE_PADDING, newAd2Y));
-      
-      // Apply the new positions but don't affect dragged bubbles
-      if (!ad1.isDragging) {
-        ad1.x = newAd1X;
-        ad1.y = newAd1Y;
-        
-        // Immediately update DOM position to prevent visual overlap
-        if (ad1.element) {
-          ad1.element.style.left = `${newAd1X}px`;
-          ad1.element.style.top = `${newAd1Y}px`;
-        }
-      }
-      
-      if (!ad2.isDragging) {
-        ad2.x = newAd2X;
-        ad2.y = newAd2Y;
-        
-        // Immediately update DOM position to prevent visual overlap
-        if (ad2.element) {
-          ad2.element.style.left = `${newAd2X}px`;
-          ad2.element.style.top = `${newAd2Y}px`;
-        }
-      }
-      
-      return true; // Collision was handled
+      return true;
     }
-    
-    return false; // No collision
+    return false;
   };
 
   // Function to smoothly refresh bubbles without glitching
   const refreshBubbles = (newAds, currentAds) => {
-    // Safety check
-    if (!newAds || !currentAds) return currentAds || [];
-    
+    if (!newAds?.length) return;
+
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
-    const updatedAds = [...currentAds];
-    
-    // Track all processed ads to avoid duplicates
-    const processedAdIds = new Set(updatedAds.map(ad => ad.id));
-    
-    // Process new ads first
-    for (const newAd of newAds) {
-      // Skip if already processed
-      if (processedAdIds.has(newAd.id)) continue;
-      
-      const existingAdIndex = updatedAds.findIndex(ad => ad.id === newAd.id);
-      
-      if (existingAdIndex !== -1) {
-        // Update existing ad
-        const existingAd = updatedAds[existingAdIndex];
+    let hasCollision;
+    let iterations = 0;
+    const maxIterations = 50;
+
+    do {
+      hasCollision = false;
+      iterations++;
+
+      // Process each ad
+      for (let i = 0; i < newAds.length; i++) {
+        const ad = newAds[i];
         
-        // Keep position if it exists and is valid, otherwise calculate new position
-        if (existingAd.x !== undefined && 
-            existingAd.y !== undefined && 
-            existingAd.x >= 0 && 
-            existingAd.y >= 0 &&
-            existingAd.x + existingAd.size <= windowWidth &&
-            existingAd.y + existingAd.size <= windowHeight) {
-          // Keep the existing position
-          newAd.x = existingAd.x;
-          newAd.y = existingAd.y;
-        } else {
-          // Calculate new safe position
-          const size = getResponsiveSize(newAd.baseSize || 140);
-          const { x, y } = calculateSafePosition(size, windowWidth, windowHeight, updatedAds);
-          newAd.x = x;
-          newAd.y = y;
+        // Skip if the ad is being dragged
+        if (ad.isDragging) continue;
+
+        // Apply velocity with decay
+        if (ad.velocityX || ad.velocityY) {
+          ad.x += ad.velocityX;
+          ad.y += ad.velocityY;
+          ad.velocityX *= 0.95;
+          ad.velocityY *= 0.95;
+          
+          // Clear tiny velocities
+          if (Math.abs(ad.velocityX) < 0.01) ad.velocityX = 0;
+          if (Math.abs(ad.velocityY) < 0.01) ad.velocityY = 0;
         }
-        
-        // Keep other existing properties we want to preserve
-        newAd.element = existingAd.element;
-        newAd.vx = existingAd.vx || 0;
-        newAd.vy = existingAd.vy || 0;
-        newAd.isDragging = existingAd.isDragging || false;
-        
-        // Replace with updated ad
-        updatedAds[existingAdIndex] = { ...newAd };
-      } else {
-        // Add new ad with calculated position
-        const size = getResponsiveSize(newAd.baseSize || 140);
-        const { x, y } = calculateSafePosition(size, windowWidth, windowHeight, updatedAds);
-        
-        updatedAds.push({
-          ...newAd,
-          x,
-          y,
-          size,
-          vx: 0,
-          vy: 0,
-          isDragging: false
-        });
+
+        // Check collisions with other bubbles
+        for (let j = i + 1; j < newAds.length; j++) {
+          const otherAd = newAds[j];
+          if (handleCollision(ad, otherAd)) {
+            hasCollision = true;
+          }
+        }
+
+        // Keep bubbles within viewport with padding
+        const padding = 20;
+        const maxX = windowWidth - ad.size - padding;
+        const maxY = windowHeight - ad.size - padding;
+
+        if (ad.x < padding) {
+          ad.x = padding;
+          ad.velocityX = Math.abs(ad.velocityX || 0) * 0.5;
+        } else if (ad.x > maxX) {
+          ad.x = maxX;
+          ad.velocityX = -Math.abs(ad.velocityX || 0) * 0.5;
+        }
+
+        if (ad.y < padding) {
+          ad.y = padding;
+          ad.velocityY = Math.abs(ad.velocityY || 0) * 0.5;
+        } else if (ad.y > maxY) {
+          ad.y = maxY;
+          ad.velocityY = -Math.abs(ad.velocityY || 0) * 0.5;
+        }
       }
-      
-      processedAdIds.add(newAd.id);
-    }
-    
-    // Check if any bubbles are now off-screen or overlapping due to window resize
-    // and adjust their positions accordingly
-    const finalAdjustedAds = updatedAds.map(ad => {
-      // Skip undefined positions
-      if (ad.x === undefined || ad.y === undefined) {
-        return ad;
+    } while (hasCollision && iterations < maxIterations);
+
+    // Update all bubble positions in the DOM
+    newAds.forEach(ad => {
+      const element = document.getElementById(ad.id);
+      if (element) {
+        element.style.transform = `translate(${ad.x}px, ${ad.y}px)`;
+        element.style.transition = iterations > 1 ? 'transform 0.3s ease-out' : 'none';
       }
-      
-      // Check if bubble is partially or fully off-screen
-      const isOffScreen = 
-        ad.x < BUBBLE_PADDING || 
-        ad.y < BUBBLE_PADDING + 30 || 
-        ad.x + ad.size > windowWidth - BUBBLE_PADDING || 
-        ad.y + ad.size > windowHeight - BUBBLE_PADDING;
-      
-      if (isOffScreen) {
-        // Adjust position to ensure it's within viewport bounds
-        const { x, y } = ensureInViewport(ad.x, ad.y, ad.size, windowWidth, windowHeight, updatedAds, ad.id);
-        return { ...ad, x, y };
-      }
-      
-      return ad;
     });
-    
-    // Run one final collision detection pass to resolve any remaining overlaps
-    let hasCollisions = true;
-    let collisionPasses = 0;
-    const maxCollisionPasses = 3;
-    
-    while (hasCollisions && collisionPasses < maxCollisionPasses) {
-      hasCollisions = false;
-      collisionPasses++;
-      
-      // Detect and resolve collisions between all pairs of bubbles
-      for (let i = 0; i < finalAdjustedAds.length; i++) {
-        for (let j = i + 1; j < finalAdjustedAds.length; j++) {
-          const collisionHandled = handleCollision(finalAdjustedAds[i], finalAdjustedAds[j]);
-          hasCollisions = hasCollisions || collisionHandled;
-        }
-      }
-    }
-    
-    return finalAdjustedAds;
   };
 
   // Function to periodically check and fix overlapping bubbles
@@ -1898,16 +1806,18 @@ function App() {
                         return (
                           <div 
                             key={ad.id}
+                            id={ad.id}
                             className="bubble-container"
                             style={{
-                              left: `${x}px`,
-                              top: `${y}px`,
+                              position: 'absolute',
+                              transform: `translate(${ad.x}px, ${ad.y}px)`,
                               width: `${ad.size}px`,
                               height: `${ad.size}px`,
+                              transition: 'transform 0.3s ease-out'
                             }}
                           >
                             <motion.div
-                              className="absolute transform hover:scale-105 bubble"
+                              className={`absolute bubble ${ad.isBumped ? 'bumped-ad' : ''}`}
                               style={{
                                 width: `${ad.size}px`,
                                 height: `${ad.size}px`,
@@ -1915,10 +1825,7 @@ function App() {
                                 zIndex: ad.isBumped ? 2 : 1,
                                 animationDuration: `${8 + Math.random() * 4}s`,
                                 cursor: 'pointer',
-                                touchAction: 'auto',
-                                position: 'absolute',
-                                top: 0,
-                                left: 0
+                                touchAction: 'auto'
                               }}
                               onClick={(e) => {
                                 if (!e.defaultPrevented) {
