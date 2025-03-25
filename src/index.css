@@ -148,7 +148,6 @@ body {
                 0 0 60px rgba(190, 75, 219, 0.5);
     background: rgba(23, 25, 35, 0.9);
     animation-play-state: paused;
-    /* No additional scale change on hover for consistency */
   }
 }
 
@@ -159,7 +158,6 @@ body {
                 0 0 60px rgba(190, 75, 219, 0.5);
     background: rgba(23, 25, 35, 0.9);
     animation-play-state: paused;
-    /* No additional scale change on hover for consistency */
   }
 }
 
@@ -432,7 +430,7 @@ body {
 }
 
 .bumped-ad:hover {
-  transform: translate(-50%, -50%) scale(1.12) !important;
+  /* Remove transform effect */
 }
 
 .animate-pulse-glow {
