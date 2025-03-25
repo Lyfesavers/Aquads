@@ -1873,7 +1873,7 @@ function App() {
                   </div>
                 </nav>
 
-                <div className="fixed top-16 left-0 right-0 z-[-1] token-banner-container">
+                <div className="fixed top-16 left-0 right-0 z-[4] token-banner-container">
                   <TokenBanner />
                 </div>
 

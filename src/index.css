@@ -515,7 +515,6 @@ body {
 /* Add this if you want a gradient fade effect on the sides */
 .token-banner-container {
   position: relative;
-  pointer-events: none;
 }
 
 .token-banner-container::before,
@@ -525,7 +524,7 @@ body {
   top: 0;
   bottom: 0;
   width: 50px;
-  z-index: -10;
+  z-index: 0;
   pointer-events: none;
 }
 
