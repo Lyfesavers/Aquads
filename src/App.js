@@ -71,11 +71,11 @@ function getResponsiveSize(baseSize) {
   const viewportWidth = window.innerWidth;
   
   if (viewportWidth <= 480) {
-    // Mobile - smaller bubbles (reduced from 0.65 to 0.5)
-    return Math.floor(baseSize * 0.5);
+    // Mobile - smaller bubbles (reduced from 0.5 to 0.45)
+    return Math.floor(baseSize * 0.45);
   } else if (viewportWidth <= 768) {
-    // Tablet - medium bubbles (reduced from 0.8 to 0.7)
-    return Math.floor(baseSize * 0.7);
+    // Tablet - medium bubbles (reduced from 0.7 to 0.6)
+    return Math.floor(baseSize * 0.6);
   }
   // Desktop - normal size
   return baseSize;
@@ -96,9 +96,9 @@ const FREE_AD_LIMIT = 1;
 const LAYOUT_DEBOUNCE = 200; // Debounce time for layout calculations
 const ANIMATION_DURATION = '0.3s'; // Slower animations
 const REPOSITION_INTERVAL = 10000; // 5 seconds between position updates
-const BUBBLE_PADDING = 20; // Padding from edges
+const BUBBLE_PADDING = 30; // Increased padding between bubbles
 const BANNER_HEIGHT = 0; // Height of the banner area including nav and token banner
-const TOP_PADDING = BANNER_HEIGHT + 0; // Additional padding from top to account for banner
+const TOP_PADDING = 70; // Increased top padding for mobile header
 const MERCHANT_WALLET = {
     SOL: "J8ewxZwntodH8sT8LAXN5j6sAsDhtCh8sQA6GwRuLTSv",
     ETH: "0x98BC1BEC892d9f74B606D478E6b45089D2faAB05",
@@ -111,7 +111,7 @@ const ADMIN_USERNAME = "admin"; // You can change this to your preferred admin u
 function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
   // Center of the available space (excluding banner)
   const centerX = windowWidth / 2;
-  const centerY = (windowHeight - TOP_PADDING) / 1 + TOP_PADDING;
+  const centerY = (windowHeight - TOP_PADDING) / 2 + TOP_PADDING;
   
   // If this is the first bubble, place it directly in the center of available space
   if (existingAds.length === 0) {
@@ -121,90 +121,72 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
     };
   }
   
-  // Reduced spacing between bubbles for tighter packing
-  const bubbleSpacing = 1.02;
+  // Increased spacing between bubbles for mobile
+  const bubbleSpacing = window.innerWidth <= 480 ? 1.5 : 1.2;
   
-  // Calculate spiral position with optimized parameters
-  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
-  const startRadius = size/3;
-  const scaleFactor = 0.7;
+  // Calculate grid size based on screen width
+  const gridSize = window.innerWidth <= 480 ? size * 2 : size * 1.5;
+  const gridColumns = Math.floor((windowWidth - 2 * BUBBLE_PADDING) / gridSize);
+  const gridRows = Math.floor((windowHeight - TOP_PADDING - BUBBLE_PADDING) / gridSize);
   
-  // Create a grid-based optimization for larger numbers of bubbles
-  const useGridApproach = existingAds.length > 12;
+  // Create grid array
+  const grid = Array(gridRows).fill().map(() => Array(gridColumns).fill(false));
   
-  if (useGridApproach) {
-    const cellSize = size * bubbleSpacing;
-    const gridColumns = Math.floor((windowWidth - 2 * BUBBLE_PADDING) / cellSize);
-    const gridRows = Math.floor((windowHeight - TOP_PADDING - BUBBLE_PADDING) / cellSize);
+  // Mark occupied grid cells
+  existingAds.forEach(ad => {
+    const col = Math.floor((ad.x - BUBBLE_PADDING) / gridSize);
+    const row = Math.floor((ad.y - TOP_PADDING) / gridSize);
     
-    const grid = Array(gridRows).fill().map(() => Array(gridColumns).fill(false));
-    
-    existingAds.forEach(ad => {
-      const col = Math.floor((ad.x - BUBBLE_PADDING) / cellSize);
-      const row = Math.floor((ad.y - TOP_PADDING) / cellSize);
+    if (col >= 0 && col < gridColumns && row >= 0 && row < gridRows) {
+      grid[row][col] = true;
       
-      if (col >= 0 && col < gridColumns && row >= 0 && row < gridRows) {
-        grid[row][col] = true;
-        
-        for (let r = Math.max(0, row-1); r <= Math.min(gridRows-1, row+1); r++) {
-          for (let c = Math.max(0, col-1); c <= Math.min(gridColumns-1, col+1); c++) {
-            if (Math.sqrt(Math.pow(r-row, 2) + Math.pow(c-col, 2)) <= 1) {
-              grid[r][c] = true;
-            }
+      // Mark surrounding cells as occupied with larger radius on mobile
+      const radius = window.innerWidth <= 480 ? 2 : 1;
+      for (let r = Math.max(0, row-radius); r <= Math.min(gridRows-1, row+radius); r++) {
+        for (let c = Math.max(0, col-radius); c <= Math.min(gridColumns-1, col+radius); c++) {
+          if (Math.sqrt(Math.pow(r-row, 2) + Math.pow(c-col, 2)) <= radius) {
+            grid[r][c] = true;
           }
         }
       }
-    });
-    
-    for (let row = 0; row < gridRows; row++) {
-      for (let col = 0; col < gridColumns; col++) {
-        if (!grid[row][col]) {
-          const x = BUBBLE_PADDING + col * cellSize;
-          const y = TOP_PADDING + row * cellSize;
-          
-          let hasOverlap = false;
-          for (const ad of existingAds) {
-            const distance = calculateDistance(
-              x + size/2, 
-              y + size/2, 
-              ad.x + ad.size/2, 
-              ad.y + ad.size/2
-            );
-            
-            const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
-            
-            if (distance < minDistance) {
-              hasOverlap = true;
-              break;
-            }
-          }
-          
-          if (!hasOverlap) {
-            return { x, y };
-          }
-        }
+    }
+  });
+  
+  // Find available grid cells
+  const availableCells = [];
+  for (let row = 0; row < gridRows; row++) {
+    for (let col = 0; col < gridColumns; col++) {
+      if (!grid[row][col]) {
+        const x = BUBBLE_PADDING + col * gridSize;
+        const y = TOP_PADDING + row * gridSize;
+        
+        // Add random offset within cell
+        const offsetX = Math.random() * (gridSize * 0.3);
+        const offsetY = Math.random() * (gridSize * 0.3);
+        
+        availableCells.push({
+          x: x + offsetX,
+          y: y + offsetY,
+          distance: Math.sqrt(
+            Math.pow(x + offsetX - centerX, 2) + 
+            Math.pow(y + offsetY - centerY, 2)
+          )
+        });
       }
     }
   }
   
-  for (let i = 0; i < 1000; i++) {
-    const angle = goldenAngle * i;
-    const radius = startRadius * scaleFactor * Math.sqrt(i + 1);
-    
-    const x = centerX + radius * Math.cos(angle) - size/2;
-    const y = centerY + radius * Math.sin(angle) - size/2;
-    
-    if (x < BUBBLE_PADDING || x + size > windowWidth - BUBBLE_PADDING || 
-        y < TOP_PADDING || y + size > windowHeight - BUBBLE_PADDING) {
-      continue;
-    }
-    
+  // Sort cells by distance from center
+  availableCells.sort((a, b) => a.distance - b.distance);
+  
+  // Return first available cell that doesn't overlap
+  for (const cell of availableCells) {
     let hasOverlap = false;
     for (const ad of existingAds) {
       const distance = calculateDistance(
-        x + size/2, 
-        y + size/2, 
-        ad.x + ad.size/2, 
+        cell.x + size/2,
+        cell.y + size/2,
+        ad.x + ad.size/2,
         ad.y + ad.size/2
       );
       
@@ -217,13 +199,14 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
     }
     
     if (!hasOverlap) {
-      return { x, y };
+      return { x: cell.x, y: cell.y };
     }
   }
   
+  // If no good position found, return a position at the bottom
   return {
-    x: Math.max(BUBBLE_PADDING, Math.min(windowWidth - size - BUBBLE_PADDING, Math.random() * windowWidth)),
-    y: Math.max(TOP_PADDING, Math.min(windowHeight - size - BUBBLE_PADDING, Math.random() * (windowHeight - TOP_PADDING)))
+    x: Math.max(BUBBLE_PADDING, Math.min(windowWidth - size - BUBBLE_PADDING, centerX + Math.random() * 100 - 50)),
+    y: Math.max(windowHeight - size - BUBBLE_PADDING, TOP_PADDING)
   };
 }
 
@@ -242,9 +225,10 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
     return { x: newX, y: newY };
   }
   
-  const bubbleSpacing = 1.02;
+  // Increased spacing for mobile
+  const bubbleSpacing = window.innerWidth <= 480 ? 1.5 : 1.2;
   let iterations = 0;
-  const maxIterations = 25;
+  const maxIterations = 50; // Increased for better separation
   
   while(iterations < maxIterations) {
     let hasOverlap = false;
@@ -273,7 +257,7 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
         const pushX = dx === 0 ? 0 : dx / magnitude;
         const pushY = dy === 0 ? 0 : dy / magnitude;
         
-        const pushAmount = minDistance - distance;
+        const pushAmount = (minDistance - distance) * 1.2; // Increased push force
         
         const multiplier = 1 / Math.sqrt(overlappingAds);
         totalPushX -= pushX * pushAmount * multiplier;
@@ -285,12 +269,14 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
       break;
     }
     
-    const dampening = 0.8;
+    const dampening = 0.9; // Reduced dampening for stronger separation
     newX += totalPushX * dampening;
     newY += totalPushY * dampening;
     
-    newX = Math.min(Math.max(newX, minX), maxX);
-    newY = Math.min(Math.max(newY, minY), maxY);
+    // Keep in bounds with increased padding for mobile
+    const edgePadding = window.innerWidth <= 480 ? BUBBLE_PADDING * 1.5 : BUBBLE_PADDING;
+    newX = Math.min(Math.max(newX, edgePadding), windowWidth - size - edgePadding);
+    newY = Math.min(Math.max(newY, TOP_PADDING), windowHeight - size - edgePadding);
     
     iterations++;
   }
