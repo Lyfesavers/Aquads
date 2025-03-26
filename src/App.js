@@ -71,11 +71,11 @@ function getResponsiveSize(baseSize) {
   const viewportWidth = window.innerWidth;
   
   if (viewportWidth <= 480) {
-    // Mobile - slightly larger bubbles for better visibility
-    return Math.floor(baseSize * 0.6);
+    // Mobile - smaller bubbles (reduced from 0.65 to 0.5)
+    return Math.floor(baseSize * 0.5);
   } else if (viewportWidth <= 768) {
-    // Tablet - medium bubbles
-    return Math.floor(baseSize * 0.8);
+    // Tablet - medium bubbles (reduced from 0.8 to 0.7)
+    return Math.floor(baseSize * 0.7);
   }
   // Desktop - normal size
   return baseSize;
@@ -121,39 +121,24 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
     };
   }
   
-  // More spacing between bubbles for less overlap - increased from 1.02 to 1.2
-  const bubbleSpacing = 1.2;
+  // Reduced spacing between bubbles for tighter packing
+  const bubbleSpacing = 1.02;
   
   // Calculate spiral position with optimized parameters
   const goldenAngle = Math.PI * (3 - Math.sqrt(5));
   const startRadius = size/3;
   const scaleFactor = 0.7;
   
-  // Use a grid approach with larger numbers of bubbles (reduced threshold from 12 to 8)
-  const useGridApproach = existingAds.length > 8;
+  // Create a grid-based optimization for larger numbers of bubbles
+  const useGridApproach = existingAds.length > 12;
   
   if (useGridApproach) {
-    // Increase cell size to prevent overlaps
     const cellSize = size * bubbleSpacing;
-    
-    // Calculate columns based on device size
-    let gridColumns;
-    if (windowWidth <= 480) {
-      // Mobile: use 3 columns
-      gridColumns = 3;
-    } else if (windowWidth <= 768) {
-      // Tablet: use 4 columns
-      gridColumns = 4;
-    } else {
-      // Desktop: use a calculated number of columns based on window width
-      gridColumns = Math.floor((windowWidth - 2 * BUBBLE_PADDING) / cellSize);
-    }
-    
+    const gridColumns = Math.floor((windowWidth - 2 * BUBBLE_PADDING) / cellSize);
     const gridRows = Math.floor((windowHeight - TOP_PADDING - BUBBLE_PADDING) / cellSize);
     
     const grid = Array(gridRows).fill().map(() => Array(gridColumns).fill(false));
     
-    // Mark existing ad positions
     existingAds.forEach(ad => {
       const col = Math.floor((ad.x - BUBBLE_PADDING) / cellSize);
       const row = Math.floor((ad.y - TOP_PADDING) / cellSize);
@@ -161,29 +146,22 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
       if (col >= 0 && col < gridColumns && row >= 0 && row < gridRows) {
         grid[row][col] = true;
         
-        // Also mark surrounding cells to reduce chance of overlap
         for (let r = Math.max(0, row-1); r <= Math.min(gridRows-1, row+1); r++) {
           for (let c = Math.max(0, col-1); c <= Math.min(gridColumns-1, col+1); c++) {
-            grid[r][c] = true;
+            if (Math.sqrt(Math.pow(r-row, 2) + Math.pow(c-col, 2)) <= 1) {
+              grid[r][c] = true;
+            }
           }
         }
       }
     });
     
-    // Try to find an empty cell - prefer upper rows for better visibility
     for (let row = 0; row < gridRows; row++) {
-      // Use a staggered pattern for better spacing (even rows get offset)
-      const startCol = row % 2 === 0 ? 0 : Math.floor(gridColumns / 2);
-      const endCol = row % 2 === 0 ? Math.floor(gridColumns / 2) : gridColumns;
-      
-      for (let col = startCol; col < endCol; col++) {
+      for (let col = 0; col < gridColumns; col++) {
         if (!grid[row][col]) {
-          // Add randomness to x position within cell for organic look
-          const xOffset = Math.random() * (cellSize * 0.3);
-          const x = BUBBLE_PADDING + col * cellSize + xOffset;
-          const y = TOP_PADDING + row * cellSize + (cellSize * 0.1);
+          const x = BUBBLE_PADDING + col * cellSize;
+          const y = TOP_PADDING + row * cellSize;
           
-          // Verify no overlap with existing ads
           let hasOverlap = false;
           for (const ad of existingAds) {
             const distance = calculateDistance(
@@ -209,7 +187,6 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
     }
   }
   
-  // If grid approach didn't work, fall back to spiral
   for (let i = 0; i < 1000; i++) {
     const angle = goldenAngle * i;
     const radius = startRadius * scaleFactor * Math.sqrt(i + 1);
@@ -244,7 +221,6 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
     }
   }
   
-  // Last resort: return a random position with bounds checking
   return {
     x: Math.max(BUBBLE_PADDING, Math.min(windowWidth - size - BUBBLE_PADDING, Math.random() * windowWidth)),
     y: Math.max(TOP_PADDING, Math.min(windowHeight - size - BUBBLE_PADDING, Math.random() * (windowHeight - TOP_PADDING)))
@@ -266,11 +242,9 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
     return { x: newX, y: newY };
   }
   
-  // Increased spacing to reduce overlaps
-  const bubbleSpacing = 1.2;
-  // More iterations to resolve complex overlaps
+  const bubbleSpacing = 1.02;
   let iterations = 0;
-  const maxIterations = 30;
+  const maxIterations = 25;
   
   while(iterations < maxIterations) {
     let hasOverlap = false;
@@ -286,14 +260,12 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
         ad.y + ad.size/2
       );
       
-      // This is the key improvement - increased minimum distance
       const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
       
       if (distance < minDistance) {
         hasOverlap = true;
         overlappingAds++;
         
-        // Calculate normalized direction vector
         const dx = (ad.x + ad.size/2) - (newX + size/2);
         const dy = (ad.y + ad.size/2) - (newY + size/2);
         
@@ -301,11 +273,9 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
         const pushX = dx === 0 ? 0 : dx / magnitude;
         const pushY = dy === 0 ? 0 : dy / magnitude;
         
-        // Push more strongly away from overlaps
-        const pushAmount = (minDistance - distance) * 1.2;
+        const pushAmount = minDistance - distance;
         
-        // Reduce force as we handle more overlaps to prevent oscillation
-        const multiplier = 1 / Math.pow(overlappingAds, 0.3);
+        const multiplier = 1 / Math.sqrt(overlappingAds);
         totalPushX -= pushX * pushAmount * multiplier;
         totalPushY -= pushY * pushAmount * multiplier;
       }
@@ -315,37 +285,14 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
       break;
     }
     
-    // Progressive dampening - start stronger, then get gentler
-    const dampening = 0.9 - (iterations / maxIterations) * 0.3;
+    const dampening = 0.8;
     newX += totalPushX * dampening;
     newY += totalPushY * dampening;
     
-    // Ensure we stay within viewport boundaries
     newX = Math.min(Math.max(newX, minX), maxX);
     newY = Math.min(Math.max(newY, minY), maxY);
     
     iterations++;
-  }
-  
-  // If we still have overlaps after many iterations, try a grid position as fallback
-  if (iterations >= maxIterations) {
-    const isMobile = windowWidth <= 480;
-    const gridSize = size * 1.2;
-    
-    // Use grid columns based on device width
-    const columns = isMobile ? 3 : Math.floor(windowWidth / gridSize);
-    
-    // Find closest grid position
-    const col = Math.floor(newX / gridSize);
-    const row = Math.floor((newY - TOP_PADDING) / gridSize);
-    
-    // Try to snap to grid
-    newX = col * gridSize + (gridSize - size) / 2;
-    newY = TOP_PADDING + row * gridSize + (gridSize - size) / 2;
-    
-    // Ensure boundaries
-    newX = Math.min(Math.max(newX, minX), maxX);
-    newY = Math.min(Math.max(newY, minY), maxY);
   }
 
   return { x: newX, y: newY };

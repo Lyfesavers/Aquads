@@ -53,8 +53,6 @@ body {
 .bubble-container {
   position: absolute;
   pointer-events: none; /* Make container non-clickable */
-  z-index: 1; /* Base z-index for regular bubbles */
-  transition: transform 0.3s ease-out, z-index 0.2s;
 }
 
 /* Make the bubble itself clickable */
@@ -428,8 +426,7 @@ body {
 }
 
 .bumped-ad {
-  z-index: 100 !important; /* Ensure bumped ads always stay on top */
-  box-shadow: 0 0 20px rgba(230, 0, 255, 0.8), 0 0 40px rgba(230, 0, 255, 0.5) !important;
+  z-index: 1;
 }
 
 .bumped-ad:hover {
@@ -978,23 +975,4 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   transition: box-shadow 0.3s;
   position: relative;
   z-index: 1;
-}
-
-/* When hovering, increase z-index to bring bubble to front */
-.bubble-container:hover {
-  z-index: 90 !important; /* Just below bumped ads but above others */
-}
-
-/* Improved visibility for mobile */
-@media (max-width: 480px) {
-  .bubble {
-    /* Make borders more visible */
-    box-shadow: 0 0 15px 3px rgba(230, 0, 255, 0.6), 0 0 25px 7px rgba(230, 0, 255, 0.4) !important;
-  }
-  
-  /* Make text more legible */
-  .bubble-text-curved span {
-    background: rgba(0, 0, 0, 0.7) !important;
-    font-weight: bold !important;
-  }
 }
