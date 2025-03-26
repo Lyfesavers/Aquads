@@ -545,8 +545,8 @@
     const scoreDisplay = document.createElement('div');
     scoreDisplay.id = 'duck-score';
     scoreDisplay.style.position = 'fixed';
-    scoreDisplay.style.top = '10px';
-    scoreDisplay.style.right = '20px';
+    scoreDisplay.style.top = '20px'; // Increased top margin
+    scoreDisplay.style.right = '80px'; // Increased right margin to avoid menu icon
     scoreDisplay.style.background = 'rgba(0, 0, 0, 0.7)';
     scoreDisplay.style.color = '#fff';
     scoreDisplay.style.padding = '8px 12px';
@@ -556,6 +556,23 @@
     scoreDisplay.style.fontWeight = 'bold';
     scoreDisplay.style.zIndex = '10000';
     scoreDisplay.style.display = 'none'; // Initially hidden
+
+    // Add responsive positioning for mobile
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    function handleMobileLayout(e) {
+        if (e.matches) {
+            // Mobile layout
+            scoreDisplay.style.top = '70px'; // Move below the header
+            scoreDisplay.style.right = '10px';
+        } else {
+            // Desktop layout
+            scoreDisplay.style.top = '20px';
+            scoreDisplay.style.right = '80px';
+        }
+    }
+    mediaQuery.addListener(handleMobileLayout);
+    handleMobileLayout(mediaQuery); // Initial check
+
     scoreDisplay.textContent = 'Ducks: 0';
     document.body.appendChild(scoreDisplay);
     
