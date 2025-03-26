@@ -53,16 +53,28 @@ body {
 .bubble-container {
   position: absolute;
   pointer-events: none; /* Make container non-clickable */
+  transition: transform 0.3s ease-out;
+  z-index: 1;
 }
 
 /* Make the bubble itself clickable */
 .bubble {
   pointer-events: auto; /* Ensure bubble is clickable */
+  width: 100%;
+  height: 100%;
+  transition: all 0.3s ease-in-out, transform 0.3s ease-out;
 }
 
 /* Ensure child elements with specific click handlers are clickable */
 .bubble > * {
   pointer-events: auto;
+}
+
+/* Ensure bumped ads get higher z-index */
+.bumped-ad {
+  z-index: 100 !important;
+  position: relative;
+  animation: bubble-float 8s ease-in-out infinite, neon-purple-pulse 4s ease-in-out infinite;
 }
 
 /* Responsive sizing for bubbles */
@@ -423,10 +435,6 @@ body {
   50% {
     box-shadow: 0 0 30px rgba(34, 197, 94, 0.4);
   }
-}
-
-.bumped-ad {
-  z-index: 1;
 }
 
 .bumped-ad:hover {
