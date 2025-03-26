@@ -71,11 +71,11 @@ function getResponsiveSize(baseSize) {
   const viewportWidth = window.innerWidth;
   
   if (viewportWidth <= 480) {
-    // Mobile - smaller bubbles for better spacing
-    return Math.floor(baseSize * 0.45);
+    // Mobile - significantly smaller bubbles to prevent overlaps
+    return Math.floor(baseSize * 0.4);
   } else if (viewportWidth <= 768) {
     // Tablet - medium bubbles
-    return Math.floor(baseSize * 0.6);
+    return Math.floor(baseSize * 0.55);
   }
   // Desktop - normal size
   return baseSize;
@@ -109,128 +109,131 @@ const ADMIN_USERNAME = "admin"; // You can change this to your preferred admin u
 
 // Helper functions for responsive positioning
 function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
-  // Check if we're on mobile
   const isMobile = window.innerWidth <= 480;
   const isTablet = window.innerWidth > 480 && window.innerWidth <= 768;
   
-  // If this is the first bubble, place it in the center
+  // If this is the first bubble, place it at a fixed position
   if (existingAds.length === 0) {
-    const centerX = windowWidth / 2 - size / 2;
-    const centerY = windowHeight / 2 - size / 2;
-    return { x: centerX, y: centerY };
-  }
-  
-  // Use fixed positions for mobile with a grid layout
-  if (isMobile) {
-    // Define a grid system for mobile
-    // This creates a fixed pattern of positions that works well on mobile
-    const gridPositions = [
-      // Top row
-      { x: windowWidth * 0.2 - size / 2, y: TOP_PADDING + 50 },
-      { x: windowWidth * 0.8 - size / 2, y: TOP_PADDING + 50 },
-      
-      // Second row
-      { x: windowWidth * 0.5 - size / 2, y: TOP_PADDING + 50 + size * 1.8 },
-      
-      // Third row
-      { x: windowWidth * 0.25 - size / 2, y: TOP_PADDING + 50 + size * 3.6 },
-      { x: windowWidth * 0.75 - size / 2, y: TOP_PADDING + 50 + size * 3.6 },
-      
-      // Fourth row
-      { x: windowWidth * 0.5 - size / 2, y: TOP_PADDING + 50 + size * 5.4 },
-      
-      // Fifth row
-      { x: windowWidth * 0.2 - size / 2, y: TOP_PADDING + 50 + size * 7.2 },
-      { x: windowWidth * 0.8 - size / 2, y: TOP_PADDING + 50 + size * 7.2 },
-      
-      // Additional positions if needed
-      { x: windowWidth * 0.5 - size / 2, y: TOP_PADDING + 50 + size * 9.0 },
-      { x: windowWidth * 0.25 - size / 2, y: TOP_PADDING + 50 + size * 10.8 },
-      { x: windowWidth * 0.75 - size / 2, y: TOP_PADDING + 50 + size * 10.8 },
-      { x: windowWidth * 0.5 - size / 2, y: TOP_PADDING + 50 + size * 12.6 },
-    ];
-    
-    // Find the first available position that doesn't have a bubble
-    for (const position of gridPositions) {
-      // Check if any existing ad occupies this position
-      const isPositionTaken = existingAds.some(ad => {
-        const distance = calculateDistance(
-          position.x + size / 2,
-          position.y + size / 2,
-          ad.x + ad.size / 2,
-          ad.y + ad.size / 2
-        );
-        // Use a smaller threshold for position matching on mobile
-        return distance < size * 0.8;
-      });
-      
-      if (!isPositionTaken) {
-        return position;
-      }
+    if (isMobile) {
+      return { x: windowWidth * 0.5 - size / 2, y: TOP_PADDING + 50 };
+    } else {
+      return { x: windowWidth * 0.5 - size / 2, y: windowHeight * 0.4 - size / 2 };
     }
-    
-    // If all predefined positions are taken, use the last one with a slight offset
-    const lastPosition = gridPositions[gridPositions.length - 1];
-    return {
-      x: lastPosition.x + Math.random() * 20 - 10,
-      y: lastPosition.y + Math.random() * 20 - 10
-    };
   }
   
-  // For tablet, use a different grid pattern that works better for that size
-  if (isTablet) {
-    const columns = 3;
-    const rows = 4;
-    const horizontalSpacing = windowWidth / columns;
-    const verticalSpacing = (windowHeight - TOP_PADDING) / rows;
+  // For mobile, use a fixed, structured grid
+  if (isMobile) {
+    // Define a 3-column grid for mobile
+    const cols = 3;
+    const colWidth = windowWidth / cols;
+    const rowHeight = size * 1.5; // Add 50% spacing between rows
     
-    const gridPositions = [];
+    // Calculate all possible grid positions
+    const positions = [];
+    const maxRows = Math.max(15, Math.ceil(existingAds.length / cols) + 5); // Ensure enough rows for all bubbles plus buffer
     
-    // Create a grid of positions
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < columns; col++) {
-        // Add some variation to avoid perfect grid alignment
-        const xVariation = Math.random() * 30 - 15;
-        const yVariation = Math.random() * 30 - 15;
+    for (let row = 0; row < maxRows; row++) {
+      for (let col = 0; col < cols; col++) {
+        // Use alternating pattern for better distribution
+        const offsetX = row % 2 === 0 ? 0 : colWidth * 0.5;
         
-        gridPositions.push({
-          x: col * horizontalSpacing + horizontalSpacing / 2 - size / 2 + xVariation,
-          y: TOP_PADDING + row * verticalSpacing + verticalSpacing / 2 - size / 2 + yVariation
+        // Skip middle position in even rows for a less crowded feel
+        if (row % 2 === 0 && col === 1) continue;
+        
+        const x = offsetX + col * colWidth + (colWidth - size) / 2;
+        const y = TOP_PADDING + 60 + row * rowHeight;
+        
+        positions.push({
+          x,
+          y,
+          row,
+          col
         });
       }
     }
     
-    // Find the first available position
-    for (const position of gridPositions) {
-      const isPositionTaken = existingAds.some(ad => {
+    // Check if each position is occupied
+    const occupied = positions.map(pos => {
+      for (const ad of existingAds) {
         const distance = calculateDistance(
-          position.x + size / 2,
-          position.y + size / 2,
+          pos.x + size / 2,
+          pos.y + size / 2,
           ad.x + ad.size / 2,
           ad.y + ad.size / 2
         );
-        return distance < size * 1.2;
-      });
-      
-      if (!isPositionTaken) {
-        return position;
+        
+        if (distance < size * 1.1) {
+          return true; // Position is occupied
+        }
+      }
+      return false; // Position is free
+    });
+    
+    // Find the first unoccupied position
+    for (let i = 0; i < positions.length; i++) {
+      if (!occupied[i]) {
+        return { x: positions[i].x, y: positions[i].y };
       }
     }
     
-    // If all positions are taken, use the last one with a slight offset
-    const lastPosition = gridPositions[gridPositions.length - 1];
-    return {
-      x: lastPosition.x + Math.random() * 30 - 15,
-      y: lastPosition.y + Math.random() * 30 - 15
-    };
+    // If all positions are occupied, return a position at the bottom
+    const lastPosition = positions[positions.length - 1];
+    return { x: lastPosition.x, y: lastPosition.y + rowHeight };
   }
   
-  // For desktop, use a more dynamic approach with spiral pattern
-  // Center of the available space
+  // For tablet, use a 4-column grid
+  if (isTablet) {
+    const cols = 4;
+    const colWidth = windowWidth / cols;
+    const rowHeight = size * 1.3; // More spacing on tablet
+    
+    const positions = [];
+    const maxRows = Math.max(10, Math.ceil(existingAds.length / cols) + 3);
+    
+    for (let row = 0; row < maxRows; row++) {
+      for (let col = 0; col < cols; col++) {
+        const x = col * colWidth + (colWidth - size) / 2;
+        const y = TOP_PADDING + 40 + row * rowHeight;
+        
+        positions.push({
+          x,
+          y,
+          row,
+          col
+        });
+      }
+    }
+    
+    const occupied = positions.map(pos => {
+      for (const ad of existingAds) {
+        const distance = calculateDistance(
+          pos.x + size / 2,
+          pos.y + size / 2,
+          ad.x + ad.size / 2,
+          ad.y + ad.size / 2
+        );
+        
+        if (distance < size * 1.2) {
+          return true;
+        }
+      }
+      return false;
+    });
+    
+    for (let i = 0; i < positions.length; i++) {
+      if (!occupied[i]) {
+        return { x: positions[i].x, y: positions[i].y };
+      }
+    }
+    
+    const lastPosition = positions[positions.length - 1];
+    return { x: lastPosition.x, y: lastPosition.y + rowHeight };
+  }
+  
+  // For desktop, use a more organic spiral layout for visual interest
   const centerX = windowWidth / 2;
   const centerY = (windowHeight - TOP_PADDING) / 2 + TOP_PADDING;
   
-  // Calculate spiral position
   const goldenAngle = Math.PI * (3 - Math.sqrt(5));
   const bubbleSpacing = 1.2;
   
@@ -268,7 +271,6 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
     }
   }
   
-  // Fallback if no position is found
   return {
     x: Math.max(BUBBLE_PADDING, Math.min(windowWidth - size - BUBBLE_PADDING, Math.random() * windowWidth)),
     y: Math.max(TOP_PADDING, Math.min(windowHeight - size - BUBBLE_PADDING, Math.random() * (windowHeight - TOP_PADDING)))
@@ -277,128 +279,104 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
 
 function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, currentAdId) {
   const isMobile = window.innerWidth <= 480;
-  const isTablet = window.innerWidth > 480 && window.innerWidth <= 768;
   
+  // Define the bounds
   const minX = BUBBLE_PADDING;
   const maxX = windowWidth - size - BUBBLE_PADDING;
   const minY = TOP_PADDING;
   const maxY = windowHeight - size - BUBBLE_PADDING;
 
+  // First, ensure the bubble is within viewport
   let newX = Math.min(Math.max(x, minX), maxX);
   let newY = Math.min(Math.max(y, minY), maxY);
-
-  // Use different spacing based on device type
-  const spacingMultiplier = isMobile ? 2.0 : isTablet ? 1.5 : 1.2;
   
+  // Filter out the current ad
   const otherAds = existingAds.filter(ad => ad.id !== currentAdId);
   
   if (otherAds.length === 0) {
     return { x: newX, y: newY };
   }
   
-  // On mobile, first check if we can snap to the nearest grid position
+  // On mobile, try to snap to grid
   if (isMobile) {
-    // Define the same grid positions as in calculateSafePosition
-    const gridPositions = [
-      // Top row
-      { x: windowWidth * 0.2 - size / 2, y: TOP_PADDING + 50 },
-      { x: windowWidth * 0.8 - size / 2, y: TOP_PADDING + 50 },
-      
-      // Second row
-      { x: windowWidth * 0.5 - size / 2, y: TOP_PADDING + 50 + size * 1.8 },
-      
-      // Third row
-      { x: windowWidth * 0.25 - size / 2, y: TOP_PADDING + 50 + size * 3.6 },
-      { x: windowWidth * 0.75 - size / 2, y: TOP_PADDING + 50 + size * 3.6 },
-      
-      // Fourth row
-      { x: windowWidth * 0.5 - size / 2, y: TOP_PADDING + 50 + size * 5.4 },
-      
-      // Fifth row
-      { x: windowWidth * 0.2 - size / 2, y: TOP_PADDING + 50 + size * 7.2 },
-      { x: windowWidth * 0.8 - size / 2, y: TOP_PADDING + 50 + size * 7.2 },
-      
-      // Additional positions if needed
-      { x: windowWidth * 0.5 - size / 2, y: TOP_PADDING + 50 + size * 9.0 },
-      { x: windowWidth * 0.25 - size / 2, y: TOP_PADDING + 50 + size * 10.8 },
-      { x: windowWidth * 0.75 - size / 2, y: TOP_PADDING + 50 + size * 10.8 },
-      { x: windowWidth * 0.5 - size / 2, y: TOP_PADDING + 50 + size * 12.6 },
-    ];
+    // Define the same grid used in calculateSafePosition
+    const cols = 3;
+    const colWidth = windowWidth / cols;
+    const rowHeight = size * 1.5;
     
-    // Find the nearest grid position
-    let closestPosition = null;
-    let closestDistance = Infinity;
+    // Find the current "grid position" of the bubble
+    const currentCol = Math.floor(newX / colWidth);
+    const currentRow = Math.floor((newY - TOP_PADDING) / rowHeight);
     
-    for (const position of gridPositions) {
+    // Calculate the ideal position for this grid cell
+    const idealX = (currentCol + 0.5) * colWidth - size / 2;
+    const idealY = TOP_PADDING + 60 + currentRow * rowHeight;
+    
+    // Check if the ideal position is free from overlaps
+    let hasOverlap = false;
+    for (const ad of otherAds) {
       const distance = calculateDistance(
-        newX + size / 2,
-        newY + size / 2,
-        position.x + size / 2,
-        position.y + size / 2
+        idealX + size / 2,
+        idealY + size / 2,
+        ad.x + ad.size / 2,
+        ad.y + ad.size / 2
       );
       
-      if (distance < closestDistance) {
-        // Check if position is already taken
-        const isTaken = otherAds.some(ad => {
-          const adDistance = calculateDistance(
-            position.x + size / 2,
-            position.y + size / 2,
-            ad.x + ad.size / 2,
-            ad.y + ad.size / 2
-          );
-          return adDistance < size * 0.8;
-        });
-        
-        if (!isTaken) {
-          closestDistance = distance;
-          closestPosition = position;
-        }
+      // Use a smaller threshold for collision detection
+      if (distance < size * 0.8) {
+        hasOverlap = true;
+        break;
       }
     }
     
-    // If we found a close grid position, snap to it
-    if (closestPosition && closestDistance < size * 2) {
-      return closestPosition;
+    // If no overlap, snap to the ideal position
+    if (!hasOverlap) {
+      return { x: idealX, y: idealY };
     }
   }
   
-  // For all device types: iterative push-based collision resolution
+  // For all device types, check for and resolve collisions
   let iterations = 0;
-  const maxIterations = isMobile ? 70 : 50; // More iterations for mobile
+  const maxIterations = 30;
   
-  while(iterations < maxIterations) {
+  while (iterations < maxIterations) {
     let hasOverlap = false;
-    let totalPushX = 0;
-    let totalPushY = 0;
-    let overlappingAds = 0;
     
     for (const ad of otherAds) {
       const distance = calculateDistance(
-        newX + size/2, 
-        newY + size/2, 
-        ad.x + ad.size/2, 
-        ad.y + ad.size/2
+        newX + size / 2,
+        newY + size / 2,
+        ad.x + ad.size / 2,
+        ad.y + ad.size / 2
       );
       
-      const minDistance = ((size + ad.size) / 2) * spacingMultiplier;
+      // Calculate minimum distance needed between bubbles
+      const minDistance = isMobile ? 
+        (size + ad.size) * 0.6 : // For mobile, allow slight overlap
+        (size + ad.size) * 0.55; // For desktop
       
       if (distance < minDistance) {
         hasOverlap = true;
-        overlappingAds++;
         
-        const dx = (ad.x + ad.size/2) - (newX + size/2);
-        const dy = (ad.y + ad.size/2) - (newY + size/2);
+        // Calculate direction to push
+        const dx = newX + size / 2 - (ad.x + ad.size / 2);
+        const dy = newY + size / 2 - (ad.y + ad.size / 2);
         
-        const magnitude = Math.sqrt(dx * dx + dy * dy);
-        const pushX = dx === 0 ? 0 : dx / magnitude;
-        const pushY = dy === 0 ? 0 : dy / magnitude;
+        // Normalize direction
+        const length = Math.sqrt(dx * dx + dy * dy) || 1;
+        const dirX = dx / length;
+        const dirY = dy / length;
         
-        // Stronger push for mobile
-        const pushStrength = isMobile ? 1.5 : 1.2;
-        const pushAmount = (minDistance - distance) * pushStrength;
+        // Push amount decreases with iterations to prevent oscillation
+        const pushForce = (minDistance - distance) * (1 - iterations / maxIterations);
         
-        totalPushX -= pushX * pushAmount;
-        totalPushY -= pushY * pushAmount;
+        // Apply push
+        newX += dirX * pushForce;
+        newY += dirY * pushForce;
+        
+        // Ensure still in bounds
+        newX = Math.min(Math.max(newX, minX), maxX);
+        newY = Math.min(Math.max(newY, minY), maxY);
       }
     }
     
@@ -406,52 +384,15 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
       break;
     }
     
-    // Less dampening on mobile for stronger separation
-    const dampening = isMobile ? 0.95 : 0.9;
-    newX += totalPushX * dampening;
-    newY += totalPushY * dampening;
-    
-    // Keep in bounds
-    newX = Math.min(Math.max(newX, minX), maxX);
-    newY = Math.min(Math.max(newY, minY), maxY);
-    
     iterations++;
   }
   
-  // Additional safety check: if still overlapping, push away more aggressively
+  // Final check - if we still have overlap issues, use calculateSafePosition
   if (iterations >= maxIterations) {
-    for (const ad of otherAds) {
-      const distance = calculateDistance(
-        newX + size/2, 
-        newY + size/2, 
-        ad.x + ad.size/2, 
-        ad.y + ad.size/2
-      );
-      
-      const minDistance = ((size + ad.size) / 2) * spacingMultiplier;
-      
-      if (distance < minDistance) {
-        // Calculate push direction
-        const dx = (newX + size/2) - (ad.x + ad.size/2);
-        const dy = (newY + size/2) - (ad.y + ad.size/2);
-        
-        // Normalize direction vector
-        const magnitude = Math.sqrt(dx * dx + dy * dy) || 1;
-        const dirX = dx / magnitude;
-        const dirY = dy / magnitude;
-        
-        // Push bubble away more strongly
-        const pushAmount = (minDistance - distance) + size * 0.5;
-        newX += dirX * pushAmount;
-        newY += dirY * pushAmount;
-        
-        // Keep in bounds
-        newX = Math.min(Math.max(newX, minX), maxX);
-        newY = Math.min(Math.max(newY, minY), maxY);
-      }
-    }
+    const safePosition = calculateSafePosition(size, windowWidth, windowHeight, otherAds);
+    return safePosition;
   }
-
+  
   return { x: newX, y: newY };
 }
 
@@ -1226,14 +1167,62 @@ function App() {
 
   // 1. Subtle size variations for each bubble when created
   const createBubble = (ad) => {
-    // Your existing bubble creation code
+    // Get size based on current viewport
+    const size = getResponsiveSize(ad.size || BASE_MAX_SIZE);
     
-    // Add subtle size variation (5-10% difference between bubbles)
-    const sizeVariation = 0.95 + Math.random() * 0.1;
-    ad.element.style.transform = `scale(${sizeVariation})`;
-    ad.baseScale = sizeVariation; // Store base scale for animations
+    // Calculate z-index: bumped ads get highest priority, then newer ads
+    let zIndex = 1;
+    if (ad.isBumped) {
+      // Bumped ads get higher z-index (100-200 range)
+      zIndex = 100 + parseInt(ad.id.substring(ad.id.length - 4), 16) % 100;
+    } else {
+      // Normal ads get z-index based on id (newer ads higher)
+      zIndex = 1 + parseInt(ad.id.substring(ad.id.length - 4), 16) % 50;
+    }
     
-    return ad;
+    return (
+      <div
+        key={ad.id}
+        id={ad.id}
+        className={`bubble-container ${ad.isBumped ? 'bumped-ad' : ''}`}
+        style={{
+          transform: `translate(${ad.x}px, ${ad.y}px)`,
+          width: `${size}px`,
+          height: `${size}px`,
+          zIndex,
+          willChange: 'transform',
+          touchAction: 'none'
+        }}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            window.open(ad.url, '_blank');
+          }
+        }}
+      >
+        <div
+          className={`bubble ${ad.isBumped ? 'animate-pulse-glow' : ''}`}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              window.open(ad.url, '_blank');
+            }
+          }}
+        >
+          {/* Display the label/name above the bubble */}
+          {ad.title && (
+            <div className="bubble-text-curved">
+              <span style={{ fontSize: size > 100 ? '1em' : '0.9em' }}>
+                {ad.title}
+              </span>
+            </div>
+          )}
+          
+          {/* Logo container */}
+          <div className="bubble-logo-container">
+            <img src={ad.logo} alt={ad.title || 'Ad'} />
+          </div>
+        </div>
+      </div>
+    );
   };
 
   // 2. Gentler deceleration for more fluid movement
@@ -1847,100 +1836,7 @@ function App() {
                   <div className="relative min-h-screen overflow-hidden">
                     {/* Ads */}
                     {ads && ads.length > 0 ? (
-                      ads.map(ad => {
-                        const { x, y } = ensureInViewport(
-                          ad.x,
-                          ad.y,
-                          ad.size,
-                          windowSize.width,
-                          windowSize.height,
-                          ads,
-                          ad.id
-                        );
-
-                        return (
-                          <div 
-                            key={ad.id}
-                            id={ad.id}
-                            className="bubble-container"
-                            style={{
-                              position: 'absolute',
-                              transform: `translate(${x}px, ${y}px)`,
-                              width: `${ad.size}px`,
-                              height: `${ad.size}px`,
-                              transition: 'transform 0.3s ease-out',
-                              zIndex: ad.isBumped ? 2 : 1
-                            }}
-                          >
-                            <motion.div
-                              className={`absolute bubble ${ad.isBumped ? 'bumped-ad' : ''}`}
-                              style={{
-                                width: '100%',
-                                height: '100%',
-                                transition: `all ${ANIMATION_DURATION} ease-in-out`,
-                                animationDuration: `${8 + Math.random() * 4}s`,
-                                cursor: 'pointer',
-                                touchAction: 'auto'
-                              }}
-                              onClick={(e) => {
-                                if (!e.defaultPrevented) {
-                                  if (requireAuth()) {
-                                    window.open(ad.url, '_blank');
-                                  }
-                                }
-                              }}
-                            >
-                              <div className="bubble-content">
-                                {/* Background of bubble */}
-                                <div className="bubble-bg"></div>
-                                
-                                {/* Curved text at top */}
-                                <div 
-                                  className="bubble-text-curved"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (requireAuth()) {
-                                      setSelectedAdId(ad.id);
-                                      setShowBumpStore(true);
-                                    }
-                                  }}
-                                >
-                                  <span 
-                                    className="text-white truncate block hover:text-blue-300 transition-colors duration-300"
-                                    style={{
-                                      fontSize: `${Math.max(ad.size * 0.09, 10)}px`
-                                    }}
-                                  >
-                                    {ad.title}
-                                  </span>
-                                </div>
-                                
-                                {/* Larger Logo */}
-                                <div 
-                                  className="bubble-logo-container"
-                                >
-                                  <img
-                                    src={ad.logo}
-                                    alt={ad.title}
-                                    loading="eager"
-                                    className="w-full h-full object-contain"
-                                    style={{
-                                      objectFit: 'contain',
-                                      width: '100%',
-                                      height: '100%'
-                                    }}
-                                    onLoad={(e) => {
-                                      if (e.target.src.toLowerCase().endsWith('.gif')) {
-                                        e.target.setAttribute('loop', 'infinite');
-                                      }
-                                    }}
-                                  />
-                                </div>
-                              </div>
-                            </motion.div>
-                          </div>
-                        );
-                      })
+                      ads.map(ad => createBubble(ad))
                     ) : (
                       <div className="flex items-center justify-center h-screen">
                         <p className="text-gray-500">Loading ads...</p>

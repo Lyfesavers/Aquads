@@ -53,11 +53,15 @@ body {
 .bubble-container {
   position: absolute;
   pointer-events: none; /* Make container non-clickable */
+  transition: transform 0.3s ease-out;
 }
 
 /* Make the bubble itself clickable */
 .bubble {
   pointer-events: auto; /* Ensure bubble is clickable */
+  transition: all 0.3s ease-in-out;
+  width: 100%;
+  height: 100%;
 }
 
 /* Ensure child elements with specific click handlers are clickable */
@@ -425,16 +429,11 @@ body {
   }
 }
 
+/* Bumped ad styling */
 .bumped-ad {
-  z-index: 1;
-}
-
-.bumped-ad:hover {
-  /* Remove transform effect */
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 3s infinite;
+  z-index: 100 !important; /* Ensure this overrides any other z-index */
+  animation: pulse-glow 3s infinite !important;
+  position: relative;
 }
 
 /* Tech Background Animations */
