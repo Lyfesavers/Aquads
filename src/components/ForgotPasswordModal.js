@@ -50,13 +50,13 @@ const ForgotPasswordModal = ({ show, onHide }) => {
               />
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>Your Referral Code</Form.Label>
+              <Form.Label>Your Secret Code</Form.Label>
               <Form.Control
                 type="text"
                 value={referralCode}
                 onChange={(e) => setReferralCode(e.target.value)}
                 required
-                placeholder="Enter your referral code"
+                placeholder="Enter your secret code"
               />
               <Form.Text className="text-muted">
                 This is the unique code generated when you created your account
