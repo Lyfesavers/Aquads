@@ -1665,6 +1665,164 @@ function App() {
     };
   }, [setAds]);
 
+  // Add a simple useEffect for overlap detection with tighter packing
+  useEffect(() => {
+    // Simple function to detect and fix overlapping bubbles
+    const checkForOverlaps = () => {
+      const bubbleElements = document.querySelectorAll('.bubble');
+      if (bubbleElements.length < 2) return;
+      
+      // Get viewport dimensions
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      
+      // Track if we made any changes
+      let madeChanges = false;
+      
+      // First ensure all bubbles are within viewport
+      bubbleElements.forEach(bubble => {
+        const rect = bubble.getBoundingClientRect();
+        
+        // Check if bubble is out of bounds
+        if (rect.right > viewportWidth || rect.left < 0 || 
+            rect.bottom > viewportHeight || rect.top < 0) {
+          
+          // Calculate new position within viewport
+          const newX = Math.max(10, Math.min(viewportWidth - rect.width - 10, 
+            rect.left < 0 ? 10 : (rect.right > viewportWidth ? viewportWidth - rect.width - 10 : rect.left)));
+          
+          const newY = Math.max(10, Math.min(viewportHeight - rect.height - 10,
+            rect.top < 0 ? 10 : (rect.bottom > viewportHeight ? viewportHeight - rect.height - 10 : rect.top)));
+          
+          // Update DOM immediately
+          bubble.style.left = `${newX}px`;
+          bubble.style.top = `${newY}px`;
+          
+          // Update React state
+          const adId = bubble.id.replace('ad-', '');
+          setAds(prevAds => prevAds.map(ad => 
+            ad.id === adId ? { ...ad, x: newX, y: newY } : ad
+          ));
+          
+          madeChanges = true;
+        }
+      });
+      
+      // Next check for overlapping bubbles
+      for (let i = 0; i < bubbleElements.length; i++) {
+        const bubble1 = bubbleElements[i];
+        const rect1 = bubble1.getBoundingClientRect();
+        const isBumped1 = bubble1.classList.contains('bumped-ad');
+        
+        for (let j = i + 1; j < bubbleElements.length; j++) {
+          const bubble2 = bubbleElements[j];
+          const rect2 = bubble2.getBoundingClientRect();
+          const isBumped2 = bubble2.classList.contains('bumped-ad');
+          
+          // Calculate centers and distance
+          const center1 = {
+            x: rect1.left + rect1.width / 2,
+            y: rect1.top + rect1.height / 2
+          };
+          
+          const center2 = {
+            x: rect2.left + rect2.width / 2,
+            y: rect2.top + rect2.height / 2
+          };
+          
+          const dx = center1.x - center2.x;
+          const dy = center1.y - center2.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          // Minimum distance is 95% of the sum of radii for tighter packing
+          const bubbleSpacing = 0.95; // Adjust this value to control spacing (lower = tighter)
+          const minDistance = ((rect1.width + rect2.width) / 2) * bubbleSpacing;
+          
+          // Check if bubbles are overlapping
+          if (distance < minDistance) {
+            // Decide which bubble to move
+            let bubbleToMove;
+            
+            if (isBumped1 && !isBumped2) {
+              bubbleToMove = bubble2;
+            } else if (!isBumped1 && isBumped2) {
+              bubbleToMove = bubble1;
+            } else {
+              // If both or neither are bumped, move newer one
+              const id1 = bubble1.id.replace('ad-', '');
+              const id2 = bubble2.id.replace('ad-', '');
+              bubbleToMove = parseInt(id1) > parseInt(id2) ? bubble1 : bubble2;
+            }
+            
+            // Calculate how much to move
+            const moveDistance = (minDistance - distance) + 2; // Add 2px buffer
+            const angle = Math.atan2(dy, dx);
+            
+            // If bubble1 is being moved
+            if (bubbleToMove === bubble1) {
+              // Determine the new position
+              const newX = rect1.left + (moveDistance * Math.cos(angle));
+              const newY = rect1.top + (moveDistance * Math.sin(angle));
+              
+              // Make sure the new position is within viewport
+              const constrainedX = Math.max(10, Math.min(viewportWidth - rect1.width - 10, newX));
+              const constrainedY = Math.max(10, Math.min(viewportHeight - rect1.height - 10, newY));
+              
+              // Update DOM immediately
+              bubble1.style.left = `${constrainedX}px`;
+              bubble1.style.top = `${constrainedY}px`;
+              
+              // Update React state
+              const adId = bubble1.id.replace('ad-', '');
+              setAds(prevAds => prevAds.map(ad => 
+                ad.id === adId ? { ...ad, x: constrainedX, y: constrainedY } : ad
+              ));
+            } else {
+              // Bubble2 is being moved, in the opposite direction
+              const newX = rect2.left - (moveDistance * Math.cos(angle));
+              const newY = rect2.top - (moveDistance * Math.sin(angle));
+              
+              // Make sure the new position is within viewport
+              const constrainedX = Math.max(10, Math.min(viewportWidth - rect2.width - 10, newX));
+              const constrainedY = Math.max(10, Math.min(viewportHeight - rect2.height - 10, newY));
+              
+              // Update DOM immediately
+              bubble2.style.left = `${constrainedX}px`;
+              bubble2.style.top = `${constrainedY}px`;
+              
+              // Update React state
+              const adId = bubble2.id.replace('ad-', '');
+              setAds(prevAds => prevAds.map(ad => 
+                ad.id === adId ? { ...ad, x: constrainedX, y: constrainedY } : ad
+              ));
+            }
+            
+            madeChanges = true;
+            break; // Move to the next bubble
+          }
+        }
+      }
+      
+      // If we made changes, check again after a short delay
+      if (madeChanges) {
+        setTimeout(checkForOverlaps, 100);
+      }
+    };
+    
+    // Run the check initially and periodically
+    const initialCheck = setTimeout(checkForOverlaps, 2000);
+    const intervalCheck = setInterval(checkForOverlaps, 5000);
+    
+    // Also check on window resize
+    window.addEventListener('resize', checkForOverlaps);
+    
+    return () => {
+      clearTimeout(initialCheck);
+      clearInterval(intervalCheck);
+      window.removeEventListener('resize', checkForOverlaps);
+    };
+  }, [setAds]);
+
   // Modify the return statement to wrap everything in the Auth context provider
   return (
     <AuthContext.Provider value={{ currentUser, setCurrentUser }}>
