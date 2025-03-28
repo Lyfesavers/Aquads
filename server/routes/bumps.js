@@ -94,7 +94,7 @@ router.post('/approve', async (req, res) => {
     const ad = await Ad.findOneAndUpdate(
       { id: adId },
       { 
-        size: 200, // MAX_SIZE
+        size: 100, // MAX_SIZE
         isBumped: true,
         status: 'approved',
         bumpedAt: now,

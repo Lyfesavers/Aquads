@@ -63,7 +63,7 @@ window.Buffer = Buffer;
 emailjs.init(process.env.REACT_APP_EMAILJS_PUBLIC_KEY);
 
 // Constants for ad sizes and animations
-const BASE_MAX_SIZE = 150;
+const BASE_MAX_SIZE = 100;
 const MIN_SIZE = 50;
 // Function to get responsive size based on screen width
 function getResponsiveSize(baseSize) {

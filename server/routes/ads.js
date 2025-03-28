@@ -15,7 +15,7 @@ router.use((req, res, next) => {
 
 // Constants for shrinking logic
 const SHRINK_INTERVAL = 30000; // 30 seconds
-const MAX_SIZE = 150; // This will be maximum size, client may request smaller for mobile
+const MAX_SIZE = 100; // This will be maximum size, client may request smaller for mobile
 const MIN_SIZE = 50;
 const SHRINK_PERCENTAGE = 0.9; // Shrink by 5% each interval
 
