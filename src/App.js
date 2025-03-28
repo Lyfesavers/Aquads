@@ -121,19 +121,30 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
     };
   }
   
-  // Dynamic spacing - decreases slightly with more bubbles for better distribution
-  // But never below 1.05 to maintain minimum space between bubbles
-  const bubbleSpacing = Math.max(1.05, 1.3 - (existingAds.length * 0.005));
+  // Calculate effective dimensions for positioning
+  const effectiveWidth = windowWidth - 2 * BUBBLE_PADDING;
+  const effectiveHeight = windowHeight - TOP_PADDING - BUBBLE_PADDING;
   
-  // Calculate spiral position with optimized parameters
+  // For smaller screens, use more aggressive spacing to prevent overlaps
+  // Scale spacing inversely with screen width
+  const screenSizeFactor = Math.min(1, Math.max(0.8, effectiveWidth / 1200));
+  
+  // Calculate dynamic spacing based on both screen size and number of bubbles
+  // Smaller screens and more bubbles = smaller spacing, but never below 1.05
+  const bubbleSpacing = Math.max(1.05, (1.4 - (existingAds.length * 0.005)) * screenSizeFactor);
+  
+  // Calculate spiral position parameters
   const goldenAngle = Math.PI * (3 - Math.sqrt(5));
   const startRadius = size/3;
   const scaleFactor = 0.7;
   
   // Create a grid with cell size based on bubble size and spacing
-  const cellSize = size * bubbleSpacing;
-  const gridColumns = Math.floor((windowWidth - 2 * BUBBLE_PADDING) / cellSize);
-  const gridRows = Math.floor((windowHeight - TOP_PADDING - BUBBLE_PADDING) / cellSize);
+  // For smaller screens, reduce cell size to fit more cells
+  const gridSizeFactor = Math.max(0.7, Math.min(1, effectiveWidth / 800));
+  const cellSize = size * bubbleSpacing * gridSizeFactor;
+  
+  const gridColumns = Math.max(3, Math.floor(effectiveWidth / cellSize));
+  const gridRows = Math.max(3, Math.floor(effectiveHeight / cellSize));
   
   // Create a grid to track occupied positions
   const grid = Array(gridRows).fill().map(() => Array(gridColumns).fill(false));
@@ -144,11 +155,17 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
     const col = Math.floor((ad.x - BUBBLE_PADDING) / cellSize);
     const row = Math.floor((ad.y - TOP_PADDING) / cellSize);
     
-    // Mark a larger area around the ad as occupied (prevents clustering)
-    if (col >= 0 && col < gridColumns && row >= 0 && row < gridRows) {
-      // Mark cells in a 3x3 area centered on the ad
-      for (let r = Math.max(0, row-1); r <= Math.min(gridRows-1, row+1); r++) {
-        for (let c = Math.max(0, col-1); c <= Math.min(gridColumns-1, col+1); c++) {
+    // Use adaptive marking area based on screen size
+    // Smaller screens need smaller buffer to allow more bubbles to fit
+    const bufferSize = Math.max(1, Math.floor(2 * screenSizeFactor));
+    
+    // Mark cells in the area around the ad as occupied
+    for (let r = Math.max(0, row-bufferSize); r <= Math.min(gridRows-1, row+bufferSize); r++) {
+      for (let c = Math.max(0, col-bufferSize); c <= Math.min(gridColumns-1, col+bufferSize); c++) {
+        // Add distance-based probability for marking cells
+        // Cells further from the ad's center have lower probability of being marked
+        const distance = Math.sqrt(Math.pow(r-row, 2) + Math.pow(c-col, 2));
+        if (distance <= bufferSize) {
           grid[r][c] = true;
         }
       }
@@ -158,12 +175,27 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
   // Create an array of all available grid positions
   const availablePositions = [];
   
+  // Add tracking for effective cell usage
+  const usedCells = new Set();
+  
   for (let row = 0; row < gridRows; row++) {
     for (let col = 0; col < gridColumns; col++) {
       if (!grid[row][col]) {
-        // Add slight randomization within the cell to avoid perfect alignment
-        const offsetX = (Math.random() - 0.5) * (cellSize * 0.2);
-        const offsetY = (Math.random() - 0.5) * (cellSize * 0.2);
+        // Create a unique cell identifier
+        const cellId = `${row}-${col}`;
+        
+        // Skip if we've already used this cell
+        if (usedCells.has(cellId)) continue;
+        
+        // Add to used cells
+        usedCells.add(cellId);
+        
+        // On smaller screens, increase randomization to avoid alignment patterns
+        const randomFactor = Math.max(0.3, Math.min(0.5, 800 / effectiveWidth));
+        
+        // Add randomization within the cell to avoid perfect alignment
+        const offsetX = (Math.random() - 0.5) * (cellSize * randomFactor);
+        const offsetY = (Math.random() - 0.5) * (cellSize * randomFactor);
         
         const x = BUBBLE_PADDING + col * cellSize + offsetX;
         const y = TOP_PADDING + row * cellSize + offsetY;
@@ -184,6 +216,7 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
               ad.y + ad.size/2
             );
             
+            // Scale minimum distance based on screen size
             const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
             
             if (distance < minDistance) {
@@ -193,16 +226,37 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
           }
           
           // If no overlap, add to available positions with distance from center
+          // and other metrics to help with selection
           if (!hasOverlap) {
             const distFromCenter = Math.sqrt(
               Math.pow(x + size/2 - centerX, 2) + 
               Math.pow(y + size/2 - centerY, 2)
             );
             
+            // Calculate a metric for how well-distributed this position is
+            // by checking average distance to other bubble positions
+            let avgDistToOthers = 0;
+            if (existingAds.length > 0) {
+              let totalDist = 0;
+              for (const ad of existingAds) {
+                const dist = calculateDistance(
+                  x + size/2, 
+                  y + size/2, 
+                  ad.x + ad.size/2, 
+                  ad.y + ad.size/2
+                );
+                totalDist += dist;
+              }
+              avgDistToOthers = totalDist / existingAds.length;
+            }
+            
             availablePositions.push({
               x, 
               y, 
-              distFromCenter
+              distFromCenter,
+              avgDistToOthers,
+              // Add small random factor to prevent tied positions
+              randomFactor: Math.random() * 0.1
             });
           }
         }
@@ -210,33 +264,50 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
     }
   }
   
-  // If we have available positions, prefer those closer to center
+  // If we have available positions, prefer the best position
   if (availablePositions.length > 0) {
-    // Sort by distance from center
-    availablePositions.sort((a, b) => a.distFromCenter - b.distFromCenter);
+    // Sort positions by a combination of criteria
+    // For smaller screens, prioritize spacing between bubbles over central position
+    if (effectiveWidth < 800) {
+      // For small screens, prioritize even spacing
+      availablePositions.sort((a, b) => 
+        (b.avgDistToOthers + b.randomFactor) - (a.avgDistToOthers + a.randomFactor)
+      );
+    } else {
+      // For larger screens, blend distance from center with spacing
+      availablePositions.sort((a, b) => {
+        const aScore = a.avgDistToOthers * 0.7 - a.distFromCenter * 0.3 + a.randomFactor;
+        const bScore = b.avgDistToOthers * 0.7 - b.distFromCenter * 0.3 + b.randomFactor;
+        return bScore - aScore;
+      });
+    }
     
-    // Add some randomness to selection - pick from top 30% of positions
-    // This avoids all bubbles clustering at center
-    const selectionPool = Math.max(1, Math.floor(availablePositions.length * 0.3));
-    const selectedIndex = Math.floor(Math.random() * selectionPool);
-    
+    // Return the best position (more spaced out on small screens, more central on large screens)
     return {
-      x: availablePositions[selectedIndex].x,
-      y: availablePositions[selectedIndex].y
+      x: availablePositions[0].x,
+      y: availablePositions[0].y
     };
   }
   
-  // If grid approach failed, try spiral approach as fallback
+  // If grid approach failed, try enhanced spiral approach as fallback
   for (let i = 0; i < 1000; i++) {
-    const angle = goldenAngle * i;
-    const radius = startRadius * scaleFactor * Math.sqrt(i + 1);
+    // Add variability to spiral based on screen size
+    const angle = goldenAngle * i * (1 + (Math.random() - 0.5) * 0.2);
+    // Scale radius differently based on screen dimensions
+    const radiusScale = effectiveWidth < effectiveHeight ? 
+                        effectiveWidth / effectiveHeight : 
+                        1;
     
-    // Add slight randomization to spiral
-    const randomAngleOffset = (Math.random() - 0.5) * 0.2;
+    const radius = startRadius * scaleFactor * Math.sqrt(i + 1) * radiusScale;
+    
+    // Add randomization to spiral
+    const randomAngleOffset = (Math.random() - 0.5) * 0.3;
     const finalAngle = angle + randomAngleOffset;
     
-    const x = centerX + radius * Math.cos(finalAngle) - size/2;
-    const y = centerY + radius * Math.sin(finalAngle) - size/2;
+    // Calculate unique position
+    const radialOffset = (Math.random() * 0.2 + 0.9) * radius; // 90-110% of radius
+    const x = centerX + radialOffset * Math.cos(finalAngle) - size/2;
+    const y = centerY + radialOffset * Math.sin(finalAngle) - size/2;
     
     if (x < BUBBLE_PADDING || x + size > windowWidth - BUBBLE_PADDING || 
         y < TOP_PADDING || y + size > windowHeight - BUBBLE_PADDING) {
@@ -265,29 +336,77 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
     }
   }
   
-  // Last resort - quadrant-based random positioning with overlap minimization
+  // Final fallback - strategic quadrant-based positioning
+  // Divide screen into more quadrants for smaller screens
+  const quadrantCount = effectiveWidth < 600 ? 9 : 4;
+  const quadrantRows = Math.sqrt(quadrantCount);
+  const quadrantCols = quadrantCount / quadrantRows;
+  
+  // Create a set of quadrants
+  const quadrants = [];
+  for (let r = 0; r < quadrantRows; r++) {
+    for (let c = 0; c < quadrantCols; c++) {
+      const minX = BUBBLE_PADDING + (c * effectiveWidth / quadrantCols);
+      const maxX = BUBBLE_PADDING + ((c + 1) * effectiveWidth / quadrantCols) - size;
+      const minY = TOP_PADDING + (r * effectiveHeight / quadrantRows);
+      const maxY = TOP_PADDING + ((r + 1) * effectiveHeight / quadrantRows) - size;
+      
+      quadrants.push({ minX, maxX, minY, maxY });
+    }
+  }
+  
+  // Shuffle quadrants to avoid predictable placement patterns
+  quadrants.sort(() => Math.random() - 0.5);
+  
   let bestPosition = null;
   let leastOverlap = Infinity;
   
-  // Divide screen into quadrants and try positions in each
-  const quadrants = [
-    { minX: BUBBLE_PADDING, maxX: windowWidth/2, minY: TOP_PADDING, maxY: windowHeight/2 },
-    { minX: windowWidth/2, maxX: windowWidth-size-BUBBLE_PADDING, minY: TOP_PADDING, maxY: windowHeight/2 },
-    { minX: BUBBLE_PADDING, maxX: windowWidth/2, minY: windowHeight/2, maxY: windowHeight-size-BUBBLE_PADDING },
-    { minX: windowWidth/2, maxX: windowWidth-size-BUBBLE_PADDING, minY: windowHeight/2, maxY: windowHeight-size-BUBBLE_PADDING }
-  ];
-  
-  // Try multiple positions in each quadrant
+  // Try positions in each quadrant
   for (const quadrant of quadrants) {
-    for (let i = 0; i < 15; i++) {
+    const positions = [];
+    
+    // Create multiple test positions within this quadrant
+    for (let i = 0; i < 5; i++) {
       const randomX = quadrant.minX + Math.random() * (quadrant.maxX - quadrant.minX);
       const randomY = quadrant.minY + Math.random() * (quadrant.maxY - quadrant.minY);
       
+      positions.push({ x: randomX, y: randomY });
+    }
+    
+    // Sort potential positions by distance to existing ads (descending)
+    positions.sort((a, b) => {
+      let aMinDist = Infinity;
+      let bMinDist = Infinity;
+      
+      for (const ad of existingAds) {
+        const aDist = calculateDistance(
+          a.x + size/2, 
+          a.y + size/2, 
+          ad.x + ad.size/2, 
+          ad.y + ad.size/2
+        );
+        
+        const bDist = calculateDistance(
+          b.x + size/2, 
+          b.y + size/2, 
+          ad.x + ad.size/2, 
+          ad.y + ad.size/2
+        );
+        
+        aMinDist = Math.min(aMinDist, aDist);
+        bMinDist = Math.min(bMinDist, bDist);
+      }
+      
+      return bMinDist - aMinDist;
+    });
+    
+    // Test each position in this quadrant
+    for (const position of positions) {
       let totalOverlap = 0;
       for (const ad of existingAds) {
         const distance = calculateDistance(
-          randomX + size/2, 
-          randomY + size/2, 
+          position.x + size/2, 
+          position.y + size/2, 
           ad.x + ad.size/2, 
           ad.y + ad.size/2
         );
@@ -301,7 +420,7 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
       
       if (totalOverlap < leastOverlap) {
         leastOverlap = totalOverlap;
-        bestPosition = { x: randomX, y: randomY };
+        bestPosition = { x: position.x, y: position.y };
       }
       
       // If we found a position with no overlap, use it immediately
@@ -316,10 +435,14 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
     return bestPosition;
   }
   
-  // Absolute last resort - random position within viewport
+  // Absolute last resort - random position with slight offset from center
+  // This ensures that multiple bubbles don't stack precisely in the center
+  const randomOffsetX = (Math.random() - 0.5) * (effectiveWidth * 0.5);
+  const randomOffsetY = (Math.random() - 0.5) * (effectiveHeight * 0.5);
+  
   return {
-    x: Math.max(BUBBLE_PADDING, Math.min(windowWidth - size - BUBBLE_PADDING, Math.random() * windowWidth)),
-    y: Math.max(TOP_PADDING, Math.min(windowHeight - size - BUBBLE_PADDING, Math.random() * (windowHeight - TOP_PADDING)))
+    x: Math.max(BUBBLE_PADDING, Math.min(windowWidth - size - BUBBLE_PADDING, centerX + randomOffsetX - size/2)),
+    y: Math.max(TOP_PADDING, Math.min(windowHeight - size - BUBBLE_PADDING, centerY + randomOffsetY - size/2))
   };
 }
 
