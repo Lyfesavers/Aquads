@@ -315,11 +315,16 @@ const NavigationListener = ({ onNavigate }) => {
 function checkAndFixOverlaps(ads, windowWidth, windowHeight) {
   if (!ads || ads.length <= 1) return ads;
   
-  // Make a copy of the ads array to avoid modifying the original
-  const updatedAds = [...ads];
+  // Make a deep copy to avoid mutating the original array
+  const updatedAds = JSON.parse(JSON.stringify(ads));
   let hasOverlap = false;
   
-  // Check for overlaps between all pairs of ads
+  // MUCH more aggressive minimum distance - 2x the combined size
+  const getMinimumDistance = (ad1Size, ad2Size) => {
+    return (ad1Size + ad2Size) / 2 * 2.0; // Double the required distance
+  };
+  
+  // First pass: Check for overlaps between all pairs of ads
   for (let i = 0; i < updatedAds.length; i++) {
     for (let j = i + 1; j < updatedAds.length; j++) {
       const ad1 = updatedAds[i];
@@ -333,16 +338,11 @@ function checkAndFixOverlaps(ads, windowWidth, windowHeight) {
       const dy = ad1.y - ad2.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
       
-      // Minimum distance to avoid overlap (with bigger buffer - 1.3x instead of 1.1x)
-      const minDistance = (ad1.size + ad2.size) / 2 * 1.3;
+      // Required minimum distance
+      const minDistance = getMinimumDistance(ad1.size, ad2.size);
       
       if (distance < minDistance) {
-        // Log when we detect an overlap
-        console.log(`Overlap detected between ${ad1.title} and ${ad2.title}`, {
-          distance: distance.toFixed(2),
-          minDistance: minDistance.toFixed(2)
-        });
-        
+        console.log(`OVERLAP DETECTED: ${ad1.title} and ${ad2.title} - distance: ${distance.toFixed(2)}px, required: ${minDistance.toFixed(2)}px`);
         hasOverlap = true;
         
         // Determine which ad to move (prefer not moving bumped ads)
@@ -359,21 +359,21 @@ function checkAndFixOverlaps(ads, windowWidth, windowHeight) {
           fixedAd = j > i ? ad1 : ad2;
         }
         
-        // Calculate push direction and distance
-        const pushDx = adToMove.x - fixedAd.x;
-        const pushDy = adToMove.y - fixedAd.y;
-        const pushDistance = Math.sqrt(pushDx * pushDx + pushDy * pushDy) || 0.1;
+        // Calculate push direction vector
+        let pushX = adToMove.x - fixedAd.x;
+        let pushY = adToMove.y - fixedAd.y;
         
-        // Calculate push amount (overlap plus larger buffer)
-        const pushAmount = (minDistance - distance) + 20; // Added extra 20px buffer
+        // Normalize the direction vector
+        const pushLength = Math.sqrt(pushX * pushX + pushY * pushY) || 1;
+        pushX = pushX / pushLength;
+        pushY = pushY / pushLength;
         
-        // Normalize direction
-        const pushNormalX = pushDx / pushDistance;
-        const pushNormalY = pushDy / pushDistance;
+        // Calculate push amount - overlap plus large buffer (100px extra)
+        const pushAmount = (minDistance - distance) + 100;
         
-        // Calculate new position with more aggressive push
-        let newX = adToMove.x + pushNormalX * pushAmount;
-        let newY = adToMove.y + pushNormalY * pushAmount;
+        // Calculate new position with aggressive push
+        let newX = adToMove.x + pushX * pushAmount;
+        let newY = adToMove.y + pushY * pushAmount;
         
         // Ensure the ad stays within viewport
         const minX = BUBBLE_PADDING;
@@ -381,15 +381,66 @@ function checkAndFixOverlaps(ads, windowWidth, windowHeight) {
         const maxX = windowWidth - adToMove.size - BUBBLE_PADDING;
         const maxY = windowHeight - adToMove.size - BUBBLE_PADDING;
         
-        newX = Math.min(Math.max(newX, minX), maxX);
-        newY = Math.min(Math.max(newY, minY), maxY);
+        // If we're pushing ad outside viewport, push to opposite direction
+        if (newX < minX || newX > maxX || newY < minY || newY > maxY) {
+          // Try opposite direction
+          newX = adToMove.x - pushX * pushAmount;
+          newY = adToMove.y - pushY * pushAmount;
+          
+          // If still outside, find a random safe position
+          if (newX < minX || newX > maxX || newY < minY || newY > maxY) {
+            // Find open quadrant
+            const quadX = fixedAd.x > windowWidth / 2 ? 0.25 : 0.75;
+            const quadY = fixedAd.y > windowHeight / 2 ? 0.25 : 0.75;
+            
+            // Place in the opposite quadrant with some random offset
+            newX = windowWidth * quadX + (Math.random() * 0.2 - 0.1) * windowWidth;
+            newY = windowHeight * quadY + (Math.random() * 0.2 - 0.1) * windowHeight;
+            
+            // Final bounds check
+            newX = Math.min(Math.max(newX, minX), maxX);
+            newY = Math.min(Math.max(newY, minY), maxY);
+          }
+        }
         
-        // Log the position change
-        console.log(`Moving ${adToMove.title} from (${adToMove.x.toFixed(0)},${adToMove.y.toFixed(0)}) to (${newX.toFixed(0)},${newY.toFixed(0)})`);
+        console.log(`RELOCATING: Moving ${adToMove.title} from (${adToMove.x.toFixed(0)},${adToMove.y.toFixed(0)}) to (${newX.toFixed(0)},${newY.toFixed(0)})`);
         
         // Update the ad's position
         adToMove.x = newX;
         adToMove.y = newY;
+      }
+    }
+  }
+  
+  // Second pass: Check if any ad is STILL overlapping after all adjustments
+  let stillHasOverlaps = false;
+  for (let i = 0; i < updatedAds.length && !stillHasOverlaps; i++) {
+    for (let j = i + 1; j < updatedAds.length && !stillHasOverlaps; j++) {
+      const ad1 = updatedAds[i];
+      const ad2 = updatedAds[j];
+      
+      if (ad1.isDragging || ad2.isDragging) continue;
+      
+      const dx = ad1.x - ad2.x;
+      const dy = ad1.y - ad2.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      const minDistance = getMinimumDistance(ad1.size, ad2.size);
+      
+      if (distance < minDistance) {
+        stillHasOverlaps = true;
+        console.log(`STILL OVERLAPPING after adjustments: ${ad1.title} and ${ad2.title}`);
+        
+        // Take more drastic action - move one ad to completely random position
+        const adToMove = !ad1.isBumped ? ad1 : !ad2.isBumped ? ad2 : Math.random() > 0.5 ? ad1 : ad2;
+        
+        // Place at random position on screen
+        const randomX = Math.floor(Math.random() * (windowWidth - adToMove.size - 2 * BUBBLE_PADDING)) + BUBBLE_PADDING;
+        const randomY = Math.floor(Math.random() * (windowHeight - adToMove.size - BUBBLE_PADDING - TOP_PADDING)) + TOP_PADDING;
+        
+        console.log(`EMERGENCY RELOCATION: Moving ${adToMove.title} to random position (${randomX},${randomY})`);
+        
+        adToMove.x = randomX;
+        adToMove.y = randomY;
       }
     }
   }
@@ -1513,17 +1564,17 @@ function App() {
       if (ads.length > 1) {
         const fixedAds = checkAndFixOverlaps(ads, windowSize.width, windowSize.height);
         
-        // Only update if positions changed
+        // Check if positions actually changed
         const positionsChanged = fixedAds.some((ad, i) => 
           ad.x !== ads[i].x || ad.y !== ads[i].y
         );
         
         if (positionsChanged) {
-          console.log('Fixed overlapping bubbles: ', new Date().toISOString());
+          console.log(`${new Date().toISOString()} - Fixed ${fixedAds.length} bubbles - Overlap resolution active`);
           setAds(fixedAds);
         }
       }
-    }, 500); // Check every 500ms instead of 1000ms for more responsive fixing
+    }, 200); // Check every 200ms for maximum responsiveness
     
     return () => clearInterval(checkOverlapsInterval);
   }, [ads, windowSize.width, windowSize.height]);
