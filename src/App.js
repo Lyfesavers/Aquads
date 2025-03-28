@@ -311,20 +311,15 @@ const NavigationListener = ({ onNavigate }) => {
   return null; // This component doesn't render anything
 };
 
-// Add this function somewhere before the App component
+// Replace the existing checkAndFixOverlaps function with this much simpler version
 function checkAndFixOverlaps(ads, windowWidth, windowHeight) {
   if (!ads || ads.length <= 1) return ads;
   
-  // Make a deep copy to avoid mutating the original array
-  const updatedAds = JSON.parse(JSON.stringify(ads));
-  let hasOverlap = false;
+  // Create a new array to avoid mutating the original
+  const updatedAds = [...ads];
+  let moveCount = 0;
   
-  // Use a more reasonable minimum distance - 1.2x instead of 2.0x
-  const getMinimumDistance = (ad1Size, ad2Size) => {
-    return (ad1Size + ad2Size) / 2 * 1.2;
-  };
-  
-  // Check for overlaps between all pairs of ads
+  // First pass - find overlapping bubbles
   for (let i = 0; i < updatedAds.length; i++) {
     for (let j = i + 1; j < updatedAds.length; j++) {
       const ad1 = updatedAds[i];
@@ -333,20 +328,22 @@ function checkAndFixOverlaps(ads, windowWidth, windowHeight) {
       // Skip if either ad is being dragged
       if (ad1.isDragging || ad2.isDragging) continue;
       
-      // Calculate distance between centers
-      const dx = ad1.x - ad2.x;
-      const dy = ad1.y - ad2.y;
+      // Calculate centers and actual distance
+      const ad1CenterX = ad1.x + ad1.size / 2;
+      const ad1CenterY = ad1.y + ad1.size / 2;
+      const ad2CenterX = ad2.x + ad2.size / 2;
+      const ad2CenterY = ad2.y + ad2.size / 2;
+      
+      const dx = ad1CenterX - ad2CenterX;
+      const dy = ad1CenterY - ad2CenterY;
       const distance = Math.sqrt(dx * dx + dy * dy);
       
-      // Required minimum distance
-      const minDistance = getMinimumDistance(ad1.size, ad2.size);
+      // Minimum required distance to avoid overlap
+      const minDistance = (ad1.size + ad2.size) / 2;
       
-      // Only fix true overlaps - bubbles must be significantly overlapping
-      if (distance < minDistance * 0.95) {
-        console.log(`Fixing overlap between ${ad1.title} and ${ad2.title} - distance: ${distance.toFixed(2)}px, required: ${minDistance.toFixed(2)}px`);
-        hasOverlap = true;
-        
-        // Determine which ad to move (prefer not moving bumped ads)
+      // Only fix if there's an actual overlap
+      if (distance < minDistance) {
+        // Decide which ad to move (prefer not moving bumped ads)
         let adToMove, fixedAd;
         if (ad1.isBumped && !ad2.isBumped) {
           adToMove = ad2;
@@ -360,66 +357,106 @@ function checkAndFixOverlaps(ads, windowWidth, windowHeight) {
           fixedAd = j > i ? ad1 : ad2;
         }
         
-        // Calculate push direction vector
-        let pushX = adToMove.x - fixedAd.x;
-        let pushY = adToMove.y - fixedAd.y;
+        // Highlight the bubble being moved with a border to make it obvious
+        adToMove.lastMoved = Date.now();
         
-        // If vectors are both zero, add a tiny amount to avoid division by zero
-        if (pushX === 0 && pushY === 0) {
-          pushX = 0.1;
-          pushY = 0.1;
+        // Calculate the direction to move
+        const adMoveCenterX = adToMove.x + adToMove.size / 2;
+        const adMoveCenterY = adToMove.y + adToMove.size / 2;
+        const fixedAdCenterX = fixedAd.x + fixedAd.size / 2;
+        const fixedAdCenterY = fixedAd.y + fixedAd.size / 2;
+        
+        // Get direction vector
+        let dirX = adMoveCenterX - fixedAdCenterX;
+        let dirY = adMoveCenterY - fixedAdCenterY;
+        
+        // Handle case where bubbles are exactly on top of each other
+        if (dirX === 0 && dirY === 0) {
+          dirX = Math.random() > 0.5 ? 1 : -1;
+          dirY = Math.random() > 0.5 ? 1 : -1;
         }
         
-        // Normalize the direction vector
-        const pushLength = Math.sqrt(pushX * pushX + pushY * pushY);
-        pushX = pushX / pushLength;
-        pushY = pushY / pushLength;
+        // Normalize direction
+        const dirLength = Math.sqrt(dirX * dirX + dirY * dirY);
+        dirX = dirX / dirLength;
+        dirY = dirY / dirLength;
         
-        // Calculate push amount - just enough to fix the overlap plus a small buffer
-        const pushAmount = (minDistance - distance) + 5; // Much smaller buffer
+        // Calculate needed push distance plus 10px buffer
+        const pushDistance = minDistance - distance + 10;
         
-        // Calculate new position with minimal push
-        let newX = adToMove.x + pushX * pushAmount;
-        let newY = adToMove.y + pushY * pushAmount;
+        // Apply the movement
+        const newX = adToMove.x + dirX * pushDistance;
+        const newY = adToMove.y + dirY * pushDistance;
         
-        // Ensure the ad stays within viewport
+        // Ensure the bubble stays within viewport bounds
         const minX = BUBBLE_PADDING;
         const minY = TOP_PADDING;
         const maxX = windowWidth - adToMove.size - BUBBLE_PADDING;
         const maxY = windowHeight - adToMove.size - BUBBLE_PADDING;
         
-        // If we'd push outside the viewport, try opposite direction
-        if (newX < minX || newX > maxX || newY < minY || newY > maxY) {
-          newX = adToMove.x - pushX * pushAmount;
-          newY = adToMove.y - pushY * pushAmount;
-          
-          // Final bounds check
-          newX = Math.min(Math.max(newX, minX), maxX);
-          newY = Math.min(Math.max(newY, minY), maxY);
-        } else {
-          // Regular bounds check
-          newX = Math.min(Math.max(newX, minX), maxX);
-          newY = Math.min(Math.max(newY, minY), maxY);
-        }
+        adToMove.x = Math.min(Math.max(newX, minX), maxX);
+        adToMove.y = Math.min(Math.max(newY, minY), maxY);
         
-        // Only move if the new position is significantly different
-        const moveDistance = Math.sqrt(
-          Math.pow(newX - adToMove.x, 2) + 
-          Math.pow(newY - adToMove.y, 2)
-        );
-        
-        if (moveDistance > 3) { // Only move if more than 3px difference
-          console.log(`Moving ${adToMove.title} from (${adToMove.x.toFixed(0)},${adToMove.y.toFixed(0)}) to (${newX.toFixed(0)},${newY.toFixed(0)})`);
-          adToMove.x = newX;
-          adToMove.y = newY;
-        }
+        console.log(`Moved ${adToMove.title} to resolve overlap with ${fixedAd.title}`);
+        moveCount++;
       }
     }
   }
   
-  // Only return the updated array if there were changes
-  return hasOverlap ? updatedAds : ads;
+  if (moveCount > 0) {
+    console.log(`Fixed ${moveCount} overlapping bubbles at ${new Date().toISOString()}`);
+  }
+  
+  return updatedAds;
 }
+
+// Add visual indicator for recently moved bubbles to createBubble function
+// Find the createBubble function and add this code near the end before the return statement
+const createBubble = (ad) => {
+  // Add highlight for recently moved bubbles
+  const bubbleStyle = {
+    width: `${ad.size}px`,
+    height: `${ad.size}px`,
+    left: `${ad.x}px`,
+    top: `${ad.y}px`,
+    position: 'absolute',
+    zIndex: ad.isBumped ? 10 : 1,
+    cursor: 'pointer',
+    transition: 'left 0.3s ease-out, top 0.3s ease-out' // Add smooth transition for movement
+  };
+  
+  // Add visual indicator if bubble was moved in the last 2 seconds
+  if (ad.lastMoved && Date.now() - ad.lastMoved < 2000) {
+    bubbleStyle.border = '2px solid #ff0000';
+    bubbleStyle.boxShadow = '0 0 20px #ff0000';
+  }
+  
+  return (
+    <div
+      className={`bubble ${ad.isBumped ? 'bumped-ad' : ''}`}
+      key={ad.id}
+      style={bubbleStyle}
+      onClick={() => window.open(ad.url, '_blank')}
+    >
+      <div className="bubble-bg"></div>
+      <div className="bubble-content">
+        <div className="bubble-logo-container">
+          <img
+            src={ad.logo}
+            alt={ad.title}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = 'https://placehold.co/100?text=Ad';
+            }}
+          />
+        </div>
+        <div className="bubble-text-curved">
+          <span style={{ fontSize: '12px', color: 'white' }}>{ad.title}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 function App() {
   const [ads, setAds] = useState(() => {
@@ -1153,14 +1190,49 @@ function App() {
 
   // 1. Subtle size variations for each bubble when created
   const createBubble = (ad) => {
-    // Your existing bubble creation code
+    // Add highlight for recently moved bubbles
+    const bubbleStyle = {
+      width: `${ad.size}px`,
+      height: `${ad.size}px`,
+      left: `${ad.x}px`,
+      top: `${ad.y}px`,
+      position: 'absolute',
+      zIndex: ad.isBumped ? 10 : 1,
+      cursor: 'pointer',
+      transition: 'left 0.3s ease-out, top 0.3s ease-out' // Add smooth transition for movement
+    };
     
-    // Add subtle size variation (5-10% difference between bubbles)
-    const sizeVariation = 0.95 + Math.random() * 0.1;
-    ad.element.style.transform = `scale(${sizeVariation})`;
-    ad.baseScale = sizeVariation; // Store base scale for animations
+    // Add visual indicator if bubble was moved in the last 2 seconds
+    if (ad.lastMoved && Date.now() - ad.lastMoved < 2000) {
+      bubbleStyle.border = '2px solid #ff0000';
+      bubbleStyle.boxShadow = '0 0 20px #ff0000';
+    }
     
-    return ad;
+    return (
+      <div
+        className={`bubble ${ad.isBumped ? 'bumped-ad' : ''}`}
+        key={ad.id}
+        style={bubbleStyle}
+        onClick={() => window.open(ad.url, '_blank')}
+      >
+        <div className="bubble-bg"></div>
+        <div className="bubble-content">
+          <div className="bubble-logo-container">
+            <img
+              src={ad.logo}
+              alt={ad.title}
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = 'https://placehold.co/100?text=Ad';
+              }}
+            />
+          </div>
+          <div className="bubble-text-curved">
+            <span style={{ fontSize: '12px', color: 'white' }}>{ad.title}</span>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   // 2. Gentler deceleration for more fluid movement
@@ -1530,23 +1602,18 @@ function App() {
     };
   }, []);
 
-  // Add this inside the App component's useEffect hook
+  // Update the useEffect for checking overlaps (use 3-second interval)
   useEffect(() => {
     const checkOverlapsInterval = setInterval(() => {
       if (ads.length > 1) {
         const fixedAds = checkAndFixOverlaps(ads, windowSize.width, windowSize.height);
         
-        // Only update state if we actually moved bubbles
-        const significantChanges = fixedAds.some((ad, i) => 
-          Math.abs(ad.x - ads[i].x) > 3 || Math.abs(ad.y - ads[i].y) > 3
-        );
-        
-        if (significantChanges) {
-          console.log(`Fixed overlapping bubbles at ${new Date().toISOString()}`);
+        // Only update if needed
+        if (fixedAds !== ads) {
           setAds(fixedAds);
         }
       }
-    }, 1000); // Check only once per second
+    }, 3000); // Check every 3 seconds to reduce constant movement
     
     return () => clearInterval(checkOverlapsInterval);
   }, [ads, windowSize.width, windowSize.height]);
