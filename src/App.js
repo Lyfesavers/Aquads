@@ -122,7 +122,7 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
   }
   
   // Reduced spacing between bubbles for tighter packing
-  const bubbleSpacing = 0.95;
+  const bubbleSpacing = 0.50;
   
   // Calculate spiral position with optimized parameters
   const goldenAngle = Math.PI * (3 - Math.sqrt(5));
