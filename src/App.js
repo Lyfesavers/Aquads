@@ -337,6 +337,90 @@ const NavigationListener = ({ onNavigate }) => {
   return null; // This component doesn't render anything
 };
 
+// Add this function to App.js, before the App function
+function findAndFixOverlaps(adsArray, windowWidth, windowHeight) {
+  if (!adsArray || adsArray.length <= 1) return adsArray;
+  
+  // Make a copy to avoid modifying the original
+  const updatedAds = [...adsArray];
+  
+  // Track if we changed anything
+  let madeChanges = false;
+  
+  // Track which bubbles have been moved to avoid moving them again in this cycle
+  const movedBubbles = new Set();
+  
+  // Step 1: Find genuine overlaps (bubble centers closer than their combined radius)
+  for (let i = 0; i < updatedAds.length; i++) {
+    if (movedBubbles.has(updatedAds[i].id)) continue;
+    
+    const a = updatedAds[i];
+    const aCenter = { x: a.x + a.size/2, y: a.y + a.size/2 };
+    
+    for (let j = i + 1; j < updatedAds.length; j++) {
+      if (movedBubbles.has(updatedAds[j].id)) continue;
+      
+      const b = updatedAds[j];
+      const bCenter = { x: b.x + b.size/2, y: b.y + b.size/2 };
+      
+      // Calculate distance between centers
+      const dx = aCenter.x - bCenter.x;
+      const dy = aCenter.y - bCenter.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      // Minimum distance to avoid overlap (exactly their combined radius)
+      const minDistance = (a.size + b.size) / 2;
+      
+      // Only fix actual overlaps
+      if (distance < minDistance) {
+        console.log(`Overlap detected between ${a.title} and ${b.title}`);
+        
+        // Determine which one to move (prefer not to move bumped ads)
+        const bubbleToMove = (a.isBumped && !b.isBumped) ? b : 
+                             (!a.isBumped && b.isBumped) ? a : 
+                             Math.random() > 0.5 ? a : b;
+        
+        // Mark it as moved this cycle
+        movedBubbles.add(bubbleToMove.id);
+        
+        // Find an unoccupied area of the screen
+        // Divide screen into quadrants and find opposite quadrant
+        const currentQuadX = bubbleToMove.x > windowWidth / 2 ? 'right' : 'left';
+        const currentQuadY = bubbleToMove.y > windowHeight / 2 ? 'bottom' : 'top';
+        
+        // Target opposite quadrant
+        const targetQuadX = currentQuadX === 'left' ? 'right' : 'left';
+        const targetQuadY = currentQuadY === 'top' ? 'bottom' : 'top';
+        
+        // Calculate new position in the opposite quadrant with padding
+        const padding = 20;
+        const minX = (targetQuadX === 'left') ? padding : windowWidth / 2 + padding;
+        const maxX = (targetQuadX === 'left') ? windowWidth / 2 - padding - bubbleToMove.size : windowWidth - padding - bubbleToMove.size;
+        const minY = (targetQuadY === 'top') ? TOP_PADDING + padding : windowHeight / 2 + padding;
+        const maxY = (targetQuadY === 'top') ? windowHeight / 2 - padding - bubbleToMove.size : windowHeight - padding - bubbleToMove.size;
+        
+        // Random position within that quadrant
+        const newX = minX + Math.random() * (maxX - minX);
+        const newY = minY + Math.random() * (maxY - minY);
+        
+        // Mark the bubble as recently moved (for visual indicator)
+        bubbleToMove.lastMoved = Date.now();
+        
+        console.log(`Moving ${bubbleToMove.title} to new position (${newX.toFixed(0)}, ${newY.toFixed(0)})`);
+        
+        // Update position
+        bubbleToMove.x = newX;
+        bubbleToMove.y = newY;
+        
+        madeChanges = true;
+      }
+    }
+  }
+  
+  // Return the original array if no changes were made
+  return madeChanges ? updatedAds : adsArray;
+}
+
 function App() {
   const [ads, setAds] = useState(() => {
     const cachedAds = localStorage.getItem('cachedAds');
@@ -1069,14 +1153,51 @@ function App() {
 
   // 1. Subtle size variations for each bubble when created
   const createBubble = (ad) => {
-    // Your existing bubble creation code
+    // Determine if this bubble was recently moved (in the last 3 seconds)
+    const wasRecentlyMoved = ad.lastMoved && (Date.now() - ad.lastMoved < 3000);
     
-    // Add subtle size variation (5-10% difference between bubbles)
-    const sizeVariation = 0.95 + Math.random() * 0.1;
-    ad.element.style.transform = `scale(${sizeVariation})`;
-    ad.baseScale = sizeVariation; // Store base scale for animations
+    // Add a highlight effect for recently moved bubbles
+    const style = {
+      width: `${ad.size}px`,
+      height: `${ad.size}px`,
+      left: `${ad.x}px`,
+      top: `${ad.y}px`,
+      position: 'absolute',
+      zIndex: ad.isBumped ? 10 : 1,
+      cursor: 'pointer',
+      transition: 'left 0.5s ease-out, top 0.5s ease-out' // Smooth transition
+    };
     
-    return ad;
+    // Add highlight if recently moved
+    if (wasRecentlyMoved) {
+      style.boxShadow = '0 0 20px #ff0000';
+    }
+    
+    return (
+      <div 
+        className={`bubble ${ad.isBumped ? 'bumped-ad' : ''} ${wasRecentlyMoved ? 'recently-moved' : ''}`}
+        key={ad.id}
+        style={style}
+        onClick={() => window.open(ad.url, '_blank')}
+      >
+        <div className="bubble-bg"></div>
+        <div className="bubble-content">
+          <div className="bubble-logo-container">
+            <img
+              src={ad.logo}
+              alt={ad.title}
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = 'https://placehold.co/100?text=Ad';
+              }}
+            />
+          </div>
+          <div className="bubble-text-curved">
+            <span style={{ fontSize: '12px', color: 'white' }}>{ad.title}</span>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   // 2. Gentler deceleration for more fluid movement
@@ -1445,6 +1566,23 @@ function App() {
       delete window.showDashboard;
     };
   }, []);
+
+  // Add this useEffect inside the App component
+  useEffect(() => {
+    // Run overlap check every 5 seconds to avoid constant movement
+    const checkInterval = setInterval(() => {
+      if (ads.length > 1) {
+        const fixedAds = findAndFixOverlaps(ads, windowSize.width, windowSize.height);
+        
+        // Only update if we actually made changes
+        if (fixedAds !== ads) {
+          setAds(fixedAds);
+        }
+      }
+    }, 5000);
+    
+    return () => clearInterval(checkInterval);
+  }, [ads, windowSize.width, windowSize.height]);
 
   // Modify the return statement to wrap everything in the Auth context provider
   return (
