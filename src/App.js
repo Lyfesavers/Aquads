@@ -337,6 +337,84 @@ const NavigationListener = ({ onNavigate }) => {
   return null; // This component doesn't render anything
 };
 
+// Add this function somewhere before the App component
+function checkAndFixOverlaps(ads, windowWidth, windowHeight) {
+  if (!ads || ads.length <= 1) return ads;
+  
+  // Make a copy of the ads array to avoid modifying the original
+  const updatedAds = [...ads];
+  let hasOverlap = false;
+  
+  // Check for overlaps between all pairs of ads
+  for (let i = 0; i < updatedAds.length; i++) {
+    for (let j = i + 1; j < updatedAds.length; j++) {
+      const ad1 = updatedAds[i];
+      const ad2 = updatedAds[j];
+      
+      // Skip if either ad is being dragged
+      if (ad1.isDragging || ad2.isDragging) continue;
+      
+      // Calculate distance between centers
+      const dx = ad1.x - ad2.x;
+      const dy = ad1.y - ad2.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      // Minimum distance to avoid overlap (with small buffer)
+      const minDistance = (ad1.size + ad2.size) / 2 * 1.1;
+      
+      if (distance < minDistance) {
+        hasOverlap = true;
+        
+        // Determine which ad to move (prefer not moving bumped ads)
+        let adToMove, fixedAd;
+        if (ad1.isBumped && !ad2.isBumped) {
+          adToMove = ad2;
+          fixedAd = ad1;
+        } else if (!ad1.isBumped && ad2.isBumped) {
+          adToMove = ad1;
+          fixedAd = ad2;
+        } else {
+          // Otherwise move the newer ad (higher index)
+          adToMove = j > i ? ad2 : ad1;
+          fixedAd = j > i ? ad1 : ad2;
+        }
+        
+        // Calculate push direction and distance
+        const pushDx = adToMove.x - fixedAd.x;
+        const pushDy = adToMove.y - fixedAd.y;
+        const pushDistance = Math.sqrt(pushDx * pushDx + pushDy * pushDy) || 0.1;
+        
+        // Calculate push amount (overlap plus small buffer)
+        const pushAmount = minDistance - distance + 5;
+        
+        // Normalize direction
+        const pushNormalX = pushDx / pushDistance;
+        const pushNormalY = pushDy / pushDistance;
+        
+        // Calculate new position
+        let newX = adToMove.x + pushNormalX * pushAmount;
+        let newY = adToMove.y + pushNormalY * pushAmount;
+        
+        // Ensure the ad stays within viewport
+        const minX = BUBBLE_PADDING;
+        const minY = TOP_PADDING;
+        const maxX = windowWidth - adToMove.size - BUBBLE_PADDING;
+        const maxY = windowHeight - adToMove.size - BUBBLE_PADDING;
+        
+        newX = Math.min(Math.max(newX, minX), maxX);
+        newY = Math.min(Math.max(newY, minY), maxY);
+        
+        // Update the ad's position
+        adToMove.x = newX;
+        adToMove.y = newY;
+      }
+    }
+  }
+  
+  // Only return the updated array if there were changes
+  return hasOverlap ? updatedAds : ads;
+}
+
 function App() {
   const [ads, setAds] = useState(() => {
     const cachedAds = localStorage.getItem('cachedAds');
@@ -1445,6 +1523,27 @@ function App() {
       delete window.showDashboard;
     };
   }, []);
+
+  // Add this inside the App component's useEffect hook
+  useEffect(() => {
+    const checkOverlapsInterval = setInterval(() => {
+      if (ads.length > 1) {
+        const fixedAds = checkAndFixOverlaps(ads, windowSize.width, windowSize.height);
+        
+        // Only update if positions changed
+        const positionsChanged = fixedAds.some((ad, i) => 
+          ad.x !== ads[i].x || ad.y !== ads[i].y
+        );
+        
+        if (positionsChanged) {
+          console.log('Fixed overlapping bubbles: ', new Date().toISOString());
+          setAds(fixedAds);
+        }
+      }
+    }, 1000); // Check every 1 second for more responsive fixing
+    
+    return () => clearInterval(checkOverlapsInterval);
+  }, [ads, windowSize.width, windowSize.height]);
 
   // Modify the return statement to wrap everything in the Auth context provider
   return (
