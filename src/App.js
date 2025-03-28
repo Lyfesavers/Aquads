@@ -337,6 +337,77 @@ const NavigationListener = ({ onNavigate }) => {
   return null; // This component doesn't render anything
 };
 
+// Add this function before the App component
+function detectAndFixOverlaps(currentAds, windowWidth, windowHeight) {
+  // If no ads or just one ad, nothing to check
+  if (!currentAds || currentAds.length <= 1) return currentAds;
+  
+  // Make a copy to avoid mutating the original
+  const updatedAds = [...currentAds];
+  let hasOverlap = false;
+  
+  // Check each pair of bubbles for overlap
+  for (let i = 0; i < updatedAds.length; i++) {
+    const ad1 = updatedAds[i];
+    
+    // Calculate center of bubble 1
+    const ad1Center = {
+      x: ad1.x + ad1.size / 2,
+      y: ad1.y + ad1.size / 2
+    };
+    
+    for (let j = i + 1; j < updatedAds.length; j++) {
+      const ad2 = updatedAds[j];
+      
+      // Calculate center of bubble 2
+      const ad2Center = {
+        x: ad2.x + ad2.size / 2,
+        y: ad2.y + ad2.size / 2
+      };
+      
+      // Calculate distance between centers
+      const distance = Math.sqrt(
+        Math.pow(ad1Center.x - ad2Center.x, 2) + 
+        Math.pow(ad1Center.y - ad2Center.y, 2)
+      );
+      
+      // Minimum distance needed to avoid overlap
+      const minDistance = (ad1.size + ad2.size) / 2;
+      
+      // Check if bubbles are overlapping
+      if (distance < minDistance) {
+        console.log(`Overlap detected between "${ad1.title}" and "${ad2.title}"`);
+        hasOverlap = true;
+        
+        // Decide which bubble to move (prefer not to move bumped ads)
+        const bubbleToMove = 
+          (ad1.isBumped && !ad2.isBumped) ? ad2 : 
+          (!ad1.isBumped && ad2.isBumped) ? ad1 : 
+          ad2; // Default move the second bubble
+        
+        // Find a free spot for the bubble
+        const freeX = Math.random() * (windowWidth - bubbleToMove.size - BUBBLE_PADDING * 2) + BUBBLE_PADDING;
+        const freeY = Math.random() * (windowHeight - bubbleToMove.size - TOP_PADDING - BUBBLE_PADDING) + TOP_PADDING;
+        
+        console.log(`Moving "${bubbleToMove.title}" to (${freeX.toFixed(0)}, ${freeY.toFixed(0)})`);
+        
+        // Move the bubble to the new position
+        bubbleToMove.x = freeX;
+        bubbleToMove.y = freeY;
+        
+        // Only fix one overlap at a time to avoid chaos
+        break;
+      }
+    }
+    
+    // If we found an overlap, break the outer loop too
+    if (hasOverlap) break;
+  }
+  
+  // Return updated ads if we fixed an overlap, otherwise return the original
+  return hasOverlap ? updatedAds : currentAds;
+}
+
 function App() {
   const [ads, setAds] = useState(() => {
     const cachedAds = localStorage.getItem('cachedAds');
@@ -1229,143 +1300,30 @@ function App() {
     });
   };
 
-  // Function to periodically check and fix overlapping bubbles
-  const fixOverlappingBubbles = useCallback(() => {
-    // We'll only run this function when necessary, not periodically
-    // This reduces the constant repositioning that causes glitchy appearance
-    
-    const adsCopy = [...ads];
-    let hasOverlaps = false;
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-    
-    // Check all pairs of bubbles for overlaps
-    for (let i = 0; i < adsCopy.length; i++) {
-      for (let j = i + 1; j < adsCopy.length; j++) {
-        const ad1 = adsCopy[i];
-        const ad2 = adsCopy[j];
-        
-        if (ad1.element && ad2.element) {
-          const dx = (ad1.x + ad1.size/2) - (ad2.x + ad2.size/2);
-          const dy = (ad1.y + ad1.size/2) - (ad2.y + ad2.size/2);
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          
-          // Check for any meaningful overlap (more aggressive - 95% of expected distance)
-          const minDistance = (ad1.size + ad2.size) / 2 * 0.95;
-          
-          if (distance < minDistance) {
-            hasOverlaps = true;
-            
-            // Calculate push direction - normalized vector
-            const pushDirection = { 
-              x: dx / (distance || 0.001), 
-              y: dy / (distance || 0.001) 
-            };
-            
-            // Calculate stronger push amount (extra 5px buffer)
-            const pushAmount = (minDistance - distance) + 5;
-            
-            // Determine which ad should move more
-            let push1 = 0.5;
-            let push2 = 0.5;
-            
-            // If one is bumped, the other one moves more
-            if (ad1.isBumped) {
-              push1 = 0.1; // Bumped ad moves less
-              push2 = 0.9; // Other ad moves more
-            } else if (ad2.isBumped) {
-              push1 = 0.9;
-              push2 = 0.1;
-            }
-            // If one is newer, it gets priority
-            else if (ad1.id > ad2.id) {
-              push1 = 0.3;
-              push2 = 0.7;
-            } else if (ad2.id > ad1.id) {
-              push1 = 0.7;
-              push2 = 0.3;
-            }
-            
-            // Move the bubbles apart with the calculated ratios
-            ad1.x += pushDirection.x * pushAmount * push1;
-            ad1.y += pushDirection.y * pushAmount * push1;
-            ad2.x -= pushDirection.x * pushAmount * push2;
-            ad2.y -= pushDirection.y * pushAmount * push2;
-            
-            // Add a velocity component to help them separate naturally
-            ad1.vx = (ad1.vx || 0) + pushDirection.x * 0.8;
-            ad1.vy = (ad1.vy || 0) + pushDirection.y * 0.8;
-            ad2.vx = (ad2.vx || 0) - pushDirection.x * 0.8;
-            ad2.vy = (ad2.vy || 0) - pushDirection.y * 0.8;
-            
-            // Keep bubbles on screen
-            ad1.x = Math.max(BUBBLE_PADDING, Math.min(windowWidth - ad1.size - BUBBLE_PADDING, ad1.x));
-            ad1.y = Math.max(BUBBLE_PADDING, Math.min(windowHeight - ad1.size - BUBBLE_PADDING, ad1.y));
-            ad2.x = Math.max(BUBBLE_PADDING, Math.min(windowWidth - ad2.size - BUBBLE_PADDING, ad2.x));
-            ad2.y = Math.max(BUBBLE_PADDING, Math.min(windowHeight - ad2.size - BUBBLE_PADDING, ad2.y));
-            
-            // Update DOM elements immediately
-            if (ad1.element) {
-              ad1.element.style.left = `${ad1.x}px`;
-              ad1.element.style.top = `${ad1.y}px`;
-              // Add a slight transition for smoother movement
-              ad1.element.style.transition = 'left 0.1s, top 0.1s';
-            }
-            if (ad2.element) {
-              ad2.element.style.left = `${ad2.x}px`;
-              ad2.element.style.top = `${ad2.y}px`;
-              // Add a slight transition for smoother movement
-              ad2.element.style.transition = 'left 0.1s, top 0.1s';
-            }
-          }
-        }
+  // Add this useEffect inside the App component, near the other useEffects
+  useEffect(() => {
+    // First check - run immediately when ads change
+    if (ads.length > 1) {
+      const fixedAds = detectAndFixOverlaps(ads, windowSize.width, windowSize.height);
+      if (fixedAds !== ads) {
+        console.log("Fixing overlapping bubbles");
+        setAds(fixedAds);
       }
     }
     
-    // If we fixed overlaps, update the state
-    if (hasOverlaps) {
-      setAds(adsCopy);
-      
-      // Schedule another check after a short delay to handle cascading conflicts
-      setTimeout(() => {
-        fixOverlappingBubbles();
-      }, 100);
-    }
-  }, [ads, setAds]);
-  
-  // Set up periodic checks to fix overlaps
-  useEffect(() => {
-    // Run initially to handle any existing overlaps
-    fixOverlappingBubbles();
+    // Then set up interval for continuous checking
+    const checkInterval = setInterval(() => {
+      if (ads.length > 1) {
+        const fixedAds = detectAndFixOverlaps(ads, windowSize.width, windowSize.height);
+        if (fixedAds !== ads) {
+          console.log("Fixing overlapping bubbles");
+          setAds(fixedAds);
+        }
+      }
+    }, 2000); // Check every 2 seconds
     
-    // Run periodically to ensure bubbles don't overlap
-    const checkInterval = setInterval(fixOverlappingBubbles, 2000);
-    
-    // Run when window resizes
-    const handleResize = debounce(() => {
-      fixOverlappingBubbles();
-    }, 500);
-    
-    window.addEventListener('resize', handleResize);
-    
-    // Setup custom event listener for bubble updates
-    const handleBubbleUpdate = () => {
-      fixOverlappingBubbles();
-    };
-    
-    // Create custom events for bubble operations
-    window.addEventListener('bubbleAdded', handleBubbleUpdate);
-    window.addEventListener('bubbleBumped', handleBubbleUpdate);
-    window.addEventListener('bubbleMoved', handleBubbleUpdate);
-    
-    return () => {
-      clearInterval(checkInterval);
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('bubbleAdded', handleBubbleUpdate);
-      window.removeEventListener('bubbleBumped', handleBubbleUpdate);
-      window.removeEventListener('bubbleMoved', handleBubbleUpdate);
-    };
-  }, [fixOverlappingBubbles]);
+    return () => clearInterval(checkInterval);
+  }, [ads, windowSize.width, windowSize.height]);
 
   // Add effect to check for showCreateAccount parameter
   useEffect(() => {
