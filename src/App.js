@@ -421,6 +421,117 @@ function findAndFixOverlaps(adsArray, windowWidth, windowHeight) {
   return madeChanges ? updatedAds : adsArray;
 }
 
+// Add this right before the App function
+function fixOverlappingBubbles(bubbles, windowWidth, windowHeight) {
+  if (!bubbles || bubbles.length <= 1) return bubbles;
+  
+  // Create a copy of the bubbles array
+  const updatedBubbles = [...bubbles];
+  let hasFixedAny = false;
+  
+  // Check each pair of bubbles for overlap
+  for (let i = 0; i < updatedBubbles.length; i++) {
+    const a = updatedBubbles[i];
+    // Skip if this bubble was already moved
+    if (a.justMoved) continue;
+    
+    // Calculate center of bubble A
+    const aCenter = {
+      x: a.x + a.size / 2,
+      y: a.y + a.size / 2
+    };
+    
+    for (let j = i + 1; j < updatedBubbles.length; j++) {
+      const b = updatedBubbles[j];
+      // Skip if this bubble was already moved
+      if (b.justMoved) continue;
+      
+      // Calculate center of bubble B
+      const bCenter = {
+        x: b.x + b.size / 2,
+        y: b.y + b.size / 2
+      };
+      
+      // Calculate distance between centers
+      const distance = Math.sqrt(
+        Math.pow(aCenter.x - bCenter.x, 2) + 
+        Math.pow(aCenter.y - bCenter.y, 2)
+      );
+      
+      // Calculate minimum distance needed to avoid overlap
+      const minDistance = (a.size + b.size) / 2;
+      
+      // Check if bubbles are overlapping
+      if (distance < minDistance) {
+        console.log(`Overlap detected between ${a.title} and ${b.title}`);
+        
+        // Decide which bubble to move (prefer not to move bumped bubbles)
+        const bubbleToMove = 
+          (a.isBumped && !b.isBumped) ? b : 
+          (!a.isBumped && b.isBumped) ? a : 
+          Math.random() > 0.5 ? a : b;
+        
+        // Find an open area on screen away from other bubbles
+        // Divide screen into 4 quadrants
+        const currentQuadrantX = bubbleToMove.x < windowWidth / 2 ? 'left' : 'right';
+        const currentQuadrantY = bubbleToMove.y < windowHeight / 2 ? 'top' : 'bottom';
+        
+        // Move to opposite quadrant
+        const newQuadrantX = currentQuadrantX === 'left' ? 'right' : 'left';
+        const newQuadrantY = currentQuadrantY === 'top' ? 'bottom' : 'top';
+        
+        // Calculate base coordinates for the new quadrant
+        const baseX = newQuadrantX === 'left' ? 0 : windowWidth / 2;
+        const baseY = newQuadrantY === 'top' ? TOP_PADDING : windowHeight / 2;
+        
+        // Add random offset within quadrant (with padding)
+        const padding = 50;
+        const maxOffsetX = (windowWidth / 2) - bubbleToMove.size - padding;
+        const maxOffsetY = (windowHeight / 2) - bubbleToMove.size - padding;
+        
+        const offsetX = padding + Math.random() * maxOffsetX;
+        const offsetY = padding + Math.random() * maxOffsetY;
+        
+        // Calculate new position
+        let newX = baseX + offsetX;
+        let newY = baseY + offsetY;
+        
+        // Make sure it's within viewport bounds
+        newX = Math.max(BUBBLE_PADDING, Math.min(windowWidth - bubbleToMove.size - BUBBLE_PADDING, newX));
+        newY = Math.max(TOP_PADDING, Math.min(windowHeight - bubbleToMove.size - BUBBLE_PADDING, newY));
+        
+        console.log(`Moving ${bubbleToMove.title} from (${bubbleToMove.x.toFixed(0)},${bubbleToMove.y.toFixed(0)}) to (${newX.toFixed(0)},${newY.toFixed(0)})`);
+        
+        // Update position
+        bubbleToMove.x = newX;
+        bubbleToMove.y = newY;
+        
+        // Mark this bubble as just moved so we don't move it again in this cycle
+        bubbleToMove.justMoved = true;
+        hasFixedAny = true;
+        
+        // Only fix one overlap per pass to avoid too many movements at once
+        break;
+      }
+    }
+    
+    // If we've already fixed an overlap, stop checking more bubbles
+    if (hasFixedAny) break;
+  }
+  
+  // Clear the justMoved flags for the next cycle
+  if (hasFixedAny) {
+    updatedBubbles.forEach(bubble => {
+      delete bubble.justMoved;
+    });
+    
+    return updatedBubbles;
+  }
+  
+  // If no overlaps were fixed, return the original array
+  return bubbles;
+}
+
 function App() {
   const [ads, setAds] = useState(() => {
     const cachedAds = localStorage.getItem('cachedAds');
@@ -1582,6 +1693,21 @@ function App() {
     }, 5000);
     
     return () => clearInterval(checkInterval);
+  }, [ads, windowSize.width, windowSize.height]);
+
+  // Add this useEffect inside the App component
+  useEffect(() => {
+    // Check for and fix overlapping bubbles every 2 seconds
+    const interval = setInterval(() => {
+      if (ads.length > 1) {
+        const fixedAds = fixOverlappingBubbles(ads, windowSize.width, windowSize.height);
+        if (fixedAds !== ads) {
+          setAds(fixedAds);
+        }
+      }
+    }, 2000);
+    
+    return () => clearInterval(interval);
   }, [ads, windowSize.width, windowSize.height]);
 
   // Modify the return statement to wrap everything in the Auth context provider
