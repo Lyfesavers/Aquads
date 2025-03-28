@@ -109,96 +109,122 @@ const ADMIN_USERNAME = "admin"; // You can change this to your preferred admin u
 
 // Helper functions for responsive positioning
 function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
-  const minX = BUBBLE_PADDING;
-  const minY = TOP_PADDING;
-  const maxX = windowWidth - size - BUBBLE_PADDING;
-  const maxY = windowHeight - size - BUBBLE_PADDING;
+  // Center of the available space (excluding banner)
+  const centerX = windowWidth / 2;
+  const centerY = (windowHeight - TOP_PADDING) / 1 + TOP_PADDING;
   
-  // Minimum safe distance between bubbles (increased from size to 1.5*size)
-  const safeDistance = size * 1.5;
-  
-  // Try spiral placement for better distribution
-  const attempts = 200; // Increased attempts
-  const spiralIncrement = 30;
-  let angle = Math.random() * Math.PI * 2; // Random starting angle
-  let radius = safeDistance;
-  
-  // Start from center with some randomness
-  const centerX = windowWidth / 2 + (Math.random() * 100 - 50);
-  const centerY = windowHeight / 2 + (Math.random() * 100 - 50);
-  
-  for (let i = 0; i < attempts; i++) {
-    // Calculate position along spiral
-    const x = centerX + radius * Math.cos(angle);
-    const y = centerY + radius * Math.sin(angle);
-    
-    // Check if position is within viewport
-    if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
-      // Check if position is safe from all existing ads
-      let isSafe = true;
-      
-      for (let j = 0; j < existingAds.length; j++) {
-        const ad = existingAds[j];
-        const dx = x - ad.x;
-        const dy = y - ad.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        // If too close to an existing ad, mark as unsafe
-        if (distance < (size + ad.size) / 2 * 1.5) {
-          isSafe = false;
-          break;
-        }
-      }
-      
-      if (isSafe) {
-        return { x, y };
-      }
-    }
-    
-    // Increase radius and angle for spiral pattern
-    angle += Math.PI * 0.5; // Larger angle increment for better spread
-    radius += spiralIncrement;
+  // If this is the first bubble, place it directly in the center of available space
+  if (existingAds.length === 0) {
+    return {
+      x: centerX - size/2,
+      y: centerY - size/2
+    };
   }
   
-  // If no safe position found with spiral, divide screen into regions and find least crowded
-  const gridSize = 4;
-  const regionsX = Math.floor(windowWidth / (windowWidth / gridSize));
-  const regionsY = Math.floor(windowHeight / (windowHeight / gridSize));
-  const regions = Array(regionsX * regionsY).fill(0);
+  // Reduced spacing between bubbles for tighter packing
+  const bubbleSpacing = 1.02;
   
-  // Count ads in each region
-  existingAds.forEach(ad => {
-    const regionX = Math.floor(ad.x / (windowWidth / regionsX));
-    const regionY = Math.floor(ad.y / (windowHeight / regionsY));
-    const regionIndex = regionY * regionsX + regionX;
-    if (regionIndex >= 0 && regionIndex < regions.length) {
-      regions[regionIndex]++;
+  // Calculate spiral position with optimized parameters
+  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+  const startRadius = size/3;
+  const scaleFactor = 0.7;
+  
+  // Create a grid-based optimization for larger numbers of bubbles
+  const useGridApproach = existingAds.length > 12;
+  
+  if (useGridApproach) {
+    const cellSize = size * bubbleSpacing;
+    const gridColumns = Math.floor((windowWidth - 2 * BUBBLE_PADDING) / cellSize);
+    const gridRows = Math.floor((windowHeight - TOP_PADDING - BUBBLE_PADDING) / cellSize);
+    
+    const grid = Array(gridRows).fill().map(() => Array(gridColumns).fill(false));
+    
+    existingAds.forEach(ad => {
+      const col = Math.floor((ad.x - BUBBLE_PADDING) / cellSize);
+      const row = Math.floor((ad.y - TOP_PADDING) / cellSize);
+      
+      if (col >= 0 && col < gridColumns && row >= 0 && row < gridRows) {
+        grid[row][col] = true;
+        
+        for (let r = Math.max(0, row-1); r <= Math.min(gridRows-1, row+1); r++) {
+          for (let c = Math.max(0, col-1); c <= Math.min(gridColumns-1, col+1); c++) {
+            if (Math.sqrt(Math.pow(r-row, 2) + Math.pow(c-col, 2)) <= 1) {
+              grid[r][c] = true;
+            }
+          }
+        }
+      }
+    });
+    
+    for (let row = 0; row < gridRows; row++) {
+      for (let col = 0; col < gridColumns; col++) {
+        if (!grid[row][col]) {
+          const x = BUBBLE_PADDING + col * cellSize;
+          const y = TOP_PADDING + row * cellSize;
+          
+          let hasOverlap = false;
+          for (const ad of existingAds) {
+            const distance = calculateDistance(
+              x + size/2, 
+              y + size/2, 
+              ad.x + ad.size/2, 
+              ad.y + ad.size/2
+            );
+            
+            const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
+            
+            if (distance < minDistance) {
+              hasOverlap = true;
+              break;
+            }
+          }
+          
+          if (!hasOverlap) {
+            return { x, y };
+          }
+        }
+      }
     }
-  });
+  }
   
-  // Find region with fewest ads
-  let minCount = Infinity;
-  let minRegionIndex = 0;
-  
-  regions.forEach((count, index) => {
-    if (count < minCount) {
-      minCount = count;
-      minRegionIndex = index;
+  for (let i = 0; i < 1000; i++) {
+    const angle = goldenAngle * i;
+    const radius = startRadius * scaleFactor * Math.sqrt(i + 1);
+    
+    const x = centerX + radius * Math.cos(angle) - size/2;
+    const y = centerY + radius * Math.sin(angle) - size/2;
+    
+    if (x < BUBBLE_PADDING || x + size > windowWidth - BUBBLE_PADDING || 
+        y < TOP_PADDING || y + size > windowHeight - BUBBLE_PADDING) {
+      continue;
     }
-  });
+    
+    let hasOverlap = false;
+    for (const ad of existingAds) {
+      const distance = calculateDistance(
+        x + size/2, 
+        y + size/2, 
+        ad.x + ad.size/2, 
+        ad.y + ad.size/2
+      );
+      
+      const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
+      
+      if (distance < minDistance) {
+        hasOverlap = true;
+        break;
+      }
+    }
+    
+    if (!hasOverlap) {
+      return { x, y };
+    }
+  }
   
-  // Calculate region boundaries
-  const regionWidth = windowWidth / regionsX;
-  const regionHeight = windowHeight / regionsY;
-  const regionY = Math.floor(minRegionIndex / regionsX);
-  const regionX = minRegionIndex % regionsX;
-  
-  // Get a random position in the least crowded region with padding
-  const x = Math.max(minX, Math.min(maxX, regionX * regionWidth + Math.random() * regionWidth));
-  const y = Math.max(minY, Math.min(maxY, regionY * regionHeight + Math.random() * regionHeight));
-  
-  console.log(`Used region placement (${regionX},${regionY}) for new bubble`);
-  return { x, y };
+  return {
+    x: Math.max(BUBBLE_PADDING, Math.min(windowWidth - size - BUBBLE_PADDING, Math.random() * windowWidth)),
+    y: Math.max(TOP_PADDING, Math.min(windowHeight - size - BUBBLE_PADDING, Math.random() * (windowHeight - TOP_PADDING)))
+  };
 }
 
 function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, currentAdId) {
@@ -309,153 +335,6 @@ const NavigationListener = ({ onNavigate }) => {
   }, [onNavigate]);
   
   return null; // This component doesn't render anything
-};
-
-// Replace the existing checkAndFixOverlaps function with this much simpler version
-function checkAndFixOverlaps(ads, windowWidth, windowHeight) {
-  if (!ads || ads.length <= 1) return ads;
-  
-  // Create a new array to avoid mutating the original
-  const updatedAds = [...ads];
-  let moveCount = 0;
-  
-  // First pass - find overlapping bubbles
-  for (let i = 0; i < updatedAds.length; i++) {
-    for (let j = i + 1; j < updatedAds.length; j++) {
-      const ad1 = updatedAds[i];
-      const ad2 = updatedAds[j];
-      
-      // Skip if either ad is being dragged
-      if (ad1.isDragging || ad2.isDragging) continue;
-      
-      // Calculate centers and actual distance
-      const ad1CenterX = ad1.x + ad1.size / 2;
-      const ad1CenterY = ad1.y + ad1.size / 2;
-      const ad2CenterX = ad2.x + ad2.size / 2;
-      const ad2CenterY = ad2.y + ad2.size / 2;
-      
-      const dx = ad1CenterX - ad2CenterX;
-      const dy = ad1CenterY - ad2CenterY;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      
-      // Minimum required distance to avoid overlap
-      const minDistance = (ad1.size + ad2.size) / 2;
-      
-      // Only fix if there's an actual overlap
-      if (distance < minDistance) {
-        // Decide which ad to move (prefer not moving bumped ads)
-        let adToMove, fixedAd;
-        if (ad1.isBumped && !ad2.isBumped) {
-          adToMove = ad2;
-          fixedAd = ad1;
-        } else if (!ad1.isBumped && ad2.isBumped) {
-          adToMove = ad1;
-          fixedAd = ad2;
-        } else {
-          // Otherwise move the newer ad (higher index)
-          adToMove = j > i ? ad2 : ad1;
-          fixedAd = j > i ? ad1 : ad2;
-        }
-        
-        // Highlight the bubble being moved with a border to make it obvious
-        adToMove.lastMoved = Date.now();
-        
-        // Calculate the direction to move
-        const adMoveCenterX = adToMove.x + adToMove.size / 2;
-        const adMoveCenterY = adToMove.y + adToMove.size / 2;
-        const fixedAdCenterX = fixedAd.x + fixedAd.size / 2;
-        const fixedAdCenterY = fixedAd.y + fixedAd.size / 2;
-        
-        // Get direction vector
-        let dirX = adMoveCenterX - fixedAdCenterX;
-        let dirY = adMoveCenterY - fixedAdCenterY;
-        
-        // Handle case where bubbles are exactly on top of each other
-        if (dirX === 0 && dirY === 0) {
-          dirX = Math.random() > 0.5 ? 1 : -1;
-          dirY = Math.random() > 0.5 ? 1 : -1;
-        }
-        
-        // Normalize direction
-        const dirLength = Math.sqrt(dirX * dirX + dirY * dirY);
-        dirX = dirX / dirLength;
-        dirY = dirY / dirLength;
-        
-        // Calculate needed push distance plus 10px buffer
-        const pushDistance = minDistance - distance + 10;
-        
-        // Apply the movement
-        const newX = adToMove.x + dirX * pushDistance;
-        const newY = adToMove.y + dirY * pushDistance;
-        
-        // Ensure the bubble stays within viewport bounds
-        const minX = BUBBLE_PADDING;
-        const minY = TOP_PADDING;
-        const maxX = windowWidth - adToMove.size - BUBBLE_PADDING;
-        const maxY = windowHeight - adToMove.size - BUBBLE_PADDING;
-        
-        adToMove.x = Math.min(Math.max(newX, minX), maxX);
-        adToMove.y = Math.min(Math.max(newY, minY), maxY);
-        
-        console.log(`Moved ${adToMove.title} to resolve overlap with ${fixedAd.title}`);
-        moveCount++;
-      }
-    }
-  }
-  
-  if (moveCount > 0) {
-    console.log(`Fixed ${moveCount} overlapping bubbles at ${new Date().toISOString()}`);
-  }
-  
-  return updatedAds;
-}
-
-// Add visual indicator for recently moved bubbles to createBubble function
-// Find the createBubble function and add this code near the end before the return statement
-const createBubble = (ad) => {
-  // Add highlight for recently moved bubbles
-  const bubbleStyle = {
-    width: `${ad.size}px`,
-    height: `${ad.size}px`,
-    left: `${ad.x}px`,
-    top: `${ad.y}px`,
-    position: 'absolute',
-    zIndex: ad.isBumped ? 10 : 1,
-    cursor: 'pointer',
-    transition: 'left 0.3s ease-out, top 0.3s ease-out' // Add smooth transition for movement
-  };
-  
-  // Add visual indicator if bubble was moved in the last 2 seconds
-  if (ad.lastMoved && Date.now() - ad.lastMoved < 2000) {
-    bubbleStyle.border = '2px solid #ff0000';
-    bubbleStyle.boxShadow = '0 0 20px #ff0000';
-  }
-  
-  return (
-    <div
-      className={`bubble ${ad.isBumped ? 'bumped-ad' : ''}`}
-      key={ad.id}
-      style={bubbleStyle}
-      onClick={() => window.open(ad.url, '_blank')}
-    >
-      <div className="bubble-bg"></div>
-      <div className="bubble-content">
-        <div className="bubble-logo-container">
-          <img
-            src={ad.logo}
-            alt={ad.title}
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = 'https://placehold.co/100?text=Ad';
-            }}
-          />
-        </div>
-        <div className="bubble-text-curved">
-          <span style={{ fontSize: '12px', color: 'white' }}>{ad.title}</span>
-        </div>
-      </div>
-    </div>
-  );
 };
 
 function App() {
@@ -1190,49 +1069,14 @@ function App() {
 
   // 1. Subtle size variations for each bubble when created
   const createBubble = (ad) => {
-    // Add highlight for recently moved bubbles
-    const bubbleStyle = {
-      width: `${ad.size}px`,
-      height: `${ad.size}px`,
-      left: `${ad.x}px`,
-      top: `${ad.y}px`,
-      position: 'absolute',
-      zIndex: ad.isBumped ? 10 : 1,
-      cursor: 'pointer',
-      transition: 'left 0.3s ease-out, top 0.3s ease-out' // Add smooth transition for movement
-    };
+    // Your existing bubble creation code
     
-    // Add visual indicator if bubble was moved in the last 2 seconds
-    if (ad.lastMoved && Date.now() - ad.lastMoved < 2000) {
-      bubbleStyle.border = '2px solid #ff0000';
-      bubbleStyle.boxShadow = '0 0 20px #ff0000';
-    }
+    // Add subtle size variation (5-10% difference between bubbles)
+    const sizeVariation = 0.95 + Math.random() * 0.1;
+    ad.element.style.transform = `scale(${sizeVariation})`;
+    ad.baseScale = sizeVariation; // Store base scale for animations
     
-    return (
-      <div
-        className={`bubble ${ad.isBumped ? 'bumped-ad' : ''}`}
-        key={ad.id}
-        style={bubbleStyle}
-        onClick={() => window.open(ad.url, '_blank')}
-      >
-        <div className="bubble-bg"></div>
-        <div className="bubble-content">
-          <div className="bubble-logo-container">
-            <img
-              src={ad.logo}
-              alt={ad.title}
-              onError={(e) => {
-                e.target.onerror = null;
-                e.target.src = 'https://placehold.co/100?text=Ad';
-              }}
-            />
-          </div>
-          <div className="bubble-text-curved">
-            <span style={{ fontSize: '12px', color: 'white' }}>{ad.title}</span>
-          </div>
-        </div>
-      </div>
-    );
+    return ad;
   };
 
   // 2. Gentler deceleration for more fluid movement
@@ -1601,22 +1445,6 @@ function App() {
       delete window.showDashboard;
     };
   }, []);
-
-  // Update the useEffect for checking overlaps (use 3-second interval)
-  useEffect(() => {
-    const checkOverlapsInterval = setInterval(() => {
-      if (ads.length > 1) {
-        const fixedAds = checkAndFixOverlaps(ads, windowSize.width, windowSize.height);
-        
-        // Only update if needed
-        if (fixedAds !== ads) {
-          setAds(fixedAds);
-        }
-      }
-    }, 3000); // Check every 3 seconds to reduce constant movement
-    
-    return () => clearInterval(checkOverlapsInterval);
-  }, [ads, windowSize.width, windowSize.height]);
 
   // Modify the return statement to wrap everything in the Auth context provider
   return (
