@@ -43,7 +43,7 @@ import emailService from './services/emailService';
 import emailjs from '@emailjs/browser';
 import NotificationBell from './components/NotificationBell';
 import logger from './utils/logger';
-import useDimension from './hooks/useDimension';
+import { useDimension } from './hooks/useDimension';
 
 // Simple debounce function implementation
 const debounce = (func, wait) => {
@@ -509,18 +509,20 @@ function App() {
   const [notifications, setNotifications] = useState([]);
   const [showEditModal, setShowEditModal] = useState(false);
   const [adToEdit, setAdToEdit] = useState(null);
-  const [windowSize, setWindowSize] = useState({
-    width: window.innerWidth,
-    height: window.innerHeight
-  });
-  const [showScrollButtons, setShowScrollButtons] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [showMarketplace, setShowMarketplace] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [newUsername, setNewUsername] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeBookingId, setActiveBookingId] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Use the original dimension hooks instead of the windowSize state
+  const windowWidth = useDimension('width');
+  const windowHeight = useDimension('height');
+  
+  // Remove the windowSize state and related handlers
+  const [showScrollButtons, setShowScrollButtons] = useState(false);
   
   // Add state to track if we need to check for overlaps
   const [checkOverlaps, setCheckOverlaps] = useState(false);
@@ -528,7 +530,7 @@ function App() {
   // Enhanced ad update function to resolve overlaps
   const updateAds = (newAds) => {
     // Resolve any overlaps before setting the ads
-    const resolvedAds = resolveOverlaps(newAds, windowSize.width, windowSize.height);
+    const resolvedAds = resolveOverlaps(newAds, windowWidth, windowHeight);
     setAds(resolvedAds);
     localStorage.setItem('cachedAds', JSON.stringify(resolvedAds));
   };
@@ -557,8 +559,8 @@ function App() {
             // Calculate a safe position for this ad
             const position = calculateSafePosition(
               ad.size, 
-              windowSize.width, 
-              windowSize.height, 
+              windowWidth, 
+              windowHeight, 
               data.filter(otherAd => otherAd.id !== ad.id)
             );
             adWithMetadata = { ...adWithMetadata, x: position.x, y: position.y };
@@ -568,7 +570,7 @@ function App() {
         });
         
         // Resolve any overlaps in the loaded ads
-        const resolvedAds = resolveOverlaps(repositionedAds, windowSize.width, windowSize.height);
+        const resolvedAds = resolveOverlaps(repositionedAds, windowWidth, windowHeight);
         setAds(resolvedAds);
         setIsLoading(false);
         
@@ -590,16 +592,11 @@ function App() {
     };
 
     loadAdsFromApi();
-  }, []);
+  }, [windowWidth, windowHeight]);
 
-  // Effect for updating window size
+  // Effect for window resize - use windowWidth and windowHeight directly
   useEffect(() => {
-    const handleResize = () => {
-      setWindowSize({
-        width: window.innerWidth,
-        height: window.innerHeight
-      });
-      
+    if (windowWidth > 0 && windowHeight > 0) {
       // Update bubble sizes when window size changes
       const newMaxSize = getMaxSize();
       setAds(prevAds => {
@@ -638,17 +635,14 @@ function App() {
         setCheckOverlaps(true);
         return updatedAds;
       });
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    }
+  }, [windowWidth, windowHeight]);
   
   // Add a new effect to check for and resolve overlaps
   useEffect(() => {
     // Only run this if we need to check for overlaps
-    if (checkOverlaps && windowSize.width > 0 && windowSize.height > 0 && ads.length > 1) {
-      const resolvedAds = resolveOverlaps(ads, windowSize.width, windowSize.height);
+    if (checkOverlaps && windowWidth > 0 && windowHeight > 0 && ads.length > 1) {
+      const resolvedAds = resolveOverlaps(ads, windowWidth, windowHeight);
       
       // Only update if positions actually changed
       const positionsChanged = resolvedAds.some((ad, index) => {
@@ -663,7 +657,7 @@ function App() {
       // Reset the check flag
       setCheckOverlaps(false);
     }
-  }, [checkOverlaps, ads, windowSize.width, windowSize.height]);
+  }, [checkOverlaps, ads, windowWidth, windowHeight]);
   
   // Periodically check for overlaps (every 5 seconds)
   useEffect(() => {
@@ -673,9 +667,6 @@ function App() {
     
     return () => clearInterval(intervalId);
   }, []);
-
-  // Rest of the component code...
-  // ... (keep all the existing code)
 
   return (
     <AuthContext.Provider value={{ currentUser, setCurrentUser }}>
