@@ -109,278 +109,193 @@ const ADMIN_USERNAME = "admin"; // You can change this to your preferred admin u
 
 // Helper functions for responsive positioning
 function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
-  // Calculate grid dimensions based on screen size and bubble size
-  const effectiveWidth = windowWidth - (BUBBLE_PADDING * 2);
-  const effectiveHeight = windowHeight - TOP_PADDING - BUBBLE_PADDING;
+  // Center of the available space (excluding banner)
+  const centerX = windowWidth / 2;
+  const centerY = (windowHeight - TOP_PADDING) / 1 + TOP_PADDING;
   
-  // Increase spacing to prevent any bubbles from touching (1.5x size instead of 1.3x)
-  const gridSpacing = size * 1.5;
+  // If this is the first bubble, place it directly in the center of available space
+  if (existingAds.length === 0) {
+    return {
+      x: centerX - size/2,
+      y: centerY - size/2
+    };
+  }
   
-  // Calculate available rows and columns in the grid
-  const columns = Math.floor(effectiveWidth / gridSpacing);
-  const rows = Math.floor(effectiveHeight / gridSpacing);
+  // Reduced spacing between bubbles for tighter packing
+  const bubbleSpacing = 1.02;
   
-  // Create a 2D array to track occupied grid positions
-  const grid = Array(rows).fill().map(() => Array(columns).fill(false));
+  // Calculate spiral position with optimized parameters
+  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+  const startRadius = size/3;
+  const scaleFactor = 0.7;
   
-  // Mark grid positions that are already occupied by existing ads
-  // and also mark surrounding cells to create more space
-  existingAds.forEach(ad => {
-    // Convert pixel position to grid position
-    const col = Math.floor((ad.x - BUBBLE_PADDING) / gridSpacing);
-    const row = Math.floor((ad.y - TOP_PADDING) / gridSpacing);
+  // Create a grid-based optimization for larger numbers of bubbles
+  const useGridApproach = existingAds.length > 12;
+  
+  if (useGridApproach) {
+    const cellSize = size * bubbleSpacing;
+    const gridColumns = Math.floor((windowWidth - 2 * BUBBLE_PADDING) / cellSize);
+    const gridRows = Math.floor((windowHeight - TOP_PADDING - BUBBLE_PADDING) / cellSize);
     
-    // Mark a larger zone around each bubble (2 cells in each direction)
-    for (let r = Math.max(0, row - 1); r <= Math.min(rows - 1, row + 1); r++) {
-      for (let c = Math.max(0, col - 1); c <= Math.min(columns - 1, col + 1); c++) {
-        grid[r][c] = true;
-      }
-    }
-  });
-  
-  // Try to find an empty grid position
-  // First try positions near the center for better aesthetics
-  const centerRow = Math.floor(rows / 2);
-  const centerCol = Math.floor(columns / 2);
-  
-  // Search in spiraling order from the center
-  for (let distance = 0; distance < Math.max(rows, columns); distance++) {
-    // Check positions in a square around the center
-    for (let offsetRow = -distance; offsetRow <= distance; offsetRow++) {
-      for (let offsetCol = -distance; offsetCol <= distance; offsetCol++) {
-        // Only check positions on the perimeter of the square
-        if (Math.abs(offsetRow) === distance || Math.abs(offsetCol) === distance) {
-          const row = centerRow + offsetRow;
-          const col = centerCol + offsetCol;
-          
-          // Make sure the position is within grid bounds
-          if (row >= 0 && row < rows && col >= 0 && col < columns) {
-            // Check if the position is free
-            if (!grid[row][col]) {
-              // Convert to pixel coordinates
-              const x = BUBBLE_PADDING + (col * gridSpacing) + ((gridSpacing - size) / 2);
-              const y = TOP_PADDING + (row * gridSpacing) + ((gridSpacing - size) / 2);
-              
-              // Double check for any overlaps with existing ads
-              let hasOverlap = false;
-              for (const ad of existingAds) {
-                const distance = calculateDistance(
-                  x + size/2, 
-                  y + size/2, 
-                  ad.x + ad.size/2, 
-                  ad.y + ad.size/2
-                );
-                
-                // Use a buffer to ensure no bubbles are even touching (1.5x combined radii)
-                const minDistance = ((size + ad.size) / 2) * 1.2;
-                
-                if (distance < minDistance) {
-                  hasOverlap = true;
-                  break;
-                }
-              }
-              
-              if (!hasOverlap) {
-                return { x, y };
-              }
+    const grid = Array(gridRows).fill().map(() => Array(gridColumns).fill(false));
+    
+    existingAds.forEach(ad => {
+      const col = Math.floor((ad.x - BUBBLE_PADDING) / cellSize);
+      const row = Math.floor((ad.y - TOP_PADDING) / cellSize);
+      
+      if (col >= 0 && col < gridColumns && row >= 0 && row < gridRows) {
+        grid[row][col] = true;
+        
+        for (let r = Math.max(0, row-1); r <= Math.min(gridRows-1, row+1); r++) {
+          for (let c = Math.max(0, col-1); c <= Math.min(gridColumns-1, col+1); c++) {
+            if (Math.sqrt(Math.pow(r-row, 2) + Math.pow(c-col, 2)) <= 1) {
+              grid[r][c] = true;
             }
           }
         }
       }
-    }
-  }
-  
-  // Last resort: scan the entire grid methodically
-  for (let row = 0; row < rows; row++) {
-    for (let col = 0; col < columns; col++) {
-      if (!grid[row][col]) {
-        const x = BUBBLE_PADDING + (col * gridSpacing) + ((gridSpacing - size) / 2);
-        const y = TOP_PADDING + (row * gridSpacing) + ((gridSpacing - size) / 2);
-        
-        // Double check for any overlaps
-        let hasOverlap = false;
-        for (const ad of existingAds) {
-          const distance = calculateDistance(
-            x + size/2, 
-            y + size/2, 
-            ad.x + ad.size/2, 
-            ad.y + ad.size/2
-          );
+    });
+    
+    for (let row = 0; row < gridRows; row++) {
+      for (let col = 0; col < gridColumns; col++) {
+        if (!grid[row][col]) {
+          const x = BUBBLE_PADDING + col * cellSize;
+          const y = TOP_PADDING + row * cellSize;
           
-          const minDistance = ((size + ad.size) / 2) * 1.2;
+          let hasOverlap = false;
+          for (const ad of existingAds) {
+            const distance = calculateDistance(
+              x + size/2, 
+              y + size/2, 
+              ad.x + ad.size/2, 
+              ad.y + ad.size/2
+            );
+            
+            const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
+            
+            if (distance < minDistance) {
+              hasOverlap = true;
+              break;
+            }
+          }
           
-          if (distance < minDistance) {
-            hasOverlap = true;
-            break;
+          if (!hasOverlap) {
+            return { x, y };
           }
         }
-        
-        if (!hasOverlap) {
-          return { x, y };
-        }
       }
     }
   }
   
-  // If all else fails, use fallback random position
-  const randomCol = Math.floor(Math.random() * columns);
-  const randomRow = Math.floor(Math.random() * rows);
-  
-  // Add slight random offset within the cell to avoid perfect overlap
-  const offsetX = Math.random() * (gridSpacing - size) * 0.5;
-  const offsetY = Math.random() * (gridSpacing - size) * 0.5;
-  
-  // Convert to pixel coordinates with offset
-  const x = BUBBLE_PADDING + (randomCol * gridSpacing) + offsetX;
-  const y = TOP_PADDING + (randomRow * gridSpacing) + offsetY;
-  
-  return { x, y };
-}
-
-function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, currentAdId) {
-  // Define bounds
-  const minX = BUBBLE_PADDING;
-  const maxX = windowWidth - BUBBLE_PADDING - size;
-  const minY = TOP_PADDING;
-  const maxY = windowHeight - BUBBLE_PADDING - size;
-
-  // Ensure the position is within bounds
-  let boundedX = Math.max(minX, Math.min(maxX, x));
-  let boundedY = Math.max(minY, Math.min(maxY, y));
-
-  // Calculate grid dimensions
-  const effectiveWidth = windowWidth - (BUBBLE_PADDING * 2);
-  const effectiveHeight = windowHeight - TOP_PADDING - BUBBLE_PADDING;
-  const gridSpacing = size * 1.5; // Use the same grid spacing as calculateSafePosition
-  const columns = Math.floor(effectiveWidth / gridSpacing);
-  const rows = Math.floor(effectiveHeight / gridSpacing);
-
-  // Filter out the current ad from the collision checks
-  const otherAds = existingAds.filter(ad => ad.id !== currentAdId);
-  
-  // Create a grid to track occupied positions
-  const grid = Array(rows).fill().map(() => Array(columns).fill(false));
-  
-  // Mark positions of other ads in the grid
-  otherAds.forEach(ad => {
-    const col = Math.floor((ad.x - BUBBLE_PADDING) / gridSpacing);
-    const row = Math.floor((ad.y - TOP_PADDING) / gridSpacing);
+  for (let i = 0; i < 1000; i++) {
+    const angle = goldenAngle * i;
+    const radius = startRadius * scaleFactor * Math.sqrt(i + 1);
     
-    // Mark a zone around each bubble
-    for (let r = Math.max(0, row - 1); r <= Math.min(rows - 1, row + 1); r++) {
-      for (let c = Math.max(0, col - 1); c <= Math.min(columns - 1, col + 1); c++) {
-        if (r >= 0 && r < rows && c >= 0 && c < columns) {
-          grid[r][c] = true;
-        }
-      }
+    const x = centerX + radius * Math.cos(angle) - size/2;
+    const y = centerY + radius * Math.sin(angle) - size/2;
+    
+    if (x < BUBBLE_PADDING || x + size > windowWidth - BUBBLE_PADDING || 
+        y < TOP_PADDING || y + size > windowHeight - BUBBLE_PADDING) {
+      continue;
     }
-  });
-  
-  // Find the nearest grid cell to the target position
-  const targetCol = Math.floor((boundedX - BUBBLE_PADDING) / gridSpacing);
-  const targetRow = Math.floor((boundedY - TOP_PADDING) / gridSpacing);
-  
-  // Check if target position is already occupied
-  let isOccupied = false;
-  if (targetRow >= 0 && targetRow < rows && targetCol >= 0 && targetCol < columns) {
-    isOccupied = grid[targetRow][targetCol];
-  }
-  
-  // If the target position is free, snap to the grid
-  if (!isOccupied) {
-    boundedX = BUBBLE_PADDING + (targetCol * gridSpacing) + ((gridSpacing - size) / 2);
-    boundedY = TOP_PADDING + (targetRow * gridSpacing) + ((gridSpacing - size) / 2);
     
-    // Double-check for collisions
-    for (const ad of otherAds) {
+    let hasOverlap = false;
+    for (const ad of existingAds) {
       const distance = calculateDistance(
-        boundedX + size/2,
-        boundedY + size/2,
-        ad.x + ad.size/2,
+        x + size/2, 
+        y + size/2, 
+        ad.x + ad.size/2, 
         ad.y + ad.size/2
       );
       
-      const minDistance = ((size + ad.size) / 2) * 1.2;
+      const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
       
       if (distance < minDistance) {
-        isOccupied = true;
+        hasOverlap = true;
         break;
       }
     }
     
-    if (!isOccupied) {
-      return { x: boundedX, y: boundedY };
+    if (!hasOverlap) {
+      return { x, y };
     }
   }
   
-  // If target is occupied, search for the nearest free grid cell
-  let nearestFreeCell = null;
-  let minDistance = Infinity;
+  return {
+    x: Math.max(BUBBLE_PADDING, Math.min(windowWidth - size - BUBBLE_PADDING, Math.random() * windowWidth)),
+    y: Math.max(TOP_PADDING, Math.min(windowHeight - size - BUBBLE_PADDING, Math.random() * (windowHeight - TOP_PADDING)))
+  };
+}
+
+function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, currentAdId) {
+  const minX = BUBBLE_PADDING;
+  const maxX = windowWidth - size - BUBBLE_PADDING;
+  const minY = TOP_PADDING;
+  const maxY = windowHeight - size - BUBBLE_PADDING;
+
+  let newX = Math.min(Math.max(x, minX), maxX);
+  let newY = Math.min(Math.max(y, minY), maxY);
+
+  const otherAds = existingAds.filter(ad => ad.id !== currentAdId);
   
-  // Search in expanding squares around the target
-  for (let distance = 1; distance < Math.max(rows, columns); distance++) {
-    let found = false;
+  if (otherAds.length === 0) {
+    return { x: newX, y: newY };
+  }
+  
+  const bubbleSpacing = 1.02;
+  let iterations = 0;
+  const maxIterations = 25;
+  
+  while(iterations < maxIterations) {
+    let hasOverlap = false;
+    let totalPushX = 0;
+    let totalPushY = 0;
+    let overlappingAds = 0;
     
-    // Check cells in a square pattern around the target
-    for (let offsetRow = -distance; offsetRow <= distance; offsetRow++) {
-      for (let offsetCol = -distance; offsetCol <= distance; offsetCol++) {
-        // Only check positions on the perimeter of the square
-        if (Math.abs(offsetRow) === distance || Math.abs(offsetCol) === distance) {
-          const row = targetRow + offsetRow;
-          const col = targetCol + offsetCol;
-          
-          // Check if position is valid and free
-          if (row >= 0 && row < rows && col >= 0 && col < columns && !grid[row][col]) {
-            const cellX = BUBBLE_PADDING + (col * gridSpacing) + ((gridSpacing - size) / 2);
-            const cellY = TOP_PADDING + (row * gridSpacing) + ((gridSpacing - size) / 2);
-            
-            // Check for collisions with other ads
-            let hasCollision = false;
-            for (const ad of otherAds) {
-              const dist = calculateDistance(
-                cellX + size/2,
-                cellY + size/2,
-                ad.x + ad.size/2,
-                ad.y + ad.size/2
-              );
-              
-              const minDist = ((size + ad.size) / 2) * 1.2;
-              
-              if (dist < minDist) {
-                hasCollision = true;
-                break;
-              }
-            }
-            
-            if (!hasCollision) {
-              const distanceToTarget = Math.sqrt(
-                Math.pow(col - targetCol, 2) + Math.pow(row - targetRow, 2)
-              );
-              
-              if (distanceToTarget < minDistance) {
-                minDistance = distanceToTarget;
-                nearestFreeCell = { x: cellX, y: cellY };
-                found = true;
-              }
-            }
-          }
-        }
+    for (const ad of otherAds) {
+      const distance = calculateDistance(
+        newX + size/2, 
+        newY + size/2, 
+        ad.x + ad.size/2, 
+        ad.y + ad.size/2
+      );
+      
+      const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
+      
+      if (distance < minDistance) {
+        hasOverlap = true;
+        overlappingAds++;
+        
+        const dx = (ad.x + ad.size/2) - (newX + size/2);
+        const dy = (ad.y + ad.size/2) - (newY + size/2);
+        
+        const magnitude = Math.sqrt(dx * dx + dy * dy);
+        const pushX = dx === 0 ? 0 : dx / magnitude;
+        const pushY = dy === 0 ? 0 : dy / magnitude;
+        
+        const pushAmount = minDistance - distance;
+        
+        const multiplier = 1 / Math.sqrt(overlappingAds);
+        totalPushX -= pushX * pushAmount * multiplier;
+        totalPushY -= pushY * pushAmount * multiplier;
       }
     }
     
-    // If we found at least one free cell in this ring, no need to search further
-    if (found) {
+    if (!hasOverlap) {
       break;
     }
+    
+    const dampening = 0.8;
+    newX += totalPushX * dampening;
+    newY += totalPushY * dampening;
+    
+    newX = Math.min(Math.max(newX, minX), maxX);
+    newY = Math.min(Math.max(newY, minY), maxY);
+    
+    iterations++;
   }
-  
-  // If we found a free position, use it
-  if (nearestFreeCell) {
-    return nearestFreeCell;
-  }
-  
-  // Fallback: if we couldn't find a free grid cell, revert to calculateSafePosition
-  return calculateSafePosition(size, windowWidth, windowHeight, otherAds);
+
+  return { x: newX, y: newY };
 }
 
 function calculateDistance(x1, y1, x2, y2) {
@@ -422,74 +337,6 @@ const NavigationListener = ({ onNavigate }) => {
   return null; // This component doesn't render anything
 };
 
-// Function to create a bubble element
-function createBubble(ad) {
-  const size = ad.size;
-  const isBumped = ad.isBumped === true;
-  
-  return (
-    <motion.div
-      className={`bubble ${isBumped ? 'bumped-ad' : ''}`}
-      style={{
-        width: '100%',
-        height: '100%',
-        transition: `all 0.3s ease-in-out`,
-        animationDuration: `${8 + Math.random() * 4}s`,
-        cursor: 'pointer',
-        touchAction: 'auto'
-      }}
-      onClick={(e) => {
-        if (!e.defaultPrevented) {
-          window.open(ad.url, '_blank');
-        }
-      }}
-    >
-      <div className="bubble-content">
-        {/* Background of bubble */}
-        <div className="bubble-bg"></div>
-        
-        {/* Curved text at top */}
-        <div 
-          className="bubble-text-curved"
-          onClick={(e) => {
-            e.stopPropagation();
-            // You can add bump store functionality here if needed
-          }}
-        >
-          <span 
-            className="text-white truncate block hover:text-blue-300 transition-colors duration-300"
-            style={{
-              fontSize: `${Math.max(size * 0.09, 10)}px`
-            }}
-          >
-            {ad.title}
-          </span>
-        </div>
-        
-        {/* Larger Logo */}
-        <div className="bubble-logo-container">
-          <img
-            src={ad.logo}
-            alt={ad.title}
-            loading="eager"
-            className="w-full h-full object-contain"
-            style={{
-              objectFit: 'contain',
-              width: '100%',
-              height: '100%'
-            }}
-            onLoad={(e) => {
-              if (e.target.src.toLowerCase().endsWith('.gif')) {
-                e.target.setAttribute('loop', 'infinite');
-              }
-            }}
-          />
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
 function App() {
   const [ads, setAds] = useState(() => {
     const cachedAds = localStorage.getItem('cachedAds');
@@ -517,8 +364,6 @@ function App() {
   const [notifications, setNotifications] = useState([]);
   const [showEditModal, setShowEditModal] = useState(false);
   const [adToEdit, setAdToEdit] = useState(null);
-  const [draggingAd, setDraggingAd] = useState(null);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [windowSize, setWindowSize] = useState({
     width: window.innerWidth,
     height: window.innerHeight
@@ -1601,156 +1446,6 @@ function App() {
     };
   }, []);
 
-  // Handle bubble mouse down event to start dragging
-  const handleBubbleMouseDown = (e, ad) => {
-    // Prevent default to avoid text selection
-    e.preventDefault();
-    
-    // Calculate the offset from where the user clicked to the top-left of the bubble
-    const rect = e.currentTarget.getBoundingClientRect();
-    const offsetX = e.clientX - rect.left;
-    const offsetY = e.clientY - rect.top;
-    
-    setDraggingAd(ad);
-    setDragOffset({ x: offsetX, y: offsetY });
-    
-    // Add mouse move and mouse up event listeners
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
-  
-  // Handle mouse move event during dragging
-  const handleMouseMove = (e) => {
-    if (!draggingAd) return;
-    
-    // Calculate new position
-    const newX = e.clientX - dragOffset.x;
-    const newY = e.clientY - dragOffset.y;
-    
-    // Update the position immediately for smooth dragging
-    const adElement = document.querySelector(`.bubble-container[data-ad-id="${draggingAd.id}"]`);
-    if (adElement) {
-      adElement.style.left = `${newX}px`;
-      adElement.style.top = `${newY}px`;
-    }
-  };
-  
-  // Handle mouse up event to end dragging
-  const handleMouseUp = (e) => {
-    if (!draggingAd) return;
-    
-    // Calculate final position
-    const newX = e.clientX - dragOffset.x;
-    const newY = e.clientY - dragOffset.y;
-    
-    // Ensure the position is within viewport and doesn't overlap others
-    const newPosition = ensureInViewport(
-      newX,
-      newY,
-      draggingAd.size,
-      windowSize.width,
-      windowSize.height,
-      ads,
-      draggingAd.id
-    );
-    
-    // Update ad position in state
-    updateAdPosition(draggingAd.id, newPosition.x, newPosition.y);
-    
-    // Clean up
-    setDraggingAd(null);
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
-  };
-  
-  // Touch handlers for mobile devices
-  const handleBubbleTouchStart = (e, ad) => {
-    e.stopPropagation();
-    
-    const touch = e.touches[0];
-    const rect = e.currentTarget.getBoundingClientRect();
-    const offsetX = touch.clientX - rect.left;
-    const offsetY = touch.clientY - rect.top;
-    
-    setDraggingAd(ad);
-    setDragOffset({ x: offsetX, y: offsetY });
-    
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', handleTouchEnd);
-  };
-  
-  const handleTouchMove = (e) => {
-    if (!draggingAd) return;
-    
-    // Prevent scrolling while dragging
-    e.preventDefault();
-    
-    const touch = e.touches[0];
-    const newX = touch.clientX - dragOffset.x;
-    const newY = touch.clientY - dragOffset.y;
-    
-    // Update position for smooth dragging
-    const adElement = document.querySelector(`.bubble-container[data-ad-id="${draggingAd.id}"]`);
-    if (adElement) {
-      adElement.style.left = `${newX}px`;
-      adElement.style.top = `${newY}px`;
-    }
-  };
-  
-  const handleTouchEnd = (e) => {
-    if (!draggingAd) return;
-    
-    // Get the final touch position
-    let finalX, finalY;
-    if (e.changedTouches && e.changedTouches.length > 0) {
-      const touch = e.changedTouches[0];
-      finalX = touch.clientX - dragOffset.x;
-      finalY = touch.clientY - dragOffset.y;
-    } else {
-      // Fallback to current position
-      const adElement = document.querySelector(`.bubble-container[data-ad-id="${draggingAd.id}"]`);
-      if (adElement) {
-        finalX = parseInt(adElement.style.left, 10) || draggingAd.x;
-        finalY = parseInt(adElement.style.top, 10) || draggingAd.y;
-      } else {
-        finalX = draggingAd.x;
-        finalY = draggingAd.y;
-      }
-    }
-    
-    // Ensure the position is valid
-    const newPosition = ensureInViewport(
-      finalX,
-      finalY,
-      draggingAd.size,
-      windowSize.width,
-      windowSize.height,
-      ads,
-      draggingAd.id
-    );
-    
-    // Update ad position in state
-    updateAdPosition(draggingAd.id, newPosition.x, newPosition.y);
-    
-    // Clean up
-    setDraggingAd(null);
-    document.removeEventListener('touchmove', handleTouchMove);
-    document.removeEventListener('touchend', handleTouchEnd);
-  };
-  
-  // Function to update ad position in state and optionally on server
-  const updateAdPosition = (adId, x, y) => {
-    // Update local state first for immediate feedback
-    setAds(prevAds => 
-      prevAds.map(ad => 
-        ad.id === adId ? { ...ad, x, y } : ad
-      )
-    );
-    
-    // Optionally update position on server (can be throttled for performance)
-    // This would depend on your API implementation
-  };
-
   // Modify the return statement to wrap everything in the Auth context provider
   return (
     <AuthContext.Provider value={{ currentUser, setCurrentUser }}>
@@ -1996,37 +1691,96 @@ function App() {
                     {/* Ads */}
                     {ads && ads.length > 0 ? (
                       ads.map(ad => {
-                        // Calculate base z-index - bumped ads should appear on top
-                        const isBumped = ad.isBumped === true;
-                        const isNew = (Date.now() - new Date(ad.createdAt).getTime()) < 24 * 60 * 60 * 1000; // New = created in last 24 hours
-                        
-                        // Base z-index: 100 for bumped, 50 for new, 10 for regular
-                        let baseZIndex = isBumped ? 100 : (isNew ? 50 : 10);
-                        
-                        // Add small variation based on ID to prevent z-fighting
-                        const idNumber = parseInt(ad.id.replace(/\D/g, ''), 10);
-                        const zIndexVariation = idNumber % 10;
-                        
-                        // Final z-index
-                        const zIndex = baseZIndex + zIndexVariation;
+                        const { x, y } = ensureInViewport(
+                          ad.x,
+                          ad.y,
+                          ad.size,
+                          windowSize.width,
+                          windowSize.height,
+                          ads,
+                          ad.id
+                        );
 
                         return (
-                          <div
+                          <div 
                             key={ad.id}
-                            data-ad-id={ad.id}
-                            className={`bubble-container ${isBumped ? 'bumped-ad' : ''}`}
+                            id={ad.id}
+                            className="bubble-container"
                             style={{
-                              left: `${ad.x}px`,
-                              top: `${ad.y}px`,
+                              position: 'absolute',
+                              transform: `translate(${x}px, ${y}px)`,
                               width: `${ad.size}px`,
                               height: `${ad.size}px`,
-                              zIndex: zIndex,
-                              transition: 'left 0.3s ease-out, top 0.3s ease-out, transform 0.3s ease-out'
+                              transition: 'transform 0.3s ease-out',
+                              zIndex: ad.isBumped ? 2 : 1
                             }}
-                            onMouseDown={(e) => handleBubbleMouseDown(e, ad)}
-                            onTouchStart={(e) => handleBubbleTouchStart(e, ad)}
                           >
-                            {createBubble(ad)}
+                            <motion.div
+                              className={`absolute bubble ${ad.isBumped ? 'bumped-ad' : ''}`}
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                transition: `all ${ANIMATION_DURATION} ease-in-out`,
+                                animationDuration: `${8 + Math.random() * 4}s`,
+                                cursor: 'pointer',
+                                touchAction: 'auto'
+                              }}
+                              onClick={(e) => {
+                                if (!e.defaultPrevented) {
+                                  if (requireAuth()) {
+                                    window.open(ad.url, '_blank');
+                                  }
+                                }
+                              }}
+                            >
+                              <div className="bubble-content">
+                                {/* Background of bubble */}
+                                <div className="bubble-bg"></div>
+                                
+                                {/* Curved text at top */}
+                                <div 
+                                  className="bubble-text-curved"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (requireAuth()) {
+                                      setSelectedAdId(ad.id);
+                                      setShowBumpStore(true);
+                                    }
+                                  }}
+                                >
+                                  <span 
+                                    className="text-white truncate block hover:text-blue-300 transition-colors duration-300"
+                                    style={{
+                                      fontSize: `${Math.max(ad.size * 0.09, 10)}px`
+                                    }}
+                                  >
+                                    {ad.title}
+                                  </span>
+                                </div>
+                                
+                                {/* Larger Logo */}
+                                <div 
+                                  className="bubble-logo-container"
+                                >
+                                  <img
+                                    src={ad.logo}
+                                    alt={ad.title}
+                                    loading="eager"
+                                    className="w-full h-full object-contain"
+                                    style={{
+                                      objectFit: 'contain',
+                                      width: '100%',
+                                      height: '100%'
+                                    }}
+                                    onLoad={(e) => {
+                                      if (e.target.src.toLowerCase().endsWith('.gif')) {
+                                        e.target.setAttribute('loop', 'infinite');
+                                      }
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            </motion.div>
                           </div>
                         );
                       })
