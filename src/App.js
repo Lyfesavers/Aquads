@@ -121,268 +121,89 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
     };
   }
   
-  // Simple but effective approach: use larger, fixed minimum distance
-  // This ensures bubbles won't overlap even with zoom changes
-  const minDistance = size * 1.5; // Use 1.5x bubble size as minimum distance
+  // Reduced spacing between bubbles for tighter packing
+  const bubbleSpacing = 1.02;
   
-  // Try placing bubbles in two ways:
-  // 1. Start from center and spiral outward
-  // 2. If that fails, place in least crowded area
+  // Calculate spiral position with optimized parameters
+  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+  const startRadius = size/3;
+  const scaleFactor = 0.7;
   
-  // Approach 1: Spiral placement (works well for first ~20 bubbles)
-  const goldenAngle = Math.PI * (3 - Math.sqrt(5)); // ~137.5 degrees
+  // Create a grid-based optimization for larger numbers of bubbles
+  const useGridApproach = existingAds.length > 12;
+  
+  if (useGridApproach) {
+    const cellSize = size * bubbleSpacing;
+    const gridColumns = Math.floor((windowWidth - 2 * BUBBLE_PADDING) / cellSize);
+    const gridRows = Math.floor((windowHeight - TOP_PADDING - BUBBLE_PADDING) / cellSize);
+    
+    const grid = Array(gridRows).fill().map(() => Array(gridColumns).fill(false));
+    
+    existingAds.forEach(ad => {
+      const col = Math.floor((ad.x - BUBBLE_PADDING) / cellSize);
+      const row = Math.floor((ad.y - TOP_PADDING) / cellSize);
+      
+      if (col >= 0 && col < gridColumns && row >= 0 && row < gridRows) {
+        grid[row][col] = true;
+        
+        for (let r = Math.max(0, row-1); r <= Math.min(gridRows-1, row+1); r++) {
+          for (let c = Math.max(0, col-1); c <= Math.min(gridColumns-1, col+1); c++) {
+            if (Math.sqrt(Math.pow(r-row, 2) + Math.pow(c-col, 2)) <= 1) {
+              grid[r][c] = true;
+            }
+          }
+        }
+      }
+    });
+    
+    for (let row = 0; row < gridRows; row++) {
+      for (let col = 0; col < gridColumns; col++) {
+        if (!grid[row][col]) {
+          const x = BUBBLE_PADDING + col * cellSize;
+          const y = TOP_PADDING + row * cellSize;
+          
+          let hasOverlap = false;
+          for (const ad of existingAds) {
+            const distance = calculateDistance(
+              x + size/2, 
+              y + size/2, 
+              ad.x + ad.size/2, 
+              ad.y + ad.size/2
+            );
+            
+            const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
+            
+            if (distance < minDistance) {
+              hasOverlap = true;
+              break;
+            }
+          }
+          
+          if (!hasOverlap) {
+            return { x, y };
+          }
+        }
+      }
+    }
+  }
   
   for (let i = 0; i < 1000; i++) {
-    // Calculate position along spiral
     const angle = goldenAngle * i;
-    // Use i^0.7 for a more balanced spacing as we move outward
-    const radius = Math.pow(i, 0.7) * (size * 0.5);
+    const radius = startRadius * scaleFactor * Math.sqrt(i + 1);
     
-    // Add randomness to avoid grid-like patterns
-    const randomAngle = angle + (Math.random() - 0.5) * 0.2;
-    const randomRadius = radius * (0.9 + Math.random() * 0.2);
+    const x = centerX + radius * Math.cos(angle) - size/2;
+    const y = centerY + radius * Math.sin(angle) - size/2;
     
-    // Calculate position
-    const x = centerX + randomRadius * Math.cos(randomAngle) - size/2;
-    const y = centerY + randomRadius * Math.sin(randomAngle) - size/2;
-    
-    // Check if position is within viewport
     if (x < BUBBLE_PADDING || x + size > windowWidth - BUBBLE_PADDING || 
         y < TOP_PADDING || y + size > windowHeight - BUBBLE_PADDING) {
       continue;
     }
     
-    // Check distance from existing ads
-    let isSafe = true;
+    let hasOverlap = false;
     for (const ad of existingAds) {
-      // Calculate distance between centers
       const distance = calculateDistance(
         x + size/2, 
         y + size/2, 
-        ad.x + ad.size/2, 
-        ad.y + ad.size/2
-      );
-      
-      // Calculate minimum safe distance (sum of radii * safety factor)
-      const safeDistance = ((size + ad.size) / 2) * 1.5;
-      
-      if (distance < safeDistance) {
-        isSafe = false;
-        break;
-      }
-    }
-    
-    if (isSafe) {
-      return { x, y };
-    }
-  }
-  
-  // Approach 2: Divide viewport into regions and find least crowded area
-  const regions = [];
-  const regionSize = size * 2; // Each region is 2x bubble size
-  
-  // Create regions covering the viewport
-  for (let y = TOP_PADDING; y < windowHeight - size; y += regionSize) {
-    for (let x = BUBBLE_PADDING; x < windowWidth - size - BUBBLE_PADDING; x += regionSize) {
-      regions.push({
-        x: x,
-        y: y,
-        crowdedness: 0
-      });
-    }
-  }
-  
-  // Calculate crowdedness for each region (lower is better)
-  for (const region of regions) {
-    for (const ad of existingAds) {
-      const distance = calculateDistance(
-        region.x + size/2,
-        region.y + size/2,
-        ad.x + ad.size/2,
-        ad.y + ad.size/2
-      );
-      
-      // Closer ads increase crowdedness more
-      if (distance < size * 5) {
-        region.crowdedness += (size * 5) / Math.max(1, distance);
-      }
-    }
-  }
-  
-  // Sort regions by crowdedness (least crowded first)
-  regions.sort((a, b) => a.crowdedness - b.crowdedness);
-  
-  // Try each region starting with least crowded
-  for (const region of regions) {
-    // Add randomness within the region
-    const randomX = region.x + (Math.random() * size * 0.5);
-    const randomY = region.y + (Math.random() * size * 0.5);
-    
-    // Verify position is still within viewport after randomization
-    if (randomX < BUBBLE_PADDING || randomX + size > windowWidth - BUBBLE_PADDING || 
-        randomY < TOP_PADDING || randomY + size > windowHeight - BUBBLE_PADDING) {
-      continue;
-    }
-    
-    // Check distance from existing ads
-    let isSafe = true;
-    for (const ad of existingAds) {
-      const distance = calculateDistance(
-        randomX + size/2,
-        randomY + size/2,
-        ad.x + ad.size/2,
-        ad.y + ad.size/2
-      );
-      
-      const safeDistance = ((size + ad.size) / 2) * 1.5;
-      
-      if (distance < safeDistance) {
-        isSafe = false;
-        break;
-      }
-    }
-    
-    if (isSafe) {
-      return { x: randomX, y: randomY };
-    }
-  }
-  
-  // Last resort: place in least crowded region even if not ideal
-  // But ensure minimum safe distance is at least the sum of radii
-  // to prevent actual overlap
-  
-  // Try each region one more time with less strict requirements
-  for (const region of regions) {
-    const randomX = region.x + (Math.random() * size * 0.5);
-    const randomY = region.y + (Math.random() * size * 0.5);
-    
-    if (randomX < BUBBLE_PADDING || randomX + size > windowWidth - BUBBLE_PADDING || 
-        randomY < TOP_PADDING || randomY + size > windowHeight - BUBBLE_PADDING) {
-      continue;
-    }
-    
-    // Check for direct overlaps only (not desired spacing)
-    let hasDirectOverlap = false;
-    for (const ad of existingAds) {
-      const distance = calculateDistance(
-        randomX + size/2,
-        randomY + size/2,
-        ad.x + ad.size/2,
-        ad.y + ad.size/2
-      );
-      
-      // Basic overlap check (sum of radii)
-      const minOverlapDistance = (size + ad.size) / 2;
-      
-      if (distance < minOverlapDistance) {
-        hasDirectOverlap = true;
-        break;
-      }
-    }
-    
-    if (!hasDirectOverlap) {
-      return { x: randomX, y: randomY };
-    }
-  }
-  
-  // Absolute last resort: random position with a strict no-overlap guarantee
-  for (let attempts = 0; attempts < 100; attempts++) {
-    const randomX = BUBBLE_PADDING + Math.random() * (windowWidth - size - 2 * BUBBLE_PADDING);
-    const randomY = TOP_PADDING + Math.random() * (windowHeight - size - BUBBLE_PADDING - TOP_PADDING);
-    
-    // Check for direct overlaps
-    let hasDirectOverlap = false;
-    for (const ad of existingAds) {
-      const distance = calculateDistance(
-        randomX + size/2,
-        randomY + size/2,
-        ad.x + ad.size/2,
-        ad.y + ad.size/2
-      );
-      
-      // Absolute minimum distance (sum of radii + 5px buffer)
-      const absoluteMinDistance = (size + ad.size) / 2 + 5;
-      
-      if (distance < absoluteMinDistance) {
-        hasDirectOverlap = true;
-        break;
-      }
-    }
-    
-    if (!hasDirectOverlap) {
-      return { x: randomX, y: randomY };
-    }
-  }
-  
-  // If all else fails, return center position
-  // (this should never happen with the multiple approaches above)
-  return {
-    x: Math.max(BUBBLE_PADDING, Math.min(windowWidth - size - BUBBLE_PADDING, centerX - size/2)),
-    y: Math.max(TOP_PADDING, Math.min(windowHeight - size - BUBBLE_PADDING, centerY - size/2))
-  };
-}
-
-function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, currentAdId) {
-  const minX = BUBBLE_PADDING;
-  const maxX = windowWidth - size - BUBBLE_PADDING;
-  const minY = TOP_PADDING;
-  const maxY = windowHeight - size - BUBBLE_PADDING;
-
-  // First ensure the bubble stays within viewport bounds
-  let newX = Math.min(Math.max(x, minX), maxX);
-  let newY = Math.min(Math.max(y, minY), maxY);
-
-  // Filter out the current ad from collision checks
-  const otherAds = existingAds.filter(ad => ad.id !== currentAdId);
-  
-  if (otherAds.length === 0) {
-    return { x: newX, y: newY };
-  }
-
-  // Increased spacing for better separation
-  const bubbleSpacing = 1.2;
-  
-  // Create a grid to track occupied positions
-  const cellSize = size * bubbleSpacing;
-  const gridColumns = Math.floor((windowWidth - 2 * BUBBLE_PADDING) / cellSize);
-  const gridRows = Math.floor((windowHeight - TOP_PADDING - BUBBLE_PADDING) / cellSize);
-  
-  const grid = Array(gridRows).fill().map(() => Array(gridColumns).fill(false));
-  
-  // Mark positions of existing ads
-  otherAds.forEach(ad => {
-    const col = Math.floor((ad.x - BUBBLE_PADDING) / cellSize);
-    const row = Math.floor((ad.y - TOP_PADDING) / cellSize);
-    
-    if (col >= 0 && col < gridColumns && row >= 0 && row < gridRows) {
-      // Mark the cell and surrounding cells as occupied
-      for (let r = Math.max(0, row-1); r <= Math.min(gridRows-1, row+1); r++) {
-        for (let c = Math.max(0, col-1); c <= Math.min(gridColumns-1, col+1); c++) {
-          grid[r][c] = true;
-        }
-      }
-    }
-  });
-  
-  // Find the grid cell for the target position
-  const targetCol = Math.floor((newX - BUBBLE_PADDING) / cellSize);
-  const targetRow = Math.floor((newY - TOP_PADDING) / cellSize);
-  
-  // Check if the target position is valid and free
-  if (targetCol >= 0 && targetCol < gridColumns && 
-      targetRow >= 0 && targetRow < gridRows && 
-      !grid[targetRow][targetCol]) {
-    
-    // Snap to grid cell center with padding offset
-    const snappedX = BUBBLE_PADDING + targetCol * cellSize;
-    const snappedY = TOP_PADDING + targetRow * cellSize;
-    
-    // Verify there's no actual overlap with existing ads
-    let hasOverlap = false;
-    for (const ad of otherAds) {
-      const distance = calculateDistance(
-        snappedX + size/2, 
-        snappedY + size/2, 
         ad.x + ad.size/2, 
         ad.y + ad.size/2
       );
@@ -396,59 +217,32 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
     }
     
     if (!hasOverlap) {
-      return { x: snappedX, y: snappedY };
+      return { x, y };
     }
   }
   
-  // If target position is occupied, search for nearest free cell in expanding squares
-  const maxSearchDistance = Math.max(gridRows, gridColumns);
+  return {
+    x: Math.max(BUBBLE_PADDING, Math.min(windowWidth - size - BUBBLE_PADDING, Math.random() * windowWidth)),
+    y: Math.max(TOP_PADDING, Math.min(windowHeight - size - BUBBLE_PADDING, Math.random() * (windowHeight - TOP_PADDING)))
+  };
+}
+
+function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, currentAdId) {
+  const minX = BUBBLE_PADDING;
+  const maxX = windowWidth - size - BUBBLE_PADDING;
+  const minY = TOP_PADDING;
+  const maxY = windowHeight - size - BUBBLE_PADDING;
+
+  let newX = Math.min(Math.max(x, minX), maxX);
+  let newY = Math.min(Math.max(y, minY), maxY);
+
+  const otherAds = existingAds.filter(ad => ad.id !== currentAdId);
   
-  // Try to find the nearest free cell
-  for (let dist = 1; dist <= maxSearchDistance; dist++) {
-    // Check in a square pattern around the target position
-    for (let offsetRow = -dist; offsetRow <= dist; offsetRow++) {
-      for (let offsetCol = -dist; offsetCol <= dist; offsetCol++) {
-        // Only check cells on the perimeter of the square
-        if (Math.abs(offsetRow) === dist || Math.abs(offsetCol) === dist) {
-          const searchRow = targetRow + offsetRow;
-          const searchCol = targetCol + offsetCol;
-          
-          if (searchRow >= 0 && searchRow < gridRows && 
-              searchCol >= 0 && searchCol < gridColumns && 
-              !grid[searchRow][searchCol]) {
-            
-            const candidateX = BUBBLE_PADDING + searchCol * cellSize;
-            const candidateY = TOP_PADDING + searchRow * cellSize;
-            
-            // Verify there's no actual overlap with existing ads
-            let hasOverlap = false;
-            for (const ad of otherAds) {
-              const distance = calculateDistance(
-                candidateX + size/2, 
-                candidateY + size/2, 
-                ad.x + ad.size/2, 
-                ad.y + ad.size/2
-              );
-              
-              const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
-              
-              if (distance < minDistance) {
-                hasOverlap = true;
-                break;
-              }
-            }
-            
-            if (!hasOverlap) {
-              return { x: candidateX, y: candidateY };
-            }
-          }
-        }
-      }
-    }
+  if (otherAds.length === 0) {
+    return { x: newX, y: newY };
   }
   
-  // If no free grid cell is found, fall back to original position resolution
-  // But we'll do more iterations to resolve overlaps
+  const bubbleSpacing = 1.02;
   let iterations = 0;
   const maxIterations = 25;
   
@@ -499,23 +293,6 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
     newY = Math.min(Math.max(newY, minY), maxY);
     
     iterations++;
-  }
-  
-  // If we still have overlap after iterations, try calculateSafePosition as a last resort
-  for (const ad of otherAds) {
-    const distance = calculateDistance(
-      newX + size/2, 
-      newY + size/2, 
-      ad.x + ad.size/2, 
-      ad.y + ad.size/2
-    );
-    
-    const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
-    
-    if (distance < minDistance) {
-      // Use calculateSafePosition with the bubble we're currently dragging excluded
-      return calculateSafePosition(size, windowWidth, windowHeight, otherAds);
-    }
   }
 
   return { x: newX, y: newY };
