@@ -37,6 +37,16 @@ const BannerDisplay = () => {
     return () => clearInterval(rotationInterval);
   }, [banners.length]);
 
+  // Preload the next banner to prevent blurry transitions
+  useEffect(() => {
+    if (banners.length > 1) {
+      const nextIndex = (currentIndex + 1) % banners.length;
+      const nextBanner = banners[nextIndex];
+      const img = new Image();
+      img.src = nextBanner.gif;
+    }
+  }, [currentIndex, banners]);
+
   if (!banners.length) {
     return null;
   }
@@ -55,7 +65,14 @@ const BannerDisplay = () => {
           src={currentBanner.gif}
           alt={currentBanner.title}
           className="w-full h-[60px] sm:h-[80px] md:h-[200px] object-contain"
-          loading="lazy"
+          width="1280"
+          height="200"
+          loading="eager"
+          onLoad={(e) => {
+            if (e.target.src.toLowerCase().endsWith('.gif')) {
+              e.target.setAttribute('loop', 'infinite');
+            }
+          }}
         />
       </a>
     </div>
