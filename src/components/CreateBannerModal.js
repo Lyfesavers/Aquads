@@ -154,7 +154,7 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
 
           <div className="mb-4">
             <label className="block text-sm font-medium mb-2">
-              Banner GIF URL
+              Banner GIF URL (W1280xH200px)
             </label>
             <input
               type="text"
