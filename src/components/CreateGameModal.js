@@ -223,7 +223,7 @@ const CreateGameModal = ({ onClose, onCreateGame }) => {
             
             <div className="col-span-1">
               <label className="block text-gray-300 mb-1">
-                {formData.bannerType === 'image' ? 'Banner Image URL *' : 'Video/YouTube URL *'}
+                {formData.bannerType === 'image' ? 'Banner Image URL (W640xH360px) *' : 'Video/YouTube URL *'}
               </label>
               <input
                 type="url"
@@ -234,7 +234,7 @@ const CreateGameModal = ({ onClose, onCreateGame }) => {
                   errors.bannerUrl ? 'border-red-500' : 'border-gray-600'
                 } rounded py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 placeholder={formData.bannerType === 'image' 
-                  ? "Enter URL for game banner image" 
+                  ? "Enter URL for game banner image (W640xH360px recommended)" 
                   : "Enter YouTube or video URL"}
               />
               {errors.bannerUrl && (

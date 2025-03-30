@@ -216,14 +216,16 @@ const EditGameModal = ({ game, onClose, onUpdateGame }) => {
             
             {/* Banner URL */}
             <div>
-              <label className="block mb-1">Banner URL*</label>
+              <label className="block mb-1">Banner URL {formData.bannerType === 'image' ? '(W640xH360px)' : ''}*</label>
               <input
                 type="text"
                 name="bannerUrl"
                 value={formData.bannerUrl}
                 onChange={handleChange}
                 className={`w-full bg-gray-700 rounded p-2 border ${errors.bannerUrl ? 'border-red-500' : 'border-gray-600'}`}
-                placeholder={`Enter ${formData.bannerType} URL`}
+                placeholder={formData.bannerType === 'image' 
+                  ? "Enter image URL (W640xH360px recommended)" 
+                  : "Enter video/YouTube URL"}
               />
               {errors.bannerUrl && <p className="text-red-500 text-sm mt-1">{errors.bannerUrl}</p>}
             </div>
