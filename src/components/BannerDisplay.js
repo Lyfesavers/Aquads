@@ -54,7 +54,7 @@ const BannerDisplay = () => {
   const currentBanner = banners[currentIndex];
 
   return (
-    <div className="banner-container w-full">
+    <div className="banner-container w-full relative z-10">
       <a 
         href={currentBanner.url} 
         target="_blank" 
