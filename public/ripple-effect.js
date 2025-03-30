@@ -575,13 +575,13 @@
     const bannerImages = document.querySelectorAll('.banner-container img, img.banner, [class*="banner"] img, svg, [class*="banner"] svg, svg path, svg rect, svg a, svg text, svg g');
     bannerImages.forEach(img => {
       img.style.position = 'relative';
-      img.style.zIndex = '50'; // Lower z-index value to prevent overlapping modals
+      img.style.zIndex = '5'; // Much lower z-index value
       
       // Ensure parent links are also properly z-indexed
       const parentLink = img.closest('a');
       if (parentLink) {
         parentLink.style.position = 'relative';
-        parentLink.style.zIndex = '50'; // Lower z-index value to prevent overlapping modals
+        parentLink.style.zIndex = '5'; // Much lower z-index value
       }
     });
 
@@ -590,7 +590,7 @@
     svgElements.forEach(svg => {
       // Make sure the SVG itself is clickable
       svg.style.position = 'relative';
-      svg.style.zIndex = '50'; // Lower z-index value to prevent overlapping modals
+      svg.style.zIndex = '5'; // Much lower z-index value
       
       // Find all clickable elements inside the SVG
       const clickableElements = svg.querySelectorAll('[onclick], [href], a, g[id*="link"]');
@@ -615,7 +615,7 @@
         linkAreas.forEach(link => {
           link.style.pointerEvents = 'auto';
           link.style.cursor = 'pointer';
-          link.style.zIndex = '50'; // Lower z-index to prevent overlapping modals
+          link.style.zIndex = '5'; // Lower z-index value
           
           // Add debug outline to verify link areas (will be invisible in production)
           link.setAttribute('stroke', 'rgba(0,0,0,0)');

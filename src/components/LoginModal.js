@@ -30,7 +30,7 @@ const LoginModal = ({ onClose, onLogin, onCreateAccount }) => {
 
   return (
     <>
-      <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[100]">
+      <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[999999]">
         <div className="bg-gray-800 p-4 sm:p-8 rounded-lg w-full max-w-md relative mx-2 sm:mx-auto">
           <button
             onClick={onClose}

@@ -989,7 +989,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
               {/* Reject Modal */}
               {showRejectModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[999999]">
                   <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
                     <h3 className="text-xl font-semibold text-white mb-4">Reject Bump Request</h3>
                     <textarea
