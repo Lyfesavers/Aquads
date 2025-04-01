@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaGamepad, FaThumbsUp, FaTrophy, FaExternalLinkAlt, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaGamepad, FaThumbsUp, FaTrophy, FaExternalLinkAlt, FaEdit, FaTrash, FaVolumeUp, FaVolumeMute } from 'react-icons/fa';
 import { voteForGame, checkGameVoteStatus } from '../services/api';
 
 const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEdit, onDelete }) => {
@@ -8,6 +8,7 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
   const [loading, setLoading] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isMuted, setIsMuted] = useState(true); // Default to muted
   
   useEffect(() => {
     if (currentUser) {
@@ -71,6 +72,10 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
     setShowDeleteConfirm(false);
   };
   
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
+  };
+  
   const truncateDescription = (text, length = 150) => {
     if (text.length <= length) return text;
     return text.substring(0, length) + '...';
@@ -92,7 +97,8 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
           ? url.split('youtu.be/')[1].split('?')[0]
           : '';
           
-      return `https://www.youtube.com/embed/${videoId}`;
+      // Add parameters for controls, mute status, and modest branding
+      return `https://www.youtube.com/embed/${videoId}?controls=1&mute=${isMuted ? 1 : 0}&modestbranding=1`;
     }
     return url;
   };
@@ -107,19 +113,35 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
     currentUser.role === 'admin'
   );
   
+  // Determine if the banner is a YouTube video specifically
+  const isYouTubeVideo = 
+    (game.bannerType === 'video' && (game.bannerUrl.includes('youtube.com') || game.bannerUrl.includes('youtu.be')));
+  
   return (
     <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg border border-gray-700 hover:border-blue-500 transition-all duration-300 flex flex-col h-full">
       {/* Banner (video or image) */}
       <div className="relative w-full h-48 bg-gray-900 overflow-hidden">
         {isVideo ? (
-          <iframe 
-            src={formatVideoUrl(game.bannerUrl)}
-            title={game.title}
-            className="w-full h-full"
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
+          <>
+            <iframe 
+              src={formatVideoUrl(game.bannerUrl)}
+              title={game.title}
+              className="w-full h-full"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+            {/* Volume control button for YouTube videos */}
+            {isYouTubeVideo && (
+              <button 
+                onClick={toggleMute}
+                className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80 transition-opacity z-10"
+                title={isMuted ? "Unmute" : "Mute"}
+              >
+                {isMuted ? <FaVolumeMute /> : <FaVolumeUp />}
+              </button>
+            )}
+          </>
         ) : (
           <img 
             src={game.bannerUrl} 
