@@ -182,11 +182,11 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
         )}
         
         {/* Category and blockchain labels with improved styling */}
-        <div className="absolute top-2 left-2 bg-blue-600/90 text-white text-xs px-2 py-1 rounded-full z-[9999999] pointer-events-none shadow-lg backdrop-blur-sm" style={{position: 'relative'}}>
+        <div className="absolute top-2 left-2 bg-blue-600/80 text-white text-xs px-3 py-1.5 rounded-full z-[9999999] pointer-events-none shadow-lg backdrop-blur-sm border border-blue-400/30" style={{position: 'relative'}}>
           {game.category}
         </div>
         
-        <div className="absolute top-2 right-2 bg-purple-600/90 text-white text-xs px-2 py-1 rounded-full z-[9999999] pointer-events-none shadow-lg backdrop-blur-sm" style={{position: 'relative'}}>
+        <div className="absolute top-2 right-2 bg-purple-600/80 text-white text-xs px-3 py-1.5 rounded-full z-[9999999] pointer-events-none shadow-lg backdrop-blur-sm border border-purple-400/30" style={{position: 'relative'}}>
           {game.blockchain}
         </div>
       </div>
