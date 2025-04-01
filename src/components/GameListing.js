@@ -180,19 +180,21 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
             }}
           />
         )}
-        
-        {/* Category and blockchain labels with improved styling */}
-        <div className="absolute top-2 left-2 bg-blue-600/80 text-white text-xs px-3 py-1.5 rounded-full z-[9999999] pointer-events-none shadow-lg backdrop-blur-sm border border-blue-400/30" style={{position: 'relative'}}>
+      </div>
+      
+      {/* Category and blockchain tags - moved below the banner */}
+      <div className="flex justify-between items-center px-4 pt-3 pb-1">
+        <div className="bg-blue-600/80 text-white text-xs px-2.5 py-1 rounded-full shadow-sm border border-blue-400/30 backdrop-blur-sm">
           {game.category}
         </div>
         
-        <div className="absolute top-2 right-2 bg-purple-600/80 text-white text-xs px-3 py-1.5 rounded-full z-[9999999] pointer-events-none shadow-lg backdrop-blur-sm border border-purple-400/30" style={{position: 'relative'}}>
+        <div className="bg-purple-600/80 text-white text-xs px-2.5 py-1 rounded-full shadow-sm border border-purple-400/30 backdrop-blur-sm">
           {game.blockchain}
         </div>
       </div>
       
       {/* Content */}
-      <div className="p-4 flex-grow flex flex-col">
+      <div className="px-4 pt-1 pb-4 flex-grow flex flex-col">
         <div className="flex justify-between items-start mb-2">
           <h3 className="text-xl font-bold text-white">{game.title}</h3>
           
