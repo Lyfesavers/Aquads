@@ -91,13 +91,16 @@ router.post('/', auth, async (req, res) => {
 // Update a game listing
 router.patch('/:id', auth, async (req, res) => {
   try {
-    const game = await Game.findOne({
-      _id: req.params.id,
-      owner: req.user.userId
-    });
+    // First find the game by ID
+    const game = await Game.findById(req.params.id);
     
     if (!game) {
-      return res.status(404).json({ error: 'Game not found or you do not have permission to edit' });
+      return res.status(404).json({ error: 'Game not found' });
+    }
+    
+    // Check if user is the owner or an admin
+    if (game.owner.toString() !== req.user.userId && !req.user.isAdmin) {
+      return res.status(403).json({ error: 'You do not have permission to edit this game' });
     }
     
     // Update fields
@@ -116,13 +119,16 @@ router.patch('/:id', auth, async (req, res) => {
 // Delete a game listing
 router.delete('/:id', auth, async (req, res) => {
   try {
-    const game = await Game.findOne({
-      _id: req.params.id,
-      owner: req.user.userId
-    });
+    // First find the game by ID
+    const game = await Game.findById(req.params.id);
     
     if (!game) {
-      return res.status(404).json({ error: 'Game not found or you do not have permission to delete' });
+      return res.status(404).json({ error: 'Game not found' });
+    }
+    
+    // Check if user is the owner or an admin
+    if (game.owner.toString() !== req.user.userId && !req.user.isAdmin) {
+      return res.status(403).json({ error: 'You do not have permission to delete this game' });
     }
     
     await Game.findByIdAndDelete(req.params.id);
