@@ -128,7 +128,7 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
   return (
     <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg border border-gray-700 hover:border-blue-500 transition-all duration-300 flex flex-col h-full">
       {/* Banner (video or image) */}
-      <div className="relative w-full h-48 bg-gray-900 overflow-hidden">
+      <div className="relative w-full h-48 bg-gray-900 overflow-visible">
         {isVideo ? (
           <>
             {isUnsupportedExternalUrl ? (
@@ -181,13 +181,12 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
           />
         )}
         
-        {/* Category label */}
-        <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full z-[200]">
+        {/* Category and blockchain labels with improved styling */}
+        <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full z-[900] pointer-events-none shadow-md">
           {game.category}
         </div>
         
-        {/* Blockchain label */}
-        <div className="absolute top-2 right-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full z-[200]">
+        <div className="absolute top-2 right-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full z-[900] pointer-events-none shadow-md">
           {game.blockchain}
         </div>
       </div>
