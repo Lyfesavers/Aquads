@@ -128,7 +128,7 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
   return (
     <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg border border-gray-700 hover:border-blue-500 transition-all duration-300 flex flex-col h-full">
       {/* Banner (video or image) */}
-      <div className="relative w-full h-48 bg-gray-900 overflow-visible">
+      <div className="relative w-full h-48 bg-gray-900 overflow-hidden">
         {isVideo ? (
           <>
             {isUnsupportedExternalUrl ? (
