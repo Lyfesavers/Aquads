@@ -253,7 +253,7 @@ const EditServiceModal = ({ service, onClose, onEditService, categories }) => {
                   {/* Service Image */}
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Service Image URL (Use imgur.com)
+                      Service Image URL (H500px x W300px)
                     </label>
                     <input
                       type="url"

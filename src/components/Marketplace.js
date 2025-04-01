@@ -987,7 +987,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                           <ServiceBadgeComponent badge={service.badge} />
                           {service.isPremium && <PremiumBadge />}
                           {currentUser && service.seller?.username === currentUser.username && (
-                            <div className="absolute top-2 right-2 flex gap-2 z-10">
+                            <div className="absolute top-2 right-2 flex gap-2 z-[200000]">
                               {!service.isPremium && (
                                 <button
                                   onClick={() => handlePremiumUpgrade(service._id)}
