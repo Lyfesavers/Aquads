@@ -92,13 +92,12 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         if (Array.isArray(data)) {
           setGames(data);
         } else {
-          console.warn('Games API returned non-array data:', data);
+          // Silent error handling - no console logs
           setGames([]);
           setError('Game Hub is currently under development. Games will be available soon!');
         }
       } catch (error) {
-        console.log('Game Hub API not ready yet:', error.message);
-        // Provide a clean user interface without error messages in console
+        // Silent error handling - no console logs
         setGames([]);
         setError('Game Hub is coming soon! Our team is currently working on bringing exciting blockchain games to Aquads.');
       }
@@ -114,12 +113,11 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         if (Array.isArray(categories)) {
           setPopularCategories(categories);
         } else {
-          console.log('Categories API returned non-array data');
+          // Silent error handling - no console logs
           setDefaultCategories();
         }
       } catch (error) {
-        console.log('Game categories API not ready yet');
-        // Set default categories without error messages in console
+        // Silent error handling - no console logs
         setDefaultCategories();
       }
     } catch (error) {
@@ -190,7 +188,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       setGames(prevGames => prevGames.filter(game => game._id !== gameId));
       showNotification('Game deleted successfully!', 'success');
     } catch (error) {
-      console.error('Error deleting game:', error);
+      // Silent error handling - no console logs
       showNotification('Failed to delete game. Please try again.', 'error');
     }
   };

@@ -23,7 +23,7 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
       const { voted } = await checkGameVoteStatus(game._id);
       setVoted(voted);
     } catch (error) {
-      console.error('Error checking vote status:', error);
+      // Silent error handling to prevent console logging
     }
   };
   
@@ -40,7 +40,7 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
       setVoteCount(response.votes);
       showNotification(response.voted ? 'Vote added!' : 'Vote removed!');
     } catch (error) {
-      console.error('Error voting for game:', error);
+      // Silent error handling
       showNotification('Failed to vote. Please try again.', 'error');
     } finally {
       setLoading(false);
