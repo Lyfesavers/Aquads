@@ -9,7 +9,6 @@ const auth = (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log('Decoded token:', decoded);  // Debug log
 
     req.user = {
       userId: decoded._id || decoded.userId,  // Handle both formats
@@ -17,7 +16,6 @@ const auth = (req, res, next) => {
       isAdmin: Boolean(decoded.isAdmin)  // Ensure boolean conversion
     };
 
-    console.log('User object set:', req.user);  // Debug log
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);

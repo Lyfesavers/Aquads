@@ -13,14 +13,10 @@ function init(server) {
   
   // Add socket event handlers
   io.on('connection', (socket) => {
-    console.log('Client connected');
-    
     socket.on('error', (error) => {
-      console.error('Socket error:', error);
     });
 
     socket.on('disconnect', (reason) => {
-      console.log(`Client disconnected: ${reason}`);
     });
 
     // Add back real-time ad updates
@@ -51,11 +47,9 @@ function getIO() {
 // Utility function to emit ad updates
 function emitAdUpdate(type, ad) {
   if (!io) {
-    console.warn('Socket.io not initialized, cannot emit ad update');
     return;
   }
   
-  console.log(`Emitting adsUpdated event: ${type}`, ad.id);
   io.emit('adsUpdated', { type, ad });
 }
 
