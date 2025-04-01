@@ -111,12 +111,31 @@ const EditGameModal = ({ game, onClose, onUpdateGame }) => {
   const validateForm = () => {
     const newErrors = {};
     
-    if (!formData.title.trim()) newErrors.title = 'Title is required';
-    if (!formData.description.trim()) newErrors.description = 'Description is required';
-    if (!formData.bannerUrl.trim()) newErrors.bannerUrl = 'Banner URL is required';
-    if (formData.bannerUrl.trim() && !isValidUrl(formData.bannerUrl)) newErrors.bannerUrl = 'Invalid URL format';
-    if (!formData.gameUrl.trim()) newErrors.gameUrl = 'Game URL is required';
-    if (formData.gameUrl.trim() && !isValidUrl(formData.gameUrl)) newErrors.gameUrl = 'Invalid URL format';
+    if (!formData.title.trim()) {
+      newErrors.title = 'Title is required';
+    }
+    
+    if (!formData.description.trim()) {
+      newErrors.description = 'Description is required';
+    }
+    
+    if (!formData.bannerUrl.trim()) {
+      newErrors.bannerUrl = 'Banner URL is required';
+    } else if (!isValidUrl(formData.bannerUrl)) {
+      newErrors.bannerUrl = 'Please enter a valid URL';
+    } else if (formData.bannerType === 'video' && 
+              !(formData.bannerUrl.includes('youtube.com/watch?v=') || 
+                formData.bannerUrl.includes('youtube.com/embed/') ||
+                formData.bannerUrl.includes('youtu.be/'))) {
+      newErrors.bannerUrl = 'Only YouTube videos are supported. Please provide a YouTube link.';
+    }
+    
+    if (!formData.gameUrl.trim()) {
+      newErrors.gameUrl = 'Game URL is required';
+    } else if (!isValidUrl(formData.gameUrl)) {
+      newErrors.gameUrl = 'Please enter a valid URL';
+    }
+    
     if (!formData.projectName.trim()) newErrors.projectName = 'Project name is required';
     if (!formData.category) newErrors.category = 'Category is required';
     if (!formData.blockchain) newErrors.blockchain = 'Blockchain is required';
@@ -215,19 +234,28 @@ const EditGameModal = ({ game, onClose, onUpdateGame }) => {
             </div>
             
             {/* Banner URL */}
-            <div>
-              <label className="block mb-1">Banner URL {formData.bannerType === 'image' ? '(W640xH360px)' : ''}*</label>
+            <div className="col-span-1">
+              <label className="block text-gray-300 mb-1">
+                {formData.bannerType === 'image' ? 'Banner Image URL *' : 'Video/YouTube URL *'}
+              </label>
               <input
-                type="text"
+                type="url"
                 name="bannerUrl"
                 value={formData.bannerUrl}
                 onChange={handleChange}
-                className={`w-full bg-gray-700 rounded p-2 border ${errors.bannerUrl ? 'border-red-500' : 'border-gray-600'}`}
+                className={`w-full bg-gray-700 text-white border ${
+                  errors.bannerUrl ? 'border-red-500' : 'border-gray-600'
+                } rounded py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 placeholder={formData.bannerType === 'image' 
-                  ? "Enter image URL (W640xH360px recommended)" 
-                  : "Enter video/YouTube URL"}
+                  ? "Enter URL for game banner image" 
+                  : "Enter YouTube video URL"}
               />
-              {errors.bannerUrl && <p className="text-red-500 text-sm mt-1">{errors.bannerUrl}</p>}
+              {formData.bannerType === 'video' && (
+                <p className="text-gray-500 text-xs mt-1">Only YouTube videos are supported (youtube.com or youtu.be links)</p>
+              )}
+              {errors.bannerUrl && (
+                <p className="text-red-500 text-sm mt-1">{errors.bannerUrl}</p>
+              )}
             </div>
             
             {/* Game URL */}

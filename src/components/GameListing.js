@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaGamepad, FaThumbsUp, FaTrophy, FaExternalLinkAlt, FaEdit, FaTrash, FaVolumeUp, FaVolumeMute } from 'react-icons/fa';
+import { FaGamepad, FaThumbsUp, FaTrophy, FaExternalLinkAlt, FaEdit, FaTrash, FaVolumeUp, FaVolumeMute, FaExclamationTriangle } from 'react-icons/fa';
 import { voteForGame, checkGameVoteStatus } from '../services/api';
 
 const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEdit, onDelete }) => {
@@ -88,9 +88,21 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
     game.bannerUrl.includes('youtube.com') || 
     game.bannerUrl.includes('youtu.be');
   
+  // Determine if video is from a supported platform
+  const isYouTubeVideo = 
+    game.bannerUrl.includes('youtube.com/watch?v=') || 
+    game.bannerUrl.includes('youtube.com/embed/') ||
+    game.bannerUrl.includes('youtu.be/');
+    
+  // Check if it's an unsupported external URL (not YouTube)
+  const isUnsupportedExternalUrl = isVideo && !isYouTubeVideo && (
+    game.bannerUrl.startsWith('http://') || 
+    game.bannerUrl.startsWith('https://')
+  );
+  
   // Format YouTube URLs for embedding
   const formatVideoUrl = (url) => {
-    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+    if (isYouTubeVideo) {
       const videoId = url.includes('youtube.com/watch?v=') 
         ? url.split('v=')[1].split('&')[0]
         : url.includes('youtu.be/') 
@@ -113,24 +125,39 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
     currentUser.role === 'admin'
   );
   
-  // Determine if the banner is a YouTube video specifically
-  const isYouTubeVideo = 
-    (game.bannerType === 'video' && (game.bannerUrl.includes('youtube.com') || game.bannerUrl.includes('youtu.be')));
-  
   return (
     <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg border border-gray-700 hover:border-blue-500 transition-all duration-300 flex flex-col h-full">
       {/* Banner (video or image) */}
       <div className="relative w-full h-48 bg-gray-900 overflow-hidden">
         {isVideo ? (
           <>
-            <iframe 
-              src={formatVideoUrl(game.bannerUrl)}
-              title={game.title}
-              className="w-full h-full"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
+            {isUnsupportedExternalUrl ? (
+              <div className="w-full h-full flex flex-col items-center justify-center text-center p-4 bg-gray-800">
+                <FaExclamationTriangle className="text-yellow-500 text-3xl mb-2" />
+                <p className="text-gray-300 text-sm">Non-YouTube content cannot be embedded</p>
+                <button
+                  onClick={handlePlay}
+                  className="mt-3 px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                >
+                  Open Game Directly
+                </button>
+                {isOwnerOrAdmin && (
+                  <p className="text-red-400 text-xs mt-2">
+                    Admin: Please edit this entry and use YouTube for video previews
+                  </p>
+                )}
+              </div>
+            ) : (
+              <iframe 
+                src={formatVideoUrl(game.bannerUrl)}
+                title={game.title}
+                className="w-full h-full"
+                frameBorder="0"
+                allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                sandbox={isYouTubeVideo ? "allow-scripts allow-same-origin allow-presentation" : ""}
+              />
+            )}
             {/* Volume control button for YouTube videos */}
             {isYouTubeVideo && (
               <button 

@@ -84,6 +84,11 @@ const CreateGameModal = ({ onClose, onCreateGame }) => {
       newErrors.bannerUrl = 'Banner URL is required';
     } else if (!isValidUrl(formData.bannerUrl)) {
       newErrors.bannerUrl = 'Please enter a valid URL';
+    } else if (formData.bannerType === 'video' && 
+              !(formData.bannerUrl.includes('youtube.com/watch?v=') || 
+                formData.bannerUrl.includes('youtube.com/embed/') ||
+                formData.bannerUrl.includes('youtu.be/'))) {
+      newErrors.bannerUrl = 'Only YouTube videos are supported. Please provide a YouTube link.';
     }
     
     if (!formData.gameUrl.trim()) {
@@ -235,8 +240,11 @@ const CreateGameModal = ({ onClose, onCreateGame }) => {
                 } rounded py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 placeholder={formData.bannerType === 'image' 
                   ? "Enter URL for game banner image (W640xH360px recommended)" 
-                  : "Enter YouTube or video URL"}
+                  : "Enter YouTube video URL"}
               />
+              {formData.bannerType === 'video' && (
+                <p className="text-gray-500 text-xs mt-1">Only YouTube videos are supported (youtube.com or youtu.be links)</p>
+              )}
               {errors.bannerUrl && (
                 <p className="text-red-500 text-sm mt-1">{errors.bannerUrl}</p>
               )}
