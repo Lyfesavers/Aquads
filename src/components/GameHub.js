@@ -219,7 +219,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   return (
     <div className="h-screen overflow-y-auto bg-gray-900 text-white">
       {/* Navigation - Make it sticky */}
-      <nav className="bg-gray-800 shadow-md py-3 sticky top-0 z-50">
+      <nav className="bg-gray-800 shadow-md py-3 sticky top-0 z-[200000]">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center">
