@@ -1498,7 +1498,7 @@ function App() {
               {/* Main content wrapper */}
               <div className="relative z-10">
                 {/* Navigation and banner stay fixed */}
-                <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm shadow-lg shadow-blue-500/20 z-50">
+                <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm shadow-lg shadow-blue-500/20 z-[200000]">
                   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
                       <div className="flex items-center">
@@ -1680,7 +1680,7 @@ function App() {
                   </div>
                 </nav>
 
-                <div className="fixed top-16 left-0 right-0 z-[4] token-banner-container">
+                <div className="fixed top-16 left-0 right-0 z-[3] token-banner-container">
                   <TokenBanner />
                 </div>
 
