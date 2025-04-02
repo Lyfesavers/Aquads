@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaGamepad, FaThumbsUp, FaTrophy, FaExternalLinkAlt, FaEdit, FaTrash, FaVolumeUp, FaVolumeMute, FaExclamationTriangle } from 'react-icons/fa';
+import { FaGamepad, FaThumbsUp, FaTrophy, FaExternalLinkAlt, FaEdit, FaTrash, FaExclamationTriangle } from 'react-icons/fa';
 import { voteForGame, checkGameVoteStatus } from '../services/api';
 
 const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEdit, onDelete }) => {
@@ -8,7 +8,6 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
   const [loading, setLoading] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isMuted, setIsMuted] = useState(true); // Default to muted
   
   useEffect(() => {
     if (currentUser) {
@@ -72,10 +71,6 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
     setShowDeleteConfirm(false);
   };
   
-  const toggleMute = () => {
-    setIsMuted(!isMuted);
-  };
-  
   const truncateDescription = (text, length = 150) => {
     if (text.length <= length) return text;
     return text.substring(0, length) + '...';
@@ -109,8 +104,8 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
           ? url.split('youtu.be/')[1].split('?')[0]
           : '';
           
-      // Add parameters for controls, mute status, and modest branding
-      return `https://www.youtube.com/embed/${videoId}?controls=1&mute=${isMuted ? 1 : 0}&modestbranding=1`;
+      // Add parameters for controls and modest branding (mute removed)
+      return `https://www.youtube.com/embed/${videoId}?controls=1&mute=1&modestbranding=1`;
     }
     return url;
   };
@@ -157,16 +152,6 @@ const GameListing = ({ game, currentUser, showLoginModal, showNotification, onEd
                 allowFullScreen
                 sandbox={isYouTubeVideo ? "allow-scripts allow-same-origin allow-presentation" : ""}
               />
-            )}
-            {/* Volume control button for YouTube videos */}
-            {isYouTubeVideo && (
-              <button 
-                onClick={toggleMute}
-                className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80 transition-opacity z-10"
-                title={isMuted ? "Unmute" : "Mute"}
-              >
-                {isMuted ? <FaVolumeMute /> : <FaVolumeUp />}
-              </button>
             )}
           </>
         ) : (
