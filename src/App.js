@@ -1590,7 +1590,7 @@ function App() {
                     </div>
 
                     {/* Mobile menu */}
-                    <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden py-2`}>
+                    <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden py-2 z-[200000] relative`}>
                       <div className="flex flex-col space-y-2">
                         <Link
                           to="/marketplace"
