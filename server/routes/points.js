@@ -256,7 +256,7 @@ const awardAffiliateReviewPoints = async (userId) => {
 // Helper function to award points for game votes
 const awardGameVotePoints = async (userId, gameId) => {
   try {
-    console.log('Awarding 200 points for game vote, userId:', userId, 'gameId:', gameId);
+    console.log('Checking for game vote points, userId:', userId, 'gameId:', gameId);
     
     // Check if user has already received points for this game
     const user = await User.findById(userId);
@@ -271,12 +271,24 @@ const awardGameVotePoints = async (userId, gameId) => {
               entry.reason === 'Voted for a game'
     );
     
-    if (alreadyReceivedPoints) {
+    // Check if points were previously revoked for this game (user is re-voting)
+    const previouslyRevokedPoints = user.pointsHistory.some(
+      entry => entry.gameId && entry.gameId.toString() === gameId.toString() && 
+              entry.reason === 'Removed vote for a game'
+    );
+    
+    // If they already have active points and haven't had them revoked, don't give points again
+    if (alreadyReceivedPoints && !previouslyRevokedPoints) {
       console.log('User already received points for voting on this game');
       return user; // Don't award points again
     }
     
     // Update user points and add to history
+    // If they're re-voting, we're restoring previously revoked points
+    const reason = previouslyRevokedPoints 
+      ? 'Restored points for re-voting on a game' 
+      : 'Voted for a game';
+      
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       {
@@ -284,7 +296,7 @@ const awardGameVotePoints = async (userId, gameId) => {
         $push: {
           pointsHistory: {
             amount: 200,
-            reason: 'Voted for a game',
+            reason: reason,
             gameId: gameId,
             createdAt: new Date()
           }
@@ -293,7 +305,7 @@ const awardGameVotePoints = async (userId, gameId) => {
       { new: true }
     );
     
-    console.log('Successfully awarded 200 points for game vote');
+    console.log(`Successfully awarded 200 points for ${previouslyRevokedPoints ? 're-voting on' : 'voting for'} game`);
     return updatedUser;
   } catch (error) {
     console.error('Error awarding game vote points:', error);

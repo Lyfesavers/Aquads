@@ -791,7 +791,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                     <div className="text-sm text-gray-400 mt-4">
                       <h4 className="text-lg font-medium text-white mb-2">Points Earning Rules</h4>
                       <p>• Earn 100 points for each new affiliate</p>
-                      <p>• Earn 200 points when your affiliates list a service or ad</p>
+                      <p>• Earn 200 points for each game vote in the gamehub</p>
+                      <p>• Earn 200 points when your affiliates list a freelancer service or bubble ad</p>
                       <p>• Earn 500 points when your affiliates write a review</p>
                       <p>• Redeem 10,000 points for a $100 gift card(Canadian Dollars)</p>
                     </div>
