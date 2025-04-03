@@ -258,6 +258,24 @@ const awardGameVotePoints = async (userId, gameId) => {
   try {
     console.log('Awarding 200 points for game vote, userId:', userId, 'gameId:', gameId);
     
+    // Check if user has already received points for this game
+    const user = await User.findById(userId);
+    if (!user) {
+      console.error('User not found when awarding game vote points');
+      return null;
+    }
+    
+    // Check if this game is already in the user's pointsHistory for a vote
+    const alreadyReceivedPoints = user.pointsHistory.some(
+      entry => entry.gameId && entry.gameId.toString() === gameId.toString() && 
+              entry.reason === 'Voted for a game'
+    );
+    
+    if (alreadyReceivedPoints) {
+      console.log('User already received points for voting on this game');
+      return user; // Don't award points again
+    }
+    
     // Update user points and add to history
     const updatedUser = await User.findByIdAndUpdate(
       userId,
@@ -275,15 +293,58 @@ const awardGameVotePoints = async (userId, gameId) => {
       { new: true }
     );
     
-    if (!updatedUser) {
-      console.error('User not found when awarding game vote points');
-      return null;
-    }
-    
     console.log('Successfully awarded 200 points for game vote');
     return updatedUser;
   } catch (error) {
     console.error('Error awarding game vote points:', error);
+    return null;
+  }
+};
+
+// Helper function to revoke points when a vote is removed
+const revokeGameVotePoints = async (userId, gameId) => {
+  try {
+    console.log('Revoking 200 points for removed game vote, userId:', userId, 'gameId:', gameId);
+    
+    // Find the user
+    const user = await User.findById(userId);
+    if (!user) {
+      console.error('User not found when revoking game vote points');
+      return null;
+    }
+    
+    // Check if the user has received points for this game
+    const pointEntry = user.pointsHistory.find(
+      entry => entry.gameId && entry.gameId.toString() === gameId.toString() && 
+              entry.reason === 'Voted for a game'
+    );
+    
+    if (!pointEntry) {
+      console.log('No points to revoke for this game vote');
+      return user; // No points to revoke
+    }
+    
+    // Update user points and add a negative entry to history
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        $inc: { points: -200 },
+        $push: {
+          pointsHistory: {
+            amount: -200,
+            reason: 'Removed vote for a game',
+            gameId: gameId,
+            createdAt: new Date()
+          }
+        }
+      },
+      { new: true }
+    );
+    
+    console.log('Successfully revoked 200 points for removed game vote');
+    return updatedUser;
+  } catch (error) {
+    console.error('Error revoking game vote points:', error);
     return null;
   }
 };
@@ -295,4 +356,5 @@ module.exports = router;
 module.exports.awardAffiliatePoints = awardAffiliatePoints;
 module.exports.awardListingPoints = awardListingPoints;
 module.exports.awardAffiliateReviewPoints = awardAffiliateReviewPoints;
-module.exports.awardGameVotePoints = awardGameVotePoints; 
+module.exports.awardGameVotePoints = awardGameVotePoints;
+module.exports.revokeGameVotePoints = revokeGameVotePoints; 

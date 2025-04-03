@@ -4,7 +4,7 @@ const Game = require('../models/Game');
 const GameVote = require('../models/GameVote');
 const auth = require('../middleware/auth');
 const User = require('../models/User');
-const { awardGameVotePoints } = require('./points');
+const { awardGameVotePoints, revokeGameVotePoints } = require('./points');
 
 // Get all games
 router.get('/', async (req, res) => {
@@ -167,6 +167,14 @@ router.post('/:id/vote', auth, async (req, res) => {
       game.votes = Math.max(0, game.votes - 1);
       await game.save();
       
+      // Revoke the 200 points since vote was removed
+      try {
+        await revokeGameVotePoints(userId, gameId);
+      } catch (pointsError) {
+        console.error('Error revoking points for game vote:', pointsError);
+        // Continue with the vote removal even if points revocation fails
+      }
+      
       return res.json({ message: 'Vote removed successfully', voted: false, votes: game.votes });
     } else {
       // Add new vote
@@ -182,7 +190,7 @@ router.post('/:id/vote', auth, async (req, res) => {
       game.votes += 1;
       await game.save();
       
-      // Award 200 points to the user for voting
+      // Award 200 points to the user for voting (only once per game)
       try {
         await awardGameVotePoints(userId, gameId);
       } catch (pointsError) {
