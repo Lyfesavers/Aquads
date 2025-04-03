@@ -57,183 +57,128 @@
     height: 40
   };
   
-  // Create HTML audio elements directly in the DOM
-  function createSoundElements() {
-    // No longer needed since we're using Web Audio API
-    soundsCreated = true;
-    return true;
+  // Add throttling/debouncing utility functions at the top
+  function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(this, args), wait);
+    };
   }
 
-  // Audio context for sound generation
+  function throttle(func, limit) {
+    let inThrottle;
+    return function(...args) {
+      if (!inThrottle) {
+        func.apply(this, args);
+        inThrottle = true;
+        setTimeout(() => inThrottle = false, limit);
+      }
+    };
+  }
+
+  // Create audio elements lazily
+  let audioElements = null;
   let audioContext = null;
-  
-  // Initialize audio context on first use
+  let audioInitialized = false;
+
+  function createSoundElements() {
+    if (audioElements) return audioElements;
+    
+    audioElements = {
+      shot: document.createElement('audio'),
+      quack: document.createElement('audio'),
+      fall: document.createElement('audio'),
+      gameStart: document.createElement('audio'),
+      dogLaugh: document.createElement('audio')
+    };
+
+    // Set sources lazily
+    return audioElements;
+  }
+
+  // Lazy initialize audio context
   function getAudioContext() {
-    if (!audioContext) {
+    if (!audioContext && window.AudioContext) {
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
     return audioContext;
   }
 
-  // Play a sound by its ID
+  // Optimize audio playback
   function playSound(soundName) {
-    if (!soundEnabled) return;
+    // Skip audio on low-end devices or if disabled
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
     
-    try {
-      const ctx = getAudioContext();
-      logger.log('Playing sound:', soundName, 'using Web Audio API');
+    if (!audioInitialized) {
+      initAudio();
+      audioInitialized = true;
+    }
+
+    const elements = createSoundElements();
+    const soundElement = elements[soundName];
+
+    if (!soundElement || !soundElement.src) {
+      setSoundSource(soundName);
+    }
+
+    // Only try to play if the element exists and has a source
+    if (soundElement && soundElement.src) {
+      // Reset the audio to the beginning if it's already playing
+      soundElement.currentTime = 0;
       
-      // Create different sounds based on name
-      switch(soundName) {
-        case 'shot':
-          playShot(ctx);
-          break;
-        case 'quack':
-          playQuack(ctx);
-          break;
-        case 'fall':
-          playFall(ctx);
-          break;
-        case 'gameStart':
-          playGameStart(ctx);
-          break;
-        case 'dogLaugh':
-          playDogLaugh(ctx);
-          break;
-        default:
-          logger.error('Unknown sound:', soundName);
+      // Use a Promise to handle play() failures gracefully
+      const playPromise = soundElement.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(e => {
+          // Auto-play was prevented, we'll just silently fail
+          console.log('Audio playback was prevented by the browser');
+        });
       }
-    } catch (error) {
-      logger.error('Failed to play sound:', soundName, error);
     }
   }
-  
-  // Gunshot sound
-  function playShot(ctx) {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+
+  // Lazy initialization of audio sources
+  function setSoundSource(soundName) {
+    const elements = createSoundElements();
+    const soundElement = elements[soundName];
     
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(80, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(20, ctx.currentTime + 0.1);
+    if (!soundElement) return;
     
-    gain.gain.setValueAtTime(1, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+    // Set source based on sound name
+    switch (soundName) {
+      case 'shot':
+        soundElement.src = 'https://www.myinstants.com/media/sounds/shotgun.mp3';
+        break;
+      case 'quack':
+        soundElement.src = 'https://www.myinstants.com/media/sounds/duck-quack.mp3';
+        break;
+      case 'fall':
+        soundElement.src = 'https://www.myinstants.com/media/sounds/fall.mp3';
+        break;
+      case 'gameStart':
+        soundElement.src = 'https://www.myinstants.com/media/sounds/duck-hunt-intro.mp3';
+        break;
+      case 'dogLaugh':
+        soundElement.src = 'https://www.myinstants.com/media/sounds/dog-laugh.mp3';
+        break;
+    }
     
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    
-    osc.start();
-    osc.stop(ctx.currentTime + 0.2);
+    // Set common properties
+    soundElement.preload = 'none'; // Don't preload until needed
+    soundElement.volume = 0.3;
   }
-  
-  // Duck quack sound
-  function playQuack(ctx) {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const lfo = ctx.createOscillator();
-    const lfoGain = ctx.createGain();
-    
-    // Set up LFO
-    lfo.frequency.value = 15;
-    lfoGain.gain.value = 100;
-    lfo.connect(lfoGain);
-    lfoGain.connect(osc.frequency);
-    
-    // Main oscillator
-    osc.type = 'triangle';
-    osc.frequency.value = 300;
-    
-    // Volume envelope
-    gain.gain.setValueAtTime(0.8, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
-    
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    
-    lfo.start();
-    osc.start();
-    
-    lfo.stop(ctx.currentTime + 0.2);
-    osc.stop(ctx.currentTime + 0.2);
-  }
-  
-  // Falling sound
-  function playFall(ctx) {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(800, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.5);
-    
-    gain.gain.setValueAtTime(0.3, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-    
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    
-    osc.start();
-    osc.stop(ctx.currentTime + 0.5);
-  }
-  
-  // Game start sound
-  function playGameStart(ctx) {
-    const noteLength = 0.1;
-    const notes = [
-      { note: 440, time: 0 },      // A4
-      { note: 554.37, time: 0.1 }, // C#5
-      { note: 659.25, time: 0.2 }, // E5
-      { note: 880, time: 0.3 }     // A5
-    ];
-    
-    notes.forEach(note => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      
-      osc.type = 'triangle';
-      osc.frequency.value = note.note;
-      
-      gain.gain.setValueAtTime(0.3, ctx.currentTime + note.time);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + note.time + noteLength);
-      
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      
-      osc.start(ctx.currentTime + note.time);
-      osc.stop(ctx.currentTime + note.time + noteLength);
+
+  // Initialize audio only when needed
+  function initAudio() {
+    const elements = createSoundElements();
+    Object.keys(elements).forEach(key => {
+      setSoundSource(key);
     });
   }
-  
-  // Dog laugh sound
-  function playDogLaugh(ctx) {
-    const iterations = 3;
-    const iterationDuration = 0.15;
-    
-    for (let i = 0; i < iterations; i++) {
-      const startTime = ctx.currentTime + (i * iterationDuration);
-      
-      // Main oscillator
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(300, startTime);
-      osc.frequency.setValueAtTime(400, startTime + 0.05);
-      osc.frequency.setValueAtTime(300, startTime + 0.1);
-      
-      gain.gain.setValueAtTime(0, startTime);
-      gain.gain.linearRampToValueAtTime(0.3, startTime + 0.02);
-      gain.gain.linearRampToValueAtTime(0.01, startTime + iterationDuration);
-      
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      
-      osc.start(startTime);
-      osc.stop(startTime + iterationDuration);
-    }
-  }
-  
+
   // Initialize game
   function init() {
     // Style game container
@@ -584,6 +529,14 @@
     
     // Start animation loop
     requestAnimationFrame(updateGame);
+
+    // Throttle window resize event
+    const throttledResize = throttle(handleResize, 150);
+    window.addEventListener('resize', throttledResize);
+
+    // Debounce mobile layout changes
+    const debouncedMobileLayout = debounce(handleMobileLayout, 200);
+    window.addEventListener('resize', debouncedMobileLayout);
   }
   
   // Create a new duck
@@ -945,6 +898,9 @@
   
   // Game loop
   function updateGame() {
+    // Skip update work if tab is not visible
+    if (document.hidden) return;
+    
     // Update each duck
     for (let i = ducks.length - 1; i >= 0; i--) {
       const duck = ducks[i];
@@ -1087,6 +1043,16 @@
     } catch (e) {
       return color; // Return original if parsing fails
     }
+  }
+  
+  // Use the throttled/debounced versions of handlers for events that fire frequently
+  function handleResize() {
+    // ... existing resize code ...
+  }
+
+  // Debounce mobile layout changes
+  function handleMobileLayout(e) {
+    // ... existing mobile layout code ...
   }
   
   // Initialize on load

@@ -51,70 +51,108 @@
     -->
     <title>Aquads - All in one Web3 crypto Hub and Freelancer marketplace!</title>
     
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://www.aquads.xyz" crossorigin>
+    <link rel="preconnect" href="https://static.ads-twitter.com" crossorigin>
+    
+    <!-- Preload critical assets -->
+    <link rel="preload" href="%PUBLIC_URL%/duck-hunt.js" as="script">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/chart.js" as="script">
+    
     <!-- Script to pre-update metadata for blog shares without changing URL structure -->
     <script type="text/javascript">
       (function() {
-        // Check if we're on a blog page by looking for blogId parameter
-        var url = new URL(window.location.href);
-        var blogId = url.searchParams.get('blogId');
+        // Defer non-critical initialization
+        function initBlogMetadata() {
+          // Check if we're on a blog page by looking for blogId parameter
+          var url = new URL(window.location.href);
+          var blogId = url.searchParams.get('blogId');
+          
+          // Only proceed if we have a blogId
+          if (blogId && window.location.pathname.includes('/how-to')) {
+            // Fetch the blog data from the API
+            fetch('https://www.aquads.xyz/api/blogs/' + blogId)
+              .then(function(response) {
+                if (response.ok) return response.json();
+                throw new Error('Failed to fetch blog data');
+              })
+              .then(function(blog) {
+                if (!blog) return;
+                
+                // Get meta tag elements
+                var titleTag = document.querySelector('title');
+                var descTag = document.querySelector('meta[name="description"]');
+                var twitterTitleTag = document.querySelector('meta[name="twitter:title"]');
+                var twitterDescTag = document.querySelector('meta[name="twitter:description"]');
+                var twitterImageTag = document.querySelector('meta[name="twitter:image"]');
+                var ogTitleTag = document.querySelector('meta[property="og:title"]');
+                var ogDescTag = document.querySelector('meta[property="og:description"]');
+                var ogImageTag = document.querySelector('meta[property="og:image"]');
+                var ogUrlTag = document.querySelector('meta[property="og:url"]');
+                
+                // Clean blog content for description (remove HTML tags and limit length)
+                var description = blog.content
+                  ? blog.content.replace(/<[^>]*>/g, '').slice(0, 200) + '...'
+                  : 'Read our latest blog post on Aquads!';
+                
+                // Update the meta tags with blog info
+                if (titleTag) titleTag.textContent = blog.title + ' - Aquads Blog';
+                if (descTag) descTag.content = description;
+                if (twitterTitleTag) twitterTitleTag.content = blog.title + ' - Aquads Blog';
+                if (twitterDescTag) twitterDescTag.content = description;
+                if (twitterImageTag && blog.bannerImage) twitterImageTag.content = blog.bannerImage;
+                if (ogTitleTag) ogTitleTag.content = blog.title + ' - Aquads Blog';
+                if (ogDescTag) ogDescTag.content = description;
+                if (ogImageTag && blog.bannerImage) ogImageTag.content = blog.bannerImage;
+                if (ogUrlTag) ogUrlTag.content = window.location.href;
+                
+                // If blog has a bannerImage, set image dimensions meta tags asynchronously
+                if (blog.bannerImage) {
+                  // Use a web worker for image dimension calculation to avoid main thread work
+                  if (window.Worker) {
+                    var dimensionWorker = new Worker('%PUBLIC_URL%/dimension-worker.js');
+                    dimensionWorker.postMessage(blog.bannerImage);
+                    dimensionWorker.onmessage = function(e) {
+                      var width = e.data.width;
+                      var height = e.data.height;
+                      
+                      var ogImageWidth = document.querySelector('meta[property="og:image:width"]');
+                      var ogImageHeight = document.querySelector('meta[property="og:image:height"]');
+                      
+                      if (ogImageWidth) ogImageWidth.content = width.toString();
+                      if (ogImageHeight) ogImageHeight.content = height.toString();
+                    };
+                  } else {
+                    // Fallback method
+                    var img = new Image();
+                    img.onload = function() {
+                      var width = this.width;
+                      var height = this.height;
+                      
+                      var ogImageWidth = document.querySelector('meta[property="og:image:width"]');
+                      var ogImageHeight = document.querySelector('meta[property="og:image:height"]');
+                      
+                      if (ogImageWidth) ogImageWidth.content = width.toString();
+                      if (ogImageHeight) ogImageHeight.content = height.toString();
+                    };
+                    img.src = blog.bannerImage;
+                  }
+                }
+              })
+              .catch(function(error) {
+                console.error('Error updating blog metadata:', error);
+              });
+          }
+        }
         
-        // Only proceed if we have a blogId
-        if (blogId && window.location.pathname.includes('/how-to')) {
-          // Fetch the blog data from the API
-          fetch('https://www.aquads.xyz/api/blogs/' + blogId)
-            .then(function(response) {
-              if (response.ok) return response.json();
-              throw new Error('Failed to fetch blog data');
-            })
-            .then(function(blog) {
-              if (!blog) return;
-              
-              // Get meta tag elements
-              var titleTag = document.querySelector('title');
-              var descTag = document.querySelector('meta[name="description"]');
-              var twitterTitleTag = document.querySelector('meta[name="twitter:title"]');
-              var twitterDescTag = document.querySelector('meta[name="twitter:description"]');
-              var twitterImageTag = document.querySelector('meta[name="twitter:image"]');
-              var ogTitleTag = document.querySelector('meta[property="og:title"]');
-              var ogDescTag = document.querySelector('meta[property="og:description"]');
-              var ogImageTag = document.querySelector('meta[property="og:image"]');
-              var ogUrlTag = document.querySelector('meta[property="og:url"]');
-              
-              // Clean blog content for description (remove HTML tags and limit length)
-              var description = blog.content
-                ? blog.content.replace(/<[^>]*>/g, '').slice(0, 200) + '...'
-                : 'Read our latest blog post on Aquads!';
-              
-              // Update the meta tags with blog info
-              if (titleTag) titleTag.textContent = blog.title + ' - Aquads Blog';
-              if (descTag) descTag.content = description;
-              if (twitterTitleTag) twitterTitleTag.content = blog.title + ' - Aquads Blog';
-              if (twitterDescTag) twitterDescTag.content = description;
-              if (twitterImageTag && blog.bannerImage) twitterImageTag.content = blog.bannerImage;
-              if (ogTitleTag) ogTitleTag.content = blog.title + ' - Aquads Blog';
-              if (ogDescTag) ogDescTag.content = description;
-              if (ogImageTag && blog.bannerImage) ogImageTag.content = blog.bannerImage;
-              if (ogUrlTag) ogUrlTag.content = window.location.href;
-              
-              // If blog has a bannerImage, set image dimensions meta tags
-              if (blog.bannerImage) {
-                var img = new Image();
-                img.onload = function() {
-                  var width = this.width;
-                  var height = this.height;
-                  
-                  var ogImageWidth = document.querySelector('meta[property="og:image:width"]');
-                  var ogImageHeight = document.querySelector('meta[property="og:image:height"]');
-                  
-                  if (ogImageWidth) ogImageWidth.content = width.toString();
-                  if (ogImageHeight) ogImageHeight.content = height.toString();
-                };
-                img.src = blog.bannerImage;
-              }
-            })
-            .catch(function(error) {
-              console.error('Error updating blog metadata:', error);
-            });
+        // Defer non-critical initialization until after page load
+        if (document.readyState === 'complete') {
+          initBlogMetadata();
+        } else {
+          window.addEventListener('load', function() {
+            setTimeout(initBlogMetadata, 1000);
+          });
         }
       })();
     </script>
@@ -132,38 +170,43 @@
       To begin the development, run `npm start` or `yarn start`.
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- Twitter base code -->
+    <!-- Load Chart.js with defer to not block rendering -->
+    <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Twitter base code - load after page content -->
     <script defer>
       window.addEventListener('load', function() {
-        !function(e,t,n,s,u,a){e.twq||(s=e.twq=function(){s.exe?s.exe.apply(s,arguments):s.queue.push(arguments);
-        },s.version='1.1',s.queue=[],u=t.createElement(n),u.async=!0,u.src='https://static.ads-twitter.com/uwt.js',
-        a=t.getElementsByTagName(n)[0],a.parentNode.insertBefore(u,a))}(window,document,'script');
-        twq('config','p4dav');
-        
-        // Twitter conversion tracking event
-        twq('event', 'tw-p4dav-p4dgx', {
-          value: null,
-          currency: null,
-          contents: [
-            {
-              content_type: null,
-              content_id: null,
-              content_name: null,
-              content_price: null,
-              num_items: null,
-              content_group_id: null
-            }
-          ],
-          status: null,
-          conversion_id: null,
-          email_address: null,
-          phone_number: null
-        });
+        setTimeout(function() {
+          !function(e,t,n,s,u,a){e.twq||(s=e.twq=function(){s.exe?s.exe.apply(s,arguments):s.queue.push(arguments);
+          },s.version='1.1',s.queue=[],u=t.createElement(n),u.async=!0,u.src='https://static.ads-twitter.com/uwt.js',
+          a=t.getElementsByTagName(n)[0],a.parentNode.insertBefore(u,a))}(window,document,'script');
+          twq('config','p4dav');
+          
+          // Twitter conversion tracking event
+          twq('event', 'tw-p4dav-p4dgx', {
+            value: null,
+            currency: null,
+            contents: [
+              {
+                content_type: null,
+                content_id: null,
+                content_name: null,
+                content_price: null,
+                num_items: null,
+                content_group_id: null
+              }
+            ],
+            status: null,
+            conversion_id: null,
+            email_address: null,
+            phone_number: null
+          });
+        }, 2000); // Delay Twitter tracking by 2 seconds
       });
     </script>
-    <!-- Duck Hunt Game -->
-    <script src="%PUBLIC_URL%/duck-hunt.js"></script>
+    
+    <!-- Load Duck Hunt game with defer to avoid blocking main thread -->
+    <script defer src="%PUBLIC_URL%/duck-hunt.js"></script>
   </body>
 </html>

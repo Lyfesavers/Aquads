@@ -963,3 +963,50 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   position: relative;
   z-index: 1;
 }
+
+/* Performance optimizations */
+/* Use hardware acceleration for animations */
+@media (prefers-reduced-motion: no-preference) {
+  .animate-spin, 
+  .animate-pulse, 
+  .animate-bounce,
+  .animate-bounce,
+  [class*='transition'],
+  .ad-bubble {
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+}
+
+/* Disable animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Optimize static elements */
+img, video {
+  content-visibility: auto;
+}
+
+/* Optimize large content blocks */
+.marketplace-listing, 
+.game-listing,
+.token-data-container {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 500px;
+}
+
+/* Only animate opacity and transform properties for better performance */
+.transition-opacity,
+.hover\:opacity-80,
+.hover\:opacity-90,
+.fade-in,
+.fade-out {
+  transition-property: opacity !important;
+}

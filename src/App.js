@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { Connection, PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
 import { Buffer } from 'buffer';
 import { 
@@ -37,12 +37,34 @@ import Whitepaper from './components/Whitepaper';
 import HowTo from './components/HowTo';
 import Affiliate from './components/Affiliate';
 import Terms from './components/Terms';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import emailService from './services/emailService';
 import emailjs from '@emailjs/browser';
 import NotificationBell from './components/NotificationBell';
 import logger from './utils/logger';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { v4 as uuidv4 } from 'uuid';
+import './App.css';
+
+// Regular imports for crucial components
+import Navbar from './components/Navbar';
+import Notification from './components/Notification';
+
+// Lazy load non-critical components
+const CreateAccountModal = lazy(() => import('./components/CreateAccountModal'));
+const Dashboard = lazy(() => import('./components/Dashboard'));
+const EditAdModal = lazy(() => import('./components/EditAdModal'));
+const TokenBanner = lazy(() => import('./components/TokenBanner'));
+const TokenList = lazy(() => import('./components/TokenList'));
+const Marketplace = lazy(() => import('./components/Marketplace'));
+const GameHub = lazy(() => import('./components/GameHub'));
+const CreateGameModal = lazy(() => import('./components/CreateGameModal'));
+const EditGameModal = lazy(() => import('./components/EditGameModal'));
+const BumpStore = lazy(() => import('./components/BumpStore'));
+const CreateAdModal = lazy(() => import('./components/CreateAdModal'));
+const BlogList = lazy(() => import('./components/BlogList'));
+const HowTo = lazy(() => import('./components/HowTo'));
 
 // Simple debounce function implementation
 const debounce = (func, wait) => {
@@ -67,18 +89,25 @@ const BASE_MAX_SIZE = 100;
 const MIN_SIZE = 50;
 // Function to get responsive size based on screen width
 function getResponsiveSize(baseSize) {
-  // Get current viewport width
-  const viewportWidth = window.innerWidth;
+  if (sizeCache.has(baseSize)) return sizeCache.get(baseSize);
   
-  if (viewportWidth <= 480) {
-    // Mobile - smaller bubbles (reduced from 0.65 to 0.5)
-    return Math.floor(baseSize * 0.5);
-  } else if (viewportWidth <= 768) {
-    // Tablet - medium bubbles (reduced from 0.8 to 0.7)
-    return Math.floor(baseSize * 0.7);
+  const windowWidth = window.innerWidth;
+  let size;
+  
+  // Use simplified calculation with fewer breakpoints
+  if (windowWidth < 640) { // Mobile
+    size = Math.floor(baseSize * 0.7);
+  } else if (windowWidth < 1024) { // Tablet
+    size = Math.floor(baseSize * 0.85);
+  } else { // Desktop
+    size = baseSize;
   }
-  // Desktop - normal size
-  return baseSize;
+  
+  // Ensure minimum and maximum bounds
+  size = Math.max(40, Math.min(size, 100));
+  sizeCache.set(baseSize, size);
+  
+  return size;
 }
 
 // Use this function to get current max size
@@ -107,235 +136,109 @@ const MERCHANT_WALLET = {
 }; // Replace with your wallet address
 const ADMIN_USERNAME = "admin"; // You can change this to your preferred admin username
 
-// Helper functions for responsive positioning
+// Optimize size calculation with memoization
+const sizeCache = new Map();
 function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
-  // Center of the available space (excluding banner)
+  // Create a grid for faster collision detection
+  const gridSize = size * 2;
+  const grid = {};
+  
+  // Add existing ads to grid
+  existingAds.forEach(ad => {
+    const gridX = Math.floor(ad.x / gridSize);
+    const gridY = Math.floor(ad.y / gridSize);
+    const key = `${gridX},${gridY}`;
+    
+    if (!grid[key]) grid[key] = [];
+    grid[key].push(ad);
+  });
+  
+  // Try to find a position with minimal collisions using a spiral pattern
   const centerX = windowWidth / 2;
-  const centerY = (windowHeight - TOP_PADDING) / 1 + TOP_PADDING;
+  const centerY = windowHeight / 2;
+  const safeMargin = size * 1.5;
   
-  // If this is the first bubble, place it directly in the center of available space
-  if (existingAds.length === 0) {
-    return {
-      x: centerX - size/2,
-      y: centerY - size/2
-    };
-  }
+  let bestPos = { x: centerX, y: centerY };
+  let minCollisions = Number.MAX_SAFE_INTEGER;
   
-  // Reduced spacing between bubbles for tighter packing
-  const bubbleSpacing = 0.50;
-  
-  // Calculate spiral position with optimized parameters
-  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
-  const startRadius = size/3;
-  const scaleFactor = 0.7;
-  
-  // Create a grid-based optimization for larger numbers of bubbles
-  const useGridApproach = existingAds.length > 12;
-  
-  if (useGridApproach) {
-    const cellSize = size * bubbleSpacing;
-    const gridColumns = Math.floor((windowWidth - 2 * BUBBLE_PADDING) / cellSize);
-    const gridRows = Math.floor((windowHeight - TOP_PADDING - BUBBLE_PADDING) / cellSize);
+  // Check positions in a spiral pattern outward from center
+  const maxIterations = 20; // Limit iterations for performance
+  for (let r = 0; r < maxIterations; r++) {
+    const radius = r * safeMargin;
+    const points = 8 + r * 4; // More points for larger radius
     
-    const grid = Array(gridRows).fill().map(() => Array(gridColumns).fill(false));
-    
-    existingAds.forEach(ad => {
-      const col = Math.floor((ad.x - BUBBLE_PADDING) / cellSize);
-      const row = Math.floor((ad.y - TOP_PADDING) / cellSize);
+    for (let i = 0; i < points; i++) {
+      const angle = (i / points) * 2 * Math.PI;
+      const x = centerX + radius * Math.cos(angle);
+      const y = centerY + radius * Math.sin(angle);
       
-      if (col >= 0 && col < gridColumns && row >= 0 && row < gridRows) {
-        grid[row][col] = true;
-        
-        for (let r = Math.max(0, row-1); r <= Math.min(gridRows-1, row+1); r++) {
-          for (let c = Math.max(0, col-1); c <= Math.min(gridColumns-1, col+1); c++) {
-            if (Math.sqrt(Math.pow(r-row, 2) + Math.pow(c-col, 2)) <= 1) {
-              grid[r][c] = true;
-            }
+      // Skip if out of bounds
+      if (x < safeMargin || x > windowWidth - safeMargin || 
+          y < safeMargin || y > windowHeight - safeMargin) {
+        continue;
+      }
+      
+      // Check for collisions in nearby grid cells
+      const gridX = Math.floor(x / gridSize);
+      const gridY = Math.floor(y / gridSize);
+      
+      let collisions = 0;
+      for (let gx = gridX - 1; gx <= gridX + 1; gx++) {
+        for (let gy = gridY - 1; gy <= gridY + 1; gy++) {
+          const key = `${gx},${gy}`;
+          if (grid[key]) {
+            grid[key].forEach(ad => {
+              const dx = ad.x - x;
+              const dy = ad.y - y;
+              const distance = Math.sqrt(dx * dx + dy * dy);
+              if (distance < safeMargin) {
+                collisions++;
+              }
+            });
           }
         }
       }
-    });
-    
-    for (let row = 0; row < gridRows; row++) {
-      for (let col = 0; col < gridColumns; col++) {
-        if (!grid[row][col]) {
-          const x = BUBBLE_PADDING + col * cellSize;
-          const y = TOP_PADDING + row * cellSize;
-          
-          let hasOverlap = false;
-          for (const ad of existingAds) {
-            const distance = calculateDistance(
-              x + size/2, 
-              y + size/2, 
-              ad.x + ad.size/2, 
-              ad.y + ad.size/2
-            );
-            
-            const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
-            
-            if (distance < minDistance) {
-              hasOverlap = true;
-              break;
-            }
-          }
-          
-          if (!hasOverlap) {
-            return { x, y };
-          }
-        }
-      }
-    }
-  }
-  
-  for (let i = 0; i < 1000; i++) {
-    const angle = goldenAngle * i;
-    const radius = startRadius * scaleFactor * Math.sqrt(i + 1);
-    
-    const x = centerX + radius * Math.cos(angle) - size/2;
-    const y = centerY + radius * Math.sin(angle) - size/2;
-    
-    if (x < BUBBLE_PADDING || x + size > windowWidth - BUBBLE_PADDING || 
-        y < TOP_PADDING || y + size > windowHeight - BUBBLE_PADDING) {
-      continue;
-    }
-    
-    let hasOverlap = false;
-    for (const ad of existingAds) {
-      const distance = calculateDistance(
-        x + size/2, 
-        y + size/2, 
-        ad.x + ad.size/2, 
-        ad.y + ad.size/2
-      );
       
-      const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
-      
-      if (distance < minDistance) {
-        hasOverlap = true;
-        break;
+      if (collisions < minCollisions) {
+        minCollisions = collisions;
+        bestPos = { x, y };
+        
+        // If we found a position with no collisions, use it immediately
+        if (collisions === 0) break;
       }
     }
     
-    if (!hasOverlap) {
-      return { x, y };
-    }
+    // If we found a position with no collisions, use it
+    if (minCollisions === 0) break;
   }
   
-  return {
-    x: Math.max(BUBBLE_PADDING, Math.min(windowWidth - size - BUBBLE_PADDING, Math.random() * windowWidth)),
-    y: Math.max(TOP_PADDING, Math.min(windowHeight - size - BUBBLE_PADDING, Math.random() * (windowHeight - TOP_PADDING)))
-  };
+  return bestPos;
 }
 
-function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, currentAdId) {
-  const minX = BUBBLE_PADDING;
-  const maxX = windowWidth - size - BUBBLE_PADDING;
-  const minY = TOP_PADDING;
-  const maxY = windowHeight - size - BUBBLE_PADDING;
-
-  let newX = Math.min(Math.max(x, minX), maxX);
-  let newY = Math.min(Math.max(y, minY), maxY);
-
-  const otherAds = existingAds.filter(ad => ad.id !== currentAdId);
-  
-  if (otherAds.length === 0) {
-    return { x: newX, y: newY };
-  }
-  
-  const bubbleSpacing = 1.02;
-  let iterations = 0;
-  const maxIterations = 25;
-  
-  while(iterations < maxIterations) {
-    let hasOverlap = false;
-    let totalPushX = 0;
-    let totalPushY = 0;
-    let overlappingAds = 0;
-    
-    for (const ad of otherAds) {
-      const distance = calculateDistance(
-        newX + size/2, 
-        newY + size/2, 
-        ad.x + ad.size/2, 
-        ad.y + ad.size/2
-      );
-      
-      const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
-      
-      if (distance < minDistance) {
-        hasOverlap = true;
-        overlappingAds++;
-        
-        const dx = (ad.x + ad.size/2) - (newX + size/2);
-        const dy = (ad.y + ad.size/2) - (newY + size/2);
-        
-        const magnitude = Math.sqrt(dx * dx + dy * dy);
-        const pushX = dx === 0 ? 0 : dx / magnitude;
-        const pushY = dy === 0 ? 0 : dy / magnitude;
-        
-        const pushAmount = minDistance - distance;
-        
-        const multiplier = 1 / Math.sqrt(overlappingAds);
-        totalPushX -= pushX * pushAmount * multiplier;
-        totalPushY -= pushY * pushAmount * multiplier;
-      }
-    }
-    
-    if (!hasOverlap) {
-      break;
-    }
-    
-    const dampening = 0.8;
-    newX += totalPushX * dampening;
-    newY += totalPushY * dampening;
-    
-    newX = Math.min(Math.max(newX, minX), maxX);
-    newY = Math.min(Math.max(newY, minY), maxY);
-    
-    iterations++;
-  }
-
-  return { x: newX, y: newY };
-}
-
+// Memoize distance calculation
+const distanceCache = new Map();
 function calculateDistance(x1, y1, x2, y2) {
-  return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+  const key = `${x1},${y1}-${x2},${y2}`;
+  if (distanceCache.has(key)) return distanceCache.get(key);
+  
+  const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+  distanceCache.set(key, distance);
+  return distance;
 }
 
 // Add Auth Context near the top of the file - outside the App component
 const AuthContext = React.createContext();
 
-// Create a custom NavigationListener component to track navigation events
-const NavigationListener = ({ onNavigate }) => {
-  useEffect(() => {
-    // Handle initial navigation
-    onNavigate();
-    
-    // Use MutationObserver to detect navigation changes through component unmounts/mounts
-    // This works with both history API navigation and Link component navigation
-    const observer = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        if (mutation.type === 'childList' && 
-            (mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0)) {
-          // Route change detected
-          onNavigate();
-          break;
-        }
-      }
-    });
-    
-    // Observe the main app container
-    const container = document.getElementById('root');
-    if (container) {
-      observer.observe(container, { childList: true, subtree: true });
-    }
-    
-    // Clean up
-    return () => observer.disconnect();
-  }, [onNavigate]);
+// Use React.memo to prevent unnecessary rerenders of infrequently changing components
+const NavigationListener = React.memo(({ onNavigate }) => {
+  const location = useLocation();
   
-  return null; // This component doesn't render anything
-};
+  useEffect(() => {
+    onNavigate(location.pathname);
+  }, [location, onNavigate]);
+  
+  return null;
+});
 
 function App() {
   const [ads, setAds] = useState(() => {
@@ -1446,7 +1349,15 @@ function App() {
     };
   }, []);
 
-  // Modify the return statement to wrap everything in the Auth context provider
+  // Loading fallback for lazy-loaded components
+  const loadingFallback = (
+    <div className="text-center py-10">
+      <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" role="status">
+        <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">Loading...</span>
+      </div>
+    </div>
+  );
+
   return (
     <AuthContext.Provider value={{ currentUser, setCurrentUser }}>
       <Router>
