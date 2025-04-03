@@ -243,7 +243,7 @@
     gameContainer.style.width = '100%';
     gameContainer.style.height = '100%';
     gameContainer.style.pointerEvents = 'none';
-    gameContainer.style.zIndex = '9998'; // Below the ripple effect
+    gameContainer.style.zIndex = '9998'; // High z-index but below modals
     gameContainer.style.overflow = 'hidden';
     
     // Add pixel art styling

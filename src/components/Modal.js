@@ -22,19 +22,8 @@ const Modal = ({ children, onClose }) => {
     e.stopPropagation();
   };
 
-  // Add style to restore normal cursor behavior in modals and ensure no pointer events bleed through
+  // Simplified style to ensure proper z-index and pointer events
   const modalStyles = `
-    .fixed[class*="z-[999999]"] *,
-    .fixed[class*="z-[999999]"] {
-      cursor: auto !important;
-    }
-    .fixed[class*="z-[999999]"] button,
-    .fixed[class*="z-[999999]"] a,
-    .fixed[class*="z-[999999]"] [role="button"],
-    .fixed[class*="z-[999999]"] [type="button"],
-    .fixed[class*="z-[999999]"] [type="submit"] {
-      cursor: pointer !important;
-    }
     .modal-backdrop {
       pointer-events: all !important;
     }
@@ -45,7 +34,7 @@ const Modal = ({ children, onClose }) => {
 
   return (
     <>
-      {/* Style tag to restore normal cursor behavior */}
+      {/* Style tag for modal */}
       <style>{modalStyles}</style>
       <div 
         className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[999999] p-2 sm:p-4 overflow-y-auto modal-backdrop"
