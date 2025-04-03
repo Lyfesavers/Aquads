@@ -47,6 +47,24 @@ const BannerDisplay = () => {
     }
   }, [currentIndex, banners]);
 
+  // Add CSS to disable pointer events when modals are shown
+  useEffect(() => {
+    const styleElement = document.createElement('style');
+    styleElement.textContent = `
+      .banner-container {
+        pointer-events: auto;
+      }
+      body:has(.modal-backdrop) .banner-container {
+        pointer-events: none !important;
+      }
+    `;
+    document.head.appendChild(styleElement);
+    
+    return () => {
+      document.head.removeChild(styleElement);
+    };
+  }, []);
+
   if (!banners.length) {
     return null;
   }
