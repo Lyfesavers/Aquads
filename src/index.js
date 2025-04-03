@@ -6,14 +6,17 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 
 ReactDOM.render(
-  <App />,
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
   document.getElementById('root')
 );
 
-// Only report web vitals in non-production environments
-if (process.env.NODE_ENV !== 'production') {
-  // Delay non-critical operations
+// Delay non-critical operations
+const reportWebVitalsWithDelay = () => {
   setTimeout(() => {
     reportWebVitals();
   }, 3000);
-}
+};
+
+reportWebVitalsWithDelay();
