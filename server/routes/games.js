@@ -4,6 +4,7 @@ const Game = require('../models/Game');
 const GameVote = require('../models/GameVote');
 const auth = require('../middleware/auth');
 const User = require('../models/User');
+const { awardGameVotePoints } = require('./points');
 
 // Get all games
 router.get('/', async (req, res) => {
@@ -180,6 +181,14 @@ router.post('/:id/vote', auth, async (req, res) => {
       // Update game vote count
       game.votes += 1;
       await game.save();
+      
+      // Award 200 points to the user for voting
+      try {
+        await awardGameVotePoints(userId, gameId);
+      } catch (pointsError) {
+        console.error('Error awarding points for game vote:', pointsError);
+        // Continue with the vote even if points award fails
+      }
       
       return res.json({ message: 'Vote added successfully', voted: true, votes: game.votes });
     }

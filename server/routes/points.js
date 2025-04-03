@@ -253,10 +253,46 @@ const awardAffiliateReviewPoints = async (userId) => {
   }
 };
 
+// Helper function to award points for game votes
+const awardGameVotePoints = async (userId, gameId) => {
+  try {
+    console.log('Awarding 200 points for game vote, userId:', userId, 'gameId:', gameId);
+    
+    // Update user points and add to history
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        $inc: { points: 200 },
+        $push: {
+          pointsHistory: {
+            amount: 200,
+            reason: 'Voted for a game',
+            gameId: gameId,
+            createdAt: new Date()
+          }
+        }
+      },
+      { new: true }
+    );
+    
+    if (!updatedUser) {
+      console.error('User not found when awarding game vote points');
+      return null;
+    }
+    
+    console.log('Successfully awarded 200 points for game vote');
+    return updatedUser;
+  } catch (error) {
+    console.error('Error awarding game vote points:', error);
+    return null;
+  }
+};
+
 // Export the router directly
 module.exports = router;
 
 // Export helper functions separately
 module.exports.awardAffiliatePoints = awardAffiliatePoints;
 module.exports.awardListingPoints = awardListingPoints;
-module.exports.awardAffiliateReviewPoints = awardAffiliateReviewPoints; 
+module.exports.awardAffiliateReviewPoints = awardAffiliateReviewPoints;
+module.exports.awardGameVotePoints = awardGameVotePoints; 
