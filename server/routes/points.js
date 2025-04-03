@@ -11,7 +11,6 @@ router.get('/test', (req, res) => {
 // Get user's points and history
 router.get('/my-points', auth, async (req, res) => {
   try {
-    console.log('Fetching points for user:', req.user);
     const user = await User.findById(req.user.userId)
       .select('points pointsHistory giftCardRedemptions')
       .populate('pointsHistory.referredUser', 'username');
@@ -26,7 +25,6 @@ router.get('/my-points', auth, async (req, res) => {
       giftCardRedemptions: user.giftCardRedemptions
     });
   } catch (error) {
-    console.error('Error fetching points:', error);
     res.status(500).json({ error: 'Failed to fetch points' });
   }
 });
@@ -98,7 +96,6 @@ router.post('/redeem', auth, async (req, res) => {
     await user.save();
     res.json({ message: 'Redemption request submitted successfully', user });
   } catch (error) {
-    console.error('Error redeeming points:', error);
     res.status(500).json({ error: 'Failed to process redemption' });
   }
 });
@@ -122,7 +119,6 @@ router.get('/redemptions/pending', auth, async (req, res) => {
 
     res.json(pendingUsers);
   } catch (error) {
-    console.error('Error fetching redemptions:', error);
     res.status(500).json({ error: 'Failed to fetch redemptions' });
   }
 });
@@ -165,14 +161,12 @@ router.post('/redemptions/:userId/process', auth, async (req, res) => {
     await user.save();
     res.json({ message: 'Redemption processed successfully', user });
   } catch (error) {
-    console.error('Error processing redemption:', error);
     res.status(500).json({ error: 'Failed to process redemption' });
   }
 });
 
 // Helper functions for awarding points
 function awardAffiliatePoints(referrerId, referredUserId) {
-  console.log('Awarding affiliate points:', { referrerId, referredUserId });
   return User.findByIdAndUpdate(
     referrerId,
     {
@@ -188,10 +182,8 @@ function awardAffiliatePoints(referrerId, referredUserId) {
     },
     { new: true }
   ).then(user => {
-    console.log('Points awarded successfully:', user.points);
     return user;
   }).catch(error => {
-    console.error('Error awarding points:', error);
     throw error;
   });
 }
@@ -222,8 +214,6 @@ function awardListingPoints(userId) {
 // Helper function to award points for affiliate reviews
 const awardAffiliateReviewPoints = async (userId) => {
   try {
-    console.log('Awarding 500 points to affiliate for service review, userId:', userId);
-    
     // Update user points and add to history
     const updatedUser = await User.findByIdAndUpdate(
       userId,
@@ -241,14 +231,11 @@ const awardAffiliateReviewPoints = async (userId) => {
     );
     
     if (!updatedUser) {
-      console.error('User not found when awarding affiliate review points');
       return null;
     }
     
-    console.log('Successfully awarded 500 points to affiliate for review');
     return updatedUser;
   } catch (error) {
-    console.error('Error awarding affiliate review points:', error);
     return null;
   }
 };
@@ -256,12 +243,9 @@ const awardAffiliateReviewPoints = async (userId) => {
 // Helper function to award points for game votes
 const awardGameVotePoints = async (userId, gameId) => {
   try {
-    console.log('Checking for game vote points, userId:', userId, 'gameId:', gameId);
-    
     // Check if user has already received points for this game
     const user = await User.findById(userId);
     if (!user) {
-      console.error('User not found when awarding game vote points');
       return null;
     }
     
@@ -279,7 +263,6 @@ const awardGameVotePoints = async (userId, gameId) => {
     
     // If they already have active points and haven't had them revoked, don't give points again
     if (alreadyReceivedPoints && !previouslyRevokedPoints) {
-      console.log('User already received points for voting on this game');
       return user; // Don't award points again
     }
     
@@ -305,10 +288,8 @@ const awardGameVotePoints = async (userId, gameId) => {
       { new: true }
     );
     
-    console.log(`Successfully awarded 200 points for ${previouslyRevokedPoints ? 're-voting on' : 'voting for'} game`);
     return updatedUser;
   } catch (error) {
-    console.error('Error awarding game vote points:', error);
     return null;
   }
 };
@@ -316,12 +297,9 @@ const awardGameVotePoints = async (userId, gameId) => {
 // Helper function to revoke points when a vote is removed
 const revokeGameVotePoints = async (userId, gameId) => {
   try {
-    console.log('Revoking 200 points for removed game vote, userId:', userId, 'gameId:', gameId);
-    
     // Find the user
     const user = await User.findById(userId);
     if (!user) {
-      console.error('User not found when revoking game vote points');
       return null;
     }
     
@@ -332,7 +310,6 @@ const revokeGameVotePoints = async (userId, gameId) => {
     );
     
     if (!pointEntry) {
-      console.log('No points to revoke for this game vote');
       return user; // No points to revoke
     }
     
@@ -353,10 +330,8 @@ const revokeGameVotePoints = async (userId, gameId) => {
       { new: true }
     );
     
-    console.log('Successfully revoked 200 points for removed game vote');
     return updatedUser;
   } catch (error) {
-    console.error('Error revoking game vote points:', error);
     return null;
   }
 };
