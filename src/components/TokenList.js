@@ -11,12 +11,6 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const DEX_OPTIONS = [
   {
-    name: 'PawChain',
-    icon: '🐾',
-    url: 'https://swap.pawchain.net',
-    description: 'Native PawChain DEX'
-  },
-  {
     name: 'TurboSwap',
     icon: '🌪️',
     url: 'https://bridge.turboctobsc.com/',
