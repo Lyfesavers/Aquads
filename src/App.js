@@ -393,7 +393,7 @@ function App() {
         const currentMaxSize = getMaxSize(); // Get current max size for this screen
         
         // Reposition any bubbles that have x=0, y=0 coordinates (fix for DB-stored bubbles)
-        const repositionedAds = data.map(ad => {
+        const repositionedAds = data.map((ad, index) => {
           // Calculate responsive size correctly based on the current screen size
           let adWithMetadata = {
             ...ad,
@@ -402,16 +402,48 @@ function App() {
             currentMaxSize: currentMaxSize
           };
           
-          // Check if this ad has zero coordinates (likely from the server bug)
-          if (ad.x === 0 && ad.y === 0) {
-            logger.log('Fixing ad with zero coordinates:', ad.id);
-            // Calculate a safe position for this ad
-            const position = calculateSafePosition(
-              ad.size, 
-              windowSize.width, 
-              windowSize.height, 
-              data.filter(otherAd => otherAd.id !== ad.id)
-            );
+          // Check if this ad has zero coordinates or y less than TOP_PADDING
+          if (ad.x === 0 || ad.y === 0 || ad.y < TOP_PADDING) {
+            logger.log('Fixing ad with invalid coordinates:', ad.id);
+            
+            // Use staggered positioning if many ads need fixing
+            let position;
+            if (index > 0) {
+              // Try a position that's definitely not (0,0)
+              const baseX = windowSize.width / 2;
+              const baseY = windowSize.height / 2;
+              
+              // Apply a spiral pattern
+              const angle = index * (Math.PI * 0.618033988749895); // Golden ratio
+              const radius = 50 + 20 * Math.sqrt(index);
+              
+              position = {
+                x: baseX + Math.cos(angle) * radius - (ad.size / 2),
+                y: baseY + Math.sin(angle) * radius - (ad.size / 2)
+              };
+              
+              // Then use calculateSafePosition to fine-tune
+              position = calculateSafePosition(
+                ad.size, 
+                windowSize.width, 
+                windowSize.height, 
+                data.filter(otherAd => otherAd.id !== ad.id)
+              );
+            } else {
+              // Calculate a safe position for this ad
+              position = calculateSafePosition(
+                ad.size, 
+                windowSize.width, 
+                windowSize.height, 
+                data.filter(otherAd => otherAd.id !== ad.id)
+              );
+            }
+            
+            // Make sure y is at least TOP_PADDING + some margin
+            if (position.y < TOP_PADDING) {
+              position.y = TOP_PADDING + 20;
+            }
+            
             adWithMetadata = { ...adWithMetadata, x: position.x, y: position.y };
           }
           
@@ -423,7 +455,7 @@ function App() {
         
         // Update any repositioned ads on the server (optional)
         for (const ad of repositionedAds) {
-          if (ad.x !== 0 || ad.y !== 0) {
+          if (ad.x !== 0 && ad.y !== 0) {
             try {
               // Use position-only update to avoid auth issues
               await apiUpdateAdPosition(ad.id, ad.x, ad.y);
@@ -689,6 +721,51 @@ function App() {
 
       // Calculate a safe position for the new ad
       const position = calculateSafePosition(getMaxSize(), windowSize.width, windowSize.height, ads);
+
+      // Ensure position is valid and not at y=0
+      if (position.y === 0 || position.y < TOP_PADDING) {
+        // Force y to be at least below the top padding with some margin
+        position.y = TOP_PADDING + (getMaxSize() / 2) + 20;
+        
+        // Make sure it doesn't overlap with other ads
+        const otherAds = [...ads];
+        let attempts = 0;
+        const maxAttempts = 20;
+        
+        while (attempts < maxAttempts) {
+          let hasOverlap = false;
+          
+          for (const ad of otherAds) {
+            const distance = calculateDistance(
+              position.x + getMaxSize()/2,
+              position.y + getMaxSize()/2,
+              ad.x + ad.size/2,
+              ad.y + ad.size/2
+            );
+            
+            // Consider bubbles too close if they are less than 75% of their combined sizes apart
+            const minDistance = ((getMaxSize() + ad.size) / 2) * 0.75;
+            
+            if (distance < minDistance) {
+              hasOverlap = true;
+              // Move position down a bit and try again
+              position.y += 20;
+              break;
+            }
+          }
+          
+          if (!hasOverlap) {
+            break;
+          }
+          
+          attempts++;
+          
+          // If we can't find a spot vertically, try changing x as well
+          if (attempts > maxAttempts / 2) {
+            position.x = BUBBLE_PADDING + Math.random() * (windowSize.width - 2 * BUBBLE_PADDING - getMaxSize());
+          }
+        }
+      }
 
       // Create the new ad object with explicit x and y coordinates
       const newAd = {
