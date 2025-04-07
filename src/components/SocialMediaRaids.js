@@ -23,8 +23,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newRaid, setNewRaid] = useState({
     tweetUrl: '',
-    title: '',
-    description: '',
+    title: 'Twitter Raid',
+    description: 'Retweet, Like & Comment to earn 50 points!',
     points: 50
   });
 
@@ -343,10 +343,18 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       return;
     }
     
-    if (!newRaid.tweetUrl || !newRaid.title || !newRaid.description) {
-      setError('Please fill in all required fields');
+    if (!newRaid.tweetUrl) {
+      setError('Please enter the Tweet URL');
       return;
     }
+    
+    // Always set fixed values for these fields
+    const raidData = {
+      ...newRaid,
+      title: 'Twitter Raid',
+      description: 'Retweet, Like & Comment to earn 50 points!',
+      points: 50
+    };
     
     setSubmitting(true);
     
@@ -357,7 +365,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
         },
-        body: JSON.stringify(newRaid)
+        body: JSON.stringify(raidData)
       });
       
       const data = await response.json();
@@ -369,8 +377,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       // Reset form and hide it
       setNewRaid({
         tweetUrl: '',
-        title: '',
-        description: '',
+        title: 'Twitter Raid',
+        description: 'Retweet, Like & Comment to earn 50 points!',
         points: 50
       });
       setShowCreateForm(false);
@@ -506,66 +514,30 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
             <h3 className="text-lg font-bold text-white mb-4">Create New Twitter Raid</h3>
             
             <form onSubmit={handleCreateRaid}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-gray-300 mb-2">
-                    Tweet URL <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="tweetUrl"
-                    value={newRaid.tweetUrl}
-                    onChange={handleInputChange}
-                    placeholder="https://twitter.com/username/status/1234567890"
-                    className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-gray-300 mb-2">
-                    Title <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="title"
-                    value={newRaid.title}
-                    onChange={handleInputChange}
-                    placeholder="Retweet Our Announcement"
-                    className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
-                
-                <div className="md:col-span-2">
-                  <label className="block text-gray-300 mb-2">
-                    Description <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    name="description"
-                    value={newRaid.description}
-                    onChange={handleInputChange}
-                    placeholder="Retweet our latest announcement to earn 50 points!"
-                    className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    rows="3"
-                    required
-                  ></textarea>
-                </div>
-                
-                <div>
-                  <label className="block text-gray-300 mb-2">
-                    Points
-                  </label>
-                  <input
-                    type="number"
-                    name="points"
-                    value={newRaid.points}
-                    onChange={handleInputChange}
-                    min="1"
-                    max="1000"
-                    className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+              <div className="mb-4">
+                <label className="block text-gray-300 mb-2">
+                  Tweet URL <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="tweetUrl"
+                  value={newRaid.tweetUrl}
+                  onChange={handleInputChange}
+                  placeholder="https://twitter.com/username/status/1234567890"
+                  className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+                <p className="text-gray-500 text-sm mt-2">
+                  Enter the URL of the tweet you want users to interact with.
+                  <br />
+                  A new raid will be created with standard values:
+                  <br />
+                  • Title: "Twitter Raid"
+                  <br />
+                  • Description: "Retweet, Like & Comment to earn 50 points!"
+                  <br />
+                  • Points: 50
+                </p>
               </div>
               
               <button
