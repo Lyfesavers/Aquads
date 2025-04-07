@@ -5,6 +5,7 @@ const User = require('../models/User');
 const auth = require('../middleware/auth');
 const pointsModule = require('./points');
 const axios = require('axios');
+const { twitterRaidRateLimit } = require('../middleware/rateLimiter');
 
 // Use the imported module function
 const awardSocialMediaPoints = pointsModule.awardSocialMediaPoints;
@@ -130,10 +131,11 @@ const verifyTweetUrl = async (tweetUrl) => {
   }
 };
 
-// Complete a Twitter raid
-router.post('/:id/complete', auth, async (req, res) => {
+// Complete a Twitter raid with rate limiting
+router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
   try {
     const { twitterUsername, verificationCode, tweetUrl } = req.body;
+    const ipAddress = req.ip || req.connection.remoteAddress;
     
     if (!twitterUsername) {
       return res.status(400).json({ error: 'Twitter username is required' });
@@ -203,7 +205,7 @@ router.post('/:id/complete', auth, async (req, res) => {
       // Save the user with new points
       await user.save();
       
-      // Then record the completion
+      // Then record the completion with IP tracking
       raid.completions.push({
         userId: req.user.userId,
         twitterUsername,
@@ -211,6 +213,7 @@ router.post('/:id/complete', auth, async (req, res) => {
         verificationMethod,
         tweetUrl: tweetUrl || null,
         verified: true,
+        ipAddress, // Store IP address
         verificationNote,
         completedAt: new Date()
       });
@@ -250,6 +253,68 @@ router.get('/user/completed', auth, async (req, res) => {
   } catch (error) {
     console.error('Error fetching completed Twitter raids:', error);
     res.status(500).json({ error: 'Failed to fetch completed Twitter raids' });
+  }
+});
+
+// Admin endpoint to check for suspicious activity
+router.get('/suspicious', auth, async (req, res) => {
+  try {
+    // Only admins can access this endpoint
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Unauthorized: Admin access required' });
+    }
+    
+    // Get all raids with completions
+    const raids = await TwitterRaid.find({
+      'completions.0': { $exists: true }
+    }).populate('completions.userId', 'username email');
+    
+    // Map to store completions by IP address
+    const ipMap = {};
+    
+    // Process each raid to find IP patterns
+    raids.forEach(raid => {
+      if (!raid.completions || raid.completions.length === 0) return;
+      
+      raid.completions.forEach(completion => {
+        if (!completion.ipAddress) return;
+        
+        if (!ipMap[completion.ipAddress]) {
+          ipMap[completion.ipAddress] = [];
+        }
+        
+        ipMap[completion.ipAddress].push({
+          userId: completion.userId._id || completion.userId,
+          username: completion.userId.username || 'Unknown',
+          raidId: raid._id,
+          title: raid.title,
+          timestamp: completion.completedAt
+        });
+      });
+    });
+    
+    // Find multiple accounts using the same IP
+    const suspiciousIPs = {};
+    
+    Object.keys(ipMap).forEach(ip => {
+      const completions = ipMap[ip];
+      
+      // Extract unique user IDs for this IP
+      const userIds = new Set(completions.map(c => c.userId.toString()));
+      
+      // If more than one user has completed raids from this IP
+      if (userIds.size > 1) {
+        suspiciousIPs[ip] = completions;
+      }
+    });
+    
+    res.json({
+      success: true,
+      suspiciousIPs
+    });
+  } catch (error) {
+    console.error('Error checking for suspicious activity:', error);
+    res.status(500).json({ error: 'Failed to check for suspicious activity' });
   }
 });
 

@@ -44,6 +44,10 @@ const twitterRaidSchema = new Schema({
       type: Boolean,
       default: false
     },
+    ipAddress: {
+      type: String,
+      default: null
+    },
     verificationNote: String,
     completedAt: {
       type: Date,
