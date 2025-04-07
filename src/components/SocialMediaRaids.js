@@ -569,17 +569,17 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           {raids.map(raid => (
             <div 
               key={raid._id}
-              className={`bg-gray-800/50 rounded-lg p-4 border cursor-pointer transition-all hover:shadow-lg ${
+              className={`bg-gray-800/50 rounded-lg p-4 border cursor-pointer relative transition-shadow transition-border duration-200 ${
                 safeSelectedRaid?._id === raid._id 
                   ? 'border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]' 
-                  : 'border-gray-700 hover:border-blue-500/50'
-              } relative`}
+                  : 'border-gray-700 hover:border-blue-500/50 hover:shadow-md'
+              }`}
               onClick={() => handleRaidClick(raid)}
             >
               {/* Admin Delete Button */}
               {currentUser?.isAdmin && (
                 <button
-                  className="absolute top-2 right-2 bg-red-500/20 hover:bg-red-500/40 text-red-400 p-1 rounded-full"
+                  className="absolute top-2 right-2 bg-red-500/20 hover:bg-red-500/40 text-red-400 rounded-full w-8 h-8 flex items-center justify-center z-10 transition-colors duration-200"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleDeleteRaid(raid._id);
