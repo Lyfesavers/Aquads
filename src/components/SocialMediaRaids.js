@@ -38,13 +38,24 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   }, [tweetUrl]);
 
   const loadTwitterWidgetScript = () => {
-    // Skip if already loaded
-    if (window.twttr) return;
-
-    const script = document.createElement('script');
-    script.src = 'https://platform.twitter.com/widgets.js';
-    script.async = true;
-    document.body.appendChild(script);
+    // Skip if already loaded or if we've already tried loading it
+    if (window.twttrLoaded) return;
+    
+    try {
+      window.twttrLoaded = true;
+      const script = document.createElement('script');
+      script.src = 'https://platform.twitter.com/widgets.js';
+      script.async = true;
+      script.onload = () => {
+        console.log('Twitter widgets script loaded');
+      };
+      script.onerror = () => {
+        console.error('Failed to load Twitter widgets script');
+      };
+      document.body.appendChild(script);
+    } catch (error) {
+      console.error('Error loading Twitter script:', error);
+    }
   };
 
   const extractTweetId = (url) => {
@@ -58,63 +69,43 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   };
 
   const embedTweet = (url) => {
-    // Skip if Twitter widgets not loaded yet
-    if (!window.twttr) {
-      console.log('Twitter widgets not loaded yet');
-      if (tweetEmbedRef.current) {
-        tweetEmbedRef.current.innerHTML = '<div class="p-4 text-gray-400">Loading Twitter widgets...</div>';
-      }
-      // Try loading again
-      loadTwitterWidgetScript();
-      return;
-    }
-
+    if (!tweetEmbedRef.current) return;
+    
     // Clear previous embed
-    if (tweetEmbedRef.current) {
-      tweetEmbedRef.current.innerHTML = '';
-    }
-
+    tweetEmbedRef.current.innerHTML = '';
+    
     const tweetId = extractTweetId(url);
     if (!tweetId) {
-      if (tweetEmbedRef.current) {
-        tweetEmbedRef.current.innerHTML = '<div class="p-4 text-red-400">Invalid tweet URL format</div>';
-      }
+      tweetEmbedRef.current.innerHTML = '<div class="p-4 text-red-400">Invalid tweet URL format</div>';
       return;
     }
-
+    
     // Show loading indicator
-    if (tweetEmbedRef.current) {
-      tweetEmbedRef.current.innerHTML = '<div class="flex items-center justify-center p-6"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>';
-    }
-
+    tweetEmbedRef.current.innerHTML = 
+      '<div class="flex items-center justify-center p-6">' +
+        '<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>' +
+      '</div>';
+    
     try {
-      window.twttr.widgets.createTweet(
-        tweetId,
-        tweetEmbedRef.current,
-        {
-          theme: 'dark',
-          dnt: true
-        }
-      ).then((el) => {
-        if (el) {
-          console.log('Tweet embedded successfully');
-        } else {
-          console.error('Failed to embed tweet');
-          if (tweetEmbedRef.current) {
-            tweetEmbedRef.current.innerHTML = '<div class="p-4 text-red-400">Could not embed this tweet. The tweet may be private, deleted, or unavailable.</div>';
-          }
-        }
-      }).catch(err => {
-        console.error('Error embedding tweet:', err);
-        if (tweetEmbedRef.current) {
-          tweetEmbedRef.current.innerHTML = '<div class="p-4 text-red-400">Error embedding tweet: ' + (err.message || 'Unknown error') + '</div>';
-        }
-      });
+      // Fallback to iframe embed which is more reliable than the widget API
+      const iframe = document.createElement('iframe');
+      
+      iframe.setAttribute('src', `https://platform.twitter.com/embed/Tweet.html?id=${tweetId}`);
+      iframe.setAttribute('width', '100%');
+      iframe.setAttribute('height', '400px');
+      iframe.setAttribute('frameBorder', '0');
+      iframe.setAttribute('scrolling', 'no');
+      iframe.style.borderRadius = '12px';
+      iframe.style.border = '1px solid rgba(75, 85, 99, 0.3)';
+      iframe.style.overflow = 'hidden';
+      iframe.style.backgroundColor = 'transparent';
+      
+      // Clear loading indicator and add the iframe
+      tweetEmbedRef.current.innerHTML = '';
+      tweetEmbedRef.current.appendChild(iframe);
     } catch (error) {
       console.error('Tweet embedding error:', error);
-      if (tweetEmbedRef.current) {
-        tweetEmbedRef.current.innerHTML = '<div class="p-4 text-red-400">Error embedding tweet: ' + (error.message || 'Unknown error') + '</div>';
-      }
+      tweetEmbedRef.current.innerHTML = '<div class="p-4 text-red-400">Error embedding tweet: ' + (error.message || 'Unknown error') + '</div>';
     }
   };
 
@@ -344,7 +335,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           <div>
             <h2 className="text-xl font-bold text-blue-400">Twitter Raids</h2>
             <p className="text-gray-300 mt-2">
-              Complete Twitter tasks to earn 50 points with automated verification!
+              Complete Twitter tasks to earn points with automated verification!
             </p>
           </div>
           
@@ -667,4 +658,4 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   );
 };
 
-export default SocialMediaRaids; 
+export default SocialMediaRaids;
