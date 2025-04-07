@@ -47,46 +47,80 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     document.body.appendChild(script);
   };
 
-  const embedTweet = (url) => {
-    // Skip if Twitter widgets not loaded yet
-    if (!window.twttr) return;
-
-    // Clear previous embed
-    if (tweetEmbedRef.current) {
-      tweetEmbedRef.current.innerHTML = '';
-    }
-
-    window.twttr.widgets.load(tweetEmbedRef.current);
-    
-    window.twttr.widgets.createTweet(
-      extractTweetId(url),
-      tweetEmbedRef.current,
-      {
-        theme: 'dark'
-      }
-    ).then((el) => {
-      if (el) {
-        console.log('Tweet embedded successfully');
-      } else {
-        console.error('Failed to embed tweet');
-      }
-    });
-  };
-
   const extractTweetId = (url) => {
     const match = url.match(/\/status\/(\d+)/);
     return match ? match[1] : null;
   };
 
   const generateVerificationCode = () => {
-    const prefix = 'AQ';
-    const randomChars = Math.random().toString(36).substring(2, 8);
-    return `${prefix}${randomChars}`;
+    // Always use aquads.xyz as the verification code
+    return 'aquads.xyz';
+  };
+
+  const embedTweet = (url) => {
+    // Skip if Twitter widgets not loaded yet
+    if (!window.twttr) {
+      console.log('Twitter widgets not loaded yet');
+      if (tweetEmbedRef.current) {
+        tweetEmbedRef.current.innerHTML = '<div class="p-4 text-gray-400">Loading Twitter widgets...</div>';
+      }
+      // Try loading again
+      loadTwitterWidgetScript();
+      return;
+    }
+
+    // Clear previous embed
+    if (tweetEmbedRef.current) {
+      tweetEmbedRef.current.innerHTML = '';
+    }
+
+    const tweetId = extractTweetId(url);
+    if (!tweetId) {
+      if (tweetEmbedRef.current) {
+        tweetEmbedRef.current.innerHTML = '<div class="p-4 text-red-400">Invalid tweet URL format</div>';
+      }
+      return;
+    }
+
+    // Show loading indicator
+    if (tweetEmbedRef.current) {
+      tweetEmbedRef.current.innerHTML = '<div class="flex items-center justify-center p-6"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>';
+    }
+
+    try {
+      window.twttr.widgets.createTweet(
+        tweetId,
+        tweetEmbedRef.current,
+        {
+          theme: 'dark',
+          dnt: true
+        }
+      ).then((el) => {
+        if (el) {
+          console.log('Tweet embedded successfully');
+        } else {
+          console.error('Failed to embed tweet');
+          if (tweetEmbedRef.current) {
+            tweetEmbedRef.current.innerHTML = '<div class="p-4 text-red-400">Could not embed this tweet. The tweet may be private, deleted, or unavailable.</div>';
+          }
+        }
+      }).catch(err => {
+        console.error('Error embedding tweet:', err);
+        if (tweetEmbedRef.current) {
+          tweetEmbedRef.current.innerHTML = '<div class="p-4 text-red-400">Error embedding tweet: ' + (err.message || 'Unknown error') + '</div>';
+        }
+      });
+    } catch (error) {
+      console.error('Tweet embedding error:', error);
+      if (tweetEmbedRef.current) {
+        tweetEmbedRef.current.innerHTML = '<div class="p-4 text-red-400">Error embedding tweet: ' + (error.message || 'Unknown error') + '</div>';
+      }
+    }
   };
 
   const verifyUserCompletion = async () => {
-    if (!twitterUsername || !verificationCode) {
-      setError('Please provide your Twitter username and verification code');
+    if (!twitterUsername) {
+      setError('Please provide your Twitter username');
       return false;
     }
 
@@ -97,23 +131,15 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       if (tweetUrl) {
         const tweetId = extractTweetId(tweetUrl);
         if (!tweetId) {
-          throw new Error('Invalid tweet URL');
+          throw new Error('Invalid tweet URL format');
         }
 
-        // Here you would parse the embedded tweet content to verify
-        // For now we're just checking if the tweet can be embedded
-        const embeddedTweet = tweetEmbedRef.current;
-        
-        if (!embeddedTweet || embeddedTweet.innerHTML === '') {
-          throw new Error("We couldn't verify your tweet. Make sure the URL is correct.");
-        }
-
-        // Success! We were able to embed the tweet
+        // For a more reliable approach, we'll just check if the URL looks valid
+        // and let the server handle verification
         return true;
       } else {
-        // This is for reply verification
-        // For a real implementation, you'd check if the reply contains the verification code
-        return true;
+        // For this implementation, we require a tweet URL
+        throw new Error('Please provide the URL of your tweet or reply that includes "aquads.xyz"');
       }
     } catch (err) {
       console.error("Verification error:", err);
@@ -519,16 +545,16 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                 </div>
                 
                 <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-4">
-                  <h4 className="text-blue-400 font-semibold mb-1">Your Unique Verification Code</h4>
+                  <h4 className="text-blue-400 font-semibold mb-1">Verification Tag</h4>
                   <div className="bg-gray-800 p-3 rounded flex items-center justify-between mb-2">
                     <code className="text-green-400 font-mono text-lg">{verificationCode}</code>
                     <button 
                       onClick={() => {
                         navigator.clipboard.writeText(verificationCode);
-                        showNotification('Verification code copied!', 'success');
+                        showNotification('Verification tag copied!', 'success');
                       }}
                       className="bg-gray-700 hover:bg-gray-600 text-gray-300 p-1 rounded"
-                      title="Copy code"
+                      title="Copy tag"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
@@ -536,7 +562,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                     </button>
                   </div>
                   <p className="text-gray-400 text-sm">
-                    Include this code in your reply or retweet to verify your completion automatically.
+                    Include <span className="text-green-400 font-semibold">aquads.xyz</span> in your tweet/reply so we can verify your participation.
                   </p>
                 </div>
   
@@ -562,7 +588,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   
                   <div className="mb-4">
                     <label className="block text-gray-300 mb-2">
-                      Your Tweet/Reply URL <span className="text-gray-500">(with your verification code)</span>
+                      Your Tweet/Reply URL <span className="text-gray-500">(must include "aquads.xyz")</span>
                     </label>
                     <input
                       type="text"
@@ -570,9 +596,10 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                       placeholder="https://twitter.com/username/status/1234567890"
                       value={tweetUrl}
                       onChange={(e) => setTweetUrl(e.target.value)}
+                      required
                     />
                     <p className="text-gray-500 text-sm mt-2">
-                      Copy the URL of your tweet/reply that contains the verification code.
+                      After replying to the tweet with "aquads.xyz", copy and paste your reply's URL here.
                     </p>
                   </div>
                   
@@ -625,11 +652,11 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
               <div className="mt-4 bg-gray-800/70 rounded p-3 border border-gray-700">
                 <h5 className="text-gray-300 font-medium mb-2">How verification works:</h5>
                 <ol className="list-decimal list-inside text-gray-400 text-sm space-y-2">
-                  <li>Copy your unique verification code</li>
-                  <li>Go to the tweet and reply with a message that includes your code</li>
-                  <li>Copy the URL of your reply and paste it above</li>
-                  <li>Our system will automatically verify your interaction</li>
-                  <li>Earn points instantly upon verification!</li>
+                  <li>Go to the tweet via the "Go to Tweet" button</li>
+                  <li>Reply to the tweet with a message that includes "aquads.xyz"</li>
+                  <li>Copy the URL of your reply and paste it in the field above</li>
+                  <li>The system will verify your participation</li>
+                  <li>You'll earn points once verified!</li>
                 </ol>
               </div>
             </div>
