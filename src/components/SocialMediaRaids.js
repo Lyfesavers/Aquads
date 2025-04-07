@@ -13,6 +13,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [verificationCode, setVerificationCode] = useState('');
   const [verifyingTweet, setVerifyingTweet] = useState(false);
   const [tweetUrl, setTweetUrl] = useState('');
+  const [isValidUrl, setIsValidUrl] = useState(true);
   const tweetEmbedRef = useRef(null);
   
   // For admin creation
@@ -59,8 +60,44 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   };
 
   const extractTweetId = (url) => {
-    const match = url.match(/\/status\/(\d+)/);
-    return match ? match[1] : null;
+    if (!url) return null;
+    
+    try {
+      // Handle cases where someone might paste "@URL" by mistake
+      const cleanUrl = url.startsWith('@') ? url.substring(1) : url;
+      
+      // Try to parse as a URL first
+      let parsedUrl;
+      try {
+        parsedUrl = new URL(cleanUrl);
+      } catch (e) {
+        // If it's not a valid URL, try adding https://
+        if (!cleanUrl.startsWith('http')) {
+          try {
+            parsedUrl = new URL(`https://${cleanUrl}`);
+          } catch (err) {
+            return null;
+          }
+        } else {
+          return null;
+        }
+      }
+      
+      // Check if it's a Twitter or X domain
+      if (!parsedUrl.hostname.includes('twitter.com') && !parsedUrl.hostname.includes('x.com')) {
+        return null;
+      }
+      
+      // Extract ID from pathname
+      const match = parsedUrl.pathname.match(/\/status\/(\d+)/);
+      return match ? match[1] : null;
+    } catch (error) {
+      console.error('Error parsing tweet URL:', error);
+      
+      // Fallback to regex for simpler validation
+      const match = url.match(/(?:twitter\.com|x\.com)\/[^\/]+\/status\/(\d+)/i);
+      return match ? match[1] : null;
+    }
   };
 
   const generateVerificationCode = () => {
@@ -118,20 +155,20 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     setVerifyingTweet(true);
 
     try {
-      // If it's a reply, submit the URL directly
-      if (tweetUrl) {
-        const tweetId = extractTweetId(tweetUrl);
-        if (!tweetId) {
-          throw new Error('Invalid tweet URL format');
-        }
-
-        // For a more reliable approach, we'll just check if the URL looks valid
-        // and let the server handle verification
-        return true;
-      } else {
-        // For this implementation, we require a tweet URL
-        throw new Error('Please provide the URL of your tweet or reply that includes "aquads.xyz"');
+      // Validate tweet URL format first
+      if (!validateTweetUrl(tweetUrl)) {
+        throw new Error('Invalid tweet URL format. Please use the format: https://x.com/username/status/1234567890');
       }
+
+      // If URL format is valid, proceed with verification
+      const tweetId = extractTweetId(tweetUrl);
+      if (!tweetId) {
+        throw new Error('Could not extract tweet ID from the URL. Please check the format.');
+      }
+
+      // For a more reliable approach, we'll just check if the URL looks valid
+      // and let the server handle verification
+      return true;
     } catch (err) {
       console.error("Verification error:", err);
       setError(err.message || "We couldn't verify your interaction with the tweet");
@@ -160,12 +197,24 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     }
   };
 
+  const validateTweetUrl = (url) => {
+    if (!url) {
+      setIsValidUrl(true); // Empty is not invalid yet
+      return true;
+    }
+    
+    const tweetId = extractTweetId(url);
+    setIsValidUrl(!!tweetId);
+    return !!tweetId;
+  };
+
   const handleRaidClick = (raid) => {
     setSelectedRaid(raid);
     setTwitterUsername('');
     setError(null);
     setSuccess(null);
     setTweetUrl('');
+    setIsValidUrl(true);
     // Generate a new verification code for the user
     setVerificationCode(generateVerificationCode());
   };
@@ -583,14 +632,27 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                     </label>
                     <input
                       type="text"
-                      className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="https://twitter.com/username/status/1234567890"
+                      className={`w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 ${
+                        tweetUrl && !isValidUrl ? 'border border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'
+                      }`}
+                      placeholder="https://x.com/username/status/1234567890"
                       value={tweetUrl}
-                      onChange={(e) => setTweetUrl(e.target.value)}
+                      onChange={(e) => {
+                        setTweetUrl(e.target.value);
+                        validateTweetUrl(e.target.value);
+                      }}
                       required
                     />
+                    {tweetUrl && !isValidUrl && (
+                      <p className="text-red-400 text-sm mt-1 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        Invalid URL format. Use format: https://x.com/username/status/1234567890
+                      </p>
+                    )}
                     <p className="text-gray-500 text-sm mt-2">
-                      After replying to the tweet with "aquads.xyz", copy and paste your reply's URL here.
+                      After replying to the tweet with "aquads.xyz", copy and paste your reply's URL here. Make sure it contains "status" in the URL.
                     </p>
                   </div>
                   

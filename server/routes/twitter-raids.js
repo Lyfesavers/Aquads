@@ -86,15 +86,23 @@ router.delete('/:id', auth, async (req, res) => {
 // Helper function to verify tweet URL format and existence
 const verifyTweetUrl = async (tweetUrl) => {
   try {
-    // Check if the URL is valid
-    if (!tweetUrl.match(/twitter\.com\/[^\/]+\/status\/\d+/)) {
-      return { success: false, error: 'Invalid tweet URL format' };
+    // Check if the URL is valid - supports both twitter.com and x.com domains
+    if (!tweetUrl.match(/(?:twitter\.com|x\.com)\/[^\/]+\/status\/\d+/i)) {
+      return { success: false, error: 'Invalid tweet URL format. URL should look like: https://twitter.com/username/status/1234567890 or https://x.com/username/status/1234567890' };
     }
     
     // Try to fetch the tweet to see if it exists
-    // We're just checking if the URL is valid, not parsing content
     try {
-      const response = await axios.head(tweetUrl, {
+      // Extract the tweet ID from the URL
+      const tweetIdMatch = tweetUrl.match(/\/status\/(\d+)/);
+      const tweetId = tweetIdMatch ? tweetIdMatch[1] : null;
+      
+      if (!tweetId) {
+        return { success: false, error: 'Could not extract tweet ID from URL' };
+      }
+      
+      // Try to fetch the tweet
+      const response = await axios.head(`https://twitter.com/i/status/${tweetId}`, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         },
