@@ -242,6 +242,17 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     setError(null);
     
     try {
+      // Validate URL one more time before submission
+      if (!tweetUrl || !validateTweetUrl(tweetUrl)) {
+        throw new Error('Please provide a valid tweet URL');
+      }
+      
+      console.log('Submitting raid completion:', {
+        twitterUsername,
+        tweetUrl,
+        raidId: selectedRaid?._id
+      });
+      
       const response = await fetch(`${API_URL}/api/twitter-raids/${selectedRaid._id}/complete`, {
         method: 'POST',
         headers: {
@@ -255,9 +266,19 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         })
       });
       
-      const data = await response.json();
+      // Get the raw text first to see if there's an error in JSON parsing
+      const responseText = await response.text();
+      let data;
+      
+      try {
+        data = JSON.parse(responseText);
+      } catch (jsonError) {
+        console.error('Error parsing response JSON:', responseText);
+        throw new Error('Server returned an invalid response. Please try again later.');
+      }
       
       if (!response.ok) {
+        console.error('API Error:', data);
         throw new Error(data.error || 'Failed to complete raid');
       }
       
@@ -271,7 +292,17 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       // Notify the user
       showNotification(data.message || 'Successfully completed Twitter raid!', 'success');
     } catch (err) {
-      setError(err.message || 'Failed to submit task. Please try again.');
+      console.error('Task submission error:', err);
+      
+      // Display more helpful error message if the server gave us one
+      if (err.message && err.message.includes('TwitterRaid validation failed')) {
+        setError('There was a validation error with your submission. Please contact support.');
+      } else {
+        setError(err.message || 'Failed to submit task. Please try again.');
+      }
+      
+      // Notify with error
+      showNotification(err.message || 'Error completing raid', 'error');
     } finally {
       setSubmitting(false);
     }
