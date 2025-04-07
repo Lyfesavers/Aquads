@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
+// Add this delay utility function at the top of the component
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [raids, setRaids] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +37,15 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   useEffect(() => {
     // When tweet URL changes, try to embed it
     if (tweetUrl) {
-      embedTweet(tweetUrl);
+      try {
+        embedTweet(tweetUrl);
+      } catch (error) {
+        console.error('Error in tweet embed useEffect:', error);
+        // Don't let embed errors crash the component
+        if (tweetEmbedRef.current) {
+          tweetEmbedRef.current.innerHTML = '<div class="p-4 text-red-400">Error embedding tweet. Please check URL format.</div>';
+        }
+      }
     }
   }, [tweetUrl]);
 
@@ -222,30 +233,33 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const handleSubmitTask = async (e) => {
     e.preventDefault();
     
-    if (!currentUser) {
-      showNotification('Please log in to complete Twitter raids', 'error');
-      return;
-    }
-
-    if (!twitterUsername) {
-      setError('Please provide your Twitter username');
-      return;
-    }
-
-    // Run verification check
-    const verified = await verifyUserCompletion();
-    if (!verified) {
-      return;
-    }
-
-    setSubmitting(true);
-    setError(null);
-    
     try {
+      if (!currentUser) {
+        showNotification('Please log in to complete Twitter raids', 'error');
+        return;
+      }
+
+      if (!twitterUsername) {
+        setError('Please provide your Twitter username');
+        return;
+      }
+
+      // Run verification check
+      const verified = await verifyUserCompletion();
+      if (!verified) {
+        return;
+      }
+
+      setSubmitting(true);
+      setError(null);
+      
       // Validate URL one more time before submission
       if (!tweetUrl || !validateTweetUrl(tweetUrl)) {
         throw new Error('Please provide a valid tweet URL');
       }
+
+      // Add a short delay to prevent screen going blank during submission
+      await delay(100);
       
       console.log('Submitting raid completion:', {
         twitterUsername,
@@ -253,7 +267,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         raidId: selectedRaid?._id
       });
       
-      const response = await fetch(`${API_URL}/api/twitter-raids/${selectedRaid._id}/complete`, {
+      // Use fetchWithDelay instead of fetch
+      const response = await fetchWithDelay(`${API_URL}/api/twitter-raids/${selectedRaid._id}/complete`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -268,6 +283,10 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       
       // Get the raw text first to see if there's an error in JSON parsing
       const responseText = await response.text();
+      
+      // Add another small delay before updating state
+      await delay(100);
+      
       let data;
       
       try {
@@ -282,15 +301,23 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         throw new Error(data.error || 'Failed to complete raid');
       }
       
+      console.log('Success response:', data);
+      
+      // Set success message with a delay to prevent UI issues
+      await delay(100);
       setSuccess(data.message || 'Task completed! You earned points.');
+      
+      // Clear inputs after confirmed success
       setTwitterUsername('');
       setTweetUrl('');
       
-      // Refresh raids list
-      fetchRaids();
-      
       // Notify the user
       showNotification(data.message || 'Successfully completed Twitter raid!', 'success');
+      
+      // After a delay, refresh the raids list to show completion
+      setTimeout(() => {
+        fetchRaids();
+      }, 500);
     } catch (err) {
       console.error('Task submission error:', err);
       
@@ -404,9 +431,53 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     }));
   };
 
+  // Add this safety function to check if raid object is valid
+  const isValidRaid = (raid) => {
+    return raid && raid._id && typeof raid._id === 'string';
+  };
+
+  // Use setTimeout in the fetch function to prevent screen going blank
+  const fetchWithDelay = async (url, options) => {
+    try {
+      // Introduce a minimal delay to prevent rendering issues
+      await delay(100);
+      const response = await fetch(url, options);
+      return response;
+    } catch (error) {
+      console.error("Fetch with delay error:", error);
+      throw error;
+    }
+  };
+
+  // Add this wrapper function around the form submission
+  const safeHandleSubmit = (e) => {
+    try {
+      // Add a short preventive delay to avoid UI freezing
+      setTimeout(() => {
+        try {
+          handleSubmitTask(e);
+        } catch (innerError) {
+          console.error("Error in delayed submit:", innerError);
+          setError("An error occurred during submission. Please try again.");
+          setSubmitting(false);
+        }
+      }, 50);
+    } catch (outerError) {
+      console.error("Error in submit wrapper:", outerError);
+      setError("An error occurred. Please try again.");
+      setSubmitting(false);
+    }
+    
+    // Return false to prevent default form submission
+    return false;
+  };
+
   if (loading && raids.length === 0) {
     return <div className="text-center p-4">Loading Twitter raids...</div>;
   }
+
+  // Add safety check for selectedRaid before rendering detail view
+  const safeSelectedRaid = selectedRaid && isValidRaid(selectedRaid) ? selectedRaid : null;
 
   return (
     <div className="bg-gray-900/50 backdrop-blur-sm rounded-lg overflow-hidden">
@@ -527,7 +598,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
             <div 
               key={raid._id}
               className={`bg-gray-800/50 rounded-lg p-4 border cursor-pointer transition-all hover:shadow-lg ${
-                selectedRaid?._id === raid._id 
+                safeSelectedRaid?._id === raid._id 
                   ? 'border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]' 
                   : 'border-gray-700 hover:border-blue-500/50'
               } relative`}
@@ -592,18 +663,18 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         </div>
       )}
 
-      {selectedRaid && (
+      {safeSelectedRaid && (
         <div className="mt-4 p-4 border-t border-gray-700">
-          <h3 className="text-lg font-bold text-white mb-4">Complete: {selectedRaid.title}</h3>
+          <h3 className="text-lg font-bold text-white mb-4">Complete: {safeSelectedRaid.title}</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
               <div className="mb-4">
                 <div className="bg-gray-800/70 p-4 rounded-lg mb-4">
                   <h4 className="text-white font-semibold mb-2">Task Instructions</h4>
-                  <p className="text-gray-300 mb-3">{selectedRaid.description}</p>
+                  <p className="text-gray-300 mb-3">{safeSelectedRaid.description}</p>
                   <a 
-                    href={selectedRaid.tweetUrl} 
+                    href={safeSelectedRaid.tweetUrl} 
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className="bg-blue-600/30 hover:bg-blue-600/50 text-blue-400 px-4 py-2 rounded inline-flex items-center"
@@ -637,7 +708,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   </p>
                 </div>
   
-                <form onSubmit={handleSubmitTask}>
+                <form onSubmit={safeHandleSubmit}>
                   <div className="mb-4">
                     <label className="block text-gray-300 mb-2">
                       Your Twitter Username <span className="text-gray-500">(@username)</span>
@@ -663,92 +734,4 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                     </label>
                     <input
                       type="text"
-                      className={`w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 ${
-                        tweetUrl && !isValidUrl ? 'border border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'
-                      }`}
-                      placeholder="https://x.com/username/status/1234567890"
-                      value={tweetUrl}
-                      onChange={(e) => {
-                        setTweetUrl(e.target.value);
-                        validateTweetUrl(e.target.value);
-                      }}
-                      required
-                    />
-                    {tweetUrl && !isValidUrl && (
-                      <p className="text-red-400 text-sm mt-1 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                        </svg>
-                        Invalid URL format. Use format: https://x.com/username/status/1234567890
-                      </p>
-                    )}
-                    <p className="text-gray-500 text-sm mt-2">
-                      After replying to the tweet with "aquads.xyz", copy and paste your reply's URL here. Make sure it contains "status" in the URL.
-                    </p>
-                  </div>
-                  
-                  {error && (
-                    <div className="bg-red-500/20 border border-red-500/50 text-red-400 p-3 rounded mb-4">
-                      {error}
-                    </div>
-                  )}
-                  
-                  {success && (
-                    <div className="bg-green-500/20 border border-green-500/50 text-green-400 p-3 rounded mb-4">
-                      {success}
-                    </div>
-                  )}
-                  
-                  <button
-                    type="submit"
-                    disabled={submitting || verifyingTweet}
-                    className={`w-full px-4 py-2 rounded font-medium ${
-                      submitting || verifyingTweet
-                        ? 'bg-gray-600 cursor-not-allowed'
-                        : 'bg-blue-600 hover:bg-blue-700'
-                    } text-white`}
-                  >
-                    {verifyingTweet ? 'Verifying Tweet...' : submitting ? 'Submitting...' : 'Verify & Complete Task'}
-                  </button>
-                </form>
-              </div>
-            </div>
-            
-            <div className="bg-gray-800/30 p-4 rounded-lg">
-              <h4 className="text-white font-semibold mb-3">Tweet Preview</h4>
-              {tweetUrl ? (
-                <div
-                  ref={tweetEmbedRef}
-                  className="w-full bg-gray-800/50 rounded-lg overflow-hidden min-h-[300px] flex items-center justify-center"
-                >
-                  <div className="text-gray-400">Loading tweet...</div>
-                </div>
-              ) : (
-                <div className="w-full bg-gray-800/50 rounded-lg p-6 flex flex-col items-center justify-center text-center min-h-[300px]">
-                  <svg className="w-12 h-12 text-gray-500 mb-3" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                  </svg>
-                  <p className="text-gray-400 mb-2">Enter your tweet or reply URL to see the preview</p>
-                  <p className="text-gray-500 text-sm">This helps us verify your task completion</p>
-                </div>
-              )}
-              
-              <div className="mt-4 bg-gray-800/70 rounded p-3 border border-gray-700">
-                <h5 className="text-gray-300 font-medium mb-2">How verification works:</h5>
-                <ol className="list-decimal list-inside text-gray-400 text-sm space-y-2">
-                  <li>Go to the tweet via the "Go to Tweet" button</li>
-                  <li>Reply to the tweet with a message that includes "aquads.xyz"</li>
-                  <li>Copy the URL of your reply and paste it in the field above</li>
-                  <li>The system will verify your participation</li>
-                  <li>You'll earn points once verified!</li>
-                </ol>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default SocialMediaRaids;
+                      className={`
