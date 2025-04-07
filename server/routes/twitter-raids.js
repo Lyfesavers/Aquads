@@ -159,7 +159,7 @@ router.post('/:id/complete', auth, async (req, res) => {
     }
 
     // Verify tweet URL format only (skip API validation to avoid potential issues)
-    let verificationMethod = 'client_side';
+    let verificationMethod = 'tweet_embed';
     let verificationNote = 'Verified through client-side tweet embedding';
     
     if (tweetUrl) {
