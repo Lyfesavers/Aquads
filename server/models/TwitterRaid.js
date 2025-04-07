@@ -27,29 +27,46 @@ const twitterRaidSchema = new Schema({
     ref: 'User',
     required: true
   },
-  completions: [{
-    userId: {
-      type: Schema.Types.ObjectId,
-      ref: 'User'
-    },
-    twitterUsername: String,
-    tweetUrl: String,
-    verificationCode: String,
-    verificationMethod: {
-      type: String,
-      enum: ['automatic', 'manual', 'tweet_embed', 'client_side'],
-      default: 'automatic'
-    },
-    verified: {
-      type: Boolean,
-      default: false
-    },
-    verificationNote: String,
-    completedAt: {
-      type: Date,
-      default: Date.now
+  completions: [
+    {
+      userId: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+      },
+      twitterUsername: {
+        type: String,
+        required: true
+      },
+      tweetUrl: {
+        type: String,
+        required: true
+      },
+      status: {
+        type: String,
+        enum: ['pending', 'approved', 'rejected'],
+        default: 'pending'
+      },
+      ipAddress: {
+        type: String,
+        default: null
+      },
+      ownershipVerified: {
+        type: Boolean,
+        default: false
+      },
+      completedAt: {
+        type: Date,
+        default: Date.now
+      },
+      verifiedAt: Date,
+      verifiedBy: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      rejectionReason: String
     }
-  }],
+  ],
   active: {
     type: Boolean,
     default: true

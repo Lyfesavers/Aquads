@@ -5,6 +5,8 @@ const User = require('../models/User');
 const auth = require('../middleware/auth');
 const pointsModule = require('./points');
 const axios = require('axios');
+const { twitterRaidRateLimit } = require('../middleware/rateLimiter');
+const { verifyTweetOwnership } = require('../utils/tweetUtils');
 
 // Use the imported module function
 const awardSocialMediaPoints = pointsModule.awardSocialMediaPoints;
@@ -130,112 +132,76 @@ const verifyTweetUrl = async (tweetUrl) => {
   }
 };
 
-// Complete a Twitter raid
-router.post('/:id/complete', auth, async (req, res) => {
+// Twitter Raid completion endpoint with rate limiting and security
+router.post('/complete/:id', [auth, twitterRaidRateLimit], async (req, res) => {
   try {
-    const { twitterUsername, verificationCode, tweetUrl } = req.body;
+    const { tweetUrl, twitterUsername } = req.body;
     
-    if (!twitterUsername) {
-      return res.status(400).json({ error: 'Twitter username is required' });
+    if (!tweetUrl || !twitterUsername) {
+      return res.status(400).json({ 
+        error: 'Missing required fields: tweetUrl and twitterUsername are required.' 
+      });
     }
-
+    
+    // Extract the request IP address (using headers for proxied setups)
+    const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    
+    // Validate tweet URL format before proceeding
+    if (!tweetUrl.includes('/status/')) {
+      return res.status(400).json({
+        error: 'Invalid tweet URL format. URL must include "/status/" and be a direct link to the tweet.'
+      });
+    }
+    
+    // Verify that the tweet URL belongs to the provided Twitter username
+    const ownershipVerification = verifyTweetOwnership(tweetUrl, twitterUsername);
+    
+    // Check for verification failures
+    if (!ownershipVerification.success) {
+      // Log the verification attempt for suspicious activity monitoring
+      console.log(`Tweet ownership verification failed for user ${req.user.id}:`, ownershipVerification.message);
+      
+      return res.status(400).json({
+        error: `Tweet ownership verification failed: ${ownershipVerification.message}`
+      });
+    }
+    
     const raid = await TwitterRaid.findById(req.params.id);
     
     if (!raid) {
-      return res.status(404).json({ error: 'Twitter raid not found' });
+      return res.status(404).json({ error: 'Twitter raid not found.' });
     }
-
-    if (!raid.active) {
-      return res.status(400).json({ error: 'This Twitter raid is no longer active' });
-    }
-
-    // Check if user already completed this raid
-    const alreadyCompleted = raid.completions.some(
-      completion => completion.userId.toString() === req.user.userId
+    
+    // Check if user has already completed this raid
+    const existingCompletion = raid.completions.find(
+      completion => completion.userId.toString() === req.user.id
     );
     
-    if (alreadyCompleted) {
-      return res.status(400).json({ error: 'You have already completed this raid' });
+    if (existingCompletion) {
+      return res.status(400).json({ error: 'You have already completed this raid.' });
     }
-
-    // Verify tweet URL format only (skip API validation to avoid potential issues)
-    let verificationMethod = 'tweet_embed';
-    let verificationNote = 'Verified through client-side tweet embedding';
     
-    if (tweetUrl) {
-      // Just check basic URL format
-      const isValidFormat = !!tweetUrl.match(/(?:twitter\.com|x\.com)\/[^\/]+\/status\/\d+/i);
-      
-      if (!isValidFormat) {
-        return res.status(400).json({ 
-          error: 'Invalid tweet URL format. URL should look like: https://twitter.com/username/status/1234567890 or https://x.com/username/status/1234567890' 
-        });
-      }
-      
-      // Check if URL contains "aquads.xyz" (case insensitive) - only as a note, not a requirement
-      const containsVerificationTag = tweetUrl.toLowerCase().includes('aquads.xyz');
-      if (!containsVerificationTag) {
-        verificationNote = 'URL does not contain verification tag, but accepted';
-      } else {
-        verificationNote = 'Tweet URL format verified with verification tag';
-      }
-    }
-
-    // First award points directly to ensure the user gets them
-    try {
-      // Award points directly - this is the important part that needs to work
-      const pointsAmount = raid.points || 50;
-      const user = await User.findById(req.user.userId);
-      
-      if (!user) {
-        throw new Error('User not found');
-      }
-      
-      // Award points directly on the user object
-      user.points += pointsAmount;
-      user.pointsHistory.push({
-        amount: pointsAmount,
-        reason: `Completed Twitter raid: ${raid.title}`,
-        socialRaidId: raid._id,
-        createdAt: new Date()
-      });
-      
-      // Save the user with new points
-      await user.save();
-      
-      // Then record the completion
-      raid.completions.push({
-        userId: req.user.userId,
-        twitterUsername,
-        verificationCode,
-        verificationMethod,
-        tweetUrl: tweetUrl || null,
-        verified: true,
-        verificationNote,
-        completedAt: new Date()
-      });
-      
-      await raid.save();
-      
-      // Success response
-      res.json({
-        success: true,
-        message: `Twitter raid completed successfully! You earned ${pointsAmount} points.`,
-        note: 'Your submission has been recorded. Thank you for participating!',
-        pointsAwarded: pointsAmount,
-        currentPoints: user.points
-      });
-    } catch (error) {
-      console.error('Error in Twitter raid completion:', error);
-      res.status(500).json({ 
-        error: 'Failed to complete Twitter raid: ' + (error.message || 'Unknown error')
-      });
-    }
+    // Add the completion with IP address for tracking
+    raid.completions.push({
+      userId: req.user.id,
+      tweetUrl,
+      twitterUsername,
+      status: 'pending',
+      ipAddress,
+      completedAt: new Date(),
+      ownershipVerified: ownershipVerification.success
+    });
+    
+    await raid.save();
+    
+    // Return success without details about IP tracking to the user
+    res.json({
+      success: true,
+      message: 'Twitter raid completed successfully. Verification pending.'
+    });
   } catch (error) {
     console.error('Error completing Twitter raid:', error);
-    res.status(500).json({ 
-      error: 'Failed to complete Twitter raid: ' + (error.message || 'Unknown error') 
-    });
+    res.status(500).json({ error: 'An error occurred while completing the Twitter raid' });
   }
 });
 
@@ -250,6 +216,105 @@ router.get('/user/completed', auth, async (req, res) => {
   } catch (error) {
     console.error('Error fetching completed Twitter raids:', error);
     res.status(500).json({ error: 'Failed to fetch completed Twitter raids' });
+  }
+});
+
+// Admin endpoint to check for suspicious activity
+router.get('/suspicious', auth, async (req, res) => {
+  try {
+    // Only admins can access this endpoint
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Unauthorized: Admin access required' });
+    }
+    
+    // Get all raids with completions
+    const raids = await TwitterRaid.find({
+      'completions.0': { $exists: true }
+    }).populate('completions.userId', 'username email');
+    
+    // Track suspicious activities
+    const suspiciousActivities = {
+      multipleAccountsPerIP: {},
+      rapidCompletions: []
+    };
+    
+    // Map to store completions by IP address
+    const ipMap = {};
+    
+    // Process each raid
+    raids.forEach(raid => {
+      if (!raid.completions || raid.completions.length === 0) return;
+      
+      // Sort completions by timestamp
+      const sortedCompletions = [...raid.completions].sort((a, b) => 
+        new Date(a.completedAt) - new Date(b.completedAt)
+      );
+      
+      // Check for rapid completions (within 5 seconds)
+      for (let i = 0; i < sortedCompletions.length - 1; i++) {
+        const current = sortedCompletions[i];
+        const next = sortedCompletions[i + 1];
+        
+        const timeDiff = new Date(next.completedAt) - new Date(current.completedAt);
+        
+        // If completions are less than 5 seconds apart and by different users
+        if (timeDiff < 5000 && current.userId.toString() !== next.userId.toString()) {
+          suspiciousActivities.rapidCompletions.push({
+            raidId: raid._id,
+            title: raid.title,
+            timeDiff: `${timeDiff}ms`,
+            user1: {
+              id: current.userId._id || current.userId,
+              username: current.userId.username || 'Unknown',
+              timestamp: current.completedAt
+            },
+            user2: {
+              id: next.userId._id || next.userId,
+              username: next.userId.username || 'Unknown',
+              timestamp: next.completedAt
+            }
+          });
+        }
+      }
+      
+      // Track completions by IP
+      sortedCompletions.forEach(completion => {
+        if (!completion.ipAddress) return;
+        
+        if (!ipMap[completion.ipAddress]) {
+          ipMap[completion.ipAddress] = [];
+        }
+        
+        ipMap[completion.ipAddress].push({
+          userId: completion.userId._id || completion.userId,
+          username: completion.userId.username || 'Unknown',
+          raidId: raid._id,
+          title: raid.title,
+          timestamp: completion.completedAt
+        });
+      });
+    });
+    
+    // Find multiple accounts using the same IP
+    Object.keys(ipMap).forEach(ip => {
+      const completions = ipMap[ip];
+      
+      // Extract unique user IDs for this IP
+      const userIds = new Set(completions.map(c => c.userId.toString()));
+      
+      // If more than one user has completed raids from this IP
+      if (userIds.size > 1) {
+        suspiciousActivities.multipleAccountsPerIP[ip] = completions;
+      }
+    });
+    
+    res.json({
+      success: true,
+      suspiciousActivities
+    });
+  } catch (error) {
+    console.error('Error checking for suspicious activity:', error);
+    res.status(500).json({ error: 'Failed to check for suspicious activity' });
   }
 });
 
