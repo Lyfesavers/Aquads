@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import './SocialMediaRaids.css'; // Add this to load the CSS file we'll create
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -490,7 +491,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   return (
     <div className="bg-gray-900/50 backdrop-blur-sm rounded-lg overflow-hidden">
       <div className="bg-blue-500/10 border-b border-blue-500/30 p-4">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h2 className="text-xl font-bold text-blue-400">Twitter Raids</h2>
             <p className="text-gray-300 mt-2">
@@ -501,7 +502,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           {currentUser?.isAdmin && (
             <button
               onClick={() => setShowCreateForm(!showCreateForm)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded whitespace-nowrap text-sm sm:text-base"
             >
               {showCreateForm ? 'Cancel' : 'Create New Raid'}
             </button>
@@ -647,7 +648,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         <div className="mt-4 p-4 border-t border-gray-700">
           <h3 className="text-lg font-bold text-white mb-4">Complete: {safeSelectedRaid.title}</h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div>
               <div className="mb-4">
                 <div className="bg-gray-800/70 p-4 rounded-lg mb-4">
@@ -669,13 +670,13 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                 <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-4">
                   <h4 className="text-blue-400 font-semibold mb-1">Verification Tag</h4>
                   <div className="bg-gray-800 p-3 rounded flex items-center justify-between mb-2">
-                    <code className="text-green-400 font-mono text-lg">{verificationCode}</code>
+                    <code className="text-green-400 font-mono text-sm sm:text-lg overflow-auto">{verificationCode}</code>
                     <button 
                       onClick={() => {
                         navigator.clipboard.writeText(verificationCode);
                         showNotification('Verification tag copied!', 'success');
                       }}
-                      className="bg-gray-700 hover:bg-gray-600 text-gray-300 p-1 rounded"
+                      className="bg-gray-700 hover:bg-gray-600 text-gray-300 p-1 rounded ml-2 flex-shrink-0"
                       title="Copy tag"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -688,7 +689,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   </p>
                 </div>
   
-                <form onSubmit={safeHandleSubmit}>
+                <form onSubmit={safeHandleSubmit} className="mobile-friendly-form">
                   <div className="mb-4">
                     <label className="block text-gray-300 mb-2">
                       Your Twitter Username <span className="text-gray-500">(@username)</span>
@@ -726,11 +727,11 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                       required
                     />
                     {tweetUrl && !isValidUrl && (
-                      <p className="text-red-400 text-sm mt-1 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                      <p className="text-red-400 text-sm mt-1 flex items-start sm:items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 flex-shrink-0 mt-0.5 sm:mt-0" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                         </svg>
-                        Invalid URL format. Use format: https://x.com/username/status/1234567890
+                        <span>Invalid URL format. Use format: https://x.com/username/status/1234567890</span>
                       </p>
                     )}
                     <p className="text-gray-500 text-sm mt-2">
@@ -753,11 +754,11 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   <button
                     type="submit"
                     disabled={submitting || verifyingTweet}
-                    className={`w-full px-4 py-2 rounded font-medium ${
+                    className={`w-full px-4 py-3 rounded font-medium ${
                       submitting || verifyingTweet
                         ? 'bg-gray-600 cursor-not-allowed'
                         : 'bg-blue-600 hover:bg-blue-700'
-                    } text-white`}
+                    } text-white verify-button`}
                   >
                     {verifyingTweet ? 'Verifying Tweet...' : submitting ? 'Submitting...' : 'Verify & Complete Task'}
                   </button>
