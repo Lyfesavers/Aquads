@@ -51,7 +51,7 @@ router.post('/', auth, async (req, res) => {
       title,
       description,
       points: points || 50,
-      createdBy: req.user.userId
+      createdBy: req.user.id
     });
 
     await raid.save();
@@ -153,7 +153,7 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
 
     // Check if user already completed this raid
     const alreadyCompleted = raid.completions.some(
-      completion => completion.userId.toString() === req.user.userId
+      completion => completion.userId.toString() === req.user.id
     );
     
     if (alreadyCompleted) {
@@ -187,7 +187,7 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
     try {
       // Award points directly - this is the important part that needs to work
       const pointsAmount = raid.points || 50;
-      const user = await User.findById(req.user.userId);
+      const user = await User.findById(req.user.id);
       
       if (!user) {
         throw new Error('User not found');
@@ -207,7 +207,7 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
       
       // Then record the completion with IP tracking
       raid.completions.push({
-        userId: req.user.userId,
+        userId: req.user.id,
         twitterUsername,
         verificationCode,
         verificationMethod,
@@ -246,7 +246,7 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
 router.get('/user/completed', auth, async (req, res) => {
   try {
     const raids = await TwitterRaid.find({
-      'completions.userId': req.user.userId
+      'completions.userId': req.user.id
     }).sort({ createdAt: -1 });
     
     res.json(raids);

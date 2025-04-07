@@ -28,7 +28,7 @@ setInterval(() => {
 
 // Rate limit middleware for Twitter raid completions
 const twitterRaidRateLimit = (req, res, next) => {
-  const userId = req.user.userId;
+  const userId = req.user.id;
   const ip = req.ip || req.connection.remoteAddress;
   const now = Date.now();
   
