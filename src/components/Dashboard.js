@@ -795,6 +795,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       <p>• Earn 200 points for each game vote in the gamehub</p>
                       <p>• Earn 200 points when your affiliates list a freelancer service or bubble ad</p>
                       <p>• Earn 500 points when your affiliates write a review</p>
+                      <p>• Earn 1000 points when you sing up with a referral link</p>
                       <p>• Redeem 10,000 points for a $100 gift card(Canadian Dollars)</p>
                     </div>
                     

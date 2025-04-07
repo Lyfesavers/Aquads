@@ -33,6 +33,18 @@ const twitterRaidSchema = new Schema({
       ref: 'User'
     },
     twitterUsername: String,
+    tweetUrl: String,
+    verificationCode: String,
+    verificationMethod: {
+      type: String,
+      enum: ['automatic', 'manual', 'tweet_embed'],
+      default: 'automatic'
+    },
+    verified: {
+      type: Boolean,
+      default: false
+    },
+    verificationNote: String,
     completedAt: {
       type: Date,
       default: Date.now

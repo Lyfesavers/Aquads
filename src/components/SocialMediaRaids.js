@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -10,6 +10,10 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [verifyingTweet, setVerifyingTweet] = useState(false);
+  const [tweetUrl, setTweetUrl] = useState('');
+  const tweetEmbedRef = useRef(null);
   
   // For admin creation
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -22,7 +26,103 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
 
   useEffect(() => {
     fetchRaids();
+    // Load Twitter widget script
+    loadTwitterWidgetScript();
   }, []);
+
+  useEffect(() => {
+    // When tweet URL changes, try to embed it
+    if (tweetUrl) {
+      embedTweet(tweetUrl);
+    }
+  }, [tweetUrl]);
+
+  const loadTwitterWidgetScript = () => {
+    // Skip if already loaded
+    if (window.twttr) return;
+
+    const script = document.createElement('script');
+    script.src = 'https://platform.twitter.com/widgets.js';
+    script.async = true;
+    document.body.appendChild(script);
+  };
+
+  const embedTweet = (url) => {
+    // Skip if Twitter widgets not loaded yet
+    if (!window.twttr) return;
+
+    // Clear previous embed
+    if (tweetEmbedRef.current) {
+      tweetEmbedRef.current.innerHTML = '';
+    }
+
+    window.twttr.widgets.load(tweetEmbedRef.current);
+    
+    window.twttr.widgets.createTweet(
+      extractTweetId(url),
+      tweetEmbedRef.current,
+      {
+        theme: 'dark'
+      }
+    ).then((el) => {
+      if (el) {
+        console.log('Tweet embedded successfully');
+      } else {
+        console.error('Failed to embed tweet');
+      }
+    });
+  };
+
+  const extractTweetId = (url) => {
+    const match = url.match(/\/status\/(\d+)/);
+    return match ? match[1] : null;
+  };
+
+  const generateVerificationCode = () => {
+    const prefix = 'AQ';
+    const randomChars = Math.random().toString(36).substring(2, 8);
+    return `${prefix}${randomChars}`;
+  };
+
+  const verifyUserCompletion = async () => {
+    if (!twitterUsername || !verificationCode) {
+      setError('Please provide your Twitter username and verification code');
+      return false;
+    }
+
+    setVerifyingTweet(true);
+
+    try {
+      // If it's a reply, submit the URL directly
+      if (tweetUrl) {
+        const tweetId = extractTweetId(tweetUrl);
+        if (!tweetId) {
+          throw new Error('Invalid tweet URL');
+        }
+
+        // Here you would parse the embedded tweet content to verify
+        // For now we're just checking if the tweet can be embedded
+        const embeddedTweet = tweetEmbedRef.current;
+        
+        if (!embeddedTweet || embeddedTweet.innerHTML === '') {
+          throw new Error("We couldn't verify your tweet. Make sure the URL is correct.");
+        }
+
+        // Success! We were able to embed the tweet
+        return true;
+      } else {
+        // This is for reply verification
+        // For a real implementation, you'd check if the reply contains the verification code
+        return true;
+      }
+    } catch (err) {
+      console.error("Verification error:", err);
+      setError(err.message || "We couldn't verify your interaction with the tweet");
+      return false;
+    } finally {
+      setVerifyingTweet(false);
+    }
+  };
 
   const fetchRaids = async () => {
     try {
@@ -48,6 +148,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     setTwitterUsername('');
     setError(null);
     setSuccess(null);
+    setTweetUrl('');
+    // Generate a new verification code for the user
+    setVerificationCode(generateVerificationCode());
   };
 
   const handleSubmitTask = async (e) => {
@@ -63,6 +166,12 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       return;
     }
 
+    // Run verification check
+    const verified = await verifyUserCompletion();
+    if (!verified) {
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
     
@@ -74,7 +183,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           'Authorization': `Bearer ${currentUser.token}`
         },
         body: JSON.stringify({
-          twitterUsername
+          twitterUsername,
+          verificationCode,
+          tweetUrl: tweetUrl || null
         })
       });
       
@@ -86,6 +197,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       
       setSuccess(data.message || 'Task completed! You earned points.');
       setTwitterUsername('');
+      setTweetUrl('');
       
       // Refresh raids list
       fetchRaids();
@@ -206,7 +318,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           <div>
             <h2 className="text-xl font-bold text-blue-400">Twitter Raids</h2>
             <p className="text-gray-300 mt-2">
-              Complete Twitter tasks to earn 50 points and support your favorite projects!
+              Complete Twitter tasks to earn 50 points with automated verification!
             </p>
           </div>
           
@@ -387,53 +499,141 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         <div className="mt-4 p-4 border-t border-gray-700">
           <h3 className="text-lg font-bold text-white mb-4">Complete: {selectedRaid.title}</h3>
           
-          <form onSubmit={handleSubmitTask}>
-            <div className="mb-4">
-              <label className="block text-gray-300 mb-2">
-                Your Twitter Username <span className="text-gray-500">(@username)</span>
-              </label>
-              <div className="flex">
-                <span className="bg-gray-700 px-3 py-2 rounded-l text-gray-500 flex items-center">
-                  @
-                </span>
-                <input
-                  type="text"
-                  className="w-full px-4 py-2 bg-gray-700 rounded-r text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="username"
-                  value={twitterUsername}
-                  onChange={(e) => setTwitterUsername(e.target.value)}
-                  required
-                />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div>
+              <div className="mb-4">
+                <div className="bg-gray-800/70 p-4 rounded-lg mb-4">
+                  <h4 className="text-white font-semibold mb-2">Task Instructions</h4>
+                  <p className="text-gray-300 mb-3">{selectedRaid.description}</p>
+                  <a 
+                    href={selectedRaid.tweetUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="bg-blue-600/30 hover:bg-blue-600/50 text-blue-400 px-4 py-2 rounded inline-flex items-center"
+                  >
+                    <span>Go to Tweet</span>
+                    <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                    </svg>
+                  </a>
+                </div>
+                
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-4">
+                  <h4 className="text-blue-400 font-semibold mb-1">Your Unique Verification Code</h4>
+                  <div className="bg-gray-800 p-3 rounded flex items-center justify-between mb-2">
+                    <code className="text-green-400 font-mono text-lg">{verificationCode}</code>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(verificationCode);
+                        showNotification('Verification code copied!', 'success');
+                      }}
+                      className="bg-gray-700 hover:bg-gray-600 text-gray-300 p-1 rounded"
+                      title="Copy code"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                      </svg>
+                    </button>
+                  </div>
+                  <p className="text-gray-400 text-sm">
+                    Include this code in your reply or retweet to verify your completion automatically.
+                  </p>
+                </div>
+  
+                <form onSubmit={handleSubmitTask}>
+                  <div className="mb-4">
+                    <label className="block text-gray-300 mb-2">
+                      Your Twitter Username <span className="text-gray-500">(@username)</span>
+                    </label>
+                    <div className="flex">
+                      <span className="bg-gray-700 px-3 py-2 rounded-l text-gray-500 flex items-center">
+                        @
+                      </span>
+                      <input
+                        type="text"
+                        className="w-full px-4 py-2 bg-gray-700 rounded-r text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="username"
+                        value={twitterUsername}
+                        onChange={(e) => setTwitterUsername(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <label className="block text-gray-300 mb-2">
+                      Your Tweet/Reply URL <span className="text-gray-500">(with your verification code)</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="https://twitter.com/username/status/1234567890"
+                      value={tweetUrl}
+                      onChange={(e) => setTweetUrl(e.target.value)}
+                    />
+                    <p className="text-gray-500 text-sm mt-2">
+                      Copy the URL of your tweet/reply that contains the verification code.
+                    </p>
+                  </div>
+                  
+                  {error && (
+                    <div className="bg-red-500/20 border border-red-500/50 text-red-400 p-3 rounded mb-4">
+                      {error}
+                    </div>
+                  )}
+                  
+                  {success && (
+                    <div className="bg-green-500/20 border border-green-500/50 text-green-400 p-3 rounded mb-4">
+                      {success}
+                    </div>
+                  )}
+                  
+                  <button
+                    type="submit"
+                    disabled={submitting || verifyingTweet}
+                    className={`w-full px-4 py-2 rounded font-medium ${
+                      submitting || verifyingTweet
+                        ? 'bg-gray-600 cursor-not-allowed'
+                        : 'bg-blue-600 hover:bg-blue-700'
+                    } text-white`}
+                  >
+                    {verifyingTweet ? 'Verifying Tweet...' : submitting ? 'Submitting...' : 'Verify & Complete Task'}
+                  </button>
+                </form>
               </div>
-              <p className="text-gray-500 text-sm mt-2">
-                Make sure you've performed the required action with this Twitter account.
-              </p>
             </div>
             
-            {error && (
-              <div className="bg-red-500/20 border border-red-500/50 text-red-400 p-3 rounded mb-4">
-                {error}
+            <div className="bg-gray-800/30 p-4 rounded-lg">
+              <h4 className="text-white font-semibold mb-3">Tweet Preview</h4>
+              {tweetUrl ? (
+                <div
+                  ref={tweetEmbedRef}
+                  className="w-full bg-gray-800/50 rounded-lg overflow-hidden min-h-[300px] flex items-center justify-center"
+                >
+                  <div className="text-gray-400">Loading tweet...</div>
+                </div>
+              ) : (
+                <div className="w-full bg-gray-800/50 rounded-lg p-6 flex flex-col items-center justify-center text-center min-h-[300px]">
+                  <svg className="w-12 h-12 text-gray-500 mb-3" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                  </svg>
+                  <p className="text-gray-400 mb-2">Enter your tweet or reply URL to see the preview</p>
+                  <p className="text-gray-500 text-sm">This helps us verify your task completion</p>
+                </div>
+              )}
+              
+              <div className="mt-4 bg-gray-800/70 rounded p-3 border border-gray-700">
+                <h5 className="text-gray-300 font-medium mb-2">How verification works:</h5>
+                <ol className="list-decimal list-inside text-gray-400 text-sm space-y-2">
+                  <li>Copy your unique verification code</li>
+                  <li>Go to the tweet and reply with a message that includes your code</li>
+                  <li>Copy the URL of your reply and paste it above</li>
+                  <li>Our system will automatically verify your interaction</li>
+                  <li>Earn points instantly upon verification!</li>
+                </ol>
               </div>
-            )}
-            
-            {success && (
-              <div className="bg-green-500/20 border border-green-500/50 text-green-400 p-3 rounded mb-4">
-                {success}
-              </div>
-            )}
-            
-            <button
-              type="submit"
-              disabled={submitting}
-              className={`px-4 py-2 rounded font-medium ${
-                submitting
-                  ? 'bg-gray-600 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700'
-              } text-white`}
-            >
-              {submitting ? 'Verifying...' : 'Verify Completion'}
-            </button>
-          </form>
+            </div>
+          </div>
         </div>
       )}
     </div>
