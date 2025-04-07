@@ -73,6 +73,9 @@ const userSchema = new Schema({
       type: Schema.Types.ObjectId,
       ref: 'Game'
     },
+    socialRaidId: {
+      type: String
+    },
     createdAt: {
       type: Date,
       default: Date.now

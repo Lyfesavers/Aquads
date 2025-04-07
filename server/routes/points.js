@@ -188,6 +188,71 @@ function awardAffiliatePoints(referrerId, referredUserId) {
   });
 }
 
+// Helper function to award points for social media raids
+function awardSocialMediaPoints(userId, platform, raidId) {
+  return User.findByIdAndUpdate(
+    userId,
+    {
+      $inc: { points: 50 },
+      $push: {
+        pointsHistory: {
+          amount: 50,
+          reason: `Completed ${platform} social media raid`,
+          socialRaidId: raidId,
+          createdAt: new Date()
+        }
+      }
+    },
+    { new: true }
+  ).then(user => {
+    return user;
+  }).catch(error => {
+    throw error;
+  });
+}
+
+// Route to complete a social media raid
+router.post('/social-raids/complete', auth, async (req, res) => {
+  try {
+    const { raidId, platform, proof } = req.body;
+    
+    if (!raidId || !platform || !proof) {
+      return res.status(400).json({ error: 'Missing required information' });
+    }
+    
+    // Check if user already completed this raid
+    const user = await User.findById(req.user.userId);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Check if user already got points for this raid
+    const alreadyCompleted = user.pointsHistory.some(
+      entry => entry.socialRaidId && entry.socialRaidId.toString() === raidId.toString()
+    );
+    
+    if (alreadyCompleted) {
+      return res.status(400).json({ error: 'You have already completed this raid' });
+    }
+    
+    // In a real implementation, you would verify the proof here
+    // For now, we'll just award the points
+    
+    const updatedUser = await awardSocialMediaPoints(req.user.userId, platform, raidId);
+    
+    res.json({
+      success: true,
+      message: `Successfully completed ${platform} raid and earned 50 points!`,
+      currentPoints: updatedUser.points
+    });
+    
+  } catch (error) {
+    console.error('Error completing social media raid:', error);
+    res.status(500).json({ error: 'Failed to process social media raid' });
+  }
+});
+
 function awardListingPoints(userId) {
   return User.findById(userId)
     .then(user => {
@@ -344,4 +409,5 @@ module.exports.awardAffiliatePoints = awardAffiliatePoints;
 module.exports.awardListingPoints = awardListingPoints;
 module.exports.awardAffiliateReviewPoints = awardAffiliateReviewPoints;
 module.exports.awardGameVotePoints = awardGameVotePoints;
-module.exports.revokeGameVotePoints = revokeGameVotePoints; 
+module.exports.revokeGameVotePoints = revokeGameVotePoints;
+module.exports.awardSocialMediaPoints = awardSocialMediaPoints; 
