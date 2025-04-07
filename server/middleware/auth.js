@@ -10,8 +10,17 @@ const auth = (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+    // Get the user ID from the token
+    const userId = decoded._id || decoded.userId;
+    
+    if (!userId) {
+      throw new Error('Invalid token: No user ID found');
+    }
+    
+    // Set both userId and id for better compatibility with different code styles
     req.user = {
-      userId: decoded._id || decoded.userId,  // Handle both formats
+      userId: userId,
+      id: userId,  // Add this for compatibility
       username: decoded.username,
       isAdmin: Boolean(decoded.isAdmin)  // Ensure boolean conversion
     };

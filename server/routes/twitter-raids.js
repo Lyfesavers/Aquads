@@ -137,6 +137,21 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
     const { twitterUsername, verificationCode, tweetUrl } = req.body;
     const ipAddress = req.ip || req.connection.remoteAddress;
     
+    // DEBUG: Log the actual structure of req.user
+    console.log('User object structure:', {
+      id: req.user.id,
+      userId: req.user.userId,
+      user: req.user
+    });
+    
+    // Get the user ID safely - checking both possible locations
+    const userId = req.user.id || req.user.userId || req.user._id;
+    
+    if (!userId) {
+      console.error('Could not determine user ID from request:', req.user);
+      return res.status(400).json({ error: 'User ID not found in request' });
+    }
+    
     if (!twitterUsername) {
       return res.status(400).json({ error: 'Twitter username is required' });
     }
@@ -151,9 +166,9 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
       return res.status(400).json({ error: 'This Twitter raid is no longer active' });
     }
 
-    // Check if user already completed this raid
+    // Check if user already completed this raid - using the safely determined userId
     const alreadyCompleted = raid.completions.some(
-      completion => completion.userId.toString() === req.user.id
+      completion => completion.userId && completion.userId.toString() === userId.toString()
     );
     
     if (alreadyCompleted) {
@@ -187,11 +202,14 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
     try {
       // Award points directly - this is the important part that needs to work
       const pointsAmount = raid.points || 50;
-      const user = await User.findById(req.user.id);
+      const user = await User.findById(userId);
       
       if (!user) {
-        throw new Error('User not found');
+        console.error(`User not found with ID: ${userId}`);
+        throw new Error(`User not found with ID: ${userId}`);
       }
+      
+      console.log(`Awarding ${pointsAmount} points to user:`, user.username || user.email || userId);
       
       // Award points directly on the user object
       user.points += pointsAmount;
@@ -204,10 +222,11 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
       
       // Save the user with new points
       await user.save();
+      console.log(`Successfully saved user with new points. Total points: ${user.points}`);
       
       // Then record the completion with IP tracking
       raid.completions.push({
-        userId: req.user.id,
+        userId: userId,
         twitterUsername,
         verificationCode,
         verificationMethod,
@@ -219,6 +238,7 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
       });
       
       await raid.save();
+      console.log(`Successfully saved raid completion for raid: ${raid.title}`);
       
       // Success response
       res.json({
@@ -245,9 +265,21 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
 // Get user's completed Twitter raids
 router.get('/user/completed', auth, async (req, res) => {
   try {
+    // Get the user ID safely - checking both possible locations
+    const userId = req.user.id || req.user.userId || req.user._id;
+    
+    if (!userId) {
+      console.error('Could not determine user ID from request:', req.user);
+      return res.status(400).json({ error: 'User ID not found in request' });
+    }
+    
+    console.log(`Fetching completed raids for user ID: ${userId}`);
+    
     const raids = await TwitterRaid.find({
-      'completions.userId': req.user.id
+      'completions.userId': userId
     }).sort({ createdAt: -1 });
+    
+    console.log(`Found ${raids.length} completed raids for user ID: ${userId}`);
     
     res.json(raids);
   } catch (error) {

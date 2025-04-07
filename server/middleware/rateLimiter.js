@@ -28,20 +28,33 @@ setInterval(() => {
 
 // Rate limit middleware for Twitter raid completions
 const twitterRaidRateLimit = (req, res, next) => {
-  const userId = req.user.id;
+  // Safely get the user ID - check all possible properties
+  const userId = req.user.id || req.user.userId || req.user._id;
+  
+  if (!userId) {
+    console.error('Could not determine user ID in rate limiter:', req.user);
+    return res.status(400).json({ 
+      error: 'User identification not found. Please try again or contact support.'
+    });
+  }
+  
   const ip = req.ip || req.connection.remoteAddress;
   const now = Date.now();
   
   // Get user attempts within the last hour
-  const userRaidAttempts = userAttempts.get(userId) || [];
+  const userRaidAttempts = userAttempts.get(userId.toString()) || [];
   const recentUserAttempts = userRaidAttempts.filter(time => time > now - 3600000);
   
   // Get IP attempts within the last 10 minutes
   const ipRaidAttempts = ipAttempts.get(ip) || [];
   const recentIpAttempts = ipRaidAttempts.filter(time => time > now - 600000);
   
+  // For debugging
+  console.log(`Rate limit check - User ${userId}: ${recentUserAttempts.length}/5 attempts, IP ${ip}: ${recentIpAttempts.length}/3 attempts`);
+  
   // Max 5 completions per user per hour
   if (recentUserAttempts.length >= 5) {
+    console.log(`Rate limit exceeded for user ${userId}`);
     return res.status(429).json({
       error: 'Rate limit exceeded. You can only complete 5 Twitter raids per hour.'
     });
@@ -49,6 +62,7 @@ const twitterRaidRateLimit = (req, res, next) => {
   
   // Max 3 completions per IP per 10 minutes
   if (recentIpAttempts.length >= 3) {
+    console.log(`Rate limit exceeded for IP ${ip}`);
     return res.status(429).json({
       error: 'Rate limit exceeded. Please wait before completing more Twitter raids.'
     });
@@ -58,8 +72,8 @@ const twitterRaidRateLimit = (req, res, next) => {
   userRaidAttempts.push(now);
   ipRaidAttempts.push(now);
   
-  // Update maps
-  userAttempts.set(userId, userRaidAttempts);
+  // Update maps - ensure we're using strings for user IDs
+  userAttempts.set(userId.toString(), userRaidAttempts);
   ipAttempts.set(ip, ipRaidAttempts);
   
   next();
