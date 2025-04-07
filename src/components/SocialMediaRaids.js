@@ -734,4 +734,92 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                     </label>
                     <input
                       type="text"
-                      className={`
+                      className={`w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 ${
+                        tweetUrl && !isValidUrl ? 'border border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'
+                      }`}
+                      placeholder="https://x.com/username/status/1234567890"
+                      value={tweetUrl}
+                      onChange={(e) => {
+                        setTweetUrl(e.target.value);
+                        validateTweetUrl(e.target.value);
+                      }}
+                      required
+                    />
+                    {tweetUrl && !isValidUrl && (
+                      <p className="text-red-400 text-sm mt-1 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        Invalid URL format. Use format: https://x.com/username/status/1234567890
+                      </p>
+                    )}
+                    <p className="text-gray-500 text-sm mt-2">
+                      After replying to the tweet with "aquads.xyz", copy and paste your reply's URL here. Make sure it contains "status" in the URL.
+                    </p>
+                  </div>
+                  
+                  {error && (
+                    <div className="bg-red-500/20 border border-red-500/50 text-red-400 p-3 rounded mb-4">
+                      {error}
+                    </div>
+                  )}
+                  
+                  {success && (
+                    <div className="bg-green-500/20 border border-green-500/50 text-green-400 p-3 rounded mb-4">
+                      {success}
+                    </div>
+                  )}
+                  
+                  <button
+                    type="submit"
+                    disabled={submitting || verifyingTweet}
+                    className={`w-full px-4 py-2 rounded font-medium ${
+                      submitting || verifyingTweet
+                        ? 'bg-gray-600 cursor-not-allowed'
+                        : 'bg-blue-600 hover:bg-blue-700'
+                    } text-white`}
+                  >
+                    {verifyingTweet ? 'Verifying Tweet...' : submitting ? 'Submitting...' : 'Verify & Complete Task'}
+                  </button>
+                </form>
+              </div>
+            </div>
+            
+            <div className="bg-gray-800/30 p-4 rounded-lg">
+              <h4 className="text-white font-semibold mb-3">Tweet Preview</h4>
+              {tweetUrl ? (
+                <div
+                  ref={tweetEmbedRef}
+                  className="w-full bg-gray-800/50 rounded-lg overflow-hidden min-h-[300px] flex items-center justify-center"
+                >
+                  <div className="text-gray-400">Loading tweet...</div>
+                </div>
+              ) : (
+                <div className="w-full bg-gray-800/50 rounded-lg p-6 flex flex-col items-center justify-center text-center min-h-[300px]">
+                  <svg className="w-12 h-12 text-gray-500 mb-3" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                  </svg>
+                  <p className="text-gray-400 mb-2">Enter your tweet or reply URL to see the preview</p>
+                  <p className="text-gray-500 text-sm">This helps us verify your task completion</p>
+                </div>
+              )}
+              
+              <div className="mt-4 bg-gray-800/70 rounded p-3 border border-gray-700">
+                <h5 className="text-gray-300 font-medium mb-2">How verification works:</h5>
+                <ol className="list-decimal list-inside text-gray-400 text-sm space-y-2">
+                  <li>Go to the tweet via the "Go to Tweet" button</li>
+                  <li>Reply to the tweet with a message that includes "aquads.xyz"</li>
+                  <li>Copy the URL of your reply and paste it in the field above</li>
+                  <li>The system will verify your participation</li>
+                  <li>You'll earn points once verified!</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default SocialMediaRaids;
