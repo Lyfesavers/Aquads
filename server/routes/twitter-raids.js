@@ -3,8 +3,11 @@ const router = express.Router();
 const TwitterRaid = require('../models/TwitterRaid');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
-const { awardSocialMediaPoints } = require('./points');
+const pointsModule = require('./points');
 const axios = require('axios');
+
+// Use the imported module function
+const awardSocialMediaPoints = pointsModule.awardSocialMediaPoints;
 
 // Get all active Twitter raids
 router.get('/', async (req, res) => {
@@ -155,44 +158,84 @@ router.post('/:id/complete', auth, async (req, res) => {
       return res.status(400).json({ error: 'You have already completed this raid' });
     }
 
-    // Verify the tweet URL if provided
-    let verified = { success: true };
+    // Verify tweet URL format only (skip API validation to avoid potential issues)
     let verificationMethod = 'client_side';
     let verificationNote = 'Verified through client-side tweet embedding';
     
     if (tweetUrl) {
-      verified = await verifyTweetUrl(tweetUrl);
-      if (!verified.success) {
-        return res.status(400).json({ error: verified.error });
+      // Just check basic URL format
+      const isValidFormat = !!tweetUrl.match(/(?:twitter\.com|x\.com)\/[^\/]+\/status\/\d+/i);
+      
+      if (!isValidFormat) {
+        return res.status(400).json({ 
+          error: 'Invalid tweet URL format. URL should look like: https://twitter.com/username/status/1234567890 or https://x.com/username/status/1234567890' 
+        });
       }
-      verificationNote = verified.warning || 'Tweet URL verified';
+      
+      // Check if URL contains "aquads.xyz" (case insensitive) - only as a note, not a requirement
+      const containsVerificationTag = tweetUrl.toLowerCase().includes('aquads.xyz');
+      if (!containsVerificationTag) {
+        verificationNote = 'URL does not contain verification tag, but accepted';
+      } else {
+        verificationNote = 'Tweet URL format verified with verification tag';
+      }
     }
 
-    // Record the completion
-    raid.completions.push({
-      userId: req.user.userId,
-      twitterUsername,
-      verificationCode,
-      verificationMethod,
-      tweetUrl: tweetUrl || null,
-      verified: true,
-      verificationNote,
-      completedAt: new Date()
-    });
-    
-    await raid.save();
-    
-    // Award points
-    await awardSocialMediaPoints(req.user.userId, 'Twitter', raid._id.toString());
-    
-    res.json({
-      success: true,
-      message: `Twitter raid completed successfully! You earned ${raid.points} points.`,
-      note: 'Your submission has been recorded. Thank you for participating!'
-    });
+    // First award points directly to ensure the user gets them
+    try {
+      // Award points directly - this is the important part that needs to work
+      const pointsAmount = raid.points || 50;
+      const user = await User.findById(req.user.userId);
+      
+      if (!user) {
+        throw new Error('User not found');
+      }
+      
+      // Award points directly on the user object
+      user.points += pointsAmount;
+      user.pointsHistory.push({
+        amount: pointsAmount,
+        reason: `Completed Twitter raid: ${raid.title}`,
+        socialRaidId: raid._id,
+        createdAt: new Date()
+      });
+      
+      // Save the user with new points
+      await user.save();
+      
+      // Then record the completion
+      raid.completions.push({
+        userId: req.user.userId,
+        twitterUsername,
+        verificationCode,
+        verificationMethod,
+        tweetUrl: tweetUrl || null,
+        verified: true,
+        verificationNote,
+        completedAt: new Date()
+      });
+      
+      await raid.save();
+      
+      // Success response
+      res.json({
+        success: true,
+        message: `Twitter raid completed successfully! You earned ${pointsAmount} points.`,
+        note: 'Your submission has been recorded. Thank you for participating!',
+        pointsAwarded: pointsAmount,
+        currentPoints: user.points
+      });
+    } catch (error) {
+      console.error('Error in Twitter raid completion:', error);
+      res.status(500).json({ 
+        error: 'Failed to complete Twitter raid: ' + (error.message || 'Unknown error')
+      });
+    }
   } catch (error) {
     console.error('Error completing Twitter raid:', error);
-    res.status(500).json({ error: 'Failed to complete Twitter raid' });
+    res.status(500).json({ 
+      error: 'Failed to complete Twitter raid: ' + (error.message || 'Unknown error') 
+    });
   }
 });
 

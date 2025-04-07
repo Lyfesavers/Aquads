@@ -189,26 +189,42 @@ function awardAffiliatePoints(referrerId, referredUserId) {
 }
 
 // Helper function to award points for social media raids
-function awardSocialMediaPoints(userId, platform, raidId) {
-  return User.findByIdAndUpdate(
-    userId,
-    {
-      $inc: { points: 50 },
-      $push: {
-        pointsHistory: {
-          amount: 50,
-          reason: `Completed ${platform} social media raid`,
-          socialRaidId: raidId,
-          createdAt: new Date()
+async function awardSocialMediaPoints(userId, platform, raidId) {
+  try {
+    // First check if user exists
+    const userExists = await User.exists({ _id: userId });
+    if (!userExists) {
+      throw new Error(`User with ID ${userId} not found`);
+    }
+    
+    const pointAmount = 50; // Default point amount
+    
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        $inc: { points: pointAmount },
+        $push: {
+          pointsHistory: {
+            amount: pointAmount,
+            reason: `Completed ${platform} social media raid`,
+            socialRaidId: raidId,
+            createdAt: new Date()
+          }
         }
-      }
-    },
-    { new: true }
-  ).then(user => {
-    return user;
-  }).catch(error => {
-    throw error;
-  });
+      },
+      { new: true }
+    );
+    
+    if (!updatedUser) {
+      throw new Error(`Failed to update user points for user ID ${userId}`);
+    }
+    
+    return updatedUser;
+  } catch (error) {
+    console.error('Error in awardSocialMediaPoints:', error);
+    // Instead of throwing, return a rejection
+    return Promise.reject(error);
+  }
 }
 
 // Route to complete a social media raid
