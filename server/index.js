@@ -166,6 +166,7 @@ app.use('/api/blogs', blogsRoutes);
 app.use('/api/sitemap', sitemapRoutes);
 app.use('/api/games', require('./routes/games'));
 app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/twitter-raids', require('./routes/twitter-raids'));
 
 // Special route for blog sharing metadata (outside the API namespace)
 app.get('/share-blog/:id', async (req, res) => {

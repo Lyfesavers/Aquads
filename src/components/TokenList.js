@@ -364,7 +364,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                     : 'bg-transparent text-gray-300 hover:bg-gray-600'
                 }`}
               >
-                Social Raids
+                Twitter Raids
               </button>
             </div>
 
