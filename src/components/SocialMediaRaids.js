@@ -299,6 +299,12 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   };
 
   const handleRaidClick = (raid) => {
+    // Don't allow interaction with pending raids
+    if (raid.isPaid && raid.paymentStatus === 'pending') {
+      showNotification('This raid is pending admin approval', 'warning');
+      return;
+    }
+    
     setSelectedRaid(raid);
     setTwitterUsername('');
     setError(null);
@@ -727,8 +733,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     return <div className="text-center p-4">Loading Twitter raids...</div>;
   }
 
-  // Add safety check for selectedRaid before rendering detail view
-  const safeSelectedRaid = selectedRaid && isValidRaid(selectedRaid) ? selectedRaid : null;
+  // Update the safeSelectedRaid check to also verify that raids are not pending
+  const safeSelectedRaid = selectedRaid && isValidRaid(selectedRaid) && 
+    !(selectedRaid.isPaid && selectedRaid.paymentStatus === 'pending') ? selectedRaid : null;
 
   return (
     <div className="bg-gray-900/50 backdrop-blur-sm rounded-lg overflow-hidden">
@@ -939,6 +946,11 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
             </div>
             <div>
               <h3 className="text-lg font-bold text-white">Complete: {safeSelectedRaid.title}</h3>
+              {safeSelectedRaid.isPaid && (
+                <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded text-xs inline-block mb-1">
+                  Paid Raid
+                </span>
+              )}
               <p className="text-blue-400">
                 <a 
                   href={safeSelectedRaid.tweetUrl} 
@@ -1113,14 +1125,28 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           {raids.map(raid => (
             <div 
               key={raid._id}
-              className={`bg-gray-800/50 rounded-lg p-4 border cursor-pointer relative ${
-                safeSelectedRaid?._id === raid._id 
-                  ? 'border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]' 
-                  : 'border-gray-700 hover:border-blue-500/50 hover:shadow-md'
+              className={`bg-gray-800/50 rounded-lg p-4 border relative ${
+                raid.isPaid && raid.paymentStatus === 'pending'
+                  ? 'border-yellow-500/30 opacity-75 cursor-not-allowed'
+                  : safeSelectedRaid?._id === raid._id 
+                    ? 'border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)] cursor-pointer' 
+                    : 'border-gray-700 hover:border-blue-500/50 hover:shadow-md cursor-pointer'
               }`}
               style={{ transition: 'border-color 0.2s ease, box-shadow 0.2s ease' }}
-              onClick={() => handleRaidClick(raid)}
+              onClick={() => raid.isPaid && raid.paymentStatus === 'pending' ? showNotification('This raid is pending admin approval', 'warning') : handleRaidClick(raid)}
             >
+              {/* If raid is pending, add an overlay warning message */}
+              {raid.isPaid && raid.paymentStatus === 'pending' && (
+                <div className="absolute inset-0 bg-gray-900/30 flex items-center justify-center rounded-lg z-10">
+                  <div className="bg-yellow-500/20 text-yellow-400 px-3 py-1.5 rounded-lg text-sm font-medium flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    Awaiting Approval
+                  </div>
+                </div>
+              )}
+
               {/* Admin Delete Button */}
               {currentUser?.isAdmin && (
                 <div 
