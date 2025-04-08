@@ -6,6 +6,25 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 // Add this delay utility function at the top of the component
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+// Add this utility function at the top of the file after the delay function
+const isWithinDays = (dateString, days) => {
+  if (!dateString) return true; // If no date, assume it's valid
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffTime = now - date;
+  const diffDays = diffTime / (1000 * 60 * 60 * 24);
+  return diffDays <= days;
+};
+
+const getRemainingDays = (dateString) => {
+  if (!dateString) return null;
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffTime = date.getTime() + (7 * 24 * 60 * 60 * 1000) - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays > 0 ? diffDays : 0;
+};
+
 const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [raids, setRaids] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -200,7 +219,11 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       }
       
       const data = await response.json();
-      setRaids(data);
+      
+      // Filter out raids older than 7 days if they have createdAt
+      const filteredRaids = data.filter(raid => isWithinDays(raid.createdAt, 7));
+      
+      setRaids(filteredRaids);
     } catch (err) {
       console.error('Error fetching Twitter raids:', err);
       setError('Failed to load Twitter raids. Please try again later.');
@@ -489,6 +512,38 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     return false;
   };
 
+  // Inside the SocialMediaRaids component, add a function to trigger manual cleanup
+  const triggerRaidCleanup = async () => {
+    if (!currentUser || !currentUser.isAdmin) {
+      showNotification('Only admins can trigger raid cleanup', 'error');
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${API_URL}/api/twitter-raids/cleanup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to clean up Twitter raids');
+      }
+      
+      showNotification(data.message || `Cleaned up ${data.cleanedUpRaids} old Twitter raids`, 'success');
+      
+      // Refresh the raids list
+      fetchRaids();
+    } catch (err) {
+      console.error('Error triggering raid cleanup:', err);
+      showNotification(err.message || 'Failed to clean up Twitter raids', 'error');
+    }
+  };
+
   if (loading && raids.length === 0) {
     return <div className="text-center p-4">Loading Twitter raids...</div>;
   }
@@ -508,12 +563,26 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           </div>
           
           {currentUser?.isAdmin && (
-            <button
-              onClick={() => setShowCreateForm(!showCreateForm)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded whitespace-nowrap text-sm sm:text-base"
-            >
-              {showCreateForm ? 'Cancel' : 'Create New Raid'}
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowCreateForm(!showCreateForm)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded whitespace-nowrap text-sm sm:text-base"
+              >
+                {showCreateForm ? 'Cancel' : 'Create New Raid'}
+              </button>
+              
+              {/* Cleanup button for admins */}
+              <button
+                onClick={triggerRaidCleanup}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded whitespace-nowrap text-sm sm:text-base flex items-center"
+                title="Remove raids older than 7 days"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Cleanup Old Raids
+              </button>
+            </div>
           )}
         </div>
         
@@ -785,6 +854,17 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                       <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
                   </button>
+                </div>
+              )}
+                
+              {/* Expiration Indicator */}
+              {raid.createdAt && (
+                <div className="absolute top-2 left-2 text-xs bg-gray-900/70 px-2 py-1 rounded-full text-gray-300">
+                  {getRemainingDays(raid.createdAt) <= 1 ? (
+                    <span className="text-red-400">Expires soon</span>
+                  ) : (
+                    <span>{getRemainingDays(raid.createdAt)} days left</span>
+                  )}
                 </div>
               )}
                 

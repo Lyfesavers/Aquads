@@ -24,6 +24,7 @@ const jobsRoutes = require('./routes/jobs');
 const blogsRoutes = require('./routes/blogs');
 const sitemapRoutes = require('./routes/sitemap');
 const socketModule = require('./socket');
+const CleanupService = require('./services/cleanupService');
 
 const app = express();
 const server = http.createServer(app);
@@ -123,6 +124,19 @@ mongoose.connect(process.env.MONGODB_URI, {
   socketTimeoutMS: 45000, // Close sockets after 45s
 }).then(() => {
   console.log('Connected to MongoDB');
+  
+  // Initialize the cleanup service after MongoDB connection
+  try {
+    CleanupService.init();
+    console.log('Cleanup service initialized successfully');
+    
+    // Run an initial cleanup
+    CleanupService.cleanupOldTwitterRaids()
+      .then(count => console.log(`Initial cleanup: removed ${count} old Twitter raids`))
+      .catch(err => console.error('Error in initial cleanup:', err));
+  } catch (error) {
+    console.error('Failed to initialize cleanup service:', error);
+  }
 }).catch(err => {
   console.error('MongoDB connection error:', err);
   // Don't exit the process, let it retry
