@@ -7,20 +7,14 @@ const userSchema = new Schema({
     type: String,
     required: true,
     unique: true,
-    trim: true
+    trim: true,
+    minlength: 3
   },
   email: {
     type: String,
-    required: false,
+    required: true,
     unique: true,
-    sparse: true,
-    trim: true,
-    validate: {
-      validator: function(v) {
-        return !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-      },
-      message: 'Please enter a valid email address'
-    }
+    trim: true
   },
   userType: {
     type: String,
@@ -30,7 +24,8 @@ const userSchema = new Schema({
   },
   password: {
     type: String,
-    required: true
+    required: true,
+    minlength: 6
   },
   image: {
     type: String,
@@ -47,8 +42,11 @@ const userSchema = new Schema({
   },
   referralCode: {
     type: String,
-    unique: true,
-    sparse: true
+    default: null
+  },
+  referralUrl: {
+    type: String,
+    default: null
   },
   affiliates: [{
     type: Schema.Types.ObjectId,
@@ -74,7 +72,8 @@ const userSchema = new Schema({
       ref: 'Game'
     },
     socialRaidId: {
-      type: String
+      type: Schema.Types.ObjectId,
+      ref: 'TwitterRaid'
     },
     createdAt: {
       type: Date,
@@ -110,6 +109,10 @@ const userSchema = new Schema({
   isVipAffiliate: {
     type: Boolean,
     default: false
+  },
+  remainingTwitterRaids: {
+    type: Number,
+    default: 0
   }
 });
 
