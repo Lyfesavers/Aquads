@@ -3,6 +3,34 @@ import './SocialMediaRaids.css'; // Add this to load the CSS file we'll create
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
+// Payment blockchain options
+const BLOCKCHAIN_OPTIONS = [
+  {
+    name: 'Solana',
+    symbol: 'SOL',
+    address: 'F4HuQfUx5zsuQpxca4KQfX6uZPYtRp3Y7HYVGsuHdYVf',
+    amount: 'USDC'
+  },
+  {
+    name: 'Ethereum',
+    symbol: 'ETH',
+    address: '0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358',
+    amount: 'USDC'
+  },
+  {
+    name: 'Base',
+    symbol: 'BASE',
+    address: '0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358',
+    amount: 'USDC'
+  },
+  {
+    name: 'Sui',
+    symbol: 'SUI',
+    address: '0xdadea3003856d304535c3f1b6d5670ab07a8e71715c7644bf230dd3a4ba7d13a',
+    amount: 'USDC'
+  }
+];
+
 // Add this delay utility function at the top of the component
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -63,6 +91,17 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     description: 'Retweet, Like & Comment to earn 50 points!',
     points: 50
   });
+  
+  // For paid raid creation
+  const [showPaidCreateForm, setShowPaidCreateForm] = useState(false);
+  const [paidRaidData, setPaidRaidData] = useState({
+    tweetUrl: '',
+    title: 'Twitter Raid',
+    description: 'Retweet, Like & Comment to earn 50 points!',
+    txSignature: ''
+  });
+  const [selectedChain, setSelectedChain] = useState(BLOCKCHAIN_OPTIONS[0]);
+  const [copiedAddress, setCopiedAddress] = useState(false);
 
   useEffect(() => {
     fetchRaids();
@@ -528,6 +567,162 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     return false;
   };
 
+  // Utility function to handle address copying
+  const handleCopyAddress = async (address, setCopiedAddressCallback) => {
+    try {
+      await navigator.clipboard.writeText(address);
+      setCopiedAddressCallback(true);
+      setTimeout(() => setCopiedAddressCallback(false), 2000);
+    } catch (error) {
+      console.error('Error copying to clipboard:', error);
+    }
+  };
+
+  // Utility function to create a paid Twitter raid
+  const createPaidTwitterRaid = async (data, token) => {
+    try {
+      const response = await fetch(`${API_URL}/api/twitter-raids/paid`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(data)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create Twitter raid');
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating paid Twitter raid:', error);
+      throw error;
+    }
+  };
+
+  // Function to handle submission of paid raid form
+  const handlePaidRaidSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!currentUser) {
+      showNotification('Please log in to create a paid Twitter raid', 'error');
+      return;
+    }
+    
+    if (!paidRaidData.tweetUrl || !paidRaidData.txSignature) {
+      setError('Please fill in all required fields');
+      return;
+    }
+    
+    try {
+      setSubmitting(true);
+      setError(null);
+      
+      // Prepare data for submission
+      const submissionData = {
+        ...paidRaidData,
+        paymentChain: selectedChain.name,
+        chainSymbol: selectedChain.symbol,
+        chainAddress: selectedChain.address
+      };
+      
+      // Create the paid Twitter raid
+      const result = await createPaidTwitterRaid(submissionData, currentUser.token);
+      
+      // Reset form and hide it
+      setPaidRaidData({
+        tweetUrl: '',
+        title: 'Twitter Raid',
+        description: 'Retweet, Like & Comment to earn 50 points!',
+        txSignature: ''
+      });
+      setShowPaidCreateForm(false);
+      
+      // Show success message
+      showNotification(result.message || 'Twitter raid created! Awaiting payment approval.', 'success');
+      
+      // Refresh raids list
+      fetchRaids();
+    } catch (err) {
+      console.error('Error submitting paid raid:', err);
+      setError(err.message || 'Failed to create Twitter raid');
+      showNotification(err.message || 'Failed to create Twitter raid', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Admin function to approve a pending paid raid
+  const handleApproveRaid = async (raidId) => {
+    if (!currentUser || !currentUser.isAdmin) {
+      showNotification('Only admins can approve raids', 'error');
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${API_URL}/api/twitter-raids/${raidId}/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to approve raid');
+      }
+      
+      const result = await response.json();
+      showNotification(result.message || 'Raid approved successfully!', 'success');
+      
+      // Refresh raids list
+      fetchRaids();
+    } catch (error) {
+      console.error('Error approving raid:', error);
+      showNotification(error.message || 'Failed to approve raid', 'error');
+    }
+  };
+  
+  // Admin function to reject a pending paid raid
+  const handleRejectRaid = async (raidId) => {
+    if (!currentUser || !currentUser.isAdmin) {
+      showNotification('Only admins can reject raids', 'error');
+      return;
+    }
+    
+    // Prompt for rejection reason
+    const reason = prompt('Enter reason for rejection:');
+    if (reason === null) return; // User cancelled
+    
+    try {
+      const response = await fetch(`${API_URL}/api/twitter-raids/${raidId}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({ rejectionReason: reason })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to reject raid');
+      }
+      
+      const result = await response.json();
+      showNotification(result.message || 'Raid rejected', 'success');
+      
+      // Refresh raids list
+      fetchRaids();
+    } catch (error) {
+      console.error('Error rejecting raid:', error);
+      showNotification(error.message || 'Failed to reject raid', 'error');
+    }
+  };
+
   if (loading && raids.length === 0) {
     return <div className="text-center p-4">Loading Twitter raids...</div>;
   }
@@ -546,14 +741,34 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
             </p>
           </div>
           
-          {currentUser?.isAdmin && (
-            <button
-              onClick={() => setShowCreateForm(!showCreateForm)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded whitespace-nowrap text-sm sm:text-base"
-            >
-              {showCreateForm ? 'Cancel' : 'Create New Raid'}
-            </button>
-          )}
+          <div className="flex flex-wrap gap-2">
+            {currentUser?.isAdmin && (
+              <button
+                onClick={() => {
+                  setShowCreateForm(!showCreateForm);
+                  setShowPaidCreateForm(false);
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded whitespace-nowrap text-sm sm:text-base"
+              >
+                {showCreateForm ? 'Cancel' : 'Create Raid (Admin)'}
+              </button>
+            )}
+            
+            {currentUser && (
+              <button
+                onClick={() => {
+                  setShowPaidCreateForm(!showPaidCreateForm);
+                  setShowCreateForm(false);
+                }}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded whitespace-nowrap text-sm sm:text-base flex items-center"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {showPaidCreateForm ? 'Cancel' : 'Create Paid Raid (5 USDC)'}
+              </button>
+            )}
+          </div>
         </div>
         
         {/* Admin Create Form */}
@@ -602,6 +817,108 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
             </form>
           </div>
         )}
+        
+        {/* Paid Raid Create Form */}
+        {showPaidCreateForm && currentUser && (
+          <div className="mt-4 p-4 bg-gray-800/50 rounded-lg">
+            <h3 className="text-lg font-bold text-white mb-4">Create Paid Twitter Raid (5 USDC)</h3>
+            
+            <form onSubmit={handlePaidRaidSubmit}>
+              <div className="mb-4">
+                <label className="block text-gray-300 mb-2">
+                  Tweet URL <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={paidRaidData.tweetUrl}
+                  onChange={(e) => setPaidRaidData({...paidRaidData, tweetUrl: e.target.value})}
+                  placeholder="https://twitter.com/username/status/1234567890"
+                  className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              
+              <div className="mb-6">
+                <h4 className="text-white font-semibold mb-3">Payment Options</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+                  {BLOCKCHAIN_OPTIONS.map((chain) => (
+                    <button
+                      key={chain.symbol}
+                      type="button"
+                      onClick={() => setSelectedChain(chain)}
+                      className={`p-4 rounded-lg border flex flex-col items-center justify-center h-20 ${
+                        selectedChain === chain
+                          ? 'border-blue-500 bg-blue-500/20'
+                          : 'border-gray-600 hover:border-blue-400'
+                      }`}
+                    >
+                      <div className="font-medium">{chain.name}</div>
+                      <div className="text-sm text-gray-400 mt-1">
+                        5 {chain.amount}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                
+                <div className="flex items-center gap-2 p-4 bg-gray-700 rounded-lg mb-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm text-gray-400">Send 5 USDC to:</div>
+                    <div className="font-mono text-sm truncate">{selectedChain.address}</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyAddress(selectedChain.address, setCopiedAddress)}
+                    className="p-2 hover:text-blue-400"
+                  >
+                    {copiedAddress ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                
+                <div className="mb-4">
+                  <label className="block text-gray-300 mb-2">
+                    Transaction Signature <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={paidRaidData.txSignature}
+                    onChange={(e) => setPaidRaidData({...paidRaidData, txSignature: e.target.value})}
+                    placeholder="Enter your transaction signature/ID"
+                    className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+              </div>
+              
+              {error && (
+                <div className="bg-red-500/20 border border-red-500/50 text-red-400 p-3 rounded mb-4">
+                  {error}
+                </div>
+              )}
+              
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className={`px-4 py-2 rounded font-medium ${
+                    submitting
+                      ? 'bg-gray-600 cursor-not-allowed'
+                      : 'bg-purple-600 hover:bg-purple-700'
+                  } text-white`}
+                >
+                  {submitting ? 'Submitting...' : 'Create Paid Raid'}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
       </div>
 
       {/* Error Display */}
@@ -617,7 +934,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           <div className="flex items-center gap-3 mb-4">
             <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
               <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085a4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
               </svg>
             </div>
             <div>
@@ -768,7 +1085,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
               ) : (
                 <div className="w-full bg-gray-800/50 rounded-lg p-6 flex flex-col items-center justify-center text-center min-h-[300px]">
                   <svg className="w-12 h-12 text-gray-500 mb-3" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                    <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085a4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
                   </svg>
                   <p className="text-gray-400 mb-2">Enter your tweet or reply URL to see the preview</p>
                   <p className="text-gray-500 text-sm">This helps us verify your task completion</p>
@@ -829,7 +1146,24 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                 
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <h3 className="text-white font-bold">{raid.title}</h3>
+                  <div className="flex items-center mb-1">
+                    <h3 className="text-white font-bold mr-2">{raid.title}</h3>
+                    {raid.isPaid && (
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        raid.paymentStatus === 'approved' 
+                          ? 'bg-green-500/20 text-green-400' 
+                          : raid.paymentStatus === 'pending' 
+                            ? 'bg-yellow-500/20 text-yellow-400'
+                            : 'bg-red-500/20 text-red-400'
+                      }`}>
+                        {raid.paymentStatus === 'approved' 
+                          ? 'Paid' 
+                          : raid.paymentStatus === 'pending' 
+                            ? 'Payment Pending' 
+                            : 'Payment Rejected'}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-gray-400 text-sm">
                     Created by: {raid.createdBy?.username || 'Admin'}
                   </p>
@@ -871,6 +1205,36 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                 </a>
                 <span className="bg-blue-500/20 text-blue-400 px-2 py-1 rounded text-sm">+{raid.points} points</span>
               </div>
+              
+              {/* Admin Approval Buttons for Pending Paid Raids */}
+              {currentUser?.isAdmin && raid.isPaid && raid.paymentStatus === 'pending' && (
+                <div className="mt-3 pt-3 border-t border-gray-700 flex space-x-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleApproveRaid(raid._id);
+                    }}
+                    className="bg-green-600/20 hover:bg-green-600/40 text-green-400 px-2 py-1 rounded text-sm flex items-center"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Approve
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRejectRaid(raid._id);
+                    }}
+                    className="bg-red-600/20 hover:bg-red-600/40 text-red-400 px-2 py-1 rounded text-sm flex items-center"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Reject
+                  </button>
+                </div>
+              )}
               
               {/* Completions */}
               {raid.completions && raid.completions.length > 0 && (

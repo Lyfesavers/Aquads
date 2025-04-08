@@ -6,6 +6,7 @@ const auth = require('../middleware/auth');
 const pointsModule = require('./points');
 const axios = require('axios');
 const { twitterRaidRateLimit } = require('../middleware/rateLimiter');
+const AffiliateEarning = require('../models/AffiliateEarning');
 
 // Use the imported module function
 const awardSocialMediaPoints = pointsModule.awardSocialMediaPoints;
@@ -51,7 +52,9 @@ router.post('/', auth, async (req, res) => {
       title,
       description,
       points: points || 50,
-      createdBy: req.user.id
+      createdBy: req.user.id,
+      isPaid: false,
+      paymentStatus: 'approved' // Admin created raids are automatically approved
     });
 
     await raid.save();
@@ -60,6 +63,152 @@ router.post('/', auth, async (req, res) => {
   } catch (error) {
     console.error('Error creating Twitter raid:', error);
     res.status(500).json({ error: 'Failed to create Twitter raid' });
+  }
+});
+
+// Create a new paid Twitter raid (users)
+router.post('/paid', auth, async (req, res) => {
+  try {
+    const { tweetUrl, title, description, txSignature, paymentChain, chainSymbol, chainAddress } = req.body;
+
+    if (!tweetUrl || !title || !description || !txSignature) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Extract tweet ID from URL
+    const tweetIdMatch = tweetUrl.match(/\/status\/(\d+)/);
+    if (!tweetIdMatch || !tweetIdMatch[1]) {
+      return res.status(400).json({ error: 'Invalid Twitter URL' });
+    }
+
+    const tweetId = tweetIdMatch[1];
+
+    // Create the raid with pending payment status
+    const raid = new TwitterRaid({
+      tweetId,
+      tweetUrl,
+      title,
+      description,
+      points: 50, // Fixed points for paid raids
+      createdBy: req.user.id,
+      isPaid: true,
+      paymentStatus: 'pending',
+      txSignature,
+      paymentChain,
+      chainSymbol,
+      chainAddress
+    });
+
+    await raid.save();
+    
+    // Process affiliate commission if applicable
+    try {
+      const raidCreator = await User.findById(req.user.id);
+      if (raidCreator && raidCreator.referredBy) {
+        const raidAmount = 5; // 5 USDC per raid
+        
+        const commissionRate = await AffiliateEarning.calculateCommissionRate(raidCreator.referredBy);
+        const commissionEarned = AffiliateEarning.calculateCommission(raidAmount, commissionRate);
+        
+        const earning = new AffiliateEarning({
+          affiliateId: raidCreator.referredBy,
+          referredUserId: raidCreator._id,
+          adId: raid._id,
+          adAmount: raidAmount,
+          currency: 'USDC',
+          commissionRate,
+          commissionEarned
+        });
+        
+        await earning.save();
+        console.log('Affiliate commission recorded for Twitter raid:', earning);
+      }
+    } catch (commissionError) {
+      console.error('Error processing affiliate commission:', commissionError);
+      // Continue despite commission error
+    }
+    
+    res.status(201).json({ 
+      message: 'Twitter raid created successfully! It will be active once payment is approved.',
+      raid 
+    });
+  } catch (error) {
+    console.error('Error creating paid Twitter raid:', error);
+    res.status(500).json({ error: 'Failed to create Twitter raid' });
+  }
+});
+
+// Approve a paid Twitter raid (admin only)
+router.post('/:id/approve', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Only admins can approve raids' });
+    }
+
+    const raid = await TwitterRaid.findById(req.params.id);
+    
+    if (!raid) {
+      return res.status(404).json({ error: 'Twitter raid not found' });
+    }
+
+    if (!raid.isPaid) {
+      return res.status(400).json({ error: 'This is not a paid raid' });
+    }
+
+    if (raid.paymentStatus === 'approved') {
+      return res.status(400).json({ error: 'This raid is already approved' });
+    }
+
+    // Update raid status
+    raid.paymentStatus = 'approved';
+    raid.active = true;
+    await raid.save();
+    
+    res.json({ 
+      message: 'Twitter raid payment approved!',
+      raid 
+    });
+  } catch (error) {
+    console.error('Error approving Twitter raid:', error);
+    res.status(500).json({ error: 'Failed to approve Twitter raid' });
+  }
+});
+
+// Reject a paid Twitter raid (admin only)
+router.post('/:id/reject', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Only admins can reject raids' });
+    }
+
+    const { rejectionReason } = req.body;
+    const raid = await TwitterRaid.findById(req.params.id);
+    
+    if (!raid) {
+      return res.status(404).json({ error: 'Twitter raid not found' });
+    }
+
+    if (!raid.isPaid) {
+      return res.status(400).json({ error: 'This is not a paid raid' });
+    }
+
+    if (raid.paymentStatus === 'rejected') {
+      return res.status(400).json({ error: 'This raid is already rejected' });
+    }
+
+    // Update raid status
+    raid.paymentStatus = 'rejected';
+    raid.active = false;
+    raid.rejectionReason = rejectionReason || 'Payment verification failed';
+    await raid.save();
+    
+    res.json({ 
+      message: 'Twitter raid payment rejected!',
+      raid 
+    });
+  } catch (error) {
+    console.error('Error rejecting Twitter raid:', error);
+    res.status(500).json({ error: 'Failed to reject Twitter raid' });
   }
 });
 

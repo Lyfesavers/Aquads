@@ -27,6 +27,32 @@ const twitterRaidSchema = new Schema({
     ref: 'User',
     required: true
   },
+  // Payment related fields
+  isPaid: {
+    type: Boolean,
+    default: false
+  },
+  paymentStatus: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
+  },
+  txSignature: {
+    type: String,
+    default: null
+  },
+  paymentChain: {
+    type: String,
+    default: null
+  },
+  chainSymbol: {
+    type: String,
+    default: null
+  },
+  chainAddress: {
+    type: String,
+    default: null
+  },
   completions: [{
     userId: {
       type: Schema.Types.ObjectId,
