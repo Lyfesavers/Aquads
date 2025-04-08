@@ -343,12 +343,12 @@ const TokenList = ({ currentUser, showNotification }) => {
             )}
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 justify-end">
             {/* View Mode Toggle */}
             <div className="flex bg-gray-700 rounded-md overflow-hidden">
               <button
                 onClick={() => setViewMode('tokens')}
-                className={`px-4 py-2 font-medium text-sm ${
+                className={`px-3 py-2 text-xs sm:text-sm font-medium ${
                   viewMode === 'tokens' 
                     ? 'bg-blue-600 text-white' 
                     : 'bg-transparent text-gray-300 hover:bg-gray-600'
@@ -358,7 +358,7 @@ const TokenList = ({ currentUser, showNotification }) => {
               </button>
               <button
                 onClick={() => setViewMode('raids')}
-                className={`px-4 py-2 font-medium text-sm ${
+                className={`px-3 py-2 text-xs sm:text-sm font-medium ${
                   viewMode === 'raids' 
                     ? 'bg-blue-600 text-white' 
                     : 'bg-transparent text-gray-300 hover:bg-gray-600'
@@ -376,7 +376,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                     setSortConfig({ key: e.target.value, direction: sortConfig.direction });
                     handleSort(e.target.value);
                   }}
-                  className="bg-gray-700 text-white rounded px-3 py-2"
+                  className="bg-gray-700 text-white rounded px-2 py-2 text-xs sm:text-sm"
                 >
                   <option value="marketCap">Market Cap</option>
                   <option value="currentPrice">Price</option>
@@ -608,18 +608,6 @@ const TokenList = ({ currentUser, showNotification }) => {
           </div>
         ) : null}
       </div>
-      
-      {/* Mobile-only Twitter Raids button - only visible when in tokens view */}
-      {viewMode === 'tokens' && (
-        <button 
-          onClick={() => setViewMode('raids')}
-          className="md:hidden fixed bottom-24 right-4 bg-blue-600/90 hover:bg-blue-700 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 z-50"
-          style={{ fontSize: '14px' }}
-        >
-          <span>🐦</span>
-          <span>Twitter Raids</span>
-        </button>
-      )}
     </div>
   );
 };
