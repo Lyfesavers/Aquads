@@ -6,23 +6,39 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 // Add this delay utility function at the top of the component
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Add this utility function at the top of the file after the delay function
-const isWithinDays = (dateString, days) => {
-  if (!dateString) return true; // If no date, assume it's valid
-  const date = new Date(dateString);
+// Add function to check if a raid is less than 7 days old
+const isWithinSevenDays = (dateString) => {
+  if (!dateString) return true; // If no date, show the raid
+  const raidDate = new Date(dateString);
   const now = new Date();
-  const diffTime = now - date;
+  const diffTime = now - raidDate;
   const diffDays = diffTime / (1000 * 60 * 60 * 24);
-  return diffDays <= days;
+  return diffDays <= 7;
 };
 
-const getRemainingDays = (dateString) => {
+// Add this utility function to format the days remaining
+const getDaysRemaining = (dateString) => {
   if (!dateString) return null;
-  const date = new Date(dateString);
+  const raidDate = new Date(dateString);
   const now = new Date();
-  const diffTime = date.getTime() + (7 * 24 * 60 * 60 * 1000) - now.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays > 0 ? diffDays : 0;
+  const diffTime = now - raidDate;
+  const diffDays = diffTime / (1000 * 60 * 60 * 24);
+  const daysRemaining = Math.ceil(7 - diffDays);
+  
+  if (daysRemaining <= 0) return "Expiring today";
+  if (daysRemaining === 1) return "1 day left";
+  return `${daysRemaining} days left`;
+};
+
+// Add this utility function to format the date in a readable format
+const formatDate = (dateString) => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric',
+    year: 'numeric'
+  });
 };
 
 const SocialMediaRaids = ({ currentUser, showNotification }) => {
@@ -220,8 +236,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       
       const data = await response.json();
       
-      // Filter out raids older than 7 days if they have createdAt
-      const filteredRaids = data.filter(raid => isWithinDays(raid.createdAt, 7));
+      // Filter out raids older than 7 days
+      const filteredRaids = data.filter(raid => isWithinSevenDays(raid.createdAt));
       
       setRaids(filteredRaids);
     } catch (err) {
@@ -512,38 +528,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     return false;
   };
 
-  // Inside the SocialMediaRaids component, add a function to trigger manual cleanup
-  const triggerRaidCleanup = async () => {
-    if (!currentUser || !currentUser.isAdmin) {
-      showNotification('Only admins can trigger raid cleanup', 'error');
-      return;
-    }
-    
-    try {
-      const response = await fetch(`${API_URL}/api/twitter-raids/cleanup`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
-        }
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to clean up Twitter raids');
-      }
-      
-      showNotification(data.message || `Cleaned up ${data.cleanedUpRaids} old Twitter raids`, 'success');
-      
-      // Refresh the raids list
-      fetchRaids();
-    } catch (err) {
-      console.error('Error triggering raid cleanup:', err);
-      showNotification(err.message || 'Failed to clean up Twitter raids', 'error');
-    }
-  };
-
   if (loading && raids.length === 0) {
     return <div className="text-center p-4">Loading Twitter raids...</div>;
   }
@@ -563,26 +547,12 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           </div>
           
           {currentUser?.isAdmin && (
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowCreateForm(!showCreateForm)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded whitespace-nowrap text-sm sm:text-base"
-              >
-                {showCreateForm ? 'Cancel' : 'Create New Raid'}
-              </button>
-              
-              {/* Cleanup button for admins */}
-              <button
-                onClick={triggerRaidCleanup}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded whitespace-nowrap text-sm sm:text-base flex items-center"
-                title="Remove raids older than 7 days"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-                Cleanup Old Raids
-              </button>
-            </div>
+            <button
+              onClick={() => setShowCreateForm(!showCreateForm)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded whitespace-nowrap text-sm sm:text-base"
+            >
+              {showCreateForm ? 'Cancel' : 'Create New Raid'}
+            </button>
           )}
         </div>
         
@@ -857,28 +827,31 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                 </div>
               )}
                 
-              {/* Expiration Indicator */}
-              {raid.createdAt && (
-                <div className="absolute top-2 left-2 text-xs bg-gray-900/70 px-2 py-1 rounded-full text-gray-300">
-                  {getRemainingDays(raid.createdAt) <= 1 ? (
-                    <span className="text-red-400">Expires soon</span>
-                  ) : (
-                    <span>{getRemainingDays(raid.createdAt)} days left</span>
-                  )}
-                </div>
-              )}
-                
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <h3 className="text-white font-bold">{raid.title}</h3>
                   <p className="text-gray-400 text-sm">
                     Created by: {raid.createdBy?.username || 'Admin'}
                   </p>
+                  {raid.createdAt && (
+                    <div className="mt-1 flex items-center">
+                      <span className="text-xs text-gray-500 mr-2">
+                        {formatDate(raid.createdAt)}
+                      </span>
+                      <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                        raid.createdAt && getDaysRemaining(raid.createdAt).includes("today")
+                          ? "bg-red-500/20 text-red-400"
+                          : "bg-blue-500/20 text-blue-400"
+                      }`}>
+                        {getDaysRemaining(raid.createdAt)}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
                   {/* Twitter bird logo */}
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                    <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085a4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
                   </svg>
                 </div>
               </div>

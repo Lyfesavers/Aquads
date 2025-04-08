@@ -6,7 +6,6 @@ const auth = require('../middleware/auth');
 const pointsModule = require('./points');
 const axios = require('axios');
 const { twitterRaidRateLimit } = require('../middleware/rateLimiter');
-const CleanupService = require('../services/cleanupService');
 
 // Use the imported module function
 const awardSocialMediaPoints = pointsModule.awardSocialMediaPoints;
@@ -348,32 +347,6 @@ router.get('/suspicious', auth, async (req, res) => {
   } catch (error) {
     console.error('Error checking for suspicious activity:', error);
     res.status(500).json({ error: 'Failed to check for suspicious activity' });
-  }
-});
-
-// Add a route to run manual cleanup (admin only)
-router.post('/cleanup', auth, async (req, res) => {
-  try {
-    if (!req.user.isAdmin) {
-      return res.status(403).json({ error: 'Only admins can trigger cleanup' });
-    }
-
-    const result = await CleanupService.runManualCleanup();
-    
-    if (result.success) {
-      return res.json({ 
-        message: result.message,
-        cleanedUpRaids: result.cleanedUpRaids 
-      });
-    } else {
-      return res.status(500).json({ 
-        error: 'Cleanup failed', 
-        details: result.error 
-      });
-    }
-  } catch (error) {
-    console.error('Error triggering raid cleanup:', error);
-    res.status(500).json({ error: 'Failed to run Twitter raid cleanup' });
   }
 });
 
