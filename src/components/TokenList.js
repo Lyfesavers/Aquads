@@ -608,6 +608,18 @@ const TokenList = ({ currentUser, showNotification }) => {
           </div>
         ) : null}
       </div>
+      
+      {/* Mobile-only Twitter Raids button - only visible when in tokens view */}
+      {viewMode === 'tokens' && (
+        <button 
+          onClick={() => setViewMode('raids')}
+          className="md:hidden fixed bottom-24 right-4 bg-blue-600/90 hover:bg-blue-700 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 z-50"
+          style={{ fontSize: '14px' }}
+        >
+          <span>🐦</span>
+          <span>Twitter Raids</span>
+        </button>
+      )}
     </div>
   );
 };
