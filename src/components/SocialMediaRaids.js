@@ -608,16 +608,23 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                     Created by: {raid.createdBy?.username || 'Admin'}
                   </p>
                 </div>
-                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
-                  <img
-                    src={raid.createdBy?.profileImage || `https://ui-avatars.com/api/?name=${raid.createdBy?.username || 'User'}&background=random`}
-                    alt={raid.createdBy?.username || "User"}
-                    className="h-8 w-8 rounded-full object-cover"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = `https://ui-avatars.com/api/?name=${raid.createdBy?.username || 'User'}&background=random&color=fff`;
-                    }}
-                  />
+                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 overflow-hidden">
+                  {raid.createdBy?.profileImage ? (
+                    <img 
+                      src={raid.createdBy.profileImage} 
+                      alt={raid.createdBy.username || "Admin"}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.onError = null;
+                        e.target.style.display = 'none';
+                        e.target.parentNode.innerHTML = `<div class="text-center font-bold">${(raid.createdBy.username || 'A').charAt(0).toUpperCase()}</div>`;
+                      }}
+                    />
+                  ) : (
+                    <div className="text-center font-bold">
+                      {(raid.createdBy?.username || 'A').charAt(0).toUpperCase()}
+                    </div>
+                  )}
                 </div>
               </div>
               <p className="text-gray-300 mb-3">{raid.description}</p>
