@@ -609,7 +609,15 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   </p>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
-                  <i className="fab fa-twitter"></i>
+                  <img
+                    src={raid.createdBy?.profileImage || `https://ui-avatars.com/api/?name=${raid.createdBy?.username || 'User'}&background=random`}
+                    alt={raid.createdBy?.username || "User"}
+                    className="h-8 w-8 rounded-full object-cover"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = `https://ui-avatars.com/api/?name=${raid.createdBy?.username || 'User'}&background=random&color=fff`;
+                    }}
+                  />
                 </div>
               </div>
               <p className="text-gray-300 mb-3">{raid.description}</p>
