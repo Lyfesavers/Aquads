@@ -609,19 +609,21 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   </p>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 overflow-hidden">
-                  {raid.createdBy?.profileImage ? (
+                  {raid.createdBy && raid.createdBy._id ? (
                     <img 
-                      src={raid.createdBy.profileImage} 
+                      src={`${API_URL}/uploads/profile/${raid.createdBy._id}.jpg`} 
                       alt={raid.createdBy.username || "Admin"}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        e.target.onError = null;
+                        e.target.onerror = null; // Note: lowercase "onerror"
+                        // Fall back to a letter avatar if image fails to load
                         e.target.style.display = 'none';
-                        e.target.parentNode.innerHTML = `<div class="text-center font-bold">${(raid.createdBy.username || 'A').charAt(0).toUpperCase()}</div>`;
+                        const letter = (raid.createdBy.username || 'A').charAt(0).toUpperCase();
+                        e.target.parentNode.innerHTML = `<div class="text-center font-bold text-lg">${letter}</div>`;
                       }}
                     />
                   ) : (
-                    <div className="text-center font-bold">
+                    <div className="text-center font-bold text-lg">
                       {(raid.createdBy?.username || 'A').charAt(0).toUpperCase()}
                     </div>
                   )}
