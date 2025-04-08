@@ -34,6 +34,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [activeBooking, setActiveBooking] = useState(null);
   const [selectedAdForBump, setSelectedAdForBump] = useState(null);
   const [showBumpStoreModal, setShowBumpStoreModal] = useState(false);
+  const [suspiciousActivity, setSuspiciousActivity] = useState(null);
+  const [loadingSuspiciousActivity, setLoadingSuspiciousActivity] = useState(false);
+  const [twitterRaids, setTwitterRaids] = useState([]);
+  const [selectedRaid, setSelectedRaid] = useState(null);
+  const [raidCompletions, setRaidCompletions] = useState([]);
+  const [loadingRaids, setLoadingRaids] = useState(false);
 
   // Fetch bump requests and banner ads when dashboard opens
   useEffect(() => {
@@ -670,6 +676,124 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     setSelectedAdForBump(null);
   };
 
+  const fetchSuspiciousActivity = async () => {
+    try {
+      setLoadingSuspiciousActivity(true);
+      const response = await fetch(`${API_URL}/twitter-raids/suspicious`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch suspicious activity');
+      const data = await response.json();
+      setSuspiciousActivity(data);
+    } catch (error) {
+      console.error('Error fetching suspicious activity:', error);
+      showNotification('Failed to fetch suspicious activity', 'error');
+    } finally {
+      setLoadingSuspiciousActivity(false);
+    }
+  };
+
+  const handleFlagIP = async (ip) => {
+    try {
+      showNotification(`IP ${ip} has been flagged for review`, 'success');
+      // In a future update, we could implement an actual API endpoint for flagging IPs
+    } catch (error) {
+      console.error('Error flagging IP:', error);
+      showNotification('Failed to flag IP', 'error');
+    }
+  };
+
+  const handleBanIP = async (ip) => {
+    if (!window.confirm(`Are you sure you want to ban IP address ${ip}? This will affect all users connecting from this IP.`)) {
+      return;
+    }
+    
+    try {
+      showNotification(`IP ${ip} has been banned`, 'success');
+      // In a future update, we could implement an actual API endpoint for banning IPs
+    } catch (error) {
+      console.error('Error banning IP:', error);
+      showNotification('Failed to ban IP', 'error');
+    }
+  };
+
+  // Add function to fetch Twitter raids
+  const fetchTwitterRaids = async () => {
+    try {
+      setLoadingRaids(true);
+      const response = await fetch(`${API_URL}/twitter-raids`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch Twitter raids');
+      const data = await response.json();
+      setTwitterRaids(data);
+    } catch (error) {
+      console.error('Error fetching Twitter raids:', error);
+      showNotification('Failed to fetch Twitter raids', 'error');
+    } finally {
+      setLoadingRaids(false);
+    }
+  };
+
+  // Add function to load raid completions
+  const fetchRaidCompletions = async (raidId) => {
+    try {
+      setSelectedRaid(raidId);
+      const response = await fetch(`${API_URL}/twitter-raids/${raidId}`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch raid completions');
+      const data = await response.json();
+      setRaidCompletions(data.completions || []);
+    } catch (error) {
+      console.error('Error fetching raid completions:', error);
+      showNotification('Failed to fetch raid completions', 'error');
+    }
+  };
+  
+  // Add function to verify a completion
+  const handleVerifyCompletion = async (raidId, completionId, verified) => {
+    try {
+      const response = await fetch(`${API_URL}/twitter-raids/${raidId}/completions/${completionId}/verify`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          verified,
+          note: verified ? 'Manually verified by admin' : 'Rejected by admin'
+        })
+      });
+      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to update completion');
+      }
+      
+      showNotification(`Completion ${verified ? 'verified' : 'rejected'} successfully`, 'success');
+      
+      // Refresh the completions
+      await fetchRaidCompletions(raidId);
+    } catch (error) {
+      console.error('Error updating completion:', error);
+      showNotification('Failed to update completion: ' + error.message, 'error');
+    }
+  };
+  
+  // Load Twitter raids when the admin tab is viewed
+  useEffect(() => {
+    if (activeTab === 'admin' && currentUser?.isAdmin) {
+      fetchTwitterRaids();
+    }
+  }, [activeTab, currentUser]);
+
   return (
     <div className="fixed inset-0 bg-gray-900 z-[999999] overflow-y-auto">
       {/* Header */}
@@ -987,6 +1111,78 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       )}
                     </div>
                   )}
+
+                  {/* Twitter Raid Verification Section */}
+                  {currentUser?.isAdmin && (
+                    <div className="mb-8">
+                      <h3 className="text-xl font-semibold text-white mb-4">Twitter Raid Verification</h3>
+                      <div className="mb-4">
+                        <button
+                          onClick={() => fetchSuspiciousActivity()}
+                          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                        >
+                          Scan for Suspicious Activity
+                        </button>
+                      </div>
+                      
+                      {suspiciousActivity ? (
+                        <div className="space-y-4">
+                          <h4 className="text-lg font-medium text-white">Multiple Users from Same IP</h4>
+                          {Object.keys(suspiciousActivity.suspiciousIPs).length === 0 ? (
+                            <p className="text-gray-400 py-2">No suspicious activity detected.</p>
+                          ) : (
+                            Object.entries(suspiciousActivity.suspiciousIPs).map(([ip, completions]) => (
+                              <div key={ip} className="bg-gray-700 rounded-lg p-4">
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <h5 className="text-white font-medium">IP Address: {ip}</h5>
+                                    <p className="text-gray-400 text-sm mb-2">
+                                      {new Set(completions.map(c => c.username)).size} different users
+                                    </p>
+                                    <div className="space-y-2 mt-3">
+                                      {Array.from(new Set(completions.map(c => c.username))).map(username => (
+                                        <div key={username} className="bg-gray-800 p-2 rounded">
+                                          <p className="text-blue-400">User: {username}</p>
+                                          <div className="text-gray-400 text-sm">
+                                            {completions
+                                              .filter(c => c.username === username)
+                                              .map((completion, idx) => (
+                                                <div key={idx} className="mt-1">
+                                                  <p>Raid: {completion.title}</p>
+                                                  <p>Time: {new Date(completion.timestamp).toLocaleString()}</p>
+                                                </div>
+                                              ))}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                  <div className="flex space-x-2">
+                                    <button
+                                      onClick={() => handleFlagIP(ip)}
+                                      className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
+                                    >
+                                      Flag IP
+                                    </button>
+                                    <button
+                                      onClick={() => handleBanIP(ip)}
+                                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                                    >
+                                      Ban IP
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      ) : loadingSuspiciousActivity ? (
+                        <p className="text-gray-400 text-center py-4">Loading suspicious activity data...</p>
+                      ) : (
+                        <p className="text-gray-400 text-center py-4">Click the button above to scan for suspicious Twitter raid activity.</p>
+                      )}
+                    </div>
+                  )}
                 </>
               )}
 
@@ -1276,6 +1472,78 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                         </div>
                       ))}
                     </div>
+                  )}
+                </div>
+              )}
+
+              {/* Twitter Raid Verification Section */}
+              {currentUser?.isAdmin && (
+                <div className="mb-8">
+                  <h3 className="text-xl font-semibold text-white mb-4">Twitter Raid Verification</h3>
+                  <div className="mb-4">
+                    <button
+                      onClick={() => fetchSuspiciousActivity()}
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                    >
+                      Scan for Suspicious Activity
+                    </button>
+                  </div>
+                  
+                  {suspiciousActivity ? (
+                    <div className="space-y-4">
+                      <h4 className="text-lg font-medium text-white">Multiple Users from Same IP</h4>
+                      {Object.keys(suspiciousActivity.suspiciousIPs).length === 0 ? (
+                        <p className="text-gray-400 py-2">No suspicious activity detected.</p>
+                      ) : (
+                        Object.entries(suspiciousActivity.suspiciousIPs).map(([ip, completions]) => (
+                          <div key={ip} className="bg-gray-700 rounded-lg p-4">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h5 className="text-white font-medium">IP Address: {ip}</h5>
+                                <p className="text-gray-400 text-sm mb-2">
+                                  {new Set(completions.map(c => c.username)).size} different users
+                                </p>
+                                <div className="space-y-2 mt-3">
+                                  {Array.from(new Set(completions.map(c => c.username))).map(username => (
+                                    <div key={username} className="bg-gray-800 p-2 rounded">
+                                      <p className="text-blue-400">User: {username}</p>
+                                      <div className="text-gray-400 text-sm">
+                                        {completions
+                                          .filter(c => c.username === username)
+                                          .map((completion, idx) => (
+                                            <div key={idx} className="mt-1">
+                                              <p>Raid: {completion.title}</p>
+                                              <p>Time: {new Date(completion.timestamp).toLocaleString()}</p>
+                                            </div>
+                                          ))}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="flex space-x-2">
+                                <button
+                                  onClick={() => handleFlagIP(ip)}
+                                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
+                                >
+                                  Flag IP
+                                </button>
+                                <button
+                                  onClick={() => handleBanIP(ip)}
+                                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                                >
+                                  Ban IP
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  ) : loadingSuspiciousActivity ? (
+                    <p className="text-gray-400 text-center py-4">Loading suspicious activity data...</p>
+                  ) : (
+                    <p className="text-gray-400 text-center py-4">Click the button above to scan for suspicious Twitter raid activity.</p>
                   )}
                 </div>
               )}

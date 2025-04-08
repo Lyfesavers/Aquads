@@ -499,4 +499,74 @@ router.get('/suspicious', auth, async (req, res) => {
   }
 });
 
+// Admin endpoint to verify or reject a raid completion
+router.post('/:raidId/completions/:completionId/verify', auth, async (req, res) => {
+  try {
+    // Only admins can access this endpoint
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Unauthorized: Admin access required' });
+    }
+    
+    const { raidId, completionId } = req.params;
+    const { verified, note } = req.body;
+    
+    if (verified === undefined) {
+      return res.status(400).json({ error: 'Verification status is required' });
+    }
+    
+    // Find the raid
+    const raid = await TwitterRaid.findById(raidId);
+    
+    if (!raid) {
+      return res.status(404).json({ error: 'Twitter raid not found' });
+    }
+    
+    // Find the completion within the raid
+    const completion = raid.completions.id(completionId);
+    
+    if (!completion) {
+      return res.status(404).json({ error: 'Completion not found' });
+    }
+    
+    // Update the completion
+    completion.verified = verified;
+    if (note) {
+      completion.verificationNote = note;
+    }
+    
+    // If rejecting a previously verified completion, handle points adjustment
+    if (completion.verified && !verified) {
+      try {
+        // Find the user and deduct points
+        const user = await User.findById(completion.userId);
+        if (user) {
+          const pointsAmount = raid.points || 50;
+          user.points = Math.max(0, user.points - pointsAmount); // Ensure points don't go negative
+          user.pointsHistory.push({
+            amount: -pointsAmount,
+            reason: `Twitter raid completion rejected: ${raid.title}`,
+            socialRaidId: raid._id,
+            createdAt: new Date()
+          });
+          await user.save();
+        }
+      } catch (err) {
+        console.error('Error adjusting points for rejected completion:', err);
+        // Continue with completion update even if points adjustment fails
+      }
+    }
+    
+    await raid.save();
+    
+    res.json({
+      success: true,
+      message: `Completion ${verified ? 'verified' : 'rejected'} successfully`,
+      completion
+    });
+  } catch (error) {
+    console.error('Error verifying/rejecting completion:', error);
+    res.status(500).json({ error: 'Failed to verify/reject completion' });
+  }
+});
+
 module.exports = router; 
