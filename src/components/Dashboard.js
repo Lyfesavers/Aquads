@@ -34,6 +34,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [activeBooking, setActiveBooking] = useState(null);
   const [selectedAdForBump, setSelectedAdForBump] = useState(null);
   const [showBumpStoreModal, setShowBumpStoreModal] = useState(false);
+  const [pendingTwitterRaids, setPendingTwitterRaids] = useState([]);
+  const [loadingTwitterRaids, setLoadingTwitterRaids] = useState(false);
+  const [twitterRaidRejectionReason, setTwitterRaidRejectionReason] = useState('');
+  const [showTwitterRaidRejectModal, setShowTwitterRaidRejectModal] = useState(false);
+  const [selectedTwitterRaid, setSelectedTwitterRaid] = useState(null);
 
   // Fetch bump requests and banner ads when dashboard opens
   useEffect(() => {
@@ -168,6 +173,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
     if (currentUser?.userId) {
       fetchUserJobs();
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (currentUser?.isAdmin) {
+      fetchPendingTwitterRaids();
     }
   }, [currentUser]);
 
@@ -670,6 +681,187 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     setSelectedAdForBump(null);
   };
 
+  // Add this function to fetch pending Twitter raids
+  const fetchPendingTwitterRaids = async () => {
+    setLoadingTwitterRaids(true);
+    try {
+      const response = await fetch(`${API_URL}/api/twitter-raids`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch Twitter raids');
+      }
+      
+      const raids = await response.json();
+      // Filter to only get the paid raids with pending payment status
+      const pendingRaids = raids.filter(raid => raid.isPaid && raid.paymentStatus === 'pending');
+      setPendingTwitterRaids(pendingRaids);
+    } catch (error) {
+      console.error('Error fetching pending Twitter raids:', error);
+    } finally {
+      setLoadingTwitterRaids(false);
+    }
+  };
+
+  // Add these functions to handle Twitter raid approvals and rejections
+  const handleApproveTwitterRaid = async (raidId) => {
+    try {
+      const response = await fetch(`${API_URL}/api/twitter-raids/${raidId}/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to approve Twitter raid');
+      }
+      
+      // Refresh the list of pending raids
+      fetchPendingTwitterRaids();
+      alert('Twitter raid approved successfully!');
+    } catch (error) {
+      console.error('Error approving Twitter raid:', error);
+      alert('Error approving Twitter raid: ' + error.message);
+    }
+  };
+
+  const handleRejectTwitterRaidClick = (raid) => {
+    setSelectedTwitterRaid(raid);
+    setTwitterRaidRejectionReason('');
+    setShowTwitterRaidRejectModal(true);
+  };
+
+  const handleRejectTwitterRaid = async () => {
+    try {
+      if (!selectedTwitterRaid) return;
+      
+      const response = await fetch(`${API_URL}/api/twitter-raids/${selectedTwitterRaid._id}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({ rejectionReason: twitterRaidRejectionReason })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to reject Twitter raid');
+      }
+      
+      // Refresh the list of pending raids
+      fetchPendingTwitterRaids();
+      setShowTwitterRaidRejectModal(false);
+      alert('Twitter raid rejected successfully!');
+    } catch (error) {
+      console.error('Error rejecting Twitter raid:', error);
+      alert('Error rejecting Twitter raid: ' + error.message);
+    }
+  };
+
+  // Add a new function to render the Twitter Raids tab content
+  const renderTwitterRaidsTab = () => {
+    return (
+      <div className="space-y-4">
+        <h3 className="text-xl font-semibold mb-4">Twitter Raids Pending Approval</h3>
+        
+        {loadingTwitterRaids ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto"></div>
+            <p className="mt-4 text-gray-400">Loading pending Twitter raids...</p>
+          </div>
+        ) : pendingTwitterRaids.length === 0 ? (
+          <p className="text-gray-400 text-center py-4">No pending Twitter raids to approve.</p>
+        ) : (
+          <div className="space-y-4">
+            {pendingTwitterRaids.map(raid => (
+              <div key={raid._id} className="bg-gray-800 p-4 rounded-lg">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-white">{raid.title}</h4>
+                    <p className="text-sm text-gray-400">
+                      Created by: {raid.createdBy?.username || "Unknown"}
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      Created at: {new Date(raid.createdAt).toLocaleString()}
+                    </p>
+                    <p className="text-sm">
+                      <span className="text-gray-400">Transaction ID: </span>
+                      <span className="text-blue-400 font-mono">{raid.txSignature}</span>
+                    </p>
+                    <p className="text-sm">
+                      <span className="text-gray-400">Payment Chain: </span>
+                      <span className="text-green-400">{raid.paymentChain || "Unknown"}</span>
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      Tweet URL: <a href={raid.tweetUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">{raid.tweetUrl}</a>
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleApproveTwitterRaid(raid._id)}
+                      className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => handleRejectTwitterRaidClick(raid)}
+                      className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {/* Modal for rejecting Twitter raids */}
+        {showTwitterRaidRejectModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
+              <h3 className="text-lg font-semibold mb-4">Reject Twitter Raid</h3>
+              <p className="mb-4 text-gray-300">
+                Are you sure you want to reject this Twitter raid? This action cannot be undone.
+              </p>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  Rejection Reason:
+                </label>
+                <textarea
+                  value={twitterRaidRejectionReason}
+                  onChange={(e) => setTwitterRaidRejectionReason(e.target.value)}
+                  className="w-full p-2 rounded bg-gray-700 text-white"
+                  rows="3"
+                  placeholder="Enter reason for rejection (optional)"
+                ></textarea>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <button
+                  onClick={() => setShowTwitterRaidRejectModal(false)}
+                  className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleRejectTwitterRaid}
+                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                >
+                  Reject Raid
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="fixed inset-0 bg-gray-900 z-[999999] overflow-y-auto">
       {/* Header */}
@@ -714,6 +906,14 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
               onClick={() => setActiveTab('premium')}
             >
               Premium Requests
+            </button>
+          )}
+          {currentUser.isAdmin && (
+            <button
+              className={`px-4 py-2 ${activeTab === 'twitterRaids' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+              onClick={() => setActiveTab('twitterRaids')}
+            >
+              Twitter Raids
             </button>
           )}
         </div>
@@ -1317,6 +1517,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
               )}
             </div>
           )}
+
+          {/* Add the Twitter Raids tab content */}
+          {activeTab === 'twitterRaids' && currentUser?.isAdmin && renderTwitterRaidsTab()}
 
           <div className="mb-6">
             <h3 className="text-xl font-semibold mb-4">My Job Postings</h3>
