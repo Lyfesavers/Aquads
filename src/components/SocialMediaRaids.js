@@ -82,7 +82,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [tweetUrl, setTweetUrl] = useState('');
   const [isValidUrl, setIsValidUrl] = useState(true);
   const tweetEmbedRef = useRef(null);
-  const [userRemainingRaids, setUserRemainingRaids] = useState(0);
   
   // For admin creation
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -108,12 +107,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     fetchRaids();
     // Load Twitter widget script
     loadTwitterWidgetScript();
-    
-    // Fetch user's remaining Twitter raids if user is logged in
-    if (currentUser && currentUser.token) {
-      fetchUserRemainingRaids();
-    }
-  }, [currentUser]);
+  }, []);
 
   useEffect(() => {
     // When tweet URL changes, try to embed it
@@ -615,54 +609,35 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   };
 
   // Function to handle submission of paid raid form
-  const handlePaidSubmit = async (e) => {
+  const handlePaidRaidSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-    setSubmitting(true);
+    
+    if (!currentUser) {
+      showNotification('Please log in to create a paid Twitter raid', 'error');
+      return;
+    }
+    
+    if (!paidRaidData.tweetUrl || !paidRaidData.txSignature) {
+      setError('Please fill in all required fields');
+      return;
+    }
     
     try {
-      // Validation
-      if (!paidRaidData.tweetUrl) {
-        throw new Error('Tweet URL is required');
-      }
+      setSubmitting(true);
+      setError(null);
       
-      // Check if user has remaining raids and skip txSignature validation if they do
-      if (userRemainingRaids === 0 && !paidRaidData.txSignature) {
-        throw new Error('Transaction signature is required for paid raids');
-      }
-      
-      // Create payload - don't require txSignature if user has remaining raids
-      const payload = {
-        tweetUrl: paidRaidData.tweetUrl,
-        title: paidRaidData.title,
-        description: paidRaidData.description
+      // Prepare data for submission
+      const submissionData = {
+        ...paidRaidData,
+        paymentChain: selectedChain.name,
+        chainSymbol: selectedChain.symbol,
+        chainAddress: selectedChain.address
       };
       
-      // Only add transaction details if this is not using a free remaining raid
-      if (userRemainingRaids === 0) {
-        payload.txSignature = paidRaidData.txSignature;
-        payload.paymentChain = selectedChain.name;
-        payload.chainSymbol = selectedChain.symbol;
-        payload.chainAddress = selectedChain.address;
-      }
+      // Create the paid Twitter raid
+      const result = await createPaidTwitterRaid(submissionData, currentUser.token);
       
-      // Submit the paid raid
-      const response = await fetch(`${API_URL}/twitter-raids/paid`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
-        },
-        body: JSON.stringify(payload)
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create Twitter raid');
-      }
-      
-      // Clear form and reset state
+      // Reset form and hide it
       setPaidRaidData({
         tweetUrl: '',
         title: 'Twitter Raid',
@@ -671,23 +646,15 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       });
       setShowPaidCreateForm(false);
       
-      // If user had remaining raids, update the count
-      if (userRemainingRaids > 0) {
-        setUserRemainingRaids(prevCount => prevCount - 1);
-      }
+      // Show success message
+      showNotification(result.message || 'Twitter raid created! Awaiting payment approval.', 'success');
       
       // Refresh raids list
       fetchRaids();
-      
-      // Show success notification
-      if (data.message) {
-        setSuccess(data.message);
-        showNotification(data.message, 'success');
-      }
-    } catch (error) {
-      console.error('Error creating paid Twitter raid:', error);
-      setError(error.message || 'Failed to create Twitter raid');
-      showNotification(error.message || 'Failed to create Twitter raid', 'error');
+    } catch (err) {
+      console.error('Error submitting paid raid:', err);
+      setError(err.message || 'Failed to create Twitter raid');
+      showNotification(err.message || 'Failed to create Twitter raid', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -759,24 +726,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     } catch (error) {
       console.error('Error rejecting raid:', error);
       showNotification(error.message || 'Failed to reject raid', 'error');
-    }
-  };
-
-  // Add this function to fetch user's remaining Twitter raids
-  const fetchUserRemainingRaids = async () => {
-    try {
-      const response = await fetch(`${API_URL}/users/me`, {
-        headers: {
-          'Authorization': `Bearer ${currentUser.token}`
-        }
-      });
-      
-      if (response.ok) {
-        const userData = await response.json();
-        setUserRemainingRaids(userData.remainingTwitterRaids || 0);
-      }
-    } catch (error) {
-      console.error('Error fetching user data:', error);
     }
   };
 
@@ -881,168 +830,97 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           <div className="mt-4 p-4 bg-gray-800/50 rounded-lg">
             <h3 className="text-lg font-bold text-white mb-4">Create Paid Twitter Raid (5 USDC)</h3>
             
-            {error && (
-              <div className="bg-red-500/20 border border-red-500/50 text-red-400 p-3 rounded mb-4">
-                {error}
-              </div>
-            )}
-            
-            {/* Info banner about the 5 raids for 5 USDC */}
-            <div className="mb-6 p-4 bg-blue-500 bg-opacity-10 border border-blue-500 rounded-md">
-              <h3 className="text-blue-400 font-semibold mb-2">Twitter Raid Package</h3>
-              <p className="text-white text-sm mb-2">Pay 5 USDC once to create 5 Twitter raids!</p>
-              <ul className="text-sm text-gray-300 list-disc pl-5 space-y-1">
-                <li>First raid requires admin approval</li>
-                <li>After approval, you can create 4 more raids instantly</li>
-                <li>Current remaining raids: <span className="font-bold text-blue-400">{userRemainingRaids}</span></li>
-              </ul>
-            </div>
-
-            <form onSubmit={handlePaidSubmit}>
+            <form onSubmit={handlePaidRaidSubmit}>
               <div className="mb-4">
-                <label className="block text-gray-300 text-sm font-bold mb-2">
-                  Tweet URL
+                <label className="block text-gray-300 mb-2">
+                  Tweet URL <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
-                  className="shadow-sm w-full px-3 py-2 text-white bg-gray-700 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="https://twitter.com/username/status/1234567890"
                   value={paidRaidData.tweetUrl}
                   onChange={(e) => setPaidRaidData({...paidRaidData, tweetUrl: e.target.value})}
+                  placeholder="https://twitter.com/username/status/1234567890"
+                  className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
               
-              <div className="mb-4">
-                <label className="block text-gray-300 text-sm font-bold mb-2">
-                  Title
-                </label>
-                <input
-                  type="text"
-                  className="shadow-sm w-full px-3 py-2 text-white bg-gray-700 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Twitter Raid"
-                  value={paidRaidData.title}
-                  onChange={(e) => setPaidRaidData({...paidRaidData, title: e.target.value})}
-                  required
-                />
+              <div className="mb-6">
+                <h4 className="text-white font-semibold mb-3">Payment Options</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+                  {BLOCKCHAIN_OPTIONS.map((chain) => (
+                    <button
+                      key={chain.symbol}
+                      type="button"
+                      onClick={() => setSelectedChain(chain)}
+                      className={`p-4 rounded-lg border flex flex-col items-center justify-center h-20 ${
+                        selectedChain === chain
+                          ? 'border-blue-500 bg-blue-500/20'
+                          : 'border-gray-600 hover:border-blue-400'
+                      }`}
+                    >
+                      <div className="font-medium">{chain.name}</div>
+                      <div className="text-sm text-gray-400 mt-1">
+                        5 {chain.amount}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                
+                <div className="flex items-center gap-2 p-4 bg-gray-700 rounded-lg mb-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm text-gray-400">Send 5 USDC to:</div>
+                    <div className="font-mono text-sm truncate">{selectedChain.address}</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyAddress(selectedChain.address, setCopiedAddress)}
+                    className="p-2 hover:text-blue-400"
+                  >
+                    {copiedAddress ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                
+                <div className="mb-4">
+                  <label className="block text-gray-300 mb-2">
+                    Transaction Signature <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={paidRaidData.txSignature}
+                    onChange={(e) => setPaidRaidData({...paidRaidData, txSignature: e.target.value})}
+                    placeholder="Enter your transaction signature/ID"
+                    className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
               </div>
               
-              <div className="mb-4">
-                <label className="block text-gray-300 text-sm font-bold mb-2">
-                  Description
-                </label>
-                <textarea
-                  className="shadow-sm w-full px-3 py-2 text-white bg-gray-700 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Retweet, Like & Comment to earn 50 points!"
-                  value={paidRaidData.description}
-                  onChange={(e) => setPaidRaidData({...paidRaidData, description: e.target.value})}
-                  rows="3"
-                  required
-                />
-              </div>
-              
-              {userRemainingRaids === 0 && (
-                <>
-                  <div className="mb-6">
-                    <label className="block text-gray-300 text-sm font-bold mb-2">
-                      Payment Method
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {BLOCKCHAIN_OPTIONS.map((chain) => (
-                        <button
-                          key={chain.symbol}
-                          type="button"
-                          className={`px-4 py-2 rounded-lg ${
-                            selectedChain.symbol === chain.symbol
-                              ? 'bg-blue-500 text-white'
-                              : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-                          }`}
-                          onClick={() => setSelectedChain(chain)}
-                        >
-                          {chain.name} ({chain.symbol})
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div className="mb-6 p-4 bg-gray-700 rounded-lg">
-                    <h3 className="font-semibold text-white mb-2">Payment Details</h3>
-                    <div className="flex flex-col space-y-2">
-                      <div className="grid grid-cols-4 gap-2">
-                        <div className="text-gray-400 col-span-1">Network:</div>
-                        <div className="text-white col-span-3">{selectedChain.name}</div>
-                      </div>
-                      <div className="grid grid-cols-4 gap-2">
-                        <div className="text-gray-400 col-span-1">Amount:</div>
-                        <div className="text-white col-span-3">5 USDC</div>
-                      </div>
-                      <div className="grid grid-cols-4 gap-2">
-                        <div className="text-gray-400 col-span-1">Address:</div>
-                        <div className="text-white col-span-3 break-all">
-                          <div className="flex items-center">
-                            <span className="font-mono text-sm">{selectedChain.address}</span>
-                            <button
-                              type="button"
-                              className="ml-2 text-blue-400 hover:text-blue-300"
-                              onClick={() => {
-                                navigator.clipboard.writeText(selectedChain.address);
-                                setCopiedAddress(true);
-                                setTimeout(() => setCopiedAddress(false), 2000);
-                              }}
-                            >
-                              {copiedAddress ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
-                              ) : (
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                                </svg>
-                              )}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="mb-4">
-                    <label className="block text-gray-300 text-sm font-bold mb-2">
-                      Transaction Signature
-                    </label>
-                    <input
-                      type="text"
-                      className="shadow-sm w-full px-3 py-2 text-white bg-gray-700 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Enter transaction ID / signature after payment"
-                      value={paidRaidData.txSignature}
-                      onChange={(e) => setPaidRaidData({...paidRaidData, txSignature: e.target.value})}
-                      required={userRemainingRaids === 0}
-                    />
-                    <p className="text-gray-400 text-xs mt-1">
-                      Complete payment of 5 USDC to the address above, then paste the transaction ID/hash here
-                    </p>
-                  </div>
-                </>
+              {error && (
+                <div className="bg-red-500/20 border border-red-500/50 text-red-400 p-3 rounded mb-4">
+                  {error}
+                </div>
               )}
               
               <div className="flex justify-end">
                 <button
-                  type="button"
-                  className="mr-2 px-4 py-2 text-gray-300 hover:text-white"
-                  onClick={() => setShowPaidCreateForm(false)}
-                >
-                  Cancel
-                </button>
-                <button
                   type="submit"
-                  className={`px-4 py-2 rounded ${
+                  disabled={submitting}
+                  className={`px-4 py-2 rounded font-medium ${
                     submitting
                       ? 'bg-gray-600 cursor-not-allowed'
-                      : 'bg-blue-500 hover:bg-blue-600'
+                      : 'bg-purple-600 hover:bg-purple-700'
                   } text-white`}
-                  disabled={submitting}
                 >
-                  {submitting ? 'Creating...' : userRemainingRaids > 0 ? 'Create Using Free Raid' : 'Create Raid'}
+                  {submitting ? 'Submitting...' : 'Create Paid Raid'}
                 </button>
               </div>
             </form>

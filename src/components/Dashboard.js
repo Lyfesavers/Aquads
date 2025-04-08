@@ -769,17 +769,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       <div className="space-y-4">
         <h3 className="text-xl font-semibold mb-4">Twitter Raids Pending Approval</h3>
         
-        {/* Info banner about the 5 raids for 5 USDC system */}
-        <div className="mb-6 p-4 bg-blue-500 bg-opacity-10 border border-blue-500 rounded-md">
-          <h3 className="text-blue-400 font-semibold mb-2">Twitter Raid System</h3>
-          <p className="text-white text-sm mb-2">Users pay 5 USDC to create 5 Twitter raids:</p>
-          <ul className="text-sm text-gray-300 list-disc pl-5 space-y-1">
-            <li>First raid requires admin approval</li>
-            <li>After approval, users can post 4 more raids instantly</li>
-            <li>By approving a paid raid, you're giving the user 4 more free raids</li>
-          </ul>
-        </div>
-        
         {loadingTwitterRaids ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto"></div>
@@ -811,13 +800,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                     <p className="text-sm text-gray-400">
                       Tweet URL: <a href={raid.tweetUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">{raid.tweetUrl}</a>
                     </p>
-                    
-                    {/* Add information about what happens when this raid is approved */}
-                    <div className="p-2 bg-yellow-500 bg-opacity-10 border border-yellow-500 rounded-md mt-2">
-                      <p className="text-yellow-400 text-xs">
-                        <strong>Note:</strong> Approving this raid will grant the user 4 additional free raids.
-                      </p>
-                    </div>
                   </div>
                   <div className="flex gap-2">
                     <button

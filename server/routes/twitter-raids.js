@@ -71,14 +71,10 @@ router.post('/paid', auth, async (req, res) => {
   try {
     const { tweetUrl, title, description, txSignature, paymentChain, chainSymbol, chainAddress } = req.body;
 
-    if (!tweetUrl || !title || !description) {
+    if (!tweetUrl || !title || !description || !txSignature) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Check if user has remaining free raids
-    const user = await User.findById(req.user.id);
-    const hasRemainingRaids = user.remainingTwitterRaids > 0;
-    
     // Extract tweet ID from URL
     const tweetIdMatch = tweetUrl.match(/\/status\/(\d+)/);
     if (!tweetIdMatch || !tweetIdMatch[1]) {
@@ -87,7 +83,7 @@ router.post('/paid', auth, async (req, res) => {
 
     const tweetId = tweetIdMatch[1];
 
-    // Create the raid with pending or approved status based on remaining raids
+    // Create the raid with pending payment status
     const raid = new TwitterRaid({
       tweetId,
       tweetUrl,
@@ -96,56 +92,44 @@ router.post('/paid', auth, async (req, res) => {
       points: 50, // Fixed points for paid raids
       createdBy: req.user.id,
       isPaid: true,
-      paymentStatus: hasRemainingRaids ? 'approved' : 'pending', // Auto-approve if user has remaining raids
-      txSignature: hasRemainingRaids ? null : txSignature, // Only store transaction signature for the first paid raid
-      paymentChain: hasRemainingRaids ? null : paymentChain,
-      chainSymbol: hasRemainingRaids ? null : chainSymbol,
-      chainAddress: hasRemainingRaids ? null : chainAddress,
-      active: hasRemainingRaids // Auto-activate if user has remaining raids
+      paymentStatus: 'pending',
+      txSignature,
+      paymentChain,
+      chainSymbol,
+      chainAddress
     });
-
-    // If user has remaining raids, decrement their count
-    if (hasRemainingRaids) {
-      user.remainingTwitterRaids -= 1;
-      await user.save();
-      console.log(`User ${user.username} used 1 remaining raid. ${user.remainingTwitterRaids} raids left.`);
-    }
 
     await raid.save();
     
-    // Process affiliate commission if applicable and if this is a paid raid (not using free remaining)
-    if (!hasRemainingRaids) {
-      try {
-        const raidCreator = await User.findById(req.user.id);
-        if (raidCreator && raidCreator.referredBy) {
-          const raidAmount = 5; // 5 USDC per raid
-          
-          const commissionRate = await AffiliateEarning.calculateCommissionRate(raidCreator.referredBy);
-          const commissionEarned = AffiliateEarning.calculateCommission(raidAmount, commissionRate);
-          
-          const earning = new AffiliateEarning({
-            affiliateId: raidCreator.referredBy,
-            referredUserId: raidCreator._id,
-            adId: raid._id,
-            adAmount: raidAmount,
-            currency: 'USDC',
-            commissionRate,
-            commissionEarned
-          });
-          
-          await earning.save();
-          console.log('Affiliate commission recorded for Twitter raid:', earning);
-        }
-      } catch (commissionError) {
-        console.error('Error processing affiliate commission:', commissionError);
-        // Continue despite commission error
+    // Process affiliate commission if applicable
+    try {
+      const raidCreator = await User.findById(req.user.id);
+      if (raidCreator && raidCreator.referredBy) {
+        const raidAmount = 5; // 5 USDC per raid
+        
+        const commissionRate = await AffiliateEarning.calculateCommissionRate(raidCreator.referredBy);
+        const commissionEarned = AffiliateEarning.calculateCommission(raidAmount, commissionRate);
+        
+        const earning = new AffiliateEarning({
+          affiliateId: raidCreator.referredBy,
+          referredUserId: raidCreator._id,
+          adId: raid._id,
+          adAmount: raidAmount,
+          currency: 'USDC',
+          commissionRate,
+          commissionEarned
+        });
+        
+        await earning.save();
+        console.log('Affiliate commission recorded for Twitter raid:', earning);
       }
+    } catch (commissionError) {
+      console.error('Error processing affiliate commission:', commissionError);
+      // Continue despite commission error
     }
     
     res.status(201).json({ 
-      message: hasRemainingRaids 
-        ? 'Twitter raid created and automatically approved!' 
-        : 'Twitter raid created successfully! It will be active once payment is approved.',
+      message: 'Twitter raid created successfully! It will be active once payment is approved.',
       raid 
     });
   } catch (error) {
@@ -180,16 +164,8 @@ router.post('/:id/approve', auth, async (req, res) => {
     raid.active = true;
     await raid.save();
     
-    // When a paid raid is approved, give the user 4 more free raids
-    const user = await User.findById(raid.createdBy);
-    if (user) {
-      user.remainingTwitterRaids += 4; // They get 4 more free raids
-      await user.save();
-      console.log(`User ${user.username} granted 4 additional Twitter raids. Total remaining: ${user.remainingTwitterRaids}`);
-    }
-    
     res.json({ 
-      message: 'Twitter raid payment approved! User can now post 4 more raids without approval.',
+      message: 'Twitter raid payment approved!',
       raid 
     });
   } catch (error) {
