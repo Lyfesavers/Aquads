@@ -229,6 +229,14 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     setIsValidUrl(true);
     // Generate a new verification code for the user
     setVerificationCode(generateVerificationCode());
+    
+    // Scroll to the form section for better UX
+    setTimeout(() => {
+      const formElement = document.getElementById('verification-form-section');
+      if (formElement) {
+        formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
   };
 
   const handleSubmitTask = async (e) => {
@@ -564,92 +572,32 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         </div>
       )}
 
-      {/* Raids Grid */}
-      {raids.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-          {raids.map(raid => (
-            <div 
-              key={raid._id}
-              className={`bg-gray-800/50 rounded-lg p-4 border cursor-pointer relative ${
-                safeSelectedRaid?._id === raid._id 
-                  ? 'border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]' 
-                  : 'border-gray-700 hover:border-blue-500/50 hover:shadow-md'
-              }`}
-              style={{ transition: 'border-color 0.2s ease, box-shadow 0.2s ease' }}
-              onClick={() => handleRaidClick(raid)}
-            >
-              {/* Admin Delete Button */}
-              {currentUser?.isAdmin && (
-                <div 
-                  className="absolute top-2 right-2 z-20 w-8 h-8" 
-                  onClick={(e) => e.stopPropagation()}
-                  style={{ pointerEvents: 'auto' }}
-                >
-                  <button
-                    className="absolute inset-0 bg-red-500/20 hover:bg-red-500/40 text-red-400 rounded-full flex items-center justify-center transition-colors duration-200"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteRaid(raid._id);
-                    }}
-                    title="Delete Raid"
-                    style={{ transform: 'translateZ(0)' }}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 pointer-events-none" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                </div>
-              )}
-                
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <h3 className="text-white font-bold">{raid.title}</h3>
-                  <p className="text-gray-400 text-sm">
-                    Created by: {raid.createdBy?.username || 'Admin'}
-                  </p>
-                </div>
-                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
-                  {/* Twitter bird logo */}
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                  </svg>
-                </div>
-              </div>
-              <p className="text-gray-300 mb-3">{raid.description}</p>
-              <div className="flex justify-between items-center">
+      {/* Verification Form - Shown at the top when a raid is selected */}
+      {safeSelectedRaid && (
+        <div id="verification-form-section" className="p-4 border-b border-gray-700 bg-gray-800/80">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-white">Complete: {safeSelectedRaid.title}</h3>
+              <p className="text-blue-400">
                 <a 
-                  href={raid.tweetUrl} 
+                  href={safeSelectedRaid.tweetUrl} 
                   target="_blank" 
                   rel="noopener noreferrer" 
-                  className="text-blue-400 hover:underline text-sm inline-flex items-center"
-                  onClick={(e) => e.stopPropagation()}
+                  className="hover:underline inline-flex items-center"
                 >
-                  <span>View Tweet</span>
+                  View Original Tweet
                   <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
                   </svg>
                 </a>
-                <span className="bg-blue-500/20 text-blue-400 px-2 py-1 rounded text-sm">+{raid.points} points</span>
-              </div>
-              
-              {/* Completions */}
-              {raid.completions && raid.completions.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-gray-700">
-                  <p className="text-gray-400 text-sm">{raid.completions.length} completions</p>
-                </div>
-              )}
+              </p>
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center text-gray-400 py-8">
-          {loading ? 'Loading Twitter raids...' : 'No Twitter raids found'}
-        </div>
-      )}
-
-      {safeSelectedRaid && (
-        <div className="mt-4 p-4 border-t border-gray-700">
-          <h3 className="text-lg font-bold text-white mb-4">Complete: {safeSelectedRaid.title}</h3>
+          </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div>
@@ -800,6 +748,89 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Raids Grid */}
+      {raids.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+          {raids.map(raid => (
+            <div 
+              key={raid._id}
+              className={`bg-gray-800/50 rounded-lg p-4 border cursor-pointer relative ${
+                safeSelectedRaid?._id === raid._id 
+                  ? 'border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]' 
+                  : 'border-gray-700 hover:border-blue-500/50 hover:shadow-md'
+              }`}
+              style={{ transition: 'border-color 0.2s ease, box-shadow 0.2s ease' }}
+              onClick={() => handleRaidClick(raid)}
+            >
+              {/* Admin Delete Button */}
+              {currentUser?.isAdmin && (
+                <div 
+                  className="absolute top-2 right-2 z-20 w-8 h-8" 
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ pointerEvents: 'auto' }}
+                >
+                  <button
+                    className="absolute inset-0 bg-red-500/20 hover:bg-red-500/40 text-red-400 rounded-full flex items-center justify-center transition-colors duration-200"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteRaid(raid._id);
+                    }}
+                    title="Delete Raid"
+                    style={{ transform: 'translateZ(0)' }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 pointer-events-none" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+                
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <h3 className="text-white font-bold">{raid.title}</h3>
+                  <p className="text-gray-400 text-sm">
+                    Created by: {raid.createdBy?.username || 'Admin'}
+                  </p>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
+                  {/* Twitter bird logo */}
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                  </svg>
+                </div>
+              </div>
+              <p className="text-gray-300 mb-3">{raid.description}</p>
+              <div className="flex justify-between items-center">
+                <a 
+                  href={raid.tweetUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-blue-400 hover:underline text-sm inline-flex items-center"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <span>View Tweet</span>
+                  <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                  </svg>
+                </a>
+                <span className="bg-blue-500/20 text-blue-400 px-2 py-1 rounded text-sm">+{raid.points} points</span>
+              </div>
+              
+              {/* Completions */}
+              {raid.completions && raid.completions.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-gray-700">
+                  <p className="text-gray-400 text-sm">{raid.completions.length} completions</p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center text-gray-400 py-8">
+          {loading ? 'Loading Twitter raids...' : 'No Twitter raids found'}
         </div>
       )}
     </div>
