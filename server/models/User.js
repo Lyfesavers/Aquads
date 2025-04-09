@@ -62,10 +62,6 @@ const userSchema = new Schema({
     type: Number,
     default: 0
   },
-  remainingRaidPosts: {
-    type: Number,
-    default: 0
-  },
   pointsHistory: [{
     amount: Number,
     reason: String,

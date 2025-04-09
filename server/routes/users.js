@@ -431,22 +431,6 @@ router.get('/affiliates', auth, async (req, res) => {
   }
 });
 
-// Get current user data (including remaining raid posts)
-router.get('/me', auth, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.userId).select('-password');
-    
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    
-    res.json(user);
-  } catch (error) {
-    console.error('Error fetching current user data:', error);
-    res.status(500).json({ error: 'Failed to fetch user data' });
-  }
-});
-
 // Add this new route
 router.get('/by-username/:username', auth, async (req, res) => {
   try {
