@@ -103,11 +103,32 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [selectedChain, setSelectedChain] = useState(BLOCKCHAIN_OPTIONS[0]);
   const [copiedAddress, setCopiedAddress] = useState(false);
 
+  // Add this state to track remaining raid posts
+  const [remainingRaidPosts, setRemainingRaidPosts] = useState(0);
+
   useEffect(() => {
     fetchRaids();
     // Load Twitter widget script
     loadTwitterWidgetScript();
   }, []);
+
+  // Add effect to get user data including remaining raid posts
+  useEffect(() => {
+    if (currentUser?.token) {
+      fetch(`${API_URL}/api/users/me`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      })
+        .then(res => res.json())
+        .then(userData => {
+          if (userData.remainingRaidPosts) {
+            setRemainingRaidPosts(userData.remainingRaidPosts);
+          }
+        })
+        .catch(err => console.error('Error fetching user data:', err));
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     // When tweet URL changes, try to embed it
@@ -649,6 +670,25 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       // Show success message
       showNotification(result.message || 'Twitter raid created! Awaiting payment approval.', 'success');
       
+      // Fetch updated user data to get remainingRaidPosts
+      try {
+        const userResponse = await fetch(`${API_URL}/api/users/me`, {
+          headers: {
+            'Authorization': `Bearer ${currentUser.token}`
+          }
+        });
+        
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          setRemainingRaidPosts(userData.remainingRaidPosts || 0);
+          if (userData.remainingRaidPosts > 0) {
+            showNotification(`You have ${userData.remainingRaidPosts} remaining raid posts available.`, 'info');
+          }
+        }
+      } catch (userError) {
+        console.error('Error fetching updated user data:', userError);
+      }
+      
       // Refresh raids list
       fetchRaids();
     } catch (err) {
@@ -682,7 +722,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       }
       
       const result = await response.json();
-      showNotification(result.message || 'Raid approved successfully!', 'success');
+      showNotification(result.message || 'Raid approved successfully! User now has 4 additional raid posts available.', 'success');
       
       // Refresh raids list
       fetchRaids();
@@ -772,8 +812,13 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                {showPaidCreateForm ? 'Cancel' : 'Create Paid Raid (5 USDC)'}
+                {showPaidCreateForm ? 'Cancel' : 'Create Paid Raid (5 posts for 5 USDC)'}
               </button>
+            )}
+            {remainingRaidPosts > 0 && (
+              <div className="text-center mt-2 text-sm text-green-400 font-medium bg-green-900/30 px-3 py-1 rounded-full">
+                You have {remainingRaidPosts} pre-paid raid post{remainingRaidPosts !== 1 ? 's' : ''} available
+              </div>
             )}
           </div>
         </div>
@@ -828,7 +873,15 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         {/* Paid Raid Create Form */}
         {showPaidCreateForm && currentUser && (
           <div className="mt-4 p-4 bg-gray-800/50 rounded-lg">
-            <h3 className="text-lg font-bold text-white mb-4">Create Paid Twitter Raid (5 USDC)</h3>
+            <h3 className="text-lg font-bold text-white mb-4">Create Paid Twitter Raid (5 posts for 5 USDC)</h3>
+            
+            {remainingRaidPosts > 0 && (
+              <div className="mb-4 p-3 bg-green-900/30 rounded border border-green-500/30">
+                <p className="text-green-400">
+                  <span className="font-semibold">Good news!</span> You have {remainingRaidPosts} pre-paid raid post{remainingRaidPosts !== 1 ? 's' : ''} available. This post will be automatically approved upon submission.
+                </p>
+              </div>
+            )}
             
             <form onSubmit={handlePaidRaidSubmit}>
               <div className="mb-4">
@@ -843,6 +896,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
+                <p className="text-gray-400 text-sm mt-2">
+                  With your 5 USDC payment, you'll receive a total of 5 raid posts. The first post requires admin approval, after which your remaining 4 posts will be automatically approved.
+                </p>
               </div>
               
               <div className="mb-6">

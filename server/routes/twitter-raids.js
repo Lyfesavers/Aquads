@@ -83,7 +83,20 @@ router.post('/paid', auth, async (req, res) => {
 
     const tweetId = tweetIdMatch[1];
 
-    // Create the raid with pending payment status
+    // Check if user has remaining raid posts
+    const user = await User.findById(req.user.id);
+    let paymentStatus = 'pending';
+    let isAutoApproved = false;
+    
+    // If user has remaining raid posts, auto-approve this one
+    if (user.remainingRaidPosts > 0) {
+      paymentStatus = 'approved';
+      user.remainingRaidPosts -= 1;
+      await user.save();
+      isAutoApproved = true;
+    }
+
+    // Create the raid with appropriate payment status
     const raid = new TwitterRaid({
       tweetId,
       tweetUrl,
@@ -92,44 +105,52 @@ router.post('/paid', auth, async (req, res) => {
       points: 50, // Fixed points for paid raids
       createdBy: req.user.id,
       isPaid: true,
-      paymentStatus: 'pending',
+      paymentStatus, // Will be 'approved' if user has remaining raid posts
       txSignature,
       paymentChain,
       chainSymbol,
-      chainAddress
+      chainAddress,
+      active: paymentStatus === 'approved' // Automatically activate if approved
     });
 
     await raid.save();
     
-    // Process affiliate commission if applicable
-    try {
-      const raidCreator = await User.findById(req.user.id);
-      if (raidCreator && raidCreator.referredBy) {
-        const raidAmount = 5; // 5 USDC per raid
-        
-        const commissionRate = await AffiliateEarning.calculateCommissionRate(raidCreator.referredBy);
-        const commissionEarned = AffiliateEarning.calculateCommission(raidAmount, commissionRate);
-        
-        const earning = new AffiliateEarning({
-          affiliateId: raidCreator.referredBy,
-          referredUserId: raidCreator._id,
-          adId: raid._id,
-          adAmount: raidAmount,
-          currency: 'USDC',
-          commissionRate,
-          commissionEarned
-        });
-        
-        await earning.save();
-        console.log('Affiliate commission recorded for Twitter raid:', earning);
+    // Process affiliate commission if applicable (only for new payments, not for additional raids)
+    if (!isAutoApproved) {
+      try {
+        const raidCreator = await User.findById(req.user.id);
+        if (raidCreator && raidCreator.referredBy) {
+          const raidAmount = 5; // 5 USDC per raid
+          
+          const commissionRate = await AffiliateEarning.calculateCommissionRate(raidCreator.referredBy);
+          const commissionEarned = AffiliateEarning.calculateCommission(raidAmount, commissionRate);
+          
+          const earning = new AffiliateEarning({
+            affiliateId: raidCreator.referredBy,
+            referredUserId: raidCreator._id,
+            adId: raid._id,
+            adAmount: raidAmount,
+            currency: 'USDC',
+            commissionRate,
+            commissionEarned
+          });
+          
+          await earning.save();
+          console.log('Affiliate commission recorded for Twitter raid:', earning);
+        }
+      } catch (commissionError) {
+        console.error('Error processing affiliate commission:', commissionError);
+        // Continue despite commission error
       }
-    } catch (commissionError) {
-      console.error('Error processing affiliate commission:', commissionError);
-      // Continue despite commission error
     }
     
+    // Message based on whether this was auto-approved or not
+    const message = isAutoApproved
+      ? 'Twitter raid created and automatically approved! It is now active.'
+      : 'Twitter raid created successfully! It will be active once payment is approved.';
+    
     res.status(201).json({ 
-      message: 'Twitter raid created successfully! It will be active once payment is approved.',
+      message,
       raid 
     });
   } catch (error) {
@@ -164,8 +185,16 @@ router.post('/:id/approve', auth, async (req, res) => {
     raid.active = true;
     await raid.save();
     
+    // Add 4 remaining raid posts to the user who created this raid
+    // This is only done when the first post is approved
+    const user = await User.findById(raid.createdBy);
+    if (user) {
+      user.remainingRaidPosts += 4; // Give them 4 more post credits
+      await user.save();
+    }
+    
     res.json({ 
-      message: 'Twitter raid payment approved!',
+      message: 'Twitter raid payment approved! User now has 4 additional raid posts available.',
       raid 
     });
   } catch (error) {
