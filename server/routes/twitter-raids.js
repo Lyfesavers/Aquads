@@ -101,31 +101,33 @@ router.post('/paid', auth, async (req, res) => {
 
     await raid.save();
     
-    // Process affiliate commission if applicable
-    try {
-      const raidCreator = await User.findById(req.user.id);
-      if (raidCreator && raidCreator.referredBy) {
-        const raidAmount = 5; // 5 USDC per raid
-        
-        const commissionRate = await AffiliateEarning.calculateCommissionRate(raidCreator.referredBy);
-        const commissionEarned = AffiliateEarning.calculateCommission(raidAmount, commissionRate);
-        
-        const earning = new AffiliateEarning({
-          affiliateId: raidCreator.referredBy,
-          referredUserId: raidCreator._id,
-          adId: raid._id,
-          adAmount: raidAmount,
-          currency: 'USDC',
-          commissionRate,
-          commissionEarned
-        });
-        
-        await earning.save();
-        console.log('Affiliate commission recorded for Twitter raid:', earning);
+    // Process affiliate commission if applicable (only for new payments, not for additional raids)
+    if (!isAutoApproved) {
+      try {
+        const raidCreator = await User.findById(req.user.id);
+        if (raidCreator && raidCreator.referredBy) {
+          const raidAmount = 1.50; // 1.50 USDC per raid
+          
+          const commissionRate = await AffiliateEarning.calculateCommissionRate(raidCreator.referredBy);
+          const commissionEarned = AffiliateEarning.calculateCommission(raidAmount, commissionRate);
+          
+          const earning = new AffiliateEarning({
+            affiliateId: raidCreator.referredBy,
+            referredUserId: raidCreator._id,
+            adId: raid._id,
+            adAmount: raidAmount,
+            currency: 'USDC',
+            commissionRate,
+            commissionEarned
+          });
+          
+          await earning.save();
+          console.log('Affiliate commission recorded for Twitter raid:', earning);
+        }
+      } catch (commissionError) {
+        console.error('Error processing affiliate commission:', commissionError);
+        // Continue despite commission error
       }
-    } catch (commissionError) {
-      console.error('Error processing affiliate commission:', commissionError);
-      // Continue despite commission error
     }
     
     res.status(201).json({ 
