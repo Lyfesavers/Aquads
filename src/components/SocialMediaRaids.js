@@ -288,6 +288,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const fetchRaids = async () => {
     try {
       setLoading(true);
+      console.log('Fetching raids...');
       const response = await fetch(`${API_URL}/api/twitter-raids`);
       
       if (!response.ok) {
@@ -295,9 +296,11 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       }
       
       const data = await response.json();
+      console.log('Fetched raids:', data);
       
       // Filter out raids older than 7 days
       const filteredRaids = data.filter(raid => isWithinSevenDays(raid.createdAt));
+      console.log('Filtered raids:', filteredRaids);
       
       setRaids(filteredRaids);
     } catch (err) {
@@ -608,6 +611,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   // Utility function to create a paid Twitter raid
   const createPaidTwitterRaid = async (data, token) => {
     try {
+      console.log('Creating paid twitter raid with data:', data);
       const response = await fetch(`${API_URL}/api/twitter-raids/paid`, {
         method: 'POST',
         headers: {
@@ -619,10 +623,13 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Error response from server:', errorData);
         throw new Error(errorData.error || 'Failed to create Twitter raid');
       }
       
-      return await response.json();
+      const result = await response.json();
+      console.log('Raid created successfully:', result);
+      return result;
     } catch (error) {
       console.error('Error creating paid Twitter raid:', error);
       throw error;

@@ -110,7 +110,7 @@ router.post('/paid', auth, async (req, res) => {
       paymentChain,
       chainSymbol,
       chainAddress,
-      active: paymentStatus === 'approved' // Automatically activate if approved
+      active: true // Always set active to true, regardless of approval status
     });
 
     await raid.save();
