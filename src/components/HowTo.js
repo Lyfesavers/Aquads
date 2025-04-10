@@ -149,6 +149,13 @@ const HowTo = ({ currentUser }) => {
         return;
       }
 
+      // Check if user is an admin
+      if (!currentUser.isAdmin) {
+        console.log('User is not an admin'); // Debug log
+        setError('Only administrators can create blog posts');
+        return;
+      }
+
       const token = currentUser.token || localStorage.getItem('token');
       
       if (!token) {
@@ -204,6 +211,12 @@ const HowTo = ({ currentUser }) => {
       
       if (!token) {
         setError('Authentication required. Please log in again.');
+        return;
+      }
+
+      // Check if user is either the blog author or an admin
+      if (editingBlog.author !== currentUser.userId && !currentUser.isAdmin) {
+        setError('You do not have permission to edit this blog post');
         return;
       }
 
@@ -409,13 +422,17 @@ const HowTo = ({ currentUser }) => {
         <div className="mt-16" ref={blogListRef}>
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-white">Community Blog Posts</h2>
-            {currentUser ? (
+            {currentUser && currentUser.isAdmin ? (
               <button
                 onClick={() => setShowCreateModal(true)}
                 className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors"
               >
                 Create Blog Post
               </button>
+            ) : currentUser ? (
+              <div className="text-gray-400">
+                <span>Only administrators can create blog posts</span>
+              </div>
             ) : (
               <button
                 onClick={() => {

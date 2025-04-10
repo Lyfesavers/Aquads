@@ -50,6 +50,11 @@ router.get('/:id', async (req, res) => {
 // Create blog (auth required)
 router.post('/', auth, async (req, res) => {
   try {
+    // Check if user is an admin
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Only administrators can create blog posts' });
+    }
+
     const { title, content, bannerImage } = req.body;
     
     // Validate content length (max 5000 words)
