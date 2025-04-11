@@ -4,6 +4,9 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import BlogList from './BlogList';
 import CreateBlogModal from './CreateBlogModal';
 import { API_URL, deleteBlog } from '../services/api';
+import { Markdown } from 'tiptap-markdown';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
 
 // Helper function to create URL-friendly slugs
 const createSlug = (title) => {
@@ -305,12 +308,32 @@ const HowTo = ({ currentUser }) => {
     setShowCreateModal(true);
   };
 
+  // Function to check if content is Markdown
+  const isMarkdownContent = (content) => {
+    if (!content || typeof content !== 'string') return false;
+    
+    // More comprehensive check for Markdown patterns
+    return (
+      /^#+ .+/m.test(content) || // Headers
+      /\n#+ .+/m.test(content) || // Headers after newline
+      /\n- .+/m.test(content) || // List items after newline
+      /^- .+/m.test(content) || // List items at start
+      /\n\* .+/m.test(content) || // Asterisk list items
+      /^(>\s.*)+$/m.test(content) || // Blockquotes
+      /\*\*[^*]+\*\*/m.test(content) || // Bold text
+      /\*[^*]+\*/m.test(content) || // Italic text
+      /\[.+\]\(.+\)/m.test(content) || // Links
+      /`[^`]+`/m.test(content) || // Inline code
+      /^\s*```[\s\S]*?```\s*$/m.test(content) // Code blocks
+    );
+  };
+  
   // Function to extract plain text from either Markdown or HTML
   const extractPlainText = (content, maxLength = 160) => {
-    // Check if content is likely Markdown
-    const isMarkdown = /^#|\n-\s|^-\s|\*\*/.test(content);
+    if (!content || typeof content !== 'string') return '';
     
-    if (isMarkdown) {
+    // Check if content is likely Markdown
+    if (isMarkdownContent(content)) {
       // For Markdown, strip out markdown syntax
       return content
         .replace(/#{1,6}\s+/g, '') // Remove headers
@@ -339,15 +362,15 @@ const HowTo = ({ currentUser }) => {
           // Dynamic meta tags for a specific blog post
           <>
             <title>{`${sharedBlog.title} - Aquads How To Guide`}</title>
-            <meta name="description" content={extractPlainText(sharedBlog.content, 160)} />
+            <meta name="description" content={extractPlainText(sharedBlog.content)} />
             <meta property="og:title" content={`${sharedBlog.title} - Aquads Blog`} />
-            <meta property="og:description" content={extractPlainText(sharedBlog.content, 200)} />
+            <meta property="og:description" content={extractPlainText(sharedBlog.content)} />
             <meta property="og:image" content={sharedBlog.bannerImage} />
             <meta property="og:url" content={window.location.href} />
             <meta property="og:type" content="article" />
             <meta name="twitter:card" content="summary_large_image" />
             <meta name="twitter:title" content={`${sharedBlog.title} - Aquads Blog`} />
-            <meta name="twitter:description" content={extractPlainText(sharedBlog.content, 200)} />
+            <meta name="twitter:description" content={extractPlainText(sharedBlog.content)} />
             <meta name="twitter:image" content={sharedBlog.bannerImage} />
             
             {/* Canonical link for SEO */}

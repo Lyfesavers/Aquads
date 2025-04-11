@@ -15,6 +15,7 @@ const createSlug = (title) => {
 
 // Markdown renderer component
 const MarkdownRenderer = ({ content }) => {
+  const [ready, setReady] = useState(false);
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -26,7 +27,34 @@ const MarkdownRenderer = ({ content }) => {
     ],
     content: content,
     editable: false,
+    onBeforeCreate({ editor }) {
+      // Process Markdown in a more explicit way
+      if (content && typeof content === 'string') {
+        // Let the editor fully initialize first
+        setTimeout(() => {
+          try {
+            // Force the Markdown extension to parse the content
+            const md = editor.storage.markdown;
+            if (md) {
+              editor.commands.setContent(content);
+              setReady(true);
+            }
+          } catch (err) {
+            console.error('Error parsing Markdown:', err);
+            // Fallback to simply setting content
+            editor.commands.setContent(content);
+            setReady(true);
+          }
+        }, 0);
+      } else {
+        setReady(true);
+      }
+    },
   });
+
+  if (!editor || !ready) {
+    return <div className="animate-pulse bg-gray-700 h-24 rounded"></div>;
+  }
 
   return (
     <EditorContent editor={editor} className="prose prose-invert max-w-none" />
@@ -81,7 +109,22 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
 
   // Function to check if content is Markdown
   const isMarkdownContent = (content) => {
-    return /^#|\n-\s|^-\s|\*\*/.test(content);
+    if (!content || typeof content !== 'string') return false;
+    
+    // More comprehensive check for Markdown patterns
+    return (
+      /^#+ .+/m.test(content) || // Headers
+      /\n#+ .+/m.test(content) || // Headers after newline
+      /\n- .+/m.test(content) || // List items after newline
+      /^- .+/m.test(content) || // List items at start
+      /\n\* .+/m.test(content) || // Asterisk list items
+      /^(>\s.*)+$/m.test(content) || // Blockquotes
+      /\*\*[^*]+\*\*/m.test(content) || // Bold text
+      /\*[^*]+\*/m.test(content) || // Italic text
+      /\[.+\]\(.+\)/m.test(content) || // Links
+      /`[^`]+`/m.test(content) || // Inline code
+      /^\s*```[\s\S]*?```\s*$/m.test(content) // Code blocks
+    );
   };
 
   if (!blogs?.length) {
@@ -166,10 +209,100 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
 
             {/* Content Preview - conditionally render based on content type */}
             {isMarkdownContent(blog.content) ? (
-              <div className={expandedBlogId === blog._id ? '' : 'max-h-24 overflow-hidden'}>
+              <div className={`markdown-content ${expandedBlogId === blog._id ? '' : 'max-h-24 overflow-hidden'}`}>
                 <MarkdownRenderer 
                   content={expandedBlogId === blog._id ? blog.content : truncateContent(blog.content)} 
                 />
+                <style jsx global>{`
+                  .markdown-content .ProseMirror {
+                    min-height: auto !important;
+                    padding: 0 !important;
+                  }
+                  
+                  .markdown-content h1, 
+                  .markdown-content h2, 
+                  .markdown-content h3,
+                  .markdown-content h4,
+                  .markdown-content h5,
+                  .markdown-content h6 {
+                    margin-top: 1.5em;
+                    margin-bottom: 0.75em;
+                    font-weight: bold;
+                    line-height: 1.2;
+                  }
+                  
+                  .markdown-content h1 {
+                    font-size: 1.75rem;
+                  }
+                  
+                  .markdown-content h2 {
+                    font-size: 1.5rem;
+                  }
+                  
+                  .markdown-content h3 {
+                    font-size: 1.25rem;
+                  }
+                  
+                  .markdown-content p {
+                    margin-bottom: 1em;
+                    line-height: 1.6;
+                  }
+                  
+                  .markdown-content ul, 
+                  .markdown-content ol {
+                    margin-bottom: 1em;
+                    padding-left: 1.5em;
+                  }
+                  
+                  .markdown-content ul {
+                    list-style-type: disc;
+                  }
+                  
+                  .markdown-content ol {
+                    list-style-type: decimal;
+                  }
+                  
+                  .markdown-content li {
+                    margin-bottom: 0.5em;
+                  }
+                  
+                  .markdown-content blockquote {
+                    border-left: 3px solid #4b5563;
+                    padding-left: 1em;
+                    margin: 1em 0;
+                    font-style: italic;
+                  }
+                  
+                  .markdown-content pre {
+                    background-color: #1f2937;
+                    padding: 1em;
+                    border-radius: 4px;
+                    margin: 1em 0;
+                    overflow-x: auto;
+                  }
+                  
+                  .markdown-content code {
+                    background-color: rgba(75, 85, 99, 0.4);
+                    padding: 0.2em 0.4em;
+                    border-radius: 0.25em;
+                    font-family: monospace;
+                  }
+                  
+                  .markdown-content a {
+                    color: #3b82f6;
+                    text-decoration: underline;
+                  }
+                  
+                  .markdown-content a:hover {
+                    color: #60a5fa;
+                  }
+                  
+                  .markdown-content hr {
+                    margin: 2em 0;
+                    border: none;
+                    border-top: 1px solid #4b5563;
+                  }
+                `}</style>
               </div>
             ) : (
               <div 
