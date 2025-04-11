@@ -216,6 +216,10 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
           .replace(/<span style="[^"]*line-height:[^"]*">(.*?)<\/span>/g, '<div>$1</div>')
           // Clean up empty paragraphs
           .replace(/<p>\s*<\/p>/g, '<p>&nbsp;</p>')
+          // Convert div tags to paragraphs for better separation
+          .replace(/<div(?![^>]*class="[^"]*ProseMirror[^"]*")([^>]*)>(.*?)<\/div>/g, '<p$1>$2</p>')
+          // Ensure double line breaks between paragraphs are preserved
+          .replace(/<\/p>\s*<p/g, '</p>\n<p')
           // Preserve hyperlinks attributes
           .replace(/<a\s+href="([^"]+)"[^>]*>(.*?)<\/a>/gi, (match, url, text) => {
             return `<a href="${url}" target="_blank" rel="noopener noreferrer">${text}</a>`;
@@ -225,15 +229,74 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
       },
       // This helps preserve whitespace in pasted plain text
       transformPastedText(text) {
-        // Preserve consecutive spaces and line breaks
+        // Improved handling of line breaks
+        // Double line breaks become paragraphs
+        // Single line breaks become <br> tags
         return text
-          .replace(/\n\n/g, '<p></p>')
-          .replace(/\n/g, '<br>');
+          // First convert multiple consecutive line breaks to a special token
+          .replace(/\n{3,}/g, '\n\n')
+          // Convert double line breaks to paragraph separators
+          .replace(/\n\n/g, '</p><p>')
+          // Convert single line breaks to <br>
+          .replace(/\n/g, '<br>')
+          // Wrap in paragraph tags if not already wrapped
+          .replace(/^(.+)$/, '<p>$1</p>')
+          // Fix any cases where we might have created malformed tags
+          .replace(/<p><\/p>/g, '<p>&nbsp;</p>');
       },
       // Special handling for code blocks
       handlePaste: (view, event) => {
+        // Check if the paste event has clipboard data
+        if (event.clipboardData && event.clipboardData.getData) {
+          // Check if user is holding Shift key during paste (for paste as plain text with preserved formatting)
+          if (event.shiftKey) {
+            // Get plain text from clipboard
+            const text = event.clipboardData.getData('text/plain');
+            
+            if (text) {
+              // Process the text to preserve paragraph breaks
+              const processedText = text
+                // Normalize line endings
+                .replace(/\r\n/g, '\n')
+                // Handle multiple consecutive line breaks (3+) and convert to double breaks
+                .replace(/\n{3,}/g, '\n\n')
+                // Split by double line breaks to get paragraphs
+                .split(/\n\n/);
+              
+              // Insert each paragraph as a separate paragraph node
+              processedText.forEach((paragraph, index) => {
+                // Skip empty paragraphs
+                if (!paragraph.trim()) return;
+                
+                // Insert paragraph with proper breaks
+                const lines = paragraph.split('\n');
+                
+                // For each line in this paragraph
+                lines.forEach((line, lineIndex) => {
+                  // Insert the text content
+                  view.dispatch(view.state.tr.insertText(line));
+                  
+                  // If not the last line in this paragraph, add a hard break
+                  if (lineIndex < lines.length - 1) {
+                    const { hardBreak } = view.state.schema.nodes;
+                    view.dispatch(view.state.tr.replaceSelectionWith(hardBreak.create()));
+                  }
+                });
+                
+                // If not the last paragraph, add a paragraph break
+                if (index < processedText.length - 1) {
+                  view.dispatch(view.state.tr.insertText('\n\n'));
+                }
+              });
+              
+              // Prevent default paste behavior
+              event.preventDefault();
+              return true;
+            }
+          }
+        }
+        
         // Let the default handler work in most cases
-        // Only return true if we're handling it specially
         return false;
       },
     },
@@ -302,6 +365,9 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
               editor={editor} 
               className="prose prose-invert max-w-none min-h-[300px] p-4 bg-gray-800 focus:outline-none"
             />
+            <div className="bg-gray-700 p-2 border-t border-gray-600 text-xs text-gray-400">
+              <p>Tip: When pasting formatted content, press <kbd className="px-1 py-0.5 bg-gray-800 rounded">Ctrl+Shift+V</kbd> (Windows) or <kbd className="px-1 py-0.5 bg-gray-800 rounded">Cmd+Shift+V</kbd> (Mac) to paste as plain text with line breaks preserved.</p>
+            </div>
             <style jsx global>{`
               .ProseMirror {
                 min-height: 300px;
