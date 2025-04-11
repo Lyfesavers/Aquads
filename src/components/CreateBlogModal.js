@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
+import { Markdown } from 'tiptap-markdown';
 import Modal from './Modal';
 
 const MenuBar = ({ editor }) => {
@@ -196,6 +197,13 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
         // Linkify (convert text URLs to actual links)
         linkOnPaste: true,
       }),
+      // Add Markdown support
+      Markdown.configure({
+        html: false,
+        tightLists: true,
+        bulletListMarker: '-',
+        linkify: true,
+      }),
     ],
     content: formData.content,
     onUpdate: ({ editor }) => {
@@ -233,7 +241,18 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
       },
       // This helps preserve whitespace in pasted plain text
       transformPastedText(text) {
-        // Handle line breaks in a smarter way to avoid excessive <br> tags
+        // Check if the text contains Markdown markers
+        const hasMarkdownHeadings = /^#+\s+.+$/m.test(text);
+        const hasMarkdownLists = /^[\s]*[-*+]\s+.+$/m.test(text);
+        const hasMarkdownLinks = /\[.+\]\(.+\)/.test(text);
+        const hasMarkdownBold = /\*\*.+\*\*/.test(text);
+        
+        // If the text appears to have Markdown formatting, return it as-is for the Markdown extension to handle
+        if (hasMarkdownHeadings || hasMarkdownLists || hasMarkdownLinks || hasMarkdownBold) {
+          return text;
+        }
+        
+        // Handle regular text with line breaks in a smarter way
         return text
           // Normalize line endings
           .replace(/\r\n/g, '\n')
@@ -254,11 +273,22 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
       handlePaste: (view, event) => {
         // Check if the paste event has clipboard data
         if (event.clipboardData && event.clipboardData.getData) {
+          // Get plain text from clipboard
+          const text = event.clipboardData.getData('text/plain');
+          
+          // Check if text has Markdown patterns
+          const hasMarkdownHeadings = /^#+\s+.+$/m.test(text);
+          const hasMarkdownLists = /^[\s]*[-*+]\s+.+$/m.test(text);
+          const hasMarkdownLinks = /\[.+\]\(.+\)/.test(text);
+          const hasMarkdownBold = /\*\*.+\*\*/.test(text);
+          
+          if (hasMarkdownHeadings || hasMarkdownLists || hasMarkdownLinks || hasMarkdownBold) {
+            // Let the Markdown extension handle it
+            return false;
+          }
+          
           // Check if user is holding Shift key during paste (for paste as plain text with preserved formatting)
           if (event.shiftKey) {
-            // Get plain text from clipboard
-            const text = event.clipboardData.getData('text/plain');
-            
             if (text) {
               // Process the text to preserve paragraph breaks
               const processedText = text
@@ -372,7 +402,7 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
               className="prose prose-invert max-w-none min-h-[300px] p-4 bg-gray-800 focus:outline-none"
             />
             <div className="bg-gray-700 p-2 border-t border-gray-600 text-xs text-gray-400">
-              <p>Tip: When pasting content, the editor will automatically preserve your paragraph structure. Use the formatting tools above to fine-tune your content.</p>
+              <p>Tip: When pasting content, the editor will automatically preserve your paragraph structure and Markdown formatting. Use the formatting tools above to fine-tune your content.</p>
             </div>
             <style jsx global>{`
               .ProseMirror {
