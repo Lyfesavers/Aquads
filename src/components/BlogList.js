@@ -4,6 +4,7 @@ import DOMPurify from 'dompurify';
 import { Markdown } from 'tiptap-markdown';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import Link from '@tiptap/extension-link';
 
 // Helper function to create URL-friendly slugs
 const createSlug = (title) => {
@@ -22,10 +23,20 @@ const MarkdownRenderer = ({ content }) => {
   const editor = useEditor({
     extensions: [
       StarterKit,
+      Link.configure({
+        openOnClick: true,
+        HTMLAttributes: {
+          class: 'blog-link',
+          target: '_blank',
+          rel: 'noopener noreferrer'
+        },
+        autolink: true,
+      }),
       Markdown.configure({
         html: false,
         tightLists: true,
         bulletListMarker: '-',
+        linkify: true, // Enable automatic link detection
       }),
     ],
     content: content,
@@ -39,7 +50,14 @@ const MarkdownRenderer = ({ content }) => {
             // Force the Markdown extension to parse the content
             const md = editor.storage.markdown;
             if (md) {
-              editor.commands.setContent(content);
+              // Process links in Markdown - look for [text](url) pattern
+              const contentWithEnhancedLinks = content.replace(
+                /\[([^\]]+)\]\(([^)]+)\)/g, 
+                (match, text, url) => {
+                  return `[${text}](${url})`;
+                }
+              );
+              editor.commands.setContent(contentWithEnhancedLinks);
               setReady(true);
             }
           } catch (err) {
@@ -329,13 +347,22 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
                     font-family: monospace;
                   }
                   
-                  .markdown-content a {
-                    color: #3b82f6;
-                    text-decoration: underline;
+                  /* Enhanced link styling to match the older blog styling */
+                  .markdown-content a,
+                  .markdown-content .ProseMirror a,
+                  .markdown-content .blog-link {
+                    color: #f700ff !important; /* Neon pink/violet */
+                    text-decoration: underline !important;
+                    cursor: pointer !important;
+                    text-shadow: 0 0 5px rgba(247, 0, 255, 0.5) !important;
+                    transition: all 0.2s ease !important;
                   }
                   
-                  .markdown-content a:hover {
-                    color: #60a5fa;
+                  .markdown-content a:hover,
+                  .markdown-content .ProseMirror a:hover,
+                  .markdown-content .blog-link:hover {
+                    color: #cb6ce6 !important; /* Lighter neon pink/violet on hover */
+                    text-shadow: 0 0 8px rgba(247, 0, 255, 0.7) !important;
                   }
                   
                   .markdown-content hr {
@@ -357,6 +384,22 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
                 }}
               />
             )}
+            
+            <style jsx global>{`
+              /* Standard HTML content links styling to match markdown links */
+              .prose a {
+                color: #f700ff !important; /* Neon pink/violet */
+                text-decoration: underline !important;
+                cursor: pointer !important;
+                text-shadow: 0 0 5px rgba(247, 0, 255, 0.5) !important;
+                transition: all 0.2s ease !important;
+              }
+              
+              .prose a:hover {
+                color: #cb6ce6 !important; /* Lighter neon pink/violet on hover */
+                text-shadow: 0 0 8px rgba(247, 0, 255, 0.7) !important;
+              }
+            `}</style>
 
             {/* Read More Button */}
             <button
