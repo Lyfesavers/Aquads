@@ -159,6 +159,9 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
     content: initialData?.content || '',
     bannerImage: initialData?.bannerImage || ''
   });
+  
+  // Add state for keeping track of editor mode
+  const [preserveMarkdown, setPreserveMarkdown] = useState(true);
 
   // Create an enhanced StarterKit configuration
   const editor = useEditor({
@@ -207,7 +210,13 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
     ],
     content: formData.content,
     onUpdate: ({ editor }) => {
-      setFormData(prev => ({ ...prev, content: editor.getHTML() }));
+      // If we're preserving Markdown, get the Markdown representation instead of HTML
+      if (preserveMarkdown) {
+        const markdown = editor.storage.markdown.getMarkdown();
+        setFormData(prev => ({ ...prev, content: markdown }));
+      } else {
+        setFormData(prev => ({ ...prev, content: editor.getHTML() }));
+      }
     },
     // Enhanced editor props for better paste handling
     editorProps: {
@@ -394,7 +403,21 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
         </div>
         
         <div>
-          <label className="block text-sm font-medium mb-1">Content (Max 5000 words)</label>
+          <div className="flex justify-between items-center mb-1">
+            <label className="block text-sm font-medium">Content (Max 5000 words)</label>
+            <div className="flex gap-2 items-center">
+              <span className="text-xs text-gray-400">Format Preservation:</span>
+              <button
+                type="button"
+                onClick={() => setPreserveMarkdown(!preserveMarkdown)}
+                className={`px-2 py-1 text-xs rounded ${
+                  preserveMarkdown ? 'bg-green-600' : 'bg-gray-600'
+                }`}
+              >
+                {preserveMarkdown ? 'Markdown Enabled' : 'Rich Text Mode'}
+              </button>
+            </div>
+          </div>
           <div className="border border-gray-600 rounded overflow-hidden">
             <MenuBar editor={editor} />
             <EditorContent 
@@ -402,7 +425,11 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
               className="prose prose-invert max-w-none min-h-[300px] p-4 bg-gray-800 focus:outline-none"
             />
             <div className="bg-gray-700 p-2 border-t border-gray-600 text-xs text-gray-400">
-              <p>Tip: When pasting content, the editor will automatically preserve your paragraph structure and Markdown formatting. Use the formatting tools above to fine-tune your content.</p>
+              <p>Tip: Markdown formatting is {preserveMarkdown ? 'enabled' : 'disabled'}. {
+                preserveMarkdown ? 
+                'Your headings (#), lists (-), and other Markdown formatting will be preserved when saved.' :
+                'Switch to Markdown mode to preserve special formatting like headings and lists.'
+              }</p>
             </div>
             <style jsx global>{`
               .ProseMirror {

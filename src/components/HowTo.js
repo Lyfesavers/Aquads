@@ -305,6 +305,33 @@ const HowTo = ({ currentUser }) => {
     setShowCreateModal(true);
   };
 
+  // Function to extract plain text from either Markdown or HTML
+  const extractPlainText = (content, maxLength = 160) => {
+    // Check if content is likely Markdown
+    const isMarkdown = /^#|\n-\s|^-\s|\*\*/.test(content);
+    
+    if (isMarkdown) {
+      // For Markdown, strip out markdown syntax
+      return content
+        .replace(/#{1,6}\s+/g, '') // Remove headers
+        .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold
+        .replace(/\*(.*?)\*/g, '$1') // Remove italic
+        .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Remove links but keep text
+        .replace(/^\s*[-*+]\s+/gm, '') // Remove list markers
+        .replace(/^\s*\d+\.\s+/gm, '') // Remove numbered list markers
+        .replace(/\n/g, ' ') // Replace newlines with spaces
+        .replace(/\s+/g, ' ') // Normalize spaces
+        .trim()
+        .slice(0, maxLength) + (content.length > maxLength ? '...' : '');
+    } else {
+      // For HTML, strip tags
+      return content
+        .replace(/<[^>]*>/g, '')
+        .trim()
+        .slice(0, maxLength) + (content.length > maxLength ? '...' : '');
+    }
+  };
+
   return (
     <div className="h-screen overflow-y-auto bg-gray-900 text-white">
       <Helmet>
@@ -312,15 +339,15 @@ const HowTo = ({ currentUser }) => {
           // Dynamic meta tags for a specific blog post
           <>
             <title>{`${sharedBlog.title} - Aquads How To Guide`}</title>
-            <meta name="description" content={sharedBlog.content?.replace(/<[^>]*>/g, '').slice(0, 160)} />
+            <meta name="description" content={extractPlainText(sharedBlog.content, 160)} />
             <meta property="og:title" content={`${sharedBlog.title} - Aquads Blog`} />
-            <meta property="og:description" content={sharedBlog.content?.replace(/<[^>]*>/g, '').slice(0, 200) + '...'} />
+            <meta property="og:description" content={extractPlainText(sharedBlog.content, 200)} />
             <meta property="og:image" content={sharedBlog.bannerImage} />
             <meta property="og:url" content={window.location.href} />
             <meta property="og:type" content="article" />
             <meta name="twitter:card" content="summary_large_image" />
             <meta name="twitter:title" content={`${sharedBlog.title} - Aquads Blog`} />
-            <meta name="twitter:description" content={sharedBlog.content?.replace(/<[^>]*>/g, '').slice(0, 200) + '...'} />
+            <meta name="twitter:description" content={extractPlainText(sharedBlog.content, 200)} />
             <meta name="twitter:image" content={sharedBlog.bannerImage} />
             
             {/* Canonical link for SEO */}

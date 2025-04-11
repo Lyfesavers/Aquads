@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { FaShare, FaEdit, FaTrash } from 'react-icons/fa';
 import DOMPurify from 'dompurify';
+import { Markdown } from 'tiptap-markdown';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
 
 // Helper function to create URL-friendly slugs
 const createSlug = (title) => {
@@ -8,6 +11,26 @@ const createSlug = (title) => {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '');
+};
+
+// Markdown renderer component
+const MarkdownRenderer = ({ content }) => {
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Markdown.configure({
+        html: false,
+        tightLists: true,
+        bulletListMarker: '-',
+      }),
+    ],
+    content: content,
+    editable: false,
+  });
+
+  return (
+    <EditorContent editor={editor} className="prose prose-invert max-w-none" />
+  );
 };
 
 const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
@@ -40,10 +63,25 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
   };
 
   const truncateContent = (content) => {
-    const strippedContent = content.replace(/<[^>]*>/g, '');
-    return strippedContent.length > 300 
-      ? strippedContent.substring(0, 300) + '...'
-      : strippedContent;
+    // Handle content appropriately based on whether it's Markdown or HTML
+    const isMarkdown = /^#|\n-\s|^-\s|\*\*/.test(content);
+    if (isMarkdown) {
+      // For Markdown content, trim to a certain length
+      return content.length > 300 
+        ? content.substring(0, 300) + '...'
+        : content;
+    } else {
+      // For HTML content, strip tags and truncate
+      const strippedContent = content.replace(/<[^>]*>/g, '');
+      return strippedContent.length > 300 
+        ? strippedContent.substring(0, 300) + '...'
+        : strippedContent;
+    }
+  };
+
+  // Function to check if content is Markdown
+  const isMarkdownContent = (content) => {
+    return /^#|\n-\s|^-\s|\*\*/.test(content);
   };
 
   if (!blogs?.length) {
@@ -126,17 +164,25 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
             {/* Title */}
             <h2 className="text-xl font-bold text-white mb-2">{blog.title}</h2>
 
-            {/* Content Preview */}
-            <div 
-              className={`prose prose-invert max-w-none ${
-                expandedBlogId === blog._id ? '' : 'line-clamp-3'
-              }`}
-              dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(
-                  expandedBlogId === blog._id ? blog.content : truncateContent(blog.content)
-                )
-              }}
-            />
+            {/* Content Preview - conditionally render based on content type */}
+            {isMarkdownContent(blog.content) ? (
+              <div className={expandedBlogId === blog._id ? '' : 'max-h-24 overflow-hidden'}>
+                <MarkdownRenderer 
+                  content={expandedBlogId === blog._id ? blog.content : truncateContent(blog.content)} 
+                />
+              </div>
+            ) : (
+              <div 
+                className={`prose prose-invert max-w-none ${
+                  expandedBlogId === blog._id ? '' : 'line-clamp-3'
+                }`}
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(
+                    expandedBlogId === blog._id ? blog.content : truncateContent(blog.content)
+                  )
+                }}
+              />
+            )}
 
             {/* Read More Button */}
             <button
