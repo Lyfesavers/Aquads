@@ -37,7 +37,7 @@ const Modal = ({ children, onClose }) => {
       {/* Style tag for modal */}
       <style>{modalStyles}</style>
       <div 
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[999999] p-2 sm:p-4 overflow-y-auto modal-backdrop"
+        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[300000] p-2 sm:p-4 overflow-y-auto modal-backdrop"
         onClick={handleBackdropClick}
       >
         <div 
