@@ -443,7 +443,7 @@ router.get('/by-username/:username', auth, async (req, res) => {
     const cleanUsername = req.params.username.trim();
 
     const user = await User.findOne({ 
-      username: cleanUsername  // Exact match since we know the exact username
+      username: { $regex: new RegExp(`^${cleanUsername}$`, 'i') }  // Case-insensitive match
     });
     
     if (!user) {
