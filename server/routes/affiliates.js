@@ -98,6 +98,7 @@ router.get('/summary', auth, async (req, res) => {
         pendingAmount: 0,
         totalAdRevenue: 0,
         currentRate: 0.10,
+        isVipAffiliate: false,
         nextTier: {
           rate: 0.15,
           amountNeeded: 5000,
@@ -105,6 +106,10 @@ router.get('/summary', auth, async (req, res) => {
         }
       });
     }
+
+    // Find user to get VIP status
+    const user = await User.findById(req.user.userId);
+    const isVipAffiliate = user?.isVipAffiliate || false;
 
     const earnings = await AffiliateEarning.find({ affiliateId: new mongoose.Types.ObjectId(req.user.userId) })
       .lean() || [];
@@ -122,6 +127,7 @@ router.get('/summary', auth, async (req, res) => {
       pendingAmount: pendingAmount || 0,
       totalAdRevenue: totalAdRevenue || 0,
       currentRate: currentRate || 0.10,
+      isVipAffiliate: isVipAffiliate,
       nextTier: currentRate < 0.20 ? {
         rate: currentRate === 0.10 ? 0.15 : 0.20,
         amountNeeded: currentRate === 0.10 ? 5000 : 25000,
@@ -137,6 +143,7 @@ router.get('/summary', auth, async (req, res) => {
       pendingAmount: 0,
       totalAdRevenue: 0,
       currentRate: 0.10,
+      isVipAffiliate: false,
       nextTier: {
         rate: 0.15,
         amountNeeded: 5000,
