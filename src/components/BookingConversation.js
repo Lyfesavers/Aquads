@@ -3,6 +3,7 @@ import { API_URL } from '../services/api';
 import logger from '../utils/logger';
 import InvoiceModal from './InvoiceModal';
 import invoiceService from '../services/invoiceService';
+import axios from 'axios';
 
 // Component to render watermarked images using canvas
 const WatermarkedImage = ({ sourceUrl, applyWatermark, attachmentName, dataUrl, generateAttachmentUrls }) => {
@@ -414,6 +415,8 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
     setInvoices(prev => [invoice, ...prev]);
     // Close the modal
     setShowInvoiceModal(false);
+    // Send a message about the new invoice
+    handleSendInvoice(invoice);
   };
 
   // Handle sending a message from the invoice modal
@@ -433,6 +436,32 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
   const handleViewInvoice = (invoice) => {
     setSelectedInvoice(invoice);
     setShowInvoiceModal(true);
+  };
+
+  // Add this function right after handleViewInvoice
+  const handleSendInvoice = async (invoice) => {
+    try {
+      // Send a message about the invoice
+      const response = await axios.post(
+        `${API_URL}/bookings/${booking._id}/invoices/${invoice._id}/message`,
+        {},
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentUser.token}`
+          }
+        }
+      );
+      
+      // Add the new message to the messages list
+      setMessages(prevMessages => [...prevMessages, response.data]);
+      
+      // Refresh invoices list
+      fetchInvoices();
+    } catch (error) {
+      console.error('Error sending invoice message:', error);
+      showNotification('Failed to send invoice notification. Please try again.', 'error');
+    }
   };
 
   // Render message content including any attachments
@@ -466,11 +495,26 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
       };
     };
 
-    // Check if the message contains an invoice reference
-    const invoiceMatch = msg.message && typeof msg.message === 'string' && msg.message.match(/Invoice #(INV-\d{4}-\d{4})/);
-    const invoiceNumberFromMessage = invoiceMatch ? invoiceMatch[1] : null;
+    // Enhanced invoice detection with multiple patterns
+    const invoicePatterns = [
+      /Invoice #(INV-\d{4}-\d{4})/i,
+      /invoice #(INV-\d{4}-\d{4})/i,
+      /invoice.*?(INV-\d{4}-\d{4})/i,
+      /(INV-\d{4}-\d{4})/i
+    ];
     
-    // Find the invoice in our list if it exists
+    let invoiceNumberFromMessage = null;
+    
+    // Try each pattern
+    for (const pattern of invoicePatterns) {
+      const match = msg.message && typeof msg.message === 'string' && msg.message.match(pattern);
+      if (match) {
+        invoiceNumberFromMessage = match[1];
+        break;
+      }
+    }
+    
+    // Find invoice by number if it exists
     const invoiceData = invoiceNumberFromMessage && invoices && invoices.length > 0 
       ? invoices.find(inv => inv.invoiceNumber === invoiceNumberFromMessage)
       : null;
@@ -560,7 +604,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
       <>
         {msg.message && <p className="text-sm whitespace-pre-wrap mb-2">{msg.message}</p>}
         
-        {/* Display invoice card if this message references an invoice */}
+        {/* Display invoice card if the message references an invoice */}
         {invoiceData && (
           <div className="mt-3 bg-gray-800 border border-gray-700 rounded-lg p-3 max-w-sm">
             <div className="flex justify-between items-center mb-2">
