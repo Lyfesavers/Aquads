@@ -169,7 +169,6 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const pollingIntervalRef = useRef(null);
-  const prevMessageCountRef = useRef(0);
 
   // Debug: Log API URL
   console.log('API_URL:', API_URL);
@@ -201,17 +200,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [booking?._id]);
 
-  // Auto-scroll to bottom when messages update, but only if new messages are added
-  useEffect(() => {
-    // If this is the first load or new messages were added, scroll to bottom
-    if (messages.length > prevMessageCountRef.current) {
-      scrollToBottom();
-    }
-    
-    // Update the previous message count
-    prevMessageCountRef.current = messages.length;
-  }, [messages]);
-
+  // Manual scroll function (kept for reference but not used automatically)
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
