@@ -548,8 +548,24 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
     };
 
     // Check if the message is about an invoice
-    const invoiceMatch = msg.message && typeof msg.message === 'string' && msg.message.match(/Invoice #(INV-\d{4}-\d{4})/);
-    const invoiceNumberFromMessage = invoiceMatch ? invoiceMatch[1] : null;
+    const invoicePatterns = [
+      /Invoice #(INV-\d{4}-\d{4})/i,
+      /invoice #(INV-\d{4}-\d{4})/i,
+      /created invoice #(INV-\d{4}-\d{4})/i,
+      /(INV-\d{4}-\d{4})/i
+    ];
+    
+    let invoiceNumberFromMessage = null;
+    // Try each pattern until we find a match
+    for (const pattern of invoicePatterns) {
+      const match = msg.message && typeof msg.message === 'string' && msg.message.match(pattern);
+      if (match) {
+        invoiceNumberFromMessage = match[1];
+        break;
+      }
+    }
+    
+    // Find the invoice in our list
     const invoiceFromMessage = invoiceNumberFromMessage && invoices && invoices.length > 0 ? 
       invoices.find(inv => inv.invoiceNumber === invoiceNumberFromMessage) : null;
 
@@ -557,7 +573,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
       <>
         {msg.message && <p className="text-sm whitespace-pre-wrap mb-2">{msg.message}</p>}
         
-        {/* If this is an invoice message and we found the invoice, show a button to view it */}
+        {/* If this is an invoice message and we found the invoice, show invoice details */}
         {invoiceFromMessage && (
           <div className="mt-2 border border-gray-600 bg-gray-800 p-3 rounded-lg">
             <div className="flex justify-between mb-2">
@@ -583,6 +599,12 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">Due Date:</span>
                   <span>{new Date(invoiceFromMessage.dueDate).toLocaleDateString()}</span>
+                </div>
+              )}
+              {invoiceFromMessage.description && (
+                <div className="text-sm mt-1">
+                  <span className="text-gray-400">Service: </span>
+                  <span>{invoiceFromMessage.description}</span>
                 </div>
               )}
             </div>
