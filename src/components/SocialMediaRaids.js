@@ -267,6 +267,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
 
   const fetchRaids = async () => {
     try {
+      console.log('Fetching raids...');
       setLoading(true);
       const response = await fetch(`${API_URL}/api/twitter-raids`);
       
@@ -275,11 +276,29 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       }
       
       const data = await response.json();
+      console.log('Fetched raids data:', data);
       
       // Filter out raids older than 7 days
       const filteredRaids = data.filter(raid => isWithinSevenDays(raid.createdAt));
+      console.log('Filtered raids:', filteredRaids.length);
       
       setRaids(filteredRaids);
+      
+      // If a raid was selected, but it's now completed, we should deselect it
+      if (selectedRaid) {
+        console.log('Checking if selected raid should be deselected...');
+        const raidStillAvailable = filteredRaids.find(r => r._id === selectedRaid._id);
+        
+        // Check if the current user has completed this raid
+        const selectedRaidCompleted = raidStillAvailable?.completions?.some(
+          completion => completion.userId && completion.userId.toString() === (currentUser?.id || currentUser?._id)
+        );
+        
+        if (selectedRaidCompleted) {
+          console.log('Selected raid has been completed, deselecting it');
+          setSelectedRaid(null);
+        }
+      }
     } catch (err) {
       console.error('Error fetching Twitter raids:', err);
       setError('Failed to load Twitter raids. Please try again later.');
@@ -308,10 +327,12 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     
     setSelectedRaid(raid);
     setTwitterUsername('');
-    setError(null);
-    setSuccess(null);
     setTweetUrl('');
     setIsValidUrl(true);
+    
+    // Clear error message but keep success message if present
+    setError(null);
+    
     // Generate a new verification code for the user
     setVerificationCode(generateVerificationCode());
     
@@ -333,6 +354,18 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         return;
       }
 
+      // Check if the required field (tweet URL) is provided
+      if (!tweetUrl) {
+        setError('Please provide your tweet URL');
+        return;
+      }
+
+      // Validate URL
+      if (!validateTweetUrl(tweetUrl)) {
+        setError('Please provide a valid tweet URL');
+        return;
+      }
+
       // Run verification check
       const verified = await verifyUserCompletion();
       if (!verified) {
@@ -342,21 +375,14 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       setSubmitting(true);
       setError(null);
       
-      // Validate URL one more time before submission
-      if (!tweetUrl || !validateTweetUrl(tweetUrl)) {
-        throw new Error('Please provide a valid tweet URL');
-      }
-
-      // Add a short delay to prevent screen going blank during submission
-      await delay(100);
-      
       console.log('Submitting raid completion:', {
-        twitterUsername,
+        twitterUsername: twitterUsername || '(not provided)',
         tweetUrl,
         raidId: selectedRaid?._id
       });
       
       // Use fetchWithDelay instead of fetch
+      console.log('Sending request to complete raid...');
       const response = await fetchWithDelay(`${API_URL}/api/twitter-raids/${selectedRaid._id}/complete`, {
         method: 'POST',
         headers: {
@@ -370,8 +396,11 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         })
       });
       
+      console.log('Response status:', response.status);
+      
       // Get the raw text first to see if there's an error in JSON parsing
       const responseText = await response.text();
+      console.log('Raw response text:', responseText);
       
       // Add another small delay before updating state
       await delay(100);
@@ -380,6 +409,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       
       try {
         data = JSON.parse(responseText);
+        console.log('Parsed response data:', data);
       } catch (jsonError) {
         console.error('Error parsing response JSON:', responseText);
         throw new Error('Server returned an invalid response. Please try again later.');
@@ -404,6 +434,13 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       showNotification(data.message || 'Successfully completed Twitter raid!', 'success');
       
       // After a delay, refresh the raids list to show completion
+      console.log('About to refresh raids list...');
+      
+      // Reset the selected raid after a successful completion
+      // This will close the form immediately on success
+      setSelectedRaid(null);
+      
+      // Refresh the raids list to update completions
       setTimeout(() => {
         fetchRaids();
       }, 500);
@@ -533,35 +570,38 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     return raid && raid._id && typeof raid._id === 'string';
   };
 
-  // Use setTimeout in the fetch function to prevent screen going blank
+  // Use a better fetch function that ensures responses are handled properly
   const fetchWithDelay = async (url, options) => {
     try {
-      // Introduce a minimal delay to prevent rendering issues
-      await delay(100);
+      console.log(`Making request to ${url}`);
+      
+      // No delay needed - just use normal fetch
       const response = await fetch(url, options);
+      
+      console.log(`Received response from ${url}:`, {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      });
+      
       return response;
     } catch (error) {
-      console.error("Fetch with delay error:", error);
+      console.error("Fetch error:", error);
       throw error;
     }
   };
 
   // Add this wrapper function around the form submission
   const safeHandleSubmit = (e) => {
+    e.preventDefault(); // Prevent the default form submission
+    console.log('safeHandleSubmit called, preventing default and calling handleSubmitTask');
+    
+    // Call handleSubmitTask directly instead of using setTimeout, which might cause issues
     try {
-      // Add a short preventive delay to avoid UI freezing
-      setTimeout(() => {
-        try {
-          handleSubmitTask(e);
-        } catch (innerError) {
-          console.error("Error in delayed submit:", innerError);
-          setError("An error occurred during submission. Please try again.");
-          setSubmitting(false);
-        }
-      }, 50);
-    } catch (outerError) {
-      console.error("Error in submit wrapper:", outerError);
-      setError("An error occurred. Please try again.");
+      handleSubmitTask(e);
+    } catch (error) {
+      console.error("Error in submit handler:", error);
+      setError("An error occurred during submission. Please try again.");
       setSubmitting(false);
     }
     
@@ -725,6 +765,17 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     }
   };
 
+  // Add effect to auto-clear success message after a few seconds
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        setSuccess(null);
+      }, 5000); // Clear after 5 seconds
+      
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
   if (loading && raids.length === 0) {
     return <div className="text-center p-4">Loading Twitter raids...</div>;
   }
@@ -773,6 +824,19 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
             )}
           </div>
         </div>
+        
+        {/* Global success message */}
+        {success && !selectedRaid && (
+          <div className="mt-4 bg-green-500/20 border border-green-500/50 text-green-400 p-4 rounded-lg flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <h4 className="font-semibold">Raid Completed Successfully!</h4>
+              <p>{success}</p>
+            </div>
+          </div>
+        )}
         
         {/* Admin Create Form */}
         {showCreateForm && currentUser?.isAdmin && (
