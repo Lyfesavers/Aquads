@@ -402,28 +402,27 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       
       // Set success message with a delay to prevent UI issues
       await delay(100);
+      // Set success message - important for UI feedback
       setSuccess(data.message || 'Task completed! You earned points.');
       
       // Clear inputs after confirmed success
       setTwitterUsername('');
       setTweetUrl('');
       
-      // Show success modal with points
+      // Show success modal with points - simplified logic
       setSuccessPoints(data.pointsAwarded || selectedRaid.points || 50);
       setShowSuccessModal(true);
-      
-      // Notify the user
-      showNotification(data.message || 'Successfully completed Twitter raid!', 'success');
       
       // Hide modal after 5 seconds
       setTimeout(() => {
         setShowSuccessModal(false);
       }, 5000);
       
-      // After a delay, refresh the raids list to show completion
-      setTimeout(() => {
-        fetchRaids();
-      }, 500);
+      // Notify the user
+      showNotification(data.message || 'Successfully completed Twitter raid!', 'success');
+      
+      // Immediately refresh the raids list to show completion
+      fetchRaids();
     } catch (err) {
       console.error('Task submission error:', err);
       
@@ -756,7 +755,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     <div className="bg-gray-900/50 backdrop-blur-sm rounded-lg overflow-hidden">
       {showSuccessModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 backdrop-blur-sm">
-          <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-2xl transform transition-all duration-300 scale-100 opacity-100" 
+          <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-2xl" 
                style={{animation: 'fadeInUp 0.5s ease-out'}}>
             <div className="text-center">
               <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
