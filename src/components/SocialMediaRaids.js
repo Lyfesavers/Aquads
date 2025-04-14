@@ -73,11 +73,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [raids, setRaids] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedRaid, setSelectedRaid] = useState(null);
-  const [twitterUsername, setTwitterUsername] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-  const [verificationCode, setVerificationCode] = useState('');
   const [verifyingTweet, setVerifyingTweet] = useState(false);
   const [tweetUrl, setTweetUrl] = useState('');
   const [isValidUrl, setIsValidUrl] = useState(true);
@@ -385,7 +383,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     }
     
     setSelectedRaid(raid);
-    setTwitterUsername('');
     
     // Set the tweet URL from the raid automatically
     setTweetUrl(raid.tweetUrl);
@@ -419,9 +416,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     
     // Clear error message but keep success message if present
     setError(null);
-    
-    // Generate a new verification code for the user
-    setVerificationCode(generateVerificationCode());
     
     // Scroll to the form section for better UX
     setTimeout(() => {
@@ -479,7 +473,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       
       // Log detailed submission data
       console.log('Submitting raid completion with details:', {
-        twitterUsername: twitterUsername || '(not provided)',
         tweetUrl: selectedRaid?.tweetUrl || tweetUrl,
         iframeVerified,
         directInteractions,
@@ -500,8 +493,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
             'Authorization': `Bearer ${currentUser.token}`
           },
           body: JSON.stringify({
-            twitterUsername: twitterUsername || '', // Make username optional
-            verificationCode,
             tweetUrl: selectedRaid?.tweetUrl || tweetUrl || null,
             iframeVerified: true, // Always set to true since we require this
             directInteractions, // Include all interaction data
@@ -538,7 +529,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         // Step 1: First update submitting and reset UI
         setSubmitting(false);
         setTweetUrl('');
-        setTwitterUsername('');
         setPreviewState({
           loading: false,
           error: false,
@@ -950,7 +940,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         twitterUrl = `https://twitter.com/intent/retweet?tweet_id=${tweetId}`;
         break;
       case 'comment':
-        twitterUrl = `https://twitter.com/intent/tweet?in_reply_to=${tweetId}&text=${encodeURIComponent('aquads.xyz')}`;
+        twitterUrl = `https://twitter.com/intent/tweet?in_reply_to=${tweetId}`;
         break;
       default:
         return;
@@ -1278,43 +1268,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   </a>
                 </div>
                 
-                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-4">
-                  <h4 className="text-blue-400 font-semibold mb-1">Verification Tag</h4>
-                  <div className="bg-gray-800 p-3 rounded flex items-center justify-between mb-2">
-                    <code className="text-green-400 font-mono text-sm sm:text-lg overflow-auto">{verificationCode}</code>
-                    <button 
-                      onClick={() => {
-                        navigator.clipboard.writeText(verificationCode);
-                        showNotification('Verification tag copied!', 'success');
-                      }}
-                      className="bg-gray-700 hover:bg-gray-600 text-gray-300 p-1 rounded ml-2 flex-shrink-0"
-                      title="Copy tag"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                      </svg>
-                    </button>
-                  </div>
-                  <p className="text-gray-400 text-sm">
-                    Include <span className="text-green-400 font-semibold">aquads.xyz</span> in your tweet/reply so we can verify your participation.
-                  </p>
-                </div>
-  
                 <form onSubmit={safeHandleSubmit} id="verification-form">
-                  <div className="mb-4">
-                    <label className="block text-gray-300 mb-2" htmlFor="twitterUsername">
-                      Twitter Username <span className="text-gray-500">(optional)</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="twitterUsername"
-                      value={twitterUsername}
-                      onChange={(e) => setTwitterUsername(e.target.value)}
-                      placeholder="Enter your Twitter username"
-                      className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  
                   {/* Hidden tweet URL input - keeping for backend compatibility */}
                   <input
                     type="hidden"
@@ -1534,7 +1488,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                               <div className={`${iframeInteractions.commented ? 'bg-green-500/20 border-green-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-4 text-center transition-colors`}>
                                 <button 
                                   onClick={() => {
-                                    window.open(`https://twitter.com/intent/tweet?in_reply_to=${previewState.tweetId}&text=${encodeURIComponent('aquads.xyz')}`, '_blank');
+                                    window.open(`https://twitter.com/intent/tweet?in_reply_to=${previewState.tweetId}`, '_blank');
                                     handleIframeInteraction('commented');
                                   }}
                                   disabled={iframeInteractions.commented}
