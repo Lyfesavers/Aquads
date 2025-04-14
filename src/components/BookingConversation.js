@@ -184,6 +184,11 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
     return sender._id === currentUser.userId;
   };
 
+  // Gets the sender object from the message (handles both sender and senderId fields)
+  const getSender = (msg) => {
+    return msg.sender || msg.senderId || null;
+  };
+
   // Format timestamp
   const formatMessageTime = (timestamp) => {
     if (!timestamp) return '';
@@ -484,25 +489,27 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
               </div>
             ) : (
               messages.map((msg, index) => {
-                if (!msg || !msg.sender) {
+                // Check if the message has either sender or senderId
+                const sender = getSender(msg);
+                if (!msg || !sender) {
                   console.warn('Invalid message object:', msg);
                   return null; // Skip invalid messages
                 }
                 return (
                 <div 
                   key={msg._id || `msg-${index}`}
-                  className={`mb-3 flex ${isCurrentUserMessage(msg.sender) ? 'justify-end' : 'justify-start'}`}
+                  className={`mb-3 flex ${isCurrentUserMessage(sender) ? 'justify-end' : 'justify-start'}`}
                 >
                   <div 
                     className={`max-w-xs sm:max-w-sm md:max-w-md rounded-lg px-4 py-2 ${
-                      isCurrentUserMessage(msg.sender) 
+                      isCurrentUserMessage(sender) 
                         ? 'bg-blue-600 text-white rounded-br-none' 
                         : 'bg-gray-700 text-white rounded-bl-none'
                     } ${msg.isInitialRequirements ? 'border-l-4 border-yellow-500' : ''}`}
                   >
                     <div className="flex justify-between items-center mb-1">
                       <span className="font-semibold text-sm">
-                        {msg.sender.username || 'Unknown'}
+                        {sender.username || 'Unknown'}
                         {msg.isInitialRequirements && ' (Initial Requirements)'}
                       </span>
                       <span className="text-xs opacity-75">
