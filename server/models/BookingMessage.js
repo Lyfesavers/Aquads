@@ -16,6 +16,15 @@ const bookingMessageSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  messageType: {
+    type: String,
+    enum: ['text', 'attachment', 'invoice'],
+    default: 'text'
+  },
+  invoiceId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Invoice'
+  },
   attachment: {
     type: String,
     trim: true
