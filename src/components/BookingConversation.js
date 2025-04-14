@@ -223,6 +223,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
 
   // Determine if a message is from the current user
   const isCurrentUserMessage = (senderId) => {
+    if (!senderId || !senderId._id || !currentUser) return false;
     return senderId._id === currentUser.userId;
   };
 
@@ -395,7 +396,11 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
                 No messages yet. Start the conversation!
               </div>
             ) : (
-              messages.map((msg, index) => (
+              messages.map((msg, index) => {
+                if (!msg || !msg.sender) {
+                  return null; // Skip invalid messages
+                }
+                return (
                 <div 
                   key={index} 
                   className={`mb-4 ${
@@ -406,7 +411,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
                 >
                   <div className="flex justify-between items-start mb-1">
                     <span className="font-semibold text-xs">
-                      {msg.sender.username}
+                      {msg.sender.username || 'Unknown'}
                     </span>
                     <span className="text-xs text-gray-400 ml-2">
                       {formatMessageTime(msg.createdAt)}
@@ -414,13 +419,14 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
                   </div>
                   {renderMessageContent(msg)}
                 </div>
-              ))
+              );
+              })
             )}
             <div ref={messagesEndRef} />
           </div>
           
           {/* Add invoice button for sellers when booking is confirmed */}
-          {isSeller && booking.status === 'confirmed' && (
+          {isSeller && booking && booking.status === 'confirmed' && (
             <div className="mb-3">
               <button
                 onClick={handleCreateInvoice}
@@ -462,7 +468,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
                 onChange={(e) => setNewMessage(e.target.value)}
                 placeholder="Type your message here..."
                 className="flex-grow bg-gray-700 text-white rounded p-2 resize-none h-20"
-                disabled={booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'}
+                disabled={!booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'}
               />
               
               <div className="flex flex-col gap-2">
@@ -470,16 +476,16 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
                   type="button"
                   onClick={handleAttachmentClick}
                   className="px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded"
-                  disabled={booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'}
+                  disabled={!booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'}
                 >
                   📎
                 </button>
                 
                 <button
                   type="submit"
-                  disabled={(!newMessage.trim() && !attachment) || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'}
+                  disabled={(!newMessage.trim() && !attachment) || !booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'}
                   className={`px-4 py-2 rounded ${
-                    (!newMessage.trim() && !attachment) || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'
+                    (!newMessage.trim() && !attachment) || !booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'
                       ? 'bg-gray-600 cursor-not-allowed'
                       : 'bg-blue-600 hover:bg-blue-700'
                   } text-white`}
@@ -490,7 +496,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
             </div>
           </form>
           
-          {(booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed') && (
+          {booking && (booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed') && (
             <div className="text-amber-500 text-sm mt-2 text-center">
               This conversation is now locked because the booking is {booking.status}.
             </div>
