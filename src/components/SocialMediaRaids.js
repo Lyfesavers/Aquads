@@ -939,7 +939,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const handleIframeInteraction = (event) => {
     // Prevent the event from propagating to parent elements
     if (event) {
-      event.preventDefault();
       event.stopPropagation();
     }
     
@@ -950,30 +949,26 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     }
     
     // Log interaction attempt
-    console.log('Iframe interaction detected, current count:', iframeInteractions);
+    console.log('Iframe interaction detected');
     
-    // Increment interaction counter using functional update to ensure we get the latest state
-    setIframeInteractions(prevCount => {
-      const newCount = prevCount + 1;
-      console.log('Incrementing from', prevCount, 'to', newCount);
-      
-      // Consider verified after 3 interactions
-      if (newCount >= 3 && !iframeVerified) {
-        console.log('Verification threshold reached, marking as verified');
-        setIframeVerified(true);
-        showNotification('Tweet interaction verified! You can now complete the task.', 'success');
-      } else {
-        // Provide feedback for each interaction
-        console.log(`Interaction ${newCount}/3 recorded`);
-        if (newCount === 1) {
-          showNotification('1 click registered. 2 more needed.', 'info');
-        } else if (newCount === 2) {
-          showNotification('2 clicks registered. 1 more needed.', 'info');
-        }
+    // Increment interaction counter
+    const newCount = iframeInteractions + 1;
+    setIframeInteractions(newCount);
+    
+    // Consider verified after 3 interactions
+    if (newCount >= 3 && !iframeVerified) {
+      console.log('Verification threshold reached, marking as verified');
+      setIframeVerified(true);
+      showNotification('Tweet interaction verified! You can now complete the task.', 'success');
+    } else {
+      // Provide feedback for each interaction
+      console.log(`Interaction ${newCount}/3 recorded`);
+      if (newCount === 1) {
+        showNotification('First interaction detected. 2 more needed.', 'info');
+      } else if (newCount === 2) {
+        showNotification('Second interaction detected. 1 more needed.', 'info');
       }
-      
-      return newCount;
-    });
+    }
   };
   
   // Handle iframe loading
@@ -997,11 +992,10 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   useEffect(() => {
     const container = iframeContainerRef.current;
     if (container && showIframe) {
-      console.log('Setting up iframe interaction tracking, current interactions:', iframeInteractions);
+      console.log('Setting up iframe interaction tracking');
       
       // Track clicks on the container instead of the iframe content
       const handleContainerClick = (e) => {
-        console.log('Container click detected');
         handleIframeInteraction(e);
       };
       
@@ -1014,7 +1008,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         container.removeEventListener('click', handleContainerClick);
       };
     }
-  }, [showIframe]); // Note: we deliberately exclude iframeInteractions to prevent re-attaching listeners
+  }, [showIframe, iframeLoading]);
 
   if (loading && raids.length === 0) {
     return <div className="text-center p-4">Loading Twitter raids...</div>;
@@ -1542,13 +1536,14 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   {showIframe ? (
                     <div className="w-full bg-gray-800/50 rounded-lg overflow-hidden mb-4 border border-gray-700">
                       <div className="text-gray-400 text-sm p-2 bg-gray-800">
-                        <span className="font-semibold">Instructions:</span> Sign in to Twitter and interact with the tweet. Click anywhere in the tweet area to register interactions. You need 3 clicks to verify.
+                        <span className="font-semibold">Instructions:</span> Sign in to Twitter and interact with the tweet (like, retweet, or reply). Click inside the frame at least 3 times to verify.
                       </div>
                       
                       {/* Iframe container that tracks clicks */}
                       <div 
                         ref={iframeContainerRef}
                         className="relative"
+                        onClick={handleIframeInteraction}
                       >
                         {/* Loading indicator */}
                         {iframeLoading && (
@@ -1560,18 +1555,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                           </div>
                         )}
                         
-                        {/* Transparent overlay to capture all clicks */}
-                        <div 
-                          className="absolute inset-0 z-20 hover:bg-blue-500/10 active:bg-blue-500/20 transition-colors duration-200"
-                          onClick={handleIframeInteraction}
-                          style={{ cursor: 'pointer' }}
-                          title="Click anywhere to register an interaction (3 clicks needed)"
-                        >
-                          <div className="absolute top-1/2 left-0 right-0 transform -translate-y-1/2 text-center text-white text-sm py-2 bg-black/70 pointer-events-none">
-                            Click anywhere {iframeInteractions > 0 ? `(${iframeInteractions}/3)` : ""}
-                          </div>
-                        </div>
-                        
                         <iframe
                           src={`https://platform.twitter.com/embed/Tweet.html?id=${previewState.tweetId}&theme=dark&dnt=true`}
                           width="100%"
@@ -1582,18 +1565,10 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                           sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
                         ></iframe>
                         
-                        {/* Better click counter indicator */}
+                        {/* Simple indicator for interactions */}
                         {!iframeLoading && (
-                          <div className="absolute top-2 right-2 bg-blue-600 text-white px-3 py-2 rounded-lg z-30 shadow-lg border border-blue-500 flex items-center">
-                            <span className="font-semibold mr-1">Clicks:</span> 
-                            <div className="flex space-x-1">
-                              <span className={`w-6 h-6 rounded-full flex items-center justify-center ${iframeInteractions >= 1 ? 'bg-green-500 text-white' : 'bg-gray-700 text-gray-300'}`}>1</span>
-                              <span className={`w-6 h-6 rounded-full flex items-center justify-center ${iframeInteractions >= 2 ? 'bg-green-500 text-white' : 'bg-gray-700 text-gray-300'}`}>2</span>
-                              <span className={`w-6 h-6 rounded-full flex items-center justify-center ${iframeInteractions >= 3 ? 'bg-green-500 text-white' : 'bg-gray-700 text-gray-300'}`}>3</span>
-                            </div>
-                            {iframeVerified && (
-                              <span className="ml-2 bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center">✓</span>
-                            )}
+                          <div className="absolute top-2 right-2 bg-blue-500/80 text-white px-2 py-1 rounded text-xs">
+                            Clicks: {iframeInteractions}/3 {iframeVerified ? "✓" : ""}
                           </div>
                         )}
                       </div>
@@ -1664,8 +1639,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                       <h6 className="text-blue-400 font-medium">Method 1: Interactive Tweet Viewer (Recommended)</h6>
                       <ol className="list-decimal list-inside text-gray-400 text-sm space-y-1 ml-2">
                         <li>Click the "Show Interactive Tweet Viewer" button above</li>
-                        <li>Sign in to Twitter within the frame if needed</li>
-                        <li>Click anywhere in the tweet area 3 times to verify</li>
+                        <li>Sign in to Twitter within the frame</li>
+                        <li>Like, retweet, or reply to the tweet</li>
+                        <li>Interact with the frame at least 3 times to verify</li>
                         <li>Complete the task to earn points!</li>
                       </ol>
                     </div>
