@@ -233,34 +233,35 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   };
 
   const verifyUserCompletion = async () => {
-    if (!twitterUsername) {
-      setError('Please provide your Twitter username');
-      return false;
-    }
-
-    setVerifyingTweet(true);
-
     try {
-      // Validate tweet URL format first
-      if (!validateTweetUrl(tweetUrl)) {
-        throw new Error('Invalid tweet URL format. Please use the format: https://x.com/username/status/1234567890');
+      // Always validate tweet URL
+      if (!tweetUrl || !validateTweetUrl(tweetUrl)) {
+        setError('Please provide a valid tweet URL');
+        return false;
       }
+      
+      // It's okay to have an empty Twitter username now
 
-      // If URL format is valid, proceed with verification
-      const tweetId = extractTweetId(tweetUrl);
-      if (!tweetId) {
-        throw new Error('Could not extract tweet ID from the URL. Please check the format.');
+      // Attempt to embed tweet for verification
+      setVerifyingTweet(true);
+      
+      try {
+        // We don't need to wait for this to succeed, just show the embed if it works
+        embedTweet(tweetUrl);
+        
+        // Now this is optional verification
+        return true;
+      } catch (embedError) {
+        console.error('Tweet embed error:', embedError);
+        // Even if embedding fails, we don't block the task completion
+        return true;
+      } finally {
+        setVerifyingTweet(false);
       }
-
-      // For a more reliable approach, we'll just check if the URL looks valid
-      // and let the server handle verification
-      return true;
-    } catch (err) {
-      console.error("Verification error:", err);
-      setError(err.message || "We couldn't verify your interaction with the tweet");
+    } catch (error) {
+      console.error('Verification error:', error);
+      setError(error.message || 'Verification failed. Please check your inputs.');
       return false;
-    } finally {
-      setVerifyingTweet(false);
     }
   };
 
@@ -332,11 +333,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         return;
       }
 
-      if (!twitterUsername) {
-        setError('Please provide your Twitter username');
-        return;
-      }
-
       // Run verification check
       const verified = await verifyUserCompletion();
       if (!verified) {
@@ -368,7 +364,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           'Authorization': `Bearer ${currentUser.token}`
         },
         body: JSON.stringify({
-          twitterUsername,
+          twitterUsername: twitterUsername || '', // Make username optional
           verificationCode,
           tweetUrl: tweetUrl || null
         })
@@ -1011,7 +1007,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                 <form onSubmit={safeHandleSubmit} className="mobile-friendly-form">
                   <div className="mb-4">
                     <label className="block text-gray-300 mb-2">
-                      Your Twitter Username <span className="text-gray-500">(@username)</span>
+                      Your Twitter Username <span className="text-gray-500">(@username)</span> <span className="text-gray-500">(optional)</span>
                     </label>
                     <div className="flex">
                       <span className="bg-gray-700 px-3 py-2 rounded-l text-gray-500 flex items-center">
@@ -1020,10 +1016,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                       <input
                         type="text"
                         className="w-full px-4 py-2 bg-gray-700 rounded-r text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="username"
+                        placeholder="username (optional)"
                         value={twitterUsername}
                         onChange={(e) => setTwitterUsername(e.target.value)}
-                        required
                       />
                     </div>
                   </div>

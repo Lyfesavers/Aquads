@@ -302,10 +302,6 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
       return res.status(400).json({ error: 'User ID not found in request' });
     }
     
-    if (!twitterUsername) {
-      return res.status(400).json({ error: 'Twitter username is required' });
-    }
-
     const raid = await TwitterRaid.findById(req.params.id);
     
     if (!raid) {
@@ -370,14 +366,14 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
         createdAt: new Date()
       });
       
-      // Save the user with new points
+      // Save the user with new points - make sure this is awaited
       await user.save();
       console.log(`Successfully saved user with new points. Total points: ${user.points}`);
       
       // Then record the completion with IP tracking
       raid.completions.push({
         userId: userId,
-        twitterUsername,
+        twitterUsername: twitterUsername || '', // Make username optional
         verificationCode,
         verificationMethod,
         tweetUrl: tweetUrl || null,
@@ -387,6 +383,7 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
         completedAt: new Date()
       });
       
+      // Make sure to await this save operation as well
       await raid.save();
       console.log(`Successfully saved raid completion for raid: ${raid.title}`);
       
