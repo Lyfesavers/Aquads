@@ -111,6 +111,12 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     tweetId: null
   });
 
+  // Track iframe interactions
+  const [iframeInteractions, setIframeInteractions] = useState(0);
+  const [iframeVerified, setIframeVerified] = useState(false);
+  const [showIframe, setShowIframe] = useState(false);
+  const iframeRef = useRef(null);
+  
   useEffect(() => {
     fetchRaids();
     // Load Twitter widget script
@@ -257,14 +263,24 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
 
   const verifyUserCompletion = async () => {
     try {
+      // If iframe verification is done, we can skip URL validation
+      if (iframeVerified) {
+        console.log('Using iframe verification - already verified');
+        return true;
+      }
+      
       // Always validate tweet URL
       if (!tweetUrl || !validateTweetUrl(tweetUrl)) {
         setError('Please provide a valid tweet URL');
         return false;
       }
       
-      // It's okay to have an empty Twitter username now
-
+      // Prompt user to try iframe verification if they haven't yet
+      if (showIframe && iframeInteractions < 3) {
+        setError('Please complete verification by interacting with the tweet in the frame');
+        return false;
+      }
+      
       // Attempt to verify the tweet
       setVerifyingTweet(true);
       
@@ -363,6 +379,11 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     setTweetUrl('');
     setIsValidUrl(true);
     
+    // Reset iframe-related states
+    setShowIframe(false);
+    setIframeInteractions(0);
+    setIframeVerified(false);
+    
     // Clear error message but keep success message if present
     setError(null);
     
@@ -388,13 +409,13 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       }
 
       // Check if the required field (tweet URL) is provided
-      if (!tweetUrl) {
-        setError('Please provide your tweet URL');
+      if (!tweetUrl && !iframeVerified) {
+        setError('Please provide your tweet URL or complete interactive verification');
         return;
       }
 
-      // Validate URL
-      if (!validateTweetUrl(tweetUrl)) {
+      // Validate URL if not using iframe verification
+      if (!iframeVerified && (!tweetUrl || !validateTweetUrl(tweetUrl))) {
         setError('Please provide a valid tweet URL');
         return;
       }
@@ -420,6 +441,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       console.log('Submitting raid completion:', {
         twitterUsername: twitterUsername || '(not provided)',
         tweetUrl,
+        iframeVerified,
+        iframeInteractions,
         raidId: selectedRaid?._id
       });
       
@@ -438,7 +461,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           body: JSON.stringify({
             twitterUsername: twitterUsername || '', // Make username optional
             verificationCode,
-            tweetUrl: tweetUrl || null
+            tweetUrl: tweetUrl || null,
+            iframeVerified, // Add iframe verification data
+            iframeInteractions
           })
         });
         
@@ -855,6 +880,40 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     };
   }, []);
 
+  // Function to handle iframe interactions
+  const handleIframeInteraction = () => {
+    // Increment interaction counter
+    const newCount = iframeInteractions + 1;
+    setIframeInteractions(newCount);
+    
+    // Consider verified after 3 interactions
+    if (newCount >= 3 && !iframeVerified) {
+      setIframeVerified(true);
+      showNotification('Tweet interaction verified! You can now complete the task.', 'success');
+    }
+  };
+  
+  // Track iframe interaction through click event
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (iframe && showIframe) {
+      const handleIframeClick = () => {
+        handleIframeInteraction();
+      };
+      
+      iframe.addEventListener('load', () => {
+        // Once loaded, we can track clicks on the iframe
+        iframe.contentWindow.addEventListener('click', handleIframeClick);
+      });
+      
+      return () => {
+        if (iframe.contentWindow) {
+          iframe.contentWindow.removeEventListener('click', handleIframeClick);
+        }
+      };
+    }
+  }, [iframeRef.current, showIframe]);
+
   if (loading && raids.length === 0) {
     return <div className="text-center p-4">Loading Twitter raids...</div>;
   }
@@ -1225,41 +1284,116 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
             
             <div className="bg-gray-800/30 p-4 rounded-lg">
               <h4 className="text-white font-semibold mb-3">Tweet Preview</h4>
-              {tweetUrl ? (
-                <div className="w-full bg-gray-800/50 rounded-lg overflow-hidden min-h-[300px] flex items-center justify-center">
-                  {previewState.loading ? (
-                    <div className="text-center p-4">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                      <p className="text-gray-400">Loading tweet preview...</p>
-                    </div>
-                  ) : previewState.error ? (
-                    <div className="p-4 text-red-400">{previewState.message || 'Error loading tweet'}</div>
-                  ) : previewState.tweetId ? (
-                    <div className="bg-gray-800 p-4 rounded-lg border border-gray-700 w-full">
-                      <div className="flex items-center mb-3">
-                        <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 mr-3">
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085a4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                          </svg>
-                        </div>
-                        <div>
-                          <div className="font-bold text-white">Tweet</div>
-                          <div className="text-gray-500 text-sm">ID: {previewState.tweetId}</div>
-                        </div>
-                      </div>
-                      <p className="text-gray-300 mb-3">
-                        URL: <a href={tweetUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">{tweetUrl}</a>
-                      </p>
-                      <div className="text-gray-400 text-sm bg-gray-900/50 p-3 rounded">
-                        <span className="text-green-400">✓</span> Tweet URL validated
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center p-4">
-                      <p className="text-gray-400">{previewState.message || 'Enter a valid tweet URL'}</p>
-                    </div>
+              
+              {/* Toggle button for iframe view */}
+              {tweetUrl && previewState.tweetId && (
+                <div className="mb-4 flex items-center">
+                  <button
+                    onClick={() => setShowIframe(!showIframe)}
+                    className={`px-4 py-2 rounded text-sm ${
+                      showIframe 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-gray-700 text-gray-300'
+                    }`}
+                  >
+                    {showIframe ? 'Hide Tweet Viewer' : 'Show Interactive Tweet Viewer'}
+                  </button>
+                  
+                  {iframeVerified && (
+                    <span className="ml-3 bg-green-500/20 text-green-400 px-3 py-1 rounded text-sm">
+                      <span className="mr-1">✓</span> Interaction Verified
+                    </span>
+                  )}
+                  
+                  {showIframe && !iframeVerified && (
+                    <span className="ml-3 text-gray-400 text-sm">
+                      Interactions: {iframeInteractions}/3
+                    </span>
                   )}
                 </div>
+              )}
+              
+              {tweetUrl ? (
+                <>
+                  {/* Show iframe if enabled */}
+                  {showIframe && previewState.tweetId ? (
+                    <div className="w-full bg-gray-800/50 rounded-lg overflow-hidden mb-4 border border-gray-700">
+                      <div className="text-gray-400 text-sm p-2 bg-gray-800">
+                        <span className="font-semibold">Instructions:</span> Sign in to Twitter and interact with the tweet (like, retweet, or reply). Click inside the frame at least 3 times to verify.
+                      </div>
+                      <iframe
+                        ref={iframeRef}
+                        src={`https://platform.twitter.com/embed/Tweet.html?id=${previewState.tweetId}&theme=dark`}
+                        width="100%"
+                        height="400"
+                        style={{ border: 'none' }}
+                        title="Twitter Tweet"
+                        onClick={handleIframeInteraction}
+                      ></iframe>
+                    </div>
+                  ) : (
+                    <div className="w-full bg-gray-800/50 rounded-lg overflow-hidden min-h-[300px] flex items-center justify-center">
+                      {previewState.loading ? (
+                        <div className="text-center p-4">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                          <p className="text-gray-400">Loading tweet preview...</p>
+                        </div>
+                      ) : previewState.error ? (
+                        <div className="p-4 text-red-400">{previewState.message || 'Error loading tweet'}</div>
+                      ) : previewState.tweetId ? (
+                        <div className="bg-gray-800 p-4 rounded-lg border border-gray-700 w-full">
+                          <div className="flex items-center mb-3">
+                            <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 mr-3">
+                              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085a4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                              </svg>
+                            </div>
+                            <div>
+                              <div className="font-bold text-white">Tweet</div>
+                              <div className="text-gray-500 text-sm">ID: {previewState.tweetId}</div>
+                            </div>
+                          </div>
+                          <p className="text-gray-300 mb-3">
+                            URL: <a href={tweetUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">{tweetUrl}</a>
+                          </p>
+                          <div className="text-gray-400 text-sm bg-gray-900/50 p-3 rounded">
+                            <span className="text-green-400">✓</span> Tweet URL validated
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center p-4">
+                          <p className="text-gray-400">{previewState.message || 'Enter a valid tweet URL'}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
+                  <div className="mt-4 bg-gray-800/70 rounded p-3 border border-gray-700">
+                    <h5 className="text-gray-300 font-medium mb-2">Two Ways to Verify:</h5>
+                    
+                    <div className="mb-3">
+                      <h6 className="text-blue-400 font-medium">Method 1: Interactive Tweet Viewer (Recommended)</h6>
+                      <ol className="list-decimal list-inside text-gray-400 text-sm space-y-1 ml-2">
+                        <li>Click the "Show Interactive Tweet Viewer" button above</li>
+                        <li>Sign in to Twitter within the frame</li>
+                        <li>Like, retweet, or reply to the tweet</li>
+                        <li>Interact with the frame at least 3 times to verify</li>
+                        <li>Complete the task to earn points!</li>
+                      </ol>
+                    </div>
+                    
+                    <div>
+                      <h6 className="text-blue-400 font-medium">Method 2: Manual URL Verification</h6>
+                      <ol className="list-decimal list-inside text-gray-400 text-sm space-y-1 ml-2">
+                        <li>Go to the tweet via the "Go to Tweet" button</li>
+                        <li>Reply to the tweet with a message that includes "aquads.xyz"</li>
+                        <li>Copy the URL of your reply and paste it in the URL field</li>
+                        <li>The system will verify your participation</li>
+                        <li>You'll earn points once verified!</li>
+                      </ol>
+                    </div>
+                  </div>
+                </>
               ) : (
                 <div className="w-full bg-gray-800/50 rounded-lg p-6 flex flex-col items-center justify-center text-center min-h-[300px]">
                   <svg className="w-12 h-12 text-gray-500 mb-3" fill="currentColor" viewBox="0 0 24 24">
@@ -1269,17 +1403,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   <p className="text-gray-500 text-sm">This helps us verify your task completion</p>
                 </div>
               )}
-              
-              <div className="mt-4 bg-gray-800/70 rounded p-3 border border-gray-700">
-                <h5 className="text-gray-300 font-medium mb-2">How verification works:</h5>
-                <ol className="list-decimal list-inside text-gray-400 text-sm space-y-2">
-                  <li>Go to the tweet via the "Go to Tweet" button</li>
-                  <li>Reply to the tweet with a message that includes "aquads.xyz"</li>
-                  <li>Copy the URL of your reply and paste it in the field above</li>
-                  <li>The system will verify your participation</li>
-                  <li>You'll earn points once verified!</li>
-                </ol>
-              </div>
             </div>
           </div>
         </div>

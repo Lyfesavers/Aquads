@@ -284,7 +284,7 @@ const verifyTweetUrl = async (tweetUrl) => {
 // Complete a Twitter raid with rate limiting
 router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
   try {
-    const { twitterUsername, verificationCode, tweetUrl } = req.body;
+    const { twitterUsername, verificationCode, tweetUrl, iframeVerified, iframeInteractions } = req.body;
     const ipAddress = req.ip || req.connection.remoteAddress;
     
     // DEBUG: Log request data
@@ -292,6 +292,8 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
       raidId: req.params.id,
       user: req.user.id || req.user.userId || req.user._id,
       tweetUrl,
+      iframeVerified,
+      iframeInteractions,
       ipAddress
     });
     
@@ -324,11 +326,20 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
       return res.status(400).json({ error: 'You have already completed this raid' });
     }
 
-    // Verify tweet URL format only (skip API validation to avoid potential issues)
-    let verificationMethod = 'tweet_embed';
-    let verificationNote = 'Verified through client-side tweet embedding';
+    // Check verification method - either iframe or tweet URL
+    let verificationMethod = 'manual';
+    let verificationNote = 'User verification was not validated';
+    let verified = false;
     
-    if (tweetUrl) {
+    // If iframe verification was used
+    if (iframeVerified === true && iframeInteractions >= 3) {
+      verificationMethod = 'iframe_interaction';
+      verificationNote = `Verified through iframe interaction (${iframeInteractions} interactions)`;
+      verified = true;
+      console.log('User verified through iframe interactions:', iframeInteractions);
+    }
+    // If tweet URL was provided
+    else if (tweetUrl) {
       // Just check basic URL format - be more flexible with validation
       const isValidFormat = !!tweetUrl.match(/(?:twitter\.com|x\.com)\/[^\/]+\/status\/\d+/i);
       
@@ -344,14 +355,21 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
       const containsVerificationTag = tweetUrl.toLowerCase().includes('aquads.xyz');
       if (!containsVerificationTag) {
         console.log('Tweet URL does not contain verification tag but accepting anyway:', tweetUrl);
+        verificationMethod = 'tweet_embed';
         verificationNote = 'URL does not contain verification tag, but accepted';
+        verified = true;
       } else {
         console.log('Tweet URL contains verification tag:', tweetUrl);
+        verificationMethod = 'tweet_embed';
         verificationNote = 'Tweet URL format verified with verification tag';
+        verified = true;
       }
     } else {
-      console.log('No tweet URL provided, accepting verification anyway');
-      verificationNote = 'No tweet URL provided, verification skipped';
+      console.log('No verification method provided');
+      return res.status(400).json({ 
+        error: 'Verification failed. Please provide a valid tweet URL or complete iframe verification.',
+        success: false
+      });
     }
 
     // First award points directly to ensure the user gets them
@@ -388,9 +406,11 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
         verificationCode,
         verificationMethod,
         tweetUrl: tweetUrl || null,
-        verified: true,
+        verified: verified,
         ipAddress, // Store IP address
         verificationNote,
+        iframeVerified: iframeVerified || false, // Store iframe verification status
+        iframeInteractions: iframeInteractions || 0, // Store interaction count
         completedAt: new Date()
       });
       

@@ -63,7 +63,7 @@ const twitterRaidSchema = new Schema({
     verificationCode: String,
     verificationMethod: {
       type: String,
-      enum: ['automatic', 'manual', 'tweet_embed', 'client_side'],
+      enum: ['automatic', 'manual', 'tweet_embed', 'client_side', 'iframe_interaction'],
       default: 'automatic'
     },
     verified: {
@@ -73,6 +73,14 @@ const twitterRaidSchema = new Schema({
     ipAddress: {
       type: String,
       default: null
+    },
+    iframeVerified: {
+      type: Boolean,
+      default: false
+    },
+    iframeInteractions: {
+      type: Number,
+      default: 0
     },
     verificationNote: String,
     completedAt: {
