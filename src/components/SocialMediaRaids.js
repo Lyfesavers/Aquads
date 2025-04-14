@@ -309,82 +309,14 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
 
   const verifyUserCompletion = async () => {
     try {
-      // Check for direct interaction verification
-      const hasDirectInteractions = Object.values(directInteractions).some(value => value);
-      
-      if (hasDirectInteractions) {
-        console.log('Using direct interaction verification');
-        setIframeVerified(true);
-        setIframeInteractions(directInteractions);
-        return true;
-      }
-      
-      // Continue with existing iframe verification logic
-      if (iframeVerified) {
-        console.log('Already verified through iframe interactions');
-        return true;
-      }
-      
-      // If iframe verification is done, we can skip URL validation
-      if (iframeVerified) {
-        console.log('Using iframe verification - already verified');
-        return true;
-      }
-      
-      // Check if we're using the auto-filled tweet URL from the raid
-      const usingRaidUrl = selectedRaid && tweetUrl === selectedRaid.tweetUrl;
-      
-      // If we're using the raid URL directly, only require interaction not a special URL
-      if (usingRaidUrl) {
-        console.log('Using original raid URL, just checking basic format');
-        // Just make sure it's a valid twitter URL format 
-        if (!validateTweetUrl(tweetUrl)) {
-          setError('The raid URL appears to be invalid. Please try the Interactive Tweet Viewer method.');
-          return false;
-        }
-        
-        // Original raid URL is valid, continue
-        return true;
-      }
-      
-      // Otherwise validate normal tweet URL as before
-      if (!tweetUrl || !validateTweetUrl(tweetUrl)) {
-        setError('Please provide a valid tweet URL');
+      // Check if all interactions are verified
+      if (!iframeVerified) {
+        setError('Please complete all three Twitter interactions first (like, retweet, and comment)');
         return false;
       }
       
-      // Prompt user to try iframe verification if they haven't yet
-      if (showIframe && iframeInteractions.liked === false && iframeInteractions.retweeted === false && iframeInteractions.commented === false) {
-        setError('Please complete verification by interacting with the tweet in the frame');
-        return false;
-      }
-      
-      // Attempt to verify the tweet
-      setVerifyingTweet(true);
-      
-      try {
-        // Just validate the URL, no DOM manipulation
-        const tweetId = extractTweetId(tweetUrl);
-        if (!tweetId) {
-          throw new Error('Invalid tweet URL format');
-        }
-        
-        // Set preview state to verified
-        setPreviewState({
-          loading: false,
-          error: false,
-          message: 'Tweet URL verified',
-          tweetId
-        });
-        
-        return true;
-      } catch (embedError) {
-        console.error('Tweet verification error:', embedError);
-        // Even if verification fails, don't block the task completion
-        return true;
-      } finally {
-        setVerifyingTweet(false);
-      }
+      console.log('All Twitter interactions verified, proceeding with submission');
+      return true;
     } catch (error) {
       console.error('Verification error:', error);
       setError(error.message || 'Verification failed. Please check your inputs.');
@@ -529,22 +461,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         return;
       }
 
-      // Special case: If iframe is verified, we can proceed even without a URL
-      if (iframeVerified) {
-        console.log('Using iframe verification - proceeding with submission');
-      }
-      // If using the original raid URL, we can proceed
-      else if (selectedRaid && tweetUrl === selectedRaid.tweetUrl) {
-        console.log('Using original raid URL - proceeding with submission');
-      }
-      // Otherwise check for URL
-      else if (!tweetUrl) {
-        setError('Please provide your tweet URL or complete interactive verification');
-        return;
-      }
-      // If URL is provided but not verified through iframe, validate it
-      else if (!validateTweetUrl(tweetUrl)) {
-        setError('Please provide a valid tweet URL');
+      // Verify all interactions are completed
+      if (!iframeVerified) {
+        setError('Please complete all three Twitter interactions first (like, retweet, and comment)');
         return;
       }
 
@@ -561,13 +480,11 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       // Log detailed submission data
       console.log('Submitting raid completion with details:', {
         twitterUsername: twitterUsername || '(not provided)',
-        tweetUrl,
+        tweetUrl: selectedRaid?.tweetUrl || tweetUrl,
         iframeVerified,
-        iframeInteractions,
-        directInteractions, // Add direct interactions data
+        directInteractions,
         raidId: selectedRaid?._id,
-        tweetId: previewState.tweetId,
-        usingOriginalRaidUrl: selectedRaid && tweetUrl === selectedRaid.tweetUrl
+        tweetId: previewState.tweetId
       });
       
       // Save the raid ID before sending the request
@@ -585,10 +502,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           body: JSON.stringify({
             twitterUsername: twitterUsername || '', // Make username optional
             verificationCode,
-            tweetUrl: tweetUrl || null,
-            iframeVerified, // Add iframe verification data
-            iframeInteractions,
-            directInteractions, // Add direct interactions data
+            tweetUrl: selectedRaid?.tweetUrl || tweetUrl || null,
+            iframeVerified: true, // Always set to true since we require this
+            directInteractions, // Include all interaction data
             tweetId: previewState.tweetId // Include the tweet ID explicitly
           })
         });
@@ -1399,130 +1315,56 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                     />
                   </div>
                   
-                  <div className="mb-6">
-                    <label className="block text-gray-300 mb-2" htmlFor="tweetUrl">
-                      Tweet URL 
-                      {selectedRaid?.tweetUrl && (
-                        <span className="text-green-400 ml-2 text-sm">(Auto-filled from selected raid)</span>
-                      )}
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        id="tweetUrl"
-                        value={tweetUrl}
-                        onChange={(e) => {
-                          setTweetUrl(e.target.value);
-                          setIsValidUrl(validateTweetUrl(e.target.value));
-                          
-                          // If URL is cleared, reset preview state
-                          if (!e.target.value) {
-                            setPreviewState({
-                              loading: false,
-                              error: false,
-                              message: '',
-                              tweetId: null
-                            });
-                          }
-                        }}
-                        placeholder={selectedRaid?.tweetUrl 
-                          ? "URL already set from selected raid" 
-                          : "Enter your tweet or reply URL"}
-                        className={`w-full px-4 py-2 ${
-                          tweetUrl && !isValidUrl
-                            ? 'bg-red-900/30 border-red-500'
-                            : 'bg-gray-700'
-                        } rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          tweetUrl ? 'pr-14' : ''
-                        }`}
-                      />
-                      
-                      {tweetUrl && (
-                        <button
-                          type="button"
-                          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-200"
-                          onClick={() => {
-                            // If we have a selected raid, set back to the raid's URL
-                            if (selectedRaid?.tweetUrl) {
-                              setTweetUrl(selectedRaid.tweetUrl);
-                              setIsValidUrl(true);
-                              // Extract tweet ID and prepare for preview
-                              const tweetId = extractTweetId(selectedRaid.tweetUrl);
-                              if (tweetId) {
-                                setPreviewState({
-                                  loading: false,
-                                  error: false,
-                                  message: 'Tweet ready to view',
-                                  tweetId
-                                });
-                              }
-                            } else {
-                              // Otherwise clear the field
-                              setTweetUrl('');
-                              setPreviewState({
-                                loading: false,
-                                error: false,
-                                message: '',
-                                tweetId: null
-                              });
-                            }
-                          }}
-                          title={selectedRaid?.tweetUrl ? "Reset to raid URL" : "Clear URL"}
-                        >
-                          {selectedRaid?.tweetUrl && tweetUrl !== selectedRaid.tweetUrl ? (
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
-                            </svg>
-                          ) : (
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                            </svg>
-                          )}
-                        </button>
-                      )}
-                    </div>
-                    
-                    {tweetUrl && !isValidUrl && (
-                      <p className="text-red-400 text-sm mt-1">
-                        Please enter a valid Twitter or X.com URL (e.g., https://twitter.com/username/status/1234567890)
-                      </p>
-                    )}
-                    
-                    {tweetUrl && isValidUrl && (
-                      <p className="text-green-400 text-sm mt-1">
-                        <span className="mr-1">✓</span> Valid tweet URL
-                      </p>
-                    )}
-                    
-                    {!tweetUrl && selectedRaid?.tweetUrl && (
-                      <p className="text-gray-400 text-sm mt-1">
-                        You can use the auto-filled URL from the selected raid or enter your own reply URL.
-                      </p>
-                    )}
-                  </div>
+                  {/* Hidden tweet URL input - keeping for backend compatibility */}
+                  <input
+                    type="hidden"
+                    id="tweetUrl"
+                    value={tweetUrl}
+                  />
                   
                   {error && (
-                    <div className="bg-red-500/20 border border-red-500/50 text-red-400 p-3 rounded mb-4">
-                      {error}
+                    <div className="text-red-400 mb-4 p-3 bg-red-400/10 rounded-lg">
+                      <div className="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        {error}
+                      </div>
                     </div>
                   )}
                   
                   {success && (
-                    <div className="bg-green-500/20 border border-green-500/50 text-green-400 p-3 rounded mb-4">
-                      {success}
+                    <div className="text-green-400 mb-4 p-3 bg-green-400/10 rounded-lg">
+                      <div className="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        {success}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {iframeVerified && (
+                    <div className="mb-6 p-4 bg-green-500/20 border border-green-500 rounded-lg">
+                      <div className="flex items-center text-green-400 font-medium">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        All Tweet Interactions Verified!
+                      </div>
+                      <p className="text-gray-300 mt-2">You can now complete the task to earn your points.</p>
                     </div>
                   )}
                   
                   <button
                     type="submit"
-                    disabled={submitting || verifyingTweet}
-                    className={`w-full px-4 py-3 rounded font-medium ${
-                      submitting || verifyingTweet
-                        ? 'bg-gray-600 cursor-not-allowed'
-                        : 'bg-blue-600 hover:bg-blue-700'
-                    } text-white verify-button`}
+                    className={`w-full mt-6 py-3 px-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors ${
+                      verifyingTweet || submitting ? 'opacity-70 cursor-wait' : 
+                      !iframeVerified ? 'opacity-50 cursor-not-allowed bg-gray-600 hover:bg-gray-600' : ''
+                    }`}
+                    disabled={verifyingTweet || submitting || !iframeVerified}
                   >
-                    {verifyingTweet ? 'Verifying Tweet...' : submitting ? 'Submitting...' : 'Verify & Complete Task'}
+                    {verifyingTweet ? 'Verifying Tweet...' : submitting ? 'Submitting...' : iframeVerified ? 'Complete Task' : 'Complete All Three Actions to Continue'}
                   </button>
                 </form>
               </div>
@@ -1795,27 +1637,15 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   )}
                   
                   <div className="mt-4 bg-gray-800/70 rounded p-3 border border-gray-700">
-                    <h5 className="text-gray-300 font-medium mb-2">Two Ways to Verify:</h5>
+                    <h5 className="text-gray-300 font-medium mb-2">How to Complete:</h5>
                     
                     <div className="mb-3">
-                      <h6 className="text-blue-400 font-medium">Method 1: Interact With The Tweet</h6>
-                      <ol className="list-decimal pl-5 space-y-1">
-                        <li>Click the "Show Interaction Buttons" button below</li>
-                        <li>Use the dedicated buttons to like, retweet, and comment on the tweet</li>
-                        <li>Each button will open Twitter in a new tab</li>
-                        <li>Complete each action (like, retweet, comment) on Twitter</li>
-                        <li>After completing all three interactions, you'll earn points for this raid</li>
-                      </ol>
-                    </div>
-                    
-                    <div>
-                      <h6 className="text-blue-400 font-medium">Method 2: Manual URL Verification</h6>
                       <ol className="list-decimal list-inside text-gray-400 text-sm space-y-1 ml-2">
-                        <li>Go to the tweet via the "Open Tweet" button</li>
-                        <li>Reply to the tweet with a message that includes "aquads.xyz"</li>
-                        <li>Copy the URL of your reply and paste it in the URL field</li>
-                        <li>The system will verify your participation</li>
-                        <li>You'll earn points once verified!</li>
+                        <li>Click the "Show Interaction Buttons" button above</li>
+                        <li>Use the buttons to like, retweet, and comment on the tweet</li>
+                        <li>Each button will open Twitter in a new tab</li>
+                        <li>Complete all three actions on Twitter</li>
+                        <li>After all three actions are verified, click "Complete Task" to earn points</li>
                       </ol>
                     </div>
                   </div>
