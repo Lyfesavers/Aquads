@@ -260,110 +260,159 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
         
         {msg.attachment && msg.attachmentType === 'image' && (
           <div className="mt-2 relative">
-            <img 
-              src={getBestImageUrl()} 
-              alt={msg.attachmentName || "Attachment"}
-              className={`max-w-full rounded-lg max-h-60 object-contain cursor-pointer border ${
-                msg.isWatermarked ? 'border-yellow-500' : 'border-gray-700'
-              }`}
-              onClick={() => {
-                // For data URLs, open in a new window directly
-                if (msg.dataUrl) {
-                  const newWindow = window.open();
-                  newWindow.document.write(`
-                    <html>
-                      <head>
-                        <title>${msg.attachmentName || 'Image'}</title>
-                        <style>
-                          body { 
-                            margin: 0; 
-                            display: flex; 
-                            justify-content: center; 
-                            align-items: center; 
-                            min-height: 100vh;
-                            background-color: #0f172a;
-                          }
-                          img {
-                            max-width: 100%;
-                            max-height: 100vh;
-                            object-fit: contain;
-                          }
-                          .watermark-notice {
-                            position: absolute;
-                            bottom: 20px;
-                            left: 0;
-                            right: 0;
-                            text-align: center;
-                            color: #FCD34D;
-                            font-size: 14px;
-                            background-color: rgba(0,0,0,0.7);
-                            padding: 8px;
-                          }
-                        </style>
-                      </head>
-                      <body>
-                        <img src="${msg.dataUrl}" alt="${msg.attachmentName || 'Image'}" />
-                        ${msg.isWatermarked ? 
-                          '<div class="watermark-notice">Draft image with watermark. Original will be available after completion.</div>' : 
-                          ''}
-                      </body>
-                    </html>
-                  `);
-                  newWindow.document.close();
-                  return;
-                }
-                
-                // Otherwise try URL approach
-                const urls = generateAttachmentUrls(msg.attachment);
-                logger.log('Opening image with most reliable method');
-                // Try the query parameter endpoint as it's most reliable
-                window.open(urls.queryParam, '_blank');
-              }}
-              onError={(e) => {
-                logger.error("Image failed to load:", e.target.src);
-                
-                // If we have a data URL and aren't already using it, switch to it
-                if (msg.dataUrl && e.target.src !== msg.dataUrl) {
-                  logger.log('Switching to embedded data URL');
-                  e.target.src = msg.dataUrl;
-                  return;
-                }
-                
-                // Otherwise try different URL formats in sequence
-                const urls = generateAttachmentUrls(msg.attachment);
-                const urlsToTry = [
-                  urls.queryParam,
-                  urls.fullRelative,
-                  urls.directEndpoint,
-                  urls.apiEndpoint
-                ];
-                
-                // Find which URL we're currently using
-                const currentIndex = urlsToTry.indexOf(e.target.src);
-                
-                // Try next URL if we haven't tried them all
-                if (currentIndex < urlsToTry.length - 1) {
-                  const nextUrl = urlsToTry[currentIndex + 1];
-                  logger.log(`Trying alternate URL (${currentIndex + 2}/${urlsToTry.length}):`, nextUrl);
-                  e.target.src = nextUrl;
-                } else {
-                  // We've tried all URLs, use placeholder
-                  logger.log('All URLs failed, using placeholder');
-                  e.target.src = 'https://via.placeholder.com/150?text=Image+Not+Found';
-                  e.target.className = 'max-w-full rounded-lg max-h-40 object-contain opacity-60 border border-red-500';
-                }
-              }}
-            />
-            {msg.isWatermarked && (
-              <div className="absolute top-0 right-0 bg-yellow-500 text-black text-xs px-2 py-1 rounded-bl-lg rounded-tr-lg">
-                DRAFT
-              </div>
-            )}
+            <div className="relative group">
+              <img 
+                src={getBestImageUrl()} 
+                alt={msg.attachmentName || "Attachment"}
+                className={`max-w-full rounded-lg max-h-60 object-contain cursor-pointer border ${
+                  msg.isWatermarked ? 'border-yellow-500' : 'border-gray-700'
+                }`}
+                onClick={() => {
+                  // For data URLs, open in a new window directly
+                  if (msg.dataUrl) {
+                    const newWindow = window.open();
+                    newWindow.document.write(`
+                      <html>
+                        <head>
+                          <title>${msg.attachmentName || 'Image'}</title>
+                          <style>
+                            body { 
+                              margin: 0; 
+                              display: flex; 
+                              justify-content: center; 
+                              align-items: center; 
+                              min-height: 100vh;
+                              background-color: #0f172a;
+                            }
+                            img {
+                              max-width: 100%;
+                              max-height: 100vh;
+                              object-fit: contain;
+                              position: relative;
+                            }
+                            .watermark-container {
+                              position: relative;
+                              display: inline-block;
+                            }
+                            .watermark-overlay {
+                              position: absolute;
+                              top: 0;
+                              left: 0;
+                              width: 100%;
+                              height: 100%;
+                              display: flex;
+                              flex-direction: column;
+                              justify-content: center;
+                              align-items: center;
+                              pointer-events: none;
+                              z-index: 10;
+                            }
+                            .watermark-text {
+                              color: rgba(255, 255, 255, 0.8);
+                              font-size: 5vw;
+                              font-weight: bold;
+                              text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+                              transform: rotate(-30deg);
+                              white-space: nowrap;
+                              opacity: 0.7;
+                              text-transform: uppercase;
+                              letter-spacing: 0.5vw;
+                            }
+                            .watermark-notice {
+                              position: absolute;
+                              bottom: 20px;
+                              left: 0;
+                              right: 0;
+                              text-align: center;
+                              color: #FCD34D;
+                              font-size: 14px;
+                              background-color: rgba(0,0,0,0.7);
+                              padding: 8px;
+                            }
+                          </style>
+                        </head>
+                        <body>
+                          <div class="watermark-container">
+                            <img src="${msg.dataUrl}" alt="${msg.attachmentName || 'Image'}" />
+                            ${msg.isWatermarked ? `
+                              <div class="watermark-overlay">
+                                <div class="watermark-text">WATERMARK</div>
+                              </div>
+                              <div class="watermark-notice">Draft image with watermark. Original will be available after completion.</div>
+                            ` : ''}
+                          </div>
+                        </body>
+                      </html>
+                    `);
+                    newWindow.document.close();
+                    return;
+                  }
+                  
+                  // Otherwise try URL approach
+                  const urls = generateAttachmentUrls(msg.attachment);
+                  logger.log('Opening image with most reliable method');
+                  // Try the query parameter endpoint as it's most reliable
+                  window.open(urls.queryParam, '_blank');
+                }}
+                onError={(e) => {
+                  logger.error("Image failed to load:", e.target.src);
+                  
+                  // If we have a data URL and aren't already using it, switch to it
+                  if (msg.dataUrl && e.target.src !== msg.dataUrl) {
+                    logger.log('Switching to embedded data URL');
+                    e.target.src = msg.dataUrl;
+                    return;
+                  }
+                  
+                  // Otherwise try different URL formats in sequence
+                  const urls = generateAttachmentUrls(msg.attachment);
+                  const urlsToTry = [
+                    urls.queryParam,
+                    urls.fullRelative,
+                    urls.directEndpoint,
+                    urls.apiEndpoint
+                  ];
+                  
+                  // Find which URL we're currently using
+                  const currentIndex = urlsToTry.indexOf(e.target.src);
+                  
+                  // Try next URL if we haven't tried them all
+                  if (currentIndex < urlsToTry.length - 1) {
+                    const nextUrl = urlsToTry[currentIndex + 1];
+                    logger.log(`Trying alternate URL (${currentIndex + 2}/${urlsToTry.length}):`, nextUrl);
+                    e.target.src = nextUrl;
+                  } else {
+                    // We've tried all URLs, use placeholder
+                    logger.log('All URLs failed, using placeholder');
+                    e.target.src = 'https://via.placeholder.com/150?text=Image+Not+Found';
+                    e.target.className = 'max-w-full rounded-lg max-h-40 object-contain opacity-60 border border-red-500';
+                  }
+                }}
+              />
+              
+              {/* Watermark overlay */}
+              {msg.isWatermarked && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="text-white text-4xl font-bold transform -rotate-30 opacity-70 text-center whitespace-nowrap" 
+                       style={{ transform: 'rotate(-30deg)', textShadow: '2px 2px 4px rgba(0,0,0,0.7)' }}>
+                    WATERMARK
+                  </div>
+                </div>
+              )}
+
+              {/* Corner label */}
+              {msg.isWatermarked && (
+                <div className="absolute top-0 right-0 bg-yellow-500 text-black font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg z-10">
+                  DRAFT
+                </div>
+              )}
+            </div>
+            
             <div className="text-xs mt-1 text-gray-300 flex justify-between items-center">
               <span>{msg.attachmentName || "Image attachment"}</span>
               <div className="flex items-center">
                 {msg.isWatermarked && (
-                  <span className="text-yellow-400 text-xs mr-2">
+                  <span className="text-yellow-400 font-semibold text-xs mr-2">
                     Watermarked preview
                   </span>
                 )}
