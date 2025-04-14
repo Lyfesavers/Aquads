@@ -123,6 +123,7 @@ const InvoiceModal = ({
     }
     
     setLoading(true);
+    console.log('Starting invoice creation with booking:', booking?._id);
 
     try {
       // Calculate total for each item
@@ -131,11 +132,26 @@ const InvoiceModal = ({
         amount: (item.quantity || 0) * (item.price || 0)
       }));
 
-      const response = await invoiceService.createInvoice({
+      // Create payload with all required fields
+      const invoiceData = {
         ...formData,
-        items: itemsWithAmount
-      });
+        items: itemsWithAmount,
+        bookingId: booking._id,
+        // Make sure these required fields are explicitly set
+        sellerId: undefined, // Will be set by the server based on the auth token
+        buyerId: undefined, // Will be set by the server based on the booking
+        dueDate: formData.dueDate,
+        description: formData.description || `Invoice for ${booking?.serviceId?.title || 'service'}`,
+        paymentLink: formData.paymentLink,
+        templateId: formData.templateId || 'default',
+        notes: formData.notes || ''
+      };
       
+      console.log('Sending invoice data to server:', JSON.stringify(invoiceData));
+
+      const response = await invoiceService.createInvoice(invoiceData);
+      
+      console.log('Invoice created successfully:', response);
       setInvoice(response);
       setViewMode(true);
       showNotification('Invoice created successfully!', 'success');
@@ -147,7 +163,20 @@ const InvoiceModal = ({
         onSendMessage(message);
       }
     } catch (error) {
-      showNotification(error.message || 'Failed to create invoice', 'error');
+      console.error('Error details:', error);
+      // Enhanced error reporting
+      let errorMsg = 'Failed to create invoice';
+      
+      if (error.message) {
+        errorMsg = error.message;
+      } else if (typeof error === 'string') {
+        errorMsg = error;
+      } else if (error.response && error.response.data && error.response.data.error) {
+        errorMsg = error.response.data.error;
+      }
+      
+      console.error('Invoice creation failed:', errorMsg);
+      showNotification(errorMsg, 'error');
     } finally {
       setLoading(false);
     }

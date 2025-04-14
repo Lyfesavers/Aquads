@@ -4,6 +4,7 @@ const Invoice = require('../models/Invoice');
 const Booking = require('../models/Booking');
 const auth = require('../middleware/auth');
 const Notification = require('../models/Notification');
+const mongoose = require('mongoose');
 
 // Generate a unique invoice number
 const generateInvoiceNumber = async () => {
@@ -33,6 +34,8 @@ const generateInvoiceNumber = async () => {
 // Create a new invoice
 router.post('/', auth, async (req, res) => {
   try {
+    console.log('Received invoice creation request:', JSON.stringify(req.body));
+    
     const { 
       bookingId, 
       dueDate, 
@@ -42,6 +45,16 @@ router.post('/', auth, async (req, res) => {
       templateId,
       paymentLink 
     } = req.body;
+
+    // Validate required fields
+    if (!bookingId) {
+      return res.status(400).json({ error: 'bookingId is required' });
+    }
+
+    // Validate bookingId is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(bookingId)) {
+      return res.status(400).json({ error: 'Invalid bookingId format' });
+    }
 
     // Check if payment link is provided
     if (!paymentLink) {
@@ -59,18 +72,42 @@ router.post('/', auth, async (req, res) => {
       return res.status(404).json({ error: 'Booking not found' });
     }
 
+    console.log('Booking found:', booking._id);
+    console.log('Request user:', req.user.userId);
+    console.log('Booking seller:', booking.sellerId.toString());
+
     // Check if seller is the one creating the invoice
     if (booking.sellerId.toString() !== req.user.userId) {
       return res.status(403).json({ error: 'Only the seller can create invoices' });
     }
 
-    // Calculate total amount from items or use booking price as default
-    let totalAmount = booking.price;
+    // Process items to ensure numeric values
+    let processedItems = [];
     if (items && items.length > 0) {
-      totalAmount = items.reduce((sum, item) => sum + (item.amount || 0), 0);
+      processedItems = items.map(item => ({
+        description: item.description || 'Item',
+        quantity: Number(item.quantity) || 1,
+        price: Number(item.price) || 0,
+        amount: Number(item.amount) || Number(item.quantity) * Number(item.price) || 0
+      }));
+    } else {
+      // Default to a single item using booking price
+      processedItems = [{
+        description: 'Service',
+        quantity: 1,
+        price: booking.price || 0,
+        amount: booking.price || 0
+      }];
+    }
+
+    // Calculate total amount from items or use booking price as default
+    let totalAmount = booking.price || 0;
+    if (processedItems.length > 0) {
+      totalAmount = processedItems.reduce((sum, item) => sum + (item.amount || 0), 0);
     }
 
     const invoiceNumber = await generateInvoiceNumber();
+    console.log('Generated invoice number:', invoiceNumber);
 
     const newInvoice = new Invoice({
       bookingId,
@@ -78,21 +115,19 @@ router.post('/', auth, async (req, res) => {
       buyerId: booking.buyerId,
       invoiceNumber,
       amount: totalAmount,
-      currency: booking.currency,
+      currency: booking.currency || 'USD',
       dueDate: new Date(dueDate),
       description: description || `Invoice for ${booking.serviceId}`,
       paymentLink,
-      items: items || [{
-        description: 'Service',
-        quantity: 1,
-        price: booking.price,
-        amount: booking.price
-      }],
-      notes,
+      items: processedItems,
+      notes: notes || '',
       templateId: templateId || 'default',
     });
 
+    console.log('Saving new invoice:', JSON.stringify(newInvoice.toObject()));
+
     await newInvoice.save();
+    console.log('Invoice saved successfully with ID:', newInvoice._id);
 
     // Create notification for the buyer
     const notification = new Notification({
@@ -105,10 +140,31 @@ router.post('/', auth, async (req, res) => {
     });
     
     await notification.save();
+    console.log('Notification created for buyer');
 
     res.status(201).json(newInvoice);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Error creating invoice:', error);
+    
+    // Provide more specific error messages based on error type
+    if (error.name === 'ValidationError') {
+      const validationErrors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ 
+        error: 'Validation error', 
+        details: validationErrors,
+        message: validationErrors.join(', ')
+      });
+    }
+    
+    if (error.name === 'CastError') {
+      return res.status(400).json({ 
+        error: 'Invalid data format', 
+        field: error.path, 
+        value: error.value 
+      });
+    }
+    
+    res.status(500).json({ error: error.message || 'Internal server error' });
   }
 });
 

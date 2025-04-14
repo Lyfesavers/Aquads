@@ -55,15 +55,64 @@ const createInvoice = async (invoiceData) => {
     const config = getAuthConfig();
     console.log('Auth headers:', config.headers.Authorization ? 'Bearer token present' : 'No Bearer token');
     
+    // Copy the data to avoid modifying the original
+    const processedData = { ...invoiceData };
+    
+    // Ensure required fields are present and valid
+    if (!processedData.bookingId) {
+      throw new Error('bookingId is required');
+    }
+    
+    if (!processedData.dueDate) {
+      throw new Error('dueDate is required');
+    }
+    
+    if (!processedData.paymentLink) {
+      throw new Error('paymentLink is required');
+    }
+    
+    // Convert any numeric strings to numbers for MongoDB
+    if (processedData.items) {
+      processedData.items = processedData.items.map(item => ({
+        ...item,
+        quantity: Number(item.quantity || 0),
+        price: Number(item.price || 0),
+        amount: Number(item.amount || 0),
+      }));
+    }
+    
+    console.log('Processed invoice data:', JSON.stringify(processedData));
+    
     const response = await axios.post(
       endpoint, 
-      invoiceData, 
+      processedData, 
       config
     );
+    
     return response.data;
   } catch (error) {
     console.error('Invoice creation error:', error);
-    throw error.response ? error.response.data : new Error('Unable to create invoice');
+    
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error('Server response error:', error.response.status);
+      console.error('Error data:', error.response.data);
+      
+      if (error.response.data && error.response.data.error) {
+        throw new Error(error.response.data.error);
+      }
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error('No response received from server');
+      throw new Error('No response received from server. Please try again later.');
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      console.error('Request setup error:', error.message);
+    }
+    
+    // If we get here, rethrow the original error or a generic one
+    throw error.message ? new Error(error.message) : new Error('Unable to create invoice');
   }
 };
 
