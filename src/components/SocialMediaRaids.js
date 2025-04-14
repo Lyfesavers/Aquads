@@ -179,37 +179,70 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       // Handle cases where someone might paste "@URL" by mistake
       const cleanUrl = url.startsWith('@') ? url.substring(1) : url;
       
-      // Try to parse as a URL first
+      // Try multiple approaches to extract the tweet ID
+      
+      // Approach 1: Try to parse as a URL first
       let parsedUrl;
       try {
-        parsedUrl = new URL(cleanUrl);
+        // Check if URL has protocol, add if missing
+        const urlWithProtocol = (!cleanUrl.startsWith('http') && !cleanUrl.startsWith('https'))
+          ? `https://${cleanUrl}` 
+          : cleanUrl;
+        
+        parsedUrl = new URL(urlWithProtocol);
       } catch (e) {
-        // If it's not a valid URL, try adding https://
-        if (!cleanUrl.startsWith('http')) {
-          try {
-            parsedUrl = new URL(`https://${cleanUrl}`);
-          } catch (err) {
-            return null;
+        console.log('URL parsing failed:', e.message);
+        // Continue to fallback regex approach
+      }
+      
+      // If we successfully parsed the URL, check the domain and extract ID
+      if (parsedUrl) {
+        // Check if it's a Twitter or X domain
+        if (parsedUrl.hostname.includes('twitter.com') || parsedUrl.hostname.includes('x.com')) {
+          // Extract ID from pathname
+          const match = parsedUrl.pathname.match(/\/status\/(\d+)/);
+          if (match && match[1]) {
+            console.log('Successfully extracted tweet ID from URL object:', match[1]);
+            return match[1];
           }
-        } else {
-          return null;
         }
       }
       
-      // Check if it's a Twitter or X domain
-      if (!parsedUrl.hostname.includes('twitter.com') && !parsedUrl.hostname.includes('x.com')) {
-        return null;
+      // Approach 2: Fallback to regex for all URL formats
+      // This handles regular twitter.com and x.com URLs
+      const standardMatch = cleanUrl.match(/(?:twitter\.com|x\.com)\/[^\/]+\/status\/(\d+)/i);
+      if (standardMatch && standardMatch[1]) {
+        console.log('Extracted tweet ID using standard regex:', standardMatch[1]);
+        return standardMatch[1];
       }
       
-      // Extract ID from pathname
-      const match = parsedUrl.pathname.match(/\/status\/(\d+)/);
-      return match ? match[1] : null;
-    } catch (error) {
-      console.error('Error parsing tweet URL:', error);
+      // Approach 3: Handle mobile.twitter.com URLs
+      const mobileMatch = cleanUrl.match(/mobile\.twitter\.com\/[^\/]+\/status\/(\d+)/i);
+      if (mobileMatch && mobileMatch[1]) {
+        console.log('Extracted tweet ID from mobile URL:', mobileMatch[1]);
+        return mobileMatch[1];
+      }
       
-      // Fallback to regex for simpler validation
-      const match = url.match(/(?:twitter\.com|x\.com)\/[^\/]+\/status\/(\d+)/i);
-      return match ? match[1] : null;
+      // Approach 4: Try to handle direct status URLs with just numbers
+      const directStatusMatch = cleanUrl.match(/\/status\/(\d+)/i);
+      if (directStatusMatch && directStatusMatch[1]) {
+        console.log('Extracted tweet ID from direct status URL:', directStatusMatch[1]);
+        return directStatusMatch[1];
+      }
+      
+      // Approach 5: Last resort - just try to find any numeric sequence that could be a tweet ID
+      // This is a very loose match and should be used with caution
+      const looseMatch = cleanUrl.match(/(\d{10,20})/); // Tweet IDs are typically long numbers
+      if (looseMatch && looseMatch[1]) {
+        console.log('Extracted potential tweet ID using loose match:', looseMatch[1]);
+        return looseMatch[1];
+      }
+      
+      console.log('Failed to extract tweet ID from URL:', cleanUrl);
+      return null;
+    } catch (error) {
+      console.error('Error in extractTweetId function:', error);
+      return null;
     }
   };
 
@@ -394,6 +427,17 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       tweetId: null
     });
     
+    // Extract tweet ID and prepare for preview
+    const tweetId = extractTweetId(raid.tweetUrl);
+    if (tweetId) {
+      setPreviewState({
+        loading: false,
+        error: false,
+        message: 'Tweet ready to view',
+        tweetId
+      });
+    }
+    
     // Clear error message but keep success message if present
     setError(null);
     
@@ -409,8 +453,28 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     }, 100);
   };
 
+  const safeHandleSubmit = (e) => {
+    if (e && e.preventDefault) {
+      e.preventDefault(); // Prevent the default form submission
+    }
+    console.log('safeHandleSubmit called, preventing default and calling handleSubmitTask');
+    
+    // Reset the preview state instead of manipulating DOM
+    setPreviewState({
+      loading: false,
+      error: false,
+      message: 'Processing your submission...',
+      tweetId: previewState.tweetId // Preserve the tweet ID
+    });
+    
+    // Call the actual submission function
+    handleSubmitTask(e);
+  };
+
   const handleSubmitTask = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
     
     try {
       if (!currentUser) {
@@ -418,14 +482,17 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         return;
       }
 
-      // Check if the required field (tweet URL) is provided
-      if (!tweetUrl && !iframeVerified) {
+      // Special case: If iframe is verified, we can proceed even without a URL
+      if (iframeVerified) {
+        console.log('Using iframe verification - proceeding with submission');
+      }
+      // Otherwise check for URL
+      else if (!tweetUrl) {
         setError('Please provide your tweet URL or complete interactive verification');
         return;
       }
-
-      // Validate URL if not using iframe verification
-      if (!iframeVerified && (!tweetUrl || !validateTweetUrl(tweetUrl))) {
+      // If URL is provided but not verified through iframe, validate it
+      else if (!validateTweetUrl(tweetUrl)) {
         setError('Please provide a valid tweet URL');
         return;
       }
@@ -440,20 +507,14 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       setSubmitting(true);
       setError(null);
       
-      // Reset preview state to avoid any DOM updates during submission
-      setPreviewState({
-        loading: false,
-        error: false,
-        message: 'Submitting...',
-        tweetId: null
-      });
-      
-      console.log('Submitting raid completion:', {
+      // Log detailed submission data
+      console.log('Submitting raid completion with details:', {
         twitterUsername: twitterUsername || '(not provided)',
         tweetUrl,
         iframeVerified,
         iframeInteractions,
-        raidId: selectedRaid?._id
+        raidId: selectedRaid?._id,
+        tweetId: previewState.tweetId
       });
       
       // Save the raid ID before sending the request
@@ -473,7 +534,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
             verificationCode,
             tweetUrl: tweetUrl || null,
             iframeVerified, // Add iframe verification data
-            iframeInteractions
+            iframeInteractions,
+            tweetId: previewState.tweetId // Include the tweet ID explicitly
           })
         });
         
@@ -674,47 +736,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     }
   };
 
-  // Add this wrapper function around the form submission
-  const safeHandleSubmit = (e) => {
-    if (e && e.preventDefault) {
-      e.preventDefault(); // Prevent the default form submission
-    }
-    console.log('safeHandleSubmit called, preventing default and calling handleSubmitTask');
-    
-    // Reset the preview state instead of manipulating DOM
-    setPreviewState({
-      loading: false,
-      error: false,
-      message: 'Processing your submission...',
-      tweetId: null
-    });
-    
-    try {
-      // Call handleSubmitTask but catch any errors
-      handleSubmitTask(e);
-    } catch (error) {
-      console.error("Error in submit handler:", error);
-      
-      // Show error to user
-      setError("An error occurred during submission. Please try again.");
-      
-      // Reset loading states
-      setSubmitting(false);
-      setVerifyingTweet(false);
-      
-      // Update preview state with error
-      setPreviewState({
-        loading: false,
-        error: true,
-        message: 'An error occurred. Please try again.',
-        tweetId: null
-      });
-    }
-    
-    // Return false to prevent default form submission
-    return false;
-  };
-
   // Utility function to handle address copying
   const handleCopyAddress = async (address, setCopiedAddressCallback) => {
     try {
@@ -891,9 +912,20 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   }, []);
 
   // Function to handle iframe interactions
-  const handleIframeInteraction = () => {
-    // Don't count interactions while iframe is loading
-    if (iframeLoading) return;
+  const handleIframeInteraction = (event) => {
+    // Prevent the event from propagating to parent elements
+    if (event) {
+      event.stopPropagation();
+    }
+    
+    // Safety check - don't count interactions while iframe is loading
+    if (iframeLoading) {
+      console.log('Ignoring interaction while iframe is loading');
+      return;
+    }
+    
+    // Log interaction attempt
+    console.log('Iframe interaction detected');
     
     // Increment interaction counter
     const newCount = iframeInteractions + 1;
@@ -901,19 +933,33 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     
     // Consider verified after 3 interactions
     if (newCount >= 3 && !iframeVerified) {
+      console.log('Verification threshold reached, marking as verified');
       setIframeVerified(true);
       showNotification('Tweet interaction verified! You can now complete the task.', 'success');
+    } else {
+      // Provide feedback for each interaction
+      console.log(`Interaction ${newCount}/3 recorded`);
+      if (newCount === 1) {
+        showNotification('First interaction detected. 2 more needed.', 'info');
+      } else if (newCount === 2) {
+        showNotification('Second interaction detected. 1 more needed.', 'info');
+      }
     }
   };
   
   // Handle iframe loading
   const handleIframeLoaded = () => {
-    setIframeLoading(false);
+    console.log('Iframe content loaded');
+    // Short delay to ensure the iframe is fully rendered
+    setTimeout(() => {
+      setIframeLoading(false);
+    }, 500);
   };
   
   // Reset iframe state when showing/hiding
   useEffect(() => {
     if (showIframe) {
+      console.log('Iframe display enabled, resetting loading state');
       setIframeLoading(true);
     }
   }, [showIframe]);
@@ -922,18 +968,23 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   useEffect(() => {
     const container = iframeContainerRef.current;
     if (container && showIframe) {
+      console.log('Setting up iframe interaction tracking');
+      
       // Track clicks on the container instead of the iframe content
-      const handleContainerClick = () => {
-        handleIframeInteraction();
+      const handleContainerClick = (e) => {
+        handleIframeInteraction(e);
       };
       
+      // Add the event listener
       container.addEventListener('click', handleContainerClick);
       
+      // Cleanup function
       return () => {
+        console.log('Removing iframe interaction tracking');
         container.removeEventListener('click', handleContainerClick);
       };
     }
-  }, [showIframe, iframeInteractions, iframeLoading]);
+  }, [showIframe, iframeLoading]);
 
   if (loading && raids.length === 0) {
     return <div className="text-center p-4">Loading Twitter raids...</div>;
@@ -1307,10 +1358,58 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
               <h4 className="text-white font-semibold mb-3">Tweet Preview</h4>
               
               {/* Toggle button for iframe view */}
-              {tweetUrl && previewState.tweetId && (
+              {selectedRaid && (
                 <div className="mb-4 flex items-center">
                   <button
-                    onClick={() => setShowIframe(!showIframe)}
+                    onClick={() => {
+                      // Toggle iframe visibility
+                      const newShowIframe = !showIframe;
+                      setShowIframe(newShowIframe);
+                      
+                      // If we're enabling the iframe, make sure we have the tweet ID
+                      if (newShowIframe) {
+                        console.log('Enabling iframe view, ensuring we have tweet ID');
+                        
+                        // Get the tweet ID from either the selected raid or the user input
+                        let sourceUrl = selectedRaid?.tweetUrl || tweetUrl;
+                        if (!sourceUrl) {
+                          console.log('No URL available for iframe');
+                          showNotification('No tweet URL available to display', 'warning');
+                          return;
+                        }
+                        
+                        console.log('Extracting tweet ID from URL:', sourceUrl);
+                        const tweetId = extractTweetId(sourceUrl);
+                        
+                        if (tweetId) {
+                          console.log('Setting tweet ID for iframe:', tweetId);
+                          // Update preview state with the extracted tweet ID
+                          setPreviewState(prev => ({
+                            ...prev,
+                            loading: true,
+                            error: false,
+                            message: 'Loading tweet preview...',
+                            tweetId
+                          }));
+                          
+                          // Reset interaction tracking
+                          setIframeInteractions(0);
+                          setIframeVerified(false);
+                        } else {
+                          console.log('Failed to extract tweet ID from URL');
+                          showNotification('Could not extract a valid tweet ID from the URL', 'error');
+                          
+                          // Set error state
+                          setPreviewState(prev => ({
+                            ...prev,
+                            loading: false,
+                            error: true,
+                            message: 'Invalid tweet URL format',
+                            tweetId: null
+                          }));
+                        }
+                      }
+                    }}
                     className={`px-4 py-2 rounded text-sm ${
                       showIframe 
                         ? 'bg-blue-600 text-white' 
@@ -1351,7 +1450,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                       >
                         {/* Loading indicator */}
                         {iframeLoading && (
-                          <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
+                          <div className="absolute inset-0 bg-gray-800 flex items-center justify-center z-10">
                             <div className="text-center">
                               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mx-auto mb-4"></div>
                               <p className="text-gray-400">Loading tweet...</p>
@@ -1360,33 +1459,19 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                         )}
                         
                         <iframe
-                          src={`https://platform.twitter.com/embed/Tweet.html?id=${previewState.tweetId}&theme=dark`}
+                          src={`https://platform.twitter.com/embed/Tweet.html?id=${previewState.tweetId}&theme=dark&dnt=true`}
                           width="100%"
-                          height="400"
+                          height="500"
                           style={{ border: 'none' }}
                           title="Twitter Tweet"
                           onLoad={handleIframeLoaded}
+                          sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
                         ></iframe>
                         
-                        {/* Overlay indicator for interactions */}
-                        {!iframeLoading && iframeInteractions > 0 && iframeInteractions < 3 && (
+                        {/* Simple indicator for interactions */}
+                        {!iframeLoading && (
                           <div className="absolute top-2 right-2 bg-blue-500/80 text-white px-2 py-1 rounded text-xs">
-                            Interaction: {iframeInteractions}/3
-                          </div>
-                        )}
-                        
-                        {/* Success overlay when verified */}
-                        {!iframeLoading && iframeVerified && (
-                          <div className="absolute inset-0 bg-green-500/10 flex items-center justify-center">
-                            <div className="bg-green-500/90 text-white px-4 py-3 rounded-lg text-center shadow-lg">
-                              <div className="flex items-center justify-center mb-2">
-                                <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                                <span className="text-lg font-bold">Verification Complete!</span>
-                              </div>
-                              <p className="text-sm">You can now complete the Twitter raid</p>
-                            </div>
+                            Clicks: {iframeInteractions}/3 {iframeVerified ? "✓" : ""}
                           </div>
                         )}
                       </div>

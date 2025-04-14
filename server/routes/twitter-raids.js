@@ -284,7 +284,7 @@ const verifyTweetUrl = async (tweetUrl) => {
 // Complete a Twitter raid with rate limiting
 router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
   try {
-    const { twitterUsername, verificationCode, tweetUrl, iframeVerified, iframeInteractions } = req.body;
+    const { twitterUsername, verificationCode, tweetUrl, iframeVerified, iframeInteractions, tweetId } = req.body;
     const ipAddress = req.ip || req.connection.remoteAddress;
     
     // DEBUG: Log request data
@@ -294,6 +294,7 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
       tweetUrl,
       iframeVerified,
       iframeInteractions,
+      tweetId,
       ipAddress
     });
     
@@ -330,13 +331,15 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
     let verificationMethod = 'manual';
     let verificationNote = 'User verification was not validated';
     let verified = false;
+    let detectedTweetId = null;
     
     // If iframe verification was used
     if (iframeVerified === true && iframeInteractions >= 3) {
       verificationMethod = 'iframe_interaction';
       verificationNote = `Verified through iframe interaction (${iframeInteractions} interactions)`;
       verified = true;
-      console.log('User verified through iframe interactions:', iframeInteractions);
+      detectedTweetId = tweetId || null; // Use the provided tweet ID if available
+      console.log('User verified through iframe interactions:', iframeInteractions, 'Tweet ID:', detectedTweetId);
     }
     // If tweet URL was provided
     else if (tweetUrl) {
@@ -349,6 +352,22 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
           error: 'Invalid tweet URL format. URL should look like: https://twitter.com/username/status/1234567890 or https://x.com/username/status/1234567890',
           success: false
         });
+      }
+      
+      // Extract tweet ID from URL
+      try {
+        const urlMatch = tweetUrl.match(/\/status\/(\d+)/i);
+        if (urlMatch && urlMatch[1]) {
+          detectedTweetId = urlMatch[1];
+        } else if (tweetId) {
+          // Use provided tweet ID if URL parsing fails
+          detectedTweetId = tweetId;
+        }
+        console.log('Extracted tweet ID from URL:', detectedTweetId);
+      } catch (error) {
+        console.error('Error extracting tweet ID:', error);
+        // Fall back to provided ID if extraction fails
+        detectedTweetId = tweetId || null;
       }
       
       // Check if URL contains "aquads.xyz" (case insensitive) - only as a note, not a requirement
@@ -399,13 +418,14 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
       await user.save();
       console.log(`Successfully saved user with new points. Previous: ${previousPoints}, New: ${user.points}`);
       
-      // Then record the completion with IP tracking
+      // Then record the completion with IP tracking and tweet ID
       raid.completions.push({
         userId: userId,
         twitterUsername: twitterUsername || '', // Make username optional
         verificationCode,
         verificationMethod,
         tweetUrl: tweetUrl || null,
+        tweetId: detectedTweetId, // Store the detected tweet ID
         verified: verified,
         ipAddress, // Store IP address
         verificationNote,

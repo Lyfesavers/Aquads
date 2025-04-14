@@ -60,6 +60,10 @@ const twitterRaidSchema = new Schema({
     },
     twitterUsername: String,
     tweetUrl: String,
+    tweetId: {
+      type: String,
+      default: null
+    },
     verificationCode: String,
     verificationMethod: {
       type: String,
