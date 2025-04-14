@@ -166,15 +166,20 @@ router.post('/', auth, async (req, res) => {
     // Create notification for the buyer
     const notification = new Notification({
       userId: booking.buyerId,
-      type: 'payment',
+      type: 'booking',
       message: `You have received an invoice for booking #${bookingId.substring(0, 6)}`,
       link: `/dashboard?tab=bookings&booking=${bookingId}&invoice=${newInvoice._id}`,
-      relatedId: newInvoice._id,
+      relatedId: booking._id,
       relatedModel: 'Booking'
     });
     
-    await notification.save();
-    console.log('Notification created for buyer');
+    try {
+      await notification.save();
+      console.log('Notification created for buyer');
+    } catch (notificationError) {
+      console.error('Error creating notification:', notificationError);
+      // Don't fail the invoice creation if notification fails
+    }
 
     res.status(201).json(newInvoice);
   } catch (error) {
@@ -309,14 +314,19 @@ router.put('/:id/status', auth, async (req, res) => {
 
     const notification = new Notification({
       userId: recipientUserId,
-      type: 'payment',
+      type: 'status',
       message: `Invoice #${invoice.invoiceNumber} has been marked as ${status}`,
       link: `/dashboard?tab=bookings&booking=${invoice.bookingId}&invoice=${invoice._id}`,
-      relatedId: invoice._id,
+      relatedId: invoice.bookingId,
       relatedModel: 'Booking'
     });
     
-    await notification.save();
+    try {
+      await notification.save();
+    } catch (notificationError) {
+      console.error('Error creating notification:', notificationError);
+      // Don't fail the status update if notification fails
+    }
 
     res.json(invoice);
   } catch (error) {
