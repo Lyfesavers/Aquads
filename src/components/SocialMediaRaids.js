@@ -111,11 +111,12 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     tweetId: null
   });
 
-  // Track iframe interactions
+  // Track iframe state
   const [iframeInteractions, setIframeInteractions] = useState(0);
   const [iframeVerified, setIframeVerified] = useState(false);
   const [showIframe, setShowIframe] = useState(false);
-  const iframeRef = useRef(null);
+  const [iframeLoading, setIframeLoading] = useState(true);
+  const iframeContainerRef = useRef(null);
   
   useEffect(() => {
     fetchRaids();
@@ -383,6 +384,15 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     setShowIframe(false);
     setIframeInteractions(0);
     setIframeVerified(false);
+    setIframeLoading(true);
+    
+    // Reset preview state
+    setPreviewState({
+      loading: false,
+      error: false,
+      message: '',
+      tweetId: null
+    });
     
     // Clear error message but keep success message if present
     setError(null);
@@ -882,6 +892,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
 
   // Function to handle iframe interactions
   const handleIframeInteraction = () => {
+    // Don't count interactions while iframe is loading
+    if (iframeLoading) return;
+    
     // Increment interaction counter
     const newCount = iframeInteractions + 1;
     setIframeInteractions(newCount);
@@ -893,26 +906,34 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     }
   };
   
-  // Track iframe interaction through click event
+  // Handle iframe loading
+  const handleIframeLoaded = () => {
+    setIframeLoading(false);
+  };
+  
+  // Reset iframe state when showing/hiding
   useEffect(() => {
-    const iframe = iframeRef.current;
-    if (iframe && showIframe) {
-      const handleIframeClick = () => {
+    if (showIframe) {
+      setIframeLoading(true);
+    }
+  }, [showIframe]);
+  
+  // Use a safer approach to track iframe interactions
+  useEffect(() => {
+    const container = iframeContainerRef.current;
+    if (container && showIframe) {
+      // Track clicks on the container instead of the iframe content
+      const handleContainerClick = () => {
         handleIframeInteraction();
       };
       
-      iframe.addEventListener('load', () => {
-        // Once loaded, we can track clicks on the iframe
-        iframe.contentWindow.addEventListener('click', handleIframeClick);
-      });
+      container.addEventListener('click', handleContainerClick);
       
       return () => {
-        if (iframe.contentWindow) {
-          iframe.contentWindow.removeEventListener('click', handleIframeClick);
-        }
+        container.removeEventListener('click', handleContainerClick);
       };
     }
-  }, [iframeRef.current, showIframe]);
+  }, [showIframe, iframeInteractions, iframeLoading]);
 
   if (loading && raids.length === 0) {
     return <div className="text-center p-4">Loading Twitter raids...</div>;
@@ -1321,15 +1342,54 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                       <div className="text-gray-400 text-sm p-2 bg-gray-800">
                         <span className="font-semibold">Instructions:</span> Sign in to Twitter and interact with the tweet (like, retweet, or reply). Click inside the frame at least 3 times to verify.
                       </div>
-                      <iframe
-                        ref={iframeRef}
-                        src={`https://platform.twitter.com/embed/Tweet.html?id=${previewState.tweetId}&theme=dark`}
-                        width="100%"
-                        height="400"
-                        style={{ border: 'none' }}
-                        title="Twitter Tweet"
+                      
+                      {/* Iframe container that tracks clicks */}
+                      <div 
+                        ref={iframeContainerRef}
+                        className="relative"
                         onClick={handleIframeInteraction}
-                      ></iframe>
+                      >
+                        {/* Loading indicator */}
+                        {iframeLoading && (
+                          <div className="absolute inset-0 bg-gray-800 flex items-center justify-center">
+                            <div className="text-center">
+                              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                              <p className="text-gray-400">Loading tweet...</p>
+                            </div>
+                          </div>
+                        )}
+                        
+                        <iframe
+                          src={`https://platform.twitter.com/embed/Tweet.html?id=${previewState.tweetId}&theme=dark`}
+                          width="100%"
+                          height="400"
+                          style={{ border: 'none' }}
+                          title="Twitter Tweet"
+                          onLoad={handleIframeLoaded}
+                        ></iframe>
+                        
+                        {/* Overlay indicator for interactions */}
+                        {!iframeLoading && iframeInteractions > 0 && iframeInteractions < 3 && (
+                          <div className="absolute top-2 right-2 bg-blue-500/80 text-white px-2 py-1 rounded text-xs">
+                            Interaction: {iframeInteractions}/3
+                          </div>
+                        )}
+                        
+                        {/* Success overlay when verified */}
+                        {!iframeLoading && iframeVerified && (
+                          <div className="absolute inset-0 bg-green-500/10 flex items-center justify-center">
+                            <div className="bg-green-500/90 text-white px-4 py-3 rounded-lg text-center shadow-lg">
+                              <div className="flex items-center justify-center mb-2">
+                                <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                <span className="text-lg font-bold">Verification Complete!</span>
+                              </div>
+                              <p className="text-sm">You can now complete the Twitter raid</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ) : (
                     <div className="w-full bg-gray-800/50 rounded-lg overflow-hidden min-h-[300px] flex items-center justify-center">
