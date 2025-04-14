@@ -569,13 +569,15 @@ const InvoiceModal = ({
             <div className="flex gap-3">
               {invoice.status === 'pending' && (
                 <>
-                  <button
-                    onClick={() => handleStatusUpdate('paid')}
-                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded"
-                    disabled={loading}
-                  >
-                    Mark as Paid
-                  </button>
+                  {isSeller && (
+                    <button
+                      onClick={() => handleStatusUpdate('paid')}
+                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded"
+                      disabled={loading}
+                    >
+                      Mark as Paid
+                    </button>
+                  )}
                   
                   <button
                     onClick={handlePaymentClick}
