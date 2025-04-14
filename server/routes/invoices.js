@@ -166,11 +166,11 @@ router.post('/', auth, async (req, res) => {
     // Create notification for the buyer
     const notification = new Notification({
       userId: booking.buyerId,
-      type: 'invoice',
+      type: 'payment',
       message: `You have received an invoice for booking #${bookingId.substring(0, 6)}`,
       link: `/dashboard?tab=bookings&booking=${bookingId}&invoice=${newInvoice._id}`,
       relatedId: newInvoice._id,
-      relatedModel: 'Invoice'
+      relatedModel: 'Booking'
     });
     
     await notification.save();
@@ -309,11 +309,11 @@ router.put('/:id/status', auth, async (req, res) => {
 
     const notification = new Notification({
       userId: recipientUserId,
-      type: 'invoice_status',
+      type: 'payment',
       message: `Invoice #${invoice.invoiceNumber} has been marked as ${status}`,
       link: `/dashboard?tab=bookings&booking=${invoice.bookingId}&invoice=${invoice._id}`,
       relatedId: invoice._id,
-      relatedModel: 'Invoice'
+      relatedModel: 'Booking'
     });
     
     await notification.save();
