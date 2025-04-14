@@ -73,6 +73,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [raids, setRaids] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedRaid, setSelectedRaid] = useState(null);
+  const [twitterUsername, setTwitterUsername] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -384,6 +385,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     }
     
     setSelectedRaid(raid);
+    setTwitterUsername('');
     
     // Set the tweet URL from the raid automatically
     setTweetUrl(raid.tweetUrl);
@@ -477,6 +479,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       
       // Log detailed submission data
       console.log('Submitting raid completion with details:', {
+        twitterUsername: twitterUsername || '(not provided)',
         tweetUrl: selectedRaid?.tweetUrl || tweetUrl,
         iframeVerified,
         directInteractions,
@@ -497,7 +500,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
             'Authorization': `Bearer ${currentUser.token}`
           },
           body: JSON.stringify({
-            twitterUsername: '', // Empty string since field was removed from UI
+            twitterUsername: twitterUsername || '', // Make username optional
             verificationCode,
             tweetUrl: selectedRaid?.tweetUrl || tweetUrl || null,
             iframeVerified: true, // Always set to true since we require this
@@ -535,6 +538,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         // Step 1: First update submitting and reset UI
         setSubmitting(false);
         setTweetUrl('');
+        setTwitterUsername('');
         setPreviewState({
           loading: false,
           error: false,
@@ -1297,7 +1301,19 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                 </div>
   
                 <form onSubmit={safeHandleSubmit} id="verification-form">
-                  {/* Twitter username field has been removed */}
+                  <div className="mb-4">
+                    <label className="block text-gray-300 mb-2" htmlFor="twitterUsername">
+                      Twitter Username <span className="text-gray-500">(optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="twitterUsername"
+                      value={twitterUsername}
+                      onChange={(e) => setTwitterUsername(e.target.value)}
+                      placeholder="Enter your Twitter username"
+                      className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
                   
                   {/* Hidden tweet URL input - keeping for backend compatibility */}
                   <input
@@ -1357,17 +1373,81 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
             <div className="bg-gray-800/30 p-4 rounded-lg">
               <h4 className="text-white font-semibold mb-3">Tweet Preview</h4>
               
-              {/* Tweet interaction status */}
+              {/* Toggle button for iframe view */}
               {selectedRaid && previewState.tweetId && (
                 <div className="mb-4 flex items-center">
+                  <button
+                    onClick={() => {
+                      // Toggle iframe visibility
+                      const newShowIframe = !showIframe;
+                      setShowIframe(newShowIframe);
+                      
+                      // If we're enabling the iframe, make sure we have the tweet ID
+                      if (newShowIframe) {
+                        console.log('Enabling tweet interactions, ensuring we have tweet ID');
+                        
+                        // We should already have the tweet ID in previewState
+                        if (!previewState.tweetId) {
+                          // But if not, try to get it from the URL
+                          console.log('No tweet ID in preview state, trying to extract from URL');
+                          const sourceUrl = selectedRaid?.tweetUrl || tweetUrl;
+                          if (!sourceUrl) {
+                            console.log('No URL available for tweet interactions');
+                            showNotification('No tweet URL available to display', 'warning');
+                            return;
+                          }
+                          
+                          console.log('Extracting tweet ID from URL:', sourceUrl);
+                          const tweetId = extractTweetId(sourceUrl);
+                          
+                          if (tweetId) {
+                            console.log('Setting tweet ID for interactions:', tweetId);
+                            // Update preview state with the extracted tweet ID
+                            setPreviewState(prev => ({
+                              ...prev,
+                              loading: false,
+                              error: false,
+                              message: 'Tweet ready for interaction',
+                              tweetId
+                            }));
+                          } else {
+                            console.log('Failed to extract tweet ID from URL');
+                            showNotification('Could not extract a valid tweet ID from the URL', 'error');
+                            
+                            // Set error state
+                            setPreviewState(prev => ({
+                              ...prev,
+                              loading: false,
+                              error: true,
+                              message: 'Invalid tweet URL format',
+                              tweetId: null
+                            }));
+                          }
+                        }
+                        
+                        // Reset interaction tracking
+                        setIframeInteractions({ liked: false, retweeted: false, commented: false });
+                        setDirectInteractions({ liked: false, retweeted: false, commented: false });
+                        setIframeVerified(false);
+                      }
+                    }}
+                    className={`px-4 py-2 rounded text-sm ${
+                      showIframe 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-gray-700 text-gray-300'
+                    }`}
+                  >
+                    {showIframe ? 'Hide Interaction Buttons' : 'Show Interaction Buttons'}
+                  </button>
+                  
                   {iframeVerified && (
                     <span className="ml-3 bg-green-500/20 text-green-400 px-3 py-1 rounded text-sm">
                       <span className="mr-1">✓</span> Interaction Verified
                     </span>
                   )}
                   
-                  {!iframeVerified && (
-                    <span className="text-gray-400 text-sm">
+                  {showIframe && !iframeVerified && (
+                    <span className="ml-3 text-gray-400 text-sm">
                       Interactions: {iframeInteractions.liked + iframeInteractions.retweeted + iframeInteractions.commented}/3
                     </span>
                   )}
@@ -1377,198 +1457,217 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
               {/* Show the tweet preview if we have a tweet ID, regardless of manual URL entry */}
               {previewState.tweetId ? (
                 <>
-                  {/* Always show interaction buttons */}
-                  <div className="w-full bg-gray-800/50 rounded-lg overflow-hidden mb-4 border border-gray-700">
-                    <div className="text-gray-400 text-sm p-2 bg-gray-800">
-                      <span className="font-semibold">Instructions:</span> Click the buttons below to interact with the tweet on Twitter. Complete all 3 interactions to verify.
+                  {/* Show iframe if enabled */}
+                  {showIframe ? (
+                    <div className="w-full bg-gray-800/50 rounded-lg overflow-hidden mb-4 border border-gray-700">
+                      <div className="text-gray-400 text-sm p-2 bg-gray-800">
+                        <span className="font-semibold">Instructions:</span> Click the buttons below to interact with the tweet on Twitter. Complete all 3 interactions to verify.
+                      </div>
+                      
+                      {/* Tweet interaction buttons */}
+                      <div 
+                        ref={iframeContainerRef}
+                        className="relative bg-gray-900 p-6"
+                      >
+                        {iframeLoading ? (
+                          <div className="p-10 text-center">
+                            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                            <p className="text-gray-400">Loading tweet preview...</p>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="bg-gray-800 rounded-lg p-5 mb-6 text-center">
+                              <h3 className="font-bold text-xl text-white mb-2">Tweet Interaction Verification</h3>
+                              <p className="text-gray-400 mb-3">Click each button below to interact with the tweet. After clicking, you will be redirected to Twitter to complete the action.</p>
+                              <div className="flex justify-center text-blue-400">
+                                <a 
+                                  href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(selectedRaid?.tweetUrl || tweetUrl)}`} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="mx-1"
+                                >
+                                  @{selectedRaid?.tweetUrl?.split('/')[3] || 'Twitter'}
+                                </a>
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-3 gap-4">
+                              {/* Like button */}
+                              <div className={`${iframeInteractions.liked ? 'bg-green-500/20 border-green-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-4 text-center transition-colors`}>
+                                <button 
+                                  onClick={() => {
+                                    window.open(`https://twitter.com/intent/like?tweet_id=${previewState.tweetId}`, '_blank');
+                                    handleIframeInteraction('liked');
+                                  }}
+                                  disabled={iframeInteractions.liked}
+                                  className={`${iframeInteractions.liked ? 'opacity-70 cursor-default' : 'hover:text-pink-500'} w-full flex flex-col items-center`}
+                                >
+                                  <svg className={`w-8 h-8 mb-2 ${iframeInteractions.liked ? 'text-pink-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 21.638h-.014C9.403 21.59 1.95 14.856 1.95 8.478c0-3.064 2.525-5.754 5.403-5.754 2.29 0 3.83 1.58 4.646 2.73.814-1.148 2.354-2.73 4.645-2.73 2.88 0 5.404 2.69 5.404 5.755 0 6.376-7.454 13.11-10.037 13.157H12z"/>
+                                  </svg>
+                                  <span className={`${iframeInteractions.liked ? 'text-green-400' : 'text-gray-300'} font-medium`}>
+                                    {iframeInteractions.liked ? 'Liked ✓' : 'Like'}
+                                  </span>
+                                </button>
+                              </div>
+                              
+                              {/* Retweet button */}
+                              <div className={`${iframeInteractions.retweeted ? 'bg-green-500/20 border-green-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-4 text-center transition-colors`}>
+                                <button 
+                                  onClick={() => {
+                                    window.open(`https://twitter.com/intent/retweet?tweet_id=${previewState.tweetId}`, '_blank');
+                                    handleIframeInteraction('retweeted');
+                                  }}
+                                  disabled={iframeInteractions.retweeted}
+                                  className={`${iframeInteractions.retweeted ? 'opacity-70 cursor-default' : 'hover:text-green-500'} w-full flex flex-col items-center`}
+                                >
+                                  <svg className={`w-8 h-8 mb-2 ${iframeInteractions.retweeted ? 'text-green-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M23.77 15.67c-.292-.293-.767-.293-1.06 0l-2.22 2.22V7.65c0-2.068-1.683-3.75-3.75-3.75h-5.85c-.414 0-.75.336-.75.75s.336.75.75.75h5.85c1.24 0 2.25 1.01 2.25 2.25v10.24l-2.22-2.22c-.293-.293-.768-.293-1.06 0s-.294.768 0 1.06l3.5 3.5c.145.147.337.22.53.22s.383-.072.53-.22l3.5-3.5c.294-.292.294-.767 0-1.06zm-10.66 3.28H7.26c-1.24 0-2.25-1.01-2.25-2.25V6.46l2.22 2.22c.148.147.34.22.532.22s.384-.073.53-.22c.293-.293.293-.768 0-1.06l-3.5-3.5c-.293-.294-.768-.294-1.06 0l-3.5 3.5c-.294.292-.294.767 0 1.06s.767.293 1.06 0l2.22-2.22V16.7c0 2.068 1.683 3.75 3.75 3.75h5.85c.414 0 .75-.336.75-.75s-.337-.75-.75-.75z"></path>
+                                  </svg>
+                                  <span className={`${iframeInteractions.retweeted ? 'text-green-400' : 'text-gray-300'} font-medium`}>
+                                    {iframeInteractions.retweeted ? 'Retweeted ✓' : 'Retweet'}
+                                  </span>
+                                </button>
+                              </div>
+                              
+                              {/* Reply button */}
+                              <div className={`${iframeInteractions.commented ? 'bg-green-500/20 border-green-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-4 text-center transition-colors`}>
+                                <button 
+                                  onClick={() => {
+                                    window.open(`https://twitter.com/intent/tweet?in_reply_to=${previewState.tweetId}&text=${encodeURIComponent('aquads.xyz')}`, '_blank');
+                                    handleIframeInteraction('commented');
+                                  }}
+                                  disabled={iframeInteractions.commented}
+                                  className={`${iframeInteractions.commented ? 'opacity-70 cursor-default' : 'hover:text-blue-500'} w-full flex flex-col items-center`}
+                                >
+                                  <svg className={`w-8 h-8 mb-2 ${iframeInteractions.commented ? 'text-blue-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M14.046 2.242l-4.148-.01h-.002c-4.374 0-7.8 3.427-7.8 7.802 0 4.098 3.186 7.206 7.465 7.37v3.828c0 .108.044.286.12.403.142.225.384.347.632.347.138 0 .277-.038.402-.118.264-.168 6.473-4.14 8.088-5.506 1.902-1.61 3.04-3.97 3.043-6.312v-.017c-.006-4.367-3.43-7.787-7.8-7.788zm3.787 12.972c-1.134.96-4.862 3.405-6.772 4.643V16.67c0-.414-.335-.75-.75-.75h-.396c-3.66 0-6.318-2.476-6.318-5.886 0-3.534 2.768-6.302 6.3-6.302l4.147.01h.002c3.532 0 6.3 2.766 6.302 6.296-.003 1.91-.942 3.844-2.514 5.176z"></path>
+                                  </svg>
+                                  <span className={`${iframeInteractions.commented ? 'text-green-400' : 'text-gray-300'} font-medium`}>
+                                    {iframeInteractions.commented ? 'Replied ✓' : 'Reply'}
+                                  </span>
+                                </button>
+                              </div>
+                            </div>
+                            
+                            {/* Verification status */}
+                            <div className="mt-6 text-center">
+                              <div className="flex justify-center space-x-2 mb-3">
+                                <div className={`w-3 h-3 rounded-full ${iframeInteractions.liked ? 'bg-green-500' : 'bg-gray-600'}`}></div>
+                                <div className={`w-3 h-3 rounded-full ${iframeInteractions.retweeted ? 'bg-green-500' : 'bg-gray-600'}`}></div>
+                                <div className={`w-3 h-3 rounded-full ${iframeInteractions.commented ? 'bg-green-500' : 'bg-gray-600'}`}></div>
+                              </div>
+                              
+                              {iframeVerified ? (
+                                <div className="bg-green-500/20 text-green-400 py-2 px-4 rounded-full inline-flex items-center">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                  </svg>
+                                  All interactions verified!
+                                </div>
+                              ) : (
+                                <p className="text-gray-400">
+                                  {(iframeInteractions.liked ? 1 : 0) + 
+                                   (iframeInteractions.retweeted ? 1 : 0) + 
+                                   (iframeInteractions.commented ? 1 : 0)}/3 interactions completed
+                                </p>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
-                    
-                    {/* Tweet interaction buttons */}
-                    <div 
-                      ref={iframeContainerRef}
-                      className="relative bg-gray-900 p-6"
-                    >
-                      {iframeLoading ? (
-                        <div className="p-10 text-center">
-                          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                  ) : (
+                    <div className="w-full bg-gray-800/50 rounded-lg overflow-hidden min-h-[300px] flex items-center justify-center">
+                      {previewState.loading ? (
+                        <div className="text-center p-4">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
                           <p className="text-gray-400">Loading tweet preview...</p>
                         </div>
+                      ) : previewState.error ? (
+                        <div className="p-4 text-red-400">{previewState.message || 'Error loading tweet'}</div>
                       ) : (
-                        <>
-                          <div className="bg-gray-800 rounded-lg p-5 mb-6 text-center">
-                            <h3 className="font-bold text-xl text-white mb-2">Tweet Interaction Verification</h3>
-                            <p className="text-gray-400 mb-3">Click each button below to interact with the tweet. After clicking, you will be redirected to Twitter to complete the action.</p>
-                            <div className="flex justify-center text-blue-400">
-                              <a 
-                                href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(selectedRaid?.tweetUrl || tweetUrl)}`} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                className="mx-1"
-                              >
-                                @{selectedRaid?.tweetUrl?.split('/')[3] || 'Twitter'}
-                              </a>
+                        <div className="bg-gray-800 p-4 rounded-lg border border-gray-700 w-full">
+                          <div className="flex items-center mb-3">
+                            <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 mr-3">
+                              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085a4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                              </svg>
+                            </div>
+                            <div>
+                              <div className="font-bold text-white">Tweet from {selectedRaid?.title || 'Twitter Raid'}</div>
+                              <div className="text-gray-500 text-sm">ID: {previewState.tweetId}</div>
                             </div>
                           </div>
-                          
-                          <div className="grid grid-cols-3 gap-4">
-                            {/* Like button */}
-                            <div className={`${iframeInteractions.liked ? 'bg-green-500/20 border-green-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-4 text-center transition-colors`}>
-                              <button 
-                                onClick={() => {
-                                  window.open(`https://twitter.com/intent/like?tweet_id=${previewState.tweetId}`, '_blank');
-                                  handleIframeInteraction('liked');
-                                }}
-                                disabled={iframeInteractions.liked}
-                                className={`${iframeInteractions.liked ? 'opacity-70 cursor-default' : 'hover:text-pink-500'} w-full flex flex-col items-center`}
-                              >
-                                <svg className={`w-8 h-8 mb-2 ${iframeInteractions.liked ? 'text-pink-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M12 21.638h-.014C9.403 21.59 1.95 14.856 1.95 8.478c0-3.064 2.525-5.754 5.403-5.754 2.29 0 3.83 1.58 4.646 2.73.814-1.148 2.354-2.73 4.645-2.73 2.88 0 5.404 2.69 5.404 5.755 0 6.376-7.454 13.11-10.037 13.157H12z"/>
-                                </svg>
-                                <span className={`${iframeInteractions.liked ? 'text-green-400' : 'text-gray-300'} font-medium`}>
-                                  {iframeInteractions.liked ? 'Liked ✓' : 'Like'}
-                                </span>
-                              </button>
-                            </div>
-                            
-                            {/* Retweet button */}
-                            <div className={`${iframeInteractions.retweeted ? 'bg-green-500/20 border-green-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-4 text-center transition-colors`}>
-                              <button 
-                                onClick={() => {
-                                  window.open(`https://twitter.com/intent/retweet?tweet_id=${previewState.tweetId}`, '_blank');
-                                  handleIframeInteraction('retweeted');
-                                }}
-                                disabled={iframeInteractions.retweeted}
-                                className={`${iframeInteractions.retweeted ? 'opacity-70 cursor-default' : 'hover:text-green-500'} w-full flex flex-col items-center`}
-                              >
-                                <svg className={`w-8 h-8 mb-2 ${iframeInteractions.retweeted ? 'text-green-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M23.77 15.67c-.292-.293-.767-.293-1.06 0l-2.22 2.22V7.65c0-2.068-1.683-3.75-3.75-3.75h-5.85c-.414 0-.75.336-.75.75s.336.75.75.75h5.85c1.24 0 2.25 1.01 2.25 2.25v10.24l-2.22-2.22c-.293-.293-.768-.293-1.06 0s-.294.768 0 1.06l3.5 3.5c.145.147.337.22.53.22s.383-.072.53-.22l3.5-3.5c.294-.292.294-.767 0-1.06zm-10.66 3.28H7.26c-1.24 0-2.25-1.01-2.25-2.25V6.46l2.22 2.22c.148.147.34.22.532.22s.384-.073.53-.22c.293-.293.293-.768 0-1.06l-3.5-3.5c-.293-.294-.768-.294-1.06 0l-3.5 3.5c-.294.292-.294.767 0 1.06s.767.293 1.06 0l2.22-2.22V16.7c0 2.068 1.683 3.75 3.75 3.75h5.85c.414 0 .75-.336.75-.75s-.337-.75-.75-.75z"></path>
-                                </svg>
-                                <span className={`${iframeInteractions.retweeted ? 'text-green-400' : 'text-gray-300'} font-medium`}>
-                                  {iframeInteractions.retweeted ? 'Retweeted ✓' : 'Retweet'}
-                                </span>
-                              </button>
-                            </div>
-                            
-                            {/* Reply button */}
-                            <div className={`${iframeInteractions.commented ? 'bg-green-500/20 border-green-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-4 text-center transition-colors`}>
-                              <button 
-                                onClick={() => {
-                                  window.open(`https://twitter.com/intent/tweet?in_reply_to=${previewState.tweetId}&text=${encodeURIComponent('aquads.xyz')}`, '_blank');
-                                  handleIframeInteraction('commented');
-                                }}
-                                disabled={iframeInteractions.commented}
-                                className={`${iframeInteractions.commented ? 'opacity-70 cursor-default' : 'hover:text-blue-500'} w-full flex flex-col items-center`}
-                              >
-                                <svg className={`w-8 h-8 mb-2 ${iframeInteractions.commented ? 'text-blue-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
-                                  <path d="M14.046 2.242l-4.148-.01h-.002c-4.374 0-7.8 3.427-7.8 7.802 0 4.098 3.186 7.206 7.465 7.37v3.828c0 .108.044.286.12.403.142.225.384.347.632.347.138 0 .277-.038.402-.118.264-.168 6.473-4.14 8.088-5.506 1.902-1.61 3.04-3.97 3.043-6.312v-.017c-.006-4.367-3.43-7.787-7.8-7.788zm3.787 12.972c-1.134.96-4.862 3.405-6.772 4.643V16.67c0-.414-.335-.75-.75-.75h-.396c-3.66 0-6.318-2.476-6.318-5.886 0-3.534 2.768-6.302 6.3-6.302l4.147.01h.002c3.532 0 6.3 2.766 6.302 6.296-.003 1.91-.942 3.844-2.514 5.176z"></path>
-                                </svg>
-                                <span className={`${iframeInteractions.commented ? 'text-green-400' : 'text-gray-300'} font-medium`}>
-                                  {iframeInteractions.commented ? 'Replied ✓' : 'Reply'}
-                                </span>
-                              </button>
-                            </div>
+                          <p className="text-gray-300 mb-3">
+                            URL: <a href={tweetUrl || selectedRaid?.tweetUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">{tweetUrl || selectedRaid?.tweetUrl}</a>
+                          </p>
+                          <div className="flex gap-3 mt-4">
+                            <a 
+                              href={tweetUrl || selectedRaid?.tweetUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-sm inline-flex items-center"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                              </svg>
+                              Open Tweet
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowIframe(true);
+                                // Reset interaction tracking when manually enabling iframe
+                                setIframeInteractions({ liked: false, retweeted: false, commented: false });
+                                setDirectInteractions({ liked: false, retweeted: false, commented: false });
+                              }}
+                              className="bg-gray-700 hover:bg-gray-600 text-gray-200 px-3 py-1.5 rounded text-sm inline-flex items-center"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                              Interactive View
+                            </button>
                           </div>
-                          
-                          {/* Verification status */}
-                          <div className="mt-6 text-center">
-                            <div className="flex justify-center space-x-2 mb-3">
-                              <div className={`w-3 h-3 rounded-full ${iframeInteractions.liked ? 'bg-green-500' : 'bg-gray-600'}`}></div>
-                              <div className={`w-3 h-3 rounded-full ${iframeInteractions.retweeted ? 'bg-green-500' : 'bg-gray-600'}`}></div>
-                              <div className={`w-3 h-3 rounded-full ${iframeInteractions.commented ? 'bg-green-500' : 'bg-gray-600'}`}></div>
-                            </div>
-                            
-                            {iframeVerified ? (
-                              <div className="bg-green-500/20 text-green-400 py-2 px-4 rounded-full inline-flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                </svg>
-                                All interactions verified!
-                              </div>
-                            ) : (
-                              <p className="text-gray-400">
-                                {(iframeInteractions.liked ? 1 : 0) + 
-                                 (iframeInteractions.retweeted ? 1 : 0) + 
-                                 (iframeInteractions.commented ? 1 : 0)}/3 interactions completed
-                              </p>
-                            )}
-                          </div>
-                        </>
+                        </div>
                       )}
+                    </div>
+                  )}
+                  
+                  <div className="mt-4 bg-gray-800/70 rounded p-3 border border-gray-700">
+                    <h5 className="text-gray-300 font-medium mb-2">How to Complete:</h5>
+                    
+                    <div className="mb-3">
+                      <ol className="list-decimal list-inside text-gray-400 text-sm space-y-1 ml-2">
+                        <li>Click the "Show Interaction Buttons" button above</li>
+                        <li>Use the buttons to like, retweet, and comment on the tweet</li>
+                        <li>Each button will open Twitter in a new tab</li>
+                        <li>Complete all three actions on Twitter</li>
+                        <li>After all three actions are verified, click "Complete Task" to earn points</li>
+                      </ol>
                     </div>
                   </div>
                 </>
               ) : (
-                <div className="w-full bg-gray-800/50 rounded-lg overflow-hidden min-h-[300px] flex items-center justify-center">
-                  {previewState.loading ? (
+                <div className="w-full bg-gray-800/50 rounded-lg p-6 flex flex-col items-center justify-center text-center min-h-[300px]">
+                  {selectedRaid ? (
                     <div className="text-center p-4">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                      <p className="text-gray-400">Loading tweet preview...</p>
+                      <p className="text-gray-400">Loading tweet from the selected raid...</p>
                     </div>
-                  ) : previewState.error ? (
-                    <div className="p-4 text-red-400">{previewState.message || 'Error loading tweet'}</div>
                   ) : (
-                    <div className="bg-gray-800 p-4 rounded-lg border border-gray-700 w-full">
-                      <div className="flex items-center mb-3">
-                        <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 mr-3">
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085a4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                          </svg>
-                        </div>
-                        <div>
-                          <div className="font-bold text-white">Tweet from {selectedRaid?.title || 'Twitter Raid'}</div>
-                          <div className="text-gray-500 text-sm">ID: {previewState.tweetId}</div>
-                        </div>
-                      </div>
-                      <p className="text-gray-300 mb-3">
-                        URL: <a href={tweetUrl || selectedRaid?.tweetUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">{tweetUrl || selectedRaid?.tweetUrl}</a>
-                      </p>
-                      <div className="flex gap-3 mt-4">
-                        <a 
-                          href={tweetUrl || selectedRaid?.tweetUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-sm inline-flex items-center"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                          </svg>
-                          Open Tweet
-                        </a>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowIframe(true);
-                            // Reset interaction tracking when manually enabling iframe
-                            setIframeInteractions({ liked: false, retweeted: false, commented: false });
-                            setDirectInteractions({ liked: false, retweeted: false, commented: false });
-                          }}
-                          className="bg-gray-700 hover:bg-gray-600 text-gray-200 px-3 py-1.5 rounded text-sm inline-flex items-center"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                          Interactive View
-                        </button>
-                      </div>
-                    </div>
+                    <>
+                      <svg className="w-12 h-12 text-gray-500 mb-3" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085a4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                      </svg>
+                      <p className="text-gray-400 mb-2">Select a raid to see the tweet preview</p>
+                      <p className="text-gray-500 text-sm">The tweet will automatically appear here</p>
+                    </>
                   )}
                 </div>
               )}
-              
-              <div className="mt-4 bg-gray-800/70 rounded p-3 border border-gray-700">
-                <h5 className="text-gray-300 font-medium mb-2">How to Complete:</h5>
-                
-                <div className="mb-3">
-                  <ol className="list-decimal list-inside text-gray-400 text-sm space-y-1 ml-2">
-                    <li>Click the "Show Interaction Buttons" button above</li>
-                    <li>Use the buttons to like, retweet, and comment on the tweet</li>
-                    <li>Each button will open Twitter in a new tab</li>
-                    <li>Complete all three actions on Twitter</li>
-                    <li>After all three actions are verified, click "Complete Task" to earn points</li>
-                  </ol>
-                </div>
-              </div>
             </div>
           </div>
         </div>
