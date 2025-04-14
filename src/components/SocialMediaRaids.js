@@ -111,14 +111,25 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
 
   useEffect(() => {
     // When tweet URL changes, try to embed it
-    if (tweetUrl) {
+    if (tweetUrl && tweetEmbedRef.current) {
       try {
         embedTweet(tweetUrl);
       } catch (error) {
         console.error('Error in tweet embed useEffect:', error);
         // Don't let embed errors crash the component
         if (tweetEmbedRef.current) {
-          tweetEmbedRef.current.innerHTML = '<div class="p-4 text-red-400">Error embedding tweet. Please check URL format.</div>';
+          try {
+            // Safely set error message
+            while (tweetEmbedRef.current.firstChild) {
+              tweetEmbedRef.current.removeChild(tweetEmbedRef.current.firstChild);
+            }
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'p-4 text-red-400';
+            errorDiv.textContent = 'Error embedding tweet. Please check URL format.';
+            tweetEmbedRef.current.appendChild(errorDiv);
+          } catch (domError) {
+            console.error('DOM manipulation error:', domError);
+          }
         }
       }
     }
@@ -195,7 +206,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     if (!tweetEmbedRef.current) return;
     
     // Clear previous embed
-    tweetEmbedRef.current.innerHTML = '';
+    while (tweetEmbedRef.current.firstChild) {
+      tweetEmbedRef.current.removeChild(tweetEmbedRef.current.firstChild);
+    }
     
     const tweetId = extractTweetId(url);
     if (!tweetId) {
@@ -224,7 +237,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       iframe.style.backgroundColor = 'transparent';
       
       // Clear loading indicator and add the iframe
-      tweetEmbedRef.current.innerHTML = '';
+      while (tweetEmbedRef.current.firstChild) {
+        tweetEmbedRef.current.removeChild(tweetEmbedRef.current.firstChild);
+      }
       tweetEmbedRef.current.appendChild(iframe);
     } catch (error) {
       console.error('Tweet embedding error:', error);
@@ -381,9 +396,12 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         raidId: selectedRaid?._id
       });
       
+      // Save the raid ID before sending the request
+      const raidId = selectedRaid._id;
+      
       // Use fetchWithDelay instead of fetch
       console.log('Sending request to complete raid...');
-      const response = await fetchWithDelay(`${API_URL}/api/twitter-raids/${selectedRaid._id}/complete`, {
+      const response = await fetchWithDelay(`${API_URL}/api/twitter-raids/${raidId}/complete`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -421,6 +439,18 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       }
       
       console.log('Success response:', data);
+      
+      // Clear tweet embed reference to prevent DOM errors
+      if (tweetEmbedRef.current) {
+        try {
+          while (tweetEmbedRef.current.firstChild) {
+            tweetEmbedRef.current.removeChild(tweetEmbedRef.current.firstChild);
+          }
+        } catch (embedError) {
+          console.error('Error clearing tweet embed:', embedError);
+          // Continue even if this fails
+        }
+      }
       
       // Set success message with a delay to prevent UI issues
       await delay(100);
@@ -596,6 +626,17 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     e.preventDefault(); // Prevent the default form submission
     console.log('safeHandleSubmit called, preventing default and calling handleSubmitTask');
     
+    // First, safely clear any tweet embed to prevent DOM issues
+    if (tweetEmbedRef.current) {
+      try {
+        while (tweetEmbedRef.current.firstChild) {
+          tweetEmbedRef.current.removeChild(tweetEmbedRef.current.firstChild);
+        }
+      } catch (error) {
+        console.error('Error clearing tweet embed:', error);
+      }
+    }
+    
     // Call handleSubmitTask directly instead of using setTimeout, which might cause issues
     try {
       handleSubmitTask(e);
@@ -603,6 +644,12 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       console.error("Error in submit handler:", error);
       setError("An error occurred during submission. Please try again.");
       setSubmitting(false);
+      
+      // Attempt to recover the UI
+      setTimeout(() => {
+        setSubmitting(false);
+        setVerifyingTweet(false);
+      }, 500);
     }
     
     // Return false to prevent default form submission
@@ -775,6 +822,22 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       return () => clearTimeout(timer);
     }
   }, [success]);
+
+  // Add clean-up function for tweet embed
+  useEffect(() => {
+    return () => {
+      // Clean up any embedded tweets when component unmounts
+      if (tweetEmbedRef.current) {
+        try {
+          while (tweetEmbedRef.current.firstChild) {
+            tweetEmbedRef.current.removeChild(tweetEmbedRef.current.firstChild);
+          }
+        } catch (error) {
+          console.error('Error cleaning up tweet embed:', error);
+        }
+      }
+    };
+  }, []);
 
   if (loading && raids.length === 0) {
     return <div className="text-center p-4">Loading Twitter raids...</div>;
