@@ -169,21 +169,8 @@ const InvoiceModal = ({
       
       // If onSendMessage is provided, send a message about the invoice
       if (onSendMessage) {
-        // Create a structured message with invoice data embedded in it
-        const invoiceData = {
-          invoiceId: response._id,
-          invoiceNumber: response.invoiceNumber,
-          amount: response.amount,
-          currency: response.currency,
-          dueDate: response.dueDate,
-          paymentLink: response.paymentLink
-        };
-        
-        // Send a message with both text and embedded data
-        const message = `I've created invoice #${response.invoiceNumber} for you. Total: ${formatCurrency(response.amount, response.currency)}. Due date: ${new Date(response.dueDate).toLocaleDateString()}`;
-        
-        // Add a special marker so the message renderer knows this is an invoice message
-        onSendMessage(message, { type: 'invoice', invoiceData: response });
+        const message = `I've created invoice #${response.invoiceNumber} for you. You can view the invoice and make payment through the provided payment link.`;
+        onSendMessage(message);
       }
     } catch (error) {
       console.error('Error details:', error);

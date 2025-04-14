@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { API_URL } from '../services/api';
 import logger from '../utils/logger';
 import InvoiceModal from './InvoiceModal';
 import invoiceService from '../services/invoiceService';
-import axios from 'axios';
 
 // Component to render watermarked images using canvas
 const WatermarkedImage = ({ sourceUrl, applyWatermark, attachmentName, dataUrl, generateAttachmentUrls }) => {
@@ -189,45 +188,44 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
   // Auto-scroll to bottom when messages update
   useEffect(() => {
     scrollToBottom();
-    
-    // Check if there are any invoice messages without matching invoice data
-    const needToFetchInvoices = messages.some(msg => {
-      const invoiceMatch = msg.message && typeof msg.message === 'string' && 
-        msg.message.match(/Invoice #(INV-\d{4}-\d{4})/);
-      
-      if (!invoiceMatch) return false;
-      
-      const invoiceNumber = invoiceMatch[1];
-      // If we don't have this invoice in our list, we should fetch invoices
-      return !invoices.some(inv => inv.invoiceNumber === invoiceNumber);
-    });
-    
-    if (needToFetchInvoices && booking && booking._id) {
-      console.log('Found invoice references in messages but missing invoice data, fetching invoices...');
-      fetchInvoices();
-    }
-  }, [messages, invoices, booking?._id]);
+  }, [messages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   // Fetch invoices for the current booking
-  const fetchInvoices = useCallback(async () => {
-    if (!booking?._id) return;
+  const fetchInvoices = async () => {
+    if (!booking || !booking._id) {
+      console.log('Skipping invoice fetch: no booking ID');
+      return;
+    }
     
     try {
-      const response = await invoiceService.getInvoicesByBookingId(booking._id);
-      setInvoices(response.data || []);
-    } catch (error) {
-      // 404 is acceptable - just means no invoices yet
-      if (error.response && error.response.status === 404) {
-        setInvoices([]);
-        return;
+      console.log('Fetching invoices for booking ID:', booking._id);
+      // Use a try-catch to handle 404 errors gracefully
+      try {
+        const invoiceData = await invoiceService.getInvoicesByBookingId(booking._id);
+        console.log('Invoices received:', invoiceData ? invoiceData.length : 0);
+        setInvoices(invoiceData || []);
+      } catch (apiError) {
+        // If the endpoint returns 404, we'll just set empty invoices
+        console.log('Invoice API returned error:', apiError);
+        if (apiError.response && apiError.response.status === 404) {
+          console.log('Invoice endpoint not found (404). Setting empty invoices array.');
+          setInvoices([]);
+        } else {
+          // For other errors, rethrow to be caught by the outer try-catch
+          throw apiError;
+        }
       }
-      console.error('Error fetching invoices:', error);
+    } catch (err) {
+      console.error('Error fetching invoices:', err);
+      logger.error('Error fetching invoices:', err);
+      setInvoices([]);
+      // Don't show notification for this to avoid cluttering the UI
     }
-  }, [booking]);
+  };
 
   // Function to verify image URL exists
   const verifyImage = async (url) => {
@@ -346,12 +344,6 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
         formData.append('attachment', attachment);
       }
       
-      // If there's invoice data, add it as a special field
-      if (e.invoiceData) {
-        formData.append('invoiceData', JSON.stringify(e.invoiceData));
-        formData.append('messageType', 'invoice');
-      }
-      
       const response = await fetch(`${API_URL}/bookings/${booking._id}/messages`, {
         method: 'POST',
         headers: {
@@ -365,14 +357,6 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
       }
       
       const sentMessage = await response.json();
-      
-      // If we have invoice data but the server doesn't support it yet,
-      // add it to the message locally
-      if (e.invoiceData && !sentMessage.invoiceData) {
-        sentMessage.invoiceData = e.invoiceData;
-        sentMessage.messageType = 'invoice';
-      }
-      
       setMessages([...messages, sentMessage]);
       setNewMessage('');
       setAttachment(null);
@@ -433,22 +417,14 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
   };
 
   // Handle sending a message from the invoice modal
-  const handleSendInvoiceMessage = (message, messageData) => {
-    // Store both the text message and any extra data (invoice data)
+  const handleSendInvoiceMessage = (message) => {
+    // Set the message and immediately send it
     setNewMessage(message);
-    
-    // Create a fake event for handleSendMessage
     const event = { preventDefault: () => {} };
-    
-    // Call handleSendMessage with the message data
+    // Call handleSendMessage with a fake event
     setTimeout(() => {
       if (message === newMessage) {
-        // Create a custom event to include the invoice data
-        const customEvent = {
-          ...event,
-          invoiceData: messageData?.invoiceData
-        };
-        handleSendMessage(customEvent);
+        handleSendMessage(event);
       }
     }, 100);
   };
@@ -459,78 +435,9 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
     setShowInvoiceModal(true);
   };
 
-  // Handle sending a message about the invoice
-  const handleSendInvoice = async (invoice) => {
-    try {
-      // Close the modal first
-      setShowInvoiceModal(false);
-      
-      // Send a message about the invoice
-      const response = await axios.post(
-        `${API_URL}/bookings/${booking._id}/invoices/${invoice._id}/message`,
-        {},
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        }
-      );
-      
-      // Add the new message to the messages list
-      setMessages(prevMessages => [...prevMessages, response.data]);
-      
-      // Refresh invoices list
-      fetchInvoices();
-    } catch (error) {
-      console.error('Error sending invoice message:', error);
-      setError('Failed to send invoice notification. Please try again.');
-    }
-  };
-
   // Render message content including any attachments
   const renderMessageContent = (msg) => {
     if (!msg) return null;
-    
-    // Handle invoice message type
-    if (msg.messageType === 'invoice' && msg.invoiceId) {
-      const invoiceData = invoices?.find(inv => 
-        inv._id === (typeof msg.invoiceId === 'object' ? msg.invoiceId._id : msg.invoiceId)
-      ) || msg.invoiceId;
-      
-      if (invoiceData) {
-        return (
-          <>
-            <p className="text-sm whitespace-pre-wrap mb-2">{msg.message}</p>
-            <div className="bg-gray-700 border border-gray-600 rounded p-3">
-              <div className="flex justify-between">
-                <span className="font-bold">Invoice #{invoiceData.invoiceNumber}</span>
-                <span className={
-                  invoiceData.status === 'paid' ? 'text-green-400' : 
-                  invoiceData.status === 'cancelled' ? 'text-red-400' : 'text-yellow-400'
-                }>
-                  {invoiceData.status?.toUpperCase()}
-                </span>
-              </div>
-              <div className="mt-1">
-                <p>Amount: {
-                  new Intl.NumberFormat('en-US', { 
-                    style: 'currency', 
-                    currency: invoiceData.currency || 'USD' 
-                  }).format(invoiceData.amount)
-                }</p>
-                <button 
-                  onClick={() => handleViewInvoice(invoiceData)}
-                  className="mt-2 bg-blue-600 text-white text-sm px-2 py-1 rounded"
-                >
-                  View Details
-                </button>
-              </div>
-            </div>
-          </>
-        );
-      }
-    }
     
     // Helper function to get API base URL without "/api"
     const getBaseUrl = () => {
@@ -558,109 +465,107 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
         queryParam: `${API_URL}/bookings/file?filename=${filename}&bookingId=${booking._id}`
       };
     };
-
-    // Check if the message is about an invoice (legacy support for old format)
-    // Support multiple message formats for invoice references
-    const invoiceRegexPatterns = [
-      /Invoice #(INV-\d{4}-\d{4})/,                                // Basic pattern: "Invoice #INV-2504-0007"
-      /I've created invoice #(INV-\d{4}-\d{4}) for you/,          // New format intro
-      /created invoice #(INV-\d{4}-\d{4})/                         // Alternative shorter pattern
-    ];
     
-    let invoiceNumberFromMessage = null;
-    // Try each pattern until we find a match
-    for (const pattern of invoiceRegexPatterns) {
-      const match = msg.message && typeof msg.message === 'string' && msg.message.match(pattern);
-      if (match) {
-        invoiceNumberFromMessage = match[1];
-        break;
+    // Choose best image URL to display
+    const getBestImageUrl = () => {
+      // If we have a data URL, use it as the most reliable source
+      if (msg.dataUrl) {
+        logger.log('Using embedded data URL for image');
+        return msg.dataUrl;
       }
-    }
-    
-    // Check for invoice data - either from message metadata or from invoices list
-    let invoiceData = msg.invoiceData || null;
-    
-    // If no direct invoice data but we have an invoice number, try to find it in the invoices list
-    if (!invoiceData && invoiceNumberFromMessage && invoices && invoices.length > 0) {
-      const foundInvoice = invoices.find(inv => inv.invoiceNumber === invoiceNumberFromMessage);
-      if (foundInvoice) {
-        invoiceData = foundInvoice;
-        console.log('Found matching invoice by number:', foundInvoice.invoiceNumber);
-      } else {
-        console.log('Invoice number found in message but no matching invoice in list:', invoiceNumberFromMessage, 'Available invoices:', invoices.map(inv => inv.invoiceNumber));
+      
+      if (!msg.attachment) return null;
+      
+      // If we've already processed the URL during fetch
+      if (msg.attachmentFullUrl) {
+        return msg.attachmentFullUrl;
       }
-    }
+      
+      // Otherwise generate the best URL based on the attachment
+      const urls = generateAttachmentUrls(msg.attachment);
+      // Try the query parameter endpoint first as it's most likely to work
+      return urls.queryParam;
+    };
 
-    // Debug output to help trace issues
-    if (invoiceNumberFromMessage) {
-      console.log('Invoice message detected:', {
-        messageId: msg._id,
-        invoiceNumber: invoiceNumberFromMessage,
-        message: msg.message,
-        hasDirectData: !!msg.invoiceData,
-        foundInList: !!invoiceData,
-        invoicesCount: invoices?.length || 0
-      });
-    }
+    // Add watermark to image and return a new data URL
+    const applyWatermarkToImage = (imageUrl, callback) => {
+      // Create temporary image to load the source
+      const img = new Image();
+      img.crossOrigin = "Anonymous"; // Enable CORS for the image
+      
+      img.onload = () => {
+        // Create canvas to draw the watermarked image
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas size to match image
+        canvas.width = img.width;
+        canvas.height = img.height;
+        
+        // Draw the original image
+        ctx.drawImage(img, 0, 0);
+        
+        // Apply watermark text
+        ctx.font = `bold ${Math.max(40, img.width / 10)}px Arial`;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        // Save context state
+        ctx.save();
+        
+        // Move to center and rotate
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate(-Math.PI / 6); // ~30 degrees
+        
+        // Draw large watermark text
+        ctx.fillText('WATERMARK', 0, 0);
+        
+        // Draw secondary watermark text
+        ctx.font = `bold ${Math.max(30, img.width / 15)}px Arial`;
+        ctx.fillText('DRAFT - DO NOT USE', 0, Math.max(50, img.height / 10));
+        
+        // Add "corner" watermark
+        ctx.restore();
+        ctx.fillStyle = 'rgba(255, 215, 0, 0.8)'; // Gold color
+        ctx.fillRect(canvas.width - 120, 0, 120, 35);
+        ctx.fillStyle = 'black';
+        ctx.font = 'bold 16px Arial';
+        ctx.fillText('DRAFT', canvas.width - 60, 20);
+        
+        // Convert canvas to data URL and return via callback
+        const watermarkedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+        callback(watermarkedDataUrl);
+      };
+      
+      img.onerror = () => {
+        logger.error('Failed to load image for watermarking:', imageUrl);
+        callback(null); // Return null to indicate failure
+      };
+      
+      // Start loading the image
+      img.src = imageUrl;
+    };
+
+    // Check if the message is about an invoice
+    const invoiceMatch = msg.message && typeof msg.message === 'string' && msg.message.match(/Invoice #(INV-\d{4}-\d{4})/);
+    const invoiceNumberFromMessage = invoiceMatch ? invoiceMatch[1] : null;
+    const invoiceFromMessage = invoiceNumberFromMessage && invoices && invoices.length > 0 ? 
+      invoices.find(inv => inv.invoiceNumber === invoiceNumberFromMessage) : null;
 
     return (
       <>
         {msg.message && <p className="text-sm whitespace-pre-wrap mb-2">{msg.message}</p>}
         
-        {/* Display invoice card if this message has invoice data or references an invoice */}
-        {invoiceData && (
-          <div className="mt-3 bg-gray-800 border border-gray-700 rounded-lg p-3 max-w-sm">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="text-blue-400 font-semibold">Invoice #{invoiceData.invoiceNumber}</h3>
-              <div className={`text-xs px-2 py-1 rounded-full ${
-                invoiceData.status === 'paid' 
-                  ? 'bg-green-900/50 text-green-400' 
-                  : invoiceData.status === 'cancelled'
-                    ? 'bg-red-900/50 text-red-400'
-                    : 'bg-yellow-900/50 text-yellow-400'
-              }`}>
-                {invoiceData.status?.toUpperCase() || 'PENDING'}
-              </div>
-            </div>
-            
-            <div className="space-y-2 mb-3">
-              <div className="flex justify-between">
-                <span className="text-gray-400 text-sm">Amount:</span>
-                <span className="font-medium">{
-                  typeof invoiceData.amount === 'number' 
-                    ? new Intl.NumberFormat('en-US', { 
-                        style: 'currency', 
-                        currency: invoiceData.currency || 'USD' 
-                      }).format(invoiceData.amount)
-                    : invoiceData.amount
-                }</span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-gray-400 text-sm">Due Date:</span>
-                <span>{new Date(invoiceData.dueDate).toLocaleDateString()}</span>
-              </div>
-            </div>
-            
-            <div className="flex justify-between items-center gap-2">
-              <button
-                onClick={() => handleViewInvoice(invoiceData)}
-                className="flex-1 px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm text-center"
-              >
-                View Details
-              </button>
-              
-              {invoiceData.paymentLink && invoiceData.status !== 'paid' && invoiceData.status !== 'cancelled' && (
-                <a
-                  href={invoiceData.paymentLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-sm text-center"
-                >
-                  Pay Now
-                </a>
-              )}
-            </div>
+        {/* If this is an invoice message and we found the invoice, show a button to view it */}
+        {invoiceFromMessage && (
+          <div className="mt-2">
+            <button
+              onClick={() => handleViewInvoice(invoiceFromMessage)}
+              className="px-3 py-1 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30 text-sm"
+            >
+              View Invoice #{invoiceFromMessage.invoiceNumber}
+            </button>
           </div>
         )}
         
@@ -669,43 +574,179 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
             {msg.isWatermarked ? (
               // Use watermarked image renderer for watermarked images
               <WatermarkedImage 
-                sourceUrl={generateAttachmentUrls(msg.attachment).queryParam} 
-                isDraft={true}
+                sourceUrl={getBestImageUrl()} 
+                applyWatermark={applyWatermarkToImage}
+                attachmentName={msg.attachmentName || "Attachment"}
+                dataUrl={msg.dataUrl}
+                generateAttachmentUrls={() => generateAttachmentUrls(msg.attachment)}
               />
             ) : (
-              // Regular image display for non-watermarked or buyer images
+              // Use regular image for non-watermarked images
               <img 
-                src={generateAttachmentUrls(msg.attachment).queryParam} 
-                alt="Attachment" 
-                className="max-w-full rounded-lg border border-gray-700"
-                onError={(e) => {
-                  logger.error('Image load error, trying fallback URL');
-                  // Try a different URL approach if the first one fails
-                  const urls = generateAttachmentUrls(msg.attachment);
-                  e.target.src = urls.directEndpoint;
-                }}
+                src={getBestImageUrl()} 
+                alt={msg.attachmentName || "Attachment"}
+                className="max-w-full rounded-lg max-h-60 object-contain cursor-pointer border border-gray-700"
                 onClick={() => {
-                  const imageUrl = generateAttachmentUrls(msg.attachment).queryParam;
-                  if (imageUrl) {
-                    window.open(imageUrl, '_blank');
+                  if (msg.dataUrl) {
+                    const newWindow = window.open();
+                    newWindow.document.write(`
+                      <html>
+                        <head>
+                          <title>${msg.attachmentName || 'Image'}</title>
+                          <style>
+                            body { 
+                              margin: 0; 
+                              display: flex; 
+                              justify-content: center; 
+                              align-items: center; 
+                              min-height: 100vh;
+                              background-color: #0f172a;
+                            }
+                            img {
+                              max-width: 100%;
+                              max-height: 100vh;
+                              object-fit: contain;
+                            }
+                          </style>
+                        </head>
+                        <body>
+                          <img src="${msg.dataUrl}" alt="${msg.attachmentName || 'Image'}" />
+                        </body>
+                      </html>
+                    `);
+                    newWindow.document.close();
+                    return;
                   }
+                  
+                  const urls = generateAttachmentUrls(msg.attachment);
+                  window.open(urls.queryParam, '_blank');
                 }}
-                style={{ cursor: 'pointer' }}
               />
             )}
+            
+            <div className="text-xs mt-1 text-gray-300 flex justify-between items-center">
+              <span>{msg.attachmentName || "Image attachment"}</span>
+              <div className="flex items-center">
+                {msg.isWatermarked && (
+                  <span className="text-yellow-400 font-semibold text-xs mr-2">
+                    Watermarked preview
+                  </span>
+                )}
+                <a 
+                  href="#"
+                  className="ml-2 text-blue-400 hover:text-blue-300"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    
+                    if (msg.isWatermarked) {
+                      // For watermarked images, we need to apply the watermark to the full-size image
+                      applyWatermarkToImage(getBestImageUrl(), (watermarkedDataUrl) => {
+                        if (watermarkedDataUrl) {
+                          const newWindow = window.open();
+                          newWindow.document.write(`
+                            <html>
+                              <head>
+                                <title>${msg.attachmentName || 'Image'}</title>
+                                <style>
+                                  body { 
+                                    margin: 0; 
+                                    display: flex; 
+                                    justify-content: center; 
+                                    align-items: center; 
+                                    min-height: 100vh;
+                                    background-color: #0f172a;
+                                    position: relative;
+                                  }
+                                  img {
+                                    max-width: 100%;
+                                    max-height: 100vh;
+                                    object-fit: contain;
+                                  }
+                                  .watermark-notice {
+                                    position: absolute;
+                                    bottom: 20px;
+                                    left: 0;
+                                    right: 0;
+                                    text-align: center;
+                                    color: #FCD34D;
+                                    font-size: 18px;
+                                    font-weight: bold;
+                                    background-color: rgba(0,0,0,0.7);
+                                    padding: 12px;
+                                  }
+                                </style>
+                              </head>
+                              <body>
+                                <img src="${watermarkedDataUrl}" alt="${msg.attachmentName || 'Image'}" />
+                                <div class="watermark-notice">Draft image with watermark. Original will be available after completion.</div>
+                              </body>
+                            </html>
+                          `);
+                          newWindow.document.close();
+                        }
+                      });
+                      return;
+                    }
+                    
+                    // Handle non-watermarked images normally
+                    if (msg.dataUrl) {
+                      const newWindow = window.open();
+                      newWindow.document.write(`
+                        <html>
+                          <head>
+                            <title>${msg.attachmentName || 'Image'}</title>
+                            <style>
+                              body { 
+                                margin: 0; 
+                                display: flex; 
+                                justify-content: center; 
+                                align-items: center; 
+                                min-height: 100vh;
+                                background-color: #0f172a;
+                              }
+                              img {
+                                max-width: 100%;
+                                max-height: 100vh;
+                                object-fit: contain;
+                              }
+                            </style>
+                          </head>
+                          <body>
+                            <img src="${msg.dataUrl}" alt="${msg.attachmentName || 'Image'}" />
+                          </body>
+                        </html>
+                      `);
+                      newWindow.document.close();
+                      return;
+                    }
+                    
+                    // Otherwise try URL approach
+                    const urls = generateAttachmentUrls(msg.attachment);
+                    logger.log('Opening image with most reliable method');
+                    // Try the query parameter endpoint as it's most reliable
+                    window.open(urls.queryParam, '_blank');
+                  }}
+                >
+                  (View full image)
+                </a>
+              </div>
+            </div>
           </div>
         )}
         
         {msg.attachment && msg.attachmentType === 'file' && (
-          <div className="mt-2">
+          <div className="mt-2 bg-gray-800 p-2 rounded-lg border border-gray-700">
             <a 
-              href={generateAttachmentUrls(msg.attachment).queryParam}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center space-x-2 text-blue-400 hover:text-blue-300"
+              href="#"
+              className="flex items-center text-blue-400 hover:text-blue-300"
+              onClick={(e) => {
+                e.preventDefault();
+                const urls = generateAttachmentUrls(msg.attachment);
+                window.open(urls.directEndpoint, '_blank');
+              }}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               <span>{msg.attachmentName || 'Download file'}</span>
             </a>
@@ -756,102 +797,130 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
                   return null; // Skip invalid messages
                 }
                 return (
+                <div 
+                  key={msg._id || `msg-${index}`}
+                  className={`mb-3 flex ${isCurrentUserMessage(sender) ? 'justify-end' : 'justify-start'}`}
+                >
                   <div 
-                    key={msg._id || `msg-${index}`}
-                    className={`flex ${isCurrentUserMessage(sender) ? 'justify-end' : 'justify-start'}`}
+                    className={`max-w-xs sm:max-w-sm md:max-w-md rounded-lg px-4 py-2 ${
+                      isCurrentUserMessage(sender) 
+                        ? 'bg-blue-600 text-white rounded-br-none' 
+                        : 'bg-gray-700 text-white rounded-bl-none'
+                    } ${msg.isInitialRequirements ? 'border-l-4 border-yellow-500' : ''}`}
                   >
-                    <div className="max-w-md p-2 rounded-lg bg-gray-700">
-                      {renderMessageContent(msg)}
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-semibold text-sm">
+                        {sender.username || 'Unknown'}
+                        {msg.isInitialRequirements && ' (Initial Requirements)'}
+                      </span>
+                      <span className="text-xs opacity-75">
+                        {formatMessageTime(msg.createdAt)}
+                      </span>
                     </div>
+                    {renderMessageContent(msg)}
                   </div>
-                );
+                </div>
+              );
               })
             )}
+            <div ref={messagesEndRef} />
           </div>
-
-          {/* Message Input */}
-          <div className="flex flex-col space-y-2">
+          
+          {/* Hidden file input */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            className="hidden"
+            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar"
+          />
+          
+          <form onSubmit={handleSendMessage} className="space-y-3">
+            {/* Show selected attachment if any */}
+            {attachment && (
+              <div className="flex items-center bg-gray-700 rounded-lg p-2">
+                <span className="text-sm text-gray-300 flex-grow truncate mr-2">
+                  {attachment.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleRemoveAttachment}
+                  className="text-red-400 hover:text-red-300"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+            
             <div className="flex gap-2">
               <textarea
-                className="flex-1 bg-gray-700 border border-gray-600 rounded-lg p-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Type your message..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }
-                }}
-                rows={2}
+                placeholder="Type your message here..."
+                className="flex-grow bg-gray-700 text-white rounded p-2 resize-none h-20"
+                disabled={!booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'}
               />
-              <input
-                type="file"
-                ref={fileInputRef}
-                style={{ display: 'none' }}
-                onChange={handleFileChange}
-              />
-            </div>
-            
-            <div className="flex justify-between">
-              <div className="flex space-x-2">
+              
+              <div className="flex flex-col gap-2 justify-end">
                 <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center px-3 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-gray-300"
+                  type="button"
+                  onClick={handleAttachmentClick}
+                  className="px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded"
+                  disabled={!booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                  </svg>
+                  📎
                 </button>
                 
-                {/* Show create invoice button for sellers when booking is confirmed */}
-                {isSeller && booking?.status === 'confirmed' && (
-                  <button
-                    onClick={handleCreateInvoice}
-                    className="flex items-center px-3 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 text-gray-300"
-                    title="Create Invoice"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </button>
-                )}
+                <button
+                  type="submit"
+                  disabled={(!newMessage.trim() && !attachment) || !booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'}
+                  className={`px-4 py-2 rounded ${
+                    (!newMessage.trim() && !attachment) || !booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'
+                      ? 'bg-gray-600 cursor-not-allowed'
+                      : 'bg-blue-600 hover:bg-blue-700'
+                  } text-white`}
+                >
+                  Send
+                </button>
               </div>
-              
+            </div>
+          </form>
+          
+          {/* Add invoice button for sellers when booking is confirmed */}
+          {isSeller && booking && booking.status === 'confirmed' && (
+            <div className="mb-3">
               <button
-                onClick={handleSendMessage}
-                disabled={(!newMessage || newMessage.trim() === '') && !attachment}
-                className={`px-4 py-2 rounded-lg text-white ${
-                  (!newMessage || newMessage.trim() === '') && !attachment
-                    ? 'bg-gray-600 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700'
-                }`}
+                onClick={handleCreateInvoice}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm flex items-center"
               >
-                {loading ? (
-                  <div className="w-6 h-6 border-t-2 border-blue-200 border-solid rounded-full animate-spin"></div>
-                ) : (
-                  'Send'
-                )}
+                <span className="mr-1">📝</span> Create Invoice
               </button>
             </div>
-          </div>
-
-          {/* Invoice Modal */}
-          {showInvoiceModal && (
-            <InvoiceModal
-              show={showInvoiceModal}
-              onClose={handleCloseInvoiceModal}
-              booking={booking}
-              onInvoiceCreated={handleInvoiceCreated}
-              userRole={isSeller ? 'seller' : 'buyer'}
-              onNotification={setError}
-              existingInvoice={selectedInvoice}
-            />
+          )}
+          
+          {booking && (booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed') && (
+            <div className="text-amber-500 text-sm mt-2 text-center">
+              This conversation is now locked because the booking is {booking.status}.
+            </div>
           )}
         </>
+      )}
+      
+      {/* Invoice Modal */}
+      {showInvoiceModal && (
+        <InvoiceModal
+          booking={booking}
+          existingInvoice={selectedInvoice}
+          onClose={handleCloseInvoiceModal}
+          showNotification={showNotification}
+          currentUser={currentUser}
+          isSeller={isSeller}
+          onInvoiceCreated={handleInvoiceCreated}
+          onSendMessage={handleSendInvoiceMessage}
+        />
       )}
     </div>
   );
 };
 
-export default BookingConversation;
+export default BookingConversation; 

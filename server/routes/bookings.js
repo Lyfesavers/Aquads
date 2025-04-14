@@ -9,7 +9,6 @@ const path = require('path');
 const fs = require('fs');
 const { createNotification } = require('./notifications');
 const mongoose = require('mongoose');
-const Invoice = require('../models/Invoice');
 
 // Require sharp module directly (make it mandatory, not optional)
 const sharp = require('sharp');
@@ -960,82 +959,6 @@ router.get('/notification/:id', auth, async (req, res) => {
   } catch (error) {
     console.error('Error handling notification redirect:', error);
     res.redirect('/dashboard');
-  }
-});
-
-// Send an invoice message
-router.post('/:bookingId/invoices/:invoiceId/message', auth, async (req, res) => {
-  try {
-    const { bookingId, invoiceId } = req.params;
-    
-    // Verify the booking exists
-    const booking = await Booking.findById(bookingId);
-    if (!booking) {
-      return res.status(404).json({ error: 'Booking not found' });
-    }
-
-    // Verify the invoice exists
-    const invoice = await Invoice.findById(invoiceId);
-    if (!invoice) {
-      return res.status(404).json({ error: 'Invoice not found' });
-    }
-
-    // Verify invoice belongs to this booking
-    if (invoice.bookingId.toString() !== bookingId) {
-      return res.status(400).json({ error: 'Invoice does not belong to this booking' });
-    }
-
-    // Verify user is the seller (only sellers can send invoices)
-    if (booking.sellerId.toString() !== req.user.userId) {
-      return res.status(403).json({ error: 'Only the seller can send invoice messages' });
-    }
-
-    // Create message text based on invoice status
-    let messageText = '';
-    if (invoice.status === 'paid') {
-      messageText = `Invoice #${invoice.invoiceNumber} has been marked as paid`;
-    } else if (invoice.status === 'cancelled') {
-      messageText = `Invoice #${invoice.invoiceNumber} has been cancelled`;
-    } else {
-      messageText = `Invoice #${invoice.invoiceNumber} for ${invoice.currency} ${invoice.amount}`;
-    }
-
-    // Create and save the new message
-    const newMessage = new BookingMessage({
-      bookingId,
-      senderId: req.user.userId,
-      message: messageText,
-      messageType: 'invoice',
-      invoiceId: invoice._id,
-      createdAt: new Date()
-    });
-
-    await newMessage.save();
-
-    // Populate sender info
-    const populatedMessage = await BookingMessage.findById(newMessage._id)
-      .populate('senderId', 'username image')
-      .populate('invoiceId');
-
-    // Add notification for the invoice
-    const recipientId = booking.buyerId;
-    const conversationLink = `/dashboard?tab=bookings&booking=${bookingId}`;
-    
-    // Create notification message
-    let notificationMessage = `${req.user.username} sent an invoice for ${invoice.currency} ${invoice.amount}`;
-    
-    // Create the notification
-    await createNotification(
-      recipientId,
-      'invoice',
-      notificationMessage,
-      conversationLink
-    );
-
-    res.status(201).json(populatedMessage);
-  } catch (error) {
-    console.error('Error sending invoice message:', error);
-    res.status(500).json({ error: 'Failed to send invoice message' });
   }
 });
 
