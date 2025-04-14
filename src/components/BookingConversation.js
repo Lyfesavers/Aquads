@@ -20,12 +20,14 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
 
   // Fetch messages on component mount
   useEffect(() => {
-    fetchMessages();
-    if (isSeller || (booking?.buyerId?._id === currentUser?.userId)) {
-      fetchInvoices();
+    if (booking && booking._id) {
+      fetchMessages();
+      if (isSeller || (booking?.buyerId?._id === currentUser?.userId)) {
+        fetchInvoices();
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [booking._id]);
+  }, [booking?._id]);
 
   // Auto-scroll to bottom when messages update
   useEffect(() => {
@@ -38,11 +40,16 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
 
   // Fetch invoices for the current booking
   const fetchInvoices = async () => {
+    if (!booking || !booking._id) {
+      return;
+    }
+    
     try {
       const invoiceData = await invoiceService.getInvoicesByBookingId(booking._id);
-      setInvoices(invoiceData);
+      setInvoices(invoiceData || []);
     } catch (err) {
       logger.error('Error fetching invoices:', err);
+      setInvoices([]);
       // Don't show notification for this to avoid cluttering the UI
     }
   };
@@ -282,7 +289,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
     // Check if the message is about an invoice
     const invoiceMatch = msg.message && typeof msg.message === 'string' && msg.message.match(/Invoice #(INV-\d{4}-\d{4})/);
     const invoiceNumberFromMessage = invoiceMatch ? invoiceMatch[1] : null;
-    const invoiceFromMessage = invoiceNumberFromMessage ? 
+    const invoiceFromMessage = invoiceNumberFromMessage && invoices && invoices.length > 0 ? 
       invoices.find(inv => inv.invoiceNumber === invoiceNumberFromMessage) : null;
 
     return (
@@ -367,7 +374,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
     <div className="bg-gray-800 rounded-lg p-4 shadow-lg w-full max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-4 border-b border-gray-700 pb-3">
         <h3 className="text-xl text-blue-400 font-semibold">
-          Conversation: {booking.serviceId.title}
+          Conversation: {booking?.serviceId?.title || 'Loading...'}
         </h3>
         <button onClick={onClose} className="text-gray-400 hover:text-white">
           ✖
