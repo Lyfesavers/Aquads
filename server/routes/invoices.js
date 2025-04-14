@@ -43,8 +43,22 @@ router.post('/', auth, async (req, res) => {
       description, 
       notes, 
       templateId,
-      paymentLink 
+      paymentLink,
+      amount,
+      currency
     } = req.body;
+
+    // Print all fields for debugging
+    console.log('Invoice fields:', {
+      bookingId, 
+      dueDate, 
+      hasItems: !!items && items.length > 0,
+      itemsCount: items?.length,
+      description,
+      paymentLink,
+      auth: !!req.user,
+      userId: req.user?.userId
+    });
 
     // Validate required fields
     if (!bookingId) {
@@ -74,11 +88,26 @@ router.post('/', auth, async (req, res) => {
 
     console.log('Booking found:', booking._id);
     console.log('Request user:', req.user.userId);
-    console.log('Booking seller:', booking.sellerId.toString());
+    console.log('Booking seller:', booking.sellerId);
+    console.log('Booking buyer:', booking.buyerId);
+
+    // Check if sellerId is a string or ObjectId and convert as needed
+    const sellerIdString = booking.sellerId.toString ? booking.sellerId.toString() : booking.sellerId;
+    const userIdString = req.user.userId.toString ? req.user.userId.toString() : req.user.userId;
+
+    console.log('Comparing user IDs:', { sellerIdString, userIdString });
 
     // Check if seller is the one creating the invoice
-    if (booking.sellerId.toString() !== req.user.userId) {
-      return res.status(403).json({ error: 'Only the seller can create invoices' });
+    if (sellerIdString !== userIdString) {
+      return res.status(403).json({ 
+        error: 'Only the seller can create invoices',
+        details: { 
+          sellerIdString, 
+          userIdString, 
+          sellerId: booking.sellerId, 
+          userId: req.user.userId
+        }
+      });
     }
 
     // Process items to ensure numeric values
@@ -101,30 +130,35 @@ router.post('/', auth, async (req, res) => {
     }
 
     // Calculate total amount from items or use booking price as default
-    let totalAmount = booking.price || 0;
-    if (processedItems.length > 0) {
+    let totalAmount = amount || booking.price || 0;
+    if (!amount && processedItems.length > 0) {
       totalAmount = processedItems.reduce((sum, item) => sum + (item.amount || 0), 0);
     }
 
     const invoiceNumber = await generateInvoiceNumber();
     console.log('Generated invoice number:', invoiceNumber);
 
-    const newInvoice = new Invoice({
+    // Create invoice document data
+    const invoiceData = {
       bookingId,
       sellerId: booking.sellerId,
       buyerId: booking.buyerId,
       invoiceNumber,
       amount: totalAmount,
-      currency: booking.currency || 'USD',
+      currency: currency || booking.currency || 'USD',
       dueDate: new Date(dueDate),
-      description: description || `Invoice for ${booking.serviceId}`,
+      description: description || `Invoice for service`,
       paymentLink,
       items: processedItems,
       notes: notes || '',
       templateId: templateId || 'default',
-    });
+    };
 
-    console.log('Saving new invoice:', JSON.stringify(newInvoice.toObject()));
+    console.log('Creating invoice with data:', JSON.stringify(invoiceData));
+
+    // Create and save the new invoice
+    const newInvoice = new Invoice(invoiceData);
+    console.log('Saving new invoice...');
 
     await newInvoice.save();
     console.log('Invoice saved successfully with ID:', newInvoice._id);
@@ -148,11 +182,25 @@ router.post('/', auth, async (req, res) => {
     
     // Provide more specific error messages based on error type
     if (error.name === 'ValidationError') {
-      const validationErrors = Object.values(error.errors).map(err => err.message);
+      // Extract validation error details
+      const errorDetails = {};
+      if (error.errors) {
+        Object.keys(error.errors).forEach(key => {
+          errorDetails[key] = error.errors[key].message;
+        });
+      }
+      
+      const validationErrors = Object.values(error.errors || {}).map(err => err.message);
+      const errorMessage = validationErrors.length > 0 
+        ? validationErrors.join(', ') 
+        : 'Validation failed, please check all required fields';
+      
+      console.error('Validation error details:', errorDetails);
+      
       return res.status(400).json({ 
         error: 'Validation error', 
-        details: validationErrors,
-        message: validationErrors.join(', ')
+        details: errorDetails,
+        message: errorMessage
       });
     }
     
@@ -160,11 +208,25 @@ router.post('/', auth, async (req, res) => {
       return res.status(400).json({ 
         error: 'Invalid data format', 
         field: error.path, 
-        value: error.value 
+        value: error.value,
+        message: `Invalid format for field: ${error.path}`
       });
     }
     
-    res.status(500).json({ error: error.message || 'Internal server error' });
+    if (error.code === 11000) {
+      // Duplicate key error
+      return res.status(400).json({
+        error: 'Duplicate key error',
+        message: 'An invoice with this number already exists',
+        details: error.keyValue
+      });
+    }
+    
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message || 'Failed to create invoice',
+      details: error.toString()
+    });
   }
 });
 

@@ -71,6 +71,20 @@ const createInvoice = async (invoiceData) => {
       throw new Error('paymentLink is required');
     }
     
+    // Format the dueDate properly for MongoDB
+    if (processedData.dueDate && typeof processedData.dueDate === 'string') {
+      try {
+        // If it's a date string like "2025-04-21", convert to ISO date format
+        const [year, month, day] = processedData.dueDate.split('-').map(Number);
+        const date = new Date(year, month - 1, day);
+        processedData.dueDate = date.toISOString();
+        console.log('Formatted dueDate to ISO format:', processedData.dueDate);
+      } catch (dateError) {
+        console.error('Error formatting date:', dateError);
+        // Keep the original format if parsing fails
+      }
+    }
+    
     // Convert any numeric strings to numbers for MongoDB
     if (processedData.items) {
       processedData.items = processedData.items.map(item => ({
@@ -80,6 +94,13 @@ const createInvoice = async (invoiceData) => {
         amount: Number(item.amount || 0),
       }));
     }
+    
+    // Make sure we're not sending undefined or empty values
+    Object.keys(processedData).forEach(key => {
+      if (processedData[key] === undefined || processedData[key] === '') {
+        delete processedData[key];
+      }
+    });
     
     console.log('Processed invoice data:', JSON.stringify(processedData));
     
@@ -99,8 +120,17 @@ const createInvoice = async (invoiceData) => {
       console.error('Server response error:', error.response.status);
       console.error('Error data:', error.response.data);
       
-      if (error.response.data && error.response.data.error) {
-        throw new Error(error.response.data.error);
+      // Extract and log detailed validation errors if available
+      if (error.response.data) {
+        if (error.response.data.details) {
+          console.error('Validation errors:', error.response.data.details);
+        }
+        if (error.response.data.message) {
+          console.error('Error message:', error.response.data.message);
+        }
+        if (error.response.data.error) {
+          throw new Error(error.response.data.error);
+        }
       }
     } else if (error.request) {
       // The request was made but no response was received

@@ -126,25 +126,35 @@ const InvoiceModal = ({
     console.log('Starting invoice creation with booking:', booking?._id);
 
     try {
+      // Ensure booking is available
+      if (!booking || !booking._id) {
+        throw new Error('Booking information is missing');
+      }
+
       // Calculate total for each item
       const itemsWithAmount = formData.items.map(item => ({
         ...item,
-        amount: (item.quantity || 0) * (item.price || 0)
+        quantity: Number(item.quantity || 0),
+        price: Number(item.price || 0),
+        amount: Number(item.quantity || 0) * Number(item.price || 0),
       }));
+
+      // Calculate total amount
+      const totalAmount = itemsWithAmount.reduce((sum, item) => sum + (item.amount || 0), 0);
 
       // Create payload with all required fields
       const invoiceData = {
-        ...formData,
-        items: itemsWithAmount,
         bookingId: booking._id,
-        // Make sure these required fields are explicitly set
-        sellerId: undefined, // Will be set by the server based on the auth token
-        buyerId: undefined, // Will be set by the server based on the booking
         dueDate: formData.dueDate,
         description: formData.description || `Invoice for ${booking?.serviceId?.title || 'service'}`,
-        paymentLink: formData.paymentLink,
+        items: itemsWithAmount,
+        notes: formData.notes || '',
         templateId: formData.templateId || 'default',
-        notes: formData.notes || ''
+        paymentLink: formData.paymentLink,
+        // Include calculated amount
+        amount: totalAmount,
+        // Include currency if available from booking
+        currency: booking.currency || 'USD',
       };
       
       console.log('Sending invoice data to server:', JSON.stringify(invoiceData));
@@ -171,8 +181,12 @@ const InvoiceModal = ({
         errorMsg = error.message;
       } else if (typeof error === 'string') {
         errorMsg = error;
-      } else if (error.response && error.response.data && error.response.data.error) {
-        errorMsg = error.response.data.error;
+      } else if (error.response && error.response.data) {
+        if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        } else if (error.response.data.error) {
+          errorMsg = error.response.data.error;
+        }
       }
       
       console.error('Invoice creation failed:', errorMsg);
