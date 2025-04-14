@@ -391,7 +391,6 @@ app.use('/api/blogs', blogsRoutes);
 app.use('/api/sitemap', sitemapRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/games', gamesRoutes);
-app.use('/api/invoices', require('./routes/invoices'));
 
 console.log('Notifications routes registered:', typeof notificationsRoutes === 'function' ? '✓' : '✗');
 console.log('Games routes registered:', typeof gamesRoutes === 'function' ? '✓' : '✗');
