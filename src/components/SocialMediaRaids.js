@@ -82,6 +82,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [tweetUrl, setTweetUrl] = useState('');
   const [isValidUrl, setIsValidUrl] = useState(true);
   const tweetEmbedRef = useRef(null);
+  const [hasCompletedRaid, setHasCompletedRaid] = useState(false);
   
   // For admin creation
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -108,6 +109,20 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     // Load Twitter widget script
     loadTwitterWidgetScript();
   }, []);
+
+  // Add effect to detect raid completion when currentUser changes
+  useEffect(() => {
+    if (currentUser && selectedRaid?.completions) {
+      const completed = selectedRaid.completions.some(
+        completion => completion.userId && completion.userId.toString() === currentUser.id?.toString()
+      );
+      setHasCompletedRaid(completed);
+      
+      if (completed && !success) {
+        setSuccess('You have already completed this raid!');
+      }
+    }
+  }, [currentUser, selectedRaid, success]);
 
   useEffect(() => {
     // When tweet URL changes, try to embed it
@@ -278,6 +293,26 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       // Filter out raids older than 7 days
       const filteredRaids = data.filter(raid => isWithinSevenDays(raid.createdAt));
       
+      // If a raid is already selected and in the new raids list, update it
+      if (selectedRaid) {
+        const updatedSelectedRaid = filteredRaids.find(raid => raid._id === selectedRaid._id);
+        if (updatedSelectedRaid) {
+          setSelectedRaid(updatedSelectedRaid);
+          
+          // Check if current user has completed this raid
+          if (currentUser && updatedSelectedRaid.completions) {
+            const completed = updatedSelectedRaid.completions.some(
+              completion => completion.userId && completion.userId.toString() === currentUser.id?.toString()
+            );
+            setHasCompletedRaid(completed);
+            
+            if (completed && !success) {
+              setSuccess('You have already completed this raid!');
+            }
+          }
+        }
+      }
+      
       setRaids(filteredRaids);
     } catch (err) {
       console.error('Error fetching Twitter raids:', err);
@@ -313,6 +348,20 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     setIsValidUrl(true);
     // Generate a new verification code for the user
     setVerificationCode(generateVerificationCode());
+    
+    // Check if user has already completed this raid
+    if (currentUser && raid.completions) {
+      const completed = raid.completions.some(
+        completion => completion.userId && completion.userId.toString() === currentUser.id?.toString()
+      );
+      setHasCompletedRaid(completed);
+      
+      if (completed) {
+        setSuccess('You have already completed this raid!');
+      }
+    } else {
+      setHasCompletedRaid(false);
+    }
     
     // Scroll to the form section for better UX
     setTimeout(() => {
@@ -403,6 +452,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       // Clear inputs after confirmed success
       setTwitterUsername('');
       setTweetUrl('');
+      
+      // Mark this raid as completed by the user
+      setHasCompletedRaid(true);
       
       // Notify the user
       showNotification(data.message || 'Successfully completed Twitter raid!', 'success');
@@ -1070,17 +1122,19 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                     </div>
                   )}
                   
-                  <button
-                    type="submit"
-                    disabled={submitting || verifyingTweet}
-                    className={`w-full px-4 py-3 rounded font-medium ${
-                      submitting || verifyingTweet
-                        ? 'bg-gray-600 cursor-not-allowed'
-                        : 'bg-blue-600 hover:bg-blue-700'
-                    } text-white verify-button`}
-                  >
-                    {verifyingTweet ? 'Verifying Tweet...' : submitting ? 'Submitting...' : 'Verify & Complete Task'}
-                  </button>
+                  {!hasCompletedRaid && (
+                    <button
+                      type="submit"
+                      disabled={submitting || verifyingTweet}
+                      className={`w-full px-4 py-3 rounded font-medium ${
+                        submitting || verifyingTweet
+                          ? 'bg-gray-600 cursor-not-allowed'
+                          : 'bg-blue-600 hover:bg-blue-700'
+                      } text-white verify-button`}
+                    >
+                      {verifyingTweet ? 'Verifying Tweet...' : submitting ? 'Submitting...' : 'Verify & Complete Task'}
+                    </button>
+                  )}
                 </form>
               </div>
             </div>
