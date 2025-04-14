@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { API_URL } from '../services/api';
 import logger from '../utils/logger';
+import InvoiceModal from './InvoiceModal';
+import invoiceService from '../services/invoiceService';
 
 const BookingConversation = ({ booking, currentUser, onClose, showNotification }) => {
   const [messages, setMessages] = useState([]);
@@ -8,12 +10,20 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [attachment, setAttachment] = useState(null);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [invoices, setInvoices] = useState([]);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  const isSeller = booking?.sellerId?._id === currentUser?.userId;
 
   // Fetch messages on component mount
   useEffect(() => {
     fetchMessages();
+    if (isSeller || (booking?.buyerId?._id === currentUser?.userId)) {
+      fetchInvoices();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [booking._id]);
 
@@ -24,6 +34,17 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Fetch invoices for the current booking
+  const fetchInvoices = async () => {
+    try {
+      const invoiceData = await invoiceService.getInvoicesByBookingId(booking._id);
+      setInvoices(invoiceData);
+    } catch (err) {
+      logger.error('Error fetching invoices:', err);
+      // Don't show notification for this to avoid cluttering the UI
+    }
   };
 
   // Function to verify image URL exists
@@ -155,6 +176,44 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
     }
   };
 
+  // Handle creating a new invoice
+  const handleCreateInvoice = () => {
+    setShowInvoiceModal(true);
+  };
+
+  // Handle closing the invoice modal
+  const handleCloseInvoiceModal = () => {
+    setShowInvoiceModal(false);
+    setSelectedInvoice(null);
+  };
+
+  // Handle invoice creation success
+  const handleInvoiceCreated = (invoice) => {
+    // Add the new invoice to the list
+    setInvoices(prev => [invoice, ...prev]);
+    // Close the modal
+    setShowInvoiceModal(false);
+  };
+
+  // Handle sending a message from the invoice modal
+  const handleSendInvoiceMessage = (message) => {
+    // Set the message and immediately send it
+    setNewMessage(message);
+    const event = { preventDefault: () => {} };
+    // Call handleSendMessage with a fake event
+    setTimeout(() => {
+      if (message === newMessage) {
+        handleSendMessage(event);
+      }
+    }, 100);
+  };
+
+  // View an invoice
+  const handleViewInvoice = (invoice) => {
+    setSelectedInvoice(invoice);
+    setShowInvoiceModal(true);
+  };
+
   // Determine if a message is from the current user
   const isCurrentUserMessage = (senderId) => {
     return senderId._id === currentUser.userId;
@@ -220,9 +279,27 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
       return urls.queryParam;
     };
 
+    // Check if the message is about an invoice
+    const invoiceMatch = msg.message && typeof msg.message === 'string' && msg.message.match(/Invoice #(INV-\d{4}-\d{4})/);
+    const invoiceNumberFromMessage = invoiceMatch ? invoiceMatch[1] : null;
+    const invoiceFromMessage = invoiceNumberFromMessage ? 
+      invoices.find(inv => inv.invoiceNumber === invoiceNumberFromMessage) : null;
+
     return (
       <>
         {msg.message && <p className="text-sm whitespace-pre-wrap mb-2">{msg.message}</p>}
+        
+        {/* If this is an invoice message and we found the invoice, show a button to view it */}
+        {invoiceFromMessage && (
+          <div className="mt-2">
+            <button
+              onClick={() => handleViewInvoice(invoiceFromMessage)}
+              className="px-3 py-1 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30 text-sm"
+            >
+              View Invoice #{invoiceFromMessage.invoiceNumber}
+            </button>
+          </div>
+        )}
         
         {msg.attachment && msg.attachmentType === 'image' && (
           <div className="mt-2 relative">
@@ -254,166 +331,31 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
                             max-height: 100vh;
                             object-fit: contain;
                           }
-                          .watermark-notice {
-                            position: absolute;
-                            bottom: 20px;
-                            left: 0;
-                            right: 0;
-                            text-align: center;
-                            color: #FCD34D;
-                            font-size: 14px;
-                            background-color: rgba(0,0,0,0.7);
-                            padding: 8px;
-                          }
                         </style>
                       </head>
                       <body>
                         <img src="${msg.dataUrl}" alt="${msg.attachmentName || 'Image'}" />
-                        ${msg.isWatermarked ? 
-                          '<div class="watermark-notice">Draft image with watermark. Original will be available after completion.</div>' : 
-                          ''}
                       </body>
                     </html>
                   `);
-                  newWindow.document.close();
-                  return;
-                }
-                
-                // Otherwise try URL approach
-                const urls = generateAttachmentUrls(msg.attachment);
-                logger.log('Opening image with most reliable method');
-                // Try the query parameter endpoint as it's most reliable
-                window.open(urls.queryParam, '_blank');
-              }}
-              onError={(e) => {
-                logger.error("Image failed to load:", e.target.src);
-                
-                // If we have a data URL and aren't already using it, switch to it
-                if (msg.dataUrl && e.target.src !== msg.dataUrl) {
-                  logger.log('Switching to embedded data URL');
-                  e.target.src = msg.dataUrl;
-                  return;
-                }
-                
-                // Otherwise try different URL formats in sequence
-                const urls = generateAttachmentUrls(msg.attachment);
-                const urlsToTry = [
-                  urls.queryParam,
-                  urls.fullRelative,
-                  urls.directEndpoint,
-                  urls.apiEndpoint
-                ];
-                
-                // Find which URL we're currently using
-                const currentIndex = urlsToTry.indexOf(e.target.src);
-                
-                // Try next URL if we haven't tried them all
-                if (currentIndex < urlsToTry.length - 1) {
-                  const nextUrl = urlsToTry[currentIndex + 1];
-                  logger.log(`Trying alternate URL (${currentIndex + 2}/${urlsToTry.length}):`, nextUrl);
-                  e.target.src = nextUrl;
                 } else {
-                  // We've tried all URLs, use placeholder
-                  logger.log('All URLs failed, using placeholder');
-                  e.target.src = 'https://via.placeholder.com/150?text=Image+Not+Found';
-                  e.target.className = 'max-w-full rounded-lg max-h-40 object-contain opacity-60 border border-red-500';
+                  window.open(getBestImageUrl(), '_blank');
                 }
               }}
             />
-            {msg.isWatermarked && (
-              <div className="absolute top-0 right-0 bg-yellow-500 text-black text-xs px-2 py-1 rounded-bl-lg rounded-tr-lg">
-                DRAFT
-              </div>
-            )}
-            <div className="text-xs mt-1 text-gray-300 flex justify-between items-center">
-              <span>{msg.attachmentName || "Image attachment"}</span>
-              <div className="flex items-center">
-                {msg.isWatermarked && (
-                  <span className="text-yellow-400 text-xs mr-2">
-                    Watermarked preview
-                  </span>
-                )}
-                <a 
-                  href="#"
-                  className="ml-2 text-blue-400 hover:text-blue-300"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    
-                    // If we have a data URL, use it directly
-                    if (msg.dataUrl) {
-                      const newWindow = window.open();
-                      newWindow.document.write(`
-                        <html>
-                          <head>
-                            <title>${msg.attachmentName || 'Image'}</title>
-                            <style>
-                              body { 
-                                margin: 0; 
-                                display: flex; 
-                                justify-content: center; 
-                                align-items: center; 
-                                min-height: 100vh;
-                                background-color: #0f172a;
-                              }
-                              img {
-                                max-width: 100%;
-                                max-height: 100vh;
-                                object-fit: contain;
-                              }
-                              .watermark-notice {
-                                position: absolute;
-                                bottom: 20px;
-                                left: 0;
-                                right: 0;
-                                text-align: center;
-                                color: #FCD34D;
-                                font-size: 14px;
-                                background-color: rgba(0,0,0,0.7);
-                                padding: 8px;
-                              }
-                            </style>
-                          </head>
-                          <body>
-                            <img src="${msg.dataUrl}" alt="${msg.attachmentName || 'Image'}" />
-                            ${msg.isWatermarked ? 
-                              '<div class="watermark-notice">Draft image with watermark. Original will be available after completion.</div>' : 
-                              ''}
-                          </body>
-                        </html>
-                      `);
-                      newWindow.document.close();
-                      return;
-                    }
-                    
-                    // Otherwise try URL approach
-                    const urls = generateAttachmentUrls(msg.attachment);
-                    logger.log('Opening image with most reliable method');
-                    // Try the query parameter endpoint as it's most reliable
-                    window.open(urls.queryParam, '_blank');
-                  }}
-                >
-                  (View full image)
-                </a>
-              </div>
-            </div>
           </div>
         )}
         
         {msg.attachment && msg.attachmentType === 'file' && (
-          <div className="mt-2 bg-gray-800 p-2 rounded-lg border border-gray-700">
+          <div className="mt-2">
             <a 
-              href="#"
-              className="flex items-center text-blue-400 hover:text-blue-300"
-              onClick={(e) => {
-                e.preventDefault();
-                const urls = generateAttachmentUrls(msg.attachment);
-                window.open(urls.directEndpoint, '_blank');
-              }}
+              href={getBestImageUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm text-blue-400 hover:text-blue-300"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <span>{msg.attachmentName || 'Download file'}</span>
+              <span className="mr-2">📎</span>
+              {msg.attachmentName || getFilename(msg.attachment)}
             </a>
           </div>
         )}
@@ -442,49 +384,55 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
         <>
           <div className="h-96 overflow-y-auto mb-4 p-2 bg-gray-900 rounded-lg">
             {messages.length === 0 ? (
-              <div className="text-gray-500 text-center my-8">
+              <div className="text-gray-400 text-center py-4">
                 No messages yet. Start the conversation!
               </div>
             ) : (
               messages.map((msg, index) => (
                 <div 
-                  key={msg._id || `msg-${index}`}
-                  className={`mb-3 flex ${isCurrentUserMessage(msg.senderId) ? 'justify-end' : 'justify-start'}`}
+                  key={index} 
+                  className={`mb-4 ${
+                    isCurrentUserMessage(msg.sender) ? 'ml-auto' : 'mr-auto'
+                  } max-w-[75%] ${
+                    isCurrentUserMessage(msg.sender) ? 'bg-blue-800 text-white' : 'bg-gray-700 text-gray-100'
+                  } p-3 rounded-lg`}
                 >
-                  <div 
-                    className={`max-w-xs sm:max-w-sm md:max-w-md rounded-lg px-4 py-2 ${
-                      isCurrentUserMessage(msg.senderId) 
-                        ? 'bg-blue-600 text-white rounded-br-none' 
-                        : 'bg-gray-700 text-white rounded-bl-none'
-                    } ${msg.isInitialRequirements ? 'border-l-4 border-yellow-500' : ''}`}
-                  >
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="font-semibold text-sm">
-                        {msg.senderId.username}
-                        {msg.isInitialRequirements && ' (Initial Requirements)'}
-                      </span>
-                      <span className="text-xs opacity-75">
-                        {formatMessageTime(msg.createdAt)}
-                      </span>
-                    </div>
-                    {renderMessageContent(msg)}
+                  <div className="flex justify-between items-start mb-1">
+                    <span className="font-semibold text-xs">
+                      {msg.sender.username}
+                    </span>
+                    <span className="text-xs text-gray-400 ml-2">
+                      {formatMessageTime(msg.createdAt)}
+                    </span>
                   </div>
+                  {renderMessageContent(msg)}
                 </div>
               ))
             )}
             <div ref={messagesEndRef} />
           </div>
           
-          {/* Hidden file input */}
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            className="hidden"
-            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar"
-          />
+          {/* Add invoice button for sellers when booking is confirmed */}
+          {isSeller && booking.status === 'confirmed' && (
+            <div className="mb-3">
+              <button
+                onClick={handleCreateInvoice}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm flex items-center"
+              >
+                <span className="mr-1">📝</span> Create Invoice
+              </button>
+            </div>
+          )}
           
           <form onSubmit={handleSendMessage} className="space-y-3">
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              onChange={handleFileChange}
+              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar,.txt"
+            />
+            
             {/* Show selected attachment if any */}
             {attachment && (
               <div className="flex items-center bg-gray-700 rounded-lg p-2">
@@ -510,7 +458,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
                 disabled={booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'}
               />
               
-              <div className="flex flex-col gap-2 justify-end">
+              <div className="flex flex-col gap-2">
                 <button
                   type="button"
                   onClick={handleAttachmentClick}
@@ -541,6 +489,20 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
             </div>
           )}
         </>
+      )}
+      
+      {/* Invoice Modal */}
+      {showInvoiceModal && (
+        <InvoiceModal
+          booking={booking}
+          existingInvoice={selectedInvoice}
+          onClose={handleCloseInvoiceModal}
+          showNotification={showNotification}
+          currentUser={currentUser}
+          isSeller={isSeller}
+          onInvoiceCreated={handleInvoiceCreated}
+          onSendMessage={handleSendInvoiceMessage}
+        />
       )}
     </div>
   );
