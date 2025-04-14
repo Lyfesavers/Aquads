@@ -103,6 +103,14 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [selectedChain, setSelectedChain] = useState(BLOCKCHAIN_OPTIONS[0]);
   const [copiedAddress, setCopiedAddress] = useState(false);
 
+  // Use a state to track if preview is loading, rather than direct DOM manipulation
+  const [previewState, setPreviewState] = useState({
+    loading: false,
+    error: false,
+    message: '',
+    tweetId: null
+  });
+
   useEffect(() => {
     fetchRaids();
     // Load Twitter widget script
@@ -111,21 +119,28 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
 
   useEffect(() => {
     // When tweet URL changes, try to embed it
-    if (tweetUrl && tweetEmbedRef.current) {
+    if (tweetUrl) {
       try {
         embedTweet(tweetUrl);
       } catch (error) {
         console.error('Error in tweet embed useEffect:', error);
+        
         // Don't let embed errors crash the component
-        if (tweetEmbedRef.current) {
-          try {
-            // Simple fallback message instead of complex DOM manipulation
-            tweetEmbedRef.current.innerHTML = '<div class="p-4 text-gray-400">Tweet preview unavailable. Verification will still work.</div>';
-          } catch (domError) {
-            console.error('DOM manipulation error:', domError);
-          }
-        }
+        setPreviewState({
+          loading: false,
+          error: true,
+          message: 'Error embedding tweet. Please check URL format.',
+          tweetId: null
+        });
       }
+    } else {
+      // Reset preview state when URL is cleared
+      setPreviewState({
+        loading: false,
+        error: false,
+        message: '',
+        tweetId: null
+      });
     }
   }, [tweetUrl]);
 
@@ -197,67 +212,46 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   };
 
   const embedTweet = (url) => {
-    // Guard against null ref
-    if (!tweetEmbedRef.current) return;
-    
+    // Instead of manipulating DOM directly, we'll update state
     try {
-      // Safely clear previous embed
-      tweetEmbedRef.current.innerHTML = '';
-      
       const tweetId = extractTweetId(url);
+      
       if (!tweetId) {
-        tweetEmbedRef.current.innerHTML = '<div class="p-4 text-red-400">Invalid tweet URL format</div>';
+        setPreviewState({
+          loading: false,
+          error: true,
+          message: 'Invalid tweet URL format',
+          tweetId: null
+        });
         return;
       }
       
-      // Use a simple static approach rather than complex DOM manipulations
-      // This avoids DOM errors that can happen with framework reconciliation
-      tweetEmbedRef.current.innerHTML = `
-        <div class="text-center p-4">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p class="text-gray-400">Loading tweet preview...</p>
-        </div>
-      `;
+      // Set loading state
+      setPreviewState({
+        loading: true,
+        error: false,
+        message: 'Loading tweet preview...',
+        tweetId
+      });
       
-      // Simple timeout to simulate loading
+      // After a delay, update to "loaded" state
+      // This avoids any direct DOM manipulation
       setTimeout(() => {
-        if (tweetEmbedRef.current) {
-          try {
-            // Create a simpler representation of the tweet instead of using Twitter's embed
-            tweetEmbedRef.current.innerHTML = `
-              <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
-                <div class="flex items-center mb-3">
-                  <div class="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 mr-3">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085a4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <div class="font-bold text-white">Tweet</div>
-                    <div class="text-gray-500 text-sm">ID: ${tweetId}</div>
-                  </div>
-                </div>
-                <p class="text-gray-300 mb-3">
-                  URL: <a href="${url}" target="_blank" class="text-blue-400 underline">${url}</a>
-                </p>
-                <div class="text-gray-400 text-sm bg-gray-900/50 p-3 rounded">
-                  <span class="text-green-400">✓</span> Tweet URL validated
-                </div>
-              </div>
-            `;
-          } catch (embedError) {
-            console.error('Error rendering tweet preview:', embedError);
-            // Fallback to a simple message
-            tweetEmbedRef.current.innerHTML = '<div class="p-4 text-green-400">Tweet URL verified ✓</div>';
-          }
-        }
+        setPreviewState({
+          loading: false,
+          error: false,
+          message: 'Tweet URL verified',
+          tweetId
+        });
       }, 500);
     } catch (error) {
       console.error('Tweet embedding error:', error);
-      // Try a simple fallback display if possible
-      if (tweetEmbedRef.current) {
-        tweetEmbedRef.current.innerHTML = '<div class="p-4 text-green-400">Tweet URL verified ✓</div>';
-      }
+      setPreviewState({
+        loading: false,
+        error: true,
+        message: 'Error verifying tweet URL',
+        tweetId: null
+      });
     }
   };
 
@@ -271,18 +265,28 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       
       // It's okay to have an empty Twitter username now
 
-      // Attempt to embed tweet for verification
+      // Attempt to verify the tweet
       setVerifyingTweet(true);
       
       try {
-        // We don't need to wait for this to succeed, just show the embed if it works
-        embedTweet(tweetUrl);
+        // Just validate the URL, no DOM manipulation
+        const tweetId = extractTweetId(tweetUrl);
+        if (!tweetId) {
+          throw new Error('Invalid tweet URL format');
+        }
         
-        // Now this is optional verification
+        // Set preview state to verified
+        setPreviewState({
+          loading: false,
+          error: false,
+          message: 'Tweet URL verified',
+          tweetId
+        });
+        
         return true;
       } catch (embedError) {
-        console.error('Tweet embed error:', embedError);
-        // Even if embedding fails, we don't block the task completion
+        console.error('Tweet verification error:', embedError);
+        // Even if verification fails, don't block the task completion
         return true;
       } finally {
         setVerifyingTweet(false);
@@ -405,15 +409,13 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       setSubmitting(true);
       setError(null);
       
-      // CRITICAL: Clear the tweet embed before making the API request
-      // This prevents DOM manipulation errors later
-      if (tweetEmbedRef.current) {
-        try {
-          tweetEmbedRef.current.innerHTML = '';
-        } catch (embedError) {
-          console.error('Error clearing tweet embed before request:', embedError);
-        }
-      }
+      // Reset preview state to avoid any DOM updates during submission
+      setPreviewState({
+        loading: false,
+        error: false,
+        message: 'Submitting...',
+        tweetId: null
+      });
       
       console.log('Submitting raid completion:', {
         twitterUsername: twitterUsername || '(not provided)',
@@ -463,30 +465,29 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         
         console.log('Success response:', data);
         
-        // IMPORTANT: Do all these success updates in a try-catch
-        try {
-          // First set success message
-          setSuccess(data.message || 'Task completed! You earned points.');
-          
-          // Clear inputs
-          setTwitterUsername('');
-          setTweetUrl('');
-          
-          // Show notification
-          showNotification(data.message || 'Successfully completed Twitter raid!', 'success');
-          
-          // Reset selected raid and submitting state
+        // Instead of updating React state while doing DOM manipulation,
+        // use a sequential approach to avoid React reconciliation issues
+        
+        // Step 1: First update submitting and reset UI
+        setSubmitting(false);
+        setTweetUrl('');
+        setTwitterUsername('');
+        setPreviewState({
+          loading: false,
+          error: false,
+          message: '',
+          tweetId: null
+        });
+        
+        // Step 2: Show success message
+        setSuccess(data.message || 'Task completed! You earned points.');
+        showNotification(data.message || 'Successfully completed Twitter raid!', 'success');
+        
+        // Step 3: After a brief delay, reset selected raid and fetch new data
+        setTimeout(() => {
           setSelectedRaid(null);
-          setSubmitting(false);
-          
-          // Refresh the raids list
-          console.log('About to refresh raids list...');
           fetchRaids();
-        } catch (stateError) {
-          console.error('Error updating state after success:', stateError);
-          // Reset state to avoid broken UI
-          setSubmitting(false);
-        }
+        }, 50);
       } catch (networkError) {
         console.error('Network error:', networkError);
         setError(networkError.message || 'Network error. Please try again.');
@@ -645,15 +646,13 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     }
     console.log('safeHandleSubmit called, preventing default and calling handleSubmitTask');
     
-    // First, safely clear any tweet embed to prevent DOM issues
-    if (tweetEmbedRef.current) {
-      try {
-        // Clear the embed completely
-        tweetEmbedRef.current.innerHTML = '<div class="p-4 text-gray-400">Verifying tweet...</div>';
-      } catch (error) {
-        console.error('Error clearing tweet embed:', error);
-      }
-    }
+    // Reset the preview state instead of manipulating DOM
+    setPreviewState({
+      loading: false,
+      error: false,
+      message: 'Processing your submission...',
+      tweetId: null
+    });
     
     try {
       // Call handleSubmitTask but catch any errors
@@ -668,14 +667,13 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       setSubmitting(false);
       setVerifyingTweet(false);
       
-      // Attempt to recover the UI
-      if (tweetEmbedRef.current) {
-        try {
-          tweetEmbedRef.current.innerHTML = '<div class="p-4 text-red-400">An error occurred. Please try again.</div>';
-        } catch (embedError) {
-          console.error('Error updating embed after error:', embedError);
-        }
-      }
+      // Update preview state with error
+      setPreviewState({
+        loading: false,
+        error: true,
+        message: 'An error occurred. Please try again.',
+        tweetId: null
+      });
     }
     
     // Return false to prevent default form submission
@@ -849,17 +847,11 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     }
   }, [success]);
 
-  // Add clean-up function for tweet embed
+  // Replace the effect that was cleaning up DOM nodes
   useEffect(() => {
     return () => {
-      // Clean up any embedded tweets when component unmounts
-      if (tweetEmbedRef.current) {
-        try {
-          tweetEmbedRef.current.innerHTML = '';
-        } catch (error) {
-          console.error('Error cleaning up tweet embed:', error);
-        }
-      }
+      // No need to clean up DOM nodes anymore
+      // React will handle unmounting properly
     };
   }, []);
 
@@ -1234,11 +1226,39 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
             <div className="bg-gray-800/30 p-4 rounded-lg">
               <h4 className="text-white font-semibold mb-3">Tweet Preview</h4>
               {tweetUrl ? (
-                <div
-                  ref={tweetEmbedRef}
-                  className="w-full bg-gray-800/50 rounded-lg overflow-hidden min-h-[300px] flex items-center justify-center"
-                >
-                  <div className="text-gray-400">Loading tweet...</div>
+                <div className="w-full bg-gray-800/50 rounded-lg overflow-hidden min-h-[300px] flex items-center justify-center">
+                  {previewState.loading ? (
+                    <div className="text-center p-4">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                      <p className="text-gray-400">Loading tweet preview...</p>
+                    </div>
+                  ) : previewState.error ? (
+                    <div className="p-4 text-red-400">{previewState.message || 'Error loading tweet'}</div>
+                  ) : previewState.tweetId ? (
+                    <div className="bg-gray-800 p-4 rounded-lg border border-gray-700 w-full">
+                      <div className="flex items-center mb-3">
+                        <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 mr-3">
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085a4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <div className="font-bold text-white">Tweet</div>
+                          <div className="text-gray-500 text-sm">ID: {previewState.tweetId}</div>
+                        </div>
+                      </div>
+                      <p className="text-gray-300 mb-3">
+                        URL: <a href={tweetUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">{tweetUrl}</a>
+                      </p>
+                      <div className="text-gray-400 text-sm bg-gray-900/50 p-3 rounded">
+                        <span className="text-green-400">✓</span> Tweet URL validated
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center p-4">
+                      <p className="text-gray-400">{previewState.message || 'Enter a valid tweet URL'}</p>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="w-full bg-gray-800/50 rounded-lg p-6 flex flex-col items-center justify-center text-center min-h-[300px]">
