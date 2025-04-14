@@ -569,11 +569,34 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
     const invoiceFromMessage = invoiceNumberFromMessage && invoices && invoices.length > 0 ? 
       invoices.find(inv => inv.invoiceNumber === invoiceNumberFromMessage) : null;
 
+    // Safe formatting function for currency that handles non-standard currency codes
+    const formatCurrency = (amount, currencyCode) => {
+      if (amount === undefined || amount === null) return '';
+      
+      // Check if it's a standard currency code (ISO 4217)
+      const standardCurrencyCodes = ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'INR'];
+      
+      try {
+        if (standardCurrencyCodes.includes(currencyCode)) {
+          return new Intl.NumberFormat('en-US', { 
+            style: 'currency', 
+            currency: currencyCode
+          }).format(amount);
+        } else {
+          // For crypto or non-standard currencies, use a simpler format
+          return `${amount.toFixed(2)} ${currencyCode}`;
+        }
+      } catch (error) {
+        console.error('Error formatting currency:', error);
+        return `${amount} ${currencyCode}`;
+      }
+    };
+
     return (
       <>
         {msg.message && <p className="text-sm whitespace-pre-wrap mb-2">{msg.message}</p>}
         
-        {/* If this is an invoice message and we found the invoice, show invoice details */}
+        {/* If this is an invoice message and we found the invoice, show it properly */}
         {invoiceFromMessage && (
           <div className="mt-2 border border-gray-600 bg-gray-800 p-3 rounded-lg">
             <div className="flex justify-between mb-2">
@@ -590,10 +613,10 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
             <div className="mb-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">Amount:</span>
-                <span>{new Intl.NumberFormat('en-US', { 
-                  style: 'currency', 
-                  currency: invoiceFromMessage.currency || 'USD' 
-                }).format(invoiceFromMessage.amount)}</span>
+                <span>{formatCurrency(
+                  invoiceFromMessage.amount, 
+                  invoiceFromMessage.currency
+                )}</span>
               </div>
               {invoiceFromMessage.dueDate && (
                 <div className="flex justify-between text-sm">
