@@ -303,7 +303,23 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         return true;
       }
       
-      // Always validate tweet URL
+      // Check if we're using the auto-filled tweet URL from the raid
+      const usingRaidUrl = selectedRaid && tweetUrl === selectedRaid.tweetUrl;
+      
+      // If we're using the raid URL directly, only require interaction not a special URL
+      if (usingRaidUrl) {
+        console.log('Using original raid URL, just checking basic format');
+        // Just make sure it's a valid twitter URL format 
+        if (!validateTweetUrl(tweetUrl)) {
+          setError('The raid URL appears to be invalid. Please try the Interactive Tweet Viewer method.');
+          return false;
+        }
+        
+        // Original raid URL is valid, continue
+        return true;
+      }
+      
+      // Otherwise validate normal tweet URL as before
       if (!tweetUrl || !validateTweetUrl(tweetUrl)) {
         setError('Please provide a valid tweet URL');
         return false;
@@ -410,7 +426,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     
     setSelectedRaid(raid);
     setTwitterUsername('');
-    setTweetUrl('');
+    
+    // Set the tweet URL from the raid automatically
+    setTweetUrl(raid.tweetUrl);
     setIsValidUrl(true);
     
     // Reset iframe-related states
@@ -419,22 +437,23 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     setIframeVerified(false);
     setIframeLoading(true);
     
-    // Reset preview state
-    setPreviewState({
-      loading: false,
-      error: false,
-      message: '',
-      tweetId: null
-    });
-    
     // Extract tweet ID and prepare for preview
     const tweetId = extractTweetId(raid.tweetUrl);
     if (tweetId) {
+      console.log('Automatically preparing tweet preview with ID:', tweetId);
       setPreviewState({
         loading: false,
         error: false,
         message: 'Tweet ready to view',
         tweetId
+      });
+    } else {
+      console.log('Failed to extract tweet ID from raid URL:', raid.tweetUrl);
+      setPreviewState({
+        loading: false,
+        error: true,
+        message: 'Could not parse tweet URL for preview',
+        tweetId: null
       });
     }
     
@@ -486,6 +505,10 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       if (iframeVerified) {
         console.log('Using iframe verification - proceeding with submission');
       }
+      // If using the original raid URL, we can proceed
+      else if (selectedRaid && tweetUrl === selectedRaid.tweetUrl) {
+        console.log('Using original raid URL - proceeding with submission');
+      }
       // Otherwise check for URL
       else if (!tweetUrl) {
         setError('Please provide your tweet URL or complete interactive verification');
@@ -514,7 +537,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         iframeVerified,
         iframeInteractions,
         raidId: selectedRaid?._id,
-        tweetId: previewState.tweetId
+        tweetId: previewState.tweetId,
+        usingOriginalRaidUrl: selectedRaid && tweetUrl === selectedRaid.tweetUrl
       });
       
       // Save the raid ID before sending the request
@@ -1278,53 +1302,121 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   </p>
                 </div>
   
-                <form onSubmit={safeHandleSubmit} className="mobile-friendly-form">
+                <form onSubmit={safeHandleSubmit} id="verification-form">
                   <div className="mb-4">
-                    <label className="block text-gray-300 mb-2">
-                      Your Twitter Username <span className="text-gray-500">(@username)</span> <span className="text-gray-500">(optional)</span>
-                    </label>
-                    <div className="flex">
-                      <span className="bg-gray-700 px-3 py-2 rounded-l text-gray-500 flex items-center">
-                        @
-                      </span>
-                      <input
-                        type="text"
-                        className="w-full px-4 py-2 bg-gray-700 rounded-r text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="username (optional)"
-                        value={twitterUsername}
-                        onChange={(e) => setTwitterUsername(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="mb-4">
-                    <label className="block text-gray-300 mb-2">
-                      Your Tweet/Reply URL <span className="text-gray-500">(must include "aquads.xyz")</span>
+                    <label className="block text-gray-300 mb-2" htmlFor="twitterUsername">
+                      Twitter Username <span className="text-gray-500">(optional)</span>
                     </label>
                     <input
                       type="text"
-                      className={`w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 ${
-                        tweetUrl && !isValidUrl ? 'border border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'
-                      }`}
-                      placeholder="https://x.com/username/status/1234567890"
-                      value={tweetUrl}
-                      onChange={(e) => {
-                        setTweetUrl(e.target.value);
-                        validateTweetUrl(e.target.value);
-                      }}
-                      required
+                      id="twitterUsername"
+                      value={twitterUsername}
+                      onChange={(e) => setTwitterUsername(e.target.value)}
+                      placeholder="Enter your Twitter username"
+                      className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
+                  </div>
+                  
+                  <div className="mb-6">
+                    <label className="block text-gray-300 mb-2" htmlFor="tweetUrl">
+                      Tweet URL 
+                      {selectedRaid?.tweetUrl && (
+                        <span className="text-green-400 ml-2 text-sm">(Auto-filled from selected raid)</span>
+                      )}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        id="tweetUrl"
+                        value={tweetUrl}
+                        onChange={(e) => {
+                          setTweetUrl(e.target.value);
+                          setIsValidUrl(validateTweetUrl(e.target.value));
+                          
+                          // If URL is cleared, reset preview state
+                          if (!e.target.value) {
+                            setPreviewState({
+                              loading: false,
+                              error: false,
+                              message: '',
+                              tweetId: null
+                            });
+                          }
+                        }}
+                        placeholder={selectedRaid?.tweetUrl 
+                          ? "URL already set from selected raid" 
+                          : "Enter your tweet or reply URL"}
+                        className={`w-full px-4 py-2 ${
+                          tweetUrl && !isValidUrl
+                            ? 'bg-red-900/30 border-red-500'
+                            : 'bg-gray-700'
+                        } rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          tweetUrl ? 'pr-14' : ''
+                        }`}
+                      />
+                      
+                      {tweetUrl && (
+                        <button
+                          type="button"
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-200"
+                          onClick={() => {
+                            // If we have a selected raid, set back to the raid's URL
+                            if (selectedRaid?.tweetUrl) {
+                              setTweetUrl(selectedRaid.tweetUrl);
+                              setIsValidUrl(true);
+                              // Extract tweet ID and prepare for preview
+                              const tweetId = extractTweetId(selectedRaid.tweetUrl);
+                              if (tweetId) {
+                                setPreviewState({
+                                  loading: false,
+                                  error: false,
+                                  message: 'Tweet ready to view',
+                                  tweetId
+                                });
+                              }
+                            } else {
+                              // Otherwise clear the field
+                              setTweetUrl('');
+                              setPreviewState({
+                                loading: false,
+                                error: false,
+                                message: '',
+                                tweetId: null
+                              });
+                            }
+                          }}
+                          title={selectedRaid?.tweetUrl ? "Reset to raid URL" : "Clear URL"}
+                        >
+                          {selectedRaid?.tweetUrl && tweetUrl !== selectedRaid.tweetUrl ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clipRule="evenodd" />
+                            </svg>
+                          ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                    
                     {tweetUrl && !isValidUrl && (
-                      <p className="text-red-400 text-sm mt-1 flex items-start sm:items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 flex-shrink-0 mt-0.5 sm:mt-0" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                        </svg>
-                        <span>Invalid URL format. Use format: https://x.com/username/status/1234567890</span>
+                      <p className="text-red-400 text-sm mt-1">
+                        Please enter a valid Twitter or X.com URL (e.g., https://twitter.com/username/status/1234567890)
                       </p>
                     )}
-                    <p className="text-gray-500 text-sm mt-2">
-                      After replying to the tweet with "aquads.xyz", copy and paste your reply's URL here. Make sure it contains "status" in the URL.
-                    </p>
+                    
+                    {tweetUrl && isValidUrl && (
+                      <p className="text-green-400 text-sm mt-1">
+                        <span className="mr-1">✓</span> Valid tweet URL
+                      </p>
+                    )}
+                    
+                    {!tweetUrl && selectedRaid?.tweetUrl && (
+                      <p className="text-gray-400 text-sm mt-1">
+                        You can use the auto-filled URL from the selected raid or enter your own reply URL.
+                      </p>
+                    )}
                   </div>
                   
                   {error && (
@@ -1358,7 +1450,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
               <h4 className="text-white font-semibold mb-3">Tweet Preview</h4>
               
               {/* Toggle button for iframe view */}
-              {selectedRaid && (
+              {selectedRaid && previewState.tweetId && (
                 <div className="mb-4 flex items-center">
                   <button
                     onClick={() => {
@@ -1370,44 +1462,48 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                       if (newShowIframe) {
                         console.log('Enabling iframe view, ensuring we have tweet ID');
                         
-                        // Get the tweet ID from either the selected raid or the user input
-                        let sourceUrl = selectedRaid?.tweetUrl || tweetUrl;
-                        if (!sourceUrl) {
-                          console.log('No URL available for iframe');
-                          showNotification('No tweet URL available to display', 'warning');
-                          return;
+                        // We should already have the tweet ID in previewState
+                        if (!previewState.tweetId) {
+                          // But if not, try to get it from the URL
+                          console.log('No tweet ID in preview state, trying to extract from URL');
+                          const sourceUrl = selectedRaid?.tweetUrl || tweetUrl;
+                          if (!sourceUrl) {
+                            console.log('No URL available for iframe');
+                            showNotification('No tweet URL available to display', 'warning');
+                            return;
+                          }
+                          
+                          console.log('Extracting tweet ID from URL:', sourceUrl);
+                          const tweetId = extractTweetId(sourceUrl);
+                          
+                          if (tweetId) {
+                            console.log('Setting tweet ID for iframe:', tweetId);
+                            // Update preview state with the extracted tweet ID
+                            setPreviewState(prev => ({
+                              ...prev,
+                              loading: true,
+                              error: false,
+                              message: 'Loading tweet preview...',
+                              tweetId
+                            }));
+                          } else {
+                            console.log('Failed to extract tweet ID from URL');
+                            showNotification('Could not extract a valid tweet ID from the URL', 'error');
+                            
+                            // Set error state
+                            setPreviewState(prev => ({
+                              ...prev,
+                              loading: false,
+                              error: true,
+                              message: 'Invalid tweet URL format',
+                              tweetId: null
+                            }));
+                          }
                         }
                         
-                        console.log('Extracting tweet ID from URL:', sourceUrl);
-                        const tweetId = extractTweetId(sourceUrl);
-                        
-                        if (tweetId) {
-                          console.log('Setting tweet ID for iframe:', tweetId);
-                          // Update preview state with the extracted tweet ID
-                          setPreviewState(prev => ({
-                            ...prev,
-                            loading: true,
-                            error: false,
-                            message: 'Loading tweet preview...',
-                            tweetId
-                          }));
-                          
-                          // Reset interaction tracking
-                          setIframeInteractions(0);
-                          setIframeVerified(false);
-                        } else {
-                          console.log('Failed to extract tweet ID from URL');
-                          showNotification('Could not extract a valid tweet ID from the URL', 'error');
-                          
-                          // Set error state
-                          setPreviewState(prev => ({
-                            ...prev,
-                            loading: false,
-                            error: true,
-                            message: 'Invalid tweet URL format',
-                            tweetId: null
-                          }));
-                        }
+                        // Reset interaction tracking
+                        setIframeInteractions(0);
+                        setIframeVerified(false);
                       }
                     }}
                     className={`px-4 py-2 rounded text-sm ${
@@ -1433,10 +1529,11 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                 </div>
               )}
               
-              {tweetUrl ? (
+              {/* Show the tweet preview if we have a tweet ID, regardless of manual URL entry */}
+              {previewState.tweetId ? (
                 <>
                   {/* Show iframe if enabled */}
-                  {showIframe && previewState.tweetId ? (
+                  {showIframe ? (
                     <div className="w-full bg-gray-800/50 rounded-lg overflow-hidden mb-4 border border-gray-700">
                       <div className="text-gray-400 text-sm p-2 bg-gray-800">
                         <span className="font-semibold">Instructions:</span> Sign in to Twitter and interact with the tweet (like, retweet, or reply). Click inside the frame at least 3 times to verify.
@@ -1485,7 +1582,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                         </div>
                       ) : previewState.error ? (
                         <div className="p-4 text-red-400">{previewState.message || 'Error loading tweet'}</div>
-                      ) : previewState.tweetId ? (
+                      ) : (
                         <div className="bg-gray-800 p-4 rounded-lg border border-gray-700 w-full">
                           <div className="flex items-center mb-3">
                             <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 mr-3">
@@ -1494,20 +1591,42 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                               </svg>
                             </div>
                             <div>
-                              <div className="font-bold text-white">Tweet</div>
+                              <div className="font-bold text-white">Tweet from {selectedRaid?.title || 'Twitter Raid'}</div>
                               <div className="text-gray-500 text-sm">ID: {previewState.tweetId}</div>
                             </div>
                           </div>
                           <p className="text-gray-300 mb-3">
-                            URL: <a href={tweetUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">{tweetUrl}</a>
+                            URL: <a href={tweetUrl || selectedRaid?.tweetUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">{tweetUrl || selectedRaid?.tweetUrl}</a>
                           </p>
-                          <div className="text-gray-400 text-sm bg-gray-900/50 p-3 rounded">
-                            <span className="text-green-400">✓</span> Tweet URL validated
+                          <div className="flex gap-3 mt-4">
+                            <a 
+                              href={tweetUrl || selectedRaid?.tweetUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-sm inline-flex items-center"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                              Open Tweet
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowIframe(true);
+                                // Reset interaction tracking when manually enabling iframe
+                                setIframeInteractions(0);
+                                setIframeVerified(false);
+                              }}
+                              className="bg-gray-700 hover:bg-gray-600 text-gray-200 px-3 py-1.5 rounded text-sm inline-flex items-center"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                              Interactive View
+                            </button>
                           </div>
-                        </div>
-                      ) : (
-                        <div className="text-center p-4">
-                          <p className="text-gray-400">{previewState.message || 'Enter a valid tweet URL'}</p>
                         </div>
                       )}
                     </div>
@@ -1530,7 +1649,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                     <div>
                       <h6 className="text-blue-400 font-medium">Method 2: Manual URL Verification</h6>
                       <ol className="list-decimal list-inside text-gray-400 text-sm space-y-1 ml-2">
-                        <li>Go to the tweet via the "Go to Tweet" button</li>
+                        <li>Go to the tweet via the "Open Tweet" button</li>
                         <li>Reply to the tweet with a message that includes "aquads.xyz"</li>
                         <li>Copy the URL of your reply and paste it in the URL field</li>
                         <li>The system will verify your participation</li>
@@ -1541,11 +1660,20 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                 </>
               ) : (
                 <div className="w-full bg-gray-800/50 rounded-lg p-6 flex flex-col items-center justify-center text-center min-h-[300px]">
-                  <svg className="w-12 h-12 text-gray-500 mb-3" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085a4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                  </svg>
-                  <p className="text-gray-400 mb-2">Enter your tweet or reply URL to see the preview</p>
-                  <p className="text-gray-500 text-sm">This helps us verify your task completion</p>
+                  {selectedRaid ? (
+                    <div className="text-center p-4">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                      <p className="text-gray-400">Loading tweet from the selected raid...</p>
+                    </div>
+                  ) : (
+                    <>
+                      <svg className="w-12 h-12 text-gray-500 mb-3" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085a4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                      </svg>
+                      <p className="text-gray-400 mb-2">Select a raid to see the tweet preview</p>
+                      <p className="text-gray-500 text-sm">The tweet will automatically appear here</p>
+                    </>
+                  )}
                 </div>
               )}
             </div>
