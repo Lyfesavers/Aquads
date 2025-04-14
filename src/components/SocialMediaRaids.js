@@ -939,35 +939,36 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const handleIframeInteraction = (event) => {
     // Prevent the event from propagating to parent elements
     if (event) {
+      event.preventDefault();
       event.stopPropagation();
     }
     
     // Safety check - don't count interactions while iframe is loading
     if (iframeLoading) {
       console.log('Ignoring interaction while iframe is loading');
+      showNotification('Please wait for the tweet to load completely', 'warning');
       return;
     }
     
     // Log interaction attempt
-    console.log('Iframe interaction detected');
+    console.log('Iframe interaction confirmed by user');
     
     // Increment interaction counter
     const newCount = iframeInteractions + 1;
     setIframeInteractions(newCount);
     
     // Consider verified after 3 interactions
-    if (newCount >= 3 && !iframeVerified) {
+    if (newCount >= 3) {
       console.log('Verification threshold reached, marking as verified');
       setIframeVerified(true);
       showNotification('Tweet interaction verified! You can now complete the task.', 'success');
     } else {
-      // Provide feedback for each interaction
-      console.log(`Interaction ${newCount}/3 recorded`);
-      if (newCount === 1) {
-        showNotification('First interaction detected. 2 more needed.', 'info');
-      } else if (newCount === 2) {
-        showNotification('Second interaction detected. 1 more needed.', 'info');
-      }
+      // Provide clear feedback for each interaction
+      const remaining = 3 - newCount;
+      const interactionText = newCount === 1 ? '1 interaction' : `${newCount} interactions`;
+      const remainingText = remaining === 1 ? '1 more' : `${remaining} more`;
+      
+      showNotification(`${interactionText} recorded. ${remainingText} needed.`, 'info');
     }
   };
   
@@ -1512,7 +1513,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                         : 'bg-gray-700 text-gray-300'
                     }`}
                   >
-                    {showIframe ? 'Hide Tweet Viewer' : 'Show Interactive Tweet Viewer'}
+                    {showIframe ? 'Hide Tweet Viewer' : 'Show Interactive Tweet Verifier'}
                   </button>
                   
                   {iframeVerified && (
@@ -1536,14 +1537,19 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   {showIframe ? (
                     <div className="w-full bg-gray-800/50 rounded-lg overflow-hidden mb-4 border border-gray-700">
                       <div className="text-gray-400 text-sm p-2 bg-gray-800">
-                        <span className="font-semibold">Instructions:</span> Sign in to Twitter and interact with the tweet (like, retweet, or reply). Click inside the frame at least 3 times to verify.
+                        <span className="font-semibold">Instructions:</span> 
+                        <ol className="list-decimal list-inside ml-2 mt-1">
+                          <li>Sign in to Twitter if prompted</li>
+                          <li>Interact with the tweet (like, retweet, or reply)</li>
+                          <li>Click the "I Interacted" button after each interaction</li>
+                          <li>Repeat until verification is complete (3 interactions)</li>
+                        </ol>
                       </div>
                       
                       {/* Iframe container that tracks clicks */}
                       <div 
                         ref={iframeContainerRef}
                         className="relative"
-                        onClick={handleIframeInteraction}
                       >
                         {/* Loading indicator */}
                         {iframeLoading && (
@@ -1565,10 +1571,30 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                           sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
                         ></iframe>
                         
-                        {/* Simple indicator for interactions */}
-                        {!iframeLoading && (
-                          <div className="absolute top-2 right-2 bg-blue-500/80 text-white px-2 py-1 rounded text-xs">
-                            Clicks: {iframeInteractions}/3 {iframeVerified ? "✓" : ""}
+                        {/* Interaction tracking overlay */}
+                        {!iframeLoading && !iframeVerified && (
+                          <div className="absolute top-0 left-0 right-0 p-3 bg-gray-800/90 z-20 text-center">
+                            <p className="text-white mb-3">
+                              After interacting with the tweet (like, reply, retweet), click the buttons below to track your interactions:
+                            </p>
+                            <div className="flex justify-center space-x-3">
+                              <button 
+                                onClick={handleIframeInteraction}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded"
+                              >
+                                I Interacted ({iframeInteractions}/3)
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Verification successful overlay */}
+                        {iframeVerified && (
+                          <div className="absolute top-2 right-2 bg-green-500/80 text-white px-3 py-1.5 rounded-lg z-20 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            Verification Complete!
                           </div>
                         )}
                       </div>
@@ -1624,7 +1650,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                               </svg>
-                              Interactive View
+                              Interactive Verifier
                             </button>
                           </div>
                         </div>
@@ -1638,11 +1664,12 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                     <div className="mb-3">
                       <h6 className="text-blue-400 font-medium">Method 1: Interactive Tweet Viewer (Recommended)</h6>
                       <ol className="list-decimal list-inside text-gray-400 text-sm space-y-1 ml-2">
-                        <li>Click the "Show Interactive Tweet Viewer" button above</li>
+                        <li>Click the "Show Interactive Tweet Verifier" button above</li>
                         <li>Sign in to Twitter within the frame</li>
                         <li>Like, retweet, or reply to the tweet</li>
-                        <li>Interact with the frame at least 3 times to verify</li>
-                        <li>Complete the task to earn points!</li>
+                        <li>After each interaction, click the "I Interacted" button</li>
+                        <li>Complete all 3 interactions to verify</li>
+                        <li>Submit the form to earn points!</li>
                       </ol>
                     </div>
                     
