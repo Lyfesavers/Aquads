@@ -2,6 +2,159 @@ import React, { useState, useEffect, useRef } from 'react';
 import { API_URL } from '../services/api';
 import logger from '../utils/logger';
 
+// Component to render watermarked images using canvas
+const WatermarkedImage = ({ sourceUrl, applyWatermark, attachmentName, dataUrl, generateAttachmentUrls }) => {
+  const [watermarkedUrl, setWatermarkedUrl] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(false);
+  
+  useEffect(() => {
+    if (!sourceUrl) {
+      setError(true);
+      setIsLoading(false);
+      return;
+    }
+    
+    // Apply watermark to the image
+    applyWatermark(sourceUrl, (result) => {
+      if (result) {
+        setWatermarkedUrl(result);
+        setIsLoading(false);
+      } else {
+        setError(true);
+        setIsLoading(false);
+      }
+    });
+  }, [sourceUrl, applyWatermark]);
+  
+  // Handle image click to open in new window
+  const handleImageClick = () => {
+    if (watermarkedUrl) {
+      const newWindow = window.open();
+      newWindow.document.write(`
+        <html>
+          <head>
+            <title>${attachmentName || 'Watermarked Image'}</title>
+            <style>
+              body { 
+                margin: 0; 
+                display: flex; 
+                justify-content: center; 
+                align-items: center; 
+                min-height: 100vh;
+                background-color: #0f172a;
+                position: relative;
+              }
+              img {
+                max-width: 100%;
+                max-height: 100vh;
+                object-fit: contain;
+              }
+              .watermark-notice {
+                position: absolute;
+                bottom: 20px;
+                left: 0;
+                right: 0;
+                text-align: center;
+                color: #FCD34D;
+                font-size: 18px;
+                font-weight: bold;
+                background-color: rgba(0,0,0,0.7);
+                padding: 12px;
+              }
+            </style>
+          </head>
+          <body>
+            <img src="${watermarkedUrl}" alt="${attachmentName || 'Watermarked Image'}" />
+            <div class="watermark-notice">Draft image with watermark. Original will be available after completion.</div>
+          </body>
+        </html>
+      `);
+      newWindow.document.close();
+    } else if (dataUrl) {
+      // Fallback to data URL if watermarking failed
+      applyWatermark(dataUrl, (result) => {
+        const newWindow = window.open();
+        newWindow.document.write(`
+          <html>
+            <head>
+              <title>${attachmentName || 'Watermarked Image'}</title>
+              <style>
+                body { 
+                  margin: 0; 
+                  display: flex; 
+                  justify-content: center; 
+                  align-items: center; 
+                  min-height: 100vh;
+                  background-color: #0f172a;
+                  position: relative;
+                }
+                img {
+                  max-width: 100%;
+                  max-height: 100vh;
+                  object-fit: contain;
+                }
+                .watermark-notice {
+                  position: absolute;
+                  bottom: 20px;
+                  left: 0;
+                  right: 0;
+                  text-align: center;
+                  color: #FCD34D;
+                  font-size: 18px;
+                  font-weight: bold;
+                  background-color: rgba(0,0,0,0.7);
+                  padding: 12px;
+                }
+              </style>
+            </head>
+            <body>
+              <img src="${result || dataUrl}" alt="${attachmentName || 'Watermarked Image'}" />
+              <div class="watermark-notice">Draft image with watermark. Original will be available after completion.</div>
+            </body>
+          </html>
+        `);
+        newWindow.document.close();
+      });
+    } else {
+      // Last resort, try to use the original URL with query param
+      const urls = generateAttachmentUrls();
+      window.open(urls.queryParam, '_blank');
+    }
+  };
+  
+  if (isLoading) {
+    return (
+      <div className="w-full h-40 flex items-center justify-center bg-gray-800 rounded-lg">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="w-full p-4 bg-gray-800 rounded-lg text-center border border-red-500">
+        <p className="text-red-400">Failed to load watermarked image</p>
+        <button 
+          className="mt-2 px-3 py-1 bg-blue-600 text-white rounded text-sm"
+          onClick={() => window.open(sourceUrl, '_blank')}
+        >
+          Open Original
+        </button>
+      </div>
+    );
+  }
+  
+  return (
+    <img 
+      src={watermarkedUrl} 
+      alt={attachmentName || "Watermarked Attachment"}
+      className="max-w-full rounded-lg max-h-60 object-contain cursor-pointer border border-yellow-500 border-2"
+      onClick={handleImageClick}
+    />
+  );
+};
+
 const BookingConversation = ({ booking, currentUser, onClose, showNotification }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -254,134 +407,125 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
       return urls.queryParam;
     };
 
+    // Add watermark to image and return a new data URL
+    const applyWatermarkToImage = (imageUrl, callback) => {
+      // Create temporary image to load the source
+      const img = new Image();
+      img.crossOrigin = "Anonymous"; // Enable CORS for the image
+      
+      img.onload = () => {
+        // Create canvas to draw the watermarked image
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas size to match image
+        canvas.width = img.width;
+        canvas.height = img.height;
+        
+        // Draw the original image
+        ctx.drawImage(img, 0, 0);
+        
+        // Apply watermark text
+        ctx.font = `bold ${Math.max(40, img.width / 10)}px Arial`;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        // Save context state
+        ctx.save();
+        
+        // Move to center and rotate
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate(-Math.PI / 6); // ~30 degrees
+        
+        // Draw large watermark text
+        ctx.fillText('WATERMARK', 0, 0);
+        
+        // Draw secondary watermark text
+        ctx.font = `bold ${Math.max(30, img.width / 15)}px Arial`;
+        ctx.fillText('DRAFT - DO NOT USE', 0, Math.max(50, img.height / 10));
+        
+        // Add "corner" watermark
+        ctx.restore();
+        ctx.fillStyle = 'rgba(255, 215, 0, 0.8)'; // Gold color
+        ctx.fillRect(canvas.width - 120, 0, 120, 35);
+        ctx.fillStyle = 'black';
+        ctx.font = 'bold 16px Arial';
+        ctx.fillText('DRAFT', canvas.width - 60, 20);
+        
+        // Convert canvas to data URL and return via callback
+        const watermarkedDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+        callback(watermarkedDataUrl);
+      };
+      
+      img.onerror = () => {
+        logger.error('Failed to load image for watermarking:', imageUrl);
+        callback(null); // Return null to indicate failure
+      };
+      
+      // Start loading the image
+      img.src = imageUrl;
+    };
+
     return (
       <>
         {msg.message && <p className="text-sm whitespace-pre-wrap mb-2">{msg.message}</p>}
         
         {msg.attachment && msg.attachmentType === 'image' && (
           <div className="mt-2 relative">
-            <img 
-              src={getBestImageUrl()} 
-              alt={msg.attachmentName || "Attachment"}
-              className={`max-w-full rounded-lg max-h-60 object-contain cursor-pointer border ${
-                msg.isWatermarked ? 'border-yellow-500 border-2' : 'border-gray-700'
-              }`}
-              onClick={() => {
-                // For data URLs, open in a new window directly
-                if (msg.dataUrl) {
-                  const newWindow = window.open();
-                  newWindow.document.write(`
-                    <html>
-                      <head>
-                        <title>${msg.attachmentName || 'Image'}</title>
-                        <style>
-                          body { 
-                            margin: 0; 
-                            display: flex; 
-                            justify-content: center; 
-                            align-items: center; 
-                            min-height: 100vh;
-                            background-color: #0f172a;
-                            position: relative;
-                          }
-                          img {
-                            max-width: 100%;
-                            max-height: 100vh;
-                            object-fit: contain;
-                          }
-                          .watermark-notice {
-                            position: absolute;
-                            bottom: 20px;
-                            left: 0;
-                            right: 0;
-                            text-align: center;
-                            color: #FCD34D;
-                            font-size: 18px;
-                            font-weight: bold;
-                            background-color: rgba(0,0,0,0.7);
-                            padding: 12px;
-                          }
-                          .watermark-text {
-                            position: absolute;
-                            top: 50%;
-                            left: 50%;
-                            transform: translate(-50%, -50%) rotate(-30deg);
-                            font-size: 92px;
-                            color: rgba(255, 255, 255, 0.4);
-                            font-weight: bold;
-                            white-space: nowrap;
-                            pointer-events: none;
-                            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-                          }
-                        </style>
-                      </head>
-                      <body>
-                        <img src="${msg.dataUrl}" alt="${msg.attachmentName || 'Image'}" />
-                        ${msg.isWatermarked ? `
-                          <div class="watermark-text">WATERMARK</div>
-                          <div class="watermark-notice">Draft image with watermark. Original will be available after completion.</div>
-                        ` : ''}
-                      </body>
-                    </html>
-                  `);
-                  newWindow.document.close();
-                  return;
-                }
-                
-                // Otherwise try URL approach
-                const urls = generateAttachmentUrls(msg.attachment);
-                logger.log('Opening image with most reliable method');
-                // Try the query parameter endpoint as it's most reliable
-                window.open(urls.queryParam, '_blank');
-              }}
-              onError={(e) => {
-                logger.error("Image failed to load:", e.target.src);
-                
-                // If we have a data URL and aren't already using it, switch to it
-                if (msg.dataUrl && e.target.src !== msg.dataUrl) {
-                  logger.log('Switching to embedded data URL');
-                  e.target.src = msg.dataUrl;
-                  return;
-                }
-                
-                // Otherwise try different URL formats in sequence
-                const urls = generateAttachmentUrls(msg.attachment);
-                const urlsToTry = [
-                  urls.queryParam,
-                  urls.fullRelative,
-                  urls.directEndpoint,
-                  urls.apiEndpoint
-                ];
-                
-                // Find which URL we're currently using
-                const currentIndex = urlsToTry.indexOf(e.target.src);
-                
-                // Try next URL if we haven't tried them all
-                if (currentIndex < urlsToTry.length - 1) {
-                  const nextUrl = urlsToTry[currentIndex + 1];
-                  logger.log(`Trying alternate URL (${currentIndex + 2}/${urlsToTry.length}):`, nextUrl);
-                  e.target.src = nextUrl;
-                } else {
-                  // We've tried all URLs, use placeholder
-                  logger.log('All URLs failed, using placeholder');
-                  e.target.src = 'https://via.placeholder.com/150?text=Image+Not+Found';
-                  e.target.className = 'max-w-full rounded-lg max-h-40 object-contain opacity-60 border border-red-500';
-                }
-              }}
-            />
-            {/* Simple watermark overlay text */}
-            {msg.isWatermarked && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="text-white text-3xl font-bold opacity-40" style={{ transform: 'rotate(-30deg)', textShadow: '1px 1px 2px black' }}>
-                  WATERMARK
-                </div>
-              </div>
+            {msg.isWatermarked ? (
+              // Use watermarked image renderer for watermarked images
+              <WatermarkedImage 
+                sourceUrl={getBestImageUrl()} 
+                applyWatermark={applyWatermarkToImage}
+                attachmentName={msg.attachmentName || "Attachment"}
+                dataUrl={msg.dataUrl}
+                generateAttachmentUrls={() => generateAttachmentUrls(msg.attachment)}
+              />
+            ) : (
+              // Use regular image for non-watermarked images
+              <img 
+                src={getBestImageUrl()} 
+                alt={msg.attachmentName || "Attachment"}
+                className="max-w-full rounded-lg max-h-60 object-contain cursor-pointer border border-gray-700"
+                onClick={() => {
+                  if (msg.dataUrl) {
+                    const newWindow = window.open();
+                    newWindow.document.write(`
+                      <html>
+                        <head>
+                          <title>${msg.attachmentName || 'Image'}</title>
+                          <style>
+                            body { 
+                              margin: 0; 
+                              display: flex; 
+                              justify-content: center; 
+                              align-items: center; 
+                              min-height: 100vh;
+                              background-color: #0f172a;
+                            }
+                            img {
+                              max-width: 100%;
+                              max-height: 100vh;
+                              object-fit: contain;
+                            }
+                          </style>
+                        </head>
+                        <body>
+                          <img src="${msg.dataUrl}" alt="${msg.attachmentName || 'Image'}" />
+                        </body>
+                      </html>
+                    `);
+                    newWindow.document.close();
+                    return;
+                  }
+                  
+                  const urls = generateAttachmentUrls(msg.attachment);
+                  window.open(urls.queryParam, '_blank');
+                }}
+              />
             )}
-            {msg.isWatermarked && (
-              <div className="absolute top-0 right-0 bg-yellow-500 text-black font-bold px-2 py-1 rounded-bl-lg rounded-tr-lg">
-                DRAFT
-              </div>
-            )}
+            
             <div className="text-xs mt-1 text-gray-300 flex justify-between items-center">
               <span>{msg.attachmentName || "Image attachment"}</span>
               <div className="flex items-center">
@@ -396,7 +540,57 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
                   onClick={(e) => {
                     e.preventDefault();
                     
-                    // If we have a data URL, use it directly
+                    if (msg.isWatermarked) {
+                      // For watermarked images, we need to apply the watermark to the full-size image
+                      applyWatermarkToImage(getBestImageUrl(), (watermarkedDataUrl) => {
+                        if (watermarkedDataUrl) {
+                          const newWindow = window.open();
+                          newWindow.document.write(`
+                            <html>
+                              <head>
+                                <title>${msg.attachmentName || 'Image'}</title>
+                                <style>
+                                  body { 
+                                    margin: 0; 
+                                    display: flex; 
+                                    justify-content: center; 
+                                    align-items: center; 
+                                    min-height: 100vh;
+                                    background-color: #0f172a;
+                                    position: relative;
+                                  }
+                                  img {
+                                    max-width: 100%;
+                                    max-height: 100vh;
+                                    object-fit: contain;
+                                  }
+                                  .watermark-notice {
+                                    position: absolute;
+                                    bottom: 20px;
+                                    left: 0;
+                                    right: 0;
+                                    text-align: center;
+                                    color: #FCD34D;
+                                    font-size: 18px;
+                                    font-weight: bold;
+                                    background-color: rgba(0,0,0,0.7);
+                                    padding: 12px;
+                                  }
+                                </style>
+                              </head>
+                              <body>
+                                <img src="${watermarkedDataUrl}" alt="${msg.attachmentName || 'Image'}" />
+                                <div class="watermark-notice">Draft image with watermark. Original will be available after completion.</div>
+                              </body>
+                            </html>
+                          `);
+                          newWindow.document.close();
+                        }
+                      });
+                      return;
+                    }
+                    
+                    // Handle non-watermarked images normally
                     if (msg.dataUrl) {
                       const newWindow = window.open();
                       newWindow.document.write(`
@@ -417,24 +611,10 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
                                 max-height: 100vh;
                                 object-fit: contain;
                               }
-                              .watermark-notice {
-                                position: absolute;
-                                bottom: 20px;
-                                left: 0;
-                                right: 0;
-                                text-align: center;
-                                color: #FCD34D;
-                                font-size: 14px;
-                                background-color: rgba(0,0,0,0.7);
-                                padding: 8px;
-                              }
                             </style>
                           </head>
                           <body>
                             <img src="${msg.dataUrl}" alt="${msg.attachmentName || 'Image'}" />
-                            ${msg.isWatermarked ? 
-                              '<div class="watermark-notice">Draft image with watermark. Original will be available after completion.</div>' : 
-                              ''}
                           </body>
                         </html>
                       `);
