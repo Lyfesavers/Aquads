@@ -2,16 +2,43 @@ import axios from 'axios';
 
 // Ensure API_URL ends with /api but doesn't have a trailing slash
 const API_URL = (() => {
-  const url = process.env.REACT_APP_API_URL || 'https://aquads.onrender.com/api';
+  // Start with the base URL (environment variable or default)
+  let baseUrl = process.env.REACT_APP_API_URL || 'https://aquads.onrender.com';
+  
   // Remove trailing slash if present
-  return url.endsWith('/') ? url.slice(0, -1) : url;
+  if (baseUrl.endsWith('/')) {
+    baseUrl = baseUrl.slice(0, -1);
+  }
+  
+  // Ensure /api is in the path
+  if (!baseUrl.endsWith('/api')) {
+    baseUrl = `${baseUrl}/api`;
+  }
+  
+  return baseUrl;
 })();
 
 // Debug the API URL
 console.log('Invoice service API_URL:', API_URL);
 
 const getAuthConfig = () => {
-  const token = localStorage.getItem('token');
+  // Try to get the token from currentUser object in localStorage
+  let token;
+  try {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    token = currentUser?.token;
+    console.log('Using auth token from currentUser');
+  } catch (error) {
+    // Fallback to direct token retrieval if parsing fails
+    token = localStorage.getItem('token');
+    console.log('Using auth token from direct token storage');
+  }
+  
+  // If no token is found, log a warning
+  if (!token) {
+    console.warn('No auth token found for invoice API request');
+  }
+  
   return {
     headers: {
       'Content-Type': 'application/json',
@@ -23,11 +50,15 @@ const getAuthConfig = () => {
 // Create a new invoice
 const createInvoice = async (invoiceData) => {
   try {
-    console.log(`Sending POST request to: ${API_URL}/invoices`);
+    const endpoint = `${API_URL}/invoices`;
+    console.log(`Sending POST request to: ${endpoint}`);
+    const config = getAuthConfig();
+    console.log('Auth headers:', config.headers.Authorization ? 'Bearer token present' : 'No Bearer token');
+    
     const response = await axios.post(
-      `${API_URL}/invoices`, 
+      endpoint, 
       invoiceData, 
-      getAuthConfig()
+      config
     );
     return response.data;
   } catch (error) {
@@ -39,10 +70,14 @@ const createInvoice = async (invoiceData) => {
 // Get all invoices for the current user
 const getInvoices = async () => {
   try {
-    console.log(`Sending GET request to: ${API_URL}/invoices`);
+    const endpoint = `${API_URL}/invoices`;
+    console.log(`Sending GET request to: ${endpoint}`);
+    const config = getAuthConfig();
+    console.log('Auth headers:', config.headers.Authorization ? 'Bearer token present' : 'No Bearer token');
+    
     const response = await axios.get(
-      `${API_URL}/invoices`, 
-      getAuthConfig()
+      endpoint, 
+      config
     );
     return response.data;
   } catch (error) {
@@ -53,10 +88,14 @@ const getInvoices = async () => {
 // Get a specific invoice by ID
 const getInvoiceById = async (invoiceId) => {
   try {
-    console.log(`Sending GET request to: ${API_URL}/invoices/${invoiceId}`);
+    const endpoint = `${API_URL}/invoices/${invoiceId}`;
+    console.log(`Sending GET request to: ${endpoint}`);
+    const config = getAuthConfig();
+    console.log('Auth headers:', config.headers.Authorization ? 'Bearer token present' : 'No Bearer token');
+    
     const response = await axios.get(
-      `${API_URL}/invoices/${invoiceId}`, 
-      getAuthConfig()
+      endpoint, 
+      config
     );
     return response.data;
   } catch (error) {
@@ -69,9 +108,12 @@ const getInvoicesByBookingId = async (bookingId) => {
   try {
     const endpoint = `${API_URL}/invoices/booking/${bookingId}`;
     console.log(`Sending GET request to: ${endpoint}`);
+    const config = getAuthConfig();
+    console.log('Auth headers:', config.headers.Authorization ? 'Bearer token present' : 'No Bearer token');
+    
     const response = await axios.get(
       endpoint,
-      getAuthConfig()
+      config
     );
     return response.data;
   } catch (error) {
@@ -83,11 +125,15 @@ const getInvoicesByBookingId = async (bookingId) => {
 // Update invoice status (paid/cancelled)
 const updateInvoiceStatus = async (invoiceId, status) => {
   try {
-    console.log(`Sending PUT request to: ${API_URL}/invoices/${invoiceId}/status`);
+    const endpoint = `${API_URL}/invoices/${invoiceId}/status`;
+    console.log(`Sending PUT request to: ${endpoint}`);
+    const config = getAuthConfig();
+    console.log('Auth headers:', config.headers.Authorization ? 'Bearer token present' : 'No Bearer token');
+    
     const response = await axios.put(
-      `${API_URL}/invoices/${invoiceId}/status`, 
+      endpoint, 
       { status }, 
-      getAuthConfig()
+      config
     );
     return response.data;
   } catch (error) {
