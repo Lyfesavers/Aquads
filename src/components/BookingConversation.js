@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { API_URL } from '../services/api';
 import logger from '../utils/logger';
+import InvoiceModal from './InvoiceModal';
+import invoiceService from '../services/invoiceService';
 
 // Component to render watermarked images using canvas
 const WatermarkedImage = ({ sourceUrl, applyWatermark, attachmentName, dataUrl, generateAttachmentUrls }) => {
@@ -161,6 +163,9 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [attachment, setAttachment] = useState(null);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [invoices, setInvoices] = useState([]);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -168,11 +173,14 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
   console.log('API_URL:', API_URL);
   console.log('Booking ID:', booking?._id);
   
+  const isSeller = booking?.sellerId?._id === currentUser?.userId;
+  
   // Fetch messages on component mount
   useEffect(() => {
     if (booking && booking._id) {
       console.log('Fetching messages for booking:', booking._id);
       fetchMessages();
+      fetchInvoices();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [booking?._id]);
@@ -184,6 +192,39 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Fetch invoices for the current booking
+  const fetchInvoices = async () => {
+    if (!booking || !booking._id) {
+      console.log('Skipping invoice fetch: no booking ID');
+      return;
+    }
+    
+    try {
+      console.log('Fetching invoices for booking ID:', booking._id);
+      // Use a try-catch to handle 404 errors gracefully
+      try {
+        const invoiceData = await invoiceService.getInvoicesByBookingId(booking._id);
+        console.log('Invoices received:', invoiceData ? invoiceData.length : 0);
+        setInvoices(invoiceData || []);
+      } catch (apiError) {
+        // If the endpoint returns 404, we'll just set empty invoices
+        console.log('Invoice API returned error:', apiError);
+        if (apiError.response && apiError.response.status === 404) {
+          console.log('Invoice endpoint not found (404). Setting empty invoices array.');
+          setInvoices([]);
+        } else {
+          // For other errors, rethrow to be caught by the outer try-catch
+          throw apiError;
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching invoices:', err);
+      logger.error('Error fetching invoices:', err);
+      setInvoices([]);
+      // Don't show notification for this to avoid cluttering the UI
+    }
   };
 
   // Function to verify image URL exists
@@ -355,6 +396,45 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
     });
   };
   
+  // Handle creating a new invoice
+  const handleCreateInvoice = () => {
+    setSelectedInvoice(null);
+    setShowInvoiceModal(true);
+  };
+
+  // Handle closing the invoice modal
+  const handleCloseInvoiceModal = () => {
+    setShowInvoiceModal(false);
+    setSelectedInvoice(null);
+  };
+
+  // Handle invoice creation success
+  const handleInvoiceCreated = (invoice) => {
+    // Add the new invoice to the list
+    setInvoices(prev => [invoice, ...prev]);
+    // Close the modal
+    setShowInvoiceModal(false);
+  };
+
+  // Handle sending a message from the invoice modal
+  const handleSendInvoiceMessage = (message) => {
+    // Set the message and immediately send it
+    setNewMessage(message);
+    const event = { preventDefault: () => {} };
+    // Call handleSendMessage with a fake event
+    setTimeout(() => {
+      if (message === newMessage) {
+        handleSendMessage(event);
+      }
+    }, 100);
+  };
+
+  // View an invoice
+  const handleViewInvoice = (invoice) => {
+    setSelectedInvoice(invoice);
+    setShowInvoiceModal(true);
+  };
+
   // Render message content including any attachments
   const renderMessageContent = (msg) => {
     if (!msg) return null;
@@ -467,9 +547,27 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
       img.src = imageUrl;
     };
 
+    // Check if the message is about an invoice
+    const invoiceMatch = msg.message && typeof msg.message === 'string' && msg.message.match(/Invoice #(INV-\d{4}-\d{4})/);
+    const invoiceNumberFromMessage = invoiceMatch ? invoiceMatch[1] : null;
+    const invoiceFromMessage = invoiceNumberFromMessage && invoices && invoices.length > 0 ? 
+      invoices.find(inv => inv.invoiceNumber === invoiceNumberFromMessage) : null;
+
     return (
       <>
         {msg.message && <p className="text-sm whitespace-pre-wrap mb-2">{msg.message}</p>}
+        
+        {/* If this is an invoice message and we found the invoice, show a button to view it */}
+        {invoiceFromMessage && (
+          <div className="mt-2">
+            <button
+              onClick={() => handleViewInvoice(invoiceFromMessage)}
+              className="px-3 py-1 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30 text-sm"
+            >
+              View Invoice #{invoiceFromMessage.invoiceNumber}
+            </button>
+          </div>
+        )}
         
         {msg.attachment && msg.attachmentType === 'image' && (
           <div className="mt-2 relative">
@@ -788,12 +886,38 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
             </div>
           </form>
           
+          {/* Add invoice button for sellers when booking is confirmed */}
+          {isSeller && booking && booking.status === 'confirmed' && (
+            <div className="mb-3">
+              <button
+                onClick={handleCreateInvoice}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm flex items-center"
+              >
+                <span className="mr-1">📝</span> Create Invoice
+              </button>
+            </div>
+          )}
+          
           {booking && (booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed') && (
             <div className="text-amber-500 text-sm mt-2 text-center">
               This conversation is now locked because the booking is {booking.status}.
             </div>
           )}
         </>
+      )}
+      
+      {/* Invoice Modal */}
+      {showInvoiceModal && (
+        <InvoiceModal
+          booking={booking}
+          existingInvoice={selectedInvoice}
+          onClose={handleCloseInvoiceModal}
+          showNotification={showNotification}
+          currentUser={currentUser}
+          isSeller={isSeller}
+          onInvoiceCreated={handleInvoiceCreated}
+          onSendMessage={handleSendInvoiceMessage}
+        />
       )}
     </div>
   );
