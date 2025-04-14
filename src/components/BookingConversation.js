@@ -559,13 +559,53 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
         
         {/* If this is an invoice message and we found the invoice, show a button to view it */}
         {invoiceFromMessage && (
-          <div className="mt-2">
-            <button
-              onClick={() => handleViewInvoice(invoiceFromMessage)}
-              className="px-3 py-1 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30 text-sm"
-            >
-              View Invoice #{invoiceFromMessage.invoiceNumber}
-            </button>
+          <div className="mt-2 border border-gray-600 bg-gray-800 p-3 rounded-lg">
+            <div className="flex justify-between mb-2">
+              <h3 className="font-medium text-blue-400">Invoice #{invoiceFromMessage.invoiceNumber}</h3>
+              <span className={
+                invoiceFromMessage.status === 'paid' ? 'text-green-400' : 
+                invoiceFromMessage.status === 'cancelled' ? 'text-red-400' : 
+                'text-yellow-400'
+              }>
+                {invoiceFromMessage.status?.toUpperCase() || 'PENDING'}
+              </span>
+            </div>
+            
+            <div className="mb-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">Amount:</span>
+                <span>{new Intl.NumberFormat('en-US', { 
+                  style: 'currency', 
+                  currency: invoiceFromMessage.currency || 'USD' 
+                }).format(invoiceFromMessage.amount)}</span>
+              </div>
+              {invoiceFromMessage.dueDate && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Due Date:</span>
+                  <span>{new Date(invoiceFromMessage.dueDate).toLocaleDateString()}</span>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={() => handleViewInvoice(invoiceFromMessage)}
+                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+              >
+                View Details
+              </button>
+              
+              {invoiceFromMessage.paymentLink && invoiceFromMessage.status !== 'paid' && invoiceFromMessage.status !== 'cancelled' && (
+                <a
+                  href={invoiceFromMessage.paymentLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+                >
+                  Pay Now
+                </a>
+              )}
+            </div>
           </div>
         )}
         
