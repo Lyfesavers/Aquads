@@ -465,7 +465,16 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
         queryParam: `${API_URL}/bookings/file?filename=${filename}&bookingId=${booking._id}`
       };
     };
+
+    // Check if the message contains an invoice reference
+    const invoiceMatch = msg.message && typeof msg.message === 'string' && msg.message.match(/Invoice #(INV-\d{4}-\d{4})/);
+    const invoiceNumberFromMessage = invoiceMatch ? invoiceMatch[1] : null;
     
+    // Find the invoice in our list if it exists
+    const invoiceData = invoiceNumberFromMessage && invoices && invoices.length > 0 
+      ? invoices.find(inv => inv.invoiceNumber === invoiceNumberFromMessage)
+      : null;
+
     // Choose best image URL to display
     const getBestImageUrl = () => {
       // If we have a data URL, use it as the most reliable source
@@ -547,25 +556,64 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
       img.src = imageUrl;
     };
 
-    // Check if the message is about an invoice
-    const invoiceMatch = msg.message && typeof msg.message === 'string' && msg.message.match(/Invoice #(INV-\d{4}-\d{4})/);
-    const invoiceNumberFromMessage = invoiceMatch ? invoiceMatch[1] : null;
-    const invoiceFromMessage = invoiceNumberFromMessage && invoices && invoices.length > 0 ? 
-      invoices.find(inv => inv.invoiceNumber === invoiceNumberFromMessage) : null;
-
     return (
       <>
         {msg.message && <p className="text-sm whitespace-pre-wrap mb-2">{msg.message}</p>}
         
-        {/* If this is an invoice message and we found the invoice, show a button to view it */}
-        {invoiceFromMessage && (
-          <div className="mt-2">
-            <button
-              onClick={() => handleViewInvoice(invoiceFromMessage)}
-              className="px-3 py-1 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30 text-sm"
-            >
-              View Invoice #{invoiceFromMessage.invoiceNumber}
-            </button>
+        {/* Display invoice card if this message references an invoice */}
+        {invoiceData && (
+          <div className="mt-3 bg-gray-800 border border-gray-700 rounded-lg p-3 max-w-sm">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-blue-400 font-semibold">Invoice #{invoiceData.invoiceNumber}</h3>
+              <div className={`text-xs px-2 py-1 rounded-full ${
+                invoiceData.status === 'paid' 
+                  ? 'bg-green-900/50 text-green-400' 
+                  : invoiceData.status === 'cancelled'
+                    ? 'bg-red-900/50 text-red-400'
+                    : 'bg-yellow-900/50 text-yellow-400'
+              }`}>
+                {invoiceData.status?.toUpperCase() || 'PENDING'}
+              </div>
+            </div>
+            
+            <div className="space-y-2 mb-3">
+              <div className="flex justify-between">
+                <span className="text-gray-400 text-sm">Amount:</span>
+                <span className="font-medium">{
+                  typeof invoiceData.amount === 'number' 
+                    ? new Intl.NumberFormat('en-US', { 
+                        style: 'currency', 
+                        currency: invoiceData.currency || 'USD' 
+                      }).format(invoiceData.amount)
+                    : invoiceData.amount
+                }</span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-gray-400 text-sm">Due Date:</span>
+                <span>{new Date(invoiceData.dueDate).toLocaleDateString()}</span>
+              </div>
+            </div>
+            
+            <div className="flex justify-between items-center gap-2">
+              <button
+                onClick={() => handleViewInvoice(invoiceData)}
+                className="flex-1 px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm text-center"
+              >
+                View Details
+              </button>
+              
+              {invoiceData.paymentLink && invoiceData.status !== 'paid' && invoiceData.status !== 'cancelled' && (
+                <a
+                  href={invoiceData.paymentLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 px-3 py-1.5 bg-green-600 text-white rounded hover:bg-green-700 text-sm text-center"
+                >
+                  Pay Now
+                </a>
+              )}
+            </div>
           </div>
         )}
         
