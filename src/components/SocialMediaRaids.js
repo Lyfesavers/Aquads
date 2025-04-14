@@ -103,10 +103,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [selectedChain, setSelectedChain] = useState(BLOCKCHAIN_OPTIONS[0]);
   const [copiedAddress, setCopiedAddress] = useState(false);
 
-  // Add state for success modal
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [successPoints, setSuccessPoints] = useState(0);
-
   useEffect(() => {
     fetchRaids();
     // Load Twitter widget script
@@ -402,35 +398,25 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       
       // Set success message with a delay to prevent UI issues
       await delay(100);
-      // Set success message - important for UI feedback
       setSuccess(data.message || 'Task completed! You earned points.');
       
       // Clear inputs after confirmed success
       setTwitterUsername('');
       setTweetUrl('');
       
-      // Show success modal with points - simplified logic
-      setSuccessPoints(data.pointsAwarded || selectedRaid.points || 50);
-      setShowSuccessModal(true);
-      
-      // Hide modal after 5 seconds
-      setTimeout(() => {
-        setShowSuccessModal(false);
-      }, 5000);
-      
       // Notify the user
       showNotification(data.message || 'Successfully completed Twitter raid!', 'success');
       
-      // Immediately refresh the raids list to show completion
-      fetchRaids();
+      // After a delay, refresh the raids list to show completion
+      setTimeout(() => {
+        fetchRaids();
+      }, 500);
     } catch (err) {
       console.error('Task submission error:', err);
       
       // Display more helpful error message if the server gave us one
       if (err.message && err.message.includes('TwitterRaid validation failed')) {
         setError('There was a validation error with your submission. Please contact support.');
-      } else if (err.message && err.message.includes('already completed this raid')) {
-        setError('You have already completed this raid. You can only earn points once per raid.');
       } else {
         setError(err.message || 'Failed to submit task. Please try again.');
       }
@@ -753,34 +739,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
 
   return (
     <div className="bg-gray-900/50 backdrop-blur-sm rounded-lg overflow-hidden">
-      {showSuccessModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/50 backdrop-blur-sm">
-          <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4 shadow-2xl" 
-               style={{animation: 'fadeInUp 0.5s ease-out'}}>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-400 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-white mb-2">Twitter Raid Completed!</h3>
-              <p className="text-green-400 text-lg font-semibold mb-4">
-                +{successPoints} points earned
-              </p>
-              <p className="text-gray-300 mb-4">
-                Thank you for participating! Your points have been added to your balance.
-              </p>
-              <button
-                onClick={() => setShowSuccessModal(false)}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded"
-              >
-                Continue
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      
       <div className="bg-blue-500/10 border-b border-blue-500/30 p-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
