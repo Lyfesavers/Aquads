@@ -119,14 +119,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         // Don't let embed errors crash the component
         if (tweetEmbedRef.current) {
           try {
-            // Safely set error message
-            while (tweetEmbedRef.current.firstChild) {
-              tweetEmbedRef.current.removeChild(tweetEmbedRef.current.firstChild);
-            }
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'p-4 text-red-400';
-            errorDiv.textContent = 'Error embedding tweet. Please check URL format.';
-            tweetEmbedRef.current.appendChild(errorDiv);
+            // Safely set error message with innerHTML
+            tweetEmbedRef.current.innerHTML = '<div class="p-4 text-red-400">Error embedding tweet. Please check URL format.</div>';
           } catch (domError) {
             console.error('DOM manipulation error:', domError);
           }
@@ -205,10 +199,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const embedTweet = (url) => {
     if (!tweetEmbedRef.current) return;
     
-    // Clear previous embed
-    while (tweetEmbedRef.current.firstChild) {
-      tweetEmbedRef.current.removeChild(tweetEmbedRef.current.firstChild);
-    }
+    // Clear previous embed with safer innerHTML approach
+    tweetEmbedRef.current.innerHTML = '';
     
     const tweetId = extractTweetId(url);
     if (!tweetId) {
@@ -223,24 +215,20 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       '</div>';
     
     try {
-      // Fallback to iframe embed which is more reliable than the widget API
-      const iframe = document.createElement('iframe');
+      // Use a more reliable approach: Create the iframe then set innerHTML
+      const iframeHtml = `
+        <iframe
+          src="https://platform.twitter.com/embed/Tweet.html?id=${tweetId}"
+          width="100%"
+          height="400px"
+          frameBorder="0"
+          scrolling="no"
+          style="border-radius: 12px; border: 1px solid rgba(75, 85, 99, 0.3); overflow: hidden; background-color: transparent;"
+        ></iframe>
+      `;
       
-      iframe.setAttribute('src', `https://platform.twitter.com/embed/Tweet.html?id=${tweetId}`);
-      iframe.setAttribute('width', '100%');
-      iframe.setAttribute('height', '400px');
-      iframe.setAttribute('frameBorder', '0');
-      iframe.setAttribute('scrolling', 'no');
-      iframe.style.borderRadius = '12px';
-      iframe.style.border = '1px solid rgba(75, 85, 99, 0.3)';
-      iframe.style.overflow = 'hidden';
-      iframe.style.backgroundColor = 'transparent';
-      
-      // Clear loading indicator and add the iframe
-      while (tweetEmbedRef.current.firstChild) {
-        tweetEmbedRef.current.removeChild(tweetEmbedRef.current.firstChild);
-      }
-      tweetEmbedRef.current.appendChild(iframe);
+      // Set the innerHTML directly instead of DOM manipulation
+      tweetEmbedRef.current.innerHTML = iframeHtml;
     } catch (error) {
       console.error('Tweet embedding error:', error);
       tweetEmbedRef.current.innerHTML = '<div class="p-4 text-red-400">Error embedding tweet: ' + (error.message || 'Unknown error') + '</div>';
@@ -440,21 +428,20 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       
       console.log('Success response:', data);
       
+      // First set success message and reset the form to minimize race conditions
+      setSuccess(data.message || 'Task completed! You earned points.');
+      setSubmitting(false);
+      
       // Clear tweet embed reference to prevent DOM errors
       if (tweetEmbedRef.current) {
         try {
-          while (tweetEmbedRef.current.firstChild) {
-            tweetEmbedRef.current.removeChild(tweetEmbedRef.current.firstChild);
-          }
+          // Use a safer method to clear the content - replace innerHTML with empty div
+          tweetEmbedRef.current.innerHTML = '';
         } catch (embedError) {
           console.error('Error clearing tweet embed:', embedError);
           // Continue even if this fails
         }
       }
-      
-      // Set success message with a delay to prevent UI issues
-      await delay(100);
-      setSuccess(data.message || 'Task completed! You earned points.');
       
       // Clear inputs after confirmed success
       setTwitterUsername('');
@@ -466,14 +453,15 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       // After a delay, refresh the raids list to show completion
       console.log('About to refresh raids list...');
       
-      // Reset the selected raid after a successful completion
-      // This will close the form immediately on success
-      setSelectedRaid(null);
-      
-      // Refresh the raids list to update completions
+      // Use setTimeout to reset the selected raid after React has finished current updates
       setTimeout(() => {
+        // Reset the selected raid after a successful completion
+        // This will close the form immediately on success
+        setSelectedRaid(null);
+        
+        // Refresh the raids list to update completions
         fetchRaids();
-      }, 500);
+      }, 100);
     } catch (err) {
       console.error('Task submission error:', err);
       
@@ -629,9 +617,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     // First, safely clear any tweet embed to prevent DOM issues
     if (tweetEmbedRef.current) {
       try {
-        while (tweetEmbedRef.current.firstChild) {
-          tweetEmbedRef.current.removeChild(tweetEmbedRef.current.firstChild);
-        }
+        tweetEmbedRef.current.innerHTML = '';
       } catch (error) {
         console.error('Error clearing tweet embed:', error);
       }
@@ -829,9 +815,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       // Clean up any embedded tweets when component unmounts
       if (tweetEmbedRef.current) {
         try {
-          while (tweetEmbedRef.current.firstChild) {
-            tweetEmbedRef.current.removeChild(tweetEmbedRef.current.firstChild);
-          }
+          tweetEmbedRef.current.innerHTML = '';
         } catch (error) {
           console.error('Error cleaning up tweet embed:', error);
         }
