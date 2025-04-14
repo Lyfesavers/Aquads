@@ -11,11 +11,18 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
+  // Debug: Log API URL
+  console.log('API_URL:', API_URL);
+  console.log('Booking ID:', booking?._id);
+  
   // Fetch messages on component mount
   useEffect(() => {
-    fetchMessages();
+    if (booking && booking._id) {
+      console.log('Fetching messages for booking:', booking._id);
+      fetchMessages();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [booking._id]);
+  }, [booking?._id]);
 
   // Auto-scroll to bottom when messages update
   useEffect(() => {
@@ -41,21 +48,35 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
 
   // Update the fetchMessages function to check image URLs
   const fetchMessages = async () => {
+    if (!booking || !booking._id || !currentUser || !currentUser.token) {
+      console.error('Missing required data for fetching messages', { 
+        bookingId: booking?._id, 
+        hasToken: Boolean(currentUser?.token) 
+      });
+      setError('Unable to load messages: missing booking data');
+      setLoading(false);
+      return;
+    }
+    
     try {
       setLoading(true);
       setError(null);
       
+      console.log('Fetching messages for booking ID:', booking._id);
       const response = await fetch(`${API_URL}/bookings/${booking._id}/messages`, {
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
         }
       });
       
+      console.log('Messages API response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch messages');
+        throw new Error(`Failed to fetch messages: ${response.status}`);
       }
       
       const data = await response.json();
+      console.log('Messages received:', data.length);
       
       // Process attachment URLs to ensure they are properly formatted
       const processedData = data.map(msg => {
@@ -75,8 +96,10 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
         return msg;
       });
       
+      console.log('Processed messages:', processedData);
       setMessages(processedData);
     } catch (err) {
+      console.error('Error fetching messages:', err);
       logger.error('Error fetching messages:', err);
       setError('Failed to load messages. Please try again.');
       showNotification('Failed to load messages. Please try again.', 'error');
@@ -156,12 +179,14 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
   };
 
   // Determine if a message is from the current user
-  const isCurrentUserMessage = (senderId) => {
-    return senderId._id === currentUser.userId;
+  const isCurrentUserMessage = (sender) => {
+    if (!sender || !sender._id || !currentUser) return false;
+    return sender._id === currentUser.userId;
   };
 
   // Format timestamp
   const formatMessageTime = (timestamp) => {
+    if (!timestamp) return '';
     const date = new Date(timestamp);
     return date.toLocaleString('en-US', { 
       month: 'short', 
@@ -174,6 +199,8 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
   
   // Render message content including any attachments
   const renderMessageContent = (msg) => {
+    if (!msg) return null;
+    
     // Helper function to get API base URL without "/api"
     const getBaseUrl = () => {
       return API_URL.replace(/\/api$/, '');
@@ -181,11 +208,13 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
     
     // Helper function to extract filename from attachment URL
     const getFilename = (url) => {
+      if (!url) return '';
       return url.split('/').pop();
     };
     
     // Generate all possible URL formats for an attachment
     const generateAttachmentUrls = (attachment) => {
+      if (!attachment) return {};
       const filename = getFilename(attachment);
       const baseUrl = getBaseUrl();
       
@@ -425,7 +454,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
     <div className="bg-gray-800 rounded-lg p-4 shadow-lg w-full max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-4 border-b border-gray-700 pb-3">
         <h3 className="text-xl text-blue-400 font-semibold">
-          Conversation: {booking.serviceId.title}
+          Conversation: {booking?.serviceId?.title || 'Loading...'}
         </h3>
         <button onClick={onClose} className="text-gray-400 hover:text-white">
           ✖
@@ -437,30 +466,43 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
         </div>
       ) : error ? (
-        <div className="text-red-500 text-center my-4">{error}</div>
+        <div className="text-red-500 text-center my-4">
+          <p>{error}</p>
+          <button 
+            onClick={fetchMessages}
+            className="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Try Again
+          </button>
+        </div>
       ) : (
         <>
           <div className="h-96 overflow-y-auto mb-4 p-2 bg-gray-900 rounded-lg">
-            {messages.length === 0 ? (
+            {!messages || messages.length === 0 ? (
               <div className="text-gray-500 text-center my-8">
                 No messages yet. Start the conversation!
               </div>
             ) : (
-              messages.map((msg, index) => (
+              messages.map((msg, index) => {
+                if (!msg || !msg.sender) {
+                  console.warn('Invalid message object:', msg);
+                  return null; // Skip invalid messages
+                }
+                return (
                 <div 
                   key={msg._id || `msg-${index}`}
-                  className={`mb-3 flex ${isCurrentUserMessage(msg.senderId) ? 'justify-end' : 'justify-start'}`}
+                  className={`mb-3 flex ${isCurrentUserMessage(msg.sender) ? 'justify-end' : 'justify-start'}`}
                 >
                   <div 
                     className={`max-w-xs sm:max-w-sm md:max-w-md rounded-lg px-4 py-2 ${
-                      isCurrentUserMessage(msg.senderId) 
+                      isCurrentUserMessage(msg.sender) 
                         ? 'bg-blue-600 text-white rounded-br-none' 
                         : 'bg-gray-700 text-white rounded-bl-none'
                     } ${msg.isInitialRequirements ? 'border-l-4 border-yellow-500' : ''}`}
                   >
                     <div className="flex justify-between items-center mb-1">
                       <span className="font-semibold text-sm">
-                        {msg.senderId.username}
+                        {msg.sender.username || 'Unknown'}
                         {msg.isInitialRequirements && ' (Initial Requirements)'}
                       </span>
                       <span className="text-xs opacity-75">
@@ -470,7 +512,8 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
                     {renderMessageContent(msg)}
                   </div>
                 </div>
-              ))
+              );
+              })
             )}
             <div ref={messagesEndRef} />
           </div>
@@ -507,7 +550,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
                 onChange={(e) => setNewMessage(e.target.value)}
                 placeholder="Type your message here..."
                 className="flex-grow bg-gray-700 text-white rounded p-2 resize-none h-20"
-                disabled={booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'}
+                disabled={!booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'}
               />
               
               <div className="flex flex-col gap-2 justify-end">
@@ -515,16 +558,16 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
                   type="button"
                   onClick={handleAttachmentClick}
                   className="px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded"
-                  disabled={booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'}
+                  disabled={!booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'}
                 >
                   📎
                 </button>
                 
                 <button
                   type="submit"
-                  disabled={(!newMessage.trim() && !attachment) || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'}
+                  disabled={(!newMessage.trim() && !attachment) || !booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'}
                   className={`px-4 py-2 rounded ${
-                    (!newMessage.trim() && !attachment) || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'
+                    (!newMessage.trim() && !attachment) || !booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'
                       ? 'bg-gray-600 cursor-not-allowed'
                       : 'bg-blue-600 hover:bg-blue-700'
                   } text-white`}
@@ -535,7 +578,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
             </div>
           </form>
           
-          {(booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed') && (
+          {booking && (booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed') && (
             <div className="text-amber-500 text-sm mt-2 text-center">
               This conversation is now locked because the booking is {booking.status}.
             </div>
