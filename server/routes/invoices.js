@@ -3,7 +3,7 @@ const router = express.Router();
 const Invoice = require('../models/Invoice');
 const Booking = require('../models/Booking');
 const auth = require('../middleware/auth');
-const { createNotification } = require('../utils/notifications');
+const { createNotification } = require('./notifications');
 
 // Generate a unique invoice number
 const generateInvoiceNumber = async () => {
