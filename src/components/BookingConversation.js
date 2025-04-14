@@ -168,6 +168,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const pollingIntervalRef = useRef(null);
 
   // Debug: Log API URL
   console.log('API_URL:', API_URL);
@@ -175,13 +176,27 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
   
   const isSeller = booking?.sellerId?._id === currentUser?.userId;
   
-  // Fetch messages on component mount
+  // Fetch messages on component mount and set up polling
   useEffect(() => {
     if (booking && booking._id) {
       console.log('Fetching messages for booking:', booking._id);
       fetchMessages();
       fetchInvoices();
+      
+      // Set up polling every 15 seconds
+      pollingIntervalRef.current = setInterval(() => {
+        console.log('Polling for new messages and invoices...');
+        fetchMessages(false); // false means don't show loading indicator
+        fetchInvoices();
+      }, 15000);
     }
+    
+    // Clean up interval on unmount
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [booking?._id]);
 
@@ -241,7 +256,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
   };
 
   // Update the fetchMessages function to check image URLs
-  const fetchMessages = async () => {
+  const fetchMessages = async (showLoader = true) => {
     if (!booking || !booking._id || !currentUser || !currentUser.token) {
       console.error('Missing required data for fetching messages', { 
         bookingId: booking?._id, 
@@ -253,7 +268,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
     }
     
     try {
-      setLoading(true);
+      if (showLoader) setLoading(true);
       setError(null);
       
       console.log('Fetching messages for booking ID:', booking._id);
@@ -296,9 +311,9 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
       console.error('Error fetching messages:', err);
       logger.error('Error fetching messages:', err);
       setError('Failed to load messages. Please try again.');
-      showNotification('Failed to load messages. Please try again.', 'error');
+      if (showLoader) showNotification('Failed to load messages. Please try again.', 'error');
     } finally {
-      setLoading(false);
+      if (showLoader) setLoading(false);
     }
   };
 
