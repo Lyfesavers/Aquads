@@ -123,7 +123,6 @@ const InvoiceModal = ({
     }
     
     setLoading(true);
-    console.log('Starting invoice creation with booking:', booking?._id);
 
     try {
       // Ensure booking is available
@@ -156,12 +155,9 @@ const InvoiceModal = ({
         // Include currency if available from booking
         currency: booking.currency || 'USD',
       };
-      
-      console.log('Sending invoice data to server:', JSON.stringify(invoiceData));
 
       const response = await invoiceService.createInvoice(invoiceData);
       
-      console.log('Invoice created successfully:', response);
       setInvoice(response);
       setViewMode(true);
       showNotification('Invoice created successfully!', 'success');
@@ -173,7 +169,6 @@ const InvoiceModal = ({
         onSendMessage(message);
       }
     } catch (error) {
-      console.error('Error details:', error);
       // Enhanced error reporting
       let errorMsg = 'Failed to create invoice';
       
@@ -189,7 +184,6 @@ const InvoiceModal = ({
         }
       }
       
-      console.error('Invoice creation failed:', errorMsg);
       showNotification(errorMsg, 'error');
     } finally {
       setLoading(false);
