@@ -20,7 +20,6 @@ router.get('/', async (req, res) => {
     
     res.json(raids);
   } catch (error) {
-    console.error('Error fetching Twitter raids:', error);
     res.status(500).json({ error: 'Failed to fetch Twitter raids' });
   }
 });
@@ -61,7 +60,6 @@ router.post('/', auth, async (req, res) => {
     
     res.status(201).json(raid);
   } catch (error) {
-    console.error('Error creating Twitter raid:', error);
     res.status(500).json({ error: 'Failed to create Twitter raid' });
   }
 });
@@ -122,10 +120,8 @@ router.post('/paid', auth, async (req, res) => {
         });
         
         await earning.save();
-        console.log('Affiliate commission recorded for Twitter raid:', earning);
       }
     } catch (commissionError) {
-      console.error('Error processing affiliate commission:', commissionError);
       // Continue despite commission error
     }
     
@@ -134,7 +130,6 @@ router.post('/paid', auth, async (req, res) => {
       raid 
     });
   } catch (error) {
-    console.error('Error creating paid Twitter raid:', error);
     res.status(500).json({ error: 'Failed to create Twitter raid' });
   }
 });
@@ -170,7 +165,6 @@ router.post('/:id/approve', auth, async (req, res) => {
       raid 
     });
   } catch (error) {
-    console.error('Error approving Twitter raid:', error);
     res.status(500).json({ error: 'Failed to approve Twitter raid' });
   }
 });
@@ -208,7 +202,6 @@ router.post('/:id/reject', auth, async (req, res) => {
       raid 
     });
   } catch (error) {
-    console.error('Error rejecting Twitter raid:', error);
     res.status(500).json({ error: 'Failed to reject Twitter raid' });
   }
 });
@@ -232,7 +225,6 @@ router.delete('/:id', auth, async (req, res) => {
     
     res.json({ message: 'Twitter raid deleted successfully' });
   } catch (error) {
-    console.error('Error deleting Twitter raid:', error);
     res.status(500).json({ error: 'Failed to delete Twitter raid' });
   }
 });
@@ -271,12 +263,10 @@ const verifyTweetUrl = async (tweetUrl) => {
       // For any response, we'll accept it as valid
       return { success: true };
     } catch (error) {
-      console.error('Error verifying tweet URL:', error);
       // If we can't connect to Twitter, we'll still accept it
       return { success: true, warning: 'Could not verify tweet existence, but accepting submission.' };
     }
   } catch (error) {
-    console.error('Error in verifyTweetUrl:', error);
     return { success: true, warning: 'Verification skipped due to error' };
   }
 };
@@ -287,27 +277,14 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
     const { twitterUsername, verificationCode, tweetUrl, iframeVerified, iframeInteractions, tweetId } = req.body;
     const ipAddress = req.ip || req.connection.remoteAddress;
     
-    // DEBUG: Log request data
-    console.log('Twitter raid completion request:', {
-      raidId: req.params.id,
-      user: req.user.id || req.user.userId || req.user._id,
-      tweetUrl,
-      iframeVerified,
-      iframeInteractions,
-      tweetId,
-      ipAddress
-    });
-    
     // Get the user ID safely - checking both possible locations
     const userId = req.user.id || req.user.userId || req.user._id;
     
     if (!userId) {
-      console.error('Could not determine user ID from request:', req.user);
       return res.status(400).json({ error: 'User ID not found in request' });
     }
     
     const raid = await TwitterRaid.findById(req.params.id);
-    console.log('Found raid:', raid ? raid._id : 'Not found');
     
     if (!raid) {
       return res.status(404).json({ error: 'Twitter raid not found' });
@@ -323,7 +300,6 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
     );
     
     if (alreadyCompleted) {
-      console.log(`User ${userId} already completed raid ${raid._id}`);
       return res.status(400).json({ error: 'You have already completed this raid' });
     }
 
@@ -339,7 +315,6 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
       verificationNote = `Verified through iframe interaction (${iframeInteractions} interactions)`;
       verified = true;
       detectedTweetId = tweetId || null; // Use the provided tweet ID if available
-      console.log('User verified through iframe interactions:', iframeInteractions, 'Tweet ID:', detectedTweetId);
     }
     // If tweet URL was provided
     else if (tweetUrl) {
@@ -347,7 +322,6 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
       const isValidFormat = !!tweetUrl.match(/(?:twitter\.com|x\.com)\/[^\/]+\/status\/\d+/i);
       
       if (!isValidFormat) {
-        console.log('Invalid tweet URL format:', tweetUrl);
         return res.status(400).json({ 
           error: 'Invalid tweet URL format. URL should look like: https://twitter.com/username/status/1234567890 or https://x.com/username/status/1234567890',
           success: false
@@ -363,9 +337,7 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
           // Use provided tweet ID if URL parsing fails
           detectedTweetId = tweetId;
         }
-        console.log('Extracted tweet ID from URL:', detectedTweetId);
       } catch (error) {
-        console.error('Error extracting tweet ID:', error);
         // Fall back to provided ID if extraction fails
         detectedTweetId = tweetId || null;
       }
@@ -373,18 +345,15 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
       // Check if URL contains "aquads.xyz" (case insensitive) - only as a note, not a requirement
       const containsVerificationTag = tweetUrl.toLowerCase().includes('aquads.xyz');
       if (!containsVerificationTag) {
-        console.log('Tweet URL does not contain verification tag but accepting anyway:', tweetUrl);
         verificationMethod = 'tweet_embed';
         verificationNote = 'URL does not contain verification tag, but accepted';
         verified = true;
       } else {
-        console.log('Tweet URL contains verification tag:', tweetUrl);
         verificationMethod = 'tweet_embed';
         verificationNote = 'Tweet URL format verified with verification tag';
         verified = true;
       }
     } else {
-      console.log('No verification method provided');
       return res.status(400).json({ 
         error: 'Verification failed. Please provide a valid tweet URL or complete iframe verification.',
         success: false
@@ -398,11 +367,8 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
       const user = await User.findById(userId);
       
       if (!user) {
-        console.error(`User not found with ID: ${userId}`);
         throw new Error(`User not found with ID: ${userId}`);
       }
-      
-      console.log(`Awarding ${pointsAmount} points to user:`, user.username || user.email || userId);
       
       // Award points directly on the user object
       const previousPoints = user.points;
@@ -416,7 +382,6 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
       
       // Save the user with new points - make sure this is awaited
       await user.save();
-      console.log(`Successfully saved user with new points. Previous: ${previousPoints}, New: ${user.points}`);
       
       // Then record the completion with IP tracking and tweet ID
       raid.completions.push({
@@ -436,7 +401,6 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
       
       // Make sure to await this save operation as well
       await raid.save();
-      console.log(`Successfully saved raid completion for raid: ${raid.title}, ID: ${raid._id}`);
       
       // Success response
       const successResponse = {
@@ -447,11 +411,8 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
         currentPoints: user.points
       };
       
-      console.log('Sending success response:', successResponse);
       res.json(successResponse);
     } catch (error) {
-      console.error('Error in Twitter raid completion:', error);
-      console.error('Error stack:', error.stack);
       let errorMessage = 'Failed to complete Twitter raid: ' + (error.message || 'Unknown error');
       res.status(500).json({ 
         error: errorMessage,
@@ -459,8 +420,6 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
       });
     }
   } catch (error) {
-    console.error('Error completing Twitter raid:', error);
-    console.error('Error stack:', error.stack);
     let errorMessage = 'Failed to complete Twitter raid: ' + (error.message || 'Unknown error');
     res.status(500).json({ 
       error: errorMessage,
@@ -476,21 +435,15 @@ router.get('/user/completed', auth, async (req, res) => {
     const userId = req.user.id || req.user.userId || req.user._id;
     
     if (!userId) {
-      console.error('Could not determine user ID from request:', req.user);
       return res.status(400).json({ error: 'User ID not found in request' });
     }
-    
-    console.log(`Fetching completed raids for user ID: ${userId}`);
     
     const raids = await TwitterRaid.find({
       'completions.userId': userId
     }).sort({ createdAt: -1 });
     
-    console.log(`Found ${raids.length} completed raids for user ID: ${userId}`);
-    
     res.json(raids);
   } catch (error) {
-    console.error('Error fetching completed Twitter raids:', error);
     res.status(500).json({ error: 'Failed to fetch completed Twitter raids' });
   }
 });
@@ -552,7 +505,6 @@ router.get('/suspicious', auth, async (req, res) => {
       suspiciousIPs
     });
   } catch (error) {
-    console.error('Error checking for suspicious activity:', error);
     res.status(500).json({ error: 'Failed to check for suspicious activity' });
   }
 });

@@ -170,22 +170,17 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
   const fileInputRef = useRef(null);
   const pollingIntervalRef = useRef(null);
 
-  // Debug: Log API URL
-  console.log('API_URL:', API_URL);
-  console.log('Booking ID:', booking?._id);
-  
+  // Seller check
   const isSeller = booking?.sellerId?._id === currentUser?.userId;
   
   // Fetch messages on component mount and set up polling
   useEffect(() => {
     if (booking && booking._id) {
-      console.log('Fetching messages for booking:', booking._id);
       fetchMessages();
       fetchInvoices();
       
       // Set up polling every 15 seconds
       pollingIntervalRef.current = setInterval(() => {
-        console.log('Polling for new messages and invoices...');
         fetchMessages(false); // false means don't show loading indicator
         fetchInvoices();
       }, 15000);
@@ -208,22 +203,17 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
   // Fetch invoices for the current booking
   const fetchInvoices = async () => {
     if (!booking || !booking._id) {
-      console.log('Skipping invoice fetch: no booking ID');
       return;
     }
     
     try {
-      console.log('Fetching invoices for booking ID:', booking._id);
       // Use a try-catch to handle 404 errors gracefully
       try {
         const invoiceData = await invoiceService.getInvoicesByBookingId(booking._id);
-        console.log('Invoices received:', invoiceData ? invoiceData.length : 0);
         setInvoices(invoiceData || []);
       } catch (apiError) {
         // If the endpoint returns 404, we'll just set empty invoices
-        console.log('Invoice API returned error:', apiError);
         if (apiError.response && apiError.response.status === 404) {
-          console.log('Invoice endpoint not found (404). Setting empty invoices array.');
           setInvoices([]);
         } else {
           // For other errors, rethrow to be caught by the outer try-catch
@@ -231,8 +221,6 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
         }
       }
     } catch (err) {
-      console.error('Error fetching invoices:', err);
-      logger.error('Error fetching invoices:', err);
       setInvoices([]);
       // Don't show notification for this to avoid cluttering the UI
     }
@@ -241,12 +229,9 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
   // Function to verify image URL exists
   const verifyImage = async (url) => {
     try {
-      logger.log('Verifying image URL:', url);
       const response = await fetch(url, { method: 'HEAD' });
-      logger.log('Image verification response:', response.status, response.statusText);
       return response.ok;
     } catch (error) {
-      logger.error('Error verifying image:', error);
       return false;
     }
   };
@@ -254,10 +239,6 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
   // Update the fetchMessages function to check image URLs
   const fetchMessages = async (showLoader = true) => {
     if (!booking || !booking._id || !currentUser || !currentUser.token) {
-      console.error('Missing required data for fetching messages', { 
-        bookingId: booking?._id, 
-        hasToken: Boolean(currentUser?.token) 
-      });
       setError('Unable to load messages: missing booking data');
       setLoading(false);
       return;
@@ -267,21 +248,17 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
       if (showLoader) setLoading(true);
       setError(null);
       
-      console.log('Fetching messages for booking ID:', booking._id);
       const response = await fetch(`${API_URL}/bookings/${booking._id}/messages`, {
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
         }
       });
       
-      console.log('Messages API response status:', response.status);
-      
       if (!response.ok) {
         throw new Error(`Failed to fetch messages: ${response.status}`);
       }
       
       const data = await response.json();
-      console.log('Messages received:', data.length);
       
       // Process attachment URLs to ensure they are properly formatted
       const processedData = data.map(msg => {
@@ -292,7 +269,6 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
             const baseUrl = API_URL.replace(/\/api$/, '');
             // Create full URL
             msg.attachmentFullUrl = `${baseUrl}${msg.attachment}`;
-            logger.log('Processed attachment URL:', msg.attachmentFullUrl);
           } else {
             // URL is already absolute
             msg.attachmentFullUrl = msg.attachment;
@@ -301,11 +277,8 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
         return msg;
       });
       
-      console.log('Processed messages:', processedData);
       setMessages(processedData);
     } catch (err) {
-      console.error('Error fetching messages:', err);
-      logger.error('Error fetching messages:', err);
       setError('Failed to load messages. Please try again.');
       if (showLoader) showNotification('Failed to load messages. Please try again.', 'error');
     } finally {
@@ -377,7 +350,6 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
         fileInputRef.current.value = '';
       }
     } catch (err) {
-      logger.error('Error sending message:', err);
       setError('Failed to send message. Please try again.');
       showNotification('Failed to send message. Please try again.', 'error');
     }
@@ -481,7 +453,6 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
     const getBestImageUrl = () => {
       // If we have a data URL, use it as the most reliable source
       if (msg.dataUrl) {
-        logger.log('Using embedded data URL for image');
         return msg.dataUrl;
       }
       
@@ -550,7 +521,6 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
       };
       
       img.onerror = () => {
-        logger.error('Failed to load image for watermarking:', imageUrl);
         callback(null); // Return null to indicate failure
       };
       
@@ -598,7 +568,6 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
           return `${amount.toFixed(2)} ${currencyCode}`;
         }
       } catch (error) {
-        console.error('Error formatting currency:', error);
         return `${amount} ${currencyCode}`;
       }
     };

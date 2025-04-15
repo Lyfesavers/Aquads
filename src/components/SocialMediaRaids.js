@@ -140,8 +140,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       try {
         embedTweet(tweetUrl);
       } catch (error) {
-        console.error('Error in tweet embed useEffect:', error);
-        
         // Don't let embed errors crash the component
         setPreviewState({
           loading: false,
@@ -170,15 +168,11 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       const script = document.createElement('script');
       script.src = 'https://platform.twitter.com/widgets.js';
       script.async = true;
-      script.onload = () => {
-        console.log('Twitter widgets script loaded');
-      };
-      script.onerror = () => {
-        console.error('Failed to load Twitter widgets script');
-      };
+      script.onload = () => {};
+      script.onerror = () => {};
       document.body.appendChild(script);
     } catch (error) {
-      console.error('Error loading Twitter script:', error);
+      // Error handling
     }
   };
 
@@ -201,7 +195,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         
         parsedUrl = new URL(urlWithProtocol);
       } catch (e) {
-        console.log('URL parsing failed:', e.message);
         // Continue to fallback regex approach
       }
       
@@ -212,7 +205,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           // Extract ID from pathname
           const match = parsedUrl.pathname.match(/\/status\/(\d+)/);
           if (match && match[1]) {
-            console.log('Successfully extracted tweet ID from URL object:', match[1]);
             return match[1];
           }
         }
@@ -222,21 +214,18 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       // This handles regular twitter.com and x.com URLs
       const standardMatch = cleanUrl.match(/(?:twitter\.com|x\.com)\/[^\/]+\/status\/(\d+)/i);
       if (standardMatch && standardMatch[1]) {
-        console.log('Extracted tweet ID using standard regex:', standardMatch[1]);
         return standardMatch[1];
       }
       
       // Approach 3: Handle mobile.twitter.com URLs
       const mobileMatch = cleanUrl.match(/mobile\.twitter\.com\/[^\/]+\/status\/(\d+)/i);
       if (mobileMatch && mobileMatch[1]) {
-        console.log('Extracted tweet ID from mobile URL:', mobileMatch[1]);
         return mobileMatch[1];
       }
       
       // Approach 4: Try to handle direct status URLs with just numbers
       const directStatusMatch = cleanUrl.match(/\/status\/(\d+)/i);
       if (directStatusMatch && directStatusMatch[1]) {
-        console.log('Extracted tweet ID from direct status URL:', directStatusMatch[1]);
         return directStatusMatch[1];
       }
       
@@ -244,14 +233,11 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       // This is a very loose match and should be used with caution
       const looseMatch = cleanUrl.match(/(\d{10,20})/); // Tweet IDs are typically long numbers
       if (looseMatch && looseMatch[1]) {
-        console.log('Extracted potential tweet ID using loose match:', looseMatch[1]);
         return looseMatch[1];
       }
       
-      console.log('Failed to extract tweet ID from URL:', cleanUrl);
       return null;
     } catch (error) {
-      console.error('Error in extractTweetId function:', error);
       return null;
     }
   };
@@ -295,7 +281,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         });
       }, 500);
     } catch (error) {
-      console.error('Tweet embedding error:', error);
       setPreviewState({
         loading: false,
         error: true,
@@ -313,10 +298,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         return false;
       }
       
-      console.log('All Twitter interactions verified, proceeding with submission');
       return true;
     } catch (error) {
-      console.error('Verification error:', error);
       setError(error.message || 'Verification failed. Please check your inputs.');
       return false;
     }
@@ -324,7 +307,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
 
   const fetchRaids = async () => {
     try {
-      console.log('Fetching raids...');
       setLoading(true);
       const response = await fetch(`${API_URL}/api/twitter-raids`);
       
@@ -333,17 +315,14 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       }
       
       const data = await response.json();
-      console.log('Fetched raids data:', data);
       
       // Filter out raids older than 7 days
       const filteredRaids = data.filter(raid => isWithinSevenDays(raid.createdAt));
-      console.log('Filtered raids:', filteredRaids.length);
       
       setRaids(filteredRaids);
       
       // If a raid was selected, but it's now completed, we should deselect it
       if (selectedRaid) {
-        console.log('Checking if selected raid should be deselected...');
         const raidStillAvailable = filteredRaids.find(r => r._id === selectedRaid._id);
         
         // Check if the current user has completed this raid
@@ -352,12 +331,10 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         );
         
         if (selectedRaidCompleted) {
-          console.log('Selected raid has been completed, deselecting it');
           setSelectedRaid(null);
         }
       }
     } catch (err) {
-      console.error('Error fetching Twitter raids:', err);
       setError('Failed to load Twitter raids. Please try again later.');
     } finally {
       setLoading(false);
@@ -397,7 +374,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     // Extract tweet ID and prepare for preview
     const tweetId = extractTweetId(raid.tweetUrl);
     if (tweetId) {
-      console.log('Automatically preparing tweet preview with ID:', tweetId);
       setPreviewState({
         loading: false,
         error: false,
@@ -405,7 +381,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         tweetId
       });
     } else {
-      console.log('Failed to extract tweet ID from raid URL:', raid.tweetUrl);
       setPreviewState({
         loading: false,
         error: true,
@@ -430,7 +405,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     if (e && e.preventDefault) {
       e.preventDefault(); // Prevent the default form submission
     }
-    console.log('safeHandleSubmit called, preventing default and calling handleSubmitTask');
     
     // Reset the preview state instead of manipulating DOM
     setPreviewState({
@@ -471,21 +445,11 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       setSubmitting(true);
       setError(null);
       
-      // Log detailed submission data
-      console.log('Submitting raid completion with details:', {
-        tweetUrl: selectedRaid?.tweetUrl || tweetUrl,
-        iframeVerified,
-        directInteractions,
-        raidId: selectedRaid?._id,
-        tweetId: previewState.tweetId
-      });
-      
       // Save the raid ID before sending the request
       const raidId = selectedRaid._id;
       
       try {
         // Use fetchWithDelay instead of fetch
-        console.log('Sending request to complete raid...');
         const response = await fetchWithDelay(`${API_URL}/api/twitter-raids/${raidId}/complete`, {
           method: 'POST',
           headers: {
@@ -500,28 +464,20 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           })
         });
         
-        console.log('Response status:', response.status);
-        
         // Get the raw text first to see if there's an error in JSON parsing
         const responseText = await response.text();
-        console.log('Raw response text:', responseText);
         
         let data;
         
         try {
           data = JSON.parse(responseText);
-          console.log('Parsed response data:', data);
         } catch (jsonError) {
-          console.error('Error parsing response JSON:', responseText);
           throw new Error('Server returned an invalid response. Please try again later.');
         }
         
         if (!response.ok) {
-          console.error('API Error:', data);
           throw new Error(data.error || 'Failed to complete raid');
         }
-        
-        console.log('Success response:', data);
         
         // Instead of updating React state while doing DOM manipulation,
         // use a sequential approach to avoid React reconciliation issues
@@ -546,13 +502,10 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           fetchRaids();
         }, 50);
       } catch (networkError) {
-        console.error('Network error:', networkError);
         setError(networkError.message || 'Network error. Please try again.');
         setSubmitting(false);
       }
     } catch (err) {
-      console.error('Task submission error:', err);
-      
       // Display more helpful error message if the server gave us one
       if (err.message && err.message.includes('TwitterRaid validation failed')) {
         setError('There was a validation error with your submission. Please contact support.');
@@ -678,20 +631,11 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   // Use a better fetch function that ensures responses are handled properly
   const fetchWithDelay = async (url, options) => {
     try {
-      console.log(`Making request to ${url}`);
-      
       // No delay needed - just use normal fetch
       const response = await fetch(url, options);
       
-      console.log(`Received response from ${url}:`, {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok
-      });
-      
       return response;
     } catch (error) {
-      console.error("Fetch error:", error);
       throw error;
     }
   };
@@ -703,7 +647,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       setCopiedAddressCallback(true);
       setTimeout(() => setCopiedAddressCallback(false), 2000);
     } catch (error) {
-      console.error('Error copying to clipboard:', error);
+      // Error handling
     }
   };
 
@@ -726,7 +670,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       
       return await response.json();
     } catch (error) {
-      console.error('Error creating paid Twitter raid:', error);
       throw error;
     }
   };
@@ -775,7 +718,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       // Refresh raids list
       fetchRaids();
     } catch (err) {
-      console.error('Error submitting paid raid:', err);
       setError(err.message || 'Failed to create Twitter raid');
       showNotification(err.message || 'Failed to create Twitter raid', 'error');
     } finally {
@@ -810,7 +752,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       // Refresh raids list
       fetchRaids();
     } catch (error) {
-      console.error('Error approving raid:', error);
       showNotification(error.message || 'Failed to approve raid', 'error');
     }
   };
@@ -847,7 +788,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       // Refresh raids list
       fetchRaids();
     } catch (error) {
-      console.error('Error rejecting raid:', error);
       showNotification(error.message || 'Failed to reject raid', 'error');
     }
   };
@@ -873,18 +813,14 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
 
   // Function to handle iframe loaded event
   const handleIframeLoaded = () => {
-    console.log('Interaction UI is ready');
     setIframeLoading(false);
   };
 
   // Function to handle iframe interactions
   const handleIframeInteraction = (actionType) => {
-    console.log(`Registering ${actionType} interaction`);
-    
     // Update the specific interaction type
     setIframeInteractions(prev => {
       const updated = { ...prev, [actionType]: true };
-      console.log('Updated interactions:', updated);
       
       // Check if all needed interactions are complete
       const totalCompleted = 
@@ -894,7 +830,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       
       // If all three are complete, mark as verified
       if (totalCompleted >= 3 && !iframeVerified) {
-        console.log('All interactions completed, marking as verified');
         setIframeVerified(true);
         showNotification('All tweet interactions verified! You can now complete the task.', 'success');
       } else {
@@ -909,7 +844,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   // Reset iframe state when showing/hiding
   useEffect(() => {
     if (showIframe) {
-      console.log('Iframe display enabled, resetting loading state');
       setIframeLoading(true);
       
       // Auto-hide loading indicator after a delay in case the onload event fails
