@@ -10,7 +10,7 @@ body {
 }
 
 .bubble {
-  border-radius: 68% 32% 64% 36% / 32% 64% 36% 68%;
+  border-radius: 50%;
   position: relative;
   overflow: visible; /* Allow glow to extend beyond bubble */
   display: flex;
@@ -18,10 +18,10 @@ body {
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(4px);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), 0 0 10px 2px rgba(230, 0, 255, 0.5), 0 0 20px 5px rgba(230, 0, 255, 0.3), 0 0 30px 7px rgba(230, 0, 255, 0.1);
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, neon-purple-pulse 4s ease-in-out infinite !important;
-  transition: all 0.5s ease;
+  background: rgba(23, 25, 35, 0.8);
+  animation: bubble-float 8s ease-in-out infinite, neon-purple-pulse 4s ease-in-out infinite;
+  box-shadow: 0 0 10px 2px rgba(230, 0, 255, 0.5), 0 0 20px 5px rgba(230, 0, 255, 0.3), 0 0 30px 7px rgba(230, 0, 255, 0.1);
+  transition: all 0.3s ease-in-out;
   pointer-events: auto;
 }
 
@@ -35,36 +35,6 @@ body {
   border-radius: 50%;
   pointer-events: auto;
   z-index: 10;
-  bottom: 25%;
-  right: 20%;
-  width: 15%;
-  height: 10%;
-  background: rgba(255, 255, 255, 0.07);
-  border-radius: 50%;
-  filter: blur(3px);
-  transform: rotate(-15deg);
-  z-index: 2;
-  pointer-events: none;
-  animation: second-highlight 9s ease-in-out infinite;
-}
-
-@keyframes second-highlight {
-  0% {
-    transform: scale(1) translate(0, 0) rotate(-15deg);
-    opacity: 0.07;
-  }
-  30% {
-    transform: scale(1.3) translate(-8%, 3%) rotate(-10deg);
-    opacity: 0.1;
-  }
-  60% {
-    transform: scale(0.85) translate(5%, -5%) rotate(-20deg);
-    opacity: 0.05;
-  }
-  100% {
-    transform: scale(1) translate(0, 0) rotate(-15deg);
-    opacity: 0.07;
-  }
 }
 
 .bubble .text-white {
@@ -366,45 +336,38 @@ body {
 
 /* Blockchain-specific bubble classes */
 .bubble-ethereum {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, ethereum-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: ethereum-pulse;
+  animation: bubble-float 8s ease-in-out infinite, ethereum-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(98, 126, 234, 0.5), 0 0 20px 5px rgba(98, 126, 234, 0.3), 0 0 30px 7px rgba(98, 126, 234, 0.1);
 }
 
 .bubble-solana {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, solana-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: solana-pulse;
+  animation: bubble-float 8s ease-in-out infinite, solana-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(20, 241, 149, 0.5), 0 0 20px 5px rgba(20, 241, 149, 0.3), 0 0 30px 7px rgba(20, 241, 149, 0.1);
 }
 
 .bubble-bsc {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, bsc-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: bsc-pulse;
+  animation: bubble-float 8s ease-in-out infinite, bsc-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(240, 185, 11, 0.5), 0 0 20px 5px rgba(240, 185, 11, 0.3), 0 0 30px 7px rgba(240, 185, 11, 0.1);
 }
 
 .bubble-polygon {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, polygon-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: polygon-pulse;
+  animation: bubble-float 8s ease-in-out infinite, polygon-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(130, 71, 229, 0.5), 0 0 20px 5px rgba(130, 71, 229, 0.3), 0 0 30px 7px rgba(130, 71, 229, 0.1);
 }
 
 .bubble-avalanche {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, avalanche-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: avalanche-pulse;
+  animation: bubble-float 8s ease-in-out infinite, avalanche-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(232, 65, 66, 0.5), 0 0 20px 5px rgba(232, 65, 66, 0.3), 0 0 30px 7px rgba(232, 65, 66, 0.1);
 }
 
 .bubble-sui {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, sui-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: sui-pulse;
+  animation: bubble-float 8s ease-in-out infinite, sui-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(101, 153, 255, 0.5), 0 0 20px 5px rgba(101, 153, 255, 0.3), 0 0 30px 7px rgba(101, 153, 255, 0.1);
 }
 
 .bubble-base {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, base-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: base-pulse;
+  animation: bubble-float 8s ease-in-out infinite, base-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(0, 102, 255, 0.5), 0 0 20px 5px rgba(0, 102, 255, 0.3), 0 0 30px 7px rgba(0, 102, 255, 0.1);
 }
 
 /* Also style the hover effect for each blockchain bubble */
@@ -413,27 +376,27 @@ body {
 }
 
 .bubble-solana:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(20, 241, 149, 0.7), 0 0 30px 8px rgba(20, 241, 149, 0.5), 0 0 50px 12px rgba(20, 241, 149, 0.3);
+  box-shadow: 0 0 15px 4px rgba(20, 241, 149, 0.7), 0 0 30px 8px rgba(20, 241, 149, 0.5), 0 0 50px 12px rgba(20, 241, 149, 0.3);
 }
 
 .bubble-bsc:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(240, 185, 11, 0.7), 0 0 30px 8px rgba(240, 185, 11, 0.5), 0 0 50px 12px rgba(240, 185, 11, 0.3);
+  box-shadow: 0 0 15px 4px rgba(240, 185, 11, 0.7), 0 0 30px 8px rgba(240, 185, 11, 0.5), 0 0 50px 12px rgba(240, 185, 11, 0.3);
 }
 
 .bubble-polygon:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(130, 71, 229, 0.7), 0 0 30px 8px rgba(130, 71, 229, 0.5), 0 0 50px 12px rgba(130, 71, 229, 0.3);
+  box-shadow: 0 0 15px 4px rgba(130, 71, 229, 0.7), 0 0 30px 8px rgba(130, 71, 229, 0.5), 0 0 50px 12px rgba(130, 71, 229, 0.3);
 }
 
 .bubble-avalanche:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(232, 65, 66, 0.7), 0 0 30px 8px rgba(232, 65, 66, 0.5), 0 0 50px 12px rgba(232, 65, 66, 0.3);
+  box-shadow: 0 0 15px 4px rgba(232, 65, 66, 0.7), 0 0 30px 8px rgba(232, 65, 66, 0.5), 0 0 50px 12px rgba(232, 65, 66, 0.3);
 }
 
 .bubble-sui:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(101, 153, 255, 0.7), 0 0 30px 8px rgba(101, 153, 255, 0.5), 0 0 50px 12px rgba(101, 153, 255, 0.3);
+  box-shadow: 0 0 15px 4px rgba(101, 153, 255, 0.7), 0 0 30px 8px rgba(101, 153, 255, 0.5), 0 0 50px 12px rgba(101, 153, 255, 0.3);
 }
 
 .bubble-base:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(0, 102, 255, 0.7), 0 0 30px 8px rgba(0, 102, 255, 0.5), 0 0 50px 12px rgba(0, 102, 255, 0.3);
+  box-shadow: 0 0 15px 4px rgba(0, 102, 255, 0.7), 0 0 30px 8px rgba(0, 102, 255, 0.5), 0 0 50px 12px rgba(0, 102, 255, 0.3);
 }
 
 /* Additional blockchain colors */
@@ -474,33 +437,30 @@ body {
 }
 
 .bubble-arbitrum {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, arbitrum-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: arbitrum-pulse;
+  animation: bubble-float 8s ease-in-out infinite, arbitrum-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(40, 160, 240, 0.5), 0 0 20px 5px rgba(40, 160, 240, 0.3), 0 0 30px 7px rgba(40, 160, 240, 0.1);
 }
 
 .bubble-optimism {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, optimism-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: optimism-pulse;
+  animation: bubble-float 8s ease-in-out infinite, optimism-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(255, 4, 32, 0.5), 0 0 20px 5px rgba(255, 4, 32, 0.3), 0 0 30px 7px rgba(255, 4, 32, 0.1);
 }
 
 .bubble-near {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, near-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: near-pulse;
+  animation: bubble-float 8s ease-in-out infinite, near-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(0, 25, 75, 0.5), 0 0 20px 5px rgba(0, 25, 75, 0.3), 0 0 30px 7px rgba(0, 25, 75, 0.1);
 }
 
 .bubble-arbitrum:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(40, 160, 240, 0.7), 0 0 30px 8px rgba(40, 160, 240, 0.5), 0 0 50px 12px rgba(40, 160, 240, 0.3);
+  box-shadow: 0 0 15px 4px rgba(40, 160, 240, 0.7), 0 0 30px 8px rgba(40, 160, 240, 0.5), 0 0 50px 12px rgba(40, 160, 240, 0.3);
 }
 
 .bubble-optimism:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(255, 4, 32, 0.7), 0 0 30px 8px rgba(255, 4, 32, 0.5), 0 0 50px 12px rgba(255, 4, 32, 0.3);
+  box-shadow: 0 0 15px 4px rgba(255, 4, 32, 0.7), 0 0 30px 8px rgba(255, 4, 32, 0.5), 0 0 50px 12px rgba(255, 4, 32, 0.3);
 }
 
 .bubble-near:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(0, 25, 75, 0.7), 0 0 30px 8px rgba(0, 25, 75, 0.5), 0 0 50px 12px rgba(0, 25, 75, 0.3);
+  box-shadow: 0 0 15px 4px rgba(0, 25, 75, 0.7), 0 0 30px 8px rgba(0, 25, 75, 0.5), 0 0 50px 12px rgba(0, 25, 75, 0.3);
 }
 
 @keyframes float {
@@ -1340,63 +1300,53 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 }
 
 .bubble-fantom {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, fantom-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: fantom-pulse;
+  animation: bubble-float 8s ease-in-out infinite, fantom-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(19, 181, 236, 0.5), 0 0 20px 5px rgba(19, 181, 236, 0.3), 0 0 30px 7px rgba(19, 181, 236, 0.1);
 }
 
 .bubble-tron {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, tron-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: tron-pulse;
+  animation: bubble-float 8s ease-in-out infinite, tron-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(238, 13, 33, 0.5), 0 0 20px 5px rgba(238, 13, 33, 0.3), 0 0 30px 7px rgba(238, 13, 33, 0.1);
 }
 
 .bubble-cronos {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, cronos-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: cronos-pulse;
+  animation: bubble-float 8s ease-in-out infinite, cronos-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(32, 113, 205, 0.5), 0 0 20px 5px rgba(32, 113, 205, 0.3), 0 0 30px 7px rgba(32, 113, 205, 0.1);
 }
 
 .bubble-celo {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, celo-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: celo-pulse;
+  animation: bubble-float 8s ease-in-out infinite, celo-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(53, 208, 127, 0.5), 0 0 20px 5px rgba(53, 208, 127, 0.3), 0 0 30px 7px rgba(53, 208, 127, 0.1);
 }
 
 .bubble-harmony {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, harmony-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: harmony-pulse;
+  animation: bubble-float 8s ease-in-out infinite, harmony-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(0, 217, 187, 0.5), 0 0 20px 5px rgba(0, 217, 187, 0.3), 0 0 30px 7px rgba(0, 217, 187, 0.1);
 }
 
 .bubble-polkadot {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, polkadot-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: polkadot-pulse;
+  animation: bubble-float 8s ease-in-out infinite, polkadot-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(230, 0, 122, 0.5), 0 0 20px 5px rgba(230, 0, 122, 0.3), 0 0 30px 7px rgba(230, 0, 122, 0.1);
 }
 
 .bubble-cosmos {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, cosmos-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: cosmos-pulse;
+  animation: bubble-float 8s ease-in-out infinite, cosmos-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(42, 112, 226, 0.5), 0 0 20px 5px rgba(42, 112, 226, 0.3), 0 0 30px 7px rgba(42, 112, 226, 0.1);
 }
 
 .bubble-aptos {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, aptos-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: aptos-pulse;
+  animation: bubble-float 8s ease-in-out infinite, aptos-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(81, 45, 147, 0.5), 0 0 20px 5px rgba(81, 45, 147, 0.3), 0 0 30px 7px rgba(81, 45, 147, 0.1);
 }
 
 .bubble-flow {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, flow-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: flow-pulse;
+  animation: bubble-float 8s ease-in-out infinite, flow-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(0, 239, 139, 0.5), 0 0 20px 5px rgba(0, 239, 139, 0.3), 0 0 30px 7px rgba(0, 239, 139, 0.1);
 }
 
 .bubble-cardano {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, cardano-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: cardano-pulse;
+  animation: bubble-float 8s ease-in-out infinite, cardano-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(0, 51, 173, 0.5), 0 0 20px 5px rgba(0, 51, 173, 0.3), 0 0 30px 7px rgba(0, 51, 173, 0.1);
 }
 
 .bubble-fantom:hover, .bubble-tron:hover, .bubble-cronos:hover, .bubble-celo:hover, 
@@ -1407,43 +1357,43 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 }
 
 .bubble-fantom:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(19, 181, 236, 0.7), 0 0 30px 8px rgba(19, 181, 236, 0.5), 0 0 50px 12px rgba(19, 181, 236, 0.3);
+  box-shadow: 0 0 15px 4px rgba(19, 181, 236, 0.7), 0 0 30px 8px rgba(19, 181, 236, 0.5), 0 0 50px 12px rgba(19, 181, 236, 0.3);
 }
 
 .bubble-tron:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(238, 13, 33, 0.7), 0 0 30px 8px rgba(238, 13, 33, 0.5), 0 0 50px 12px rgba(238, 13, 33, 0.3);
+  box-shadow: 0 0 15px 4px rgba(238, 13, 33, 0.7), 0 0 30px 8px rgba(238, 13, 33, 0.5), 0 0 50px 12px rgba(238, 13, 33, 0.3);
 }
 
 .bubble-cronos:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(32, 113, 205, 0.7), 0 0 30px 8px rgba(32, 113, 205, 0.5), 0 0 50px 12px rgba(32, 113, 205, 0.3);
+  box-shadow: 0 0 15px 4px rgba(32, 113, 205, 0.7), 0 0 30px 8px rgba(32, 113, 205, 0.5), 0 0 50px 12px rgba(32, 113, 205, 0.3);
 }
 
 .bubble-celo:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(53, 208, 127, 0.7), 0 0 30px 8px rgba(53, 208, 127, 0.5), 0 0 50px 12px rgba(53, 208, 127, 0.3);
+  box-shadow: 0 0 15px 4px rgba(53, 208, 127, 0.7), 0 0 30px 8px rgba(53, 208, 127, 0.5), 0 0 50px 12px rgba(53, 208, 127, 0.3);
 }
 
 .bubble-harmony:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(0, 217, 187, 0.7), 0 0 30px 8px rgba(0, 217, 187, 0.5), 0 0 50px 12px rgba(0, 217, 187, 0.3);
+  box-shadow: 0 0 15px 4px rgba(0, 217, 187, 0.7), 0 0 30px 8px rgba(0, 217, 187, 0.5), 0 0 50px 12px rgba(0, 217, 187, 0.3);
 }
 
 .bubble-polkadot:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(230, 0, 122, 0.7), 0 0 30px 8px rgba(230, 0, 122, 0.5), 0 0 50px 12px rgba(230, 0, 122, 0.3);
+  box-shadow: 0 0 15px 4px rgba(230, 0, 122, 0.7), 0 0 30px 8px rgba(230, 0, 122, 0.5), 0 0 50px 12px rgba(230, 0, 122, 0.3);
 }
 
 .bubble-cosmos:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(42, 112, 226, 0.7), 0 0 30px 8px rgba(42, 112, 226, 0.5), 0 0 50px 12px rgba(42, 112, 226, 0.3);
+  box-shadow: 0 0 15px 4px rgba(42, 112, 226, 0.7), 0 0 30px 8px rgba(42, 112, 226, 0.5), 0 0 50px 12px rgba(42, 112, 226, 0.3);
 }
 
 .bubble-aptos:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(81, 45, 147, 0.7), 0 0 30px 8px rgba(81, 45, 147, 0.5), 0 0 50px 12px rgba(81, 45, 147, 0.3);
+  box-shadow: 0 0 15px 4px rgba(81, 45, 147, 0.7), 0 0 30px 8px rgba(81, 45, 147, 0.5), 0 0 50px 12px rgba(81, 45, 147, 0.3);
 }
 
 .bubble-flow:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(0, 239, 139, 0.7), 0 0 30px 8px rgba(0, 239, 139, 0.5), 0 0 50px 12px rgba(0, 239, 139, 0.3);
+  box-shadow: 0 0 15px 4px rgba(0, 239, 139, 0.7), 0 0 30px 8px rgba(0, 239, 139, 0.5), 0 0 50px 12px rgba(0, 239, 139, 0.3);
 }
 
 .bubble-cardano:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(0, 51, 173, 0.7), 0 0 30px 8px rgba(0, 51, 173, 0.5), 0 0 50px 12px rgba(0, 51, 173, 0.3);
+  box-shadow: 0 0 15px 4px rgba(0, 51, 173, 0.7), 0 0 30px 8px rgba(0, 51, 173, 0.5), 0 0 50px 12px rgba(0, 51, 173, 0.3);
 }
 
 @keyframes float {
@@ -1633,87 +1583,73 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 }
 
 .bubble-moonbeam {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, moonbeam-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: moonbeam-pulse;
+  animation: bubble-float 8s ease-in-out infinite, moonbeam-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(83, 205, 255, 0.5), 0 0 20px 5px rgba(83, 205, 255, 0.3), 0 0 30px 7px rgba(83, 205, 255, 0.1);
 }
 
 .bubble-moonriver {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, moonriver-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: moonriver-pulse;
+  animation: bubble-float 8s ease-in-out infinite, moonriver-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(120, 112, 255, 0.5), 0 0 20px 5px rgba(120, 112, 255, 0.3), 0 0 30px 7px rgba(120, 112, 255, 0.1);
 }
 
 .bubble-hedera {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, hedera-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: hedera-pulse;
+  animation: bubble-float 8s ease-in-out infinite, hedera-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(85, 193, 72, 0.5), 0 0 20px 5px rgba(85, 193, 72, 0.3), 0 0 30px 7px rgba(85, 193, 72, 0.1);
 }
 
 .bubble-kadena {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, kadena-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: kadena-pulse;
+  animation: bubble-float 8s ease-in-out infinite, kadena-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(255, 64, 129, 0.5), 0 0 20px 5px rgba(255, 64, 129, 0.3), 0 0 30px 7px rgba(255, 64, 129, 0.1);
 }
 
 .bubble-stacks {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, stacks-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: stacks-pulse;
+  animation: bubble-float 8s ease-in-out infinite, stacks-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(92, 104, 118, 0.5), 0 0 20px 5px rgba(92, 104, 118, 0.3), 0 0 30px 7px rgba(92, 104, 118, 0.1);
 }
 
 .bubble-oasis {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, oasis-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: oasis-pulse;
+  animation: bubble-float 8s ease-in-out infinite, oasis-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(0, 147, 221, 0.5), 0 0 20px 5px rgba(0, 147, 221, 0.3), 0 0 30px 7px rgba(0, 147, 221, 0.1);
 }
 
 .bubble-zilliqa {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, zilliqa-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: zilliqa-pulse;
+  animation: bubble-float 8s ease-in-out infinite, zilliqa-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(73, 160, 181, 0.5), 0 0 20px 5px rgba(73, 160, 181, 0.3), 0 0 30px 7px rgba(73, 160, 181, 0.1);
 }
 
 .bubble-multiversx {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, multiversx-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: multiversx-pulse;
+  animation: bubble-float 8s ease-in-out infinite, multiversx-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(35, 40, 88, 0.5), 0 0 20px 5px rgba(35, 40, 88, 0.3), 0 0 30px 7px rgba(35, 40, 88, 0.1);
 }
 
 .bubble-kava {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, kava-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: kava-pulse;
+  animation: bubble-float 8s ease-in-out infinite, kava-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(255, 99, 71, 0.5), 0 0 20px 5px rgba(255, 99, 71, 0.3), 0 0 30px 7px rgba(255, 99, 71, 0.1);
 }
 
 .bubble-injective {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, injective-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: injective-pulse;
+  animation: bubble-float 8s ease-in-out infinite, injective-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(0, 193, 127, 0.5), 0 0 20px 5px rgba(0, 193, 127, 0.3), 0 0 30px 7px rgba(0, 193, 127, 0.1);
 }
 
 .bubble-algorand {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, algorand-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: algorand-pulse;
+  animation: bubble-float 8s ease-in-out infinite, algorand-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.5), 0 0 20px 5px rgba(0, 0, 0, 0.3), 0 0 30px 7px rgba(0, 0, 0, 0.1);
 }
 
 .bubble-stellar {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, stellar-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: stellar-pulse;
+  animation: bubble-float 8s ease-in-out infinite, stellar-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(20, 172, 242, 0.5), 0 0 20px 5px rgba(20, 172, 242, 0.3), 0 0 30px 7px rgba(20, 172, 242, 0.1);
 }
 
 .bubble-ton {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, ton-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: ton-pulse;
+  animation: bubble-float 8s ease-in-out infinite, ton-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(0, 136, 204, 0.5), 0 0 20px 5px rgba(0, 136, 204, 0.3), 0 0 30px 7px rgba(0, 136, 204, 0.1);
 }
 
 .bubble-tezos {
-  animation: morph 8s ease-in-out infinite, bubble-float 8s ease-in-out infinite, tezos-pulse 4s ease-in-out infinite !important;
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), var(--outer-shadow);
-  --pulse-animation: tezos-pulse;
+  animation: bubble-float 8s ease-in-out infinite, tezos-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(43, 155, 247, 0.5), 0 0 20px 5px rgba(43, 155, 247, 0.3), 0 0 30px 7px rgba(43, 155, 247, 0.1);
 }
 
 .bubble-moonbeam:hover, .bubble-moonriver:hover, .bubble-hedera:hover, .bubble-kadena:hover,
@@ -1725,337 +1661,57 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 }
 
 .bubble-moonbeam:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(83, 205, 255, 0.7), 0 0 30px 8px rgba(83, 205, 255, 0.5), 0 0 50px 12px rgba(83, 205, 255, 0.3);
+  box-shadow: 0 0 15px 4px rgba(83, 205, 255, 0.7), 0 0 30px 8px rgba(83, 205, 255, 0.5), 0 0 50px 12px rgba(83, 205, 255, 0.3);
 }
 
 .bubble-moonriver:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(120, 112, 255, 0.7), 0 0 30px 8px rgba(120, 112, 255, 0.5), 0 0 50px 12px rgba(120, 112, 255, 0.3);
+  box-shadow: 0 0 15px 4px rgba(120, 112, 255, 0.7), 0 0 30px 8px rgba(120, 112, 255, 0.5), 0 0 50px 12px rgba(120, 112, 255, 0.3);
 }
 
 .bubble-hedera:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(85, 193, 72, 0.7), 0 0 30px 8px rgba(85, 193, 72, 0.5), 0 0 50px 12px rgba(85, 193, 72, 0.3);
+  box-shadow: 0 0 15px 4px rgba(85, 193, 72, 0.7), 0 0 30px 8px rgba(85, 193, 72, 0.5), 0 0 50px 12px rgba(85, 193, 72, 0.3);
 }
 
 .bubble-kadena:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(255, 64, 129, 0.7), 0 0 30px 8px rgba(255, 64, 129, 0.5), 0 0 50px 12px rgba(255, 64, 129, 0.3);
+  box-shadow: 0 0 15px 4px rgba(255, 64, 129, 0.7), 0 0 30px 8px rgba(255, 64, 129, 0.5), 0 0 50px 12px rgba(255, 64, 129, 0.3);
 }
 
 .bubble-stacks:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(92, 104, 118, 0.7), 0 0 30px 8px rgba(92, 104, 118, 0.5), 0 0 50px 12px rgba(92, 104, 118, 0.3);
+  box-shadow: 0 0 15px 4px rgba(92, 104, 118, 0.7), 0 0 30px 8px rgba(92, 104, 118, 0.5), 0 0 50px 12px rgba(92, 104, 118, 0.3);
 }
 
 .bubble-oasis:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(0, 147, 221, 0.7), 0 0 30px 8px rgba(0, 147, 221, 0.5), 0 0 50px 12px rgba(0, 147, 221, 0.3);
+  box-shadow: 0 0 15px 4px rgba(0, 147, 221, 0.7), 0 0 30px 8px rgba(0, 147, 221, 0.5), 0 0 50px 12px rgba(0, 147, 221, 0.3);
 }
 
 .bubble-zilliqa:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(73, 160, 181, 0.7), 0 0 30px 8px rgba(73, 160, 181, 0.5), 0 0 50px 12px rgba(73, 160, 181, 0.3);
+  box-shadow: 0 0 15px 4px rgba(73, 160, 181, 0.7), 0 0 30px 8px rgba(73, 160, 181, 0.5), 0 0 50px 12px rgba(73, 160, 181, 0.3);
 }
 
 .bubble-multiversx:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(35, 40, 88, 0.7), 0 0 30px 8px rgba(35, 40, 88, 0.5), 0 0 50px 12px rgba(35, 40, 88, 0.3);
+  box-shadow: 0 0 15px 4px rgba(35, 40, 88, 0.7), 0 0 30px 8px rgba(35, 40, 88, 0.5), 0 0 50px 12px rgba(35, 40, 88, 0.3);
 }
 
 .bubble-kava:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(255, 99, 71, 0.7), 0 0 30px 8px rgba(255, 99, 71, 0.5), 0 0 50px 12px rgba(255, 99, 71, 0.3);
+  box-shadow: 0 0 15px 4px rgba(255, 99, 71, 0.7), 0 0 30px 8px rgba(255, 99, 71, 0.5), 0 0 50px 12px rgba(255, 99, 71, 0.3);
 }
 
 .bubble-injective:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(0, 193, 127, 0.7), 0 0 30px 8px rgba(0, 193, 127, 0.5), 0 0 50px 12px rgba(0, 193, 127, 0.3);
+  box-shadow: 0 0 15px 4px rgba(0, 193, 127, 0.7), 0 0 30px 8px rgba(0, 193, 127, 0.5), 0 0 50px 12px rgba(0, 193, 127, 0.3);
 }
 
 .bubble-algorand:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(0, 0, 0, 0.7), 0 0 30px 8px rgba(0, 0, 0, 0.5), 0 0 50px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 15px 4px rgba(0, 0, 0, 0.7), 0 0 30px 8px rgba(0, 0, 0, 0.5), 0 0 50px 12px rgba(0, 0, 0, 0.3);
 }
 
 .bubble-stellar:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(20, 172, 242, 0.7), 0 0 30px 8px rgba(20, 172, 242, 0.5), 0 0 50px 12px rgba(20, 172, 242, 0.3);
+  box-shadow: 0 0 15px 4px rgba(20, 172, 242, 0.7), 0 0 30px 8px rgba(20, 172, 242, 0.5), 0 0 50px 12px rgba(20, 172, 242, 0.3);
 }
 
 .bubble-ton:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(0, 136, 204, 0.7), 0 0 30px 8px rgba(0, 136, 204, 0.5), 0 0 50px 12px rgba(0, 136, 204, 0.3);
+  box-shadow: 0 0 15px 4px rgba(0, 136, 204, 0.7), 0 0 30px 8px rgba(0, 136, 204, 0.5), 0 0 50px 12px rgba(0, 136, 204, 0.3);
 }
 
 .bubble-tezos:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(43, 155, 247, 0.7), 0 0 30px 8px rgba(43, 155, 247, 0.5), 0 0 50px 12px rgba(43, 155, 247, 0.3);
-}
-
-@keyframes morph {
-  0% {
-    border-radius: 68% 32% 64% 36% / 32% 64% 36% 68%;
-    transform: scale(1) translate(0, 0);
-  }
-  20% {
-    border-radius: 32% 58% 35% 65% / 78% 33% 67% 22%;
-    transform: scale(1.05) translate(-3%, 2%);
-  }
-  40% {
-    border-radius: 38% 62% 73% 27% / 46% 48% 52% 54%;
-    transform: scale(0.97) translate(3%, -2%);
-  }
-  60% {
-    border-radius: 45% 55% 28% 72% / 35% 68% 32% 65%;
-    transform: scale(1.04) translate(1%, 4%);
-  }
-  80% {
-    border-radius: 73% 27% 56% 44% / 25% 58% 42% 75%;
-    transform: scale(0.96) translate(-4%, -3%);
-  }
-  100% {
-    border-radius: 68% 32% 64% 36% / 32% 64% 36% 68%;
-    transform: scale(1) translate(0, 0);
-  }
-}
-
-/* Add a pseudo-element for a water-drop highlight effect */
-.bubble::before {
-  content: '';
-  position: absolute;
-  top: 20%;
-  left: 15%;
-  width: 25%;
-  height: 25%;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 50%;
-  filter: blur(5px);
-  z-index: 3;
-  pointer-events: none;
-  animation: highlight-wobble 8s ease-in-out infinite;
-}
-
-@keyframes highlight-wobble {
-  0% {
-    transform: scale(1) translate(0, 0);
-    opacity: 0.15;
-  }
-  25% {
-    transform: scale(1.2) translate(5%, -5%);
-    opacity: 0.18;
-  }
-  50% {
-    transform: scale(0.9) translate(10%, 10%);
-    opacity: 0.12;
-  }
-  75% {
-    transform: scale(1.1) translate(-5%, 5%);
-    opacity: 0.2;
-  }
-  100% {
-    transform: scale(1) translate(0, 0);
-    opacity: 0.15;
-  }
-}
-
-/* Define CSS variables for blockchain colors */
-:root {
-  --ethereum-color: rgba(98, 126, 234, 1);
-  --solana-color: rgba(20, 241, 149, 1);
-  --bsc-color: rgba(240, 185, 11, 1);
-  --polygon-color: rgba(130, 71, 229, 1);
-  --avalanche-color: rgba(232, 65, 66, 1);
-  --sui-color: rgba(101, 153, 255, 1);
-  --base-color: rgba(0, 102, 255, 1);
-  --arbitrum-color: rgba(40, 160, 240, 1);
-  --optimism-color: rgba(255, 4, 32, 1);
-  --near-color: rgba(0, 25, 75, 1);
-  --fantom-color: rgba(19, 181, 236, 1);
-  --tron-color: rgba(238, 13, 33, 1);
-  --cronos-color: rgba(32, 113, 205, 1);
-  --celo-color: rgba(53, 208, 127, 1);
-  --harmony-color: rgba(0, 217, 187, 1);
-  --polkadot-color: rgba(230, 0, 122, 1);
-  --cosmos-color: rgba(42, 112, 226, 1);
-  --aptos-color: rgba(81, 45, 147, 1);
-  --flow-color: rgba(0, 239, 139, 1);
-  --cardano-color: rgba(0, 51, 173, 1);
-  --moonbeam-color: rgba(83, 205, 255, 1);
-  --moonriver-color: rgba(120, 112, 255, 1);
-  --hedera-color: rgba(85, 193, 72, 1);
-  --kadena-color: rgba(255, 64, 129, 1);
-  --stacks-color: rgba(92, 104, 118, 1);
-  --oasis-color: rgba(0, 147, 221, 1);
-  --zilliqa-color: rgba(73, 160, 181, 1);
-  --multiversx-color: rgba(35, 40, 88, 1);
-  --kava-color: rgba(255, 99, 71, 1);
-  --injective-color: rgba(0, 193, 127, 1);
-  --algorand-color: rgba(0, 0, 0, 1);
-  --stellar-color: rgba(20, 172, 242, 1);
-  --ton-color: rgba(0, 136, 204, 1);
-  --tezos-color: rgba(43, 155, 247, 1);
-  --default-color: rgba(230, 0, 255, 1);
-}
-
-.bubble-ethereum {
-  --outer-shadow: 0 0 10px 2px rgba(98, 126, 234, 0.5), 0 0 20px 5px rgba(98, 126, 234, 0.3), 0 0 30px 7px rgba(98, 126, 234, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-solana {
-  --outer-shadow: 0 0 10px 2px rgba(20, 241, 149, 0.5), 0 0 20px 5px rgba(20, 241, 149, 0.3), 0 0 30px 7px rgba(20, 241, 149, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-bsc {
-  --outer-shadow: 0 0 10px 2px rgba(240, 185, 11, 0.5), 0 0 20px 5px rgba(240, 185, 11, 0.3), 0 0 30px 7px rgba(240, 185, 11, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-polygon {
-  --outer-shadow: 0 0 10px 2px rgba(130, 71, 229, 0.5), 0 0 20px 5px rgba(130, 71, 229, 0.3), 0 0 30px 7px rgba(130, 71, 229, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-avalanche {
-  --outer-shadow: 0 0 10px 2px rgba(232, 65, 66, 0.5), 0 0 20px 5px rgba(232, 65, 66, 0.3), 0 0 30px 7px rgba(232, 65, 66, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-sui {
-  --outer-shadow: 0 0 10px 2px rgba(101, 153, 255, 0.5), 0 0 20px 5px rgba(101, 153, 255, 0.3), 0 0 30px 7px rgba(101, 153, 255, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-base {
-  --outer-shadow: 0 0 10px 2px rgba(0, 102, 255, 0.5), 0 0 20px 5px rgba(0, 102, 255, 0.3), 0 0 30px 7px rgba(0, 102, 255, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-arbitrum {
-  --outer-shadow: 0 0 10px 2px rgba(40, 160, 240, 0.5), 0 0 20px 5px rgba(40, 160, 240, 0.3), 0 0 30px 7px rgba(40, 160, 240, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-optimism {
-  --outer-shadow: 0 0 10px 2px rgba(255, 4, 32, 0.5), 0 0 20px 5px rgba(255, 4, 32, 0.3), 0 0 30px 7px rgba(255, 4, 32, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-near {
-  --outer-shadow: 0 0 10px 2px rgba(0, 25, 75, 0.5), 0 0 20px 5px rgba(0, 25, 75, 0.3), 0 0 30px 7px rgba(0, 25, 75, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-fantom {
-  --outer-shadow: 0 0 10px 2px rgba(19, 181, 236, 0.5), 0 0 20px 5px rgba(19, 181, 236, 0.3), 0 0 30px 7px rgba(19, 181, 236, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-tron {
-  --outer-shadow: 0 0 10px 2px rgba(238, 13, 33, 0.5), 0 0 20px 5px rgba(238, 13, 33, 0.3), 0 0 30px 7px rgba(238, 13, 33, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-cronos {
-  --outer-shadow: 0 0 10px 2px rgba(32, 113, 205, 0.5), 0 0 20px 5px rgba(32, 113, 205, 0.3), 0 0 30px 7px rgba(32, 113, 205, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-celo {
-  --outer-shadow: 0 0 10px 2px rgba(53, 208, 127, 0.5), 0 0 20px 5px rgba(53, 208, 127, 0.3), 0 0 30px 7px rgba(53, 208, 127, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-harmony {
-  --outer-shadow: 0 0 10px 2px rgba(0, 217, 187, 0.5), 0 0 20px 5px rgba(0, 217, 187, 0.3), 0 0 30px 7px rgba(0, 217, 187, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-polkadot {
-  --outer-shadow: 0 0 10px 2px rgba(230, 0, 122, 0.5), 0 0 20px 5px rgba(230, 0, 122, 0.3), 0 0 30px 7px rgba(230, 0, 122, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-cosmos {
-  --outer-shadow: 0 0 10px 2px rgba(42, 112, 226, 0.5), 0 0 20px 5px rgba(42, 112, 226, 0.3), 0 0 30px 7px rgba(42, 112, 226, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-aptos {
-  --outer-shadow: 0 0 10px 2px rgba(81, 45, 147, 0.5), 0 0 20px 5px rgba(81, 45, 147, 0.3), 0 0 30px 7px rgba(81, 45, 147, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-flow {
-  --outer-shadow: 0 0 10px 2px rgba(0, 239, 139, 0.5), 0 0 20px 5px rgba(0, 239, 139, 0.3), 0 0 30px 7px rgba(0, 239, 139, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-cardano {
-  --outer-shadow: 0 0 10px 2px rgba(0, 51, 173, 0.5), 0 0 20px 5px rgba(0, 51, 173, 0.3), 0 0 30px 7px rgba(0, 51, 173, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-moonbeam {
-  --outer-shadow: 0 0 10px 2px rgba(83, 205, 255, 0.5), 0 0 20px 5px rgba(83, 205, 255, 0.3), 0 0 30px 7px rgba(83, 205, 255, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-moonriver {
-  --outer-shadow: 0 0 10px 2px rgba(120, 112, 255, 0.5), 0 0 20px 5px rgba(120, 112, 255, 0.3), 0 0 30px 7px rgba(120, 112, 255, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-hedera {
-  --outer-shadow: 0 0 10px 2px rgba(85, 193, 72, 0.5), 0 0 20px 5px rgba(85, 193, 72, 0.3), 0 0 30px 7px rgba(85, 193, 72, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-kadena {
-  --outer-shadow: 0 0 10px 2px rgba(255, 64, 129, 0.5), 0 0 20px 5px rgba(255, 64, 129, 0.3), 0 0 30px 7px rgba(255, 64, 129, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-stacks {
-  --outer-shadow: 0 0 10px 2px rgba(92, 104, 118, 0.5), 0 0 20px 5px rgba(92, 104, 118, 0.3), 0 0 30px 7px rgba(92, 104, 118, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-oasis {
-  --outer-shadow: 0 0 10px 2px rgba(0, 147, 221, 0.5), 0 0 20px 5px rgba(0, 147, 221, 0.3), 0 0 30px 7px rgba(0, 147, 221, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-zilliqa {
-  --outer-shadow: 0 0 10px 2px rgba(73, 160, 181, 0.5), 0 0 20px 5px rgba(73, 160, 181, 0.3), 0 0 30px 7px rgba(73, 160, 181, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-multiversx {
-  --outer-shadow: 0 0 10px 2px rgba(35, 40, 88, 0.5), 0 0 20px 5px rgba(35, 40, 88, 0.3), 0 0 30px 7px rgba(35, 40, 88, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-kava {
-  --outer-shadow: 0 0 10px 2px rgba(255, 99, 71, 0.5), 0 0 20px 5px rgba(255, 99, 71, 0.3), 0 0 30px 7px rgba(255, 99, 71, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-injective {
-  --outer-shadow: 0 0 10px 2px rgba(0, 193, 127, 0.5), 0 0 20px 5px rgba(0, 193, 127, 0.3), 0 0 30px 7px rgba(0, 193, 127, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-algorand {
-  --outer-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.5), 0 0 20px 5px rgba(0, 0, 0, 0.3), 0 0 30px 7px rgba(0, 0, 0, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-stellar {
-  --outer-shadow: 0 0 10px 2px rgba(20, 172, 242, 0.5), 0 0 20px 5px rgba(20, 172, 242, 0.3), 0 0 30px 7px rgba(20, 172, 242, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-ton {
-  --outer-shadow: 0 0 10px 2px rgba(0, 136, 204, 0.5), 0 0 20px 5px rgba(0, 136, 204, 0.3), 0 0 30px 7px rgba(0, 136, 204, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-.bubble-tezos {
-  --outer-shadow: 0 0 10px 2px rgba(43, 155, 247, 0.5), 0 0 20px 5px rgba(43, 155, 247, 0.3), 0 0 30px 7px rgba(43, 155, 247, 0.1);
-  background: radial-gradient(circle at 30% 30%, rgba(35, 37, 49, 0.85), rgba(23, 25, 35, 0.95));
-}
-
-/* Fix hover styling to match the outer shadow colors */
-.bubble-ethereum:hover {
-  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1), 0 0 15px 4px rgba(98, 126, 234, 0.7), 0 0 30px 8px rgba(98, 126, 234, 0.5), 0 0 50px 12px rgba(98, 126, 234, 0.3);
+  box-shadow: 0 0 15px 4px rgba(43, 155, 247, 0.7), 0 0 30px 8px rgba(43, 155, 247, 0.5), 0 0 50px 12px rgba(43, 155, 247, 0.3);
 }
