@@ -1794,7 +1794,7 @@ function App() {
                             }}
                           >
                             <motion.div
-                              className={`absolute bubble ${ad.isBumped ? 'bumped-ad' : ''}`}
+                              className={`absolute bubble ${ad.isBumped ? 'bumped-ad' : ''} ${ad.blockchain ? `bubble-${ad.blockchain.toLowerCase()}` : 'bubble-ethereum'}`}
                               style={{
                                 width: '100%',
                                 height: '100%',

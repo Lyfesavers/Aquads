@@ -249,6 +249,220 @@ body {
   }
 }
 
+/* Blockchain-specific glow animations */
+@keyframes ethereum-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(98, 126, 234, 0.5), 0 0 20px 5px rgba(98, 126, 234, 0.3), 0 0 30px 7px rgba(98, 126, 234, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(98, 126, 234, 0.7), 0 0 30px 8px rgba(98, 126, 234, 0.5), 0 0 50px 12px rgba(98, 126, 234, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(98, 126, 234, 0.5), 0 0 20px 5px rgba(98, 126, 234, 0.3), 0 0 30px 7px rgba(98, 126, 234, 0.1);
+  }
+}
+
+@keyframes solana-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(20, 241, 149, 0.5), 0 0 20px 5px rgba(20, 241, 149, 0.3), 0 0 30px 7px rgba(20, 241, 149, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(20, 241, 149, 0.7), 0 0 30px 8px rgba(20, 241, 149, 0.5), 0 0 50px 12px rgba(20, 241, 149, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(20, 241, 149, 0.5), 0 0 20px 5px rgba(20, 241, 149, 0.3), 0 0 30px 7px rgba(20, 241, 149, 0.1);
+  }
+}
+
+@keyframes bsc-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(240, 185, 11, 0.5), 0 0 20px 5px rgba(240, 185, 11, 0.3), 0 0 30px 7px rgba(240, 185, 11, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(240, 185, 11, 0.7), 0 0 30px 8px rgba(240, 185, 11, 0.5), 0 0 50px 12px rgba(240, 185, 11, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(240, 185, 11, 0.5), 0 0 20px 5px rgba(240, 185, 11, 0.3), 0 0 30px 7px rgba(240, 185, 11, 0.1);
+  }
+}
+
+@keyframes polygon-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(130, 71, 229, 0.5), 0 0 20px 5px rgba(130, 71, 229, 0.3), 0 0 30px 7px rgba(130, 71, 229, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(130, 71, 229, 0.7), 0 0 30px 8px rgba(130, 71, 229, 0.5), 0 0 50px 12px rgba(130, 71, 229, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(130, 71, 229, 0.5), 0 0 20px 5px rgba(130, 71, 229, 0.3), 0 0 30px 7px rgba(130, 71, 229, 0.1);
+  }
+}
+
+@keyframes avalanche-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(232, 65, 66, 0.5), 0 0 20px 5px rgba(232, 65, 66, 0.3), 0 0 30px 7px rgba(232, 65, 66, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(232, 65, 66, 0.7), 0 0 30px 8px rgba(232, 65, 66, 0.5), 0 0 50px 12px rgba(232, 65, 66, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(232, 65, 66, 0.5), 0 0 20px 5px rgba(232, 65, 66, 0.3), 0 0 30px 7px rgba(232, 65, 66, 0.1);
+  }
+}
+
+@keyframes sui-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(101, 153, 255, 0.5), 0 0 20px 5px rgba(101, 153, 255, 0.3), 0 0 30px 7px rgba(101, 153, 255, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(101, 153, 255, 0.7), 0 0 30px 8px rgba(101, 153, 255, 0.5), 0 0 50px 12px rgba(101, 153, 255, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(101, 153, 255, 0.5), 0 0 20px 5px rgba(101, 153, 255, 0.3), 0 0 30px 7px rgba(101, 153, 255, 0.1);
+  }
+}
+
+@keyframes base-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(0, 102, 255, 0.5), 0 0 20px 5px rgba(0, 102, 255, 0.3), 0 0 30px 7px rgba(0, 102, 255, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(0, 102, 255, 0.7), 0 0 30px 8px rgba(0, 102, 255, 0.5), 0 0 50px 12px rgba(0, 102, 255, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(0, 102, 255, 0.5), 0 0 20px 5px rgba(0, 102, 255, 0.3), 0 0 30px 7px rgba(0, 102, 255, 0.1);
+  }
+}
+
+/* Blockchain-specific bubble classes */
+.bubble-ethereum {
+  animation: bubble-float 8s ease-in-out infinite, ethereum-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(98, 126, 234, 0.5), 0 0 20px 5px rgba(98, 126, 234, 0.3), 0 0 30px 7px rgba(98, 126, 234, 0.1);
+}
+
+.bubble-solana {
+  animation: bubble-float 8s ease-in-out infinite, solana-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(20, 241, 149, 0.5), 0 0 20px 5px rgba(20, 241, 149, 0.3), 0 0 30px 7px rgba(20, 241, 149, 0.1);
+}
+
+.bubble-bsc {
+  animation: bubble-float 8s ease-in-out infinite, bsc-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(240, 185, 11, 0.5), 0 0 20px 5px rgba(240, 185, 11, 0.3), 0 0 30px 7px rgba(240, 185, 11, 0.1);
+}
+
+.bubble-polygon {
+  animation: bubble-float 8s ease-in-out infinite, polygon-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(130, 71, 229, 0.5), 0 0 20px 5px rgba(130, 71, 229, 0.3), 0 0 30px 7px rgba(130, 71, 229, 0.1);
+}
+
+.bubble-avalanche {
+  animation: bubble-float 8s ease-in-out infinite, avalanche-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(232, 65, 66, 0.5), 0 0 20px 5px rgba(232, 65, 66, 0.3), 0 0 30px 7px rgba(232, 65, 66, 0.1);
+}
+
+.bubble-sui {
+  animation: bubble-float 8s ease-in-out infinite, sui-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(101, 153, 255, 0.5), 0 0 20px 5px rgba(101, 153, 255, 0.3), 0 0 30px 7px rgba(101, 153, 255, 0.1);
+}
+
+.bubble-base {
+  animation: bubble-float 8s ease-in-out infinite, base-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(0, 102, 255, 0.5), 0 0 20px 5px rgba(0, 102, 255, 0.3), 0 0 30px 7px rgba(0, 102, 255, 0.1);
+}
+
+/* Also style the hover effect for each blockchain bubble */
+.bubble-ethereum:hover {
+  box-shadow: 0 0 15px 4px rgba(98, 126, 234, 0.7), 0 0 30px 8px rgba(98, 126, 234, 0.5), 0 0 50px 12px rgba(98, 126, 234, 0.3);
+}
+
+.bubble-solana:hover {
+  box-shadow: 0 0 15px 4px rgba(20, 241, 149, 0.7), 0 0 30px 8px rgba(20, 241, 149, 0.5), 0 0 50px 12px rgba(20, 241, 149, 0.3);
+}
+
+.bubble-bsc:hover {
+  box-shadow: 0 0 15px 4px rgba(240, 185, 11, 0.7), 0 0 30px 8px rgba(240, 185, 11, 0.5), 0 0 50px 12px rgba(240, 185, 11, 0.3);
+}
+
+.bubble-polygon:hover {
+  box-shadow: 0 0 15px 4px rgba(130, 71, 229, 0.7), 0 0 30px 8px rgba(130, 71, 229, 0.5), 0 0 50px 12px rgba(130, 71, 229, 0.3);
+}
+
+.bubble-avalanche:hover {
+  box-shadow: 0 0 15px 4px rgba(232, 65, 66, 0.7), 0 0 30px 8px rgba(232, 65, 66, 0.5), 0 0 50px 12px rgba(232, 65, 66, 0.3);
+}
+
+.bubble-sui:hover {
+  box-shadow: 0 0 15px 4px rgba(101, 153, 255, 0.7), 0 0 30px 8px rgba(101, 153, 255, 0.5), 0 0 50px 12px rgba(101, 153, 255, 0.3);
+}
+
+.bubble-base:hover {
+  box-shadow: 0 0 15px 4px rgba(0, 102, 255, 0.7), 0 0 30px 8px rgba(0, 102, 255, 0.5), 0 0 50px 12px rgba(0, 102, 255, 0.3);
+}
+
+/* Additional blockchain colors */
+@keyframes arbitrum-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(40, 160, 240, 0.5), 0 0 20px 5px rgba(40, 160, 240, 0.3), 0 0 30px 7px rgba(40, 160, 240, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(40, 160, 240, 0.7), 0 0 30px 8px rgba(40, 160, 240, 0.5), 0 0 50px 12px rgba(40, 160, 240, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(40, 160, 240, 0.5), 0 0 20px 5px rgba(40, 160, 240, 0.3), 0 0 30px 7px rgba(40, 160, 240, 0.1);
+  }
+}
+
+@keyframes optimism-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(255, 4, 32, 0.5), 0 0 20px 5px rgba(255, 4, 32, 0.3), 0 0 30px 7px rgba(255, 4, 32, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(255, 4, 32, 0.7), 0 0 30px 8px rgba(255, 4, 32, 0.5), 0 0 50px 12px rgba(255, 4, 32, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(255, 4, 32, 0.5), 0 0 20px 5px rgba(255, 4, 32, 0.3), 0 0 30px 7px rgba(255, 4, 32, 0.1);
+  }
+}
+
+@keyframes near-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(0, 25, 75, 0.5), 0 0 20px 5px rgba(0, 25, 75, 0.3), 0 0 30px 7px rgba(0, 25, 75, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(0, 25, 75, 0.7), 0 0 30px 8px rgba(0, 25, 75, 0.5), 0 0 50px 12px rgba(0, 25, 75, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(0, 25, 75, 0.5), 0 0 20px 5px rgba(0, 25, 75, 0.3), 0 0 30px 7px rgba(0, 25, 75, 0.1);
+  }
+}
+
+.bubble-arbitrum {
+  animation: bubble-float 8s ease-in-out infinite, arbitrum-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(40, 160, 240, 0.5), 0 0 20px 5px rgba(40, 160, 240, 0.3), 0 0 30px 7px rgba(40, 160, 240, 0.1);
+}
+
+.bubble-optimism {
+  animation: bubble-float 8s ease-in-out infinite, optimism-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(255, 4, 32, 0.5), 0 0 20px 5px rgba(255, 4, 32, 0.3), 0 0 30px 7px rgba(255, 4, 32, 0.1);
+}
+
+.bubble-near {
+  animation: bubble-float 8s ease-in-out infinite, near-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(0, 25, 75, 0.5), 0 0 20px 5px rgba(0, 25, 75, 0.3), 0 0 30px 7px rgba(0, 25, 75, 0.1);
+}
+
+.bubble-arbitrum:hover {
+  box-shadow: 0 0 15px 4px rgba(40, 160, 240, 0.7), 0 0 30px 8px rgba(40, 160, 240, 0.5), 0 0 50px 12px rgba(40, 160, 240, 0.3);
+}
+
+.bubble-optimism:hover {
+  box-shadow: 0 0 15px 4px rgba(255, 4, 32, 0.7), 0 0 30px 8px rgba(255, 4, 32, 0.5), 0 0 50px 12px rgba(255, 4, 32, 0.3);
+}
+
+.bubble-near:hover {
+  box-shadow: 0 0 15px 4px rgba(0, 25, 75, 0.7), 0 0 30px 8px rgba(0, 25, 75, 0.5), 0 0 50px 12px rgba(0, 25, 75, 0.3);
+}
+
 @keyframes float {
   0% {
     transform: translate(0, 0) rotate(0deg);
@@ -962,4 +1176,542 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   transition: box-shadow 0.3s;
   position: relative;
   z-index: 1;
+}
+
+/* Add colors for the remaining blockchains */
+@keyframes fantom-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(19, 181, 236, 0.5), 0 0 20px 5px rgba(19, 181, 236, 0.3), 0 0 30px 7px rgba(19, 181, 236, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(19, 181, 236, 0.7), 0 0 30px 8px rgba(19, 181, 236, 0.5), 0 0 50px 12px rgba(19, 181, 236, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(19, 181, 236, 0.5), 0 0 20px 5px rgba(19, 181, 236, 0.3), 0 0 30px 7px rgba(19, 181, 236, 0.1);
+  }
+}
+
+@keyframes tron-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(238, 13, 33, 0.5), 0 0 20px 5px rgba(238, 13, 33, 0.3), 0 0 30px 7px rgba(238, 13, 33, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(238, 13, 33, 0.7), 0 0 30px 8px rgba(238, 13, 33, 0.5), 0 0 50px 12px rgba(238, 13, 33, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(238, 13, 33, 0.5), 0 0 20px 5px rgba(238, 13, 33, 0.3), 0 0 30px 7px rgba(238, 13, 33, 0.1);
+  }
+}
+
+@keyframes cronos-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(32, 113, 205, 0.5), 0 0 20px 5px rgba(32, 113, 205, 0.3), 0 0 30px 7px rgba(32, 113, 205, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(32, 113, 205, 0.7), 0 0 30px 8px rgba(32, 113, 205, 0.5), 0 0 50px 12px rgba(32, 113, 205, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(32, 113, 205, 0.5), 0 0 20px 5px rgba(32, 113, 205, 0.3), 0 0 30px 7px rgba(32, 113, 205, 0.1);
+  }
+}
+
+@keyframes celo-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(53, 208, 127, 0.5), 0 0 20px 5px rgba(53, 208, 127, 0.3), 0 0 30px 7px rgba(53, 208, 127, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(53, 208, 127, 0.7), 0 0 30px 8px rgba(53, 208, 127, 0.5), 0 0 50px 12px rgba(53, 208, 127, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(53, 208, 127, 0.5), 0 0 20px 5px rgba(53, 208, 127, 0.3), 0 0 30px 7px rgba(53, 208, 127, 0.1);
+  }
+}
+
+@keyframes harmony-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(0, 217, 187, 0.5), 0 0 20px 5px rgba(0, 217, 187, 0.3), 0 0 30px 7px rgba(0, 217, 187, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(0, 217, 187, 0.7), 0 0 30px 8px rgba(0, 217, 187, 0.5), 0 0 50px 12px rgba(0, 217, 187, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(0, 217, 187, 0.5), 0 0 20px 5px rgba(0, 217, 187, 0.3), 0 0 30px 7px rgba(0, 217, 187, 0.1);
+  }
+}
+
+@keyframes polkadot-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(230, 0, 122, 0.5), 0 0 20px 5px rgba(230, 0, 122, 0.3), 0 0 30px 7px rgba(230, 0, 122, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(230, 0, 122, 0.7), 0 0 30px 8px rgba(230, 0, 122, 0.5), 0 0 50px 12px rgba(230, 0, 122, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(230, 0, 122, 0.5), 0 0 20px 5px rgba(230, 0, 122, 0.3), 0 0 30px 7px rgba(230, 0, 122, 0.1);
+  }
+}
+
+@keyframes cosmos-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(42, 112, 226, 0.5), 0 0 20px 5px rgba(42, 112, 226, 0.3), 0 0 30px 7px rgba(42, 112, 226, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(42, 112, 226, 0.7), 0 0 30px 8px rgba(42, 112, 226, 0.5), 0 0 50px 12px rgba(42, 112, 226, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(42, 112, 226, 0.5), 0 0 20px 5px rgba(42, 112, 226, 0.3), 0 0 30px 7px rgba(42, 112, 226, 0.1);
+  }
+}
+
+@keyframes aptos-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(81, 45, 147, 0.5), 0 0 20px 5px rgba(81, 45, 147, 0.3), 0 0 30px 7px rgba(81, 45, 147, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(81, 45, 147, 0.7), 0 0 30px 8px rgba(81, 45, 147, 0.5), 0 0 50px 12px rgba(81, 45, 147, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(81, 45, 147, 0.5), 0 0 20px 5px rgba(81, 45, 147, 0.3), 0 0 30px 7px rgba(81, 45, 147, 0.1);
+  }
+}
+
+@keyframes flow-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(0, 239, 139, 0.5), 0 0 20px 5px rgba(0, 239, 139, 0.3), 0 0 30px 7px rgba(0, 239, 139, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(0, 239, 139, 0.7), 0 0 30px 8px rgba(0, 239, 139, 0.5), 0 0 50px 12px rgba(0, 239, 139, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(0, 239, 139, 0.5), 0 0 20px 5px rgba(0, 239, 139, 0.3), 0 0 30px 7px rgba(0, 239, 139, 0.1);
+  }
+}
+
+@keyframes cardano-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(0, 51, 173, 0.5), 0 0 20px 5px rgba(0, 51, 173, 0.3), 0 0 30px 7px rgba(0, 51, 173, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(0, 51, 173, 0.7), 0 0 30px 8px rgba(0, 51, 173, 0.5), 0 0 50px 12px rgba(0, 51, 173, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(0, 51, 173, 0.5), 0 0 20px 5px rgba(0, 51, 173, 0.3), 0 0 30px 7px rgba(0, 51, 173, 0.1);
+  }
+}
+
+.bubble-fantom {
+  animation: bubble-float 8s ease-in-out infinite, fantom-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(19, 181, 236, 0.5), 0 0 20px 5px rgba(19, 181, 236, 0.3), 0 0 30px 7px rgba(19, 181, 236, 0.1);
+}
+
+.bubble-tron {
+  animation: bubble-float 8s ease-in-out infinite, tron-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(238, 13, 33, 0.5), 0 0 20px 5px rgba(238, 13, 33, 0.3), 0 0 30px 7px rgba(238, 13, 33, 0.1);
+}
+
+.bubble-cronos {
+  animation: bubble-float 8s ease-in-out infinite, cronos-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(32, 113, 205, 0.5), 0 0 20px 5px rgba(32, 113, 205, 0.3), 0 0 30px 7px rgba(32, 113, 205, 0.1);
+}
+
+.bubble-celo {
+  animation: bubble-float 8s ease-in-out infinite, celo-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(53, 208, 127, 0.5), 0 0 20px 5px rgba(53, 208, 127, 0.3), 0 0 30px 7px rgba(53, 208, 127, 0.1);
+}
+
+.bubble-harmony {
+  animation: bubble-float 8s ease-in-out infinite, harmony-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(0, 217, 187, 0.5), 0 0 20px 5px rgba(0, 217, 187, 0.3), 0 0 30px 7px rgba(0, 217, 187, 0.1);
+}
+
+.bubble-polkadot {
+  animation: bubble-float 8s ease-in-out infinite, polkadot-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(230, 0, 122, 0.5), 0 0 20px 5px rgba(230, 0, 122, 0.3), 0 0 30px 7px rgba(230, 0, 122, 0.1);
+}
+
+.bubble-cosmos {
+  animation: bubble-float 8s ease-in-out infinite, cosmos-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(42, 112, 226, 0.5), 0 0 20px 5px rgba(42, 112, 226, 0.3), 0 0 30px 7px rgba(42, 112, 226, 0.1);
+}
+
+.bubble-aptos {
+  animation: bubble-float 8s ease-in-out infinite, aptos-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(81, 45, 147, 0.5), 0 0 20px 5px rgba(81, 45, 147, 0.3), 0 0 30px 7px rgba(81, 45, 147, 0.1);
+}
+
+.bubble-flow {
+  animation: bubble-float 8s ease-in-out infinite, flow-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(0, 239, 139, 0.5), 0 0 20px 5px rgba(0, 239, 139, 0.3), 0 0 30px 7px rgba(0, 239, 139, 0.1);
+}
+
+.bubble-cardano {
+  animation: bubble-float 8s ease-in-out infinite, cardano-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(0, 51, 173, 0.5), 0 0 20px 5px rgba(0, 51, 173, 0.3), 0 0 30px 7px rgba(0, 51, 173, 0.1);
+}
+
+.bubble-fantom:hover, .bubble-tron:hover, .bubble-cronos:hover, .bubble-celo:hover, 
+.bubble-harmony:hover, .bubble-polkadot:hover, .bubble-cosmos:hover, .bubble-aptos:hover, 
+.bubble-flow:hover, .bubble-cardano:hover {
+  animation-play-state: paused;
+  background: rgba(23, 25, 35, 0.9);
+}
+
+.bubble-fantom:hover {
+  box-shadow: 0 0 15px 4px rgba(19, 181, 236, 0.7), 0 0 30px 8px rgba(19, 181, 236, 0.5), 0 0 50px 12px rgba(19, 181, 236, 0.3);
+}
+
+.bubble-tron:hover {
+  box-shadow: 0 0 15px 4px rgba(238, 13, 33, 0.7), 0 0 30px 8px rgba(238, 13, 33, 0.5), 0 0 50px 12px rgba(238, 13, 33, 0.3);
+}
+
+.bubble-cronos:hover {
+  box-shadow: 0 0 15px 4px rgba(32, 113, 205, 0.7), 0 0 30px 8px rgba(32, 113, 205, 0.5), 0 0 50px 12px rgba(32, 113, 205, 0.3);
+}
+
+.bubble-celo:hover {
+  box-shadow: 0 0 15px 4px rgba(53, 208, 127, 0.7), 0 0 30px 8px rgba(53, 208, 127, 0.5), 0 0 50px 12px rgba(53, 208, 127, 0.3);
+}
+
+.bubble-harmony:hover {
+  box-shadow: 0 0 15px 4px rgba(0, 217, 187, 0.7), 0 0 30px 8px rgba(0, 217, 187, 0.5), 0 0 50px 12px rgba(0, 217, 187, 0.3);
+}
+
+.bubble-polkadot:hover {
+  box-shadow: 0 0 15px 4px rgba(230, 0, 122, 0.7), 0 0 30px 8px rgba(230, 0, 122, 0.5), 0 0 50px 12px rgba(230, 0, 122, 0.3);
+}
+
+.bubble-cosmos:hover {
+  box-shadow: 0 0 15px 4px rgba(42, 112, 226, 0.7), 0 0 30px 8px rgba(42, 112, 226, 0.5), 0 0 50px 12px rgba(42, 112, 226, 0.3);
+}
+
+.bubble-aptos:hover {
+  box-shadow: 0 0 15px 4px rgba(81, 45, 147, 0.7), 0 0 30px 8px rgba(81, 45, 147, 0.5), 0 0 50px 12px rgba(81, 45, 147, 0.3);
+}
+
+.bubble-flow:hover {
+  box-shadow: 0 0 15px 4px rgba(0, 239, 139, 0.7), 0 0 30px 8px rgba(0, 239, 139, 0.5), 0 0 50px 12px rgba(0, 239, 139, 0.3);
+}
+
+.bubble-cardano:hover {
+  box-shadow: 0 0 15px 4px rgba(0, 51, 173, 0.7), 0 0 30px 8px rgba(0, 51, 173, 0.5), 0 0 50px 12px rgba(0, 51, 173, 0.3);
+}
+
+@keyframes float {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(5%, 5%) rotate(5deg);
+  }
+  50% {
+    transform: translate(0, 10%) rotate(0deg);
+  }
+  75% {
+    transform: translate(-5%, 5%) rotate(-5deg);
+  }
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+}
+
+@keyframes moonbeam-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(83, 205, 255, 0.5), 0 0 20px 5px rgba(83, 205, 255, 0.3), 0 0 30px 7px rgba(83, 205, 255, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(83, 205, 255, 0.7), 0 0 30px 8px rgba(83, 205, 255, 0.5), 0 0 50px 12px rgba(83, 205, 255, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(83, 205, 255, 0.5), 0 0 20px 5px rgba(83, 205, 255, 0.3), 0 0 30px 7px rgba(83, 205, 255, 0.1);
+  }
+}
+
+@keyframes moonriver-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(120, 112, 255, 0.5), 0 0 20px 5px rgba(120, 112, 255, 0.3), 0 0 30px 7px rgba(120, 112, 255, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(120, 112, 255, 0.7), 0 0 30px 8px rgba(120, 112, 255, 0.5), 0 0 50px 12px rgba(120, 112, 255, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(120, 112, 255, 0.5), 0 0 20px 5px rgba(120, 112, 255, 0.3), 0 0 30px 7px rgba(120, 112, 255, 0.1);
+  }
+}
+
+@keyframes hedera-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(85, 193, 72, 0.5), 0 0 20px 5px rgba(85, 193, 72, 0.3), 0 0 30px 7px rgba(85, 193, 72, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(85, 193, 72, 0.7), 0 0 30px 8px rgba(85, 193, 72, 0.5), 0 0 50px 12px rgba(85, 193, 72, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(85, 193, 72, 0.5), 0 0 20px 5px rgba(85, 193, 72, 0.3), 0 0 30px 7px rgba(85, 193, 72, 0.1);
+  }
+}
+
+@keyframes kadena-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(255, 64, 129, 0.5), 0 0 20px 5px rgba(255, 64, 129, 0.3), 0 0 30px 7px rgba(255, 64, 129, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(255, 64, 129, 0.7), 0 0 30px 8px rgba(255, 64, 129, 0.5), 0 0 50px 12px rgba(255, 64, 129, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(255, 64, 129, 0.5), 0 0 20px 5px rgba(255, 64, 129, 0.3), 0 0 30px 7px rgba(255, 64, 129, 0.1);
+  }
+}
+
+@keyframes stacks-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(92, 104, 118, 0.5), 0 0 20px 5px rgba(92, 104, 118, 0.3), 0 0 30px 7px rgba(92, 104, 118, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(92, 104, 118, 0.7), 0 0 30px 8px rgba(92, 104, 118, 0.5), 0 0 50px 12px rgba(92, 104, 118, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(92, 104, 118, 0.5), 0 0 20px 5px rgba(92, 104, 118, 0.3), 0 0 30px 7px rgba(92, 104, 118, 0.1);
+  }
+}
+
+@keyframes oasis-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(0, 147, 221, 0.5), 0 0 20px 5px rgba(0, 147, 221, 0.3), 0 0 30px 7px rgba(0, 147, 221, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(0, 147, 221, 0.7), 0 0 30px 8px rgba(0, 147, 221, 0.5), 0 0 50px 12px rgba(0, 147, 221, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(0, 147, 221, 0.5), 0 0 20px 5px rgba(0, 147, 221, 0.3), 0 0 30px 7px rgba(0, 147, 221, 0.1);
+  }
+}
+
+@keyframes zilliqa-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(73, 160, 181, 0.5), 0 0 20px 5px rgba(73, 160, 181, 0.3), 0 0 30px 7px rgba(73, 160, 181, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(73, 160, 181, 0.7), 0 0 30px 8px rgba(73, 160, 181, 0.5), 0 0 50px 12px rgba(73, 160, 181, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(73, 160, 181, 0.5), 0 0 20px 5px rgba(73, 160, 181, 0.3), 0 0 30px 7px rgba(73, 160, 181, 0.1);
+  }
+}
+
+@keyframes multiversx-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(35, 40, 88, 0.5), 0 0 20px 5px rgba(35, 40, 88, 0.3), 0 0 30px 7px rgba(35, 40, 88, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(35, 40, 88, 0.7), 0 0 30px 8px rgba(35, 40, 88, 0.5), 0 0 50px 12px rgba(35, 40, 88, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(35, 40, 88, 0.5), 0 0 20px 5px rgba(35, 40, 88, 0.3), 0 0 30px 7px rgba(35, 40, 88, 0.1);
+  }
+}
+
+@keyframes kava-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(255, 99, 71, 0.5), 0 0 20px 5px rgba(255, 99, 71, 0.3), 0 0 30px 7px rgba(255, 99, 71, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(255, 99, 71, 0.7), 0 0 30px 8px rgba(255, 99, 71, 0.5), 0 0 50px 12px rgba(255, 99, 71, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(255, 99, 71, 0.5), 0 0 20px 5px rgba(255, 99, 71, 0.3), 0 0 30px 7px rgba(255, 99, 71, 0.1);
+  }
+}
+
+@keyframes injective-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(0, 193, 127, 0.5), 0 0 20px 5px rgba(0, 193, 127, 0.3), 0 0 30px 7px rgba(0, 193, 127, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(0, 193, 127, 0.7), 0 0 30px 8px rgba(0, 193, 127, 0.5), 0 0 50px 12px rgba(0, 193, 127, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(0, 193, 127, 0.5), 0 0 20px 5px rgba(0, 193, 127, 0.3), 0 0 30px 7px rgba(0, 193, 127, 0.1);
+  }
+}
+
+@keyframes algorand-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.5), 0 0 20px 5px rgba(0, 0, 0, 0.3), 0 0 30px 7px rgba(0, 0, 0, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(0, 0, 0, 0.7), 0 0 30px 8px rgba(0, 0, 0, 0.5), 0 0 50px 12px rgba(0, 0, 0, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.5), 0 0 20px 5px rgba(0, 0, 0, 0.3), 0 0 30px 7px rgba(0, 0, 0, 0.1);
+  }
+}
+
+@keyframes stellar-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(20, 172, 242, 0.5), 0 0 20px 5px rgba(20, 172, 242, 0.3), 0 0 30px 7px rgba(20, 172, 242, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(20, 172, 242, 0.7), 0 0 30px 8px rgba(20, 172, 242, 0.5), 0 0 50px 12px rgba(20, 172, 242, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(20, 172, 242, 0.5), 0 0 20px 5px rgba(20, 172, 242, 0.3), 0 0 30px 7px rgba(20, 172, 242, 0.1);
+  }
+}
+
+@keyframes ton-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(0, 136, 204, 0.5), 0 0 20px 5px rgba(0, 136, 204, 0.3), 0 0 30px 7px rgba(0, 136, 204, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(0, 136, 204, 0.7), 0 0 30px 8px rgba(0, 136, 204, 0.5), 0 0 50px 12px rgba(0, 136, 204, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(0, 136, 204, 0.5), 0 0 20px 5px rgba(0, 136, 204, 0.3), 0 0 30px 7px rgba(0, 136, 204, 0.1);
+  }
+}
+
+@keyframes tezos-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(43, 155, 247, 0.5), 0 0 20px 5px rgba(43, 155, 247, 0.3), 0 0 30px 7px rgba(43, 155, 247, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(43, 155, 247, 0.7), 0 0 30px 8px rgba(43, 155, 247, 0.5), 0 0 50px 12px rgba(43, 155, 247, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(43, 155, 247, 0.5), 0 0 20px 5px rgba(43, 155, 247, 0.3), 0 0 30px 7px rgba(43, 155, 247, 0.1);
+  }
+}
+
+.bubble-moonbeam {
+  animation: bubble-float 8s ease-in-out infinite, moonbeam-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(83, 205, 255, 0.5), 0 0 20px 5px rgba(83, 205, 255, 0.3), 0 0 30px 7px rgba(83, 205, 255, 0.1);
+}
+
+.bubble-moonriver {
+  animation: bubble-float 8s ease-in-out infinite, moonriver-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(120, 112, 255, 0.5), 0 0 20px 5px rgba(120, 112, 255, 0.3), 0 0 30px 7px rgba(120, 112, 255, 0.1);
+}
+
+.bubble-hedera {
+  animation: bubble-float 8s ease-in-out infinite, hedera-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(85, 193, 72, 0.5), 0 0 20px 5px rgba(85, 193, 72, 0.3), 0 0 30px 7px rgba(85, 193, 72, 0.1);
+}
+
+.bubble-kadena {
+  animation: bubble-float 8s ease-in-out infinite, kadena-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(255, 64, 129, 0.5), 0 0 20px 5px rgba(255, 64, 129, 0.3), 0 0 30px 7px rgba(255, 64, 129, 0.1);
+}
+
+.bubble-stacks {
+  animation: bubble-float 8s ease-in-out infinite, stacks-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(92, 104, 118, 0.5), 0 0 20px 5px rgba(92, 104, 118, 0.3), 0 0 30px 7px rgba(92, 104, 118, 0.1);
+}
+
+.bubble-oasis {
+  animation: bubble-float 8s ease-in-out infinite, oasis-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(0, 147, 221, 0.5), 0 0 20px 5px rgba(0, 147, 221, 0.3), 0 0 30px 7px rgba(0, 147, 221, 0.1);
+}
+
+.bubble-zilliqa {
+  animation: bubble-float 8s ease-in-out infinite, zilliqa-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(73, 160, 181, 0.5), 0 0 20px 5px rgba(73, 160, 181, 0.3), 0 0 30px 7px rgba(73, 160, 181, 0.1);
+}
+
+.bubble-multiversx {
+  animation: bubble-float 8s ease-in-out infinite, multiversx-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(35, 40, 88, 0.5), 0 0 20px 5px rgba(35, 40, 88, 0.3), 0 0 30px 7px rgba(35, 40, 88, 0.1);
+}
+
+.bubble-kava {
+  animation: bubble-float 8s ease-in-out infinite, kava-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(255, 99, 71, 0.5), 0 0 20px 5px rgba(255, 99, 71, 0.3), 0 0 30px 7px rgba(255, 99, 71, 0.1);
+}
+
+.bubble-injective {
+  animation: bubble-float 8s ease-in-out infinite, injective-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(0, 193, 127, 0.5), 0 0 20px 5px rgba(0, 193, 127, 0.3), 0 0 30px 7px rgba(0, 193, 127, 0.1);
+}
+
+.bubble-algorand {
+  animation: bubble-float 8s ease-in-out infinite, algorand-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.5), 0 0 20px 5px rgba(0, 0, 0, 0.3), 0 0 30px 7px rgba(0, 0, 0, 0.1);
+}
+
+.bubble-stellar {
+  animation: bubble-float 8s ease-in-out infinite, stellar-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(20, 172, 242, 0.5), 0 0 20px 5px rgba(20, 172, 242, 0.3), 0 0 30px 7px rgba(20, 172, 242, 0.1);
+}
+
+.bubble-ton {
+  animation: bubble-float 8s ease-in-out infinite, ton-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(0, 136, 204, 0.5), 0 0 20px 5px rgba(0, 136, 204, 0.3), 0 0 30px 7px rgba(0, 136, 204, 0.1);
+}
+
+.bubble-tezos {
+  animation: bubble-float 8s ease-in-out infinite, tezos-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(43, 155, 247, 0.5), 0 0 20px 5px rgba(43, 155, 247, 0.3), 0 0 30px 7px rgba(43, 155, 247, 0.1);
+}
+
+.bubble-moonbeam:hover, .bubble-moonriver:hover, .bubble-hedera:hover, .bubble-kadena:hover,
+.bubble-stacks:hover, .bubble-oasis:hover, .bubble-zilliqa:hover, .bubble-multiversx:hover,
+.bubble-kava:hover, .bubble-injective:hover, .bubble-algorand:hover, .bubble-stellar:hover,
+.bubble-ton:hover, .bubble-tezos:hover {
+  animation-play-state: paused;
+  background: rgba(23, 25, 35, 0.9);
+}
+
+.bubble-moonbeam:hover {
+  box-shadow: 0 0 15px 4px rgba(83, 205, 255, 0.7), 0 0 30px 8px rgba(83, 205, 255, 0.5), 0 0 50px 12px rgba(83, 205, 255, 0.3);
+}
+
+.bubble-moonriver:hover {
+  box-shadow: 0 0 15px 4px rgba(120, 112, 255, 0.7), 0 0 30px 8px rgba(120, 112, 255, 0.5), 0 0 50px 12px rgba(120, 112, 255, 0.3);
+}
+
+.bubble-hedera:hover {
+  box-shadow: 0 0 15px 4px rgba(85, 193, 72, 0.7), 0 0 30px 8px rgba(85, 193, 72, 0.5), 0 0 50px 12px rgba(85, 193, 72, 0.3);
+}
+
+.bubble-kadena:hover {
+  box-shadow: 0 0 15px 4px rgba(255, 64, 129, 0.7), 0 0 30px 8px rgba(255, 64, 129, 0.5), 0 0 50px 12px rgba(255, 64, 129, 0.3);
+}
+
+.bubble-stacks:hover {
+  box-shadow: 0 0 15px 4px rgba(92, 104, 118, 0.7), 0 0 30px 8px rgba(92, 104, 118, 0.5), 0 0 50px 12px rgba(92, 104, 118, 0.3);
+}
+
+.bubble-oasis:hover {
+  box-shadow: 0 0 15px 4px rgba(0, 147, 221, 0.7), 0 0 30px 8px rgba(0, 147, 221, 0.5), 0 0 50px 12px rgba(0, 147, 221, 0.3);
+}
+
+.bubble-zilliqa:hover {
+  box-shadow: 0 0 15px 4px rgba(73, 160, 181, 0.7), 0 0 30px 8px rgba(73, 160, 181, 0.5), 0 0 50px 12px rgba(73, 160, 181, 0.3);
+}
+
+.bubble-multiversx:hover {
+  box-shadow: 0 0 15px 4px rgba(35, 40, 88, 0.7), 0 0 30px 8px rgba(35, 40, 88, 0.5), 0 0 50px 12px rgba(35, 40, 88, 0.3);
+}
+
+.bubble-kava:hover {
+  box-shadow: 0 0 15px 4px rgba(255, 99, 71, 0.7), 0 0 30px 8px rgba(255, 99, 71, 0.5), 0 0 50px 12px rgba(255, 99, 71, 0.3);
+}
+
+.bubble-injective:hover {
+  box-shadow: 0 0 15px 4px rgba(0, 193, 127, 0.7), 0 0 30px 8px rgba(0, 193, 127, 0.5), 0 0 50px 12px rgba(0, 193, 127, 0.3);
+}
+
+.bubble-algorand:hover {
+  box-shadow: 0 0 15px 4px rgba(0, 0, 0, 0.7), 0 0 30px 8px rgba(0, 0, 0, 0.5), 0 0 50px 12px rgba(0, 0, 0, 0.3);
+}
+
+.bubble-stellar:hover {
+  box-shadow: 0 0 15px 4px rgba(20, 172, 242, 0.7), 0 0 30px 8px rgba(20, 172, 242, 0.5), 0 0 50px 12px rgba(20, 172, 242, 0.3);
+}
+
+.bubble-ton:hover {
+  box-shadow: 0 0 15px 4px rgba(0, 136, 204, 0.7), 0 0 30px 8px rgba(0, 136, 204, 0.5), 0 0 50px 12px rgba(0, 136, 204, 0.3);
+}
+
+.bubble-tezos:hover {
+  box-shadow: 0 0 15px 4px rgba(43, 155, 247, 0.7), 0 0 30px 8px rgba(43, 155, 247, 0.5), 0 0 50px 12px rgba(43, 155, 247, 0.3);
 }
