@@ -10,19 +10,22 @@ body {
 }
 
 .bubble {
-  border-radius: 50%;
+  /* Change from circular to pentagon shape */
+  border-radius: 0;
   position: relative;
-  overflow: visible; /* Allow glow to extend beyond bubble */
+  overflow: visible; /* Allow glow to extend beyond shape */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(4px);
   background: rgba(23, 25, 35, 0.8);
-  animation: bubble-float 8s ease-in-out infinite, neon-purple-pulse 4s ease-in-out infinite;
+  animation: honeycomb-float 8s ease-in-out infinite, neon-purple-pulse 4s ease-in-out infinite;
   box-shadow: 0 0 10px 2px rgba(230, 0, 255, 0.5), 0 0 20px 5px rgba(230, 0, 255, 0.3), 0 0 30px 7px rgba(230, 0, 255, 0.1);
   transition: all 0.3s ease-in-out;
   pointer-events: auto;
+  /* Pentagon shape */
+  clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
 }
 
 .bubble::after {
@@ -32,7 +35,8 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  border-radius: 50%;
+  /* Match the pentagon shape */
+  clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
   pointer-events: auto;
   z-index: 10;
 }
@@ -55,6 +59,13 @@ body {
   pointer-events: none; /* Make container non-clickable */
 }
 
+.honeycomb-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  grid-gap: 5px;
+  transform: scale(1);
+}
+
 /* Make the bubble itself clickable */
 .bubble {
   pointer-events: auto; /* Ensure bubble is clickable */
@@ -65,7 +76,7 @@ body {
   pointer-events: auto;
 }
 
-/* Responsive sizing for bubbles */
+/* Responsive sizing for honeycomb */
 @media (max-width: 768px) {
   .bubble {
     transform-origin: center;
@@ -73,10 +84,10 @@ body {
   }
   
   .bubble {
-    animation: bubble-float-tablet 8s ease-in-out infinite, neon-purple-pulse 3s ease-in-out infinite;
+    animation: honeycomb-float-tablet 8s ease-in-out infinite, neon-purple-pulse 3s ease-in-out infinite;
   }
   
-  @keyframes bubble-float-tablet {
+  @keyframes honeycomb-float-tablet {
     0%, 100% {
       transform: scale(0.7) translateY(0) rotate(0deg) !important;
       filter: brightness(1);
@@ -103,16 +114,16 @@ body {
   }
   
   .bubble {
-    animation: bubble-float-mobile 8s ease-in-out infinite, neon-purple-pulse 3s ease-in-out infinite;
+    animation: honeycomb-float-mobile 8s ease-in-out infinite, neon-purple-pulse 3s ease-in-out infinite;
   }
   
-  @keyframes bubble-float-mobile {
+  @keyframes honeycomb-float-mobile {
     0%, 100% {
       transform: scale(0.5) translateY(0) rotate(0deg) !important;
       filter: brightness(1);
     }
     25% {
-      transform: scale(0.5) translateY(-10px) rotate(1deg) !important;
+      transform: scale(0.5) translateY(-5px) rotate(1deg) !important;
       filter: brightness(1.1);
     }
     50% {
@@ -120,7 +131,7 @@ body {
       filter: brightness(1);
     }
     75% {
-      transform: scale(0.5) translateY(10px) rotate(-1deg) !important;
+      transform: scale(0.5) translateY(5px) rotate(-1deg) !important;
       filter: brightness(0.9);
     }
   }
@@ -130,7 +141,8 @@ body {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  border-radius: 50%;
+  /* Match pentagon shape */
+  clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
   pointer-events: none;
 }
 
@@ -161,14 +173,14 @@ body {
   }
 }
 
-/* Bubble Animation */
+/* Bubble Animation - changing to honeycomb animation */
 @keyframes bubble-float {
   0%, 100% {
     transform: translateY(0) rotate(0deg);
     filter: brightness(1);
   }
   25% {
-    transform: translateY(-10px) rotate(1deg);
+    transform: translateY(-5px) rotate(1deg);
     filter: brightness(1.1);
   }
   50% {
@@ -176,7 +188,7 @@ body {
     filter: brightness(1);
   }
   75% {
-    transform: translateY(10px) rotate(-1deg);
+    transform: translateY(5px) rotate(-1deg);
     filter: brightness(0.9);
   }
 }
@@ -1076,41 +1088,43 @@ body {
 /* Curved text container for bubbles */
 .bubble-text-curved {
   position: absolute;
-  top: 8%;
+  top: 10%;
   left: 0;
   width: 100%;
   text-align: center;
-  z-index: 20;
-  transform: translateY(-50%);
-  padding: 0 10%;
+  transform: translateY(-10px);
+  transition: transform 0.3s ease-in-out;
+  z-index: 10;
+}
+
+.bubble:hover .bubble-text-curved {
+  transform: translateY(-5px);
 }
 
 .bubble-text-curved span {
-  display: block;
-  text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
-  font-weight: 500;
+  display: inline-block;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding: 4px 8px;
+  max-width: 80%;
+  padding: 2px 4px;
   background: rgba(0, 0, 0, 0.5);
-  border-radius: 12px;
-  backdrop-filter: blur(2px);
-  transform: perspective(100px) rotateX(5deg);
-  box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
 }
 
 /* Larger logo container for bubbles */
 .bubble-logo-container {
-  position: relative;
-  z-index: 10;
-  width: 85% !important; /* Override inline styles */
-  height: 85% !important; /* Override inline styles */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -35%);
+  width: 75%;
+  height: 75%;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  overflow: hidden;
+  z-index: 1;
+  padding: 5%;
 }
 
 /* Make sure the bubble content is positioned to allow for the curved text at top */
@@ -1122,15 +1136,21 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  /* Match pentagon shape */
+  clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
 }
 
 /* Background glow for the bubble */
 .bubble-bg {
   position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: rgba(23, 25, 35, 0.8);
-  backdrop-filter: blur(4px);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(23, 25, 35, 0.7);
+  /* Match pentagon shape */
+  clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+  z-index: -1;
 }
 
 @media (max-width: 768px) {
@@ -1714,4 +1734,24 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 
 .bubble-tezos:hover {
   box-shadow: 0 0 15px 4px rgba(43, 155, 247, 0.7), 0 0 30px 8px rgba(43, 155, 247, 0.5), 0 0 50px 12px rgba(43, 155, 247, 0.3);
+}
+
+/* Honeycomb Animation */
+@keyframes honeycomb-float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+    filter: brightness(1);
+  }
+  25% {
+    transform: translateY(-5px) rotate(1deg);
+    filter: brightness(1.1);
+  }
+  50% {
+    transform: translateY(0) rotate(0deg);
+    filter: brightness(1);
+  }
+  75% {
+    transform: translateY(5px) rotate(-1deg);
+    filter: brightness(0.9);
+  }
 }
