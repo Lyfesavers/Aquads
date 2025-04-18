@@ -279,6 +279,7 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
         totalPushX -= pushX * pushAmount * multiplier;
         totalPushY -= pushY * pushAmount * multiplier;
       }
+
     }
     
     if (!hasOverlap) {
@@ -294,7 +295,7 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
     
     iterations++;
   }
-  
+
   return { x: newX, y: newY };
 }
 
