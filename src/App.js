@@ -111,80 +111,116 @@ const ADMIN_USERNAME = "admin"; // You can change this to your preferred admin u
 function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
   // Center of the available space (excluding banner)
   const centerX = windowWidth / 2;
-  const centerY = (windowHeight - TOP_PADDING) / 2 + TOP_PADDING;
+  const centerY = (windowHeight - TOP_PADDING) / 1 + TOP_PADDING;
   
-  // Honeycomb grid parameters
-  const hexWidth = size * 0.9; // Slightly smaller for overlap
-  const hexHeight = size * 0.9;
+  // If this is the first bubble, place it directly in the center of available space
+  if (existingAds.length === 0) {
+    return {
+      x: centerX - size/2,
+      y: centerY - size/2
+    };
+  }
   
-  // Horizontal distance between adjacent hexagons
-  const horizontalSpacing = hexWidth * 0.75;
+  // Reduced spacing between bubbles for tighter packing
+  const bubbleSpacing = 0.50;
   
-  // Vertical distance between adjacent rows
-  const verticalSpacing = hexHeight * 0.85;
+  // Calculate spiral position with optimized parameters
+  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+  const startRadius = size/3;
+  const scaleFactor = 0.7;
   
-  // Calculate the number of columns and rows that can fit
-  const numCols = Math.floor(windowWidth / horizontalSpacing);
-  const numRows = Math.floor((windowHeight - TOP_PADDING) / verticalSpacing);
+  // Create a grid-based optimization for larger numbers of bubbles
+  const useGridApproach = existingAds.length > 12;
   
-  // Create a grid array to track occupied positions
-  const grid = Array(numRows).fill().map(() => Array(numCols).fill(false));
-  
-  // Mark positions occupied by existing ads
-  existingAds.forEach(ad => {
-    // Convert ad position to grid coordinates
-    const col = Math.floor(ad.x / horizontalSpacing);
-    const row = Math.floor((ad.y - TOP_PADDING) / verticalSpacing);
+  if (useGridApproach) {
+    const cellSize = size * bubbleSpacing;
+    const gridColumns = Math.floor((windowWidth - 2 * BUBBLE_PADDING) / cellSize);
+    const gridRows = Math.floor((windowHeight - TOP_PADDING - BUBBLE_PADDING) / cellSize);
     
-    // Mark this position and adjacent ones as occupied
-    if (col >= 0 && col < numCols && row >= 0 && row < numRows) {
-      grid[row][col] = true;
+    const grid = Array(gridRows).fill().map(() => Array(gridColumns).fill(false));
+    
+    existingAds.forEach(ad => {
+      const col = Math.floor((ad.x - BUBBLE_PADDING) / cellSize);
+      const row = Math.floor((ad.y - TOP_PADDING) / cellSize);
       
-      // Mark adjacent cells as occupied too (honeycomb neighbors)
-      for (let r = Math.max(0, row-1); r <= Math.min(numRows-1, row+1); r++) {
-        for (let c = Math.max(0, col-1); c <= Math.min(numCols-1, col+1); c++) {
-          grid[r][c] = true;
-        }
-      }
-    }
-  });
-  
-  // Find a free position using the honeycomb grid
-  for (let row = 0; row < numRows; row++) {
-    for (let col = 0; col < numCols; col++) {
-      if (!grid[row][col]) {
-        // Calculate actual x,y position using honeycomb layout
-        // Even rows have a horizontal offset to create the honeycomb pattern
-        const isEvenRow = row % 2 === 0;
-        const x = col * horizontalSpacing + (isEvenRow ? 0 : horizontalSpacing / 2);
-        const y = TOP_PADDING + row * verticalSpacing;
+      if (col >= 0 && col < gridColumns && row >= 0 && row < gridRows) {
+        grid[row][col] = true;
         
-        // Check for any overlaps with existing ads
-        let hasOverlap = false;
-        for (const ad of existingAds) {
-          const distance = calculateDistance(
-            x + size/2, 
-            y + size/2, 
-            ad.x + ad.size/2, 
-            ad.y + ad.size/2
-          );
-          
-          const minDistance = ((size + ad.size) / 2) * 0.9; // Allow slight overlap for honeycomb effect
-          
-          if (distance < minDistance) {
-            hasOverlap = true;
-            break;
+        for (let r = Math.max(0, row-1); r <= Math.min(gridRows-1, row+1); r++) {
+          for (let c = Math.max(0, col-1); c <= Math.min(gridColumns-1, col+1); c++) {
+            if (Math.sqrt(Math.pow(r-row, 2) + Math.pow(c-col, 2)) <= 1) {
+              grid[r][c] = true;
+            }
           }
         }
-        
-        if (!hasOverlap) {
-          return { x, y };
+      }
+    });
+    
+    for (let row = 0; row < gridRows; row++) {
+      for (let col = 0; col < gridColumns; col++) {
+        if (!grid[row][col]) {
+          const x = BUBBLE_PADDING + col * cellSize;
+          const y = TOP_PADDING + row * cellSize;
+          
+          let hasOverlap = false;
+          for (const ad of existingAds) {
+            const distance = calculateDistance(
+              x + size/2, 
+              y + size/2, 
+              ad.x + ad.size/2, 
+              ad.y + ad.size/2
+            );
+            
+            const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
+            
+            if (distance < minDistance) {
+              hasOverlap = true;
+              break;
+            }
+          }
+          
+          if (!hasOverlap) {
+            return { x, y };
+          }
         }
       }
     }
   }
   
-  // If no free position found, use a fallback position
+  for (let i = 0; i < 1000; i++) {
+    const angle = goldenAngle * i;
+    const radius = startRadius * scaleFactor * Math.sqrt(i + 1);
+    
+    const x = centerX + radius * Math.cos(angle) - size/2;
+    const y = centerY + radius * Math.sin(angle) - size/2;
+    
+    if (x < BUBBLE_PADDING || x + size > windowWidth - BUBBLE_PADDING || 
+        y < TOP_PADDING || y + size > windowHeight - BUBBLE_PADDING) {
+      continue;
+    }
+    
+    let hasOverlap = false;
+    for (const ad of existingAds) {
+      const distance = calculateDistance(
+        x + size/2, 
+        y + size/2, 
+        ad.x + ad.size/2, 
+        ad.y + ad.size/2
+      );
+      
+      const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
+      
+      if (distance < minDistance) {
+        hasOverlap = true;
+        break;
+      }
+    }
+    
+    if (!hasOverlap) {
+      return { x, y };
+    }
+  }
+  
   return {
     x: Math.max(BUBBLE_PADDING, Math.min(windowWidth - size - BUBBLE_PADDING, Math.random() * windowWidth)),
     y: Math.max(TOP_PADDING, Math.min(windowHeight - size - BUBBLE_PADDING, Math.random() * (windowHeight - TOP_PADDING)))
@@ -206,27 +242,7 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
     return { x: newX, y: newY };
   }
   
-  // Honeycomb grid parameters - should match those in calculateSafePosition
-  const hexWidth = size * 0.9;
-  const hexHeight = size * 0.9;
-  const horizontalSpacing = hexWidth * 0.75;
-  const verticalSpacing = hexHeight * 0.85;
-  
-  // Try to snap to honeycomb grid
-  const col = Math.round(newX / horizontalSpacing);
-  const row = Math.round((newY - TOP_PADDING) / verticalSpacing);
-  
-  // Apply honeycomb offset pattern (every other row is offset)
-  const isEvenRow = row % 2 === 0;
-  const snapX = col * horizontalSpacing + (isEvenRow ? 0 : horizontalSpacing / 2);
-  const snapY = TOP_PADDING + row * verticalSpacing;
-  
-  // Use snapped position as a starting point for collision resolution
-  newX = snapX;
-  newY = snapY;
-  
-  // Now resolve collisions if any
-  const spacing = 0.9; // Allow slight overlap for honeycomb effect
+  const bubbleSpacing = 1.02;
   let iterations = 0;
   const maxIterations = 25;
   
@@ -244,7 +260,7 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
         ad.y + ad.size/2
       );
       
-      const minDistance = ((size + ad.size) / 2) * spacing;
+      const minDistance = ((size + ad.size) / 2) * bubbleSpacing;
       
       if (distance < minDistance) {
         hasOverlap = true;
@@ -263,37 +279,10 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
         totalPushX -= pushX * pushAmount * multiplier;
         totalPushY -= pushY * pushAmount * multiplier;
       }
+
     }
     
     if (!hasOverlap) {
-      // Final snap to honeycomb grid
-      const snapCol = Math.round(newX / horizontalSpacing);
-      const snapRow = Math.round((newY - TOP_PADDING) / verticalSpacing);
-      const snapEvenRow = snapRow % 2 === 0;
-      const finalX = snapCol * horizontalSpacing + (snapEvenRow ? 0 : horizontalSpacing / 2);
-      const finalY = TOP_PADDING + snapRow * verticalSpacing;
-      
-      // Only snap if it doesn't cause new overlaps
-      let snapCausesOverlap = false;
-      for (const ad of otherAds) {
-        const snapDistance = calculateDistance(
-          finalX + size/2, 
-          finalY + size/2, 
-          ad.x + ad.size/2, 
-          ad.y + ad.size/2
-        );
-        
-        if (snapDistance < minDistance) {
-          snapCausesOverlap = true;
-          break;
-        }
-      }
-      
-      if (!snapCausesOverlap) {
-        newX = finalX;
-        newY = finalY;
-      }
-      
       break;
     }
     
@@ -306,7 +295,7 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
     
     iterations++;
   }
-  
+
   return { x: newX, y: newY };
 }
 
@@ -1775,7 +1764,7 @@ function App() {
 
                 {/* Main content - allow natural scrolling */}
                 <div className="pt-20">
-                  {/* Changed from Bubbles to Honeycomb layout */}
+                  {/* Bubbles section - keep it as is, remove fixed positioning */}
                   <div className="relative min-h-screen overflow-hidden">
                     {/* Ads */}
                     {ads && ads.length > 0 ? (
