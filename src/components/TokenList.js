@@ -232,7 +232,7 @@ const TokenList = ({ currentUser, showNotification }) => {
   const fetchChartData = async (tokenId, days) => {
     try {
       const response = await fetch(
-        `https://api.coingecko.com/api/v3/coins/${tokenId}/market_chart?vs_currency=usd&days=${days}`,
+        `${API_URL}/api/tokens/market-chart/${tokenId}?days=${days}`,
         {
           headers: {
             'Accept': 'application/json',
