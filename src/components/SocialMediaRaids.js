@@ -52,6 +52,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [tweetUrl, setTweetUrl] = useState('');
   const [isValidUrl, setIsValidUrl] = useState(true);
   const tweetEmbedRef = useRef(null);
+  const [userData, setUserData] = useState(currentUser);
   
   // For admin creation
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -78,10 +79,48 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     tweetId: null
   });
 
+  // Add fetchUserData function to get the latest user data including points
+  const fetchUserData = async () => {
+    try {
+      // Get the current user's token from localStorage or the currentUser prop
+      const token = currentUser?.token || JSON.parse(localStorage.getItem('currentUser'))?.token;
+      
+      if (!token) {
+        return;
+      }
+      
+      const response = await fetch(`${API_URL}/users/me`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch user data');
+      }
+      
+      const userData = await response.json();
+      setUserData(userData);
+      
+      // Update the localStorage with the latest user data including points
+      const currentStoredUser = JSON.parse(localStorage.getItem('currentUser')) || {};
+      localStorage.setItem('currentUser', JSON.stringify({
+        ...currentStoredUser,
+        ...userData
+      }));
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
+  };
+
   useEffect(() => {
     fetchRaids();
     // Load Twitter widget script
     loadTwitterWidgetScript();
+    // Fetch latest user data including points
+    fetchUserData();
   }, []);
 
   useEffect(() => {
@@ -628,8 +667,16 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const handlePointsRaidSubmit = async (e) => {
     e.preventDefault();
     
-    if (!currentUser) {
+    if (!userData) {
       showNotification('Please log in to create a Twitter raid', 'error');
+      return;
+    }
+    
+    // Refresh user data to ensure we have the latest points balance
+    await fetchUserData();
+    
+    if ((userData?.points || 0) < 200) {
+      setError(`Not enough points. You need 200 points but only have ${userData?.points || 0}.`);
       return;
     }
     
@@ -643,7 +690,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       setError(null);
       
       // Create the points-based Twitter raid
-      const result = await createPointsTwitterRaid(pointsRaidData, currentUser.token);
+      const result = await createPointsTwitterRaid(pointsRaidData, userData.token || currentUser.token);
       
       // Reset form and hide it
       setPointsRaidData({
@@ -655,6 +702,12 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       
       // Show success message
       showNotification(result.message || 'Twitter raid created using your affiliate points!', 'success');
+      
+      // Update user data with new points balance
+      setUserData(prev => ({
+        ...prev,
+        points: result.pointsRemaining
+      }));
       
       // Refresh raids list
       fetchRaids();
@@ -867,9 +920,25 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
-                  <div>
+                  <div className="flex-1">
                     <p className="font-medium">Using Affiliate Points</p>
-                    <p className="text-sm">You currently have {currentUser?.points || 0} points. Creating this raid will cost 200 points.</p>
+                    <div className="flex items-center">
+                      <p className="text-sm mr-2">You currently have {userData?.points || 0} points. Creating this raid will cost 200 points.</p>
+                      <button 
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          fetchUserData();
+                          showNotification('Points balance refreshed', 'info');
+                        }}
+                        className="text-blue-400 hover:text-blue-300 p-1 rounded"
+                        title="Refresh points balance"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -882,16 +951,16 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
               
               <button
                 type="submit"
-                disabled={submitting || (currentUser?.points || 0) < 200}
+                disabled={submitting || (userData?.points || 0) < 200}
                 className={`px-4 py-2 rounded font-medium ${
-                  submitting || (currentUser?.points || 0) < 200
+                  submitting || (userData?.points || 0) < 200
                     ? 'bg-gray-600 cursor-not-allowed'
                     : 'bg-green-600 hover:bg-green-700'
                 } text-white`}
               >
                 {submitting 
                   ? 'Creating...' 
-                  : (currentUser?.points || 0) < 200 
+                  : (userData?.points || 0) < 200 
                     ? 'Not Enough Points (Need 200)' 
                     : 'Create Twitter Raid with Points'}
               </button>
