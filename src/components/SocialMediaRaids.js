@@ -53,6 +53,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [isValidUrl, setIsValidUrl] = useState(true);
   const tweetEmbedRef = useRef(null);
   const [userData, setUserData] = useState(currentUser);
+  // Add a dedicated state for points
+  const [pointsData, setPointsData] = useState({ points: 0 });
+  const [loadingPoints, setLoadingPoints] = useState(true);
   
   // For admin creation
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -79,60 +82,88 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     tweetId: null
   });
 
-  // Add fetchUserData function to get the latest user data including points
-  const fetchUserData = async () => {
+  // Fetch user points data from the backend API
+  const fetchUserPoints = async () => {
+    if (!currentUser?.token) {
+      console.log('No authentication token available');
+      setLoadingPoints(false);
+      return;
+    }
+
     try {
-      // Get the current user's token from localStorage or the currentUser prop
-      const token = currentUser?.token || JSON.parse(localStorage.getItem('currentUser'))?.token;
+      console.log('Fetching points from API...');
+      setLoadingPoints(true);
       
-      if (!token) {
-        return;
-      }
-      
-      const response = await fetch(`${API_URL}/verify-token`, {
-        method: 'GET',
+      const response = await fetch(`${API_URL}/api/points/my-points`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Authorization': `Bearer ${currentUser.token}`
         }
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch user data');
-      }
+      console.log('Points API response status:', response.status);
       
-      const userData = await response.json();
-      
-      // Only update if we actually got user data back
-      if (userData && userData.userId) {
-        setUserData(userData);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Points data from API:', data);
+        setPointsData(data);
         
-        // Update the localStorage with the latest user data including points
-        const currentStoredUser = JSON.parse(localStorage.getItem('currentUser')) || {};
-        localStorage.setItem('currentUser', JSON.stringify({
-          ...currentStoredUser,
-          ...userData
-        }));
-      } else {
-        // If not successful, fallback to localStorage data
-        const storedUser = JSON.parse(localStorage.getItem('currentUser'));
-        if (storedUser) {
-          setUserData(storedUser);
+        // Also update the localStorage to keep everything in sync
+        try {
+          const storedUser = JSON.parse(localStorage.getItem('currentUser'));
+          if (storedUser) {
+            storedUser.points = data.points;
+            localStorage.setItem('currentUser', JSON.stringify(storedUser));
+          }
+        } catch (e) {
+          console.error('Error updating localStorage with points:', e);
         }
+      } else {
+        console.error('Failed to fetch points:', await response.text());
       }
     } catch (error) {
-      console.error('Error fetching user data:', error);
-      // Fallback to using currentUser data from props
-      setUserData(currentUser);
+      console.error('Error fetching points:', error);
+    } finally {
+      setLoadingPoints(false);
     }
+  };
+
+  // Get user points - now using our dedicated pointsData state
+  const getUserPoints = () => {
+    // First try from our dedicated pointsData state
+    if (pointsData && typeof pointsData.points === 'number') {
+      return pointsData.points;
+    }
+    
+    // Try from userData state
+    if (userData && typeof userData.points === 'number') {
+      return userData.points;
+    }
+    
+    // Try from currentUser prop
+    if (currentUser && typeof currentUser.points === 'number') {
+      return currentUser.points;
+    }
+    
+    // Try from localStorage
+    try {
+      const storedUser = JSON.parse(localStorage.getItem('currentUser'));
+      if (storedUser && typeof storedUser.points === 'number') {
+        return storedUser.points;
+      }
+    } catch (e) {
+      console.error('Error reading points from localStorage:', e);
+    }
+    
+    // Default to 0
+    return 0;
   };
 
   useEffect(() => {
     fetchRaids();
     // Load Twitter widget script
     loadTwitterWidgetScript();
-    // Fetch latest user data including points
-    fetchUserData();
+    // Fetch user points from API
+    fetchUserPoints();
   }, []);
 
   useEffect(() => {
@@ -684,9 +715,11 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       return;
     }
     
-    // Get latest points balance
-    await fetchUserData();
+    // Get latest points directly from the API
+    await fetchUserPoints();
     const currentPoints = getUserPoints();
+    
+    console.log('Current points balance:', currentPoints);
     
     if (currentPoints < 200) {
       setError(`Not enough points. You need 200 points but only have ${currentPoints}.`);
@@ -702,7 +735,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       setSubmitting(true);
       setError(null);
       
-      // Create the points-based Twitter raid using the token from currentUser or localStorage
+      // Create the points-based Twitter raid
       const token = currentUser?.token || JSON.parse(localStorage.getItem('currentUser'))?.token;
       const result = await createPointsTwitterRaid(pointsRaidData, token);
       
@@ -717,24 +750,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       // Show success message
       showNotification(result.message || 'Twitter raid created using your affiliate points!', 'success');
       
-      // Update user data with new points balance if provided by the server
-      if (result.pointsRemaining !== undefined) {
-        setUserData(prev => ({
-          ...prev,
-          points: result.pointsRemaining
-        }));
-        
-        // Also update localStorage
-        try {
-          const storedUser = JSON.parse(localStorage.getItem('currentUser'));
-          if (storedUser) {
-            storedUser.points = result.pointsRemaining;
-            localStorage.setItem('currentUser', JSON.stringify(storedUser));
-          }
-        } catch (e) {
-          console.error('Error updating points in localStorage:', e);
-        }
-      }
+      // Fetch updated points from the API to get the new balance
+      await fetchUserPoints();
       
       // Refresh raids list
       fetchRaids();
@@ -811,32 +828,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     } catch (error) {
       showNotification(error.message || 'Failed to reject raid', 'error');
     }
-  };
-
-  // Add a function to directly get points from localStorage
-  const getUserPoints = () => {
-    // First try from userData state
-    if (userData && typeof userData.points === 'number') {
-      return userData.points;
-    }
-    
-    // Then try from currentUser prop
-    if (currentUser && typeof currentUser.points === 'number') {
-      return currentUser.points;
-    }
-    
-    // Lastly try from localStorage directly
-    try {
-      const storedUser = JSON.parse(localStorage.getItem('currentUser'));
-      if (storedUser && typeof storedUser.points === 'number') {
-        return storedUser.points;
-      }
-    } catch (e) {
-      console.error('Error parsing user data from localStorage:', e);
-    }
-    
-    // Default fallback
-    return 0;
   };
 
   if (loading && raids.length === 0) {
@@ -976,18 +967,23 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   <div className="flex-1">
                     <p className="font-medium">Using Affiliate Points</p>
                     <div className="flex items-center">
-                      <p className="text-sm mr-2">You currently have {getUserPoints()} points. Creating this raid will cost 200 points.</p>
+                      {loadingPoints ? (
+                        <p className="text-sm mr-2">Loading points balance...</p>
+                      ) : (
+                        <p className="text-sm mr-2">You currently have {getUserPoints()} points. Creating this raid will cost 200 points.</p>
+                      )}
                       <button 
                         type="button"
                         onClick={(e) => {
                           e.preventDefault();
-                          fetchUserData();
+                          fetchUserPoints();
                           showNotification('Points balance refreshed', 'info');
                         }}
                         className="text-blue-400 hover:text-blue-300 p-1 rounded"
                         title="Refresh points balance"
+                        disabled={loadingPoints}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${loadingPoints ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                         </svg>
                       </button>
