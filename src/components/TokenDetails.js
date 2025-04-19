@@ -85,7 +85,11 @@ const TokenDetails = ({
           </div>
 
           <div className="mb-6">
-            <TokenSentiment tokenId={token.id} />
+            <TokenSentiment 
+              tokenId={token.id} 
+              currentUser={currentUser}
+              showNotification={showNotification}
+            />
           </div>
 
           <div className="mb-6">
