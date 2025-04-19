@@ -173,44 +173,4 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Add a proxy route for CoinGecko market chart data
-router.get('/market-chart/:tokenId', async (req, res) => {
-  try {
-    const { tokenId } = req.params;
-    const { days = 30, vs_currency = 'usd' } = req.query;
-    
-    console.log(`Proxying market chart data for ${tokenId} over ${days} days`);
-    
-    const response = await axios.get(
-      `https://api.coingecko.com/api/v3/coins/${tokenId}/market_chart`,
-      {
-        params: {
-          vs_currency,
-          days
-        },
-        timeout: 10000,
-        headers: {
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache'
-        }
-      }
-    );
-
-    if (!response.data) {
-      throw new Error('Invalid response from CoinGecko');
-    }
-
-    res.json(response.data);
-  } catch (error) {
-    console.error('Error fetching market chart data:', error.message);
-    
-    // Send a more detailed error response
-    res.status(error.response?.status || 500).json({ 
-      error: 'Failed to fetch market chart data', 
-      message: error.message,
-      statusCode: error.response?.status
-    });
-  }
-});
-
 module.exports = router; 
