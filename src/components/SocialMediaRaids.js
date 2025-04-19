@@ -89,7 +89,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         return;
       }
       
-      const response = await fetch(`${API_URL}/users/me`, {
+      const response = await fetch(`${API_URL}/verify-token`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -102,16 +102,28 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       }
       
       const userData = await response.json();
-      setUserData(userData);
       
-      // Update the localStorage with the latest user data including points
-      const currentStoredUser = JSON.parse(localStorage.getItem('currentUser')) || {};
-      localStorage.setItem('currentUser', JSON.stringify({
-        ...currentStoredUser,
-        ...userData
-      }));
+      // Only update if we actually got user data back
+      if (userData && userData.userId) {
+        setUserData(userData);
+        
+        // Update the localStorage with the latest user data including points
+        const currentStoredUser = JSON.parse(localStorage.getItem('currentUser')) || {};
+        localStorage.setItem('currentUser', JSON.stringify({
+          ...currentStoredUser,
+          ...userData
+        }));
+      } else {
+        // If not successful, fallback to localStorage data
+        const storedUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (storedUser) {
+          setUserData(storedUser);
+        }
+      }
     } catch (error) {
       console.error('Error fetching user data:', error);
+      // Fallback to using currentUser data from props
+      setUserData(currentUser);
     }
   };
 
@@ -667,16 +679,17 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const handlePointsRaidSubmit = async (e) => {
     e.preventDefault();
     
-    if (!userData) {
+    if (!currentUser) {
       showNotification('Please log in to create a Twitter raid', 'error');
       return;
     }
     
-    // Refresh user data to ensure we have the latest points balance
+    // Get latest points balance
     await fetchUserData();
+    const currentPoints = getUserPoints();
     
-    if ((userData?.points || 0) < 200) {
-      setError(`Not enough points. You need 200 points but only have ${userData?.points || 0}.`);
+    if (currentPoints < 200) {
+      setError(`Not enough points. You need 200 points but only have ${currentPoints}.`);
       return;
     }
     
@@ -689,8 +702,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       setSubmitting(true);
       setError(null);
       
-      // Create the points-based Twitter raid
-      const result = await createPointsTwitterRaid(pointsRaidData, userData.token || currentUser.token);
+      // Create the points-based Twitter raid using the token from currentUser or localStorage
+      const token = currentUser?.token || JSON.parse(localStorage.getItem('currentUser'))?.token;
+      const result = await createPointsTwitterRaid(pointsRaidData, token);
       
       // Reset form and hide it
       setPointsRaidData({
@@ -703,11 +717,24 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       // Show success message
       showNotification(result.message || 'Twitter raid created using your affiliate points!', 'success');
       
-      // Update user data with new points balance
-      setUserData(prev => ({
-        ...prev,
-        points: result.pointsRemaining
-      }));
+      // Update user data with new points balance if provided by the server
+      if (result.pointsRemaining !== undefined) {
+        setUserData(prev => ({
+          ...prev,
+          points: result.pointsRemaining
+        }));
+        
+        // Also update localStorage
+        try {
+          const storedUser = JSON.parse(localStorage.getItem('currentUser'));
+          if (storedUser) {
+            storedUser.points = result.pointsRemaining;
+            localStorage.setItem('currentUser', JSON.stringify(storedUser));
+          }
+        } catch (e) {
+          console.error('Error updating points in localStorage:', e);
+        }
+      }
       
       // Refresh raids list
       fetchRaids();
@@ -784,6 +811,32 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     } catch (error) {
       showNotification(error.message || 'Failed to reject raid', 'error');
     }
+  };
+
+  // Add a function to directly get points from localStorage
+  const getUserPoints = () => {
+    // First try from userData state
+    if (userData && typeof userData.points === 'number') {
+      return userData.points;
+    }
+    
+    // Then try from currentUser prop
+    if (currentUser && typeof currentUser.points === 'number') {
+      return currentUser.points;
+    }
+    
+    // Lastly try from localStorage directly
+    try {
+      const storedUser = JSON.parse(localStorage.getItem('currentUser'));
+      if (storedUser && typeof storedUser.points === 'number') {
+        return storedUser.points;
+      }
+    } catch (e) {
+      console.error('Error parsing user data from localStorage:', e);
+    }
+    
+    // Default fallback
+    return 0;
   };
 
   if (loading && raids.length === 0) {
@@ -923,7 +976,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   <div className="flex-1">
                     <p className="font-medium">Using Affiliate Points</p>
                     <div className="flex items-center">
-                      <p className="text-sm mr-2">You currently have {userData?.points || 0} points. Creating this raid will cost 200 points.</p>
+                      <p className="text-sm mr-2">You currently have {getUserPoints()} points. Creating this raid will cost 200 points.</p>
                       <button 
                         type="button"
                         onClick={(e) => {
@@ -951,16 +1004,16 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
               
               <button
                 type="submit"
-                disabled={submitting || (userData?.points || 0) < 200}
+                disabled={submitting || getUserPoints() < 200}
                 className={`px-4 py-2 rounded font-medium ${
-                  submitting || (userData?.points || 0) < 200
+                  submitting || getUserPoints() < 200
                     ? 'bg-gray-600 cursor-not-allowed'
                     : 'bg-green-600 hover:bg-green-700'
                 } text-white`}
               >
                 {submitting 
                   ? 'Creating...' 
-                  : (userData?.points || 0) < 200 
+                  : getUserPoints() < 200 
                     ? 'Not Enough Points (Need 200)' 
                     : 'Create Twitter Raid with Points'}
               </button>
