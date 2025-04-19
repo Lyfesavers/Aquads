@@ -1,5 +1,6 @@
 import React from 'react';
 import { FaGlobe, FaTwitter, FaTelegram, FaDiscord, FaGithub, FaReddit } from 'react-icons/fa';
+import TokenSentiment from './TokenSentiment';
 
 const TokenDetails = ({
   token,
@@ -81,6 +82,10 @@ const TokenDetails = ({
                 Volume: ${token.totalVolume.toLocaleString()}
               </p>
             </div>
+          </div>
+
+          <div className="mb-6">
+            <TokenSentiment tokenId={token.id} />
           </div>
 
           <div className="mb-6">
