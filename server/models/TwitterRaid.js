@@ -53,6 +53,15 @@ const twitterRaidSchema = new Schema({
     type: String,
     default: null
   },
+  // Points payment related fields
+  paidWithPoints: {
+    type: Boolean,
+    default: false
+  },
+  pointsSpent: {
+    type: Number,
+    default: 0
+  },
   completions: [{
     userId: {
       type: Schema.Types.ObjectId,

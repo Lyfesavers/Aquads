@@ -3,34 +3,6 @@ import './SocialMediaRaids.css'; // Add this to load the CSS file we'll create
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-// Payment blockchain options
-const BLOCKCHAIN_OPTIONS = [
-  {
-    name: 'Solana',
-    symbol: 'SOL',
-    address: 'F4HuQfUx5zsuQpxca4KQfX6uZPYtRp3Y7HYVGsuHdYVf',
-    amount: 'USDC'
-  },
-  {
-    name: 'Ethereum',
-    symbol: 'ETH',
-    address: '0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358',
-    amount: 'USDC'
-  },
-  {
-    name: 'Base',
-    symbol: 'BASE',
-    address: '0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358',
-    amount: 'USDC'
-  },
-  {
-    name: 'Sui',
-    symbol: 'SUI',
-    address: '0xdadea3003856d304535c3f1b6d5670ab07a8e71715c7644bf230dd3a4ba7d13a',
-    amount: 'USDC'
-  }
-];
-
 // Add this delay utility function at the top of the component
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -90,16 +62,13 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     points: 50
   });
   
-  // For paid raid creation
-  const [showPaidCreateForm, setShowPaidCreateForm] = useState(false);
-  const [paidRaidData, setPaidRaidData] = useState({
+  // For points-based raid creation
+  const [showPointsCreateForm, setShowPointsCreateForm] = useState(false);
+  const [pointsRaidData, setPointsRaidData] = useState({
     tweetUrl: '',
     title: 'Twitter Raid',
-    description: 'Retweet, Like & Comment to earn 50 points!',
-    txSignature: ''
+    description: 'Retweet, Like & Comment to earn 50 points!'
   });
-  const [selectedChain, setSelectedChain] = useState(BLOCKCHAIN_OPTIONS[0]);
-  const [copiedAddress, setCopiedAddress] = useState(false);
 
   // Use a state to track if preview is loading, rather than direct DOM manipulation
   const [previewState, setPreviewState] = useState({
@@ -109,25 +78,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     tweetId: null
   });
 
-  // Track iframe state
-  const [iframeInteractions, setIframeInteractions] = useState({
-    liked: false,
-    retweeted: false,
-    commented: false
-  });
-  
-  // Track direct Twitter interactions
-  const [directInteractions, setDirectInteractions] = useState({
-    liked: false,
-    retweeted: false,
-    commented: false
-  });
-  
-  const [iframeVerified, setIframeVerified] = useState(false);
-  const [showIframe, setShowIframe] = useState(false);
-  const [iframeLoading, setIframeLoading] = useState(true);
-  const iframeContainerRef = useRef(null);
-  
   useEffect(() => {
     fetchRaids();
     // Load Twitter widget script
@@ -651,10 +601,10 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     }
   };
 
-  // Utility function to create a paid Twitter raid
-  const createPaidTwitterRaid = async (data, token) => {
+  // Add utility function to create a points-based Twitter raid
+  const createPointsTwitterRaid = async (data, token) => {
     try {
-      const response = await fetch(`${API_URL}/api/twitter-raids/paid`, {
+      const response = await fetch(`${API_URL}/api/twitter-raids/points`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -674,16 +624,16 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     }
   };
 
-  // Function to handle submission of paid raid form
-  const handlePaidRaidSubmit = async (e) => {
+  // Function to handle submission of points-based raid form
+  const handlePointsRaidSubmit = async (e) => {
     e.preventDefault();
     
     if (!currentUser) {
-      showNotification('Please log in to create a paid Twitter raid', 'error');
+      showNotification('Please log in to create a Twitter raid', 'error');
       return;
     }
     
-    if (!paidRaidData.tweetUrl || !paidRaidData.txSignature) {
+    if (!pointsRaidData.tweetUrl) {
       setError('Please fill in all required fields');
       return;
     }
@@ -692,28 +642,19 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       setSubmitting(true);
       setError(null);
       
-      // Prepare data for submission
-      const submissionData = {
-        ...paidRaidData,
-        paymentChain: selectedChain.name,
-        chainSymbol: selectedChain.symbol,
-        chainAddress: selectedChain.address
-      };
-      
-      // Create the paid Twitter raid
-      const result = await createPaidTwitterRaid(submissionData, currentUser.token);
+      // Create the points-based Twitter raid
+      const result = await createPointsTwitterRaid(pointsRaidData, currentUser.token);
       
       // Reset form and hide it
-      setPaidRaidData({
+      setPointsRaidData({
         tweetUrl: '',
         title: 'Twitter Raid',
-        description: 'Retweet, Like & Comment to earn 50 points!',
-        txSignature: ''
+        description: 'Retweet, Like & Comment to earn 50 points!'
       });
-      setShowPaidCreateForm(false);
+      setShowPointsCreateForm(false);
       
       // Show success message
-      showNotification(result.message || 'Twitter raid created! Awaiting payment approval.', 'success');
+      showNotification(result.message || 'Twitter raid created using your affiliate points!', 'success');
       
       // Refresh raids list
       fetchRaids();
@@ -792,146 +733,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     }
   };
 
-  // Add effect to auto-clear success message after a few seconds
-  useEffect(() => {
-    if (success) {
-      const timer = setTimeout(() => {
-        setSuccess(null);
-      }, 5000); // Clear after 5 seconds
-      
-      return () => clearTimeout(timer);
-    }
-  }, [success]);
-
-  // Replace the effect that was cleaning up DOM nodes
-  useEffect(() => {
-    return () => {
-      // No need to clean up DOM nodes anymore
-      // React will handle unmounting properly
-    };
-  }, []);
-
-  // Function to handle iframe loaded event
-  const handleIframeLoaded = () => {
-    setIframeLoading(false);
-  };
-
-  // Function to handle iframe interactions
-  const handleIframeInteraction = (actionType) => {
-    // Update the specific interaction type
-    setIframeInteractions(prev => {
-      const updated = { ...prev, [actionType]: true };
-      
-      // Check if all needed interactions are complete
-      const totalCompleted = 
-        (updated.liked ? 1 : 0) + 
-        (updated.retweeted ? 1 : 0) + 
-        (updated.commented ? 1 : 0);
-      
-      // If all three are complete, mark as verified
-      if (totalCompleted >= 3 && !iframeVerified) {
-        setIframeVerified(true);
-        showNotification('All tweet interactions verified! You can now complete the task.', 'success');
-      } else {
-        // Show feedback for the current interaction count
-        showNotification(`${actionType.charAt(0).toUpperCase() + actionType.slice(1)} action registered. ${3 - totalCompleted} more to go.`, 'info');
-      }
-      
-      return updated;
-    });
-  };
-
-  // Reset iframe state when showing/hiding
-  useEffect(() => {
-    if (showIframe) {
-      setIframeLoading(true);
-      
-      // Auto-hide loading indicator after a delay in case the onload event fails
-      const timer = setTimeout(() => {
-        setIframeLoading(false);
-      }, 2500);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [showIframe]);
-  
-  // Function to handle direct Twitter interactions
-  const handleDirectInteraction = (actionType) => {
-    if (!selectedRaid || !previewState.tweetId) {
-      showNotification('No tweet selected', 'error');
-      return;
-    }
-    
-    // Create the appropriate Twitter URL based on action type
-    let twitterUrl;
-    const tweetId = previewState.tweetId;
-    
-    switch (actionType) {
-      case 'like':
-        twitterUrl = `https://twitter.com/intent/like?tweet_id=${tweetId}`;
-        break;
-      case 'retweet':
-        twitterUrl = `https://twitter.com/intent/retweet?tweet_id=${tweetId}`;
-        break;
-      case 'comment':
-        twitterUrl = `https://twitter.com/intent/tweet?in_reply_to=${tweetId}`;
-        break;
-      default:
-        return;
-    }
-    
-    // Update the interaction state - use the iframe interaction state for consistency
-    handleIframeInteraction(actionType === 'like' ? 'liked' : actionType === 'retweet' ? 'retweeted' : 'commented');
-    
-    // Open the Twitter action in a new tab
-    window.open(twitterUrl, '_blank');
-    
-    // Also log the interactions for the server
-    setDirectInteractions(prev => ({
-      ...prev,
-      [actionType === 'like' ? 'liked' : actionType === 'retweet' ? 'retweeted' : 'commented']: true
-    }));
-  };
-
-  // Add Twitter interaction buttons component
-  const TwitterInteractionButtons = () => {
-    if (!previewState.tweetId) return null;
-    
-    return (
-      <div className="twitter-action-buttons mt-3">
-        <h5>Complete these actions:</h5>
-        <div className="d-flex gap-2">
-          <button 
-            className={`btn btn-sm ${directInteractions.like ? 'btn-success' : 'btn-outline-primary'}`}
-            onClick={() => handleDirectInteraction('like')}
-            disabled={directInteractions.like}
-          >
-            {directInteractions.like ? '✓ Liked' : 'Like Tweet'}
-          </button>
-          
-          <button 
-            className={`btn btn-sm ${directInteractions.retweet ? 'btn-success' : 'btn-outline-primary'}`}
-            onClick={() => handleDirectInteraction('retweet')}
-            disabled={directInteractions.retweet}
-          >
-            {directInteractions.retweet ? '✓ Retweeted' : 'Retweet'}
-          </button>
-          
-          <button 
-            className={`btn btn-sm ${directInteractions.commented ? 'btn-success' : 'btn-outline-primary'}`}
-            onClick={() => handleDirectInteraction('comment')}
-            disabled={directInteractions.commented}
-          >
-            {directInteractions.commented ? '✓ Commented' : 'Comment'}
-          </button>
-        </div>
-        <div className="mt-2 small text-muted">
-          Click each button and complete the action on Twitter
-        </div>
-      </div>
-    );
-  };
-
   if (loading && raids.length === 0) {
     return <div className="text-center p-4">Loading Twitter raids...</div>;
   }
@@ -956,7 +757,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
               <button
                 onClick={() => {
                   setShowCreateForm(!showCreateForm);
-                  setShowPaidCreateForm(false);
+                  setShowPointsCreateForm(false);
                 }}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded whitespace-nowrap text-sm sm:text-base"
               >
@@ -967,15 +768,15 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
             {currentUser && (
               <button
                 onClick={() => {
-                  setShowPaidCreateForm(!showPaidCreateForm);
+                  setShowPointsCreateForm(!showPointsCreateForm);
                   setShowCreateForm(false);
                 }}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded whitespace-nowrap text-sm sm:text-base flex items-center"
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded whitespace-nowrap text-sm sm:text-base flex items-center"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                {showPaidCreateForm ? 'Cancel' : 'Create Paid Raid (1.50 USDC)'}
+                {showPointsCreateForm ? 'Cancel' : 'Create Raid (200 Points)'}
               </button>
             )}
           </div>
@@ -1041,82 +842,35 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           </div>
         )}
         
-        {/* Paid Raid Create Form */}
-        {showPaidCreateForm && currentUser && (
+        {/* Points-based Raid Create Form */}
+        {showPointsCreateForm && currentUser && (
           <div className="mt-4 p-4 bg-gray-800/50 rounded-lg">
-            <h3 className="text-lg font-bold text-white mb-4">Create Paid Twitter Raid (1.50 USDC)</h3>
+            <h3 className="text-lg font-bold text-white mb-4">Create Twitter Raid with Points (200 Points)</h3>
             
-            <form onSubmit={handlePaidRaidSubmit}>
+            <form onSubmit={handlePointsRaidSubmit}>
               <div className="mb-4">
                 <label className="block text-gray-300 mb-2">
                   Tweet URL <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
-                  value={paidRaidData.tweetUrl}
-                  onChange={(e) => setPaidRaidData({...paidRaidData, tweetUrl: e.target.value})}
+                  value={pointsRaidData.tweetUrl}
+                  onChange={(e) => setPointsRaidData({...pointsRaidData, tweetUrl: e.target.value})}
                   placeholder="https://twitter.com/username/status/1234567890"
                   className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
               
-              <div className="mb-6">
-                <h4 className="text-white font-semibold mb-3">Payment Options</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-                  {BLOCKCHAIN_OPTIONS.map((chain) => (
-                    <button
-                      key={chain.symbol}
-                      type="button"
-                      onClick={() => setSelectedChain(chain)}
-                      className={`p-4 rounded-lg border flex flex-col items-center justify-center h-20 ${
-                        selectedChain === chain
-                          ? 'border-blue-500 bg-blue-500/20'
-                          : 'border-gray-600 hover:border-blue-400'
-                      }`}
-                    >
-                      <div className="font-medium">{chain.name}</div>
-                      <div className="text-sm text-gray-400 mt-1">
-                        1.50 {chain.amount}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-                
-                <div className="flex items-center gap-2 p-4 bg-gray-700 rounded-lg mb-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm text-gray-400">Send 1.50 USDC to:</div>
-                    <div className="font-mono text-sm truncate">{selectedChain.address}</div>
+              <div className="p-4 bg-green-500/20 border border-green-500/50 text-green-400 rounded-lg mb-4">
+                <div className="flex items-start">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <div>
+                    <p className="font-medium">Using Affiliate Points</p>
+                    <p className="text-sm">You currently have {currentUser?.points || 0} points. Creating this raid will cost 200 points.</p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleCopyAddress(selectedChain.address, setCopiedAddress)}
-                    className="p-2 hover:text-blue-400"
-                  >
-                    {copiedAddress ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                    ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                    )}
-                  </button>
-                </div>
-                
-                <div className="mb-4">
-                  <label className="block text-gray-300 mb-2">
-                    Transaction Signature <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={paidRaidData.txSignature}
-                    onChange={(e) => setPaidRaidData({...paidRaidData, txSignature: e.target.value})}
-                    placeholder="Enter your transaction signature/ID"
-                    className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
                 </div>
               </div>
               
@@ -1126,19 +880,21 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                 </div>
               )}
               
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className={`px-4 py-2 rounded font-medium ${
-                    submitting
-                      ? 'bg-gray-600 cursor-not-allowed'
-                      : 'bg-purple-600 hover:bg-purple-700'
-                  } text-white`}
-                >
-                  {submitting ? 'Submitting...' : 'Create Paid Raid'}
-                </button>
-              </div>
+              <button
+                type="submit"
+                disabled={submitting || (currentUser?.points || 0) < 200}
+                className={`px-4 py-2 rounded font-medium ${
+                  submitting || (currentUser?.points || 0) < 200
+                    ? 'bg-gray-600 cursor-not-allowed'
+                    : 'bg-green-600 hover:bg-green-700'
+                } text-white`}
+              >
+                {submitting 
+                  ? 'Creating...' 
+                  : (currentUser?.points || 0) < 200 
+                    ? 'Not Enough Points (Need 200)' 
+                    : 'Create Twitter Raid with Points'}
+              </button>
             </form>
           </div>
         )}

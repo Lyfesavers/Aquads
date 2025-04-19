@@ -134,6 +134,77 @@ router.post('/paid', auth, async (req, res) => {
   }
 });
 
+// Create a new Twitter raid using affiliate points (users)
+router.post('/points', auth, async (req, res) => {
+  try {
+    const { tweetUrl, title, description } = req.body;
+    const POINTS_REQUIRED = 200; // Points required to create a raid
+
+    if (!tweetUrl || !title || !description) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Check if user has enough points
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (user.points < POINTS_REQUIRED) {
+      return res.status(400).json({ 
+        error: `Not enough points. You have ${user.points} points but need ${POINTS_REQUIRED} points to create a raid.`
+      });
+    }
+
+    // Extract tweet ID from URL
+    const tweetIdMatch = tweetUrl.match(/\/status\/(\d+)/);
+    if (!tweetIdMatch || !tweetIdMatch[1]) {
+      return res.status(400).json({ error: 'Invalid Twitter URL' });
+    }
+
+    const tweetId = tweetIdMatch[1];
+
+    // Create the raid
+    const raid = new TwitterRaid({
+      tweetId,
+      tweetUrl,
+      title,
+      description,
+      points: 50, // Fixed points for raids
+      createdBy: req.user.id,
+      isPaid: false, // Not a paid raid (it's a points raid)
+      paymentStatus: 'approved', // Automatically approved since we're deducting points
+      active: true,
+      paidWithPoints: true, // New field to track point-based raids
+      pointsSpent: POINTS_REQUIRED // Track how many points were spent
+    });
+
+    // Deduct points from user
+    user.points -= POINTS_REQUIRED;
+    user.pointsHistory.push({
+      amount: -POINTS_REQUIRED,
+      reason: 'Created Twitter raid with points',
+      socialRaidId: raid._id,
+      createdAt: new Date()
+    });
+
+    // Save both the raid and updated user
+    await Promise.all([
+      raid.save(),
+      user.save()
+    ]);
+    
+    res.status(201).json({ 
+      message: `Twitter raid created successfully! ${POINTS_REQUIRED} points have been deducted from your account.`,
+      raid,
+      pointsRemaining: user.points
+    });
+  } catch (error) {
+    console.error('Error creating Twitter raid with points:', error);
+    res.status(500).json({ error: 'Failed to create Twitter raid' });
+  }
+});
+
 // Approve a paid Twitter raid (admin only)
 router.post('/:id/approve', auth, async (req, res) => {
   try {
