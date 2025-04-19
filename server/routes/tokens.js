@@ -5,6 +5,8 @@ const axios = require('axios');
 
 let lastUpdateTime = 0;
 const UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutes
+let chartDataCache = {}; // Cache for chart data
+const CHART_CACHE_DURATION = 60 * 60 * 1000; // 1 hour cache for chart data
 
 const updateTokenCache = async (force = false) => {
   const now = Date.now();
@@ -170,6 +172,59 @@ router.get('/:id', async (req, res) => {
   } catch (error) {
     console.error('Error fetching token:', error);
     res.status(500).json({ error: 'Failed to fetch token' });
+  }
+});
+
+// Get chart data for a token
+router.get('/:id/chart', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { days = '1' } = req.query;
+    
+    const cacheKey = `${id}-${days}`;
+    const now = Date.now();
+    
+    // Check if we have cached data
+    if (chartDataCache[cacheKey] && now - chartDataCache[cacheKey].timestamp < CHART_CACHE_DURATION) {
+      console.log(`Serving cached chart data for ${id} (${days} days)`);
+      return res.json(chartDataCache[cacheKey].data);
+    }
+    
+    // Fetch from CoinGecko if not in cache or expired
+    console.log(`Fetching chart data for ${id} (${days} days)`);
+    const response = await axios.get(
+      `https://api.coingecko.com/api/v3/coins/${id}/market_chart`,
+      {
+        params: {
+          vs_currency: 'usd',
+          days: days
+        },
+        timeout: 10000,
+        headers: {
+          'Accept': 'application/json'
+        }
+      }
+    );
+    
+    if (!response.data) {
+      throw new Error('Invalid response from CoinGecko');
+    }
+    
+    // Cache the results
+    chartDataCache[cacheKey] = {
+      data: response.data,
+      timestamp: now
+    };
+    
+    // Return the chart data
+    res.json(response.data);
+    
+  } catch (error) {
+    console.error(`Error fetching chart data for ${req.params.id}:`, error.message);
+    res.status(error.response?.status || 500).json({ 
+      error: 'Failed to fetch chart data',
+      message: error.message 
+    });
   }
 });
 

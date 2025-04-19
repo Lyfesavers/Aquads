@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useCallback, memo } from 'react';
+import { FaArrowUp, FaArrowDown } from 'react-icons/fa';
 import logger from '../utils/logger';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 // Move formatting functions outside component to prevent recreation on each render
 const formatVolume = (volume) => {
@@ -66,46 +69,40 @@ const TokenBanner = () => {
   // Memoize fetchTokens to prevent recreation
   const fetchTokens = useCallback(async () => {
     try {
-      // Fetch trending tokens from CoinGecko
-      const response = await fetch('https://api.coingecko.com/api/v3/search/trending');
+      // Use a simple fallback instead of directly calling CoinGecko
+      // This prevents CORS issues in production
+      const response = await fetch(`${API_URL}/api/tokens?limit=7`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const trendingData = await response.json();
-      logger.info('Trending Response:', trendingData);
+      const tokensData = await response.json();
+      
+      // Get the top tokens by market cap
+      const topTokens = tokensData
+        .slice(0, 7)
+        .map(token => ({
+          id: token.id,
+          symbol: token.symbol.toUpperCase(),
+          name: token.name,
+          price: token.currentPrice || 0,
+          priceChange24h: token.priceChangePercentage24h || 0,
+          marketCap: token.marketCap || 0,
+          logo: token.image,
+          url: `https://www.coingecko.com/en/coins/${token.id}`,
+          rank: token.marketCapRank
+        }));
 
-      // Get the IDs of trending coins
-      const trendingIds = trendingData.coins.map(coin => coin.item.id).join(',');
-
-      // Fetch detailed price data for trending coins
-      const priceResponse = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=${trendingIds}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true`
-      );
-
-      const priceData = await priceResponse.json();
-
-      // Format the data combining trending info with price data
-      const formattedTokens = trendingData.coins.map(coin => {
-        const priceInfo = priceData[coin.item.id] || {};
-        return {
-          id: coin.item.id,
-          symbol: coin.item.symbol.toUpperCase(),
-          name: coin.item.name,
-          price: priceInfo.usd || 0,
-          priceChange24h: priceInfo.usd_24h_change || 0,
-          marketCap: priceInfo.usd_market_cap || 0,
-          logo: coin.item.small, // Use the logo URL directly from trending data
-          url: `https://www.coingecko.com/en/coins/${coin.item.id}`,
-          rank: coin.item.market_cap_rank
-        };
-      });
-
-      logger.info('Formatted Trending Tokens:', formattedTokens);
-      setTokens(formattedTokens);
+      setTokens(topTokens);
     } catch (error) {
-      logger.error('Error fetching trending tokens:', error);
+      logger.error('Error fetching tokens:', error);
+      // Try to load some default tokens if the API fails
+      setTokens([
+        { id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin', price: 0, priceChange24h: 0 },
+        { id: 'ethereum', symbol: 'ETH', name: 'Ethereum', price: 0, priceChange24h: 0 },
+        { id: 'solana', symbol: 'SOL', name: 'Solana', price: 0, priceChange24h: 0 }
+      ]);
     } finally {
       setLoading(false);
     }
