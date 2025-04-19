@@ -232,10 +232,11 @@ const TokenList = ({ currentUser, showNotification }) => {
   const fetchChartData = async (tokenId, days) => {
     try {
       const response = await fetch(
-        `${API_URL}/api/tokens/${tokenId}/chart?days=${days}`,
+        `https://api.coingecko.com/api/v3/coins/${tokenId}/market_chart?vs_currency=usd&days=${days}`,
         {
           headers: {
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
           }
         }
       );
@@ -253,32 +254,32 @@ const TokenList = ({ currentUser, showNotification }) => {
       
       if (chartRef.current) {
         const ctx = chartRef.current.getContext('2d');
-        if (chartInstance) {
-          chartInstance.destroy();
-        }
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
         const newChart = new Chart(ctx, {
-          type: 'line',
-          data: {
+        type: 'line',
+        data: {
             labels: data.prices.map(price => new Date(price[0]).toLocaleDateString()),
-            datasets: [{
+          datasets: [{
               label: 'Price (USD)',
               data: data.prices.map(price => price[1]),
-              borderColor: 'rgb(75, 192, 192)',
-              tension: 0.1
-            }]
-          },
-          options: {
-            responsive: true,
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+          }]
+        },
+        options: {
+          responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-              legend: { position: 'top' },
-              title: { display: true, text: 'Price History' }
-            },
-            scales: {
-              y: { beginAtZero: false }
-            }
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: 'Price History' }
+          },
+          scales: {
+            y: { beginAtZero: false }
           }
-        });
+        }
+      });
         setChartInstance(newChart);
       }
     } catch (error) {
