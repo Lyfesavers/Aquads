@@ -85,13 +85,11 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   // Fetch user points data from the backend API
   const fetchUserPoints = async () => {
     if (!currentUser?.token) {
-      console.log('No authentication token available');
       setLoadingPoints(false);
       return;
     }
 
     try {
-      console.log('Fetching points from API...');
       setLoadingPoints(true);
       
       const response = await fetch(`${API_URL}/api/points/my-points`, {
@@ -100,11 +98,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         }
       });
       
-      console.log('Points API response status:', response.status);
-      
       if (response.ok) {
         const data = await response.json();
-        console.log('Points data from API:', data);
         setPointsData(data);
         
         // Also update the localStorage to keep everything in sync
@@ -115,13 +110,13 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
             localStorage.setItem('currentUser', JSON.stringify(storedUser));
           }
         } catch (e) {
-          console.error('Error updating localStorage with points:', e);
+          // Silently handle localStorage errors
         }
       } else {
-        console.error('Failed to fetch points:', await response.text());
+        // Error handled silently to avoid console logs
       }
     } catch (error) {
-      console.error('Error fetching points:', error);
+      // Silently handle fetch errors
     } finally {
       setLoadingPoints(false);
     }
@@ -151,7 +146,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         return storedUser.points;
       }
     } catch (e) {
-      console.error('Error reading points from localStorage:', e);
+      // Silently handle localStorage errors
     }
     
     // Default to 0
@@ -718,8 +713,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     // Get latest points directly from the API
     await fetchUserPoints();
     const currentPoints = getUserPoints();
-    
-    console.log('Current points balance:', currentPoints);
     
     if (currentPoints < 200) {
       setError(`Not enough points. You need 200 points but only have ${currentPoints}.`);
