@@ -235,8 +235,7 @@ const TokenList = ({ currentUser, showNotification }) => {
         `${API_URL}/api/tokens/${tokenId}/chart?days=${days}`,
         {
           headers: {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache'
+            'Accept': 'application/json'
           }
         }
       );
