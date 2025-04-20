@@ -57,6 +57,13 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [pointsData, setPointsData] = useState({ points: 0 });
   const [loadingPoints, setLoadingPoints] = useState(true);
   
+  // Add missing state variables
+  const [showIframe, setShowIframe] = useState(false);
+  const [iframeLoading, setIframeLoading] = useState(false);
+  const [iframeInteractions, setIframeInteractions] = useState({ liked: false, retweeted: false, commented: false });
+  const [iframeVerified, setIframeVerified] = useState(false);
+  const iframeContainerRef = useRef(null);
+  
   // For admin creation
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newRaid, setNewRaid] = useState({
@@ -486,7 +493,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           body: JSON.stringify({
             tweetUrl: selectedRaid?.tweetUrl || tweetUrl || null,
             iframeVerified: true, // Always set to true since we require this
-            directInteractions, // Include all interaction data
+            directInteractions: iframeInteractions, // Include all interaction data
             tweetId: previewState.tweetId // Include the tweet ID explicitly
           })
         });
@@ -673,9 +680,23 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       await navigator.clipboard.writeText(address);
       setCopiedAddressCallback(true);
       setTimeout(() => setCopiedAddressCallback(false), 2000);
-    } catch (error) {
-      // Error handling
+    } catch (err) {
+      console.error('Failed to copy address: ', err);
     }
+  };
+
+  // Add missing handleIframeInteraction function
+  const handleIframeInteraction = (type) => {
+    setIframeInteractions(prev => {
+      const newInteractions = { ...prev, [type]: true };
+      
+      // Check if all three interactions are completed
+      if (newInteractions.liked && newInteractions.retweeted && newInteractions.commented) {
+        setIframeVerified(true);
+      }
+      
+      return newInteractions;
+    });
   };
 
   // Add utility function to create a points-based Twitter raid
@@ -1401,7 +1422,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                       <div className="text-red-400 mb-4 p-3 bg-red-400/10 rounded-lg">
                         <div className="flex items-center">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                           </svg>
                           {error}
                         </div>
