@@ -377,6 +377,8 @@ function App() {
   const [newUsername, setNewUsername] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeBookingId, setActiveBookingId] = useState(null);
+  const [showRewardAnimation, setShowRewardAnimation] = useState(false);
+  const [hasReachedMilestone, setHasReachedMilestone] = useState(false);
 
   // Add this function to update ads with persistence
   const updateAds = (newAds) => {
@@ -1524,6 +1526,127 @@ function App() {
     };
   }, []);
 
+  // Add a useEffect that monitors points and triggers the animation at 3000
+  useEffect(() => {
+    // Exit early if user isn't logged in
+    if (!currentUser) return;
+    
+    // Check if the user has stored points information
+    const checkPointsMilestone = async () => {
+      try {
+        // Fetch current points from API
+        const response = await fetch(`${API_URL}/points/my-points`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentUser.token}`
+          }
+        });
+        
+        if (!response.ok) return;
+        
+        const data = await response.json();
+        const currentPoints = data.points;
+        
+        // Define launch timestamp of the points milestone feature (April 20, 2025)
+        const featureLaunchTime = new Date('2025-04-20T00:00:00Z').getTime();
+        
+        // Get the last points check timestamp from localStorage
+        const lastPointsCheck = localStorage.getItem('lastPointsCheck');
+        const lastPointsAmount = localStorage.getItem('lastPointsAmount');
+        
+        // Current timestamp
+        const now = new Date().getTime();
+        
+        // If no previous check, store current values and exit
+        if (!lastPointsCheck || !lastPointsAmount) {
+          localStorage.setItem('lastPointsCheck', now.toString());
+          localStorage.setItem('lastPointsAmount', currentPoints.toString());
+          return;
+        }
+        
+        // Parse stored values
+        const lastCheck = parseInt(lastPointsCheck, 10);
+        const lastAmount = parseInt(lastPointsAmount, 10);
+        
+        // Only process if:
+        // 1. The last check was after the feature launch
+        // 2. The user previously had less than 3000 points
+        // 3. They now have at least 3000 points
+        // 4. They haven't already celebrated this milestone
+        if (
+          lastCheck >= featureLaunchTime && 
+          lastAmount < 3000 && 
+          currentPoints >= 3000 && 
+          !hasReachedMilestone
+        ) {
+          // Get whether this milestone was previously celebrated from localStorage
+          const celebrated3kPoints = localStorage.getItem('celebrated3kPoints');
+          
+          // Only show animation if not previously celebrated
+          if (!celebrated3kPoints) {
+            setShowRewardAnimation(true);
+            // Hide after 10 seconds
+            setTimeout(() => setShowRewardAnimation(false), 10000);
+            // Mark as celebrated so it doesn't show again
+            localStorage.setItem('celebrated3kPoints', 'true');
+            setHasReachedMilestone(true);
+          }
+        }
+        
+        // Update stored values for next check
+        localStorage.setItem('lastPointsCheck', now.toString());
+        localStorage.setItem('lastPointsAmount', currentPoints.toString());
+        
+      } catch (error) {
+        logger.error('Error checking points milestone:', error);
+      }
+    };
+    
+    // Run on mount and whenever currentUser changes
+    checkPointsMilestone();
+    
+    // Also set up an interval to periodically check (every 2 minutes)
+    const intervalId = setInterval(checkPointsMilestone, 120000);
+    
+    return () => clearInterval(intervalId);
+  }, [currentUser, hasReachedMilestone]);
+
+  // Handle reward claim when user reaches 3000 points
+  const handleClaimReward = () => {
+    setShowRewardAnimation(false);
+    
+    // Show a notification about the claimed reward
+    showNotification("Congratulations! You've unlocked exclusive benefits with 3000 points!", "success");
+    
+    // Record the milestone achievement with timestamp
+    const now = new Date().getTime();
+    localStorage.setItem('celebrated3kPoints', 'true');
+    localStorage.setItem('pointsMilestoneClaimedAt', now.toString());
+    
+    // Optionally notify the server that user has seen this milestone
+    if (currentUser && currentUser.token) {
+      try {
+        fetch(`${API_URL}/points/milestone-reached`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentUser.token}`
+          },
+          body: JSON.stringify({ 
+            milestone: 3000,
+            username: currentUser.username,
+            claimedAt: now,
+            // Track that this was from the new feature
+            source: 'points_milestone_3000'
+          })
+        });
+      } catch (error) {
+        logger.error('Error recording milestone achievement:', error);
+      }
+    }
+  };
+
   // Modify the return statement to wrap everything in the Auth context provider
   return (
     <AuthContext.Provider value={{ currentUser, setCurrentUser }}>
@@ -2036,6 +2159,257 @@ function App() {
           <Route path="/terms" element={<Terms />} />
         </Routes>
       </Router>
+
+      {/* 3D Reward Animation for 3000 Points Milestone */}
+      {showRewardAnimation && (
+        <div className="reward-animation-container" style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 10000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'radial-gradient(circle, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.95) 100%)',
+          perspective: '1000px',
+          overflow: 'hidden'
+        }}>
+          {/* Background particles */}
+          {Array.from({ length: 150 }).map((_, index) => (
+            <motion.div
+              key={`particle-${index}`}
+              initial={{ 
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight,
+                scale: 0,
+                opacity: 0
+              }}
+              animate={{
+                scale: Math.random() * 0.5 + 0.5,
+                opacity: Math.random() * 0.5 + 0.3,
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight,
+                transition: {
+                  duration: 5 + Math.random() * 15,
+                  repeat: Infinity,
+                  repeatType: 'mirror'
+                }
+              }}
+              style={{
+                position: 'absolute',
+                width: Math.random() * 8 + 2,
+                height: Math.random() * 8 + 2,
+                borderRadius: '50%',
+                background: `rgb(${Math.floor(Math.random() * 100 + 155)}, ${Math.floor(Math.random() * 100 + 155)}, ${Math.floor(Math.random() * 255)})`,
+                boxShadow: `0 0 ${Math.random() * 10 + 5}px rgba(${Math.floor(Math.random() * 100 + 155)}, ${Math.floor(Math.random() * 100 + 155)}, ${Math.floor(Math.random() * 255)}, 0.8)`
+              }}
+            />
+          ))}
+          
+          {/* Central 3D spinning reward badge */}
+          <motion.div
+            initial={{ 
+              scale: 0,
+              rotateY: 0,
+              opacity: 0
+            }}
+            animate={{ 
+              scale: 1,
+              rotateY: 360,
+              opacity: 1,
+              transition: { 
+                scale: { duration: 0.8, ease: "backOut" },
+                rotateY: { duration: 2, ease: "easeInOut" },
+                opacity: { duration: 0.5 }
+              }
+            }}
+            style={{
+              position: 'relative',
+              width: '300px',
+              height: '300px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #2a5298 0%, #1e3c72 100%)',
+              boxShadow: '0 0 50px rgba(30, 60, 114, 0.8), 0 0 100px rgba(42, 82, 152, 0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'column',
+              transform: 'rotateX(20deg)', // Slight 3D tilt
+              transformStyle: 'preserve-3d'
+            }}
+          >
+            <motion.div
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ 
+                y: 0, 
+                opacity: 1,
+                transition: { 
+                  delay: 0.5,
+                  duration: 0.8,
+                  ease: "easeOut" 
+                }
+              }}
+              style={{
+                fontSize: '120px',
+                marginBottom: '10px',
+                textShadow: '0 0 20px rgba(255,255,255,0.8)',
+                color: '#ffffff'
+              }}
+            >
+              🏆
+            </motion.div>
+            
+            <motion.div
+              initial={{ y: 20, opacity: 0, scale: 0.8 }}
+              animate={{ 
+                y: 0, 
+                opacity: 1,
+                scale: 1,
+                transition: { 
+                  delay: 0.8,
+                  duration: 0.6,
+                  ease: "easeOut" 
+                }
+              }}
+              style={{
+                fontSize: '28px',
+                fontWeight: 'bold',
+                color: '#ffffff',
+                textShadow: '0 0 10px rgba(255,255,255,0.6)',
+                textAlign: 'center',
+                padding: '0 20px'
+              }}
+            >
+              3000 POINTS ACHIEVED!
+            </motion.div>
+          </motion.div>
+          
+          {/* Congratulatory text with prize info */}
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ 
+              opacity: 1, 
+              y: 0,
+              transition: { 
+                delay: 1.5,
+                duration: 0.8 
+              }
+            }}
+            style={{
+              position: 'absolute',
+              bottom: '100px',
+              textAlign: 'center',
+              maxWidth: '600px',
+              color: 'white'
+            }}
+          >
+            <h2 style={{ 
+              fontSize: '32px', 
+              marginBottom: '15px',
+              background: 'linear-gradient(to right, #c6ffdd, #fbd786, #f7797d)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              fontWeight: 'bold'
+            }}>
+              Congratulations!
+            </h2>
+            <p style={{ 
+              fontSize: '18px', 
+              marginBottom: '20px',
+              color: '#e6e6e6',
+              lineHeight: 1.5
+            }}>
+              You've reached the 3000 points milestone! Keep going to unlock more rewards and benefits.
+            </p>
+            <motion.button
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ 
+                scale: 1, 
+                opacity: 1,
+                transition: { 
+                  delay: 2,
+                  duration: 0.5 
+                }
+              }}
+              whileHover={{ 
+                scale: 1.05,
+                boxShadow: '0 0 25px rgba(255,255,255,0.5)'
+              }}
+              onClick={handleClaimReward}
+              style={{
+                background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                border: 'none',
+                padding: '12px 30px',
+                borderRadius: '30px',
+                color: 'white',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                boxShadow: '0 0 15px rgba(79, 172, 254, 0.7)',
+                marginTop: '20px'
+              }}
+            >
+              CLAIM REWARD
+            </motion.button>
+          </motion.div>
+          
+          {/* Floating 3D coins */}
+          {Array.from({ length: 30 }).map((_, index) => (
+            <motion.div
+              key={`coin-${index}`}
+              initial={{ 
+                x: window.innerWidth / 2 + (Math.random() * 400 - 200),
+                y: window.innerHeight / 2 + (Math.random() * 400 - 200),
+                scale: 0,
+                opacity: 0,
+                rotateY: 0
+              }}
+              animate={{
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight,
+                scale: Math.random() * 0.4 + 0.2,
+                opacity: 1,
+                rotateY: 360,
+                transition: {
+                  duration: 10 + Math.random() * 10,
+                  repeat: Infinity,
+                  repeatType: 'loop',
+                  delay: Math.random() * 2,
+                  rotateY: {
+                    duration: 2 + Math.random() * 3,
+                    repeat: Infinity,
+                    ease: "linear"
+                  }
+                }
+              }}
+              style={{
+                position: 'absolute',
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #ffd700 0%, #ffcc00 100%)',
+                boxShadow: '0 0 10px rgba(255, 215, 0, 0.8)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 'bold',
+                color: '#664d00',
+                border: '3px solid #ffdd33',
+                transformStyle: 'preserve-3d'
+              }}
+            >
+              <div style={{
+                transform: 'translateZ(5px)',
+                fontSize: '14px'
+              }}>
+                +$
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
     </AuthContext.Provider>
   );
 }
