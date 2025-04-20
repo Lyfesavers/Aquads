@@ -293,6 +293,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           message: 'Invalid tweet URL format',
           tweetId: null
         });
+        setIframeLoading(false);
         return;
       }
       
@@ -313,6 +314,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           message: 'Tweet URL verified',
           tweetId
         });
+        // Set iframeLoading to false since tweet ID is ready
+        setIframeLoading(false);
       }, 500);
     } catch (error) {
       setPreviewState({
@@ -321,6 +324,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         message: 'Error verifying tweet URL',
         tweetId: null
       });
+      // Also set iframeLoading to false if there's an error
+      setIframeLoading(false);
     }
   };
 
@@ -400,7 +405,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     setIsValidUrl(true);
     
     // Reset iframe-related states
-    setShowIframe(false);
+    handleShowIframe(false);
     setIframeInteractions({ liked: false, retweeted: false, commented: false });
     setIframeVerified(false);
     setIframeLoading(true);
@@ -414,6 +419,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         message: 'Tweet ready to view',
         tweetId
       });
+      // Set iframeLoading to false since tweet ID is ready
+      setIframeLoading(false);
     } else {
       setPreviewState({
         loading: false,
@@ -421,6 +428,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         message: 'Could not parse tweet URL for preview',
         tweetId: null
       });
+      // Also set iframeLoading to false if there's an error
+      setIframeLoading(false);
     }
     
     // Clear error message but keep success message if present
@@ -697,6 +706,15 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       
       return newInteractions;
     });
+  };
+
+  // Add a handler function for showing/hiding iframe
+  const handleShowIframe = (show) => {
+    setShowIframe(show);
+    if (show) {
+      // Make sure we're not stuck in loading state
+      setIframeLoading(false);
+    }
   };
 
   // Add utility function to create a points-based Twitter raid
@@ -1248,7 +1266,10 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                     <div className="mb-4 border border-gray-700 rounded-lg overflow-hidden">
                       <div className="flex">
                         <button
-                          onClick={() => setShowIframe(!showIframe)}
+                          onClick={() => {
+                            const newShowIframe = !showIframe;
+                            handleShowIframe(newShowIframe);
+                          }}
                           className={`flex-1 py-2 px-4 text-center text-sm font-medium ${
                             showIframe 
                               ? 'bg-blue-600/30 text-blue-400 border-b-2 border-blue-500' 
@@ -1395,7 +1416,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                                 </div>
                                 <div className="flex gap-2 mt-3">
                                   <button
-                                    onClick={() => setShowIframe(true)}
+                                    onClick={() => {
+                                      handleShowIframe(true);
+                                    }}
                                     className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-sm inline-flex items-center"
                                   >
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
