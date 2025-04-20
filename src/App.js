@@ -377,9 +377,6 @@ function App() {
   const [newUsername, setNewUsername] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeBookingId, setActiveBookingId] = useState(null);
-  const [showEasterEgg, setShowEasterEgg] = useState(false);
-  const [showHiddenEgg, setShowHiddenEgg] = useState(false);
-  const [eggClicks, setEggClicks] = useState(0);
 
   // Add this function to update ads with persistence
   const updateAds = (newAds) => {
@@ -1527,69 +1524,6 @@ function App() {
     };
   }, []);
 
-  useEffect(() => {
-    // ... existing code ...
-    
-    // Easter Egg - Konami Code Handler
-    const konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
-    let konamiIndex = 0;
-    
-    const handleKeydown = (e) => {
-      // Check if the key pressed matches the next key in the Konami code
-      if (e.key === konamiCode[konamiIndex]) {
-        konamiIndex++;
-        
-        // If the entire code is entered correctly
-        if (konamiIndex === konamiCode.length) {
-          setShowEasterEgg(true);
-          setTimeout(() => setShowEasterEgg(false), 10000); // Hide after 10 seconds
-          konamiIndex = 0; // Reset for next time
-        }
-      } else {
-        konamiIndex = 0; // Reset if incorrect key
-      }
-    };
-    
-    window.addEventListener('keydown', handleKeydown);
-    
-    return () => {
-      window.removeEventListener('keydown', handleKeydown);
-    };
-  }, []); // Empty dependency array ensures this only runs once
-
-  // Add a useEffect to randomly place a hidden Easter egg element
-  useEffect(() => {
-    // Randomly decide if we should show the hidden egg (10% chance)
-    // Only show on certain days or for Easter season
-    const isEasterSeason = () => {
-      const today = new Date();
-      // Check if it's March or April (months when Easter typically falls)
-      return today.getMonth() === 2 || today.getMonth() === 3;
-    };
-    
-    // Show hidden egg if it's Easter season or with a small random chance
-    if (isEasterSeason() || Math.random() < 0.1) {
-      setTimeout(() => {
-        setShowHiddenEgg(true);
-      }, 30000 + Math.random() * 60000); // Random delay between 30s and 90s
-    }
-  }, []);
-  
-  // Handle clicking the hidden egg
-  const handleEggClick = () => {
-    // Increment clicks
-    const newClicks = eggClicks + 1;
-    setEggClicks(newClicks);
-    
-    // After 3 clicks, show the Easter egg
-    if (newClicks >= 3) {
-      setShowEasterEgg(true);
-      setShowHiddenEgg(false);
-      setEggClicks(0);
-      setTimeout(() => setShowEasterEgg(false), 10000);
-    }
-  };
-
   // Modify the return statement to wrap everything in the Auth context provider
   return (
     <AuthContext.Provider value={{ currentUser, setCurrentUser }}>
@@ -2102,129 +2036,6 @@ function App() {
           <Route path="/terms" element={<Terms />} />
         </Routes>
       </Router>
-
-      {showEasterEgg && (
-        <div className="easter-egg-container" style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          zIndex: 9999,
-          pointerEvents: 'none',
-          overflow: 'hidden'
-        }}>
-          {/* Easter egg animations */}
-          {Array.from({ length: 20 }).map((_, index) => {
-            // Pick one of several Easter-themed images
-            const eggImages = [
-              "https://i.imgur.com/JXMpHee.png", // Colorful Easter egg
-              "https://i.imgur.com/W83T3vL.png", // Decorated egg
-              "https://i.imgur.com/yzSeggu.png", // Bunny
-              "https://i.imgur.com/LZqPxHs.png", // Easter basket
-            ];
-            const randomImage = eggImages[Math.floor(Math.random() * eggImages.length)];
-            
-            return (
-              <motion.div
-                key={index}
-                initial={{ 
-                  y: -100, 
-                  x: Math.random() * window.innerWidth,
-                  opacity: 0,
-                  rotate: 0,
-                  scale: 0.5
-                }}
-                animate={{
-                  y: window.innerHeight + 100,
-                  opacity: 1,
-                  rotate: Math.random() * 360,
-                  scale: 0.5 + Math.random() * 0.5,
-                  transition: {
-                    duration: 8 + Math.random() * 5,
-                    ease: "linear",
-                    delay: Math.random() * 3
-                  }
-                }}
-                style={{
-                  position: 'absolute',
-                  backgroundImage: `url('${randomImage}')`,
-                  backgroundSize: 'contain',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundPosition: 'center',
-                  width: '80px',
-                  height: '80px',
-                  filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.5))'
-                }}
-              />
-            );
-          })}
-          
-          {/* Congratulations message */}
-          <motion.div
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ 
-              scale: 1, 
-              opacity: 1,
-              transition: { duration: 1 } 
-            }}
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              background: 'linear-gradient(135deg, #fdf6f0 0%, #f9d9ea 100%)',
-              padding: '25px',
-              borderRadius: '15px',
-              boxShadow: '0 0 30px rgba(255,192,203,0.7)',
-              textAlign: 'center',
-              border: '2px solid #ffccd5'
-            }}
-          >
-            <div style={{ fontSize: '50px', marginBottom: '10px' }}>🐰</div>
-            <h2 style={{ color: '#e6007e', fontFamily: 'cursive', marginBottom: '15px' }}>
-              Happy Easter!
-            </h2>
-            <p style={{ color: '#333', marginBottom: '15px' }}>
-              You found our hidden Easter egg!
-            </p>
-            <p style={{ color: '#666', fontSize: '14px', fontStyle: 'italic' }}>
-              Enter the code "EASTERBUNNY" on your next purchase for a special surprise!
-            </p>
-          </motion.div>
-        </div>
-      )}
-      
-      {showHiddenEgg && (
-        <div 
-          onClick={handleEggClick} 
-          style={{
-            position: 'fixed',
-            zIndex: 9998,
-            cursor: 'pointer',
-            width: '30px',
-            height: '30px',
-            backgroundImage: `url('https://i.imgur.com/JXMpHee.png')`,
-            backgroundSize: 'contain',
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'center',
-            opacity: 0.3,
-            filter: 'drop-shadow(0 0 5px rgba(255,255,255,0.3))',
-            top: `${10 + Math.random() * 80}%`,
-            left: `${10 + Math.random() * 80}%`,
-            pointerEvents: 'auto'
-          }}
-          onMouseOver={(e) => {
-            e.currentTarget.style.opacity = '0.8';
-            e.currentTarget.style.transform = 'scale(1.2)';
-          }}
-          onMouseOut={(e) => {
-            e.currentTarget.style.opacity = '0.3';
-            e.currentTarget.style.transform = 'scale(1)';
-          }}
-          title="Click me!"
-        />
-      )}
     </AuthContext.Provider>
   );
 }
