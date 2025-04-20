@@ -7,6 +7,10 @@ const User = require('../models/User');
 // Get all blogs
 router.get('/', async (req, res) => {
   try {
+    // Add no-index headers to prevent search engines from indexing the API endpoint
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    res.setHeader('Content-Type', 'application/json');
+    
     const blogs = await Blog.find()
       .sort({ createdAt: -1 })
       .populate('author', 'username image');
@@ -29,6 +33,10 @@ router.get('/', async (req, res) => {
 // Get single blog
 router.get('/:id', async (req, res) => {
   try {
+    // Add no-index headers to prevent search engines from indexing the API endpoint
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    res.setHeader('Content-Type', 'application/json');
+    
     const blog = await Blog.findById(req.params.id)
       .populate('author', 'username image');
       

@@ -415,6 +415,8 @@ const HowTo = ({ currentUser }) => {
             <meta name="description" content="Learn how to use Aquads platform with our video tutorials and community blog posts" />
           </>
         )}
+        <link rel="canonical" href={`${window.location.origin}${location.pathname.split('?')[0]}`} />
+        {location.search && <meta name="robots" content="noindex, follow" />}
       </Helmet>
 
       {/* Header */}
