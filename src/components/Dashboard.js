@@ -5,6 +5,7 @@ import ServiceReviews from './ServiceReviews';
 import JobList from './JobList';
 import BookingConversation from './BookingConversation';
 import BumpStore from './BumpStore';
+import EasterEggAnimation from './EasterEggAnimation';
 
 const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, onRejectBump, onApproveBump, initialBookingId }) => {
   const [bumpRequests, setBumpRequests] = useState([]);
@@ -39,6 +40,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [twitterRaidRejectionReason, setTwitterRaidRejectionReason] = useState('');
   const [showTwitterRaidRejectModal, setShowTwitterRaidRejectModal] = useState(false);
   const [selectedTwitterRaid, setSelectedTwitterRaid] = useState(null);
+  const [showEasterEgg, setShowEasterEgg] = useState(false);
+  const [hasShownEasterEgg, setHasShownEasterEgg] = useState(false);
 
   // Fetch bump requests and banner ads when dashboard opens
   useEffect(() => {
@@ -883,6 +886,22 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     );
   };
 
+  // Add this effect to handle showing the easter egg animation
+  useEffect(() => {
+    // Only show the animation if:
+    // 1. Points data has been loaded
+    // 2. User has 3000 or more points
+    // 3. We haven't shown the animation yet in this session
+    if (pointsInfo && pointsInfo.points >= 3000 && !hasShownEasterEgg) {
+      setShowEasterEgg(true);
+      setHasShownEasterEgg(true); // Don't show again in this session
+    }
+  }, [pointsInfo, hasShownEasterEgg]);
+
+  const handleCloseEasterEgg = () => {
+    setShowEasterEgg(false);
+  };
+
   return (
     <div className="fixed inset-0 bg-gray-900 z-[999999] overflow-y-auto">
       {/* Header */}
@@ -1602,6 +1621,14 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           ad={selectedAdForBump}
           onSubmitPayment={handleSubmitBump}
           onClose={handleCloseBumpStore}
+        />
+      )}
+
+      {/* Easter Egg Animation */}
+      {showEasterEgg && pointsInfo && (
+        <EasterEggAnimation 
+          points={pointsInfo.points} 
+          onClose={handleCloseEasterEgg} 
         />
       )}
     </div>
