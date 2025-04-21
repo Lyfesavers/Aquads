@@ -1531,7 +1531,7 @@ function App() {
 
   // Use a single useEffect to check for the Easter egg condition
   useEffect(() => {
-    const checkEasterEggCondition = async () => {
+    const fetchPointsAndCheckEasterEgg = async () => {
       // Only proceed if user is logged in and Easter egg hasn't been shown yet
       if (!currentUser?.token || easterEggAlreadyShown) return;
       
@@ -1566,11 +1566,11 @@ function App() {
       }
     };
     
-    checkEasterEggCondition();
+    fetchPointsAndCheckEasterEgg();
   }, [currentUser, easterEggAlreadyShown]);
   
   // Cache the checkEasterEggCondition function with useCallback so it can be used elsewhere
-  const checkEasterEggCondition = useCallback(async () => {
+  const triggerEasterEggCheck = useCallback(async () => {
     // Only proceed if user is logged in and Easter egg hasn't been shown yet
     if (!currentUser?.token || easterEggAlreadyShown) return;
     
@@ -1609,7 +1609,7 @@ function App() {
     setShowDashboard(false);
     setActiveBookingId(null);
     // Check if user has earned the Easter egg after closing dashboard
-    checkEasterEggCondition();
+    triggerEasterEggCheck();
   };
 
   // Modify the return statement to wrap everything in the Auth context provider
