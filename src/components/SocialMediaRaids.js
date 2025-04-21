@@ -99,7 +99,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     try {
       setLoadingPoints(true);
       
-      const response = await fetch(`${API_URL}/points/my-points`, {
+      const response = await fetch(`${API_URL}/api/points/my-points`, {
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
         }
@@ -347,16 +347,34 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const fetchRaids = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/twitter-raids`);
+      const response = await fetch(`${API_URL}/api/twitter-raids`);
       
-      if (response.ok) {
-        const data = await response.json();
-        setRaids(data);
-      } else {
-        showNotification('Failed to load raids', 'error');
+      if (!response.ok) {
+        throw new Error('Failed to fetch Twitter raids');
       }
-    } catch (error) {
-      showNotification('Network error: Could not fetch raids', 'error');
+      
+      const data = await response.json();
+      
+      // Filter out raids older than 7 days
+      const filteredRaids = data.filter(raid => isWithinSevenDays(raid.createdAt));
+      
+      setRaids(filteredRaids);
+      
+      // If a raid was selected, but it's now completed, we should deselect it
+      if (selectedRaid) {
+        const raidStillAvailable = filteredRaids.find(r => r._id === selectedRaid._id);
+        
+        // Check if the current user has completed this raid
+        const selectedRaidCompleted = raidStillAvailable?.completions?.some(
+          completion => completion.userId && completion.userId.toString() === (currentUser?.id || currentUser?._id)
+        );
+        
+        if (selectedRaidCompleted) {
+          setSelectedRaid(null);
+        }
+      }
+    } catch (err) {
+      setError('Failed to load Twitter raids. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -444,78 +462,102 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   };
 
   const handleSubmitTask = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
     
     try {
-      setSubmitting(true);
-      
-      if (!selectedRaid) {
-        showNotification('No raid selected', 'error');
-        setSubmitting(false);
+      if (!currentUser) {
+        showNotification('Please log in to complete Twitter raids', 'error');
         return;
       }
+
+      // Verify all interactions are completed
+      if (!iframeVerified) {
+        setError('Please complete all three Twitter interactions first (like, retweet, and comment)');
+        return;
+      }
+
+      // Run verification check
+      const verified = await verifyUserCompletion();
+      if (!verified) {
+        return;
+      }
+
+      // Set submitting state
+      setSubmitting(true);
+      setError(null);
       
+      // Save the raid ID before sending the request
       const raidId = selectedRaid._id;
       
-      // Make sure the tweet URL is valid and we can extract a tweet ID
-      if (!tweetUrl || !extractTweetId(tweetUrl)) {
-        showNotification('Please enter a valid tweet URL', 'error');
-        setSubmitting(false);
-        return;
-      }
-      
-      // Make sure the tweet contains the verification code
-      const verificationComplete = await verifyUserCompletion();
-      if (!verificationComplete) {
-        setSubmitting(false);
-        return;
-      }
-      
-      // Submit completion to the API
-      const response = await fetchWithDelay(`${API_URL}/twitter-raids/${raidId}/complete`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
-        },
-        body: JSON.stringify({
-          tweetUrl: tweetUrl
-        })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        
-        // Update the raids list to reflect the update
-        setRaids(prevRaids => {
-          return prevRaids.map(raid => {
-            if (raid._id === raidId) {
-              return {
-                ...raid,
-                completedBy: [...(raid.completedBy || []), currentUser.userId]
-              };
-            }
-            return raid;
-          });
+      try {
+        // Use fetchWithDelay instead of fetch
+        const response = await fetchWithDelay(`${API_URL}/api/twitter-raids/${raidId}/complete`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentUser.token}`
+          },
+          body: JSON.stringify({
+            tweetUrl: selectedRaid?.tweetUrl || tweetUrl || null,
+            iframeVerified: true, // Always set to true since we require this
+            directInteractions: iframeInteractions, // Include all interaction data
+            tweetId: previewState.tweetId // Include the tweet ID explicitly
+          })
         });
         
-        // Update points data
-        fetchUserPoints();
+        // Get the raw text first to see if there's an error in JSON parsing
+        const responseText = await response.text();
         
-        showNotification('Task completed successfully! You earned points.', 'success');
-        // Reset form
+        let data;
+        
+        try {
+          data = JSON.parse(responseText);
+        } catch (jsonError) {
+          throw new Error('Server returned an invalid response. Please try again later.');
+        }
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to complete raid');
+        }
+        
+        // Instead of updating React state while doing DOM manipulation,
+        // use a sequential approach to avoid React reconciliation issues
+        
+        // Step 1: First update submitting and reset UI
+        setSubmitting(false);
         setTweetUrl('');
-        setSelectedRaid(null);
+        setPreviewState({
+          loading: false,
+          error: false,
+          message: '',
+          tweetId: null
+        });
         
-        // Hide modal after completion
-        setShowTaskModal(false);
-      } else {
-        const errorData = await response.json();
-        showNotification(errorData.error || 'Failed to submit task', 'error');
+        // Step 2: Show success message
+        setSuccess(data.message || 'Task completed! You earned points.');
+        showNotification(data.message || 'Successfully completed Twitter raid!', 'success');
+        
+        // Step 3: After a brief delay, reset selected raid and fetch new data
+        setTimeout(() => {
+          setSelectedRaid(null);
+          fetchRaids();
+        }, 50);
+      } catch (networkError) {
+        setError(networkError.message || 'Network error. Please try again.');
+        setSubmitting(false);
       }
-    } catch (error) {
-      showNotification('Error submitting task: ' + error.message, 'error');
-    } finally {
+    } catch (err) {
+      // Display more helpful error message if the server gave us one
+      if (err.message && err.message.includes('TwitterRaid validation failed')) {
+        setError('There was a validation error with your submission. Please contact support.');
+      } else {
+        setError(err.message || 'Failed to submit task. Please try again.');
+      }
+      
+      // Notify with error
+      showNotification(err.message || 'Error completing raid', 'error');
       setSubmitting(false);
     }
   };
@@ -523,88 +565,96 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const handleCreateRaid = async (e) => {
     e.preventDefault();
     
+    if (!currentUser || !currentUser.isAdmin) {
+      showNotification('Only admins can create Twitter raids', 'error');
+      return;
+    }
+    
+    if (!newRaid.tweetUrl) {
+      setError('Please enter the Tweet URL');
+      return;
+    }
+    
+    // Always set fixed values for these fields
+    const raidData = {
+      ...newRaid,
+      title: 'Twitter Raid',
+      description: 'Retweet, Like & Comment to earn 50 points!',
+      points: 50
+    };
+    
+    setSubmitting(true);
+    
     try {
-      setCreating(true);
-      
-      // Validation
-      if (!newRaid.tweetUrl) {
-        setError('Please enter the Tweet URL');
-        setCreating(false);
-        return;
-      }
-      
-      // Extract tweet ID from URL
-      const tweetId = extractTweetId(newRaid.tweetUrl);
-      if (!tweetId) {
-        setError('Please enter a valid tweet URL');
-        setCreating(false);
-        return;
-      }
-      
-      // Create the raid
-      const response = await fetch(`${API_URL}/twitter-raids`, {
+      const response = await fetch(`${API_URL}/api/twitter-raids`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
         },
-        body: JSON.stringify({
-          ...newRaid,
-          tweetId
-        })
+        body: JSON.stringify(raidData)
       });
       
-      if (response.ok) {
-        const newRaid = await response.json();
-        setRaids(prevRaids => [...prevRaids, newRaid]);
-        
-        // Reset form
-        setNewRaid({
-          tweetUrl: '',
-          title: 'Twitter Raid',
-          description: 'Retweet, Like & Comment to earn 50 points!',
-          points: 50
-        });
-        setShowCreateForm(false);
-        
-        showNotification('Raid created successfully!', 'success');
-      } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Failed to create raid');
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create Twitter raid');
       }
-    } catch (error) {
-      setError('Error creating raid: ' + error.message);
+      
+      // Reset form and hide it
+      setNewRaid({
+        tweetUrl: '',
+        title: 'Twitter Raid',
+        description: 'Retweet, Like & Comment to earn 50 points!',
+        points: 50
+      });
+      setShowCreateForm(false);
+      
+      // Refresh raids list
+      fetchRaids();
+      
+      showNotification('Twitter raid created successfully!', 'success');
+    } catch (err) {
+      setError(err.message || 'Failed to create Twitter raid');
     } finally {
-      setCreating(false);
+      setSubmitting(false);
     }
   };
   
   const handleDeleteRaid = async (raidId) => {
-    if (!window.confirm('Are you sure you want to delete this raid?')) {
+    if (!currentUser || !currentUser.isAdmin) {
+      showNotification('Only admins can delete Twitter raids', 'error');
+      return;
+    }
+    
+    if (!window.confirm('Are you sure you want to delete this Twitter raid?')) {
       return;
     }
     
     try {
-      setDeleting(raidId);
-      
-      const response = await fetch(`${API_URL}/twitter-raids/${raidId}`, {
+      const response = await fetch(`${API_URL}/api/twitter-raids/${raidId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
         }
       });
       
-      if (response.ok) {
-        setRaids(prevRaids => prevRaids.filter(raid => raid._id !== raidId));
-        showNotification('Raid deleted successfully', 'success');
-      } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Failed to delete raid');
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to delete Twitter raid');
       }
-    } catch (error) {
-      showNotification('Error deleting raid: ' + error.message, 'error');
-    } finally {
-      setDeleting(null);
+      
+      // If the deleted raid was selected, deselect it
+      if (selectedRaid && selectedRaid._id === raidId) {
+        setSelectedRaid(null);
+      }
+      
+      // Refresh raids list
+      fetchRaids();
+      
+      showNotification('Twitter raid deleted successfully!', 'success');
+    } catch (err) {
+      showNotification(err.message || 'Failed to delete Twitter raid', 'error');
     }
   };
   
@@ -670,7 +720,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   // Add utility function to create a points-based Twitter raid
   const createPointsTwitterRaid = async (data, token) => {
     try {
-      const response = await fetch(`${API_URL}/twitter-raids/points`, {
+      const response = await fetch(`${API_URL}/api/twitter-raids/points`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -681,7 +731,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create points raid');
+        throw new Error(errorData.error || 'Failed to create Twitter raid');
       }
       
       return await response.json();
@@ -747,19 +797,13 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
 
   // Admin function to approve a pending paid raid
   const handleApproveRaid = async (raidId) => {
-    if (!currentUser?.isAdmin) {
+    if (!currentUser || !currentUser.isAdmin) {
       showNotification('Only admins can approve raids', 'error');
       return;
     }
     
     try {
-      setAdminAction({
-        loading: true,
-        raidId,
-        type: 'approve'
-      });
-      
-      const response = await fetch(`${API_URL}/twitter-raids/${raidId}/approve`, {
+      const response = await fetch(`${API_URL}/api/twitter-raids/${raidId}/approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -767,89 +811,54 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         }
       });
       
-      if (response.ok) {
-        // Update raid status in the UI
-        setRaids(prevRaids => {
-          return prevRaids.map(raid => {
-            if (raid._id === raidId) {
-              return {
-                ...raid,
-                paymentStatus: 'approved'
-              };
-            }
-            return raid;
-          });
-        });
-        
-        showNotification('Raid approved successfully', 'success');
-      } else {
+      if (!response.ok) {
         const errorData = await response.json();
-        showNotification(errorData.error || 'Failed to approve raid', 'error');
+        throw new Error(errorData.error || 'Failed to approve raid');
       }
+      
+      const result = await response.json();
+      showNotification(result.message || 'Raid approved successfully!', 'success');
+      
+      // Refresh raids list
+      fetchRaids();
     } catch (error) {
-      showNotification('Error approving raid: ' + error.message, 'error');
-    } finally {
-      setAdminAction({
-        loading: false,
-        raidId: null,
-        type: null
-      });
+      showNotification(error.message || 'Failed to approve raid', 'error');
     }
   };
   
   // Admin function to reject a pending paid raid
   const handleRejectRaid = async (raidId) => {
-    if (!currentUser?.isAdmin) {
+    if (!currentUser || !currentUser.isAdmin) {
       showNotification('Only admins can reject raids', 'error');
       return;
     }
     
-    const reason = prompt('Enter reason for rejection (optional):');
+    // Prompt for rejection reason
+    const reason = prompt('Enter reason for rejection:');
+    if (reason === null) return; // User cancelled
     
     try {
-      setAdminAction({
-        loading: true,
-        raidId,
-        type: 'reject'
-      });
-      
-      const response = await fetch(`${API_URL}/twitter-raids/${raidId}/reject`, {
+      const response = await fetch(`${API_URL}/api/twitter-raids/${raidId}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
         },
-        body: JSON.stringify({ reason })
+        body: JSON.stringify({ rejectionReason: reason })
       });
       
-      if (response.ok) {
-        // Update raid status in the UI
-        setRaids(prevRaids => {
-          return prevRaids.map(raid => {
-            if (raid._id === raidId) {
-              return {
-                ...raid,
-                paymentStatus: 'rejected',
-                rejectionReason: reason || 'No reason provided'
-              };
-            }
-            return raid;
-          });
-        });
-        
-        showNotification('Raid rejected successfully', 'success');
-      } else {
+      if (!response.ok) {
         const errorData = await response.json();
-        showNotification(errorData.error || 'Failed to reject raid', 'error');
+        throw new Error(errorData.error || 'Failed to reject raid');
       }
+      
+      const result = await response.json();
+      showNotification(result.message || 'Raid rejected', 'success');
+      
+      // Refresh raids list
+      fetchRaids();
     } catch (error) {
-      showNotification('Error rejecting raid: ' + error.message, 'error');
-    } finally {
-      setAdminAction({
-        loading: false,
-        raidId: null,
-        type: null
-      });
+      showNotification(error.message || 'Failed to reject raid', 'error');
     }
   };
 

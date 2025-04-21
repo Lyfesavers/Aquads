@@ -25,9 +25,6 @@ const NotificationBell = ({ currentUser }) => {
   const [showReadNotifications, setShowReadNotifications] = useState(false); // New state for toggle
   const dropdownRef = useRef(null);
   const hasAttemptedFetch = useRef(false); // Prevent multiple failed fetch attempts
-  const [loadingNotifications, setLoadingNotifications] = useState(false);
-  const [isActive, setIsActive] = useState(true);
-  const [soundEnabled, setSoundEnabled] = useState(true);
 
   // Debug logging when component mounts
   useEffect(() => {
@@ -502,100 +499,6 @@ const NotificationBell = ({ currentUser }) => {
     return date.toLocaleDateString();
   };
 
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        if (currentUser?.token) {
-          setLoadingNotifications(true);
-          
-          // Determine the best API URL to use
-          const apiBaseUrl = API_URL || 
-                       window.location.origin;
-          
-          const response = await fetch(`${apiBaseUrl}/notifications`, {
-            headers: {
-              'Authorization': `Bearer ${currentUser.token}`
-            }
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            setNotifications(data);
-            setUnreadCount(data.filter(n => !n.read).length);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to fetch notifications", error);
-      } finally {
-        setLoadingNotifications(false);
-      }
-    };
-
-    fetchNotifications();
-    
-    // Set up polling
-    const interval = setInterval(() => {
-      if (isActive && !document.hidden && currentUser?.token) {
-        fetchNotifications();
-      }
-    }, 30000);
-    
-    return () => clearInterval(interval);
-  }, [currentUser, isActive]);
-
-  const handleMarkAllAsRead = async () => {
-    try {
-      if (!currentUser?.token) return;
-      
-      const response = await fetch(`${API_URL}/notifications/mark-all-read`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${currentUser.token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (response.ok) {
-        // Update local state
-        setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
-        setUnreadCount(0);
-        playNotificationSound('success');
-      }
-    } catch (error) {
-      console.error("Failed to mark notifications as read", error);
-    }
-  };
-
-  useEffect(() => {
-    // Load notification settings
-    const loadNotificationSettings = async () => {
-      try {
-        if (!currentUser?.token) return;
-        
-        // Determine the best API URL to use
-        const apiBaseUrl = API_URL || 
-                       window.location.origin;
-        
-        const response = await fetch(`${apiBaseUrl}/config`, {
-          headers: {
-            'Authorization': `Bearer ${currentUser.token}`
-          }
-        });
-        
-        if (response.ok) {
-          const { notificationSettings } = await response.json();
-          if (notificationSettings) {
-            setSoundEnabled(notificationSettings.soundEnabled ?? true);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to load notification settings", error);
-      }
-    };
-    
-    loadNotificationSettings();
-  }, [currentUser]);
-
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Bell icon with notification count */}
@@ -620,7 +523,7 @@ const NotificationBell = ({ currentUser }) => {
             <div className="flex space-x-2">
               {unreadCount > 0 && (
                 <button
-                  onClick={handleMarkAllAsRead}
+                  onClick={markAllAsRead}
                   className="text-sm text-blue-400 hover:text-blue-300 focus:outline-none"
                 >
                   Mark all as read

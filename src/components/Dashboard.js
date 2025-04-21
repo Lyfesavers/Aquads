@@ -65,7 +65,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   useEffect(() => {
     if (currentUser?.isAdmin) {
-      fetch(`${process.env.REACT_APP_API_URL}/points/redemptions/pending`, {
+      fetch(`${process.env.REACT_APP_API_URL}/api/points/redemptions/pending`, {
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
         }
@@ -100,7 +100,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   useEffect(() => {
     if (currentUser?.token) {
       // Fetch affiliate earnings summary
-      fetch(`${process.env.REACT_APP_API_URL}/affiliates/summary`, {
+      fetch(`${process.env.REACT_APP_API_URL}/api/affiliates/summary`, {
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
         }
@@ -114,7 +114,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         });
 
       // Fetch detailed earnings
-      fetch(`${process.env.REACT_APP_API_URL}/affiliates/earnings`, {
+      fetch(`${process.env.REACT_APP_API_URL}/api/affiliates/earnings`, {
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
         }
@@ -185,12 +185,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const fetchAffiliateInfo = async () => {
     try {
       const [affiliateResponse, pointsResponse] = await Promise.all([
-        fetch(`${process.env.REACT_APP_API_URL}/users/affiliates`, {
+        fetch(`${process.env.REACT_APP_API_URL}/api/users/affiliates`, {
           headers: {
             'Authorization': `Bearer ${currentUser.token}`
           }
         }),
-        fetch(`${process.env.REACT_APP_API_URL}/points/my-points`, {
+        fetch(`${process.env.REACT_APP_API_URL}/api/points/my-points`, {
           headers: {
             'Authorization': `Bearer ${currentUser.token}`
           }
@@ -218,7 +218,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       setIsRedeeming(true);
       setRedeemError('');
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/points/redeem`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/points/redeem`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${currentUser.token}`,
@@ -319,7 +319,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         return;
       }
 
-      const response = await fetch(`${API_URL}/bannerAds/${bannerId}`, {
+      const response = await fetch(`${API_URL}/api/bannerAds/${bannerId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -362,7 +362,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   const handleProcessRedemption = async (userId, status) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/points/redemptions/${userId}/process`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/points/redemptions/${userId}/process`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${currentUser.token}`,
@@ -387,7 +387,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   const fetchBookings = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/bookings/my-bookings`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/bookings/my-bookings`, {
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
         }
@@ -402,25 +402,36 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   const handleBookingStatusUpdate = async (bookingId, status) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/bookings/${bookingId}/status`, {
+      const token = JSON.parse(localStorage.getItem('currentUser'))?.token;
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/bookings/${bookingId}/status`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${currentUser.token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ status })
       });
-      if (!response.ok) throw new Error('Failed to update booking status');
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update booking status');
+      }
+
+      const updatedBooking = await response.json();
+      setBookings(prevBookings => 
+        prevBookings.map(booking => 
+          booking._id === updatedBooking._id ? updatedBooking : booking
+        )
+      );
       
-      // Update local state
-      setBookings(prev => prev.map(booking => 
-        booking._id === bookingId ? { ...booking, status } : booking
-      ));
-      
-      showNotification('Booking status updated successfully!', 'success');
+      return updatedBooking;
     } catch (error) {
       console.error('Error updating booking status:', error);
-      showNotification('Failed to update booking status', 'error');
+      throw error;
     }
   };
 

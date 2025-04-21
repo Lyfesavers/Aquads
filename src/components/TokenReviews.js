@@ -16,10 +16,8 @@ const TokenReviews = ({ token, onClose, currentUser, showNotification }) => {
   const fetchReviews = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/reviews/${token.symbol}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch reviews');
-      }
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/reviews/${token.symbol}`);
+      if (!response.ok) throw new Error('Failed to fetch reviews');
       const data = await response.json();
       setReviews(data);
       
@@ -40,7 +38,7 @@ const TokenReviews = ({ token, onClose, currentUser, showNotification }) => {
       }
     } catch (error) {
       console.error('Error fetching reviews:', error);
-      setError('Failed to load reviews. Please try again later.');
+      setError('Failed to load reviews');
     } finally {
       setIsLoading(false);
     }
@@ -49,31 +47,36 @@ const TokenReviews = ({ token, onClose, currentUser, showNotification }) => {
   const handleSubmitReview = async (e) => {
     e.preventDefault();
     if (!currentUser) {
-      alert('Please log in to submit a review');
+      showNotification('Please login to submit a review', 'error');
       return;
     }
+
     try {
-      setIsLoading(true);
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/reviews`, {
+      const savedUser = localStorage.getItem('currentUser');
+      const userData = JSON.parse(savedUser);
+
+      const reviewData = {
+        tokenSymbol: token.symbol,
+        rating: parseInt(newReview.rating),
+        comment: newReview.comment.trim()
+      };
+
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/reviews`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
+          'Authorization': `Bearer ${userData.token}`
         },
-        body: JSON.stringify({
-          token: token.symbol,
-          rating: parseInt(newReview.rating),
-          content: newReview.comment.trim(),
-          username: currentUser.username
-        })
+        body: JSON.stringify(reviewData)
       });
 
+      const data = await response.json();
+      
       if (!response.ok) {
-        throw new Error('Failed to submit review');
+        throw new Error(data.error || 'Failed to submit review');
       }
 
-      const newReview = await response.json();
-      setReviews([...reviews, newReview]);
+      setReviews([data, ...reviews]);
       setNewReview({ rating: 5, comment: '' });
       showNotification('Review submitted successfully!', 'success');
       
@@ -82,8 +85,6 @@ const TokenReviews = ({ token, onClose, currentUser, showNotification }) => {
     } catch (error) {
       console.error('Error submitting review:', error);
       showNotification(error.message || 'Failed to submit review', 'error');
-    } finally {
-      setIsLoading(false);
     }
   };
 
