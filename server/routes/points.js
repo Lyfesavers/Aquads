@@ -417,6 +417,38 @@ const revokeGameVotePoints = async (userId, gameId) => {
   }
 };
 
+// Record when a user finds the Easter egg
+router.post('/easter-egg-found', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Update the user record with Easter egg discovery
+    await User.findByIdAndUpdate(
+      req.user.userId,
+      {
+        $set: { easterEggFound: true },
+        $push: {
+          pointsHistory: {
+            amount: 100, // Bonus points for finding the Easter egg!
+            reason: 'Found the Easter egg!',
+            createdAt: new Date()
+          }
+        },
+        $inc: { points: 100 } // Award 100 bonus points
+      }
+    );
+
+    res.json({ success: true, message: 'Easter egg discovery recorded!' });
+  } catch (error) {
+    console.error('Error recording Easter egg discovery:', error);
+    res.status(500).json({ error: 'Failed to record Easter egg discovery' });
+  }
+});
+
 // Export the router directly
 module.exports = router;
 

@@ -62,6 +62,10 @@ const userSchema = new Schema({
     type: Number,
     default: 0
   },
+  easterEggFound: {
+    type: Boolean,
+    default: false
+  },
   pointsHistory: [{
     amount: Number,
     reason: String,
