@@ -9,10 +9,10 @@ const EasterEggAnimation = ({ points, onClose }) => {
     if (points >= 3000) {
       setVisible(true);
       
-      // Auto close after 6 seconds
+      // Auto close after 10 seconds (extended from 6)
       const timer = setTimeout(() => {
         handleClose();
-      }, 6000);
+      }, 10000);
       
       return () => clearTimeout(timer);
     }
@@ -50,7 +50,7 @@ const EasterEggAnimation = ({ points, onClose }) => {
           <div className="absolute inset-0 overflow-hidden">
             {/* Animated particles */}
             <div className="absolute inset-0">
-              {[...Array(20)].map((_, i) => (
+              {[...Array(30)].map((_, i) => (
                 <motion.div
                   key={i}
                   className="absolute w-2 h-2 rounded-full bg-blue-500"
@@ -89,13 +89,13 @@ const EasterEggAnimation = ({ points, onClose }) => {
                 ease: "easeInOut"
               }}
             >
-              <div className="w-[600px] h-[600px] rounded-full bg-gradient-to-r from-blue-600/20 to-indigo-600/20 blur-3xl" />
+              <div className="w-[300px] h-[300px] sm:w-[400px] sm:h-[400px] md:w-[600px] md:h-[600px] rounded-full bg-gradient-to-r from-blue-600/20 to-indigo-600/20 blur-3xl" />
             </motion.div>
           </div>
           
           {/* Main content */}
           <motion.div
-            className="relative z-10 max-w-2xl text-center p-8"
+            className="relative z-10 max-w-xs sm:max-w-sm md:max-w-2xl text-center px-4 py-6 sm:p-8"
             initial={{ scale: 0.8, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             transition={{
@@ -105,8 +105,100 @@ const EasterEggAnimation = ({ points, onClose }) => {
               delay: 0.2
             }}
           >
+            {/* Golden Egg */}
             <motion.div
-              className="text-6xl font-extrabold mb-6"
+              className="mx-auto mb-6 w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 relative"
+              animate={{ 
+                rotateY: 360,
+                rotateZ: [0, 10, 0, -10, 0]
+              }}
+              transition={{ 
+                rotateY: {
+                  duration: 8,
+                  repeat: Infinity,
+                  ease: "linear"
+                },
+                rotateZ: {
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }
+              }}
+            >
+              <svg 
+                viewBox="0 0 200 250" 
+                className="w-full h-full drop-shadow-[0_0_30px_rgba(255,215,0,0.7)]"
+              >
+                <defs>
+                  <radialGradient id="eggGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                    <stop offset="0%" stopColor="#fff6a8" />
+                    <stop offset="50%" stopColor="#ffdf00" />
+                    <stop offset="100%" stopColor="#e7b500" />
+                  </radialGradient>
+                  <filter id="eggShadow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur in="SourceAlpha" stdDeviation="10" />
+                    <feOffset dx="0" dy="10" result="offsetblur" />
+                    <feComponentTransfer>
+                      <feFuncA type="linear" slope="0.5" />
+                    </feComponentTransfer>
+                    <feMerge>
+                      <feMergeNode />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+                <ellipse 
+                  cx="100" 
+                  cy="125" 
+                  rx="80" 
+                  ry="110" 
+                  fill="url(#eggGradient)" 
+                  filter="url(#eggShadow)"
+                />
+                <ellipse 
+                  cx="70" 
+                  cy="85" 
+                  rx="12" 
+                  ry="15" 
+                  fill="white" 
+                  fillOpacity="0.4" 
+                />
+                <ellipse 
+                  cx="120" 
+                  cy="105" 
+                  rx="8" 
+                  ry="10" 
+                  fill="white" 
+                  fillOpacity="0.2" 
+                />
+              </svg>
+              
+              {/* Sparkles around the egg */}
+              {[...Array(8)].map((_, i) => (
+                <motion.div 
+                  key={i}
+                  className="absolute w-3 h-3 rounded-full bg-yellow-300"
+                  style={{
+                    top: `${30 + 40 * Math.sin(i * Math.PI / 4)}%`,
+                    left: `${30 + 40 * Math.cos(i * Math.PI / 4)}%`,
+                    boxShadow: '0 0 10px 3px rgba(255, 215, 0, 0.6)'
+                  }}
+                  animate={{
+                    scale: [0.5, 1.5, 0.5],
+                    opacity: [0.3, 1, 0.3]
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    delay: i * 0.2,
+                    ease: "easeInOut"
+                  }}
+                />
+              ))}
+            </motion.div>
+            
+            <motion.div
+              className="text-3xl sm:text-4xl md:text-6xl font-extrabold mb-4 sm:mb-6"
               animate={{
                 scale: [1, 1.1, 1],
                 color: [
@@ -127,18 +219,18 @@ const EasterEggAnimation = ({ points, onClose }) => {
             </motion.div>
             
             <motion.div
-              className="mb-8 text-3xl font-bold text-white"
+              className="mb-4 sm:mb-8 text-xl sm:text-2xl md:text-3xl font-bold text-white"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
             >
               <span>You've reached </span>
-              <span className="text-blue-400">3,000</span>
+              <span className="text-yellow-400">3,000</span>
               <span> affiliate points!</span>
             </motion.div>
             
             <motion.div
-              className="mb-8 text-xl text-gray-200"
+              className="mb-6 sm:mb-8 text-base sm:text-xl text-gray-200"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8 }}
@@ -148,7 +240,7 @@ const EasterEggAnimation = ({ points, onClose }) => {
             </motion.div>
             
             <motion.button
-              className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full text-white font-bold text-lg shadow-lg hover:shadow-blue-500/50 transition-all duration-300"
+              className="px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full text-gray-900 font-bold text-base sm:text-lg shadow-lg hover:shadow-yellow-500/50 transition-all duration-300"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1 }}
