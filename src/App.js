@@ -37,6 +37,7 @@ import Whitepaper from './components/Whitepaper';
 import HowTo from './components/HowTo';
 import Affiliate from './components/Affiliate';
 import Terms from './components/Terms';
+import EasterEggAnimation from './components/EasterEggAnimation';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import emailService from './services/emailService';
@@ -377,6 +378,10 @@ function App() {
   const [newUsername, setNewUsername] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeBookingId, setActiveBookingId] = useState(null);
+  const [showEasterEgg, setShowEasterEgg] = useState(false);
+  const [easterEggAlreadyShown, setEasterEggAlreadyShown] = useState(() => {
+    return localStorage.getItem('easterEggShown') === 'true';
+  });
 
   // Add this function to update ads with persistence
   const updateAds = (newAds) => {
@@ -671,7 +676,16 @@ function App() {
   const handleLogout = () => {
     setCurrentUser(null);
     localStorage.removeItem('currentUser');
-    showNotification('Successfully logged out!', 'success');
+    
+    // Reset Easter egg for testing purposes
+    localStorage.removeItem('easterEggShown');
+    setEasterEggAlreadyShown(false);
+    
+    socket.emit('logout');
+    
+    // Close any open modals
+    setShowDashboard(false);
+    setShowProfileModal(false);
   };
 
   const handleCreateAccount = async (formData) => {
@@ -1524,10 +1538,96 @@ function App() {
     };
   }, []);
 
+  // Add a useEffect to check for the Easter egg condition
+  useEffect(() => {
+    const checkEasterEggCondition = async () => {
+      // Only proceed if user is logged in and Easter egg hasn't been shown yet
+      if (!currentUser?.token || easterEggAlreadyShown) return;
+      
+      try {
+        // Fetch user points from API
+        const response = await fetch(`${API_URL}/api/points/my-points`, {
+          headers: {
+            'Authorization': `Bearer ${currentUser.token}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          // If user has 3000+ points, show Easter egg
+          if (data.points >= 3000) {
+            setShowEasterEgg(true);
+            
+            // Mark as shown in localStorage to prevent showing it again
+            localStorage.setItem('easterEggShown', 'true');
+            setEasterEggAlreadyShown(true);
+            
+            // Hide Easter egg after 10 seconds
+            setTimeout(() => {
+              setShowEasterEgg(false);
+            }, 10000);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking Easter egg condition:', error);
+      }
+    };
+    
+    checkEasterEggCondition();
+  }, [currentUser, easterEggAlreadyShown]);
+  
+  // Cache the checkEasterEggCondition function with useCallback so it can be used elsewhere
+  const checkEasterEggCondition = useCallback(async () => {
+    // Only proceed if user is logged in and Easter egg hasn't been shown yet
+    if (!currentUser?.token || easterEggAlreadyShown) return;
+    
+    try {
+      // Fetch user points from API
+      const response = await fetch(`${API_URL}/api/points/my-points`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        // If user has 3000+ points, show Easter egg
+        if (data.points >= 3000) {
+          setShowEasterEgg(true);
+          
+          // Mark as shown in localStorage to prevent showing it again
+          localStorage.setItem('easterEggShown', 'true');
+          setEasterEggAlreadyShown(true);
+          
+          // Hide Easter egg after 10 seconds
+          setTimeout(() => {
+            setShowEasterEgg(false);
+          }, 10000);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking Easter egg condition:', error);
+    }
+  }, [currentUser, easterEggAlreadyShown]);
+
+  const handleCloseDashboard = () => {
+    setShowDashboard(false);
+    setActiveBookingId(null);
+    // Check if user has earned the Easter egg after closing dashboard
+    checkEasterEggCondition();
+  };
+
   // Modify the return statement to wrap everything in the Auth context provider
   return (
     <AuthContext.Provider value={{ currentUser, setCurrentUser }}>
       <Router>
+        {/* Add Easter Egg Animation */}
+        {showEasterEgg && (
+          <EasterEggAnimation onClose={() => setShowEasterEgg(false)} />
+        )}
+        
         <NavigationListener 
           onNavigate={() => {
             if (currentUser) {
@@ -1978,10 +2078,7 @@ function App() {
                   <Dashboard
                     ads={ads}
                     currentUser={currentUser}
-                    onClose={() => {
-                      setShowDashboard(false);
-                      setActiveBookingId(null);
-                    }}
+                    onClose={handleCloseDashboard}
                     onDeleteAd={handleDeleteAd}
                     onBumpAd={handleBumpPurchase}
                     onEditAd={handleEditAd}
