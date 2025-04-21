@@ -2,30 +2,42 @@ import React, { useState, useEffect } from 'react';
 
 const TokenRating = ({ symbol }) => {
   const [rating, setRating] = useState('0.0');
+  const [count, setCount] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchTokenRating();
+    fetchReviews();
   }, [symbol]);
 
-  const fetchTokenRating = async () => {
+  const fetchReviews = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/reviews/${symbol.toLowerCase()}`);
-      if (!response.ok) throw new Error('Failed to fetch reviews');
-      const reviews = await response.json();
+      setLoading(true);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/reviews/${symbol.toLowerCase()}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch reviews');
+      }
+      const data = await response.json();
       
-      if (reviews && reviews.length > 0) {
-        const totalRating = reviews.reduce((sum, review) => sum + Number(review.rating), 0);
-        const avgRating = (totalRating / reviews.length).toFixed(1);
+      if (Array.isArray(data) && data.length > 0) {
+        // Calculate average rating
+        const totalRating = data.reduce((acc, review) => acc + review.rating, 0);
+        const avgRating = totalRating / data.length;
         setRating(avgRating);
+        setCount(data.length);
+      } else {
+        setRating(0);
+        setCount(0);
       }
     } catch (error) {
-      console.error('Error fetching token rating:', error);
+      console.error('Error fetching reviews:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <span>
-      {rating}
+      {loading ? 'Loading...' : rating}
     </span>
   );
 };

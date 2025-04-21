@@ -133,6 +133,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [jobs, setJobs] = useState([]);
   const [jobToEdit, setJobToEdit] = useState(null);
   const [isLoading, setIsLoading] = useState({ jobs: true });
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const categories = [
     { id: 'smart-contract', name: 'Smart Contract', icon: '📝' },
@@ -528,25 +530,45 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     }
   };
 
-  const handleBookingCreate = async (serviceId, requirements) => {
+  const handleBookingSubmit = async (bookingData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/bookings`, {
+      setLoading(true);
+      const token = currentUser.token;
+      
+      if (!token) {
+        throw new Error('Please log in to book a service');
+      }
+      
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/bookings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ serviceId, requirements })
+        body: JSON.stringify(bookingData)
       });
-
+      
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to create booking');
+        throw new Error(error.message || 'Failed to create booking');
       }
-
-      return await response.json();
+      
+      const data = await response.json();
+      setLoading(false);
+      setBookingData(null);
+      setShowBookingModal(false);
+      
+      // Show success message
+      setSuccessMessage('Booking created successfully!');
+      setTimeout(() => setSuccessMessage(''), 5000);
+      
+      return data;
     } catch (error) {
-      throw error;
+      setLoading(false);
+      setErrorMessage(error.message);
+      setTimeout(() => setErrorMessage(''), 5000);
+      console.error('Booking error:', error);
+      return null;
     }
   };
 
@@ -1072,7 +1094,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                             <BookingButton
                               service={service}
                               currentUser={currentUser}
-                              onBookingCreate={handleBookingCreate}
+                              onBookingCreate={handleBookingSubmit}
                               showNotification={(message, type) => {
                                 alert(message); // Using alert for now, can be replaced with a better notification system
                               }}

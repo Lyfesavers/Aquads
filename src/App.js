@@ -1538,15 +1538,15 @@ function App() {
     };
   }, []);
 
-  // Add a useEffect to check for the Easter egg condition
+  // Use a single useEffect to check for the Easter egg condition
   useEffect(() => {
     const checkEasterEggCondition = async () => {
       // Only proceed if user is logged in and Easter egg hasn't been shown yet
       if (!currentUser?.token || easterEggAlreadyShown) return;
       
       try {
-        // Fetch user points from API
-        const response = await fetch(`${API_URL}/api/points/my-points`, {
+        // Fetch user points from API (fix the duplicate 'api/' in the URL)
+        const response = await fetch(`${API_URL}/points/my-points`, {
           headers: {
             'Authorization': `Bearer ${currentUser.token}`
           }
@@ -1583,8 +1583,8 @@ function App() {
     if (!currentUser?.token || easterEggAlreadyShown) return;
     
     try {
-      // Fetch user points from API
-      const response = await fetch(`${API_URL}/api/points/my-points`, {
+      // Fetch user points from API (fix the duplicate 'api/' in the URL)
+      const response = await fetch(`${API_URL}/points/my-points`, {
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
         }

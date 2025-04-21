@@ -96,87 +96,59 @@ const TokenList = ({ currentUser, showNotification }) => {
     setFilteredTokens(sorted);
   };
 
-  const fetchInitialTokens = async (isBackgroundUpdate = false) => {
+  const fetchTokens = async () => {
     try {
-      if (!isBackgroundUpdate) {
-        setIsLoading(true);
-      }
-
-      const response = await fetch(`${API_URL}/api/tokens`);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch tokens: ${response.status}`);
-      }
-      
-        const data = await response.json();
-      
-      if (!Array.isArray(data)) {
-        throw new Error('Invalid response format');
-      }
-
-      setTokens(data);
-      setFilteredTokens(data);
+      setIsLoading(true);
       setError(null);
 
+      const response = await fetch(`${API_URL}/tokens`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch tokens');
+      }
+
+      const sortedTokens = sortTokens(data);
+      setTokens(sortedTokens);
+      
+      // Save first tokens for initial chart data
+      if (sortedTokens.length > 0 && !currentTokenId) {
+        setCurrentTokenId(sortedTokens[0].id);
+      }
     } catch (error) {
-      logger.error('Error fetching tokens:', error);
-      // Only show error if we have no tokens to display and this isn't a background update
-      if (tokens.length === 0 && !isBackgroundUpdate) {
-        setError('Failed to load tokens. Please try again in a few minutes.');
-      }
+      console.error('Error fetching tokens:', error);
+      setError('Failed to load tokens. Please try again.');
     } finally {
-      if (!isBackgroundUpdate) {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
     }
   };
 
-  const handleSearch = async (searchTerm) => {
+  const searchTokens = async (searchTerm) => {
     try {
       setIsLoading(true);
-    setSearchTerm(searchTerm);
-    
-      if (!searchTerm.trim()) {
-        setFilteredTokens(tokens);
-        setIsLoading(false);
-      return;
-    }
+      setError(null);
 
-      const response = await fetch(`${API_URL}/api/tokens?search=${encodeURIComponent(searchTerm)}`);
-      if (!response.ok) {
-        throw new Error('Search failed');
-      }
-
+      const response = await fetch(`${API_URL}/tokens?search=${encodeURIComponent(searchTerm)}`);
       const data = await response.json();
-      if (Array.isArray(data)) {
-        setFilteredTokens(data);
-        setError(null);
-      } else {
-        // Fallback to client-side filtering
-        const filtered = tokens.filter(token => 
-          token.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          token.name.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-        setFilteredTokens(filtered);
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to search tokens');
       }
+
+      setTokens(sortTokens(data));
     } catch (error) {
-      logger.error('Search error:', error);
-      // Fallback to client-side filtering
-      const filtered = tokens.filter(token => 
-        token.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        token.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredTokens(filtered);
+      console.error('Error searching tokens:', error);
+      setError('Failed to search tokens. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchInitialTokens();
+    fetchTokens();
     const refreshInterval = setInterval(() => {
       if (!document.hidden) {
-        fetchInitialTokens(true);
+        fetchTokens();
       }
     }, 60000);
 
