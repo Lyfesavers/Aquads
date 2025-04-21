@@ -888,15 +888,21 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   // Add this effect to handle showing the easter egg animation
   useEffect(() => {
+    // Check if we've shown this animation before by looking in localStorage
+    const hasShownAffiliateAnimation = localStorage.getItem(`affiliateAnimation_${currentUser?.userId}`);
+    
     // Only show the animation if:
     // 1. Points data has been loaded
     // 2. User has 3000 or more points
-    // 3. We haven't shown the animation yet in this session
-    if (pointsInfo && pointsInfo.points >= 3000 && !hasShownEasterEgg) {
+    // 3. We haven't shown the animation ever before (not in localStorage)
+    if (pointsInfo && pointsInfo.points >= 3000 && !hasShownAffiliateAnimation && currentUser?.userId) {
       setShowEasterEgg(true);
-      setHasShownEasterEgg(true); // Don't show again in this session
+      setHasShownEasterEgg(true);
+      
+      // Save to localStorage so it never shows again for this user
+      localStorage.setItem(`affiliateAnimation_${currentUser.userId}`, 'true');
     }
-  }, [pointsInfo, hasShownEasterEgg]);
+  }, [pointsInfo, currentUser?.userId]);
 
   const handleCloseEasterEgg = () => {
     setShowEasterEgg(false);
