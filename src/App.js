@@ -37,6 +37,7 @@ import Whitepaper from './components/Whitepaper';
 import HowTo from './components/HowTo';
 import Affiliate from './components/Affiliate';
 import Terms from './components/Terms';
+import EasterEggAnimation from './components/EasterEggAnimation';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import emailService from './services/emailService';
@@ -377,6 +378,7 @@ function App() {
   const [newUsername, setNewUsername] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeBookingId, setActiveBookingId] = useState(null);
+  const [showEasterEgg, setShowEasterEgg] = useState(false);
 
   // Add this function to update ads with persistence
   const updateAds = (newAds) => {
@@ -1524,6 +1526,33 @@ function App() {
     };
   }, []);
 
+  // Check for Easter egg condition - affiliate points >= 3000
+  useEffect(() => {
+    const checkEasterEggCondition = () => {
+      // Only check if user is logged in
+      if (!currentUser) return;
+      
+      // Check if user has 3000 or more points
+      if (currentUser.points >= 3000) {
+        // Check if Easter egg has already been shown
+        const easterEggShown = localStorage.getItem('easterEggShown');
+        if (!easterEggShown) {
+          // Show the Easter egg animation
+          setShowEasterEgg(true);
+          // Mark Easter egg as shown so it doesn't appear again
+          localStorage.setItem('easterEggShown', 'true');
+        }
+      }
+    };
+    
+    checkEasterEggCondition();
+  }, [currentUser]);
+  
+  // Function to close the Easter egg animation
+  const handleCloseEasterEgg = () => {
+    setShowEasterEgg(false);
+  };
+
   // Modify the return statement to wrap everything in the Auth context provider
   return (
     <AuthContext.Provider value={{ currentUser, setCurrentUser }}>
@@ -1544,6 +1573,10 @@ function App() {
             }
           }} 
         />
+        
+        {/* Easter Egg Animation */}
+        {showEasterEgg && <EasterEggAnimation onClose={handleCloseEasterEgg} />}
+        
         <Routes>
           <Route path="/marketplace" element={
             <Marketplace 
