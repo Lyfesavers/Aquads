@@ -43,8 +43,6 @@ import emailService from './services/emailService';
 import emailjs from '@emailjs/browser';
 import NotificationBell from './components/NotificationBell';
 import logger from './utils/logger';
-import EasterEgg from './components/EasterEgg';
-import useEasterEgg from './hooks/useEasterEgg';
 
 // Simple debounce function implementation
 const debounce = (func, wait) => {
@@ -379,10 +377,6 @@ function App() {
   const [newUsername, setNewUsername] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeBookingId, setActiveBookingId] = useState(null);
-  const [userPointsData, setUserPointsData] = useState(null);
-  
-  // Easter egg hook
-  const { showEasterEgg, closeEasterEgg, checkEasterEggEligibility } = useEasterEgg(currentUser, userPointsData);
 
   // Add this function to update ads with persistence
   const updateAds = (newAds) => {
@@ -1530,35 +1524,6 @@ function App() {
     };
   }, []);
 
-  useEffect(() => {
-    if (currentUser?.token) {
-      // Fetch user points data
-      fetchUserPoints();
-    }
-  }, [currentUser]);
-
-  const fetchUserPoints = async () => {
-    if (!currentUser?.token) return;
-    
-    try {
-      const response = await fetch(`${API_URL}/api/points/my-points`, {
-        headers: {
-          'Authorization': `Bearer ${currentUser.token}`
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setUserPointsData(data);
-        
-        // Check if eligible for Easter egg
-        checkEasterEggEligibility(data.points);
-      }
-    } catch (error) {
-      // Silently handle fetch errors
-    }
-  };
-
   // Modify the return statement to wrap everything in the Auth context provider
   return (
     <AuthContext.Provider value={{ currentUser, setCurrentUser }}>
@@ -2071,8 +2036,6 @@ function App() {
           <Route path="/terms" element={<Terms />} />
         </Routes>
       </Router>
-      {/* Show Easter egg if conditions are met */}
-      {showEasterEgg && <EasterEgg onClose={closeEasterEgg} />}
     </AuthContext.Provider>
   );
 }

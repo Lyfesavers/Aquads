@@ -5,8 +5,6 @@ import ServiceReviews from './ServiceReviews';
 import JobList from './JobList';
 import BookingConversation from './BookingConversation';
 import BumpStore from './BumpStore';
-import EasterEgg from './EasterEgg';
-import useEasterEgg from '../hooks/useEasterEgg';
 
 const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, onRejectBump, onApproveBump, initialBookingId }) => {
   const [bumpRequests, setBumpRequests] = useState([]);
@@ -41,9 +39,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [twitterRaidRejectionReason, setTwitterRaidRejectionReason] = useState('');
   const [showTwitterRaidRejectModal, setShowTwitterRaidRejectModal] = useState(false);
   const [selectedTwitterRaid, setSelectedTwitterRaid] = useState(null);
-
-  // Easter egg hook
-  const { showEasterEgg, closeEasterEgg, checkEasterEggEligibility } = useEasterEgg(currentUser, pointsInfo);
 
   // Fetch bump requests and banner ads when dashboard opens
   useEffect(() => {
@@ -203,20 +198,17 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       ]);
 
       if (affiliateResponse.ok) {
-        const affiliateData = await affiliateResponse.json();
-        setAffiliateInfo(affiliateData);
-        setIsLoadingAffiliates(false);
+        const data = await affiliateResponse.json();
+        setAffiliateInfo(data);
       }
 
       if (pointsResponse.ok) {
-        const pointsData = await pointsResponse.json();
-        setPointsInfo(pointsData);
-        
-        // Check if eligible for Easter egg
-        checkEasterEggEligibility(pointsData.points);
+        const data = await pointsResponse.json();
+        setPointsInfo(data);
       }
     } catch (error) {
-      console.error('Error fetching affiliate/points info:', error);
+      console.error('Error fetching affiliate info:', error);
+    } finally {
       setIsLoadingAffiliates(false);
     }
   };
@@ -893,9 +885,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   return (
     <div className="fixed inset-0 bg-gray-900 z-[999999] overflow-y-auto">
-      {/* Show Easter egg if conditions are met */}
-      {showEasterEgg && <EasterEgg onClose={closeEasterEgg} />}
-
       {/* Header */}
       <div className="sticky top-0 bg-gray-800/80 backdrop-blur-sm shadow-lg z-10 p-4">
         <div className="flex justify-between items-center max-w-7xl mx-auto">
