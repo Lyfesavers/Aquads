@@ -1933,10 +1933,8 @@ function App() {
                                   </span>
                                 </div>
                                 
-                                {/* Logo Container - Reduced height to make room for sentiment UI */}
-                                <div 
-                                  className="bubble-logo-container"
-                                >
+                                {/* Logo Container */}
+                                <div className="bubble-logo-container">
                                   <img
                                     src={ad.logo}
                                     alt={ad.title}
@@ -1944,10 +1942,8 @@ function App() {
                                     className="w-full h-full object-contain"
                                     style={{
                                       objectFit: 'contain',
-                                      width: '100%',
-                                      height: '75%',
-                                      maxHeight: '75%',
-                                      marginBottom: '5px'
+                                      maxWidth: '90%',
+                                      maxHeight: '90%'
                                     }}
                                     onLoad={(e) => {
                                       if (e.target.src.toLowerCase().endsWith('.gif')) {
@@ -1957,9 +1953,8 @@ function App() {
                                   />
                                 </div>
                                 
-                                {/* Market Sentiment Indicator */}
+                                {/* Market Sentiment Indicator - simplified for better appearance */}
                                 <div className="sentiment-indicator">
-                                  {/* Vote Buttons and Percentage */}
                                   <div className="sentiment-buttons">
                                     <button
                                       className="bearish-btn"
@@ -1969,12 +1964,12 @@ function App() {
                                       }}
                                       aria-label="Vote bearish"
                                     >
-                                      <span>🐻</span>
+                                      🐻
                                     </button>
                                     
                                     <div className="vote-count">
                                       {ad.bullishVotes + ad.bearishVotes > 0 ? 
-                                        `${Math.round((ad.bullishVotes / (ad.bullishVotes + ad.bearishVotes)) * 100)}% Bullish` : 'No votes'}
+                                        `${Math.round((ad.bullishVotes / (ad.bullishVotes + ad.bearishVotes)) * 100)}%` : 'No votes'}
                                     </div>
                                     
                                     <button
@@ -1985,11 +1980,9 @@ function App() {
                                       }}
                                       aria-label="Vote bullish"
                                     >
-                                      <span>🐂</span>
+                                      🐂
                                     </button>
                                   </div>
-                                  
-                                  {/* Sentiment Bar */}
                                   <div className="sentiment-bar-container">
                                     <div 
                                       className="sentiment-bar"
