@@ -1890,6 +1890,18 @@ function App() {
                               zIndex: ad.isBumped ? 2 : 1
                             }}
                           >
+                            {/* Bear button on left side */}
+                            <button
+                              className="bearish-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSentimentVote(ad.id, 'bearish');
+                              }}
+                              aria-label="Vote bearish"
+                            >
+                              🐻
+                            </button>
+                            
                             <motion.div
                               className={`absolute bubble ${ad.isBumped ? 'bumped-ad' : ''} ${ad.blockchain ? `bubble-${ad.blockchain.toLowerCase()}` : 'bubble-ethereum'}`}
                               style={{
@@ -1942,8 +1954,8 @@ function App() {
                                     className="w-full h-full object-contain"
                                     style={{
                                       objectFit: 'contain',
-                                      maxWidth: '90%',
-                                      maxHeight: '90%'
+                                      maxWidth: '95%',
+                                      maxHeight: '95%'
                                     }}
                                     onLoad={(e) => {
                                       if (e.target.src.toLowerCase().endsWith('.gif')) {
@@ -1953,48 +1965,36 @@ function App() {
                                   />
                                 </div>
                                 
-                                {/* Market Sentiment Indicator - simplified for better appearance */}
-                                <div className="sentiment-indicator">
-                                  <div className="sentiment-buttons">
-                                    <button
-                                      className="bearish-btn"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleSentimentVote(ad.id, 'bearish');
-                                      }}
-                                      aria-label="Vote bearish"
-                                    >
-                                      🐻
-                                    </button>
-                                    
-                                    <div className="vote-count">
-                                      {ad.bullishVotes + ad.bearishVotes > 0 ? 
-                                        `${Math.round((ad.bullishVotes / (ad.bullishVotes + ad.bearishVotes)) * 100)}%` : 'No votes'}
-                                    </div>
-                                    
-                                    <button
-                                      className="bullish-btn"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleSentimentVote(ad.id, 'bullish');
-                                      }}
-                                      aria-label="Vote bullish"
-                                    >
-                                      🐂
-                                    </button>
+                                {/* Simple percentage indicator */}
+                                {(ad.bullishVotes > 0 || ad.bearishVotes > 0) && (
+                                  <div 
+                                    className={`vote-percentage ${
+                                      ad.bullishVotes > ad.bearishVotes 
+                                        ? 'vote-bullish' 
+                                        : ad.bearishVotes > ad.bullishVotes 
+                                          ? 'vote-bearish' 
+                                          : 'vote-neutral'
+                                    }`}
+                                  >
+                                    {ad.bullishVotes + ad.bearishVotes > 0 
+                                      ? `${Math.round((ad.bullishVotes / (ad.bullishVotes + ad.bearishVotes)) * 100)}%` 
+                                      : 'No votes'}
                                   </div>
-                                  <div className="sentiment-bar-container">
-                                    <div 
-                                      className="sentiment-bar"
-                                      style={{
-                                        width: `${ad.bullishVotes + ad.bearishVotes > 0 ? 
-                                          Math.round((ad.bullishVotes / (ad.bullishVotes + ad.bearishVotes)) * 100) : 50}%`
-                                      }}
-                                    ></div>
-                                  </div>
-                                </div>
+                                )}
                               </div>
                             </motion.div>
+                            
+                            {/* Bull button on right side */}
+                            <button
+                              className="bullish-btn"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSentimentVote(ad.id, 'bullish');
+                              }}
+                              aria-label="Vote bullish"
+                            >
+                              🐂
+                            </button>
                           </div>
                         );
                       })
