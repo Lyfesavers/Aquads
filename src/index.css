@@ -1753,62 +1753,78 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 /* Side buttons for voting */
 .bearish-btn, .bullish-btn {
   position: absolute;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  background: rgba(0, 0, 0, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
-  z-index: 10;
-  font-size: 12px;
-  transition: all 0.2s ease;
+  background: rgba(20, 20, 30, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.7);
+  z-index: 20;
+  font-size: 14px;
+  transition: transform 0.2s ease;
+  pointer-events: auto;
 }
 
 .bearish-btn {
-  left: -5px;
+  left: -8px;
   top: 50%;
   transform: translateY(-50%);
-  color: rgb(255, 59, 48);
+  color: rgb(255, 100, 100);
 }
 
 .bullish-btn {
-  right: -5px;
+  right: -8px;
   top: 50%;
   transform: translateY(-50%);
-  color: rgb(52, 199, 89);
+  color: rgb(100, 255, 100);
 }
 
-.bearish-btn:hover, .bullish-btn:hover {
-  transform: translateY(-50%) scale(1.15);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+.bearish-btn:hover {
+  transform: translateY(-50%) scale(1.2);
+  background: rgba(30, 30, 40, 0.9);
+  box-shadow: 0 0 8px rgba(255, 59, 48, 0.5);
+}
+
+.bullish-btn:hover {
+  transform: translateY(-50%) scale(1.2);
+  background: rgba(30, 30, 40, 0.9);
+  box-shadow: 0 0 8px rgba(52, 199, 89, 0.5);
 }
 
 /* Media queries for responsive side buttons */
 @media (max-width: 768px) {
   .bearish-btn, .bullish-btn {
-    width: 20px;
-    height: 20px;
-    font-size: 11px;
+    width: 22px;
+    height: 22px;
+    font-size: 13px;
   }
   
-  .vote-percentage {
-    font-size: 10px;
+  .bearish-btn {
+    left: -6px;
+  }
+  
+  .bullish-btn {
+    right: -6px;
   }
 }
 
 @media (max-width: 480px) {
   .bearish-btn, .bullish-btn {
-    width: 18px;
-    height: 18px;
-    font-size: 10px;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
   }
   
-  .vote-percentage {
-    font-size: 9px;
+  .bearish-btn {
+    left: -5px;
+  }
+  
+  .bullish-btn {
+    right: -5px;
   }
 }
 

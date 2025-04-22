@@ -1890,18 +1890,6 @@ function App() {
                               zIndex: ad.isBumped ? 2 : 1
                             }}
                           >
-                            {/* Bear button on left side */}
-                            <button
-                              className="bearish-btn"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleSentimentVote(ad.id, 'bearish');
-                              }}
-                              aria-label="Vote bearish"
-                            >
-                              🐻
-                            </button>
-                            
                             <motion.div
                               className={`absolute bubble ${ad.isBumped ? 'bumped-ad' : ''} ${ad.blockchain ? `bubble-${ad.blockchain.toLowerCase()}` : 'bubble-ethereum'}`}
                               style={{
@@ -1920,6 +1908,32 @@ function App() {
                                 }
                               }}
                             >
+                              {/* Bear button on left side */}
+                              <button
+                                className="bearish-btn"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  handleSentimentVote(ad.id, 'bearish');
+                                }}
+                                aria-label="Vote bearish"
+                              >
+                                🐻
+                              </button>
+                              
+                              {/* Bull button on right side */}
+                              <button
+                                className="bullish-btn"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  handleSentimentVote(ad.id, 'bullish');
+                                }}
+                                aria-label="Vote bullish"
+                              >
+                                🐂
+                              </button>
+                              
                               <div className="bubble-content">
                                 {/* Background of bubble */}
                                 <div className="bubble-bg"></div>
@@ -1983,18 +1997,6 @@ function App() {
                                 )}
                               </div>
                             </motion.div>
-                            
-                            {/* Bull button on right side */}
-                            <button
-                              className="bullish-btn"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleSentimentVote(ad.id, 'bullish');
-                              }}
-                              aria-label="Vote bullish"
-                            >
-                              🐂
-                            </button>
                           </div>
                         );
                       })
