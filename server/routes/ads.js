@@ -427,4 +427,85 @@ router.put('/:id/position', async (req, res) => {
   }
 });
 
+// Vote on ad sentiment (bullish/bearish)
+router.post('/:id/vote', auth, async (req, res) => {
+  try {
+    const { voteType } = req.body;
+    const adId = req.params.id;
+    const userId = req.user.userId;
+
+    // Validate vote type
+    if (voteType !== 'bullish' && voteType !== 'bearish') {
+      return res.status(400).json({ error: 'Invalid vote type. Must be "bullish" or "bearish".' });
+    }
+
+    // Get the ad
+    const ad = await Ad.findOne({ id: adId });
+    if (!ad) {
+      return res.status(404).json({ error: 'Ad not found' });
+    }
+
+    // Check if user already voted
+    if (ad.voterIds.includes(userId)) {
+      return res.status(400).json({ error: 'You have already voted on this ad' });
+    }
+
+    // Update appropriate vote count and add user to voters
+    const updateField = voteType === 'bullish' ? 'bullishVotes' : 'bearishVotes';
+    const updateQuery = {
+      $inc: { [updateField]: 1 },
+      $push: { voterIds: userId }
+    };
+
+    const updatedAd = await Ad.findByIdAndUpdate(
+      ad._id,
+      updateQuery,
+      { new: true }
+    );
+
+    // Emit socket event for real-time updates
+    socket.getIO().emit('adVoteUpdated', {
+      adId: updatedAd.id,
+      bullishVotes: updatedAd.bullishVotes,
+      bearishVotes: updatedAd.bearishVotes
+    });
+
+    res.json({
+      success: true,
+      adId: updatedAd.id,
+      bullishVotes: updatedAd.bullishVotes,
+      bearishVotes: updatedAd.bearishVotes
+    });
+  } catch (error) {
+    console.error('Error voting on ad:', error);
+    res.status(500).json({ error: 'Failed to submit vote' });
+  }
+});
+
+// Get vote counts for an ad
+router.get('/:id/votes', async (req, res) => {
+  try {
+    const adId = req.params.id;
+    
+    // Get the ad
+    const ad = await Ad.findOne({ id: adId });
+    if (!ad) {
+      return res.status(404).json({ error: 'Ad not found' });
+    }
+
+    res.json({
+      adId: ad.id,
+      bullishVotes: ad.bullishVotes,
+      bearishVotes: ad.bearishVotes,
+      // Calculate sentiment percentage
+      sentiment: ad.bullishVotes + ad.bearishVotes > 0 
+        ? Math.round((ad.bullishVotes / (ad.bullishVotes + ad.bearishVotes)) * 100) 
+        : 50 // Default to neutral if no votes
+    });
+  } catch (error) {
+    console.error('Error getting ad votes:', error);
+    res.status(500).json({ error: 'Failed to get vote data' });
+  }
+});
+
 module.exports = router; 

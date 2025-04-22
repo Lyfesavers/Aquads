@@ -1007,6 +1007,45 @@ function App() {
     }
   };
 
+  // Add sentiment voting function
+  const handleSentimentVote = async (adId, voteType) => {
+    if (!requireAuth()) return;
+    
+    try {
+      const response = await fetch(`${API_URL}/ads/${adId}/vote`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({ voteType })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to register vote');
+      }
+
+      const data = await response.json();
+      
+      // Update the ads state with the new vote counts
+      setAds(prevAds => prevAds.map(ad => 
+        ad.id === adId 
+          ? { 
+              ...ad, 
+              bullishVotes: data.bullishVotes, 
+              bearishVotes: data.bearishVotes 
+            } 
+          : ad
+      ));
+      
+      showNotification(`Voted ${voteType} successfully!`, 'success');
+    } catch (error) {
+      logger.error('Error voting on ad:', error);
+      showNotification(error.message || 'Failed to vote', 'error');
+    }
+  };
+
   // Add a helper function to check authentication
   const requireAuth = (action) => {
     if (!currentUser) {
@@ -1032,14 +1071,60 @@ function App() {
       setCurrentUser(userData);
     });
 
+    // Add listener for vote updates
+    socket.on('adVoteUpdated', (voteData) => {
+      setAds(prevAds => prevAds.map(ad => 
+        ad.id === voteData.adId 
+          ? { 
+              ...ad, 
+              bullishVotes: voteData.bullishVotes, 
+              bearishVotes: voteData.bearishVotes 
+            } 
+          : ad
+      ));
+    });
+
     return () => {
       socket.off('reviewAdded');
       socket.off('userAuthenticated');
+      socket.off('adVoteUpdated'); // Remove listener on cleanup
     };
   }, []);
 
   // Add this effect to periodically refresh ads
   useEffect(() => {
+    const fetchAds = async () => {
+      try {
+        const response = await fetch(`${API_URL}/ads`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Ensure ads have bullishVotes and bearishVotes properties if not present
+        const processedAds = data.map(ad => ({
+          ...ad,
+          bullishVotes: ad.bullishVotes || 0,
+          bearishVotes: ad.bearishVotes || 0
+        }));
+        
+        // Cache the ads
+        localStorage.setItem('cachedAds', JSON.stringify(processedAds));
+        
+        // Update state
+        setAds(processedAds);
+      } catch (error) {
+        logger.error('Error fetching ads:', error);
+        // Use cached ads if available and the API call fails
+        const cachedAds = localStorage.getItem('cachedAds');
+        if (cachedAds) {
+          setAds(JSON.parse(cachedAds));
+        }
+      }
+    };
+
     fetchAds();
     const interval = setInterval(fetchAds, 30000); // Refresh every 30 seconds
     return () => clearInterval(interval);
@@ -1836,6 +1921,50 @@ function App() {
                                   </span>
                                 </div>
                                 
+                                {/* Market Sentiment Indicator */}
+                                <div className="sentiment-indicator">
+                                  {/* Sentiment Bar */}
+                                  <div className="sentiment-bar-container">
+                                    <div 
+                                      className="sentiment-bar"
+                                      style={{
+                                        width: `${ad.bullishVotes + ad.bearishVotes > 0 ? 
+                                          Math.round((ad.bullishVotes / (ad.bullishVotes + ad.bearishVotes)) * 100) : 50}%`
+                                      }}
+                                    ></div>
+                                  </div>
+                                  
+                                  {/* Vote Buttons */}
+                                  <div className="sentiment-buttons">
+                                    <button
+                                      className="bearish-btn"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleSentimentVote(ad.id, 'bearish');
+                                      }}
+                                      aria-label="Vote bearish"
+                                    >
+                                      <span className="text-xs">🐻</span>
+                                    </button>
+                                    
+                                    <div className="vote-count text-xs">
+                                      {ad.bullishVotes + ad.bearishVotes > 0 ? 
+                                        `${Math.round((ad.bullishVotes / (ad.bullishVotes + ad.bearishVotes)) * 100)}%` : '0%'}
+                                    </div>
+                                    
+                                    <button
+                                      className="bullish-btn"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleSentimentVote(ad.id, 'bullish');
+                                      }}
+                                      aria-label="Vote bullish"
+                                    >
+                                      <span className="text-xs">🐂</span>
+                                    </button>
+                                  </div>
+                                </div>
+                                
                                 {/* Larger Logo */}
                                 <div 
                                   className="bubble-logo-container"
@@ -1848,7 +1977,7 @@ function App() {
                                     style={{
                                       objectFit: 'contain',
                                       width: '100%',
-                                      height: '100%'
+                                      height: '80%' // Reduced height to make room for sentiment UI
                                     }}
                                     onLoad={(e) => {
                                       if (e.target.src.toLowerCase().endsWith('.gif')) {

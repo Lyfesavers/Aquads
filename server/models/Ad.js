@@ -87,6 +87,20 @@ const adSchema = new mongoose.Schema({
     type: String,
     default: 'ethereum',
     trim: true
+  },
+  // Adding sentiment voting fields
+  bullishVotes: {
+    type: Number,
+    default: 0
+  },
+  bearishVotes: {
+    type: Number,
+    default: 0
+  },
+  // Track users who voted to prevent duplicate votes
+  voterIds: {
+    type: [String],
+    default: []
   }
 });
 
