@@ -341,7 +341,19 @@ const NavigationListener = ({ onNavigate }) => {
 function App() {
   const [ads, setAds] = useState(() => {
     const cachedAds = localStorage.getItem('cachedAds');
-    return cachedAds ? JSON.parse(cachedAds) : [];
+    if (cachedAds) {
+      try {
+        // Ensure vote properties exist
+        return JSON.parse(cachedAds).map(ad => ({
+          ...ad,
+          bullishVotes: ad.bullishVotes || 0,
+          bearishVotes: ad.bearishVotes || 0
+        }));
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
   });
   const [currentUser, setCurrentUser] = useState(() => {
     const savedUser = localStorage.getItem('currentUser');
@@ -1921,51 +1933,7 @@ function App() {
                                   </span>
                                 </div>
                                 
-                                {/* Market Sentiment Indicator */}
-                                <div className="sentiment-indicator">
-                                  {/* Sentiment Bar */}
-                                  <div className="sentiment-bar-container">
-                                    <div 
-                                      className="sentiment-bar"
-                                      style={{
-                                        width: `${ad.bullishVotes + ad.bearishVotes > 0 ? 
-                                          Math.round((ad.bullishVotes / (ad.bullishVotes + ad.bearishVotes)) * 100) : 50}%`
-                                      }}
-                                    ></div>
-                                  </div>
-                                  
-                                  {/* Vote Buttons */}
-                                  <div className="sentiment-buttons">
-                                    <button
-                                      className="bearish-btn"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleSentimentVote(ad.id, 'bearish');
-                                      }}
-                                      aria-label="Vote bearish"
-                                    >
-                                      <span className="text-xs">🐻</span>
-                                    </button>
-                                    
-                                    <div className="vote-count text-xs">
-                                      {ad.bullishVotes + ad.bearishVotes > 0 ? 
-                                        `${Math.round((ad.bullishVotes / (ad.bullishVotes + ad.bearishVotes)) * 100)}%` : '0%'}
-                                    </div>
-                                    
-                                    <button
-                                      className="bullish-btn"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleSentimentVote(ad.id, 'bullish');
-                                      }}
-                                      aria-label="Vote bullish"
-                                    >
-                                      <span className="text-xs">🐂</span>
-                                    </button>
-                                  </div>
-                                </div>
-                                
-                                {/* Larger Logo */}
+                                {/* Logo Container - Reduced height to make room for sentiment UI */}
                                 <div 
                                   className="bubble-logo-container"
                                 >
@@ -1977,7 +1945,9 @@ function App() {
                                     style={{
                                       objectFit: 'contain',
                                       width: '100%',
-                                      height: '80%' // Reduced height to make room for sentiment UI
+                                      height: '75%',
+                                      maxHeight: '75%',
+                                      marginBottom: '5px'
                                     }}
                                     onLoad={(e) => {
                                       if (e.target.src.toLowerCase().endsWith('.gif')) {
@@ -1985,6 +1955,50 @@ function App() {
                                       }
                                     }}
                                   />
+                                </div>
+                                
+                                {/* Market Sentiment Indicator */}
+                                <div className="sentiment-indicator">
+                                  {/* Vote Buttons and Percentage */}
+                                  <div className="sentiment-buttons">
+                                    <button
+                                      className="bearish-btn"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleSentimentVote(ad.id, 'bearish');
+                                      }}
+                                      aria-label="Vote bearish"
+                                    >
+                                      <span>🐻</span>
+                                    </button>
+                                    
+                                    <div className="vote-count">
+                                      {ad.bullishVotes + ad.bearishVotes > 0 ? 
+                                        `${Math.round((ad.bullishVotes / (ad.bullishVotes + ad.bearishVotes)) * 100)}% Bullish` : 'No votes'}
+                                    </div>
+                                    
+                                    <button
+                                      className="bullish-btn"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleSentimentVote(ad.id, 'bullish');
+                                      }}
+                                      aria-label="Vote bullish"
+                                    >
+                                      <span>🐂</span>
+                                    </button>
+                                  </div>
+                                  
+                                  {/* Sentiment Bar */}
+                                  <div className="sentiment-bar-container">
+                                    <div 
+                                      className="sentiment-bar"
+                                      style={{
+                                        width: `${ad.bullishVotes + ad.bearishVotes > 0 ? 
+                                          Math.round((ad.bullishVotes / (ad.bullishVotes + ad.bearishVotes)) * 100) : 50}%`
+                                      }}
+                                    ></div>
+                                  </div>
                                 </div>
                               </div>
                             </motion.div>
