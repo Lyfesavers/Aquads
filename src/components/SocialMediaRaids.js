@@ -1069,24 +1069,13 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           {raids.map(raid => {
             const isSelected = safeSelectedRaid?._id === raid._id;
             const isPendingPaid = raid.isPaid && raid.paymentStatus === 'pending';
-            // Check if the current user has completed this raid with more robust ID comparison
-            const currentUserId = currentUser?.id || currentUser?._id;
-            const isCompletedByUser = currentUserId && raid.completions?.some(
-              completion => {
-                // Handle both object references and direct ID strings
-                const completionUserId = completion.userId || completion.user;
-                if (!completionUserId) return false;
-                
-                // Convert both to strings for comparison
-                const completionIdStr = typeof completionUserId === 'object' 
-                  ? (completionUserId._id || completionUserId.id || '').toString() 
-                  : completionUserId.toString();
-                  
-                const currentUserIdStr = currentUserId.toString();
-                
-                return completionIdStr === currentUserIdStr;
-              }
-            );
+            
+            // Check if user completed this raid (simple approach)
+            const userCompleted = currentUser && raid.completions?.some(completion => {
+              const userId = completion.userId || (completion.user && completion.user._id);
+              const currentId = currentUser.id || currentUser._id;
+              return userId && currentId && userId.toString() === currentId.toString();
+            });
             
             return (
             <div 
@@ -1106,13 +1095,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   showNotification('This raid is pending admin approval', 'warning') : 
                   handleRaidClick(raid)}
               >
-                {/* Completed badge - positioned on top of card */}
-                {isCompletedByUser && (
-                  <div className="absolute top-0 right-0 bg-green-500 text-white px-2 py-1 rounded-bl rounded-tr text-xs font-medium z-30">
-                    Completed ✓
-                  </div>
-                )}
-
                 {/* If raid is pending, add an overlay warning message */}
                 {isPendingPaid && (
                   <div className="absolute inset-0 bg-gray-900/30 flex items-center justify-center rounded-lg z-10">
@@ -1152,15 +1134,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   <div>
                     <div className="flex items-center mb-1">
                       <h3 className="text-white font-bold mr-2">{raid.title}</h3>
-                      {/* Add checkmark for completed raids with more visibility */}
-                      {isCompletedByUser && (
-                        <div className="bg-green-500/30 text-green-400 px-2 py-0.5 rounded-full text-xs flex items-center mr-2" title="You've completed this raid">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
-                          <span>Completed</span>
-                        </div>
-                      )}
                       {raid.isPaid && (
                         <span className={`text-xs px-2 py-0.5 rounded-full ${
                           raid.paymentStatus === 'approved' 
@@ -1195,8 +1168,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                       </div>
                     )}
                   </div>
-                  <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
-                    {/* Twitter bird logo */}
+                  <div className={`w-10 h-10 rounded-full ${userCompleted ? 'bg-green-500/20 text-green-400' : 'bg-blue-500/20 text-blue-400'} flex items-center justify-center`}>
+                    {/* Twitter bird logo - green for completed raids */}
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085a4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
                     </svg>
