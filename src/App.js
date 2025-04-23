@@ -1977,7 +1977,7 @@ function App() {
                                   />
                                 </div>
                                 
-                                {/* Simple percentage indicator */}
+                                {/* Simple percentage indicator - changed to BUY/SELL */}
                                 {(ad.bullishVotes > 0 || ad.bearishVotes > 0) && (
                                   <div 
                                     className={`vote-percentage ${
@@ -1989,7 +1989,11 @@ function App() {
                                     }`}
                                   >
                                     {ad.bullishVotes + ad.bearishVotes > 0 
-                                      ? `${Math.round((ad.bullishVotes / (ad.bullishVotes + ad.bearishVotes)) * 100)}%` 
+                                      ? ad.bullishVotes > ad.bearishVotes 
+                                        ? 'BUY' 
+                                        : ad.bearishVotes > ad.bullishVotes 
+                                          ? 'SELL' 
+                                          : '50/50'
                                       : 'No votes'}
                                   </div>
                                 )}
