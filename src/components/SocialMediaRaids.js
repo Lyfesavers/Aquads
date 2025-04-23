@@ -1069,6 +1069,10 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           {raids.map(raid => {
             const isSelected = safeSelectedRaid?._id === raid._id;
             const isPendingPaid = raid.isPaid && raid.paymentStatus === 'pending';
+            // Check if the current user has completed this raid
+            const isCompletedByUser = raid.completions?.some(
+              completion => completion.userId && completion.userId.toString() === (currentUser?.id || currentUser?._id)
+            );
             
             return (
             <div 
