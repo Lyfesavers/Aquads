@@ -1073,11 +1073,18 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
             const currentUserId = currentUser?.id || currentUser?._id;
             const isCompletedByUser = currentUserId && raid.completions?.some(
               completion => {
+                // Handle both object references and direct ID strings
                 const completionUserId = completion.userId || completion.user;
-                return completionUserId && (
-                  completionUserId.toString() === currentUserId.toString() ||
-                  (typeof completionUserId === 'object' && completionUserId._id && completionUserId._id.toString() === currentUserId.toString())
-                );
+                if (!completionUserId) return false;
+                
+                // Convert both to strings for comparison
+                const completionIdStr = typeof completionUserId === 'object' 
+                  ? (completionUserId._id || completionUserId.id || '').toString() 
+                  : completionUserId.toString();
+                  
+                const currentUserIdStr = currentUserId.toString();
+                
+                return completionIdStr === currentUserIdStr;
               }
             );
             
@@ -1099,6 +1106,13 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   showNotification('This raid is pending admin approval', 'warning') : 
                   handleRaidClick(raid)}
               >
+                {/* Completed badge - positioned on top of card */}
+                {isCompletedByUser && (
+                  <div className="absolute top-0 right-0 bg-green-500 text-white px-2 py-1 rounded-bl rounded-tr text-xs font-medium z-30">
+                    Completed ✓
+                  </div>
+                )}
+
                 {/* If raid is pending, add an overlay warning message */}
                 {isPendingPaid && (
                   <div className="absolute inset-0 bg-gray-900/30 flex items-center justify-center rounded-lg z-10">
