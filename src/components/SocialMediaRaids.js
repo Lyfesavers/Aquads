@@ -1127,6 +1127,14 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   <div>
                     <div className="flex items-center mb-1">
                       <h3 className="text-white font-bold mr-2">{raid.title}</h3>
+                      {/* Add checkmark next to title for completed raids */}
+                      {isCompletedByUser && (
+                        <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center mr-2" title="You've completed this raid">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      )}
                       {raid.isPaid && (
                         <span className={`text-xs px-2 py-0.5 rounded-full ${
                           raid.paymentStatus === 'approved' 
