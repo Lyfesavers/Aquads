@@ -1988,3 +1988,18 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
     height: 24px;
   }
 }
+
+/* Highlight for user's current vote */
+.active-vote {
+  transform: scale(1.15);
+  border: 2px solid white;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.bearish-vote.active-vote {
+  background: rgba(255, 59, 48, 0.5);
+}
+
+.bullish-vote.active-vote {
+  background: rgba(52, 199, 89, 0.5);
+}

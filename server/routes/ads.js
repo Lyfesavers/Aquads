@@ -446,15 +446,70 @@ router.post('/:id/vote', auth, async (req, res) => {
     }
 
     // Check if user already voted
-    if (ad.voterIds.includes(userId)) {
-      return res.status(400).json({ error: 'You have already voted on this ad' });
+    const existingVote = ad.voterData.find(voter => voter.userId === userId);
+    
+    if (existingVote) {
+      // If voting the same way, do nothing
+      if (existingVote.voteType === voteType) {
+        return res.json({
+          success: true,
+          adId: ad.id,
+          bullishVotes: ad.bullishVotes,
+          bearishVotes: ad.bearishVotes,
+          userVote: voteType
+        });
+      }
+      
+      // User is changing their vote - remove old vote and add new one
+      let updates = {};
+      
+      // Decrement old vote type
+      if (existingVote.voteType === 'bullish') {
+        updates.bullishVotes = ad.bullishVotes - 1;
+      } else {
+        updates.bearishVotes = ad.bearishVotes - 1;
+      }
+      
+      // Increment new vote type
+      if (voteType === 'bullish') {
+        updates.bullishVotes = (updates.bullishVotes !== undefined ? updates.bullishVotes : ad.bullishVotes) + 1;
+      } else {
+        updates.bearishVotes = (updates.bearishVotes !== undefined ? updates.bearishVotes : ad.bearishVotes) + 1;
+      }
+      
+      // Update the voter's vote type in voterData
+      updates.$set = { 'voterData.$[elem].voteType': voteType };
+      
+      const updatedAd = await Ad.findByIdAndUpdate(
+        ad._id,
+        updates,
+        { 
+          arrayFilters: [{ 'elem.userId': userId }],
+          new: true 
+        }
+      );
+      
+      // Emit socket event for real-time updates
+      socket.getIO().emit('adVoteUpdated', {
+        adId: updatedAd.id,
+        bullishVotes: updatedAd.bullishVotes,
+        bearishVotes: updatedAd.bearishVotes
+      });
+      
+      return res.json({
+        success: true,
+        adId: updatedAd.id,
+        bullishVotes: updatedAd.bullishVotes,
+        bearishVotes: updatedAd.bearishVotes,
+        userVote: voteType
+      });
     }
-
-    // Update appropriate vote count and add user to voters
+    
+    // First-time vote - update appropriate vote count and add user to voters
     const updateField = voteType === 'bullish' ? 'bullishVotes' : 'bearishVotes';
     const updateQuery = {
       $inc: { [updateField]: 1 },
-      $push: { voterIds: userId }
+      $push: { voterData: { userId, voteType } }
     };
 
     const updatedAd = await Ad.findByIdAndUpdate(
@@ -474,7 +529,8 @@ router.post('/:id/vote', auth, async (req, res) => {
       success: true,
       adId: updatedAd.id,
       bullishVotes: updatedAd.bullishVotes,
-      bearishVotes: updatedAd.bearishVotes
+      bearishVotes: updatedAd.bearishVotes,
+      userVote: voteType
     });
   } catch (error) {
     console.error('Error voting on ad:', error);
@@ -486,11 +542,21 @@ router.post('/:id/vote', auth, async (req, res) => {
 router.get('/:id/votes', async (req, res) => {
   try {
     const adId = req.params.id;
+    const userId = req.user?.userId;
     
     // Get the ad
     const ad = await Ad.findOne({ id: adId });
     if (!ad) {
       return res.status(404).json({ error: 'Ad not found' });
+    }
+
+    // Check if the user has voted
+    let userVote = null;
+    if (userId) {
+      const existingVote = ad.voterData.find(voter => voter.userId === userId);
+      if (existingVote) {
+        userVote = existingVote.voteType;
+      }
     }
 
     res.json({
@@ -500,7 +566,8 @@ router.get('/:id/votes', async (req, res) => {
       // Calculate sentiment percentage
       sentiment: ad.bullishVotes + ad.bearishVotes > 0 
         ? Math.round((ad.bullishVotes / (ad.bullishVotes + ad.bearishVotes)) * 100) 
-        : 50 // Default to neutral if no votes
+        : 50, // Default to neutral if no votes
+      userVote
     });
   } catch (error) {
     console.error('Error getting ad votes:', error);

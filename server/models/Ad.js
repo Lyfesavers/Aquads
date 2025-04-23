@@ -88,7 +88,7 @@ const adSchema = new mongoose.Schema({
     default: 'ethereum',
     trim: true
   },
-  // Adding sentiment voting fields
+  // Updated voting structure to track what each user voted
   bullishVotes: {
     type: Number,
     default: 0
@@ -97,9 +97,15 @@ const adSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  // Track users who voted to prevent duplicate votes
-  voterIds: {
-    type: [String],
+  // Replace simple voterIds with more detailed structure
+  voterData: {
+    type: [{
+      userId: String,
+      voteType: {
+        type: String,
+        enum: ['bullish', 'bearish']
+      }
+    }],
     default: []
   }
 });

@@ -1040,13 +1040,14 @@ function App() {
 
       const data = await response.json();
       
-      // Update the ads state with the new vote counts
+      // Update the ads state with the new vote counts and user's vote
       setAds(prevAds => prevAds.map(ad => 
         ad.id === adId 
           ? { 
               ...ad, 
               bullishVotes: data.bullishVotes, 
-              bearishVotes: data.bearishVotes 
+              bearishVotes: data.bearishVotes,
+              userVote: data.userVote // Track what the user voted
             } 
           : ad
       ));
@@ -1911,7 +1912,7 @@ function App() {
                               {/* Voting popup that appears on hover */}
                               <div className="vote-popup">
                                 <button 
-                                  className="vote-button bearish-vote" 
+                                  className={`vote-button bearish-vote ${ad.userVote === 'bearish' ? 'active-vote' : ''}`}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleSentimentVote(ad.id, 'bearish');
@@ -1921,7 +1922,7 @@ function App() {
                                   🐻
                                 </button>
                                 <button 
-                                  className="vote-button bullish-vote" 
+                                  className={`vote-button bullish-vote ${ad.userVote === 'bullish' ? 'active-vote' : ''}`}
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleSentimentVote(ad.id, 'bullish');
