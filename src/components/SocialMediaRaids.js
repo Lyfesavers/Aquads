@@ -1069,9 +1069,16 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           {raids.map(raid => {
             const isSelected = safeSelectedRaid?._id === raid._id;
             const isPendingPaid = raid.isPaid && raid.paymentStatus === 'pending';
-            // Check if the current user has completed this raid
-            const isCompletedByUser = raid.completions?.some(
-              completion => completion.userId && completion.userId.toString() === (currentUser?.id || currentUser?._id)
+            // Check if the current user has completed this raid with more robust ID comparison
+            const currentUserId = currentUser?.id || currentUser?._id;
+            const isCompletedByUser = currentUserId && raid.completions?.some(
+              completion => {
+                const completionUserId = completion.userId || completion.user;
+                return completionUserId && (
+                  completionUserId.toString() === currentUserId.toString() ||
+                  (typeof completionUserId === 'object' && completionUserId._id && completionUserId._id.toString() === currentUserId.toString())
+                );
+              }
             );
             
             return (
@@ -1131,12 +1138,13 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   <div>
                     <div className="flex items-center mb-1">
                       <h3 className="text-white font-bold mr-2">{raid.title}</h3>
-                      {/* Add checkmark next to title for completed raids */}
+                      {/* Add checkmark for completed raids with more visibility */}
                       {isCompletedByUser && (
-                        <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center mr-2" title="You've completed this raid">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <div className="bg-green-500/30 text-green-400 px-2 py-0.5 rounded-full text-xs flex items-center mr-2" title="You've completed this raid">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
+                          <span>Completed</span>
                         </div>
                       )}
                       {raid.isPaid && (
