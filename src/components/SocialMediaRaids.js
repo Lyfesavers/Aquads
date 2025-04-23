@@ -1069,10 +1069,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           {raids.map(raid => {
             const isSelected = safeSelectedRaid?._id === raid._id;
             const isPendingPaid = raid.isPaid && raid.paymentStatus === 'pending';
-            // Check if the current user has completed this raid
-            const isCompletedByUser = raid.completions?.some(
-              completion => completion.userId && completion.userId.toString() === (currentUser?.id || currentUser?._id)
-            );
             
             return (
             <div 
@@ -1092,15 +1088,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   showNotification('This raid is pending admin approval', 'warning') : 
                   handleRaidClick(raid)}
               >
-                {/* Completed checkmark indicator */}
-                {isCompletedByUser && (
-                  <div className={`absolute ${currentUser?.isAdmin ? 'top-2 right-12' : 'top-2 right-2'} z-20 w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center`} title="You've completed this raid">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                )}
-
                 {/* If raid is pending, add an overlay warning message */}
                 {isPendingPaid && (
                   <div className="absolute inset-0 bg-gray-900/30 flex items-center justify-center rounded-lg z-10">
