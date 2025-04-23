@@ -1908,31 +1908,29 @@ function App() {
                                 }
                               }}
                             >
-                              {/* Bear button on left side */}
-                              <button
-                                className="bearish-btn"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  e.preventDefault();
-                                  handleSentimentVote(ad.id, 'bearish');
-                                }}
-                                aria-label="Vote bearish"
-                              >
-                                🐻
-                              </button>
-                              
-                              {/* Bull button on right side */}
-                              <button
-                                className="bullish-btn"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  e.preventDefault();
-                                  handleSentimentVote(ad.id, 'bullish');
-                                }}
-                                aria-label="Vote bullish"
-                              >
-                                🐂
-                              </button>
+                              {/* Voting popup that appears on hover */}
+                              <div className="vote-popup">
+                                <button 
+                                  className="vote-button bearish-vote" 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSentimentVote(ad.id, 'bearish');
+                                  }}
+                                  aria-label="Vote bearish"
+                                >
+                                  🐻
+                                </button>
+                                <button 
+                                  className="vote-button bullish-vote" 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSentimentVote(ad.id, 'bullish');
+                                  }}
+                                  aria-label="Vote bullish"
+                                >
+                                  🐂
+                                </button>
+                              </div>
                               
                               <div className="bubble-content">
                                 {/* Background of bubble */}

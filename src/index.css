@@ -1895,3 +1895,96 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
     height: 70%;
   }
 }
+
+/* Remove old button styles */
+.bearish-btn, .bullish-btn {
+  display: none;
+}
+
+/* Voting popup that appears on hover */
+.vote-popup {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(10, 10, 15, 0.9);
+  border-radius: 20px;
+  padding: 5px 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.bubble:hover .vote-popup {
+  transform: translateX(-50%) scale(1);
+  opacity: 1;
+  pointer-events: all;
+}
+
+.vote-button {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  transition: transform 0.1s ease, background-color 0.1s ease;
+}
+
+.vote-button:hover {
+  transform: scale(1.2);
+}
+
+.vote-button:active {
+  transform: scale(0.9);
+}
+
+.bearish-vote {
+  background: rgba(255, 59, 48, 0.2);
+}
+
+.bearish-vote:hover {
+  background: rgba(255, 59, 48, 0.3);
+}
+
+.bullish-vote {
+  background: rgba(52, 199, 89, 0.2);
+}
+
+.bullish-vote:hover {
+  background: rgba(52, 199, 89, 0.3);
+}
+
+@media (max-width: 768px) {
+  .vote-popup {
+    top: -35px;
+  }
+  
+  .vote-button {
+    font-size: 14px;
+    width: 26px;
+    height: 26px;
+  }
+}
+
+@media (max-width: 480px) {
+  .vote-popup {
+    top: -30px;
+  }
+  
+  .vote-button {
+    font-size: 12px;
+    width: 24px;
+    height: 24px;
+  }
+}
