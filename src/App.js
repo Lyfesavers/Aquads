@@ -1968,8 +1968,7 @@ function App() {
                                     style={{
                                       objectFit: 'contain',
                                       maxWidth: '95%',
-                                      maxHeight: '95%',
-                                      borderRadius: '50%'
+                                      maxHeight: '95%'
                                     }}
                                     onLoad={(e) => {
                                       if (e.target.src.toLowerCase().endsWith('.gif')) {
