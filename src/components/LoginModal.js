@@ -34,13 +34,12 @@ const LoginModal = ({ onClose, onLogin, onCreateAccount }) => {
         <div className="bg-gray-800 p-4 sm:p-8 rounded-lg w-full max-w-md relative mx-2 sm:mx-auto">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-white w-8 h-8 flex items-center justify-center cursor-pointer"
+            className="absolute top-4 right-4 text-white w-8 h-8 flex items-center justify-center cursor-pointer"
             style={{ 
-              touchAction: 'manipulation',
+              touchAction: 'none',
               fontSize: '1.25rem',
               userSelect: 'none',
-              WebkitTapHighlightColor: 'transparent',
-              transition: 'color 0.15s'
+              pointerEvents: 'auto'
             }}
             aria-label="Close"
           >
