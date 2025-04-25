@@ -1649,14 +1649,27 @@ function App() {
     const bubbles = document.querySelectorAll('.bubble-container');
     if (bubbles.length === 0) return;
     
-    // Calculate optimal grid layout
+    // Calculate optimal grid layout based on screen width
     const screenWidth = window.innerWidth;
     const bubbleSize = parseInt(bubbles[0].style.width) || 50;
-    const columns = 3; // Use 3 columns for better sizing on mobile
     
-    // Calculate positioning values
-    const horizontalGap = (screenWidth - (columns * bubbleSize)) / (columns + 1);
-    const verticalGap = 20; // Space between rows
+    // Determine optimal number of columns based on screen width
+    // Use more columns for better space utilization
+    let columns;
+    if (screenWidth <= 320) {
+      columns = 2; // For very small screens (iPhone SE etc)
+    } else if (screenWidth <= 375) {
+      columns = 3; // For medium mobile (iPhone X, etc)
+    } else {
+      columns = 3; // For larger mobile screens
+    }
+    
+    // Make bubbles smaller on very small screens if needed
+    const effectiveBubbleSize = screenWidth <= 320 ? Math.min(bubbleSize, 80) : bubbleSize;
+    
+    // Calculate optimal positioning values with minimal gaps
+    const horizontalGap = Math.max(5, (screenWidth - (columns * effectiveBubbleSize)) / (columns + 1));
+    const verticalGap = 10; // Reduced vertical gap
     
     // Store original positions to restore if needed
     if (!window.originalBubblePositions) {
@@ -1669,14 +1682,28 @@ function App() {
       });
     }
     
-    // Create a grid layout ONLY on mobile
-    bubbles.forEach((bubble, index) => {
+    // Sort bubbles by bullish votes just like desktop view
+    const sortedBubbles = Array.from(bubbles).sort((a, b) => {
+      // Get the corresponding ad for each bubble using the bubble ID
+      const adA = ads.find(ad => ad.id === a.id);
+      const adB = ads.find(ad => ad.id === b.id);
+      
+      // If we can't find the ad, put it at the end
+      if (!adA) return 1;
+      if (!adB) return -1;
+      
+      // Sort by bullish votes (highest first)
+      return (adB.bullishVotes || 0) - (adA.bullishVotes || 0);
+    });
+    
+    // Create a grid layout optimized for mobile
+    sortedBubbles.forEach((bubble, index) => {
       const row = Math.floor(index / columns);
       const col = index % columns;
       
-      // Calculate new position
-      const x = horizontalGap + (col * (bubbleSize + horizontalGap));
-      const y = TOP_PADDING + verticalGap + (row * (bubbleSize + verticalGap));
+      // Calculate new position with tighter spacing
+      const x = horizontalGap + (col * (effectiveBubbleSize + horizontalGap));
+      const y = TOP_PADDING + verticalGap + (row * (effectiveBubbleSize + verticalGap));
       
       // Apply the new position directly with CSS transform
       bubble.style.transform = `translate(${x}px, ${y}px)`;
