@@ -1761,7 +1761,6 @@ function App() {
     if (window.isUpdatingModelFromDom) return;
     window.isUpdatingModelFromDom = true;
     
-    console.log("Updating ads model from DOM positions");
     
     // Get all bubble containers
     const bubbles = document.querySelectorAll('.bubble-container');
@@ -1909,7 +1908,6 @@ function App() {
   setTimeout(() => {
     // Make sure this only runs on desktop
     if (window.innerWidth > 480 && !window.initialGridLayoutApplied) {
-      console.log("Immediately arranging desktop bubbles in grid layout by bullish votes");
       
       // Set flag to prevent this from running multiple times
       window.initialGridLayoutApplied = true;
@@ -1984,7 +1982,6 @@ function App() {
       return;
     }
     
-    console.log("Arranging desktop bubbles in grid layout by bullish votes");
     
     // Get all bubbles as an array
     const bubblesArray = Array.from(bubbles);
