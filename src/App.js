@@ -1668,7 +1668,7 @@ function App() {
     const effectiveBubbleSize = screenWidth <= 320 ? Math.min(bubbleSize, 90) : bubbleSize;
     
     // Calculate optimal positioning values with minimal gaps
-    const horizontalGap = Math.max(5, (screenWidth - (columns * effectiveBubbleSize)) / (columns + 1));
+    const horizontalGap = Math.max(3, (screenWidth - (columns * effectiveBubbleSize)) / (columns + 1));
     const verticalGap = 0; // Minimal vertical gap - bubbles will be close together
     
     // Store original positions to restore if needed
