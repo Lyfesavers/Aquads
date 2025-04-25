@@ -1651,7 +1651,7 @@ function App() {
     
     // Calculate optimal grid layout based on screen width
     const screenWidth = window.innerWidth;
-    const bubbleSize = parseInt(bubbles[0].style.width) || 50;
+    const bubbleSize = parseInt(bubbles[0].style.width) || 60;
     
     // Determine optimal number of columns based on screen width
     // Use more columns for better space utilization
