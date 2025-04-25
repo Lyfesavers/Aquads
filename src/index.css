@@ -1731,7 +1731,7 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   font-weight: bold;
   font-size: 11px;
   text-shadow: 0 0 4px rgba(0, 0, 0, 0.9);
-  z-index: 3;
+  z-index: 20;
   padding: 1px 4px;
   border-radius: 3px;
   background-color: rgba(0, 0, 0, 0.2);
@@ -1756,9 +1756,12 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
     font-size: 14px;
     padding: 2px 8px;
     font-weight: 800;
-    background-color: rgba(0, 0, 0, 0.4);
+    background-color: rgba(0, 0, 0, 0.6);
     border-radius: 4px;
     bottom: 8px;
+    text-shadow: 0 0 4px rgba(0, 0, 0, 1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
   }
 }
 
