@@ -592,6 +592,9 @@ function App() {
   // Effect for updating window size
   useEffect(() => {
     const handleResize = () => {
+      // Store current width to detect mobile/desktop transitions
+      const wasMobile = window.innerWidth <= 480;
+      
       setWindowSize({
         width: window.innerWidth,
         height: window.innerHeight
@@ -634,8 +637,14 @@ function App() {
         return updatedAds;
       });
       
+      // If transitioning from mobile to desktop, restore original positions
+      const isNowDesktop = window.innerWidth > 480;
+      if (wasMobile && isNowDesktop) {
+        // Small delay to let React update the DOM
+        setTimeout(restoreOriginalPositions, 100);
+      }
       // Apply mobile-specific adjustments after short delay to let DOM update
-      if (window.innerWidth <= 480) {
+      else if (window.innerWidth <= 480) {
         setTimeout(adjustBubblesForMobile, 100);
       }
     };
@@ -1630,7 +1639,7 @@ function App() {
 
   // For mobile view only, adjust bubbles in viewport to prevent overlaps
   function adjustBubblesForMobile() {
-    // Only run on mobile devices
+    // CRITICAL: Only run on mobile devices, exit immediately on desktop
     if (window.innerWidth > 480) return;
     
     // Find all bubble containers
@@ -1646,7 +1655,18 @@ function App() {
     const horizontalGap = (screenWidth - (columns * bubbleSize)) / (columns + 1);
     const verticalGap = 20; // Space between rows
     
-    // Create a grid layout
+    // Store original positions to restore if needed
+    if (!window.originalBubblePositions) {
+      window.originalBubblePositions = Array.from(bubbles).map(bubble => {
+        const transform = bubble.style.transform;
+        return {
+          id: bubble.id,
+          transform: transform
+        };
+      });
+    }
+    
+    // Create a grid layout ONLY on mobile
     bubbles.forEach((bubble, index) => {
       const row = Math.floor(index / columns);
       const col = index % columns;
@@ -1687,6 +1707,70 @@ function App() {
       return () => clearInterval(checkInterval);
     }
   }, []);
+
+  // Restore original bubble positions when going back to desktop
+  function restoreOriginalPositions() {
+    // Only do this if we have stored positions and we're on desktop now
+    if (!window.originalBubblePositions || window.innerWidth <= 480) return;
+    
+    // Find all bubble containers
+    const bubbles = document.querySelectorAll('.bubble-container');
+    if (bubbles.length === 0) return;
+    
+    // First try to reset using the model data (most accurate)
+    resetBubblePositionsFromModel();
+    
+    // If model reset doesn't work, fall back to stored positions
+    if (window.originalBubblePositions) {
+      bubbles.forEach(bubble => {
+        const originalData = window.originalBubblePositions.find(item => item.id === bubble.id);
+        if (originalData && originalData.transform) {
+          bubble.style.transform = originalData.transform;
+        }
+      });
+    }
+  }
+
+  // Reset all bubble positions to match their state in the ads array
+  function resetBubblePositionsFromModel() {
+    const bubbles = document.querySelectorAll('.bubble-container');
+    if (bubbles.length === 0) return;
+    
+    // For each bubble in the DOM, find its corresponding ad in the state
+    // and apply the position from the state
+    bubbles.forEach(bubble => {
+      const adId = bubble.id;
+      const ad = ads.find(a => a.id === adId);
+      
+      if (ad) {
+        // Apply the position from the state model
+        bubble.style.transform = `translate(${ad.x}px, ${ad.y}px)`;
+      }
+    });
+    
+    // Clear the stored positions to ensure fresh calculations next time
+    window.originalBubblePositions = null;
+  }
+
+  // Add an immediate fix to restore desktop layout 
+  useEffect(() => {
+    // Only run on desktop to fix current layout issues
+    if (window.innerWidth > 480) {
+      // Wait for DOM to be ready
+      setTimeout(() => {
+        resetBubblePositionsFromModel();
+      }, 500);
+    }
+  }, []);
+  
+  // Add effect to apply mobile layout whenever ads update
+  useEffect(() => {
+    // Only run this effect on mobile
+    if (window.innerWidth <= 480 && ads.length > 0) {
+      // Short delay to ensure the DOM has updated with bubble elements
+      setTimeout(adjustBubblesForMobile, 300);
+    }
+  }, [ads]);
 
   // Modify the return statement to wrap everything in the Auth context provider
   return (
