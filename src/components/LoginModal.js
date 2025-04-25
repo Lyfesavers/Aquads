@@ -32,19 +32,26 @@ const LoginModal = ({ onClose, onLogin, onCreateAccount }) => {
     <>
       <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[999999]">
         <div className="bg-gray-800 p-4 sm:p-8 rounded-lg w-full max-w-md relative mx-2 sm:mx-auto">
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 text-white w-8 h-8 flex items-center justify-center cursor-pointer"
-            style={{ 
-              touchAction: 'none',
-              fontSize: '1.25rem',
-              userSelect: 'none',
-              pointerEvents: 'auto'
+          <div 
+            onClick={onClose} 
+            className="text-white text-center select-none cursor-pointer" 
+            style={{
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
+              width: '24px',
+              height: '24px',
+              lineHeight: '24px',
+              fontSize: '18px',
+              fontWeight: 'bold',
+              zIndex: 10
             }}
+            role="button"
+            tabIndex={0}
             aria-label="Close"
           >
             ✕
-          </button>
+          </div>
           <h2 className="text-2xl font-bold mb-6 text-white">Login</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
