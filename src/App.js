@@ -1908,7 +1908,6 @@ function App() {
   setTimeout(() => {
     // Make sure this only runs on desktop
     if (window.innerWidth > 480 && !window.initialGridLayoutApplied) {
-      
       // Set flag to prevent this from running multiple times
       window.initialGridLayoutApplied = true;
       
@@ -1935,13 +1934,17 @@ function App() {
         // Get first bubble size to use as reference
         const bubbleSize = parseInt(sortedBubbles[0].style.width) || 100;
         
-        // Calculate columns based on screen width
+        // Calculate columns based on screen width - enhanced for larger monitors
         const screenWidth = window.innerWidth;
-        const columns = screenWidth >= 1400 ? 7 : screenWidth >= 1000 ? 6 : 5;
+        const columns = screenWidth >= 2400 ? 10 : 
+                       screenWidth >= 1800 ? 9 : 
+                       screenWidth >= 1440 ? 8 : 
+                       screenWidth >= 1200 ? 7 : 
+                       screenWidth >= 1000 ? 6 : 5;
         
-        // Calculate margins and spacing
-        const horizontalMargin = 60;
-        const verticalMargin = 50;
+        // Calculate margins and spacing - reduced for larger screens
+        const horizontalMargin = screenWidth >= 1440 ? 40 : 60; // Smaller margin for larger screens
+        const verticalMargin = 40; // Reduced vertical margin
         
         // Calculate available width and cell size
         const availableWidth = screenWidth - (horizontalMargin * 2);
@@ -1982,7 +1985,6 @@ function App() {
       return;
     }
     
-    
     // Get all bubbles as an array
     const bubblesArray = Array.from(bubbles);
     
@@ -2005,13 +2007,17 @@ function App() {
     const bubbleSize = parseInt(firstBubble.style.width) || 100;
     
     // Calculate optimal columns based on screen width
-    // For desktop, we'll use more columns than mobile
+    // Enhanced for larger monitors
     const screenWidth = window.innerWidth;
-    const columns = screenWidth >= 1400 ? 7 : screenWidth >= 1000 ? 6 : 5;
+    const columns = screenWidth >= 2400 ? 10 : 
+                   screenWidth >= 1800 ? 9 : 
+                   screenWidth >= 1440 ? 8 : 
+                   screenWidth >= 1200 ? 7 : 
+                   screenWidth >= 1000 ? 6 : 5;
     
-    // Calculate margins and spacing
-    const horizontalMargin = 60; // Larger margin for desktop
-    const verticalMargin = 50;
+    // Calculate margins and spacing - reduced for larger screens
+    const horizontalMargin = screenWidth >= 1440 ? 40 : 60; // Smaller margin for larger screens
+    const verticalMargin = 40; // Reduced vertical margin
     
     // Calculate available width and the cell size
     const availableWidth = screenWidth - (horizontalMargin * 2);
