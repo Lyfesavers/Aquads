@@ -1750,155 +1750,16 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   color: white;
 }
 
-/* Side buttons for voting */
-.bearish-btn, .bullish-btn {
-  position: absolute;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  background: rgba(20, 20, 30, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 0 6px rgba(0, 0, 0, 0.7);
-  z-index: 20;
-  font-size: 14px;
-  transition: background-color 0.2s ease, box-shadow 0.2s ease;
-  pointer-events: auto;
-}
-
-.bearish-btn {
-  left: -10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: rgb(255, 100, 100);
-}
-
-.bullish-btn {
-  right: -10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: rgb(100, 255, 100);
-}
-
-.bearish-btn:hover {
-  background: rgba(50, 0, 0, 0.9);
-  box-shadow: 0 0 8px rgba(255, 59, 48, 0.7);
-  color: rgb(255, 150, 150);
-}
-
-.bullish-btn:hover {
-  background: rgba(0, 50, 0, 0.9);
-  box-shadow: 0 0 8px rgba(52, 199, 89, 0.7);
-  color: rgb(150, 255, 150);
-}
-
-/* Media queries for responsive side buttons */
-@media (max-width: 768px) {
-  .bearish-btn, .bullish-btn {
-    width: 24px;
-    height: 24px;
-    font-size: 13px;
-  }
-  
-  .bearish-btn {
-    left: -8px;
-  }
-  
-  .bullish-btn {
-    right: -8px;
-  }
-}
-
+/* Increase size for mobile */
 @media (max-width: 480px) {
-  .bearish-btn, .bullish-btn {
-    width: 22px;
-    height: 22px;
-    font-size: 12px;
+  .vote-percentage {
+    font-size: 14px;
+    padding: 2px 8px;
+    font-weight: 800;
+    background-color: rgba(0, 0, 0, 0.4);
+    border-radius: 4px;
+    bottom: 8px;
   }
-  
-  .bearish-btn {
-    left: -6px;
-  }
-  
-  .bullish-btn {
-    right: -6px;
-  }
-}
-
-.bubble-content {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 10% 5% 15px 5%;
-}
-
-.bubble-text-curved {
-  position: absolute;
-  top: 8%;
-  left: 0;
-  width: 100%;
-  text-align: center;
-  z-index: 1;
-  display: flex;
-  justify-content: center;
-}
-
-.bubble-text-curved span {
-  max-width: 90%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-weight: bold;
-  text-shadow: 0 0 3px rgba(0, 0, 0, 0.9);
-  pointer-events: auto;
-}
-
-.bubble-logo-container {
-  position: relative;
-  width: 85%;
-  height: 75%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1;
-}
-
-@media (max-width: 768px) {
-  .bubble-text-curved {
-    top: 6%;
-  }
-  
-  .bubble-logo-container {
-    width: 90%;
-    height: 70%;
-  }
-}
-
-@media (max-width: 480px) {
-  .bubble-text-curved {
-    top: 5%;
-  }
-  
-  .bubble-text-curved span {
-    font-size: 0.8em !important;
-  }
-  
-  .bubble-logo-container {
-    width: 95%;
-    height: 70%;
-  }
-}
-
-/* Remove old button styles */
-.bearish-btn, .bullish-btn {
-  display: none;
 }
 
 /* Voting popup that appears on hover */
@@ -1979,13 +1840,22 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 
 @media (max-width: 480px) {
   .vote-popup {
-    top: -30px;
+    top: -32px;
+    padding: 6px 12px;
+    gap: 15px;
   }
   
   .vote-button {
-    font-size: 12px;
-    width: 24px;
-    height: 24px;
+    font-size: 18px;
+    width: 32px;
+    height: 32px;
+  }
+  
+  /* Make vote popup always visible on mobile */
+  .bubble .vote-popup {
+    transform: translateX(-50%) scale(1);
+    opacity: 1;
+    pointer-events: all;
   }
 }
 
