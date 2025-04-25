@@ -109,9 +109,6 @@ const ADMIN_USERNAME = "admin"; // You can change this to your preferred admin u
 
 // Helper functions for responsive positioning
 function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
-  // Check if on mobile
-  const isMobile = window.innerWidth <= 480;
-  
   // Center of the available space (excluding banner)
   const centerX = windowWidth / 2;
   const centerY = (windowHeight - TOP_PADDING) / 1 + TOP_PADDING;
@@ -122,49 +119,6 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
       x: centerX - size/2,
       y: centerY - size/2
     };
-  }
-  
-  // For mobile, use a structured grid layout with 2 bubbles per row
-  if (isMobile) {
-    const bubbleMargin = 10; // Space between bubbles
-    const columnWidth = (windowWidth - (3 * bubbleMargin)) / 2; // 2 columns
-    const rowHeight = size + bubbleMargin * 2;
-    
-    // Determine which position this bubble should be in
-    const index = existingAds.length;
-    const row = Math.floor(index / 2);
-    const column = index % 2;
-    
-    // Calculate position based on grid position
-    const x = bubbleMargin + (column * (columnWidth + bubbleMargin));
-    const y = TOP_PADDING + bubbleMargin + (row * rowHeight);
-    
-    // Check for overlaps with existing ads
-    const position = { x, y };
-    let hasOverlap = false;
-    
-    for (const ad of existingAds) {
-      const distance = calculateDistance(
-        position.x + size/2,
-        position.y + size/2,
-        ad.x + ad.size/2,
-        ad.y + ad.size/2
-      );
-      
-      const minDistance = (size + ad.size) / 2 + bubbleMargin;
-      
-      if (distance < minDistance) {
-        hasOverlap = true;
-        break;
-      }
-    }
-    
-    // If no overlap, use the grid position
-    if (!hasOverlap) {
-      return position;
-    }
-    
-    // If there's an overlap, fallback to default positioning
   }
   
   // Reduced spacing between bubbles for tighter packing
@@ -508,17 +462,11 @@ function App() {
           return adWithMetadata;
         });
         
-        // Apply mobile grid layout if on mobile
-        let finalAds = repositionedAds;
-        if (window.innerWidth <= 480) {
-          finalAds = repositionBubblesForMobile(repositionedAds, window.innerWidth, window.innerHeight);
-        }
-        
-        setAds(finalAds);
+        setAds(repositionedAds);
         setIsLoading(false);
         
         // Update any repositioned ads on the server (optional)
-        for (const ad of finalAds) {
+        for (const ad of repositionedAds) {
           if (ad.x !== 0 && ad.y !== 0) {
             try {
               // Use position-only update to avoid auth issues
@@ -682,12 +630,6 @@ function App() {
             };
           }
         });
-        
-        // Apply mobile grid layout if needed
-        if (window.innerWidth <= 480) {
-          return repositionBubblesForMobile(updatedAds, window.innerWidth, window.innerHeight);
-        }
-        
         return updatedAds;
       });
     };
@@ -1680,55 +1622,6 @@ function App() {
     };
   }, []);
 
-  // Utility function to reposition bubbles on mobile to a grid layout
-  function repositionBubblesForMobile(ads, windowWidth, windowHeight) {
-    if (window.innerWidth > 480) return ads; // Only apply on mobile
-    
-    // Create a copy of the ads to modify
-    const repositionedAds = [...ads];
-    if (repositionedAds.length === 0) return ads;
-    
-    // Use 5 columns across as requested
-    const columns = 5;
-    
-    // Calculate optimal bubble size to fit 5 across with padding
-    // Allow some padding on sides (about 10% of screen width total)
-    const screenPadding = windowWidth * 0.05; // 5% padding on each side
-    const availableWidth = windowWidth - (screenPadding * 2);
-    const cellWidth = availableWidth / columns;
-    
-    // Calculate bubble size with margin between bubbles
-    const bubbleMargin = Math.max(4, Math.floor(cellWidth * 0.1)); // Minimum 4px margin, or 10% of cell
-    const bubbleSize = cellWidth - (bubbleMargin * 2);
-    
-    // Calculate vertical spacing (use same margins for consistency)
-    const rowHeight = bubbleSize + (bubbleMargin * 2);
-    
-    // Sort alphabetically by title for consistent ordering
-    repositionedAds.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
-    
-    // Position each bubble in the grid
-    repositionedAds.forEach((ad, index) => {
-      const row = Math.floor(index / columns);
-      const column = index % columns;
-      
-      // Center each bubble in its cell
-      const cellLeft = screenPadding + (column * cellWidth);
-      const cellTop = TOP_PADDING + (row * rowHeight);
-      
-      // Position bubble in center of cell
-      const x = cellLeft + bubbleMargin;
-      const y = cellTop + bubbleMargin;
-      
-      // Update ad properties
-      ad.x = x;
-      ad.y = y;
-      ad.displaySize = bubbleSize; // Set consistent size for all bubbles
-    });
-    
-    return repositionedAds;
-  }
-
   // Modify the return statement to wrap everything in the Auth context provider
   return (
     <AuthContext.Provider value={{ currentUser, setCurrentUser }}>
@@ -1984,9 +1877,6 @@ function App() {
                           ad.id
                         );
 
-                        // Use displaySize if it's set (for mobile grid layout), otherwise use original size
-                        const displaySize = ad.displaySize || ad.size;
-
                         return (
                           <div 
                             key={ad.id}
@@ -1995,8 +1885,8 @@ function App() {
                             style={{
                               position: 'absolute',
                               transform: `translate(${x}px, ${y}px)`,
-                              width: `${displaySize}px`,
-                              height: `${displaySize}px`,
+                              width: `${ad.size}px`,
+                              height: `${ad.size}px`,
                               transition: 'transform 0.3s ease-out',
                               zIndex: ad.isBumped ? 2 : 1
                             }}
