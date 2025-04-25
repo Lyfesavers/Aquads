@@ -1686,39 +1686,44 @@ function App() {
     
     // Create a copy of the ads to modify
     const repositionedAds = [...ads];
-    const size = repositionedAds.length > 0 ? repositionedAds[0].size : 0;
-    if (size === 0) return ads;
+    if (repositionedAds.length === 0) return ads;
     
-    // Calculate optimal grid parameters
-    let columns = 2; // Default to 2 columns
+    // Use 5 columns across as requested
+    const columns = 5;
     
-    // For very small screens or many bubbles, adjust accordingly
-    if (windowWidth < 360 || repositionedAds.length > 14) {
-      columns = 1; // Single column for very small screens or many bubbles
-    }
+    // Calculate optimal bubble size to fit 5 across with padding
+    // Allow some padding on sides (about 10% of screen width total)
+    const screenPadding = windowWidth * 0.05; // 5% padding on each side
+    const availableWidth = windowWidth - (screenPadding * 2);
+    const cellWidth = availableWidth / columns;
     
-    const totalMargin = (columns + 1) * 20; // 20px margin on each side
-    const columnWidth = (windowWidth - totalMargin) / columns;
-    const bubbleMargin = 20; // Space between bubbles vertically
-    const rowHeight = size + bubbleMargin;
+    // Calculate bubble size with margin between bubbles
+    const bubbleMargin = Math.max(4, Math.floor(cellWidth * 0.1)); // Minimum 4px margin, or 10% of cell
+    const bubbleSize = cellWidth - (bubbleMargin * 2);
     
-    // Sort by id to maintain consistent ordering
-    repositionedAds.sort((a, b) => a.id.localeCompare(b.id));
+    // Calculate vertical spacing (use same margins for consistency)
+    const rowHeight = bubbleSize + (bubbleMargin * 2);
     
-    // Position each bubble in a grid
+    // Sort alphabetically by title for consistent ordering
+    repositionedAds.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+    
+    // Position each bubble in the grid
     repositionedAds.forEach((ad, index) => {
       const row = Math.floor(index / columns);
       const column = index % columns;
       
-      // Center the bubble in its grid cell
-      const cellCenterX = (column * columnWidth) + (columnWidth / 2);
-      const x = cellCenterX - (ad.size / 2);
+      // Center each bubble in its cell
+      const cellLeft = screenPadding + (column * cellWidth);
+      const cellTop = TOP_PADDING + (row * rowHeight);
       
-      // Position vertically with proper spacing
-      const y = TOP_PADDING + bubbleMargin + (row * rowHeight);
+      // Position bubble in center of cell
+      const x = cellLeft + bubbleMargin;
+      const y = cellTop + bubbleMargin;
       
+      // Update ad properties
       ad.x = x;
       ad.y = y;
+      ad.displaySize = bubbleSize; // Set consistent size for all bubbles
     });
     
     return repositionedAds;
@@ -1979,6 +1984,9 @@ function App() {
                           ad.id
                         );
 
+                        // Use displaySize if it's set (for mobile grid layout), otherwise use original size
+                        const displaySize = ad.displaySize || ad.size;
+
                         return (
                           <div 
                             key={ad.id}
@@ -1987,8 +1995,8 @@ function App() {
                             style={{
                               position: 'absolute',
                               transform: `translate(${x}px, ${y}px)`,
-                              width: `${ad.size}px`,
-                              height: `${ad.size}px`,
+                              width: `${displaySize}px`,
+                              height: `${displaySize}px`,
                               transition: 'transform 0.3s ease-out',
                               zIndex: ad.isBumped ? 2 : 1
                             }}
