@@ -641,7 +641,7 @@ function App() {
       const isNowDesktop = window.innerWidth > 480;
       if (wasMobile && isNowDesktop) {
         // Small delay to let React update the DOM
-        setTimeout(restoreOriginalPositions, 100);
+        setTimeout(arrangeDesktopBubbleSpiral, 100);
       }
       // Apply mobile-specific adjustments after short delay to let DOM update
       else if (window.innerWidth <= 480) {
@@ -1752,13 +1752,49 @@ function App() {
     window.originalBubblePositions = null;
   }
 
+  // Update the ads model based on DOM positions
+  function updateModelFromDomPositions() {
+    const bubbles = document.querySelectorAll('.bubble-container');
+    if (bubbles.length === 0) return;
+    
+    // For each bubble in the DOM, update its corresponding ad in the state
+    setAds(prevAds => {
+      const updatedAds = [...prevAds];
+      
+      bubbles.forEach(bubble => {
+        const adId = bubble.id;
+        const adIndex = updatedAds.findIndex(a => a.id === adId);
+        
+        if (adIndex !== -1) {
+          // Extract position from transform style
+          const transform = bubble.style.transform;
+          const match = transform.match(/translate\((.+?)px,\s*(.+?)px\)/);
+          
+          if (match && match.length === 3) {
+            const x = parseFloat(match[1]);
+            const y = parseFloat(match[2]);
+            
+            // Update the ad position in the model
+            updatedAds[adIndex] = {
+              ...updatedAds[adIndex],
+              x: x,
+              y: y
+            };
+          }
+        }
+      });
+      
+      return updatedAds;
+    });
+  }
+
   // Add an immediate fix to restore desktop layout 
   useEffect(() => {
     // Only run on desktop to fix current layout issues
     if (window.innerWidth > 480) {
       // Wait for DOM to be ready
       setTimeout(() => {
-        resetBubblePositionsFromModel();
+        arrangeDesktopBubbleSpiral();
       }, 500);
     }
   }, []);
@@ -1771,6 +1807,57 @@ function App() {
       setTimeout(adjustBubblesForMobile, 300);
     }
   }, [ads]);
+
+  // Arrange bubbles in a spiral pattern for desktop layout
+  function arrangeDesktopBubbleSpiral() {
+    // Only run on desktop
+    if (window.innerWidth <= 480) return;
+    
+    // Find all bubble containers
+    const bubbles = document.querySelectorAll('.bubble-container');
+    if (bubbles.length === 0) return;
+    
+    // Get screen dimensions
+    const centerX = window.innerWidth / 2;
+    const centerY = (window.innerHeight - TOP_PADDING) / 2 + TOP_PADDING;
+    
+    // Sort by ID to ensure consistent arrangement
+    const sortedBubbles = Array.from(bubbles).sort((a, b) => a.id.localeCompare(b.id));
+    
+    // Use golden ratio for nice spiral
+    const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+    
+    // First bubble goes in center
+    if (sortedBubbles.length > 0) {
+      const firstBubbleSize = parseInt(sortedBubbles[0].style.width) || 50;
+      sortedBubbles[0].style.transform = `translate(${centerX - firstBubbleSize/2}px, ${centerY - firstBubbleSize/2}px)`;
+    }
+    
+    // Arrange rest in spiral - use wider spread for desktop
+    for (let i = 1; i < sortedBubbles.length; i++) {
+      const bubble = sortedBubbles[i];
+      const size = parseInt(bubble.style.width) || 50;
+      
+      // Calculate spiral position - increased radius and spread
+      const angle = i * goldenAngle;
+      const radius = 100 + 55 * Math.sqrt(i); // Much wider spacing for desktop
+      
+      // Calculate position, ensuring bubbles don't go off screen
+      let x = centerX + radius * Math.cos(angle) - size/2;
+      let y = centerY + radius * Math.sin(angle) - size/2;
+      
+      // Boundary checks
+      const margin = 20;
+      x = Math.max(margin, Math.min(window.innerWidth - size - margin, x));
+      y = Math.max(TOP_PADDING + margin, Math.min(window.innerHeight - size - margin, y));
+      
+      // Apply position
+      bubble.style.transform = `translate(${x}px, ${y}px)`;
+    }
+    
+    // Update the model to match the DOM positions
+    updateModelFromDomPositions();
+  }
 
   // Modify the return statement to wrap everything in the Auth context provider
   return (
