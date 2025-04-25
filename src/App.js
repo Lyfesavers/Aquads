@@ -71,11 +71,11 @@ function getResponsiveSize(baseSize) {
   const viewportWidth = window.innerWidth;
   
   if (viewportWidth <= 480) {
-    // Mobile - make bubbles a bit larger than before (changed from 0.5 to 0.55)
-    return Math.floor(baseSize * 0.55);
+    // Mobile - make bubbles significantly smaller for less overlap (from 0.55 to 0.45)
+    return Math.floor(baseSize * 0.45);
   } else if (viewportWidth <= 768) {
-    // Tablet - medium bubbles (reduced from 0.8 to 0.7)
-    return Math.floor(baseSize * 0.7);
+    // Tablet - medium bubbles (reduced slightly from 0.7 to 0.65)
+    return Math.floor(baseSize * 0.65);
   }
   // Desktop - normal size
   return baseSize;
@@ -123,14 +123,17 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
   
   // Responsive spacing between bubbles based on screen size
   const viewportWidth = window.innerWidth;
+  // Apply responsive padding based on viewport size
+  const effectivePadding = viewportWidth <= 480 ? BUBBLE_PADDING * 2.5 : BUBBLE_PADDING;
+  
   let bubbleSpacing;
   
   if (viewportWidth <= 480) {
-    // Mobile - much larger spacing
-    bubbleSpacing = 1.2;
+    // Mobile - much larger spacing (increased from 1.2 to 2.0 for much more aggressive spacing)
+    bubbleSpacing = 2.0;
   } else if (viewportWidth <= 768) {
     // Tablet - increased spacing
-    bubbleSpacing = 0.85;
+    bubbleSpacing = 1.2;
   } else {
     // Desktop - original spacing
     bubbleSpacing = 0.50;
@@ -138,33 +141,32 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
   
   // Calculate spiral position with optimized parameters
   const goldenAngle = Math.PI * (3 - Math.sqrt(5));
-  const startRadius = size/2; // Increased from size/3
-  const scaleFactor = viewportWidth <= 480 ? 1.0 : 0.7; // Larger scaling factor for mobile
+  const startRadius = viewportWidth <= 480 ? size : size/2; // Much larger start radius on mobile
+  const scaleFactor = viewportWidth <= 480 ? 1.5 : 0.7; // Much larger scaling factor for mobile
   
   // Create a grid-based optimization for larger numbers of bubbles
   const useGridApproach = existingAds.length > 12;
   
   if (useGridApproach) {
     // Make cell size bigger on mobile for better spacing
-    const viewportWidth = window.innerWidth;
-    const cellSizeMultiplier = viewportWidth <= 480 ? 1.5 : viewportWidth <= 768 ? 1.2 : 1.0;
+    const cellSizeMultiplier = viewportWidth <= 480 ? 3.0 : viewportWidth <= 768 ? 1.5 : 1.0;
     const cellSize = size * bubbleSpacing * cellSizeMultiplier;
     
-    const gridColumns = Math.floor((windowWidth - 2 * BUBBLE_PADDING) / cellSize);
-    const gridRows = Math.floor((windowHeight - TOP_PADDING - BUBBLE_PADDING) / cellSize);
+    const gridColumns = Math.floor((windowWidth - 2 * effectivePadding) / cellSize);
+    const gridRows = Math.floor((windowHeight - TOP_PADDING - effectivePadding) / cellSize);
     
     const grid = Array(gridRows).fill().map(() => Array(gridColumns).fill(false));
     
     // Mark occupied grid cells and their neighbors
     existingAds.forEach(ad => {
-      const col = Math.floor((ad.x - BUBBLE_PADDING) / cellSize);
+      const col = Math.floor((ad.x - effectivePadding) / cellSize);
       const row = Math.floor((ad.y - TOP_PADDING) / cellSize);
       
       if (col >= 0 && col < gridColumns && row >= 0 && row < gridRows) {
         grid[row][col] = true;
         
         // Extend the marked area for mobile to create more spacing
-        const neighborRadius = viewportWidth <= 480 ? 1.5 : 1;
+        const neighborRadius = viewportWidth <= 480 ? 2.5 : viewportWidth <= 768 ? 1.8 : 1;
         
         for (let r = Math.max(0, row-neighborRadius); r <= Math.min(gridRows-1, row+neighborRadius); r++) {
           for (let c = Math.max(0, col-neighborRadius); c <= Math.min(gridColumns-1, col+neighborRadius); c++) {
@@ -179,7 +181,7 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
     for (let row = 0; row < gridRows; row++) {
       for (let col = 0; col < gridColumns; col++) {
         if (!grid[row][col]) {
-          const x = BUBBLE_PADDING + col * cellSize;
+          const x = effectivePadding + col * cellSize;
           const y = TOP_PADDING + row * cellSize;
           
           let hasOverlap = false;
@@ -214,8 +216,8 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
     const x = centerX + radius * Math.cos(angle) - size/2;
     const y = centerY + radius * Math.sin(angle) - size/2;
     
-    if (x < BUBBLE_PADDING || x + size > windowWidth - BUBBLE_PADDING || 
-        y < TOP_PADDING || y + size > windowHeight - BUBBLE_PADDING) {
+    if (x < effectivePadding || x + size > windowWidth - effectivePadding || 
+        y < TOP_PADDING || y + size > windowHeight - effectivePadding) {
       continue;
     }
     
@@ -242,16 +244,20 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
   }
   
   return {
-    x: Math.max(BUBBLE_PADDING, Math.min(windowWidth - size - BUBBLE_PADDING, Math.random() * windowWidth)),
-    y: Math.max(TOP_PADDING, Math.min(windowHeight - size - BUBBLE_PADDING, Math.random() * (windowHeight - TOP_PADDING)))
+    x: Math.max(effectivePadding, Math.min(windowWidth - size - effectivePadding, Math.random() * windowWidth)),
+    y: Math.max(TOP_PADDING, Math.min(windowHeight - size - effectivePadding, Math.random() * (windowHeight - TOP_PADDING)))
   };
 }
 
 function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, currentAdId) {
-  const minX = BUBBLE_PADDING;
-  const maxX = windowWidth - size - BUBBLE_PADDING;
+  // Apply responsive padding based on viewport width
+  const viewportWidth = window.innerWidth;
+  const effectivePadding = viewportWidth <= 480 ? BUBBLE_PADDING * 2.5 : BUBBLE_PADDING;
+  
+  const minX = effectivePadding;
+  const maxX = windowWidth - size - effectivePadding;
   const minY = TOP_PADDING;
-  const maxY = windowHeight - size - BUBBLE_PADDING;
+  const maxY = windowHeight - size - effectivePadding;
 
   let newX = Math.min(Math.max(x, minX), maxX);
   let newY = Math.min(Math.max(y, minY), maxY);
@@ -263,22 +269,22 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
   }
   
   // Responsive bubble spacing based on viewport width
-  const viewportWidth = window.innerWidth;
   let bubbleSpacing;
   
   if (viewportWidth <= 480) {
-    // Mobile - increased spacing to prevent overlaps
-    bubbleSpacing = 1.3;
+    // Mobile - dramatically increased spacing to prevent overlaps (from 1.3 to 2.5)
+    bubbleSpacing = 2.5;
   } else if (viewportWidth <= 768) {
-    // Tablet - slightly increased spacing
-    bubbleSpacing = 1.1;
+    // Tablet - substantially increased spacing
+    bubbleSpacing = 1.5;
   } else {
     // Desktop - original spacing
     bubbleSpacing = 1.02;
   }
   
+  // Increase max iterations for mobile
   let iterations = 0;
-  const maxIterations = 25;
+  const maxIterations = viewportWidth <= 480 ? 40 : 25;
   
   while(iterations < maxIterations) {
     let hasOverlap = false;
@@ -307,7 +313,10 @@ function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, cu
         const pushX = dx === 0 ? 0 : dx / magnitude;
         const pushY = dy === 0 ? 0 : dy / magnitude;
         
-        const pushAmount = minDistance - distance;
+        // Increase push amount for mobile
+        const pushAmount = viewportWidth <= 480 ? 
+          (minDistance - distance) * 1.5 : 
+          minDistance - distance;
         
         const multiplier = 1 / Math.sqrt(overlappingAds);
         totalPushX -= pushX * pushAmount * multiplier;
