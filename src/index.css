@@ -1788,30 +1788,6 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   pointer-events: all;
 }
 
-/* On mobile, only show vote popup on tap */
-@media (max-width: 480px) {
-  .vote-popup {
-    transition: transform 0.2s ease, opacity 0.2s ease;
-    transform: translateX(-50%) scale(0);
-    opacity: 0;
-    pointer-events: none;
-  }
-  
-  /* Override the hover behavior on mobile - don't show by default */
-  .bubble:hover .vote-popup {
-    transform: translateX(-50%) scale(0);
-    opacity: 0;
-    pointer-events: none;
-  }
-  
-  /* Show only when the bubble is clicked/tapped - this class will be toggled by JS */
-  .bubble.vote-active .vote-popup {
-    transform: translateX(-50%) scale(1);
-    opacity: 1;
-    pointer-events: all;
-  }
-}
-
 .vote-button {
   background: none;
   border: none;

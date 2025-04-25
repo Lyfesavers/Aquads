@@ -1651,18 +1651,10 @@ function App() {
     
     // Calculate optimal grid layout based on screen width
     const screenWidth = window.innerWidth;
-    const originalBubbleSize = parseInt(bubbles[0].style.width) || 50;
-    
-    // Make bubbles 5% bigger on mobile
-    const effectiveBubbleSize = originalBubbleSize * 1.05;
-    
-    // Apply the new size to all bubbles
-    bubbles.forEach(bubble => {
-      bubble.style.width = `${effectiveBubbleSize}px`;
-      bubble.style.height = `${effectiveBubbleSize}px`;
-    });
+    const bubbleSize = parseInt(bubbles[0].style.width) || 50;
     
     // Determine optimal number of columns based on screen width
+    // Use more columns for better space utilization
     let columns;
     if (screenWidth <= 320) {
       columns = 2; // For very small screens (iPhone SE etc)
@@ -1671,6 +1663,9 @@ function App() {
     } else {
       columns = 4; // For larger mobile screens (iPhone 12 Pro, etc)
     }
+    
+    // Make bubbles smaller on very small screens if needed
+    const effectiveBubbleSize = screenWidth <= 320 ? Math.min(bubbleSize, 80) : bubbleSize;
     
     // Calculate optimal positioning values with minimal gaps
     const horizontalGap = Math.max(5, (screenWidth - (columns * effectiveBubbleSize)) / (columns + 1));
@@ -2117,56 +2112,6 @@ function App() {
       window.isArrangingDesktopGrid = false;
     }
   }
-
-  // Add event handler for showing/hiding vote buttons on mobile
-  useEffect(() => {
-    // Only apply this on mobile devices
-    if (window.innerWidth > 480) return;
-    
-    const handleBubbleClick = (e) => {
-      const bubble = e.currentTarget;
-      
-      // Don't interfere with links or buttons
-      if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON') {
-        return;
-      }
-      
-      // Toggle the active class for this bubble
-      bubble.classList.toggle('vote-active');
-      
-      // Close any other open vote popups
-      document.querySelectorAll('.bubble.vote-active').forEach(activeBubble => {
-        if (activeBubble !== bubble) {
-          activeBubble.classList.remove('vote-active');
-        }
-      });
-    };
-    
-    // Add click event to all bubbles
-    const bubbles = document.querySelectorAll('.bubble');
-    bubbles.forEach(bubble => {
-      bubble.addEventListener('click', handleBubbleClick);
-    });
-    
-    // Close vote popup when clicking outside
-    const handleDocumentClick = (e) => {
-      if (!e.target.closest('.bubble')) {
-        document.querySelectorAll('.bubble.vote-active').forEach(bubble => {
-          bubble.classList.remove('vote-active');
-        });
-      }
-    };
-    
-    document.addEventListener('click', handleDocumentClick);
-    
-    // Cleanup
-    return () => {
-      bubbles.forEach(bubble => {
-        bubble.removeEventListener('click', handleBubbleClick);
-      });
-      document.removeEventListener('click', handleDocumentClick);
-    };
-  }, [ads.length]); // Re-run when ads change
 
   // Modify the return statement to wrap everything in the Auth context provider
   return (
