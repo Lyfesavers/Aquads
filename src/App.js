@@ -1669,7 +1669,7 @@ function App() {
     
     // Calculate optimal positioning values with minimal gaps
     const horizontalGap = Math.max(5, (screenWidth - (columns * effectiveBubbleSize)) / (columns + 1));
-    const verticalGap = 10; // Reduced vertical gap
+    const verticalGap = 0; // Minimal vertical gap - bubbles will be close together
     
     // Store original positions to restore if needed
     if (!window.originalBubblePositions) {
@@ -1703,7 +1703,8 @@ function App() {
       
       // Calculate new position with tighter spacing
       const x = horizontalGap + (col * (effectiveBubbleSize + horizontalGap));
-      const y = TOP_PADDING + verticalGap + (row * (effectiveBubbleSize + verticalGap));
+      // Use row * bubbleSize to make rows touch each other with minimal gap
+      const y = TOP_PADDING + (row * (effectiveBubbleSize + verticalGap));
       
       // Apply the new position directly with CSS transform
       bubble.style.transform = `translate(${x}px, ${y}px)`;

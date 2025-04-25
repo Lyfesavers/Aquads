@@ -1840,15 +1840,16 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 
 @media (max-width: 480px) {
   .vote-popup {
-    top: -32px;
-    padding: 6px 12px;
-    gap: 15px;
+    top: -38px;
+    padding: 8px 15px;
+    gap: 20px;
+    border-radius: 25px;
   }
   
   .vote-button {
-    font-size: 18px;
-    width: 32px;
-    height: 32px;
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
   }
   
   /* Make vote popup always visible on mobile */
@@ -1856,6 +1857,17 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
     transform: translateX(-50%) scale(1);
     opacity: 1;
     pointer-events: all;
+  }
+  
+  /* Increase hit area by adding invisible padding */
+  .vote-button::after {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    z-index: -1;
   }
 }
 
