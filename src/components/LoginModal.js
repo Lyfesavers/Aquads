@@ -34,7 +34,8 @@ const LoginModal = ({ onClose, onLogin, onCreateAccount }) => {
         <div className="bg-gray-800 p-4 sm:p-8 rounded-lg w-full max-w-md relative mx-2 sm:mx-auto">
           <button
             onClick={onClose}
-            className="absolute top-2 right-2 text-gray-400 hover:text-white p-3 z-10 transition-colors"
+            className="absolute top-2 right-2 text-gray-400 hover:text-white z-10 w-8 h-8 flex items-center justify-center user-select-none"
+            style={{transform: 'none'}}
             aria-label="Close"
           >
             ✕
