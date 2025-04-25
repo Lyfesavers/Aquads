@@ -641,11 +641,14 @@ function App() {
       const isNowDesktop = window.innerWidth > 480;
       if (wasMobile && isNowDesktop) {
         // Small delay to let React update the DOM
-        setTimeout(arrangeDesktopBubbleSpiral, 100);
+        setTimeout(arrangeDesktopGrid, 100);
       }
       // Apply mobile-specific adjustments after short delay to let DOM update
       else if (window.innerWidth <= 480) {
         setTimeout(adjustBubblesForMobile, 100);
+      } else {
+        // On any desktop resize, re-arrange the grid
+        setTimeout(arrangeDesktopGrid, 100);
       }
     };
 
@@ -1805,7 +1808,7 @@ function App() {
     if (window.innerWidth > 480) {
       // Wait for DOM to be ready
       setTimeout(() => {
-        arrangeDesktopBubbleSpiral();
+        arrangeDesktopGrid();
       }, 500);
     }
   }, []);
@@ -1816,6 +1819,9 @@ function App() {
     if (window.innerWidth <= 480 && ads.length > 0) {
       // Short delay to ensure the DOM has updated with bubble elements
       setTimeout(adjustBubblesForMobile, 300);
+    } else if (window.innerWidth > 480 && ads.length > 0) {
+      // Apply desktop grid layout when ads update on desktop
+      setTimeout(arrangeDesktopGrid, 300);
     }
   }, [ads]);
 
@@ -1875,40 +1881,37 @@ function App() {
   setTimeout(() => {
     // Make sure this only runs on desktop
     if (window.innerWidth > 480) {
-      console.log("Immediately arranging desktop bubbles in spiral");
+      console.log("Immediately arranging desktop bubbles in grid layout");
       
-      // Direct DOM manipulation to force proper spacing of bubbles
+      // Direct DOM manipulation to force proper grid layout
       const bubbles = document.querySelectorAll('.bubble-container');
       if (bubbles.length > 0) {
-        // Sort to ensure consistent ordering
+        // Sort for consistent ordering
         const sortedBubbles = Array.from(bubbles).sort((a, b) => a.id.localeCompare(b.id));
         
-        // Get center of screen
-        const centerX = window.innerWidth / 2;
-        const centerY = (window.innerHeight - TOP_PADDING) / 2 + TOP_PADDING;
-        const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+        // Get first bubble size to use as reference
+        const bubbleSize = parseInt(sortedBubbles[0].style.width) || 100;
         
-        // Use extreme spacing for desktop
-        sortedBubbles.forEach((bubble, i) => {
-          const size = parseInt(bubble.style.width) || 50;
+        // Calculate columns based on screen width
+        const screenWidth = window.innerWidth;
+        const columns = screenWidth >= 1400 ? 7 : screenWidth >= 1000 ? 6 : 5;
+        
+        // Calculate margins and spacing
+        const horizontalMargin = 60;
+        const verticalMargin = 50;
+        
+        // Calculate available width and cell size
+        const availableWidth = screenWidth - (horizontalMargin * 2);
+        const cellWidth = availableWidth / columns;
+        
+        // Arrange in grid
+        sortedBubbles.forEach((bubble, index) => {
+          const row = Math.floor(index / columns);
+          const column = index % columns;
           
-          // Position first bubble in center
-          if (i === 0) {
-            bubble.style.transform = `translate(${centerX - size/2}px, ${centerY - size/2}px)`;
-            return;
-          }
-          
-          // Position all other bubbles in expanding spiral
-          const angle = i * goldenAngle;
-          const radius = 250 + 100 * Math.sqrt(i);
-          
-          let x = centerX + radius * Math.cos(angle) - size/2;
-          let y = centerY + radius * Math.sin(angle) - size/2;
-          
-          // Apply boundary constraints
-          const margin = 40;
-          x = Math.max(margin, Math.min(window.innerWidth - size - margin, x));
-          y = Math.max(TOP_PADDING + margin, Math.min(window.innerHeight - size - margin, y));
+          // Center in grid cell
+          const x = horizontalMargin + (column * cellWidth) + (cellWidth / 2) - (bubbleSize / 2);
+          const y = TOP_PADDING + verticalMargin + (row * (bubbleSize + verticalMargin));
           
           // Set position
           bubble.style.transform = `translate(${x}px, ${y}px)`;
@@ -1916,6 +1919,54 @@ function App() {
       }
     }
   }, 100);
+
+  // Arrange bubbles in a clean grid for desktop
+  function arrangeDesktopGrid() {
+    // Only run on desktop
+    if (window.innerWidth <= 480) return;
+    
+    // Find all bubble containers
+    const bubbles = document.querySelectorAll('.bubble-container');
+    if (bubbles.length === 0) return;
+    
+    console.log("Arranging desktop bubbles in grid layout");
+    
+    // Sort alphabetically by ID for consistent arrangement
+    const sortedBubbles = Array.from(bubbles).sort((a, b) => a.id.localeCompare(b.id));
+    
+    // Get first bubble size to use as reference
+    const firstBubble = sortedBubbles[0];
+    const bubbleSize = parseInt(firstBubble.style.width) || 100;
+    
+    // Calculate optimal columns based on screen width
+    // For desktop, we'll use more columns than mobile
+    const screenWidth = window.innerWidth;
+    const columns = screenWidth >= 1400 ? 7 : screenWidth >= 1000 ? 6 : 5;
+    
+    // Calculate margins and spacing
+    const horizontalMargin = 60; // Larger margin for desktop
+    const verticalMargin = 50;
+    
+    // Calculate available width and the cell size
+    const availableWidth = screenWidth - (horizontalMargin * 2);
+    const cellWidth = availableWidth / columns;
+    
+    // Now place each bubble in its grid cell
+    sortedBubbles.forEach((bubble, index) => {
+      const row = Math.floor(index / columns);
+      const column = index % columns;
+      
+      // Center bubble in its grid cell
+      const x = horizontalMargin + (column * cellWidth) + (cellWidth / 2) - (bubbleSize / 2);
+      const y = TOP_PADDING + verticalMargin + (row * (bubbleSize + verticalMargin));
+      
+      // Set position
+      bubble.style.transform = `translate(${x}px, ${y}px)`;
+    });
+    
+    // Update model to match DOM positions
+    updateModelFromDomPositions();
+  }
 
   // Modify the return statement to wrap everything in the Auth context provider
   return (
