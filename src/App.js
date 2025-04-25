@@ -1909,7 +1909,7 @@ function App() {
   setTimeout(() => {
     // Make sure this only runs on desktop
     if (window.innerWidth > 480 && !window.initialGridLayoutApplied) {
-      console.log("Immediately arranging desktop bubbles in grid layout");
+      console.log("Immediately arranging desktop bubbles in grid layout by bullish votes");
       
       // Set flag to prevent this from running multiple times
       window.initialGridLayoutApplied = true;
@@ -1917,8 +1917,22 @@ function App() {
       // Direct DOM manipulation to force proper grid layout
       const bubbles = document.querySelectorAll('.bubble-container');
       if (bubbles.length > 0) {
-        // Sort for consistent ordering
-        const sortedBubbles = Array.from(bubbles).sort((a, b) => a.id.localeCompare(b.id));
+        // Sort by bullish votes instead of just by ID
+        const bubblesArray = Array.from(bubbles);
+        
+        // Sort bubbles by bullish votes (highest to lowest)
+        const sortedBubbles = bubblesArray.sort((a, b) => {
+          // Get the corresponding ad for each bubble using the bubble ID
+          const adA = ads.find(ad => ad.id === a.id);
+          const adB = ads.find(ad => ad.id === b.id);
+          
+          // If we can't find the ad, put it at the end
+          if (!adA) return 1;
+          if (!adB) return -1;
+          
+          // Sort by bullish votes (highest first)
+          return (adB.bullishVotes || 0) - (adA.bullishVotes || 0);
+        });
         
         // Get first bubble size to use as reference
         const bubbleSize = parseInt(sortedBubbles[0].style.width) || 100;
@@ -1970,10 +1984,24 @@ function App() {
       return;
     }
     
-    console.log("Arranging desktop bubbles in grid layout");
+    console.log("Arranging desktop bubbles in grid layout by bullish votes");
     
-    // Sort alphabetically by ID for consistent arrangement
-    const sortedBubbles = Array.from(bubbles).sort((a, b) => a.id.localeCompare(b.id));
+    // Get all bubbles as an array
+    const bubblesArray = Array.from(bubbles);
+    
+    // Sort bubbles by bullish votes (highest to lowest)
+    const sortedBubbles = bubblesArray.sort((a, b) => {
+      // Get the corresponding ad for each bubble using the bubble ID
+      const adA = ads.find(ad => ad.id === a.id);
+      const adB = ads.find(ad => ad.id === b.id);
+      
+      // If we can't find the ad, put it at the end
+      if (!adA) return 1;
+      if (!adB) return -1;
+      
+      // Sort by bullish votes (highest first)
+      return (adB.bullishVotes || 0) - (adA.bullishVotes || 0);
+    });
     
     // Get first bubble size to use as reference
     const firstBubble = sortedBubbles[0];
