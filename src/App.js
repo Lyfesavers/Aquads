@@ -630,8 +630,14 @@ function App() {
             };
           }
         });
+        
         return updatedAds;
       });
+      
+      // Apply mobile-specific adjustments after short delay to let DOM update
+      if (window.innerWidth <= 480) {
+        setTimeout(adjustBubblesForMobile, 100);
+      }
     };
 
     window.addEventListener('resize', handleResize);
@@ -1620,6 +1626,66 @@ function App() {
       window.removeEventListener('openDashboard', handleOpenDashboard);
       delete window.showDashboard;
     };
+  }, []);
+
+  // For mobile view only, adjust bubbles in viewport to prevent overlaps
+  function adjustBubblesForMobile() {
+    // Only run on mobile devices
+    if (window.innerWidth > 480) return;
+    
+    // Find all bubble containers
+    const bubbles = document.querySelectorAll('.bubble-container');
+    if (bubbles.length === 0) return;
+    
+    // Calculate optimal grid layout
+    const screenWidth = window.innerWidth;
+    const bubbleSize = parseInt(bubbles[0].style.width) || 50;
+    const columns = 3; // Use 3 columns for better sizing on mobile
+    
+    // Calculate positioning values
+    const horizontalGap = (screenWidth - (columns * bubbleSize)) / (columns + 1);
+    const verticalGap = 20; // Space between rows
+    
+    // Create a grid layout
+    bubbles.forEach((bubble, index) => {
+      const row = Math.floor(index / columns);
+      const col = index % columns;
+      
+      // Calculate new position
+      const x = horizontalGap + (col * (bubbleSize + horizontalGap));
+      const y = TOP_PADDING + verticalGap + (row * (bubbleSize + verticalGap));
+      
+      // Apply the new position directly with CSS transform
+      bubble.style.transform = `translate(${x}px, ${y}px)`;
+    });
+  }
+
+  // Add effect to apply mobile layout whenever ads update
+  useEffect(() => {
+    // Only run this effect on mobile
+    if (window.innerWidth <= 480 && ads.length > 0) {
+      // Short delay to ensure the DOM has updated with bubble elements
+      setTimeout(adjustBubblesForMobile, 300);
+    }
+  }, [ads]);
+  
+  // Add effect to apply mobile layout on initial load
+  useEffect(() => {
+    if (window.innerWidth <= 480) {
+      // Check for bubbles and apply layout periodically until they exist
+      const checkInterval = setInterval(() => {
+        const bubbles = document.querySelectorAll('.bubble-container');
+        if (bubbles.length > 0) {
+          adjustBubblesForMobile();
+          clearInterval(checkInterval);
+        }
+      }, 500);
+      
+      // Clear interval after 10 seconds at most to prevent infinite checking
+      setTimeout(() => clearInterval(checkInterval), 10000);
+      
+      return () => clearInterval(checkInterval);
+    }
   }, []);
 
   // Modify the return statement to wrap everything in the Auth context provider
