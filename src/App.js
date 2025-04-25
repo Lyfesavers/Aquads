@@ -1757,19 +1757,27 @@ function App() {
 
   // Update the ads model based on DOM positions
   function updateModelFromDomPositions() {
+    // Prevent recursive updates by checking if we're already updating
+    if (window.isUpdatingModelFromDom) return;
+    window.isUpdatingModelFromDom = true;
+    
+    console.log("Updating ads model from DOM positions");
+    
+    // Get all bubble containers
     const bubbles = document.querySelectorAll('.bubble-container');
-    if (bubbles.length === 0) return;
+    if (!bubbles.length) {
+      window.isUpdatingModelFromDom = false;
+      return;
+    }
     
-    console.log("Updating model from DOM positions, found", bubbles.length, "bubbles");
+    // Create batch of updates to apply at once
+    const updates = {};
     
-    // Create a positions map to update state
-    const positionsMap = {};
-    
-    // Process all bubbles to extract their current positions
+    // Extract position from each bubble DOM element
     bubbles.forEach(bubble => {
       const adId = bubble.id;
+      if (!adId) return;
       
-      // Extract position from transform style
       const transform = bubble.style.transform;
       const match = transform.match(/translate\((.+?)px,\s*(.+?)px\)/);
       
@@ -1777,49 +1785,69 @@ function App() {
         const x = parseFloat(match[1]);
         const y = parseFloat(match[2]);
         
-        // Store position keyed by ID
-        positionsMap[adId] = { x, y };
+        // Only update if the position has significantly changed
+        if (ads[adId] && 
+            (Math.abs(ads[adId].x - x) > 1 || Math.abs(ads[adId].y - y) > 1)) {
+          updates[adId] = {
+            ...ads[adId],
+            x,
+            y
+          };
+        }
       }
     });
     
-    // Update the ads state in one batch
-    setAds(prevAds => {
-      // Apply all position updates at once
-      const updatedAds = prevAds.map(ad => {
-        if (positionsMap[ad.id]) {
-          return {
-            ...ad,
-            x: positionsMap[ad.id].x,
-            y: positionsMap[ad.id].y
-          };
-        }
-        return ad;
+    // Only update state if we have actual changes
+    if (Object.keys(updates).length > 0) {
+      // Set a flag to prevent layout recalculation when this update happens
+      window.skipNextLayoutUpdate = true;
+      
+      // Batch all updates together
+      setAds(currentAds => {
+        const newAds = { ...currentAds };
+        Object.keys(updates).forEach(adId => {
+          newAds[adId] = updates[adId];
+        });
+        return newAds;
       });
       
-      // Force state update by returning a new array
-      console.log("Updated ads model with new positions");
-      return [...updatedAds];
-    });
+      // Add a small delay before allowing the next update
+      setTimeout(() => {
+        window.isUpdatingModelFromDom = false;
+      }, 300); // Increased delay to prevent rapid updates
+    } else {
+      window.isUpdatingModelFromDom = false;
+    }
   }
 
   // Add an immediate fix to restore desktop layout 
   useEffect(() => {
     // Only run on desktop to fix current layout issues
     if (window.innerWidth > 480) {
-      // Wait for DOM to be ready
-      setTimeout(() => {
-        arrangeDesktopGrid();
-      }, 500);
+      // Set a flag to track whether we've already done the initial layout
+      if (!window.initialLayoutApplied) {
+        window.initialLayoutApplied = true;
+        // Wait for DOM to be ready
+        setTimeout(() => {
+          arrangeDesktopGrid();
+        }, 500);
+      }
     }
   }, []);
   
   // Add effect to apply mobile layout whenever ads update
   useEffect(() => {
+    // Skip this effect if we just updated the model from DOM positions
+    if (window.skipNextLayoutUpdate) {
+      window.skipNextLayoutUpdate = false;
+      return;
+    }
+    
     // Only run this effect on mobile
-    if (window.innerWidth <= 480 && ads.length > 0) {
+    if (window.innerWidth <= 480 && Object.keys(ads).length > 0) {
       // Short delay to ensure the DOM has updated with bubble elements
       setTimeout(adjustBubblesForMobile, 300);
-    } else if (window.innerWidth > 480 && ads.length > 0) {
+    } else if (window.innerWidth > 480 && Object.keys(ads).length > 0) {
       // Apply desktop grid layout when ads update on desktop
       setTimeout(arrangeDesktopGrid, 300);
     }
@@ -1880,8 +1908,11 @@ function App() {
   // This ensures it runs before any React rendering completes
   setTimeout(() => {
     // Make sure this only runs on desktop
-    if (window.innerWidth > 480) {
+    if (window.innerWidth > 480 && !window.initialGridLayoutApplied) {
       console.log("Immediately arranging desktop bubbles in grid layout");
+      
+      // Set flag to prevent this from running multiple times
+      window.initialGridLayoutApplied = true;
       
       // Direct DOM manipulation to force proper grid layout
       const bubbles = document.querySelectorAll('.bubble-container');
@@ -1916,6 +1947,9 @@ function App() {
           // Set position
           bubble.style.transform = `translate(${x}px, ${y}px)`;
         });
+        
+        // Skip updating the model from this initial layout to prevent loops
+        window.skipNextModelUpdate = true;
       }
     }
   }, 100);
@@ -1925,9 +1959,16 @@ function App() {
     // Only run on desktop
     if (window.innerWidth <= 480) return;
     
+    // Prevent multiple executions in quick succession
+    if (window.isArrangingDesktopGrid) return;
+    window.isArrangingDesktopGrid = true;
+    
     // Find all bubble containers
     const bubbles = document.querySelectorAll('.bubble-container');
-    if (bubbles.length === 0) return;
+    if (bubbles.length === 0) {
+      window.isArrangingDesktopGrid = false;
+      return;
+    }
     
     console.log("Arranging desktop bubbles in grid layout");
     
@@ -1951,6 +1992,22 @@ function App() {
     const availableWidth = screenWidth - (horizontalMargin * 2);
     const cellWidth = availableWidth / columns;
     
+    // Store current positions to check if we need to update the model
+    const originalPositions = {};
+    // Record original positions before moving
+    sortedBubbles.forEach(bubble => {
+      const adId = bubble.id;
+      const transform = bubble.style.transform;
+      const match = transform.match(/translate\((.+?)px,\s*(.+?)px\)/);
+      
+      if (match && match.length === 3) {
+        originalPositions[adId] = {
+          x: parseFloat(match[1]),
+          y: parseFloat(match[2])
+        };
+      }
+    });
+    
     // Now place each bubble in its grid cell
     sortedBubbles.forEach((bubble, index) => {
       const row = Math.floor(index / columns);
@@ -1964,8 +2021,37 @@ function App() {
       bubble.style.transform = `translate(${x}px, ${y}px)`;
     });
     
-    // Update model to match DOM positions
-    updateModelFromDomPositions();
+    // Check if positions actually changed
+    let positionsChanged = false;
+    sortedBubbles.forEach(bubble => {
+      const adId = bubble.id;
+      const transform = bubble.style.transform;
+      const match = transform.match(/translate\((.+?)px,\s*(.+?)px\)/);
+      
+      if (match && match.length === 3) {
+        const x = parseFloat(match[1]);
+        const y = parseFloat(match[2]);
+        
+        if (!originalPositions[adId] || 
+            Math.abs(originalPositions[adId].x - x) > 5 || // Increased threshold to reduce updates
+            Math.abs(originalPositions[adId].y - y) > 5) {
+          positionsChanged = true;
+        }
+      }
+    });
+    
+    // Only update model if positions actually changed and we're not skipping
+    if (positionsChanged && !window.skipNextModelUpdate) {
+      // Use a timeout to allow DOM to settle and prevent rapid state updates
+      setTimeout(() => {
+        updateModelFromDomPositions();
+        window.isArrangingDesktopGrid = false;
+      }, 200); // Increased delay
+    } else {
+      // Clear the skip flag if it was set
+      window.skipNextModelUpdate = false;
+      window.isArrangingDesktopGrid = false;
+    }
   }
 
   // Modify the return statement to wrap everything in the Auth context provider
