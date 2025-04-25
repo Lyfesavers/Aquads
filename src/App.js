@@ -109,6 +109,9 @@ const ADMIN_USERNAME = "admin"; // You can change this to your preferred admin u
 
 // Helper functions for responsive positioning
 function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
+  // Check if on mobile
+  const isMobile = window.innerWidth <= 480;
+  
   // Center of the available space (excluding banner)
   const centerX = windowWidth / 2;
   const centerY = (windowHeight - TOP_PADDING) / 1 + TOP_PADDING;
@@ -119,6 +122,49 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
       x: centerX - size/2,
       y: centerY - size/2
     };
+  }
+  
+  // For mobile, use a structured grid layout with 2 bubbles per row
+  if (isMobile) {
+    const bubbleMargin = 10; // Space between bubbles
+    const columnWidth = (windowWidth - (3 * bubbleMargin)) / 2; // 2 columns
+    const rowHeight = size + bubbleMargin * 2;
+    
+    // Determine which position this bubble should be in
+    const index = existingAds.length;
+    const row = Math.floor(index / 2);
+    const column = index % 2;
+    
+    // Calculate position based on grid position
+    const x = bubbleMargin + (column * (columnWidth + bubbleMargin));
+    const y = TOP_PADDING + bubbleMargin + (row * rowHeight);
+    
+    // Check for overlaps with existing ads
+    const position = { x, y };
+    let hasOverlap = false;
+    
+    for (const ad of existingAds) {
+      const distance = calculateDistance(
+        position.x + size/2,
+        position.y + size/2,
+        ad.x + ad.size/2,
+        ad.y + ad.size/2
+      );
+      
+      const minDistance = (size + ad.size) / 2 + bubbleMargin;
+      
+      if (distance < minDistance) {
+        hasOverlap = true;
+        break;
+      }
+    }
+    
+    // If no overlap, use the grid position
+    if (!hasOverlap) {
+      return position;
+    }
+    
+    // If there's an overlap, fallback to default positioning
   }
   
   // Reduced spacing between bubbles for tighter packing
@@ -462,11 +508,17 @@ function App() {
           return adWithMetadata;
         });
         
-        setAds(repositionedAds);
+        // Apply mobile grid layout if on mobile
+        let finalAds = repositionedAds;
+        if (window.innerWidth <= 480) {
+          finalAds = repositionBubblesForMobile(repositionedAds, window.innerWidth, window.innerHeight);
+        }
+        
+        setAds(finalAds);
         setIsLoading(false);
         
         // Update any repositioned ads on the server (optional)
-        for (const ad of repositionedAds) {
+        for (const ad of finalAds) {
           if (ad.x !== 0 && ad.y !== 0) {
             try {
               // Use position-only update to avoid auth issues
@@ -630,6 +682,12 @@ function App() {
             };
           }
         });
+        
+        // Apply mobile grid layout if needed
+        if (window.innerWidth <= 480) {
+          return repositionBubblesForMobile(updatedAds, window.innerWidth, window.innerHeight);
+        }
+        
         return updatedAds;
       });
     };
@@ -1621,6 +1679,50 @@ function App() {
       delete window.showDashboard;
     };
   }, []);
+
+  // Utility function to reposition bubbles on mobile to a grid layout
+  function repositionBubblesForMobile(ads, windowWidth, windowHeight) {
+    if (window.innerWidth > 480) return ads; // Only apply on mobile
+    
+    // Create a copy of the ads to modify
+    const repositionedAds = [...ads];
+    const size = repositionedAds.length > 0 ? repositionedAds[0].size : 0;
+    if (size === 0) return ads;
+    
+    // Calculate optimal grid parameters
+    let columns = 2; // Default to 2 columns
+    
+    // For very small screens or many bubbles, adjust accordingly
+    if (windowWidth < 360 || repositionedAds.length > 14) {
+      columns = 1; // Single column for very small screens or many bubbles
+    }
+    
+    const totalMargin = (columns + 1) * 20; // 20px margin on each side
+    const columnWidth = (windowWidth - totalMargin) / columns;
+    const bubbleMargin = 20; // Space between bubbles vertically
+    const rowHeight = size + bubbleMargin;
+    
+    // Sort by id to maintain consistent ordering
+    repositionedAds.sort((a, b) => a.id.localeCompare(b.id));
+    
+    // Position each bubble in a grid
+    repositionedAds.forEach((ad, index) => {
+      const row = Math.floor(index / columns);
+      const column = index % columns;
+      
+      // Center the bubble in its grid cell
+      const cellCenterX = (column * columnWidth) + (columnWidth / 2);
+      const x = cellCenterX - (ad.size / 2);
+      
+      // Position vertically with proper spacing
+      const y = TOP_PADDING + bubbleMargin + (row * rowHeight);
+      
+      ad.x = x;
+      ad.y = y;
+    });
+    
+    return repositionedAds;
+  }
 
   // Modify the return statement to wrap everything in the Auth context provider
   return (
