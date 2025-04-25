@@ -1757,34 +1757,45 @@ function App() {
     const bubbles = document.querySelectorAll('.bubble-container');
     if (bubbles.length === 0) return;
     
-    // For each bubble in the DOM, update its corresponding ad in the state
-    setAds(prevAds => {
-      const updatedAds = [...prevAds];
+    console.log("Updating model from DOM positions, found", bubbles.length, "bubbles");
+    
+    // Create a positions map to update state
+    const positionsMap = {};
+    
+    // Process all bubbles to extract their current positions
+    bubbles.forEach(bubble => {
+      const adId = bubble.id;
       
-      bubbles.forEach(bubble => {
-        const adId = bubble.id;
-        const adIndex = updatedAds.findIndex(a => a.id === adId);
+      // Extract position from transform style
+      const transform = bubble.style.transform;
+      const match = transform.match(/translate\((.+?)px,\s*(.+?)px\)/);
+      
+      if (match && match.length === 3) {
+        const x = parseFloat(match[1]);
+        const y = parseFloat(match[2]);
         
-        if (adIndex !== -1) {
-          // Extract position from transform style
-          const transform = bubble.style.transform;
-          const match = transform.match(/translate\((.+?)px,\s*(.+?)px\)/);
-          
-          if (match && match.length === 3) {
-            const x = parseFloat(match[1]);
-            const y = parseFloat(match[2]);
-            
-            // Update the ad position in the model
-            updatedAds[adIndex] = {
-              ...updatedAds[adIndex],
-              x: x,
-              y: y
-            };
-          }
+        // Store position keyed by ID
+        positionsMap[adId] = { x, y };
+      }
+    });
+    
+    // Update the ads state in one batch
+    setAds(prevAds => {
+      // Apply all position updates at once
+      const updatedAds = prevAds.map(ad => {
+        if (positionsMap[ad.id]) {
+          return {
+            ...ad,
+            x: positionsMap[ad.id].x,
+            y: positionsMap[ad.id].y
+          };
         }
+        return ad;
       });
       
-      return updatedAds;
+      // Force state update by returning a new array
+      console.log("Updated ads model with new positions");
+      return [...updatedAds];
     });
   }
 
@@ -1833,21 +1844,21 @@ function App() {
       sortedBubbles[0].style.transform = `translate(${centerX - firstBubbleSize/2}px, ${centerY - firstBubbleSize/2}px)`;
     }
     
-    // Arrange rest in spiral - use wider spread for desktop
+    // Arrange rest in spiral - use MUCH wider spread for desktop
     for (let i = 1; i < sortedBubbles.length; i++) {
       const bubble = sortedBubbles[i];
       const size = parseInt(bubble.style.width) || 50;
       
-      // Calculate spiral position - increased radius and spread
+      // Calculate spiral position with SUBSTANTIALLY increased spacing
       const angle = i * goldenAngle;
-      const radius = 100 + 55 * Math.sqrt(i); // Much wider spacing for desktop
+      const radius = 200 + 90 * Math.sqrt(i); // Extreme wide spacing for desktop
       
       // Calculate position, ensuring bubbles don't go off screen
       let x = centerX + radius * Math.cos(angle) - size/2;
       let y = centerY + radius * Math.sin(angle) - size/2;
       
       // Boundary checks
-      const margin = 20;
+      const margin = 30;
       x = Math.max(margin, Math.min(window.innerWidth - size - margin, x));
       y = Math.max(TOP_PADDING + margin, Math.min(window.innerHeight - size - margin, y));
       
@@ -1858,6 +1869,53 @@ function App() {
     // Update the model to match the DOM positions
     updateModelFromDomPositions();
   }
+
+  // Call immediately to fix desktop layout
+  // This ensures it runs before any React rendering completes
+  setTimeout(() => {
+    // Make sure this only runs on desktop
+    if (window.innerWidth > 480) {
+      console.log("Immediately arranging desktop bubbles in spiral");
+      
+      // Direct DOM manipulation to force proper spacing of bubbles
+      const bubbles = document.querySelectorAll('.bubble-container');
+      if (bubbles.length > 0) {
+        // Sort to ensure consistent ordering
+        const sortedBubbles = Array.from(bubbles).sort((a, b) => a.id.localeCompare(b.id));
+        
+        // Get center of screen
+        const centerX = window.innerWidth / 2;
+        const centerY = (window.innerHeight - TOP_PADDING) / 2 + TOP_PADDING;
+        const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+        
+        // Use extreme spacing for desktop
+        sortedBubbles.forEach((bubble, i) => {
+          const size = parseInt(bubble.style.width) || 50;
+          
+          // Position first bubble in center
+          if (i === 0) {
+            bubble.style.transform = `translate(${centerX - size/2}px, ${centerY - size/2}px)`;
+            return;
+          }
+          
+          // Position all other bubbles in expanding spiral
+          const angle = i * goldenAngle;
+          const radius = 250 + 100 * Math.sqrt(i);
+          
+          let x = centerX + radius * Math.cos(angle) - size/2;
+          let y = centerY + radius * Math.sin(angle) - size/2;
+          
+          // Apply boundary constraints
+          const margin = 40;
+          x = Math.max(margin, Math.min(window.innerWidth - size - margin, x));
+          y = Math.max(TOP_PADDING + margin, Math.min(window.innerHeight - size - margin, y));
+          
+          // Set position
+          bubble.style.transform = `translate(${x}px, ${y}px)`;
+        });
+      }
+    }
+  }, 100);
 
   // Modify the return statement to wrap everything in the Auth context provider
   return (
