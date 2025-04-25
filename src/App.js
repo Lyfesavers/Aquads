@@ -1664,8 +1664,11 @@ function App() {
       columns = 4; // For larger mobile screens (iPhone 12 Pro, etc)
     }
     
-    // Make bubbles smaller on very small screens if needed
-    const effectiveBubbleSize = screenWidth <= 320 ? Math.min(bubbleSize, 90) : bubbleSize;
+    // Make bubbles smaller on very small screens if needed, then add a size increase for better visibility
+    let effectiveBubbleSize = screenWidth <= 320 ? Math.min(bubbleSize, 90) : bubbleSize;
+    
+    // Increase bubble size by 10% for better visibility on mobile
+    effectiveBubbleSize = Math.round(effectiveBubbleSize * 1.1);
     
     // Calculate optimal positioning values with minimal gaps
     const horizontalGap = Math.max(3, (screenWidth - (columns * effectiveBubbleSize)) / (columns + 1));
