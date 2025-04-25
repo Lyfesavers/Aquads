@@ -1843,7 +1843,7 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 
 @media (max-width: 480px) {
   .vote-popup {
-    top: -65px;
+    top: -60px;
     padding: 8px 15px;
     gap: 20px;
     border-radius: 25px;
