@@ -1975,7 +1975,7 @@ function App() {
         
         // Calculate margins and spacing - reduced for larger screens
         const horizontalMargin = screenWidth >= 1440 ? 30 : 50; // Smaller margin for larger screens
-        const verticalMargin = 20; // Reduced vertical margin
+        const verticalMargin = 30; // Reduced vertical margin
         
         // Calculate available width and cell size
         const availableWidth = screenWidth - (horizontalMargin * 2);
@@ -2048,7 +2048,7 @@ function App() {
     
     // Calculate margins and spacing - reduced for larger screens
     const horizontalMargin = screenWidth >= 1440 ? 30 : 50; // Smaller margin for larger screens
-    const verticalMargin = 20; // Reduced vertical margin
+    const verticalMargin = 30; // Reduced vertical margin
     
     // Calculate available width and the cell size
     const availableWidth = screenWidth - (horizontalMargin * 2);
