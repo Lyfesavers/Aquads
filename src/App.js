@@ -2040,15 +2040,15 @@ function App() {
     // Calculate optimal columns based on screen width
     // Enhanced for larger monitors
     const screenWidth = window.innerWidth;
-    const columns = screenWidth >= 2400 ? 10 : 
-                   screenWidth >= 1800 ? 9 : 
-                   screenWidth >= 1440 ? 8 : 
-                   screenWidth >= 1200 ? 7 : 
+    const columns = screenWidth >= 2400 ? 14 : 
+                   screenWidth >= 1800 ? 12 : 
+                   screenWidth >= 1440 ? 10 : 
+                   screenWidth >= 1200 ? 8 : 
                    screenWidth >= 1000 ? 6 : 5;
     
     // Calculate margins and spacing - reduced for larger screens
-    const horizontalMargin = screenWidth >= 1440 ? 40 : 60; // Smaller margin for larger screens
-    const verticalMargin = 40; // Reduced vertical margin
+    const horizontalMargin = screenWidth >= 1440 ? 20 : 40; // Smaller margin for larger screens
+    const verticalMargin = 20; // Reduced vertical margin
     
     // Calculate available width and the cell size
     const availableWidth = screenWidth - (horizontalMargin * 2);
