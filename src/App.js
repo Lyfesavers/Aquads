@@ -1533,7 +1533,7 @@ function App() {
     fixOverlappingBubbles();
     
     // Run periodically to ensure bubbles don't overlap
-    const checkInterval = setInterval(fixOverlappingBubbles, 2000);
+    const checkInterval = setInterval(fixOverlappingBubbles, 1000);
     
     // Run when window resizes
     const handleResize = debounce(() => {
