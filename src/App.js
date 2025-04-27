@@ -423,15 +423,39 @@ function App() {
   const [itemsPerPage, setItemsPerPage] = useState(50);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Determine how many bubbles to show per page based on screen size
+  /**
+   * Determine how many bubbles to show per page based on screen size.
+   * User testing has determined optimal bubble counts for different screens:
+   * - 2560x1440: 70 bubbles maximum
+   * - 1366x768: 32 bubbles maximum
+   * 
+   * Limiting bubbles per page based on screen size prevents performance issues
+   * and improves the user experience by avoiding overcrowded displays.
+   * Additional bubbles are placed on subsequent pages accessible via pagination.
+   */
   useEffect(() => {
     const calculateItemsPerPage = () => {
-      if (windowSize.width <= 480) {
+      // Get current viewport dimensions
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      
+      // Specific screen size optimizations based on user testing
+      if (viewportWidth === 2560 && viewportHeight === 1440) {
+        return 70; // 2560x1440 can fit 70 bubbles
+      } else if (viewportWidth === 1366 && viewportHeight === 768) {
+        return 32; // 1366x768 can fit 32 bubbles
+      } else if (viewportWidth <= 480) {
         return 25; // Mobile
-      } else if (windowSize.width <= 768) {
+      } else if (viewportWidth <= 768) {
         return 35; // Tablet
+      } else if (viewportWidth >= 2400) {
+        return 70; // Large desktop similar to 2560x1440
+      } else if (viewportWidth >= 1440) {
+        return 55; // Medium-large desktop
+      } else if (viewportWidth >= 1200) {
+        return 45; // Medium desktop
       } else {
-        return 50; // Desktop
+        return 32; // Default to similar to 1366x768
       }
     };
     setItemsPerPage(calculateItemsPerPage());
@@ -2061,30 +2085,48 @@ function App() {
         // Get first bubble size to use as reference
         const bubbleSize = parseInt(sortedBubbles[0].style.width) || 100;
         
-        // Calculate columns based on screen width - enhanced for larger monitors
+        // Calculate columns based on screen width and height
         const screenWidth = window.innerWidth;
-        const columns = screenWidth >= 2400 ? 14 : 
-                       screenWidth >= 1800 ? 12 : 
-                       screenWidth >= 1440 ? 10 : 
-                       screenWidth >= 1200 ? 8 : 
-                       screenWidth >= 1000 ? 6 : 5;
+        const screenHeight = window.innerHeight;
         
-        // Calculate margins and spacing - reduced for larger screens
-        const horizontalMargin = screenWidth >= 1440 ? 10 : 20; // Smaller margin for larger screens
-        const verticalMargin = 30; // Reduced vertical margin
+        // Specific column counts for tested screen resolutions
+        let initialColumns;
+        
+        // Specific optimizations for known screen sizes based on user testing
+        if (screenWidth === 2560 && screenHeight === 1440) {
+          initialColumns = 10; // Optimized for 70 bubbles on 2560x1440
+        } else if (screenWidth === 1366 && screenHeight === 768) {
+          initialColumns = 8; // Optimized for 32 bubbles on 1366x768
+        } else if (screenWidth >= 2400) {
+          initialColumns = 10; // Similar to 2560x1440
+        } else if (screenWidth >= 1800) {
+          initialColumns = 9;
+        } else if (screenWidth >= 1440) {
+          initialColumns = 8;
+        } else if (screenWidth >= 1200) {
+          initialColumns = 7;
+        } else if (screenWidth >= 1000) {
+          initialColumns = 6;
+        } else {
+          initialColumns = 5;
+        }
+        
+        // Calculate margins and spacing
+        const initialHorizontalMargin = screenWidth >= 1440 ? 10 : 20;
+        const initialVerticalMargin = 30;
         
         // Calculate available width and cell size
-        const availableWidth = screenWidth - (horizontalMargin * 2);
-        const cellWidth = availableWidth / columns;
+        const initialAvailableWidth = screenWidth - (initialHorizontalMargin * 2);
+        const cellWidth = initialAvailableWidth / initialColumns;
         
         // Arrange in grid
         sortedBubbles.forEach((bubble, index) => {
-          const row = Math.floor(index / columns);
-          const column = index % columns;
+          const row = Math.floor(index / initialColumns);
+          const column = index % initialColumns;
           
           // Center in grid cell
-          const x = horizontalMargin + (column * cellWidth) + (cellWidth / 2) - (bubbleSize / 2);
-          const y = TOP_PADDING + verticalMargin + (row * (bubbleSize + verticalMargin));
+          const x = initialHorizontalMargin + (column * cellWidth) + (cellWidth / 2) - (bubbleSize / 2);
+          const y = TOP_PADDING + initialVerticalMargin + (row * (bubbleSize + initialVerticalMargin));
           
           // Set position
           bubble.style.transform = `translate(${x}px, ${y}px)`;
@@ -2133,18 +2175,36 @@ function App() {
     const firstBubble = sortedBubbles[0];
     const bubbleSize = parseInt(firstBubble.style.width) || 100;
     
-    // Calculate optimal columns based on screen width
-    // Enhanced for larger monitors
+    // Calculate optimal columns based on screen width and height
     const screenWidth = window.innerWidth;
-    const columns = screenWidth >= 2400 ? 14 : 
-                   screenWidth >= 1800 ? 12 : 
-                   screenWidth >= 1440 ? 10 : 
-                   screenWidth >= 1200 ? 8 : 
-                   screenWidth >= 1000 ? 6 : 5;
+    const screenHeight = window.innerHeight;
     
-    // Calculate margins and spacing - reduced for larger screens
-    const horizontalMargin = screenWidth >= 1440 ? 10 : 20; // Smaller margin for larger screens
-    const verticalMargin = 30; // Reduced vertical margin
+    // Specific column counts for tested screen resolutions
+    let columns;
+    
+    // Specific optimizations for known screen sizes based on user testing
+    if (screenWidth === 2560 && screenHeight === 1440) {
+      columns = 10; // Optimized for 70 bubbles on 2560x1440
+    } else if (screenWidth === 1366 && screenHeight === 768) {
+      columns = 8; // Optimized for 32 bubbles on 1366x768
+    } else if (screenWidth >= 2400) {
+      columns = 10; // Similar to 2560x1440
+    } else if (screenWidth >= 1800) {
+      columns = 9;
+    } else if (screenWidth >= 1440) {
+      columns = 8;
+    } else if (screenWidth >= 1200) {
+      columns = 7;
+    } else if (screenWidth >= 1000) {
+      columns = 6;
+    } else {
+      columns = 5;
+    }
+    
+    // Calculate margins and spacing
+    // Use tighter spacing for known screen resolutions to fit the desired number of bubbles
+    const horizontalMargin = screenWidth >= 1440 ? 10 : 20;
+    const verticalMargin = 30;
     
     // Calculate available width and the cell size
     const availableWidth = screenWidth - (horizontalMargin * 2);

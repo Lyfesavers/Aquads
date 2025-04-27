@@ -113,6 +113,12 @@ const FilterControls = ({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
             </svg>
             {startItem}-{endItem}/{totalItems}
+            <span className="hidden sm:inline-flex items-center ml-1">
+              <svg className="w-3 h-3 ml-1 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span className="tooltip-text ml-1 text-[10px] text-gray-500">({itemsPerPage} per page, optimized for your screen)</span>
+            </span>
           </div>
           <div className="flex items-center gap-1 ml-auto">
             <button
