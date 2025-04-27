@@ -422,6 +422,9 @@ function App() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(50);
   const [totalPages, setTotalPages] = useState(1);
+  
+  // Ref to track the SVG banner position
+  const svgBannerRef = useRef(null);
 
   // Determine how many bubbles to show per page based on screen size
   useEffect(() => {
@@ -450,6 +453,40 @@ function App() {
       setCurrentPage(1);
     }
   }, [ads, blockchainFilter, itemsPerPage]);
+
+  // Detect when bubbles would go below the SVG banner and move to next page
+  useEffect(() => {
+    if (getVisibleAds().length === 0 || currentPage >= totalPages) return;
+    
+    // Get the actual banner position if available, otherwise use estimate
+    let bannerTopPosition;
+    
+    // Try to find the SVG banner element
+    const bannerElement = document.querySelector('.svg-banner-container');
+    
+    if (bannerElement) {
+      const rect = bannerElement.getBoundingClientRect();
+      bannerTopPosition = rect.top;
+    } else {
+      // Fallback: estimate banner is ~150px from bottom of viewport
+      bannerTopPosition = windowSize.height - 150;
+    }
+    
+    // Find any ads that would overlap with the banner
+    const overflowingAds = getVisibleAds().filter(ad => {
+      return ad.y + ad.size > bannerTopPosition;
+    });
+    
+    // If we have overflowing ads and we're not on the last page, go to the next page
+    if (overflowingAds.length > 0 && currentPage < totalPages) {
+      // Add a small delay to prevent rapid pagination
+      const timer = setTimeout(() => {
+        setCurrentPage(prev => prev + 1);
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [windowSize, ads, blockchainFilter, currentPage, totalPages, itemsPerPage]);
 
   // Function to get currently visible ads
   const getVisibleAds = () => {
@@ -694,10 +731,12 @@ function App() {
           return 50; // Desktop
         }
       };
+      
       setItemsPerPage(calculateItemsPerPage());
       
       // Update bubble sizes when window size changes
       const newMaxSize = getMaxSize();
+      
       setAds(prevAds => {
         const updatedAds = prevAds.map(ad => {
           // For bumped ads, always use the maximum size
@@ -746,6 +785,34 @@ function App() {
         // On any desktop resize, re-arrange the grid
         setTimeout(arrangeDesktopGrid, 100);
       }
+      
+      // Check if any bubbles would now overlap with the banner
+      setTimeout(() => {
+        // Get the actual banner position if available, otherwise use estimate
+        let bannerTopPosition;
+        
+        // Try to find the SVG banner element
+        const bannerElement = document.querySelector('.svg-banner-container');
+        
+        if (bannerElement) {
+          const rect = bannerElement.getBoundingClientRect();
+          bannerTopPosition = rect.top;
+        } else {
+          // Fallback: estimate banner is ~150px from bottom of viewport
+          bannerTopPosition = window.innerHeight - 150;
+        }
+        
+        // Find any ads that would overlap with the banner
+        const visibleAds = getVisibleAds();
+        const overflowingAds = visibleAds.filter(ad => {
+          return ad.y + ad.size > bannerTopPosition;
+        });
+        
+        // If we have overflowing ads and we're not on the last page, go to the next page
+        if (overflowingAds.length > 0 && currentPage < totalPages) {
+          setCurrentPage(prev => prev + 1);
+        }
+      }, 500); // Add a small delay to ensure ads are updated first
     };
 
     window.addEventListener('resize', handleResize);
@@ -2635,7 +2702,7 @@ function App() {
                   {/* Token list section - add z-index and proper background */}
                   <div className="relative z-10 bg-transparent">
                     {/* Multi-Section Banner (GameHub, Freelancer, Affiliate) */}
-                    <div className="w-full overflow-hidden relative">
+                    <div className="w-full overflow-hidden relative svg-banner-container">
                       {/* SVG Banner Image */}
                       <img
                         src="/FREELANCER-HUB.svg"
