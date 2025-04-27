@@ -30,48 +30,55 @@ const ForgotPasswordModal = ({ show, onHide }) => {
     onHide();
   };
 
+  // Prevent event bubbling that might cause the modal to close
+  const stopPropagation = (e) => {
+    e.stopPropagation();
+  };
+
   return (
     <>
-      <Modal show={show && !showResetModal} onHide={onHide} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Forgot Password</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form onSubmit={handleSubmit}>
-            {error && <Alert variant="danger">{error}</Alert>}
-            <Form.Group className="mb-3">
-              <Form.Label>Username</Form.Label>
-              <Form.Control
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                placeholder="Enter your username"
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Your Secret Code</Form.Label>
-              <Form.Control
-                type="text"
-                value={referralCode}
-                onChange={(e) => setReferralCode(e.target.value)}
-                required
-                placeholder="Enter your secret code"
-              />
-              <Form.Text className="text-muted">
-                This is the unique code generated when you created your account
-              </Form.Text>
-            </Form.Group>
-            <Button
-              variant="primary"
-              type="submit"
-              disabled={isLoading}
-              className="w-100"
-            >
-              {isLoading ? 'Processing...' : 'Reset Password'}
-            </Button>
-          </Form>
-        </Modal.Body>
+      <Modal show={show && !showResetModal} onHide={onHide} centered backdrop="static">
+        <div onClick={stopPropagation}>
+          <Modal.Header closeButton>
+            <Modal.Title>Forgot Password</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Form onSubmit={handleSubmit}>
+              {error && <Alert variant="danger">{error}</Alert>}
+              <Form.Group className="mb-3">
+                <Form.Label>Username</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                  placeholder="Enter your username"
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Your Secret Code</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value)}
+                  required
+                  placeholder="Enter your secret code"
+                />
+                <Form.Text className="text-muted">
+                  This is the unique code generated when you created your account
+                </Form.Text>
+              </Form.Group>
+              <Button
+                variant="primary"
+                type="submit"
+                disabled={isLoading}
+                className="w-100"
+              >
+                {isLoading ? 'Processing...' : 'Reset Password'}
+              </Button>
+            </Form>
+          </Modal.Body>
+        </div>
       </Modal>
 
       <ResetPasswordModal
