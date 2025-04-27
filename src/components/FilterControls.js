@@ -63,11 +63,11 @@ const FilterControls = ({
         <button
           key={i}
           onClick={() => onPageChange(i)}
-          className={`px-3 py-1 rounded-md ${
+          className={`px-2 py-0.5 text-xs rounded-md ${
             currentPage === i
               ? 'bg-purple-600 text-white'
               : 'bg-gray-700 text-gray-200 hover:bg-gray-600'
-          } mx-1`}
+          } mx-0.5`}
         >
           {i}
         </button>
@@ -81,42 +81,44 @@ const FilterControls = ({
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
   
   return (
-    <div className="filter-controls bg-gray-900/80 backdrop-blur-md p-4 rounded-lg shadow-lg border border-purple-500/30 mb-4 sticky top-[4.5rem] z-[9] transition-all duration-300 ease-in-out hover:border-purple-500/50">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="blockchain-filter">
-          <label htmlFor="blockchain-select" className="block text-sm font-medium text-gray-300 mb-1 flex items-center">
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-            </svg>
-            Filter by Blockchain
-          </label>
-          <select
-            id="blockchain-select"
-            value={currentBlockchain}
-            onChange={(e) => onBlockchainChange(e.target.value)}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white 
-                      focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200"
-          >
-            {BLOCKCHAIN_OPTIONS.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+    <div className="filter-controls bg-gray-900/80 backdrop-blur-md p-2 rounded-lg shadow-lg border border-purple-500/30 mb-2 sticky top-[4.5rem] z-[9] transition-all duration-300 ease-in-out hover:border-purple-500/50">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="blockchain-filter w-full sm:w-auto sm:flex-1 min-w-[150px]">
+          <div className="flex items-center justify-between">
+            <label htmlFor="blockchain-select" className="text-xs font-medium text-gray-300 flex items-center whitespace-nowrap mr-2">
+              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+              </svg>
+              Filter:
+            </label>
+            <select
+              id="blockchain-select"
+              value={currentBlockchain}
+              onChange={(e) => onBlockchainChange(e.target.value)}
+              className="flex-1 px-2 py-1 text-xs bg-gray-800 border border-gray-700 rounded-md text-white 
+                        focus:outline-none focus:ring-1 focus:ring-purple-500 transition-all duration-200"
+            >
+              {BLOCKCHAIN_OPTIONS.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         
-        <div className="pagination flex flex-col justify-center">
-          <div className="text-sm text-gray-400 mb-1 flex items-center">
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <div className="pagination flex items-center justify-between w-full sm:w-auto sm:flex-1 gap-1 flex-wrap">
+          <div className="text-xs text-gray-400 flex items-center whitespace-nowrap">
+            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
             </svg>
-            Showing {startItem}-{endItem} of {totalItems} projects
+            {startItem}-{endItem}/{totalItems}
           </div>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1 ml-auto">
             <button
               onClick={() => onPageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className={`px-3 py-1 rounded-md ${
+              className={`px-2 py-0.5 text-xs rounded-md ${
                 currentPage === 1
                   ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
                   : 'bg-gray-700 text-white hover:bg-gray-600 transition-colors duration-200'
@@ -129,14 +131,14 @@ const FilterControls = ({
               {renderPageNumbers()}
             </div>
             
-            <div className="md:hidden text-gray-300">
-              Page {currentPage} of {totalPages}
+            <div className="md:hidden text-xs text-gray-300">
+              {currentPage}/{totalPages}
             </div>
             
             <button
               onClick={() => onPageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className={`px-3 py-1 rounded-md ${
+              className={`px-2 py-0.5 text-xs rounded-md ${
                 currentPage === totalPages
                   ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
                   : 'bg-gray-700 text-white hover:bg-gray-600 transition-colors duration-200'
