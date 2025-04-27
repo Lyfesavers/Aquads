@@ -136,10 +136,9 @@ const ADMIN_USERNAME = "admin"; // You can change this to your preferred admin u
 
 // Helper functions for responsive positioning
 function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
-  // Add padding to account for the SVG banner
-  const bottomPadding = 100;
+  // Fixed container height rather than using a bottom padding
   const centerX = windowWidth / 2;
-  const centerY = (windowHeight - bottomPadding) / 2; // Adjust center point to account for banner
+  const centerY = windowHeight / 2; // Use the provided container height
   const maxRadius = Math.min(centerX, centerY) * 0.7;
   const bubbleSpacing = 1.2;
   
@@ -150,8 +149,9 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
     const x = centerX + radius * Math.cos(angle) - size/2;
     const y = centerY + radius * Math.sin(angle) - size/2;
     
+    // Make sure bubble stays within the provided height constraint
     if (x < BUBBLE_PADDING || x + size > windowWidth - BUBBLE_PADDING || 
-        y < TOP_PADDING || y + size > windowHeight - BUBBLE_PADDING - bottomPadding) {
+        y < TOP_PADDING || y + size > windowHeight - BUBBLE_PADDING) {
       continue;
     }
     
@@ -177,20 +177,19 @@ function calculateSafePosition(size, windowWidth, windowHeight, existingAds) {
     }
   }
   
+  // Fallback to random position within the constrained height
   return {
     x: Math.max(BUBBLE_PADDING, Math.min(windowWidth - size - BUBBLE_PADDING, Math.random() * windowWidth)),
-    y: Math.max(TOP_PADDING, Math.min(windowHeight - size - BUBBLE_PADDING - bottomPadding, Math.random() * (windowHeight - TOP_PADDING - bottomPadding)))
+    y: Math.max(TOP_PADDING, Math.min(windowHeight - size - BUBBLE_PADDING, Math.random() * (windowHeight - TOP_PADDING)))
   };
 }
 
 function ensureInViewport(x, y, size, windowWidth, windowHeight, existingAds, currentAdId) {
-  // Ensure the bubble stays within the viewport boundaries
-  // Add more padding at the bottom to account for the SVG banner
-  const bottomPadding = 100; // Additional padding for the bottom to avoid the banner
+  // Ensure the bubble stays within the viewport boundaries using the constrained height
   const minX = BUBBLE_PADDING;
   const maxX = windowWidth - size - BUBBLE_PADDING;
   const minY = TOP_PADDING;
-  const maxY = windowHeight - size - BUBBLE_PADDING - bottomPadding; // Added bottomPadding
+  const maxY = windowHeight - size - BUBBLE_PADDING; // No need for additional padding as height is already constrained
 
   let newX = Math.min(Math.max(x, minX), maxX);
   let newY = Math.min(Math.max(y, minY), maxY);
@@ -371,19 +370,24 @@ function App() {
 
   // Detect when bubbles would overflow the screen and move to next page if needed
   useEffect(() => {
-    const bottomPadding = 100; // Bottom padding for SVG banner
+    const availableHeight = windowSize.height - 320; // Fixed height constraint
     const visibleAds = getVisibleAds();
     
-    // Check if any bubbles would go below the bottom boundary
+    // Check if any bubbles would go below the constrained area
     const overflowingAds = visibleAds.filter(ad => 
-      ad.y + ad.size > windowSize.height - bottomPadding - BUBBLE_PADDING
+      ad.y + ad.size > availableHeight - BUBBLE_PADDING
     );
     
-    // If we have overflowing ads and there are more pages, go to the next page
+    // Move to next page only if we have overflows, not on the last page, and not already transitioning pages
     if (overflowingAds.length > 0 && currentPage < totalPages) {
-      setCurrentPage(prev => prev + 1);
+      // Set a small delay to prevent rapid pagination
+      const timer = setTimeout(() => {
+        setCurrentPage(prev => prev + 1);
+      }, 300);
+      
+      return () => clearTimeout(timer);
     }
-  }, [windowSize, ads, blockchainFilter, itemsPerPage, totalPages, currentPage]);
+  }, [windowSize, totalPages, currentPage]);
 
   // Calculate total pages whenever ads or filter changes
   useEffect(() => {
@@ -435,7 +439,7 @@ function App() {
         setIsLoading(true);
         const data = await fetchAds();
         const currentMaxSize = getMaxSize(); // Get current max size for this screen
-        const bottomPadding = 100; // Add bottom padding for the SVG banner
+        const availableHeight = windowSize.height - 320; // Height constraint for bubbles
         
         // Reposition any bubbles that have x=0, y=0 coordinates (fix for DB-stored bubbles)
         const repositionedAds = data.map((ad, index) => {
@@ -456,7 +460,7 @@ function App() {
             if (index > 0) {
               // Try a position that's definitely not (0,0)
               const baseX = windowSize.width / 2;
-              const baseY = (windowSize.height - bottomPadding) / 2; // Adjust for banner
+              const baseY = availableHeight / 2; // Use constrained height
               
               // Apply a spiral pattern
               const angle = index * (Math.PI * 0.618033988749895); // Golden ratio
@@ -471,7 +475,7 @@ function App() {
               position = calculateSafePosition(
                 ad.size, 
                 windowSize.width, 
-                windowSize.height - bottomPadding, // Adjust height for banner
+                availableHeight, // Use constrained height
                 data.filter(otherAd => otherAd.id !== ad.id)
               );
             } else {
@@ -479,7 +483,7 @@ function App() {
               position = calculateSafePosition(
                 ad.size, 
                 windowSize.width, 
-                windowSize.height - bottomPadding, // Adjust height for banner
+                availableHeight, // Use constrained height
                 data.filter(otherAd => otherAd.id !== ad.id)
               );
             }
@@ -489,9 +493,9 @@ function App() {
               position.y = TOP_PADDING + 20;
             }
             
-            // Make sure y doesn't exceed the bottom boundary
-            if (position.y + ad.size > windowSize.height - bottomPadding) {
-              position.y = windowSize.height - bottomPadding - ad.size - BUBBLE_PADDING;
+            // Make sure y doesn't exceed the available height
+            if (position.y + ad.size > availableHeight) {
+              position.y = availableHeight - ad.size - BUBBLE_PADDING;
             }
             
             adWithMetadata = { ...adWithMetadata, x: position.x, y: position.y };
@@ -521,7 +525,7 @@ function App() {
     };
 
     loadAdsFromApi();
-  }, []);
+  }, [windowSize]);
 
   // Update socket connection handling
   useEffect(() => {
@@ -652,7 +656,7 @@ function App() {
       
       // Update bubble sizes when window size changes
       const newMaxSize = getMaxSize();
-      const bottomPadding = 100; // Bottom padding for SVG banner
+      const availableHeight = window.innerHeight - 320; // Fixed height constraint
       
       setAds(prevAds => {
         const updatedAds = prevAds.map(ad => {
@@ -672,8 +676,8 @@ function App() {
             
             // Check if the bubble is now below the bottom boundary
             let updatedY = ad.y;
-            if (updatedY + newSize > window.innerHeight - bottomPadding - BUBBLE_PADDING) {
-              updatedY = window.innerHeight - bottomPadding - newSize - BUBBLE_PADDING;
+            if (updatedY + newSize > availableHeight - BUBBLE_PADDING) {
+              updatedY = availableHeight - newSize - BUBBLE_PADDING;
             }
             
             return {
@@ -2430,17 +2434,30 @@ function App() {
                     />
                   </div>
                   
-                  {/* Bubbles section - keep it as is, remove fixed positioning */}
-                  <div className="relative min-h-screen overflow-hidden pb-24"> {/* Added pb-24 for bottom padding */}
+                  {/* Bubbles section - with fixed height and proper z-index */}
+                  <div 
+                    className="relative overflow-hidden" 
+                    style={{ 
+                      height: 'calc(100vh - 320px)', // Fixed height that accounts for top nav, filters, and bottom banner
+                      minHeight: '400px',
+                      zIndex: 1
+                    }}
+                  >
                     {/* Ads */}
                     {getVisibleAds().length > 0 ? (
                       getVisibleAds().map(ad => {
+                        // Calculate available height for bubbles
+                        const availableHeight = Math.min(
+                          windowSize.height - 320, 
+                          document.querySelector('.relative.overflow-hidden')?.clientHeight || windowSize.height - 320
+                        );
+                        
                         const { x, y } = ensureInViewport(
                           ad.x,
                           ad.y,
                           ad.size,
                           windowSize.width,
-                          windowSize.height - 100, // Subtract 100px to account for the banner
+                          availableHeight,
                           getVisibleAds(),
                           ad.id
                         );
