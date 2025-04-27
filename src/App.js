@@ -2116,126 +2116,6 @@ function App() {
     }
   }
 
-  // Add support for touch swipe and page indicators
-  useEffect(() => {
-    // Only run if there are overflow bubbles that go to a second page
-    const hasOverflowBubbles = ads && ads.length > 0 && ads.some(ad => {
-      const maxY = window.innerHeight - 250;
-      return ad.y >= maxY;
-    });
-    
-    if (!hasOverflowBubbles) return;
-    
-    // Update page indicators when scrolling
-    const updatePageIndicators = () => {
-      const container = document.querySelector('.bubble-pages-container');
-      if (!container) return;
-      
-      const pageIndicators = document.querySelectorAll('.page-indicator');
-      if (pageIndicators.length === 0) return;
-      
-      const scrollLeft = container.scrollLeft;
-      const pageWidth = container.clientWidth;
-      const currentPage = Math.round(scrollLeft / pageWidth);
-      
-      // Update indicators
-      pageIndicators.forEach((indicator, index) => {
-        if (index === currentPage) {
-          indicator.classList.add('active');
-        } else {
-          indicator.classList.remove('active');
-        }
-      });
-    };
-    
-    // Touch swipe support for mobile
-    let touchStartX = 0;
-    let touchEndX = 0;
-    
-    const handleTouchStart = (e) => {
-      touchStartX = e.changedTouches[0].screenX;
-    };
-    
-    const handleTouchEnd = (e) => {
-      touchEndX = e.changedTouches[0].screenX;
-      handleSwipe();
-    };
-    
-    const handleSwipe = () => {
-      const container = document.querySelector('.bubble-pages-container');
-      if (!container) return;
-      
-      const currentScroll = container.scrollLeft;
-      const pageWidth = container.clientWidth;
-      
-      // Minimum swipe distance to register (pixels)
-      const minSwipeDistance = 50;
-      
-      if (touchStartX - touchEndX > minSwipeDistance) {
-        // Swipe left -> go right
-        container.scrollTo({
-          left: Math.min(currentScroll + pageWidth, container.scrollWidth - pageWidth),
-          behavior: 'smooth'
-        });
-      } else if (touchEndX - touchStartX > minSwipeDistance) {
-        // Swipe right -> go left
-        container.scrollTo({
-          left: Math.max(currentScroll - pageWidth, 0),
-          behavior: 'smooth'
-        });
-      }
-    };
-    
-    // Add event listeners
-    const container = document.querySelector('.bubble-pages-container');
-    if (container) {
-      container.addEventListener('scroll', updatePageIndicators);
-      container.addEventListener('touchstart', handleTouchStart, false);
-      container.addEventListener('touchend', handleTouchEnd, false);
-      
-      // Initialize page indicators
-      updatePageIndicators();
-    }
-    
-    return () => {
-      if (container) {
-        container.removeEventListener('scroll', updatePageIndicators);
-        container.removeEventListener('touchstart', handleTouchStart);
-        container.removeEventListener('touchend', handleTouchEnd);
-      }
-    };
-  }, [ads]);
-
-  // Initialize bubble pages layout
-  useEffect(() => {
-    // Only run if there are ads
-    if (ads && ads.length > 0) {
-      // Short delay to ensure DOM elements are rendered
-      const initTimer = setTimeout(() => {
-        const container = document.querySelector('.bubble-pages-container');
-        if (container) {
-          // Scroll to first page when ads update
-          container.scrollTo({
-            left: 0,
-            behavior: 'auto'
-          });
-          
-          // Update active page indicator
-          const indicators = document.querySelectorAll('.page-indicator');
-          indicators.forEach((indicator, index) => {
-            if (index === 0) {
-              indicator.classList.add('active');
-            } else {
-              indicator.classList.remove('active');
-            }
-          });
-        }
-      }, 500);
-      
-      return () => clearTimeout(initTimer);
-    }
-  }, [ads]);
-
   // Modify the return statement to wrap everything in the Auth context provider
   return (
     <AuthContext.Provider value={{ currentUser, setCurrentUser }}>
@@ -2476,411 +2356,150 @@ function App() {
 
                 {/* Main content - allow natural scrolling */}
                 <div className="pt-20">
-                  {/* Bubbles section - with horizontal pagination */}
-                  <div className="relative min-h-screen bubble-scroll-container">
-                    {/* Left Arrow for PC */}
-                    <button 
-                      className="hidden md:block absolute left-2 top-1/2 transform -translate-y-1/2 z-10 bg-gray-800 bg-opacity-70 text-white rounded-full p-2 hover:bg-opacity-90 transition-all" 
-                      onClick={() => {
-                        const container = document.querySelector('.bubble-pages-container');
-                        if (container) {
-                          const currentScroll = container.scrollLeft;
-                          const pageWidth = container.clientWidth;
-                          container.scrollTo({
-                            left: Math.max(currentScroll - pageWidth, 0),
-                            behavior: 'smooth'
-                          });
-                        }
-                      }}
-                      aria-label="Previous page"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                      </svg>
-                    </button>
-                    
-                    {/* Right Arrow for PC */}
-                    <button 
-                      className="hidden md:block absolute right-2 top-1/2 transform -translate-y-1/2 z-10 bg-gray-800 bg-opacity-70 text-white rounded-full p-2 hover:bg-opacity-90 transition-all" 
-                      onClick={() => {
-                        const container = document.querySelector('.bubble-pages-container');
-                        if (container) {
-                          const currentScroll = container.scrollLeft;
-                          const pageWidth = container.clientWidth;
-                          const maxScroll = container.scrollWidth - pageWidth;
-                          container.scrollTo({
-                            left: Math.min(currentScroll + pageWidth, maxScroll),
-                            behavior: 'smooth'
-                          });
-                        }
-                      }}
-                      aria-label="Next page"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-                    
-                    {/* Horizontal scrollable container */}
-                    <div 
-                      className="bubble-pages-container overflow-x-auto overflow-y-hidden snap-x snap-mandatory scrollbar-hide" 
-                      style={{
-                        display: 'flex',
-                        width: '100%', 
-                        maxHeight: `calc(100vh - 250px)`, // Ensure bubbles don't go below the SVG banner
-                        scrollbarWidth: 'none', // Hide scrollbar in Firefox
-                        msOverflowStyle: 'none' // Hide scrollbar in IE/Edge
-                      }}
-                    >
-                      {/* First page */}
-                      <div
-                        className="bubble-page snap-start"
-                        style={{
-                          flexShrink: 0,
-                          width: '100%',
-                          position: 'relative'
-                        }}
-                      >
-                        {/* Ads */}
-                        {ads && ads.length > 0 ? (
-                          ads.filter(ad => {
-                            // Check if the ad position would be below the SVG banner
-                            const maxY = window.innerHeight - 250;
-                            return ad.y < maxY;
-                          }).map(ad => {
-                            const { x, y } = ensureInViewport(
-                              ad.x,
-                              ad.y,
-                              ad.size,
-                              windowSize.width,
-                              windowSize.height,
-                              ads,
-                              ad.id
-                            );
+                  {/* Bubbles section - keep it as is, remove fixed positioning */}
+                  <div className="relative min-h-screen overflow-hidden">
+                    {/* Ads */}
+                    {ads && ads.length > 0 ? (
+                      ads.map(ad => {
+                        const { x, y } = ensureInViewport(
+                          ad.x,
+                          ad.y,
+                          ad.size,
+                          windowSize.width,
+                          windowSize.height,
+                          ads,
+                          ad.id
+                        );
 
-                            return (
-                              <div 
-                                key={ad.id}
-                                id={ad.id}
-                                className="bubble-container"
-                                style={{
-                                  position: 'absolute',
-                                  transform: `translate(${x}px, ${y}px)`,
-                                  width: `${ad.size}px`,
-                                  height: `${ad.size}px`,
-                                  transition: 'transform 0.3s ease-out',
-                                  zIndex: ad.isBumped ? 2 : 1
-                                }}
-                              >
-                                <motion.div
-                                  className={`absolute bubble ${ad.isBumped ? 'bumped-ad' : ''} ${ad.blockchain ? `bubble-${ad.blockchain.toLowerCase()}` : 'bubble-ethereum'}`}
-                                  style={{
-                                    width: '100%',
-                                    height: '100%',
-                                    transition: `all ${ANIMATION_DURATION} ease-in-out`,
-                                    animationDuration: `${8 + Math.random() * 4}s`,
-                                    cursor: 'pointer',
-                                    touchAction: 'auto'
-                                  }}
+                        return (
+                          <div 
+                            key={ad.id}
+                            id={ad.id}
+                            className="bubble-container"
+                            style={{
+                              position: 'absolute',
+                              transform: `translate(${x}px, ${y}px)`,
+                              width: `${ad.size}px`,
+                              height: `${ad.size}px`,
+                              transition: 'transform 0.3s ease-out',
+                              zIndex: ad.isBumped ? 2 : 1
+                            }}
+                          >
+                            <motion.div
+                              className={`absolute bubble ${ad.isBumped ? 'bumped-ad' : ''} ${ad.blockchain ? `bubble-${ad.blockchain.toLowerCase()}` : 'bubble-ethereum'}`}
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                transition: `all ${ANIMATION_DURATION} ease-in-out`,
+                                animationDuration: `${8 + Math.random() * 4}s`,
+                                cursor: 'pointer',
+                                touchAction: 'auto'
+                              }}
+                              onClick={(e) => {
+                                if (!e.defaultPrevented) {
+                                  if (requireAuth()) {
+                                    window.open(ad.url, '_blank');
+                                  }
+                                }
+                              }}
+                            >
+                              {/* Voting popup that appears on hover */}
+                              <div className="vote-popup">
+                                <button 
+                                  className={`vote-button bearish-vote ${ad.userVote === 'bearish' ? 'active-vote' : ''}`}
                                   onClick={(e) => {
-                                    if (!e.defaultPrevented) {
-                                      if (requireAuth()) {
-                                        window.open(ad.url, '_blank');
-                                      }
+                                    e.stopPropagation();
+                                    handleSentimentVote(ad.id, 'bearish');
+                                  }}
+                                  aria-label="Vote bearish"
+                                >
+                                  🐻
+                                </button>
+                                <button 
+                                  className={`vote-button bullish-vote ${ad.userVote === 'bullish' ? 'active-vote' : ''}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSentimentVote(ad.id, 'bullish');
+                                  }}
+                                  aria-label="Vote bullish"
+                                >
+                                  🐂
+                                </button>
+                              </div>
+                              
+                              <div className="bubble-content">
+                                {/* Background of bubble */}
+                                <div className="bubble-bg"></div>
+                                
+                                {/* Curved text at top */}
+                                <div 
+                                  className="bubble-text-curved"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (requireAuth()) {
+                                      setSelectedAdId(ad.id);
+                                      setShowBumpStore(true);
                                     }
                                   }}
                                 >
-                                  {/* Voting popup that appears on hover */}
-                                  <div className="vote-popup">
-                                    <button 
-                                      className={`vote-button bearish-vote ${ad.userVote === 'bearish' ? 'active-vote' : ''}`}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleSentimentVote(ad.id, 'bearish');
-                                      }}
-                                      aria-label="Vote bearish"
-                                    >
-                                      🐻
-                                    </button>
-                                    <button 
-                                      className={`vote-button bullish-vote ${ad.userVote === 'bullish' ? 'active-vote' : ''}`}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleSentimentVote(ad.id, 'bullish');
-                                      }}
-                                      aria-label="Vote bullish"
-                                    >
-                                      🐂
-                                    </button>
+                                  <span 
+                                    className="text-white truncate block hover:text-blue-300 transition-colors duration-300"
+                                    style={{
+                                      fontSize: `${Math.max(ad.size * 0.09, 10)}px`
+                                    }}
+                                  >
+                                    {ad.title}
+                                  </span>
+                                </div>
+                                
+                                {/* Logo Container */}
+                                <div className="bubble-logo-container">
+                                  <img
+                                    src={ad.logo}
+                                    alt={ad.title}
+                                    loading="eager"
+                                    className="w-full h-full object-contain"
+                                    style={{
+                                      objectFit: 'contain',
+                                      maxWidth: '95%',
+                                      maxHeight: '95%'
+                                    }}
+                                    onLoad={(e) => {
+                                      if (e.target.src.toLowerCase().endsWith('.gif')) {
+                                        e.target.setAttribute('loop', 'infinite');
+                                      }
+                                    }}
+                                  />
+                                </div>
+                                
+                                {/* Simple percentage indicator - changed to BUY/SELL */}
+                                {(ad.bullishVotes > 0 || ad.bearishVotes > 0) && (
+                                  <div 
+                                    className={`vote-percentage ${
+                                      ad.bullishVotes > ad.bearishVotes 
+                                        ? 'vote-bullish' 
+                                        : ad.bearishVotes > ad.bullishVotes 
+                                          ? 'vote-bearish' 
+                                          : 'vote-neutral'
+                                    }`}
+                                  >
+                                    {ad.bullishVotes + ad.bearishVotes > 0 
+                                      ? ad.bullishVotes > ad.bearishVotes 
+                                        ? 'BUY' 
+                                        : ad.bearishVotes > ad.bullishVotes 
+                                          ? 'SELL' 
+                                          : '50/50'
+                                      : 'No votes'}
                                   </div>
-                                  
-                                  <div className="bubble-content">
-                                    {/* Background of bubble */}
-                                    <div className="bubble-bg"></div>
-                                    
-                                    {/* Curved text at top */}
-                                    <div 
-                                      className="bubble-text-curved"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (requireAuth()) {
-                                          setSelectedAdId(ad.id);
-                                          setShowBumpStore(true);
-                                        }
-                                      }}
-                                    >
-                                      <span 
-                                        className="text-white truncate block hover:text-blue-300 transition-colors duration-300"
-                                        style={{
-                                          fontSize: `${Math.max(ad.size * 0.09, 10)}px`
-                                        }}
-                                      >
-                                        {ad.title}
-                                      </span>
-                                    </div>
-                                    
-                                    {/* Logo Container */}
-                                    <div className="bubble-logo-container">
-                                      <img
-                                        src={ad.logo}
-                                        alt={ad.title}
-                                        loading="eager"
-                                        className="w-full h-full object-contain"
-                                        style={{
-                                          objectFit: 'contain',
-                                          maxWidth: '95%',
-                                          maxHeight: '95%'
-                                        }}
-                                        onLoad={(e) => {
-                                          if (e.target.src.toLowerCase().endsWith('.gif')) {
-                                            e.target.setAttribute('loop', 'infinite');
-                                          }
-                                        }}
-                                      />
-                                    </div>
-                                    
-                                    {/* Simple percentage indicator - changed to BUY/SELL */}
-                                    {(ad.bullishVotes > 0 || ad.bearishVotes > 0) && (
-                                      <div 
-                                        className={`vote-percentage ${
-                                          ad.bullishVotes > ad.bearishVotes 
-                                            ? 'vote-bullish' 
-                                            : ad.bearishVotes > ad.bullishVotes 
-                                              ? 'vote-bearish' 
-                                              : 'vote-neutral'
-                                        }`}
-                                      >
-                                        {ad.bullishVotes + ad.bearishVotes > 0 
-                                          ? ad.bullishVotes > ad.bearishVotes 
-                                            ? 'BUY' 
-                                            : ad.bearishVotes > ad.bullishVotes 
-                                              ? 'SELL' 
-                                              : '50/50'
-                                          : 'No votes'}
-                                      </div>
-                                    )}
-                                  </div>
-                                </motion.div>
+                                )}
                               </div>
-                            );
-                          })
-                        ) : (
-                          <div className="flex items-center justify-center h-screen">
-                            <p className="text-gray-500">Loading ads...</p>
+                            </motion.div>
                           </div>
-                        )}
-                      </div>
-                      
-                      {/* Second page (for bubbles that would fall below SVG) */}
-                      {ads && ads.length > 0 && ads.some(ad => {
-                        const maxY = window.innerHeight - 250;
-                        return ad.y >= maxY;
-                      }) && (
-                        <div
-                          className="bubble-page snap-start"
-                          style={{
-                            flexShrink: 0,
-                            width: '100%',
-                            position: 'relative'
-                          }}
-                        >
-                          {ads.filter(ad => {
-                            // Check if the ad position would be below the SVG banner
-                            const maxY = window.innerHeight - 250;
-                            return ad.y >= maxY;
-                          }).map(ad => {
-                            // Use y position relative to page start
-                            const adjustedY = ad.y % (window.innerHeight - 250);
-                            
-                            const { x, y: originalY } = ensureInViewport(
-                              ad.x,
-                              adjustedY,
-                              ad.size,
-                              windowSize.width,
-                              windowSize.height,
-                              ads,
-                              ad.id
-                            );
-
-                            return (
-                              <div 
-                                key={ad.id}
-                                id={`overflow-${ad.id}`}
-                                className="bubble-container"
-                                style={{
-                                  position: 'absolute',
-                                  transform: `translate(${x}px, ${originalY < 250 ? originalY + 50 : originalY}px)`,
-                                  width: `${ad.size}px`,
-                                  height: `${ad.size}px`,
-                                  transition: 'transform 0.3s ease-out',
-                                  zIndex: ad.isBumped ? 2 : 1
-                                }}
-                              >
-                                <motion.div
-                                  className={`absolute bubble ${ad.isBumped ? 'bumped-ad' : ''} ${ad.blockchain ? `bubble-${ad.blockchain.toLowerCase()}` : 'bubble-ethereum'}`}
-                                  style={{
-                                    width: '100%',
-                                    height: '100%',
-                                    transition: `all ${ANIMATION_DURATION} ease-in-out`,
-                                    animationDuration: `${8 + Math.random() * 4}s`,
-                                    cursor: 'pointer',
-                                    touchAction: 'auto'
-                                  }}
-                                  onClick={(e) => {
-                                    if (!e.defaultPrevented) {
-                                      if (requireAuth()) {
-                                        window.open(ad.url, '_blank');
-                                      }
-                                    }
-                                  }}
-                                >
-                                  {/* Repeat same bubble content structure */}
-                                  <div className="vote-popup">
-                                    <button 
-                                      className={`vote-button bearish-vote ${ad.userVote === 'bearish' ? 'active-vote' : ''}`}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleSentimentVote(ad.id, 'bearish');
-                                      }}
-                                      aria-label="Vote bearish"
-                                    >
-                                      🐻
-                                    </button>
-                                    <button 
-                                      className={`vote-button bullish-vote ${ad.userVote === 'bullish' ? 'active-vote' : ''}`}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleSentimentVote(ad.id, 'bullish');
-                                      }}
-                                      aria-label="Vote bullish"
-                                    >
-                                      🐂
-                                    </button>
-                                  </div>
-                                  
-                                  <div className="bubble-content">
-                                    <div className="bubble-bg"></div>
-                                    
-                                    <div 
-                                      className="bubble-text-curved"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (requireAuth()) {
-                                          setSelectedAdId(ad.id);
-                                          setShowBumpStore(true);
-                                        }
-                                      }}
-                                    >
-                                      <span 
-                                        className="text-white truncate block hover:text-blue-300 transition-colors duration-300"
-                                        style={{
-                                          fontSize: `${Math.max(ad.size * 0.09, 10)}px`
-                                        }}
-                                      >
-                                        {ad.title}
-                                      </span>
-                                    </div>
-                                    
-                                    <div className="bubble-logo-container">
-                                      <img
-                                        src={ad.logo}
-                                        alt={ad.title}
-                                        loading="eager"
-                                        className="w-full h-full object-contain"
-                                        style={{
-                                          objectFit: 'contain',
-                                          maxWidth: '95%',
-                                          maxHeight: '95%'
-                                        }}
-                                        onLoad={(e) => {
-                                          if (e.target.src.toLowerCase().endsWith('.gif')) {
-                                            e.target.setAttribute('loop', 'infinite');
-                                          }
-                                        }}
-                                      />
-                                    </div>
-                                    
-                                    {(ad.bullishVotes > 0 || ad.bearishVotes > 0) && (
-                                      <div 
-                                        className={`vote-percentage ${
-                                          ad.bullishVotes > ad.bearishVotes 
-                                            ? 'vote-bullish' 
-                                            : ad.bearishVotes > ad.bullishVotes 
-                                              ? 'vote-bearish' 
-                                              : 'vote-neutral'
-                                        }`}
-                                      >
-                                        {ad.bullishVotes + ad.bearishVotes > 0 
-                                          ? ad.bullishVotes > ad.bearishVotes 
-                                            ? 'BUY' 
-                                            : ad.bearishVotes > ad.bullishVotes 
-                                              ? 'SELL' 
-                                              : '50/50'
-                                          : 'No votes'}
-                                      </div>
-                                    )}
-                                  </div>
-                                </motion.div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Pagination indicators - only show if there are overflow bubbles */}
-                    {ads && ads.length > 0 && ads.some(ad => {
-                      const maxY = window.innerHeight - 250;
-                      return ad.y >= maxY;
-                    }) && (
-                      <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2">
-                        <button 
-                          className="w-2 h-2 rounded-full bg-gray-500 cursor-pointer hover:bg-white transition-colors page-indicator active"
-                          onClick={() => {
-                            const container = document.querySelector('.bubble-pages-container');
-                            if (container) {
-                              container.scrollTo({
-                                left: 0,
-                                behavior: 'smooth'
-                              });
-                            }
-                          }}
-                          aria-label="Go to page 1"
-                        ></button>
-                        <button 
-                          className="w-2 h-2 rounded-full bg-gray-500 cursor-pointer hover:bg-white transition-colors page-indicator"
-                          onClick={() => {
-                            const container = document.querySelector('.bubble-pages-container');
-                            if (container) {
-                              const pageWidth = container.clientWidth;
-                              container.scrollTo({
-                                left: pageWidth,
-                                behavior: 'smooth'
-                              });
-                            }
-                          }}
-                          aria-label="Go to page 2"
-                        ></button>
+                        );
+                      })
+                    ) : (
+                      <div className="flex items-center justify-center h-screen">
+                        <p className="text-gray-500">Loading ads...</p>
                       </div>
                     )}
                   </div>
