@@ -2116,110 +2116,6 @@ function App() {
     }
   }
 
-  // Add support for bubble pagination
-  useEffect(() => {
-    // Only run if there are ads
-    if (!ads || ads.length === 0) return;
-    
-    // Check if we have overflow bubbles that go below the SVG banner
-    const hasOverflow = ads.some(ad => ad.y > window.innerHeight - 250);
-    const container = document.querySelector('.bubble-overflow-container');
-    
-    if (!container || !hasOverflow) return;
-    
-    // Set data attribute to indicate overflow exists (for CSS)
-    container.setAttribute('data-has-overflow', 'true');
-    
-    // Default to page 1
-    container.setAttribute('data-page', '1');
-    
-    // Set up touch swipe for mobile
-    let touchStartX = 0;
-    let touchEndX = 0;
-    
-    const handleTouchStart = (e) => {
-      touchStartX = e.changedTouches[0].screenX;
-    };
-    
-    const handleTouchEnd = (e) => {
-      touchEndX = e.changedTouches[0].screenX;
-      
-      // Calculate swipe distance
-      const swipeDistance = touchEndX - touchStartX;
-      
-      // Only register significant swipes (more than 50px)
-      if (Math.abs(swipeDistance) < 50) return;
-      
-      // Get current page
-      const currentPage = container.getAttribute('data-page') || '1';
-      
-      if (swipeDistance < 0 && currentPage === '1') {
-        // Swipe left - go to page 2
-        setActivePage('2');
-      } else if (swipeDistance > 0 && currentPage === '2') {
-        // Swipe right - go back to page 1
-        setActivePage('1');
-      }
-    };
-    
-    // Helper function to set active page and update indicators
-    const setActivePage = (page) => {
-      container.setAttribute('data-page', page);
-      
-      // Update pagination dots
-      const dots = document.querySelectorAll('.bubble-page-dot');
-      dots.forEach((dot, index) => {
-        if ((page === '1' && index === 0) || (page === '2' && index === 1)) {
-          dot.classList.add('active');
-        } else {
-          dot.classList.remove('active');
-        }
-      });
-    };
-    
-    // Add click handlers to pagination dots
-    const dots = document.querySelectorAll('.bubble-page-dot');
-    dots.forEach((dot, index) => {
-      dot.addEventListener('click', () => {
-        setActivePage(index === 0 ? '1' : '2');
-      });
-    });
-    
-    // Add click handlers to arrow buttons
-    const leftArrow = document.querySelector('.bubble-nav-left');
-    const rightArrow = document.querySelector('.bubble-nav-right');
-    
-    if (leftArrow) {
-      leftArrow.addEventListener('click', () => {
-        setActivePage('1');
-      });
-    }
-    
-    if (rightArrow) {
-      rightArrow.addEventListener('click', () => {
-        setActivePage('2');
-      });
-    }
-    
-    // Add touch event listeners
-    container.addEventListener('touchstart', handleTouchStart);
-    container.addEventListener('touchend', handleTouchEnd);
-    
-    // Cleanup event listeners
-    return () => {
-      container.removeEventListener('touchstart', handleTouchStart);
-      container.removeEventListener('touchend', handleTouchEnd);
-      
-      // Remove click handlers
-      dots.forEach(dot => {
-        dot.replaceWith(dot.cloneNode(true));
-      });
-      
-      if (leftArrow) leftArrow.replaceWith(leftArrow.cloneNode(true));
-      if (rightArrow) rightArrow.replaceWith(rightArrow.cloneNode(true));
-    };
-  }, [ads]);
-
   // Modify the return statement to wrap everything in the Auth context provider
   return (
     <AuthContext.Provider value={{ currentUser, setCurrentUser }}>
@@ -2460,35 +2356,9 @@ function App() {
 
                 {/* Main content - allow natural scrolling */}
                 <div className="pt-20">
-                  {/* Bubbles section - with overflow pagination */}
-                  <div className="relative min-h-screen overflow-hidden bubble-overflow-container">
-                    {/* Left/Right Navigation Arrows - only shown when overflow exists */}
-                    {ads && ads.length > 0 && ads.some(ad => ad.y > window.innerHeight - 250) && (
-                      <>
-                        <button 
-                          className="bubble-nav-arrow bubble-nav-left"
-                          onClick={() => {
-                            // Set data attribute to show page 1
-                            document.querySelector('.bubble-overflow-container').setAttribute('data-page', '1');
-                          }}
-                          aria-label="Previous page"
-                        >
-                          ◀
-                        </button>
-                        <button 
-                          className="bubble-nav-arrow bubble-nav-right"
-                          onClick={() => {
-                            // Set data attribute to show page 2
-                            document.querySelector('.bubble-overflow-container').setAttribute('data-page', '2');
-                          }}
-                          aria-label="Next page"
-                        >
-                          ▶
-                        </button>
-                      </>
-                    )}
-                    
-                    {/* Ads - First Page */}
+                  {/* Bubbles section - keep it as is, remove fixed positioning */}
+                  <div className="relative min-h-screen overflow-hidden">
+                    {/* Ads */}
                     {ads && ads.length > 0 ? (
                       ads.map(ad => {
                         const { x, y } = ensureInViewport(
@@ -2501,14 +2371,11 @@ function App() {
                           ad.id
                         );
 
-                        // Check if this bubble would be below the banner
-                        const isBelowBanner = y > window.innerHeight - 250;
-                        
                         return (
                           <div 
                             key={ad.id}
                             id={ad.id}
-                            className={`bubble-container ${isBelowBanner ? 'bubble-overflow' : ''}`}
+                            className="bubble-container"
                             style={{
                               position: 'absolute',
                               transform: `translate(${x}px, ${y}px)`,
@@ -2633,14 +2500,6 @@ function App() {
                     ) : (
                       <div className="flex items-center justify-center h-screen">
                         <p className="text-gray-500">Loading ads...</p>
-                      </div>
-                    )}
-                    
-                    {/* Pagination indicator dots - only shown when overflow exists */}
-                    {ads && ads.length > 0 && ads.some(ad => ad.y > window.innerHeight - 250) && (
-                      <div className="bubble-pagination">
-                        <span className="bubble-page-dot active" onClick={() => document.querySelector('.bubble-overflow-container').setAttribute('data-page', '1')}></span>
-                        <span className="bubble-page-dot" onClick={() => document.querySelector('.bubble-overflow-container').setAttribute('data-page', '2')}></span>
                       </div>
                     )}
                   </div>
