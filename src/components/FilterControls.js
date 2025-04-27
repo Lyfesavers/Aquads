@@ -77,12 +77,8 @@ const FilterControls = ({
     return pageNumbers;
   };
 
-  // Calculate display range, handling edge cases
-  const startItem = totalItems > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0;
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
-  
-  // Don't show pagination controls if there's only one page or no items
-  const showPaginationControls = totalPages > 1 && totalItems > 0;
   
   return (
     <div className="filter-controls bg-gray-900/80 backdrop-blur-md p-2 rounded-lg shadow-lg border border-purple-500/30 mb-2 sticky top-[4.5rem] z-[9] transition-all duration-300 ease-in-out hover:border-purple-500/50">
@@ -116,48 +112,41 @@ const FilterControls = ({
             <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
             </svg>
-            {totalItems > 0 ? (
-              `${startItem}-${endItem}/${totalItems}`
-            ) : (
-              "0 items"
-            )}
+            {startItem}-{endItem}/{totalItems}
           </div>
-          
-          {showPaginationControls && (
-            <div className="flex items-center gap-1 ml-auto">
-              <button
-                onClick={() => onPageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                className={`px-2 py-0.5 text-xs rounded-md ${
-                  currentPage === 1
-                    ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                    : 'bg-gray-700 text-white hover:bg-gray-600 transition-colors duration-200'
-                }`}
-              >
-                Prev
-              </button>
-              
-              <div className="hidden md:flex space-x-1">
-                {renderPageNumbers()}
-              </div>
-              
-              <div className="md:hidden text-xs text-gray-300">
-                {currentPage}/{totalPages}
-              </div>
-              
-              <button
-                onClick={() => onPageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className={`px-2 py-0.5 text-xs rounded-md ${
-                  currentPage === totalPages
-                    ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                    : 'bg-gray-700 text-white hover:bg-gray-600 transition-colors duration-200'
-                }`}
-              >
-                Next
-              </button>
+          <div className="flex items-center gap-1 ml-auto">
+            <button
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className={`px-2 py-0.5 text-xs rounded-md ${
+                currentPage === 1
+                  ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                  : 'bg-gray-700 text-white hover:bg-gray-600 transition-colors duration-200'
+              }`}
+            >
+              Prev
+            </button>
+            
+            <div className="hidden md:flex space-x-1">
+              {renderPageNumbers()}
             </div>
-          )}
+            
+            <div className="md:hidden text-xs text-gray-300">
+              {currentPage}/{totalPages}
+            </div>
+            
+            <button
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className={`px-2 py-0.5 text-xs rounded-md ${
+                currentPage === totalPages
+                  ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                  : 'bg-gray-700 text-white hover:bg-gray-600 transition-colors duration-200'
+              }`}
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
     </div>

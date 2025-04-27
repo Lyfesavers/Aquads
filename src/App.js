@@ -422,9 +422,6 @@ function App() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(50);
   const [totalPages, setTotalPages] = useState(1);
-  
-  // Ref to track the SVG banner position
-  const svgBannerRef = useRef(null);
 
   // Determine how many bubbles to show per page based on screen size
   useEffect(() => {
@@ -440,167 +437,31 @@ function App() {
     setItemsPerPage(calculateItemsPerPage());
   }, [windowSize]);
 
-  // Define what items should be on each page based on available space
-  const distributeItemsAcrossPages = useCallback(() => {
-    if (ads.length === 0) return;
-    
-    // Filter ads by blockchain if needed
+  // Calculate total pages whenever ads or filter changes
+  useEffect(() => {
     const filteredAds = blockchainFilter === 'all' 
       ? ads 
       : ads.filter(ad => (ad.blockchain || 'ethereum').toLowerCase() === blockchainFilter.toLowerCase());
     
-    // Nothing to do if no ads match filter
-    if (filteredAds.length === 0) return;
+    setTotalPages(Math.max(1, Math.ceil(filteredAds.length / itemsPerPage)));
     
-    // Get banner position for overflow check
-    let bannerTopPosition;
-    const bannerElement = document.querySelector('.svg-banner-container');
-    if (bannerElement) {
-      const rect = bannerElement.getBoundingClientRect();
-      bannerTopPosition = rect.top;
-    } else {
-      bannerTopPosition = windowSize.height - 150;
-    }
-    
-    // Calculate how many bubbles will fit on each page
-    const maxItemsByPage = [];
-    let currentPage = 0;
-    let currentPageItems = 0;
-    let totalChecked = 0;
-    
-    // Sort ads by position (top to bottom, left to right)
-    const sortedAds = [...filteredAds].sort((a, b) => {
-      if (Math.abs(a.y - b.y) < 50) { // If roughly same row
-        return a.x - b.x; // Sort by x position
-      }
-      return a.y - b.y; // Otherwise sort by y position
-    });
-    
-    // Check which ads would fit on each page
-    while (totalChecked < sortedAds.length) {
-      const ad = sortedAds[totalChecked];
-      
-      // Check if this ad would overflow
-      if (ad.y + ad.size > bannerTopPosition) {
-        // Need to start a new page
-        if (currentPageItems > 0) {
-          maxItemsByPage[currentPage] = currentPageItems;
-          currentPage++;
-          currentPageItems = 1; // This ad goes to next page
-        } else {
-          // Force at least one item per page, even if it overflows
-          currentPageItems = 1;
-        }
-      } else {
-        currentPageItems++;
-      }
-      
-      totalChecked++;
-      
-      // Check if we've hit itemsPerPage limit
-      if (currentPageItems >= itemsPerPage) {
-        maxItemsByPage[currentPage] = currentPageItems;
-        currentPage++;
-        currentPageItems = 0;
-      }
-    }
-    
-    // Add any remaining items
-    if (currentPageItems > 0) {
-      maxItemsByPage[currentPage] = currentPageItems;
-    }
-    
-    // Update total pages - at least 1 page even if empty
-    const newTotalPages = Math.max(1, maxItemsByPage.length);
-    if (newTotalPages !== totalPages) {
-      setTotalPages(newTotalPages);
-    }
-    
-    // Make sure current page is valid
-    if (currentPage >= newTotalPages) {
-      setCurrentPage(Math.max(1, newTotalPages));
-    }
-  }, [ads, blockchainFilter, itemsPerPage, windowSize, totalPages]);
-  
-  // Run distribution on mount, filter change, or window resize
-  useEffect(() => {
-    distributeItemsAcrossPages();
-  }, [ads, blockchainFilter, windowSize.height, windowSize.width, distributeItemsAcrossPages]);
-  
-  // Function to get filtered ads based on blockchain filter
-  const getFilteredAds = useCallback(() => {
-    return blockchainFilter === 'all' 
-      ? ads 
-      : ads.filter(ad => (ad.blockchain || 'ethereum').toLowerCase() === blockchainFilter.toLowerCase());
-  }, [ads, blockchainFilter]);
-
-  // Calculate total pages whenever ads or filter changes
-  useEffect(() => {
-    const filteredAds = getFilteredAds();
-    
-    // Calculate total pages based on filtered ads count and items per page
-    const calculatedTotalPages = Math.max(1, Math.ceil(filteredAds.length / itemsPerPage));
-    setTotalPages(calculatedTotalPages);
-    
-    // Reset to page 1 if current page exceeds total pages
-    if (currentPage > calculatedTotalPages) {
+    // Reset to page 1 when filter changes
+    if (currentPage > Math.ceil(filteredAds.length / itemsPerPage)) {
       setCurrentPage(1);
     }
-  }, [ads, blockchainFilter, itemsPerPage, currentPage, getFilteredAds]);
+  }, [ads, blockchainFilter, itemsPerPage]);
 
-  // Function to get visible ads for the current page
-  const getVisibleAds = useCallback(() => {
-    // Get filtered ads
-    const filteredAds = getFilteredAds();
+  // Function to get currently visible ads
+  const getVisibleAds = () => {
+    const filteredAds = blockchainFilter === 'all' 
+      ? ads 
+      : ads.filter(ad => (ad.blockchain || 'ethereum').toLowerCase() === blockchainFilter.toLowerCase());
     
-    // Sort ads by position (top to bottom, left to right)
-    const sortedAds = [...filteredAds].sort((a, b) => {
-      if (Math.abs(a.y - b.y) < 50) { // If roughly same row
-        return a.x - b.x; // Sort by x position
-      }
-      return a.y - b.y; // Otherwise sort by y position
-    });
-    
-    // Simple pagination based on current page and items per page
+    // Paginate the filtered ads
     const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = Math.min(startIndex + itemsPerPage, sortedAds.length);
-    
-    return sortedAds.slice(startIndex, endIndex);
-  }, [ads, blockchainFilter, currentPage, itemsPerPage, getFilteredAds]);
-
-  // Detect when bubbles would go below the SVG banner and move to next page
-  useEffect(() => {
-    if (getVisibleAds().length === 0 || currentPage >= totalPages) return;
-    
-    // Get the actual banner position if available, otherwise use estimate
-    let bannerTopPosition;
-    
-    // Try to find the SVG banner element
-    const bannerElement = document.querySelector('.svg-banner-container');
-    
-    if (bannerElement) {
-      const rect = bannerElement.getBoundingClientRect();
-      bannerTopPosition = rect.top;
-    } else {
-      // Fallback: estimate banner is ~150px from bottom of viewport
-      bannerTopPosition = windowSize.height - 150;
-    }
-    
-    // Find any ads that would overlap with the banner
-    const overflowingAds = getVisibleAds().filter(ad => {
-      return ad.y + ad.size > bannerTopPosition;
-    });
-    
-    // If we have overflowing ads and we're not on the last page, go to the next page
-    if (overflowingAds.length > 0 && currentPage < totalPages) {
-      // Add a small delay to prevent rapid pagination
-      const timer = setTimeout(() => {
-        setCurrentPage(prev => prev + 1);
-      }, 300);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [windowSize, ads, blockchainFilter, currentPage, totalPages, itemsPerPage]);
+    const endIndex = startIndex + itemsPerPage;
+    return filteredAds.slice(startIndex, endIndex);
+  };
 
   // Function to handle blockchain filter change
   const handleBlockchainFilterChange = (blockchain) => {
@@ -833,12 +694,10 @@ function App() {
           return 50; // Desktop
         }
       };
-      
       setItemsPerPage(calculateItemsPerPage());
       
       // Update bubble sizes when window size changes
       const newMaxSize = getMaxSize();
-      
       setAds(prevAds => {
         const updatedAds = prevAds.map(ad => {
           // For bumped ads, always use the maximum size
@@ -887,9 +746,6 @@ function App() {
         // On any desktop resize, re-arrange the grid
         setTimeout(arrangeDesktopGrid, 100);
       }
-      
-      // Recalculate page distribution after layout is updated
-      setTimeout(distributeItemsAcrossPages, 500);
     };
 
     window.addEventListener('resize', handleResize);
@@ -2779,7 +2635,7 @@ function App() {
                   {/* Token list section - add z-index and proper background */}
                   <div className="relative z-10 bg-transparent">
                     {/* Multi-Section Banner (GameHub, Freelancer, Affiliate) */}
-                    <div className="w-full overflow-hidden relative svg-banner-container">
+                    <div className="w-full overflow-hidden relative">
                       {/* SVG Banner Image */}
                       <img
                         src="/FREELANCER-HUB.svg"
