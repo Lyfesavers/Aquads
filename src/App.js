@@ -389,7 +389,6 @@ function App() {
   const [newUsername, setNewUsername] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeBookingId, setActiveBookingId] = useState(null);
-  const [currentBubblePage, setCurrentBubblePage] = useState(0);
 
   // Add this function to update ads with persistence
   const updateAds = (newAds) => {
@@ -2117,150 +2116,6 @@ function App() {
     }
   }
 
-  // Add swipe gesture support for mobile
-  useEffect(() => {
-    // Only set up swipe if we have multiple pages
-    const bubblesPerPage = parseInt(document.documentElement.getAttribute('data-bubbles-per-page')) || 50;
-    const totalPages = Math.ceil((ads?.length || 0) / bubblesPerPage);
-    
-    if (totalPages <= 1) return;
-    
-    let touchStartX = 0;
-    let touchEndX = 0;
-    
-    const handleTouchStart = (e) => {
-      touchStartX = e.changedTouches[0].screenX;
-    };
-    
-    const handleTouchEnd = (e) => {
-      touchEndX = e.changedTouches[0].screenX;
-      handleSwipe();
-    };
-    
-    const handleSwipe = () => {
-      const swipeThreshold = 50; // Minimum distance to register as swipe
-      const swipeDistance = touchEndX - touchStartX;
-      
-      if (Math.abs(swipeDistance) < swipeThreshold) return;
-      
-      if (swipeDistance > 0) {
-        // Swipe right - go to previous page
-        handlePageChange(Math.max(0, currentBubblePage - 1));
-      } else {
-        // Swipe left - go to next page
-        handlePageChange(Math.min(totalPages - 1, currentBubblePage + 1));
-      }
-    };
-    
-    // Add event listeners to the bubble container
-    const bubbleContainer = document.querySelector('.relative.min-h-screen.overflow-hidden');
-    
-    if (bubbleContainer) {
-      bubbleContainer.addEventListener('touchstart', handleTouchStart);
-      bubbleContainer.addEventListener('touchend', handleTouchEnd);
-      
-      return () => {
-        bubbleContainer.removeEventListener('touchstart', handleTouchStart);
-        bubbleContainer.removeEventListener('touchend', handleTouchEnd);
-      };
-    }
-  }, [ads, currentBubblePage]);
-
-  // Add keyboard navigation for bubble pagination
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Only handle if we have multiple pages
-      const bubblesPerPage = parseInt(document.documentElement.getAttribute('data-bubbles-per-page')) || 50;
-      const totalPages = Math.ceil((ads?.length || 0) / bubblesPerPage);
-      
-      if (totalPages <= 1) return;
-      
-      if (e.key === 'ArrowRight' || e.key === 'PageDown') {
-        // Next page
-        handlePageChange(Math.min(currentBubblePage + 1, totalPages - 1));
-      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
-        // Previous page
-        handlePageChange(Math.max(currentBubblePage - 1, 0));
-      } else if (e.key === 'Home') {
-        // First page
-        handlePageChange(0);
-      } else if (e.key === 'End') {
-        // Last page
-        handlePageChange(totalPages - 1);
-      }
-    };
-    
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [ads, currentBubblePage]);
-
-  // Handle bubble pagination based on screen size
-  useEffect(() => {
-    // Reset to first page when ads change
-    setCurrentBubblePage(0);
-    
-    // Calculate optimal bubbles per page based on screen size
-    const calculateBubblesPerPage = () => {
-      const screenWidth = window.innerWidth;
-      const screenHeight = Math.min(window.innerHeight - 250, window.innerHeight); // Account for SVG banner
-      
-      // Estimate how many bubbles can fit on screen
-      // This is a rough estimate assuming average bubble size
-      const avgBubbleSize = 100; // pixels
-      const spacing = 20; // pixels between bubbles
-      
-      const horizontalBubbles = Math.floor(screenWidth / (avgBubbleSize + spacing));
-      const verticalBubbles = Math.floor(screenHeight / (avgBubbleSize + spacing));
-      
-      // Calculate total bubbles that can fit on screen
-      const totalBubbles = horizontalBubbles * verticalBubbles;
-      
-      // Set a reasonable minimum and maximum
-      return Math.max(20, Math.min(50, totalBubbles));
-    };
-    
-    // Store bubbles per page in a data attribute for reference
-    if (ads && ads.length > 0) {
-      const bubblesPerPage = calculateBubblesPerPage();
-      document.documentElement.setAttribute('data-bubbles-per-page', bubblesPerPage);
-    }
-    
-    // Handle window resize
-    const handleResize = debounce(() => {
-      if (ads && ads.length > 0) {
-        const bubblesPerPage = calculateBubblesPerPage();
-        document.documentElement.setAttribute('data-bubbles-per-page', bubblesPerPage);
-        // Reset to first page on resize to prevent confusion
-        setCurrentBubblePage(0);
-      }
-    }, 200);
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [ads]);
-
-  // Add page transition animations
-  const handlePageChange = (newPage) => {
-    // Add animation class
-    const bubbleContainer = document.querySelector('.relative.min-h-screen.overflow-hidden');
-    if (bubbleContainer) {
-      bubbleContainer.classList.add('bubble-page-changing');
-      
-      // Wait for animation to complete before changing page
-      setTimeout(() => {
-        setCurrentBubblePage(newPage);
-        
-        // Remove animation class after page change
-        setTimeout(() => {
-          bubbleContainer.classList.remove('bubble-page-changing');
-        }, 50);
-      }, 300);
-    } else {
-      // Fallback if container not found
-      setCurrentBubblePage(newPage);
-    }
-  };
-
   // Modify the return statement to wrap everything in the Auth context provider
   return (
     <AuthContext.Provider value={{ currentUser, setCurrentUser }}>
@@ -2501,112 +2356,17 @@ function App() {
 
                 {/* Main content - allow natural scrolling */}
                 <div className="pt-20">
-                  {/* Bubbles section - with pagination filter */}
+                  {/* Bubbles section - keep it as is, remove fixed positioning */}
                   <div className="relative min-h-screen overflow-hidden">
-                    {/* Bubble Filter/Pagination */}
-                    {ads && ads.length > 0 && (
-                      <div className="bubble-pagination-controls absolute top-2 right-4 z-20 flex items-center space-x-2">
-                        <span className="text-gray-300 text-sm">Page:</span>
-                        
-                        {/* Previous page button */}
-                        <button 
-                          className="bubble-page-btn text-xs px-2 py-1 rounded bg-gray-700 text-gray-300 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                          onClick={() => handlePageChange(Math.max(currentBubblePage - 1, 0))}
-                          disabled={currentBubblePage === 0}
-                          aria-label="Previous page"
-                        >
-                          ◀
-                        </button>
-                        
-                        {/* Page buttons - with smart pagination display logic */}
-                        {Array.from({ 
-                          length: Math.ceil(
-                            ads.length / 
-                            (parseInt(document.documentElement.getAttribute('data-bubbles-per-page')) || 50)
-                          )
-                        }).map((_, index) => {
-                          // Calculate range for this page
-                          const bubblesPerPage = parseInt(document.documentElement.getAttribute('data-bubbles-per-page')) || 50;
-                          const startRange = index * bubblesPerPage + 1;
-                          const endRange = Math.min((index + 1) * bubblesPerPage, ads.length);
-                          const totalPages = Math.ceil(ads.length / bubblesPerPage);
-                          
-                          // Smart pagination UI - only show current page, first/last pages, and nearby pages
-                          const shouldShow = 
-                            index === 0 || // First page
-                            index === totalPages - 1 || // Last page
-                            Math.abs(index - currentBubblePage) <= 1; // Current page and adjacent pages
-                            
-                          // Show ellipsis for gaps
-                          const showLeftEllipsis = index === currentBubblePage - 2 && currentBubblePage > 2;
-                          const showRightEllipsis = index === currentBubblePage + 2 && currentBubblePage < totalPages - 3;
-                          
-                          if (showLeftEllipsis) {
-                            return <span key={`ellipsis-left`} className="text-gray-500">...</span>;
-                          }
-                          
-                          if (showRightEllipsis) {
-                            return <span key={`ellipsis-right`} className="text-gray-500">...</span>;
-                          }
-                          
-                          if (!shouldShow) return null;
-                          
-                          return (
-                            <button
-                              key={`page-${index}`}
-                              className={`bubble-page-btn text-xs px-2 py-1 rounded ${
-                                currentBubblePage === index 
-                                  ? 'bg-blue-600 text-white' 
-                                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                              }`}
-                              onClick={() => handlePageChange(index)}
-                              title={`Bubbles ${startRange}-${endRange}`}
-                            >
-                              {index + 1}
-                            </button>
-                          );
-                        })}
-                        
-                        {/* Next page button */}
-                        <button 
-                          className="bubble-page-btn text-xs px-2 py-1 rounded bg-gray-700 text-gray-300 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                          onClick={() => {
-                            const bubblesPerPage = parseInt(document.documentElement.getAttribute('data-bubbles-per-page')) || 50;
-                            const totalPages = Math.ceil(ads.length / bubblesPerPage);
-                            handlePageChange(Math.min(currentBubblePage + 1, totalPages - 1));
-                          }}
-                          disabled={currentBubblePage === Math.ceil(ads.length / (parseInt(document.documentElement.getAttribute('data-bubbles-per-page')) || 50)) - 1}
-                          aria-label="Next page"
-                        >
-                          ▶
-                        </button>
-                        
-                        {/* Page info */}
-                        <span className="text-gray-400 text-xs ml-2">
-                          {(() => {
-                            const bubblesPerPage = parseInt(document.documentElement.getAttribute('data-bubbles-per-page')) || 50;
-                            const startRange = currentBubblePage * bubblesPerPage + 1;
-                            const endRange = Math.min((currentBubblePage + 1) * bubblesPerPage, ads.length);
-                            return `${startRange}-${endRange} of ${ads.length}`;
-                          })()}
-                        </span>
-                      </div>
-                    )}
-                    
                     {/* Ads */}
                     {ads && ads.length > 0 ? (
-                      // Only show bubbles for the current page (using dynamic bubbles per page)
-                      ads.slice(
-                        currentBubblePage * (parseInt(document.documentElement.getAttribute('data-bubbles-per-page')) || 50), 
-                        (currentBubblePage + 1) * (parseInt(document.documentElement.getAttribute('data-bubbles-per-page')) || 50)
-                      ).map(ad => {
+                      ads.map(ad => {
                         const { x, y } = ensureInViewport(
                           ad.x,
                           ad.y,
                           ad.size,
                           windowSize.width,
-                          // Limit the height to prevent bubbles from going below the SVG banner
-                          Math.min(windowSize.height - 250, windowSize.height),
+                          windowSize.height,
                           ads,
                           ad.id
                         );
