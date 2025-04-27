@@ -33,57 +33,50 @@ const ResetPasswordModal = ({ show, onHide, username, referralCode }) => {
     }
   };
 
-  // Prevent event bubbling that might cause the modal to close
-  const stopPropagation = (e) => {
-    e.stopPropagation();
-  };
-
   return (
     <Modal show={show} onHide={onHide} centered backdrop="static">
-      <div onClick={stopPropagation}>
-        <Modal.Header closeButton>
-          <Modal.Title>Reset Password</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {success ? (
-            <Alert variant="success">
-              Password reset successful! You can now log in with your new password.
-            </Alert>
-          ) : (
-            <Form onSubmit={handleSubmit}>
-              {error && <Alert variant="danger">{error}</Alert>}
-              <Form.Group className="mb-3">
-                <Form.Label>New Password</Form.Label>
-                <Form.Control
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  minLength={6}
-                />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Confirm New Password</Form.Label>
-                <Form.Control
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  minLength={6}
-                />
-              </Form.Group>
-              <Button
-                variant="primary"
-                type="submit"
-                disabled={isLoading}
-                className="w-100"
-              >
-                {isLoading ? 'Resetting Password...' : 'Reset Password'}
-              </Button>
-            </Form>
-          )}
-        </Modal.Body>
-      </div>
+      <Modal.Header closeButton>
+        <Modal.Title>Reset Password</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        {success ? (
+          <Alert variant="success">
+            Password reset successful! You can now log in with your new password.
+          </Alert>
+        ) : (
+          <Form onSubmit={handleSubmit}>
+            {error && <Alert variant="danger">{error}</Alert>}
+            <Form.Group className="mb-3">
+              <Form.Label>New Password</Form.Label>
+              <Form.Control
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                minLength={6}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Confirm New Password</Form.Label>
+              <Form.Control
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={6}
+              />
+            </Form.Group>
+            <Button
+              variant="primary"
+              type="submit"
+              disabled={isLoading}
+              className="w-100"
+            >
+              {isLoading ? 'Resetting Password...' : 'Reset Password'}
+            </Button>
+          </Form>
+        )}
+      </Modal.Body>
     </Modal>
   );
 };
