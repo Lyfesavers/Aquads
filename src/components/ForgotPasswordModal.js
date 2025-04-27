@@ -32,7 +32,14 @@ const ForgotPasswordModal = ({ show, onHide }) => {
 
   return (
     <>
-      <Modal show={show && !showResetModal} onHide={onHide} centered backdrop="static">
+      <Modal 
+        show={show && !showResetModal} 
+        onHide={onHide} 
+        centered 
+        enforceFocus={true}
+        container={document.body}
+        restoreFocus={true}
+      >
         <Modal.Header closeButton>
           <Modal.Title>Forgot Password</Modal.Title>
         </Modal.Header>

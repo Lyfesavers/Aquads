@@ -28,6 +28,16 @@ const LoginModal = ({ onClose, onLogin, onCreateAccount }) => {
     setError('');
   };
 
+  const handleOpenForgotPassword = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowForgotPassword(true);
+  };
+
+  const handleCloseForgotPassword = () => {
+    setShowForgotPassword(false);
+  };
+
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[999999]">
@@ -93,7 +103,7 @@ const LoginModal = ({ onClose, onLogin, onCreateAccount }) => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowForgotPassword(true)}
+                  onClick={handleOpenForgotPassword}
                   className="text-blue-400 hover:text-blue-300 text-sm"
                 >
                   Forgot Password?
@@ -110,10 +120,12 @@ const LoginModal = ({ onClose, onLogin, onCreateAccount }) => {
         </div>
       </div>
 
-      <ForgotPasswordModal
-        show={showForgotPassword}
-        onHide={() => setShowForgotPassword(false)}
-      />
+      {showForgotPassword && (
+        <ForgotPasswordModal
+          show={showForgotPassword}
+          onHide={handleCloseForgotPassword}
+        />
+      )}
     </>
   );
 }

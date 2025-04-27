@@ -34,7 +34,14 @@ const ResetPasswordModal = ({ show, onHide, username, referralCode }) => {
   };
 
   return (
-    <Modal show={show} onHide={onHide} centered backdrop="static">
+    <Modal 
+      show={show} 
+      onHide={onHide} 
+      centered 
+      enforceFocus={true}
+      container={document.body}
+      restoreFocus={true}
+    >
       <Modal.Header closeButton>
         <Modal.Title>Reset Password</Modal.Title>
       </Modal.Header>
