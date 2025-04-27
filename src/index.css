@@ -9,6 +9,127 @@ body {
   overflow: hidden;
 }
 
+/* Bubble Pagination System */
+.bubble-overflow-container {
+  position: relative;
+}
+
+/* Default: display all bubbles */
+.bubble-overflow-container[data-page="1"] .bubble-overflow {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.bubble-overflow-container[data-page="2"] .bubble-container:not(.bubble-overflow) {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+/* By default, show page 1 */
+.bubble-overflow-container:not([data-page]) {
+  content: "1";
+}
+
+.bubble-overflow-container:not([data-page]) .bubble-overflow {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Navigation arrows */
+.bubble-nav-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.bubble-nav-arrow:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+.bubble-nav-left {
+  left: 20px;
+}
+
+.bubble-nav-right {
+  right: 20px;
+}
+
+/* Pagination dots */
+.bubble-pagination {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 10;
+}
+
+.bubble-page-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.bubble-page-dot:hover {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.bubble-page-dot.active {
+  background-color: white;
+  transform: scale(1.2);
+}
+
+/* Hide overflow bubbles by default on first load */
+.bubble-overflow {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Mobile swipe indicator */
+@media (max-width: 768px) {
+  .bubble-pagination {
+    bottom: 10px;
+  }
+  
+  .bubble-nav-arrow {
+    width: 30px;
+    height: 30px;
+  }
+  
+  /* Add swipe hint message */
+  .bubble-overflow-container::after {
+    content: "Swipe for more >";
+    position: absolute;
+    bottom: 40px;
+    right: 20px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 14px;
+    display: none;
+  }
+  
+  .bubble-overflow-container[data-has-overflow="true"]::after {
+    display: block;
+  }
+}
+
 .bubble {
   border-radius: 50%;
   position: relative;
