@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Connection, PublicKey, Transaction, SystemProgram } from '@solana/web3.js';
 import { Buffer } from 'buffer';
 import { 
@@ -43,6 +43,8 @@ import emailService from './services/emailService';
 import emailjs from '@emailjs/browser';
 import NotificationBell from './components/NotificationBell';
 import logger from './utils/logger';
+import './App.css';
+import FilterControls from './components/FilterControls';
 
 // Simple debounce function implementation
 const debounce = (func, wait) => {
@@ -85,6 +87,31 @@ function getResponsiveSize(baseSize) {
 function getMaxSize() {
   return getResponsiveSize(BASE_MAX_SIZE);
 }
+
+// Define blockchain options for filters and display
+const BLOCKCHAIN_OPTIONS = [
+  { value: 'all', label: 'All Blockchains' },
+  { value: 'ethereum', label: 'Ethereum' },
+  { value: 'bsc', label: 'Binance Smart Chain' },
+  { value: 'polygon', label: 'Polygon' },
+  { value: 'solana', label: 'Solana' },
+  { value: 'avalanche', label: 'Avalanche' },
+  { value: 'arbitrum', label: 'Arbitrum' },
+  { value: 'optimism', label: 'Optimism' },
+  { value: 'base', label: 'Base' },
+  { value: 'sui', label: 'Sui' },
+  { value: 'near', label: 'NEAR' },
+  { value: 'fantom', label: 'Fantom' },
+  { value: 'tron', label: 'TRON' },
+  { value: 'cronos', label: 'Cronos' },
+  { value: 'celo', label: 'Celo' },
+  { value: 'harmony', label: 'Harmony' },
+  { value: 'polkadot', label: 'Polkadot' },
+  { value: 'cosmos', label: 'Cosmos' },
+  { value: 'aptos', label: 'Aptos' },
+  { value: 'flow', label: 'Flow' },
+  { value: 'cardano', label: 'Cardano' }
+];
 
 const SHRINK_RATE = 4; // Amount to shrink by each interval
 const SHRINK_INTERVAL = 30000; // 30 seconds
@@ -389,6 +416,63 @@ function App() {
   const [newUsername, setNewUsername] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeBookingId, setActiveBookingId] = useState(null);
+  
+  // New state for blockchain filter and pagination
+  const [blockchainFilter, setBlockchainFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(50);
+  const [totalPages, setTotalPages] = useState(1);
+
+  // Determine how many bubbles to show per page based on screen size
+  useEffect(() => {
+    const calculateItemsPerPage = () => {
+      if (windowSize.width <= 480) {
+        return 25; // Mobile
+      } else if (windowSize.width <= 768) {
+        return 35; // Tablet
+      } else {
+        return 50; // Desktop
+      }
+    };
+    setItemsPerPage(calculateItemsPerPage());
+  }, [windowSize]);
+
+  // Calculate total pages whenever ads or filter changes
+  useEffect(() => {
+    const filteredAds = blockchainFilter === 'all' 
+      ? ads 
+      : ads.filter(ad => (ad.blockchain || 'ethereum').toLowerCase() === blockchainFilter.toLowerCase());
+    
+    setTotalPages(Math.max(1, Math.ceil(filteredAds.length / itemsPerPage)));
+    
+    // Reset to page 1 when filter changes
+    if (currentPage > Math.ceil(filteredAds.length / itemsPerPage)) {
+      setCurrentPage(1);
+    }
+  }, [ads, blockchainFilter, itemsPerPage]);
+
+  // Function to get currently visible ads
+  const getVisibleAds = () => {
+    const filteredAds = blockchainFilter === 'all' 
+      ? ads 
+      : ads.filter(ad => (ad.blockchain || 'ethereum').toLowerCase() === blockchainFilter.toLowerCase());
+    
+    // Paginate the filtered ads
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredAds.slice(startIndex, endIndex);
+  };
+
+  // Function to handle blockchain filter change
+  const handleBlockchainFilterChange = (blockchain) => {
+    setBlockchainFilter(blockchain);
+    setCurrentPage(1); // Reset to first page when filter changes
+  };
+
+  // Function to handle page change
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
 
   // Add this function to update ads with persistence
   const updateAds = (newAds) => {
@@ -599,6 +683,18 @@ function App() {
         width: window.innerWidth,
         height: window.innerHeight
       });
+      
+      // Calculate items per page based on new window size
+      const calculateItemsPerPage = () => {
+        if (window.innerWidth <= 480) {
+          return 25; // Mobile
+        } else if (window.innerWidth <= 768) {
+          return 35; // Tablet
+        } else {
+          return 50; // Desktop
+        }
+      };
+      setItemsPerPage(calculateItemsPerPage());
       
       // Update bubble sizes when window size changes
       const newMaxSize = getMaxSize();
@@ -2356,18 +2452,33 @@ function App() {
 
                 {/* Main content - allow natural scrolling */}
                 <div className="pt-20">
+                  {/* Filter controls */}
+                  <div className="container mx-auto px-4">
+                    <FilterControls 
+                      currentBlockchain={blockchainFilter}
+                      onBlockchainChange={handleBlockchainFilterChange}
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={handlePageChange}
+                      itemsPerPage={itemsPerPage}
+                      totalItems={blockchainFilter === 'all' 
+                        ? ads.length 
+                        : ads.filter(ad => (ad.blockchain || 'ethereum').toLowerCase() === blockchainFilter.toLowerCase()).length}
+                    />
+                  </div>
+                  
                   {/* Bubbles section - keep it as is, remove fixed positioning */}
                   <div className="relative min-h-screen overflow-hidden">
                     {/* Ads */}
-                    {ads && ads.length > 0 ? (
-                      ads.map(ad => {
+                    {getVisibleAds().length > 0 ? (
+                      getVisibleAds().map(ad => {
                         const { x, y } = ensureInViewport(
                           ad.x,
                           ad.y,
                           ad.size,
                           windowSize.width,
                           windowSize.height,
-                          ads,
+                          getVisibleAds(),
                           ad.id
                         );
 
@@ -2498,8 +2609,25 @@ function App() {
                         );
                       })
                     ) : (
-                      <div className="flex items-center justify-center h-screen">
-                        <p className="text-gray-500">Loading ads...</p>
+                      <div className="flex items-center justify-center min-h-[50vh] flex-col">
+                        {isLoading ? (
+                          <p className="text-gray-400 text-xl">Loading ads...</p>
+                        ) : (
+                          <>
+                            <p className="text-gray-400 text-xl mb-2">No projects found</p>
+                            {blockchainFilter !== 'all' && (
+                              <p className="text-gray-500">
+                                No projects found for {BLOCKCHAIN_OPTIONS.find(option => option.value === blockchainFilter)?.label || blockchainFilter}.
+                                <button 
+                                  className="ml-2 text-blue-400 hover:text-blue-300 underline"
+                                  onClick={() => handleBlockchainFilterChange('all')}
+                                >
+                                  View all projects
+                                </button>
+                              </p>
+                            )}
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
