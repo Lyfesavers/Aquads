@@ -2103,9 +2103,9 @@ function App() {
         } else if (screenWidth >= 1800) {
           initialColumns = 14;
         } else if (screenWidth >= 1440) {
-          initialColumns = 10;
+          initialColumns = 14;
         } else if (screenWidth >= 1200) {
-          initialColumns = 7;
+          initialColumns = 8;
         } else if (screenWidth >= 1000) {
           initialColumns = 6;
         } else {
@@ -2113,7 +2113,7 @@ function App() {
         }
         
         // Calculate margins and spacing
-        const initialHorizontalMargin = screenWidth >= 1440 ? 10 : 20;
+        const initialHorizontalMargin = screenWidth >= 1440 ? 10 : 10;
         const initialVerticalMargin = 30;
         
         // Calculate available width and cell size
@@ -2193,9 +2193,9 @@ function App() {
     } else if (screenWidth >= 1800) {
       columns = 14;
     } else if (screenWidth >= 1440) {
-      columns = 10;
+      columns = 14;
     } else if (screenWidth >= 1200) {
-      columns = 7;
+      columns = 8;
     } else if (screenWidth >= 1000) {
       columns = 6;
     } else {
@@ -2204,7 +2204,7 @@ function App() {
     
     // Calculate margins and spacing
     // Use tighter spacing for known screen resolutions to fit the desired number of bubbles
-    const horizontalMargin = screenWidth >= 1440 ? 10 : 20;
+    const horizontalMargin = screenWidth >= 1440 ? 10 : 10;
     const verticalMargin = 30;
     
     // Calculate available width and the cell size
