@@ -11,7 +11,7 @@ import { Button } from 'react-bootstrap';
 import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
 import EditServiceModal from './EditServiceModal';
-import { FaTelegram, FaTwitter, FaDiscord, FaEnvelope, FaLinkedin, FaGlobe, FaCrown } from 'react-icons/fa';
+import { FaTelegram, FaTwitter, FaDiscord, FaEnvelope, FaLinkedin, FaGlobe, FaCrown, FaCheck } from 'react-icons/fa';
 import BookingButton from './BookingButton';
 import Dashboard from './Dashboard';
 import PremiumBadge from './PremiumBadge';
@@ -1024,7 +1024,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                             />
                             <div className="flex-1">
                               <div className="flex items-center justify-between">
-                                <h4 className="font-medium">{service.seller?.username}</h4>
+                                <h4 className="font-medium">
+                                  {service.seller?.username}
+                                  {service.isPremium && (
+                                    <FaCheck className="inline-block ml-1 text-yellow-500" />
+                                  )}
+                                </h4>
                                 {service.linkedin && (
                                   <a
                                     href={service.linkedin}
