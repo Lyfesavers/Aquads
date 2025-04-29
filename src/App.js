@@ -2095,15 +2095,15 @@ function App() {
         
         // Specific optimizations for known screen sizes based on user testing
         if (screenWidth === 2560 && screenHeight === 1440) {
-          initialColumns = 10; // Optimized for 70 bubbles on 2560x1440
+          initialColumns = 15; // Optimized for 70 bubbles on 2560x1440
         } else if (screenWidth === 1366 && screenHeight === 768) {
-          initialColumns = 8; // Optimized for 32 bubbles on 1366x768
+          initialColumns = 9; // Optimized for 32 bubbles on 1366x768
         } else if (screenWidth >= 2400) {
-          initialColumns = 10; // Similar to 2560x1440
+          initialColumns = 16; // Similar to 2560x1440
         } else if (screenWidth >= 1800) {
-          initialColumns = 9;
+          initialColumns = 14;
         } else if (screenWidth >= 1440) {
-          initialColumns = 8;
+          initialColumns = 10;
         } else if (screenWidth >= 1200) {
           initialColumns = 7;
         } else if (screenWidth >= 1000) {
@@ -2185,15 +2185,15 @@ function App() {
     
     // Specific optimizations for known screen sizes based on user testing
     if (screenWidth === 2560 && screenHeight === 1440) {
-      columns = 10; // Optimized for 70 bubbles on 2560x1440
+      columns = 15; // Optimized for 70 bubbles on 2560x1440
     } else if (screenWidth === 1366 && screenHeight === 768) {
-      columns = 8; // Optimized for 32 bubbles on 1366x768
+      columns = 9; // Optimized for 32 bubbles on 1366x768
     } else if (screenWidth >= 2400) {
-      columns = 10; // Similar to 2560x1440
+      columns = 16; // Similar to 2560x1440
     } else if (screenWidth >= 1800) {
-      columns = 9;
+      columns = 14;
     } else if (screenWidth >= 1440) {
-      columns = 8;
+      columns = 10;
     } else if (screenWidth >= 1200) {
       columns = 7;
     } else if (screenWidth >= 1000) {
