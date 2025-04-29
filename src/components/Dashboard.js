@@ -1075,6 +1075,29 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                         </div>
                       </div>
                     )}
+                    
+                    {/* XPX Card Button */}
+                    <div className="mt-6">
+                      <a 
+                        href="https://dash.xpxpay.com/register?ref=38053024" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="block rounded-lg overflow-hidden shadow-lg transform transition-transform hover:scale-105"
+                      >
+                        <div className="relative">
+                          <div className="bg-gradient-to-r from-green-500 to-purple-600 text-white px-6 py-4 rounded-t-lg font-bold text-center text-xl">
+                            GET YOUR XPX CARD
+                          </div>
+                          <div className="bg-gray-800 p-4 flex justify-center">
+                            <img 
+                              src="/xpx-card.png" 
+                              alt="XPX Card" 
+                              className="h-48 object-contain"
+                            />
+                          </div>
+                        </div>
+                      </a>
+                    </div>
                   </div>
                 )}
               </div>
