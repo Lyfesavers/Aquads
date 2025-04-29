@@ -37,6 +37,7 @@ import Whitepaper from './components/Whitepaper';
 import HowTo from './components/HowTo';
 import Affiliate from './components/Affiliate';
 import Terms from './components/Terms';
+import BannerDisplay from './components/BannerDisplay';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import emailService from './services/emailService';
@@ -2733,6 +2734,10 @@ function App() {
                         </Link>
                       </div>
                     </div>
+                    
+                    {/* Banner Ad Display */}
+                    <BannerDisplay />
+                    
                     <TokenList 
                       currentUser={currentUser}
                       showNotification={showNotification}
