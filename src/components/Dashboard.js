@@ -1046,6 +1046,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                     {/* Points Rules */}
                     <div className="text-sm text-gray-400 mt-4">
                       <h4 className="text-lg font-medium text-white mb-2">Points Earning Rules</h4>
+                      <p>• Earn 20 points for voting on a project bubble</p>
                       <p>• Earn 50 points for completing social media raids</p>
                       <p>• Earn 100 points for each new affiliate</p>
                       <p>• Earn 200 points for each game vote in the gamehub</p>
