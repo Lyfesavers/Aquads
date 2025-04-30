@@ -38,7 +38,7 @@ import HowTo from './components/HowTo';
 import Affiliate from './components/Affiliate';
 import Terms from './components/Terms';
 import BannerDisplay from './components/BannerDisplay';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import emailService from './services/emailService';
 import emailjs from '@emailjs/browser';
@@ -335,35 +335,30 @@ function calculateDistance(x1, y1, x2, y2) {
 const AuthContext = React.createContext();
 
 // Create a custom NavigationListener component to track navigation events
-const NavigationListener = ({ onNavigate }) => {
-  useEffect(() => {
-    // Handle initial navigation
-    onNavigate();
-    
-    // Use MutationObserver to detect navigation changes through component unmounts/mounts
-    // This works with both history API navigation and Link component navigation
-    const observer = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        if (mutation.type === 'childList' && 
-            (mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0)) {
-          // Route change detected
-          onNavigate();
-          break;
-        }
-      }
-    });
-    
-    // Observe the main app container
-    const container = document.getElementById('root');
-    if (container) {
-      observer.observe(container, { childList: true, subtree: true });
-    }
-    
-    // Clean up
-    return () => observer.disconnect();
-  }, [onNavigate]);
+const NavigationListener = ({ onNavigate, arrangeDesktopGrid, adjustBubblesForMobile }) => {
+  const location = useLocation();
+  const prevLocationRef = useRef(location);
   
-  return null; // This component doesn't render anything
+  useEffect(() => {
+    if (location.pathname !== prevLocationRef.current.pathname) {
+      onNavigate();
+      prevLocationRef.current = location;
+      
+      // Immediately arrange bubbles when returning to the main page
+      if (location.pathname === '/') {
+        // Small timeout to ensure DOM is ready
+        setTimeout(() => {
+          if (window.innerWidth > 480) {
+            arrangeDesktopGrid();
+          } else {
+            adjustBubblesForMobile();
+          }
+        }, 50);
+      }
+    }
+  }, [location, onNavigate, arrangeDesktopGrid, adjustBubblesForMobile]);
+  
+  return null;
 };
 
 function App() {
@@ -2155,6 +2150,11 @@ function App() {
       return;
     }
     
+    // Add transition for immediate positioning (will be faster than the default)
+    bubbles.forEach(bubble => {
+      bubble.style.transition = 'transform 0.05s ease-out';
+    });
+    
     // Get all bubbles as an array
     const bubblesArray = Array.from(bubbles);
     
@@ -2227,7 +2227,7 @@ function App() {
       }
     });
     
-    // Now place each bubble in its grid cell
+    // Now place each bubble in its grid cell (immediately)
     sortedBubbles.forEach((bubble, index) => {
       const row = Math.floor(index / columns);
       const column = index % columns;
@@ -2259,18 +2259,14 @@ function App() {
       }
     });
     
-    // Only update model if positions actually changed and we're not skipping
+    // Update model immediately if positions changed and we're not skipping
     if (positionsChanged && !window.skipNextModelUpdate) {
-      // Use a timeout to allow DOM to settle and prevent rapid state updates
-      setTimeout(() => {
-        updateModelFromDomPositions();
-        window.isArrangingDesktopGrid = false;
-      }, 200); // Increased delay
-    } else {
-      // Clear the skip flag if it was set
-      window.skipNextModelUpdate = false;
-      window.isArrangingDesktopGrid = false;
+      updateModelFromDomPositions();
     }
+    
+    // Reset flag and clear arrangement flag immediately
+    window.skipNextModelUpdate = false;
+    window.isArrangingDesktopGrid = false;
   }
 
   // Modify the return statement to wrap everything in the Auth context provider
@@ -2291,7 +2287,9 @@ function App() {
                   logger.error('Route navigation token verification error:', err);
                 });
             }
-          }} 
+          }}
+          arrangeDesktopGrid={arrangeDesktopGrid}
+          adjustBubblesForMobile={adjustBubblesForMobile}
         />
         <Routes>
           <Route path="/marketplace" element={
@@ -2553,7 +2551,7 @@ function App() {
                               transform: `translate(${x}px, ${y}px)`,
                               width: `${ad.size}px`,
                               height: `${ad.size}px`,
-                              transition: 'transform 0.3s ease-out',
+                              transition: 'transform 0.1s ease-out', // Faster transition
                               zIndex: ad.isBumped ? 2 : 1
                             }}
                           >
