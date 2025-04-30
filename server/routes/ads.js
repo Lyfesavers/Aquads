@@ -445,8 +445,22 @@ router.post('/:id/vote', auth, async (req, res) => {
       return res.status(404).json({ error: 'Ad not found' });
     }
 
+    // Get user to check points history
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
     // Check if user already voted
     const existingVote = ad.voterData.find(voter => voter.userId === userId);
+    
+    // Flag to determine if we need to award points
+    let shouldAwardPoints = false;
+    
+    // Check if user has already received points for voting on this ad
+    const alreadyReceivedPoints = user.pointsHistory.some(
+      entry => entry.reason === `Voted on bubble: ${adId}`
+    );
     
     if (existingVote) {
       // If voting the same way, do nothing
@@ -489,6 +503,26 @@ router.post('/:id/vote', auth, async (req, res) => {
         }
       );
       
+      // Award points if they haven't received them before
+      shouldAwardPoints = !alreadyReceivedPoints;
+      
+      if (shouldAwardPoints) {
+        // Award 20 points for voting on this ad
+        await User.findByIdAndUpdate(
+          userId,
+          {
+            $inc: { points: 20 },
+            $push: {
+              pointsHistory: {
+                amount: 20,
+                reason: `Voted on bubble: ${adId}`,
+                createdAt: new Date()
+              }
+            }
+          }
+        );
+      }
+      
       // Emit socket event for real-time updates
       socket.getIO().emit('adVoteUpdated', {
         adId: updatedAd.id,
@@ -501,40 +535,66 @@ router.post('/:id/vote', auth, async (req, res) => {
         adId: updatedAd.id,
         bullishVotes: updatedAd.bullishVotes,
         bearishVotes: updatedAd.bearishVotes,
-        userVote: voteType
+        userVote: voteType,
+        pointsAwarded: shouldAwardPoints ? 20 : 0
+      });
+    } else {
+      // New vote - update vote counts and add user to voterData
+      let updates = {};
+      
+      if (voteType === 'bullish') {
+        updates.bullishVotes = ad.bullishVotes + 1;
+      } else {
+        updates.bearishVotes = ad.bearishVotes + 1;
+      }
+      
+      updates.$push = { voterData: { userId, voteType } };
+      
+      const updatedAd = await Ad.findByIdAndUpdate(
+        ad._id,
+        updates,
+        { new: true }
+      );
+      
+      // Award points for first vote on this ad
+      shouldAwardPoints = !alreadyReceivedPoints;
+      
+      if (shouldAwardPoints) {
+        // Award 20 points for voting on this ad
+        await User.findByIdAndUpdate(
+          userId,
+          {
+            $inc: { points: 20 },
+            $push: {
+              pointsHistory: {
+                amount: 20,
+                reason: `Voted on bubble: ${adId}`,
+                createdAt: new Date()
+              }
+            }
+          }
+        );
+      }
+      
+      // Emit socket event for real-time updates
+      socket.getIO().emit('adVoteUpdated', {
+        adId: updatedAd.id,
+        bullishVotes: updatedAd.bullishVotes,
+        bearishVotes: updatedAd.bearishVotes
+      });
+      
+      return res.json({
+        success: true,
+        adId: updatedAd.id,
+        bullishVotes: updatedAd.bullishVotes,
+        bearishVotes: updatedAd.bearishVotes,
+        userVote: voteType,
+        pointsAwarded: shouldAwardPoints ? 20 : 0
       });
     }
-    
-    // First-time vote - update appropriate vote count and add user to voters
-    const updateField = voteType === 'bullish' ? 'bullishVotes' : 'bearishVotes';
-    const updateQuery = {
-      $inc: { [updateField]: 1 },
-      $push: { voterData: { userId, voteType } }
-    };
-
-    const updatedAd = await Ad.findByIdAndUpdate(
-      ad._id,
-      updateQuery,
-      { new: true }
-    );
-
-    // Emit socket event for real-time updates
-    socket.getIO().emit('adVoteUpdated', {
-      adId: updatedAd.id,
-      bullishVotes: updatedAd.bullishVotes,
-      bearishVotes: updatedAd.bearishVotes
-    });
-
-    res.json({
-      success: true,
-      adId: updatedAd.id,
-      bullishVotes: updatedAd.bullishVotes,
-      bearishVotes: updatedAd.bearishVotes,
-      userVote: voteType
-    });
   } catch (error) {
-    console.error('Error voting on ad:', error);
-    res.status(500).json({ error: 'Failed to submit vote' });
+    console.error('Error processing vote:', error);
+    res.status(500).json({ error: 'Failed to process vote' });
   }
 });
 

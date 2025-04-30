@@ -1186,7 +1186,12 @@ function App() {
           : ad
       ));
       
-      showNotification(`Voted ${voteType} successfully!`, 'success');
+      // Show notification about vote and points if awarded
+      if (data.pointsAwarded > 0) {
+        showNotification(`Voted ${voteType} successfully! You earned ${data.pointsAwarded} points!`, 'success');
+      } else {
+        showNotification(`Voted ${voteType} successfully!`, 'success');
+      }
     } catch (error) {
       logger.error('Error voting on ad:', error);
       showNotification(error.message || 'Failed to vote', 'error');
