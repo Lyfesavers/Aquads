@@ -440,8 +440,10 @@ function App() {
         return 70; // 2560x1440 can fit 70 bubbles
       } else if (viewportWidth === 1366 && viewportHeight === 768) {
         return 32; // 1366x768 can fit 32 bubbles
+      } else if (viewportWidth >= 400 && viewportWidth <= 420 && viewportHeight >= 900 && viewportHeight <= 930) {
+        return 48; // For mobile screens around 412x915 
       } else if (viewportWidth <= 480) {
-        return 25; // Mobile
+        return 25; // Other smaller mobile screens
       } else if (viewportWidth <= 768) {
         return 35; // Tablet
       } else if (viewportWidth >= 2400) {
