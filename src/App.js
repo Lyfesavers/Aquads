@@ -443,7 +443,7 @@ function App() {
       } else if (viewportWidth >= 400 && viewportWidth <= 420 && viewportHeight >= 900 && viewportHeight <= 930) {
         return 48; // For mobile screens around 412x915 
       } else if (viewportWidth <= 480) {
-        return 25; // Other smaller mobile screens
+        return 40; // Other smaller mobile screens
       } else if (viewportWidth <= 768) {
         return 35; // Tablet
       } else if (viewportWidth >= 2400) {
