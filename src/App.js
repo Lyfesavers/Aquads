@@ -2727,9 +2727,7 @@ function App() {
                           className="flex-1 flex items-center justify-center mobile-touch-target"
                           aria-label="Go to Game Hub"
                         >
-                          <div className="sr-only md:not-sr-only md:text-white md:text-lg md:font-bold md:bg-black/20 md:px-4 md:py-2 md:rounded-full">
-                            Game Hub
-                          </div>
+                          <div className="sr-only">Game Hub</div>
                           <div className="absolute inset-0" onClick={() => window.location.href = '/games'}></div>
                         </Link>
                         
@@ -2739,9 +2737,7 @@ function App() {
                           className="flex-1 flex items-center justify-center mobile-touch-target"
                           aria-label="Go to Freelancer Hub"
                         >
-                          <div className="sr-only md:not-sr-only md:text-white md:text-lg md:font-bold md:bg-black/20 md:px-4 md:py-2 md:rounded-full">
-                            Freelancer Hub
-                          </div>
+                          <div className="sr-only">Freelancer Hub</div>
                           <div className="absolute inset-0" onClick={() => window.location.href = '/marketplace'}></div>
                         </Link>
                         
@@ -2753,9 +2749,7 @@ function App() {
                           className="flex-1 flex items-center justify-center mobile-touch-target"
                           aria-label="Go to Telegram Mini App"
                         >
-                          <div className="sr-only md:not-sr-only md:text-white md:text-lg md:font-bold md:bg-black/20 md:px-4 md:py-2 md:rounded-full">
-                            Telegram Mini App
-                          </div>
+                          <div className="sr-only">Telegram Mini App</div>
                           <div className="absolute inset-0" onClick={() => window.open('https://t.me/aquadsbumpbot?start=_tgr_gMbuSho0MWJh', '_blank')}></div>
                         </a>
                       </div>
