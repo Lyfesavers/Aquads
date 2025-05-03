@@ -1785,15 +1785,15 @@ function App() {
       columns = 4; // For larger mobile screens (iPhone 12 Pro, etc)
     }
     
-    // Make bubbles smaller on very small screens if needed, then add a size increase for better visibility
+    // Make bubbles smaller to fit more rows
     let effectiveBubbleSize = screenWidth <= 320 ? Math.min(bubbleSize, 90) : bubbleSize;
     
-    // Increase bubble size by 10% for better visibility on mobile
-    effectiveBubbleSize = Math.round(effectiveBubbleSize * 1.1);
+    // Reduce bubble size by 15% to fit more rows vertically
+    effectiveBubbleSize = Math.round(effectiveBubbleSize * 0.85);
     
     // Calculate optimal positioning values with minimal gaps
     const horizontalGap = 5; // Fixed smaller gap between columns
-    const verticalGap = 0; // Minimal vertical gap - bubbles will be close together
+    const verticalGap = -5; // Negative vertical gap - bubbles will overlap slightly
     
     // Store original positions to restore if needed
     if (!window.originalBubblePositions) {
@@ -1827,7 +1827,7 @@ function App() {
       
       // Calculate new position with tighter spacing
       const x = horizontalGap + (col * (effectiveBubbleSize + horizontalGap));
-      // Use row * bubbleSize to make rows touch each other with minimal gap
+      // Use row * (bubbleSize + verticalGap) for tighter vertical spacing
       const y = TOP_PADDING + (row * (effectiveBubbleSize + verticalGap));
       
       // Apply the new position directly with CSS transform
