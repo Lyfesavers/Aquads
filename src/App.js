@@ -1778,9 +1778,9 @@ function App() {
     // Use more columns for better space utilization
     let columns;
     if (screenWidth <= 320) {
-      columns = 2; // For very small screens (iPhone SE etc)
+      columns = 4; // For very small screens (iPhone SE etc)
     } else if (screenWidth <= 375) {
-      columns = 3; // For medium mobile (iPhone X, etc)
+      columns = 4; // For medium mobile (iPhone X, etc)
     } else {
       columns = 4; // For larger mobile screens (iPhone 12 Pro, etc)
     }
