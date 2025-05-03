@@ -2719,26 +2719,24 @@ function App() {
                         style={{ pointerEvents: "none" }} /* Disable clicks on image */
                       />
                       
-                      {/* Clickable overlay areas with improved mobile touch handling */}
-                      <div className="absolute inset-0 flex" style={{ touchAction: "auto" }}>
+                      {/* Clickable overlay areas using <Link> and <a> directly */}
+                      <div className="absolute inset-0 flex">
                         {/* GameHub Section (left third) */}
                         <Link 
                           to="/games" 
-                          className="flex-1 flex items-center justify-center mobile-touch-target"
+                          className="flex-1 h-full block"
                           aria-label="Go to Game Hub"
                         >
-                          <div className="sr-only">Game Hub</div>
-                          <div className="absolute inset-0" onClick={() => window.location.href = '/games'}></div>
+                          <span className="sr-only">Game Hub</span>
                         </Link>
                         
                         {/* Freelancer Hub Section (middle third) */}
                         <Link 
                           to="/marketplace" 
-                          className="flex-1 flex items-center justify-center mobile-touch-target"
+                          className="flex-1 h-full block"
                           aria-label="Go to Freelancer Hub"
                         >
-                          <div className="sr-only">Freelancer Hub</div>
-                          <div className="absolute inset-0" onClick={() => window.location.href = '/marketplace'}></div>
+                          <span className="sr-only">Freelancer Hub</span>
                         </Link>
                         
                         {/* Telegram Mini App Section (right third) */}
@@ -2746,11 +2744,10 @@ function App() {
                           href="https://t.me/aquadsbumpbot?start=_tgr_gMbuSho0MWJh" 
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex-1 flex items-center justify-center mobile-touch-target"
+                          className="flex-1 h-full block"
                           aria-label="Go to Telegram Mini App"
                         >
-                          <div className="sr-only">Telegram Mini App</div>
-                          <div className="absolute inset-0" onClick={() => window.open('https://t.me/aquadsbumpbot?start=_tgr_gMbuSho0MWJh', '_blank')}></div>
+                          <span className="sr-only">Telegram Mini App</span>
                         </a>
                       </div>
                     </div>
