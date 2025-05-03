@@ -378,6 +378,15 @@ function App() {
     }
     return [];
   });
+  
+  // Detect iOS for better touch handling
+  useEffect(() => {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    if (isIOS) {
+      document.documentElement.classList.add('ios');
+    }
+  }, []);
+  
   const [currentUser, setCurrentUser] = useState(() => {
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
@@ -2702,35 +2711,50 @@ function App() {
                   <div className="relative z-10 bg-transparent">
                     {/* Multi-Section Banner (GameHub, Freelancer, Affiliate) */}
                     <div className="w-full overflow-hidden relative">
-                      {/* SVG Banner Image */}
+                      {/* Background SVG Banner Image */}
                       <img
                         src="/FREELANCER-HUB.svg"
                         alt="Navigation Banner"
                         className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px]"
+                        style={{ pointerEvents: "none" }} /* Disable clicks on image */
                       />
                       
-                      {/* Clickable overlay areas */}
-                      <div className="absolute inset-0">
+                      {/* Clickable overlay areas with improved mobile touch handling */}
+                      <div className="absolute inset-0 flex" style={{ touchAction: "auto" }}>
                         {/* GameHub Section (left third) */}
                         <Link 
                           to="/games" 
-                          className="absolute top-0 bottom-0 left-0 w-1/3"
+                          className="flex-1 flex items-center justify-center mobile-touch-target"
                           aria-label="Go to Game Hub"
-                          style={{ touchAction: "manipulation" }}
-                          onClick={() => {}} // Empty click handler to ensure proper touch events
                         >
-                          <span className="sr-only">Game Hub</span>
+                          <div className="sr-only md:not-sr-only md:text-white md:text-lg md:font-bold md:bg-black/20 md:px-4 md:py-2 md:rounded-full">
+                            Game Hub
+                          </div>
+                          <div className="absolute inset-0 sm:hidden" onClick={() => window.location.href = '/games'}>
+                            <div className="w-full h-full flex items-center justify-center">
+                              <div className="w-12 h-12 rounded-full bg-white/5 border border-white/20 flex items-center justify-center backdrop-blur-sm">
+                                <span className="text-xs font-bold text-white/80">TAP</span>
+                              </div>
+                            </div>
+                          </div>
                         </Link>
                         
                         {/* Freelancer Hub Section (middle third) */}
                         <Link 
                           to="/marketplace" 
-                          className="absolute top-0 bottom-0 left-1/3 w-1/3"
+                          className="flex-1 flex items-center justify-center mobile-touch-target"
                           aria-label="Go to Freelancer Hub"
-                          style={{ touchAction: "manipulation" }}
-                          onClick={() => {}} // Empty click handler to ensure proper touch events
                         >
-                          <span className="sr-only">Freelancer Hub</span>
+                          <div className="sr-only md:not-sr-only md:text-white md:text-lg md:font-bold md:bg-black/20 md:px-4 md:py-2 md:rounded-full">
+                            Freelancer Hub
+                          </div>
+                          <div className="absolute inset-0 sm:hidden" onClick={() => window.location.href = '/marketplace'}>
+                            <div className="w-full h-full flex items-center justify-center">
+                              <div className="w-12 h-12 rounded-full bg-white/5 border border-white/20 flex items-center justify-center backdrop-blur-sm">
+                                <span className="text-xs font-bold text-white/80">TAP</span>
+                              </div>
+                            </div>
+                          </div>
                         </Link>
                         
                         {/* Telegram Mini App Section (right third) */}
@@ -2738,12 +2762,19 @@ function App() {
                           href="https://t.me/aquadsbumpbot?start=_tgr_gMbuSho0MWJh" 
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="absolute top-0 bottom-0 left-2/3 w-1/3"
+                          className="flex-1 flex items-center justify-center mobile-touch-target"
                           aria-label="Go to Telegram Mini App"
-                          style={{ touchAction: "manipulation" }}
-                          onClick={() => {}} // Empty click handler to ensure proper touch events
                         >
-                          <span className="sr-only">Telegram Mini App</span>
+                          <div className="sr-only md:not-sr-only md:text-white md:text-lg md:font-bold md:bg-black/20 md:px-4 md:py-2 md:rounded-full">
+                            Telegram Mini App
+                          </div>
+                          <div className="absolute inset-0 sm:hidden" onClick={() => window.open('https://t.me/aquadsbumpbot?start=_tgr_gMbuSho0MWJh', '_blank')}>
+                            <div className="w-full h-full flex items-center justify-center">
+                              <div className="w-12 h-12 rounded-full bg-white/5 border border-white/20 flex items-center justify-center backdrop-blur-sm">
+                                <span className="text-xs font-bold text-white/80">TAP</span>
+                              </div>
+                            </div>
+                          </div>
                         </a>
                       </div>
                     </div>

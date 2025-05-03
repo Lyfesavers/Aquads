@@ -1083,6 +1083,40 @@ body {
   [aria-label="Go to Telegram Mini App"]:active {
     background-color: rgba(255, 255, 255, 0.1);
   }
+  
+  /* Enhance banner clickable areas on mobile */
+  .mobile-touch-target {
+    position: relative;
+    -webkit-tap-highlight-color: rgba(255, 255, 255, 0.2);
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
+    cursor: pointer;
+    z-index: 40;
+  }
+  
+  /* Add visible active state feedback */
+  .mobile-touch-target:active {
+    background-color: rgba(255, 255, 255, 0.15);
+  }
+  
+  /* Ensure no pointer events issues */
+  .mobile-touch-target:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+  }
+  
+  /* Optimize for Safari on iOS */
+  html.ios .mobile-touch-target {
+    cursor: pointer;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
 }
 
 /* Enhance bubble content with glowing text */
