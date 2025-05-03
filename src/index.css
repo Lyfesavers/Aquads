@@ -1853,6 +1853,7 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
     font-size: 24px;
     width: 40px;
     height: 40px;
+    transform: scale(1.01); /* Make vote buttons 1% bigger on mobile */
   }
   
   /* Make vote popup always visible on mobile */
