@@ -1066,6 +1066,23 @@ body {
     transform: scale(0.95) !important; 
     transition: transform 0.1s ease-out;
   }
+  
+  /* Enhance banner clickable areas on mobile */
+  [aria-label="Go to Game Hub"],
+  [aria-label="Go to Freelancer Hub"],
+  [aria-label="Go to Telegram Mini App"] {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    position: relative;
+    z-index: 10; /* Ensure these are above other elements */
+  }
+  
+  /* Add subtle active state feedback */
+  [aria-label="Go to Game Hub"]:active,
+  [aria-label="Go to Freelancer Hub"]:active,
+  [aria-label="Go to Telegram Mini App"]:active {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
 }
 
 /* Enhance bubble content with glowing text */

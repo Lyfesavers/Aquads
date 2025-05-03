@@ -2716,6 +2716,8 @@ function App() {
                           to="/games" 
                           className="absolute top-0 bottom-0 left-0 w-1/3"
                           aria-label="Go to Game Hub"
+                          style={{ touchAction: "manipulation" }}
+                          onClick={() => {}} // Empty click handler to ensure proper touch events
                         >
                           <span className="sr-only">Game Hub</span>
                         </Link>
@@ -2725,6 +2727,8 @@ function App() {
                           to="/marketplace" 
                           className="absolute top-0 bottom-0 left-1/3 w-1/3"
                           aria-label="Go to Freelancer Hub"
+                          style={{ touchAction: "manipulation" }}
+                          onClick={() => {}} // Empty click handler to ensure proper touch events
                         >
                           <span className="sr-only">Freelancer Hub</span>
                         </Link>
@@ -2736,6 +2740,8 @@ function App() {
                           rel="noopener noreferrer"
                           className="absolute top-0 bottom-0 left-2/3 w-1/3"
                           aria-label="Go to Telegram Mini App"
+                          style={{ touchAction: "manipulation" }}
+                          onClick={() => {}} // Empty click handler to ensure proper touch events
                         >
                           <span className="sr-only">Telegram Mini App</span>
                         </a>
