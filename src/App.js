@@ -2730,13 +2730,7 @@ function App() {
                           <div className="sr-only md:not-sr-only md:text-white md:text-lg md:font-bold md:bg-black/20 md:px-4 md:py-2 md:rounded-full">
                             Game Hub
                           </div>
-                          <div className="absolute inset-0 sm:hidden" onClick={() => window.location.href = '/games'}>
-                            <div className="w-full h-full flex items-center justify-center">
-                              <div className="w-12 h-12 rounded-full bg-white/5 border border-white/20 flex items-center justify-center backdrop-blur-sm">
-                                <span className="text-xs font-bold text-white/80">TAP</span>
-                              </div>
-                            </div>
-                          </div>
+                          <div className="absolute inset-0" onClick={() => window.location.href = '/games'}></div>
                         </Link>
                         
                         {/* Freelancer Hub Section (middle third) */}
@@ -2748,13 +2742,7 @@ function App() {
                           <div className="sr-only md:not-sr-only md:text-white md:text-lg md:font-bold md:bg-black/20 md:px-4 md:py-2 md:rounded-full">
                             Freelancer Hub
                           </div>
-                          <div className="absolute inset-0 sm:hidden" onClick={() => window.location.href = '/marketplace'}>
-                            <div className="w-full h-full flex items-center justify-center">
-                              <div className="w-12 h-12 rounded-full bg-white/5 border border-white/20 flex items-center justify-center backdrop-blur-sm">
-                                <span className="text-xs font-bold text-white/80">TAP</span>
-                              </div>
-                            </div>
-                          </div>
+                          <div className="absolute inset-0" onClick={() => window.location.href = '/marketplace'}></div>
                         </Link>
                         
                         {/* Telegram Mini App Section (right third) */}
@@ -2768,13 +2756,7 @@ function App() {
                           <div className="sr-only md:not-sr-only md:text-white md:text-lg md:font-bold md:bg-black/20 md:px-4 md:py-2 md:rounded-full">
                             Telegram Mini App
                           </div>
-                          <div className="absolute inset-0 sm:hidden" onClick={() => window.open('https://t.me/aquadsbumpbot?start=_tgr_gMbuSho0MWJh', '_blank')}>
-                            <div className="w-full h-full flex items-center justify-center">
-                              <div className="w-12 h-12 rounded-full bg-white/5 border border-white/20 flex items-center justify-center backdrop-blur-sm">
-                                <span className="text-xs font-bold text-white/80">TAP</span>
-                              </div>
-                            </div>
-                          </div>
+                          <div className="absolute inset-0" onClick={() => window.open('https://t.me/aquadsbumpbot?start=_tgr_gMbuSho0MWJh', '_blank')}></div>
                         </a>
                       </div>
                     </div>
