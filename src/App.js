@@ -2727,14 +2727,16 @@ function App() {
                           <span className="sr-only">Freelancer Hub</span>
                         </Link>
                         
-                        {/* Affiliate Program Section (right third) */}
-                        <Link 
-                          to="/affiliate" 
+                        {/* Telegram Mini App Section (right third) */}
+                        <a 
+                          href="https://t.me/aquadsbumpbot?start=_tgr_gMbuSho0MWJh" 
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="absolute top-0 bottom-0 left-2/3 w-1/3"
-                          aria-label="Go to Affiliate Program"
+                          aria-label="Go to Telegram Mini App"
                         >
-                          <span className="sr-only">Affiliate Program</span>
-                        </Link>
+                          <span className="sr-only">Telegram Mini App</span>
+                        </a>
                       </div>
                     </div>
                     
