@@ -699,6 +699,15 @@ function App() {
       }));
 
       setAds(updatedAds);
+      
+      // Recalculate bubble layout after size changes
+      setTimeout(() => {
+        if (window.innerWidth <= 480) {
+          adjustBubblesForMobile();
+        } else {
+          arrangeDesktopGrid();
+        }
+      }, 100);
     }, SHRINK_INTERVAL);
 
     return () => clearInterval(shrinkInterval);
