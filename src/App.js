@@ -1836,7 +1836,11 @@ function App() {
       if (!adA) return 1;
       if (!adB) return -1;
       
-      // Sort by bullish votes (highest first)
+      // First prioritize bumped bubbles - all bumped bubbles come before unbumped ones
+      if (adA.isBumped && !adB.isBumped) return -1;
+      if (!adA.isBumped && adB.isBumped) return 1;
+      
+      // Then sort by bullish votes (highest first)
       return (adB.bullishVotes || 0) - (adA.bullishVotes || 0);
     });
     
@@ -2099,7 +2103,11 @@ function App() {
           if (!adA) return 1;
           if (!adB) return -1;
           
-          // Sort by bullish votes (highest first)
+          // First prioritize bumped bubbles - all bumped bubbles come before unbumped ones
+          if (adA.isBumped && !adB.isBumped) return -1;
+          if (!adA.isBumped && adB.isBumped) return 1;
+          
+          // Then sort by bullish votes (highest first)
           return (adB.bullishVotes || 0) - (adA.bullishVotes || 0);
         });
         
@@ -2192,7 +2200,11 @@ function App() {
       // If we can't find the ad, put it at the end
       if (!adA) return 1;
       if (!adB) return -1;
+      // First prioritize bumped bubbles - all bumped bubbles come before unbumped ones
+      if (adA.isBumped && !adB.isBumped) return -1;
+      if (!adA.isBumped && adB.isBumped) return 1;
       
+
       // Sort by bullish votes (highest first)
       return (adB.bullishVotes || 0) - (adA.bullishVotes || 0);
     });
