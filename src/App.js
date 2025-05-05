@@ -2895,9 +2895,9 @@ function App() {
                         {votePopup.adDetails && (
                           <div className="mb-4 flex flex-col items-center">
                             <div className={`w-24 h-24 rounded-full mb-2 flex items-center justify-center text-center overflow-hidden ${votePopup.adDetails.blockchain ? `bubble-${votePopup.adDetails.blockchain.toLowerCase()}` : 'bubble-ethereum'}`}>
-                              {votePopup.adDetails.imageUrl ? (
+                              {votePopup.adDetails.logo ? (
                                 <img 
-                                  src={votePopup.adDetails.imageUrl} 
+                                  src={votePopup.adDetails.logo} 
                                   alt={votePopup.adDetails.title}
                                   className="w-16 h-16 object-contain"
                                 />
