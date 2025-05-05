@@ -427,7 +427,8 @@ function App() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(50);
   const [totalPages, setTotalPages] = useState(1);
-
+  const [votePopup, setVotePopup] = useState(null);
+  
   /**
    * Determine how many bubbles to show per page based on screen size.
    * User testing has determined optimal bubble counts for different screens:
@@ -813,12 +814,29 @@ function App() {
     }
   }, [ads.length]);
 
-  const showNotification = (message, type = 'info') => {
+  const showNotification = (message, type = 'info', adDetails = null) => {
     const id = Date.now();
-    setNotifications(prev => [...prev, { id, message, type }]);
-    setTimeout(() => {
-      setNotifications(prev => prev.filter(n => n.id !== id));
-    }, 3000);
+    
+    // Special handling for successful votes
+    if (type === 'success' && message.includes('Voted') && adDetails) {
+      setVotePopup({
+        id,
+        message,
+        type,
+        adDetails
+      });
+      
+      // Auto dismiss after 3 seconds
+      setTimeout(() => {
+        setVotePopup(null);
+      }, 3000);
+    } else {
+      // Regular notifications
+      setNotifications(prev => [...prev, { id, message, type }]);
+      setTimeout(() => {
+        setNotifications(prev => prev.filter(n => n.id !== id));
+      }, 3000);
+    }
   };
 
   const handleLogin = async (credentials) => {
@@ -1194,6 +1212,9 @@ function App() {
 
       const data = await response.json();
       
+      // Get the ad details for the notification
+      const votedAd = ads.find(ad => ad.id === adId);
+      
       // Update the ads state with the new vote counts and user's vote
       setAds(prevAds => prevAds.map(ad => 
         ad.id === adId 
@@ -1206,11 +1227,11 @@ function App() {
           : ad
       ));
       
-      // Show notification about vote and points if awarded
+      // Show enhanced notification about vote and points if awarded
       if (data.pointsAwarded > 0) {
-        showNotification(`Voted ${voteType} successfully! You earned ${data.pointsAwarded} points!`, 'success');
+        showNotification(`Voted ${voteType} successfully! You earned ${data.pointsAwarded} points!`, 'success', votedAd);
       } else {
-        showNotification(`Voted ${voteType} successfully!`, 'success');
+        showNotification(`Voted ${voteType} successfully!`, 'success', votedAd);
       }
     } catch (error) {
       logger.error('Error voting on ad:', error);
@@ -2865,7 +2886,61 @@ function App() {
                   />
                 )}
 
-                {/* Notifications */}
+                {/* Full-screen vote popup */}
+                {votePopup && (
+                  <div className="fixed inset-0 flex items-center justify-center z-[999] bg-black/70 backdrop-blur-md">
+                    <div className="bg-gray-900 border-2 border-purple-500 rounded-lg shadow-2xl max-w-md w-full p-6 transform transition-all animate-fadeIn">
+                      <div className="flex flex-col items-center">
+                        {/* Bubble image/preview */}
+                        {votePopup.adDetails && (
+                          <div className="mb-4 flex flex-col items-center">
+                            <div className={`w-24 h-24 rounded-full mb-2 flex items-center justify-center text-center overflow-hidden ${votePopup.adDetails.blockchain ? `bubble-${votePopup.adDetails.blockchain.toLowerCase()}` : 'bubble-ethereum'}`}>
+                              {votePopup.adDetails.imageUrl ? (
+                                <img 
+                                  src={votePopup.adDetails.imageUrl} 
+                                  alt={votePopup.adDetails.title}
+                                  className="w-16 h-16 object-contain"
+                                />
+                              ) : (
+                                <span className="text-lg font-bold">{votePopup.adDetails.title.substring(0, 2)}</span>
+                              )}
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-1">{votePopup.adDetails.title}</h3>
+                            <p className="text-sm text-gray-300 mb-4">
+                              {votePopup.adDetails.blockchain 
+                                ? BLOCKCHAIN_OPTIONS.find(opt => opt.value === votePopup.adDetails.blockchain.toLowerCase())?.label || votePopup.adDetails.blockchain
+                                : 'Ethereum'
+                              }
+                            </p>
+                          </div>
+                        )}
+                        
+                        {/* Thumbs up icon for bullish, thumbs down for bearish */}
+                        <div className="text-6xl mb-4">
+                          {votePopup.message.includes('bullish') ? '👍' : '👎'}
+                        </div>
+                        
+                        {/* Message */}
+                        <div className="text-center mb-6">
+                          <h2 className="text-2xl font-bold text-white mb-2">
+                            {votePopup.message.includes('bullish') ? 'Bullish Vote!' : 'Bearish Vote!'}
+                          </h2>
+                          <p className="text-lg text-gray-200">{votePopup.message}</p>
+                        </div>
+                        
+                        {/* Close button */}
+                        <button 
+                          onClick={() => setVotePopup(null)}
+                          className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-full transition duration-300"
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Regular notifications - keep these for non-vote notifications */}
                 <div className="fixed bottom-4 right-4 space-y-2 z-50">
                   {notifications.map(({ id, message, type }) => (
                     <div
