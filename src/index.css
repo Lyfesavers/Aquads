@@ -1895,16 +1895,16 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 @media (max-width: 480px) {
   .vote-popup {
     top: -60px;
-    padding: 8px 15px;
-    gap: 20px;
-    border-radius: 25px;
+    padding: 10px 20px;
+    gap: 25px;
+    border-radius: 30px;
   }
   
   .vote-button {
-    font-size: 24px;
-    width: 40px;
-    height: 40px;
-    transform: scale(1.01); /* Make vote buttons 1% bigger on mobile */
+    font-size: 32px;
+    width: 52px;
+    height: 52px;
+    transform: scale(1.05); /* Make vote buttons 5% bigger on mobile */
   }
   
   /* Make vote popup always visible on mobile */
@@ -1918,10 +1918,10 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   .vote-button::after {
     content: '';
     position: absolute;
-    top: -10px;
-    left: -10px;
-    right: -10px;
-    bottom: -10px;
+    top: -15px;
+    left: -15px;
+    right: -15px;
+    bottom: -15px;
     z-index: -1;
   }
 }
