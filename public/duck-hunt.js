@@ -11,6 +11,7 @@
   let feathers = []; // Track all feather particles
   let soundEnabled = false; // Track if sounds are enabled
   let soundsCreated = false; // Track if sounds are created
+  let gameStarted = false; // Track if game has been started
   
   // Create a silent logger that only logs in development
   const isDev = window.location.hostname === 'localhost' || 
@@ -395,104 +396,6 @@
       }
     });
     
-    // Add a sound toggle button
-    const soundButton = document.createElement('button');
-    soundButton.id = 'duck-hunt-sound-button';
-    soundButton.style.position = 'fixed';
-    soundButton.style.bottom = '80px'; // Higher position to be more visible
-    soundButton.style.right = '20px';
-    soundButton.style.backgroundColor = '#e74c3c'; // Red to grab attention
-    soundButton.style.color = 'white';
-    soundButton.style.border = 'none';
-    soundButton.style.borderRadius = '50%';
-    soundButton.style.width = '40px'; // Smaller button (was 60px)
-    soundButton.style.height = '40px'; // Smaller button (was 60px)
-    soundButton.style.fontSize = '16px'; // Smaller font (was 24px)
-    soundButton.style.display = 'flex';
-    soundButton.style.alignItems = 'center';
-    soundButton.style.justifyContent = 'center';
-    soundButton.style.boxShadow = '0 4px 10px rgba(0,0,0,0.3)';
-    soundButton.style.cursor = 'pointer';
-    soundButton.style.zIndex = '10002';
-    soundButton.innerHTML = '🔇'; // Start with sound off
-    soundButton.title = "Enable Duck Hunt Sounds";
-    
-    // Add pulsating animation to draw attention
-    const pulsateKeyframes = `
-      @keyframes soundButtonPulsate {
-        0% { transform: scale(1); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        50% { transform: scale(1.1); box-shadow: 0 0 20px rgba(231, 76, 60, 0.8); }
-        100% { transform: scale(1); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-      }
-    `;
-    const pulsateStyle = document.createElement('style');
-    pulsateStyle.textContent = pulsateKeyframes;
-    document.head.appendChild(pulsateStyle);
-    
-    // Add the pulsating animation initially to draw attention
-    soundButton.style.animation = 'soundButtonPulsate 1.5s infinite';
-    
-    // Add text label under the button
-    const soundLabel = document.createElement('div');
-    soundLabel.style.position = 'fixed';
-    soundLabel.style.bottom = '60px';
-    soundLabel.style.right = '0px';
-    soundLabel.style.width = '100px';
-    soundLabel.style.textAlign = 'center';
-    soundLabel.style.color = 'white';
-    soundLabel.style.fontFamily = 'Arial, sans-serif';
-    soundLabel.style.fontSize = '12px';
-    soundLabel.style.fontWeight = 'bold';
-    soundLabel.style.backgroundColor = 'rgba(0,0,0,0.7)';
-    soundLabel.style.padding = '3px';
-    soundLabel.style.borderRadius = '4px';
-    soundLabel.style.zIndex = '10002';
-    soundLabel.textContent = "Click for sound";
-    
-    // Toggle sound on/off when clicked
-    soundButton.onclick = function() {
-      if (!soundEnabled) {
-        // First enable - ensure audio elements are created
-        if (!soundsCreated) {
-          createSoundElements();
-        }
-        
-        soundEnabled = true;
-        soundButton.innerHTML = '🔊';
-        soundButton.title = "Disable Duck Hunt Sounds";
-        soundLabel.textContent = "Sound enabled!";
-        soundButton.style.backgroundColor = '#2ecc71'; // Green when enabled
-        
-        // Stop the pulsating animation once clicked
-        soundButton.style.animation = 'none';
-        
-        // Play game start sound
-        setTimeout(() => {
-          playSound('gameStart');
-        }, 100);
-        
-        // Hide the label after 2 seconds
-        setTimeout(() => {
-          soundLabel.style.display = 'none';
-        }, 2000);
-      } else {
-        // Toggle sound off
-        soundEnabled = false;
-        soundButton.innerHTML = '🔇';
-        soundButton.title = "Enable Duck Hunt Sounds";
-        soundLabel.textContent = "Sound disabled";
-        soundButton.style.backgroundColor = '#e74c3c'; // Red when disabled
-        
-        // Hide the label after 2 seconds
-        setTimeout(() => {
-          soundLabel.style.display = 'none';
-        }, 2000);
-      }
-    };
-    
-    document.body.appendChild(soundButton);
-    document.body.appendChild(soundLabel);
-    
     // Add gun sight cursor
     const gunSight = document.createElement('div');
     gunSight.style.position = 'fixed';
@@ -579,15 +482,30 @@
     // Add to document
     document.body.appendChild(gameContainer);
     
+    // Start animation loop
+    requestAnimationFrame(updateGame);
+    
+    // Game is now started
+    gameStarted = true;
+    
+    // Start spawning ducks occasionally
+    startDuckSpawning();
+  }
+  
+  // Start duck spawning
+  function startDuckSpawning() {
     // Start spawning ducks occasionally - less frequently (8-12 seconds)
     setInterval(spawnDuck, 8000 + Math.random() * 4000);
     
-    // Start animation loop
-    requestAnimationFrame(updateGame);
+    // Spawn first duck immediately
+    spawnDuck();
   }
   
   // Create a new duck
   function spawnDuck() {
+    // Don't spawn ducks if the game hasn't been started
+    if (!gameStarted) return;
+    
     // Limit number of ducks
     if (ducks.length >= maxDucks) return;
     
@@ -1089,10 +1007,118 @@
     }
   }
   
-  // Initialize on load
+  // Initialize only the sound button first
+  function initSoundButton() {
+    // Add a sound toggle button that also acts as a game starter
+    const soundButton = document.createElement('button');
+    soundButton.id = 'duck-hunt-sound-button';
+    soundButton.style.position = 'fixed';
+    soundButton.style.bottom = '80px'; // Higher position to be more visible
+    soundButton.style.right = '20px';
+    soundButton.style.backgroundColor = '#e74c3c'; // Red to grab attention
+    soundButton.style.color = 'white';
+    soundButton.style.border = 'none';
+    soundButton.style.borderRadius = '50%';
+    soundButton.style.width = '40px'; // Smaller button (was 60px)
+    soundButton.style.height = '40px'; // Smaller button (was 60px)
+    soundButton.style.fontSize = '16px'; // Smaller font (was 24px)
+    soundButton.style.display = 'flex';
+    soundButton.style.alignItems = 'center';
+    soundButton.style.justifyContent = 'center';
+    soundButton.style.boxShadow = '0 4px 10px rgba(0,0,0,0.3)';
+    soundButton.style.cursor = 'pointer';
+    soundButton.style.zIndex = '10002';
+    soundButton.innerHTML = '🔇'; // Start with sound off
+    soundButton.title = "Click to Start Duck Hunt Game with Sound";
+    
+    // Add pulsating animation to draw attention
+    const pulsateKeyframes = `
+      @keyframes soundButtonPulsate {
+        0% { transform: scale(1); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        50% { transform: scale(1.1); box-shadow: 0 0 20px rgba(231, 76, 60, 0.8); }
+        100% { transform: scale(1); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+      }
+    `;
+    const pulsateStyle = document.createElement('style');
+    pulsateStyle.textContent = pulsateKeyframes;
+    document.head.appendChild(pulsateStyle);
+    
+    // Add the pulsating animation initially to draw attention
+    soundButton.style.animation = 'soundButtonPulsate 1.5s infinite';
+    
+    // Add text label under the button
+    const soundLabel = document.createElement('div');
+    soundLabel.style.position = 'fixed';
+    soundLabel.style.bottom = '60px';
+    soundLabel.style.right = '0px';
+    soundLabel.style.width = '100px';
+    soundLabel.style.textAlign = 'center';
+    soundLabel.style.color = 'white';
+    soundLabel.style.fontFamily = 'Arial, sans-serif';
+    soundLabel.style.fontSize = '12px';
+    soundLabel.style.fontWeight = 'bold';
+    soundLabel.style.backgroundColor = 'rgba(0,0,0,0.7)';
+    soundLabel.style.padding = '3px';
+    soundLabel.style.borderRadius = '4px';
+    soundLabel.style.zIndex = '10002';
+    soundLabel.textContent = "Start Duck Hunt";
+    
+    // Toggle sound on/off when clicked
+    soundButton.onclick = function() {
+      if (!soundEnabled) {
+        // First enable - ensure audio elements are created
+        if (!soundsCreated) {
+          createSoundElements();
+        }
+        
+        soundEnabled = true;
+        soundButton.innerHTML = '🔊';
+        soundButton.title = "Disable Duck Hunt Sounds";
+        soundLabel.textContent = "Sound enabled!";
+        soundButton.style.backgroundColor = '#2ecc71'; // Green when enabled
+        
+        // Stop the pulsating animation once clicked
+        soundButton.style.animation = 'none';
+        
+        // Start the game if not already started
+        if (!gameStarted) {
+          init();
+          // Play game start sound
+          setTimeout(() => {
+            playSound('gameStart');
+          }, 100);
+        } else {
+          // Just play the sound if game is already started
+          playSound('gameStart');
+        }
+        
+        // Hide the label after 2 seconds
+        setTimeout(() => {
+          soundLabel.style.display = 'none';
+        }, 2000);
+      } else {
+        // Toggle sound off
+        soundEnabled = false;
+        soundButton.innerHTML = '🔇';
+        soundButton.title = "Enable Duck Hunt Sounds";
+        soundLabel.textContent = "Sound disabled";
+        soundButton.style.backgroundColor = '#e74c3c'; // Red when disabled
+        
+        // Hide the label after 2 seconds
+        setTimeout(() => {
+          soundLabel.style.display = 'none';
+        }, 2000);
+      }
+    };
+    
+    document.body.appendChild(soundButton);
+    document.body.appendChild(soundLabel);
+  }
+  
+  // Initialize on load - but only create the sound button
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', initSoundButton);
   } else {
-    init();
+    initSoundButton();
   }
 })(); 
