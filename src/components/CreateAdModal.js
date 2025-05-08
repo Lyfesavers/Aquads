@@ -1,5 +1,33 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
+import { FaCopy, FaCheck, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
+
+const BLOCKCHAIN_OPTIONS = [
+  {
+    name: 'Solana',
+    symbol: 'SOL',
+    address: 'F4HuQfUx5zsuQpxca4KQfX6uZPYtRp3Y7HYVGsuHdYVf',
+    amount: 'USDC'
+  },
+  {
+    name: 'Ethereum',
+    symbol: 'ETH',
+    address: '0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358',
+    amount: 'USDC'
+  },
+  {
+    name: 'Base',
+    symbol: 'BASE',
+    address: '0xA1ec6B1df5367a41Ff9EadEF7EC4cC25C0ff7358',
+    amount: 'USDC'
+  },
+  {
+    name: 'Sui',
+    symbol: 'SUI',
+    address: '0xe99b659efbb9a713c494eff34cff9e614fdd8f7ca00530b62c747d5c088aa877',
+    amount: 'USDC'
+  }
+];
 
 const CreateAdModal = ({ onCreateAd, onClose }) => {
   const [formData, setFormData] = useState({
@@ -7,10 +35,17 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
     logo: '',
     url: '',
     contractAddress: '',
-    blockchain: 'ethereum'
+    blockchain: 'ethereum',
+    txSignature: '',
+    paymentChain: BLOCKCHAIN_OPTIONS[0].name,
+    chainSymbol: BLOCKCHAIN_OPTIONS[0].symbol,
+    chainAddress: BLOCKCHAIN_OPTIONS[0].address
   });
   const [previewUrl, setPreviewUrl] = useState('');
   const [error, setError] = useState('');
+  const [step, setStep] = useState(1);
+  const [selectedChain, setSelectedChain] = useState(BLOCKCHAIN_OPTIONS[0]);
+  const [copiedAddress, setCopiedAddress] = useState(false);
 
   const validateImageUrl = async (url) => {
     try {
@@ -61,7 +96,13 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleCopyAddress = async () => {
+    await navigator.clipboard.writeText(selectedChain.address);
+    setCopiedAddress(true);
+    setTimeout(() => setCopiedAddress(false), 2000);
+  };
+
+  const handleInfoSubmit = (e) => {
     e.preventDefault();
     if (!previewUrl) {
       setError('Please enter a valid image URL');
@@ -73,7 +114,23 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
       return;
     }
 
-    onCreateAd(formData);
+    // Move to payment step
+    setStep(2);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.txSignature) {
+      setError('Please enter the transaction signature');
+      return;
+    }
+
+    onCreateAd({
+      ...formData,
+      paymentChain: selectedChain.name,
+      chainSymbol: selectedChain.symbol,
+      chainAddress: selectedChain.address
+    });
   };
 
   const handleChange = (e) => {
@@ -88,123 +145,193 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
   return (
     <Modal onClose={onClose}>
       <div className="text-white">
-        <h2 className="text-2xl font-bold mb-4">List New Project</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block mb-1">Title</label>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block mb-1">Contract Address</label>
-            <input
-              type="text"
-              name="contractAddress"
-              value={formData.contractAddress}
-              onChange={handleChange}
-              placeholder="Enter contract address (0x...)"
-              required
-              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block mb-1">Blockchain</label>
-            <select
-              name="blockchain"
-              value={formData.blockchain}
-              onChange={handleChange}
-              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="ethereum">Ethereum</option>
-              <option value="bsc">Binance Smart Chain</option>
-              <option value="polygon">Polygon</option>
-              <option value="solana">Solana</option>
-              <option value="avalanche">Avalanche</option>
-              <option value="arbitrum">Arbitrum</option>
-              <option value="optimism">Optimism</option>
-              <option value="base">Base</option>
-              <option value="sui">Sui</option>
-              <option value="near">NEAR</option>
-              <option value="fantom">Fantom</option>
-              <option value="tron">TRON</option>
-              <option value="cronos">Cronos</option>
-              <option value="celo">Celo</option>
-              <option value="harmony">Harmony</option>
-              <option value="moonbeam">Moonbeam</option>
-              <option value="moonriver">Moonriver</option>
-              <option value="cosmos">Cosmos</option>
-              <option value="polkadot">Polkadot</option>
-              <option value="hedera">Hedera</option>
-              <option value="kadena">Kadena</option>
-              <option value="stacks">Stacks</option>
-              <option value="oasis">Oasis</option>
-              <option value="zilliqa">Zilliqa</option>
-              <option value="elrond">MultiversX (Elrond)</option>
-              <option value="kava">Kava</option>
-              <option value="injective">Injective</option>
-              <option value="aptos">Aptos</option>
-              <option value="algorand">Algorand</option>
-              <option value="stellar">Stellar</option>
-              <option value="flow">Flow</option>
-              <option value="cardano">Cardano</option>
-              <option value="ton">TON</option>
-              <option value="tezos">Tezos</option>
-            </select>
-          </div>
-          <div>
-            <label className="block mb-1">Logo URL (GIF or PNG)</label>
-            <input
-              type="url"
-              name="logo"
-              value={formData.logo}
-              onChange={handleChange}
-              placeholder="Enter image URL (GIF or PNG)"
-              required
-              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
-            {previewUrl && (
-              <div className="mt-2 p-2 bg-gray-700 rounded">
-                <p className="text-sm text-gray-300 mb-2">Preview:</p>
-                <img
-                  src={previewUrl}
-                  alt="Logo preview"
-                  className="max-w-full h-32 object-contain mx-auto rounded"
-                />
+        <h2 className="text-2xl font-bold mb-4">
+          {step === 1 ? 'List New Project' : 'Payment for Listing'}
+          <span className="text-sm text-gray-400 ml-3">Step {step} of 2</span>
+        </h2>
+        
+        {step === 1 ? (
+          <form onSubmit={handleInfoSubmit} className="space-y-4">
+            <div>
+              <label className="block mb-1">Title</label>
+              <input
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block mb-1">Contract Address</label>
+              <input
+                type="text"
+                name="contractAddress"
+                value={formData.contractAddress}
+                onChange={handleChange}
+                placeholder="Enter contract address (0x...)"
+                required
+                className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block mb-1">Blockchain</label>
+              <select
+                name="blockchain"
+                value={formData.blockchain}
+                onChange={handleChange}
+                className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="ethereum">Ethereum</option>
+                <option value="solana">Solana</option>
+                <option value="base">Base</option>
+                <option value="sui">Sui</option>
+                <option value="bitcoin">Bitcoin</option>
+                <option value="binance">Binance</option>
+                <option value="polygon">Polygon</option>
+                <option value="avalanche">Avalanche</option>
+                <option value="arbitrum">Arbitrum</option>
+                <option value="optimism">Optimism</option>
+                <option value="flow">Flow</option>
+                <option value="cardano">Cardano</option>
+                <option value="ton">TON</option>
+                <option value="tezos">Tezos</option>
+              </select>
+            </div>
+            <div>
+              <label className="block mb-1">Logo URL (GIF or PNG)</label>
+              <input
+                type="url"
+                name="logo"
+                value={formData.logo}
+                onChange={handleChange}
+                placeholder="Enter image URL (GIF or PNG)"
+                required
+                className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+              {previewUrl && (
+                <div className="mt-2 p-2 bg-gray-700 rounded">
+                  <p className="text-sm text-gray-300 mb-2">Preview:</p>
+                  <img
+                    src={previewUrl}
+                    alt="Logo preview"
+                    className="max-w-full h-32 object-contain mx-auto rounded"
+                  />
+                </div>
+              )}
+            </div>
+            <div>
+              <label className="block mb-1">Website URL</label>
+              <input
+                type="url"
+                name="url"
+                value={formData.url}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={!!error}
+                className={`flex items-center px-4 py-2 rounded ${
+                  error 
+                    ? 'bg-gray-500 cursor-not-allowed' 
+                    : 'bg-blue-500 hover:bg-blue-600'
+                }`}
+              >
+                Next <FaArrowRight className="ml-2" />
+              </button>
+            </div>
+          </form>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4 mb-4">
+              <h3 className="text-lg font-semibold text-white mb-2">Listing Fee: $350 USDC</h3>
+              <p className="text-sm text-gray-300">
+                Your listing will be reviewed by our admins after payment confirmation. 
+                Once approved, your project will appear in the bubbles.
+              </p>
+            </div>
+            
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-white mb-4">Select Network</h3>
+              <div className="grid grid-cols-2 gap-4">
+                {BLOCKCHAIN_OPTIONS.map((chain) => (
+                  <button
+                    key={chain.symbol}
+                    type="button"
+                    onClick={() => setSelectedChain(chain)}
+                    className={`p-4 rounded-lg border ${
+                      selectedChain === chain
+                        ? 'border-blue-500 bg-blue-500/20'
+                        : 'border-gray-600 hover:border-blue-400'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span>{chain.name}</span>
+                      <span>$350 {chain.amount}</span>
+                    </div>
+                  </button>
+                ))}
               </div>
-            )}
-          </div>
-          <div>
-            <label className="block mb-1">Website URL</label>
-            <input
-              type="url"
-              name="url"
-              value={formData.url}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={!!error}
-              className={`px-4 py-2 rounded ${
-                error 
-                  ? 'bg-gray-500 cursor-not-allowed' 
-                  : 'bg-blue-500 hover:bg-blue-600'
-              }`}
-            >
-              Create Ad
-            </button>
-          </div>
-        </form>
+            </div>
+
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-white mb-4">Payment Address</h3>
+              <div className="flex items-center gap-2 p-4 bg-gray-700 rounded-lg">
+                <input
+                  type="text"
+                  value={selectedChain.address}
+                  readOnly
+                  className="bg-transparent flex-1 outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={handleCopyAddress}
+                  className="text-blue-400 hover:text-blue-300"
+                >
+                  {copiedAddress ? <FaCheck /> : <FaCopy />}
+                </button>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Transaction Signature
+              </label>
+              <input
+                type="text"
+                name="txSignature"
+                value={formData.txSignature}
+                onChange={handleChange}
+                placeholder="Enter transaction signature"
+                className="w-full p-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+              {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+            </div>
+
+            <div className="flex justify-between">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="flex items-center px-4 py-2 rounded bg-gray-600 hover:bg-gray-700"
+              >
+                <FaArrowLeft className="mr-2" /> Back
+              </button>
+              <button
+                type="submit"
+                className="flex items-center px-4 py-2 rounded bg-blue-500 hover:bg-blue-600"
+              >
+                Submit Payment
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </Modal>
   );

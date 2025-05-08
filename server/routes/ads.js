@@ -207,13 +207,32 @@ const calculateBumpAmount = (type) => {
 // POST route for creating new ad
 router.post('/', auth, async (req, res) => {
   try {
-    const { title, logo, url, contractAddress, blockchain, referredBy, x, y, preferredSize } = req.body;
+    const { 
+      title, 
+      logo, 
+      url, 
+      contractAddress, 
+      blockchain, 
+      referredBy, 
+      x, 
+      y, 
+      preferredSize,
+      txSignature,
+      paymentChain,
+      chainSymbol,
+      chainAddress 
+    } = req.body;
     
     // Use client's preferred size if provided, otherwise use MAX_SIZE
     const bubbleSize = preferredSize || MAX_SIZE;
     
     // Validate size is within acceptable range
     const validatedSize = Math.min(MAX_SIZE, Math.max(MIN_SIZE, bubbleSize));
+    
+    // Validate payment data
+    if (!txSignature) {
+      return res.status(400).json({ error: 'Transaction signature is required for listing' });
+    }
     
     console.log('Creating ad with data:', req.body);
 
@@ -228,7 +247,12 @@ router.post('/', auth, async (req, res) => {
       x: x || 0,
       y: y || 0,
       owner: req.user.username,
-      status: 'active'
+      status: 'pending', // Set to pending for admin approval
+      txSignature,
+      paymentChain,
+      chainSymbol,
+      chainAddress,
+      listingFee: 350 // $350 USDC
     });
 
     const savedAd = await ad.save();
@@ -285,6 +309,88 @@ router.post('/', auth, async (req, res) => {
       error: 'Failed to create ad', 
       message: error.message 
     });
+  }
+});
+
+// Get pending ad approvals (admin only)
+router.get('/pending', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const pendingAds = await Ad.find({ status: 'pending' }).sort({ createdAt: -1 });
+    res.json(pendingAds);
+  } catch (error) {
+    console.error('Error fetching pending ads:', error);
+    res.status(500).json({ error: 'Failed to fetch pending ads' });
+  }
+});
+
+// Approve an ad (admin only)
+router.post('/:id/approve', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const adId = req.params.id;
+    const ad = await Ad.findOne({ id: adId });
+
+    if (!ad) {
+      return res.status(404).json({ error: 'Ad not found' });
+    }
+
+    if (ad.status !== 'pending') {
+      return res.status(400).json({ error: `Ad is already ${ad.status}` });
+    }
+
+    ad.status = 'active';
+    await ad.save();
+
+    // Emit socket event for real-time updates
+    socket.emit('adUpdate', ad);
+
+    res.json({ 
+      message: 'Ad approved successfully',
+      ad
+    });
+  } catch (error) {
+    console.error('Error approving ad:', error);
+    res.status(500).json({ error: 'Failed to approve ad' });
+  }
+});
+
+// Reject an ad (admin only)
+router.post('/:id/reject', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { rejectionReason } = req.body;
+    const adId = req.params.id;
+    const ad = await Ad.findOne({ id: adId });
+
+    if (!ad) {
+      return res.status(404).json({ error: 'Ad not found' });
+    }
+
+    if (ad.status !== 'pending') {
+      return res.status(400).json({ error: `Ad is already ${ad.status}` });
+    }
+
+    ad.status = 'rejected';
+    ad.rejectionReason = rejectionReason || 'Rejected by admin';
+    await ad.save();
+
+    res.json({ 
+      message: 'Ad rejected successfully',
+      ad
+    });
+  } catch (error) {
+    console.error('Error rejecting ad:', error);
+    res.status(500).json({ error: 'Failed to reject ad' });
   }
 });
 

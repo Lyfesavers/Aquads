@@ -68,8 +68,8 @@ const adSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['active', 'pending', 'approved'],
-    default: 'active'
+    enum: ['active', 'pending', 'approved', 'rejected'],
+    default: 'pending'
   },
   contractAddress: {
     type: String,
@@ -87,6 +87,31 @@ const adSchema = new mongoose.Schema({
     type: String,
     default: 'ethereum',
     trim: true
+  },
+  // Payment fields
+  txSignature: {
+    type: String,
+    default: null
+  },
+  paymentChain: {
+    type: String,
+    default: null
+  },
+  chainSymbol: {
+    type: String,
+    default: null
+  },
+  chainAddress: {
+    type: String,
+    default: null
+  },
+  listingFee: {
+    type: Number,
+    default: 350 // $350 USDC
+  },
+  rejectionReason: {
+    type: String,
+    default: null
   },
   // Updated voting structure to track what each user voted
   bullishVotes: {
