@@ -399,15 +399,15 @@
     const soundButton = document.createElement('button');
     soundButton.id = 'duck-hunt-sound-button';
     soundButton.style.position = 'fixed';
-    soundButton.style.top = '80px'; // Position near the top instead of bottom
-    soundButton.style.right = '20px';
+    soundButton.style.top = '20px'; // Align with the filter bar
+    soundButton.style.right = '20px'; // Keep on right side
     soundButton.style.backgroundColor = '#e74c3c'; // Red to grab attention
     soundButton.style.color = 'white';
     soundButton.style.border = 'none';
     soundButton.style.borderRadius = '50%';
-    soundButton.style.width = '40px'; // Keep smaller button size
-    soundButton.style.height = '40px'; // Keep smaller button size
-    soundButton.style.fontSize = '16px'; // Keep smaller font
+    soundButton.style.width = '30px'; // Smaller to fit in the filter bar area
+    soundButton.style.height = '30px'; // Smaller to fit in the filter bar area
+    soundButton.style.fontSize = '14px'; // Smaller font for the smaller button
     soundButton.style.display = 'flex';
     soundButton.style.alignItems = 'center';
     soundButton.style.justifyContent = 'center';
@@ -415,7 +415,7 @@
     soundButton.style.cursor = 'pointer';
     soundButton.style.zIndex = '10002';
     soundButton.innerHTML = '🔇'; // Start with sound off
-    soundButton.title = "Enable Duck Hunt Sounds";
+    soundButton.title = "Duck Hunt Sound";
     
     // Add pulsating animation to draw attention
     const pulsateKeyframes = `
@@ -432,22 +432,23 @@
     // Add the pulsating animation initially to draw attention
     soundButton.style.animation = 'soundButtonPulsate 1.5s infinite';
     
-    // Add text label next to the button
+    // Add text label next to the button (removed to save space)
     const soundLabel = document.createElement('div');
     soundLabel.style.position = 'fixed';
-    soundLabel.style.top = '85px'; // Position near the top
-    soundLabel.style.right = '70px'; // Position to the left of the sound button
-    soundLabel.style.width = '100px';
+    soundLabel.style.top = '20px'; // Align with button
+    soundLabel.style.right = '60px'; // Position to the left of the sound button
+    soundLabel.style.width = '90px';
     soundLabel.style.textAlign = 'center';
     soundLabel.style.color = 'white';
     soundLabel.style.fontFamily = 'Arial, sans-serif';
-    soundLabel.style.fontSize = '12px';
+    soundLabel.style.fontSize = '11px';
     soundLabel.style.fontWeight = 'bold';
     soundLabel.style.backgroundColor = 'rgba(0,0,0,0.7)';
     soundLabel.style.padding = '3px';
     soundLabel.style.borderRadius = '4px';
     soundLabel.style.zIndex = '10002';
     soundLabel.textContent = "Duck Hunt Sound";
+    soundLabel.style.display = 'none'; // Hide initially, only show on hover/click
     
     // Toggle sound on/off when clicked
     soundButton.onclick = function() {
@@ -545,13 +546,13 @@
     const scoreDisplay = document.createElement('div');
     scoreDisplay.id = 'duck-score';
     scoreDisplay.style.position = 'fixed';
-    scoreDisplay.style.top = '20px'; // Decreased slightly to be at top of page
-    scoreDisplay.style.right = '140px'; // Positioned to the left of the sound button
+    scoreDisplay.style.top = '20px'; // Align with top items
+    scoreDisplay.style.left = '20px'; // Move to left side to avoid overlaps
     scoreDisplay.style.background = 'rgba(0, 0, 0, 0.7)';
     scoreDisplay.style.color = '#fff';
-    scoreDisplay.style.padding = '8px 12px';
+    scoreDisplay.style.padding = '5px 10px';
     scoreDisplay.style.borderRadius = '20px';
-    scoreDisplay.style.fontSize = '16px';
+    scoreDisplay.style.fontSize = '14px';
     scoreDisplay.style.fontFamily = 'Arial, sans-serif';
     scoreDisplay.style.fontWeight = 'bold';
     scoreDisplay.style.zIndex = '10000';
@@ -562,12 +563,16 @@
     function handleMobileLayout(e) {
         if (e.matches) {
             // Mobile layout
-            scoreDisplay.style.top = '70px'; // Move below the header
-            scoreDisplay.style.right = '70px'; // Adjusted for mobile
+            scoreDisplay.style.top = '60px'; // Move below the header
+            scoreDisplay.style.left = '20px'; // Keep on left
+            soundButton.style.top = '60px'; // Move down on mobile
+            soundButton.style.right = '20px'; // Keep on right
         } else {
             // Desktop layout
             scoreDisplay.style.top = '20px';
-            scoreDisplay.style.right = '140px';
+            scoreDisplay.style.left = '20px';
+            soundButton.style.top = '20px';
+            soundButton.style.right = '20px';
         }
     }
     mediaQuery.addListener(handleMobileLayout);
