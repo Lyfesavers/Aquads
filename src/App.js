@@ -951,7 +951,7 @@ function App() {
         }
       }
 
-      // Create the new ad object with explicit x and y coordinates and payment info
+      // Create the new ad object with explicit x and y coordinates
       const newAd = {
         id: `ad-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         ...adData,
@@ -973,7 +973,7 @@ function App() {
       
       setAds(prevAds => [...prevAds, createdAd]);
       setShowCreateModal(false);
-      showNotification('Project submitted for listing! It will be visible once approved by admins.', 'success');
+      showNotification('Project Listed successfully!', 'success');
     } catch (error) {
       logger.error('Error creating ad:', error);
       showNotification('Failed to List Project. Please try again.', 'error');

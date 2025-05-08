@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchBumpRequests, API_URL, fetchPendingAds, approveAd, rejectAd } from '../services/api';
+import { fetchBumpRequests, API_URL } from '../services/api';
 import BookingManagement from './BookingManagement';
 import ServiceReviews from './ServiceReviews';
 import JobList from './JobList';
@@ -42,11 +42,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [selectedTwitterRaid, setSelectedTwitterRaid] = useState(null);
   const [showEasterEgg, setShowEasterEgg] = useState(false);
   const [hasShownEasterEgg, setHasShownEasterEgg] = useState(false);
-  const [pendingListings, setPendingListings] = useState([]);
-  const [showRejectListingModal, setShowRejectListingModal] = useState(false);
-  const [selectedListing, setSelectedListing] = useState(null);
-  const [listingRejectionReason, setListingRejectionReason] = useState('');
-  const [isLoadingListings, setIsLoadingListings] = useState(false);
 
   // Fetch bump requests and banner ads when dashboard opens
   useEffect(() => {
@@ -189,12 +184,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       fetchPendingTwitterRaids();
     }
   }, [currentUser]);
-
-  useEffect(() => {
-    if (currentUser?.isAdmin && activeTab === 'admin') {
-      fetchPendingBubbleListings();
-    }
-  }, [currentUser, activeTab]);
 
   const fetchAffiliateInfo = async () => {
     try {
@@ -919,54 +908,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     setShowEasterEgg(false);
   };
 
-  // Add these new functions to handle listing approvals
-  const fetchPendingBubbleListings = async () => {
-    try {
-      setIsLoadingListings(true);
-      const listings = await fetchPendingAds();
-      setPendingListings(listings);
-    } catch (error) {
-      console.error('Error fetching pending bubble listings:', error);
-    } finally {
-      setIsLoadingListings(false);
-    }
-  };
-
-  const handleApproveListing = async (adId) => {
-    try {
-      await approveAd(adId);
-      fetchPendingBubbleListings(); // Refresh the list
-      showNotification('Bubble listing approved successfully!', 'success');
-    } catch (error) {
-      console.error('Error approving bubble listing:', error);
-      showNotification('Failed to approve listing', 'error');
-    }
-  };
-
-  const handleRejectListingClick = (listing) => {
-    setSelectedListing(listing);
-    setListingRejectionReason('');
-    setShowRejectListingModal(true);
-  };
-
-  const handleRejectListing = async () => {
-    try {
-      if (!selectedListing) return;
-      
-      await rejectAd(selectedListing.id, listingRejectionReason);
-      
-      setShowRejectListingModal(false);
-      setSelectedListing(null);
-      setListingRejectionReason('');
-      
-      fetchPendingBubbleListings(); // Refresh the list
-      showNotification('Bubble listing rejected successfully!', 'success');
-    } catch (error) {
-      console.error('Error rejecting listing:', error);
-      showNotification('Failed to reject listing', 'error');
-    }
-  };
-
   return (
     <div className="fixed inset-0 bg-gray-900 z-[999999] overflow-y-auto">
       {/* Header */}
@@ -1618,73 +1559,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   )}
                 </div>
               )}
-
-              {/* Bubble Listing Approvals */}
-              <div className="mb-8">
-                <h3 className="text-xl font-semibold text-white mb-4">Bubble Listing Approvals</h3>
-                {isLoadingListings ? (
-                  <p className="text-gray-400 text-center py-4">Loading pending listings...</p>
-                ) : pendingListings.length === 0 ? (
-                  <p className="text-gray-400 text-center py-4">No pending bubble listings to approve.</p>
-                ) : (
-                  <div className="space-y-4">
-                    {pendingListings.map(listing => (
-                      <div key={listing.id} className="bg-gray-700 rounded-lg p-4">
-                        <div className="flex items-start space-x-4">
-                          <img
-                            src={listing.logo}
-                            alt={listing.title}
-                            className="w-16 h-16 object-contain rounded"
-                          />
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                              <h4 className="text-white font-semibold">{listing.title}</h4>
-                              <span className="bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded-full text-xs">
-                                Fee: $350 USDC
-                              </span>
-                            </div>
-                            <p className="text-gray-400 text-sm">Owner: {listing.owner}</p>
-                            <p className="text-gray-400 text-sm">Blockchain: {listing.blockchain}</p>
-                            <p className="text-gray-400 text-sm">Contract: {listing.contractAddress}</p>
-                            <div className="flex items-center mt-2">
-                              <a 
-                                href={listing.url} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                className="text-blue-400 hover:text-blue-300 text-sm mr-4"
-                              >
-                                View Website
-                              </a>
-                              <a 
-                                href={`https://solscan.io/tx/${listing.txSignature}`} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                className="text-blue-400 hover:text-blue-300 text-sm"
-                              >
-                                View Transaction
-                              </a>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex justify-end mt-4 space-x-3">
-                          <button
-                            onClick={() => handleRejectListingClick(listing)}
-                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                          >
-                            Reject
-                          </button>
-                          <button
-                            onClick={() => handleApproveListing(listing.id)}
-                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
-                          >
-                            Approve
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
             </>
           )}
 
@@ -1786,40 +1660,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           points={pointsInfo.points} 
           onClose={handleCloseEasterEgg} 
         />
-      )}
-
-      {showRejectListingModal && selectedListing && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999999]">
-          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold text-white mb-4">Reject Bubble Listing</h3>
-            <p className="text-gray-300 mb-4">
-              Listing: <span className="font-semibold">{selectedListing.title}</span>
-            </p>
-            <div className="mb-4">
-              <label className="block text-gray-300 mb-2">Reason for rejection:</label>
-              <textarea
-                value={listingRejectionReason}
-                onChange={(e) => setListingRejectionReason(e.target.value)}
-                className="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white"
-                rows="3"
-              ></textarea>
-            </div>
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => setShowRejectListingModal(false)}
-                className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleRejectListing}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-              >
-                Reject Listing
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );

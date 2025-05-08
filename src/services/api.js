@@ -1011,40 +1011,4 @@ export const reconnectSocket = () => {
       logger.error('Socket reconnection error:', error);
     }
   }
-};
-
-// Fetch pending ad approvals (admin only)
-export const fetchPendingAds = async () => {
-  const response = await fetch(`${API_URL}/ads/pending`, {
-    headers: getAuthHeader()
-  });
-  if (!response.ok) throw new Error('Failed to fetch pending ads');
-  return await response.json();
-};
-
-// Approve an ad (admin only)
-export const approveAd = async (adId) => {
-  const response = await fetch(`${API_URL}/ads/${adId}/approve`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeader()
-    }
-  });
-  if (!response.ok) throw new Error('Failed to approve ad');
-  return await response.json();
-};
-
-// Reject an ad (admin only)
-export const rejectAd = async (adId, rejectionReason) => {
-  const response = await fetch(`${API_URL}/ads/${adId}/reject`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeader()
-    },
-    body: JSON.stringify({ rejectionReason })
-  });
-  if (!response.ok) throw new Error('Failed to reject ad');
-  return await response.json();
 }; 
