@@ -399,15 +399,15 @@
     const soundButton = document.createElement('button');
     soundButton.id = 'duck-hunt-sound-button';
     soundButton.style.position = 'fixed';
-    soundButton.style.bottom = '80px'; // Higher position to be more visible
+    soundButton.style.top = '80px'; // Position near the top instead of bottom
     soundButton.style.right = '20px';
     soundButton.style.backgroundColor = '#e74c3c'; // Red to grab attention
     soundButton.style.color = 'white';
     soundButton.style.border = 'none';
     soundButton.style.borderRadius = '50%';
-    soundButton.style.width = '40px'; // Smaller button (was 60px)
-    soundButton.style.height = '40px'; // Smaller button (was 60px)
-    soundButton.style.fontSize = '16px'; // Smaller font (was 24px)
+    soundButton.style.width = '40px'; // Keep smaller button size
+    soundButton.style.height = '40px'; // Keep smaller button size
+    soundButton.style.fontSize = '16px'; // Keep smaller font
     soundButton.style.display = 'flex';
     soundButton.style.alignItems = 'center';
     soundButton.style.justifyContent = 'center';
@@ -432,11 +432,11 @@
     // Add the pulsating animation initially to draw attention
     soundButton.style.animation = 'soundButtonPulsate 1.5s infinite';
     
-    // Add text label under the button
+    // Add text label next to the button
     const soundLabel = document.createElement('div');
     soundLabel.style.position = 'fixed';
-    soundLabel.style.bottom = '60px';
-    soundLabel.style.right = '0px';
+    soundLabel.style.top = '85px'; // Position near the top
+    soundLabel.style.right = '70px'; // Position to the left of the sound button
     soundLabel.style.width = '100px';
     soundLabel.style.textAlign = 'center';
     soundLabel.style.color = 'white';
@@ -447,7 +447,7 @@
     soundLabel.style.padding = '3px';
     soundLabel.style.borderRadius = '4px';
     soundLabel.style.zIndex = '10002';
-    soundLabel.textContent = "Click for sound";
+    soundLabel.textContent = "Duck Hunt Sound";
     
     // Toggle sound on/off when clicked
     soundButton.onclick = function() {
@@ -545,8 +545,8 @@
     const scoreDisplay = document.createElement('div');
     scoreDisplay.id = 'duck-score';
     scoreDisplay.style.position = 'fixed';
-    scoreDisplay.style.top = '20px'; // Increased top margin
-    scoreDisplay.style.right = '80px'; // Increased right margin to avoid menu icon
+    scoreDisplay.style.top = '20px'; // Decreased slightly to be at top of page
+    scoreDisplay.style.right = '140px'; // Positioned to the left of the sound button
     scoreDisplay.style.background = 'rgba(0, 0, 0, 0.7)';
     scoreDisplay.style.color = '#fff';
     scoreDisplay.style.padding = '8px 12px';
@@ -563,11 +563,11 @@
         if (e.matches) {
             // Mobile layout
             scoreDisplay.style.top = '70px'; // Move below the header
-            scoreDisplay.style.right = '10px';
+            scoreDisplay.style.right = '70px'; // Adjusted for mobile
         } else {
             // Desktop layout
             scoreDisplay.style.top = '20px';
-            scoreDisplay.style.right = '80px';
+            scoreDisplay.style.right = '140px';
         }
     }
     mediaQuery.addListener(handleMobileLayout);
