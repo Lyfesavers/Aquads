@@ -12,6 +12,8 @@
   let soundEnabled = false; // Track if sounds are enabled
   let soundsCreated = false; // Track if sounds are created
   let gameStarted = false; // Track if game has been started
+  let duckSpawningInterval = null; // Track interval for spawning ducks
+  let isGameRunning = false; // Track if game animation is running
   
   // Create a silent logger that only logs in development
   const isDev = window.location.hostname === 'localhost' || 
@@ -483,6 +485,7 @@
     document.body.appendChild(gameContainer);
     
     // Start animation loop
+    isGameRunning = true;
     requestAnimationFrame(updateGame);
     
     // Game is now started
@@ -494,8 +497,13 @@
   
   // Start duck spawning
   function startDuckSpawning() {
+    // Clear any existing interval to avoid duplicates
+    if (duckSpawningInterval) {
+      clearInterval(duckSpawningInterval);
+    }
+    
     // Start spawning ducks occasionally - less frequently (8-12 seconds)
-    setInterval(spawnDuck, 8000 + Math.random() * 4000);
+    duckSpawningInterval = setInterval(spawnDuck, 8000 + Math.random() * 4000);
     
     // Spawn first duck immediately
     spawnDuck();
@@ -976,8 +984,10 @@
       }
     }
     
-    // Continue game loop
-    requestAnimationFrame(updateGame);
+    // Continue game loop only if game is running
+    if (isGameRunning) {
+      requestAnimationFrame(updateGame);
+    }
   }
   
   // Utility: Darken or lighten a color
@@ -1087,8 +1097,17 @@
           setTimeout(() => {
             playSound('gameStart');
           }, 100);
+        } else if (!isGameRunning) {
+          // Restart the game if it was stopped
+          isGameRunning = true;
+          requestAnimationFrame(updateGame);
+          startDuckSpawning();
+          // Play game start sound
+          setTimeout(() => {
+            playSound('gameStart');
+          }, 100);
         } else {
-          // Just play the sound if game is already started
+          // Just play the sound if game is already running
           playSound('gameStart');
         }
         
@@ -1097,12 +1116,16 @@
           soundLabel.style.display = 'none';
         }, 2000);
       } else {
-        // Toggle sound off
+        // Toggle sound off and stop the game
         soundEnabled = false;
         soundButton.innerHTML = '🔇';
-        soundButton.title = "Enable Duck Hunt Sounds";
-        soundLabel.textContent = "Sound disabled";
+        soundButton.title = "Click to Start Duck Hunt Game with Sound";
+        soundLabel.textContent = "Game paused";
+        soundLabel.style.display = 'block'; // Show the label
         soundButton.style.backgroundColor = '#e74c3c'; // Red when disabled
+        
+        // Stop the game
+        stopGame();
         
         // Hide the label after 2 seconds
         setTimeout(() => {
@@ -1120,5 +1143,36 @@
     document.addEventListener('DOMContentLoaded', initSoundButton);
   } else {
     initSoundButton();
+  }
+
+  // Function to stop the game
+  function stopGame() {
+    // Stop spawning new ducks
+    if (duckSpawningInterval) {
+      clearInterval(duckSpawningInterval);
+      duckSpawningInterval = null;
+    }
+    
+    // Stop the game animation
+    isGameRunning = false;
+    
+    // Remove all existing ducks from the screen
+    ducks.forEach(duck => {
+      if (duck.element && duck.element.parentNode) {
+        duck.element.parentNode.removeChild(duck.element);
+      }
+    });
+    
+    // Clear the ducks array
+    ducks = [];
+    
+    // Hide the score display
+    const scoreDisplay = document.getElementById('duck-score');
+    if (scoreDisplay) {
+      scoreDisplay.style.display = 'none';
+    }
+    
+    // Reset score
+    score = 0;
   }
 })(); 
