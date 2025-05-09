@@ -36,3 +36,23 @@
     transform: rotate(360deg);
   }
 }
+
+/* Mobile optimization */
+@media (max-width: 768px) {
+  /* Optimize animations for mobile */
+  .bubble-container {
+    transition: transform 0.1s ease-out !important; /* Faster transitions */
+  }
+  
+  /* Reduce animation complexity on mobile */
+  .bubble {
+    animation: none !important; /* Disable complex animations */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2) !important; /* Simpler shadows */
+  }
+  
+  /* Simplify transitions for better performance */
+  .animated-element {
+    transition-duration: 0.1s !important;
+    transform: translateZ(0); /* Hardware acceleration hint */
+  }
+}
