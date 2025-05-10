@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchBumpRequests, API_URL } from '../services/api';
+import { fetchBumpRequests, API_URL, fetchPendingAds, approveAd, rejectAd } from '../services/api';
 import BookingManagement from './BookingManagement';
 import ServiceReviews from './ServiceReviews';
 import JobList from './JobList';
@@ -42,6 +42,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [selectedTwitterRaid, setSelectedTwitterRaid] = useState(null);
   const [showEasterEgg, setShowEasterEgg] = useState(false);
   const [hasShownEasterEgg, setHasShownEasterEgg] = useState(false);
+  const [pendingListings, setPendingListings] = useState([]);
+  const [showRejectListingModal, setShowRejectListingModal] = useState(false);
+  const [selectedListing, setSelectedListing] = useState(null);
+  const [listingRejectionReason, setListingRejectionReason] = useState('');
+  const [isLoadingListings, setIsLoadingListings] = useState(false);
 
   // Fetch bump requests and banner ads when dashboard opens
   useEffect(() => {
@@ -184,6 +189,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       fetchPendingTwitterRaids();
     }
   }, [currentUser]);
+
+  useEffect(() => {
+    if (currentUser?.isAdmin && activeTab === 'admin') {
+      fetchPendingBubbleListings();
+    }
+  }, [currentUser, activeTab]);
 
   const fetchAffiliateInfo = async () => {
     try {
@@ -908,6 +919,53 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     setShowEasterEgg(false);
   };
 
+  // Add these new functions to handle listing approvals
+  const fetchPendingBubbleListings = async () => {
+    if (!currentUser?.isAdmin) return;
+    try {
+      setIsLoadingListings(true);
+      const data = await fetchPendingAds();
+      setPendingListings(data);
+    } catch (error) {
+      console.error('Error fetching pending listings:', error);
+      setError('Failed to fetch pending bubble listings');
+    } finally {
+      setIsLoadingListings(false);
+    }
+  };
+
+  const handleApproveListing = async (listingId) => {
+    try {
+      await approveAd(listingId);
+      showNotification('Listing approved successfully', 'success');
+      fetchPendingBubbleListings(); // Refresh the list
+    } catch (error) {
+      console.error('Error approving listing:', error);
+      showNotification('Failed to approve listing', 'error');
+    }
+  };
+
+  const openRejectModal = (listing) => {
+    setSelectedListing(listing);
+    setShowRejectListingModal(true);
+  };
+
+  const handleRejectListing = async () => {
+    if (!selectedListing) return;
+    
+    try {
+      await rejectAd(selectedListing.id, listingRejectionReason);
+      showNotification('Listing rejected successfully', 'success');
+      setShowRejectListingModal(false);
+      setSelectedListing(null);
+      setListingRejectionReason('');
+      fetchPendingBubbleListings(); // Refresh the list
+    } catch (error) {
+      console.error('Error rejecting listing:', error);
+      showNotification('Failed to reject listing', 'error');
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-gray-900 z-[999999] overflow-y-auto">
       {/* Header */}
@@ -1559,6 +1617,95 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   )}
                 </div>
               )}
+
+              {/* Bubble Listing Approvals Section */}
+              <div className="mt-8">
+                <h3 className="text-xl font-bold mb-4">Bubble Listing Approvals</h3>
+                <div className="bg-gray-800 rounded-lg p-4">
+                  {isLoadingListings ? (
+                    <div className="text-center py-4">
+                      <div className="spinner"></div>
+                      <p className="mt-2 text-gray-400">Loading pending listings...</p>
+                    </div>
+                  ) : pendingListings.length === 0 ? (
+                    <div className="text-center py-6 text-gray-400">
+                      No pending bubble listings to approve
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-gray-700">
+                            <th className="px-4 py-2 text-left">Project</th>
+                            <th className="px-4 py-2 text-left">Owner</th>
+                            <th className="px-4 py-2 text-left">Payment</th>
+                            <th className="px-4 py-2 text-left">Date</th>
+                            <th className="px-4 py-2 text-left">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pendingListings.map((listing) => (
+                            <tr key={listing.id} className="border-b border-gray-700">
+                              <td className="px-4 py-3">
+                                <div className="flex items-center">
+                                  <img 
+                                    src={listing.logo} 
+                                    alt={listing.title} 
+                                    className="w-8 h-8 rounded-full mr-3"
+                                    onError={(e) => { e.target.src = 'https://placehold.co/40x40?text=?' }}
+                                  />
+                                  <div>
+                                    <div className="font-medium">{listing.title}</div>
+                                    <div className="text-sm text-gray-400">
+                                      <a 
+                                        href={listing.url} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="hover:text-blue-400"
+                                      >
+                                        {listing.url?.replace(/(^\w+:|^)\/\//, '')}
+                                      </a>
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">{listing.owner}</td>
+                              <td className="px-4 py-3">
+                                <div className="text-sm">
+                                  <div>Chain: {listing.paymentChain}</div>
+                                  <div className="text-gray-400 text-xs truncate max-w-[160px]" 
+                                        title={listing.txSignature}>
+                                    Tx: {listing.txSignature?.substring(0, 8)}...
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                {new Date(listing.createdAt).toLocaleDateString()}
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex space-x-2">
+                                  <button
+                                    onClick={() => handleApproveListing(listing.id)}
+                                    className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded-md text-sm"
+                                  >
+                                    Approve
+                                  </button>
+                                  <button
+                                    onClick={() => openRejectModal(listing)}
+                                    className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded-md text-sm"
+                                  >
+                                    Reject
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
             </>
           )}
 
@@ -1660,6 +1807,44 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           points={pointsInfo.points} 
           onClose={handleCloseEasterEgg} 
         />
+      )}
+
+      {/* Rejection Confirmation Modal */}
+      {showRejectListingModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-60">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md shadow-lg">
+            <h3 className="text-xl font-bold mb-4">Reject Bubble Listing</h3>
+            <p className="mb-4 text-gray-300">
+              You are about to reject the listing for "{selectedListing?.title}". 
+              Please provide a reason for rejection:
+            </p>
+            <textarea
+              value={listingRejectionReason}
+              onChange={(e) => setListingRejectionReason(e.target.value)}
+              placeholder="Enter rejection reason (optional)"
+              className="w-full p-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+              rows={4}
+            ></textarea>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowRejectListingModal(false);
+                  setSelectedListing(null);
+                  setListingRejectionReason('');
+                }}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-md"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRejectListing}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md"
+              >
+                Confirm Reject
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

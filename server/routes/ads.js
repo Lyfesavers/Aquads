@@ -635,4 +635,83 @@ router.get('/:id/votes', async (req, res) => {
   }
 });
 
+// GET pending ads (admin only)
+router.get('/pending', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const pendingAds = await Ad.find({ status: 'pending' }).sort({ createdAt: -1 });
+    res.json(pendingAds);
+  } catch (error) {
+    console.error('Error fetching pending ads:', error);
+    res.status(500).json({ error: 'Failed to fetch pending ads' });
+  }
+});
+
+// Approve an ad (admin only)
+router.post('/:id/approve', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const adId = req.params.id;
+    const ad = await Ad.findOne({ id: adId });
+
+    if (!ad) {
+      return res.status(404).json({ error: 'Ad not found' });
+    }
+
+    if (ad.status !== 'pending') {
+      return res.status(400).json({ error: `Ad is already ${ad.status}` });
+    }
+
+    ad.status = 'active';
+    await ad.save();
+
+    res.json({ 
+      message: 'Ad approved successfully',
+      ad
+    });
+  } catch (error) {
+    console.error('Error approving ad:', error);
+    res.status(500).json({ error: 'Failed to approve ad' });
+  }
+});
+
+// Reject an ad (admin only)
+router.post('/:id/reject', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const { rejectionReason } = req.body;
+    const adId = req.params.id;
+    const ad = await Ad.findOne({ id: adId });
+
+    if (!ad) {
+      return res.status(404).json({ error: 'Ad not found' });
+    }
+
+    if (ad.status !== 'pending') {
+      return res.status(400).json({ error: `Ad is already ${ad.status}` });
+    }
+
+    ad.status = 'rejected';
+    ad.rejectionReason = rejectionReason || 'Rejected by admin';
+    await ad.save();
+
+    res.json({ 
+      message: 'Ad rejected successfully',
+      ad
+    });
+  } catch (error) {
+    console.error('Error rejecting ad:', error);
+    res.status(500).json({ error: 'Failed to reject ad' });
+  }
+});
+
 module.exports = router; 

@@ -88,6 +88,31 @@ const adSchema = new mongoose.Schema({
     default: 'ethereum',
     trim: true
   },
+  // Payment fields for listing fee
+  txSignature: {
+    type: String,
+    default: null
+  },
+  paymentChain: {
+    type: String,
+    default: null
+  },
+  chainSymbol: {
+    type: String,
+    default: null
+  },
+  chainAddress: {
+    type: String,
+    default: null
+  },
+  listingFee: {
+    type: Number,
+    default: 350 // $350 USDC
+  },
+  rejectionReason: {
+    type: String,
+    default: null
+  },
   // Updated voting structure to track what each user voted
   bullishVotes: {
     type: Number,

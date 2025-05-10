@@ -971,9 +971,19 @@ function App() {
       const createdAd = await apiCreateAd(newAd);
       logger.log('Created ad:', createdAd);
       
-      setAds(prevAds => [...prevAds, createdAd]);
+      // Only add to UI if admin (active immediately) or if it has active status
+      if (currentUser?.isAdmin || createdAd.status === 'active') {
+        setAds(prevAds => [...prevAds, createdAd]);
+      }
+      
       setShowCreateModal(false);
-      showNotification('Project Listed successfully!', 'success');
+      
+      // Show different messages based on user role or ad status
+      if (currentUser?.isAdmin || createdAd.status === 'active') {
+        showNotification('Project Listed successfully!', 'success');
+      } else {
+        showNotification('Project submitted for listing! It will be visible once approved by admins.', 'success');
+      }
     } catch (error) {
       logger.error('Error creating ad:', error);
       showNotification('Failed to List Project. Please try again.', 'error');
@@ -1303,17 +1313,27 @@ function App() {
           bearishVotes: ad.bearishVotes || 0
         }));
         
-        // Cache the ads
+        // Filter out pending and rejected ads - only show active ads in the bubbles
+        const filteredAds = currentUser?.isAdmin 
+          ? processedAds 
+          : processedAds.filter(ad => ad.status !== 'pending' && ad.status !== 'rejected');
+        
+        // Cache the ads (store all ads but only display filtered ones)
         localStorage.setItem('cachedAds', JSON.stringify(processedAds));
         
-        // Update state
-        setAds(processedAds);
+        // Update state with filtered ads
+        setAds(filteredAds);
       } catch (error) {
         logger.error('Error fetching ads:', error);
         // Use cached ads if available and the API call fails
         const cachedAds = localStorage.getItem('cachedAds');
         if (cachedAds) {
-          setAds(JSON.parse(cachedAds));
+          const parsedAds = JSON.parse(cachedAds);
+          // Apply same filtering to cached ads
+          const filteredAds = currentUser?.isAdmin 
+            ? parsedAds 
+            : parsedAds.filter(ad => ad.status !== 'pending' && ad.status !== 'rejected');
+          setAds(filteredAds);
         }
       }
     };
@@ -1321,7 +1341,7 @@ function App() {
     fetchAds();
     const interval = setInterval(fetchAds, 30000); // Refresh every 30 seconds
     return () => clearInterval(interval);
-  }, []);
+  }, [currentUser]);
 
   // Then add a special hook to handle route changes inside the App component
   useEffect(() => {
