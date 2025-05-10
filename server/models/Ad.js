@@ -68,7 +68,7 @@ const adSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['active', 'pending', 'approved'],
+    enum: ['active', 'pending', 'approved', 'rejected'],
     default: 'active'
   },
   contractAddress: {
