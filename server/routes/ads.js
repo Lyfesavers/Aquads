@@ -207,7 +207,7 @@ const calculateBumpAmount = (type) => {
 // POST route for creating new ad
 router.post('/', auth, async (req, res) => {
   try {
-    const { title, logo, url, contractAddress, blockchain, referredBy, x, y, preferredSize } = req.body;
+    const { title, logo, url, contractAddress, blockchain, referredBy, x, y, preferredSize, txSignature, paymentChain, chainSymbol, chainAddress } = req.body;
     
     // Use client's preferred size if provided, otherwise use MAX_SIZE
     const bubbleSize = preferredSize || MAX_SIZE;
@@ -216,7 +216,7 @@ router.post('/', auth, async (req, res) => {
     const validatedSize = Math.min(MAX_SIZE, Math.max(MIN_SIZE, bubbleSize));
     
     console.log('Creating ad with data:', req.body);
-
+  
     const ad = new Ad({
       id: `ad-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       title,
@@ -228,11 +228,16 @@ router.post('/', auth, async (req, res) => {
       x: x || 0,
       y: y || 0,
       owner: req.user.username,
-      status: 'active'
+      txSignature,
+      paymentChain,
+      chainSymbol,
+      chainAddress,
+      // Set status to 'pending' for non-admin users, 'active' for admins
+      status: req.user.isAdmin ? 'active' : 'pending'
     });
 
     const savedAd = await ad.save();
-    
+
     if (!savedAd) {
       throw new Error('Failed to save ad');
     }
