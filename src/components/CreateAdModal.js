@@ -24,7 +24,7 @@ const BLOCKCHAIN_OPTIONS = [
   {
     name: 'Sui',
     symbol: 'SUI',
-    address: '0xe99b659efbb9a713c494eff34cff9e614fdd8f7ca00530b62c747d5c088aa877',
+    address: '0xdadea3003856d304535c3f1b6d5670ab07a8e71715c7644bf230dd3a4ba7d13a',
     amount: 'USDC'
   }
 ];
