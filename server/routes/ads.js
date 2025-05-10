@@ -138,9 +138,9 @@ setInterval(async () => {
 // GET route
 router.get('/', async (req, res) => {
   try {
-    // Show all ads without status filter
-    const ads = await Ad.find({});
-    console.log(`Found ${ads.length} total ads`);
+    // Only show active or approved ads (not pending or rejected)
+    const ads = await Ad.find({ status: { $in: ['active', 'approved'] } });
+    console.log(`Found ${ads.length} approved/active ads`);
     
     // Ensure all ad sizes are up-to-date before sending to clients
     // This prevents the "large then small" visual bug when loading the page
@@ -705,13 +705,12 @@ router.post('/:id/reject', auth, async (req, res) => {
       return res.status(400).json({ error: `Ad is already ${ad.status}` });
     }
 
-    ad.status = 'rejected';
-    ad.rejectionReason = rejectionReason || 'Rejected by admin';
-    await ad.save();
+    // Instead of updating the status, delete the ad entirely
+    await Ad.findByIdAndDelete(ad._id);
 
     res.json({ 
-      message: 'Ad rejected successfully',
-      ad
+      message: 'Ad rejected and deleted successfully',
+      adId: adId
     });
   } catch (error) {
     console.error('Error rejecting ad:', error);
