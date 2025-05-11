@@ -222,6 +222,7 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
                 <option value="cardano">Cardano</option>
                 <option value="ton">TON</option>
                 <option value="tezos">Tezos</option>
+                <option value="kaspa">Kaspa</option>
               </select>
             </div>
             <div>

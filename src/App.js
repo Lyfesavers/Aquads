@@ -111,7 +111,8 @@ const BLOCKCHAIN_OPTIONS = [
   { value: 'cosmos', label: 'Cosmos' },
   { value: 'aptos', label: 'Aptos' },
   { value: 'flow', label: 'Flow' },
-  { value: 'cardano', label: 'Cardano' }
+  { value: 'cardano', label: 'Cardano' },
+  { value: 'kaspa', label: 'Kaspa' }
 ];
 
 const SHRINK_RATE = 4; // Amount to shrink by each interval
