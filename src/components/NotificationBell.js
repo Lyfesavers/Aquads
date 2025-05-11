@@ -268,7 +268,7 @@ const NotificationBell = ({ currentUser }) => {
         if (notification.link.startsWith('/dashboard')) {
           // It's a dashboard link, show dashboard instead of navigating
           const openDashboardEvent = new CustomEvent('openDashboard', { 
-            detail: { tab: 'default' } 
+            detail: { tab: 'ads' } 
           });
           window.dispatchEvent(openDashboardEvent);
           
@@ -278,7 +278,7 @@ const NotificationBell = ({ currentUser }) => {
           
           // If there's a global function to show the dashboard, use it
           if (typeof window.showDashboard === 'function') {
-            window.showDashboard();
+            window.showDashboard('ads');
           }
         } else {
           // External link, use navigation
@@ -287,7 +287,7 @@ const NotificationBell = ({ currentUser }) => {
       } else {
         // No booking ID or link, just show the dashboard
         const openDashboardEvent = new CustomEvent('openDashboard', { 
-          detail: { tab: 'default' } 
+          detail: { tab: 'ads' } 
         });
         window.dispatchEvent(openDashboardEvent);
         
@@ -297,7 +297,7 @@ const NotificationBell = ({ currentUser }) => {
         
         // If there's a global function to show the dashboard, use it
         if (typeof window.showDashboard === 'function') {
-          window.showDashboard();
+          window.showDashboard('ads');
         }
       }
     } catch (error) {
@@ -305,7 +305,7 @@ const NotificationBell = ({ currentUser }) => {
       
       // Fallback to simple dashboard open
       if (typeof window.showDashboard === 'function') {
-        window.showDashboard();
+        window.showDashboard('ads');
       }
     }
   };

@@ -7,7 +7,7 @@ import BookingConversation from './BookingConversation';
 import BumpStore from './BumpStore';
 import EasterEggAnimation from './EasterEggAnimation';
 
-const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, onRejectBump, onApproveBump, initialBookingId }) => {
+const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, onRejectBump, onApproveBump, initialBookingId, initialActiveTab }) => {
   const [bumpRequests, setBumpRequests] = useState([]);
   const [bannerAds, setBannerAds] = useState([]);
   const [rejectReason, setRejectReason] = useState('');
@@ -23,7 +23,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [isLoadingAffiliates, setIsLoadingAffiliates] = useState(true);
   const [pendingRedemptions, setPendingRedemptions] = useState([]);
   const [bookings, setBookings] = useState([]);
-  const [activeTab, setActiveTab] = useState('analytics');
+  const [activeTab, setActiveTab] = useState(initialActiveTab || 'ads');
   const [showReviews, setShowReviews] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
   const [affiliateEarnings, setAffiliateEarnings] = useState(null);
@@ -47,6 +47,13 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [selectedListing, setSelectedListing] = useState(null);
   const [listingRejectionReason, setListingRejectionReason] = useState('');
   const [isLoadingListings, setIsLoadingListings] = useState(false);
+
+  // Update activeTab when initialActiveTab changes
+  useEffect(() => {
+    if (initialActiveTab) {
+      setActiveTab(initialActiveTab);
+    }
+  }, [initialActiveTab]);
 
   // Fetch bump requests and banner ads when dashboard opens
   useEffect(() => {

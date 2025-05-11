@@ -422,6 +422,7 @@ function App() {
   const [newUsername, setNewUsername] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeBookingId, setActiveBookingId] = useState(null);
+  const [dashboardActiveTab, setDashboardActiveTab] = useState('ads');
   
   // New state for blockchain filter and pagination
   const [blockchainFilter, setBlockchainFilter] = useState('all');
@@ -1765,12 +1766,14 @@ function App() {
     const handleOpenDashboardWithBooking = (event) => {
       logger.log('Opening dashboard with booking:', event.detail.bookingId);
       setActiveBookingId(event.detail.bookingId);
+      setDashboardActiveTab('ads');
       setShowDashboard(true);
     };
     
     // Define handler for opening dashboard without specific booking
     const handleOpenDashboard = () => {
       logger.log('Opening dashboard');
+      setDashboardActiveTab('ads');
       setShowDashboard(true);
     };
     
@@ -1783,6 +1786,11 @@ function App() {
       logger.log('Global showDashboard called', tab, bookingId);
       if (bookingId) {
         setActiveBookingId(bookingId);
+      }
+      if (tab) {
+        setDashboardActiveTab(tab);
+      } else {
+        setDashboardActiveTab('ads'); // Default to ads tab if not specified
       }
       setShowDashboard(true);
     };
@@ -1803,6 +1811,7 @@ function App() {
           setActiveBookingId(bookingId);
         }
         
+        setDashboardActiveTab('ads');
         setShowDashboard(true);
         
         // Clear the flags
@@ -2450,7 +2459,10 @@ function App() {
                             <NotificationBell currentUser={currentUser} />
                             <span className="text-blue-300">Welcome, {currentUser.username}!</span>
                             <button
-                              onClick={() => setShowDashboard(true)}
+                              onClick={() => {
+                                setDashboardActiveTab('ads');
+                                setShowDashboard(true);
+                              }}
                               className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
                             >
                               Dashboard
@@ -2522,6 +2534,7 @@ function App() {
                             <span className="text-blue-300 text-center">Welcome, {currentUser.username}!</span>
                             <button
                               onClick={() => {
+                                setDashboardActiveTab('ads');
                                 setShowDashboard(true);
                                 setIsMobileMenuOpen(false);
                               }}
@@ -2896,6 +2909,7 @@ function App() {
                     onRejectBump={handleRejectBump}
                     onApproveBump={handleApproveBump}
                     initialBookingId={activeBookingId}
+                    initialActiveTab={dashboardActiveTab}
                   />
                 )}
 
