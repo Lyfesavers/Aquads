@@ -24,6 +24,7 @@ const BLOCKCHAIN_OPTIONS = [
   { label: 'Aptos', value: 'aptos' },
   { label: 'Near', value: 'near' },
   { label: 'Immutable X', value: 'immutablex' },
+  { label: 'Kaspa', value: 'kaspa' },
   { label: 'Other', value: 'other' }
 ];
 

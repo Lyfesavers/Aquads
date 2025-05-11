@@ -22,6 +22,7 @@ const BLOCKCHAIN_OPTIONS = [
   { value: 'aptos', label: 'Aptos' },
   { value: 'flow', label: 'Flow' },
   { value: 'cardano', label: 'Cardano' },
+  { value: 'kaspa', label: 'Kaspa' },
   { value: 'moonbeam', label: 'Moonbeam' },
   { value: 'moonriver', label: 'Moonriver' },
   { value: 'hedera', label: 'Hedera' },
