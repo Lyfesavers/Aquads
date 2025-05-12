@@ -4,9 +4,10 @@ import { FaCopy, FaCheck } from 'react-icons/fa';
 import logger from '../utils/logger';
 
 const BUMP_OPTIONS = [
-  { duration: '24 hours', price: 5, durationMs: 24 * 60 * 60 * 1000 },
-  { duration: '3 days', price: 15, durationMs: 3 * 24 * 60 * 60 * 1000 },
-  { duration: '7 days', price: 35, durationMs: 7 * 24 * 60 * 60 * 1000 }
+  { duration: '1 month', price: 150, durationMs: 30 * 24 * 60 * 60 * 1000 },
+  { duration: '3 months', price: 400, durationMs: 90 * 24 * 60 * 60 * 1000 },
+  { duration: '6 months', price: 600, durationMs: 180 * 24 * 60 * 60 * 1000 },
+  { duration: '1 year', price: 1000, durationMs: 365 * 24 * 60 * 60 * 1000 }
 ];
 
 const BLOCKCHAIN_OPTIONS = [
