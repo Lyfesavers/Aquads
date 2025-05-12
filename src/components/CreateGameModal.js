@@ -136,7 +136,11 @@ const CreateGameModal = ({ onClose, onCreateGame }) => {
       };
       
       const newGame = await createGame(gameData);
+      
+      // Call onCreateGame with the newly created game
       onCreateGame(newGame);
+      
+      // No need to explicitly close modal here as the parent component will do this
     } catch (error) {
       console.error('Error creating game:', error);
       setErrors(prev => ({

@@ -10,6 +10,7 @@ import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
 import BannerDisplay from './BannerDisplay';
 import { Link } from 'react-router-dom';
+import { showToast } from './Toast';
 
 const BLOCKCHAIN_OPTIONS = [
   { label: 'All Blockchains', value: '' },
@@ -163,9 +164,19 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   
   const handleCreateGame = async (gameData) => {
     try {
-      // ... existing code ...
+      // Add the new game to the existing games array
+      setGames(prevGames => [gameData, ...prevGames]);
+      
+      // Show a success notification
+      showToast('Game created successfully!', 'success');
+      
+      // Close the create modal
+      setShowCreateModal(false);
+      
+      // Reload games to ensure we have the freshest data
+      loadGames();
     } catch (error) {
-      // ... existing code ...
+      showToast('Failed to create game. Please try again.', 'error');
     }
   };
   
@@ -180,17 +191,17 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         game._id === updatedGame._id ? updatedGame : game
       )
     );
-    showNotification('Game updated successfully!', 'success');
+    showToast('Game updated successfully!', 'success');
   };
   
   const handleDeleteGame = async (gameId) => {
     try {
       await deleteGame(gameId);
       setGames(prevGames => prevGames.filter(game => game._id !== gameId));
-      showNotification('Game deleted successfully!', 'success');
+      showToast('Game deleted successfully!', 'success');
     } catch (error) {
       // Silent error handling - no console logs
-      showNotification('Failed to delete game. Please try again.', 'error');
+      showToast('Failed to delete game. Please try again.', 'error');
     }
   };
   
@@ -210,11 +221,6 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const handleCreateAccountSubmit = async (formData) => {
     await onCreateAccount(formData);
     setShowCreateAccountModal(false);
-  };
-  
-  const showNotification = (message, type = 'info') => {
-    // If you have a notification system, use it here
-    alert(message);
   };
   
   return (
@@ -494,7 +500,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                     game={game} 
                     currentUser={currentUser}
                     showLoginModal={handleLoginClick}
-                    showNotification={showNotification}
+                    showNotification={showToast}
                     onEdit={handleEditGame}
                     onDelete={handleDeleteGame}
                   />
