@@ -137,24 +137,20 @@ const HowTo = ({ currentUser }) => {
         setBlogs(data);
       }
     } catch (error) {
-      console.error('Error fetching blogs:', error);
       setError('Failed to fetch blogs');
     }
   };
 
   const handleCreateBlog = async (blogData) => {
     try {
-      console.log('Current user:', currentUser); // Debug log
       
       if (!currentUser) {
-        console.log('No current user found'); // Debug log
         setError('You must be logged in to create a blog post');
         return;
       }
 
       // Check if user is an admin
       if (!currentUser.isAdmin) {
-        console.log('User is not an admin'); // Debug log
         setError('Only administrators can create blog posts');
         return;
       }
@@ -162,7 +158,6 @@ const HowTo = ({ currentUser }) => {
       const token = currentUser.token || localStorage.getItem('token');
       
       if (!token) {
-        console.log('No token found in currentUser or localStorage'); // Debug log
         setError('Authentication token not found. Please log in again.');
         return;
       }
@@ -173,7 +168,6 @@ const HowTo = ({ currentUser }) => {
         userId: currentUser.userId
       };
 
-      console.log('Sending blog data:', requestData); // Debug log
 
       const response = await fetch(`${API_URL}/blogs`, {
         method: 'POST',
@@ -184,11 +178,9 @@ const HowTo = ({ currentUser }) => {
         body: JSON.stringify(requestData)
       });
 
-      console.log('Response status:', response.status); // Debug log
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
-        console.error('Error creating blog:', errorData);
         if (response.status === 401) {
           setError('Your session has expired. Please log in again.');
         } else {
@@ -198,12 +190,10 @@ const HowTo = ({ currentUser }) => {
       }
 
       const data = await response.json();
-      console.log('Blog created successfully:', data); // Debug log
       setShowCreateModal(false);
       setError(null);
       fetchBlogs();
     } catch (error) {
-      console.error('Error creating blog:', error);
       setError('Failed to create blog post. Please try again.');
     }
   };
@@ -246,7 +236,6 @@ const HowTo = ({ currentUser }) => {
       setShowCreateModal(false);
       setError(null);
     } catch (error) {
-      console.error('Error updating blog:', error);
       setError('Failed to update blog. Please try again.');
     }
   };
@@ -257,7 +246,6 @@ const HowTo = ({ currentUser }) => {
       const token = currentUser?.token || localStorage.getItem('token');
       
       if (!token) {
-        console.error('No authentication token found');
         setError('Authentication required. Please log in again.');
         return;
       }
@@ -284,7 +272,6 @@ const HowTo = ({ currentUser }) => {
       await fetchBlogs();
       setError(null);
     } catch (error) {
-      console.error('Error deleting blog:', error);
       setError(error.message || 'Failed to delete blog. Please try again.');
     }
   };
@@ -303,7 +290,6 @@ const HowTo = ({ currentUser }) => {
 
   // Set up a blog for editing
   const handleBlogEdit = (blog) => {
-    console.log("Setting blog for editing:", blog); // Debug log
     setEditingBlog(blog);
     setShowCreateModal(true);
   };
