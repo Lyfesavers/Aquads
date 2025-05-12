@@ -167,16 +167,16 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       // Add the new game to the existing games array
       setGames(prevGames => [gameData, ...prevGames]);
       
-      // Show a success notification
-      showToast('Game created successfully!', 'success');
-      
-      // Close the create modal
+      // Close the create modal - this is now handled in the CreateGameModal component
       setShowCreateModal(false);
+      
+      // Show a detailed success notification
+      showToast(`Game "${gameData.title}" was successfully listed in GameHub!`, 'success', 5000);
       
       // Reload games to ensure we have the freshest data
       loadGames();
     } catch (error) {
-      showToast('Failed to create game. Please try again.', 'error');
+      showToast('Failed to create game: ' + (error.message || 'Unknown error'), 'error', 5000);
     }
   };
   

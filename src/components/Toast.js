@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
 
 const Toast = ({ message, type = 'info', duration = 3000, onClose }) => {
@@ -34,69 +34,99 @@ const Toast = ({ message, type = 'info', duration = 3000, onClose }) => {
   );
 };
 
-const ToastContainer = () => {
-  const [toasts, setToasts] = useState([]);
+class ToastContainer extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      toasts: []
+    };
+    this.containerRef = React.createRef();
+  }
   
   // Add a new toast
-  const addToast = (message, type = 'info', duration = 3000) => {
+  addToast = (message, type = 'info', duration = 3000) => {
     const id = Date.now();
-    setToasts(prev => [...prev, { id, message, type, duration }]);
+    this.setState(prevState => ({
+      toasts: [...prevState.toasts, { id, message, type, duration }]
+    }));
     return id;
   };
   
   // Remove a toast by id
-  const removeToast = (id) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
+  removeToast = (id) => {
+    this.setState(prevState => ({
+      toasts: prevState.toasts.filter(toast => toast.id !== id)
+    }));
   };
   
-  // Create a container if it doesn't exist
-  useEffect(() => {
-    let toastContainer = document.getElementById('toast-container');
+  componentDidMount() {
+    // Ensure the container exists in DOM
+    if (!document.getElementById('toast-container')) {
+      const containerDiv = document.createElement('div');
+      containerDiv.id = 'toast-container';
+      document.body.appendChild(containerDiv);
+    }
+  }
+  
+  render() {
+    const toastContainer = document.getElementById('toast-container');
     
     if (!toastContainer) {
-      toastContainer = document.createElement('div');
-      toastContainer.id = 'toast-container';
-      document.body.appendChild(toastContainer);
+      return null;
     }
     
-    return () => {
-      if (toastContainer && document.body.contains(toastContainer)) {
-        document.body.removeChild(toastContainer);
-      }
-    };
-  }, []);
-  
-  return ReactDOM.createPortal(
-    <div className="fixed bottom-4 right-4 space-y-2 z-50">
-      {toasts.map(toast => (
-        <Toast 
-          key={toast.id}
-          message={toast.message}
-          type={toast.type}
-          duration={toast.duration}
-          onClose={() => removeToast(toast.id)}
-        />
-      ))}
-    </div>,
-    document.getElementById('toast-container')
-  );
-};
+    return ReactDOM.createPortal(
+      <div className="fixed bottom-4 right-4 space-y-2 z-50">
+        {this.state.toasts.map(toast => (
+          <Toast 
+            key={toast.id}
+            message={toast.message}
+            type={toast.type}
+            duration={toast.duration}
+            onClose={() => this.removeToast(toast.id)}
+          />
+        ))}
+      </div>,
+      toastContainer
+    );
+  }
+}
 
 // Singleton for toast management
-let toastManager = null;
+let toastContainerInstance = null;
 
-export const showToast = (message, type = 'info', duration = 3000) => {
-  if (!toastManager) {
-    // Create a container element
+// Create the toast container once on initial import
+const initToastContainer = () => {
+  if (!toastContainerInstance) {
     const containerElement = document.createElement('div');
     document.body.appendChild(containerElement);
     
-    // Render the ToastContainer into it
-    ReactDOM.render(<ToastContainer ref={ref => { toastManager = ref; }} />, containerElement);
+    const container = document.createElement('div');
+    container.id = 'toast-container';
+    document.body.appendChild(container);
+    
+    const toastContainerComponent = ReactDOM.render(
+      <ToastContainer />, 
+      containerElement
+    );
+    
+    toastContainerInstance = toastContainerComponent;
   }
   
-  // Use the instance to show a toast
-  return toastManager?.addToast(message, type, duration);
+  return toastContainerInstance;
+};
+
+// Initialize on import
+initToastContainer();
+
+export const showToast = (message, type = 'info', duration = 3000) => {
+  const instance = initToastContainer();
+  if (instance && instance.addToast) {
+    return instance.addToast(message, type, duration);
+  }
+  // Fallback to alert if the toast system fails
+  console.warn('Toast system unavailable, falling back to alert');
+  alert(`${type.toUpperCase()}: ${message}`);
 };
 
 export default Toast; 
