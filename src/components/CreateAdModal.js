@@ -276,7 +276,7 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4 mb-4">
-              <h3 className="text-lg font-semibold text-white mb-2">Listing Fee: $350 USDC</h3>
+              <h3 className="text-lg font-semibold text-white mb-2">Listing Fee: $150 USDC</h3>
               <p className="text-sm text-gray-300">
                 Your listing will be reviewed by our admins after payment confirmation. 
                 Once approved, your project will appear in the bubbles. If rejected you will refunded.
@@ -299,7 +299,7 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
                   >
                     <div className="flex justify-between items-center">
                       <span>{chain.name}</span>
-                      <span>$350 {chain.amount}</span>
+                      <span>$150 {chain.amount}</span>
                     </div>
                   </button>
                 ))}
