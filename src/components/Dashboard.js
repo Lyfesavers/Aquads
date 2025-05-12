@@ -60,7 +60,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     if (currentUser?.isAdmin) {
       fetchBumpRequests()
         .then(data => {
-          console.log('Fetched bump requests:', data);
           setBumpRequests(data);
         })
         .catch(error => {
@@ -95,7 +94,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           return response.json();
         })
         .then(data => {
-          console.log('Fetched pending redemptions:', data);
           // Ensure we always set an array
           setPendingRedemptions(Array.isArray(data) ? data : []);
         })
@@ -656,7 +654,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       window.showNotification(message, type);
     } else {
       // Fallback to a simple alert
-      console.log(`${type}: ${message}`);
       alert(message);
     }
   };
@@ -665,13 +662,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   useEffect(() => {
     const loadInitialBooking = async () => {
       if (initialBookingId && currentUser) {
-        console.log('Dashboard received initialBookingId:', initialBookingId);
         
         // First try to find the booking in already loaded bookings
         if (bookings && bookings.length > 0) {
           const bookingToOpen = bookings.find(b => b._id === initialBookingId);
           if (bookingToOpen) {
-            console.log('Found booking in existing bookings:', bookingToOpen);
             setActiveBookingConversation(bookingToOpen);
             setActiveTab('bookings');
             return;
@@ -680,7 +675,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         
         // If not found or not loaded yet, fetch the specific booking
         try {
-          console.log('Fetching specific booking:', initialBookingId);
           const response = await fetch(`${API_URL}/bookings/${initialBookingId}`, {
             headers: {
               'Authorization': `Bearer ${currentUser.token}`
@@ -689,7 +683,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           
           if (response.ok) {
             const bookingData = await response.json();
-            console.log('Fetched booking data:', bookingData);
             setActiveBookingConversation(bookingData);
             setActiveTab('bookings');
           } else {
@@ -1452,7 +1445,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                 currentUser={currentUser}
                 onStatusUpdate={handleBookingStatusUpdate}
                 showNotification={(message, type) => {
-                  console.log(message); // Temporary fallback
                   alert(message);
                 }}
                 onShowReviews={handleShowReviews}
@@ -1794,7 +1786,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           onClose={handleCloseReviews}
           currentUser={currentUser}
           showNotification={(message, type) => {
-            console.log(message); // Temporary fallback
             alert(message);
           }}
         />
