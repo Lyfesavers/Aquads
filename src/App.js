@@ -2644,14 +2644,11 @@ function App() {
                               width: `${ad.size}px`,
                               height: `${ad.size}px`,
                               transition: 'transform 0.1s ease-out', // Faster transition
-                              zIndex: ad.isBumped ? 2 : 1,
-                              display: 'flex',  // Add flex display
-                              alignItems: 'center', // Center vertically
-                              justifyContent: 'center' // Center horizontally
+                              zIndex: ad.isBumped ? 2 : 1
                             }}
                           >
                             <motion.div
-                              className={`bubble ${ad.isBumped ? 'bumped-ad' : ''} ${ad.blockchain ? `bubble-${ad.blockchain.toLowerCase()}` : 'bubble-ethereum'}`}
+                              className={`absolute bubble ${ad.isBumped ? 'bumped-ad' : ''} ${ad.blockchain ? `bubble-${ad.blockchain.toLowerCase()}` : 'bubble-ethereum'}`}
                               style={{
                                 width: '100%',
                                 height: '100%',
