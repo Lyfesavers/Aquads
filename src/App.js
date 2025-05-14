@@ -1853,7 +1853,7 @@ function App() {
     } else if (screenWidth <= 375) {
       columns = 4; // For medium mobile (iPhone X, etc)
     } else {
-      columns = 4; // For larger mobile screens (iPhone 12 Pro, etc)
+      columns = 5; // For larger mobile screens (iPhone 12 Pro, etc)
     }
     
     // Make bubbles smaller to fit more rows
