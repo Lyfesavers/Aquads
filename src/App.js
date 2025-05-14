@@ -477,13 +477,32 @@ function App() {
       ? ads 
       : ads.filter(ad => (ad.blockchain || 'ethereum').toLowerCase() === blockchainFilter.toLowerCase());
     
-    setTotalPages(Math.max(1, Math.ceil(filteredAds.length / itemsPerPage)));
+    // Separate bumped and non-bumped ads to calculate pages
+    const bumpedAds = filteredAds.filter(ad => ad.isBumped);
+    const nonBumpedAds = filteredAds.filter(ad => !ad.isBumped);
+    
+    // Calculate pages needed for bumped ads (minimum 1 page)
+    const bumpedPages = Math.max(1, Math.ceil(bumpedAds.length / itemsPerPage));
+    
+    // Calculate pages needed for non-bumped ads
+    const nonBumpedPages = nonBumpedAds.length > 0 
+      ? Math.ceil(nonBumpedAds.length / itemsPerPage) 
+      : 0;
+    
+    // Total pages is bumped pages + non-bumped pages
+    // If bumped ads need more than 1 page, we reduce non-bumped pages by 1
+    // since some non-bumped ads will share page with overflow bumped ads
+    const adjustedNonBumpedPages = bumpedPages > 1 
+      ? Math.max(0, nonBumpedPages - 1) 
+      : nonBumpedPages;
+    
+    setTotalPages(Math.max(1, bumpedPages + adjustedNonBumpedPages));
     
     // Reset to page 1 when filter changes
-    if (currentPage > Math.ceil(filteredAds.length / itemsPerPage)) {
+    if (currentPage > (bumpedPages + adjustedNonBumpedPages)) {
       setCurrentPage(1);
     }
-  }, [ads, blockchainFilter, itemsPerPage]);
+  }, [ads, blockchainFilter, itemsPerPage, currentPage]);
 
   // Function to get currently visible ads
   const getVisibleAds = () => {
@@ -491,10 +510,54 @@ function App() {
       ? ads 
       : ads.filter(ad => (ad.blockchain || 'ethereum').toLowerCase() === blockchainFilter.toLowerCase());
     
-    // Paginate the filtered ads
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return filteredAds.slice(startIndex, endIndex);
+    // First, sort ads to put bumped ads first, then sort by bullish votes
+    const sortedAds = [...filteredAds].sort((a, b) => {
+      // First prioritize bumped bubbles - all bumped bubbles come before unbumped ones
+      if (a.isBumped && !b.isBumped) return -1;
+      if (!a.isBumped && b.isBumped) return 1;
+      
+      // Then sort by bullish votes (highest first)
+      return (b.bullishVotes || 0) - (a.bullishVotes || 0);
+    });
+    
+    // Separate bumped and non-bumped ads
+    const bumpedAds = sortedAds.filter(ad => ad.isBumped);
+    const nonBumpedAds = sortedAds.filter(ad => !ad.isBumped);
+    
+    // If we're on the first page, only show bumped ads
+    if (currentPage === 1) {
+      // Only return bumped ads for the first page, limited to itemsPerPage
+      return bumpedAds.slice(0, itemsPerPage);
+    } else {
+      // For subsequent pages, calculate the proper slice of non-bumped ads
+      // Start from first page of non-bumped ads
+      const startIndex = (currentPage - 2) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      
+      // If there are more bumped ads than fit on the first page, show overflow on second page
+      if (currentPage === 2 && bumpedAds.length > itemsPerPage) {
+        const bumpedOverflow = bumpedAds.slice(itemsPerPage);
+        const remainingSlots = itemsPerPage - bumpedOverflow.length;
+        
+        if (remainingSlots > 0) {
+          // Fill remaining slots with non-bumped ads
+          return [...bumpedOverflow, ...nonBumpedAds.slice(0, remainingSlots)];
+        } else {
+          // If no space left, just show the bumped overflow
+          return bumpedOverflow.slice(0, itemsPerPage);
+        }
+      }
+      
+      // For pages beyond 2, or if no bumped overflow, show non-bumped ads
+      // Adjust startIndex to account for any bumped overflow on page 2
+      const adjustedStartIndex = currentPage === 2 
+        ? 0 
+        : startIndex - Math.max(0, bumpedAds.length - itemsPerPage);
+      
+      const adjustedEndIndex = adjustedStartIndex + itemsPerPage;
+      
+      return nonBumpedAds.slice(adjustedStartIndex, adjustedEndIndex);
+    }
   };
 
   // Function to handle blockchain filter change
