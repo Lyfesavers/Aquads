@@ -1863,8 +1863,8 @@ function App() {
     effectiveBubbleSize = Math.round(effectiveBubbleSize * 0.85);
     
     // Calculate optimal positioning values with minimal gaps
-    const horizontalGap = 19; // Fixed smaller gap between columns
-    const verticalGap = -6; // Negative vertical gap - bubbles will overlap slightly
+    const horizontalGap = 7; // Fixed smaller gap between columns
+    const verticalGap = -20; // Negative vertical gap - bubbles will overlap slightly
     
     // Store original positions to restore if needed
     if (!window.originalBubblePositions) {
