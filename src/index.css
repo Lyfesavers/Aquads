@@ -2940,7 +2940,7 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 
 @media (max-width: 768px) {
   .vote-popup {
-    top: -35px;
+    top: -34px;
   }
   
   .vote-button {
@@ -2952,7 +2952,7 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 
 @media (max-width: 480px) {
   .vote-popup {
-    top: -60px;
+    top: -62px;
     padding: 10px 20px;
     gap: 25px;
     border-radius: 30px;
