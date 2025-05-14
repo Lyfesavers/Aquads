@@ -99,7 +99,7 @@ body {
 @media (max-width: 480px) {
   .bubble {
     transform-origin: center;
-    transform: scale(0.6) !important;
+    transform: scale(0.55) !important;
   }
   
   .bubble {
@@ -108,19 +108,19 @@ body {
   
   @keyframes bubble-float-mobile {
     0%, 100% {
-      transform: scale(0.6) translateY(0) rotate(0deg) !important;
+      transform: scale(0.55) translateY(0) rotate(0deg) !important;
       filter: brightness(1);
     }
     25% {
-      transform: scale(0.6) translateY(-10px) rotate(1deg) !important;
+      transform: scale(0.55) translateY(-10px) rotate(1deg) !important;
       filter: brightness(1.1);
     }
     50% {
-      transform: scale(0.6) translateY(0) rotate(0deg) !important;
+      transform: scale(0.55) translateY(0) rotate(0deg) !important;
       filter: brightness(1);
     }
     75% {
-      transform: scale(0.6) translateY(10px) rotate(-1deg) !important;
+      transform: scale(0.55) translateY(10px) rotate(-1deg) !important;
       filter: brightness(0.9);
     }
   }
@@ -2940,7 +2940,7 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 
 @media (max-width: 768px) {
   .vote-popup {
-    top: -38px;
+    top: -35px;
   }
   
   .vote-button {
@@ -2952,7 +2952,7 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 
 @media (max-width: 480px) {
   .vote-popup {
-    top: -50px;
+    top: -60px;
     padding: 10px 20px;
     gap: 25px;
     border-radius: 30px;
