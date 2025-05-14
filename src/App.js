@@ -569,6 +569,15 @@ function App() {
   // Function to handle page change
   const handlePageChange = (page) => {
     setCurrentPage(page);
+    
+    // Add a short delay to allow state update before arranging bubbles
+    setTimeout(() => {
+      if (window.innerWidth <= 480) {
+        adjustBubblesForMobile();
+      } else {
+        arrangeDesktopGrid();
+      }
+    }, 100);
   };
 
   // Add this function to update ads with persistence
