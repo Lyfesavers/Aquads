@@ -7,6 +7,7 @@ const auth = require('../middleware/auth');
 const crypto = require('crypto');
 const { awardAffiliatePoints } = require('./points');
 const rateLimit = require('express-rate-limit');
+const ipLimiter = require('../middleware/ipLimiter');
 
 // Modify the rate limiting for registration
 const registrationLimiter = rateLimit({
@@ -21,7 +22,7 @@ const registrationLimiter = rateLimit({
 const tempTokenStore = new Map();
 
 // Register new user
-router.post('/register', registrationLimiter, async (req, res) => {
+router.post('/register', registrationLimiter, ipLimiter(3), async (req, res) => {
   try {
     const { username, email, password, image, referralCode } = req.body;
     console.log('Registration attempt for username:', username);
@@ -76,7 +77,8 @@ router.post('/register', registrationLimiter, async (req, res) => {
       password,
       email: email ? email.toLowerCase() : undefined,
       image: image || undefined,
-      userType: req.body.userType || 'freelancer' // Add userType with default fallback
+      userType: req.body.userType || 'freelancer', // Add userType with default fallback
+      ipAddress: req.clientIp // Store client IP address
     };
 
     // If referral code provided, find referring user by username
@@ -454,6 +456,58 @@ router.get('/by-username/:username', auth, async (req, res) => {
   } catch (error) {
     console.error('Error finding user:', error);
     res.status(500).json({ error: 'Failed to fetch user' });
+  }
+});
+
+// Get accounts by IP address (admin only)
+router.get('/ip/:ipAddress', auth, async (req, res) => {
+  try {
+    // Only allow admins to access this route
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const ipAddress = req.params.ipAddress.trim();
+    
+    const users = await User.find({ ipAddress })
+      .select('username email createdAt image userType referredBy')
+      .populate('referredBy', 'username')
+      .sort({ createdAt: -1 });
+    
+    res.json({
+      ipAddress,
+      accountCount: users.length,
+      accounts: users
+    });
+  } catch (error) {
+    console.error('Error finding users by IP:', error);
+    res.status(500).json({ error: 'Failed to fetch users by IP' });
+  }
+});
+
+// Get multiple registrations (admin only)
+router.get('/multiple-registrations', auth, async (req, res) => {
+  try {
+    // Only allow admins to access this route
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    // Find IPs with multiple accounts
+    const ipCounts = await User.aggregate([
+      { $match: { ipAddress: { $ne: null } } },
+      { $group: { _id: "$ipAddress", count: { $sum: 1 }, users: { $push: "$username" } } },
+      { $match: { count: { $gt: 1 } } },
+      { $sort: { count: -1 } }
+    ]);
+    
+    res.json({
+      multipleRegistrations: ipCounts,
+      count: ipCounts.length
+    });
+  } catch (error) {
+    console.error('Error finding multiple registrations:', error);
+    res.status(500).json({ error: 'Failed to fetch multiple registrations' });
   }
 });
 

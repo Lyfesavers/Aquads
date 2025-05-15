@@ -24,6 +24,7 @@ const jobsRoutes = require('./routes/jobs');
 const blogsRoutes = require('./routes/blogs');
 const sitemapRoutes = require('./routes/sitemap');
 const socketModule = require('./socket');
+const ipLimiter = require('./middleware/ipLimiter');
 
 const app = express();
 const server = http.createServer(app);
@@ -339,7 +340,7 @@ app.get('/api/verify-token', auth, (req, res) => {
 });
 
 // Register
-app.post('/api/users/register', async (req, res) => {
+app.post('/api/users/register', ipLimiter(3), async (req, res) => {
   try {
     const { username, password, image } = req.body;
     console.log('Registration attempt with username:', username);
@@ -363,7 +364,8 @@ app.post('/api/users/register', async (req, res) => {
       username,
       password,
       image: image || 'https://placehold.co/400x400?text=User',
-      isAdmin: username === 'admin'
+      isAdmin: username === 'admin',
+      ipAddress: req.clientIp // Store client IP address
     });
 
     await user.save();

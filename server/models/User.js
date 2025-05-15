@@ -36,6 +36,10 @@ const userSchema = new Schema({
     type: String,
     default: 'https://i.imgur.com/6VBx3io.png'
   },
+  ipAddress: {
+    type: String,
+    default: null
+  },
   isAdmin: {
     type: Boolean,
     default: false
