@@ -40,6 +40,11 @@ const userSchema = new Schema({
     type: String,
     default: null
   },
+  deviceFingerprint: {
+    type: String,
+    default: null,
+    index: true
+  },
   isAdmin: {
     type: Boolean,
     default: false

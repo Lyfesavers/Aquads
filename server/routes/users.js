@@ -8,6 +8,7 @@ const crypto = require('crypto');
 const { awardAffiliatePoints } = require('./points');
 const rateLimit = require('express-rate-limit');
 const ipLimiter = require('../middleware/ipLimiter');
+const deviceLimiter = require('../middleware/deviceLimiter');
 
 // Modify the rate limiting for registration
 const registrationLimiter = rateLimit({
@@ -22,9 +23,9 @@ const registrationLimiter = rateLimit({
 const tempTokenStore = new Map();
 
 // Register new user
-router.post('/register', registrationLimiter, ipLimiter(3), async (req, res) => {
+router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), async (req, res) => {
   try {
-    const { username, email, password, image, referralCode } = req.body;
+    const { username, email, password, image, referralCode, deviceFingerprint } = req.body;
     console.log('Registration attempt for username:', username);
 
     // Enhanced validation
@@ -78,7 +79,8 @@ router.post('/register', registrationLimiter, ipLimiter(3), async (req, res) => 
       email: email ? email.toLowerCase() : undefined,
       image: image || undefined,
       userType: req.body.userType || 'freelancer', // Add userType with default fallback
-      ipAddress: req.clientIp // Store client IP address
+      ipAddress: req.clientIp, // Store client IP address
+      deviceFingerprint: req.deviceFingerprint || deviceFingerprint || null // Store device fingerprint
     };
 
     // If referral code provided, find referring user by username
@@ -508,6 +510,58 @@ router.get('/multiple-registrations', auth, async (req, res) => {
   } catch (error) {
     console.error('Error finding multiple registrations:', error);
     res.status(500).json({ error: 'Failed to fetch multiple registrations' });
+  }
+});
+
+// Get accounts by device fingerprint (admin only)
+router.get('/device/:fingerprint', auth, async (req, res) => {
+  try {
+    // Only allow admins to access this route
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    const fingerprint = req.params.fingerprint.trim();
+    
+    const users = await User.find({ deviceFingerprint: fingerprint })
+      .select('username email createdAt image userType referredBy ipAddress')
+      .populate('referredBy', 'username')
+      .sort({ createdAt: -1 });
+    
+    res.json({
+      deviceFingerprint: fingerprint,
+      accountCount: users.length,
+      accounts: users
+    });
+  } catch (error) {
+    console.error('Error finding users by device fingerprint:', error);
+    res.status(500).json({ error: 'Failed to fetch users by device fingerprint' });
+  }
+});
+
+// Get multiple device registrations (admin only)
+router.get('/multiple-device-registrations', auth, async (req, res) => {
+  try {
+    // Only allow admins to access this route
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    // Find device fingerprints with multiple accounts
+    const deviceCounts = await User.aggregate([
+      { $match: { deviceFingerprint: { $ne: null } } },
+      { $group: { _id: "$deviceFingerprint", count: { $sum: 1 }, users: { $push: "$username" } } },
+      { $match: { count: { $gt: 1 } } },
+      { $sort: { count: -1 } }
+    ]);
+    
+    res.json({
+      multipleDeviceRegistrations: deviceCounts,
+      count: deviceCounts.length
+    });
+  } catch (error) {
+    console.error('Error finding multiple device registrations:', error);
+    res.status(500).json({ error: 'Failed to fetch multiple device registrations' });
   }
 });
 

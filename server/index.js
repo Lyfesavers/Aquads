@@ -25,6 +25,7 @@ const blogsRoutes = require('./routes/blogs');
 const sitemapRoutes = require('./routes/sitemap');
 const socketModule = require('./socket');
 const ipLimiter = require('./middleware/ipLimiter');
+const deviceLimiter = require('./middleware/deviceLimiter');
 
 const app = express();
 const server = http.createServer(app);
@@ -340,9 +341,9 @@ app.get('/api/verify-token', auth, (req, res) => {
 });
 
 // Register
-app.post('/api/users/register', ipLimiter(3), async (req, res) => {
+app.post('/api/users/register', ipLimiter(3), deviceLimiter(2), async (req, res) => {
   try {
-    const { username, password, image } = req.body;
+    const { username, password, image, deviceFingerprint } = req.body;
     console.log('Registration attempt with username:', username);
     console.log('Registration data:', { username, image });
     
@@ -365,7 +366,8 @@ app.post('/api/users/register', ipLimiter(3), async (req, res) => {
       password,
       image: image || 'https://placehold.co/400x400?text=User',
       isAdmin: username === 'admin',
-      ipAddress: req.clientIp // Store client IP address
+      ipAddress: req.clientIp, // Store client IP address
+      deviceFingerprint: req.deviceFingerprint || deviceFingerprint || null // Store device fingerprint 
     });
 
     await user.save();
