@@ -341,7 +341,7 @@ app.get('/api/verify-token', auth, (req, res) => {
 });
 
 // Register
-app.post('/api/users/register', ipLimiter(3), deviceLimiter(2), async (req, res) => {
+app.post('/api/users/register', ipLimiter(3), deviceLimiter(3), async (req, res) => {
   try {
     const { username, password, image, deviceFingerprint } = req.body;
     console.log('Registration attempt with username:', username);
