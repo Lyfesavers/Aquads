@@ -122,14 +122,12 @@ router.post('/approve', async (req, res) => {
       if (adOwner && adOwner.referredBy) {
         // Calculate USDC amount based on bump duration
         let adAmount;
-        if (duration === 30 * 24 * 60 * 60 * 1000) { // 1 month
-          adAmount = 150; // 150 USDC
-        } else if (duration === 90 * 24 * 60 * 60 * 1000) { // 3 months
-          adAmount = 400; // 400 USDC
+        if (duration === 90 * 24 * 60 * 60 * 1000) { // 3 months
+          adAmount = 99; // 99 USDC
         } else if (duration === 180 * 24 * 60 * 60 * 1000) { // 6 months
-          adAmount = 600; // 600 USDC
+          adAmount = 150; // 150 USDC
         } else if (duration === 365 * 24 * 60 * 60 * 1000) { // 1 year
-          adAmount = 1000; // 1000 USDC
+          adAmount = 300; // 300 USDC
         }
 
         console.log('Calculating commission for USDC amount:', adAmount);
