@@ -40,6 +40,10 @@ const userSchema = new Schema({
     type: String,
     default: null
   },
+  country: {
+    type: String,
+    default: null
+  },
   deviceFingerprint: {
     type: String,
     default: null,

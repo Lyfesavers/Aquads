@@ -21,6 +21,19 @@ import JobList from './JobList';
 import NotificationBell from './NotificationBell';
 import logger from '../utils/logger';
 
+// Helper function to convert country code to flag emoji
+const getCountryFlag = (countryCode) => {
+  if (!countryCode) return '';
+  
+  // Convert country code to flag emoji
+  const codePoints = countryCode
+    .toUpperCase()
+    .split('')
+    .map(char => 127397 + char.charCodeAt());
+  
+  return String.fromCodePoint(...codePoints);
+};
+
 // Helper function to check if URL is valid
 const isValidUrl = (string) => {
   try {
@@ -1029,6 +1042,11 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                                   {service.isPremium && (
                                     <span className="inline-flex items-center justify-center ml-1 w-4 h-4 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full">
                                       <FaCheck className="text-white text-xs" />
+                                    </span>
+                                  )}
+                                  {service.seller?.country && (
+                                    <span className="ml-2 text-lg" title={service.seller.country}>
+                                      {getCountryFlag(service.seller.country)}
                                     </span>
                                   )}
                                 </h4>

@@ -25,7 +25,7 @@ const tempTokenStore = new Map();
 // Register new user
 router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), async (req, res) => {
   try {
-    const { username, email, password, image, referralCode, deviceFingerprint } = req.body;
+    const { username, email, password, image, referralCode, deviceFingerprint, country } = req.body;
     console.log('Registration attempt for username:', username);
 
     // Enhanced validation
@@ -80,7 +80,8 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
       image: image || undefined,
       userType: req.body.userType || 'freelancer', // Add userType with default fallback
       ipAddress: req.clientIp, // Store client IP address
-      deviceFingerprint: req.deviceFingerprint || deviceFingerprint || null // Store device fingerprint
+      deviceFingerprint: req.deviceFingerprint || deviceFingerprint || null, // Store device fingerprint
+      country: country || null // Store country code
     };
 
     // If referral code provided, find referring user by username
