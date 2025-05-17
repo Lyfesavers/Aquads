@@ -240,7 +240,7 @@ router.get('/profile', auth, async (req, res) => {
 // Update user profile
 router.put('/profile', auth, async (req, res) => {
   try {
-    const { username, email, image, currentPassword, newPassword } = req.body;
+    const { username, email, image, currentPassword, newPassword, country } = req.body;
     const user = await User.findById(req.user.userId);
 
     if (!user) {
@@ -268,6 +268,11 @@ router.put('/profile', auth, async (req, res) => {
     // Update image if provided
     if (image) {
       user.image = image;
+    }
+
+    // Update country if provided
+    if (country !== undefined) {
+      user.country = country;
     }
 
     // Update password if provided
@@ -301,6 +306,7 @@ router.put('/profile', auth, async (req, res) => {
       username: user.username,
       email: user.email,
       image: user.image,
+      country: user.country,
       referralCode: user.referralCode
     };
 
