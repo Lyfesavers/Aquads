@@ -478,7 +478,7 @@ export const pingServer = async () => {
 // Service endpoints
 export const fetchServices = async () => {
   try {
-    const response = await fetch(`${API_URL}/services`);
+    const response = await fetch(`${API_URL}/services?limit=100`);
     if (!response.ok) {
       throw new Error(`Failed to fetch services: ${response.status} ${response.statusText}`);
     }
