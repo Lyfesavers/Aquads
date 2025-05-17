@@ -25,24 +25,13 @@ import logger from '../utils/logger';
 const getCountryFlag = (countryCode) => {
   if (!countryCode) return '';
   
-  // Convert country code to regional indicator symbols
-  // Each letter in the country code is converted to a regional indicator symbol
-  // by adding an offset to its code point
-  const countryString = countryCode.toUpperCase();
+  // Convert country code to flag emoji
+  const codePoints = countryCode
+    .toUpperCase()
+    .split('')
+    .map(char => 127397 + char.charCodeAt());
   
-  // Regional indicator symbols are created by using the offset from 'A' to '🇦'
-  // The offset from ASCII 'A' (65) to the regional indicator symbol '🇦' (127462) is 127397
-  const codePoints = Array.from(countryString).map(
-    char => char.charCodeAt(0) + 127397
-  );
-  
-  try {
-    // Combine the code points into a flag emoji
-    return String.fromCodePoint(...codePoints);
-  } catch (error) {
-    console.error('Error creating flag emoji:', error);
-    return countryCode; // Fallback to country code if conversion fails
-  }
+  return String.fromCodePoint(...codePoints);
 };
 
 // Helper function to check if URL is valid
