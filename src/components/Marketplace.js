@@ -209,10 +209,27 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const loadServices = async () => {
     try {
       const data = await fetchServices();
-      const services = data.services || [];
+      console.log('Fetched services data:', data); // Debug log
+      
+      // Check data structure and extract services array properly
+      let servicesArray = [];
+      if (Array.isArray(data)) {
+        // If data is already an array of services
+        servicesArray = data;
+      } else if (data && Array.isArray(data.services)) {
+        // If data has a services property that is an array
+        servicesArray = data.services;
+      } else if (data && typeof data === 'object') {
+        // If data is an object but not in expected format
+        console.warn('Unexpected data format, trying to extract services:', data);
+        servicesArray = data.services || [];
+      } else {
+        console.error('Invalid service data format:', data);
+        servicesArray = [];
+      }
       
       // Fetch initial review data for each service
-      const servicesWithReviews = await Promise.all(services.map(async (service) => {
+      const servicesWithReviews = await Promise.all(servicesArray.map(async (service) => {
         try {
           const response = await fetch(`${API_URL}/service-reviews/${service._id}`);
           if (!response.ok) return service;

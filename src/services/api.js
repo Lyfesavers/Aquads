@@ -480,12 +480,28 @@ export const fetchServices = async () => {
   try {
     const response = await fetch(`${API_URL}/services`);
     if (!response.ok) {
-      throw new Error('Failed to fetch services');
+      throw new Error(`Failed to fetch services: ${response.status} ${response.statusText}`);
     }
-    return response.json();
+    
+    const data = await response.json();
+    console.log('API response data:', data); // Debug log
+    
+    // Check if data has the expected structure
+    if (data && data.services) {
+      // Return the services array from the response
+      return data;
+    } else if (Array.isArray(data)) {
+      // If API returns just an array of services
+      return { services: data };
+    } else {
+      // Handle unexpected data structure
+      console.warn('Unexpected service data format:', data);
+      return { services: [] };
+    }
   } catch (error) {
     logger.error('Error fetching services:', error);
-    throw error;
+    // Return empty services array on error
+    return { services: [] };
   }
 };
 
