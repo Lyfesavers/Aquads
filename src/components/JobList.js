@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { FaChevronDown, FaChevronUp, FaEdit, FaTrash, FaEnvelope, FaTelegram, FaDiscord } from 'react-icons/fa';
+import { FaChevronDown, FaChevronUp, FaEdit, FaTrash, FaEnvelope, FaTelegram, FaDiscord, FaRedo } from 'react-icons/fa';
 
-const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob }) => {
+const JobList = ({ jobs, currentUser, onEditJob, onDeleteJob, onRefreshJob }) => {
   const [expandedJobId, setExpandedJobId] = useState(null);
 
   const toggleExpand = (jobId) => {
@@ -49,7 +49,11 @@ Best regards,
       {jobs.map((job) => (
         <div
           key={job._id}
-          className="bg-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-lg overflow-hidden cursor-pointer hover:bg-gray-800/70 transition-all duration-300"
+          className={`${
+            job.status === 'expired' 
+              ? 'bg-gray-800/30 border-red-900/30' 
+              : 'bg-gray-800/50 border-gray-700/50'
+          } backdrop-blur-sm border rounded-lg overflow-hidden cursor-pointer hover:bg-gray-800/70 transition-all duration-300`}
           onClick={() => toggleExpand(job._id)}
         >
           <div className="p-4">
@@ -67,25 +71,23 @@ Best regards,
                     }}
                   />
                 </div>
+
                 <div>
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center">
                     <h3 className="text-lg font-semibold text-white">{job.title}</h3>
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      job.jobType === 'hiring' 
-                        ? 'bg-green-500/20 text-green-400 border border-green-500/40' 
-                        : 'bg-blue-500/20 text-blue-400 border border-blue-500/40'
-                    }`}>
-                      {job.jobType === 'hiring' ? 'Hiring' : 'For Hire'}
-                    </span>
+                    {job.status === 'expired' && (
+                      <span className="ml-2 px-2 py-1 text-xs bg-red-900/50 text-red-400 rounded-full">
+                        Expired
+                      </span>
+                    )}
                   </div>
-                  <div className="flex items-center space-x-2 text-sm text-gray-400">
-                    <span>Posted by {job.ownerUsername}</span>
-                    <span>•</span>
-                    <span>{formatDate(job.createdAt)}</span>
-                  </div>
+                  <p className="text-sm text-gray-400">
+                    Posted by {job.ownerUsername} on {formatDate(job.createdAt)}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">{job.jobType === 'hiring' ? 'Hiring' : 'For Hire'}</p>
                 </div>
               </div>
-              
+
               <div className="flex items-center space-x-4">
                 {/* Pay amount display */}
                 <div className="text-lg font-semibold text-green-400">
@@ -98,6 +100,18 @@ Best regards,
                 
                 {currentUser && (currentUser.userId === job.owner || currentUser.userId === job.owner._id) && (
                   <div className="flex space-x-2">
+                    {job.status === 'expired' && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onRefreshJob(job._id);
+                        }}
+                        className="text-blue-500 hover:text-blue-400 transition-colors"
+                        title="Refresh job (will move to top of listing)"
+                      >
+                        <FaRedo size={18} />
+                      </button>
+                    )}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();

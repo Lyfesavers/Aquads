@@ -170,7 +170,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   useEffect(() => {
     const fetchUserJobs = async () => {
       try {
-        const response = await fetch(`${API_URL}/jobs?owner=${currentUser.userId}`, {
+        const response = await fetch(`${API_URL}/jobs?owner=${currentUser.userId}&includeExpired=true`, {
           headers: {
             'Authorization': `Bearer ${currentUser.token}`
           }
@@ -572,6 +572,29 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     } catch (error) {
       console.error('Error updating job:', error);
       showNotification('Failed to update job', 'error');
+    }
+  };
+
+  const handleRefreshJob = async (jobId) => {
+    try {
+      const response = await fetch(`${API_URL}/jobs/${jobId}/refresh`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+
+      if (response.ok) {
+        const refreshedJob = await response.json();
+        // Update the job in the local state
+        setUserJobs(prev => prev.map(job => 
+          job._id === refreshedJob._id ? refreshedJob : job
+        ));
+        showNotification('Job refreshed successfully and moved to top of listing', 'success');
+      }
+    } catch (error) {
+      console.error('Error refreshing job:', error);
+      showNotification('Failed to refresh job', 'error');
     }
   };
 
@@ -1754,6 +1777,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
               currentUser={currentUser}
               onEditJob={handleEditJob}
               onDeleteJob={handleDeleteJob}
+              onRefreshJob={handleRefreshJob}
             />
           </div>
 

@@ -677,13 +677,14 @@ export const resetPassword = async (username, referralCode, newPassword) => {
 };
 
 // Add these job-related API functions
-export const fetchJobs = async () => {
+export const fetchJobs = async (includeExpired = false) => {
   logger.log('Fetching jobs...');
   try {
     // Check for auth token - this might be needed for some job listings
     const authHeader = getAuthHeader();
     
-    const response = await fetch(`${API_URL}/jobs`, {
+    const queryParams = includeExpired ? '?includeExpired=true' : '';
+    const response = await fetch(`${API_URL}/jobs${queryParams}`, {
       headers: {
         ...authHeader
       }
@@ -703,7 +704,7 @@ export const fetchJobs = async () => {
         reconnectSocket();
         
         // Retry the request with fresh auth headers
-        const retryResponse = await fetch(`${API_URL}/jobs`, {
+        const retryResponse = await fetch(`${API_URL}/jobs${queryParams}`, {
           headers: {
             ...getAuthHeader() // Get fresh auth headers
           }
@@ -727,6 +728,20 @@ export const fetchJobs = async () => {
     logger.error('Error fetching jobs:', error);
     throw error;
   }
+};
+
+export const refreshJob = async (jobId, token) => {
+  const response = await fetch(`${API_URL}/jobs/${jobId}/refresh`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || 'Failed to refresh job');
+  }
+  return response.json();
 };
 
 export const createJob = async (jobData) => {

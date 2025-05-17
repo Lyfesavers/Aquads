@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import CreateServiceModal from './CreateServiceModal';
 import ServiceReviews from './ServiceReviews';
-import { createService, fetchServices, fetchJobs, createJob, updateJob, deleteJob } from '../services/api';
+import { createService, fetchServices, fetchJobs, createJob, updateJob, deleteJob, refreshJob } from '../services/api';
 import { API_URL } from '../services/api';
 import ProfileModal from './ProfileModal';
 import BannerDisplay from './BannerDisplay';
@@ -651,6 +651,22 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     loadJobs();
   }, []);
 
+  const handleRefreshJob = async (jobId) => {
+    if (!currentUser) {
+      showNotification('Please login to refresh your job', 'error');
+      return;
+    }
+
+    try {
+      const refreshedJob = await refreshJob(jobId, currentUser.token);
+      setJobs(prevJobs => [refreshedJob, ...prevJobs.filter(job => job._id !== jobId)]);
+      showNotification('Job refreshed successfully and moved to top of listing', 'success');
+    } catch (error) {
+      logger.error('Error refreshing job:', error);
+      showNotification(error.message || 'Failed to refresh job', 'error');
+    }
+  };
+
   const handleCreateJob = async (jobData) => {
     if (!currentUser) {
       showNotification('Please login to post a job', 'error');
@@ -999,6 +1015,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                       currentUser={currentUser}
                       onEditJob={setJobToEdit}
                       onDeleteJob={handleDeleteJob}
+                      onRefreshJob={handleRefreshJob}
                     />
                   ) : (
                     <div className="text-center py-8 text-gray-400">

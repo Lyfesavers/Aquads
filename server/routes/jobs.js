@@ -19,6 +19,26 @@ router.get('/', async (req, res) => {
     if (req.query.owner) {
       query.owner = req.query.owner;
     }
+    
+    // Calculate date 30 days ago
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    // Update status of expired jobs
+    await Job.updateMany(
+      { 
+        createdAt: { $lt: thirtyDaysAgo },
+        status: 'active'
+      },
+      { 
+        $set: { status: 'expired' }
+      }
+    );
+    
+    // Only return active jobs
+    if (!req.query.includeExpired) {
+      query.status = 'active';
+    }
 
     const jobs = await Job.find(query)
       .populate('owner', 'username image')
@@ -30,6 +50,31 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Refresh expired job
+router.post('/:id/refresh', auth, async (req, res) => {
+  try {
+    const job = await Job.findOne({ 
+      _id: req.params.id,
+      owner: req.user.userId,
+      status: 'expired'
+    });
+
+    if (!job) {
+      return res.status(404).json({ error: 'Expired job not found' });
+    }
+
+    // Update createdAt to now and set status back to active
+    job.createdAt = new Date();
+    job.status = 'active';
+    await job.save();
+
+    res.json(job);
+  } catch (error) {
+    console.error('Error refreshing job:', error);
+    res.status(500).json({ error: 'Failed to refresh job' });
+  }
+});
+
 // Create job
 router.post('/', auth, async (req, res) => {
   try {
@@ -38,7 +83,8 @@ router.post('/', auth, async (req, res) => {
       ...req.body,
       owner: req.user.userId,
       ownerUsername: req.user.username,
-      ownerImage: user.image
+      ownerImage: user.image,
+      status: 'active'
     });
     await job.save();
     res.status(201).json(job);
