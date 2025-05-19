@@ -428,7 +428,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                           key={dex.name}
                           onClick={() => handleDexClick(dex)}
                           className={`
-                            flex items-center justify-center rounded-full 
+                            flex items-center justify-center rounded-full overflow-hidden p-0
                             ${selectedDex?.name === dex.name 
                               ? 'bg-blue-500/20 border-2 border-blue-500' 
                               : 'bg-gray-700/50 border border-gray-600 hover:border-blue-500/50'
@@ -442,7 +442,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                           <img 
                             src={`/${dex.name}.svg`} 
                             alt={dex.name}
-                            className="w-10 h-10 object-contain"
+                            className="w-full h-full object-cover p-1"
                             onError={(e) => {
                               e.target.onerror = null;
                               e.target.src = `/${dex.name}.png`;
