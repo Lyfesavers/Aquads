@@ -2836,7 +2836,7 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   position: absolute;
   bottom: 5px;
   left: 50%;
-  transform: translateX(-50%);
+    transform: translateX(-50%);
   font-weight: bold;
   font-size: 11px;
   text-shadow: 0 0 4px rgba(0, 0, 0, 0.9);
@@ -2862,7 +2862,7 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 /* Increase size for mobile */
 @media (max-width: 480px) {
   .vote-percentage {
-    font-size: 14px;
+  font-size: 14px;
     padding: 2px 8px;
     font-weight: 800;
     background-color: rgba(0, 0, 0, 0.6);
@@ -2896,7 +2896,7 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 
 .bubble:hover .vote-popup {
   transform: translateX(-50%) scale(1);
-  opacity: 1;
+    opacity: 1;
   pointer-events: all;
 }
 
@@ -2904,7 +2904,7 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   background: none;
   border: none;
   font-size: 16px;
-  cursor: pointer;
+    cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
