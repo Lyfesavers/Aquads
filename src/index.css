@@ -1161,15 +1161,20 @@ body {
   display: block;
   text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
   font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
   padding: 4px 8px;
   background: rgba(0, 0, 0, 0.5);
   border-radius: 12px;
   backdrop-filter: blur(2px);
-  transform: perspective(100px) rotateX(5deg);
+  transform: perspective(100px) rotateX(15deg) scale(1.05);
   box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.2);
+  /* Add rainbow arc effect */
+  background: linear-gradient(to right, #ff0000, #ff8000, #ffff00, #00ff00, #0080ff, #8000ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
 }
 
 /* Larger logo container for bubbles */
@@ -2198,15 +2203,20 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   display: block;
   text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
   font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
   padding: 4px 8px;
   background: rgba(0, 0, 0, 0.5);
   border-radius: 12px;
   backdrop-filter: blur(2px);
-  transform: perspective(100px) rotateX(5deg);
+  transform: perspective(100px) rotateX(15deg) scale(1.05);
   box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.2);
+  /* Add rainbow arc effect */
+  background: linear-gradient(to right, #ff0000, #ff8000, #ffff00, #00ff00, #0080ff, #8000ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
 }
 
 /* Larger logo container for bubbles */
@@ -2414,96 +2424,148 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   box-shadow: 0 0 10px 2px rgba(19, 181, 236, 0.5), 0 0 20px 5px rgba(19, 181, 236, 0.3), 0 0 30px 7px rgba(19, 181, 236, 0.1);
 }
 
-.bubble-tron {
-  animation: bubble-float 8s ease-in-out infinite, tron-pulse 4s ease-in-out infinite !important;
-  box-shadow: 0 0 10px 2px rgba(238, 13, 33, 0.5), 0 0 20px 5px rgba(238, 13, 33, 0.3), 0 0 30px 7px rgba(238, 13, 33, 0.1);
+.bubble-solana {
+  animation: bubble-float 8s ease-in-out infinite, solana-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(20, 241, 149, 0.5), 0 0 20px 5px rgba(20, 241, 149, 0.3), 0 0 30px 7px rgba(20, 241, 149, 0.1);
 }
 
-.bubble-cronos {
-  animation: bubble-float 8s ease-in-out infinite, cronos-pulse 4s ease-in-out infinite !important;
-  box-shadow: 0 0 10px 2px rgba(32, 113, 205, 0.5), 0 0 20px 5px rgba(32, 113, 205, 0.3), 0 0 30px 7px rgba(32, 113, 205, 0.1);
+.bubble-bsc {
+  animation: bubble-float 8s ease-in-out infinite, bsc-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(240, 185, 11, 0.5), 0 0 20px 5px rgba(240, 185, 11, 0.3), 0 0 30px 7px rgba(240, 185, 11, 0.1);
 }
 
-.bubble-celo {
-  animation: bubble-float 8s ease-in-out infinite, celo-pulse 4s ease-in-out infinite !important;
-  box-shadow: 0 0 10px 2px rgba(53, 208, 127, 0.5), 0 0 20px 5px rgba(53, 208, 127, 0.3), 0 0 30px 7px rgba(53, 208, 127, 0.1);
+.bubble-polygon {
+  animation: bubble-float 8s ease-in-out infinite, polygon-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(130, 71, 229, 0.5), 0 0 20px 5px rgba(130, 71, 229, 0.3), 0 0 30px 7px rgba(130, 71, 229, 0.1);
 }
 
-.bubble-harmony {
-  animation: bubble-float 8s ease-in-out infinite, harmony-pulse 4s ease-in-out infinite !important;
-  box-shadow: 0 0 10px 2px rgba(0, 217, 187, 0.5), 0 0 20px 5px rgba(0, 217, 187, 0.3), 0 0 30px 7px rgba(0, 217, 187, 0.1);
+.bubble-avalanche {
+  animation: bubble-float 8s ease-in-out infinite, avalanche-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(232, 65, 66, 0.5), 0 0 20px 5px rgba(232, 65, 66, 0.3), 0 0 30px 7px rgba(232, 65, 66, 0.1);
 }
 
-.bubble-polkadot {
-  animation: bubble-float 8s ease-in-out infinite, polkadot-pulse 4s ease-in-out infinite !important;
-  box-shadow: 0 0 10px 2px rgba(230, 0, 122, 0.5), 0 0 20px 5px rgba(230, 0, 122, 0.3), 0 0 30px 7px rgba(230, 0, 122, 0.1);
+.bubble-sui {
+  animation: bubble-float 8s ease-in-out infinite, sui-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(101, 153, 255, 0.5), 0 0 20px 5px rgba(101, 153, 255, 0.3), 0 0 30px 7px rgba(101, 153, 255, 0.1);
 }
 
-.bubble-cosmos {
-  animation: bubble-float 8s ease-in-out infinite, cosmos-pulse 4s ease-in-out infinite !important;
-  box-shadow: 0 0 10px 2px rgba(42, 112, 226, 0.5), 0 0 20px 5px rgba(42, 112, 226, 0.3), 0 0 30px 7px rgba(42, 112, 226, 0.1);
+.bubble-base {
+  animation: bubble-float 8s ease-in-out infinite, base-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(0, 102, 255, 0.5), 0 0 20px 5px rgba(0, 102, 255, 0.3), 0 0 30px 7px rgba(0, 102, 255, 0.1);
 }
 
-.bubble-aptos {
-  animation: bubble-float 8s ease-in-out infinite, aptos-pulse 4s ease-in-out infinite !important;
-  box-shadow: 0 0 10px 2px rgba(81, 45, 147, 0.5), 0 0 20px 5px rgba(81, 45, 147, 0.3), 0 0 30px 7px rgba(81, 45, 147, 0.1);
+/* Also style the hover effect for each blockchain bubble */
+.bubble-ethereum:hover {
+  box-shadow: 0 0 15px 4px rgba(98, 126, 234, 0.7), 0 0 30px 8px rgba(98, 126, 234, 0.5), 0 0 50px 12px rgba(98, 126, 234, 0.3);
 }
 
-.bubble-flow {
-  animation: bubble-float 8s ease-in-out infinite, flow-pulse 4s ease-in-out infinite !important;
-  box-shadow: 0 0 10px 2px rgba(0, 239, 139, 0.5), 0 0 20px 5px rgba(0, 239, 139, 0.3), 0 0 30px 7px rgba(0, 239, 139, 0.1);
+.bubble-solana:hover {
+  box-shadow: 0 0 15px 4px rgba(20, 241, 149, 0.7), 0 0 30px 8px rgba(20, 241, 149, 0.5), 0 0 50px 12px rgba(20, 241, 149, 0.3);
 }
 
-.bubble-cardano {
-  animation: bubble-float 8s ease-in-out infinite, cardano-pulse 4s ease-in-out infinite !important;
-  box-shadow: 0 0 10px 2px rgba(0, 51, 173, 0.5), 0 0 20px 5px rgba(0, 51, 173, 0.3), 0 0 30px 7px rgba(0, 51, 173, 0.1);
+.bubble-bsc:hover {
+  box-shadow: 0 0 15px 4px rgba(240, 185, 11, 0.7), 0 0 30px 8px rgba(240, 185, 11, 0.5), 0 0 50px 12px rgba(240, 185, 11, 0.3);
 }
 
-.bubble-fantom:hover, .bubble-tron:hover, .bubble-cronos:hover, .bubble-celo:hover, 
-.bubble-harmony:hover, .bubble-polkadot:hover, .bubble-cosmos:hover, .bubble-aptos:hover, 
-.bubble-flow:hover, .bubble-cardano:hover {
-  animation-play-state: paused;
-  background: rgba(23, 25, 35, 0.9);
+.bubble-polygon:hover {
+  box-shadow: 0 0 15px 4px rgba(130, 71, 229, 0.7), 0 0 30px 8px rgba(130, 71, 229, 0.5), 0 0 50px 12px rgba(130, 71, 229, 0.3);
 }
 
-.bubble-fantom:hover {
-  box-shadow: 0 0 15px 4px rgba(19, 181, 236, 0.7), 0 0 30px 8px rgba(19, 181, 236, 0.5), 0 0 50px 12px rgba(19, 181, 236, 0.3);
+.bubble-avalanche:hover {
+  box-shadow: 0 0 15px 4px rgba(232, 65, 66, 0.7), 0 0 30px 8px rgba(232, 65, 66, 0.5), 0 0 50px 12px rgba(232, 65, 66, 0.3);
 }
 
-.bubble-tron:hover {
-  box-shadow: 0 0 15px 4px rgba(238, 13, 33, 0.7), 0 0 30px 8px rgba(238, 13, 33, 0.5), 0 0 50px 12px rgba(238, 13, 33, 0.3);
+.bubble-sui:hover {
+  box-shadow: 0 0 15px 4px rgba(101, 153, 255, 0.7), 0 0 30px 8px rgba(101, 153, 255, 0.5), 0 0 50px 12px rgba(101, 153, 255, 0.3);
 }
 
-.bubble-cronos:hover {
-  box-shadow: 0 0 15px 4px rgba(32, 113, 205, 0.7), 0 0 30px 8px rgba(32, 113, 205, 0.5), 0 0 50px 12px rgba(32, 113, 205, 0.3);
+.bubble-base:hover {
+  box-shadow: 0 0 15px 4px rgba(0, 102, 255, 0.7), 0 0 30px 8px rgba(0, 102, 255, 0.5), 0 0 50px 12px rgba(0, 102, 255, 0.3);
 }
 
-.bubble-celo:hover {
-  box-shadow: 0 0 15px 4px rgba(53, 208, 127, 0.7), 0 0 30px 8px rgba(53, 208, 127, 0.5), 0 0 50px 12px rgba(53, 208, 127, 0.3);
+/* Additional blockchain colors */
+@keyframes arbitrum-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(40, 160, 240, 0.5), 0 0 20px 5px rgba(40, 160, 240, 0.3), 0 0 30px 7px rgba(40, 160, 240, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(40, 160, 240, 0.7), 0 0 30px 8px rgba(40, 160, 240, 0.5), 0 0 50px 12px rgba(40, 160, 240, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(40, 160, 240, 0.5), 0 0 20px 5px rgba(40, 160, 240, 0.3), 0 0 30px 7px rgba(40, 160, 240, 0.1);
+  }
 }
 
-.bubble-harmony:hover {
-  box-shadow: 0 0 15px 4px rgba(0, 217, 187, 0.7), 0 0 30px 8px rgba(0, 217, 187, 0.5), 0 0 50px 12px rgba(0, 217, 187, 0.3);
+@keyframes kaspa-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(133, 66, 230, 0.5), 0 0 20px 5px rgba(133, 66, 230, 0.3), 0 0 30px 7px rgba(133, 66, 230, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(133, 66, 230, 0.7), 0 0 30px 8px rgba(133, 66, 230, 0.5), 0 0 50px 12px rgba(133, 66, 230, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(133, 66, 230, 0.5), 0 0 20px 5px rgba(133, 66, 230, 0.3), 0 0 30px 7px rgba(133, 66, 230, 0.1);
+  }
 }
 
-.bubble-polkadot:hover {
-  box-shadow: 0 0 15px 4px rgba(230, 0, 122, 0.7), 0 0 30px 8px rgba(230, 0, 122, 0.5), 0 0 50px 12px rgba(230, 0, 122, 0.3);
+@keyframes optimism-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(255, 4, 32, 0.5), 0 0 20px 5px rgba(255, 4, 32, 0.3), 0 0 30px 7px rgba(255, 4, 32, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(255, 4, 32, 0.7), 0 0 30px 8px rgba(255, 4, 32, 0.5), 0 0 50px 12px rgba(255, 4, 32, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(255, 4, 32, 0.5), 0 0 20px 5px rgba(255, 4, 32, 0.3), 0 0 30px 7px rgba(255, 4, 32, 0.1);
+  }
 }
 
-.bubble-cosmos:hover {
-  box-shadow: 0 0 15px 4px rgba(42, 112, 226, 0.7), 0 0 30px 8px rgba(42, 112, 226, 0.5), 0 0 50px 12px rgba(42, 112, 226, 0.3);
+@keyframes near-pulse {
+  0% {
+    box-shadow: 0 0 10px 2px rgba(0, 25, 75, 0.5), 0 0 20px 5px rgba(0, 25, 75, 0.3), 0 0 30px 7px rgba(0, 25, 75, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 15px 4px rgba(0, 25, 75, 0.7), 0 0 30px 8px rgba(0, 25, 75, 0.5), 0 0 50px 12px rgba(0, 25, 75, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 10px 2px rgba(0, 25, 75, 0.5), 0 0 20px 5px rgba(0, 25, 75, 0.3), 0 0 30px 7px rgba(0, 25, 75, 0.1);
+  }
 }
 
-.bubble-aptos:hover {
-  box-shadow: 0 0 15px 4px rgba(81, 45, 147, 0.7), 0 0 30px 8px rgba(81, 45, 147, 0.5), 0 0 50px 12px rgba(81, 45, 147, 0.3);
+.bubble-arbitrum {
+  animation: bubble-float 8s ease-in-out infinite, arbitrum-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(40, 160, 240, 0.5), 0 0 20px 5px rgba(40, 160, 240, 0.3), 0 0 30px 7px rgba(40, 160, 240, 0.1);
 }
 
-.bubble-flow:hover {
-  box-shadow: 0 0 15px 4px rgba(0, 239, 139, 0.7), 0 0 30px 8px rgba(0, 239, 139, 0.5), 0 0 50px 12px rgba(0, 239, 139, 0.3);
+.bubble-kaspa {
+  animation: bubble-float 8s ease-in-out infinite, kaspa-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(133, 66, 230, 0.5), 0 0 20px 5px rgba(133, 66, 230, 0.3), 0 0 30px 7px rgba(133, 66, 230, 0.1);
 }
 
-.bubble-cardano:hover {
-  box-shadow: 0 0 15px 4px rgba(0, 51, 173, 0.7), 0 0 30px 8px rgba(0, 51, 173, 0.5), 0 0 50px 12px rgba(0, 51, 173, 0.3);
+.bubble-optimism {
+  animation: bubble-float 8s ease-in-out infinite, optimism-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(255, 4, 32, 0.5), 0 0 20px 5px rgba(255, 4, 32, 0.3), 0 0 30px 7px rgba(255, 4, 32, 0.1);
+}
+
+.bubble-near {
+  animation: bubble-float 8s ease-in-out infinite, near-pulse 4s ease-in-out infinite !important;
+  box-shadow: 0 0 10px 2px rgba(0, 25, 75, 0.5), 0 0 20px 5px rgba(0, 25, 75, 0.3), 0 0 30px 7px rgba(0, 25, 75, 0.1);
+}
+
+.bubble-arbitrum:hover {
+  box-shadow: 0 0 15px 4px rgba(40, 160, 240, 0.7), 0 0 30px 8px rgba(40, 160, 240, 0.5), 0 0 50px 12px rgba(40, 160, 240, 0.3);
+}
+
+.bubble-kaspa:hover {
+  box-shadow: 0 0 15px 4px rgba(133, 66, 230, 0.7), 0 0 30px 8px rgba(133, 66, 230, 0.5), 0 0 50px 12px rgba(133, 66, 230, 0.3);
+}
+
+.bubble-optimism:hover {
+  box-shadow: 0 0 15px 4px rgba(255, 4, 32, 0.7), 0 0 30px 8px rgba(255, 4, 32, 0.5), 0 0 50px 12px rgba(255, 4, 32, 0.3);
+}
+
+.bubble-near:hover {
+  box-shadow: 0 0 15px 4px rgba(0, 25, 75, 0.7), 0 0 30px 8px rgba(0, 25, 75, 0.5), 0 0 50px 12px rgba(0, 25, 75, 0.3);
 }
 
 @keyframes float {
@@ -2998,3 +3060,4 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 .bullish-vote.active-vote {
   background: rgba(52, 199, 89, 0.5);
 }
+
