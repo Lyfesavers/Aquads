@@ -2466,43 +2466,43 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 }
 
 .bubble-fantom:hover {
-  box-shadow: 0 0 15px 4px rgba(19, 181, 236, 0.7), 0 0 30px 8px rgba(19, 181, 236, 0.5), 0 0 50px 12px rgba(19, 181, 236, 0.3);
+    box-shadow: 0 0 15px 4px rgba(19, 181, 236, 0.7), 0 0 30px 8px rgba(19, 181, 236, 0.5), 0 0 50px 12px rgba(19, 181, 236, 0.3);
 }
 
 .bubble-tron:hover {
-  box-shadow: 0 0 15px 4px rgba(238, 13, 33, 0.7), 0 0 30px 8px rgba(238, 13, 33, 0.5), 0 0 50px 12px rgba(238, 13, 33, 0.3);
+    box-shadow: 0 0 15px 4px rgba(238, 13, 33, 0.7), 0 0 30px 8px rgba(238, 13, 33, 0.5), 0 0 50px 12px rgba(238, 13, 33, 0.3);
 }
 
 .bubble-cronos:hover {
-  box-shadow: 0 0 15px 4px rgba(32, 113, 205, 0.7), 0 0 30px 8px rgba(32, 113, 205, 0.5), 0 0 50px 12px rgba(32, 113, 205, 0.3);
+    box-shadow: 0 0 15px 4px rgba(32, 113, 205, 0.7), 0 0 30px 8px rgba(32, 113, 205, 0.5), 0 0 50px 12px rgba(32, 113, 205, 0.3);
 }
 
 .bubble-celo:hover {
-  box-shadow: 0 0 15px 4px rgba(53, 208, 127, 0.7), 0 0 30px 8px rgba(53, 208, 127, 0.5), 0 0 50px 12px rgba(53, 208, 127, 0.3);
+    box-shadow: 0 0 15px 4px rgba(53, 208, 127, 0.7), 0 0 30px 8px rgba(53, 208, 127, 0.5), 0 0 50px 12px rgba(53, 208, 127, 0.3);
 }
 
 .bubble-harmony:hover {
-  box-shadow: 0 0 15px 4px rgba(0, 217, 187, 0.7), 0 0 30px 8px rgba(0, 217, 187, 0.5), 0 0 50px 12px rgba(0, 217, 187, 0.3);
+    box-shadow: 0 0 15px 4px rgba(0, 217, 187, 0.7), 0 0 30px 8px rgba(0, 217, 187, 0.5), 0 0 50px 12px rgba(0, 217, 187, 0.3);
 }
 
 .bubble-polkadot:hover {
-  box-shadow: 0 0 15px 4px rgba(230, 0, 122, 0.7), 0 0 30px 8px rgba(230, 0, 122, 0.5), 0 0 50px 12px rgba(230, 0, 122, 0.3);
+    box-shadow: 0 0 15px 4px rgba(230, 0, 122, 0.7), 0 0 30px 8px rgba(230, 0, 122, 0.5), 0 0 50px 12px rgba(230, 0, 122, 0.3);
 }
 
 .bubble-cosmos:hover {
-  box-shadow: 0 0 15px 4px rgba(42, 112, 226, 0.7), 0 0 30px 8px rgba(42, 112, 226, 0.5), 0 0 50px 12px rgba(42, 112, 226, 0.3);
+    box-shadow: 0 0 15px 4px rgba(42, 112, 226, 0.7), 0 0 30px 8px rgba(42, 112, 226, 0.5), 0 0 50px 12px rgba(42, 112, 226, 0.3);
 }
 
 .bubble-aptos:hover {
-  box-shadow: 0 0 15px 4px rgba(81, 45, 147, 0.7), 0 0 30px 8px rgba(81, 45, 147, 0.5), 0 0 50px 12px rgba(81, 45, 147, 0.3);
+    box-shadow: 0 0 15px 4px rgba(81, 45, 147, 0.7), 0 0 30px 8px rgba(81, 45, 147, 0.5), 0 0 50px 12px rgba(81, 45, 147, 0.3);
 }
 
 .bubble-flow:hover {
-  box-shadow: 0 0 15px 4px rgba(0, 239, 139, 0.7), 0 0 30px 8px rgba(0, 239, 139, 0.5), 0 0 50px 12px rgba(0, 239, 139, 0.3);
+    box-shadow: 0 0 15px 4px rgba(0, 239, 139, 0.7), 0 0 30px 8px rgba(0, 239, 139, 0.5), 0 0 50px 12px rgba(0, 239, 139, 0.3);
 }
 
 .bubble-cardano:hover {
-  box-shadow: 0 0 15px 4px rgba(0, 51, 173, 0.7), 0 0 30px 8px rgba(0, 51, 173, 0.5), 0 0 50px 12px rgba(0, 51, 173, 0.3);
+    box-shadow: 0 0 15px 4px rgba(0, 51, 173, 0.7), 0 0 30px 8px rgba(0, 51, 173, 0.5), 0 0 50px 12px rgba(0, 51, 173, 0.3);
 }
 
 @keyframes float {
@@ -2974,7 +2974,7 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   /* Increase hit area by adding invisible padding */
   .vote-button::after {
     content: '';
-    position: absolute;
+  position: absolute;
     top: -15px;
     left: -15px;
     right: -15px;
