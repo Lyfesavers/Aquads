@@ -422,23 +422,32 @@ const TokenList = ({ currentUser, showNotification }) => {
               {showDexFrame && (
                 <div className="bg-gray-900/80 backdrop-blur-lg border border-blue-500/30 rounded-lg overflow-hidden mb-6">
                   <div className="bg-gray-800/90 p-4 border-b border-blue-500/30">
-                    <div className="flex flex-wrap gap-4">
+                    <div className="flex flex-wrap gap-4 justify-center">
                       {DEX_OPTIONS.map((dex) => (
                         <button
                           key={dex.name}
                           onClick={() => handleDexClick(dex)}
                           className={`
-                            flex items-center space-x-2 px-4 py-2 rounded
+                            flex items-center justify-center rounded-full 
                             ${selectedDex?.name === dex.name 
-                              ? 'bg-blue-500/20 border-2 border-blue-500 text-blue-400' 
-                              : 'bg-gray-700/50 border border-gray-600 hover:border-blue-500/50 text-gray-300 hover:text-blue-400'
+                              ? 'bg-blue-500/20 border-2 border-blue-500' 
+                              : 'bg-gray-700/50 border border-gray-600 hover:border-blue-500/50'
                             }
                             transition-all duration-300 transform hover:scale-105
                             shadow-[0_0_15px_rgba(59,130,246,0.2)]
+                            w-16 h-16
                           `}
+                          title={dex.name}
                         >
-                          <span className="text-2xl">{dex.icon}</span>
-                          <span className="font-cyberpunk">{dex.name}</span>
+                          <img 
+                            src={`/${dex.name}.svg`} 
+                            alt={dex.name}
+                            className="w-10 h-10 object-contain"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = `/${dex.name}.png`;
+                            }}
+                          />
                         </button>
                       ))}
                     </div>
