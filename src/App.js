@@ -2777,7 +2777,7 @@ function App() {
                                   }}
                                 >
                                   <span 
-                                    className="text-white block hover:text-blue-300 transition-colors duration-300"
+                                    className="text-white truncate block hover:text-blue-300 transition-colors duration-300"
                                     style={{
                                       fontSize: `${Math.max(ad.size * 0.09, 10)}px`
                                     }}
