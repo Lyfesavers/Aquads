@@ -430,8 +430,8 @@ const TokenList = ({ currentUser, showNotification }) => {
                           className={`
                             flex items-center justify-center rounded-full overflow-hidden p-0
                             ${selectedDex?.name === dex.name 
-                              ? 'bg-blue-500/20 border-2 border-blue-500' 
-                              : 'bg-gray-700/50 border border-gray-600 hover:border-blue-500/50'
+                              ? 'bg-white border-2 border-blue-500' 
+                              : 'bg-white border border-gray-600 hover:border-blue-500/50'
                             }
                             transition-all duration-300 transform hover:scale-105
                             shadow-[0_0_15px_rgba(59,130,246,0.2)]
