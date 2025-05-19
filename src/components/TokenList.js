@@ -13,33 +13,33 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const DEX_OPTIONS = [
   {
     name: 'TurboSwap',
-    icon: '🌪️',
+    logoUrl: 'https://bridge.turboctobsc.com/static/media/logo.05a51c0e.png',
     url: 'https://bridge.turboctobsc.com/',
     description: 'TurboSwap DEX'
   },
   {
     name: 'PancakeSwap',
-    icon: '🥞',
+    logoUrl: 'https://pancakeswap.finance/images/tokens/0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82.svg',
     url: 'https://pancakeswap.finance/swap'
   },
   {
     name: 'Uniswap',
-    icon: '🦄',
+    logoUrl: 'https://cryptologos.cc/logos/uniswap-uni-logo.png',
     url: 'https://app.uniswap.org/#/swap'
   },
   {
     name: 'SushiSwap',
-    icon: '🍣',
+    logoUrl: 'https://cryptologos.cc/logos/sushiswap-sushi-logo.png',
     url: 'https://app.sushi.com/swap'
   },
   {
     name: 'Raydium',
-    icon: '☀️',
+    logoUrl: 'https://cryptologos.cc/logos/raydium-ray-logo.png',
     url: 'https://raydium.io/swap/'
   },
   {
     name: 'Jupiter',
-    icon: '🪐',
+    logoUrl: 'https://jup.ag/logo.png',
     url: 'https://jup.ag/',
     description: 'Popular DEX'
   }
@@ -422,23 +422,32 @@ const TokenList = ({ currentUser, showNotification }) => {
               {showDexFrame && (
                 <div className="bg-gray-900/80 backdrop-blur-lg border border-blue-500/30 rounded-lg overflow-hidden mb-6">
                   <div className="bg-gray-800/90 p-4 border-b border-blue-500/30">
-                    <div className="flex flex-wrap gap-4">
+                    <div className="flex flex-wrap gap-4 justify-center">
                       {DEX_OPTIONS.map((dex) => (
                         <button
                           key={dex.name}
                           onClick={() => handleDexClick(dex)}
                           className={`
-                            flex items-center space-x-2 px-4 py-2 rounded
+                            flex flex-col items-center p-2 rounded-full 
                             ${selectedDex?.name === dex.name 
-                              ? 'bg-blue-500/20 border-2 border-blue-500 text-blue-400' 
-                              : 'bg-gray-700/50 border border-gray-600 hover:border-blue-500/50 text-gray-300 hover:text-blue-400'
+                              ? 'bg-blue-500/20 border-2 border-blue-500' 
+                              : 'bg-gray-700/50 border border-gray-600 hover:border-blue-500/50 hover:bg-gray-700'
                             }
                             transition-all duration-300 transform hover:scale-105
                             shadow-[0_0_15px_rgba(59,130,246,0.2)]
+                            w-16 h-16
                           `}
+                          title={dex.name}
                         >
-                          <span className="text-2xl">{dex.icon}</span>
-                          <span className="font-cyberpunk">{dex.name}</span>
+                          <img 
+                            src={dex.logoUrl} 
+                            alt={dex.name} 
+                            className="w-10 h-10 object-contain rounded-full"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = '/placeholder.png';
+                            }}
+                          />
                         </button>
                       ))}
                     </div>
