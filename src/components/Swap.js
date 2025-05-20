@@ -41,10 +41,36 @@ const Swap = () => {
   const [toChain, setToChain] = useState('');
   const [fromChainTokens, setFromChainTokens] = useState([]);
   const [toChainTokens, setToChainTokens] = useState([]);
+  const [apiKeyStatus, setApiKeyStatus] = useState('unknown');
   
   const LIFI_API_KEY = process.env.REACT_APP_LIFI_API_KEY;
   const FEE_PERCENTAGE = 0.5; // 0.5% fee
   const FEE_RECIPIENT = process.env.REACT_APP_FEE_WALLET || '0x98BC1BEC892d9f74B606D478E6b45089D2faAB05'; // Default to a wallet if not set
+
+  useEffect(() => {
+    if (!LIFI_API_KEY) {
+      logger.error('LIFI_API_KEY is not set in environment variables');
+      setApiKeyStatus('missing');
+      setError('API key not found. Please check your environment variables.');
+    } else {
+      // Don't log the full API key for security reasons
+      const keyLength = LIFI_API_KEY.length;
+      const maskedKey = keyLength > 6 
+        ? `${LIFI_API_KEY.substring(0, 3)}...${LIFI_API_KEY.substring(keyLength - 3)}` 
+        : '***';
+      
+      logger.info(`LIFI_API_KEY is set (${maskedKey}) with length: ${keyLength}`);
+      setApiKeyStatus('available');
+    }
+    
+    // Log environment for debugging
+    logger.info('Environment check:', { 
+      nodeEnv: process.env.NODE_ENV,
+      hasApiKey: !!process.env.REACT_APP_LIFI_API_KEY,
+      hasFeeWallet: !!process.env.REACT_APP_FEE_WALLET,
+      isProduction: process.env.NODE_ENV === 'production'
+    });
+  }, [LIFI_API_KEY]);
 
   useEffect(() => {
     // Inject CSS to hide Duck Hunt button and other third-party elements
@@ -249,6 +275,12 @@ const Swap = () => {
 
     if (!walletConnected) {
       setError('Please connect your wallet first to get a quote');
+      return;
+    }
+
+    // Check if API key is available
+    if (apiKeyStatus === 'missing') {
+      setError('Cannot get quote: API key not configured. Please contact support.');
       return;
     }
 
@@ -471,6 +503,13 @@ const Swap = () => {
         AquaSwap <span className="text-sm font-normal text-gray-400">(Powered by li.fi)</span>
       </h2>
       
+      {/* API Key Status */}
+      {apiKeyStatus === 'missing' && (
+        <div className="bg-yellow-500/20 border border-yellow-500 text-yellow-300 p-3 rounded-lg mb-4">
+          ⚠️ API key not configured. Some features may not work correctly.
+        </div>
+      )}
+      
       {error && (
         <div className="bg-red-500/20 border border-red-500 text-red-300 p-3 rounded-lg mb-4 whitespace-pre-line">
           {error}
@@ -544,11 +583,26 @@ const Swap = () => {
               {!fromChain && <option value="">Select chain first</option>}
               {fromChain && fromChainTokens.length === 0 && <option value="">Loading tokens...</option>}
               {fromChainTokens.map(token => (
-                <option key={token.address} value={token.address}>
-                  {token.symbol} - {token.name}
+                <option key={token.address} value={token.address} className="flex items-center">
+                  {token.symbol}
                 </option>
               ))}
             </select>
+            {/* Custom token display with icons since select options can't have images */}
+            {fromToken && fromChainTokens.length > 0 && (
+              <div className="mt-2 flex items-center">
+                <img 
+                  src={fromChainTokens.find(t => t.address === fromToken)?.logoURI || '/placeholder-token.png'} 
+                  alt=""
+                  className="w-5 h-5 mr-2 rounded-full"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = '/placeholder-token.png';
+                  }}
+                />
+                <span>{fromChainTokens.find(t => t.address === fromToken)?.symbol}</span>
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-gray-400 mb-2">To Token</label>
@@ -562,10 +616,25 @@ const Swap = () => {
               {toChain && toChainTokens.length === 0 && <option value="">Loading tokens...</option>}
               {toChainTokens.map(token => (
                 <option key={token.address} value={token.address}>
-                  {token.symbol} - {token.name}
+                  {token.symbol}
                 </option>
               ))}
             </select>
+            {/* Custom token display with icons */}
+            {toToken && toChainTokens.length > 0 && (
+              <div className="mt-2 flex items-center">
+                <img 
+                  src={toChainTokens.find(t => t.address === toToken)?.logoURI || '/placeholder-token.png'} 
+                  alt=""
+                  className="w-5 h-5 mr-2 rounded-full"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = '/placeholder-token.png';
+                  }}
+                />
+                <span>{toChainTokens.find(t => t.address === toToken)?.symbol}</span>
+              </div>
+            )}
           </div>
         </div>
         
