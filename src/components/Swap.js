@@ -1659,6 +1659,92 @@ const Swap = ({ currentUser, showNotification }) => {
     };
   };
 
+  // Add a function to check balances of common Solana tokens
+  const checkCommonSolanaTokens = async (publicKey, solanaChain) => {
+    if (!solanaConnection || !publicKey) return [];
+    
+    const commonTokens = [
+      {
+        address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
+        symbol: 'USDC',
+        name: 'USD Coin',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png'
+      },
+      {
+        address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDT
+        symbol: 'USDT',
+        name: 'Tether USD',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png'
+      },
+      {
+        address: 'So11111111111111111111111111111111111111112', // Wrapped SOL
+        symbol: 'wSOL',
+        name: 'Wrapped SOL',
+        decimals: 9,
+        logoURI: 'https://raw.githubusercontent.com/lifinance/types/main/src/assets/icons/chains/solana.svg'
+      },
+      {
+        address: 'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So', // mSOL (Marinade Staked SOL)
+        symbol: 'mSOL',
+        name: 'Marinade Staked SOL',
+        decimals: 9,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So/logo.png'
+      },
+      {
+        address: '7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj', // stSOL (Lido Staked SOL)
+        symbol: 'stSOL',
+        name: 'Lido Staked SOL',
+        decimals: 9,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj/logo.png'
+      },
+      {
+        address: 'Saber2gLauYim4Mvftnrasomsv6NvAuncvMEZwcLpD1', // SBR (Saber)
+        symbol: 'SBR',
+        name: 'Saber Protocol Token',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Saber2gLauYim4Mvftnrasomsv6NvAuncvMEZwcLpD1/logo.svg'
+      }
+    ];
+    
+    const userTokens = [];
+    
+    // Check each token manually
+    for (const token of commonTokens) {
+      try {
+        // Create a token account address for this user and mint
+        const tokenMint = new solanaWeb3.PublicKey(token.address);
+        const tokenAccounts = await solanaConnection.getTokenAccountsByOwner(
+          publicKey,
+          { mint: tokenMint }
+        );
+        
+        // If user has this token
+        if (tokenAccounts.value.length > 0) {
+          // Get the most recent account
+          const tokenAccount = tokenAccounts.value[0];
+          const accountInfo = await solanaConnection.getTokenAccountBalance(tokenAccount.pubkey);
+          
+          if (accountInfo && accountInfo.value && parseFloat(accountInfo.value.uiAmount) > 0) {
+            userTokens.push({
+              ...token,
+              chainId: solanaChain.id,
+              isUserToken: true,
+              balance: accountInfo.value.uiAmount
+            });
+            
+            logger.info(`Found ${token.symbol} with balance: ${accountInfo.value.uiAmount}`);
+          }
+        }
+      } catch (err) {
+        logger.error(`Error checking balance for ${token.symbol}:`, err);
+      }
+    }
+    
+    return userTokens;
+  };
+
   // Improved function for scanning Solana wallet tokens
   const scanSolanaWalletTokens = async () => {
     if (!walletConnected || !walletAddress || walletType !== 'solana' || !solanaConnection) {
@@ -1769,38 +1855,64 @@ const Swap = ({ currentUser, showNotification }) => {
             )
           );
           
-          allTokenAccounts = tokenAccountsRaw.value.map(account => {
-            // Convert raw data to parsed format as best we can
-            try {
-              const data = solanaWeb3.AccountLayout.decode(account.account.data);
-              return {
-                pubkey: account.pubkey,
-                account: {
-                  data: {
-                    parsed: {
-                      info: {
-                        mint: new solanaWeb3.PublicKey(data.mint).toString(),
-                        owner: new solanaWeb3.PublicKey(data.owner).toString(),
-                        tokenAmount: {
-                          amount: data.amount.toString(),
-                          decimals: 0, // We'll try to get this from metadata
-                          uiAmount: parseInt(data.amount) / Math.pow(10, 9) // Default to 9 decimals
+          try {
+            // Try to parse the token accounts manually
+            allTokenAccounts = tokenAccountsRaw.value.map(account => {
+              try {
+                // The mint address is stored in the first 32 bytes of the token account data
+                const dataBuffer = account.account.data;
+                // Convert the first 32 bytes to a PublicKey
+                const mintAddress = new solanaWeb3.PublicKey(dataBuffer.slice(0, 32)).toString();
+                
+                return {
+                  pubkey: account.pubkey,
+                  account: {
+                    data: {
+                      parsed: {
+                        info: {
+                          // Use the properly extracted mint address
+                          mint: mintAddress,
+                          tokenAmount: {
+                            amount: "1",
+                            decimals: 9,
+                            uiAmount: 0 // Will be updated from metadata
+                          }
                         }
                       }
                     }
                   }
-                }
-              };
-            } catch (e) {
-              logger.error('Error parsing token account data:', e);
-              return null;
+                };
+              } catch (e) {
+                logger.error('Error parsing token account data:', e);
+                return null;
+              }
+            }).filter(Boolean);
+            
+            logger.info(`Found ${allTokenAccounts.length} token accounts using alternate method`);
+          } catch (parseError) {
+            // If parsing fails completely, fall back to checking balance of common Solana tokens
+            logger.error('Error parsing raw token accounts, falling back to common tokens:', parseError);
+            allTokenAccounts = [];
+            
+            // Skip token account parsing and just check native SOL balance
+            logger.info('Falling back to checking only common Solana tokens');
+            
+            // Check balances of common tokens
+            const commonTokensWithBalance = await checkCommonSolanaTokens(publicKey, solanaChain);
+            if (commonTokensWithBalance.length > 0) {
+              // Add these tokens to our userTokens map
+              commonTokensWithBalance.forEach(token => {
+                userTokens.set(token.address.toLowerCase(), token);
+              });
+              
+              logger.info(`Found ${commonTokensWithBalance.length} common tokens with balance`);
             }
-          }).filter(Boolean);
-          
-          logger.info(`Found ${allTokenAccounts.length} token accounts using alternate method`);
+          }
         } catch (alternateErr) {
           logger.error('Both token account fetch methods failed:', alternateErr);
-          throw alternateErr; // Re-throw to be caught by the outer try/catch
+          // Don't throw error, just continue with empty token accounts list
+          // so we can at least check SOL balance
+          allTokenAccounts = [];
         }
       }
       
@@ -1859,6 +1971,20 @@ const Swap = ({ currentUser, showNotification }) => {
       
       // Wait for all metadata fetches to complete
       await Promise.allSettled(metadataPromises);
+      
+      // If no tokens were found via account parsing, check common tokens
+      if (userTokens.size === 0 && allTokenAccounts.length === 0) {
+        logger.info('No tokens found via account parsing, checking common tokens');
+        const commonTokensWithBalance = await checkCommonSolanaTokens(publicKey, solanaChain);
+        if (commonTokensWithBalance.length > 0) {
+          // Add these tokens to our userTokens map
+          commonTokensWithBalance.forEach(token => {
+            userTokens.set(token.address.toLowerCase(), token);
+          });
+          
+          logger.info(`Found ${commonTokensWithBalance.length} common tokens with balance`);
+        }
+      }
       
       // Add the native SOL balance
       try {
