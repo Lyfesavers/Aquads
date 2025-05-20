@@ -625,7 +625,7 @@ const Swap = ({ currentUser, showNotification }) => {
   // Fix wallet connection logic for MetaMask with stronger verification
   const connectWallet = async (walletId) => {
     try {
-      // First check if user is authenticated
+      // First check if user is authenticated to the website
       if (!currentUser) {
         setError('Please log in to securely connect your wallet');
         // Notify parent component that user needs to authenticate
@@ -668,6 +668,15 @@ const Swap = ({ currentUser, showNotification }) => {
             const response = await provider.connect();
             const walletAddr = response.publicKey.toString();
             
+            // Request signature to verify ownership
+            const message = `Verify wallet ownership for ${currentUser.username} on AquaSwap - ${new Date().toISOString()}`;
+            const encodedMessage = new TextEncoder().encode(message);
+            const signatureResponse = await provider.signMessage(encodedMessage, 'utf8');
+            
+            if (!signatureResponse || !signatureResponse.signature) {
+              throw new Error('Wallet signature verification failed');
+            }
+            
             // Save the provider and public key
             setSolanaProvider(provider);
             setWalletAddress(walletAddr);
@@ -679,7 +688,7 @@ const Swap = ({ currentUser, showNotification }) => {
             logger.info(`Authenticated user ${currentUser.username} connected Phantom Wallet:`, walletAddr);
           } catch (error) {
             logger.error('Phantom wallet connection error:', error);
-            setError('Failed to connect to Phantom wallet.');
+            setError('Failed to connect to Phantom wallet. Signature required to verify wallet ownership.');
             setWalletConnected(false);
           }
         }
@@ -696,6 +705,15 @@ const Swap = ({ currentUser, showNotification }) => {
             const response = await provider.connect();
             const walletAddr = response.publicKey.toString();
             
+            // Request signature to verify ownership
+            const message = `Verify wallet ownership for ${currentUser.username} on AquaSwap - ${new Date().toISOString()}`;
+            const encodedMessage = new TextEncoder().encode(message);
+            const signatureResponse = await provider.signMessage(encodedMessage, 'utf8');
+            
+            if (!signatureResponse || !signatureResponse.signature) {
+              throw new Error('Wallet signature verification failed');
+            }
+            
             // Save the provider and public key
             setSolanaProvider(provider);
             setWalletAddress(walletAddr);
@@ -706,7 +724,7 @@ const Swap = ({ currentUser, showNotification }) => {
             logger.info(`Connected Solflare Wallet:`, walletAddr);
           } catch (error) {
             logger.error('Solflare wallet connection error:', error);
-            setError('Failed to connect to Solflare wallet.');
+            setError('Failed to connect to Solflare wallet. Signature required to verify wallet ownership.');
             setWalletConnected(false);
           }
         }
@@ -737,7 +755,7 @@ const Swap = ({ currentUser, showNotification }) => {
             throw new Error('Invalid chainId response');
           }
           
-          // Only then request accounts
+          // Request accounts
           const accounts = await window.ethereum.request({ 
             method: 'eth_requestAccounts'
           });
@@ -750,17 +768,31 @@ const Swap = ({ currentUser, showNotification }) => {
               typeof accounts[0] === 'string' && 
               accounts[0].startsWith('0x')) {
             
+            // Require signature to verify wallet ownership
+            const provider = new ethers.BrowserProvider(window.ethereum);
+            const signer = await provider.getSigner();
+            
+            // Create a unique message to sign
+            const message = `Verify wallet ownership for ${currentUser.username} on AquaSwap - ${new Date().toISOString()}`;
+            
+            // Request personal signature
+            const signature = await signer.signMessage(message);
+            
+            if (!signature) {
+              throw new Error('Wallet signature verification failed');
+            }
+            
             setWalletAddress(accounts[0]);
             setWalletConnected(true);
             setWalletType('evm');
             setShowWalletModal(false);
-            logger.info(`Connected MetaMask:`, accounts[0]);
+            logger.info(`Connected and verified MetaMask:`, accounts[0]);
           } else {
             throw new Error('Invalid account data from MetaMask');
           }
         } catch (error) {
           logger.error('MetaMask connection error:', error);
-          setError(`Failed to connect to MetaMask: ${error.message || 'Unknown error'}`);
+          setError(`Failed to connect to MetaMask: ${error.message || 'Signature required to verify wallet ownership'}`);
           setWalletConnected(false);
           setLoading(false);
           return;
@@ -786,17 +818,31 @@ const Swap = ({ currentUser, showNotification }) => {
         try {
           const accounts = await provider.request({ method: 'eth_requestAccounts' });
           if (accounts && accounts.length > 0 && accounts[0]) {
+            // Require signature to verify wallet ownership
+            const ethersProvider = new ethers.BrowserProvider(provider);
+            const signer = await ethersProvider.getSigner();
+            
+            // Create a unique message to sign
+            const message = `Verify wallet ownership for ${currentUser.username} on AquaSwap - ${new Date().toISOString()}`;
+            
+            // Request personal signature
+            const signature = await signer.signMessage(message);
+            
+            if (!signature) {
+              throw new Error('Wallet signature verification failed');
+            }
+            
             setWalletAddress(accounts[0]);
             setWalletConnected(true);
             setWalletType('evm');
             setShowWalletModal(false);
-            logger.info(`Connected Coinbase Wallet:`, accounts[0]);
+            logger.info(`Connected and verified Coinbase Wallet:`, accounts[0]);
           } else {
             throw new Error('Invalid account response from Coinbase Wallet');
           }
         } catch (error) {
           logger.error('Coinbase Wallet connection error:', error);
-          setError('Failed to connect to Coinbase Wallet.');
+          setError('Failed to connect to Coinbase Wallet. Signature required to verify wallet ownership.');
           setWalletConnected(false);
         }
       }
@@ -811,17 +857,31 @@ const Swap = ({ currentUser, showNotification }) => {
         try {
           const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
           if (accounts && accounts.length > 0 && accounts[0]) {
+            // Require signature to verify wallet ownership
+            const provider = new ethers.BrowserProvider(window.ethereum);
+            const signer = await provider.getSigner();
+            
+            // Create a unique message to sign
+            const message = `Verify wallet ownership for ${currentUser.username} on AquaSwap - ${new Date().toISOString()}`;
+            
+            // Request personal signature
+            const signature = await signer.signMessage(message);
+            
+            if (!signature) {
+              throw new Error('Wallet signature verification failed');
+            }
+            
             setWalletAddress(accounts[0]);
             setWalletConnected(true);
             setWalletType('evm');
             setShowWalletModal(false);
-            logger.info(`Connected Trust Wallet:`, accounts[0]);
+            logger.info(`Connected and verified Trust Wallet:`, accounts[0]);
           } else {
             throw new Error('Invalid account response from Trust Wallet');
           }
         } catch (error) {
           logger.error('Trust Wallet connection error:', error);
-          setError('Failed to connect to Trust Wallet.');
+          setError('Failed to connect to Trust Wallet. Signature required to verify wallet ownership.');
           setWalletConnected(false);
         }
       }
@@ -836,17 +896,31 @@ const Swap = ({ currentUser, showNotification }) => {
         try {
           const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
           if (accounts && accounts.length > 0 && accounts[0]) {
+            // Require signature to verify wallet ownership
+            const provider = new ethers.BrowserProvider(window.ethereum);
+            const signer = await provider.getSigner();
+            
+            // Create a unique message to sign
+            const message = `Verify wallet ownership for ${currentUser.username} on AquaSwap - ${new Date().toISOString()}`;
+            
+            // Request personal signature
+            const signature = await signer.signMessage(message);
+            
+            if (!signature) {
+              throw new Error('Wallet signature verification failed');
+            }
+            
             setWalletAddress(accounts[0]);
             setWalletConnected(true);
             setWalletType('evm');
             setShowWalletModal(false);
-            logger.info(`Connected Brave Wallet:`, accounts[0]);
+            logger.info(`Connected and verified Brave Wallet:`, accounts[0]);
           } else {
             throw new Error('Invalid account response from Brave Wallet');
           }
         } catch (error) {
           logger.error('Brave Wallet connection error:', error);
-          setError('Failed to connect to Brave Wallet.');
+          setError('Failed to connect to Brave Wallet. Signature required to verify wallet ownership.');
           setWalletConnected(false);
         }
       }
@@ -866,7 +940,7 @@ const Swap = ({ currentUser, showNotification }) => {
       setLoading(false);
     } catch (error) {
       logger.error('Wallet connection error:', error);
-      setError('Failed to connect wallet. Please try again.');
+      setError('Failed to connect wallet. Signature required to verify wallet ownership.');
       setLoading(false);
       setWalletConnected(false);
     }
@@ -1372,6 +1446,11 @@ const Swap = ({ currentUser, showNotification }) => {
         <p>⚠️ <strong>Security:</strong> Always verify transaction details before confirming in your wallet.</p>
       </div>
       
+      {/* Wallet Verification Notice - Add this new notice */}
+      <div className="bg-green-500/20 border border-green-500 text-green-300 p-2 rounded-lg mb-3 text-sm flex-shrink-0">
+        <p>🔒 <strong>Security:</strong> Wallet ownership verified through signature to prevent unauthorized connections.</p>
+      </div>
+      
       {/* Solana Support Notice */}
       <div className="bg-purple-500/20 border border-purple-500 text-purple-300 p-2 rounded-lg mb-3 text-sm flex-shrink-0">
         <p>🚀 <strong>New:</strong> We now support Solana chain swaps via Jupiter exchange and cross-chain with Allbridge/Mayan.</p>
@@ -1611,10 +1690,9 @@ const Swap = ({ currentUser, showNotification }) => {
   );
 };
 
-// Add PropTypes for prop validation
 Swap.propTypes = {
   currentUser: PropTypes.object.isRequired,
   showNotification: PropTypes.func.isRequired
 };
 
-export default Swap; 
+export default Swap;
