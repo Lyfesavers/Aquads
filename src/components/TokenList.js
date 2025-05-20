@@ -42,6 +42,13 @@ const DEX_OPTIONS = [
     icon: '🪐',
     url: 'https://jup.ag/',
     description: 'Popular DEX'
+  },
+  {
+    name: 'AquaSwap',
+    icon: '💧',
+    url: '/swap',
+    description: 'Powered by li.fi with 0.5% fee',
+    custom: true
   }
 ];
 
@@ -192,6 +199,11 @@ const TokenList = ({ currentUser, showNotification }) => {
   const handleDexClick = (dex) => {
     setSelectedDex(dex);
     setShowDexFrame(true);
+    
+    // If it's our custom swap, redirect to our swap page
+    if (dex.custom) {
+      window.location.href = dex.url;
+    }
   };
 
   const handleCloseReviews = () => {
