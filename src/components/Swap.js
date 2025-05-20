@@ -117,42 +117,66 @@ const Swap = ({ currentUser, showNotification }) => {
     });
     
     // Initialize Solana connection
-    try {
-      // Connect to Solana mainnet-beta with better performance settings
-      // Use finalized commitment for more reliable token data
-      const connectionConfig = {
-        commitment: 'confirmed',
-        disableRetryOnRateLimit: false,
-        confirmTransactionInitialTimeout: 60000
-      };
-      
-      // Try to use GenesysGo's RPC endpoint first (good for token accounts)
-      // Fallback to Solana's official RPC endpoint if needed
-      const connection = new solanaWeb3.Connection(
-        'https://ssc-dao.genesysgo.net',
-        connectionConfig
-      );
-      
-      // Test the connection before using it
-      connection.getVersion()
-        .then(() => {
-          logger.info('Connected to GenesysGo Solana RPC');
+    const initializeSolanaConnection = async () => {
+      try {
+        // Connect to Solana mainnet-beta with better performance settings
+        // Use finalized commitment for more reliable token data
+        const connectionConfig = {
+          commitment: 'confirmed',
+          disableRetryOnRateLimit: false,
+          confirmTransactionInitialTimeout: 60000
+        };
+        
+        // Try multiple RPC endpoints for better reliability
+        // Helius is highly reliable and good for token detection
+        const rpcEndpoints = [
+          'https://api.mainnet-beta.solana.com',
+          'https://solana-api.projectserum.com',
+          'https://rpc.ankr.com/solana',
+          'https://ssc-dao.genesysgo.net' // Move this to the end as it seems to be failing
+        ];
+        
+        let connection = null;
+        let connectedEndpoint = '';
+        
+        // Try each endpoint until we find one that works
+        for (let i = 0; i < rpcEndpoints.length; i++) {
+          try {
+            const endpoint = rpcEndpoints[i];
+            const tempConnection = new solanaWeb3.Connection(endpoint, connectionConfig);
+            
+            // Test the connection
+            await tempConnection.getVersion();
+            
+            // If we get here, the connection works
+            connection = tempConnection;
+            connectedEndpoint = endpoint;
+            logger.info(`Connected to Solana RPC at ${endpoint}`);
+            break;
+          } catch (err) {
+            logger.warn(`Failed to connect to Solana RPC at ${rpcEndpoints[i]}: ${err.message}`);
+          }
+        }
+        
+        if (connection) {
           setSolanaConnection(connection);
-        })
-        .catch((err) => {
-          logger.warn('Could not connect to GenesysGo RPC, trying Solana mainnet:', err);
-          
-          // Fallback to official Solana RPC
+          logger.info(`Successfully established Solana connection to ${connectedEndpoint}`);
+        } else {
+          // All endpoints failed, try one last time with the primary endpoint
           const fallbackConnection = new solanaWeb3.Connection(
             'https://api.mainnet-beta.solana.com',
             connectionConfig
           );
           setSolanaConnection(fallbackConnection);
-          logger.info('Solana fallback connection established');
-        });
-    } catch (error) {
-      logger.error('Failed to initialize Solana connection:', error);
-    }
+          logger.info('Using fallback Solana connection');
+        }
+      } catch (error) {
+        logger.error('Failed to initialize Solana connection:', error);
+      }
+    };
+    
+    // Call the async function
+    initializeSolanaConnection();
   }, [LIFI_API_KEY]);
 
   useEffect(() => {
@@ -1615,10 +1639,18 @@ const Swap = ({ currentUser, showNotification }) => {
   // Add a function to fetch Solana token metadata
   const getSolanaTokenMetadata = async (mintAddress) => {
     try {
-      // First try the Solana token list registry (more complete metadata)
-      const response = await axios.get('https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/src/tokens/solana.tokenlist.json');
-      if (response.data && response.data.tokens) {
-        const token = response.data.tokens.find(t => t.address === mintAddress);
+      // Try multiple sources in parallel for better odds of finding the token
+      const [solanaLabsResponse, jupiterResponse] = await Promise.allSettled([
+        // 1. Try the official Solana token list first
+        axios.get('https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/src/tokens/solana.tokenlist.json'),
+        
+        // 2. Try Jupiter token list as a good fallback
+        axios.get('https://token.jup.ag/all')
+      ]);
+      
+      // Check Solana Labs token list
+      if (solanaLabsResponse.status === 'fulfilled' && solanaLabsResponse.value?.data?.tokens) {
+        const token = solanaLabsResponse.value.data.tokens.find(t => t.address === mintAddress);
         if (token) {
           return {
             name: token.name,
@@ -1629,22 +1661,51 @@ const Swap = ({ currentUser, showNotification }) => {
         }
       }
       
-      // If not found in main registry, try Jupiter token list as fallback
+      // Check Jupiter token list
+      if (jupiterResponse.status === 'fulfilled' && jupiterResponse.value?.data) {
+        const jupToken = jupiterResponse.value.data.find(t => t.address === mintAddress);
+        if (jupToken) {
+          return {
+            name: jupToken.name,
+            symbol: jupToken.symbol,
+            decimals: jupToken.decimals,
+            logoURI: jupToken.logoURI || ''
+          };
+        }
+      }
+      
+      // If still not found, try querying the Solana Program Library (SPL) directly
+      // This will at least get us a symbol for known tokens
       try {
-        const jupiterResponse = await axios.get('https://token.jup.ag/all');
-        if (jupiterResponse.data) {
-          const jupToken = jupiterResponse.data.find(t => t.address === mintAddress);
-          if (jupToken) {
+        // Look for token metadata program on-chain
+        const connection = solanaConnection;
+        const metaplexProgramId = new solanaWeb3.PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
+        const mintKey = new solanaWeb3.PublicKey(mintAddress);
+        
+        // Try to get on-chain metadata
+        const [metadata] = await solanaWeb3.PublicKey.findProgramAddress(
+          [Buffer.from('metadata'), metaplexProgramId.toBuffer(), mintKey.toBuffer()],
+          metaplexProgramId
+        );
+        
+        const accountInfo = await connection.getAccountInfo(metadata);
+        if (accountInfo) {
+          // Very simplified metadata parsing - in a real app you'd use a proper decoder
+          const name = Buffer.from(accountInfo.data.slice(1, 33)).toString().replace(/\0/g, '');
+          const symbol = Buffer.from(accountInfo.data.slice(33, 65)).toString().replace(/\0/g, '');
+          
+          if (name || symbol) {
             return {
-              name: jupToken.name,
-              symbol: jupToken.symbol,
-              decimals: jupToken.decimals,
-              logoURI: jupToken.logoURI || ''
+              name: name || `Token ${mintAddress.slice(0, 6)}...`,
+              symbol: symbol || `TKN-${mintAddress.slice(0, 4)}`,
+              decimals: 9, // Assuming 9 decimals which is common for SPL tokens
+              logoURI: ''
             };
           }
         }
-      } catch (error) {
-        logger.error('Error fetching Jupiter token metadata:', error);
+      } catch (onChainErr) {
+        logger.debug('Error fetching on-chain metadata:', onChainErr);
+        // This is expected to fail for many tokens, so we just continue
       }
     } catch (error) {
       logger.error('Error fetching Solana token metadata:', error);
@@ -1653,7 +1714,7 @@ const Swap = ({ currentUser, showNotification }) => {
     // Default metadata if not found
     return {
       name: `Token ${mintAddress.slice(0, 6)}...`,
-      symbol: `UNKNOWN`,
+      symbol: `TKN-${mintAddress.slice(0, 4)}`,
       decimals: 9, // Default for most Solana tokens
       logoURI: ''
     };
@@ -1664,6 +1725,7 @@ const Swap = ({ currentUser, showNotification }) => {
     if (!solanaConnection || !publicKey) return [];
     
     const commonTokens = [
+      // Major stablecoins
       {
         address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
         symbol: 'USDC',
@@ -1685,6 +1747,7 @@ const Swap = ({ currentUser, showNotification }) => {
         decimals: 9,
         logoURI: 'https://raw.githubusercontent.com/lifinance/types/main/src/assets/icons/chains/solana.svg'
       },
+      // Liquid staking tokens
       {
         address: 'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So', // mSOL (Marinade Staked SOL)
         symbol: 'mSOL',
@@ -1700,11 +1763,76 @@ const Swap = ({ currentUser, showNotification }) => {
         logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj/logo.png'
       },
       {
+        address: 'J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn', // jitoSOL
+        symbol: 'jitoSOL',
+        name: 'Jito Staked SOL',
+        decimals: 9,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn/logo.png'
+      },
+      {
+        address: 'bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1', // bSOL (Blaze SOL)
+        symbol: 'bSOL',
+        name: 'Blaze Staked SOL',
+        decimals: 9,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1/logo.png'
+      },
+      // Popular Solana tokens
+      {
         address: 'Saber2gLauYim4Mvftnrasomsv6NvAuncvMEZwcLpD1', // SBR (Saber)
         symbol: 'SBR',
         name: 'Saber Protocol Token',
         decimals: 6,
         logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Saber2gLauYim4Mvftnrasomsv6NvAuncvMEZwcLpD1/logo.svg'
+      },
+      {
+        address: 'RLBxxFkseAZ4RgJH3Sqn8jXxhmGoz9jWxDNJMh8pL7a', // RAY (Raydium)
+        symbol: 'RAY',
+        name: 'Raydium',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/RLBxxFkseAZ4RgJH3Sqn8jXxhmGoz9jWxDNJMh8pL7a/logo.png'
+      },
+      {
+        address: 'orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE', // ORCA
+        symbol: 'ORCA',
+        name: 'Orca',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png'
+      },
+      {
+        address: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263', // BONK
+        symbol: 'BONK',
+        name: 'Bonk',
+        decimals: 5,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263/logo.png'
+      },
+      {
+        address: 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN', // JUP (Jupiter)
+        symbol: 'JUP',
+        name: 'Jupiter',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN/logo.png'
+      },
+      {
+        address: 'HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3', // PYTH
+        symbol: 'PYTH',
+        name: 'Pyth Network',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3/logo.png'
+      },
+      // Additional stablecoins
+      {
+        address: 'Dq5C6Zmg37MQinAZiKRyXpHEPpnXPprEFQiPYagHisZj', // USDCet (USDC from Ethereum on Wormhole)
+        symbol: 'USDCet',
+        name: 'USDC (Ethereum)',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png'
+      },
+      {
+        address: 'Ea5SjE2Y6yvCeW5dYTn7PYMuW5ikXkvbGdcmSnXeaLjS', // PAI
+        symbol: 'PAI',
+        name: 'PAI (Parrot USD)',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Ea5SjE2Y6yvCeW5dYTn7PYMuW5ikXkvbGdcmSnXeaLjS/logo.png'
       }
     ];
     
