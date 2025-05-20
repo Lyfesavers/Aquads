@@ -3082,23 +3082,26 @@ function App() {
                           </p>
                         </div>
                         
-                        {/* Link code example */}
-                        <div className="bg-gray-800 p-3 rounded-md w-full mb-4 text-sm overflow-x-auto">
-                          <code className="text-green-300">
-                            &lt;a href="https://aquads.xyz" target="_blank" rel="noopener"&gt;Listing Partner&lt;/a&gt;
-                          </code>
+                        {/* Referral link example */}
+                        <div className="bg-gray-800 p-3 rounded-md w-full mb-4 text-sm overflow-x-auto flex items-center">
+                          <input 
+                            type="text" 
+                            value="https://aquads.xyz" 
+                            readOnly
+                            className="bg-transparent text-green-300 w-full outline-none p-1"
+                          />
                         </div>
                         
                         {/* Buttons */}
                         <div className="flex gap-3">
                           <button 
                             onClick={() => {
-                              navigator.clipboard.writeText('<a href="https://aquads.xyz" target="_blank" rel="noopener">Listing Partner</a>');
-                              showNotification('HTML code copied to clipboard!', 'success');
+                              navigator.clipboard.writeText('https://aquads.xyz');
+                              showNotification('Link copied to clipboard!', 'success');
                             }}
                             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full transition duration-300"
                           >
-                            Copy HTML
+                            Copy Link
                           </button>
                           <button 
                             onClick={() => setPartnershipPopup(null)}
