@@ -1053,20 +1053,20 @@ function App() {
       
       setShowCreateModal(false);
       
+      // Show partnership popup after successful submission for all users
+      setPartnershipPopup({
+        projectName: adData.title,
+        projectId: createdAd.id
+      });
+      
+      // Auto dismiss after 30 seconds
+      setTimeout(() => {
+        setPartnershipPopup(null);
+      }, 30000);
+      
       // Show different messages based on user role or ad status
       if (currentUser?.isAdmin || createdAd.status === 'active') {
         showNotification('Project Listed successfully!', 'success');
-        
-        // Show partnership popup after successful listing
-        setPartnershipPopup({
-          projectName: adData.title,
-          projectId: createdAd.id
-        });
-        
-        // Auto dismiss after 6 seconds
-        setTimeout(() => {
-          setPartnershipPopup(null);
-        }, 6000);
       } else {
         showNotification('Project submitted for listing! It will be visible once approved by admins.', 'success');
       }
