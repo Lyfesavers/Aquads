@@ -257,37 +257,43 @@ const Swap = () => {
     }
   };
   
-  // Update wallet detection logic with better validation
+  // Fix MetaMask detection with much stronger verification
   const detectWallets = () => {
     const available = [];
     
     // Check if window.ethereum exists at all
     const hasEthereumProvider = typeof window.ethereum !== 'undefined';
     
-    // Detect MetaMask with stricter validation
+    // CRITICAL: Add function to test if provider is actually accessible
+    const testProviderAccess = async (provider) => {
+      try {
+        // Try to call a safe, read-only method to verify provider works
+        await provider.request({ method: 'eth_chainId' });
+        return true;
+      } catch (error) {
+        logger.error('Provider test failed:', error);
+        return false;
+      }
+    };
+    
+    // MetaMask detection with thorough verification
+    let isMetaMaskInstalled = false;
     if (hasEthereumProvider && window.ethereum?.isMetaMask) {
-      // Additional verification
-      const isRealMetaMask = !window.ethereum.isCoinbaseWallet && !window.ethereum.isBraveWallet;
-      
-      available.push({ 
-        type: 'evm',
-        id: 'metamask', 
-        name: 'MetaMask',
-        icon: '🦊',
-        installed: isRealMetaMask,
-        downloadUrl: 'https://metamask.io/download/'
-      });
-    } else {
-      // Add MetaMask as not installed
-      available.push({ 
-        type: 'evm',
-        id: 'metamask', 
-        name: 'MetaMask',
-        icon: '🦊',
-        installed: false,
-        downloadUrl: 'https://metamask.io/download/'
-      });
+      // Verify it's not another wallet pretending to be MetaMask
+      isMetaMaskInstalled = !window.ethereum.isCoinbaseWallet && 
+                           !window.ethereum.isBraveWallet && 
+                           !window.ethereum.isTrust && 
+                           !window.ethereum.isTrustWallet;
     }
+    
+    available.push({ 
+      type: 'evm',
+      id: 'metamask', 
+      name: 'MetaMask',
+      icon: '🦊',
+      installed: isMetaMaskInstalled,
+      downloadUrl: 'https://metamask.io/download/'
+    });
     
     // Detect Coinbase Wallet
     if (hasEthereumProvider && (window.ethereum?.isCoinbaseWallet || 
@@ -364,15 +370,13 @@ const Swap = () => {
     });
     
     setWalletOptions(available);
-    
-    // Log detected wallet providers
     const installedWallets = available.filter(w => w.installed);
     logger.info('Detected installed wallets:', installedWallets.map(w => w.name));
     
     return installedWallets.length > 0;
   };
 
-  // Update connect wallet function with better verification and error handling
+  // Fix wallet connection logic for MetaMask with stronger verification
   const connectWallet = async (walletId) => {
     try {
       // Find the selected wallet
@@ -383,7 +387,7 @@ const Swap = () => {
         return;
       }
       
-      // If wallet is not installed, show installation prompt
+      // Absolutely ensure wallet is installed
       if (!selectedWallet.installed) {
         setInstallingWallet(selectedWallet);
         return;
@@ -391,39 +395,58 @@ const Swap = () => {
       
       setLoading(true);
       
-      // Special handling for different wallet types
+      // MetaMask specific verification and connection
       if (walletId === 'metamask') {
-        // Strict verification for MetaMask
-        if (!window.ethereum || !window.ethereum.isMetaMask) {
+        // Triple-check that MetaMask is really installed and accessible
+        if (!window.ethereum || 
+            !window.ethereum.isMetaMask || 
+            window.ethereum.isCoinbaseWallet || 
+            window.ethereum.isBraveWallet) {
           setError('MetaMask is not installed or not accessible');
           setLoading(false);
+          setWalletConnected(false);
           return;
         }
         
-        // Attempt to get accounts to verify connection
+        // Test that provider is actually working
         try {
+          // First try a read-only method to check provider is working
+          const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+          
+          if (!chainId) {
+            throw new Error('Invalid chainId response');
+          }
+          
+          // Only then request accounts
           const accounts = await window.ethereum.request({ 
-            method: 'eth_requestAccounts',
-            params: [] 
+            method: 'eth_requestAccounts'
           });
           
-          // Verify accounts are returned and valid
-          if (accounts && accounts.length > 0 && accounts[0] && 
-              typeof accounts[0] === 'string' && accounts[0].startsWith('0x')) {
+          // Strict validation of returned accounts
+          if (accounts && 
+              Array.isArray(accounts) && 
+              accounts.length > 0 && 
+              accounts[0] && 
+              typeof accounts[0] === 'string' && 
+              accounts[0].startsWith('0x')) {
+            
             setWalletAddress(accounts[0]);
             setWalletConnected(true);
             setWalletType('evm');
             setShowWalletModal(false);
             logger.info(`Connected MetaMask:`, accounts[0]);
           } else {
-            throw new Error('Invalid account response from MetaMask');
+            throw new Error('Invalid account data from MetaMask');
           }
         } catch (error) {
           logger.error('MetaMask connection error:', error);
-          setError('Failed to connect to MetaMask. Please make sure it is unlocked and try again.');
+          setError(`Failed to connect to MetaMask: ${error.message || 'Unknown error'}`);
           setWalletConnected(false);
+          setLoading(false);
+          return;
         }
-      } 
+      }
+      
       // Coinbase Wallet
       else if (walletId === 'coinbase') {
         if (!window.ethereum?.isCoinbaseWallet && 
@@ -630,6 +653,7 @@ const Swap = () => {
     detectWallets();
   }, []);
 
+  // Fix the "You Receive" amount display issue
   const getQuote = async () => {
     if (!fromToken || !toToken || !fromAmount || fromAmount <= 0) {
       setError('Please fill in all fields correctly');
@@ -638,7 +662,7 @@ const Swap = () => {
 
     if (!walletConnected) {
       setError('Please connect your wallet first to get a quote');
-      setShowWalletModal(true); // Show wallet modal when user tries to get a quote without connecting
+      setShowWalletModal(true);
       return;
     }
 
@@ -658,7 +682,7 @@ const Swap = () => {
     setError(null);
     setRoutes([]);
     setSelectedRoute(null);
-    setToAmount('');
+    setToAmount('');  // Clear the to amount
 
     try {
       // Find the selected token to get its decimals
@@ -712,17 +736,30 @@ const Swap = () => {
 
       setRoutes(response.data.routes || []);
       if (response.data.routes?.length > 0) {
-        setSelectedRoute(response.data.routes[0]);
+        // Get the best route from the response
+        const bestRoute = response.data.routes[0];
+        
         // Get the token decimals for output token
         const selectedToToken = tokens[toChain]?.find(token => token.address === toToken);
         const toDecimals = selectedToToken?.decimals || 18;
-        // Update the toAmount with the expected output
-        setToAmount(ethers.formatUnits(response.data.routes[0].toAmount, toDecimals));
+        
+        // Ensure toAmount is properly formatted with decimals
+        let formattedToAmount;
+        try {
+          formattedToAmount = ethers.formatUnits(bestRoute.toAmount, toDecimals);
+          setToAmount(formattedToAmount);
+          logger.info(`Quote received: ${fromAmount} → ${formattedToAmount}`);
+        } catch (error) {
+          logger.error('Error formatting toAmount:', error);
+          setToAmount('Error');
+        }
 
         // For display, calculate the actual fee amount in tokens
         const feeDisplayAmount = parseFloat(fromAmount) * feeDecimal;
+        
+        // Update the selectedRoute state with the route and fee information
         setSelectedRoute({
-          ...response.data.routes[0],
+          ...bestRoute,
           feeDisplayAmount
         });
       } else {
