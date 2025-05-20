@@ -35,7 +35,7 @@ const Swap = () => {
   const [selectedRoute, setSelectedRoute] = useState(null);
   const [walletConnected, setWalletConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState('');
-  const [walletType, setWalletType] = useState(''); // 'evm' or 'solana'
+  const [walletType, setWalletType] = useState(''); // Wallet connection type
   const [chains, setChains] = useState([]);
   const [tokens, setTokens] = useState({});  // Changed to object to store tokens per chain
   const [fromChain, setFromChain] = useState('');
@@ -260,15 +260,55 @@ const Swap = () => {
     const detectWallets = () => {
       const available = [];
       
-      if (window.ethereum) {
-        available.push({ type: 'evm', name: 'MetaMask/EVM' });
+      // Detect MetaMask
+      if (window.ethereum?.isMetaMask) {
+        available.push({ 
+          type: 'evm',
+          id: 'metamask', 
+          name: 'MetaMask',
+          icon: '🦊'
+        });
       }
       
-      if (window.phantom?.solana) {
-        available.push({ type: 'solana', name: 'Phantom (Solana)' });
+      // Detect Coinbase Wallet
+      if (window.ethereum?.isCoinbaseWallet || (window.ethereum?.providers && 
+          window.ethereum.providers.find(provider => provider.isCoinbaseWallet))) {
+        available.push({ 
+          type: 'evm', 
+          id: 'coinbase',
+          name: 'Coinbase Wallet',
+          icon: '🔵'
+        });
       }
       
-      // Add other wallet detections as needed
+      // Detect Trust Wallet
+      if (window.ethereum?.isTrust || window.ethereum?.isTrustWallet) {
+        available.push({ 
+          type: 'evm', 
+          id: 'trust',
+          name: 'Trust Wallet',
+          icon: '🔒'
+        });
+      }
+      
+      // Generic Ethereum provider as fallback
+      if (window.ethereum && available.length === 0) {
+        available.push({ 
+          type: 'evm', 
+          id: 'injected',
+          name: 'Browser Wallet',
+          icon: '🔶'
+        });
+      }
+      
+      // Add WalletConnect as an option regardless of detection
+      available.push({
+        type: 'evm',
+        id: 'walletconnect',
+        name: 'WalletConnect',
+        icon: '🔗'
+      });
+      
       setWalletOptions(available);
       
       // Log available wallets
@@ -276,36 +316,27 @@ const Swap = () => {
     };
     
     detectWallets();
-    
-    // Rest of your useEffect content
-    // ...
   }, []);
 
   // Update connect wallet function to handle different wallet types
-  const connectWallet = async (walletType = 'evm') => {
+  const connectWallet = async (walletId = 'injected') => {
     try {
-      if (walletType === 'evm' && window.ethereum) {
-        // EVM wallet connection (MetaMask, etc.)
+      // For all EVM connections using window.ethereum
+      if (window.ethereum) {
+        // Request accounts
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        setWalletAddress(accounts[0]);
-        setWalletConnected(true);
-        setWalletType('evm');
-        logger.info('Connected EVM wallet:', accounts[0]);
-      } 
-      else if (walletType === 'solana' && window.phantom?.solana) {
-        // Solana wallet connection (Phantom)
-        const { publicKey } = await window.phantom.solana.connect();
-        setWalletAddress(publicKey.toString());
-        setWalletConnected(true);
-        setWalletType('solana');
-        logger.info('Connected Solana wallet:', publicKey.toString());
         
-        // Show compatibility warning
-        setError("⚠️ Note: li.fi doesn't directly support Solana. For Solana swaps, please select an EVM chain and use a compatible wallet.");
+        if (accounts && accounts.length > 0) {
+          setWalletAddress(accounts[0]);
+          setWalletConnected(true);
+          setWalletType('evm');
+          logger.info(`Connected wallet (${walletId}):`, accounts[0]);
+          return;
+        }
       }
-      else {
-        setError(`No ${walletType} wallet detected. Please install a compatible wallet.`);
-      }
+      
+      // If we get here, it means connection failed
+      setError(`Unable to connect wallet. Please make sure your wallet is unlocked.`);
     } catch (error) {
       logger.error('Wallet connection error:', error);
       setError('Failed to connect wallet. Please try again.');
@@ -314,52 +345,39 @@ const Swap = () => {
 
   // Update wallet button UI
   const renderWalletOptions = () => {
+    // If wallet is already connected
     if (walletConnected) {
       return (
         <div className="text-center">
           <div className="bg-gray-800 rounded-lg px-4 py-2 inline-block">
-            <span className="text-gray-400 mr-2">Connected ({walletType}):</span>
+            <span className="text-gray-400 mr-2">Connected:</span>
             <span className="text-blue-300">{`${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}`}</span>
           </div>
-          {walletType === 'solana' && (
-            <div className="mt-2 text-yellow-400 text-sm">
-              Note: Solana is not directly supported by li.fi API
-            </div>
-          )}
         </div>
       );
     }
     
+    // Wallet connect UI
     return (
-      <div className="flex flex-col items-center gap-2">
-        {walletOptions.length > 0 ? (
-          <>
-            <div className="text-sm text-gray-400 mb-1">Select wallet type:</div>
-            <div className="flex gap-2">
-              {walletOptions.map(wallet => (
-                <button
-                  key={wallet.type}
-                  onClick={() => connectWallet(wallet.type)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
-                >
-                  Connect {wallet.name}
-                </button>
-              ))}
-            </div>
-          </>
-        ) : (
-          <div>
+      <div className="flex flex-col items-center gap-3 py-1">
+        <div className="text-center text-sm text-gray-400 mb-2">Connect your wallet to swap tokens</div>
+        
+        <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
+          {walletOptions.map(wallet => (
             <button
-              onClick={() => connectWallet()}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+              key={wallet.id}
+              onClick={() => connectWallet(wallet.id)}
+              className="flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200 border border-gray-700 hover:border-blue-500"
             >
-              Connect Wallet
+              <span className="text-xl">{wallet.icon}</span>
+              <span>{wallet.name}</span>
             </button>
-            <div className="text-sm text-gray-400 mt-2">
-              No supported wallets detected. Please install MetaMask or another EVM wallet.
-            </div>
-          </div>
-        )}
+          ))}
+        </div>
+        
+        <div className="text-xs text-gray-500 mt-2 text-center">
+          By connecting, you agree to li.fi's Terms of Service
+        </div>
       </div>
     );
   };
@@ -370,15 +388,7 @@ const Swap = () => {
       return;
     }
 
-    if (!walletConnected) {
-      setError('Please connect your wallet first to get a quote');
-      return;
-    }
-
-    if (walletType === 'solana') {
-      setError("li.fi API doesn't support Solana chains. Please connect an EVM wallet for swapping.");
-      return;
-    }
+        if (!walletConnected) {      setError('Please connect your wallet first to get a quote');      return;    }
 
     // Check if API key is available
     if (apiKeyStatus === 'missing') {
@@ -600,50 +610,51 @@ const Swap = () => {
 
   return (
     <div className="bg-gray-900 p-6 rounded-lg shadow-lg w-full h-full text-white overflow-y-auto" style={{
-      minHeight: '580px',
+      height: '100%',
+      minHeight: '720px', // Increased from 580px for more content space
       maxHeight: '100%',
-      overflowY: 'auto',
-      overscrollBehavior: 'contain'
+      overflow: 'auto !important',
+      WebkitOverflowScrolling: 'touch', // For better iOS scrolling
+      display: 'flex',
+      flexDirection: 'column'
     }}>
-      <h2 className="text-2xl font-bold mb-6 text-center text-blue-400">
+      <h2 className="text-2xl font-bold mb-4 text-center text-blue-400 flex-shrink-0">
         <span className="mr-2">💧</span>
         AquaSwap <span className="text-sm font-normal text-gray-400">(Powered by li.fi)</span>
       </h2>
       
-      {/* Chain Compatibility Notice */}
-      <div className="bg-blue-500/20 border border-blue-500 text-blue-300 p-3 rounded-lg mb-4">
-        <p>⚠️ <strong>Chain Compatibility:</strong> This swap service supports EVM chains only (Ethereum, Polygon, BSC, etc).</p>
-        <p className="text-sm mt-1">Solana and Sui are not supported by the li.fi API.</p>
-      </div>
+            {/* Security Notice */}      <div className="bg-blue-500/20 border border-blue-500 text-blue-300 p-2 rounded-lg mb-3 text-sm flex-shrink-0">        <p>⚠️ <strong>Security:</strong> Always verify transaction details before confirming in your wallet.</p>      </div>
       
       {/* API Key Status */}
       {apiKeyStatus === 'missing' && (
-        <div className="bg-yellow-500/20 border border-yellow-500 text-yellow-300 p-3 rounded-lg mb-4">
+        <div className="bg-yellow-500/20 border border-yellow-500 text-yellow-300 p-2 rounded-lg mb-3 text-sm flex-shrink-0">
           ⚠️ API key not configured. Some features may not work correctly.
         </div>
       )}
       
       {/* Error message with max height and scrolling if needed */}
       {error && (
-        <div className="bg-red-500/20 border border-red-500 text-red-300 p-3 rounded-lg mb-4 whitespace-pre-line max-h-[150px] overflow-y-auto">
+        <div className="bg-red-500/20 border border-red-500 text-red-300 p-2 rounded-lg mb-3 text-sm max-h-[100px] overflow-y-auto whitespace-pre-line flex-shrink-0">
           {error}
         </div>
       )}
       
-      <div className="space-y-6">
-        {/* Wallet Connection */}
-        <div className="flex justify-center">
+      <div className="space-y-4 flex-1 overflow-auto">
+        {/* Wallet Connection - more compact */}
+        <div className="flex justify-center mb-3 flex-shrink-0">
           {renderWalletOptions()}
         </div>
         
+        {/* The rest of your UI components with reduced spacing */}
         {/* Network Selection */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3 flex-shrink-0">
+          {/* Same content with reduced padding */}
           <div>
-            <label className="block text-gray-400 mb-2">From Chain</label>
+            <label className="block text-gray-400 mb-1 text-sm">From Chain</label>
             <select 
               value={fromChain}
               onChange={handleFromChainChange}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white text-sm"
             >
               <option value="">Select Chain</option>
               {chains.map(chain => (
@@ -654,11 +665,11 @@ const Swap = () => {
             </select>
           </div>
           <div>
-            <label className="block text-gray-400 mb-2">To Chain</label>
+            <label className="block text-gray-400 mb-1 text-sm">To Chain</label>
             <select 
               value={toChain}
               onChange={handleToChainChange}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white text-sm"
             >
               <option value="">Select Chain</option>
               {chains.map(chain => (
@@ -671,13 +682,13 @@ const Swap = () => {
         </div>
         
         {/* Token Selection */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3 flex-shrink-0">
           <div>
-            <label className="block text-gray-400 mb-2">From Token</label>
+            <label className="block text-gray-400 mb-1 text-sm">From Token</label>
             <select 
               value={fromToken}
               onChange={(e) => setFromToken(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white text-sm"
               disabled={!fromChain || fromChainTokens.length === 0}
             >
               {!fromChain && <option value="">Select chain first</option>}
@@ -688,28 +699,28 @@ const Swap = () => {
                 </option>
               ))}
             </select>
-            {/* Custom token display with icons since select options can't have images */}
+            {/* Custom token display with icons */}
             {fromToken && fromChainTokens.length > 0 && (
-              <div className="mt-2 flex items-center">
+              <div className="mt-1 flex items-center">
                 <img 
                   src={fromChainTokens.find(t => t.address === fromToken)?.logoURI || '/placeholder-token.png'} 
                   alt=""
-                  className="w-5 h-5 mr-2 rounded-full"
+                  className="w-4 h-4 mr-1 rounded-full"
                   onError={(e) => {
                     e.target.onerror = null;
                     e.target.src = '/placeholder-token.png';
                   }}
                 />
-                <span>{fromChainTokens.find(t => t.address === fromToken)?.symbol}</span>
+                <span className="text-xs">{fromChainTokens.find(t => t.address === fromToken)?.symbol}</span>
               </div>
             )}
           </div>
           <div>
-            <label className="block text-gray-400 mb-2">To Token</label>
+            <label className="block text-gray-400 mb-1 text-sm">To Token</label>
             <select 
               value={toToken}
               onChange={(e) => setToToken(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white text-sm"
               disabled={!toChain || toChainTokens.length === 0}
             >
               {!toChain && <option value="">Select chain first</option>}
@@ -722,54 +733,54 @@ const Swap = () => {
             </select>
             {/* Custom token display with icons */}
             {toToken && toChainTokens.length > 0 && (
-              <div className="mt-2 flex items-center">
+              <div className="mt-1 flex items-center">
                 <img 
                   src={toChainTokens.find(t => t.address === toToken)?.logoURI || '/placeholder-token.png'} 
                   alt=""
-                  className="w-5 h-5 mr-2 rounded-full"
+                  className="w-4 h-4 mr-1 rounded-full"
                   onError={(e) => {
                     e.target.onerror = null;
                     e.target.src = '/placeholder-token.png';
                   }}
                 />
-                <span>{toChainTokens.find(t => t.address === toToken)?.symbol}</span>
+                <span className="text-xs">{toChainTokens.find(t => t.address === toToken)?.symbol}</span>
               </div>
             )}
           </div>
         </div>
         
         {/* Amount Inputs */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3 flex-shrink-0">
           <div>
-            <label className="block text-gray-400 mb-2">You Pay</label>
+            <label className="block text-gray-400 mb-1 text-sm">You Pay</label>
             <div className="relative">
               <input
                 type="number"
                 value={fromAmount}
                 onChange={(e) => setFromAmount(e.target.value)}
                 placeholder="0.0"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white"
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white text-sm"
               />
-              <div className="absolute right-3 top-3 text-gray-400">
+              <div className="absolute right-2 top-2 text-gray-400 text-xs">
                 + 0.5% fee
               </div>
             </div>
           </div>
           <div>
-            <label className="block text-gray-400 mb-2">You Receive</label>
+            <label className="block text-gray-400 mb-1 text-sm">You Receive</label>
             <input
               type="text"
               value={toAmount}
               readOnly
               placeholder="0.0"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white text-sm"
             />
           </div>
         </div>
         
         {/* Slippage Setting with Quick Values */}
-        <div>
-          <label className="block text-gray-400 mb-2">Slippage Tolerance (%)</label>
+        <div className="flex-shrink-0">
+          <label className="block text-gray-400 mb-1 text-sm">Slippage Tolerance (%)</label>
           <div className="flex gap-2 items-center">
             <input
               type="number"
@@ -778,24 +789,24 @@ const Swap = () => {
               min="0.1"
               max="5"
               step="0.1"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white text-sm"
             />
             <div className="flex gap-1">
               <button 
                 onClick={() => setSlippage(0.5)}
-                className={`px-2 py-1 rounded ${slippage === 0.5 ? 'bg-blue-600' : 'bg-gray-700'}`}
+                className={`px-2 py-1 rounded text-xs ${slippage === 0.5 ? 'bg-blue-600' : 'bg-gray-700'}`}
               >
                 0.5%
               </button>
               <button 
                 onClick={() => setSlippage(1.0)}
-                className={`px-2 py-1 rounded ${slippage === 1.0 ? 'bg-blue-600' : 'bg-gray-700'}`}
+                className={`px-2 py-1 rounded text-xs ${slippage === 1.0 ? 'bg-blue-600' : 'bg-gray-700'}`}
               >
                 1%
               </button>
               <button 
                 onClick={() => setSlippage(2.0)}
-                className={`px-2 py-1 rounded ${slippage === 2.0 ? 'bg-blue-600' : 'bg-gray-700'}`}
+                className={`px-2 py-1 rounded text-xs ${slippage === 2.0 ? 'bg-blue-600' : 'bg-gray-700'}`}
               >
                 2%
               </button>
@@ -804,18 +815,18 @@ const Swap = () => {
         </div>
         
         {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3 flex-shrink-0">
           <button
             onClick={getQuote}
             disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 disabled:opacity-50"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 disabled:opacity-50 text-sm"
           >
             {loading ? 'Loading...' : 'Get Quote'}
           </button>
           <button
             onClick={executeSwap}
             disabled={loading || !selectedRoute || !walletConnected}
-            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 disabled:opacity-50"
+            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 disabled:opacity-50 text-sm"
           >
             {loading ? 'Processing...' : 'Execute Swap'}
           </button>
@@ -823,9 +834,9 @@ const Swap = () => {
         
         {/* Route Information */}
         {selectedRoute && (
-          <div className="bg-gray-800 p-4 rounded-lg">
-            <h3 className="text-lg font-semibold mb-2">Selected Route</h3>
-            <div className="text-sm text-gray-300 space-y-2">
+          <div className="bg-gray-800 p-3 rounded-lg flex-shrink-0">
+            <h3 className="text-sm font-semibold mb-1">Selected Route</h3>
+            <div className="text-xs text-gray-300 space-y-1">
               <div>Provider: {selectedRoute.steps[0].tool}</div>
               <div>Estimated Gas: {parseFloat(selectedRoute.gasUSD).toFixed(2)} USD</div>
               <div>Execution Time: ~{selectedRoute.steps[0].estimate.executionDuration}s</div>

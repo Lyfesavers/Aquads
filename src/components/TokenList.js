@@ -470,18 +470,21 @@ const TokenList = ({ currentUser, showNotification }) => {
                   </div>
 
                   {selectedDex && (
-                    <div className="dex-iframe-container bg-white">
+                    <div className="dex-iframe-container bg-white" style={{ height: '750px', overflow: 'hidden' }}>
                       <iframe
                         src={selectedDex.url}
                         className="dex-iframe"
                         title={`${selectedDex.name} DEX`}
-                        sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"
+                        sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals allow-top-navigation-by-user-activation"
                         referrerPolicy="no-referrer"
                         scrolling="yes"
+                        allow="clipboard-write"
                         style={{
+                          width: '100%',
+                          height: '100%',
+                          border: 'none',
                           overflow: 'auto',
-                          display: 'block',
-                          border: 'none'
+                          display: 'block'
                         }}
                       />
                     </div>
