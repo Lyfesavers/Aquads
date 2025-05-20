@@ -633,6 +633,119 @@ const Swap = ({ currentUser, showNotification }) => {
     }
   };
 
+  // Add a function to detect and set the current chain from the wallet
+  const detectAndSetChain = async (walletType, provider) => {
+    try {
+      if (walletType === 'evm') {
+        // Get the current chain ID from EVM wallet
+        const chainId = await provider.request({ method: 'eth_chainId' });
+        // Convert hex chainId to decimal if needed
+        const decimalChainId = parseInt(chainId, 16).toString();
+        
+        // Find matching chain in our list
+        const matchedChain = chains.find(c => c.id.toString() === decimalChainId);
+        if (matchedChain) {
+          logger.info(`Auto-detected chain: ${matchedChain.name} (${matchedChain.id})`);
+          // Set both from and to chain to the detected chain
+          setFromChain(matchedChain.id);
+          
+          // If tokens for this chain are already loaded, set them
+          if (tokens[matchedChain.id]) {
+            setFromChainTokens(tokens[matchedChain.id]);
+            setToChainTokens(tokens[matchedChain.id]);
+            
+            // Set default tokens
+            if (tokens[matchedChain.id].length > 0) {
+              setFromToken(tokens[matchedChain.id][0].address);
+              
+              // Try to set a different token for "to" if available
+              if (tokens[matchedChain.id].length > 1) {
+                // Prefer a stablecoin for the "to" token if available
+                const stablecoin = tokens[matchedChain.id].find(t => 
+                  t.symbol.toLowerCase() === 'usdc' || 
+                  t.symbol.toLowerCase() === 'usdt' ||
+                  t.symbol.toLowerCase() === 'dai'
+                );
+                
+                if (stablecoin) {
+                  setToToken(stablecoin.address);
+                } else {
+                  // Otherwise use the second token in the list
+                  setToToken(tokens[matchedChain.id][1].address);
+                }
+              }
+            }
+          }
+        }
+        
+        // Set up listener for chain changes
+        window.ethereum.on('chainChanged', (newChainId) => {
+          logger.info('EVM wallet chain changed:', newChainId);
+          // Convert hex chainId to decimal
+          const decimalNewChainId = parseInt(newChainId, 16).toString();
+          const newMatchedChain = chains.find(c => c.id.toString() === decimalNewChainId);
+          
+          if (newMatchedChain) {
+            // Update chain selection in the UI
+            setFromChain(newMatchedChain.id);
+            
+            // Reset tokens
+            setFromToken('');
+            setToToken('');
+            
+            // Load tokens for the new chain
+            if (tokens[newMatchedChain.id]) {
+              setFromChainTokens(tokens[newMatchedChain.id]);
+              setToChainTokens(tokens[newMatchedChain.id]);
+            }
+          }
+        });
+      } 
+      else if (walletType === 'solana') {
+        // For Solana, we already know it's the Solana chain
+        const solanaChain = chains.find(c => 
+          c.key?.toLowerCase() === 'sol' || 
+          c.name?.toLowerCase() === 'solana' ||
+          c.chainType === 'SVM'
+        );
+        
+        if (solanaChain) {
+          logger.info(`Auto-detected Solana chain: ${solanaChain.name} (${solanaChain.id})`);
+          setFromChain(solanaChain.id);
+          
+          // If tokens for Solana are already loaded, set them
+          if (tokens[solanaChain.id]) {
+            setFromChainTokens(tokens[solanaChain.id]);
+            setToChainTokens(tokens[solanaChain.id]);
+            
+            // Set default tokens
+            if (tokens[solanaChain.id].length > 0) {
+              setFromToken(tokens[solanaChain.id][0].address);
+              
+              // Try to set a different token for "to" if available
+              if (tokens[solanaChain.id].length > 1) {
+                // Prefer a stablecoin for the "to" token if available
+                const stablecoin = tokens[solanaChain.id].find(t => 
+                  t.symbol.toLowerCase() === 'usdc' || 
+                  t.symbol.toLowerCase() === 'usdt'
+                );
+                
+                if (stablecoin) {
+                  setToToken(stablecoin.address);
+                } else {
+                  // Otherwise use the second token in the list
+                  setToToken(tokens[solanaChain.id][1].address);
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      logger.error('Error detecting chain:', error);
+    }
+  };
+
   // Fix wallet connection logic for MetaMask with stronger verification
   const connectWallet = async (walletId) => {
     try {
@@ -695,7 +808,9 @@ const Swap = ({ currentUser, showNotification }) => {
             setWalletType('solana');
             setShowWalletModal(false);
             
-            // Log authenticated wallet connection
+            // Detect and set the chain automatically
+            await detectAndSetChain('solana', provider);
+            
             logger.info(`Authenticated user ${currentUser.username} connected Phantom Wallet:`, walletAddr);
             
             // Store wallet address
@@ -734,6 +849,9 @@ const Swap = ({ currentUser, showNotification }) => {
             setWalletConnected(true);
             setWalletType('solana');
             setShowWalletModal(false);
+            
+            // Detect and set the chain automatically
+            await detectAndSetChain('solana', provider);
             
             logger.info(`Connected Solflare Wallet:`, walletAddr);
             
@@ -803,6 +921,10 @@ const Swap = ({ currentUser, showNotification }) => {
             setWalletConnected(true);
             setWalletType('evm');
             setShowWalletModal(false);
+            
+            // Detect and set the chain automatically
+            await detectAndSetChain('evm', window.ethereum);
+            
             logger.info(`Connected and verified MetaMask:`, accounts[0]);
             
             // Store wallet address
@@ -856,6 +978,10 @@ const Swap = ({ currentUser, showNotification }) => {
             setWalletConnected(true);
             setWalletType('evm');
             setShowWalletModal(false);
+            
+            // Detect and set the chain automatically
+            await detectAndSetChain('evm', provider);
+            
             logger.info(`Connected and verified Coinbase Wallet:`, accounts[0]);
             
             // Store wallet address
@@ -898,6 +1024,10 @@ const Swap = ({ currentUser, showNotification }) => {
             setWalletConnected(true);
             setWalletType('evm');
             setShowWalletModal(false);
+            
+            // Detect and set the chain automatically
+            await detectAndSetChain('evm', provider);
+            
             logger.info(`Connected and verified Trust Wallet:`, accounts[0]);
             
             // Store wallet address
@@ -940,6 +1070,10 @@ const Swap = ({ currentUser, showNotification }) => {
             setWalletConnected(true);
             setWalletType('evm');
             setShowWalletModal(false);
+            
+            // Detect and set the chain automatically
+            await detectAndSetChain('evm', provider);
+            
             logger.info(`Connected and verified Brave Wallet:`, accounts[0]);
             
             // Store wallet address
@@ -1478,6 +1612,13 @@ const Swap = ({ currentUser, showNotification }) => {
         <p>🚀 <strong>New:</strong> We now support Solana chain token swaps via Jupiter exchange. Same-chain swaps only.</p>
       </div>
       
+      {/* Auto-detection notice */}
+      {!walletConnected && (
+        <div className="bg-blue-500/20 border border-blue-500 text-blue-300 p-2 rounded-lg mb-3 text-sm flex-shrink-0">
+          <p>💡 <strong>Tip:</strong> Connect your wallet to auto-detect blockchain network and simplify swapping.</p>
+        </div>
+      )}
+      
       {/* API Key Status */}
       {apiKeyStatus === 'missing' && (
         <div className="bg-yellow-500/20 border border-yellow-500 text-yellow-300 p-2 rounded-lg mb-3 text-sm flex-shrink-0">
@@ -1503,11 +1644,12 @@ const Swap = ({ currentUser, showNotification }) => {
         <div className="grid grid-cols-2 gap-3 flex-shrink-0">
           {/* Same content with reduced padding */}
           <div>
-            <label className="block text-gray-400 mb-1 text-sm">Chain</label>
+            <label className="block text-gray-400 mb-1 text-sm">Chain {walletConnected && <span className="text-green-400 text-xs">(Auto-detected from wallet)</span>}</label>
             <select 
               value={fromChain}
               onChange={handleFromChainChange}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white text-sm"
+              disabled={walletConnected} // Disable manual selection when wallet is connected
             >
               <option value="">Select Chain</option>
               {chains.map(chain => (
@@ -1516,7 +1658,12 @@ const Swap = ({ currentUser, showNotification }) => {
                 </option>
               ))}
             </select>
-            {isSolanaFromChain && (
+            {walletConnected && fromChain && (
+              <div className="mt-1 text-xs text-blue-400 flex items-center">
+                <span>✓</span> {chains.find(c => c.id === fromChain)?.name || fromChain} auto-detected
+              </div>
+            )}
+            {!walletConnected && isSolanaFromChain && (
               <div className="mt-1 text-xs text-blue-400 flex items-center">
                 <span>✓</span> Solana chain selected
               </div>
@@ -1527,7 +1674,7 @@ const Swap = ({ currentUser, showNotification }) => {
               Same-Chain Swaps Only
             </div>
             <div className="text-center text-xs text-gray-400">
-              Simplified for easier swapping
+              {walletConnected ? 'Chain auto-detected from your wallet' : 'Connect wallet to auto-detect chain'}
             </div>
           </div>
         </div>
