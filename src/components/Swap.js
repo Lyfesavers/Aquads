@@ -118,13 +118,38 @@ const Swap = ({ currentUser, showNotification }) => {
     
     // Initialize Solana connection
     try {
-      // Connect to Solana mainnet-beta
+      // Connect to Solana mainnet-beta with better performance settings
+      // Use finalized commitment for more reliable token data
+      const connectionConfig = {
+        commitment: 'confirmed',
+        disableRetryOnRateLimit: false,
+        confirmTransactionInitialTimeout: 60000
+      };
+      
+      // Try to use GenesysGo's RPC endpoint first (good for token accounts)
+      // Fallback to Solana's official RPC endpoint if needed
       const connection = new solanaWeb3.Connection(
-        'https://api.mainnet-beta.solana.com',
-        'confirmed'
+        'https://ssc-dao.genesysgo.net',
+        connectionConfig
       );
-      setSolanaConnection(connection);
-      logger.info('Solana connection established');
+      
+      // Test the connection before using it
+      connection.getVersion()
+        .then(() => {
+          logger.info('Connected to GenesysGo Solana RPC');
+          setSolanaConnection(connection);
+        })
+        .catch((err) => {
+          logger.warn('Could not connect to GenesysGo RPC, trying Solana mainnet:', err);
+          
+          // Fallback to official Solana RPC
+          const fallbackConnection = new solanaWeb3.Connection(
+            'https://api.mainnet-beta.solana.com',
+            connectionConfig
+          );
+          setSolanaConnection(fallbackConnection);
+          logger.info('Solana fallback connection established');
+        });
     } catch (error) {
       logger.error('Failed to initialize Solana connection:', error);
     }
@@ -1587,6 +1612,335 @@ const Swap = ({ currentUser, showNotification }) => {
     }
   }, []);
 
+  // Add a function to fetch Solana token metadata
+  const getSolanaTokenMetadata = async (mintAddress) => {
+    try {
+      // First try the Solana token list registry (more complete metadata)
+      const response = await axios.get('https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/src/tokens/solana.tokenlist.json');
+      if (response.data && response.data.tokens) {
+        const token = response.data.tokens.find(t => t.address === mintAddress);
+        if (token) {
+          return {
+            name: token.name,
+            symbol: token.symbol,
+            decimals: token.decimals,
+            logoURI: token.logoURI || ''
+          };
+        }
+      }
+      
+      // If not found in main registry, try Jupiter token list as fallback
+      try {
+        const jupiterResponse = await axios.get('https://token.jup.ag/all');
+        if (jupiterResponse.data) {
+          const jupToken = jupiterResponse.data.find(t => t.address === mintAddress);
+          if (jupToken) {
+            return {
+              name: jupToken.name,
+              symbol: jupToken.symbol,
+              decimals: jupToken.decimals,
+              logoURI: jupToken.logoURI || ''
+            };
+          }
+        }
+      } catch (error) {
+        logger.error('Error fetching Jupiter token metadata:', error);
+      }
+    } catch (error) {
+      logger.error('Error fetching Solana token metadata:', error);
+    }
+    
+    // Default metadata if not found
+    return {
+      name: `Token ${mintAddress.slice(0, 6)}...`,
+      symbol: `UNKNOWN`,
+      decimals: 9, // Default for most Solana tokens
+      logoURI: ''
+    };
+  };
+
+  // Improved function for scanning Solana wallet tokens
+  const scanSolanaWalletTokens = async () => {
+    if (!walletConnected || !walletAddress || walletType !== 'solana' || !solanaConnection) {
+      return;
+    }
+    
+    try {
+      logger.info('Scanning for tokens in Solana wallet:', walletAddress);
+      
+      // Get the Solana chain ID
+      const solanaChain = chains.find(c => 
+        c.key?.toLowerCase() === 'sol' || 
+        c.name?.toLowerCase() === 'solana' ||
+        c.chainType === 'SVM'
+      );
+      
+      if (!solanaChain) {
+        logger.error('Solana chain not found in available chains');
+        return;
+      }
+      
+      // Get current token list
+      const currentTokenList = tokens[solanaChain.id] || [];
+      const existingTokenAddresses = new Set(currentTokenList.map(t => t.address.toLowerCase()));
+      
+      // Get all token accounts owned by this wallet
+      const publicKey = new solanaWeb3.PublicKey(walletAddress);
+      
+      // First, fetch all token program accounts with pagination and retry logic
+      let allTokenAccounts = [];
+      const tokenProgramId = new solanaWeb3.PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+      
+      // Function to retry fetching with exponential backoff
+      const fetchWithRetry = async (fn, maxRetries = 3, initialDelay = 1000) => {
+        let retries = 0;
+        let delay = initialDelay;
+        
+        while (retries < maxRetries) {
+          try {
+            return await fn();
+          } catch (err) {
+            retries++;
+            if (retries >= maxRetries) throw err;
+            
+            logger.warn(`Retry ${retries}/${maxRetries} after error:`, err);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            delay *= 2; // Exponential backoff
+          }
+        }
+      };
+      
+      try {
+        // First attempt to get all token accounts in one call
+        const tokenAccounts = await fetchWithRetry(() => 
+          solanaConnection.getParsedTokenAccountsByOwner(
+            publicKey,
+            { programId: tokenProgramId },
+            'confirmed'
+          )
+        );
+        
+        allTokenAccounts = tokenAccounts.value;
+        logger.info(`Found ${allTokenAccounts.length} token accounts in Solana wallet initially`);
+        
+        // If we have a very large number of accounts, paginate for better results
+        if (allTokenAccounts.length >= 100) {
+          logger.info('Large number of token accounts detected, using pagination...');
+          
+          let paginatedAccounts = [];
+          let startingPoint = null;
+          const pageSize = 100;
+          let hasMore = true;
+          
+          while (hasMore) {
+            const page = await fetchWithRetry(() => 
+              solanaConnection.getParsedTokenAccountsByOwner(
+                publicKey,
+                { programId: tokenProgramId },
+                { limit: pageSize, before: startingPoint }
+              )
+            );
+            
+            paginatedAccounts = [...paginatedAccounts, ...page.value];
+            
+            if (page.value.length < pageSize) {
+              hasMore = false;
+            } else if (page.value.length > 0) {
+              // Use the last account's pubkey as the starting point for the next page
+              startingPoint = page.value[page.value.length - 1].pubkey;
+            }
+          }
+          
+          if (paginatedAccounts.length > allTokenAccounts.length) {
+            logger.info(`Pagination found ${paginatedAccounts.length} accounts (vs. ${allTokenAccounts.length} initially)`);
+            allTokenAccounts = paginatedAccounts;
+          }
+        }
+      } catch (err) {
+        logger.error('Error fetching token accounts, will try alternate method:', err);
+        
+        // Alternate method: try getTokenAccountsByOwner (non-parsed version) as fallback
+        try {
+          const tokenAccountsRaw = await fetchWithRetry(() => 
+            solanaConnection.getTokenAccountsByOwner(
+              publicKey,
+              { programId: tokenProgramId },
+              'confirmed'
+            )
+          );
+          
+          allTokenAccounts = tokenAccountsRaw.value.map(account => {
+            // Convert raw data to parsed format as best we can
+            try {
+              const data = solanaWeb3.AccountLayout.decode(account.account.data);
+              return {
+                pubkey: account.pubkey,
+                account: {
+                  data: {
+                    parsed: {
+                      info: {
+                        mint: new solanaWeb3.PublicKey(data.mint).toString(),
+                        owner: new solanaWeb3.PublicKey(data.owner).toString(),
+                        tokenAmount: {
+                          amount: data.amount.toString(),
+                          decimals: 0, // We'll try to get this from metadata
+                          uiAmount: parseInt(data.amount) / Math.pow(10, 9) // Default to 9 decimals
+                        }
+                      }
+                    }
+                  }
+                }
+              };
+            } catch (e) {
+              logger.error('Error parsing token account data:', e);
+              return null;
+            }
+          }).filter(Boolean);
+          
+          logger.info(`Found ${allTokenAccounts.length} token accounts using alternate method`);
+        } catch (alternateErr) {
+          logger.error('Both token account fetch methods failed:', alternateErr);
+          throw alternateErr; // Re-throw to be caught by the outer try/catch
+        }
+      }
+      
+      logger.info(`Processing ${allTokenAccounts.length} token accounts in Solana wallet`);
+      
+      // Create a map to store unique tokens with non-zero balance
+      const userTokens = new Map();
+      
+      // Create an array to store token metadata fetch promises
+      const metadataPromises = [];
+      
+      // Process all token accounts
+      for (const account of allTokenAccounts) {
+        try {
+          if (!account.account?.data?.parsed?.info) {
+            continue; // Skip if we don't have the expected structure
+          }
+          
+          const parsedInfo = account.account.data.parsed.info;
+          const mintAddress = parsedInfo.mint;
+          const tokenAmount = parsedInfo.tokenAmount;
+          
+          // Skip tokens with zero balance
+          if (!tokenAmount || parseFloat(tokenAmount.uiAmount) <= 0) {
+            continue;
+          }
+          
+          const tokenKey = mintAddress.toLowerCase();
+          
+          // Skip tokens we already have in the list
+          if (existingTokenAddresses.has(tokenKey) || userTokens.has(tokenKey)) {
+            continue;
+          }
+          
+          logger.info(`Found token with balance: ${mintAddress}, amount: ${tokenAmount.uiAmount}`);
+          
+          // Add to the promises array to fetch metadata for all tokens in parallel
+          metadataPromises.push(
+            getSolanaTokenMetadata(mintAddress).then(metadata => {
+              userTokens.set(tokenKey, {
+                address: mintAddress,
+                chainId: solanaChain.id,
+                name: metadata.name,
+                symbol: metadata.symbol || `TKN-${mintAddress.slice(0, 4)}`,
+                decimals: tokenAmount.decimals || metadata.decimals,
+                logoURI: metadata.logoURI,
+                isUserToken: true,
+                balance: tokenAmount.uiAmount
+              });
+            })
+          );
+        } catch (err) {
+          logger.error('Error processing token account:', err);
+        }
+      }
+      
+      // Wait for all metadata fetches to complete
+      await Promise.allSettled(metadataPromises);
+      
+      // Add the native SOL balance
+      try {
+        const solBalance = await solanaConnection.getBalance(publicKey);
+        const solBalanceInSOL = solBalance / 1000000000; // 9 decimals for SOL
+        
+        if (solBalanceInSOL > 0) {
+          logger.info(`Found native SOL balance: ${solBalanceInSOL}`);
+          
+          // Find if SOL is already in the list
+          const solTokenIndex = currentTokenList.findIndex(t => 
+            t.symbol === 'SOL' && 
+            (t.address === '11111111111111111111111111111111' || 
+             t.name === 'Solana')
+          );
+          
+          if (solTokenIndex >= 0) {
+            // Update the existing SOL entry with balance
+            const updatedTokenList = [...currentTokenList];
+            updatedTokenList[solTokenIndex] = {
+              ...updatedTokenList[solTokenIndex],
+              isUserToken: true,
+              balance: solBalanceInSOL
+            };
+            
+            // Update tokens state with the updated SOL
+            setTokens(prev => ({
+              ...prev,
+              [solanaChain.id]: updatedTokenList
+            }));
+            
+            // Update active token lists
+            if (fromChain === solanaChain.id) {
+              setFromChainTokens(updatedTokenList);
+              setToChainTokens(updatedTokenList);
+            }
+          }
+        }
+      } catch (err) {
+        logger.error('Error getting native SOL balance:', err);
+      }
+      
+      // Add user tokens to the token list
+      if (userTokens.size > 0) {
+        logger.info(`Found ${userTokens.size} additional tokens in Solana wallet`);
+        const userTokenArray = Array.from(userTokens.values());
+        
+        // Sort tokens by balance (descending) to prioritize tokens with higher balances
+        userTokenArray.sort((a, b) => parseFloat(b.balance) - parseFloat(a.balance));
+        
+        const updatedTokens = [...currentTokenList, ...userTokenArray];
+        
+        // Update tokens state
+        setTokens(prev => ({
+          ...prev,
+          [solanaChain.id]: updatedTokens
+        }));
+        
+        // Update active token lists
+        if (fromChain === solanaChain.id) {
+          setFromChainTokens(updatedTokens);
+          setToChainTokens(updatedTokens);
+        }
+        
+        // Show notification
+        if (showNotification) {
+          showNotification(`Found ${userTokens.size} additional tokens in your Solana wallet.`, 'info');
+        }
+      } else {
+        logger.info('No additional tokens found in Solana wallet');
+        if (showNotification) {
+          showNotification('No additional tokens found in your wallet. Try refreshing.', 'info');
+        }
+      }
+    } catch (error) {
+      logger.error('Error scanning Solana wallet tokens:', error);
+      if (showNotification) {
+        showNotification('Could not detect all tokens in your wallet. Try refreshing.', 'error');
+      }
+    }
+  };
+
   // Function to get tokens from the user's wallet and add them to the token list
   const getWalletTokens = async () => {
     if (!walletConnected || !walletAddress) return;
@@ -1678,79 +2032,8 @@ const Swap = ({ currentUser, showNotification }) => {
         }
       } 
       else if (walletType === 'solana') {
-        // For Solana wallets
-        if (!solanaConnection || !walletAddress) return;
-        
-        logger.info(`Scanning for tokens in Solana wallet`);
-        
-        try {
-          // Get token accounts for this wallet
-          const response = await solanaConnection.getParsedTokenAccountsByOwner(
-            new solanaWeb3.PublicKey(walletAddress),
-            { programId: new solanaWeb3.PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') }
-          );
-          
-          // Get current Solana token list
-          const solanaChain = chains.find(c => 
-            c.key?.toLowerCase() === 'sol' || 
-            c.name?.toLowerCase() === 'solana' ||
-            c.chainType === 'SVM'
-          );
-          
-          if (!solanaChain) return;
-          
-          const currentTokenList = tokens[solanaChain.id] || [];
-          const existingTokenAddresses = new Set(currentTokenList.map(t => t.address.toLowerCase()));
-          
-          // Process token accounts to build a list of tokens
-          const userTokens = new Map();
-          
-          response.value.forEach(account => {
-            const tokenMint = account.account.data.parsed.info.mint;
-            const tokenAmount = account.account.data.parsed.info.tokenAmount;
-            
-            // Only add tokens that aren't already in the list and have a non-zero balance
-            if (!existingTokenAddresses.has(tokenMint.toLowerCase()) && 
-                !userTokens.has(tokenMint) && 
-                parseInt(tokenAmount.amount) > 0) {
-              
-              userTokens.set(tokenMint, {
-                address: tokenMint,
-                chainId: solanaChain.id,
-                name: `User Token ${tokenMint.slice(0, 6)}...`,
-                symbol: `TKN-${tokenMint.slice(0, 4)}`,
-                decimals: tokenAmount.decimals,
-                logoURI: '', // We don't have logos for these tokens
-                isUserToken: true // Mark as a user token
-              });
-            }
-          });
-          
-          // Add user tokens to the token list
-          if (userTokens.size > 0) {
-            logger.info(`Found ${userTokens.size} additional tokens in Solana wallet`);
-            const updatedTokens = [...currentTokenList, ...userTokens.values()];
-            
-            // Update tokens state
-            setTokens(prev => ({
-              ...prev,
-              [solanaChain.id]: updatedTokens
-            }));
-            
-            // Update token lists if this is the current chain
-            if (fromChain === solanaChain.id) {
-              setFromChainTokens(updatedTokens);
-              setToChainTokens(updatedTokens);
-            }
-            
-            // Show notification if showNotification is available
-            if (showNotification) {
-              showNotification(`Found ${userTokens.size} tokens in your Solana wallet. They are now available for swapping.`, 'info');
-            }
-          }
-        } catch (error) {
-          logger.error('Error fetching Solana token accounts:', error);
-        }
+        // Call the improved Solana wallet scanner
+        await scanSolanaWalletTokens();
       }
     } catch (error) {
       logger.error('Error scanning wallet tokens:', error);
@@ -1763,6 +2046,22 @@ const Swap = ({ currentUser, showNotification }) => {
       getWalletTokens();
     }
   }, [walletConnected, walletAddress, walletType]);
+
+  // Add a refresh function for wallet tokens
+  const refreshWalletTokens = async () => {
+    if (!walletConnected) {
+      if (showNotification) {
+        showNotification('Please connect your wallet first', 'warning');
+      }
+      return;
+    }
+    
+    if (showNotification) {
+      showNotification('Scanning for tokens in your wallet...', 'info');
+    }
+    
+    await getWalletTokens();
+  };
 
   return (
     <div className="bg-gray-900 p-6 rounded-lg shadow-lg w-full h-full text-white overflow-y-auto swap-container" style={{
@@ -1829,21 +2128,30 @@ const Swap = ({ currentUser, showNotification }) => {
       
       <div className="space-y-4 flex-1 overflow-auto pb-6">
         {/* Wallet Connection - more compact */}
-        <div className="flex justify-center mb-3 flex-shrink-0">
+        <div className="flex justify-center mb-3 flex-shrink-0 relative">
           {renderWalletOptions()}
           
           {/* Token sorting preference (only show when wallet is connected) */}
           {walletConnected && (
-            <div className="absolute right-8 top-40">
-              <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={showUserTokensFirst}
-                  onChange={() => setShowUserTokensFirst(!showUserTokensFirst)}
-                  className="w-3 h-3"
-                />
-                <span className="leading-none">Show my tokens first</span>
-              </label>
+            <div className="absolute right-8 top-0">
+              <div className="flex flex-col items-end">
+                <button 
+                  onClick={refreshWalletTokens}
+                  className="text-blue-400 hover:text-blue-300 mb-2 text-sm flex items-center"
+                  title="Refresh wallet tokens"
+                >
+                  <span className="mr-1">↻</span> Refresh tokens
+                </button>
+                <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showUserTokensFirst}
+                    onChange={() => setShowUserTokensFirst(!showUserTokensFirst)}
+                    className="w-3 h-3"
+                  />
+                  <span className="leading-none">Show my tokens first</span>
+                </label>
+              </div>
             </div>
           )}
         </div>
