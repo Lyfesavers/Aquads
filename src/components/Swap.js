@@ -1037,7 +1037,7 @@ const Swap = () => {
             e.target.src = "/AquaSwap.png";
           }}
         />
-        AquaSwap <span className="text-sm font-normal text-gray-400">(Powered by li.fi)</span>
+        AquaSwap <span className="text-sm font-normal text-gray-400">(UNDER CONSTRUCTION)</span>
       </h2>
       
       {/* Security Notice */}
