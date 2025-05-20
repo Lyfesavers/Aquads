@@ -36,7 +36,7 @@ import Footer from './components/Footer';
 import Whitepaper from './components/Whitepaper';
 import HowTo from './components/HowTo';
 import Affiliate from './components/Affiliate';
-import Terms from './components/Terms';import BannerDisplay from './components/BannerDisplay';import Swap from './components/Swap';
+import Terms from './components/Terms';import BannerDisplay from './components/BannerDisplay';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import emailService from './services/emailService';
@@ -3148,7 +3148,7 @@ function App() {
           <Route path="/how-to" element={<HowTo currentUser={currentUser} />} />
           <Route path="/how-to/:slug" element={<HowTo currentUser={currentUser} />} />
           <Route path="/affiliate" element={<Affiliate />} />
-          <Route path="/terms" element={<Terms />} />            <Route path="/swap" element={<Swap />} />
+          <Route path="/terms" element={<Terms />} />
         </Routes>
       </Router>
     </AuthContext.Provider>

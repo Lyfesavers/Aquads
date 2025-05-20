@@ -46,9 +46,8 @@ const DEX_OPTIONS = [
   {
     name: 'AquaSwap',
     icon: '💧',
-    url: '/swap',
-    description: 'Powered by li.fi with 0.5% fee',
-    custom: true
+    url: 'https://li.quest/embed?integrator=AquaSwap&fee=0.5&referrer=0x98BC1BEC892d9f74B606D478E6b45089D2faAB05',
+    description: 'Powered by li.fi with 0.5% fee'
   }
 ];
 
@@ -199,11 +198,6 @@ const TokenList = ({ currentUser, showNotification }) => {
   const handleDexClick = (dex) => {
     setSelectedDex(dex);
     setShowDexFrame(true);
-    
-    // If it's our custom swap, redirect to our swap page
-    if (dex.custom) {
-      window.location.href = dex.url;
-    }
   };
 
   const handleCloseReviews = () => {
