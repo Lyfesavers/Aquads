@@ -3,6 +3,26 @@ import axios from 'axios';
 import { ethers } from 'ethers';
 import logger from '../utils/logger';
 
+// Add CSS to hide the Duck Hunt button
+const hideDuckHuntStyle = `
+  <style>
+    /* Hide Duck Hunt button */
+    [class*="duck-hunt"], 
+    [id*="duck-hunt"],
+    [class*="duckhunt"], 
+    [id*="duckhunt"],
+    .crisp-client,
+    .intercom-lightweight-app,
+    [class*="intercom"],
+    [id*="intercom"] {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+  </style>
+`;
+
 const Swap = () => {
   const [fromToken, setFromToken] = useState('');
   const [toToken, setToToken] = useState('');
@@ -24,42 +44,7 @@ const Swap = () => {
   const FEE_PERCENTAGE = 0.5; // 0.5% fee
   const FEE_RECIPIENT = process.env.REACT_APP_FEE_WALLET || '0x98BC1BEC892d9f74B606D478E6b45089D2faAB05'; // Default to a wallet if not set
 
-  useEffect(() => {
-    // Listen for messages from parent iframe
-    const handleMessage = (event) => {
-      // Check if it's a wallet connect message
-      if (event.data && event.data.type === 'CONNECT_WALLET') {
-        connectWallet();
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-
-    // Fetch available chains
-    const fetchChains = async () => {
-      try {
-        const response = await axios.get('https://li.quest/v1/chains', {
-          headers: {
-            'x-lifi-api-key': LIFI_API_KEY
-          }
-        });
-        setChains(response.data.chains);
-        if (response.data.chains.length > 0) {
-          setFromChain(response.data.chains[0].id);
-          setToChain(response.data.chains[0].id);
-        }
-      } catch (error) {
-        logger.error('Error fetching chains:', error);
-        setError('Failed to load blockchain networks. Please try again later.');
-      }
-    };
-
-    fetchChains();
-
-    return () => {
-      window.removeEventListener('message', handleMessage);
-    };
-  }, [LIFI_API_KEY]);
+    useEffect(() => {    // Inject CSS to hide Duck Hunt button and other third-party elements    const styleEl = document.createElement('div');    styleEl.innerHTML = hideDuckHuntStyle;    document.head.appendChild(styleEl);    // Listen for messages from parent iframe    const handleMessage = (event) => {      // Check if it's a wallet connect message      if (event.data && event.data.type === 'CONNECT_WALLET') {        connectWallet();      }    };    window.addEventListener('message', handleMessage);    // Set up a mutation observer to catch dynamically added Duck Hunt elements    const observer = new MutationObserver((mutations) => {      mutations.forEach(mutation => {        if (mutation.addedNodes && mutation.addedNodes.length > 0) {          for (let i = 0; i < mutation.addedNodes.length; i++) {            const node = mutation.addedNodes[i];            // Check if the node is an element            if (node.nodeType === 1) {              // Check if it contains duck hunt related elements              if (node.id && (node.id.includes('duck') || node.id.includes('hunt'))) {                node.style.display = 'none';              }              if (node.className && typeof node.className === 'string' &&                   (node.className.includes('duck') || node.className.includes('hunt'))) {                node.style.display = 'none';              }            }          }        }      });    });        // Start observing    observer.observe(document.body, {      childList: true,      subtree: true    });    // Fetch available chains    const fetchChains = async () => {      try {        const response = await axios.get('https://li.quest/v1/chains', {          headers: {            'x-lifi-api-key': LIFI_API_KEY          }        });        setChains(response.data.chains);        if (response.data.chains.length > 0) {          setFromChain(response.data.chains[0].id);          setToChain(response.data.chains[0].id);        }      } catch (error) {        logger.error('Error fetching chains:', error);        setError('Failed to load blockchain networks. Please try again later.');      }    };    fetchChains();    return () => {      window.removeEventListener('message', handleMessage);      observer.disconnect();      if (styleEl.parentNode) {        styleEl.parentNode.removeChild(styleEl);      }    };  }, [LIFI_API_KEY]);
 
   // Fetch tokens when chains change
   useEffect(() => {
