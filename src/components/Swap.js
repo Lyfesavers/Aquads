@@ -35,6 +35,7 @@ const Swap = () => {
   const [selectedRoute, setSelectedRoute] = useState(null);
   const [walletConnected, setWalletConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState('');
+  const [walletType, setWalletType] = useState(''); // 'evm' or 'solana'
   const [chains, setChains] = useState([]);
   const [tokens, setTokens] = useState({});  // Changed to object to store tokens per chain
   const [fromChain, setFromChain] = useState('');
@@ -42,6 +43,7 @@ const Swap = () => {
   const [fromChainTokens, setFromChainTokens] = useState([]);
   const [toChainTokens, setToChainTokens] = useState([]);
   const [apiKeyStatus, setApiKeyStatus] = useState('unknown');
+  const [walletOptions, setWalletOptions] = useState([]);
   
   const LIFI_API_KEY = process.env.REACT_APP_LIFI_API_KEY;
   const FEE_PERCENTAGE = 0.5; // 0.5% fee
@@ -252,19 +254,114 @@ const Swap = () => {
     }
   };
   
-  const connectWallet = async () => {
-    if (window.ethereum) {
-      try {
+  // Update useEffect to check for wallet types
+  useEffect(() => {
+    // Check which wallets are available
+    const detectWallets = () => {
+      const available = [];
+      
+      if (window.ethereum) {
+        available.push({ type: 'evm', name: 'MetaMask/EVM' });
+      }
+      
+      if (window.phantom?.solana) {
+        available.push({ type: 'solana', name: 'Phantom (Solana)' });
+      }
+      
+      // Add other wallet detections as needed
+      setWalletOptions(available);
+      
+      // Log available wallets
+      logger.info('Available wallets:', available.map(w => w.name));
+    };
+    
+    detectWallets();
+    
+    // Rest of your useEffect content
+    // ...
+  }, []);
+
+  // Update connect wallet function to handle different wallet types
+  const connectWallet = async (walletType = 'evm') => {
+    try {
+      if (walletType === 'evm' && window.ethereum) {
+        // EVM wallet connection (MetaMask, etc.)
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         setWalletAddress(accounts[0]);
         setWalletConnected(true);
-      } catch (error) {
-        logger.error('Wallet connection error:', error);
-        setError('Failed to connect wallet. Please try again.');
+        setWalletType('evm');
+        logger.info('Connected EVM wallet:', accounts[0]);
+      } 
+      else if (walletType === 'solana' && window.phantom?.solana) {
+        // Solana wallet connection (Phantom)
+        const { publicKey } = await window.phantom.solana.connect();
+        setWalletAddress(publicKey.toString());
+        setWalletConnected(true);
+        setWalletType('solana');
+        logger.info('Connected Solana wallet:', publicKey.toString());
+        
+        // Show compatibility warning
+        setError("⚠️ Note: li.fi doesn't directly support Solana. For Solana swaps, please select an EVM chain and use a compatible wallet.");
       }
-    } else {
-      setError('MetaMask is not installed. Please install it to use this feature.');
+      else {
+        setError(`No ${walletType} wallet detected. Please install a compatible wallet.`);
+      }
+    } catch (error) {
+      logger.error('Wallet connection error:', error);
+      setError('Failed to connect wallet. Please try again.');
     }
+  };
+
+  // Update wallet button UI
+  const renderWalletOptions = () => {
+    if (walletConnected) {
+      return (
+        <div className="text-center">
+          <div className="bg-gray-800 rounded-lg px-4 py-2 inline-block">
+            <span className="text-gray-400 mr-2">Connected ({walletType}):</span>
+            <span className="text-blue-300">{`${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}`}</span>
+          </div>
+          {walletType === 'solana' && (
+            <div className="mt-2 text-yellow-400 text-sm">
+              Note: Solana is not directly supported by li.fi API
+            </div>
+          )}
+        </div>
+      );
+    }
+    
+    return (
+      <div className="flex flex-col items-center gap-2">
+        {walletOptions.length > 0 ? (
+          <>
+            <div className="text-sm text-gray-400 mb-1">Select wallet type:</div>
+            <div className="flex gap-2">
+              {walletOptions.map(wallet => (
+                <button
+                  key={wallet.type}
+                  onClick={() => connectWallet(wallet.type)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+                >
+                  Connect {wallet.name}
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div>
+            <button
+              onClick={() => connectWallet()}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+            >
+              Connect Wallet
+            </button>
+            <div className="text-sm text-gray-400 mt-2">
+              No supported wallets detected. Please install MetaMask or another EVM wallet.
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   const getQuote = async () => {
@@ -275,6 +372,11 @@ const Swap = () => {
 
     if (!walletConnected) {
       setError('Please connect your wallet first to get a quote');
+      return;
+    }
+
+    if (walletType === 'solana') {
+      setError("li.fi API doesn't support Solana chains. Please connect an EVM wallet for swapping.");
       return;
     }
 
@@ -503,6 +605,12 @@ const Swap = () => {
         AquaSwap <span className="text-sm font-normal text-gray-400">(Powered by li.fi)</span>
       </h2>
       
+      {/* Chain Compatibility Notice */}
+      <div className="bg-blue-500/20 border border-blue-500 text-blue-300 p-3 rounded-lg mb-4">
+        <p>⚠️ <strong>Chain Compatibility:</strong> This swap service supports EVM chains only (Ethereum, Polygon, BSC, etc).</p>
+        <p className="text-sm mt-1">Solana and Sui are not supported by the li.fi API.</p>
+      </div>
+      
       {/* API Key Status */}
       {apiKeyStatus === 'missing' && (
         <div className="bg-yellow-500/20 border border-yellow-500 text-yellow-300 p-3 rounded-lg mb-4">
@@ -519,21 +627,7 @@ const Swap = () => {
       <div className="space-y-6">
         {/* Wallet Connection */}
         <div className="flex justify-center">
-          {!walletConnected ? (
-            <button 
-              onClick={connectWallet}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
-            >
-              Connect Wallet
-            </button>
-          ) : (
-            <div className="text-center">
-              <div className="bg-gray-800 rounded-lg px-4 py-2 inline-block">
-                <span className="text-gray-400 mr-2">Connected:</span>
-                <span className="text-blue-300">{`${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}`}</span>
-              </div>
-            </div>
-          )}
+          {renderWalletOptions()}
         </div>
         
         {/* Network Selection */}
