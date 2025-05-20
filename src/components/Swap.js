@@ -559,13 +559,19 @@ const Swap = () => {
     return (
       <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/70 backdrop-blur-sm px-4">
         <div className="bg-gray-800 border border-gray-700 rounded-xl max-w-md w-full p-6 relative">
-          {/* Close button */}
+          {/* Close button - fixed position with increased hit area */}
           <button 
             onClick={() => {
               setShowWalletModal(false);
               setInstallingWallet(null);
             }} 
-            className="absolute top-4 right-4 text-gray-400 hover:text-white"
+            className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white bg-gray-700 rounded-full z-10"
+            style={{
+              position: 'absolute',
+              transform: 'none',
+              transition: 'none',
+              animation: 'none'
+            }}
           >
             ✕
           </button>
