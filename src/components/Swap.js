@@ -919,18 +919,17 @@ const Swap = () => {
       {/* Wallet Modal */}
       <WalletModal />
       
-      <h2 className="text-2xl font-bold mb-4 text-center text-blue-400 flex-shrink-0">
-        <span className="mr-2 flex items-center">
-          <img 
-            src="/AquaSwap.svg" 
-            alt="AquaSwap" 
-            className="h-6 w-6"
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = "/AquaSwap.png";
-            }}
-          />
-        </span>
+      <h2 className="text-2xl font-bold mb-4 text-center text-blue-400 flex-shrink-0 flex items-center justify-center">
+        <img 
+          src="/AquaSwap.svg" 
+          alt="" 
+          className="h-6 w-6 mr-2 inline-block"
+          style={{ verticalAlign: 'middle', marginTop: '-2px' }}
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = "/AquaSwap.png";
+          }}
+        />
         AquaSwap <span className="text-sm font-normal text-gray-400">(Powered by li.fi)</span>
       </h2>
       
