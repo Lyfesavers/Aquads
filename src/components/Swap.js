@@ -44,6 +44,9 @@ const Swap = () => {
   const [toChainTokens, setToChainTokens] = useState([]);
   const [apiKeyStatus, setApiKeyStatus] = useState('unknown');
   const [walletOptions, setWalletOptions] = useState([]);
+  // New state for wallet connection modal
+  const [showWalletModal, setShowWalletModal] = useState(false);
+  const [installingWallet, setInstallingWallet] = useState(null);
   
   const LIFI_API_KEY = process.env.REACT_APP_LIFI_API_KEY;
   const FEE_PERCENTAGE = 0.5; // 0.5% fee
@@ -254,75 +257,93 @@ const Swap = () => {
     }
   };
   
-  // Update useEffect to check for wallet types
-  useEffect(() => {
-    // Check which wallets are available
-    const detectWallets = () => {
-      const available = [];
-      
-      // Detect MetaMask
-      if (window.ethereum?.isMetaMask) {
-        available.push({ 
-          type: 'evm',
-          id: 'metamask', 
-          name: 'MetaMask',
-          icon: '🦊'
-        });
-      }
-      
-      // Detect Coinbase Wallet
-      if (window.ethereum?.isCoinbaseWallet || (window.ethereum?.providers && 
-          window.ethereum.providers.find(provider => provider.isCoinbaseWallet))) {
-        available.push({ 
-          type: 'evm', 
-          id: 'coinbase',
-          name: 'Coinbase Wallet',
-          icon: '🔵'
-        });
-      }
-      
-      // Detect Trust Wallet
-      if (window.ethereum?.isTrust || window.ethereum?.isTrustWallet) {
-        available.push({ 
-          type: 'evm', 
-          id: 'trust',
-          name: 'Trust Wallet',
-          icon: '🔒'
-        });
-      }
-      
-      // Generic Ethereum provider as fallback
-      if (window.ethereum && available.length === 0) {
-        available.push({ 
-          type: 'evm', 
-          id: 'injected',
-          name: 'Browser Wallet',
-          icon: '🔶'
-        });
-      }
-      
-      // Add WalletConnect as an option regardless of detection
-      available.push({
+  // Check which wallets are available
+  const detectWallets = () => {
+    const available = [];
+    
+    // Available wallet options (with installation status)
+    const walletsList = [
+      { 
+        id: 'metamask', 
+        name: 'MetaMask',
+        icon: '🦊',
         type: 'evm',
+        installed: !!window.ethereum?.isMetaMask,
+        downloadUrl: 'https://metamask.io/download/'
+      },
+      { 
+        id: 'coinbase',
+        name: 'Coinbase Wallet',
+        icon: '🔵',
+        type: 'evm',
+        installed: !!(window.ethereum?.isCoinbaseWallet || (window.ethereum?.providers && 
+            window.ethereum.providers.find(provider => provider.isCoinbaseWallet))),
+        downloadUrl: 'https://www.coinbase.com/wallet/downloads'
+      },
+      { 
+        id: 'trust',
+        name: 'Trust Wallet',
+        icon: '🔒',
+        type: 'evm',
+        installed: !!(window.ethereum?.isTrust || window.ethereum?.isTrustWallet),
+        downloadUrl: 'https://trustwallet.com/download'
+      },
+      {
         id: 'walletconnect',
         name: 'WalletConnect',
-        icon: '🔗'
-      });
-      
-      setWalletOptions(available);
-      
-      // Log available wallets
-      logger.info('Available wallets:', available.map(w => w.name));
-    };
+        icon: '🔗',
+        type: 'evm',
+        installed: true, // Always available as a connection option
+        downloadUrl: 'https://walletconnect.com/'
+      },
+      {
+        id: 'brave',
+        name: 'Brave Wallet',
+        icon: '🦁',
+        type: 'evm',
+        installed: !!window.ethereum?.isBraveWallet,
+        downloadUrl: 'https://brave.com/wallet/'
+      }
+    ];
     
-    detectWallets();
-  }, []);
+    // Set all wallet options with installation status
+    setWalletOptions(walletsList);
+    
+    // Log available wallets
+    const installedWallets = walletsList.filter(w => w.installed);
+    logger.info('Installed wallets:', installedWallets.map(w => w.name));
+    
+    return installedWallets.length > 0;
+  };
 
-  // Update connect wallet function to handle different wallet types
-  const connectWallet = async (walletId = 'injected') => {
+  // Update connect wallet function for two-step process
+  const connectWallet = async (walletId) => {
     try {
-      // For all EVM connections using window.ethereum
-      if (window.ethereum) {
+      // Find the selected wallet
+      const selectedWallet = walletOptions.find(w => w.id === walletId);
+      
+      if (!selectedWallet) {
+        setError('Invalid wallet selection');
+        return;
+      }
+      
+      // Check if wallet is installed
+      if (!selectedWallet.installed) {
+        setInstallingWallet(selectedWallet);
+        return;
+      }
+      
+      setLoading(true);
+      
+      // Special handling for different wallets
+      if (walletId === 'metamask' || selectedWallet.type === 'evm') {
+        // Check if ethereum provider exists
+        if (!window.ethereum) {
+          setError(`${selectedWallet.name} is not installed or not accessible`);
+          setLoading(false);
+          return;
+        }
+        
         // Request accounts
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         
@@ -330,17 +351,89 @@ const Swap = () => {
           setWalletAddress(accounts[0]);
           setWalletConnected(true);
           setWalletType('evm');
-          logger.info(`Connected wallet (${walletId}):`, accounts[0]);
+          setShowWalletModal(false); // Close modal after successful connection
+          logger.info(`Connected ${selectedWallet.name}:`, accounts[0]);
+          setLoading(false);
           return;
         }
       }
       
       // If we get here, it means connection failed
-      setError(`Unable to connect wallet. Please make sure your wallet is unlocked.`);
+      setError(`Unable to connect ${selectedWallet.name}. Please make sure it's unlocked.`);
+      setLoading(false);
     } catch (error) {
       logger.error('Wallet connection error:', error);
       setError('Failed to connect wallet. Please try again.');
+      setLoading(false);
     }
+  };
+
+  // Wallet selection modal
+  const WalletModal = () => {
+    if (!showWalletModal) return null;
+    
+    return (
+      <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/70 backdrop-blur-sm px-4">
+        <div className="bg-gray-800 border border-gray-700 rounded-xl max-w-md w-full p-6 relative">
+          {/* Close button */}
+          <button 
+            onClick={() => {
+              setShowWalletModal(false);
+              setInstallingWallet(null);
+            }} 
+            className="absolute top-4 right-4 text-gray-400 hover:text-white"
+          >
+            ✕
+          </button>
+          
+          {installingWallet ? (
+            <>
+              <h3 className="text-xl font-bold text-white mb-6">Install {installingWallet.name}</h3>
+              <p className="text-gray-300 mb-6">
+                You don't have {installingWallet.name} installed. Please install it to continue.
+              </p>
+              <div className="flex flex-col gap-3">
+                <a 
+                  href={installingWallet.downloadUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg text-center"
+                >
+                  Download {installingWallet.name}
+                </a>
+                <button
+                  onClick={() => setInstallingWallet(null)}
+                  className="bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg"
+                >
+                  Back to Wallet Selection
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <h3 className="text-xl font-bold text-white mb-6">Connect your wallet</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {walletOptions.map(wallet => (
+                  <button
+                    key={wallet.id}
+                    onClick={() => connectWallet(wallet.id)}
+                    disabled={loading}
+                    className="flex flex-col items-center justify-center gap-2 bg-gray-700 hover:bg-gray-600 text-white font-medium py-4 px-3 rounded-lg transition duration-200 border border-gray-600 hover:border-blue-500 disabled:opacity-50 disabled:hover:border-gray-600 disabled:cursor-not-allowed"
+                  >
+                    <span className="text-2xl">{wallet.icon}</span>
+                    <span>{wallet.name}</span>
+                    {!wallet.installed && <span className="text-xs text-yellow-400">Not installed</span>}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-gray-400 mt-6 text-center">
+                By connecting your wallet, you agree to the Terms of Service
+              </p>
+            </>
+          )}
+        </div>
+      </div>
+    );
   };
 
   // Update wallet button UI
@@ -357,30 +450,24 @@ const Swap = () => {
       );
     }
     
-    // Wallet connect UI
+    // Wallet connect button
     return (
-      <div className="flex flex-col items-center gap-3 py-1">
-        <div className="text-center text-sm text-gray-400 mb-2">Connect your wallet to swap tokens</div>
-        
-        <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
-          {walletOptions.map(wallet => (
-            <button
-              key={wallet.id}
-              onClick={() => connectWallet(wallet.id)}
-              className="flex items-center justify-center gap-2 bg-gray-800 hover:bg-gray-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200 border border-gray-700 hover:border-blue-500"
-            >
-              <span className="text-xl">{wallet.icon}</span>
-              <span>{wallet.name}</span>
-            </button>
-          ))}
-        </div>
-        
-        <div className="text-xs text-gray-500 mt-2 text-center">
-          By connecting, you agree to li.fi's Terms of Service
-        </div>
+      <div className="flex justify-center">
+        <button 
+          onClick={() => setShowWalletModal(true)}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200 flex items-center gap-2"
+        >
+          <span>Connect Wallet</span>
+          <span>→</span>
+        </button>
       </div>
     );
   };
+
+  // Update useEffect to initialize wallet detection
+  useEffect(() => {
+    detectWallets();
+  }, []);
 
   const getQuote = async () => {
     if (!fromToken || !toToken || !fromAmount || fromAmount <= 0) {
@@ -388,7 +475,11 @@ const Swap = () => {
       return;
     }
 
-        if (!walletConnected) {      setError('Please connect your wallet first to get a quote');      return;    }
+    if (!walletConnected) {
+      setError('Please connect your wallet first to get a quote');
+      setShowWalletModal(true); // Show wallet modal when user tries to get a quote without connecting
+      return;
+    }
 
     // Check if API key is available
     if (apiKeyStatus === 'missing') {
@@ -575,6 +666,9 @@ const Swap = () => {
   const executeSwap = async () => {
     if (!selectedRoute || !walletConnected) {
       setError('Please connect your wallet and select a route first');
+      if (!walletConnected) {
+        setShowWalletModal(true); // Show wallet modal when user tries to execute without connecting
+      }
       return;
     }
 
@@ -618,12 +712,18 @@ const Swap = () => {
       display: 'flex',
       flexDirection: 'column'
     }}>
+      {/* Wallet Modal */}
+      <WalletModal />
+      
       <h2 className="text-2xl font-bold mb-4 text-center text-blue-400 flex-shrink-0">
         <span className="mr-2">💧</span>
         AquaSwap <span className="text-sm font-normal text-gray-400">(Powered by li.fi)</span>
       </h2>
       
-            {/* Security Notice */}      <div className="bg-blue-500/20 border border-blue-500 text-blue-300 p-2 rounded-lg mb-3 text-sm flex-shrink-0">        <p>⚠️ <strong>Security:</strong> Always verify transaction details before confirming in your wallet.</p>      </div>
+      {/* Security Notice */}
+      <div className="bg-blue-500/20 border border-blue-500 text-blue-300 p-2 rounded-lg mb-3 text-sm flex-shrink-0">
+        <p>⚠️ <strong>Security:</strong> Always verify transaction details before confirming in your wallet.</p>
+      </div>
       
       {/* API Key Status */}
       {apiKeyStatus === 'missing' && (
