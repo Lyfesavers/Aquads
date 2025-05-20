@@ -25,6 +25,16 @@ const Swap = () => {
   const FEE_RECIPIENT = process.env.REACT_APP_FEE_WALLET || '0x98BC1BEC892d9f74B606D478E6b45089D2faAB05'; // Default to a wallet if not set
 
   useEffect(() => {
+    // Listen for messages from parent iframe
+    const handleMessage = (event) => {
+      // Check if it's a wallet connect message
+      if (event.data && event.data.type === 'CONNECT_WALLET') {
+        connectWallet();
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+
     // Fetch available chains
     const fetchChains = async () => {
       try {
@@ -45,6 +55,10 @@ const Swap = () => {
     };
 
     fetchChains();
+
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
   }, [LIFI_API_KEY]);
 
   // Fetch tokens when chains change
@@ -172,7 +186,7 @@ const Swap = () => {
   };
 
   return (
-    <div className="bg-gray-900 p-6 rounded-lg shadow-lg max-w-2xl mx-auto text-white">
+    <div className="bg-gray-900 p-6 rounded-lg shadow-lg w-full h-full text-white" style={{minHeight: '580px'}}>
       <h2 className="text-2xl font-bold mb-6 text-center text-blue-400">
         <span className="mr-2">💧</span>
         AquaSwap <span className="text-sm font-normal text-gray-400">(Powered by li.fi)</span>

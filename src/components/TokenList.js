@@ -46,8 +46,9 @@ const DEX_OPTIONS = [
   {
     name: 'AquaSwap',
     icon: '💧',
-    url: 'https://jumper.exchange/?integrator=AquaSwap&fee=0.5&referrer=0x98BC1BEC892d9f74B606D478E6b45089D2faAB05',
-    description: 'Powered by li.fi with 0.5% fee'
+    url: '/swap',
+    description: 'Powered by li.fi with 0.5% fee',
+    custom: true
   }
 ];
 
@@ -198,6 +199,15 @@ const TokenList = ({ currentUser, showNotification }) => {
   const handleDexClick = (dex) => {
     setSelectedDex(dex);
     setShowDexFrame(true);
+    
+    // Special handling for AquaSwap
+    if (dex.custom) {
+      // Instead of redirecting, we'll load the Swap component in the iframe
+      const iframe = document.querySelector('.dex-iframe');
+      if (iframe) {
+        iframe.src = dex.url;
+      }
+    }
   };
 
   const handleCloseReviews = () => {
@@ -463,9 +473,9 @@ const TokenList = ({ currentUser, showNotification }) => {
                     <div className="h-[600px] w-full bg-white">
                       <iframe
                         src={selectedDex.url}
-                        className="w-full h-full"
+                        className="w-full h-full dex-iframe"
                         title={`${selectedDex.name} DEX`}
-                        sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                        sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"
                         referrerPolicy="no-referrer"
                       />
                     </div>
