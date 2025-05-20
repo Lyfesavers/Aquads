@@ -3,34 +3,64 @@ import axios from 'axios';
 import { ethers } from 'ethers';
 import logger from '../utils/logger';
 
-// Add CSS to hide the Duck Hunt button and any related elements
+// Add CSS to specifically target and hide the Duck Hunt button in the iframe
 const hideDuckHuntStyle = `
   <style>
-    /* Hide Duck Hunt button and any related elements - more aggressive targeting */
-    [class*="duck-hunt"], 
-    [id*="duck-hunt"],
-    [class*="duckhunt"], 
-    [id*="duckhunt"],
-    [class*="duck"], 
-    [id*="duck"],
-    [class*="hunt"], 
-    [id*="hunt"],
-    /* Target fixed/absolute positioned elements in bottom right - common for popups/widgets */
+    /* Direct targeting of the Duck Hunt button and text */
+    [class*="duck"], [id*="duck"],
+    [class*="hunt"], [id*="hunt"],
+    [class*="duck-hunt"], [id*="duck-hunt"],
+    [class*="duckhunt"], [id*="duckhunt"],
     div[style*="position: fixed"][style*="bottom:"][style*="right:"],
     div[style*="position: absolute"][style*="bottom:"][style*="right:"],
-    /* Target elements that might contain duck hunt text */
-    div:has(> span:contains('duck')),
-    div:has(> span:contains('hunt')),
-    div:has(> div:contains('duck')),
-    div:has(> div:contains('hunt')),
-    /* Target the specific corner elements */
-    div[style*="z-index: 99999"],
+    
+    /* Target elements with specific characteristics */
+    div[style*="z-index: 9"],
+    div[style*="z-index: 99"],
+    div[style*="z-index: 999"],
     div[style*="z-index: 9999"],
-    /* Other third-party elements to hide */
+    
+    /* Target specific button attributes */
+    button[style*="position: fixed"],
+    button[style*="position: absolute"],
+    button[style*="bottom:"],
+    button[style*="right:"],
+    
+    /* Target elements containing the duck hunt text */
+    *:has(> *:contains("Duck Hunt")),
+    *:has(> *:contains("duck hunt")),
+    *:has(> *:contains("Start Duck")),
+    *:has(> *:contains("start duck")),
+    
+    /* Target the red circular button specifically */
+    div[style*="border-radius: 50%"][style*="background-color: rgb(255, 0, 0)"],
+    div[style*="border-radius: 50%"][style*="background-color: red"],
+    div[style*="border-radius: 50%"][style*="background: red"],
+    div[style*="border-radius: 50%"][style*="background: #ff0000"],
+    
+    /* Target by exact position */
+    div[style*="bottom: 20px"][style*="right: 20px"],
+    div[style*="bottom: 10px"][style*="right: 10px"],
+    div[style*="bottom: 0px"][style*="right: 0px"],
+    
+    /* Other third-party elements */
     .crisp-client,
     .intercom-lightweight-app,
     [class*="intercom"],
     [id*="intercom"] {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    /* Target specifically for "Start Duck Hunt" text */
+    div:has(span:contains("Start Duck Hunt")),
+    div:has(p:contains("Start Duck Hunt")),
+    div:has(div:contains("Start Duck Hunt")),
+    button:has(span:contains("Start Duck Hunt")),
+    * > span:contains("Start Duck Hunt"),
+    * > div:contains("Start Duck Hunt") {
       display: none !important;
       visibility: hidden !important;
       opacity: 0 !important;
@@ -117,10 +147,11 @@ const Swap = () => {
             // Check if the node is an element
             if (node.nodeType === 1) {
               // Check for duck hunt related content and remove it
-              if ((node.id && (node.id.includes('duck') || node.id.includes('hunt'))) ||
+              if ((node.id && (node.id.toLowerCase().includes('duck') || node.id.toLowerCase().includes('hunt'))) ||
                   (node.className && typeof node.className === 'string' && 
-                    (node.className.includes('duck') || node.className.includes('hunt')))) {
+                    (node.className.toLowerCase().includes('duck') || node.className.toLowerCase().includes('hunt')))) {
                 node.style.display = 'none';
+                node.remove(); // completely remove the node
               }
               
               // Additional checks for elements positioned in the bottom right
@@ -128,34 +159,138 @@ const Swap = () => {
                   ((node.style.position === 'fixed' || node.style.position === 'absolute') &&
                    node.style.bottom && node.style.right)) {
                 node.style.display = 'none';
+                node.remove(); // completely remove the node
               }
               
               // Check high z-index elements which might be overlays or popups
               if (node.style && node.style.zIndex && parseInt(node.style.zIndex) > 9000) {
                 node.style.display = 'none';
+                node.remove(); // completely remove the node
               }
               
               // Check for text content containing duck hunt references
               if (node.textContent && 
                   (node.textContent.toLowerCase().includes('duck') || 
-                   node.textContent.toLowerCase().includes('hunt'))) {
-                // Only hide if it appears to be a standalone element (like a button or banner)
-                // not if it's a container with lots of other content
-                if (node.textContent.length < 100) {
-                  node.style.display = 'none';
-                }
+                   node.textContent.toLowerCase().includes('hunt') ||
+                   node.textContent.toLowerCase().includes('start duck'))) {
+                node.style.display = 'none';
+                node.remove(); // completely remove the node
               }
+              
+              // Recursively check children
+              removeDuckHuntElements(node);
             }
           }
         }
       });
     });
     
+    // Helper function to recursively check and remove duck hunt elements
+    const removeDuckHuntElements = (element) => {
+      if (!element || !element.children) return;
+      
+      // Check each child element
+      for (let i = 0; i < element.children.length; i++) {
+        const child = element.children[i];
+        
+        // Check if this child has duck hunt related characteristics
+        const hasDuckHuntId = child.id && 
+          (child.id.toLowerCase().includes('duck') || child.id.toLowerCase().includes('hunt'));
+        
+        const hasDuckHuntClass = child.className && typeof child.className === 'string' && 
+          (child.className.toLowerCase().includes('duck') || child.className.toLowerCase().includes('hunt'));
+        
+        const hasDuckHuntText = child.textContent && 
+          (child.textContent.toLowerCase().includes('duck') || 
+           child.textContent.toLowerCase().includes('hunt') ||
+           child.textContent.toLowerCase().includes('start duck'));
+        
+        const isFixedBottomRight = child.style && 
+          (child.style.position === 'fixed' || child.style.position === 'absolute') && 
+          child.style.bottom && child.style.right;
+        
+        // If any duck hunt characteristics, remove it
+        if (hasDuckHuntId || hasDuckHuntClass || hasDuckHuntText || isFixedBottomRight) {
+          child.style.display = 'none';
+          if (child.remove) {
+            child.remove();
+          } else if (child.parentNode) {
+            child.parentNode.removeChild(child);
+          }
+          continue;
+        }
+        
+        // Recursively check this child's children
+        removeDuckHuntElements(child);
+      }
+    };
+    
     // Start observing
     observer.observe(document.body, {
       childList: true,
-      subtree: true
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['style', 'class', 'id']
     });
+    
+    // Add a periodic checker to remove the duck hunt button every 500ms
+    const intervalId = setInterval(() => {
+      // Direct targeting by position and characteristics
+      const elements = document.querySelectorAll(
+        'div[style*="position: fixed"][style*="bottom:"][style*="right:"], ' +
+        'div[style*="position: absolute"][style*="bottom:"][style*="right:"], ' +
+        'button[style*="position: fixed"], ' +
+        'button[style*="position: absolute"], ' +
+        'div[style*="z-index: 999"]'
+      );
+      
+      elements.forEach(el => {
+        // Check if this might be the duck hunt button
+        if (el.textContent.toLowerCase().includes('duck') || 
+            el.textContent.toLowerCase().includes('hunt') ||
+            (el.style && el.style.borderRadius === '50%') ||
+            (el.style && el.style.bottom && el.style.right)) {
+          el.style.display = 'none';
+          if (el.remove) {
+            el.remove();
+          } else if (el.parentNode) {
+            el.parentNode.removeChild(el);
+          }
+        }
+      });
+      
+      // Also search for any element containing "Start Duck Hunt" text
+      document.querySelectorAll('*').forEach(el => {
+        if (el.textContent && 
+            (el.textContent.includes('Start Duck Hunt') || 
+             el.textContent.includes('Duck Hunt'))) {
+          el.style.display = 'none';
+          if (el.parentNode) {
+            el.parentNode.removeChild(el);
+          }
+        }
+      });
+      
+      // Look specifically for elements in the bottom right corner
+      const bottomRightElements = Array.from(document.querySelectorAll('*')).filter(el => {
+        const rect = el.getBoundingClientRect();
+        const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+        const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+        
+        // Check if element is in the bottom right corner
+        return rect.bottom > viewportHeight - 100 && 
+               rect.right > viewportWidth - 100 &&
+               (el.style.position === 'fixed' || el.style.position === 'absolute');
+      });
+      
+      bottomRightElements.forEach(el => {
+        el.style.display = 'none';
+        if (el.parentNode) {
+          el.parentNode.removeChild(el);
+        }
+      });
+      
+    }, 500);
     
     // Fetch available chains
     const fetchChains = async () => {
@@ -189,6 +324,7 @@ const Swap = () => {
     return () => {
       window.removeEventListener('message', handleMessage);
       observer.disconnect();
+      clearInterval(intervalId);
       if (styleEl.parentNode) {
         styleEl.parentNode.removeChild(styleEl);
       }
