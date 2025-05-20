@@ -432,50 +432,50 @@ const Swap = ({ currentUser, showNotification }) => {
     setFromChain(newChain);
     setFromToken(''); // Reset token when chain changes
     
+    // Force the toChain to match fromChain (same-chain only approach)
+    setToChain(newChain);
+    setToToken(''); // Reset to token as well
+    
     // Check if this is a Solana chain
     const chain = chains.find(c => c.id === newChain);
     const isSolana = chain?.chainType === 'SVM' || chain?.key === 'sol' || newChain === 'SOL';
     setIsSolanaFromChain(isSolana);
+    setIsSolanaToChain(isSolana); // Set both to same value since we're forcing same chain
     
     // If tokens for this chain are already loaded
     if (tokens[newChain]) {
       setFromChainTokens(tokens[newChain]);
+      setToChainTokens(tokens[newChain]); // Set both to same chain's tokens
       if (tokens[newChain].length > 0) {
         setFromToken(tokens[newChain][0].address);
+        
+        // Try to set a different token for "to" if available
+        if (tokens[newChain].length > 1) {
+          // Prefer a stablecoin for the "to" token if available
+          const stablecoin = tokens[newChain].find(t => 
+            t.symbol.toLowerCase() === 'usdc' || 
+            t.symbol.toLowerCase() === 'usdt' ||
+            t.symbol.toLowerCase() === 'dai'
+          );
+          
+          if (stablecoin) {
+            setToToken(stablecoin.address);
+          } else {
+            // Otherwise use the second token in the list
+            setToToken(tokens[newChain][1].address);
+          }
+        } else {
+          // If only one token, use it (though this swap wouldn't make sense)
+          setToToken(tokens[newChain][0].address);
+        }
       }
     }
   };
   
   const handleToChainChange = (e) => {
-    const newChain = e.target.value;
-    setToChain(newChain);
-    setToToken(''); // Reset token when chain changes
-    
-    // Check if this is a Solana chain
-    const chain = chains.find(c => c.id === newChain);
-    const isSolana = chain?.chainType === 'SVM' || chain?.key === 'sol' || newChain === 'SOL';
-    setIsSolanaToChain(isSolana);
-    
-    // If tokens for this chain are already loaded
-    if (tokens[newChain]) {
-      setToChainTokens(tokens[newChain]);
-      if (tokens[newChain].length > 0) {
-        // Try to find a stablecoin
-        const stablecoin = tokens[newChain].find(t => 
-          t.symbol.toLowerCase() === 'usdc' || 
-          t.symbol.toLowerCase() === 'usdt' ||
-          t.symbol.toLowerCase() === 'dai'
-        );
-        
-        if (stablecoin) {
-          setToToken(stablecoin.address);
-        } else if (tokens[newChain].length > 1) {
-          setToToken(tokens[newChain][1].address);
-        } else {
-          setToToken(tokens[newChain][0].address);
-        }
-      }
-    }
+    // In the simplified same-chain only approach, we always set toChain equal to fromChain
+    // This function is kept for backwards compatibility but effectively does nothing
+    return;
   };
   
   // Fix MetaMask detection with much stronger verification
@@ -1112,9 +1112,9 @@ const Swap = ({ currentUser, showNotification }) => {
       return;
     }
 
-    // Check if from and to tokens are the same and on the same chain
-    if (fromToken === toToken && fromChain === toChain) {
-      setError('Source and destination tokens cannot be the same on the same chain');
+    // Check if from and to tokens are the same
+    if (fromToken === toToken) {
+      setError('Source and destination tokens cannot be the same');
       return;
     }
 
@@ -1152,76 +1152,21 @@ const Swap = ({ currentUser, showNotification }) => {
       
       const requestParams = {
         fromChain,
-        toChain,
+        toChain: fromChain, // Ensure toChain is always the same as fromChain
         fromToken,
         toToken,
         fromAmount: fromAmountInWei,
         fromAddress: walletAddress,
+        toAddress: walletAddress, // Single wallet address for both
         slippage: slippage.toString(),
         fee: feeDecimal.toString(), // Pass fee as decimal fraction (e.g., "0.005")
         integrator: 'AquaSwap',
         referrer: FEE_RECIPIENT
       };
       
-      // Handle cross-chain wallet address format requirements
-      // For cross-chain swaps between Solana and EVM chains, we need proper address formats
-      const isCrossChainSolanaToEVM = isSolanaFromChain && !isSolanaToChain;
-      const isCrossChainEVMToSolana = !isSolanaFromChain && isSolanaToChain;
-      
-      // Add Solana-specific parameters for any Solana-involved transaction
-      if (isSolanaFromChain || isSolanaToChain) {
-        // If either chain is Solana, we include SVM as a chainType
-        requestParams.chainTypes = 'EVM,SVM';
-        
-        // For Solana to EVM: need to provide an EVM destination address
-        if (isCrossChainSolanaToEVM) {
-          // Check if we have an EVM wallet address already stored (from previous connections)
-          // or if we need to prompt user to provide one
-          if (localStorage.getItem('lastEVMAddress')) {
-            requestParams.toAddress = localStorage.getItem('lastEVMAddress');
-          } else if (window.ethereum) {
-            try {
-              // Try to get an address from an available EVM provider
-              const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-              if (accounts && accounts.length > 0) {
-                requestParams.toAddress = accounts[0];
-                localStorage.setItem('lastEVMAddress', accounts[0]);
-              } else {
-                throw new Error('No EVM account available');
-              }
-            } catch (error) {
-              setError('For Solana to EVM swaps, you need an EVM wallet. Please connect an EVM wallet first.');
-              setLoading(false);
-              return;
-            }
-          } else {
-            setError('For Solana to EVM swaps, you need to connect an EVM wallet as the destination.');
-            setLoading(false);
-            return;
-          }
-        }
-        
-        // For EVM to Solana: need to provide the Solana address
-        if (isCrossChainEVMToSolana) {
-          // If we have a Solana wallet address, use it
-          if (walletType === 'solana') {
-            requestParams.toAddress = walletAddress;
-          } else {
-            // Check if we have a stored Solana address
-            if (localStorage.getItem('lastSolanaAddress')) {
-              requestParams.toAddress = localStorage.getItem('lastSolanaAddress');
-            } else {
-              setError('For EVM to Solana swaps, you need to connect a Solana wallet as the destination.');
-              setLoading(false);
-              return;
-            }
-          }
-        }
-        
-        // For same chain Solana transactions
-        if (isSolanaFromChain && isSolanaToChain) {
-          requestParams.toAddress = walletAddress;
-        }
+      // Add Solana-specific parameters if needed
+      if (isSolanaFromChain) {
+        requestParams.chainTypes = 'SVM';
       }
       
       logger.info('Request params:', requestParams);
@@ -1236,8 +1181,8 @@ const Swap = ({ currentUser, showNotification }) => {
 
       // Check if routes exist
       if (!response.data.routes || response.data.routes.length === 0) {
-        // Suggest alternative tokens or chains
-        await suggestAlternatives(fromChain, toChain, fromToken, toToken);
+        // Suggest alternative tokens
+        await suggestAlternatives(fromChain, fromChain, fromToken, toToken);
         setLoading(false);
         return;
       }
@@ -1248,13 +1193,13 @@ const Swap = ({ currentUser, showNotification }) => {
         const bestRoute = response.data.routes[0];
         
         // Get the token decimals for output token
-        const selectedToToken = tokens[toChain]?.find(token => token.address === toToken);
+        const selectedToToken = tokens[fromChain]?.find(token => token.address === toToken);
         const toDecimals = selectedToToken?.decimals || 18;
         
         // Ensure toAmount is properly formatted with decimals
         let formattedToAmount;
         try {
-          if (isSolanaToChain) {
+          if (isSolanaFromChain) {
             // For Solana, manually format the amount
             formattedToAmount = (parseInt(bestRoute.toAmount) / Math.pow(10, toDecimals)).toString();
           } else {
@@ -1282,35 +1227,15 @@ const Swap = ({ currentUser, showNotification }) => {
     } catch (error) {
       logger.error('Quote error:', error.response?.data || error.message || error);
       
-      // Specific handling for cross-chain address errors
+      // Simplified error handling
       if (error.response?.data?.message) {
         const errorMessage = error.response.data.message;
         
-        // Handle invalid toAddress errors
-        if (errorMessage.includes('Invalid toAddress')) {
-          if (isSolanaToChain) {
-            setError('Invalid Solana destination address. Please connect a Solana wallet first.');
-            setShowWalletModal(true);
-          } else if (isSolanaFromChain) {
-            setError('Invalid EVM destination address. Please connect an EVM wallet (MetaMask, etc.) first.');
-            setShowWalletModal(true);
-          } else {
-            setError(`API Error: ${errorMessage}`);
-          }
-        } 
-        // Handle Solana specific errors
-        else if (errorMessage.includes('Solana') || errorMessage.includes('SVM')) {
-          setError(`Solana error: ${errorMessage}. Try connecting your Solana wallet again.`);
-        }
-        // Handle general route errors
-        else if (error.response?.status === 404 || errorMessage.includes("No available quotes")) {
-          await suggestAlternatives(fromChain, toChain, fromToken, toToken);
-        }
-        else {
+        if (error.response?.status === 404 || errorMessage.includes("No available quotes")) {
+          await suggestAlternatives(fromChain, fromChain, fromToken, toToken);
+        } else {
           setError(`API Error: ${errorMessage}`);
         }
-      } else if (error.response?.status === 404) {
-        await suggestAlternatives(fromChain, toChain, fromToken, toToken);
       } else {
         setError('Failed to get quote. Please try different tokens or amount.');
       }
@@ -1320,17 +1245,16 @@ const Swap = ({ currentUser, showNotification }) => {
   };
 
   // Function to suggest alternatives when no quotes are available
-  const suggestAlternatives = async (fromChainId, toChainId, fromTokenAddr, toTokenAddr) => {
+  const suggestAlternatives = async (chainId, _, fromTokenAddr, toTokenAddr) => {
     try {
       // Get token details
-      const sourceToken = tokens[fromChainId]?.find(t => t.address === fromTokenAddr);
-      const destToken = tokens[toChainId]?.find(t => t.address === toTokenAddr);
+      const sourceToken = tokens[chainId]?.find(t => t.address === fromTokenAddr);
+      const destToken = tokens[chainId]?.find(t => t.address === toTokenAddr);
       
       // Get chain details
-      const sourceChain = chains.find(c => c.id.toString() === fromChainId.toString());
-      const destChain = chains.find(c => c.id.toString() === toChainId.toString());
+      const chain = chains.find(c => c.id.toString() === chainId.toString());
       
-      let errorMsg = `No routes available from ${sourceChain?.name || fromChainId} to ${destChain?.name || toChainId}`;
+      let errorMsg = `No routes available on ${chain?.name || chainId}`;
       
       if (sourceToken && destToken) {
         errorMsg += ` for ${sourceToken.symbol} → ${destToken.symbol}`;
@@ -1338,7 +1262,7 @@ const Swap = ({ currentUser, showNotification }) => {
       
       errorMsg += ". Try one of these alternatives:";
       
-      // Suggest popular chains with good bridge support
+      // Suggest token alternatives
       let suggestions = [];
       
       // Suggestion 1: Try a stablecoin if not already using one
@@ -1353,29 +1277,23 @@ const Swap = ({ currentUser, showNotification }) => {
       const isToStable = destToken && stablecoins[destToken.symbol];
       
       if (!isFromStable && !isToStable) {
-        const fromStable = tokens[fromChainId]?.find(t => 
-          stablecoins[t.symbol] && t.symbol === "USDC"
-        );
-        const toStable = tokens[toChainId]?.find(t => 
-          stablecoins[t.symbol] && t.symbol === "USDC"
-        );
-        
-        if (fromStable && toStable) {
-          suggestions.push(`Try USDC → USDC between these chains`);
+        const stableTokens = tokens[chainId]?.filter(t => stablecoins[t.symbol]);
+        if (stableTokens && stableTokens.length > 0) {
+          suggestions.push(`Try swapping with a stablecoin like ${stableTokens.map(t => t.symbol).join(', ')}`);
         }
       }
       
-      // Suggestion 2: Try popular chains
-      if (fromChainId !== "1" && toChainId !== "1") {
-        suggestions.push(`Try routing through Ethereum (ETH) mainnet`);
-      }
+      // Suggestion 2: Try popular tokens on this chain
+      const popularTokens = tokens[chainId]?.filter(t => 
+        t.symbol === 'WETH' || 
+        t.symbol === 'WBTC' || 
+        t.symbol === 'WMATIC' ||
+        t.symbol === 'WBNB' ||
+        t.symbol === 'WSOL'
+      );
       
-      if (fromChainId !== "137" && toChainId !== "137") {
-        suggestions.push(`Try routing through Polygon (MATIC)`);
-      }
-      
-      if (fromChainId !== "56" && toChainId !== "56") {
-        suggestions.push(`Try routing through BNB Chain (BSC)`);
+      if (popularTokens && popularTokens.length > 0) {
+        suggestions.push(`Try swapping with a popular token like ${popularTokens.map(t => t.symbol).join(', ')}`);
       }
       
       // Suggestion 3: Try a different amount
@@ -1395,7 +1313,7 @@ const Swap = ({ currentUser, showNotification }) => {
       setError(fullErrorMsg);
     } catch (err) {
       // Fallback to simpler message if suggestion generation fails
-      setError('No routes available for this swap. Try different tokens, chains, or amounts.');
+      setError('No routes available for this swap. Try different tokens or amounts.');
       logger.error('Error generating suggestions:', err);
     }
   };
@@ -1518,19 +1436,6 @@ const Swap = ({ currentUser, showNotification }) => {
     }
   }, []);
 
-  // Check if cross-chain warning should be displayed
-  const shouldShowCrossChainWarning = () => {
-    // Only show if we have both chains selected
-    if (!fromChain || !toChain) return false;
-    
-    // Check if this is a cross-chain scenario between Solana and EVM
-    const isFromSolana = isSolanaFromChain || chains.find(c => c.id === fromChain)?.chainType === 'SVM';
-    const isToSolana = isSolanaToChain || chains.find(c => c.id === toChain)?.chainType === 'SVM';
-    
-    // Only show for mixed chain types (Solana <-> EVM)
-    return (isFromSolana && !isToSolana) || (!isFromSolana && isToSolana);
-  };
-
   return (
     <div className="bg-gray-900 p-6 rounded-lg shadow-lg w-full h-full text-white overflow-y-auto swap-container" style={{
       height: '100%',
@@ -1570,15 +1475,8 @@ const Swap = ({ currentUser, showNotification }) => {
       
       {/* Solana Support Notice */}
       <div className="bg-purple-500/20 border border-purple-500 text-purple-300 p-2 rounded-lg mb-3 text-sm flex-shrink-0">
-        <p>🚀 <strong>New:</strong> We now support Solana chain swaps via Jupiter exchange and cross-chain with Allbridge/Mayan.</p>
+        <p>🚀 <strong>New:</strong> We now support Solana chain token swaps via Jupiter exchange. Same-chain swaps only.</p>
       </div>
-      
-      {/* Cross-Chain Warning */}
-      {shouldShowCrossChainWarning() && (
-        <div className="bg-yellow-500/20 border border-yellow-500 text-yellow-300 p-2 rounded-lg mb-3 text-sm flex-shrink-0">
-          <p>⚠️ <strong>Cross-Chain Swap:</strong> For swaps between Solana and EVM chains, you need to connect both types of wallets.</p>
-        </div>
-      )}
       
       {/* API Key Status */}
       {apiKeyStatus === 'missing' && (
@@ -1605,7 +1503,7 @@ const Swap = ({ currentUser, showNotification }) => {
         <div className="grid grid-cols-2 gap-3 flex-shrink-0">
           {/* Same content with reduced padding */}
           <div>
-            <label className="block text-gray-400 mb-1 text-sm">From Chain</label>
+            <label className="block text-gray-400 mb-1 text-sm">Chain</label>
             <select 
               value={fromChain}
               onChange={handleFromChainChange}
@@ -1624,25 +1522,13 @@ const Swap = ({ currentUser, showNotification }) => {
               </div>
             )}
           </div>
-          <div>
-            <label className="block text-gray-400 mb-1 text-sm">To Chain</label>
-            <select 
-              value={toChain}
-              onChange={handleToChainChange}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white text-sm"
-            >
-              <option value="">Select Chain</option>
-              {chains.map(chain => (
-                <option key={chain.id} value={chain.id}>
-                  {chain.name} {chain.chainType === 'SVM' || chain.key === 'sol' ? '(Solana)' : ''}
-                </option>
-              ))}
-            </select>
-            {isSolanaToChain && (
-              <div className="mt-1 text-xs text-blue-400 flex items-center">
-                <span>✓</span> Solana chain selected
-              </div>
-            )}
+          <div className="flex flex-col justify-center">
+            <div className="text-center text-lg text-blue-400 font-bold mb-2">
+              Same-Chain Swaps Only
+            </div>
+            <div className="text-center text-xs text-gray-400">
+              Simplified for easier swapping
+            </div>
           </div>
         </div>
         
