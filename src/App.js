@@ -430,6 +430,7 @@ function App() {
   const [itemsPerPage, setItemsPerPage] = useState(50);
   const [totalPages, setTotalPages] = useState(1);
   const [votePopup, setVotePopup] = useState(null);
+  const [partnershipPopup, setPartnershipPopup] = useState(null);
   
   /**
    * Determine how many bubbles to show per page based on screen size.
@@ -1055,6 +1056,17 @@ function App() {
       // Show different messages based on user role or ad status
       if (currentUser?.isAdmin || createdAd.status === 'active') {
         showNotification('Project Listed successfully!', 'success');
+        
+        // Show partnership popup after successful listing
+        setPartnershipPopup({
+          projectName: adData.title,
+          projectId: createdAd.id
+        });
+        
+        // Auto dismiss after 6 seconds
+        setTimeout(() => {
+          setPartnershipPopup(null);
+        }, 6000);
       } else {
         showNotification('Project submitted for listing! It will be visible once approved by admins.', 'success');
       }
@@ -3042,6 +3054,59 @@ function App() {
                         >
                           Close
                         </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Partnership backlink popup */}
+                {partnershipPopup && (
+                  <div className="fixed inset-0 flex items-center justify-center z-[999] bg-black/70 backdrop-blur-md">
+                    <div className="bg-gray-900 border-2 border-purple-500 rounded-lg shadow-2xl max-w-md w-full p-6 transform transition-all animate-fadeIn">
+                      <div className="flex flex-col items-center">
+                        {/* Icon */}
+                        <div className="text-6xl mb-4">
+                          🔗
+                        </div>
+                        
+                        {/* Message */}
+                        <div className="text-center mb-6">
+                          <h2 className="text-2xl font-bold text-white mb-2">
+                            Boost Your Visibility!
+                          </h2>
+                          <p className="text-lg text-gray-200 mb-4">
+                            Want to increase your project's reach? Add us as a partner on your website!
+                          </p>
+                          <p className="text-md text-gray-300">
+                            Adding our backlink helps boost both your domain authority and ours.
+                          </p>
+                        </div>
+                        
+                        {/* Link code example */}
+                        <div className="bg-gray-800 p-3 rounded-md w-full mb-4 text-sm overflow-x-auto">
+                          <code className="text-green-300">
+                            &lt;a href="https://aquads.xyz" target="_blank" rel="noopener"&gt;Listing Partner&lt;/a&gt;
+                          </code>
+                        </div>
+                        
+                        {/* Buttons */}
+                        <div className="flex gap-3">
+                          <button 
+                            onClick={() => {
+                              navigator.clipboard.writeText('<a href="https://aquads.xyz" target="_blank" rel="noopener">Listing Partner</a>');
+                              showNotification('HTML code copied to clipboard!', 'success');
+                            }}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full transition duration-300"
+                          >
+                            Copy HTML
+                          </button>
+                          <button 
+                            onClick={() => setPartnershipPopup(null)}
+                            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-full transition duration-300"
+                          >
+                            Close
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
