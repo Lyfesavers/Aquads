@@ -599,7 +599,12 @@ const Swap = () => {
   };
 
   return (
-    <div className="bg-gray-900 p-6 rounded-lg shadow-lg w-full h-full text-white" style={{minHeight: '580px'}}>
+    <div className="bg-gray-900 p-6 rounded-lg shadow-lg w-full h-full text-white overflow-y-auto" style={{
+      minHeight: '580px',
+      maxHeight: '100%',
+      overflowY: 'auto',
+      overscrollBehavior: 'contain'
+    }}>
       <h2 className="text-2xl font-bold mb-6 text-center text-blue-400">
         <span className="mr-2">💧</span>
         AquaSwap <span className="text-sm font-normal text-gray-400">(Powered by li.fi)</span>
@@ -618,8 +623,9 @@ const Swap = () => {
         </div>
       )}
       
+      {/* Error message with max height and scrolling if needed */}
       {error && (
-        <div className="bg-red-500/20 border border-red-500 text-red-300 p-3 rounded-lg mb-4 whitespace-pre-line">
+        <div className="bg-red-500/20 border border-red-500 text-red-300 p-3 rounded-lg mb-4 whitespace-pre-line max-h-[150px] overflow-y-auto">
           {error}
         </div>
       )}
