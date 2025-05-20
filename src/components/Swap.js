@@ -622,6 +622,17 @@ const Swap = ({ currentUser, showNotification }) => {
     return installedWallets.length > 0;
   };
 
+  // Store wallet addresses by type for cross-chain swaps
+  const storeWalletAddress = (type, address) => {
+    if (type === 'evm' && address) {
+      localStorage.setItem('lastEVMAddress', address);
+      logger.info('Stored EVM address for cross-chain swaps:', address);
+    } else if (type === 'solana' && address) {
+      localStorage.setItem('lastSolanaAddress', address);
+      logger.info('Stored Solana address for cross-chain swaps:', address);
+    }
+  };
+
   // Fix wallet connection logic for MetaMask with stronger verification
   const connectWallet = async (walletId) => {
     try {
@@ -686,6 +697,9 @@ const Swap = ({ currentUser, showNotification }) => {
             
             // Log authenticated wallet connection
             logger.info(`Authenticated user ${currentUser.username} connected Phantom Wallet:`, walletAddr);
+            
+            // Store wallet address
+            storeWalletAddress('solana', walletAddr);
           } catch (error) {
             logger.error('Phantom wallet connection error:', error);
             setError('Failed to connect to Phantom wallet. Signature required to verify wallet ownership.');
@@ -722,6 +736,9 @@ const Swap = ({ currentUser, showNotification }) => {
             setShowWalletModal(false);
             
             logger.info(`Connected Solflare Wallet:`, walletAddr);
+            
+            // Store wallet address
+            storeWalletAddress('solana', walletAddr);
           } catch (error) {
             logger.error('Solflare wallet connection error:', error);
             setError('Failed to connect to Solflare wallet. Signature required to verify wallet ownership.');
@@ -787,6 +804,9 @@ const Swap = ({ currentUser, showNotification }) => {
             setWalletType('evm');
             setShowWalletModal(false);
             logger.info(`Connected and verified MetaMask:`, accounts[0]);
+            
+            // Store wallet address
+            storeWalletAddress('evm', accounts[0]);
           } else {
             throw new Error('Invalid account data from MetaMask');
           }
@@ -837,6 +857,9 @@ const Swap = ({ currentUser, showNotification }) => {
             setWalletType('evm');
             setShowWalletModal(false);
             logger.info(`Connected and verified Coinbase Wallet:`, accounts[0]);
+            
+            // Store wallet address
+            storeWalletAddress('evm', accounts[0]);
           } else {
             throw new Error('Invalid account response from Coinbase Wallet');
           }
@@ -876,6 +899,9 @@ const Swap = ({ currentUser, showNotification }) => {
             setWalletType('evm');
             setShowWalletModal(false);
             logger.info(`Connected and verified Trust Wallet:`, accounts[0]);
+            
+            // Store wallet address
+            storeWalletAddress('evm', accounts[0]);
           } else {
             throw new Error('Invalid account response from Trust Wallet');
           }
@@ -915,6 +941,9 @@ const Swap = ({ currentUser, showNotification }) => {
             setWalletType('evm');
             setShowWalletModal(false);
             logger.info(`Connected and verified Brave Wallet:`, accounts[0]);
+            
+            // Store wallet address
+            storeWalletAddress('evm', accounts[0]);
           } else {
             throw new Error('Invalid account response from Brave Wallet');
           }
@@ -1134,13 +1163,63 @@ const Swap = ({ currentUser, showNotification }) => {
         referrer: FEE_RECIPIENT
       };
       
-      // Add Solana-specific parameters if needed
+      // Handle cross-chain wallet address format requirements
+      // For cross-chain swaps between Solana and EVM chains, we need proper address formats
+      const isCrossChainSolanaToEVM = isSolanaFromChain && !isSolanaToChain;
+      const isCrossChainEVMToSolana = !isSolanaFromChain && isSolanaToChain;
+      
+      // Add Solana-specific parameters for any Solana-involved transaction
       if (isSolanaFromChain || isSolanaToChain) {
         // If either chain is Solana, we include SVM as a chainType
         requestParams.chainTypes = 'EVM,SVM';
         
-        // If target chain is Solana, add a toAddress parameter
-        if (isSolanaToChain) {
+        // For Solana to EVM: need to provide an EVM destination address
+        if (isCrossChainSolanaToEVM) {
+          // Check if we have an EVM wallet address already stored (from previous connections)
+          // or if we need to prompt user to provide one
+          if (localStorage.getItem('lastEVMAddress')) {
+            requestParams.toAddress = localStorage.getItem('lastEVMAddress');
+          } else if (window.ethereum) {
+            try {
+              // Try to get an address from an available EVM provider
+              const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+              if (accounts && accounts.length > 0) {
+                requestParams.toAddress = accounts[0];
+                localStorage.setItem('lastEVMAddress', accounts[0]);
+              } else {
+                throw new Error('No EVM account available');
+              }
+            } catch (error) {
+              setError('For Solana to EVM swaps, you need an EVM wallet. Please connect an EVM wallet first.');
+              setLoading(false);
+              return;
+            }
+          } else {
+            setError('For Solana to EVM swaps, you need to connect an EVM wallet as the destination.');
+            setLoading(false);
+            return;
+          }
+        }
+        
+        // For EVM to Solana: need to provide the Solana address
+        if (isCrossChainEVMToSolana) {
+          // If we have a Solana wallet address, use it
+          if (walletType === 'solana') {
+            requestParams.toAddress = walletAddress;
+          } else {
+            // Check if we have a stored Solana address
+            if (localStorage.getItem('lastSolanaAddress')) {
+              requestParams.toAddress = localStorage.getItem('lastSolanaAddress');
+            } else {
+              setError('For EVM to Solana swaps, you need to connect a Solana wallet as the destination.');
+              setLoading(false);
+              return;
+            }
+          }
+        }
+        
+        // For same chain Solana transactions
+        if (isSolanaFromChain && isSolanaToChain) {
           requestParams.toAddress = walletAddress;
         }
       }
@@ -1202,11 +1281,36 @@ const Swap = ({ currentUser, showNotification }) => {
       }
     } catch (error) {
       logger.error('Quote error:', error.response?.data || error.message || error);
-      if (error.response?.status === 404 || 
-          (error.response?.data?.message && error.response.data.message.includes("No available quotes"))) {
+      
+      // Specific handling for cross-chain address errors
+      if (error.response?.data?.message) {
+        const errorMessage = error.response.data.message;
+        
+        // Handle invalid toAddress errors
+        if (errorMessage.includes('Invalid toAddress')) {
+          if (isSolanaToChain) {
+            setError('Invalid Solana destination address. Please connect a Solana wallet first.');
+            setShowWalletModal(true);
+          } else if (isSolanaFromChain) {
+            setError('Invalid EVM destination address. Please connect an EVM wallet (MetaMask, etc.) first.');
+            setShowWalletModal(true);
+          } else {
+            setError(`API Error: ${errorMessage}`);
+          }
+        } 
+        // Handle Solana specific errors
+        else if (errorMessage.includes('Solana') || errorMessage.includes('SVM')) {
+          setError(`Solana error: ${errorMessage}. Try connecting your Solana wallet again.`);
+        }
+        // Handle general route errors
+        else if (error.response?.status === 404 || errorMessage.includes("No available quotes")) {
+          await suggestAlternatives(fromChain, toChain, fromToken, toToken);
+        }
+        else {
+          setError(`API Error: ${errorMessage}`);
+        }
+      } else if (error.response?.status === 404) {
         await suggestAlternatives(fromChain, toChain, fromToken, toToken);
-      } else if (error.response?.data?.message) {
-        setError(`API Error: ${error.response.data.message}`);
       } else {
         setError('Failed to get quote. Please try different tokens or amount.');
       }
@@ -1414,6 +1518,19 @@ const Swap = ({ currentUser, showNotification }) => {
     }
   }, []);
 
+  // Check if cross-chain warning should be displayed
+  const shouldShowCrossChainWarning = () => {
+    // Only show if we have both chains selected
+    if (!fromChain || !toChain) return false;
+    
+    // Check if this is a cross-chain scenario between Solana and EVM
+    const isFromSolana = isSolanaFromChain || chains.find(c => c.id === fromChain)?.chainType === 'SVM';
+    const isToSolana = isSolanaToChain || chains.find(c => c.id === toChain)?.chainType === 'SVM';
+    
+    // Only show for mixed chain types (Solana <-> EVM)
+    return (isFromSolana && !isToSolana) || (!isFromSolana && isToSolana);
+  };
+
   return (
     <div className="bg-gray-900 p-6 rounded-lg shadow-lg w-full h-full text-white overflow-y-auto swap-container" style={{
       height: '100%',
@@ -1455,6 +1572,13 @@ const Swap = ({ currentUser, showNotification }) => {
       <div className="bg-purple-500/20 border border-purple-500 text-purple-300 p-2 rounded-lg mb-3 text-sm flex-shrink-0">
         <p>🚀 <strong>New:</strong> We now support Solana chain swaps via Jupiter exchange and cross-chain with Allbridge/Mayan.</p>
       </div>
+      
+      {/* Cross-Chain Warning */}
+      {shouldShowCrossChainWarning() && (
+        <div className="bg-yellow-500/20 border border-yellow-500 text-yellow-300 p-2 rounded-lg mb-3 text-sm flex-shrink-0">
+          <p>⚠️ <strong>Cross-Chain Swap:</strong> For swaps between Solana and EVM chains, you need to connect both types of wallets.</p>
+        </div>
+      )}
       
       {/* API Key Status */}
       {apiKeyStatus === 'missing' && (
