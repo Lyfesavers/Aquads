@@ -470,7 +470,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                   </div>
 
                   {selectedDex && (
-                    <div className="dex-iframe-container bg-white" style={{ height: '750px', overflow: 'hidden' }}>
+                    <div className="dex-iframe-container bg-white" style={{ height: '850px', overflow: 'auto' }}>
                       <iframe
                         src={selectedDex.url}
                         className="dex-iframe"

@@ -11,9 +11,9 @@ html, body {
 
 /* This ensures iframe content can scroll */
 .dex-iframe-container {
-  height: 750px;
+  height: 850px; /* Increased from 750px to 850px to allow more space for content */
   width: 100%;
-  overflow: hidden;
+  overflow: auto; /* Changed from 'hidden' to 'auto' to allow scrolling when content exceeds container */
 }
 
 .dex-iframe {
