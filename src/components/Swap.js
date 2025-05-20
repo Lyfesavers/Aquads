@@ -167,8 +167,35 @@ const Swap = () => {
     setError(null);
 
     try {
+      // Find the selected token to get its decimals
+      const selectedFromToken = tokens.find(token => token.address === fromToken);
+      const decimals = selectedFromToken?.decimals || 18;
+      
       // Calculate fee amount (0.5% of fromAmount)
       const feeAmount = parseFloat(fromAmount) * (FEE_PERCENTAGE / 100);
+      
+      // Parse amount with proper decimals
+      let fromAmountInWei;
+      try {
+        fromAmountInWei = ethers.parseUnits(fromAmount, decimals).toString();
+      } catch (e) {
+        logger.error('Error parsing amount:', e);
+        setError('Invalid amount format. Please check your input.');
+        setLoading(false);
+        return;
+      }
+      
+      logger.info('Request params:', {
+        fromChain,
+        toChain,
+        fromToken,
+        toToken,
+        fromAmount: fromAmountInWei,
+        slippage: slippage.toString(),
+        fee: ethers.parseUnits((feeAmount).toFixed(decimals > 6 ? 6 : decimals), decimals).toString(),
+        integrator: 'AquaSwap',
+        referrer: FEE_RECIPIENT
+      });
       
       // Request quote from li.fi
       const response = await axios.get('https://li.quest/v1/quote', {
@@ -180,25 +207,39 @@ const Swap = () => {
           toChain,
           fromToken,
           toToken,
-          fromAmount: ethers.parseUnits(fromAmount, 18).toString(), // Assuming 18 decimals
+          fromAmount: fromAmountInWei,
           slippage: slippage.toString(),
-          fee: feeAmount.toString(),
+          fee: ethers.parseUnits((feeAmount).toFixed(decimals > 6 ? 6 : decimals), decimals).toString(),
           integrator: 'AquaSwap',
           referrer: FEE_RECIPIENT
         }
       });
 
+      // Check if routes exist
+      if (!response.data.routes || response.data.routes.length === 0) {
+        setError('No routes found for this swap. Try different tokens or amounts.');
+        setLoading(false);
+        return;
+      }
+
       setRoutes(response.data.routes || []);
       if (response.data.routes?.length > 0) {
         setSelectedRoute(response.data.routes[0]);
+        // Get the token decimals for output token
+        const selectedToToken = tokens.find(token => token.address === toToken);
+        const toDecimals = selectedToToken?.decimals || 18;
         // Update the toAmount with the expected output
-        setToAmount(ethers.formatUnits(response.data.routes[0].toAmount, 18)); // Assuming 18 decimals
+        setToAmount(ethers.formatUnits(response.data.routes[0].toAmount, toDecimals));
       } else {
         setError('No routes found for this swap');
       }
     } catch (error) {
-      logger.error('Quote error:', error);
-      setError('Failed to get quote. Please try different tokens or amount.');
+      logger.error('Quote error:', error.response?.data || error.message || error);
+      if (error.response?.data?.message) {
+        setError(`API Error: ${error.response.data.message}`);
+      } else {
+        setError('Failed to get quote. Please try different tokens or amount.');
+      }
     } finally {
       setLoading(false);
     }
