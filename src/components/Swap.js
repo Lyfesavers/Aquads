@@ -3,14 +3,30 @@ import axios from 'axios';
 import { ethers } from 'ethers';
 import logger from '../utils/logger';
 
-// Add CSS to hide the Duck Hunt button
+// Add CSS to hide the Duck Hunt button and any related elements
 const hideDuckHuntStyle = `
   <style>
-    /* Hide Duck Hunt button */
+    /* Hide Duck Hunt button and any related elements - more aggressive targeting */
     [class*="duck-hunt"], 
     [id*="duck-hunt"],
     [class*="duckhunt"], 
     [id*="duckhunt"],
+    [class*="duck"], 
+    [id*="duck"],
+    [class*="hunt"], 
+    [id*="hunt"],
+    /* Target fixed/absolute positioned elements in bottom right - common for popups/widgets */
+    div[style*="position: fixed"][style*="bottom:"][style*="right:"],
+    div[style*="position: absolute"][style*="bottom:"][style*="right:"],
+    /* Target elements that might contain duck hunt text */
+    div:has(> span:contains('duck')),
+    div:has(> span:contains('hunt')),
+    div:has(> div:contains('duck')),
+    div:has(> div:contains('hunt')),
+    /* Target the specific corner elements */
+    div[style*="z-index: 99999"],
+    div[style*="z-index: 9999"],
+    /* Other third-party elements to hide */
     .crisp-client,
     .intercom-lightweight-app,
     [class*="intercom"],
@@ -100,13 +116,34 @@ const Swap = () => {
             const node = mutation.addedNodes[i];
             // Check if the node is an element
             if (node.nodeType === 1) {
-              // Check if it contains duck hunt related elements
-              if (node.id && (node.id.includes('duck') || node.id.includes('hunt'))) {
+              // Check for duck hunt related content and remove it
+              if ((node.id && (node.id.includes('duck') || node.id.includes('hunt'))) ||
+                  (node.className && typeof node.className === 'string' && 
+                    (node.className.includes('duck') || node.className.includes('hunt')))) {
                 node.style.display = 'none';
               }
-              if (node.className && typeof node.className === 'string' && 
-                  (node.className.includes('duck') || node.className.includes('hunt'))) {
+              
+              // Additional checks for elements positioned in the bottom right
+              if (node.style && 
+                  ((node.style.position === 'fixed' || node.style.position === 'absolute') &&
+                   node.style.bottom && node.style.right)) {
                 node.style.display = 'none';
+              }
+              
+              // Check high z-index elements which might be overlays or popups
+              if (node.style && node.style.zIndex && parseInt(node.style.zIndex) > 9000) {
+                node.style.display = 'none';
+              }
+              
+              // Check for text content containing duck hunt references
+              if (node.textContent && 
+                  (node.textContent.toLowerCase().includes('duck') || 
+                   node.textContent.toLowerCase().includes('hunt'))) {
+                // Only hide if it appears to be a standalone element (like a button or banner)
+                // not if it's a container with lots of other content
+                if (node.textContent.length < 100) {
+                  node.style.display = 'none';
+                }
               }
             }
           }
