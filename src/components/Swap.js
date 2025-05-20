@@ -252,8 +252,17 @@ const Swap = () => {
       return;
     }
 
+    // Check if from and to tokens are the same and on the same chain
+    if (fromToken === toToken && fromChain === toChain) {
+      setError('Source and destination tokens cannot be the same on the same chain');
+      return;
+    }
+
     setLoading(true);
     setError(null);
+    setRoutes([]);
+    setSelectedRoute(null);
+    setToAmount('');
 
     try {
       // Find the selected token to get its decimals
@@ -299,7 +308,8 @@ const Swap = () => {
 
       // Check if routes exist
       if (!response.data.routes || response.data.routes.length === 0) {
-        setError('No routes found for this swap. Try different tokens or amounts.');
+        // Suggest alternative tokens or chains
+        await suggestAlternatives(fromChain, toChain, fromToken, toToken);
         setLoading(false);
         return;
       }
@@ -324,13 +334,97 @@ const Swap = () => {
       }
     } catch (error) {
       logger.error('Quote error:', error.response?.data || error.message || error);
-      if (error.response?.data?.message) {
+      if (error.response?.status === 404 || 
+          (error.response?.data?.message && error.response.data.message.includes("No available quotes"))) {
+        await suggestAlternatives(fromChain, toChain, fromToken, toToken);
+      } else if (error.response?.data?.message) {
         setError(`API Error: ${error.response.data.message}`);
       } else {
         setError('Failed to get quote. Please try different tokens or amount.');
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Function to suggest alternatives when no quotes are available
+  const suggestAlternatives = async (fromChainId, toChainId, fromTokenAddr, toTokenAddr) => {
+    try {
+      // Get token details
+      const sourceToken = tokens[fromChainId]?.find(t => t.address === fromTokenAddr);
+      const destToken = tokens[toChainId]?.find(t => t.address === toTokenAddr);
+      
+      // Get chain details
+      const sourceChain = chains.find(c => c.id.toString() === fromChainId.toString());
+      const destChain = chains.find(c => c.id.toString() === toChainId.toString());
+      
+      let errorMsg = `No routes available from ${sourceChain?.name || fromChainId} to ${destChain?.name || toChainId}`;
+      
+      if (sourceToken && destToken) {
+        errorMsg += ` for ${sourceToken.symbol} → ${destToken.symbol}`;
+      }
+      
+      errorMsg += ". Try one of these alternatives:";
+      
+      // Suggest popular chains with good bridge support
+      let suggestions = [];
+      
+      // Suggestion 1: Try a stablecoin if not already using one
+      const stablecoins = {
+        "USDC": true,
+        "USDT": true,
+        "DAI": true,
+        "BUSD": true
+      };
+      
+      const isFromStable = sourceToken && stablecoins[sourceToken.symbol];
+      const isToStable = destToken && stablecoins[destToken.symbol];
+      
+      if (!isFromStable && !isToStable) {
+        const fromStable = tokens[fromChainId]?.find(t => 
+          stablecoins[t.symbol] && t.symbol === "USDC"
+        );
+        const toStable = tokens[toChainId]?.find(t => 
+          stablecoins[t.symbol] && t.symbol === "USDC"
+        );
+        
+        if (fromStable && toStable) {
+          suggestions.push(`Try USDC → USDC between these chains`);
+        }
+      }
+      
+      // Suggestion 2: Try popular chains
+      if (fromChainId !== "1" && toChainId !== "1") {
+        suggestions.push(`Try routing through Ethereum (ETH) mainnet`);
+      }
+      
+      if (fromChainId !== "137" && toChainId !== "137") {
+        suggestions.push(`Try routing through Polygon (MATIC)`);
+      }
+      
+      if (fromChainId !== "56" && toChainId !== "56") {
+        suggestions.push(`Try routing through BNB Chain (BSC)`);
+      }
+      
+      // Suggestion 3: Try a different amount
+      suggestions.push(`Try a different amount (e.g., try 0.1 or 0.01 of your token)`);
+      
+      // Suggestion 4: Try higher slippage
+      if (slippage < 1) {
+        suggestions.push(`Increase slippage tolerance to 1% or higher`);
+      }
+      
+      // Build the full error message
+      let fullErrorMsg = errorMsg;
+      suggestions.forEach((suggestion, index) => {
+        fullErrorMsg += `\n• ${suggestion}`;
+      });
+      
+      setError(fullErrorMsg);
+    } catch (err) {
+      // Fallback to simpler message if suggestion generation fails
+      setError('No routes available for this swap. Try different tokens, chains, or amounts.');
+      logger.error('Error generating suggestions:', err);
     }
   };
 
@@ -378,7 +472,7 @@ const Swap = () => {
       </h2>
       
       {error && (
-        <div className="bg-red-500/20 border border-red-500 text-red-300 p-3 rounded-lg mb-4">
+        <div className="bg-red-500/20 border border-red-500 text-red-300 p-3 rounded-lg mb-4 whitespace-pre-line">
           {error}
         </div>
       )}
@@ -504,18 +598,40 @@ const Swap = () => {
           </div>
         </div>
         
-        {/* Slippage Setting */}
+        {/* Slippage Setting with Quick Values */}
         <div>
           <label className="block text-gray-400 mb-2">Slippage Tolerance (%)</label>
-          <input
-            type="number"
-            value={slippage}
-            onChange={(e) => setSlippage(e.target.value)}
-            min="0.1"
-            max="5"
-            step="0.1"
-            className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white"
-          />
+          <div className="flex gap-2 items-center">
+            <input
+              type="number"
+              value={slippage}
+              onChange={(e) => setSlippage(e.target.value)}
+              min="0.1"
+              max="5"
+              step="0.1"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white"
+            />
+            <div className="flex gap-1">
+              <button 
+                onClick={() => setSlippage(0.5)}
+                className={`px-2 py-1 rounded ${slippage === 0.5 ? 'bg-blue-600' : 'bg-gray-700'}`}
+              >
+                0.5%
+              </button>
+              <button 
+                onClick={() => setSlippage(1.0)}
+                className={`px-2 py-1 rounded ${slippage === 1.0 ? 'bg-blue-600' : 'bg-gray-700'}`}
+              >
+                1%
+              </button>
+              <button 
+                onClick={() => setSlippage(2.0)}
+                className={`px-2 py-1 rounded ${slippage === 2.0 ? 'bg-blue-600' : 'bg-gray-700'}`}
+              >
+                2%
+              </button>
+            </div>
+          </div>
         </div>
         
         {/* Action Buttons */}
