@@ -257,66 +257,122 @@ const Swap = () => {
     }
   };
   
-  // Check which wallets are available
+  // Update wallet detection logic with better validation
   const detectWallets = () => {
     const available = [];
     
-    // Available wallet options (with installation status)
-    const walletsList = [
-      { 
+    // Check if window.ethereum exists at all
+    const hasEthereumProvider = typeof window.ethereum !== 'undefined';
+    
+    // Detect MetaMask with stricter validation
+    if (hasEthereumProvider && window.ethereum?.isMetaMask) {
+      // Additional verification
+      const isRealMetaMask = !window.ethereum.isCoinbaseWallet && !window.ethereum.isBraveWallet;
+      
+      available.push({ 
+        type: 'evm',
         id: 'metamask', 
         name: 'MetaMask',
         icon: '🦊',
-        type: 'evm',
-        installed: !!window.ethereum?.isMetaMask,
+        installed: isRealMetaMask,
         downloadUrl: 'https://metamask.io/download/'
-      },
-      { 
+      });
+    } else {
+      // Add MetaMask as not installed
+      available.push({ 
+        type: 'evm',
+        id: 'metamask', 
+        name: 'MetaMask',
+        icon: '🦊',
+        installed: false,
+        downloadUrl: 'https://metamask.io/download/'
+      });
+    }
+    
+    // Detect Coinbase Wallet
+    if (hasEthereumProvider && (window.ethereum?.isCoinbaseWallet || 
+        (window.ethereum?.providers && window.ethereum.providers.find(p => p.isCoinbaseWallet)))) {
+      available.push({ 
+        type: 'evm', 
         id: 'coinbase',
         name: 'Coinbase Wallet',
         icon: '🔵',
-        type: 'evm',
-        installed: !!(window.ethereum?.isCoinbaseWallet || (window.ethereum?.providers && 
-            window.ethereum.providers.find(provider => provider.isCoinbaseWallet))),
+        installed: true,
         downloadUrl: 'https://www.coinbase.com/wallet/downloads'
-      },
-      { 
+      });
+    } else {
+      available.push({ 
+        type: 'evm', 
+        id: 'coinbase',
+        name: 'Coinbase Wallet',
+        icon: '🔵',
+        installed: false,
+        downloadUrl: 'https://www.coinbase.com/wallet/downloads'
+      });
+    }
+    
+    // Detect Trust Wallet
+    if (hasEthereumProvider && (window.ethereum?.isTrust || window.ethereum?.isTrustWallet)) {
+      available.push({ 
+        type: 'evm', 
         id: 'trust',
         name: 'Trust Wallet',
         icon: '🔒',
-        type: 'evm',
-        installed: !!(window.ethereum?.isTrust || window.ethereum?.isTrustWallet),
+        installed: true,
         downloadUrl: 'https://trustwallet.com/download'
-      },
-      {
-        id: 'walletconnect',
-        name: 'WalletConnect',
-        icon: '🔗',
-        type: 'evm',
-        installed: true, // Always available as a connection option
-        downloadUrl: 'https://walletconnect.com/'
-      },
-      {
+      });
+    } else {
+      available.push({ 
+        type: 'evm', 
+        id: 'trust',
+        name: 'Trust Wallet',
+        icon: '🔒',
+        installed: false,
+        downloadUrl: 'https://trustwallet.com/download'
+      });
+    }
+    
+    // Detect Brave Wallet
+    if (hasEthereumProvider && window.ethereum?.isBraveWallet) {
+      available.push({
         id: 'brave',
         name: 'Brave Wallet',
         icon: '🦁',
         type: 'evm',
-        installed: !!window.ethereum?.isBraveWallet,
+        installed: true,
         downloadUrl: 'https://brave.com/wallet/'
-      }
-    ];
+      });
+    } else {
+      available.push({
+        id: 'brave',
+        name: 'Brave Wallet',
+        icon: '🦁',
+        type: 'evm',
+        installed: false,
+        downloadUrl: 'https://brave.com/wallet/'
+      });
+    }
     
-    // Set all wallet options with installation status
-    setWalletOptions(walletsList);
+    // WalletConnect is always available as an option
+    available.push({
+      type: 'evm',
+      id: 'walletconnect',
+      name: 'WalletConnect',
+      icon: '🔗',
+      installed: true, // Always available
+      downloadUrl: 'https://walletconnect.com/'
+    });
     
-    // Log available wallets
-    const installedWallets = walletsList.filter(w => w.installed);
-    logger.info('Installed wallets:', installedWallets.map(w => w.name));
+    setWalletOptions(available);
+    
+    // Log detected wallet providers
+    const installedWallets = available.filter(w => w.installed);
+    logger.info('Detected installed wallets:', installedWallets.map(w => w.name));
     
     return installedWallets.length > 0;
   };
 
-  // Update connect wallet function for two-step process
+  // Update connect wallet function with better verification and error handling
   const connectWallet = async (walletId) => {
     try {
       // Find the selected wallet
@@ -327,7 +383,7 @@ const Swap = () => {
         return;
       }
       
-      // Check if wallet is installed
+      // If wallet is not installed, show installation prompt
       if (!selectedWallet.installed) {
         setInstallingWallet(selectedWallet);
         return;
@@ -335,36 +391,141 @@ const Swap = () => {
       
       setLoading(true);
       
-      // Special handling for different wallets
-      if (walletId === 'metamask' || selectedWallet.type === 'evm') {
-        // Check if ethereum provider exists
-        if (!window.ethereum) {
-          setError(`${selectedWallet.name} is not installed or not accessible`);
+      // Special handling for different wallet types
+      if (walletId === 'metamask') {
+        // Strict verification for MetaMask
+        if (!window.ethereum || !window.ethereum.isMetaMask) {
+          setError('MetaMask is not installed or not accessible');
           setLoading(false);
           return;
         }
         
-        // Request accounts
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        
-        if (accounts && accounts.length > 0) {
-          setWalletAddress(accounts[0]);
-          setWalletConnected(true);
-          setWalletType('evm');
-          setShowWalletModal(false); // Close modal after successful connection
-          logger.info(`Connected ${selectedWallet.name}:`, accounts[0]);
+        // Attempt to get accounts to verify connection
+        try {
+          const accounts = await window.ethereum.request({ 
+            method: 'eth_requestAccounts',
+            params: [] 
+          });
+          
+          // Verify accounts are returned and valid
+          if (accounts && accounts.length > 0 && accounts[0] && 
+              typeof accounts[0] === 'string' && accounts[0].startsWith('0x')) {
+            setWalletAddress(accounts[0]);
+            setWalletConnected(true);
+            setWalletType('evm');
+            setShowWalletModal(false);
+            logger.info(`Connected MetaMask:`, accounts[0]);
+          } else {
+            throw new Error('Invalid account response from MetaMask');
+          }
+        } catch (error) {
+          logger.error('MetaMask connection error:', error);
+          setError('Failed to connect to MetaMask. Please make sure it is unlocked and try again.');
+          setWalletConnected(false);
+        }
+      } 
+      // Coinbase Wallet
+      else if (walletId === 'coinbase') {
+        if (!window.ethereum?.isCoinbaseWallet && 
+            !(window.ethereum?.providers && window.ethereum.providers.find(p => p.isCoinbaseWallet))) {
+          setError('Coinbase Wallet is not installed or not accessible');
           setLoading(false);
           return;
+        }
+        
+        let provider = window.ethereum;
+        // Use specific provider if multiple are available
+        if (window.ethereum.providers) {
+          const coinbaseProvider = window.ethereum.providers.find(p => p.isCoinbaseWallet);
+          if (coinbaseProvider) provider = coinbaseProvider;
+        }
+        
+        try {
+          const accounts = await provider.request({ method: 'eth_requestAccounts' });
+          if (accounts && accounts.length > 0 && accounts[0]) {
+            setWalletAddress(accounts[0]);
+            setWalletConnected(true);
+            setWalletType('evm');
+            setShowWalletModal(false);
+            logger.info(`Connected Coinbase Wallet:`, accounts[0]);
+          } else {
+            throw new Error('Invalid account response from Coinbase Wallet');
+          }
+        } catch (error) {
+          logger.error('Coinbase Wallet connection error:', error);
+          setError('Failed to connect to Coinbase Wallet.');
+          setWalletConnected(false);
         }
       }
+      // Trust Wallet
+      else if (walletId === 'trust') {
+        if (!window.ethereum?.isTrust && !window.ethereum?.isTrustWallet) {
+          setError('Trust Wallet is not installed or not accessible');
+          setLoading(false);
+          return;
+        }
+        
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          if (accounts && accounts.length > 0 && accounts[0]) {
+            setWalletAddress(accounts[0]);
+            setWalletConnected(true);
+            setWalletType('evm');
+            setShowWalletModal(false);
+            logger.info(`Connected Trust Wallet:`, accounts[0]);
+          } else {
+            throw new Error('Invalid account response from Trust Wallet');
+          }
+        } catch (error) {
+          logger.error('Trust Wallet connection error:', error);
+          setError('Failed to connect to Trust Wallet.');
+          setWalletConnected(false);
+        }
+      }
+      // Brave Wallet
+      else if (walletId === 'brave') {
+        if (!window.ethereum?.isBraveWallet) {
+          setError('Brave Wallet is not installed or not accessible');
+          setLoading(false);
+          return;
+        }
+        
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          if (accounts && accounts.length > 0 && accounts[0]) {
+            setWalletAddress(accounts[0]);
+            setWalletConnected(true);
+            setWalletType('evm');
+            setShowWalletModal(false);
+            logger.info(`Connected Brave Wallet:`, accounts[0]);
+          } else {
+            throw new Error('Invalid account response from Brave Wallet');
+          }
+        } catch (error) {
+          logger.error('Brave Wallet connection error:', error);
+          setError('Failed to connect to Brave Wallet.');
+          setWalletConnected(false);
+        }
+      }
+      // WalletConnect - placeholder for future implementation
+      else if (walletId === 'walletconnect') {
+        // For now, show message that we'd need to implement WalletConnect sdk
+        setError('WalletConnect requires additional SDK implementation. Please select another wallet.');
+        setLoading(false);
+      }
+      // Generic fallback for other wallet types
+      else {
+        setError('Unsupported wallet type selected.');
+        setLoading(false);
+        setWalletConnected(false);
+      }
       
-      // If we get here, it means connection failed
-      setError(`Unable to connect ${selectedWallet.name}. Please make sure it's unlocked.`);
       setLoading(false);
     } catch (error) {
       logger.error('Wallet connection error:', error);
       setError('Failed to connect wallet. Please try again.');
       setLoading(false);
+      setWalletConnected(false);
     }
   };
 
