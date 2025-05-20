@@ -1291,10 +1291,44 @@ const Swap = () => {
     }
   };
 
+  // Add a useEffect to adjust container height in iframe environments
+  useEffect(() => {
+    // Check if we're in an iframe
+    const isInIframe = () => {
+      try {
+        return window.self !== window.top;
+      } catch (e) {
+        return true; // If access to parent window is denied, we're likely in an iframe
+      }
+    };
+
+    if (isInIframe()) {
+      // If in iframe, add specific styles for better iframe display
+      const container = document.querySelector('.swap-container');
+      if (container) {
+        // Add bottom padding and ensure content is scrollable
+        container.style.paddingBottom = '80px';
+        container.style.minHeight = '800px';
+        
+        // Ensure buttons are always visible by styling the button container
+        const buttonContainer = document.querySelector('.bottom-action-buttons');
+        if (buttonContainer) {
+          buttonContainer.style.position = 'sticky';
+          buttonContainer.style.bottom = '0';
+          buttonContainer.style.backgroundColor = '#111827';
+          buttonContainer.style.paddingTop = '10px';
+          buttonContainer.style.paddingBottom = '10px';
+          buttonContainer.style.zIndex = '10';
+          buttonContainer.style.boxShadow = '0 -4px 6px -1px rgba(0, 0, 0, 0.1)';
+        }
+      }
+    }
+  }, []);
+
   return (
-    <div className="bg-gray-900 p-6 rounded-lg shadow-lg w-full h-full text-white overflow-y-auto" style={{
+    <div className="bg-gray-900 p-6 rounded-lg shadow-lg w-full h-full text-white overflow-y-auto swap-container" style={{
       height: '100%',
-      minHeight: '720px', // Increased from 580px for more content space
+      minHeight: '800px', // Increased from 720px to accommodate the new Solana notice
       maxHeight: '100%',
       overflow: 'auto !important',
       WebkitOverflowScrolling: 'touch', // For better iOS scrolling
@@ -1342,7 +1376,7 @@ const Swap = () => {
         </div>
       )}
       
-      <div className="space-y-4 flex-1 overflow-auto">
+      <div className="space-y-4 flex-1 overflow-auto pb-6">
         {/* Wallet Connection - more compact */}
         <div className="flex justify-center mb-3 flex-shrink-0">
           {renderWalletOptions()}
@@ -1492,7 +1526,7 @@ const Swap = () => {
         </div>
         
         {/* Slippage Setting with Quick Values */}
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 mb-16">
           <label className="block text-gray-400 mb-1 text-sm">Slippage Tolerance (%)</label>
           <div className="flex gap-2 items-center">
             <input
@@ -1527,8 +1561,8 @@ const Swap = () => {
           </div>
         </div>
         
-        {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-3 flex-shrink-0">
+        {/* Fixed position action buttons for iframe mode */}
+        <div className="grid grid-cols-2 gap-3 flex-shrink-0 bottom-action-buttons">
           <button
             onClick={getQuote}
             disabled={loading}
