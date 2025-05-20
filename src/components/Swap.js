@@ -163,6 +163,11 @@ const Swap = () => {
       return;
     }
 
+    if (!walletConnected) {
+      setError('Please connect your wallet first to get a quote');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -185,34 +190,27 @@ const Swap = () => {
         return;
       }
       
-      logger.info('Request params:', {
+      const requestParams = {
         fromChain,
         toChain,
         fromToken,
         toToken,
         fromAmount: fromAmountInWei,
+        fromAddress: walletAddress,
         slippage: slippage.toString(),
         fee: ethers.parseUnits((feeAmount).toFixed(decimals > 6 ? 6 : decimals), decimals).toString(),
         integrator: 'AquaSwap',
         referrer: FEE_RECIPIENT
-      });
+      };
+      
+      logger.info('Request params:', requestParams);
       
       // Request quote from li.fi
       const response = await axios.get('https://li.quest/v1/quote', {
         headers: {
           'x-lifi-api-key': LIFI_API_KEY
         },
-        params: {
-          fromChain,
-          toChain,
-          fromToken,
-          toToken,
-          fromAmount: fromAmountInWei,
-          slippage: slippage.toString(),
-          fee: ethers.parseUnits((feeAmount).toFixed(decimals > 6 ? 6 : decimals), decimals).toString(),
-          integrator: 'AquaSwap',
-          referrer: FEE_RECIPIENT
-        }
+        params: requestParams
       });
 
       // Check if routes exist
