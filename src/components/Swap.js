@@ -176,8 +176,8 @@ const Swap = () => {
       const selectedFromToken = tokens.find(token => token.address === fromToken);
       const decimals = selectedFromToken?.decimals || 18;
       
-      // Calculate fee amount (0.5% of fromAmount)
-      const feeAmount = parseFloat(fromAmount) * (FEE_PERCENTAGE / 100);
+      // Fee as a decimal fraction (0.005 for 0.5%)
+      const feeDecimal = FEE_PERCENTAGE / 100;
       
       // Parse amount with proper decimals
       let fromAmountInWei;
@@ -198,7 +198,7 @@ const Swap = () => {
         fromAmount: fromAmountInWei,
         fromAddress: walletAddress,
         slippage: slippage.toString(),
-        fee: ethers.parseUnits((feeAmount).toFixed(decimals > 6 ? 6 : decimals), decimals).toString(),
+        fee: feeDecimal.toString(), // Pass fee as decimal fraction (e.g., "0.005")
         integrator: 'AquaSwap',
         referrer: FEE_RECIPIENT
       };
@@ -228,6 +228,13 @@ const Swap = () => {
         const toDecimals = selectedToToken?.decimals || 18;
         // Update the toAmount with the expected output
         setToAmount(ethers.formatUnits(response.data.routes[0].toAmount, toDecimals));
+
+        // For display, calculate the actual fee amount in tokens
+        const feeDisplayAmount = parseFloat(fromAmount) * feeDecimal;
+        setSelectedRoute({
+          ...response.data.routes[0],
+          feeDisplayAmount
+        });
       } else {
         setError('No routes found for this swap');
       }
@@ -445,7 +452,7 @@ const Swap = () => {
               <div>Provider: {selectedRoute.steps[0].tool}</div>
               <div>Estimated Gas: {parseFloat(selectedRoute.gasUSD).toFixed(2)} USD</div>
               <div>Execution Time: ~{selectedRoute.steps[0].estimate.executionDuration}s</div>
-              <div className="text-yellow-400">Fee: 0.5% ({parseFloat(fromAmount) * 0.005} tokens)</div>
+              <div className="text-yellow-400">Fee: {FEE_PERCENTAGE}% ({selectedRoute.feeDisplayAmount?.toFixed(6) || parseFloat(fromAmount) * (FEE_PERCENTAGE / 100)} tokens)</div>
             </div>
           </div>
         )}
