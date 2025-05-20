@@ -3,64 +3,29 @@ import axios from 'axios';
 import { ethers } from 'ethers';
 import logger from '../utils/logger';
 
-// Add CSS to specifically target and hide the Duck Hunt button in the iframe
+// Add CSS to specifically target just the Duck Hunt button without affecting other content
 const hideDuckHuntStyle = `
   <style>
-    /* Direct targeting of the Duck Hunt button and text */
-    [class*="duck"], [id*="duck"],
-    [class*="hunt"], [id*="hunt"],
-    [class*="duck-hunt"], [id*="duck-hunt"],
-    [class*="duckhunt"], [id*="duckhunt"],
-    div[style*="position: fixed"][style*="bottom:"][style*="right:"],
-    div[style*="position: absolute"][style*="bottom:"][style*="right:"],
+    /* Only target the specific Duck Hunt button, which is typically a red circle in the bottom right */
+    div[style*="position: fixed"][style*="bottom: 20px"][style*="right: 20px"],
+    div[style*="position: fixed"][style*="bottom:20px"][style*="right:20px"],
+    div[style*="position: absolute"][style*="bottom: 20px"][style*="right: 20px"],
     
-    /* Target elements with specific characteristics */
-    div[style*="z-index: 9"],
-    div[style*="z-index: 99"],
-    div[style*="z-index: 999"],
-    div[style*="z-index: 9999"],
+    /* Target the specific button and text by its contents */
+    [data-testid="duck-hunt-button"],
+    [id="duck-hunt-button"],
+    [id="start-duck-hunt"],
+    [class*="duck-hunt-button"],
     
-    /* Target specific button attributes */
-    button[style*="position: fixed"],
-    button[style*="position: absolute"],
-    button[style*="bottom:"],
-    button[style*="right:"],
+    /* Target only the specific red circular button */
+    div[style*="border-radius: 50%"][style*="background-color: red"][style*="position: fixed"][style*="bottom:"],
+    div[style*="border-radius: 50%"][style*="background: red"][style*="position: fixed"][style*="bottom:"],
     
-    /* Target elements containing the duck hunt text */
-    *:has(> *:contains("Duck Hunt")),
-    *:has(> *:contains("duck hunt")),
-    *:has(> *:contains("Start Duck")),
-    *:has(> *:contains("start duck")),
-    
-    /* Target the red circular button specifically */
-    div[style*="border-radius: 50%"][style*="background-color: rgb(255, 0, 0)"],
-    div[style*="border-radius: 50%"][style*="background-color: red"],
-    div[style*="border-radius: 50%"][style*="background: red"],
-    div[style*="border-radius: 50%"][style*="background: #ff0000"],
-    
-    /* Target by exact position */
-    div[style*="bottom: 20px"][style*="right: 20px"],
-    div[style*="bottom: 10px"][style*="right: 10px"],
-    div[style*="bottom: 0px"][style*="right: 0px"],
-    
-    /* Other third-party elements */
-    .crisp-client,
-    .intercom-lightweight-app,
-    [class*="intercom"],
-    [id*="intercom"] {
-      display: none !important;
-      visibility: hidden !important;
-      opacity: 0 !important;
-      pointer-events: none !important;
-    }
-
-    /* Target specifically for "Start Duck Hunt" text */
-    div:has(span:contains("Start Duck Hunt")),
-    div:has(p:contains("Start Duck Hunt")),
-    div:has(div:contains("Start Duck Hunt")),
-    button:has(span:contains("Start Duck Hunt")),
-    * > span:contains("Start Duck Hunt"),
-    * > div:contains("Start Duck Hunt") {
+    /* These are very specific to the duck hunt button */
+    .duck-hunt-button,
+    .duck-hunt-trigger,
+    #duck-hunt-button,
+    #duck-hunt-trigger {
       display: none !important;
       visibility: hidden !important;
       opacity: 0 !important;
@@ -138,159 +103,128 @@ const Swap = () => {
     };
     window.addEventListener('message', handleMessage);
     
-    // Set up a mutation observer to catch dynamically added Duck Hunt elements
+    // Set up a targeted mutation observer to only catch the Duck Hunt button
     const observer = new MutationObserver((mutations) => {
       mutations.forEach(mutation => {
         if (mutation.addedNodes && mutation.addedNodes.length > 0) {
           for (let i = 0; i < mutation.addedNodes.length; i++) {
             const node = mutation.addedNodes[i];
-            // Check if the node is an element
+            // Only target specific elements that match the Duck Hunt button characteristics
             if (node.nodeType === 1) {
-              // Check for duck hunt related content and remove it
-              if ((node.id && (node.id.toLowerCase().includes('duck') || node.id.toLowerCase().includes('hunt'))) ||
-                  (node.className && typeof node.className === 'string' && 
-                    (node.className.toLowerCase().includes('duck') || node.className.toLowerCase().includes('hunt')))) {
-                node.style.display = 'none';
-                node.remove(); // completely remove the node
-              }
+              // Check if this is specifically the Duck Hunt button
+              const isDuckHuntButton = 
+                // Check for exact button by ID/class
+                (node.id && node.id.includes('duck-hunt')) ||
+                (node.className && typeof node.className === 'string' && node.className.includes('duck-hunt')) ||
+                // Check if it's the red circle button specifically
+                (node.style && 
+                 node.style.position === 'fixed' && 
+                 node.style.bottom && 
+                 node.style.right && 
+                 node.style.borderRadius === '50%' &&
+                 (node.style.backgroundColor === 'red' || 
+                  node.style.background === 'red' || 
+                  node.style.backgroundColor === '#ff0000')) ||
+                // Check if it's specifically the text "Start Duck Hunt"
+                (node.textContent && 
+                 node.textContent.trim() === 'Start Duck Hunt');
               
-              // Additional checks for elements positioned in the bottom right
-              if (node.style && 
-                  ((node.style.position === 'fixed' || node.style.position === 'absolute') &&
-                   node.style.bottom && node.style.right)) {
+              if (isDuckHuntButton) {
                 node.style.display = 'none';
-                node.remove(); // completely remove the node
+                node.style.visibility = 'hidden';
+                node.style.opacity = '0';
+                node.style.pointerEvents = 'none';
               }
-              
-              // Check high z-index elements which might be overlays or popups
-              if (node.style && node.style.zIndex && parseInt(node.style.zIndex) > 9000) {
-                node.style.display = 'none';
-                node.remove(); // completely remove the node
-              }
-              
-              // Check for text content containing duck hunt references
-              if (node.textContent && 
-                  (node.textContent.toLowerCase().includes('duck') || 
-                   node.textContent.toLowerCase().includes('hunt') ||
-                   node.textContent.toLowerCase().includes('start duck'))) {
-                node.style.display = 'none';
-                node.remove(); // completely remove the node
-              }
-              
-              // Recursively check children
-              removeDuckHuntElements(node);
             }
           }
         }
       });
     });
     
-    // Helper function to recursively check and remove duck hunt elements
-    const removeDuckHuntElements = (element) => {
-      if (!element || !element.children) return;
-      
-      // Check each child element
-      for (let i = 0; i < element.children.length; i++) {
-        const child = element.children[i];
-        
-        // Check if this child has duck hunt related characteristics
-        const hasDuckHuntId = child.id && 
-          (child.id.toLowerCase().includes('duck') || child.id.toLowerCase().includes('hunt'));
-        
-        const hasDuckHuntClass = child.className && typeof child.className === 'string' && 
-          (child.className.toLowerCase().includes('duck') || child.className.toLowerCase().includes('hunt'));
-        
-        const hasDuckHuntText = child.textContent && 
-          (child.textContent.toLowerCase().includes('duck') || 
-           child.textContent.toLowerCase().includes('hunt') ||
-           child.textContent.toLowerCase().includes('start duck'));
-        
-        const isFixedBottomRight = child.style && 
-          (child.style.position === 'fixed' || child.style.position === 'absolute') && 
-          child.style.bottom && child.style.right;
-        
-        // If any duck hunt characteristics, remove it
-        if (hasDuckHuntId || hasDuckHuntClass || hasDuckHuntText || isFixedBottomRight) {
-          child.style.display = 'none';
-          if (child.remove) {
-            child.remove();
-          } else if (child.parentNode) {
-            child.parentNode.removeChild(child);
-          }
-          continue;
-        }
-        
-        // Recursively check this child's children
-        removeDuckHuntElements(child);
-      }
-    };
-    
-    // Start observing
+    // Start observing - only watch for the specific changes we care about
     observer.observe(document.body, {
       childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['style', 'class', 'id']
+      subtree: true
     });
     
-    // Add a periodic checker to remove the duck hunt button every 500ms
+    // Add a specific interval to target only the duck hunt button
     const intervalId = setInterval(() => {
-      // Direct targeting by position and characteristics
-      const elements = document.querySelectorAll(
-        'div[style*="position: fixed"][style*="bottom:"][style*="right:"], ' +
-        'div[style*="position: absolute"][style*="bottom:"][style*="right:"], ' +
-        'button[style*="position: fixed"], ' +
-        'button[style*="position: absolute"], ' +
-        'div[style*="z-index: 999"]'
-      );
+      // Only target elements that are likely to be the Duck Hunt button
+      const duckHuntElements = [
+        // By known IDs/classes
+        document.getElementById('duck-hunt-button'),
+        document.getElementById('start-duck-hunt'),
+        document.querySelector('.duck-hunt-button'),
+        document.querySelector('.duck-hunt-trigger'),
+        
+        // By test ID
+        document.querySelector('[data-testid="duck-hunt-button"]'),
+        
+        // By the specific characteristics - position, color, shape
+        document.querySelector('div[style*="position: fixed"][style*="bottom: 20px"][style*="right: 20px"]'),
+        document.querySelector('div[style*="border-radius: 50%"][style*="background-color: red"][style*="position: fixed"]')
+      ].filter(Boolean); // Filter out null elements
       
-      elements.forEach(el => {
-        // Check if this might be the duck hunt button
-        if (el.textContent.toLowerCase().includes('duck') || 
-            el.textContent.toLowerCase().includes('hunt') ||
-            (el.style && el.style.borderRadius === '50%') ||
-            (el.style && el.style.bottom && el.style.right)) {
+      // Hide any found elements
+      duckHuntElements.forEach(el => {
+        if (el) {
           el.style.display = 'none';
-          if (el.remove) {
-            el.remove();
-          } else if (el.parentNode) {
-            el.parentNode.removeChild(el);
-          }
+          el.style.visibility = 'hidden';
+          el.style.opacity = '0';
+          el.style.pointerEvents = 'none';
         }
       });
       
-      // Also search for any element containing "Start Duck Hunt" text
-      document.querySelectorAll('*').forEach(el => {
-        if (el.textContent && 
-            (el.textContent.includes('Start Duck Hunt') || 
-             el.textContent.includes('Duck Hunt'))) {
-          el.style.display = 'none';
-          if (el.parentNode) {
-            el.parentNode.removeChild(el);
-          }
-        }
-      });
-      
-      // Look specifically for elements in the bottom right corner
-      const bottomRightElements = Array.from(document.querySelectorAll('*')).filter(el => {
+      // Look for elements that might be at the exact position of the Duck Hunt button
+      // without affecting other elements
+      const elements = document.querySelectorAll('div[style*="position: fixed"]');
+      for (let i = 0; i < elements.length; i++) {
+        const el = elements[i];
         const rect = el.getBoundingClientRect();
         const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
         const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
         
-        // Check if element is in the bottom right corner
-        return rect.bottom > viewportHeight - 100 && 
-               rect.right > viewportWidth - 100 &&
-               (el.style.position === 'fixed' || el.style.position === 'absolute');
-      });
-      
-      bottomRightElements.forEach(el => {
-        el.style.display = 'none';
-        if (el.parentNode) {
-          el.parentNode.removeChild(el);
+        // Very specifically target bottom right elements that are circular
+        if (rect.bottom > viewportHeight - 30 && 
+            rect.right > viewportWidth - 30 && 
+            rect.width <= 60 && 
+            rect.height <= 60 && 
+            (el.style.borderRadius === '50%' || el.style.borderRadius === '100%' || el.style.borderRadius === '999px')) {
+          
+          el.style.display = 'none';
+          el.style.visibility = 'hidden';
+          el.style.opacity = '0';
+          el.style.pointerEvents = 'none';
         }
-      });
+        
+        // Target elements with exact text content of "Start Duck Hunt"
+        if (el.textContent && el.textContent.trim() === 'Start Duck Hunt') {
+          el.style.display = 'none';
+          el.style.visibility = 'hidden';
+          el.style.opacity = '0';
+          el.style.pointerEvents = 'none';
+        }
+      }
       
-    }, 500);
+      // Handle the case where the button has specific text content
+      const textNodes = document.evaluate(
+        "//text()[contains(., 'Start Duck Hunt')]", 
+        document, 
+        null, 
+        XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, 
+        null
+      );
+      
+      for (let i = 0; i < textNodes.snapshotLength; i++) {
+        const textNode = textNodes.snapshotItem(i);
+        if (textNode.parentNode) {
+          textNode.parentNode.style.display = 'none';
+          textNode.parentNode.style.visibility = 'hidden';
+          textNode.parentNode.style.opacity = '0';
+          textNode.parentNode.style.pointerEvents = 'none';
+        }
+      }
+    }, 2000); // Check every 2 seconds to avoid performance issues
     
     // Fetch available chains
     const fetchChains = async () => {
