@@ -74,7 +74,24 @@ const Swap = ({ currentUser, showNotification }) => {
   const LIFI_API_KEY = process.env.REACT_APP_LIFI_API_KEY;
   const FEE_PERCENTAGE = 0.5; // 0.5% fee
   const FEE_RECIPIENT = process.env.REACT_APP_FEE_WALLET || '0x98BC1BEC892d9f74B606D478E6b45089D2faAB05'; // Default to a wallet if not set
-
+  
+  // Add a state to track if we're showing user tokens first
+  const [showUserTokensFirst, setShowUserTokensFirst] = useState(true);
+  
+  // Function to sort tokens with user tokens first if enabled
+  const getSortedTokens = (tokenList) => {
+    if (!showUserTokensFirst) return tokenList;
+    
+    return [...tokenList].sort((a, b) => {
+      // Put user tokens first
+      if (a.isUserToken && !b.isUserToken) return -1;
+      if (!a.isUserToken && b.isUserToken) return 1;
+      
+      // Then sort by name
+      return a.symbol.localeCompare(b.symbol);
+    });
+  };
+  
   useEffect(() => {
     if (!LIFI_API_KEY) {
       logger.error('LIFI_API_KEY is not set in environment variables');
@@ -331,7 +348,7 @@ const Swap = ({ currentUser, showNotification }) => {
         let response;
         if (hasSolanaChain) {
           // Add SVM to chainTypes parameter for Solana (Single Value Machine)
-          response = await axios.get(`https://li.quest/v1/tokens?chains=${chainsToFetch}&chainTypes=EVM,SVM`, {
+          response = await axios.get(`https://li.quest/v1/tokens?chains=${chainsToFetch}&chainTypes=EVM,SVM&includeAllTokens=true`, {
             headers: {
               'x-lifi-api-key': LIFI_API_KEY
             }
@@ -376,7 +393,7 @@ const Swap = ({ currentUser, showNotification }) => {
           }
         } else {
           // Regular EVM token request
-          response = await axios.get(`https://li.quest/v1/tokens?chains=${chainsToFetch}`, {
+          response = await axios.get(`https://li.quest/v1/tokens?chains=${chainsToFetch}&includeAllTokens=true`, {
             headers: {
               'x-lifi-api-key': LIFI_API_KEY
             }
@@ -1570,6 +1587,183 @@ const Swap = ({ currentUser, showNotification }) => {
     }
   }, []);
 
+  // Function to get tokens from the user's wallet and add them to the token list
+  const getWalletTokens = async () => {
+    if (!walletConnected || !walletAddress) return;
+    
+    try {
+      if (walletType === 'evm') {
+        // For EVM wallets (Ethereum, BSC, etc.)
+        if (!window.ethereum) return;
+        
+        // Get the current chain ID
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        const decimalChainId = parseInt(chainId, 16).toString();
+        
+        logger.info(`Scanning for tokens in wallet on chain ${decimalChainId}`);
+        
+        // Use the indexed token list for this chain from Li.fi API as a base
+        const currentTokenList = tokens[decimalChainId] || [];
+        const existingTokenAddresses = new Set(currentTokenList.map(t => t.address.toLowerCase()));
+        
+        // Check if the chain explorer API endpoint is known for this chain
+        // Only supporting major chains with well-known endpoints for simplicity
+        let explorerApiUrl;
+        let explorerApiKey = '';
+        
+        if (decimalChainId === '1') { // Ethereum Mainnet
+          explorerApiUrl = `https://api.etherscan.io/api?module=account&action=tokentx&address=${walletAddress}&sort=desc&apikey=${explorerApiKey}`;
+        } else if (decimalChainId === '56') { // BSC
+          explorerApiUrl = `https://api.bscscan.com/api?module=account&action=tokentx&address=${walletAddress}&sort=desc&apikey=${explorerApiKey}`;
+        } else if (decimalChainId === '137') { // Polygon
+          explorerApiUrl = `https://api.polygonscan.com/api?module=account&action=tokentx&address=${walletAddress}&sort=desc&apikey=${explorerApiKey}`;
+        } else if (decimalChainId === '43114') { // Avalanche
+          explorerApiUrl = `https://api.snowtrace.io/api?module=account&action=tokentx&address=${walletAddress}&sort=desc&apikey=${explorerApiKey}`;
+        } else if (decimalChainId === '42161') { // Arbitrum
+          explorerApiUrl = `https://api.arbiscan.io/api?module=account&action=tokentx&address=${walletAddress}&sort=desc&apikey=${explorerApiKey}`;
+        } else if (decimalChainId === '10') { // Optimism
+          explorerApiUrl = `https://api-optimistic.etherscan.io/api?module=account&action=tokentx&address=${walletAddress}&sort=desc&apikey=${explorerApiKey}`;
+        }
+        
+        // Try to get user's tokens from explorer API if available
+        if (explorerApiUrl) {
+          try {
+            const response = await axios.get(explorerApiUrl);
+            if (response.data?.result && Array.isArray(response.data.result)) {
+              // Create a map to deduplicate tokens
+              const userTokens = new Map();
+              
+              // Process token transactions to build a list of tokens
+              response.data.result.forEach(tx => {
+                const tokenAddress = tx.contractAddress.toLowerCase();
+                if (!existingTokenAddresses.has(tokenAddress) && !userTokens.has(tokenAddress)) {
+                  userTokens.set(tokenAddress, {
+                    address: tx.contractAddress,
+                    chainId: decimalChainId,
+                    name: tx.tokenName,
+                    symbol: tx.tokenSymbol,
+                    decimals: parseInt(tx.tokenDecimal),
+                    logoURI: '', // We don't have logos from the explorer API
+                    isUserToken: true // Mark as a user token
+                  });
+                }
+              });
+              
+              // Add user tokens to the token list
+              if (userTokens.size > 0) {
+                logger.info(`Found ${userTokens.size} additional tokens in wallet`);
+                const updatedTokens = [...currentTokenList, ...userTokens.values()];
+                
+                // Update tokens state
+                setTokens(prev => ({
+                  ...prev,
+                  [decimalChainId]: updatedTokens
+                }));
+                
+                // Update token lists if this is the current chain
+                if (fromChain === decimalChainId) {
+                  setFromChainTokens(updatedTokens);
+                  setToChainTokens(updatedTokens);
+                }
+                
+                // Show notification if showNotification is available
+                if (showNotification) {
+                  showNotification(`Found ${userTokens.size} tokens in your wallet. They are now available for swapping.`, 'info');
+                }
+              }
+            }
+          } catch (error) {
+            logger.error('Error fetching user tokens from explorer:', error);
+          }
+        }
+      } 
+      else if (walletType === 'solana') {
+        // For Solana wallets
+        if (!solanaConnection || !walletAddress) return;
+        
+        logger.info(`Scanning for tokens in Solana wallet`);
+        
+        try {
+          // Get token accounts for this wallet
+          const response = await solanaConnection.getParsedTokenAccountsByOwner(
+            new solanaWeb3.PublicKey(walletAddress),
+            { programId: new solanaWeb3.PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') }
+          );
+          
+          // Get current Solana token list
+          const solanaChain = chains.find(c => 
+            c.key?.toLowerCase() === 'sol' || 
+            c.name?.toLowerCase() === 'solana' ||
+            c.chainType === 'SVM'
+          );
+          
+          if (!solanaChain) return;
+          
+          const currentTokenList = tokens[solanaChain.id] || [];
+          const existingTokenAddresses = new Set(currentTokenList.map(t => t.address.toLowerCase()));
+          
+          // Process token accounts to build a list of tokens
+          const userTokens = new Map();
+          
+          response.value.forEach(account => {
+            const tokenMint = account.account.data.parsed.info.mint;
+            const tokenAmount = account.account.data.parsed.info.tokenAmount;
+            
+            // Only add tokens that aren't already in the list and have a non-zero balance
+            if (!existingTokenAddresses.has(tokenMint.toLowerCase()) && 
+                !userTokens.has(tokenMint) && 
+                parseInt(tokenAmount.amount) > 0) {
+              
+              userTokens.set(tokenMint, {
+                address: tokenMint,
+                chainId: solanaChain.id,
+                name: `User Token ${tokenMint.slice(0, 6)}...`,
+                symbol: `TKN-${tokenMint.slice(0, 4)}`,
+                decimals: tokenAmount.decimals,
+                logoURI: '', // We don't have logos for these tokens
+                isUserToken: true // Mark as a user token
+              });
+            }
+          });
+          
+          // Add user tokens to the token list
+          if (userTokens.size > 0) {
+            logger.info(`Found ${userTokens.size} additional tokens in Solana wallet`);
+            const updatedTokens = [...currentTokenList, ...userTokens.values()];
+            
+            // Update tokens state
+            setTokens(prev => ({
+              ...prev,
+              [solanaChain.id]: updatedTokens
+            }));
+            
+            // Update token lists if this is the current chain
+            if (fromChain === solanaChain.id) {
+              setFromChainTokens(updatedTokens);
+              setToChainTokens(updatedTokens);
+            }
+            
+            // Show notification if showNotification is available
+            if (showNotification) {
+              showNotification(`Found ${userTokens.size} tokens in your Solana wallet. They are now available for swapping.`, 'info');
+            }
+          }
+        } catch (error) {
+          logger.error('Error fetching Solana token accounts:', error);
+        }
+      }
+    } catch (error) {
+      logger.error('Error scanning wallet tokens:', error);
+    }
+  };
+
+  // Update useEffect to scan for wallet tokens after wallet connection
+  useEffect(() => {
+    if (walletConnected && walletAddress) {
+      getWalletTokens();
+    }
+  }, [walletConnected, walletAddress, walletType]);
+
   return (
     <div className="bg-gray-900 p-6 rounded-lg shadow-lg w-full h-full text-white overflow-y-auto swap-container" style={{
       height: '100%',
@@ -1637,6 +1831,21 @@ const Swap = ({ currentUser, showNotification }) => {
         {/* Wallet Connection - more compact */}
         <div className="flex justify-center mb-3 flex-shrink-0">
           {renderWalletOptions()}
+          
+          {/* Token sorting preference (only show when wallet is connected) */}
+          {walletConnected && (
+            <div className="absolute right-8 top-40">
+              <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showUserTokensFirst}
+                  onChange={() => setShowUserTokensFirst(!showUserTokensFirst)}
+                  className="w-3 h-3"
+                />
+                <span className="leading-none">Show my tokens first</span>
+              </label>
+            </div>
+          )}
         </div>
         
         {/* The rest of your UI components with reduced spacing */}
@@ -1691,9 +1900,21 @@ const Swap = ({ currentUser, showNotification }) => {
             >
               {!fromChain && <option value="">Select chain first</option>}
               {fromChain && fromChainTokens.length === 0 && <option value="">Loading tokens...</option>}
-              {fromChainTokens.map(token => (
-                <option key={token.address} value={token.address} className="flex items-center">
-                  {token.symbol}
+              
+              {/* Add a token filter option */}
+              {fromChainTokens.length > 0 && (
+                <option value="" disabled>
+                  {walletConnected ? '---- Select token (includes wallet tokens) ----' : '---- Select token ----'}
+                </option>
+              )}
+              
+              {getSortedTokens(fromChainTokens).map(token => (
+                <option 
+                  key={token.address} 
+                  value={token.address} 
+                  className={token.isUserToken ? 'text-green-400' : ''}
+                >
+                  {token.symbol} {token.isUserToken ? '(in wallet)' : ''}
                 </option>
               ))}
             </select>
@@ -1723,9 +1944,21 @@ const Swap = ({ currentUser, showNotification }) => {
             >
               {!toChain && <option value="">Select chain first</option>}
               {toChain && toChainTokens.length === 0 && <option value="">Loading tokens...</option>}
-              {toChainTokens.map(token => (
-                <option key={token.address} value={token.address}>
-                  {token.symbol}
+              
+              {/* Add a token filter option */}
+              {toChainTokens.length > 0 && (
+                <option value="" disabled>
+                  {walletConnected ? '---- Select token (includes wallet tokens) ----' : '---- Select token ----'}
+                </option>
+              )}
+              
+              {getSortedTokens(toChainTokens).map(token => (
+                <option 
+                  key={token.address} 
+                  value={token.address}
+                  className={token.isUserToken ? 'text-green-400' : ''}
+                >
+                  {token.symbol} {token.isUserToken ? '(in wallet)' : ''}
                 </option>
               ))}
             </select>
