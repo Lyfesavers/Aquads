@@ -1335,6 +1335,22 @@ function App() {
     }
   };
 
+  // Add this effect to handle wallet authentication requests
+  useEffect(() => {
+    const handleAuthRequest = () => {
+      if (!currentUser) {
+        showNotification('Authentication required before connecting wallet', 'warning');
+        setShowLoginModal(true);
+      }
+    };
+    
+    window.addEventListener('requestAuthentication', handleAuthRequest);
+    
+    return () => {
+      window.removeEventListener('requestAuthentication', handleAuthRequest);
+    };
+  }, [currentUser]);
+
   // Add a helper function to check authentication
   const requireAuth = (action) => {
     if (!currentUser) {
@@ -3150,7 +3166,7 @@ function App() {
           <Route path="/how-to/:slug" element={<HowTo currentUser={currentUser} />} />
           <Route path="/affiliate" element={<Affiliate />} />
           <Route path="/terms" element={<Terms />} />
-          <Route path="/swap" element={<Swap />} />
+          <Route path="/swap" element={<Swap currentUser={currentUser} showNotification={showNotification} />} />
         </Routes>
       </Router>
     </AuthContext.Provider>

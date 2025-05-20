@@ -5,6 +5,8 @@ import logger from '../utils/logger';
 // Add Solana imports
 import * as solanaWeb3 from '@solana/web3.js';
 import bs58 from 'bs58';
+// Import PropTypes for prop validation
+import PropTypes from 'prop-types';
 
 // Add CSS to specifically target just the Duck Hunt button without affecting other content
 const hideDuckHuntStyle = `
@@ -37,7 +39,7 @@ const hideDuckHuntStyle = `
   </style>
 `;
 
-const Swap = () => {
+const Swap = ({ currentUser, showNotification }) => {
   const [fromToken, setFromToken] = useState('');
   const [toToken, setToToken] = useState('');
   const [fromAmount, setFromAmount] = useState('');
@@ -623,6 +625,18 @@ const Swap = () => {
   // Fix wallet connection logic for MetaMask with stronger verification
   const connectWallet = async (walletId) => {
     try {
+      // First check if user is authenticated
+      if (!currentUser) {
+        setError('Please log in to securely connect your wallet');
+        // Notify parent component that user needs to authenticate
+        if (showNotification) {
+          showNotification('Authentication required before connecting wallet', 'warning');
+        }
+        // Dispatch event to trigger login modal in parent component
+        window.dispatchEvent(new CustomEvent('requestAuthentication'));
+        return;
+      }
+      
       // Find the selected wallet
       const selectedWallet = walletOptions.find(w => w.id === walletId);
       
@@ -661,7 +675,8 @@ const Swap = () => {
             setWalletType('solana');
             setShowWalletModal(false);
             
-            logger.info(`Connected Phantom Wallet:`, walletAddr);
+            // Log authenticated wallet connection
+            logger.info(`Authenticated user ${currentUser.username} connected Phantom Wallet:`, walletAddr);
           } catch (error) {
             logger.error('Phantom wallet connection error:', error);
             setError('Failed to connect to Phantom wallet.');
@@ -1594,6 +1609,12 @@ const Swap = () => {
       </div>
     </div>
   );
+};
+
+// Add PropTypes for prop validation
+Swap.propTypes = {
+  currentUser: PropTypes.object.isRequired,
+  showNotification: PropTypes.func.isRequired
 };
 
 export default Swap; 
