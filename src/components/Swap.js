@@ -36,9 +36,11 @@ const Swap = () => {
   const [walletConnected, setWalletConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState('');
   const [chains, setChains] = useState([]);
-  const [tokens, setTokens] = useState([]);
+  const [tokens, setTokens] = useState({});  // Changed to object to store tokens per chain
   const [fromChain, setFromChain] = useState('');
   const [toChain, setToChain] = useState('');
+  const [fromChainTokens, setFromChainTokens] = useState([]);
+  const [toChainTokens, setToChainTokens] = useState([]);
   
   const LIFI_API_KEY = process.env.REACT_APP_LIFI_API_KEY;
   const FEE_PERCENTAGE = 0.5; // 0.5% fee
@@ -97,8 +99,17 @@ const Swap = () => {
         });
         setChains(response.data.chains);
         if (response.data.chains.length > 0) {
-          setFromChain(response.data.chains[0].id);
-          setToChain(response.data.chains[0].id);
+          // Default to Ethereum
+          const ethereumChain = response.data.chains.find(chain => chain.name.toLowerCase().includes('ethereum')) || response.data.chains[0];
+          setFromChain(ethereumChain.id);
+          
+          // Default to a different chain for "to" (like Polygon)
+          const polygonChain = response.data.chains.find(chain => chain.name.toLowerCase().includes('polygon'));
+          if (polygonChain && polygonChain.id !== ethereumChain.id) {
+            setToChain(polygonChain.id);
+          } else {
+            setToChain(response.data.chains[0].id);
+          }
         }
       } catch (error) {
         logger.error('Error fetching chains:', error);
@@ -116,32 +127,105 @@ const Swap = () => {
     };
   }, [LIFI_API_KEY]);
 
-  // Fetch tokens when chains change
+  // Fetch all tokens for multiple chains at once
   useEffect(() => {
-    if (fromChain) {
-      fetchTokens(fromChain);
-    }
-  }, [fromChain, LIFI_API_KEY]);
-
-  const fetchTokens = async (chainId) => {
-    try {
-      const response = await axios.get(`https://li.quest/v1/tokens?chains=${chainId}`, {
-        headers: {
-          'x-lifi-api-key': LIFI_API_KEY
+    const fetchAllTokens = async () => {
+      if (!fromChain && !toChain) return;
+      
+      const chainsToFetch = Array.from(new Set([fromChain, toChain])).filter(Boolean).join(',');
+      
+      try {
+        const response = await axios.get(`https://li.quest/v1/tokens?chains=${chainsToFetch}`, {
+          headers: {
+            'x-lifi-api-key': LIFI_API_KEY
+          }
+        });
+        
+        // Store tokens by chain
+        setTokens(response.data.tokens || {});
+        
+        // Set tokens for from chain
+        if (fromChain && response.data.tokens[fromChain]) {
+          setFromChainTokens(response.data.tokens[fromChain]);
+          if (response.data.tokens[fromChain].length > 0) {
+            // Native token (ETH, MATIC, etc) is usually first
+            setFromToken(response.data.tokens[fromChain][0].address);
+          }
         }
-      });
-      setTokens(response.data.tokens[chainId] || []);
-      if (response.data.tokens[chainId]?.length > 0) {
-        // Set default tokens
-        setFromToken(response.data.tokens[chainId][0].address);
-        setToToken(response.data.tokens[chainId][1]?.address || response.data.tokens[chainId][0].address);
+        
+        // Set tokens for to chain
+        if (toChain && response.data.tokens[toChain]) {
+          setToChainTokens(response.data.tokens[toChain]);
+          if (response.data.tokens[toChain].length > 0) {
+            // Prefer a stablecoin like USDC/USDT for the "to" token if available
+            const stablecoin = response.data.tokens[toChain].find(t => 
+              t.symbol.toLowerCase() === 'usdc' || 
+              t.symbol.toLowerCase() === 'usdt' ||
+              t.symbol.toLowerCase() === 'dai'
+            );
+            
+            if (stablecoin) {
+              setToToken(stablecoin.address);
+            } else if (response.data.tokens[toChain].length > 1) {
+              // Use second token if available to avoid same token
+              setToToken(response.data.tokens[toChain][1].address);
+            } else {
+              // Fallback to first token
+              setToToken(response.data.tokens[toChain][0].address);
+            }
+          }
+        }
+      } catch (error) {
+        logger.error('Error fetching tokens:', error);
+        setError('Failed to load tokens. Please try again later.');
       }
-    } catch (error) {
-      logger.error('Error fetching tokens:', error);
-      setError('Failed to load tokens. Please try again later.');
+    };
+    
+    fetchAllTokens();
+  }, [fromChain, toChain, LIFI_API_KEY]);
+
+  // Handle chain changes
+  const handleFromChainChange = (e) => {
+    const newChain = e.target.value;
+    setFromChain(newChain);
+    setFromToken(''); // Reset token when chain changes
+    
+    // If tokens for this chain are already loaded
+    if (tokens[newChain]) {
+      setFromChainTokens(tokens[newChain]);
+      if (tokens[newChain].length > 0) {
+        setFromToken(tokens[newChain][0].address);
+      }
     }
   };
-
+  
+  const handleToChainChange = (e) => {
+    const newChain = e.target.value;
+    setToChain(newChain);
+    setToToken(''); // Reset token when chain changes
+    
+    // If tokens for this chain are already loaded
+    if (tokens[newChain]) {
+      setToChainTokens(tokens[newChain]);
+      if (tokens[newChain].length > 0) {
+        // Try to find a stablecoin
+        const stablecoin = tokens[newChain].find(t => 
+          t.symbol.toLowerCase() === 'usdc' || 
+          t.symbol.toLowerCase() === 'usdt' ||
+          t.symbol.toLowerCase() === 'dai'
+        );
+        
+        if (stablecoin) {
+          setToToken(stablecoin.address);
+        } else if (tokens[newChain].length > 1) {
+          setToToken(tokens[newChain][1].address);
+        } else {
+          setToToken(tokens[newChain][0].address);
+        }
+      }
+    }
+  };
+  
   const connectWallet = async () => {
     if (window.ethereum) {
       try {
@@ -173,7 +257,7 @@ const Swap = () => {
 
     try {
       // Find the selected token to get its decimals
-      const selectedFromToken = tokens.find(token => token.address === fromToken);
+      const selectedFromToken = tokens[fromChain]?.find(token => token.address === fromToken);
       const decimals = selectedFromToken?.decimals || 18;
       
       // Fee as a decimal fraction (0.005 for 0.5%)
@@ -224,7 +308,7 @@ const Swap = () => {
       if (response.data.routes?.length > 0) {
         setSelectedRoute(response.data.routes[0]);
         // Get the token decimals for output token
-        const selectedToToken = tokens.find(token => token.address === toToken);
+        const selectedToToken = tokens[toChain]?.find(token => token.address === toToken);
         const toDecimals = selectedToToken?.decimals || 18;
         // Update the toAmount with the expected output
         setToAmount(ethers.formatUnits(response.data.routes[0].toAmount, toDecimals));
@@ -325,9 +409,10 @@ const Swap = () => {
             <label className="block text-gray-400 mb-2">From Chain</label>
             <select 
               value={fromChain}
-              onChange={(e) => setFromChain(e.target.value)}
+              onChange={handleFromChainChange}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white"
             >
+              <option value="">Select Chain</option>
               {chains.map(chain => (
                 <option key={chain.id} value={chain.id}>
                   {chain.name}
@@ -339,9 +424,10 @@ const Swap = () => {
             <label className="block text-gray-400 mb-2">To Chain</label>
             <select 
               value={toChain}
-              onChange={(e) => setToChain(e.target.value)}
+              onChange={handleToChainChange}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white"
             >
+              <option value="">Select Chain</option>
               {chains.map(chain => (
                 <option key={chain.id} value={chain.id}>
                   {chain.name}
@@ -359,8 +445,11 @@ const Swap = () => {
               value={fromToken}
               onChange={(e) => setFromToken(e.target.value)}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white"
+              disabled={!fromChain || fromChainTokens.length === 0}
             >
-              {tokens.map(token => (
+              {!fromChain && <option value="">Select chain first</option>}
+              {fromChain && fromChainTokens.length === 0 && <option value="">Loading tokens...</option>}
+              {fromChainTokens.map(token => (
                 <option key={token.address} value={token.address}>
                   {token.symbol} - {token.name}
                 </option>
@@ -373,8 +462,11 @@ const Swap = () => {
               value={toToken}
               onChange={(e) => setToToken(e.target.value)}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white"
+              disabled={!toChain || toChainTokens.length === 0}
             >
-              {tokens.map(token => (
+              {!toChain && <option value="">Select chain first</option>}
+              {toChain && toChainTokens.length === 0 && <option value="">Loading tokens...</option>}
+              {toChainTokens.map(token => (
                 <option key={token.address} value={token.address}>
                   {token.symbol} - {token.name}
                 </option>
