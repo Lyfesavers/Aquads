@@ -66,6 +66,10 @@ const Swap = ({ currentUser, showNotification }) => {
           frameBorder="0"
           className="lifi-iframe"
           allow="clipboard-write"
+          style={{
+            backgroundColor: 'transparent',
+            backdropFilter: 'blur(2px)'
+          }}
           onLoad={() => {
             try {
               // Get access to the iframe's content window
