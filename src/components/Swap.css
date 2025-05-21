@@ -859,4 +859,83 @@
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* Improve LiFi widget mobile responsiveness */
+.lifi-container {
+  padding: 16px !important;
+  max-width: 100% !important;
+  overflow: hidden;
+}
+
+.lifi-container iframe {
+  width: 100% !important;
+  height: 630px !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+  transform: scale(0.98);
+  transform-origin: top center;
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 480px) {
+  .swap-card.lifi-container {
+    padding: 12px !important;
+    margin: 0 !important;
+    width: 100% !important;
+    border-radius: 12px !important;
+  }
+  
+  .lifi-container iframe {
+    height: 580px !important;
+    transform: scale(0.95);
+  }
+  
+  .swap-header {
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+  }
+
+  .powered-by {
+    padding-top: 5px;
+    margin-top: 5px;
+  }
+}
+
+.lifi-iframe {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Tablet-specific styles */
+@media (min-width: 481px) and (max-width: 768px) {
+  .swap-card.lifi-container {
+    padding: 16px !important;
+    width: 100% !important;
+    max-width: 520px !important;
+    margin: 0 auto !important;
+  }
+  
+  .lifi-container iframe {
+    height: 600px !important;
+  }
+}
+
+/* Add these styles to make sure the container is properly centered and sized */
+.swap-container {
+  padding: 10px !important;
+  width: 100% !important;
+}
+
+/* Make sure the swap card doesn't touch screen edges on mobile */
+@media (max-width: 320px) {
+  .swap-card.lifi-container {
+    padding: 8px !important;
+  }
+  
+  .lifi-container iframe {
+    height: 550px !important;
+    transform: scale(0.92);
+  }
 } 

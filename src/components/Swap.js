@@ -57,13 +57,13 @@ const Swap = ({ currentUser, showNotification }) => {
       hideSelectors.forEach(selector => {
         try {
           document.querySelectorAll(selector).forEach(el => {
-            if (el) {
-              el.style.display = 'none';
-              el.style.visibility = 'hidden';
-              el.style.opacity = '0';
-              el.style.pointerEvents = 'none';
-            }
-          });
+        if (el) {
+          el.style.display = 'none';
+          el.style.visibility = 'hidden';
+          el.style.opacity = '0';
+          el.style.pointerEvents = 'none';
+        }
+      });
         } catch (e) {
           // Ignore errors
         }
@@ -90,17 +90,18 @@ const Swap = ({ currentUser, showNotification }) => {
 
   // Simple iframe-based LiFi integration
   const renderLiFiWidget = () => {
-    const lifiUrl = `https://transferto.xyz/swap?integrator=AquaSwap&fee=${FEE_PERCENTAGE}&toAddress=${FEE_WALLET}&theme=dark`;
+    const lifiUrl = `https://transferto.xyz/swap?integrator=AquaSwap&fee=${FEE_PERCENTAGE}&toAddress=${FEE_WALLET}&theme=dark&variant=default`;
     
     return (
       <iframe
         src={lifiUrl}
         title="AquaSwap powered by LiFi"
         frameBorder="0"
+        className="lifi-iframe"
         style={{
           width: '100%',
           height: '600px',
-          borderRadius: '16px',
+          borderRadius: '12px',
           border: 'none',
         }}
         allow="clipboard-write"
@@ -110,7 +111,7 @@ const Swap = ({ currentUser, showNotification }) => {
 
   // Loading state
   if (loading) {
-    return (
+      return (
       <div className="swap-container">
         <div className="swap-card">
           <div className="swap-header">
@@ -129,7 +130,7 @@ const Swap = ({ currentUser, showNotification }) => {
             <div className="loading-container">
               <div className="loading-spinner"></div>
               <p>Loading swap interface...</p>
-            </div>
+        </div>
           </div>
         </div>
       </div>
@@ -142,17 +143,17 @@ const Swap = ({ currentUser, showNotification }) => {
       <div className="swap-card lifi-container">
         <div className="swap-header">
           <h2>
-            <img 
-              src="/AquaSwap.svg" 
+        <img 
+          src="/AquaSwap.svg" 
               alt="AquaSwap" 
               className="aquaswap-logo" 
               width="24" 
               height="24"
             />
             AquaSwap
-          </h2>
-        </div>
-        
+      </h2>
+      </div>
+      
         {renderLiFiWidget()}
         
         <div className="powered-by">
@@ -169,4 +170,4 @@ Swap.propTypes = {
   showNotification: PropTypes.func.isRequired
 };
 
-export default Swap;
+export default Swap; 
