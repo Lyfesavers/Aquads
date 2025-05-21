@@ -57,20 +57,8 @@ const Swap = ({ currentUser, showNotification }) => {
     // Basic URL with essential parameters
     const lifiUrl = `https://transferto.xyz/swap?integrator=AquaSwap&fee=${FEE_PERCENTAGE}&toAddress=${FEE_WALLET}&theme=dark`;
     
-    // Add inline style for background image to avoid path resolution issues
-    const containerStyle = {
-      position: 'relative',
-      width: '100%',
-      height: '100%',
-      overflow: 'hidden',
-      backgroundImage: `url(/Aquaswapbg.svg)`,
-      backgroundRepeat: 'no-repeat',
-      backgroundPosition: 'center',
-      backgroundSize: 'contain'
-    };
-
     return (
-      <div className="iframe-container" style={containerStyle}>
+      <div className="iframe-container">
         <iframe
           ref={iframeRef}
           src={lifiUrl}
