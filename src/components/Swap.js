@@ -2067,7 +2067,7 @@ const Swap = ({ currentUser, showNotification }) => {
               await scanSolanaWalletTokens();
             }
           } catch (error) {
-            logger.error('Error marking user tokens:', error);
+            safeLogger.error('Error marking user tokens:', error);
           }
         }
         
@@ -2115,7 +2115,7 @@ const Swap = ({ currentUser, showNotification }) => {
             t.symbol.toLowerCase() === 'usdt'
           );
           
-          logger.info('Default token selection:', {
+          safeLogger.info('Default token selection:', {
             nativeToken: nativeToken?.symbol,
             nativeTokenAddress: nativeToken?.address,
             usdcToken: usdcToken?.symbol,
@@ -2126,28 +2126,28 @@ const Swap = ({ currentUser, showNotification }) => {
           // Set from token
           if (nativeToken && (!fromToken || fromToken === '')) {
             setFromToken(nativeToken.address);
-            logger.info(`Set default 'from' token: ${nativeToken.symbol} (${nativeToken.address})`);
+            safeLogger.info(`Set default 'from' token: ${nativeToken.symbol} (${nativeToken.address})`);
           }
           
           // Set to token
           if (usdcToken && (!toToken || toToken === '')) {
             setToToken(usdcToken.address);
-            logger.info(`Set default 'to' token: ${usdcToken.symbol} (${usdcToken.address})`);
+            safeLogger.info(`Set default 'to' token: ${usdcToken.symbol} (${usdcToken.address})`);
           } else if (newTokens.length > 1 && (!toToken || toToken === '')) {
             // Make sure we don't select the same token as fromToken
             const secondToken = newTokens.find(t => t.address !== (nativeToken?.address || ''));
             if (secondToken) {
               setToToken(secondToken.address);
-              logger.info(`Set fallback 'to' token: ${secondToken.symbol} (${secondToken.address})`);
+              safeLogger.info(`Set fallback 'to' token: ${secondToken.symbol} (${secondToken.address})`);
             }
           }
         }
       } else {
-        logger.error('Invalid token response format:', response.data);
+        safeLogger.error('Invalid token response format:', response.data);
         showNotification && showNotification('Failed to load tokens: Invalid response format', 'error');
       }
     } catch (error) {
-      logger.error('Error fetching all available tokens:', error);
+      safeLogger.error('Error fetching all available tokens:', error);
       showNotification && showNotification('Failed to load all tokens. Please try again.', 'error');
     } finally {
       setLoading(false);
@@ -2251,51 +2251,97 @@ const Swap = ({ currentUser, showNotification }) => {
 
   // Add debugging function for token list validation
   const validateTokenSelection = () => {
-    if (!fromChain || !fromToken || !toToken) {
-      logger.info('Token validation skipped - missing required values');
-      return;
+    try {
+      if (!fromChain || !fromToken || !toToken) {
+        logger.info('Token validation skipped - missing required values');
+        return;
+      }
+      
+      // Check if tokens exist in their respective lists
+      const fromTokenExists = fromChainTokens.some(token => 
+        token.address.toLowerCase() === fromToken.toLowerCase()
+      );
+      
+      const toTokenExists = toChainTokens.some(token => 
+        token.address.toLowerCase() === toToken.toLowerCase()
+      );
+      
+      logger.info('Token validation results:', {
+        fromTokenExists,
+        toTokenExists,
+        fromToken,
+        toToken,
+        fromTokensCount: fromChainTokens.length,
+        toTokensCount: toChainTokens.length,
+        chainId: fromChain
+      });
+      
+      if (!fromTokenExists) {
+        logger.warn(`Selected 'from' token (${fromToken}) not found in token list!`);
+      }
+      
+      if (!toTokenExists) {
+        logger.warn(`Selected 'to' token (${toToken}) not found in token list!`);
+      }
+      
+      // Use logger.info instead of logger.debug which might not exist
+      logger.info('Sample tokens in list:', fromChainTokens.slice(0, 3).map(t => ({
+        symbol: t.symbol,
+        address: t.address
+      })));
+    } catch (error) {
+      // Safely handle any errors in the validation function
+      console.error('Error in token validation:', error);
     }
-    
-    // Check if tokens exist in their respective lists
-    const fromTokenExists = fromChainTokens.some(token => 
-      token.address.toLowerCase() === fromToken.toLowerCase()
-    );
-    
-    const toTokenExists = toChainTokens.some(token => 
-      token.address.toLowerCase() === toToken.toLowerCase()
-    );
-    
-    logger.info('Token validation results:', {
-      fromTokenExists,
-      toTokenExists,
-      fromToken,
-      toToken,
-      fromTokensCount: fromChainTokens.length,
-      toTokensCount: toChainTokens.length,
-      chainId: fromChain
-    });
-    
-    if (!fromTokenExists) {
-      logger.warn(`Selected 'from' token (${fromToken}) not found in token list!`);
-    }
-    
-    if (!toTokenExists) {
-      logger.warn(`Selected 'to' token (${toToken}) not found in token list!`);
-    }
-    
-    // Sample token addresses for debugging
-    logger.debug('Sample tokens in list:', fromChainTokens.slice(0, 3).map(t => ({
-      symbol: t.symbol,
-      address: t.address
-    })));
   };
 
-  // Call the validation whenever tokens change
+  // Call the validation whenever tokens change with error handling
   useEffect(() => {
-    if (fromToken && toToken && fromChainTokens.length > 0) {
-      validateTokenSelection();
+    try {
+      if (fromToken && toToken && fromChainTokens.length > 0) {
+        validateTokenSelection();
+      }
+    } catch (error) {
+      console.error('Error calling validateTokenSelection:', error);
     }
   }, [fromToken, toToken, fromChainTokens.length]);
+
+  // Make sure all logger calls are safe throughout the app
+  const safeLogger = {
+    info: (...args) => {
+      try {
+        if (logger && typeof logger.info === 'function') {
+          logger.info(...args);
+        } else {
+          console.info(...args);
+        }
+      } catch (e) {
+        console.info(...args);
+      }
+    },
+    error: (...args) => {
+      try {
+        if (logger && typeof logger.error === 'function') {
+          logger.error(...args);
+        } else {
+          console.error(...args);
+        }
+      } catch (e) {
+        console.error(...args);
+      }
+    },
+    warn: (...args) => {
+      try {
+        if (logger && typeof logger.warn === 'function') {
+          logger.warn(...args);
+        } else {
+          console.warn(...args);
+        }
+      } catch (e) {
+        console.warn(...args);
+      }
+    }
+  };
 
   return (
     <div className="bg-gray-900 p-4 sm:p-6 rounded-lg shadow-lg w-full text-white overflow-y-auto swap-container" style={{
