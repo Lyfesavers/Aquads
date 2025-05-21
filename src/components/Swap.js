@@ -119,60 +119,29 @@ const Swap = ({ currentUser, showNotification }) => {
     // Initialize Solana connection
     const initializeSolanaConnection = async () => {
       try {
-        // Connect to Solana mainnet-beta with better performance settings
-        // Use finalized commitment for more reliable token data
+        // Connect to Solana mainnet with better performance settings
         const connectionConfig = {
           commitment: 'confirmed',
-          disableRetryOnRateLimit: false,
+          disableRetryOnRateLimit: true,
           confirmTransactionInitialTimeout: 60000
         };
         
-        // Use RPC nodes that are more likely to work with CORS in browser environments
-        // These public endpoints are specifically designed for browser access
-        const rpcEndpoints = [
-          'https://solana-mainnet.g.alchemy.com/v2/demo', // Alchemy demo endpoint
-          'https://api.devnet.solana.com', // Can fall back to devnet for testing
-          'https://api.mainnet-beta.solana.com' // Official endpoint as last resort
-        ];
+        // Instead of trying multiple endpoints that have CORS issues,
+        // we'll just set up a minimal connection that won't be used for direct RPC calls
+        // and rely on the Li.fi API for token data and swaps
+        const connection = new solanaWeb3.Connection(
+          'https://api.mainnet-beta.solana.com',
+          connectionConfig
+        );
         
-        let connection = null;
-        let connectedEndpoint = '';
+        setSolanaConnection(connection);
+        logger.info('Using Li.fi API for Solana operations to avoid CORS issues');
         
-        // Try each endpoint until we find one that works
-        for (let i = 0; i < rpcEndpoints.length; i++) {
-          try {
-            const endpoint = rpcEndpoints[i];
-            const tempConnection = new solanaWeb3.Connection(endpoint, connectionConfig);
-            
-            // Simpler test that's less likely to be rate limited
-            const blockHeight = await tempConnection.getBlockHeight();
-            if (blockHeight > 0) {
-              // If we get here, the connection works
-              connection = tempConnection;
-              connectedEndpoint = endpoint;
-              logger.info(`Connected to Solana RPC at ${endpoint}, block height: ${blockHeight}`);
-              break;
-            }
-          } catch (err) {
-            logger.warn(`Failed to connect to Solana RPC at ${rpcEndpoints[i]}: ${err.message}`);
-          }
-        }
-        
-        if (connection) {
-          setSolanaConnection(connection);
-          logger.info(`Successfully established Solana connection to ${connectedEndpoint}`);
-        } else {
-          // All endpoints failed, create dummy connection that will use Jupiter proxy instead
-          // This allows us to still use the app even if direct RPC access fails
-          const fallbackConnection = new solanaWeb3.Connection(
-            'https://api.mainnet-beta.solana.com',
-            connectionConfig
-          );
-          setSolanaConnection(fallbackConnection);
-          logger.info('Using fallback Solana connection - will rely on Jupiter API for data');
-        }
+        // Set a flag to use Li.fi exclusively for Solana operations
+        window.useLifiForSolana = true;
       } catch (error) {
         logger.error('Failed to initialize Solana connection:', error);
+        window.useLifiForSolana = true;
       }
     };
     
@@ -1329,6 +1298,13 @@ const Swap = ({ currentUser, showNotification }) => {
       // Find the selected token to get its decimals
       const selectedFromToken = tokens[fromChain]?.find(token => token.address === fromToken);
       const selectedToToken = tokens[fromChain]?.find(token => token.address === toToken);
+      
+      if (!selectedFromToken || !selectedToToken) {
+        setError('Selected tokens not found in token list. Please try different tokens.');
+        setLoading(false);
+        return;
+      }
+      
       const fromDecimals = selectedFromToken?.decimals || 18;
       const toDecimals = selectedToToken?.decimals || 18;
       
@@ -1353,12 +1329,16 @@ const Swap = ({ currentUser, showNotification }) => {
         return;
       }
       
+      // Make sure Solana addresses don't have 0x prefix
+      const cleanFromToken = isSolanaFromChain ? fromToken.replace(/^0x/, '') : fromToken;
+      const cleanToToken = isSolanaFromChain ? toToken.replace(/^0x/, '') : toToken;
+      
       // Set up parameters according to Li.fi documentation
       const requestParams = {
         fromChain,
         toChain: fromChain, // For same-chain swaps
-        fromToken: isSolanaFromChain ? fromToken.replace(/^0x/, '') : fromToken, // Remove 0x prefix for Solana tokens
-        toToken: isSolanaFromChain ? toToken.replace(/^0x/, '') : toToken, // Remove 0x prefix for Solana tokens
+        fromToken: cleanFromToken,
+        toToken: cleanToToken,
         fromAmount: fromAmountInWei,
         fromAddress: walletAddress,
         toAddress: walletAddress, // Same address for same-chain swaps
@@ -1369,9 +1349,16 @@ const Swap = ({ currentUser, showNotification }) => {
         referrer: FEE_RECIPIENT, // Your fee recipient wallet
       };
       
+      logger.info(`Quote request for ${selectedFromToken.symbol} to ${selectedToToken.symbol} on ${isSolanaFromChain ? 'Solana' : 'EVM chain'}`);
+      
       // For Solana, always use the dedicated endpoint directly
       if (isSolanaFromChain) {
-        logger.info('Using Solana-specific endpoint with params:', requestParams);
+        logger.info('Using Solana-specific endpoint with params:', {
+          ...requestParams,
+          fromToken: selectedFromToken.symbol,
+          toToken: selectedToToken.symbol
+        });
+        
         try {
           // Use the Solana-specific endpoint directly for Solana chains
           const solanaResponse = await axios.get('https://li.quest/v1/solana/quote', {
@@ -1391,8 +1378,9 @@ const Swap = ({ currentUser, showNotification }) => {
           }
         } catch (solanaError) {
           logger.error('Solana quote error:', solanaError);
+          
           if (solanaError.response?.status === 404) {
-            setError('The requested Solana token swap is not available. Please try different tokens.');
+            setError(`The requested swap (${selectedFromToken.symbol} to ${selectedToToken.symbol}) is not available on Solana. Please try different tokens.`);
           } else if (solanaError.response?.data?.message) {
             setError(`Solana API Error: ${solanaError.response.data.message}`);
           } else {
@@ -1856,12 +1844,12 @@ const Swap = ({ currentUser, showNotification }) => {
 
   // Improved function for scanning Solana wallet tokens
   const scanSolanaWalletTokens = async () => {
-    if (!walletConnected || !walletAddress || walletType !== 'solana' || !solanaConnection) {
+    if (!walletConnected || !walletAddress || walletType !== 'solana') {
       return;
     }
     
     try {
-      logger.info('Scanning for tokens in Solana wallet:', walletAddress);
+      logger.info('Setting up Solana tokens for wallet:', walletAddress);
       
       // Get the Solana chain ID
       const solanaChain = chains.find(c => 
@@ -1877,301 +1865,117 @@ const Swap = ({ currentUser, showNotification }) => {
       
       // Get current token list
       const currentTokenList = tokens[solanaChain.id] || [];
-      const existingTokenAddresses = new Set(currentTokenList.map(t => t.address.toLowerCase()));
       
-      // Get all token accounts owned by this wallet
-      const publicKey = new solanaWeb3.PublicKey(walletAddress);
-      
-      // First, fetch all token program accounts with pagination and retry logic
-      let allTokenAccounts = [];
-      const tokenProgramId = new solanaWeb3.PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
-      
-      // Function to retry fetching with exponential backoff
-      const fetchWithRetry = async (fn, maxRetries = 3, initialDelay = 1000) => {
-        let retries = 0;
-        let delay = initialDelay;
-        
-        while (retries < maxRetries) {
-          try {
-            return await fn();
-          } catch (err) {
-            retries++;
-            if (retries >= maxRetries) throw err;
-            
-            logger.warn(`Retry ${retries}/${maxRetries} after error:`, err);
-            await new Promise(resolve => setTimeout(resolve, delay));
-            delay *= 2; // Exponential backoff
-          }
+      // Use predefined list of common Solana tokens to avoid RPC calls
+      const commonSolanaTokens = [
+        {
+          address: '11111111111111111111111111111111', // Native SOL
+          chainId: solanaChain.id,
+          name: 'Solana',
+          symbol: 'SOL',
+          decimals: 9,
+          logoURI: 'https://raw.githubusercontent.com/lifinance/types/main/src/assets/icons/chains/solana.svg',
+          isUserToken: true
+        },
+        {
+          address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
+          chainId: solanaChain.id,
+          name: 'USD Coin',
+          symbol: 'USDC',
+          decimals: 6,
+          logoURI: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png',
+          isUserToken: true
+        },
+        {
+          address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDT
+          chainId: solanaChain.id,
+          name: 'Tether USD',
+          symbol: 'USDT',
+          decimals: 6,
+          logoURI: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png',
+          isUserToken: true
+        },
+        {
+          address: 'So11111111111111111111111111111111111111112', // Wrapped SOL
+          chainId: solanaChain.id,
+          name: 'Wrapped SOL',
+          symbol: 'wSOL',
+          decimals: 9,
+          logoURI: 'https://raw.githubusercontent.com/lifinance/types/main/src/assets/icons/chains/solana.svg',
+          isUserToken: true
+        },
+        {
+          address: 'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So', // mSOL (Marinade)
+          chainId: solanaChain.id,
+          name: 'Marinade Staked SOL',
+          symbol: 'mSOL',
+          decimals: 9,
+          logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So/logo.png',
+          isUserToken: true
+        },
+        {
+          address: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263', // BONK
+          chainId: solanaChain.id,
+          name: 'Bonk',
+          symbol: 'BONK',
+          decimals: 5,
+          logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263/logo.png',
+          isUserToken: true
+        },
+        {
+          address: 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN', // JUP
+          chainId: solanaChain.id,
+          name: 'Jupiter',
+          symbol: 'JUP',
+          decimals: 6,
+          logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN/logo.png',
+          isUserToken: true
         }
-      };
+      ];
       
-      try {
-        // First attempt to get all token accounts in one call
-        const tokenAccounts = await fetchWithRetry(() => 
-          solanaConnection.getParsedTokenAccountsByOwner(
-            publicKey,
-            { programId: tokenProgramId },
-            'confirmed'
-          )
+      // Add the common tokens to our list
+      const updatedTokens = [...currentTokenList];
+      
+      // Add or update tokens
+      commonSolanaTokens.forEach(token => {
+        const existingIndex = updatedTokens.findIndex(t => 
+          t.address.toLowerCase() === token.address.toLowerCase()
         );
         
-        allTokenAccounts = tokenAccounts.value;
-        logger.info(`Found ${allTokenAccounts.length} token accounts in Solana wallet initially`);
-        
-        // If we have a very large number of accounts, paginate for better results
-        if (allTokenAccounts.length >= 100) {
-          logger.info('Large number of token accounts detected, using pagination...');
-          
-          let paginatedAccounts = [];
-          let startingPoint = null;
-          const pageSize = 100;
-          let hasMore = true;
-          
-          while (hasMore) {
-            const page = await fetchWithRetry(() => 
-              solanaConnection.getParsedTokenAccountsByOwner(
-                publicKey,
-                { programId: tokenProgramId },
-                { limit: pageSize, before: startingPoint }
-              )
-            );
-            
-            paginatedAccounts = [...paginatedAccounts, ...page.value];
-            
-            if (page.value.length < pageSize) {
-              hasMore = false;
-            } else if (page.value.length > 0) {
-              // Use the last account's pubkey as the starting point for the next page
-              startingPoint = page.value[page.value.length - 1].pubkey;
-            }
-          }
-          
-          if (paginatedAccounts.length > allTokenAccounts.length) {
-            logger.info(`Pagination found ${paginatedAccounts.length} accounts (vs. ${allTokenAccounts.length} initially)`);
-            allTokenAccounts = paginatedAccounts;
-          }
+        if (existingIndex >= 0) {
+          // Update existing token
+          updatedTokens[existingIndex] = {
+            ...updatedTokens[existingIndex],
+            isUserToken: true
+          };
+        } else {
+          // Add new token
+          updatedTokens.push(token);
         }
-      } catch (err) {
-        logger.error('Error fetching token accounts, will try alternate method:', err);
-        
-        // Alternate method: try getTokenAccountsByOwner (non-parsed version) as fallback
-        try {
-          const tokenAccountsRaw = await fetchWithRetry(() => 
-            solanaConnection.getTokenAccountsByOwner(
-              publicKey,
-              { programId: tokenProgramId },
-              'confirmed'
-            )
-          );
-          
-          try {
-            // Try to parse the token accounts manually
-            allTokenAccounts = tokenAccountsRaw.value.map(account => {
-              try {
-                // The mint address is stored in the first 32 bytes of the token account data
-                const dataBuffer = account.account.data;
-                // Convert the first 32 bytes to a PublicKey
-                const mintAddress = new solanaWeb3.PublicKey(dataBuffer.slice(0, 32)).toString();
-                
-                return {
-                  pubkey: account.pubkey,
-                  account: {
-                    data: {
-                      parsed: {
-                        info: {
-                          // Use the properly extracted mint address
-                          mint: mintAddress,
-                          tokenAmount: {
-                            amount: "1",
-                            decimals: 9,
-                            uiAmount: 0 // Will be updated from metadata
-                          }
-                        }
-                      }
-                    }
-                  }
-                };
-              } catch (e) {
-                logger.error('Error parsing token account data:', e);
-                return null;
-              }
-            }).filter(Boolean);
-            
-            logger.info(`Found ${allTokenAccounts.length} token accounts using alternate method`);
-          } catch (parseError) {
-            // If parsing fails completely, fall back to checking balance of common Solana tokens
-            logger.error('Error parsing raw token accounts, falling back to common tokens:', parseError);
-            allTokenAccounts = [];
-            
-            // Skip token account parsing and just check native SOL balance
-            logger.info('Falling back to checking only common Solana tokens');
-            
-            // Check balances of common tokens
-            const commonTokensWithBalance = await checkCommonSolanaTokens(publicKey, solanaChain);
-            if (commonTokensWithBalance.length > 0) {
-              // Add these tokens to our userTokens map
-              commonTokensWithBalance.forEach(token => {
-                userTokens.set(token.address.toLowerCase(), token);
-              });
-              
-              logger.info(`Found ${commonTokensWithBalance.length} common tokens with balance`);
-            }
-          }
-        } catch (alternateErr) {
-          logger.error('Both token account fetch methods failed:', alternateErr);
-          // Don't throw error, just continue with empty token accounts list
-          // so we can at least check SOL balance
-          allTokenAccounts = [];
-        }
+      });
+      
+      // Update tokens state
+      setTokens(prev => ({
+        ...prev,
+        [solanaChain.id]: updatedTokens
+      }));
+      
+      // Update active token lists
+      if (fromChain === solanaChain.id) {
+        setFromChainTokens(updatedTokens);
+        setToChainTokens(updatedTokens);
       }
       
-      logger.info(`Processing ${allTokenAccounts.length} token accounts in Solana wallet`);
+      logger.info(`Added ${commonSolanaTokens.length} common Solana tokens to the list`);
       
-      // Create a map to store unique tokens with non-zero balance
-      const userTokens = new Map();
-      
-      // Create an array to store token metadata fetch promises
-      const metadataPromises = [];
-      
-      // Process all token accounts
-      for (const account of allTokenAccounts) {
-        try {
-          if (!account.account?.data?.parsed?.info) {
-            continue; // Skip if we don't have the expected structure
-          }
-          
-          const parsedInfo = account.account.data.parsed.info;
-          const mintAddress = parsedInfo.mint;
-          const tokenAmount = parsedInfo.tokenAmount;
-          
-          // Skip tokens with zero balance
-          if (!tokenAmount || parseFloat(tokenAmount.uiAmount) <= 0) {
-            continue;
-          }
-          
-          const tokenKey = mintAddress.toLowerCase();
-          
-          // Skip tokens we already have in the list
-          if (existingTokenAddresses.has(tokenKey) || userTokens.has(tokenKey)) {
-            continue;
-          }
-          
-          logger.info(`Found token with balance: ${mintAddress}, amount: ${tokenAmount.uiAmount}`);
-          
-          // Add to the promises array to fetch metadata for all tokens in parallel
-          metadataPromises.push(
-            getSolanaTokenMetadata(mintAddress).then(metadata => {
-              userTokens.set(tokenKey, {
-                address: mintAddress,
-                chainId: solanaChain.id,
-                name: metadata.name,
-                symbol: metadata.symbol || `TKN-${mintAddress.slice(0, 4)}`,
-                decimals: tokenAmount.decimals || metadata.decimals,
-                logoURI: metadata.logoURI,
-                isUserToken: true,
-                balance: tokenAmount.uiAmount
-              });
-            })
-          );
-        } catch (err) {
-          logger.error('Error processing token account:', err);
-        }
-      }
-      
-      // Wait for all metadata fetches to complete
-      await Promise.allSettled(metadataPromises);
-      
-      // If no tokens were found via account parsing, check common tokens
-      if (userTokens.size === 0 && allTokenAccounts.length === 0) {
-        logger.info('No tokens found via account parsing, checking common tokens');
-        const commonTokensWithBalance = await checkCommonSolanaTokens(publicKey, solanaChain);
-        if (commonTokensWithBalance.length > 0) {
-          // Add these tokens to our userTokens map
-          commonTokensWithBalance.forEach(token => {
-            userTokens.set(token.address.toLowerCase(), token);
-          });
-          
-          logger.info(`Found ${commonTokensWithBalance.length} common tokens with balance`);
-        }
-      }
-      
-      // Add the native SOL balance
-      try {
-        const solBalance = await solanaConnection.getBalance(publicKey);
-        const solBalanceInSOL = solBalance / 1000000000; // 9 decimals for SOL
-        
-        if (solBalanceInSOL > 0) {
-          logger.info(`Found native SOL balance: ${solBalanceInSOL}`);
-          
-          // Find if SOL is already in the list
-          const solTokenIndex = currentTokenList.findIndex(t => 
-            t.symbol === 'SOL' && 
-            (t.address === '11111111111111111111111111111111' || 
-             t.name === 'Solana')
-          );
-          
-          if (solTokenIndex >= 0) {
-            // Update the existing SOL entry with balance
-            const updatedTokenList = [...currentTokenList];
-            updatedTokenList[solTokenIndex] = {
-              ...updatedTokenList[solTokenIndex],
-              isUserToken: true,
-              balance: solBalanceInSOL
-            };
-            
-            // Update tokens state with the updated SOL
-            setTokens(prev => ({
-              ...prev,
-              [solanaChain.id]: updatedTokenList
-            }));
-            
-            // Update active token lists
-            if (fromChain === solanaChain.id) {
-              setFromChainTokens(updatedTokenList);
-              setToChainTokens(updatedTokenList);
-            }
-          }
-        }
-      } catch (err) {
-        logger.error('Error getting native SOL balance:', err);
-      }
-      
-      // Add user tokens to the token list
-      if (userTokens.size > 0) {
-        logger.info(`Found ${userTokens.size} additional tokens in Solana wallet`);
-        const userTokenArray = Array.from(userTokens.values());
-        
-        // Sort tokens by balance (descending) to prioritize tokens with higher balances
-        userTokenArray.sort((a, b) => parseFloat(b.balance) - parseFloat(a.balance));
-        
-        const updatedTokens = [...currentTokenList, ...userTokenArray];
-        
-        // Update tokens state
-        setTokens(prev => ({
-          ...prev,
-          [solanaChain.id]: updatedTokens
-        }));
-        
-        // Update active token lists
-        if (fromChain === solanaChain.id) {
-          setFromChainTokens(updatedTokens);
-          setToChainTokens(updatedTokens);
-        }
-        
-        // Show notification
-        if (showNotification) {
-          showNotification(`Found ${userTokens.size} additional tokens in your Solana wallet.`, 'info');
-        }
-      } else {
-        logger.info('No additional tokens found in Solana wallet');
-        if (showNotification) {
-          showNotification('No additional tokens found in your wallet. Try refreshing.', 'info');
-        }
+      if (showNotification) {
+        showNotification('Common Solana tokens added to swap selection', 'info');
       }
     } catch (error) {
-      logger.error('Error scanning Solana wallet tokens:', error);
+      logger.error('Error setting up Solana tokens:', error);
+      
       if (showNotification) {
-        showNotification('Could not detect all tokens in your wallet. Try refreshing.', 'error');
+        showNotification('Could not load Solana tokens. Please try again later.', 'error');
       }
     }
   };
@@ -2676,18 +2480,27 @@ const Swap = ({ currentUser, showNotification }) => {
             <details>
               <summary className="text-sm font-semibold mb-1 text-yellow-400 cursor-pointer">Solana Token Troubleshooting</summary>
               <div className="text-xs text-gray-300 space-y-2 mt-2">
+                <p className="text-yellow-300">Note: We're using direct Li.fi integration for Solana to avoid CORS errors with RPC nodes.</p>
                 <p>For Solana tokens, please ensure:</p>
                 <ul className="list-disc pl-4 space-y-1">
                   <li>Both tokens are valid Solana tokens</li>
-                  <li>Solana addresses should not have 0x prefix</li>
-                  <li>Native SOL uses address: 11111111111111111111111111111111</li>
-                  <li>USDC uses address: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v</li>
-                  <li>Try using common Solana tokens that have more liquidity</li>
+                  <li>Use native SOL (11111111111111111111111111111111) or USDC (EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v) for best results</li>
+                  <li>Some token pairs may not have liquidity pools available</li>
+                  <li>Try selecting different token pairs</li>
                 </ul>
                 <div className="text-xs mt-2">
                   <p>Current token addresses:</p>
                   <p className="text-blue-300 break-all">From: {fromToken || "Not selected"}</p>
                   <p className="text-blue-300 break-all">To: {toToken || "Not selected"}</p>
+                </div>
+                <div className="mt-3 text-gray-400 text-xs">
+                  <p>Common Solana Tokens:</p>
+                  <ul className="list-disc pl-4">
+                    <li>SOL: 11111111111111111111111111111111</li>
+                    <li>USDC: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v</li>
+                    <li>USDT: Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB</li>
+                    <li>Wrapped SOL: So11111111111111111111111111111111111111112</li>
+                  </ul>
                 </div>
               </div>
             </details>
