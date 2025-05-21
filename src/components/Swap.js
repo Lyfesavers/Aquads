@@ -12,13 +12,12 @@ const FEE_PERCENTAGE = 0.5; // 0.5% fee
 const FEE_RECIPIENT = process.env.REACT_APP_FEE_WALLET || '6MtTEBWBXPTwbrVCqiHp4iTe84J8CfXHPspYYWTfBPG9'; // Default fee wallet
 // Use more reliable RPC endpoints with fallbacks - prefer public endpoints not requiring auth
 const SOLANA_RPC_ENDPOINTS = [
-  'https://api.mainnet-beta.solana.com',
-  'https://solana-api.projectserum.com',
-  'https://rpc.ankr.com/solana',
-  'https://solana.public-rpc.com',
-  'https://solana-mainnet.g.alchemy.com/v2/demo', // Alchemy demo endpoint
-  'https://free.rpcpool.com',
-  'https://api.devnet.solana.com', // Devnet as last resort
+  'https://api.devnet.solana.com', // Devnet is often more permissive with CORS
+  'https://solana-mainnet.rpc.extrnode.com',
+  'https://mainnet.helius-rpc.com/?api-key=15319b0f-9379-4c57-81e5-79d8519ab768', // Helius RPC with free tier
+  'https://solana.getblock.io/mainnet/?api_key=3a7a1442-04ac-404c-811e-ef57241e429f', // GetBlock free tier
+  'https://rpc.hellomoon.io/3ddfbd2e-c973-414b-b4c6-10eb6bc7ec2a', // HelloMoon free tier
+  'https://sparkling-wild-river.solana-mainnet.quiknode.pro/', // QuickNode free tier
 ];
 
 // Style to hide unwanted UI elements
@@ -214,10 +213,11 @@ const Swap = ({ currentUser, showNotification }) => {
     }
   }, [showNotification]);
   
-  // Connect wallet
+  // Connect wallet with better error handling
   const connectWallet = async () => {
     try {
       setLoading(true);
+      
       // Check for Phantom wallet
       const isPhantomInstalled = window.phantom?.solana?.isPhantom;
       // Check for Solflare wallet
@@ -252,40 +252,62 @@ const Swap = ({ currentUser, showNotification }) => {
             setWalletConnected(true);
             setWalletType(walletName);
             
-            // Detect user tokens once wallet is connected
-            await detectUserTokens(publicKey);
+            // Set some timeout to ensure UI updates before attempting RPC calls
+            setTimeout(async () => {
+              try {
+                // Detect user tokens once wallet is connected
+                await detectUserTokens(publicKey);
+              } catch (e) {
+                logger.error("Error detecting tokens from already connected wallet:", e);
+                showNotification("Connected to wallet, but couldn't fetch tokens", 'warning');
+              }
+            }, 500);
+            
             showNotification(`Connected to ${walletName} wallet`, 'success');
             setLoading(false);
             return;
           }
           
-          // Connect to the wallet
-          const resp = await provider.connect();
-          const publicKey = resp.publicKey.toString();
+          // Connect to the wallet with timeout
+          const connectionPromise = provider.connect();
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Wallet connection timed out')), 30000)
+          );
           
+          const resp = await Promise.race([connectionPromise, timeoutPromise]);
+          
+          if (!resp || !resp.publicKey) {
+            throw new Error('Wallet connection failed: No public key received');
+          }
+          
+          const publicKey = resp.publicKey.toString();
           logger.info(`Wallet connected: ${publicKey}`);
           
           setWalletAddress(publicKey);
           setWalletConnected(true);
           setWalletType(walletName);
-          
-          // Detect user tokens once wallet is connected
-          try {
-            await detectUserTokens(publicKey);
-          } catch (error) {
-            logger.error('Failed to detect user tokens:', error);
-            // Don't let token detection failure break the app
-            showNotification('Connected, but could not fetch wallet tokens', 'warning');
-          }
-          
           showNotification(`Connected to ${walletName} wallet`, 'success');
+          
+          // Set some timeout to ensure UI updates before attempting RPC calls
+          setTimeout(async () => {
+            try {
+              // Detect user tokens once wallet is connected
+              await detectUserTokens(publicKey);
+            } catch (e) {
+              logger.error("Error detecting tokens:", e);
+              showNotification("Connected to wallet, but couldn't fetch tokens", 'warning');
+            }
+          }, 500);
+          
         } catch (error) {
           logger.error(`Error connecting to ${walletName} wallet:`, error);
-          showNotification(`Failed to connect to ${walletName} wallet: ${error.message}`, 'error');
+          showNotification(`Wallet connection issue: ${error.message}`, 'error');
+          setLoading(false);
         }
       } else {
         // No wallet installed
         showNotification('Please install a Solana wallet like Phantom, Solflare, or Backpack', 'info');
+        setLoading(false);
         
         // Open wallet installation page
         window.open('https://phantom.app/', '_blank');
@@ -293,7 +315,6 @@ const Swap = ({ currentUser, showNotification }) => {
     } catch (error) {
       logger.error('Error connecting wallet:', error);
       showNotification('Failed to connect wallet: ' + error.message, 'error');
-    } finally {
       setLoading(false);
     }
   };
@@ -338,43 +359,59 @@ const Swap = ({ currentUser, showNotification }) => {
       // Set loading indicator but don't block UI
       const loadingId = setTimeout(() => setLoading(true), 300);
       
-      // Try each endpoint until one works
-      for (const endpoint of SOLANA_RPC_ENDPOINTS) {
+      // Wrapper function to safely execute an RPC call with a timeout
+      const safeRpcCall = async (endpoint, operation) => {
         try {
-          connection = new solanaWeb3.Connection(endpoint, { commitment: 'confirmed' });
+          logger.info(`Trying RPC endpoint: ${endpoint}`);
+          const conn = new solanaWeb3.Connection(endpoint, { commitment: 'confirmed' });
           
-          // Test connection first with a simple request
-          await connection.getSlot();
-          logger.info(`Connected to RPC endpoint: ${endpoint}`);
-          
-          // Get token accounts with a timeout to prevent hanging
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('RPC request timeout')), 8000)
-          );
-          
-          tokenAccounts = await Promise.race([
-            connection.getParsedTokenAccountsByOwner(
-              new PublicKey(walletAddress),
-              { programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') }
-            ),
-            timeoutPromise
+          // First test with a simple call
+          await Promise.race([
+            conn.getSlot(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Connection test timeout')), 3000))
           ]);
           
-          // If we get here, it worked, so break the loop
-          break;
+          // If we get here, the basic connection works, so try the actual operation
+          const result = await Promise.race([
+            operation(conn),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Operation timeout')), 8000))
+          ]);
+          
+          return { success: true, result, connection: conn };
         } catch (err) {
           logger.warn(`RPC endpoint ${endpoint} failed: ${err.message}`);
-          error = err;
-          // Continue to next endpoint
+          return { success: false, error: err };
+        }
+      };
+      
+      // Try to get token accounts from any working endpoint
+      let successfulConnection = null;
+      for (const endpoint of SOLANA_RPC_ENDPOINTS) {
+        const result = await safeRpcCall(endpoint, async (conn) => {
+          return await conn.getParsedTokenAccountsByOwner(
+            new PublicKey(walletAddress),
+            { programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') }
+          );
+        });
+        
+        if (result.success) {
+          tokenAccounts = result.result;
+          successfulConnection = result.connection;
+          logger.info(`Successfully connected to ${endpoint}`);
+          break;
         }
       }
       
-      // Clear loading timeout and state if fast enough
+      // Clear loading timeout and state
       clearTimeout(loadingId);
+      setLoading(false);
       
-      // If all endpoints failed
+      // Handle case where all endpoints failed for token accounts
       if (!tokenAccounts) {
-        throw error || new Error('All RPC endpoints failed');
+        logger.warn('All RPC endpoints failed when fetching token accounts');
+        // Fall back to basic functionality without token account data
+        showNotification('Could not fetch token details, but swap functionality still available', 'warning');
+        return;
       }
       
       // Store token balances
@@ -403,71 +440,30 @@ const Swap = ({ currentUser, showNotification }) => {
         }
       }
       
-      // Check SOL balance with multiple fallback methods
-      try {
-        // Method 1: getBalance
-        let solBalance = null;
+      // If we have a successful connection, use it to get SOL balance
+      if (successfulConnection) {
         try {
-          solBalance = await connection.getBalance(new PublicKey(walletAddress));
-          logger.info(`SOL balance from getBalance: ${solBalance / 1e9} SOL`);
+          const solBalance = await successfulConnection.getBalance(new PublicKey(walletAddress));
+          if (solBalance > 0) {
+            const solUiAmount = solBalance / 1000000000;
+            balances['SOL'] = {
+              amount: solBalance,
+              decimals: 9,
+              uiAmount: solUiAmount
+            };
+            const wrappedSolAddress = 'So11111111111111111111111111111111111111112';
+            balances[wrappedSolAddress] = {
+              amount: solBalance,
+              decimals: 9,
+              uiAmount: solUiAmount
+            };
+            userTokenAddresses.push(wrappedSolAddress);
+            logger.info(`Added SOL balance: ${solUiAmount} SOL`);
+          }
         } catch (err) {
-          logger.warn(`Failed to get SOL balance with getBalance: ${err.message}`);
+          logger.warn(`Error getting SOL balance: ${err.message}`);
         }
-        
-        // Method 2: getAccountInfo as fallback
-        if (!solBalance || solBalance === 0) {
-          try {
-            const accountInfo = await connection.getAccountInfo(new PublicKey(walletAddress));
-            if (accountInfo && accountInfo.lamports) {
-              solBalance = accountInfo.lamports;
-              logger.info(`SOL balance from accountInfo: ${solBalance / 1e9} SOL`);
-            }
-          } catch (err) {
-            logger.warn(`Failed to get SOL balance with accountInfo: ${err.message}`);
-          }
-        }
-        
-        // Method 3: Try another endpoint as last resort
-        if (!solBalance || solBalance === 0) {
-          try {
-            const backupConnection = new solanaWeb3.Connection('https://api.mainnet-beta.solana.com', { commitment: 'confirmed' });
-            solBalance = await backupConnection.getBalance(new PublicKey(walletAddress));
-            logger.info(`SOL balance from backup endpoint: ${solBalance / 1e9} SOL`);
-          } catch (err) {
-            logger.warn(`Failed to get SOL balance from backup endpoint: ${err.message}`);
-          }
-        }
-        
-        if (solBalance && solBalance > 0) {
-          // SOL uses 9 decimal places
-          const solUiAmount = solBalance / 1000000000;
-          
-          // Add SOL balance
-          balances['SOL'] = {
-            amount: solBalance,
-            decimals: 9,
-            uiAmount: solUiAmount
-          };
-          
-          // Also add under wrapped SOL address
-          const wrappedSolAddress = 'So11111111111111111111111111111111111111112';
-          balances[wrappedSolAddress] = {
-            amount: solBalance,
-            decimals: 9,
-            uiAmount: solUiAmount
-          };
-          userTokenAddresses.push(wrappedSolAddress);
-          
-          logger.info(`Added SOL balance: ${solUiAmount} SOL`);
-        } else {
-          logger.warn('SOL balance is zero or could not be determined');
-        }
-      } catch (err) {
-        logger.error('Error getting SOL balance:', err);
       }
-      
-      // Print the balances to check
-      logger.info(`User wallet balances:`, balances);
       
       // Save balances
       setTokenBalances(balances);
@@ -476,8 +472,8 @@ const Swap = ({ currentUser, showNotification }) => {
       const updatedTokens = tokens.map(token => ({
         ...token,
         isUserToken: userTokenAddresses.includes(token.address) || 
-                     (token.symbol === 'SOL' && balances['SOL']) ||
-                     balances[token.address] != null
+                    (token.symbol === 'SOL' && balances['SOL']) ||
+                    balances[token.address] != null
       }));
       
       // Update the token list
@@ -505,7 +501,6 @@ const Swap = ({ currentUser, showNotification }) => {
         }
       }
       
-      setLoading(false);
       showNotification('Wallet balances updated', 'success');
     } catch (error) {
       logger.error('Error detecting user tokens:', error);
@@ -518,7 +513,7 @@ const Swap = ({ currentUser, showNotification }) => {
   // Get the user's balance for a specific token
   const getTokenBalance = (tokenAddress) => {
     if (!tokenAddress) {
-      logger.debug('getTokenBalance called with null tokenAddress');
+      logger.info('getTokenBalance called with null tokenAddress');
       return null;
     }
     
@@ -527,13 +522,13 @@ const Swap = ({ currentUser, showNotification }) => {
       const solBalance = tokenBalances['SOL'] || tokenBalances['So11111111111111111111111111111111111111112'];
       
       if (solBalance) {
-        logger.debug(`Found SOL balance: ${solBalance.uiAmount}`);
+        logger.info(`Found SOL balance: ${solBalance.uiAmount}`);
         return solBalance;
       } else {
-        logger.debug('SOL balance not found in tokenBalances');
+        logger.info('SOL balance not found in tokenBalances');
         // If wallet is connected but no SOL balance is found, log the available balances
         if (walletConnected) {
-          logger.debug('Available token balances:', Object.keys(tokenBalances));
+          logger.info('Available token balances:', Object.keys(tokenBalances));
         }
         return null;
       }
@@ -542,10 +537,10 @@ const Swap = ({ currentUser, showNotification }) => {
     // Check regular token
     const balance = tokenBalances[tokenAddress];
     if (balance) {
-      logger.debug(`Found balance for ${tokenAddress}: ${balance.uiAmount}`);
+      logger.info(`Found balance for ${tokenAddress}: ${balance.uiAmount}`);
       return balance;
     } else {
-      logger.debug(`No balance found for ${tokenAddress}`);
+      logger.info(`No balance found for ${tokenAddress}`);
       return null;
     }
   };
