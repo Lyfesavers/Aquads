@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import logger from '../utils/logger';
 import './Swap.css';
@@ -7,8 +7,8 @@ import './Swap.css';
 const FEE_PERCENTAGE = 0.5; // 0.5% fee
 const FEE_WALLET = process.env.REACT_APP_FEE_WALLET || '6MtTEBWBXPTwbrVCqiHp4iTe84J8CfXHPspYYWTfBPG9'; // Default fee wallet
 
-// Style to hide unwanted UI elements
-const hideDuckHuntStyle = `
+// Style for notification button fix
+const notificationFixStyle = `
   <style>
     /* Notification button fix */
     .notification-button {
@@ -17,15 +17,38 @@ const hideDuckHuntStyle = `
   </style>
 `;
 
+// CSS to hide duck hunt inside iframe
+const hideDuckHuntCSS = `
+  div[style*="position: fixed"][style*="bottom"][style*="right"],
+  div[data-testid="duck-hunt-button"],
+  [id*="duck-hunt"],
+  [id*="start-duck"],
+  [class*="duck-hunt"],
+  .start-duck-hunt,
+  #start-duck-hunt,
+  #duck-hunt-button,
+  .duck-hunt-button {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    position: absolute !important;
+    z-index: -1 !important;
+  }
+`;
+
 const Swap = ({ currentUser, showNotification }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const iframeRef = useRef(null);
 
   // Initialize on component mount
   useEffect(() => {
     // Style injection for notification button fix
     const styleEl = document.createElement('div');
-    styleEl.innerHTML = hideDuckHuntStyle;
+    styleEl.innerHTML = notificationFixStyle;
     document.head.appendChild(styleEl);
     
     // Load LiFi using iframe approach
@@ -45,17 +68,79 @@ const Swap = ({ currentUser, showNotification }) => {
     };
   }, []);
 
+  // Function to inject CSS into iframe to hide duck hunt
+  const injectHideDuckHuntCSS = (iframe) => {
+    try {
+      if (!iframe || !iframe.contentWindow || !iframe.contentDocument) return;
+      
+      // Create style element in iframe
+      const styleEl = iframe.contentDocument.createElement('style');
+      styleEl.textContent = hideDuckHuntCSS;
+      iframe.contentDocument.head.appendChild(styleEl);
+      
+      // Add script to continuously remove duck hunt
+      const scriptEl = iframe.contentDocument.createElement('script');
+      scriptEl.innerHTML = `
+        function hideDuckHunt() {
+          const selectors = [
+            'div[style*="position: fixed"][style*="bottom"][style*="right"]',
+            'div[data-testid="duck-hunt-button"]',
+            '[id*="duck-hunt"]',
+            '[id*="start-duck"]',
+            '[class*="duck-hunt"]',
+            '.start-duck-hunt',
+            '#start-duck-hunt',
+            '#duck-hunt-button',
+            '.duck-hunt-button'
+          ];
+          
+          selectors.forEach(selector => {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach(el => {
+              if (el) {
+                el.style.display = 'none';
+                el.style.visibility = 'hidden';
+                el.style.opacity = '0';
+                el.style.width = '0';
+                el.style.height = '0';
+                el.style.pointerEvents = 'none';
+                el.remove();
+              }
+            });
+          });
+        }
+        
+        // Run immediately and set interval
+        hideDuckHunt();
+        setInterval(hideDuckHunt, 500);
+      `;
+      iframe.contentDocument.body.appendChild(scriptEl);
+    } catch (e) {
+      console.error('Error injecting CSS into iframe:', e);
+    }
+  };
+
+  // Handle iframe load event
+  const handleIframeLoad = () => {
+    if (iframeRef.current) {
+      injectHideDuckHuntCSS(iframeRef.current);
+    }
+  };
+
   // Simple iframe-based LiFi integration
   const renderLiFiWidget = () => {
+    // Add hideDuckHunt=true parameter and other relevant parameters
     const lifiUrl = `https://transferto.xyz/swap?integrator=AquaSwap&fee=${FEE_PERCENTAGE}&toAddress=${FEE_WALLET}&theme=dark&variant=default&hideDuckHunt=true`;
     
     return (
       <iframe
+        ref={iframeRef}
         src={lifiUrl}
         title="AquaSwap powered by LiFi"
         frameBorder="0"
         className="lifi-iframe"
         allow="clipboard-write"
+        onLoad={handleIframeLoad}
       />
     );
   };
@@ -81,7 +166,7 @@ const Swap = ({ currentUser, showNotification }) => {
             <div className="loading-container">
               <div className="loading-spinner"></div>
               <p>Loading swap interface...</p>
-        </div>
+            </div>
           </div>
         </div>
       </div>
@@ -94,16 +179,16 @@ const Swap = ({ currentUser, showNotification }) => {
       <div className="swap-card lifi-container">
         <div className="swap-header">
           <h2>
-        <img 
-          src="/AquaSwap.svg" 
+            <img 
+              src="/AquaSwap.svg" 
               alt="AquaSwap" 
               className="aquaswap-logo" 
               width="24" 
               height="24"
             />
             AquaSwap
-      </h2>
-      </div>
+          </h2>
+        </div>
       
         {renderLiFiWidget()}
         

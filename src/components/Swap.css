@@ -1058,7 +1058,7 @@ body, html {
   }
 }
 
-/* Duck Hunt button visibility - restore on main site */
+/* Duck Hunt button visibility - allow on main site */
 div[data-testid="duck-hunt-button"],
 #duck-hunt-button,
 .duck-hunt-button,
@@ -1067,7 +1067,8 @@ div[data-testid="duck-hunt-button"],
 [id*="duck-hunt"],
 [id*="start-duck"],
 [class*="duck-hunt"] {
-  display: initial !important;
+  /* Override any previous hiding styles */
+  display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
   pointer-events: auto !important;
@@ -1075,7 +1076,6 @@ div[data-testid="duck-hunt-button"],
   height: auto !important;
   width: auto !important;
   overflow: visible !important;
-  clip: auto !important;
   margin: 0 !important;
-  z-index: 9999 !important;
+  z-index: 9999 !important; /* High z-index to make sure it shows on top */
 } 
