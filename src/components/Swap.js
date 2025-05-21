@@ -952,121 +952,99 @@ const Swap = ({ currentUser, showNotification }) => {
     );
   };
 
-  // Fetch tokens from Jupiter API
-  const fetchSolanaTokens = async () => {
-    try {
-      setLoading(true);
-      
-      // Check localStorage for cached tokens first
-      const cachedTokensString = localStorage.getItem('jupiterTokens');
-      const cachedTimestamp = localStorage.getItem('jupiterTokensTimestamp');
-      const now = Date.now();
-      const CACHE_DURATION = 3600000; // 1 hour
-      
-      // Use cached tokens if they exist and are less than 1 hour old
-      let jupiterTokens = [];
-      if (cachedTokensString && cachedTimestamp && (now - parseInt(cachedTimestamp) < CACHE_DURATION)) {
-        try {
-          jupiterTokens = JSON.parse(cachedTokensString);
-          logger.info(`Using ${jupiterTokens.length} cached Solana tokens`);
-          
-          if (jupiterTokens.length > 0) {
-            processTokens(jupiterTokens);
-            setLoading(false);
-            
-            // Fetch fresh tokens in the background
-            fetchFreshTokens().catch(err => 
-              logger.warn('Background token refresh failed:', err)
-            );
-            return;
-          }
-        } catch (err) {
-          logger.warn('Error parsing cached tokens:', err);
-          // Continue to fetch tokens from API
-        }
-      }
-      
-      // Fetch fresh tokens (either because cache was invalid or to update UI immediately)
-      await fetchFreshTokens();
-      
-    } catch (error) {
-      logger.error('Failed to fetch Solana tokens:', error);
-      handleTokenError();
-    } finally {
-      setLoading(false);
-    }
-  };
-  
   // Helper function to fetch fresh tokens from Jupiter API
   const fetchFreshTokens = async () => {
     try {
-      // Set a timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Token fetch timeout')), 15000)
-      );
+      // Set loading state
+      setLoading(true);
+      setError(null);
       
-      const response = await Promise.race([
-        axios.get('https://token.jup.ag/all'),
-        timeoutPromise
-      ]);
+      // Use multiple token list sources for redundancy
+      const tokenSources = [
+        'https://token.jup.ag/all',
+        'https://cdn.jsdelivr.net/gh/solana-labs/token-list@main/src/tokens/solana.tokenlist.json',
+        'https://raw.githubusercontent.com/solana-labs/token-list/main/src/tokens/solana.tokenlist.json'
+      ];
       
-      if (response.data && Array.isArray(response.data)) {
-        // Format tokens to our structure
-        const jupiterTokens = response.data.map(token => ({
-          address: token.address,
-          name: token.name,
-          symbol: token.symbol,
-          decimals: token.decimals,
-          logoURI: token.logoURI || '',
-          tags: token.tags || []
-        }));
-        
-        // Cache tokens in localStorage
-        localStorage.setItem('jupiterTokens', JSON.stringify(jupiterTokens));
-        localStorage.setItem('jupiterTokensTimestamp', Date.now().toString());
-        
-        // Process the tokens
-        processTokens(jupiterTokens);
-        
-        logger.info(`Loaded ${jupiterTokens.length} Solana tokens from Jupiter API`);
+      let tokenData = null;
+      let error = null;
+      
+      // Try each source until one works
+      for (const source of tokenSources) {
+        try {
+          logger.info(`Attempting to fetch tokens from ${source}`);
+          
+          // Set a timeout to prevent hanging
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error(`Token fetch timeout from ${source}`)), 15000)
+          );
+          
+          const response = await Promise.race([
+            axios.get(source),
+            timeoutPromise
+          ]);
+          
+          if (response.data) {
+            // Check if we need to extract from a tokens array (for solana token list format)
+            if (response.data.tokens && Array.isArray(response.data.tokens)) {
+              tokenData = response.data.tokens;
+            } else if (Array.isArray(response.data)) {
+              tokenData = response.data;
+            }
+            
+            if (tokenData && tokenData.length > 0) {
+              logger.info(`Successfully fetched ${tokenData.length} tokens from ${source}`);
+              break; // Exit the loop if we have valid data
+            }
+          }
+        } catch (err) {
+          error = err;
+          logger.warn(`Failed to fetch tokens from ${source}:`, err.message);
+          // Continue to next source
+        }
       }
+      
+      if (!tokenData || tokenData.length === 0) {
+        throw error || new Error('All token sources failed');
+      }
+      
+      // Format tokens to our structure (handling both Jupiter and Solana token list formats)
+      const formattedTokens = tokenData.map(token => ({
+        address: token.address || token.mintAddress || token.mint,
+        name: token.name,
+        symbol: token.symbol,
+        decimals: token.decimals,
+        logoURI: token.logoURI || token.icon || '',
+        tags: token.tags || []
+      }));
+      
+      // Cache tokens in localStorage
+      try {
+        localStorage.setItem('jupiterTokens', JSON.stringify(formattedTokens));
+        localStorage.setItem('jupiterTokensTimestamp', Date.now().toString());
+      } catch (err) {
+        logger.warn('Failed to cache tokens to localStorage:', err.message);
+      }
+      
+      // Process the tokens
+      processTokens(formattedTokens);
+      
+      logger.info(`Loaded ${formattedTokens.length} Solana tokens`);
+      return formattedTokens;
     } catch (error) {
-      logger.error('Error fetching fresh tokens:', error);
-      throw error;
+      logger.error('Error fetching tokens:', error);
+      handleTokenError();
+      return null;
+    } finally {
+      setLoading(false);
     }
-  };
-  
-  // Process tokens (mark common, sort, set default)
-  const processTokens = (jupiterTokens) => {
-    // Prioritize common tokens
-    const commonSymbols = ['SOL', 'USDC', 'USDT', 'BTC', 'ETH', 'BONK', 'JUP', 'RAY', 'ORCA'];
-    jupiterTokens.forEach(token => {
-      token.isCommon = commonSymbols.includes(token.symbol);
-    });
-    
-    // Sort tokens: common tokens first, then alphabetically
-    jupiterTokens.sort((a, b) => {
-      if (a.isCommon && !b.isCommon) return -1;
-      if (!a.isCommon && b.isCommon) return 1;
-      return a.symbol.localeCompare(b.symbol);
-    });
-    
-    // Set tokens
-    setTokens(jupiterTokens);
-    
-    // Default to SOL and USDC
-    const solToken = jupiterTokens.find(t => t.symbol === 'SOL' || t.symbol === 'WSOL');
-    const usdcToken = jupiterTokens.find(t => t.symbol === 'USDC');
-    
-    if (solToken && !fromToken) setFromToken(solToken.address);
-    if (usdcToken && !toToken) setToToken(usdcToken.address);
   };
   
   // Handle token error (set default tokens)
   const handleTokenError = () => {
     setError('Failed to load Solana tokens. Using default list.');
     
-    // Set some default tokens as fallback
+    // Set some default tokens as fallback - more extensive list
     const defaultTokens = [
       {
         address: 'So11111111111111111111111111111111111111112',
@@ -1099,12 +1077,132 @@ const Swap = ({ currentUser, showNotification }) => {
         decimals: 6,
         logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmvvWaxLac/logo.png',
         isCommon: true
+      },
+      {
+        address: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263',
+        name: 'BONK',
+        symbol: 'BONK',
+        decimals: 5,
+        logoURI: 'https://arweave.net/hQiPZOsRZXGXBJd_82PhVdlM_hACsT_q6wqwf5cSY7I',
+        isCommon: true
+      },
+      {
+        address: '7i5KKsX2weiTkry7jA4ZwSuXGhs5eJBEjY8vVxR4pfRx',
+        name: 'Raydium',
+        symbol: 'RAY',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/7i5KKsX2weiTkry7jA4ZwSuXGhs5eJBEjY8vVxR4pfRx/logo.png',
+        isCommon: true
+      },
+      {
+        address: 'orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE',
+        name: 'Orca',
+        symbol: 'ORCA',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png',
+        isCommon: true
+      },
+      {
+        address: 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN',
+        name: 'Jupiter',
+        symbol: 'JUP',
+        decimals: 6,
+        logoURI: 'https://static.jup.ag/jup/jup-logo.svg',
+        isCommon: true
+      },
+      {
+        address: 'kinXdEcpDQeHPEuQnqmUgtYykqKGVFq6CeVX5iAHJq6',
+        name: 'KIN',
+        symbol: 'KIN',
+        decimals: 5,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/kinXdEcpDQeHPEuQnqmUgtYykqKGVFq6CeVX5iAHJq6/logo.png',
+        isCommon: true
+      },
+      {
+        address: 'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So',
+        name: 'Marinade staked SOL',
+        symbol: 'mSOL',
+        decimals: 9,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So/logo.png',
+        isCommon: true
       }
     ];
     
-    setTokens(defaultTokens);
-    if (!fromToken) setFromToken(defaultTokens[0].address);
-    if (!toToken) setToToken(defaultTokens[1].address);
+    // Process the default tokens
+    processTokens(defaultTokens);
+  };
+  
+  // Fetch tokens from Jupiter API with better error handling
+  const fetchSolanaTokens = async () => {
+    try {
+      // Check localStorage for cached tokens first
+      const cachedTokensString = localStorage.getItem('jupiterTokens');
+      const cachedTimestamp = localStorage.getItem('jupiterTokensTimestamp');
+      const now = Date.now();
+      const CACHE_DURATION = 3600000; // 1 hour
+      
+      // Use cached tokens if they exist and are less than 1 hour old
+      let cachedTokens = [];
+      
+      if (cachedTokensString && cachedTimestamp && (now - parseInt(cachedTimestamp) < CACHE_DURATION)) {
+        try {
+          cachedTokens = JSON.parse(cachedTokensString);
+          logger.info(`Using ${cachedTokens.length} cached Solana tokens`);
+          
+          if (cachedTokens.length > 0) {
+            // Process cached tokens
+            processTokens(cachedTokens);
+            
+            // Fetch fresh tokens in the background with a delay
+            setTimeout(() => {
+              fetchFreshTokens().catch(err => 
+                logger.warn('Background token refresh failed:', err)
+              );
+            }, 5000);
+            
+            return true;
+          }
+        } catch (err) {
+          logger.warn('Error parsing cached tokens:', err);
+          // Continue to fetch tokens from API
+        }
+      }
+      
+      // If we don't have valid cached tokens, fetch fresh ones
+      const result = await fetchFreshTokens();
+      return !!result;
+      
+    } catch (error) {
+      logger.error('Failed to fetch Solana tokens:', error);
+      handleTokenError();
+      return false;
+    }
+  };
+  
+  // Process tokens (mark common, sort, set default)
+  const processTokens = (jupiterTokens) => {
+    // Prioritize common tokens
+    const commonSymbols = ['SOL', 'USDC', 'USDT', 'BTC', 'ETH', 'BONK', 'JUP', 'RAY', 'ORCA'];
+    jupiterTokens.forEach(token => {
+      token.isCommon = commonSymbols.includes(token.symbol);
+    });
+    
+    // Sort tokens: common tokens first, then alphabetically
+    jupiterTokens.sort((a, b) => {
+      if (a.isCommon && !b.isCommon) return -1;
+      if (!a.isCommon && b.isCommon) return 1;
+      return a.symbol.localeCompare(b.symbol);
+    });
+    
+    // Set tokens
+    setTokens(jupiterTokens);
+    
+    // Default to SOL and USDC
+    const solToken = jupiterTokens.find(t => t.symbol === 'SOL' || t.symbol === 'WSOL');
+    const usdcToken = jupiterTokens.find(t => t.symbol === 'USDC');
+    
+    if (solToken && !fromToken) setFromToken(solToken.address);
+    if (usdcToken && !toToken) setToToken(usdcToken.address);
   };
 
   return (
