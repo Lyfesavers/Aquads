@@ -75,6 +75,7 @@ const Swap = ({ currentUser, showNotification }) => {
   const [displayTokens, setDisplayTokens] = useState([]);
   const [showMoreTokens, setShowMoreTokens] = useState(false);
   const [hasMoreTokens, setHasMoreTokens] = useState(false);
+  const [showWalletSelector, setShowWalletSelector] = useState(false); // New state for wallet selector modal
 
   // Initialize on component mount
   useEffect(() => {
@@ -122,111 +123,117 @@ const Swap = ({ currentUser, showNotification }) => {
     };
   }, []);
   
-  // Connect wallet with explicit user approval
-  const connectWallet = async () => {
+  // Show wallet selection modal
+  const showWalletOptions = () => {
+    setShowWalletSelector(true);
+  };
+  
+  // Connect to specific wallet type
+  const connectToWallet = async (walletType) => {
     try {
       setLoading(true);
-      
-      // Check for Phantom wallet
-      const isPhantomInstalled = window.phantom?.solana?.isPhantom;
-      // Check for Solflare wallet
-      const isSolflareInstalled = window.solflare?.isSolflare;
-      // Check for Backpack wallet
-      const isBackpackInstalled = window.backpack?.isBackpack;
+      setShowWalletSelector(false);
       
       let provider = null;
-      let walletName = '';
       
-      if (isPhantomInstalled) {
+      if (walletType === 'Phantom' && window.phantom?.solana?.isPhantom) {
         provider = window.phantom.solana;
-        walletName = 'Phantom';
-      } else if (isSolflareInstalled) {
+      } else if (walletType === 'Solflare' && window.solflare?.isSolflare) {
         provider = window.solflare;
-        walletName = 'Solflare';
-      } else if (isBackpackInstalled) {
+      } else if (walletType === 'Backpack' && window.backpack?.isBackpack) {
         provider = window.backpack;
-        walletName = 'Backpack';
+      } else {
+        // Wallet not installed
+        showNotification(`${walletType} wallet not found. Please install it first.`, 'warning');
+        
+        // Open wallet installation page based on selected type
+        if (walletType === 'Phantom') {
+          window.open('https://phantom.app/', '_blank');
+        } else if (walletType === 'Solflare') {
+          window.open('https://solflare.com/', '_blank');
+        } else if (walletType === 'Backpack') {
+          window.open('https://backpack.app/', '_blank');
+        }
+        
+        setLoading(false);
+        return;
       }
       
-      if (provider) {
-        try {
-          logger.info(`Requesting connection to ${walletName} wallet...`);
-          
-          // Always disconnect first to ensure fresh connection with user approval
-          if (provider.isConnected) {
-            try {
-              // Attempt to disconnect silently first
-              await provider.disconnect();
-              logger.info('Disconnected existing wallet connection');
-            } catch (err) {
-              // Ignore errors during disconnect
-              logger.warn('Error during wallet disconnect:', err.message);
-            }
-          }
-          
-          // Request a fresh connection with explicit approval
-          const connectionPromise = provider.connect({ onlyIfTrusted: false });
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Wallet connection timed out. Please try again.')), 30000)
-          );
-          
-          showNotification(`Please check your ${walletName} wallet to approve the connection`, 'info');
-          
-          const resp = await Promise.race([connectionPromise, timeoutPromise]);
-          
-          if (!resp || !resp.publicKey) {
-            throw new Error('Wallet connection failed: No public key received');
-          }
-          
-          const publicKey = resp.publicKey.toString();
-          logger.info(`Wallet connected with user approval: ${publicKey}`);
-          
-          setWalletAddress(publicKey);
-          setWalletConnected(true);
-          setWalletType(walletName);
-          showNotification(`Connected to ${walletName} wallet`, 'success');
-          
-          // Set some timeout to ensure UI updates before attempting RPC calls
-          setTimeout(async () => {
-            try {
-              // Detect user tokens once wallet is connected
-              await detectUserTokens(publicKey);
-            } catch (e) {
-              logger.error("Error detecting tokens:", e);
-              showNotification("Connected to wallet, but couldn't fetch tokens", 'warning');
-            }
-          }, 500);
-          
-        } catch (error) {
-          logger.error(`Error connecting to ${walletName} wallet:`, error);
-          
-          // Provide more specific error messages for common wallet errors
-          let errorMessage = 'Connection error';
-          
-          if (error.message.includes('User rejected')) {
-            errorMessage = 'Connection rejected by user';
-          } else if (error.message.includes('timeout')) {
-            errorMessage = 'Connection timed out';
-          } else {
-            errorMessage = error.message;
-          }
-          
-          showNotification(`Wallet connection issue: ${errorMessage}`, 'error');
-          setLoading(false);
-        }
-      } else {
-        // No wallet installed
-        showNotification('Please install a Solana wallet like Phantom, Solflare, or Backpack', 'info');
-        setLoading(false);
+      try {
+        logger.info(`Requesting connection to ${walletType} wallet...`);
         
-        // Open wallet installation page
-        window.open('https://phantom.app/', '_blank');
+        // Always disconnect first to ensure fresh connection with user approval
+        if (provider.isConnected) {
+          try {
+            // Attempt to disconnect silently first
+            await provider.disconnect();
+            logger.info('Disconnected existing wallet connection');
+          } catch (err) {
+            // Ignore errors during disconnect
+            logger.warn('Error during wallet disconnect:', err.message);
+          }
+        }
+        
+        // Request a fresh connection with explicit approval
+        const connectionPromise = provider.connect({ onlyIfTrusted: false });
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Wallet connection timed out. Please try again.')), 30000)
+        );
+        
+        showNotification(`Please check your ${walletType} wallet to approve the connection`, 'info');
+        
+        const resp = await Promise.race([connectionPromise, timeoutPromise]);
+        
+        if (!resp || !resp.publicKey) {
+          throw new Error('Wallet connection failed: No public key received');
+        }
+        
+        const publicKey = resp.publicKey.toString();
+        logger.info(`Wallet connected with user approval: ${publicKey}`);
+        
+        setWalletAddress(publicKey);
+        setWalletConnected(true);
+        setWalletType(walletType);
+        showNotification(`Connected to ${walletType} wallet`, 'success');
+        
+        // Set some timeout to ensure UI updates before attempting RPC calls
+        setTimeout(async () => {
+          try {
+            // Detect user tokens once wallet is connected
+            await detectUserTokens(publicKey);
+          } catch (e) {
+            logger.error("Error detecting tokens:", e);
+            showNotification("Connected to wallet, but couldn't fetch tokens", 'warning');
+          }
+        }, 500);
+        
+      } catch (error) {
+        logger.error(`Error connecting to ${walletType} wallet:`, error);
+        
+        // Provide more specific error messages for common wallet errors
+        let errorMessage = 'Connection error';
+        
+        if (error.message.includes('User rejected')) {
+          errorMessage = 'Connection rejected by user';
+        } else if (error.message.includes('timeout')) {
+          errorMessage = 'Connection timed out';
+        } else {
+          errorMessage = error.message;
+        }
+        
+        showNotification(`Wallet connection issue: ${errorMessage}`, 'error');
       }
     } catch (error) {
       logger.error('Error connecting wallet:', error);
       showNotification('Failed to connect wallet: ' + error.message, 'error');
+    } finally {
       setLoading(false);
     }
+  };
+  
+  // Connect wallet - show wallet selection modal
+  const connectWallet = () => {
+    showWalletOptions();
   };
   
   // Check wallet connection on mount and set up listeners
@@ -1370,6 +1377,63 @@ const Swap = ({ currentUser, showNotification }) => {
     if (usdcToken && !toToken) setToToken(usdcToken.address);
   };
 
+  // Render wallet selector
+  const renderWalletSelector = () => {
+    const walletOptions = [
+      { type: 'Phantom', icon: 'https://phantom.app/img/phantom-logo.svg' },
+      { type: 'Solflare', icon: 'https://solflare.com/assets/logo.svg' },
+      { type: 'Backpack', icon: 'https://backpack.app/assets/backpack-logo.svg' }
+    ];
+    
+    return (
+      <div className="wallet-selector">
+        <div className="wallet-selector-header">
+          <h3>Select Wallet</h3>
+          <button 
+            onClick={() => setShowWalletSelector(false)}
+            className="close-button"
+          >
+            ✕
+          </button>
+        </div>
+        
+        <div className="wallet-options">
+          {walletOptions.map(wallet => (
+            <button
+              key={wallet.type}
+              className="wallet-option-button"
+              onClick={() => connectToWallet(wallet.type)}
+            >
+              <div className="wallet-option-icon">
+                <img 
+                  src={wallet.icon} 
+                  alt={wallet.type}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = `https://ui-avatars.com/api/?name=${wallet.type}&size=35&background=random`;
+                  }}
+                />
+              </div>
+              <span>{wallet.type}</span>
+            </button>
+          ))}
+        </div>
+        
+        <div className="wallet-selector-footer">
+          <p>Don't have a wallet?{' '}
+            <a 
+              href="https://phantom.app/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+            >
+              Get one here
+            </a>
+          </p>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="swap-container">
       <div className="swap-card">
@@ -1626,6 +1690,9 @@ const Swap = ({ currentUser, showNotification }) => {
       
       {/* Settings Modal */}
       {showSettings && renderSettings()}
+      
+      {/* Wallet Selector Modal */}
+      {showWalletSelector && renderWalletSelector()}
     </div>
   );
 };
