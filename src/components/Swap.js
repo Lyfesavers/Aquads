@@ -1490,7 +1490,7 @@ const Swap = ({ currentUser, showNotification }) => {
       const container = document.querySelector('.swap-container');
       if (container) {
         // Match the iframe container height from index.css (850px) with ample padding
-        container.style.paddingBottom = '120px';
+        container.style.paddingBottom = '100px';
         container.style.height = '100%';
         container.style.maxHeight = '850px';
         container.style.overflowY = 'auto';
@@ -1498,27 +1498,158 @@ const Swap = ({ currentUser, showNotification }) => {
         // Ensure buttons are always visible with proper positioning
         const buttonContainer = document.querySelector('.bottom-action-buttons');
         if (buttonContainer) {
-          // Set to position fixed for consistency between all views
+          // Use fixed positioning on mobile, static on larger screens
           buttonContainer.style.position = 'fixed';
           buttonContainer.style.bottom = '0';
           buttonContainer.style.left = '0';
           buttonContainer.style.right = '0';
           buttonContainer.style.width = '100%';
-          buttonContainer.style.backgroundColor = '#111827';
+          buttonContainer.style.backgroundColor = 'rgba(17, 24, 39, 0.9)'; // Semi-transparent background
+          buttonContainer.style.backdropFilter = 'blur(8px)'; // Glass effect
           buttonContainer.style.paddingTop = '15px';
-          buttonContainer.style.paddingBottom = 'max(15px, env(safe-area-inset-bottom, 15px))'; // Support iOS safe areas
+          buttonContainer.style.paddingBottom = 'max(15px, env(safe-area-inset-bottom, 15px))';
           buttonContainer.style.zIndex = '9999';
-          buttonContainer.style.boxShadow = '0 -4px 10px rgba(0, 0, 0, 0.3)';
-          buttonContainer.style.borderTop = '1px solid #374151';
+          buttonContainer.style.boxShadow = '0 -8px 16px -4px rgba(0, 0, 0, 0.3), 0 0 10px rgba(59, 130, 246, 0.2)';
+          buttonContainer.style.borderTop = '1px solid rgba(59, 130, 246, 0.3)';
           buttonContainer.style.margin = '0';
+          
+          // Get button elements and style them
+          const buttons = buttonContainer.querySelectorAll('button');
+          buttons.forEach(button => {
+            button.style.position = 'relative';
+            button.style.overflow = 'hidden';
+            button.style.transition = 'all 0.3s ease';
+            
+            // Add shine effect element to each button
+            const shine = document.createElement('div');
+            shine.style.position = 'absolute';
+            shine.style.top = '-50%';
+            shine.style.left = '-50%';
+            shine.style.width = '200%';
+            shine.style.height = '200%';
+            shine.style.background = 'linear-gradient(45deg, transparent 45%, rgba(255, 255, 255, 0.1) 50%, transparent 55%)';
+            shine.style.transform = 'rotate(25deg)';
+            shine.style.pointerEvents = 'none';
+            shine.style.zIndex = '1';
+            shine.style.animation = 'shine 3s infinite';
+            button.prepend(shine);
+          });
+        }
+      }
+      
+      // Add @keyframes for shine animation
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes shine {
+          0% { left: -100%; }
+          25%, 100% { left: 100%; }
         }
         
-        // Add a sentinel element at the bottom to prevent content from being hidden behind the fixed buttons
-        const sentinel = document.createElement('div');
-        sentinel.style.height = '100px';
-        sentinel.style.width = '100%';
-        container.appendChild(sentinel);
-      }
+        @keyframes pulse-border {
+          0%, 100% { border-color: rgba(59, 130, 246, 0.3); }
+          50% { border-color: rgba(59, 130, 246, 0.7); }
+        }
+        
+        @keyframes pulse-glow {
+          0%, 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); }
+          50% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.8), 0 0 25px rgba(59, 130, 246, 0.4); }
+        }
+        
+        .futuristic-input {
+          background: rgba(17, 24, 39, 0.6);
+          border: 1px solid rgba(59, 130, 246, 0.3);
+          border-radius: 8px;
+          transition: all 0.3s ease;
+          animation: pulse-border 4s infinite;
+        }
+        
+        .futuristic-input:focus {
+          background: rgba(17, 24, 39, 0.8);
+          border-color: rgba(59, 130, 246, 0.8);
+          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2), 0 0 15px rgba(59, 130, 246, 0.4);
+          animation: none;
+        }
+        
+        .futuristic-select {
+          background: rgba(17, 24, 39, 0.6);
+          border: 1px solid rgba(59, 130, 246, 0.3);
+          border-radius: 8px;
+          transition: all 0.3s ease;
+          animation: pulse-border 4s infinite;
+          background-image: linear-gradient(45deg, transparent 50%, rgba(59, 130, 246, 0.6) 50%),
+                            linear-gradient(135deg, rgba(59, 130, 246, 0.6) 50%, transparent 50%);
+          background-position: calc(100% - 20px) calc(1em + 2px),
+                               calc(100% - 15px) calc(1em + 2px);
+          background-size: 5px 5px,
+                           5px 5px;
+          background-repeat: no-repeat;
+        }
+        
+        .futuristic-select:focus {
+          background-color: rgba(17, 24, 39, 0.8);
+          border-color: rgba(59, 130, 246, 0.8);
+          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2), 0 0 15px rgba(59, 130, 246, 0.4);
+          animation: none;
+        }
+        
+        .tech-bg {
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .tech-bg::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: 
+            radial-gradient(circle at 10% 10%, rgba(59, 130, 246, 0.1) 0%, transparent 20%),
+            radial-gradient(circle at 90% 90%, rgba(124, 58, 237, 0.1) 0%, transparent 20%),
+            linear-gradient(60deg, rgba(17, 24, 39, 0) 0%, rgba(17, 24, 39, 0.6) 100%);
+          pointer-events: none;
+          z-index: -1;
+        }
+        
+        .tech-lines {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          overflow: hidden;
+          pointer-events: none;
+          z-index: -1;
+        }
+        
+        .tech-lines::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-image: 
+            linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px),
+            linear-gradient(0deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px);
+          background-size: 50px 50px;
+          background-position: center center;
+          opacity: 0.3;
+        }
+      `;
+      document.head.appendChild(style);
+      
+      // Apply futuristic classes to inputs and selects
+      const inputs = document.querySelectorAll('input');
+      inputs.forEach(input => {
+        input.classList.add('futuristic-input');
+      });
+      
+      const selects = document.querySelectorAll('select');
+      selects.forEach(select => {
+        select.classList.add('futuristic-select');
+      });
       
       // Notify parent to ensure proper sizing
       try {
@@ -2027,17 +2158,23 @@ const Swap = ({ currentUser, showNotification }) => {
   };
 
   return (
-    <div className="bg-gray-900 p-4 sm:p-6 rounded-lg shadow-lg w-full h-full text-white overflow-y-auto swap-container" style={{
+    <div className="bg-gray-900 p-4 sm:p-6 rounded-lg shadow-lg w-full h-full text-white overflow-y-auto swap-container tech-bg" style={{
       height: '100%',
       maxHeight: '850px', // Match the container height in index.css
       overflow: 'auto',
       WebkitOverflowScrolling: 'touch',
       display: 'flex',
       flexDirection: 'column',
-      paddingBottom: '120px', // Ensure sufficient space for buttons
+      paddingBottom: '100px', // Ensure sufficient space for buttons
       position: 'relative',
-      isolation: 'isolate'
+      isolation: 'isolate',
+      background: 'linear-gradient(135deg, #111827 0%, #1e2837 100%)',
+      borderRadius: '16px',
+      boxShadow: '0 10px 30px -5px rgba(2, 6, 23, 0.5), 0 0 2px rgba(59, 130, 246, 0.3), 0 0 20px rgba(59, 130, 246, 0.1) inset'
     }}>
+      {/* Add tech lines background */}
+      <div className="tech-lines"></div>
+      
       {/* Wallet Modal */}
       <WalletModal />
       
@@ -2046,15 +2183,28 @@ const Swap = ({ currentUser, showNotification }) => {
           src="/AquaSwap.svg" 
           alt="" 
           className="h-5 w-5 sm:h-6 sm:w-6 mr-2 inline-block"
-          style={{ verticalAlign: 'middle', marginTop: '-2px' }}
+          style={{ verticalAlign: 'middle', marginTop: '-2px', filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.6))' }}
           onError={(e) => {
             e.target.onerror = null;
             e.target.src = "/AquaSwap.png";
           }}
         />
-        AquaSwap 
+        <span style={{ 
+          background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          textShadow: '0 0 15px rgba(59, 130, 246, 0.5)'
+        }}>
+          AquaSwap
+        </span>
         {isSolanaFromChain && (
-          <span className="text-xs sm:text-sm font-normal text-blue-300 ml-2">powered by Jupiter</span>
+          <span className="text-xs sm:text-sm font-normal ml-2" style={{ 
+            background: 'linear-gradient(90deg, #38bdf8, #818cf8)', 
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
+            powered by Jupiter
+          </span>
         )}
       </h2>
       
@@ -2370,18 +2520,28 @@ const Swap = ({ currentUser, showNotification }) => {
         </div>
         
         {/* Fixed position action buttons */}
-        <div className="grid grid-cols-2 gap-3 flex-shrink-0 bottom-action-buttons fixed left-0 right-0 bottom-0 px-4 py-4 bg-gray-900 border-t border-gray-800 z-50">
+        <div className="grid grid-cols-2 gap-3 flex-shrink-0 bottom-action-buttons fixed left-0 right-0 bottom-0 px-4 py-4 bg-gray-900 bg-opacity-90 backdrop-blur-md border-t border-blue-500/30 z-50">
           <button
             onClick={getQuote}
             disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 sm:py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 text-sm shadow-lg"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 text-sm shadow-lg relative overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3), 0 0 0 1px rgba(59, 130, 246, 0.3), 0 0 20px rgba(59, 130, 246, 0.2) inset',
+              transform: 'translateZ(0)'
+            }}
           >
             {loading ? 'Loading...' : 'Get Quote'}
           </button>
           <button
             onClick={executeSwap}
             disabled={loading || !selectedRoute || !walletConnected}
-            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 sm:py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 text-sm shadow-lg"
+            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 text-sm shadow-lg relative overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, #16a34a 0%, #166534 100%)',
+              boxShadow: '0 4px 12px rgba(22, 163, 74, 0.3), 0 0 0 1px rgba(22, 163, 74, 0.3), 0 0 20px rgba(22, 163, 74, 0.2) inset',
+              transform: 'translateZ(0)'
+            }}
           >
             {loading ? 'Processing...' : 'Execute Swap'}
           </button>
