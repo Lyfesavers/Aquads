@@ -71,6 +71,9 @@ const Swap = ({ currentUser, showNotification }) => {
   const [selectingToken, setSelectingToken] = useState('from'); // 'from' or 'to'
   const [tokenSearch, setTokenSearch] = useState('');
   const [showSettings, setShowSettings] = useState(false);
+  const [displayTokens, setDisplayTokens] = useState([]);
+  const [showMoreTokens, setShowMoreTokens] = useState(false);
+  const [hasMoreTokens, setHasMoreTokens] = useState(false);
 
   // Initialize on component mount
   useEffect(() => {
@@ -724,23 +727,54 @@ const Swap = ({ currentUser, showNotification }) => {
     }
   };
   
+  // Effect to handle token pagination
+  useEffect(() => {
+    if (!showTokenSelector) return;
+    
+    const filteredTokens = getFilteredTokens();
+    const INITIAL_TOKEN_LIMIT = 20;
+    const LOAD_MORE_INCREMENT = 50;
+    
+    if (tokenSearch) {
+      // When searching, show all results
+      setDisplayTokens(filteredTokens);
+      setHasMoreTokens(false);
+    } else {
+      // Without search, paginate
+      if (showMoreTokens) {
+        // Show more tokens
+        setDisplayTokens(filteredTokens.slice(0, INITIAL_TOKEN_LIMIT + LOAD_MORE_INCREMENT));
+      } else {
+        // Show initial number of tokens
+        setDisplayTokens(filteredTokens.slice(0, INITIAL_TOKEN_LIMIT)); 
+      }
+      // Check if there are more tokens to show
+      setHasMoreTokens(filteredTokens.length > (showMoreTokens ? 
+        INITIAL_TOKEN_LIMIT + LOAD_MORE_INCREMENT : INITIAL_TOKEN_LIMIT));
+    }
+  }, [tokenSearch, showTokenSelector, showMoreTokens]);
+  
   // Filter tokens for selector
   const getFilteredTokens = () => {
-    if (!tokenSearch) {
-      // Show user tokens first, then common tokens, then all tokens
-      return [
-        ...tokens.filter(t => t.isUserToken),
-        ...tokens.filter(t => t.isCommon && !t.isUserToken),
-        ...tokens.filter(t => !t.isCommon && !t.isUserToken)
-      ];
+    // First apply search filter if any
+    let filtered = tokens;
+    
+    if (tokenSearch) {
+      const search = tokenSearch.toLowerCase();
+      filtered = tokens.filter(t => 
+        t.symbol.toLowerCase().includes(search) || 
+        t.name.toLowerCase().includes(search) ||
+        t.address.toLowerCase() === search
+      );
     }
     
-    const search = tokenSearch.toLowerCase();
-    return tokens.filter(t => 
-      t.symbol.toLowerCase().includes(search) || 
-      t.name.toLowerCase().includes(search) ||
-      t.address.toLowerCase() === search
-    );
+    // Then organize by priority
+    const userTokens = filtered.filter(t => t.isUserToken);
+    const commonTokens = filtered.filter(t => t.isCommon && !t.isUserToken);
+    const otherTokens = filtered.filter(t => !t.isCommon && !t.isUserToken);
+    
+    // Return prioritized list
+    return [...userTokens, ...commonTokens, ...otherTokens];
   };
   
   // Format display amount with appropriate decimals
@@ -760,13 +794,17 @@ const Swap = ({ currentUser, showNotification }) => {
   // Render token selector
   const renderTokenSelector = () => {
     const filteredTokens = getFilteredTokens();
-    
+  
     return (
       <div className="token-selector">
         <div className="token-selector-header">
           <h3>Select Token</h3>
           <button 
-            onClick={() => setShowTokenSelector(false)}
+            onClick={() => {
+              setShowTokenSelector(false);
+              setTokenSearch('');
+              setShowMoreTokens(false);
+            }}
             className="close-button"
           >
             ✕
@@ -779,48 +817,71 @@ const Swap = ({ currentUser, showNotification }) => {
             placeholder="Search by name or address"
             value={tokenSearch}
             onChange={(e) => setTokenSearch(e.target.value)}
+            autoFocus
           />
         </div>
         
         <div className="token-list">
-          {filteredTokens.length === 0 ? (
+          {displayTokens.length === 0 ? (
             <div className="no-tokens">No tokens found</div>
           ) : (
-            filteredTokens.map(token => (
-              <div 
-                key={token.address}
-                className={`token-item ${token.isUserToken ? 'user-token' : ''}`}
-                onClick={() => selectToken(token.address)}
-              >
-                <div className="token-icon">
-                  {token.logoURI ? (
-                    <img 
-                      src={token.logoURI} 
-                      alt={token.symbol}
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = `https://ui-avatars.com/api/?name=${token.symbol}&size=35&background=random`;
-                      }}
-                    />
-                  ) : (
-                    <div className="token-icon-placeholder">
-                      {token.symbol.slice(0, 2)}
-                    </div>
-                  )}
-                </div>
-                
-                <div className="token-info">
-                  <div className="token-name">
-                    {token.symbol}
-                    {token.isUserToken && (
-                      <span className="token-badge">In Wallet</span>
+            <>
+              {displayTokens.map(token => (
+                <div 
+                  key={token.address}
+                  className={`token-item ${token.isUserToken ? 'user-token' : ''}`}
+                  onClick={() => selectToken(token.address)}
+                >
+                  <div className="token-icon">
+                    {token.logoURI ? (
+                      <img 
+                        src={token.logoURI} 
+                        alt={token.symbol}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = `https://ui-avatars.com/api/?name=${token.symbol}&size=35&background=random`;
+                        }}
+                      />
+                    ) : (
+                      <div className="token-icon-placeholder">
+                        {token.symbol.slice(0, 2)}
+                      </div>
                     )}
                   </div>
-                  <div className="token-full-name">{token.name}</div>
+                  
+                  <div className="token-info">
+                    <div className="token-name">
+                      {token.symbol}
+                      {token.isUserToken && (
+                        <span className="token-badge">In Wallet</span>
+                      )}
+                      {token.isCommon && !token.isUserToken && (
+                        <span className="token-badge common">Popular</span>
+                      )}
+                    </div>
+                    <div className="token-full-name">{token.name}</div>
+                  </div>
                 </div>
-              </div>
-            ))
+              ))}
+              
+              {hasMoreTokens && (
+                <div className="load-more-container">
+                  <button 
+                    className="load-more-button"
+                    onClick={() => setShowMoreTokens(true)}
+                  >
+                    Load more tokens
+                  </button>
+                </div>
+              )}
+            </>
           )}
+        </div>
+        
+        <div className="token-selector-footer">
+          <div className="token-count-info">
+            Showing {displayTokens.length} of {filteredTokens.length} tokens
+          </div>
         </div>
       </div>
     );
