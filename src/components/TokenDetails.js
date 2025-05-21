@@ -15,6 +15,7 @@ const TokenDetails = ({
   showDexFrame,
   selectedDex,
   onDexClick,
+  onCexClick,
   setShowDexFrame
 }) => {
   const timeRanges = [

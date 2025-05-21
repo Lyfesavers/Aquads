@@ -26,6 +26,33 @@ const DEX_OPTIONS = [
   }
 ];
 
+const CEX_OPTIONS = [
+  {
+    name: 'Binance',
+    icon: '📊',
+    url: 'https://www.binance.com/en/trade/BTC_USDT',
+    description: 'Binance Exchange'
+  },
+  {
+    name: 'Coinbase',
+    icon: '💱',
+    url: 'https://www.coinbase.com/price',
+    description: 'Coinbase Exchange'
+  },
+  {
+    name: 'OKX',
+    icon: '🔄',
+    url: 'https://www.okx.com/trade-spot',
+    description: 'OKX Exchange'
+  },
+  {
+    name: 'Bybit',
+    icon: '📈',
+    url: 'https://www.bybit.com/en-US/trade/spot/BTC/USDT',
+    description: 'Bybit Exchange'
+  }
+];
+
 const formatCurrency = (value) => {
   if (!value) return 'N/A';
   
@@ -182,6 +209,12 @@ const TokenList = ({ currentUser, showNotification }) => {
         iframe.src = dex.url;
       }
     }
+  };
+
+  // CEX integration
+  const handleCexClick = (cex) => {
+    setSelectedDex(cex);
+    setShowDexFrame(true);
   };
 
   const handleCloseReviews = () => {
@@ -400,7 +433,7 @@ const TokenList = ({ currentUser, showNotification }) => {
               >
                 <div className="flex items-center relative z-10">
                   <span className="mr-2 text-blue-400">🔄</span>
-                  <span className="font-semibold text-blue-300">Quick DEX Access</span>
+                  <span className="font-semibold text-blue-300">Quick Exchange Access</span>
                   <span className="ml-2 text-xs text-blue-400/70 bg-blue-500/10 px-2 py-1 rounded-full">Click to toggle</span>
                 </div>
                 <div className="flex items-center">
@@ -412,34 +445,68 @@ const TokenList = ({ currentUser, showNotification }) => {
               {showDexFrame && (
                 <div className="bg-gray-900/80 backdrop-blur-lg border border-blue-500/30 rounded-lg overflow-hidden mb-6">
                   <div className="bg-gray-800/90 p-4 border-b border-blue-500/30">
-                    <div className="flex flex-wrap gap-4 justify-center">
-                      {DEX_OPTIONS.map((dex) => (
-                        <button
-                          key={dex.name}
-                          onClick={() => handleDexClick(dex)}
-                          className={`
-                            flex items-center justify-center rounded-full overflow-hidden p-0
-                            ${selectedDex?.name === dex.name 
-                              ? 'bg-white border-2 border-blue-500' 
-                              : 'bg-white border border-gray-600 hover:border-blue-500/50'
-                            }
-                            transition-all duration-300 transform hover:scale-105
-                            shadow-[0_0_15px_rgba(59,130,246,0.2)]
-                            w-16 h-16
-                          `}
-                          title={dex.name}
-                        >
-                          <img 
-                            src={`/${dex.name}.svg`} 
-                            alt={dex.name}
-                            className="w-full h-full object-cover p-1"
-                            onError={(e) => {
-                              e.target.onerror = null;
-                              e.target.src = `/${dex.name}.png`;
-                            }}
-                          />
-                        </button>
-                      ))}
+                    <div className="flex flex-col gap-2">
+                      <div className="text-sm text-blue-300 mb-1">Decentralized Exchanges (DEX)</div>
+                      <div className="flex flex-wrap gap-4 justify-center">
+                        {DEX_OPTIONS.map((dex) => (
+                          <button
+                            key={dex.name}
+                            onClick={() => handleDexClick(dex)}
+                            className={`
+                              flex items-center justify-center rounded-full overflow-hidden p-0
+                              ${selectedDex?.name === dex.name && selectedDex?.type !== 'cex'
+                                ? 'bg-white border-2 border-blue-500' 
+                                : 'bg-white border border-gray-600 hover:border-blue-500/50'
+                              }
+                              transition-all duration-300 transform hover:scale-105
+                              shadow-[0_0_15px_rgba(59,130,246,0.2)]
+                              w-16 h-16
+                            `}
+                            title={dex.name}
+                          >
+                            <img 
+                              src={`/${dex.name}.svg`} 
+                              alt={dex.name}
+                              className="w-full h-full object-cover p-1"
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = `/${dex.name}.png`;
+                              }}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                      
+                      <div className="text-sm text-green-300 mt-4 mb-1">Centralized Exchanges (CEX)</div>
+                      <div className="flex flex-wrap gap-4 justify-center">
+                        {CEX_OPTIONS.map((cex) => (
+                          <button
+                            key={cex.name}
+                            onClick={() => handleCexClick({...cex, type: 'cex'})}
+                            className={`
+                              flex items-center justify-center rounded-full overflow-hidden p-0
+                              ${selectedDex?.name === cex.name && selectedDex?.type === 'cex'
+                                ? 'bg-white border-2 border-green-500' 
+                                : 'bg-white border border-gray-600 hover:border-green-500/50'
+                              }
+                              transition-all duration-300 transform hover:scale-105
+                              shadow-[0_0_15px_rgba(72,187,120,0.2)]
+                              w-16 h-16
+                            `}
+                            title={cex.name}
+                          >
+                            <img 
+                              src={`/${cex.name}.svg`} 
+                              alt={cex.name}
+                              className="w-full h-full object-cover p-1"
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = `/${cex.name}.png`;
+                              }}
+                            />
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
@@ -623,6 +690,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                             showDexFrame={showDexFrame}
                             selectedDex={selectedDex}
                             onDexClick={handleDexClick}
+                            onCexClick={handleCexClick}
                             setShowDexFrame={setShowDexFrame}
                           />
                         )}
