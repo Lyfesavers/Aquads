@@ -1489,21 +1489,42 @@ const Swap = ({ currentUser, showNotification }) => {
       // If in iframe, add specific styles for better iframe display
       const container = document.querySelector('.swap-container');
       if (container) {
-        // Add bottom padding and ensure content is scrollable
-        container.style.paddingBottom = '80px';
-        container.style.minHeight = '800px';
+        // Match the iframe container height from index.css (850px) with ample padding
+        container.style.paddingBottom = '120px';
+        container.style.height = '100%';
+        container.style.maxHeight = '850px';
+        container.style.overflowY = 'auto';
         
-        // Ensure buttons are always visible by styling the button container
+        // Ensure buttons are always visible with proper positioning
         const buttonContainer = document.querySelector('.bottom-action-buttons');
         if (buttonContainer) {
-          buttonContainer.style.position = 'sticky';
+          // Set to position fixed for consistency between all views
+          buttonContainer.style.position = 'fixed';
           buttonContainer.style.bottom = '0';
+          buttonContainer.style.left = '0';
+          buttonContainer.style.right = '0';
+          buttonContainer.style.width = '100%';
           buttonContainer.style.backgroundColor = '#111827';
-          buttonContainer.style.paddingTop = '10px';
-          buttonContainer.style.paddingBottom = '10px';
-          buttonContainer.style.zIndex = '10';
-          buttonContainer.style.boxShadow = '0 -4px 6px -1px rgba(0, 0, 0, 0.1)';
+          buttonContainer.style.paddingTop = '15px';
+          buttonContainer.style.paddingBottom = 'max(15px, env(safe-area-inset-bottom, 15px))'; // Support iOS safe areas
+          buttonContainer.style.zIndex = '9999';
+          buttonContainer.style.boxShadow = '0 -4px 10px rgba(0, 0, 0, 0.3)';
+          buttonContainer.style.borderTop = '1px solid #374151';
+          buttonContainer.style.margin = '0';
         }
+        
+        // Add a sentinel element at the bottom to prevent content from being hidden behind the fixed buttons
+        const sentinel = document.createElement('div');
+        sentinel.style.height = '100px';
+        sentinel.style.width = '100%';
+        container.appendChild(sentinel);
+      }
+      
+      // Notify parent to ensure proper sizing
+      try {
+        window.parent.postMessage({ type: 'iframe-height', height: 850 }, '*');
+      } catch (e) {
+        // Ignore errors from cross-origin frames
       }
     }
   }, []);
@@ -2007,16 +2028,15 @@ const Swap = ({ currentUser, showNotification }) => {
 
   return (
     <div className="bg-gray-900 p-4 sm:p-6 rounded-lg shadow-lg w-full h-full text-white overflow-y-auto swap-container" style={{
-      height: 'auto',
-      minHeight: 'min(800px, 85vh)', // Reduced from 90vh to leave space for browser UI
-      maxHeight: '100%',
-      overflow: 'auto !important',
+      height: '100%',
+      maxHeight: '850px', // Match the container height in index.css
+      overflow: 'auto',
       WebkitOverflowScrolling: 'touch',
       display: 'flex',
       flexDirection: 'column',
-      paddingBottom: '100px', // Increased padding at bottom for mobile
-      position: 'relative', // Ensure positioning context
-      isolation: 'isolate' // Create stacking context
+      paddingBottom: '120px', // Ensure sufficient space for buttons
+      position: 'relative',
+      isolation: 'isolate'
     }}>
       {/* Wallet Modal */}
       <WalletModal />
@@ -2350,18 +2370,18 @@ const Swap = ({ currentUser, showNotification }) => {
         </div>
         
         {/* Fixed position action buttons */}
-        <div className="grid grid-cols-2 gap-3 flex-shrink-0 bottom-action-buttons fixed left-0 right-0 bottom-0 px-4 py-3 bg-gray-900 border-t border-gray-800 z-50 sm:static sm:border-0 sm:px-0 sm:py-0">
+        <div className="grid grid-cols-2 gap-3 flex-shrink-0 bottom-action-buttons fixed left-0 right-0 bottom-0 px-4 py-4 bg-gray-900 border-t border-gray-800 z-50">
           <button
             onClick={getQuote}
             disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 sm:py-2 px-4 rounded-lg transition duration-200 disabled:opacity-50 text-sm shadow-lg"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 sm:py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 text-sm shadow-lg"
           >
             {loading ? 'Loading...' : 'Get Quote'}
           </button>
           <button
             onClick={executeSwap}
             disabled={loading || !selectedRoute || !walletConnected}
-            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 sm:py-2 px-4 rounded-lg transition duration-200 disabled:opacity-50 text-sm shadow-lg"
+            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 sm:py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 text-sm shadow-lg"
           >
             {loading ? 'Processing...' : 'Execute Swap'}
           </button>
