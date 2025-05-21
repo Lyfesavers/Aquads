@@ -308,6 +308,9 @@ const Swap = ({ currentUser, showNotification }) => {
       let tokenAccounts = null;
       let error = null;
       
+      // Set loading indicator but don't block UI
+      const loadingId = setTimeout(() => setLoading(true), 300);
+      
       // Try each endpoint until one works
       for (const endpoint of SOLANA_RPC_ENDPOINTS) {
         try {
@@ -318,7 +321,7 @@ const Swap = ({ currentUser, showNotification }) => {
           
           // Get token accounts with a timeout to prevent hanging
           const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('RPC request timeout')), 10000)
+            setTimeout(() => reject(new Error('RPC request timeout')), 8000)
           );
           
           tokenAccounts = await Promise.race([
@@ -338,6 +341,10 @@ const Swap = ({ currentUser, showNotification }) => {
         }
       }
       
+      // Clear loading timeout and state if fast enough
+      clearTimeout(loadingId);
+      setLoading(false);
+      
       // If all endpoints failed
       if (!tokenAccounts) {
         throw error || new Error('All RPC endpoints failed');
@@ -346,24 +353,32 @@ const Swap = ({ currentUser, showNotification }) => {
       // Store token balances
       const balances = {};
       
-      // Filter for tokens with non-zero balance
-      const userTokenAddresses = tokenAccounts.value
-        .filter(account => {
-          const tokenAmount = account.account.data.parsed.info.tokenAmount;
-          const amount = parseInt(tokenAmount.amount);
+      // Process token accounts in batches to avoid UI freezing
+      await new Promise(resolve => {
+        // Use setTimeout to yield to the browser's event loop
+        setTimeout(() => {
+          // Filter for tokens with non-zero balance
+          const userTokenAddresses = tokenAccounts.value
+            .filter(account => {
+              const tokenAmount = account.account.data.parsed.info.tokenAmount;
+              const amount = parseInt(tokenAmount.amount);
+              
+              if (amount > 0) {
+                // Store balance information
+                balances[account.account.data.parsed.info.mint] = {
+                  amount: amount,
+                  decimals: tokenAmount.decimals,
+                  uiAmount: tokenAmount.uiAmount
+                };
+                return true;
+              }
+              return false;
+            })
+            .map(account => account.account.data.parsed.info.mint);
           
-          if (amount > 0) {
-            // Store balance information
-            balances[account.account.data.parsed.info.mint] = {
-              amount: amount,
-              decimals: tokenAmount.decimals,
-              uiAmount: tokenAmount.uiAmount
-            };
-            return true;
-          }
-          return false;
-        })
-        .map(account => account.account.data.parsed.info.mint);
+          resolve(userTokenAddresses);
+        }, 0);
+      });
       
       // Also check SOL balance
       try {
@@ -389,38 +404,43 @@ const Swap = ({ currentUser, showNotification }) => {
       // Save balances
       setTokenBalances(balances);
       
-      // Mark tokens in the main token list as user tokens
-      const updatedTokens = tokens.map(token => ({
-        ...token,
-        isUserToken: userTokenAddresses.includes(token.address) || (token.symbol === 'SOL' && balances['SOL'])
-      }));
-      
-      // Update the token list
-      setTokens(updatedTokens);
-      
-      // Extract user tokens
-      const userTokensList = updatedTokens.filter(token => 
-        userTokenAddresses.includes(token.address) || (token.symbol === 'SOL' && balances['SOL'])
-      );
-      
-      setUserTokens(userTokensList);
-      
-      logger.info(`Found ${userTokensList.length} tokens in user wallet`);
-      
-      // If from token not set and user has SOL, default to SOL
-      if (!fromToken && userTokensList.length > 0) {
-        const solToken = userTokensList.find(t => t.symbol === 'SOL' || t.symbol === 'WSOL');
-        if (solToken) {
-          setFromToken(solToken.address);
-        } else if (userTokensList.length > 0) {
-          // Or use the first user token
-          setFromToken(userTokensList[0].address);
+      // Use a non-blocking update for token list to avoid UI freezing
+      setTimeout(() => {
+        // Mark tokens in the main token list as user tokens
+        const updatedTokens = tokens.map(token => ({
+          ...token,
+          isUserToken: balances[token.address] != null
+        }));
+        
+        // Update the token list
+        setTokens(updatedTokens);
+        
+        // Extract user tokens
+        const userTokensList = updatedTokens.filter(token => 
+          balances[token.address] != null
+        );
+        
+        setUserTokens(userTokensList);
+        
+        logger.info(`Found ${userTokensList.length} tokens in user wallet`);
+        
+        // If from token not set and user has SOL, default to SOL
+        if (!fromToken && userTokensList.length > 0) {
+          const solToken = userTokensList.find(t => t.symbol === 'SOL' || t.symbol === 'WSOL');
+          if (solToken) {
+            setFromToken(solToken.address);
+          } else if (userTokensList.length > 0) {
+            // Or use the first user token
+            setFromToken(userTokensList[0].address);
+          }
         }
-      }
+      }, 0);
+      
     } catch (error) {
       logger.error('Error detecting user tokens:', error);
       // Don't let token detection failure break the app
       showNotification('Could not fetch wallet tokens, but you can still trade', 'warning');
+      setLoading(false);
     }
   };
   
@@ -693,66 +713,60 @@ const Swap = ({ currentUser, showNotification }) => {
     }, 500);
   };
   
-  // Open token selector
+  // Open token selector with optimized loading
   const openTokenSelector = (type) => {
     setSelectingToken(type);
-    setShowTokenSelector(true);
     setTokenSearch('');
+    setShowMoreTokens(false);
+    
+    // Pre-filter just the common tokens first before showing the modal
+    // to prevent UI freezing when opening the selector
+    const commonTokens = tokens.filter(t => t.isCommon || t.isUserToken);
+    // Initially just show top tokens for immediate response
+    setDisplayTokens(commonTokens.slice(0, 10));
+    setShowTokenSelector(true);
+    
+    // Then load the rest with a slight delay
+    setTimeout(() => {
+      const filteredTokens = getFilteredTokens();
+      const INITIAL_TOKEN_LIMIT = 20;
+      
+      // Show full initial set after short delay
+      setDisplayTokens(filteredTokens.slice(0, INITIAL_TOKEN_LIMIT));
+      setHasMoreTokens(filteredTokens.length > INITIAL_TOKEN_LIMIT);
+    }, 100);
   };
   
   // Select token and close selector
   const selectToken = (address) => {
-    if (selectingToken === 'from') {
-      if (address === toToken) {
-        // If selecting the same token as "to", switch them
-        setToToken(fromToken);
-      }
-      setFromToken(address);
-    } else {
-      if (address === fromToken) {
-        // If selecting the same token as "from", switch them
-        setFromToken(toToken);
-      }
-      setToToken(address);
-    }
-    
+    // Close immediately to prevent freezing
     setShowTokenSelector(false);
     
-    // Get new quote if we have an amount
-    if (fromAmount && parseFloat(fromAmount) > 0) {
-      // Short delay to allow state to update
-      setTimeout(() => {
-        getQuote();
-      }, 500);
-    }
-  };
-  
-  // Effect to handle token pagination
-  useEffect(() => {
-    if (!showTokenSelector) return;
-    
-    const filteredTokens = getFilteredTokens();
-    const INITIAL_TOKEN_LIMIT = 20;
-    const LOAD_MORE_INCREMENT = 50;
-    
-    if (tokenSearch) {
-      // When searching, show all results
-      setDisplayTokens(filteredTokens);
-      setHasMoreTokens(false);
-    } else {
-      // Without search, paginate
-      if (showMoreTokens) {
-        // Show more tokens
-        setDisplayTokens(filteredTokens.slice(0, INITIAL_TOKEN_LIMIT + LOAD_MORE_INCREMENT));
+    // Process selection after UI update
+    setTimeout(() => {
+      if (selectingToken === 'from') {
+        if (address === toToken) {
+          // If selecting the same token as "to", switch them
+          setToToken(fromToken);
+        }
+        setFromToken(address);
       } else {
-        // Show initial number of tokens
-        setDisplayTokens(filteredTokens.slice(0, INITIAL_TOKEN_LIMIT)); 
+        if (address === fromToken) {
+          // If selecting the same token as "from", switch them
+          setFromToken(toToken);
+        }
+        setToToken(address);
       }
-      // Check if there are more tokens to show
-      setHasMoreTokens(filteredTokens.length > (showMoreTokens ? 
-        INITIAL_TOKEN_LIMIT + LOAD_MORE_INCREMENT : INITIAL_TOKEN_LIMIT));
-    }
-  }, [tokenSearch, showTokenSelector, showMoreTokens]);
+      
+      // Get new quote if we have an amount
+      if (fromAmount && parseFloat(fromAmount) > 0) {
+        // Delay to allow state to update
+        setTimeout(() => {
+          getQuote();
+        }, 300);
+      }
+    }, 50);
+  };
   
   // Filter tokens for selector
   const getFilteredTokens = () => {
@@ -777,6 +791,39 @@ const Swap = ({ currentUser, showNotification }) => {
     return [...userTokens, ...commonTokens, ...otherTokens];
   };
   
+  // Effect to handle token pagination - with performance optimizations
+  useEffect(() => {
+    if (!showTokenSelector) return;
+    
+    // Throttle the filtering operation
+    const timeoutId = setTimeout(() => {
+      const filteredTokens = getFilteredTokens();
+      const INITIAL_TOKEN_LIMIT = 20; // Reduced from potentially larger value
+      const LOAD_MORE_INCREMENT = 30; // Reduced from 50 for better performance
+      
+      if (tokenSearch) {
+        // When searching, limit maximum results to prevent UI freezing
+        const limitedResults = filteredTokens.slice(0, 100); // Cap at 100 search results
+        setDisplayTokens(limitedResults);
+        setHasMoreTokens(filteredTokens.length > 100);
+      } else {
+        // Without search, paginate with smaller chunks
+        if (showMoreTokens) {
+          // Show more tokens
+          setDisplayTokens(filteredTokens.slice(0, INITIAL_TOKEN_LIMIT + LOAD_MORE_INCREMENT));
+        } else {
+          // Show initial number of tokens
+          setDisplayTokens(filteredTokens.slice(0, INITIAL_TOKEN_LIMIT)); 
+        }
+        // Check if there are more tokens to show
+        setHasMoreTokens(filteredTokens.length > (showMoreTokens ? 
+          INITIAL_TOKEN_LIMIT + LOAD_MORE_INCREMENT : INITIAL_TOKEN_LIMIT));
+      }
+    }, 100); // Small delay for better performance
+    
+    return () => clearTimeout(timeoutId);
+  }, [tokenSearch, showTokenSelector, showMoreTokens, tokens]);
+  
   // Format display amount with appropriate decimals
   const formatDisplayAmount = (amount, decimals = 6) => {
     if (!amount) return '';
@@ -795,6 +842,67 @@ const Swap = ({ currentUser, showNotification }) => {
   const renderTokenSelector = () => {
     const filteredTokens = getFilteredTokens();
   
+    // Render token list items efficiently
+    const renderTokenItems = () => {
+      if (displayTokens.length === 0) {
+        return <div className="no-tokens">No tokens found</div>;
+      }
+
+      return (
+        <>
+          {displayTokens.map(token => (
+            <div 
+              key={token.address}
+              className={`token-item ${token.isUserToken ? 'user-token' : ''}`}
+              onClick={() => selectToken(token.address)}
+            >
+              <div className="token-icon">
+                {token.logoURI ? (
+                  <img 
+                    src={token.logoURI} 
+                    alt={token.symbol}
+                    loading="lazy" // Add lazy loading for images
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = `https://ui-avatars.com/api/?name=${token.symbol}&size=35&background=random`;
+                    }}
+                  />
+                ) : (
+                  <div className="token-icon-placeholder">
+                    {token.symbol.slice(0, 2)}
+                  </div>
+                )}
+              </div>
+              
+              <div className="token-info">
+                <div className="token-name">
+                  {token.symbol}
+                  {token.isUserToken && (
+                    <span className="token-badge">In Wallet</span>
+                  )}
+                  {token.isCommon && !token.isUserToken && (
+                    <span className="token-badge common">Popular</span>
+                  )}
+                </div>
+                <div className="token-full-name">{token.name}</div>
+              </div>
+            </div>
+          ))}
+          
+          {hasMoreTokens && (
+            <div className="load-more-container">
+              <button 
+                className="load-more-button"
+                onClick={() => setShowMoreTokens(true)}
+              >
+                Load more tokens
+              </button>
+            </div>
+          )}
+        </>
+      );
+    };
+
     return (
       <div className="token-selector">
         <div className="token-selector-header">
@@ -822,60 +930,7 @@ const Swap = ({ currentUser, showNotification }) => {
         </div>
         
         <div className="token-list">
-          {displayTokens.length === 0 ? (
-            <div className="no-tokens">No tokens found</div>
-          ) : (
-            <>
-              {displayTokens.map(token => (
-                <div 
-                  key={token.address}
-                  className={`token-item ${token.isUserToken ? 'user-token' : ''}`}
-                  onClick={() => selectToken(token.address)}
-                >
-                  <div className="token-icon">
-                    {token.logoURI ? (
-                      <img 
-                        src={token.logoURI} 
-                        alt={token.symbol}
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = `https://ui-avatars.com/api/?name=${token.symbol}&size=35&background=random`;
-                        }}
-                      />
-                    ) : (
-                      <div className="token-icon-placeholder">
-                        {token.symbol.slice(0, 2)}
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="token-info">
-                    <div className="token-name">
-                      {token.symbol}
-                      {token.isUserToken && (
-                        <span className="token-badge">In Wallet</span>
-                      )}
-                      {token.isCommon && !token.isUserToken && (
-                        <span className="token-badge common">Popular</span>
-                      )}
-                    </div>
-                    <div className="token-full-name">{token.name}</div>
-                  </div>
-                </div>
-              ))}
-              
-              {hasMoreTokens && (
-                <div className="load-more-container">
-                  <button 
-                    className="load-more-button"
-                    onClick={() => setShowMoreTokens(true)}
-                  >
-                    Load more tokens
-                  </button>
-                </div>
-              )}
-            </>
-          )}
+          {renderTokenItems()}
         </div>
         
         <div className="token-selector-footer">

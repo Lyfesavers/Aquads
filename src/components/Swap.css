@@ -425,6 +425,9 @@
   max-height: 50vh;
   overflow-y: auto;
   padding-right: 8px;
+  will-change: transform;
+  contain: content;
+  overscroll-behavior: contain;
 }
 
 .token-list::-webkit-scrollbar {
@@ -453,7 +456,10 @@
   border-radius: 8px;
   padding: 12px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.1s ease;
+  contain: layout;
+  will-change: opacity;
+  height: 60px; /* Fixed height to prevent layout shifts */
 }
 
 .token-item:hover {
@@ -686,4 +692,10 @@
   font-size: 0.75rem;
   color: #9ca3af;
   text-align: center;
+}
+
+/* Token selector optimizations */
+.token-icon img {
+  contain: strict;
+  will-change: transform;
 } 
