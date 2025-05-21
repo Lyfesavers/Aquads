@@ -18,32 +18,6 @@ const DEX_OPTIONS = [
     description: 'TurboSwap DEX'
   },
   {
-    name: 'PancakeSwap',
-    icon: '🥞',
-    url: 'https://pancakeswap.finance/swap'
-  },
-  {
-    name: 'Uniswap',
-    icon: '🦄',
-    url: 'https://app.uniswap.org/#/swap'
-  },
-  {
-    name: 'SushiSwap',
-    icon: '🍣',
-    url: 'https://app.sushi.com/swap'
-  },
-  {
-    name: 'Raydium',
-    icon: '☀️',
-    url: 'https://raydium.io/swap/'
-  },
-  {
-    name: 'Jupiter',
-    icon: '🪐',
-    url: 'https://jup.ag/',
-    description: 'Popular DEX'
-  },
-  {
     name: 'AquaSwap',
     icon: '💧',
     url: '/swap',
