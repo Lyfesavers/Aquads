@@ -87,6 +87,55 @@ const Swap = ({ currentUser, showNotification }) => {
     });
   };
   
+  // Add this helper function at the beginning of the component to handle token errors
+  const ensureSolanaTokensAvailable = (tokensObject) => {
+    // Check if Solana tokens exist
+    if (!tokensObject['SOL'] || tokensObject['SOL'].length === 0) {
+      logger.warn('No Solana tokens found, adding fallback tokens');
+      
+      // Add fallback Solana tokens
+      tokensObject['SOL'] = [
+        {
+          address: '11111111111111111111111111111111', // Native SOL
+          chainId: 'SOL',
+          name: 'Solana',
+          symbol: 'SOL',
+          decimals: 9,
+          logoURI: 'https://raw.githubusercontent.com/lifinance/types/main/src/assets/icons/chains/solana.svg',
+          isUserToken: true
+        },
+        {
+          address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
+          chainId: 'SOL',
+          name: 'USD Coin',
+          symbol: 'USDC',
+          decimals: 6,
+          logoURI: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png',
+          isUserToken: true
+        },
+        {
+          address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDT
+          chainId: 'SOL',
+          name: 'Tether USD',
+          symbol: 'USDT',
+          decimals: 6,
+          logoURI: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png',
+          isUserToken: true
+        }
+      ];
+    }
+    
+    // Ensure no Solana tokens have 0x prefixes
+    if (tokensObject['SOL'] && tokensObject['SOL'].length > 0) {
+      tokensObject['SOL'] = tokensObject['SOL'].map(token => ({
+        ...token,
+        address: token.address.replace(/^0x/, '')
+      }));
+    }
+    
+    return tokensObject;
+  };
+  
   useEffect(() => {
     if (!LIFI_API_KEY) {
       logger.error('LIFI_API_KEY is not set in environment variables');
@@ -201,17 +250,25 @@ const Swap = ({ currentUser, showNotification }) => {
           }
         });
         
+        // Debug chain response
+        logger.info('Li.Fi chains response received', {
+          chainCount: response.data.chains?.length || 0 
+        });
+        
         // Check if Solana is included in the chains
         const solanaChain = response.data.chains.find(chain => 
           chain.key?.toLowerCase() === 'sol' || 
           chain.name?.toLowerCase() === 'solana' ||
-          chain.chainType === 'SVM'
+          chain.chainType === 'SVM' ||
+          chain.id === 'SOL'
         );
         
         // If Solana is not included in the response but we know it's supported,
         // add it manually to ensure it always appears
         if (!solanaChain) {
-          response.data.chains.push({
+          logger.info('Adding Solana chain manually as it was not found in the Li.Fi response');
+          
+          const solanaChainEntry = {
             key: 'sol',
             chainType: 'SVM',
             name: 'Solana',
@@ -219,27 +276,67 @@ const Swap = ({ currentUser, showNotification }) => {
             id: 'SOL', // Solana uses string IDs in li.fi
             mainnet: true,
             logoURI: 'https://raw.githubusercontent.com/lifinance/types/main/src/assets/icons/chains/solana.svg'
-          });
+          };
+          
+          response.data.chains.push(solanaChainEntry);
+          logger.info('Added Solana chain:', solanaChainEntry);
+        } else {
+          logger.info('Solana chain found:', solanaChain);
         }
         
         setChains(response.data.chains);
         
         if (response.data.chains.length > 0) {
-          // Default to Ethereum
-          const ethereumChain = response.data.chains.find(chain => chain.name.toLowerCase().includes('ethereum')) || response.data.chains[0];
-          setFromChain(ethereumChain.id);
-          
-          // Default to a different chain for "to" (like Polygon)
-          const polygonChain = response.data.chains.find(chain => chain.name.toLowerCase().includes('polygon'));
-          if (polygonChain && polygonChain.id !== ethereumChain.id) {
-            setToChain(polygonChain.id);
-          } else {
-            setToChain(response.data.chains[0].id);
+          // If user has a wallet connected, we want to default to their current chain
+          // Otherwise default to a popular chain
+          if (walletConnected && walletType === 'solana') {
+            const solChain = response.data.chains.find(c => 
+              c.key?.toLowerCase() === 'sol' || 
+              c.name?.toLowerCase() === 'solana' ||
+              c.chainType === 'SVM' ||
+              c.id === 'SOL'
+            );
+            
+            if (solChain) {
+              logger.info('Setting default chain to Solana based on connected wallet');
+              setFromChain(solChain.id);
+              setToChain(solChain.id);
+              setIsSolanaFromChain(true);
+              setIsSolanaToChain(true);
+              return;
+            }
           }
+          
+          // Default to Ethereum if no wallet is connected
+          const ethereumChain = response.data.chains.find(chain => 
+            chain.name.toLowerCase().includes('ethereum')
+          ) || response.data.chains[0];
+          
+          setFromChain(ethereumChain.id);
+          setToChain(ethereumChain.id); // Same chain approach
         }
       } catch (error) {
         logger.error('Error fetching chains:', error);
         setError('Failed to load blockchain networks. Please try again later.');
+        
+        // Fallback: add Solana manually if the request failed
+        const fallbackChains = [
+          {
+            key: 'sol',
+            chainType: 'SVM',
+            name: 'Solana',
+            coin: 'SOL',
+            id: 'SOL',
+            mainnet: true,
+            logoURI: 'https://raw.githubusercontent.com/lifinance/types/main/src/assets/icons/chains/solana.svg'
+          }
+        ];
+        
+        setChains(fallbackChains);
+        setFromChain('SOL');
+        setToChain('SOL');
+        setIsSolanaFromChain(true);
+        setIsSolanaToChain(true);
       }
     };
     fetchChains();
@@ -250,7 +347,7 @@ const Swap = ({ currentUser, showNotification }) => {
         styleEl.parentNode.removeChild(styleEl);
       }
     };
-  }, [LIFI_API_KEY]);
+  }, [LIFI_API_KEY, walletConnected, walletType]);
 
   // Fetch all tokens for multiple chains at once
   useEffect(() => {
@@ -278,7 +375,8 @@ const Swap = ({ currentUser, showNotification }) => {
         
         let response;
         
-        if (hasSolanaChain) {
+              if (hasSolanaChain) {
+        try {
           // For Solana, include SVM chain type and request a comprehensive token list
           response = await axios.get(`https://li.quest/v1/tokens?chains=${chainsToFetch}&chainTypes=EVM,SVM&includeAllTokens=true`, {
             headers: {
@@ -301,29 +399,20 @@ const Swap = ({ currentUser, showNotification }) => {
               has0xPrefix: t.address.startsWith('0x')
             })));
           }
-          
-          // If there are no Solana tokens, manually add some common ones
-          if (!response.data.tokens['SOL'] || response.data.tokens['SOL'].length === 0) {
-            response.data.tokens['SOL'] = [
-              {
-                address: '11111111111111111111111111111111', // System program address for native SOL
-                chainId: 'SOL',
-                name: 'Solana',
-                symbol: 'SOL',
-                decimals: 9,
-                logoURI: 'https://raw.githubusercontent.com/lifinance/types/main/src/assets/icons/chains/solana.svg'
-              },
-              {
-                address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC on Solana
-                chainId: 'SOL',
-                name: 'USD Coin',
-                symbol: 'USDC',
-                decimals: 6,
-                logoURI: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png'
-              },
-              // Additional Solana tokens as fallback...
-            ];
+        } catch (solanaTokenError) {
+          logger.error('Error fetching Solana tokens:', solanaTokenError);
+          // Create a basic response structure if none exists
+          if (!response) {
+            response = { data: { tokens: {} } };
+          } else if (!response.data) {
+            response.data = { tokens: {} };
+          } else if (!response.data.tokens) {
+            response.data.tokens = {};
           }
+        }
+        
+        // Always ensure we have some Solana tokens available
+        response.data.tokens = ensureSolanaTokensAvailable(response.data.tokens);
         } else {
           // Regular EVM token request
           response = await axios.get(`https://li.quest/v1/tokens?chains=${chainsToFetch}&includeAllTokens=true`, {
@@ -417,7 +506,7 @@ const Swap = ({ currentUser, showNotification }) => {
     };
     
     fetchAllTokens();
-  }, [fromChain, toChain, LIFI_API_KEY, chains]);
+  }, [fromChain, toChain, LIFI_API_KEY, chains, isSolanaFromChain, isSolanaToChain]);
 
   // Handle chain changes
   const handleFromChainChange = (e) => {
@@ -1328,15 +1417,24 @@ const Swap = ({ currentUser, showNotification }) => {
         });
         
         try {
-          // Use the Solana-specific endpoint directly for Solana chains
+          // Use the Solana-specific endpoint directly for Solana chains - THIS IS THE KEY FIX
+          // The /v1/solana/quote endpoint should be used instead of /v1/quote for Solana chain
           const solanaResponse = await axios.get('https://li.quest/v1/solana/quote', {
             headers: {
               'x-lifi-api-key': LIFI_API_KEY
             },
             params: {
-              ...requestParams,
-              fromToken: cleanFromToken,
-              toToken: cleanToToken
+              fromChain: 'SOL',                  // Must be 'SOL' for Solana
+              toChain: 'SOL',                    // Must be 'SOL' for Solana swaps
+              fromToken: cleanFromToken,         // Solana token address with NO 0x prefix
+              toToken: cleanToToken,             // Solana token address with NO 0x prefix
+              fromAmount: fromAmountInWei,
+              fromAddress: walletAddress,
+              toAddress: walletAddress,
+              slippage: slippage.toString(),
+              fee: feeDecimal.toString(),
+              integrator: 'AquaSwap',
+              referrer: FEE_RECIPIENT
             }
           });
           
@@ -1351,8 +1449,36 @@ const Swap = ({ currentUser, showNotification }) => {
         } catch (solanaError) {
           logger.error('Solana quote error:', solanaError);
           
+          // More detailed logging for diagnosis
+          logger.error('Detailed Solana quote debug info:', {
+            endpoint: 'https://li.quest/v1/solana/quote',
+            fromChain: 'SOL',
+            toChain: 'SOL', 
+            fromToken: {
+              value: cleanFromToken,
+              has0xPrefix: cleanFromToken?.startsWith('0x'),
+              length: cleanFromToken?.length
+            },
+            toToken: {
+              value: cleanToToken,
+              has0xPrefix: cleanToToken?.startsWith('0x'),
+              length: cleanToToken?.length
+            },
+            walletConnected,
+            selectedFromTokenSymbol: selectedFromToken?.symbol,
+            selectedToTokenSymbol: selectedToToken?.symbol,
+            errorStatus: solanaError.response?.status,
+            errorMessage: solanaError.response?.data?.message || solanaError.message
+          });
+          
           if (solanaError.response?.status === 404) {
-            setError(`The requested swap (${selectedFromToken.symbol} to ${selectedToToken.symbol}) is not available on Solana. Please try different tokens.`);
+            // Provide more helpful error message for 404 errors, which are common with incorrect token formats
+            setError(`The requested Solana swap (${selectedFromToken?.symbol || 'unknown'} to ${selectedToToken?.symbol || 'unknown'}) is not available. This could be due to unsupported tokens or incorrect token addresses.`);
+            
+            // Show notification with Li.Fi API information for reference
+            if (showNotification) {
+              showNotification('Try using the Li.Fi widget directly: https://li.fi', 'info');
+            }
           } else if (solanaError.response?.data?.message) {
             setError(`Solana API Error: ${solanaError.response.data.message}`);
           } else {
