@@ -55,6 +55,8 @@
     "three": "^0.175.0",
     "tiptap-markdown": "^0.8.10",
     "uuid": "^11.0.5",
+    "viem": "^2.30.0",
+    "wagmi": "^2.15.4",
     "web-vitals": "^4.2.4"
   },
   "scripts": {

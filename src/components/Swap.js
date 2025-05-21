@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { LiFiWidget, WidgetEvent } from '@lifi/widget';
-import { createTheme, ThemeProvider } from '@mui/material';
 import logger from '../utils/logger';
 import './Swap.css';
 
@@ -35,35 +33,11 @@ const hideDuckHuntStyle = `
   </style>
 `;
 
-// Create a custom theme matching AquaSwap's aesthetic
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#1D9BF0', // AquaSwap blue
-    },
-    secondary: {
-      main: '#38E8C6', // Secondary teal color
-    },
-    background: {
-      default: '#0A1929',
-      paper: '#12263F',
-    },
-    text: {
-      primary: '#ffffff',
-      secondary: '#B0B7C3',
-    },
-  },
-  typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-  },
-  shape: {
-    borderRadius: 12,
-  },
-});
-
 const Swap = ({ currentUser, showNotification }) => {
-  // Track widget events
-  const [widgetEvents, setWidgetEvents] = useState([]);
+  const [isClientSide, setIsClientSide] = useState(false);
+  const [lifiLoaded, setLifiLoaded] = useState(false);
+  const [LiFiWidget, setLiFiWidget] = useState(null);
+  const [error, setError] = useState(null);
 
   // Initialize on component mount
   useEffect(() => {
@@ -97,6 +71,24 @@ const Swap = ({ currentUser, showNotification }) => {
         }
       });
     }, 2000);
+
+    setIsClientSide(true);
+    
+    // Try to dynamically load LiFi widget
+    const loadLifiWidget = async () => {
+      try {
+        // Dynamically import the LiFi widget
+        const lifiModule = await import('@lifi/widget');
+        setLiFiWidget(() => lifiModule.LiFiWidget);
+        setLifiLoaded(true);
+        logger.info('LiFi widget loaded successfully');
+      } catch (err) {
+        logger.error('Failed to load LiFi widget:', err);
+        setError('Could not load the swap widget. Please try again later.');
+      }
+    };
+    
+    loadLifiWidget();
     
     // Cleanup
     return () => {
@@ -107,75 +99,76 @@ const Swap = ({ currentUser, showNotification }) => {
     };
   }, []);
   
-  // Define LiFi widget configuration
-  const widgetConfig = {
-    integrator: 'AquaSwap', // Your platform name for tracking
-    fee: FEE_PERCENTAGE, // 0.5% fee
-    toAddress: FEE_WALLET, // Fee recipient
-    containerStyle: {
-      width: '100%',
-      height: '640px',
-      border: 'none',
-      borderRadius: '16px',
-    },
-    theme: {
-      palette: {
-        primary: { main: '#1D9BF0' },
-        secondary: { main: '#38E8C6' },
-        background: {
-          default: '#0A1929',
-          paper: '#12263F',
-        },
-      },
-    },
-    appearance: 'dark',
-    variant: 'expandable', // 'drawer', 'expandable', or 'wide'
-    disableI18n: false,
-    hiddenUI: [
-      'appearance',
-      'poweredBy', // Remove if you want to keep LiFi branding
-    ],
-    languages: {
-      en: {
-        title: 'AquaSwap',
-        subtitle: 'Powered by LiFi',
-        footer: `All swaps include a ${FEE_PERCENTAGE}% platform fee`,
-      },
-    },
-  };
+  // Render fallback UI if LiFi widget fails to load
+  if (error) {
+    return (
+      <div className="swap-container">
+        <div className="swap-card">
+          <div className="swap-header">
+            <h2>
+              <img 
+                src="/AquaSwap.svg" 
+                alt="AquaSwap" 
+                className="aquaswap-logo" 
+                width="24" 
+                height="24"
+              />
+              AquaSwap
+            </h2>
+          </div>
+          <div className="swap-body">
+            <div className="error-message">
+              {error}
+            </div>
+            <p className="fallback-message">
+              We're experiencing technical difficulties with our swap interface. Please try again later or use one of these alternatives:
+            </p>
+            <div className="fallback-links">
+              <a href="https://jup.ag" target="_blank" rel="noopener noreferrer" className="fallback-link">
+                Jupiter (Solana)
+              </a>
+              <a href="https://app.uniswap.org" target="_blank" rel="noopener noreferrer" className="fallback-link">
+                Uniswap (Ethereum)
+              </a>
+              <a href="https://li.fi" target="_blank" rel="noopener noreferrer" className="fallback-link">
+                Li.Fi (Cross-chain)
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  // Handle widget events
-  const handleWidgetEvents = (event) => {
-    const { type, data } = event;
-    
-    setWidgetEvents((prev) => [...prev, event]);
-    logger.info(`LiFi widget event: ${type}`, data);
-    
-    switch (type) {
-      case WidgetEvent.RouteExecutionStarted:
-        showNotification('Swap started!', 'info');
-        break;
-      case WidgetEvent.RouteExecutionCompleted:
-        showNotification('Swap completed successfully!', 'success');
-        break;
-      case WidgetEvent.RouteExecutionFailed:
-        showNotification(`Swap failed: ${data?.error?.message || 'Unknown error'}`, 'error');
-        break;
-      case WidgetEvent.RouteHighValueLoss:
-        showNotification('Warning: High value loss detected on this route', 'warning');
-        break;
-      case WidgetEvent.WalletConnected:
-        showNotification(`Wallet connected: ${data?.address?.slice(0, 6)}...${data?.address?.slice(-4)}`, 'success');
-        break;
-      case WidgetEvent.WalletDisconnected:
-        showNotification('Wallet disconnected', 'info');
-        break;
-      default:
-        // No notification for other events
-        break;
-    }
-  };
+  // Show loading state while LiFi is being loaded
+  if (!lifiLoaded || !isClientSide) {
+    return (
+      <div className="swap-container">
+        <div className="swap-card">
+          <div className="swap-header">
+            <h2>
+              <img 
+                src="/AquaSwap.svg" 
+                alt="AquaSwap" 
+                className="aquaswap-logo" 
+                width="24" 
+                height="24"
+              />
+              AquaSwap
+            </h2>
+          </div>
+          <div className="swap-body">
+            <div className="loading-container">
+              <div className="loading-spinner"></div>
+              <p>Loading swap interface...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
+  // Once LiFi is loaded, conditionally render it
   return (
     <div className="swap-container">
       <div className="swap-card lifi-container">
@@ -192,15 +185,53 @@ const Swap = ({ currentUser, showNotification }) => {
           </h2>
         </div>
         
-        <ThemeProvider theme={theme}>
+        {LiFiWidget && (
           <LiFiWidget
-            config={widgetConfig}
-            onEvent={handleWidgetEvents}
             integrator="AquaSwap"
             fee={FEE_PERCENTAGE}
             toAddress={FEE_WALLET}
+            config={{
+              appearance: 'dark',
+              variant: 'expandable',
+              hiddenUI: ['appearance', 'poweredBy'],
+              containerStyle: {
+                width: '100%',
+                height: '640px',
+                border: 'none',
+                borderRadius: '16px',
+              },
+              theme: {
+                palette: {
+                  primary: { main: '#1D9BF0' },
+                  secondary: { main: '#38E8C6' },
+                  background: {
+                    default: '#0A1929',
+                    paper: '#12263F',
+                  },
+                },
+              },
+              languages: {
+                en: {
+                  title: 'AquaSwap',
+                  subtitle: 'Powered by LiFi',
+                  footer: `All swaps include a ${FEE_PERCENTAGE}% platform fee`,
+                },
+              },
+            }}
+            onEvent={(event) => {
+              logger.info(`LiFi widget event: ${event.type}`);
+              
+              // Handle notifications
+              if (event.type === 'routeExecutionStarted') {
+                showNotification('Swap started!', 'info');
+              } else if (event.type === 'routeExecutionCompleted') {
+                showNotification('Swap completed successfully!', 'success');
+              } else if (event.type === 'routeExecutionFailed') {
+                showNotification(`Swap failed: ${event.data?.error?.message || 'Unknown error'}`, 'error');
+              }
+            }}
           />
-        </ThemeProvider>
+        )}
         
         <div className="powered-by">
           <div>Cross-chain swaps powered by <a href="https://li.fi" target="_blank" rel="noopener noreferrer">Li.Fi</a></div>

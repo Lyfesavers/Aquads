@@ -4,8 +4,11 @@
 
 [build.environment]
   NODE_VERSION = "18"
-  NPM_FLAGS = "--legacy-peer-deps"
+  NPM_FLAGS = "--legacy-peer-deps --force"
   DISABLE_ESLINT_PLUGIN = "true"
+  GENERATE_SOURCEMAP = "false"
+  BABEL_IMPORT_ATTRIBUTES_KEYWORD = "with"
+  SKIP_PREFLIGHT_CHECK = "true"
 
 # Function to prerender blog posts for social media crawlers
 [functions]
