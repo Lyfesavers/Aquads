@@ -1067,14 +1067,14 @@ div[data-testid="duck-hunt-button"],
 [id*="duck-hunt"],
 [id*="start-duck"],
 [class*="duck-hunt"] {
-  display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-  position: absolute !important;
-  height: 0 !important;
-  width: 0 !important;
-  overflow: hidden !important;
-  clip: rect(0 0 0 0) !important;
-  margin: -1px !important;
+  display: initial !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  position: fixed !important; /* Keep it fixed */
+  height: auto !important;
+  width: auto !important;
+  overflow: visible !important;
+  clip: auto !important;
+  margin: 0 !important;
 } 

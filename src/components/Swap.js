@@ -10,22 +10,6 @@ const FEE_WALLET = process.env.REACT_APP_FEE_WALLET || '6MtTEBWBXPTwbrVCqiHp4iTe
 // Style to hide unwanted UI elements
 const hideDuckHuntStyle = `
   <style>
-    /* Basic targeting for duck hunt buttons */
-    div[style*="position: fixed"][style*="bottom"][style*="right"],
-    div[data-testid="duck-hunt-button"],
-    [id*="duck-hunt"],
-    [id*="start-duck"],
-    [class*="duck-hunt"],
-    .start-duck-hunt,
-    #start-duck-hunt,
-    #duck-hunt-button,
-    .duck-hunt-button {
-      display: none !important;
-      visibility: hidden !important;
-      opacity: 0 !important;
-      pointer-events: none !important;
-    }
-    
     /* Notification button fix */
     .notification-button {
       z-index: 5 !important;
@@ -39,36 +23,10 @@ const Swap = ({ currentUser, showNotification }) => {
 
   // Initialize on component mount
   useEffect(() => {
-    // Style injection to hide unwanted UI elements
+    // Style injection for notification button fix
     const styleEl = document.createElement('div');
     styleEl.innerHTML = hideDuckHuntStyle;
     document.head.appendChild(styleEl);
-    
-    // Hide duck hunt buttons
-    const intervalId = setInterval(() => {
-      const hideSelectors = [
-        '#duck-hunt-button',
-        '#start-duck-hunt',
-        '.duck-hunt-button',
-        '.start-duck-hunt',
-        '[data-testid="duck-hunt-button"]'
-      ];
-      
-      hideSelectors.forEach(selector => {
-        try {
-          document.querySelectorAll(selector).forEach(el => {
-        if (el) {
-          el.style.display = 'none';
-          el.style.visibility = 'hidden';
-          el.style.opacity = '0';
-          el.style.pointerEvents = 'none';
-        }
-      });
-        } catch (e) {
-          // Ignore errors
-        }
-      });
-    }, 2000);
     
     // Load LiFi using iframe approach
     const loadLiFiWidget = () => {
@@ -81,7 +39,6 @@ const Swap = ({ currentUser, showNotification }) => {
     
     // Cleanup
     return () => {
-      clearInterval(intervalId);
       if (styleEl.parentNode) {
         styleEl.parentNode.removeChild(styleEl);
       }
