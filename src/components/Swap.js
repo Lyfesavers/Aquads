@@ -1380,7 +1380,7 @@ const Swap = ({ currentUser, showNotification }) => {
       // Fee as a decimal fraction (0.005 for 0.5%)
       const feeDecimal = FEE_PERCENTAGE / 100;
       
-      // Parse amount with proper decimals
+      // Parse amount with proper decimals - DEFINE fromAmountInWei HERE FOR ALL CODE PATHS
       let fromAmountInWei;
       try {
         // Special handling for Solana vs EVM chains
@@ -1402,6 +1402,33 @@ const Swap = ({ currentUser, showNotification }) => {
       let cleanFromToken = fromToken;
       let cleanToToken = toToken;
       
+      // Set up parameters according to Li.fi documentation
+      const requestParams = {
+        fromChain,
+        toChain: fromChain, // For same-chain swaps
+        fromAmount: fromAmountInWei,
+        fromAddress: walletAddress,
+        toAddress: walletAddress, // Same address for same-chain swaps
+        slippage: slippage.toString(),
+        // Apply fee according to Li.fi documentation
+        fee: feeDecimal.toString(), // Pass fee as decimal fraction (e.g., "0.005")
+        integrator: 'AquaSwap', // Your integration name
+        referrer: FEE_RECIPIENT, // Your fee recipient wallet
+      };
+      
+      logger.info(`Quote request for ${selectedFromToken.symbol} to ${selectedToToken.symbol} on ${isSolanaFromChain ? 'Solana' : 'EVM chain'}`);
+      
+      // Add detailed parameter logging
+      logger.info('Quote request parameters:', {
+        fromSymbol: selectedFromToken.symbol,
+        toSymbol: selectedToToken.symbol,
+        fromAmount: fromAmountInWei,
+        tokenDecimals: {
+          from: fromDecimals,
+          to: toDecimals
+        }
+      });
+
       if (isSolanaFromChain) {
         // For Solana, completely remove 0x prefix if present
         cleanFromToken = fromToken ? fromToken.replace(/^0x/, '') : '';
@@ -2528,31 +2555,6 @@ const Swap = ({ currentUser, showNotification }) => {
       }
     }
   };
-
-  // Add this after line 407 (where the requestParams are set, before additional debug logging)
-  // Set up parameters according to Li.fi documentation
-  const requestParams = {
-    fromChain,
-    toChain: fromChain, // For same-chain swaps
-    fromAmount: fromAmountInWei,
-    fromAddress: walletAddress,
-    toAddress: walletAddress, // Same address for same-chain swaps
-    slippage: slippage.toString(),
-    // Apply fee according to Li.fi documentation
-    fee: feeDecimal.toString(), // Pass fee as decimal fraction (e.g., "0.005")
-    integrator: 'AquaSwap', // Your integration name
-    referrer: FEE_RECIPIENT, // Your fee recipient wallet
-  };
-      
-  logger.info(`Quote request for ${selectedFromToken.symbol} to ${selectedToToken.symbol} on ${isSolanaFromChain ? 'Solana' : 'EVM chain'}`);
-  logger.info('Quote request parameters:', {
-    fromSymbol: selectedFromToken.symbol,
-    toSymbol: selectedToToken.symbol,
-    tokenDecimals: {
-      from: fromDecimals,
-      to: toDecimals
-    }
-  });
 
   // Update the token selection dropdown handlers to better handle Solana addresses
   const handleFromTokenChange = (e) => {
