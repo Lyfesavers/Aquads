@@ -260,21 +260,47 @@ const Swap = ({ currentUser, showNotification }) => {
       const chainsToFetch = Array.from(new Set([fromChain, toChain])).filter(Boolean).join(',');
       
       try {
-        // Handle special case for Solana tokens
-        const hasSolanaChain = chainsToFetch.includes('SOL') || 
-                               chains.some(c => 
-                                 chainsToFetch.includes(c.id) && 
-                                 (c.chainType === 'SVM' || c.key === 'sol')
-                               );
+        // Check if any of the chains is Solana
+        const hasSolanaChain = 
+          chainsToFetch.includes('SOL') || 
+          chains.some(c => 
+            chainsToFetch.includes(c.id) && 
+            (c.chainType === 'SVM' || c.key === 'sol')
+          );
+        
+        // Log chain detection
+        logger.info('Fetching tokens for chains:', {
+          chainsToFetch,
+          hasSolanaChain,
+          isSolanaFromChain,
+          isSolanaToChain
+        });
         
         let response;
+        
         if (hasSolanaChain) {
-          // Add SVM to chainTypes parameter for Solana (Single Value Machine)
+          // For Solana, include SVM chain type and request a comprehensive token list
           response = await axios.get(`https://li.quest/v1/tokens?chains=${chainsToFetch}&chainTypes=EVM,SVM&includeAllTokens=true`, {
             headers: {
               'x-lifi-api-key': LIFI_API_KEY
             }
           });
+          
+          // Process Solana tokens to ensure no 0x prefixes
+          if (response.data.tokens && response.data.tokens['SOL']) {
+            // Normalize Solana token addresses to remove any 0x prefixes
+            response.data.tokens['SOL'] = response.data.tokens['SOL'].map(token => ({
+              ...token,
+              address: token.address.replace(/^0x/, '') // Ensure no 0x prefix for Solana
+            }));
+            
+            // Debug sample of tokens
+            logger.info('Solana token samples:', response.data.tokens['SOL'].slice(0, 3).map(t => ({
+              symbol: t.symbol,
+              address: t.address,
+              has0xPrefix: t.address.startsWith('0x')
+            })));
+          }
           
           // If there are no Solana tokens, manually add some common ones
           if (!response.data.tokens['SOL'] || response.data.tokens['SOL'].length === 0) {
@@ -295,22 +321,7 @@ const Swap = ({ currentUser, showNotification }) => {
                 decimals: 6,
                 logoURI: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png'
               },
-              {
-                address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDT on Solana
-                chainId: 'SOL',
-                name: 'Tether USD',
-                symbol: 'USDT',
-                decimals: 6,
-                logoURI: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png'
-              },
-              {
-                address: 'So11111111111111111111111111111111111111112', // Wrapped SOL
-                chainId: 'SOL',
-                name: 'Wrapped SOL',
-                symbol: 'wSOL',
-                decimals: 9,
-                logoURI: 'https://raw.githubusercontent.com/lifinance/types/main/src/assets/icons/chains/solana.svg'
-              }
+              // Additional Solana tokens as fallback...
             ];
           }
         } else {
@@ -325,34 +336,77 @@ const Swap = ({ currentUser, showNotification }) => {
         // Store tokens by chain
         setTokens(response.data.tokens || {});
         
-        // Set tokens for from chain
-        if (fromChain && response.data.tokens[fromChain]) {
-          setFromChainTokens(response.data.tokens[fromChain]);
-          if (response.data.tokens[fromChain].length > 0) {
-            // Native token (ETH, MATIC, etc) is usually first
-            setFromToken(response.data.tokens[fromChain][0].address);
-          }
-        }
-        
-        // Set tokens for to chain
-        if (toChain && response.data.tokens[toChain]) {
-          setToChainTokens(response.data.tokens[toChain]);
-          if (response.data.tokens[toChain].length > 0) {
-            // Prefer a stablecoin like USDC/USDT for the "to" token if available
-            const stablecoin = response.data.tokens[toChain].find(t => 
+        // Handle Solana tokens specifically for correct formatting
+        if (isSolanaFromChain && response.data.tokens[fromChain]) {
+          const formattedTokens = response.data.tokens[fromChain].map(token => ({
+            ...token,
+            address: token.address.replace(/^0x/, '') // Ensure no 0x prefix for Solana
+          }));
+          
+          setFromChainTokens(formattedTokens);
+          setToChainTokens(formattedTokens); // Same chain
+          
+          if (formattedTokens.length > 0) {
+            // Set a native SOL token if available
+            const solToken = formattedTokens.find(t => 
+              t.symbol.toUpperCase() === 'SOL' || 
+              t.address === '11111111111111111111111111111111'
+            );
+            
+            if (solToken) {
+              setFromToken(solToken.address);
+              logger.info(`Set default Solana 'from' token: SOL (${solToken.address})`);
+            } else {
+              setFromToken(formattedTokens[0].address);
+            }
+            
+            // Prefer a stablecoin for "to" token
+            const stablecoin = formattedTokens.find(t => 
               t.symbol.toLowerCase() === 'usdc' || 
-              t.symbol.toLowerCase() === 'usdt' ||
-              t.symbol.toLowerCase() === 'dai'
+              t.symbol.toLowerCase() === 'usdt'
             );
             
             if (stablecoin) {
               setToToken(stablecoin.address);
-            } else if (response.data.tokens[toChain].length > 1) {
-              // Use second token if available to avoid same token
-              setToToken(response.data.tokens[toChain][1].address);
+              logger.info(`Set default Solana 'to' token: ${stablecoin.symbol} (${stablecoin.address})`);
+            } else if (formattedTokens.length > 1) {
+              setToToken(formattedTokens[1].address);
             } else {
-              // Fallback to first token
-              setToToken(response.data.tokens[toChain][0].address);
+              setToToken(formattedTokens[0].address);
+            }
+          }
+        }
+        // Handle regular EVM tokens 
+        else {
+          // Set tokens for from chain
+          if (fromChain && response.data.tokens[fromChain]) {
+            setFromChainTokens(response.data.tokens[fromChain]);
+            if (response.data.tokens[fromChain].length > 0) {
+              // Native token (ETH, MATIC, etc) is usually first
+              setFromToken(response.data.tokens[fromChain][0].address);
+            }
+          }
+          
+          // Set tokens for to chain
+          if (toChain && response.data.tokens[toChain]) {
+            setToChainTokens(response.data.tokens[toChain]);
+            if (response.data.tokens[toChain].length > 0) {
+              // Prefer a stablecoin like USDC/USDT for the "to" token if available
+              const stablecoin = response.data.tokens[toChain].find(t => 
+                t.symbol.toLowerCase() === 'usdc' || 
+                t.symbol.toLowerCase() === 'usdt' ||
+                t.symbol.toLowerCase() === 'dai'
+              );
+              
+              if (stablecoin) {
+                setToToken(stablecoin.address);
+              } else if (response.data.tokens[toChain].length > 1) {
+                // Use second token if available to avoid same token
+                setToToken(response.data.tokens[toChain][1].address);
+              } else {
+                // Fallback to first token
+                setToToken(response.data.tokens[toChain][0].address);
+              }
             }
           }
         }
@@ -567,6 +621,10 @@ const Swap = ({ currentUser, showNotification }) => {
           // Force the toChain to match fromChain (same-chain only approach)
           setToChain(matchedChain.id);
           
+          // Reset the isSolana flags since we know this is EVM
+          setIsSolanaFromChain(false);
+          setIsSolanaToChain(false);
+          
           // Trigger comprehensive token fetch for this chain
           setTimeout(() => {
             fetchAllAvailableTokens();
@@ -589,6 +647,10 @@ const Swap = ({ currentUser, showNotification }) => {
             setFromToken('');
             setToToken('');
             
+            // Reset Solana flags if switching to EVM chain
+            setIsSolanaFromChain(false);
+            setIsSolanaToChain(false);
+            
             // Fetch tokens for the new chain
             setTimeout(() => {
               fetchAllAvailableTokens();
@@ -597,23 +659,36 @@ const Swap = ({ currentUser, showNotification }) => {
         });
       } 
       else if (walletType === 'solana') {
-        // For Solana, we already know it's the Solana chain
+        // For Solana, we explicitly identify the Solana chain
         const solanaChain = chains.find(c => 
           c.key?.toLowerCase() === 'sol' || 
           c.name?.toLowerCase() === 'solana' ||
-          c.chainType === 'SVM'
+          c.chainType === 'SVM' ||
+          c.id === 'SOL'
         );
         
-        if (solanaChain) {
-          logger.info(`Auto-detected Solana chain: ${solanaChain.name} (${solanaChain.id})`);
-          setFromChain(solanaChain.id);
-          setToChain(solanaChain.id);
-          
-          // Trigger comprehensive token fetch for Solana
-          setTimeout(() => {
-            fetchAllAvailableTokens();
-          }, 500);
+        if (!solanaChain) {
+          logger.error('Could not find Solana chain in available chains. Chain data:', chains);
+          throw new Error('Solana chain not found in available chains');
         }
+        
+        logger.info(`Setting Solana chain: ${solanaChain.name} (${solanaChain.id})`);
+        setFromChain(solanaChain.id);
+        setToChain(solanaChain.id);
+        
+        // Explicitly set Solana flags to true
+        setIsSolanaFromChain(true);
+        setIsSolanaToChain(true);
+        
+        // For Solana, we need to make sure token addresses never have 0x prefixes
+        // Reset tokens to avoid potential format issues
+        setFromToken('');
+        setToToken('');
+        
+        // Trigger comprehensive token fetch for Solana
+        setTimeout(() => {
+          fetchAllAvailableTokens();
+        }, 500);
       }
     } catch (error) {
       logger.error('Error detecting chain:', error);
@@ -1135,12 +1210,29 @@ const Swap = ({ currentUser, showNotification }) => {
     try {
       // Enhanced token validation with detailed error reporting
       // Find the selected token to get its decimals
-      const selectedFromToken = fromChainTokens.find(token => 
-        token.address.toLowerCase() === fromToken.toLowerCase()
-      );
-      const selectedToToken = toChainTokens.find(token => 
-        token.address.toLowerCase() === toToken.toLowerCase()
-      );
+      const selectedFromToken = fromChainTokens.find(token => {
+        const normalizedTokenAddress = isSolanaFromChain 
+          ? token.address.replace(/^0x/, '')
+          : token.address.toLowerCase();
+        
+        const normalizedFromToken = isSolanaFromChain
+          ? fromToken.replace(/^0x/, '')
+          : fromToken.toLowerCase();
+        
+        return normalizedTokenAddress === normalizedFromToken;
+      });
+
+      const selectedToToken = toChainTokens.find(token => {
+        const normalizedTokenAddress = isSolanaToChain 
+          ? token.address.replace(/^0x/, '')
+          : token.address.toLowerCase();
+        
+        const normalizedToToken = isSolanaToChain
+          ? toToken.replace(/^0x/, '')
+          : toToken.toLowerCase();
+        
+        return normalizedTokenAddress === normalizedToToken;
+      });
       
       // Detailed logging to diagnose token issues
       logger.info('Token validation details:', {
@@ -1148,10 +1240,19 @@ const Swap = ({ currentUser, showNotification }) => {
         toToken,
         fromChain,
         toChain: fromChain, // Same-chain swaps
+        isSolanaFromChain,
+        isSolanaToChain,
+        normalizedFromToken: isSolanaFromChain ? fromToken.replace(/^0x/, '') : fromToken,
+        normalizedToToken: isSolanaToChain ? toToken.replace(/^0x/, '') : toToken,
         fromTokenFound: !!selectedFromToken,
         toTokenFound: !!selectedToToken,
         fromChainTokensCount: fromChainTokens.length,
-        toChainTokensCount: toChainTokens.length
+        toChainTokensCount: toChainTokens.length,
+        sampleFromTokens: fromChainTokens.slice(0, 3).map(t => ({
+          symbol: t.symbol,
+          address: t.address,
+          has0xPrefix: t.address.startsWith('0x')
+        }))
       });
       
       if (!selectedFromToken) {
@@ -1213,52 +1314,17 @@ const Swap = ({ currentUser, showNotification }) => {
       let cleanToToken = toToken;
       
       if (isSolanaFromChain) {
-        // For Solana, remove 0x prefix if present
-        cleanFromToken = fromToken.replace(/^0x/, '');
-        cleanToToken = toToken.replace(/^0x/, '');
-      } else {
-        // For EVM chains, ensure 0x prefix
-        if (!cleanFromToken.startsWith('0x')) {
-          cleanFromToken = '0x' + cleanFromToken;
-        }
-        if (!cleanToToken.startsWith('0x')) {
-          cleanToToken = '0x' + cleanToToken;
-        }
-      }
-      
-      // Set up parameters according to Li.fi documentation
-      const requestParams = {
-        fromChain,
-        toChain: fromChain, // For same-chain swaps
-        fromToken: cleanFromToken,
-        toToken: cleanToToken,
-        fromAmount: fromAmountInWei,
-        fromAddress: walletAddress,
-        toAddress: walletAddress, // Same address for same-chain swaps
-        slippage: slippage.toString(),
-        // Apply fee according to Li.fi documentation
-        fee: feeDecimal.toString(), // Pass fee as decimal fraction (e.g., "0.005")
-        integrator: 'AquaSwap', // Your integration name
-        referrer: FEE_RECIPIENT, // Your fee recipient wallet
-      };
-      
-      logger.info(`Quote request for ${selectedFromToken.symbol} to ${selectedToToken.symbol} on ${isSolanaFromChain ? 'Solana' : 'EVM chain'}`);
-      logger.info('Quote request parameters:', {
-        ...requestParams,
-        fromSymbol: selectedFromToken.symbol,
-        toSymbol: selectedToToken.symbol,
-        tokenDecimals: {
-          from: fromDecimals,
-          to: toDecimals
-        }
-      });
-      
-      // For Solana, always use the dedicated endpoint directly
-      if (isSolanaFromChain) {
+        // For Solana, completely remove 0x prefix if present
+        cleanFromToken = fromToken ? fromToken.replace(/^0x/, '') : '';
+        cleanToToken = toToken ? toToken.replace(/^0x/, '') : '';
+        
+        // Ensure we're using the Solana-specific endpoint
         logger.info('Using Solana-specific endpoint with params:', {
-          ...requestParams,
-          fromToken: selectedFromToken.symbol,
-          toToken: selectedToToken.symbol
+          fromChain,
+          toChain: fromChain,
+          fromToken: cleanFromToken,
+          toToken: cleanToToken,
+          fromAmount: fromAmountInWei
         });
         
         try {
@@ -1267,7 +1333,11 @@ const Swap = ({ currentUser, showNotification }) => {
             headers: {
               'x-lifi-api-key': LIFI_API_KEY
             },
-            params: requestParams
+            params: {
+              ...requestParams,
+              fromToken: cleanFromToken,
+              toToken: cleanToToken
+            }
           });
           
           if (solanaResponse.data && solanaResponse.data.routes && solanaResponse.data.routes.length > 0) {
@@ -1277,7 +1347,7 @@ const Swap = ({ currentUser, showNotification }) => {
             return;
           } else {
             throw new Error('No routes found for Solana swap');
-        }
+          }
         } catch (solanaError) {
           logger.error('Solana quote error:', solanaError);
           
@@ -1292,9 +1362,20 @@ const Swap = ({ currentUser, showNotification }) => {
           return;
         }
       } else {
-        // For non-Solana chains, use the standard endpoint
+        // For EVM chains, ensure 0x prefix
+        if (!cleanFromToken.startsWith('0x')) {
+          cleanFromToken = '0x' + cleanFromToken;
+        }
+        if (!cleanToToken.startsWith('0x')) {
+          cleanToToken = '0x' + cleanToToken;
+        }
+        
+        // Update request params with properly formatted tokens
+        requestParams.fromToken = cleanFromToken;
+        requestParams.toToken = cleanToToken;
+        
+        // Request quote from li.fi standard endpoint for EVM chains
         try {
-          // Request quote from li.fi standard endpoint for EVM chains
           const response = await axios.get('https://li.quest/v1/quote', {
             headers: {
               'x-lifi-api-key': LIFI_API_KEY
@@ -1622,160 +1703,24 @@ const Swap = ({ currentUser, showNotification }) => {
     };
   };
 
-  // Add a function to check balances of common Solana tokens
-  const checkCommonSolanaTokens = async (publicKey, solanaChain) => {
-    if (!solanaConnection || !publicKey) return [];
+  // Add this helper function near the top of the component to centralize address normalization
+  const normalizeTokenAddress = (address, chainType) => {
+    if (!address) return '';
     
-    const commonTokens = [
-      // Major stablecoins
-      {
-        address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
-        symbol: 'USDC',
-        name: 'USD Coin',
-        decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png'
-      },
-      {
-        address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDT
-        symbol: 'USDT',
-        name: 'Tether USD',
-        decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png'
-      },
-      {
-        address: 'So11111111111111111111111111111111111111112', // Wrapped SOL
-        symbol: 'wSOL',
-        name: 'Wrapped SOL',
-        decimals: 9,
-        logoURI: 'https://raw.githubusercontent.com/lifinance/types/main/src/assets/icons/chains/solana.svg'
-      },
-      // Liquid staking tokens
-      {
-        address: 'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So', // mSOL (Marinade Staked SOL)
-        symbol: 'mSOL',
-        name: 'Marinade Staked SOL',
-        decimals: 9,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So/logo.png'
-      },
-      {
-        address: '7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj', // stSOL (Lido Staked SOL)
-        symbol: 'stSOL',
-        name: 'Lido Staked SOL',
-        decimals: 9,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj/logo.png'
-      },
-      {
-        address: 'J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn', // jitoSOL
-        symbol: 'jitoSOL',
-        name: 'Jito Staked SOL',
-        decimals: 9,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn/logo.png'
-      },
-      {
-        address: 'bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1', // bSOL (Blaze SOL)
-        symbol: 'bSOL',
-        name: 'Blaze Staked SOL',
-        decimals: 9,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1/logo.png'
-      },
-      // Popular Solana tokens
-      {
-        address: 'Saber2gLauYim4Mvftnrasomsv6NvAuncvMEZwcLpD1', // SBR (Saber)
-        symbol: 'SBR',
-        name: 'Saber Protocol Token',
-        decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Saber2gLauYim4Mvftnrasomsv6NvAuncvMEZwcLpD1/logo.svg'
-      },
-      {
-        address: 'RLBxxFkseAZ4RgJH3Sqn8jXxhmGoz9jWxDNJMh8pL7a', // RAY (Raydium)
-        symbol: 'RAY',
-        name: 'Raydium',
-        decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/RLBxxFkseAZ4RgJH3Sqn8jXxhmGoz9jWxDNJMh8pL7a/logo.png'
-      },
-      {
-        address: 'orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE', // ORCA
-        symbol: 'ORCA',
-        name: 'Orca',
-        decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png'
-      },
-      {
-        address: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263', // BONK
-        symbol: 'BONK',
-        name: 'Bonk',
-        decimals: 5,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263/logo.png'
-      },
-      {
-        address: 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN', // JUP (Jupiter)
-        symbol: 'JUP',
-        name: 'Jupiter',
-        decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN/logo.png'
-      },
-      {
-        address: 'HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3', // PYTH
-        symbol: 'PYTH',
-        name: 'Pyth Network',
-        decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3/logo.png'
-      },
-      // Additional stablecoins
-      {
-        address: 'Dq5C6Zmg37MQinAZiKRyXpHEPpnXPprEFQiPYagHisZj', // USDCet (USDC from Ethereum on Wormhole)
-        symbol: 'USDCet',
-        name: 'USDC (Ethereum)',
-        decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png'
-      },
-      {
-        address: 'Ea5SjE2Y6yvCeW5dYTn7PYMuW5ikXkvbGdcmSnXeaLjS', // PAI
-        symbol: 'PAI',
-        name: 'PAI (Parrot USD)',
-        decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Ea5SjE2Y6yvCeW5dYTn7PYMuW5ikXkvbGdcmSnXeaLjS/logo.png'
-      }
-    ];
-    
-    const userTokens = [];
-    
-    // Check each token manually
-    for (const token of commonTokens) {
-      try {
-        // Create a token account address for this user and mint
-        const tokenMint = new solanaWeb3.PublicKey(token.address);
-        const tokenAccounts = await solanaConnection.getTokenAccountsByOwner(
-          publicKey,
-          { mint: tokenMint }
-        );
-        
-        // If user has this token
-        if (tokenAccounts.value.length > 0) {
-          // Get the most recent account
-          const tokenAccount = tokenAccounts.value[0];
-          const accountInfo = await solanaConnection.getTokenAccountBalance(tokenAccount.pubkey);
-          
-          if (accountInfo && accountInfo.value && parseFloat(accountInfo.value.uiAmount) > 0) {
-            userTokens.push({
-              ...token,
-              chainId: solanaChain.id,
-              isUserToken: true,
-              balance: accountInfo.value.uiAmount
-            });
-            
-            logger.info(`Found ${token.symbol} with balance: ${accountInfo.value.uiAmount}`);
-          }
-        }
-      } catch (err) {
-        logger.error(`Error checking balance for ${token.symbol}:`, err);
-      }
+    // For Solana addresses, remove any 0x prefix
+    if (chainType === 'solana') {
+      return address.replace(/^0x/, '');
     }
     
-    return userTokens;
+    // For EVM addresses, ensure 0x prefix exists
+    if (chainType === 'evm' && !address.startsWith('0x')) {
+      return '0x' + address;
+    }
+    
+    return address;
   };
 
-  // Improved function for scanning Solana wallet tokens
+  // Update the scanSolanaWalletTokens function to include explicit debugging
   const scanSolanaWalletTokens = async () => {
     if (!walletConnected || !walletAddress || walletType !== 'solana') {
       return;
@@ -1802,7 +1747,7 @@ const Swap = ({ currentUser, showNotification }) => {
       // Use predefined list of common Solana tokens to avoid RPC calls
       const commonSolanaTokens = [
         {
-          address: '11111111111111111111111111111111', // Native SOL
+          address: '11111111111111111111111111111111', // Native SOL - ENSURE NO 0x PREFIX
           chainId: solanaChain.id,
           name: 'Solana',
           symbol: 'SOL',
@@ -1811,7 +1756,7 @@ const Swap = ({ currentUser, showNotification }) => {
           isUserToken: true
         },
         {
-          address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
+          address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC - ENSURE NO 0x PREFIX
           chainId: solanaChain.id,
           name: 'USD Coin',
           symbol: 'USDC',
@@ -1820,8 +1765,8 @@ const Swap = ({ currentUser, showNotification }) => {
           isUserToken: true
         },
         {
-          address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDT
-          chainId: solanaChain.id,
+          address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDT on Solana
+          chainId: 'SOL',
           name: 'Tether USD',
           symbol: 'USDT',
           decimals: 6,
@@ -1830,7 +1775,7 @@ const Swap = ({ currentUser, showNotification }) => {
         },
         {
           address: 'So11111111111111111111111111111111111111112', // Wrapped SOL
-          chainId: solanaChain.id,
+          chainId: 'SOL',
           name: 'Wrapped SOL',
           symbol: 'wSOL',
           decimals: 9,
@@ -1839,7 +1784,7 @@ const Swap = ({ currentUser, showNotification }) => {
         },
         {
           address: 'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So', // mSOL (Marinade)
-          chainId: solanaChain.id,
+          chainId: 'SOL',
           name: 'Marinade Staked SOL',
           symbol: 'mSOL',
           decimals: 9,
@@ -1847,8 +1792,62 @@ const Swap = ({ currentUser, showNotification }) => {
           isUserToken: true
         },
         {
+          address: '7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj', // stSOL (Lido Staked SOL)
+          chainId: 'SOL',
+          name: 'Lido Staked SOL',
+          symbol: 'stSOL',
+          decimals: 9,
+          logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj/logo.png',
+          isUserToken: true
+        },
+        {
+          address: 'J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn', // jitoSOL
+          chainId: 'SOL',
+          name: 'Jito Staked SOL',
+          symbol: 'jitoSOL',
+          decimals: 9,
+          logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn/logo.png',
+          isUserToken: true
+        },
+        {
+          address: 'bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1', // bSOL (Blaze SOL)
+          chainId: 'SOL',
+          name: 'Blaze Staked SOL',
+          symbol: 'bSOL',
+          decimals: 9,
+          logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1/logo.png',
+          isUserToken: true
+        },
+        {
+          address: 'Saber2gLauYim4Mvftnrasomsv6NvAuncvMEZwcLpD1', // SBR (Saber)
+          chainId: 'SOL',
+          name: 'Saber Protocol Token',
+          symbol: 'SBR',
+          decimals: 6,
+          logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Saber2gLauYim4Mvftnrasomsv6NvAuncvMEZwcLpD1/logo.svg',
+          isUserToken: true
+        },
+        {
+          address: 'RLBxxFkseAZ4RgJH3Sqn8jXxhmGoz9jWxDNJMh8pL7a', // RAY (Raydium)
+          chainId: 'SOL',
+          name: 'Raydium',
+          symbol: 'RAY',
+          decimals: 6,
+          logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/RLBxxFkseAZ4RgJH3Sqn8jXxhmGoz9jWxDNJMh8pL7a/logo.png',
+          isUserToken: true
+        },
+        {
+          address: 'orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE', // ORCA
+          chainId: 'SOL',
+          name: 'Orca',
+          symbol: 'ORCA',
+          decimals: 6,
+          logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png',
+          isUserToken: true
+        },
+        {
           address: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263', // BONK
-          chainId: solanaChain.id,
+          chainId: 'SOL',
           name: 'Bonk',
           symbol: 'BONK',
           decimals: 5,
@@ -1856,36 +1855,84 @@ const Swap = ({ currentUser, showNotification }) => {
           isUserToken: true
         },
         {
-          address: 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN', // JUP
-          chainId: solanaChain.id,
+          address: 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN', // JUP (Jupiter)
+          chainId: 'SOL',
           name: 'Jupiter',
           symbol: 'JUP',
           decimals: 6,
           logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN/logo.png',
           isUserToken: true
+        },
+        {
+          address: 'HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3', // PYTH
+          chainId: 'SOL',
+          name: 'Pyth Network',
+          symbol: 'PYTH',
+          decimals: 6,
+          logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3/logo.png',
+          isUserToken: true
+        },
+        {
+          address: 'Dq5C6Zmg37MQinAZiKRyXpHEPpnXPprEFQiPYagHisZj', // USDCet (USDC from Ethereum on Wormhole)
+          chainId: 'SOL',
+          name: 'USDC (Ethereum)',
+          symbol: 'USDCet',
+          decimals: 6,
+          logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
+          isUserToken: true
+        },
+        {
+          address: 'Ea5SjE2Y6yvCeW5dYTn7PYMuW5ikXkvbGdcmSnXeaLjS', // PAI
+          chainId: 'SOL',
+          name: 'PAI (Parrot USD)',
+          symbol: 'PAI',
+          decimals: 6,
+          logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Ea5SjE2Y6yvCeW5dYTn7PYMuW5ikXkvbGdcmSnXeaLjS/logo.png',
+          isUserToken: true
         }
       ];
+      
+      // DEBUG: Log token addresses to ensure they have no 0x prefix
+      logger.info('Solana token addresses (should NOT have 0x prefix):', 
+        commonSolanaTokens.map(t => ({ symbol: t.symbol, address: t.address }))
+      );
       
       // Add the common tokens to our list
       const updatedTokens = [...currentTokenList];
       
-      // Add or update tokens
+      // Add or update tokens - ENSURE NO TOKEN HAS 0x PREFIX
       commonSolanaTokens.forEach(token => {
+        // Normalize the token address to remove any possible 0x prefix
+        const normalizedAddress = normalizeTokenAddress(token.address, 'solana');
+        
         const existingIndex = updatedTokens.findIndex(t => 
-          t.address.toLowerCase() === token.address.toLowerCase()
+          normalizeTokenAddress(t.address, 'solana').toLowerCase() === normalizedAddress.toLowerCase()
         );
         
         if (existingIndex >= 0) {
-          // Update existing token
+          // Update existing token - ensure address has no 0x prefix
           updatedTokens[existingIndex] = {
             ...updatedTokens[existingIndex],
+            address: normalizedAddress, // Ensure normalized
             isUserToken: true
           };
         } else {
-          // Add new token
-          updatedTokens.push(token);
+          // Add new token - ensure address has no 0x prefix
+          updatedTokens.push({
+            ...token,
+            address: normalizedAddress // Ensure normalized
+          });
         }
       });
+      
+      // Debug: Log the first few tokens to check address format
+      logger.info('Updated Solana tokens (sample):', 
+        updatedTokens.slice(0, 3).map(t => ({ 
+          symbol: t.symbol, 
+          address: t.address,
+          has0xPrefix: t.address.startsWith('0x')
+        }))
+      );
       
       // Update tokens state
       setTokens(prev => ({
@@ -2040,15 +2087,28 @@ const Swap = ({ currentUser, showNotification }) => {
         
         // Normalize token addresses based on chain type
         newTokens = newTokens.map(token => {
+          // Check chain type to ensure addresses are normalized correctly
+          const solanaChain = chains.find(c => 
+            c.key?.toLowerCase() === 'sol' || 
+            c.name?.toLowerCase() === 'solana' ||
+            c.chainType === 'SVM' ||
+            c.id === 'SOL'
+          );
+          
+          const isSolanaChain = fromChain === 'SOL' || 
+                                fromChain === solanaChain?.id || 
+                                isSolanaFromChain;
+                                
           // Ensure addresses are in correct format for the chain
-          if (isSolanaFromChain && token.address.startsWith('0x')) {
+          if (isSolanaChain) {
+            // For Solana, addresses should never have 0x prefix
             return {
               ...token,
               address: token.address.replace(/^0x/, '')
             };
           } 
           // For EVM chains, ensure addresses have 0x prefix
-          else if (!isSolanaFromChain && !token.address.startsWith('0x') && token.address !== '0') {
+          else if (!token.address.startsWith('0x') && token.address !== '0') {
             return {
               ...token,
               address: '0x' + token.address
@@ -2343,6 +2403,71 @@ const Swap = ({ currentUser, showNotification }) => {
     }
   };
 
+  // Add this after line 407 (where the requestParams are set, before additional debug logging)
+  // Set up parameters according to Li.fi documentation
+  const requestParams = {
+    fromChain,
+    toChain: fromChain, // For same-chain swaps
+    fromAmount: fromAmountInWei,
+    fromAddress: walletAddress,
+    toAddress: walletAddress, // Same address for same-chain swaps
+    slippage: slippage.toString(),
+    // Apply fee according to Li.fi documentation
+    fee: feeDecimal.toString(), // Pass fee as decimal fraction (e.g., "0.005")
+    integrator: 'AquaSwap', // Your integration name
+    referrer: FEE_RECIPIENT, // Your fee recipient wallet
+  };
+      
+  logger.info(`Quote request for ${selectedFromToken.symbol} to ${selectedToToken.symbol} on ${isSolanaFromChain ? 'Solana' : 'EVM chain'}`);
+  logger.info('Quote request parameters:', {
+    fromSymbol: selectedFromToken.symbol,
+    toSymbol: selectedToToken.symbol,
+    tokenDecimals: {
+      from: fromDecimals,
+      to: toDecimals
+    }
+  });
+
+  // Update the token selection dropdown handlers to better handle Solana addresses
+  const handleFromTokenChange = (e) => {
+    let tokenAddress = e.target.value;
+    if (isSolanaFromChain && tokenAddress.startsWith('0x')) {
+      tokenAddress = tokenAddress.replace(/^0x/, '');
+    } else if (!isSolanaFromChain && !tokenAddress.startsWith('0x') && tokenAddress !== '') {
+      tokenAddress = '0x' + tokenAddress;
+    }
+    setFromToken(tokenAddress);
+    
+    // If we're selecting the same token for both, reset the toToken
+    if (tokenAddress === toToken) {
+      // Find an alternative token
+      const alternativeToken = fromChainTokens.find(t => 
+        t.address !== tokenAddress && 
+        (t.symbol === 'USDC' || t.symbol === 'USDT' || t.isUserToken)
+      );
+      
+      if (alternativeToken) {
+        let altTokenAddress = alternativeToken.address;
+        if (isSolanaToChain && altTokenAddress.startsWith('0x')) {
+          altTokenAddress = altTokenAddress.replace(/^0x/, '');
+        } else if (!isSolanaToChain && !altTokenAddress.startsWith('0x') && altTokenAddress !== '') {
+          altTokenAddress = '0x' + altTokenAddress;
+        }
+        setToToken(altTokenAddress);
+      }
+    }
+  };
+
+  const handleToTokenChange = (e) => {
+    let tokenAddress = e.target.value;
+    if (isSolanaToChain && tokenAddress.startsWith('0x')) {
+      tokenAddress = tokenAddress.replace(/^0x/, '');
+    } else if (!isSolanaToChain && !tokenAddress.startsWith('0x') && tokenAddress !== '') {
+      tokenAddress = '0x' + tokenAddress;
+    }
+    setToToken(tokenAddress);
+  };
+
   return (
     <div className="bg-gray-900 p-4 sm:p-6 rounded-lg shadow-lg w-full text-white overflow-y-auto swap-container" style={{
       height: '100%',
@@ -2489,13 +2614,7 @@ const Swap = ({ currentUser, showNotification }) => {
                 <label className="block text-gray-400 mb-2 text-xs sm:text-sm font-medium">From Token</label>
                 <select 
                   value={fromToken}
-                  onChange={(e) => {
-                    let tokenAddress = e.target.value;
-                    if (isSolanaFromChain && tokenAddress.startsWith('0x')) {
-                      tokenAddress = tokenAddress.substring(2);
-                    }
-                    setFromToken(tokenAddress);
-                  }}
+                  onChange={handleFromTokenChange}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                   disabled={!fromChain || fromChainTokens.length === 0}
                 >
@@ -2537,13 +2656,7 @@ const Swap = ({ currentUser, showNotification }) => {
                 <label className="block text-gray-400 mb-2 text-xs sm:text-sm font-medium">To Token</label>
                 <select 
                   value={toToken}
-                  onChange={(e) => {
-                    let tokenAddress = e.target.value;
-                    if (isSolanaToChain && tokenAddress.startsWith('0x')) {
-                      tokenAddress = tokenAddress.substring(2);
-                    }
-                    setToToken(tokenAddress);
-                  }}
+                  onChange={handleToTokenChange}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                   disabled={!toChain || toChainTokens.length === 0}
                 >
