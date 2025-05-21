@@ -43,193 +43,23 @@ const Swap = ({ currentUser, showNotification }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const iframeRef = useRef(null);
-  const iframeContainer = useRef(null);
+  const containerRef = useRef(null);
 
-  // Custom approach to hide Duck Hunt without affecting main page
+  // Initialize on component mount
   useEffect(() => {
-    // Initial load delay
-    const loadTimer = setTimeout(() => {
+    // Load widget after a short delay
+    setTimeout(() => {
       setLoading(false);
     }, 1000);
-
-    // Set up MutationObserver to watch for Duck Hunt button in the iframe
-    const setupDuckHuntRemoval = () => {
-      if (!iframeRef.current || !iframeContainer.current) return;
-
-      try {
-        // Try periodically to access iframe contents (if same origin)
-        const cleanupInterval = setInterval(() => {
-          try {
-            // If we can access the iframe content document
-            if (iframeRef.current.contentDocument) {
-              const doc = iframeRef.current.contentDocument;
-              
-              // Hide all duck hunt buttons
-              const selectors = [
-                'div[style*="position: fixed"][style*="bottom"][style*="right"]',
-                'div[data-testid="duck-hunt-button"]',
-                'div[class*="DuckHuntWidget"]',
-                'button[class*="duck-hunt"]',
-                '[id*="duck-hunt"]',
-                '[id*="start-duck"]',
-                '[class*="duck-hunt"]',
-                '.start-duck-hunt',
-                '#start-duck-hunt',
-                '#duck-hunt-button',
-                '.duck-hunt-button'
-              ];
-              
-              selectors.forEach(selector => {
-                const elements = doc.querySelectorAll(selector);
-                if (elements.length > 0) {
-                  console.log(`Found ${elements.length} duck hunt elements`);
-                  elements.forEach(el => el.remove());
-                }
-              });
-              
-              // Also inject a style to continuously hide it
-              if (!doc.getElementById('duck-hunt-blocker')) {
-                const style = doc.createElement('style');
-                style.id = 'duck-hunt-blocker';
-                style.textContent = `
-                  div[style*="position: fixed"][style*="bottom"][style*="right"],
-                  div[data-testid="duck-hunt-button"],
-                  div[class*="DuckHuntWidget"],
-                  button[class*="duck-hunt"],
-                  [id*="duck-hunt"],
-                  [id*="start-duck"],
-                  [class*="duck-hunt"],
-                  .start-duck-hunt,
-                  #start-duck-hunt,
-                  #duck-hunt-button,
-                  .duck-hunt-button {
-                    display: none !important;
-                    visibility: hidden !important;
-                    opacity: 0 !important;
-                    width: 0 !important;
-                    height: 0 !important;
-                    max-width: 0 !important;
-                    max-height: 0 !important;
-                    overflow: hidden !important;
-                    position: absolute !important;
-                    pointer-events: none !important;
-                    z-index: -9999 !important;
-                  }
-                `;
-                doc.head.appendChild(style);
-                
-                // Add cleanup script as well
-                const script = doc.createElement('script');
-                script.textContent = `
-                  (function() {
-                    function removeDuckHunt() {
-                      const selectors = [
-                        'div[style*="position: fixed"][style*="bottom"][style*="right"]',
-                        'div[data-testid="duck-hunt-button"]',
-                        'div[class*="DuckHuntWidget"]',
-                        'button[class*="duck-hunt"]',
-                        '[id*="duck-hunt"]',
-                        '[id*="start-duck"]',
-                        '[class*="duck-hunt"]',
-                        '.start-duck-hunt',
-                        '#start-duck-hunt',
-                        '#duck-hunt-button',
-                        '.duck-hunt-button'
-                      ];
-                      
-                      selectors.forEach(selector => {
-                        document.querySelectorAll(selector).forEach(el => {
-                          if (el) el.remove();
-                        });
-                      });
-                    }
-                    
-                    // Run immediately and periodically
-                    removeDuckHunt();
-                    setInterval(removeDuckHunt, 300);
-                    
-                    // Watch for dynamically added elements
-                    const observer = new MutationObserver(function(mutations) {
-                      removeDuckHunt();
-                    });
-                    
-                    observer.observe(document.body, { 
-                      childList: true,
-                      subtree: true
-                    });
-                  })();
-                `;
-                doc.body.appendChild(script);
-              }
-            }
-          } catch (err) {
-            // Cross-origin errors are expected, just continue
-          }
-        }, 500);
-        
-        return () => {
-          clearInterval(cleanupInterval);
-        };
-      } catch (err) {
-        console.error('Error setting up duck hunt removal:', err);
-      }
-    };
-    
-    // Apply CSS via wrapper
-    const applyDuckHuntCSS = () => {
-      if (!iframeContainer.current) return;
-      
-      // Add CSS to the iframe wrapper
-      iframeContainer.current.style.position = 'relative';
-      
-      // Create overlay element to intercept duck hunt
-      const overlay = document.createElement('div');
-      overlay.style.cssText = `
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        width: 150px;
-        height: 150px;
-        background: transparent;
-        z-index: 100000;
-      `;
-      iframeContainer.current.appendChild(overlay);
-    };
-    
-    // Wait for iframe to be available
-    const initTimer = setTimeout(() => {
-      setupDuckHuntRemoval();
-      applyDuckHuntCSS();
-    }, 1500);
-    
-    return () => {
-      clearTimeout(loadTimer);
-      clearTimeout(initTimer);
-    };
   }, []);
 
-  // Handle iframe load
-  const handleIframeLoad = () => {
-    try {
-      if (iframeRef.current && iframeRef.current.contentWindow) {
-        // Try using postMessage to communicate with iframe
-        iframeRef.current.contentWindow.postMessage({
-          type: 'HIDE_DUCK_HUNT',
-          hide: true
-        }, '*');
-      }
-    } catch (err) {
-      // Ignore cross-origin errors
-    }
-  };
-
-  // Simple iframe-based LiFi integration with all possible parameters to hide duck hunt
+  // Simple iframe-based LiFi integration
   const renderLiFiWidget = () => {
-    // Add every possible parameter to completely disable duck hunt
-    const lifiUrl = `https://transferto.xyz/swap?integrator=AquaSwap&fee=${FEE_PERCENTAGE}&toAddress=${FEE_WALLET}&theme=dark&variant=default&hideDuckHunt=true&disableDuckHunt=true&disableWidgets=true&disable=duckHunt&features=`;
+    // Basic URL with essential parameters
+    const lifiUrl = `https://transferto.xyz/swap?integrator=AquaSwap&fee=${FEE_PERCENTAGE}&toAddress=${FEE_WALLET}&theme=dark`;
     
     return (
-      <div ref={iframeContainer} className="iframe-wrapper">
+      <div ref={containerRef} className="iframe-container">
         <iframe
           ref={iframeRef}
           src={lifiUrl}
@@ -237,9 +67,8 @@ const Swap = ({ currentUser, showNotification }) => {
           frameBorder="0"
           className="lifi-iframe"
           allow="clipboard-write"
-          onLoad={handleIframeLoad}
         />
-        {/* Duck hunt blocker overlay */}
+        {/* This is a specific overlay element that covers EXACTLY where the duck hunt button appears */}
         <div className="duck-hunt-blocker"></div>
       </div>
     );

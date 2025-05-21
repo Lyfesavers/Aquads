@@ -470,9 +470,9 @@ const TokenList = ({ currentUser, showNotification }) => {
                   </div>
 
                   {selectedDex && (
-                    <div className="dex-iframe-container bg-white" style={{ height: '850px', overflow: 'auto' }}>
+                    <div className="dex-iframe-container bg-white" style={{ height: '850px', overflow: 'auto', position: 'relative' }}>
                       <iframe
-                        src={selectedDex.url + (selectedDex.name === 'AquaSwap' ? '?hideDuckHunt=true&disableDuckHunt=true&disableWidgets=true' : '')}
+                        src={selectedDex.url}
                         className="dex-iframe"
                         title={`${selectedDex.name} DEX`}
                         sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals allow-top-navigation-by-user-activation"
@@ -487,20 +487,20 @@ const TokenList = ({ currentUser, showNotification }) => {
                           display: 'block'
                         }}
                       />
+                      {/* Add a duck hunt blocker only for AquaSwap */}
                       {selectedDex.name === 'AquaSwap' && (
-                        <style dangerouslySetInnerHTML={{ __html: `
-                          .dex-iframe-container::after {
-                            content: '';
-                            position: absolute;
-                            bottom: 0;
-                            right: 0;
-                            width: 200px;
-                            height: 200px;
-                            z-index: 100000;
-                            background: transparent;
-                            pointer-events: auto;
-                          }
-                        `}} />
+                        <div 
+                          style={{
+                            position: 'absolute',
+                            bottom: '0',
+                            right: '0',
+                            width: '130px',
+                            height: '130px',
+                            backgroundColor: '#1F2937',
+                            zIndex: '999999'
+                          }}
+                          className="dex-duck-blocker"
+                        ></div>
                       )}
                     </div>
                   )}
