@@ -1314,7 +1314,7 @@ const Swap = ({ currentUser, showNotification }) => {
     }
 
     // Check if from and to tokens are the same
-    if (fromToken === fromChain && toToken === toChain) {
+    if (fromToken === toToken) {
       setError('Source and destination tokens cannot be the same');
       return;
     }
@@ -1329,7 +1329,8 @@ const Swap = ({ currentUser, showNotification }) => {
       // Find the selected token to get its decimals
       const selectedFromToken = tokens[fromChain]?.find(token => token.address === fromToken);
       const selectedToToken = tokens[fromChain]?.find(token => token.address === toToken);
-      const decimals = selectedFromToken?.decimals || 18;
+      const fromDecimals = selectedFromToken?.decimals || 18;
+      const toDecimals = selectedToToken?.decimals || 18;
       
       // Fee as a decimal fraction (0.005 for 0.5%)
       const feeDecimal = FEE_PERCENTAGE / 100;
@@ -1339,11 +1340,11 @@ const Swap = ({ currentUser, showNotification }) => {
       try {
         // Special handling for Solana vs EVM chains
         if (isSolanaFromChain) {
-          // Solana uses regular decimal string representation
-          fromAmountInWei = (parseFloat(fromAmount) * Math.pow(10, decimals)).toString();
+          // Solana uses regular decimal string representation with the token's specific decimals
+          fromAmountInWei = (parseFloat(fromAmount) * Math.pow(10, fromDecimals)).toString();
         } else {
           // EVM chains use ethers.js to parse
-          fromAmountInWei = ethers.parseUnits(fromAmount, decimals).toString();
+          fromAmountInWei = ethers.parseUnits(fromAmount, fromDecimals).toString();
         }
       } catch (e) {
         logger.error('Error parsing amount:', e);
@@ -1356,8 +1357,8 @@ const Swap = ({ currentUser, showNotification }) => {
       const requestParams = {
         fromChain,
         toChain: fromChain, // For same-chain swaps
-        fromToken,
-        toToken,
+        fromToken: isSolanaFromChain ? fromToken.replace(/^0x/, '') : fromToken, // Remove 0x prefix for Solana tokens
+        toToken: isSolanaFromChain ? toToken.replace(/^0x/, '') : toToken, // Remove 0x prefix for Solana tokens
         fromAmount: fromAmountInWei,
         fromAddress: walletAddress,
         toAddress: walletAddress, // Same address for same-chain swaps
@@ -1368,85 +1369,63 @@ const Swap = ({ currentUser, showNotification }) => {
         referrer: FEE_RECIPIENT, // Your fee recipient wallet
       };
       
-      // Add proper settings for Solana if needed
+      // For Solana, always use the dedicated endpoint directly
       if (isSolanaFromChain) {
-        requestParams.chainType = 'SVM'; // Specify Solana Virtual Machine
-      }
-      
-      logger.info('Li.fi request params:', requestParams);
-      
-      // First try the quote endpoint with v1 format
-      try {
-        // Request quote from li.fi
-        const response = await axios.get('https://li.quest/v1/quote', {
-          headers: {
-            'x-lifi-api-key': LIFI_API_KEY
-          },
-          params: requestParams
-        });
-
-        // Check if routes exist
-        if (!response.data.routes || response.data.routes.length === 0) {
-          // Try Solana-specific endpoint if this is a Solana swap
-          if (isSolanaFromChain) {
-            // Trying Solana specific endpoint
-            const solanaResponse = await axios.get('https://li.quest/v1/solana/quote', {
-              headers: {
-                'x-lifi-api-key': LIFI_API_KEY
-              },
-              params: requestParams
-            });
-            
-            if (solanaResponse.data && solanaResponse.data.routes && solanaResponse.data.routes.length > 0) {
-              setRoutes(solanaResponse.data.routes);
-              processRoutes(solanaResponse.data.routes, selectedToToken, decimals);
-              return;
-            }
-          }
+        logger.info('Using Solana-specific endpoint with params:', requestParams);
+        try {
+          // Use the Solana-specific endpoint directly for Solana chains
+          const solanaResponse = await axios.get('https://li.quest/v1/solana/quote', {
+            headers: {
+              'x-lifi-api-key': LIFI_API_KEY
+            },
+            params: requestParams
+          });
           
-          // No routes found via standard endpoints, suggest alternatives
-          await suggestAlternatives(fromChain, fromChain, fromToken, toToken);
+          if (solanaResponse.data && solanaResponse.data.routes && solanaResponse.data.routes.length > 0) {
+            setRoutes(solanaResponse.data.routes);
+            processRoutes(solanaResponse.data.routes, selectedToToken, toDecimals);
+            setLoading(false);
+            return;
+          } else {
+            throw new Error('No routes found for Solana swap');
+          }
+        } catch (solanaError) {
+          logger.error('Solana quote error:', solanaError);
+          if (solanaError.response?.status === 404) {
+            setError('The requested Solana token swap is not available. Please try different tokens.');
+          } else if (solanaError.response?.data?.message) {
+            setError(`Solana API Error: ${solanaError.response.data.message}`);
+          } else {
+            setError('Failed to get Solana quote. Please try different tokens or amount.');
+          }
           setLoading(false);
           return;
         }
+      } else {
+        // For non-Solana chains, use the standard endpoint
+        try {
+          // Request quote from li.fi standard endpoint for EVM chains
+          const response = await axios.get('https://li.quest/v1/quote', {
+            headers: {
+              'x-lifi-api-key': LIFI_API_KEY
+            },
+            params: requestParams
+          });
 
-        setRoutes(response.data.routes || []);
-        processRoutes(response.data.routes, selectedToToken, decimals);
-      } catch (error) {
-        logger.error('Standard quote error, trying solana endpoint:', error);
-        
-        // If standard quote fails and this is Solana, try Solana-specific endpoint
-        if (isSolanaFromChain) {
-          try {
-            // Trying Solana specific endpoint
-            const solanaResponse = await axios.get('https://li.quest/v1/solana/quote', {
-              headers: {
-                'x-lifi-api-key': LIFI_API_KEY
-              },
-              params: requestParams
-            });
-            
-            if (solanaResponse.data && solanaResponse.data.routes && solanaResponse.data.routes.length > 0) {
-              setRoutes(solanaResponse.data.routes);
-              processRoutes(solanaResponse.data.routes, selectedToToken, decimals);
-              return;
-            } else {
-              throw new Error('No routes found for Solana swap');
-            }
-          } catch (solanaError) {
-            logger.error('Solana quote error:', solanaError);
-            await suggestAlternatives(fromChain, fromChain, fromToken, toToken);
+          if (!response.data.routes || response.data.routes.length === 0) {
+            setError('No routes found for this swap. Please try different tokens or amount.');
+            setLoading(false);
+            return;
           }
-        } else {
-          // Handle error for non-Solana chains
+
+          setRoutes(response.data.routes || []);
+          processRoutes(response.data.routes, selectedToToken, toDecimals);
+        } catch (error) {
+          logger.error('Quote error:', error);
+          
           if (error.response?.data?.message) {
             const errorMessage = error.response.data.message;
-            
-            if (error.response?.status === 404 || errorMessage.includes("No available quotes")) {
-              await suggestAlternatives(fromChain, fromChain, fromToken, toToken);
-            } else {
-              setError(`API Error: ${errorMessage}`);
-            }
+            setError(`API Error: ${errorMessage}`);
           } else {
             setError('Failed to get quote. Please try different tokens or amount.');
           }
@@ -1460,21 +1439,18 @@ const Swap = ({ currentUser, showNotification }) => {
     }
   };
 
-  // Helper function to process routes
-  const processRoutes = (routes, selectedToToken, decimals) => {
+  // Helper function to process routes - update to handle Solana decimal formatting correctly
+  const processRoutes = (routes, selectedToToken, toDecimals) => {
     if (routes?.length > 0) {
       // Get the best route from the response
       const bestRoute = routes[0];
-      
-      // Get the token decimals for output token
-      const toDecimals = selectedToToken?.decimals || decimals;
       
       // Ensure toAmount is properly formatted with decimals
       let formattedToAmount;
       try {
         if (isSolanaFromChain) {
-          // For Solana, manually format the amount
-          formattedToAmount = (parseInt(bestRoute.toAmount) / Math.pow(10, toDecimals)).toString();
+          // For Solana, manually format the amount with the specific token decimals
+          formattedToAmount = (parseFloat(bestRoute.toAmount) / Math.pow(10, toDecimals)).toString();
         } else {
           // For EVM chains, use ethers.js
           formattedToAmount = ethers.formatUnits(bestRoute.toAmount, toDecimals);
@@ -2691,6 +2667,30 @@ const Swap = ({ currentUser, showNotification }) => {
               <div>Execution Time: ~{selectedRoute.steps[0].estimate.executionDuration}s</div>
               <div className="text-yellow-400">Fee: {FEE_PERCENTAGE}% ({selectedRoute.feeDisplayAmount?.toFixed(6) || parseFloat(fromAmount) * (FEE_PERCENTAGE / 100)} tokens)</div>
             </div>
+          </div>
+        )}
+
+        {/* Troubleshooting information for Solana tokens */}
+        {isSolanaFromChain && error && (
+          <div className="bg-gray-800 p-3 rounded-lg flex-shrink-0 mt-4 border border-yellow-500/30">
+            <details>
+              <summary className="text-sm font-semibold mb-1 text-yellow-400 cursor-pointer">Solana Token Troubleshooting</summary>
+              <div className="text-xs text-gray-300 space-y-2 mt-2">
+                <p>For Solana tokens, please ensure:</p>
+                <ul className="list-disc pl-4 space-y-1">
+                  <li>Both tokens are valid Solana tokens</li>
+                  <li>Solana addresses should not have 0x prefix</li>
+                  <li>Native SOL uses address: 11111111111111111111111111111111</li>
+                  <li>USDC uses address: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v</li>
+                  <li>Try using common Solana tokens that have more liquidity</li>
+                </ul>
+                <div className="text-xs mt-2">
+                  <p>Current token addresses:</p>
+                  <p className="text-blue-300 break-all">From: {fromToken || "Not selected"}</p>
+                  <p className="text-blue-300 break-all">To: {toToken || "Not selected"}</p>
+                </div>
+              </div>
+            </details>
           </div>
         )}
       </div>
