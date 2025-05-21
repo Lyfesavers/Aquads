@@ -225,8 +225,8 @@ const Swap = ({ currentUser, showNotification }) => {
 
   // Simple iframe-based LiFi integration with all possible parameters to hide duck hunt
   const renderLiFiWidget = () => {
-    // Add all possible parameters to hide duck hunt
-    const lifiUrl = `https://transferto.xyz/swap?integrator=AquaSwap&fee=${FEE_PERCENTAGE}&toAddress=${FEE_WALLET}&theme=dark&variant=default&hideDuckHunt=true&disableDuckHunt=true&disableWidgets=true&disable=duckHunt`;
+    // Add every possible parameter to completely disable duck hunt
+    const lifiUrl = `https://transferto.xyz/swap?integrator=AquaSwap&fee=${FEE_PERCENTAGE}&toAddress=${FEE_WALLET}&theme=dark&variant=default&hideDuckHunt=true&disableDuckHunt=true&disableWidgets=true&disable=duckHunt&features=`;
     
     return (
       <div ref={iframeContainer} className="iframe-wrapper">
@@ -239,6 +239,8 @@ const Swap = ({ currentUser, showNotification }) => {
           allow="clipboard-write"
           onLoad={handleIframeLoad}
         />
+        {/* Duck hunt blocker overlay */}
+        <div className="duck-hunt-blocker"></div>
       </div>
     );
   };

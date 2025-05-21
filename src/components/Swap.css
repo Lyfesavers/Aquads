@@ -1120,4 +1120,24 @@ body > [class*="duck-hunt"] {
   overflow: visible !important;
   margin: 0 !important;
   z-index: 9999 !important; /* High z-index to make sure it shows on top */
+}
+
+/* Duck hunt blocker overlay */
+.duck-hunt-blocker {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 180px;
+  height: 180px;
+  z-index: 99999;
+  background: linear-gradient(to bottom right, transparent, rgba(31, 41, 55, 0.95));
+  pointer-events: auto;
+}
+
+/* Prevent duck hunt from showing in iframe */
+.iframe-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 } 

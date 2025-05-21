@@ -472,7 +472,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                   {selectedDex && (
                     <div className="dex-iframe-container bg-white" style={{ height: '850px', overflow: 'auto' }}>
                       <iframe
-                        src={selectedDex.url}
+                        src={selectedDex.url + (selectedDex.name === 'AquaSwap' ? '?hideDuckHunt=true&disableDuckHunt=true&disableWidgets=true' : '')}
                         className="dex-iframe"
                         title={`${selectedDex.name} DEX`}
                         sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals allow-top-navigation-by-user-activation"
@@ -487,6 +487,21 @@ const TokenList = ({ currentUser, showNotification }) => {
                           display: 'block'
                         }}
                       />
+                      {selectedDex.name === 'AquaSwap' && (
+                        <style dangerouslySetInnerHTML={{ __html: `
+                          .dex-iframe-container::after {
+                            content: '';
+                            position: absolute;
+                            bottom: 0;
+                            right: 0;
+                            width: 200px;
+                            height: 200px;
+                            z-index: 100000;
+                            background: transparent;
+                            pointer-events: auto;
+                          }
+                        `}} />
+                      )}
                     </div>
                   )}
                 </div>
