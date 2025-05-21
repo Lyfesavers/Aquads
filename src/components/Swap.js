@@ -162,39 +162,90 @@ const Swap = ({ currentUser, showNotification }) => {
       try {
         logger.info(`Requesting connection to ${walletType} wallet...`);
         
-        // Always disconnect first to ensure fresh connection with user approval
-        if (provider.isConnected) {
+        // Force disconnect first
+        try {
+          await provider.disconnect();
+          logger.info('Forced disconnect before connecting');
+        } catch (err) {
+          // Ignore errors during disconnect
+          logger.warn('Error during wallet disconnect:', err.message);
+        }
+        
+        // Clear any cached auto-connect permissions
+        if (typeof localStorage !== 'undefined') {
           try {
-            // Attempt to disconnect silently first
-            await provider.disconnect();
-            logger.info('Disconnected existing wallet connection');
-          } catch (err) {
-            // Ignore errors during disconnect
-            logger.warn('Error during wallet disconnect:', err.message);
+            // Try to clear any stored permissions in localStorage
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              if (key && (
+                key.includes('wallet') || 
+                key.includes('phantom') || 
+                key.includes('solflare') ||
+                key.includes('backpack') ||
+                key.includes('connect') ||
+                key.includes('authorize')
+              )) {
+                keysToRemove.push(key);
+              }
+            }
+            
+            // Remove identified keys
+            keysToRemove.forEach(key => {
+              localStorage.removeItem(key);
+            });
+            
+            logger.info('Cleared potential wallet auth caches');
+          } catch (e) {
+            logger.warn('Error clearing localStorage:', e);
           }
         }
         
         // Request a fresh connection with explicit approval
-        const connectionPromise = provider.connect({ onlyIfTrusted: false });
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Wallet connection timed out. Please try again.')), 30000)
-        );
+        showNotification(`Please approve the connection in your ${walletType} wallet`, 'info');
         
-        showNotification(`Please check your ${walletType} wallet to approve the connection`, 'info');
-        
-        const resp = await Promise.race([connectionPromise, timeoutPromise]);
+        // Connect with explicit user permission required
+        const resp = await provider.connect({ onlyIfTrusted: false });
         
         if (!resp || !resp.publicKey) {
           throw new Error('Wallet connection failed: No public key received');
         }
         
         const publicKey = resp.publicKey.toString();
-        logger.info(`Wallet connected with user approval: ${publicKey}`);
+        logger.info(`Wallet initially connected: ${publicKey}`);
         
+        // Now require a signature to ensure the user has to explicitly approve
+        showNotification(`Please sign the message in your ${walletType} wallet to confirm access`, 'info');
+        
+        // Create a UTF-8 encoded message for signing
+        const message = `Welcome to AquaSwap!\n\nThis signature is required for secure connection to AquaSwap.\n\nThis signature will not trigger any blockchain transactions or incur any fees.\n\nTimestamp: ${Date.now()}`;
+        const encodedMessage = new TextEncoder().encode(message);
+        
+        // Request signature
+        try {
+          const signatureResponse = await provider.signMessage(encodedMessage, 'utf8');
+          
+          if (!signatureResponse || !signatureResponse.signature) {
+            throw new Error('Signature verification failed');
+          }
+          
+          logger.info('Signature verified successfully');
+        } catch (signError) {
+          // If user rejected signature, disconnect and abort
+          logger.error('Signature error:', signError);
+          try {
+            await provider.disconnect();
+          } catch (e) {
+            // Ignore
+          }
+          throw new Error('Connection cancelled: Message signing declined');
+        }
+        
+        // All checks passed, set connection state
         setWalletAddress(publicKey);
         setWalletConnected(true);
         setWalletType(walletType);
-        showNotification(`Connected to ${walletType} wallet`, 'success');
+        showNotification(`Successfully connected to ${walletType} wallet`, 'success');
         
         // Set some timeout to ensure UI updates before attempting RPC calls
         setTimeout(async () => {
@@ -215,6 +266,8 @@ const Swap = ({ currentUser, showNotification }) => {
         
         if (error.message.includes('User rejected')) {
           errorMessage = 'Connection rejected by user';
+        } else if (error.message.includes('declined') || error.message.includes('signature')) {
+          errorMessage = 'Signature declined by user';
         } else if (error.message.includes('timeout')) {
           errorMessage = 'Connection timed out';
         } else {
