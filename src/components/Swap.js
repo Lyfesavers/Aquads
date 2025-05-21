@@ -12,11 +12,13 @@ const FEE_PERCENTAGE = 0.5; // 0.5% fee
 const FEE_RECIPIENT = process.env.REACT_APP_FEE_WALLET || '6MtTEBWBXPTwbrVCqiHp4iTe84J8CfXHPspYYWTfBPG9'; // Default fee wallet
 // Use more reliable RPC endpoints with fallbacks - prefer public endpoints not requiring auth
 const SOLANA_RPC_ENDPOINTS = [
-  'https://api.devnet.solana.com', // Start with devnet which is more permissive
+  'https://api.mainnet-beta.solana.com',
+  'https://solana-api.projectserum.com',
+  'https://rpc.ankr.com/solana',
   'https://solana.public-rpc.com',
   'https://solana-mainnet.g.alchemy.com/v2/demo', // Alchemy demo endpoint
   'https://free.rpcpool.com',
-  'https://api.mainnet-beta.solana.com'
+  'https://api.devnet.solana.com', // Devnet as last resort
 ];
 
 // Style to hide unwanted UI elements
@@ -215,6 +217,7 @@ const Swap = ({ currentUser, showNotification }) => {
   // Connect wallet
   const connectWallet = async () => {
     try {
+      setLoading(true);
       // Check for Phantom wallet
       const isPhantomInstalled = window.phantom?.solana?.isPhantom;
       // Check for Solflare wallet
@@ -238,9 +241,29 @@ const Swap = ({ currentUser, showNotification }) => {
       
       if (provider) {
         try {
+          logger.info(`Connecting to ${walletName} wallet...`);
+          
+          // Check if wallet is already connected first
+          if (provider.isConnected && provider.publicKey) {
+            const publicKey = provider.publicKey.toString();
+            logger.info(`Wallet already connected: ${publicKey}`);
+            
+            setWalletAddress(publicKey);
+            setWalletConnected(true);
+            setWalletType(walletName);
+            
+            // Detect user tokens once wallet is connected
+            await detectUserTokens(publicKey);
+            showNotification(`Connected to ${walletName} wallet`, 'success');
+            setLoading(false);
+            return;
+          }
+          
           // Connect to the wallet
           const resp = await provider.connect();
           const publicKey = resp.publicKey.toString();
+          
+          logger.info(`Wallet connected: ${publicKey}`);
           
           setWalletAddress(publicKey);
           setWalletConnected(true);
@@ -255,11 +278,10 @@ const Swap = ({ currentUser, showNotification }) => {
             showNotification('Connected, but could not fetch wallet tokens', 'warning');
           }
           
-          logger.info(`Connected to ${walletName} wallet: ${publicKey}`);
           showNotification(`Connected to ${walletName} wallet`, 'success');
         } catch (error) {
           logger.error(`Error connecting to ${walletName} wallet:`, error);
-          showNotification(`Failed to connect to ${walletName} wallet`, 'error');
+          showNotification(`Failed to connect to ${walletName} wallet: ${error.message}`, 'error');
         }
       } else {
         // No wallet installed
@@ -270,7 +292,9 @@ const Swap = ({ currentUser, showNotification }) => {
       }
     } catch (error) {
       logger.error('Error connecting wallet:', error);
-      showNotification('Failed to connect wallet', 'error');
+      showNotification('Failed to connect wallet: ' + error.message, 'error');
+    } finally {
+      setLoading(false);
     }
   };
   
@@ -303,6 +327,9 @@ const Swap = ({ currentUser, showNotification }) => {
     try {
       if (!walletAddress) return;
       
+      // Show notification that we're fetching balances
+      showNotification('Fetching wallet balances...', 'info');
+      
       // Try each RPC endpoint until one works
       let connection = null;
       let tokenAccounts = null;
@@ -318,6 +345,7 @@ const Swap = ({ currentUser, showNotification }) => {
           
           // Test connection first with a simple request
           await connection.getSlot();
+          logger.info(`Connected to RPC endpoint: ${endpoint}`);
           
           // Get token accounts with a timeout to prevent hanging
           const timeoutPromise = new Promise((_, reject) => 
@@ -343,7 +371,6 @@ const Swap = ({ currentUser, showNotification }) => {
       
       // Clear loading timeout and state if fast enough
       clearTimeout(loadingId);
-      setLoading(false);
       
       // If all endpoints failed
       if (!tokenAccounts) {
@@ -369,23 +396,59 @@ const Swap = ({ currentUser, showNotification }) => {
               uiAmount: tokenAmount.uiAmount
             };
             userTokenAddresses.push(tokenAddress);
+            logger.info(`Found token: ${tokenAddress} with balance: ${tokenAmount.uiAmount}`);
           }
         } catch (err) {
           logger.warn(`Error processing token account: ${err.message}`);
         }
       }
       
-      // Also check SOL balance
+      // Check SOL balance with multiple fallback methods
       try {
-        const solBalance = await connection.getBalance(new PublicKey(walletAddress));
-        if (solBalance > 0) {
+        // Method 1: getBalance
+        let solBalance = null;
+        try {
+          solBalance = await connection.getBalance(new PublicKey(walletAddress));
+          logger.info(`SOL balance from getBalance: ${solBalance / 1e9} SOL`);
+        } catch (err) {
+          logger.warn(`Failed to get SOL balance with getBalance: ${err.message}`);
+        }
+        
+        // Method 2: getAccountInfo as fallback
+        if (!solBalance || solBalance === 0) {
+          try {
+            const accountInfo = await connection.getAccountInfo(new PublicKey(walletAddress));
+            if (accountInfo && accountInfo.lamports) {
+              solBalance = accountInfo.lamports;
+              logger.info(`SOL balance from accountInfo: ${solBalance / 1e9} SOL`);
+            }
+          } catch (err) {
+            logger.warn(`Failed to get SOL balance with accountInfo: ${err.message}`);
+          }
+        }
+        
+        // Method 3: Try another endpoint as last resort
+        if (!solBalance || solBalance === 0) {
+          try {
+            const backupConnection = new solanaWeb3.Connection('https://api.mainnet-beta.solana.com', { commitment: 'confirmed' });
+            solBalance = await backupConnection.getBalance(new PublicKey(walletAddress));
+            logger.info(`SOL balance from backup endpoint: ${solBalance / 1e9} SOL`);
+          } catch (err) {
+            logger.warn(`Failed to get SOL balance from backup endpoint: ${err.message}`);
+          }
+        }
+        
+        if (solBalance && solBalance > 0) {
           // SOL uses 9 decimal places
           const solUiAmount = solBalance / 1000000000;
+          
+          // Add SOL balance
           balances['SOL'] = {
             amount: solBalance,
             decimals: 9,
             uiAmount: solUiAmount
           };
+          
           // Also add under wrapped SOL address
           const wrappedSolAddress = 'So11111111111111111111111111111111111111112';
           balances[wrappedSolAddress] = {
@@ -394,9 +457,13 @@ const Swap = ({ currentUser, showNotification }) => {
             uiAmount: solUiAmount
           };
           userTokenAddresses.push(wrappedSolAddress);
+          
+          logger.info(`Added SOL balance: ${solUiAmount} SOL`);
+        } else {
+          logger.warn('SOL balance is zero or could not be determined');
         }
       } catch (err) {
-        logger.warn('Error getting SOL balance:', err);
+        logger.error('Error getting SOL balance:', err);
       }
       
       // Print the balances to check
@@ -437,6 +504,9 @@ const Swap = ({ currentUser, showNotification }) => {
           setFromToken(userTokensList[0].address);
         }
       }
+      
+      setLoading(false);
+      showNotification('Wallet balances updated', 'success');
     } catch (error) {
       logger.error('Error detecting user tokens:', error);
       // Don't let token detection failure break the app
@@ -447,15 +517,37 @@ const Swap = ({ currentUser, showNotification }) => {
   
   // Get the user's balance for a specific token
   const getTokenBalance = (tokenAddress) => {
-    if (!tokenAddress) return null;
+    if (!tokenAddress) {
+      logger.debug('getTokenBalance called with null tokenAddress');
+      return null;
+    }
     
     // Check for SOL special case - many tools use both direct SOL and wrapped SOL
     if (tokenAddress === 'SOL' || tokenAddress === 'So11111111111111111111111111111111111111112') {
-      return tokenBalances['SOL'] || tokenBalances['So11111111111111111111111111111111111111112'] || null;
+      const solBalance = tokenBalances['SOL'] || tokenBalances['So11111111111111111111111111111111111111112'];
+      
+      if (solBalance) {
+        logger.debug(`Found SOL balance: ${solBalance.uiAmount}`);
+        return solBalance;
+      } else {
+        logger.debug('SOL balance not found in tokenBalances');
+        // If wallet is connected but no SOL balance is found, log the available balances
+        if (walletConnected) {
+          logger.debug('Available token balances:', Object.keys(tokenBalances));
+        }
+        return null;
+      }
     }
     
     // Check regular token
-    return tokenBalances[tokenAddress] || null;
+    const balance = tokenBalances[tokenAddress];
+    if (balance) {
+      logger.debug(`Found balance for ${tokenAddress}: ${balance.uiAmount}`);
+      return balance;
+    } else {
+      logger.debug(`No balance found for ${tokenAddress}`);
+      return null;
+    }
   };
   
   // Get formatted balance string
@@ -1359,7 +1451,20 @@ const Swap = ({ currentUser, showNotification }) => {
               {/* Always show balance when wallet is connected and token is selected */}
               {walletConnected && fromToken && (
                 <div className="balance-info">
-                  <span>Balance: {getFormattedBalance(fromToken)} {getTokenInfo(fromToken)?.symbol}</span>
+                  <span>
+                    Balance: {getFormattedBalance(fromToken)} {getTokenInfo(fromToken)?.symbol}
+                    <button
+                      className="refresh-balance-button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        detectUserTokens(walletAddress);
+                      }}
+                      title="Refresh balance"
+                    >
+                      🔄
+                    </button>
+                  </span>
                   <button 
                     className="max-button"
                     onClick={setMaxAmount}
@@ -1423,7 +1528,20 @@ const Swap = ({ currentUser, showNotification }) => {
               {/* Always show to-token balance when wallet is connected */}
               {walletConnected && toToken && (
                 <div className="balance-info-no-max">
-                  <span>Balance: {getFormattedBalance(toToken)} {getTokenInfo(toToken)?.symbol}</span>
+                  <span>
+                    Balance: {getFormattedBalance(toToken)} {getTokenInfo(toToken)?.symbol}
+                    <button
+                      className="refresh-balance-button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        detectUserTokens(walletAddress);
+                      }}
+                      title="Refresh balance"
+                    >
+                      🔄
+                    </button>
+                  </span>
                 </div>
               )}
             </div>
