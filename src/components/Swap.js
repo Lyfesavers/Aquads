@@ -2104,13 +2104,14 @@ const Swap = ({ currentUser, showNotification }) => {
 
   return (
     <div className="bg-gray-900 p-4 sm:p-6 rounded-lg shadow-lg w-full h-full text-white overflow-y-auto swap-container" style={{
-      height: '100%',
-      minHeight: 'min(800px, 90vh)', // Responsive height based on viewport
+      height: 'auto',
+      minHeight: 'min(800px, 85vh)', // Reduced from 90vh to leave space for browser UI
       maxHeight: '100%',
       overflow: 'auto !important',
       WebkitOverflowScrolling: 'touch',
       display: 'flex',
-      flexDirection: 'column'
+      flexDirection: 'column',
+      paddingBottom: '80px' // Add extra padding at bottom for mobile
     }}>
       {/* Wallet Modal */}
       <WalletModal />
@@ -2208,7 +2209,7 @@ const Swap = ({ currentUser, showNotification }) => {
         </div>
       </div>
       
-      <div className="space-y-3 sm:space-y-4 flex-1 overflow-auto pb-6">
+      <div className="space-y-2 sm:space-y-4 flex-1 overflow-auto pb-20">
         {/* Wallet Connection - more compact */}
         <div className="flex flex-col sm:flex-row sm:justify-center mb-3 flex-shrink-0 relative">
           <div className="mb-3 sm:mb-0">
@@ -2408,7 +2409,7 @@ const Swap = ({ currentUser, showNotification }) => {
         </div>
         
         {/* Slippage Setting with Quick Values */}
-        <div className="flex-shrink-0 mb-16">
+        <div className="flex-shrink-0 mb-5">
           <label className="block text-gray-400 mb-1 text-xs sm:text-sm">Slippage Tolerance (%)</label>
           <div className="flex gap-2 items-center">
             <input
@@ -2444,7 +2445,7 @@ const Swap = ({ currentUser, showNotification }) => {
         </div>
         
         {/* Fixed position action buttons */}
-        <div className="grid grid-cols-2 gap-3 flex-shrink-0 bottom-action-buttons sticky bottom-0 bg-gray-900 pt-3 pb-2 z-10">
+        <div className="grid grid-cols-2 gap-3 flex-shrink-0 bottom-action-buttons fixed left-0 right-0 bottom-0 px-4 py-3 bg-gray-900 border-t border-gray-800 z-20 sm:static sm:border-0 sm:px-0 sm:py-0">
           <button
             onClick={getQuote}
             disabled={loading}
