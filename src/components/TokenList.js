@@ -47,7 +47,7 @@ const DEX_OPTIONS = [
     name: 'AquaSwap',
     icon: '💧',
     url: '/swap',
-    description: 'Powered by li.fi with 0.5% fee',
+    description: '',
     custom: true
   }
 ];

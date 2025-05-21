@@ -162,11 +162,6 @@ const Swap = ({ currentUser, showNotification }) => {
         </div>
       
         {renderLiFiWidget()}
-        
-        <div className="powered-by">
-          <div>Cross-chain swaps powered by <a href="https://li.fi" target="_blank" rel="noopener noreferrer">Li.Fi</a></div>
-          <div className="fee-disclaimer">All swaps include a {FEE_PERCENTAGE}% platform fee</div>
-        </div>
       </div>
     </div>
   );
