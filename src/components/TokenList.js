@@ -486,22 +486,54 @@ const TokenList = ({ currentUser, showNotification }) => {
                           overflow: 'auto',
                           display: 'block'
                         }}
+                        onLoad={(e) => {
+                          // Only run for AquaSwap
+                          if (selectedDex.name === 'AquaSwap') {
+                            try {
+                              // Get access to the iframe's content window
+                              const iframe = e.target;
+                              if (!iframe || !iframe.contentWindow) return;
+                              
+                              // Create a MutationObserver to watch for the duck hunt button
+                              // and remove it whenever it's added to the DOM
+                              const observer = new MutationObserver(() => {
+                                const doc = iframe.contentDocument;
+                                if (!doc) return;
+                                
+                                // Duck hunt buttons have various identifiers - search and remove all of them
+                                const duckHuntElements = [
+                                  ...doc.querySelectorAll('[data-testid="duck-hunt-button"]'),
+                                  ...doc.querySelectorAll('[id*="duck-hunt"]'),
+                                  ...doc.querySelectorAll('[id*="start-duck"]'),
+                                  ...doc.querySelectorAll('[class*="duck-hunt"]'),
+                                  ...doc.querySelectorAll('.start-duck-hunt'),
+                                  ...doc.querySelectorAll('#start-duck-hunt'),
+                                  ...doc.querySelectorAll('#duck-hunt-button'),
+                                  ...doc.querySelectorAll('.duck-hunt-button'),
+                                  ...doc.querySelectorAll('div[style*="position: fixed"][style*="bottom"][style*="right"]')
+                                ];
+                                
+                                // Remove all identified elements
+                                duckHuntElements.forEach(el => {
+                                  el.remove();
+                                });
+                              });
+                              
+                              // Start observing the iframe's document
+                              const doc = iframe.contentDocument;
+                              if (doc) {
+                                observer.observe(doc.body, { 
+                                  childList: true, 
+                                  subtree: true
+                                });
+                              }
+                            } catch (error) {
+                              // Silent catch - cross-origin restrictions may prevent this
+                              logger.debug('Could not access iframe content:', error);
+                            }
+                          }
+                        }}
                       />
-                      {/* Add a duck hunt blocker only for AquaSwap */}
-                      {selectedDex.name === 'AquaSwap' && (
-                        <div 
-                          style={{
-                            position: 'absolute',
-                            bottom: '0',
-                            right: '0',
-                            width: '130px',
-                            height: '130px',
-                            backgroundColor: '#1F2937',
-                            zIndex: '999999'
-                          }}
-                          className="dex-duck-blocker"
-                        ></div>
-                      )}
                     </div>
                   )}
                 </div>
