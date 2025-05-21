@@ -28,24 +28,6 @@ const DEX_OPTIONS = [
 
 const CEX_OPTIONS = [
   {
-    name: 'Binance',
-    icon: '📊',
-    url: 'https://www.binance.com/en/trade/BTC_USDT',
-    description: 'Binance Exchange'
-  },
-  {
-    name: 'Coinbase',
-    icon: '💱',
-    url: 'https://www.coinbase.com/price',
-    description: 'Coinbase Exchange'
-  },
-  {
-    name: 'OKX',
-    icon: '🔄',
-    url: 'https://www.okx.com/trade-spot',
-    description: 'OKX Exchange'
-  },
-  {
     name: 'Bybit',
     icon: '📈',
     url: 'https://www.bybit.com/en-US/trade/spot/BTC/USDT',
