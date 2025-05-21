@@ -835,4 +835,42 @@
 
 .wallet-selector-footer a:hover {
   text-decoration: underline;
+}
+
+/* Add LiFi widget container styles */
+.lifi-container {
+  min-height: 700px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Style override for LiFi widget */
+.lifi-widget-wrapper {
+  height: 100%;
+  flex-grow: 1;
+  overflow: hidden;
+  background: transparent !important;
+}
+
+/* Fix powered-by section for LiFi */
+.lifi-container .powered-by {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Make sure the widget gets proper width on mobile */
+@media (max-width: 768px) {
+  .swap-card.lifi-container {
+    width: 100%;
+    max-width: 480px;
+    padding: 12px;
+  }
+}
+
+/* Ensure the LiFi theme is consistent with our app */
+:root {
+  --lifi-widget-background-color: var(--background-color, #12263F);
+  --lifi-widget-text-color: var(--text-color, #ffffff);
+  --lifi-widget-accent-color: var(--accent-color, #1D9BF0);
 } 
