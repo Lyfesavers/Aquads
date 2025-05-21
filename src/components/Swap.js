@@ -406,7 +406,7 @@ const Swap = ({ currentUser, showNotification }) => {
     }
   };
   
-  // Detect user tokens in connected wallet
+  // Detect user tokens with improved balance fetching
   const detectUserTokens = async (walletAddress) => {
     try {
       if (!walletAddress) return;
@@ -414,124 +414,184 @@ const Swap = ({ currentUser, showNotification }) => {
       // Show notification that we're fetching balances
       showNotification('Fetching wallet balances...', 'info');
       
-      // Try each RPC endpoint until one works
-      let connection = null;
-      let tokenAccounts = null;
-      let error = null;
+      // Set loading indicator
+      setLoading(true);
       
-      // Set loading indicator but don't block UI
-      const loadingId = setTimeout(() => setLoading(true), 300);
+      // Output some debugging info
+      logger.info('============= BALANCE DETECTION START =============');
+      logger.info(`Detecting balances for wallet: ${walletAddress}`);
       
-      // Wrapper function to safely execute an RPC call with a timeout
-      const safeRpcCall = async (endpoint, operation) => {
-        try {
-          logger.info(`Trying RPC endpoint: ${endpoint}`);
-          const conn = new solanaWeb3.Connection(endpoint, { commitment: 'confirmed' });
+      // Use multiple methods to get SOL balance
+      const fetchSolBalance = async () => {
+        const balanceMethods = [
+          // Method 1: Direct connection through multiple RPC endpoints
+          ...SOLANA_RPC_ENDPOINTS.map(endpoint => async () => {
+            try {
+              const connection = new solanaWeb3.Connection(endpoint);
+              const balance = await connection.getBalance(new PublicKey(walletAddress));
+              logger.info(`SOL balance from ${endpoint}: ${balance / 1e9} SOL`);
+              return balance;
+            } catch (e) {
+              logger.warn(`Failed to get balance from ${endpoint}: ${e.message}`);
+              return null;
+            }
+          }),
           
-          // First test with a simple call
-          await Promise.race([
-            conn.getSlot(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Connection test timeout')), 3000))
-          ]);
+          // Method 2: Using getAccountInfo as an alternative approach
+          ...SOLANA_RPC_ENDPOINTS.map(endpoint => async () => {
+            try {
+              const connection = new solanaWeb3.Connection(endpoint);
+              const accountInfo = await connection.getAccountInfo(new PublicKey(walletAddress));
+              if (accountInfo && accountInfo.lamports) {
+                logger.info(`SOL balance from ${endpoint} (accountInfo): ${accountInfo.lamports / 1e9} SOL`);
+                return accountInfo.lamports;
+              }
+              return null;
+            } catch (e) {
+              logger.warn(`Failed to get accountInfo from ${endpoint}: ${e.message}`);
+              return null;
+            }
+          }),
           
-          // If we get here, the basic connection works, so try the actual operation
-          const result = await Promise.race([
-            operation(conn),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Operation timeout')), 8000))
-          ]);
-          
-          return { success: true, result, connection: conn };
-        } catch (err) {
-          logger.warn(`RPC endpoint ${endpoint} failed: ${err.message}`);
-          return { success: false, error: err };
+          // Method 3: Using a public SOL balance API as last resort
+          async () => {
+            try {
+              const response = await axios.get(`https://public-api.solscan.io/account/${walletAddress}`, {
+                headers: { 'User-Agent': 'Mozilla/5.0' }
+              });
+              if (response.data && response.data.lamports) {
+                const balance = parseInt(response.data.lamports);
+                logger.info(`SOL balance from Solscan API: ${balance / 1e9} SOL`);
+                return balance;
+              }
+              return null;
+            } catch (e) {
+              logger.warn(`Failed to get balance from Solscan API: ${e.message}`);
+              return null;
+            }
+          }
+        ];
+        
+        // Try each method until one works
+        for (const method of balanceMethods) {
+          const balance = await method();
+          if (balance && balance > 0) {
+            return balance;
+          }
         }
+        
+        return null;
       };
       
-      // Try to get token accounts from any working endpoint
-      let successfulConnection = null;
-      for (const endpoint of SOLANA_RPC_ENDPOINTS) {
-        const result = await safeRpcCall(endpoint, async (conn) => {
-          return await conn.getParsedTokenAccountsByOwner(
-            new PublicKey(walletAddress),
-            { programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') }
-          );
-        });
+      // Try to get token accounts and SOL balance in parallel
+      const [tokenAccountResults, solBalance] = await Promise.all([
+        // Get token accounts
+        (async () => {
+          for (const endpoint of SOLANA_RPC_ENDPOINTS) {
+            try {
+              logger.info(`Trying to get token accounts from ${endpoint}`);
+              const connection = new solanaWeb3.Connection(endpoint);
+              const accounts = await connection.getParsedTokenAccountsByOwner(
+                new PublicKey(walletAddress),
+                { programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') }
+              );
+              return accounts;
+            } catch (e) {
+              logger.warn(`Failed to get token accounts from ${endpoint}: ${e.message}`);
+            }
+          }
+          return null;
+        })(),
         
-        if (result.success) {
-          tokenAccounts = result.result;
-          successfulConnection = result.connection;
-          logger.info(`Successfully connected to ${endpoint}`);
-          break;
-        }
-      }
+        // Get SOL balance
+        fetchSolBalance()
+      ]);
       
-      // Clear loading timeout and state
-      clearTimeout(loadingId);
-      setLoading(false);
-      
-      // Handle case where all endpoints failed for token accounts
-      if (!tokenAccounts) {
-        logger.warn('All RPC endpoints failed when fetching token accounts');
-        // Fall back to basic functionality without token account data
-        showNotification('Could not fetch token details, but swap functionality still available', 'warning');
-        return;
-      }
-      
-      // Store token balances
+      // Initialize balance object
       const balances = {};
       const userTokenAddresses = [];
       
-      // Process token accounts
-      for (const account of tokenAccounts.value) {
-        try {
-          const tokenAmount = account.account.data.parsed.info.tokenAmount;
-          const amount = parseInt(tokenAmount.amount);
-          const tokenAddress = account.account.data.parsed.info.mint;
-          
-          if (amount > 0) {
-            // Store balance information
-            balances[tokenAddress] = {
-              amount: amount,
-              decimals: tokenAmount.decimals,
-              uiAmount: tokenAmount.uiAmount
-            };
-            userTokenAddresses.push(tokenAddress);
-            logger.info(`Found token: ${tokenAddress} with balance: ${tokenAmount.uiAmount}`);
-          }
-        } catch (err) {
-          logger.warn(`Error processing token account: ${err.message}`);
-        }
-      }
-      
-      // If we have a successful connection, use it to get SOL balance
-      if (successfulConnection) {
-        try {
-          const solBalance = await successfulConnection.getBalance(new PublicKey(walletAddress));
-          if (solBalance > 0) {
-            const solUiAmount = solBalance / 1000000000;
-            balances['SOL'] = {
-              amount: solBalance,
-              decimals: 9,
-              uiAmount: solUiAmount
-            };
-            const wrappedSolAddress = 'So11111111111111111111111111111111111111112';
-            balances[wrappedSolAddress] = {
-              amount: solBalance,
-              decimals: 9,
-              uiAmount: solUiAmount
-            };
-            userTokenAddresses.push(wrappedSolAddress);
-            logger.info(`Added SOL balance: ${solUiAmount} SOL`);
-          }
-        } catch (err) {
-          logger.warn(`Error getting SOL balance: ${err.message}`);
-        }
-      }
-      
-      // Save balances
-      setTokenBalances(balances);
+      // Process token accounts if we got any
+      if (tokenAccountResults && tokenAccountResults.value) {
+        logger.info(`Found ${tokenAccountResults.value.length} token accounts`);
+        
+        for (const account of tokenAccountResults.value) {
+          try {
+            const tokenAmount = account.account.data.parsed.info.tokenAmount;
+            const amount = parseInt(tokenAmount.amount);
+            const tokenAddress = account.account.data.parsed.info.mint;
             
-      // Mark tokens in the main token list as user tokens
+            if (amount > 0) {
+              logger.info(`Token ${tokenAddress}: ${tokenAmount.uiAmount} (${amount} raw)`);
+              
+              // Store balance information
+              balances[tokenAddress] = {
+                amount: amount,
+                decimals: tokenAmount.decimals,
+                uiAmount: tokenAmount.uiAmount
+              };
+              userTokenAddresses.push(tokenAddress);
+            }
+          } catch (err) {
+            logger.warn(`Error processing token account: ${err.message}`);
+          }
+        }
+      } else {
+        logger.warn('No token accounts data received');
+      }
+      
+      // Add SOL balance if found
+      if (solBalance && solBalance > 0) {
+        const solUiAmount = solBalance / 1e9;
+        logger.info(`Final SOL balance: ${solUiAmount} SOL (${solBalance} lamports)`);
+        
+        // Add both as SOL and wrapped SOL for maximum compatibility
+        balances['SOL'] = {
+          amount: solBalance,
+          decimals: 9,
+          uiAmount: solUiAmount
+        };
+        
+        const wrappedSolAddress = 'So11111111111111111111111111111111111111112';
+        balances[wrappedSolAddress] = {
+          amount: solBalance,
+          decimals: 9,
+          uiAmount: solUiAmount
+        };
+        userTokenAddresses.push(wrappedSolAddress);
+      } else {
+        logger.warn('No SOL balance found or zero balance');
+      }
+      
+      // Add specifically USDC if needed - common for new wallets to show their token options
+      const usdcAddress = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+      if (!balances[usdcAddress]) {
+        balances[usdcAddress] = {
+          amount: 0,
+          decimals: 6,
+          uiAmount: 0
+        };
+      }
+      
+      // Log all balances found
+      logger.info('Final balances detected:');
+      Object.entries(balances).forEach(([address, data]) => {
+        logger.info(`- ${address}: ${data.uiAmount} (decimals: ${data.decimals})`);
+      });
+      
+      // Force a direct display in the console of the wrapped SOL balance
+      const wrappedSolBalance = balances['So11111111111111111111111111111111111111112'];
+      if (wrappedSolBalance) {
+        console.log('DIRECT WRAPPED SOL BALANCE:', wrappedSolBalance.uiAmount);
+      } else {
+        console.log('NO WRAPPED SOL BALANCE FOUND');
+      }
+      
+      // Update state with balances
+      setTokenBalances(balances);
+      logger.info(`Updated tokenBalances state with ${Object.keys(balances).length} tokens`);
+      
+      // Mark user tokens in the main list
       const updatedTokens = tokens.map(token => ({
         ...token,
         isUserToken: userTokenAddresses.includes(token.address) || 
@@ -539,50 +599,53 @@ const Swap = ({ currentUser, showNotification }) => {
                     balances[token.address] != null
       }));
       
-      // Update the token list
+      // Update state
       setTokens(updatedTokens);
-      
-      // Extract user tokens
-      const userTokensList = updatedTokens.filter(token => 
+      setUserTokens(updatedTokens.filter(token => 
         userTokenAddresses.includes(token.address) || 
         (token.symbol === 'SOL' && balances['SOL']) ||
         balances[token.address] != null
-      );
+      ));
       
-      setUserTokens(userTokensList);
-      
-      logger.info(`Found ${userTokensList.length} tokens in user wallet`);
-      
-      // If from token not set and user has SOL, default to SOL
-      if (!fromToken && userTokensList.length > 0) {
-        const solToken = userTokensList.find(t => t.symbol === 'SOL' || t.symbol === 'WSOL');
+      // Default to SOL if available
+      if (!fromToken && balances['SOL']) {
+        const solToken = updatedTokens.find(t => t.symbol === 'SOL' || t.symbol === 'WSOL');
         if (solToken) {
           setFromToken(solToken.address);
-        } else if (userTokensList.length > 0) {
-          // Or use the first user token
-          setFromToken(userTokensList[0].address);
         }
       }
       
-      showNotification('Wallet balances updated', 'success');
+      logger.info('============= BALANCE DETECTION COMPLETE =============');
+      
+      // Notify user
+      if (Object.keys(balances).length > 0) {
+        showNotification('Wallet balances updated', 'success');
+      } else {
+        showNotification('No tokens found in wallet', 'info');
+      }
     } catch (error) {
-      logger.error('Error detecting user tokens:', error);
-      // Don't let token detection failure break the app
-      showNotification('Could not fetch wallet tokens, but you can still trade', 'warning');
+      logger.error('Error detecting wallet tokens:', error);
+      showNotification('Could not fetch wallet balances', 'warning');
+    } finally {
       setLoading(false);
     }
   };
   
-  // Get the user's balance for a specific token
+  // Get the user's balance for a specific token with better debugging
   const getTokenBalance = (tokenAddress) => {
     if (!tokenAddress) {
       logger.info('getTokenBalance called with null tokenAddress');
       return null;
     }
     
+    console.log(`Checking balance for token: ${tokenAddress}`);
+    console.log('Available balances:', Object.keys(tokenBalances));
+    
     // Check for SOL special case - many tools use both direct SOL and wrapped SOL
     if (tokenAddress === 'SOL' || tokenAddress === 'So11111111111111111111111111111111111111112') {
       const solBalance = tokenBalances['SOL'] || tokenBalances['So11111111111111111111111111111111111111112'];
+      
+      console.log('SOL/WSOL balance check result:', solBalance);
       
       if (solBalance) {
         logger.info(`Found SOL balance: ${solBalance.uiAmount}`);
@@ -608,15 +671,46 @@ const Swap = ({ currentUser, showNotification }) => {
     }
   };
   
-  // Get formatted balance string
+  // Get formatted balance string with improved fallbacks
   const getFormattedBalance = (tokenAddress) => {
-    const balance = getTokenBalance(tokenAddress);
-    if (!balance) return '0';
+    // Direct console output for debugging
+    console.log(`Formatting balance for: ${tokenAddress}`);
     
-    return balance.uiAmount.toLocaleString(undefined, {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 6
-    });
+    const balance = getTokenBalance(tokenAddress);
+    console.log(`Balance result:`, balance);
+    
+    if (!balance) {
+      // Special handling for SOL to check alternative sources
+      if (tokenAddress === 'SOL' || tokenAddress === 'So11111111111111111111111111111111111111112') {
+        // Check both forms in tokenBalances
+        const directSol = tokenBalances['SOL'];
+        const wrappedSol = tokenBalances['So11111111111111111111111111111111111111112'];
+        console.log('Direct SOL check:', directSol);
+        console.log('Wrapped SOL check:', wrappedSol);
+        
+        if (directSol) return directSol.uiAmount.toLocaleString(undefined, {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 6
+        });
+        
+        if (wrappedSol) return wrappedSol.uiAmount.toLocaleString(undefined, {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 6
+        });
+      }
+      
+      return '0';
+    }
+    
+    try {
+      return balance.uiAmount.toLocaleString(undefined, {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 6
+      });
+    } catch (err) {
+      logger.error(`Error formatting balance: ${err.message}`, balance);
+      return '0';
+    }
   };
   
   // Set max amount from balance
@@ -1485,6 +1579,66 @@ const Swap = ({ currentUser, showNotification }) => {
         </div>
       </div>
     );
+  };
+
+  // Force set test balances for debugging (remove in production)
+  const setTestBalances = () => {
+    try {
+      // Create a test balance object
+      const testBalances = {
+        'SOL': {
+          amount: 1000000000, // 1 SOL in lamports
+          decimals: 9,
+          uiAmount: 1.0
+        },
+        'So11111111111111111111111111111111111111112': { // Wrapped SOL
+          amount: 1000000000,
+          decimals: 9,
+          uiAmount: 1.0
+        },
+        'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v': { // USDC
+          amount: 1000000,
+          decimals: 6,
+          uiAmount: 1.0
+        }
+      };
+      
+      // Update the state
+      setTokenBalances(testBalances);
+      console.log('Set test balances:', testBalances);
+      
+      // Update tokens to mark as user tokens
+      const updatedTokens = tokens.map(token => ({
+        ...token,
+        isUserToken: testBalances[token.address] != null || 
+                   (token.symbol === 'SOL' && testBalances['SOL'])
+      }));
+      
+      setTokens(updatedTokens);
+      
+      // Extract user tokens
+      const userTokensList = updatedTokens.filter(token => 
+        testBalances[token.address] != null || (token.symbol === 'SOL' && testBalances['SOL'])
+      );
+      
+      setUserTokens(userTokensList);
+      
+      showNotification('Test balances set for demonstration', 'info');
+    } catch (err) {
+      console.error('Error setting test balances:', err);
+    }
+  };
+  
+  // Debug function to show current balance state
+  const logBalanceState = () => {
+    console.log('============ BALANCE STATE LOG ============');
+    console.log('tokenBalances:', tokenBalances);
+    console.log('userTokens:', userTokens);
+    console.log('Current fromToken:', fromToken);
+    console.log('fromToken info:', getTokenInfo(fromToken));
+    console.log('fromToken balance:', getTokenBalance(fromToken));
+    console.log('fromToken formatted balance:', getFormattedBalance(fromToken));
+    console.log('============ END BALANCE STATE ============');
   };
 
   return (
