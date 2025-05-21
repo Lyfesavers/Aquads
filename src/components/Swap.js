@@ -44,50 +44,31 @@ const Swap = ({ currentUser, showNotification }) => {
     styleEl.innerHTML = hideDuckHuntStyle;
     document.head.appendChild(styleEl);
     
-    // Hide duck hunt buttons more aggressively
+    // Hide duck hunt buttons
     const intervalId = setInterval(() => {
       const hideSelectors = [
         '#duck-hunt-button',
         '#start-duck-hunt',
         '.duck-hunt-button',
         '.start-duck-hunt',
-        '[data-testid="duck-hunt-button"]',
-        '[id*="duck-hunt"]',
-        '[id*="start-duck"]',
-        '[class*="duck-hunt"]',
-        'div[style*="position: fixed"][style*="bottom"][style*="right"]'
+        '[data-testid="duck-hunt-button"]'
       ];
       
       hideSelectors.forEach(selector => {
         try {
           document.querySelectorAll(selector).forEach(el => {
-            if (el) {
-              // Completely remove duck hunt elements
-              el.style.display = 'none';
-              el.style.visibility = 'hidden';
-              el.style.opacity = '0';
-              el.style.pointerEvents = 'none';
-              el.style.position = 'absolute';
-              el.style.height = '0';
-              el.style.width = '0';
-              el.style.overflow = 'hidden';
-              
-              // Try to remove from DOM if possible
-              if (el.parentNode && !el.getAttribute('data-kept')) {
-                try {
-                  el.parentNode.removeChild(el);
-                } catch (err) {
-                  // If can't remove, mark it as processed
-                  el.setAttribute('data-kept', 'true');
-                }
-              }
-            }
-          });
+        if (el) {
+          el.style.display = 'none';
+          el.style.visibility = 'hidden';
+          el.style.opacity = '0';
+          el.style.pointerEvents = 'none';
+        }
+      });
         } catch (e) {
           // Ignore errors
         }
       });
-    }, 1000);
+    }, 2000);
     
     // Load LiFi using iframe approach
     const loadLiFiWidget = () => {
