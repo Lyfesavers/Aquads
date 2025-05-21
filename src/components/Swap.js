@@ -10,6 +10,13 @@ import './Swap.css';
 const JUPITER_API_BASE_URL = 'https://quote-api.jup.ag/v6';
 const FEE_PERCENTAGE = 0.5; // 0.5% fee
 const FEE_RECIPIENT = process.env.REACT_APP_FEE_WALLET || '6MtTEBWBXPTwbrVCqiHp4iTe84J8CfXHPspYYWTfBPG9'; // Default fee wallet
+// Use more reliable RPC endpoints with fallbacks
+const SOLANA_RPC_ENDPOINTS = [
+  'https://solana-mainnet.rpc.extrnode.com',
+  'https://api.mainnet-beta.solana.com',
+  'https://rpc.ankr.com/solana',
+  'https://solana-api.projectserum.com'
+];
 
 // Style to hide unwanted UI elements
 const hideDuckHuntStyle = `
@@ -145,8 +152,12 @@ const Swap = ({ currentUser, showNotification }) => {
               setWalletConnected(true);
               setWalletType(walletName);
               
-              // Detect user tokens once wallet is connected
-              detectUserTokens(publicKey);
+              // Detect user tokens once wallet is connected - wrap in try/catch to prevent app freezing
+              try {
+                await detectUserTokens(publicKey);
+              } catch (error) {
+                logger.error('Failed to detect user tokens:', error);
+              }
               
               logger.info(`Connected to ${walletName} wallet: ${publicKey}`);
               showNotification(`Connected to ${walletName} wallet`, 'success');
@@ -157,7 +168,11 @@ const Swap = ({ currentUser, showNotification }) => {
           provider.on('connect', (publicKey) => {
             setWalletAddress(publicKey.toString());
             setWalletConnected(true);
-            detectUserTokens(publicKey.toString());
+            try {
+              detectUserTokens(publicKey.toString());
+            } catch (error) {
+              logger.error('Failed to detect user tokens:', error);
+            }
             showNotification(`Connected to ${walletName} wallet`, 'success');
           });
           
@@ -171,7 +186,11 @@ const Swap = ({ currentUser, showNotification }) => {
           provider.on('accountChanged', (publicKey) => {
             if (publicKey) {
               setWalletAddress(publicKey.toString());
-              detectUserTokens(publicKey.toString());
+              try {
+                detectUserTokens(publicKey.toString());
+              } catch (error) {
+                logger.error('Failed to detect user tokens:', error);
+              }
               showNotification('Wallet account changed', 'info');
             } else {
               setWalletAddress('');
@@ -223,7 +242,13 @@ const Swap = ({ currentUser, showNotification }) => {
           setWalletType(walletName);
           
           // Detect user tokens once wallet is connected
-          detectUserTokens(publicKey);
+          try {
+            await detectUserTokens(publicKey);
+          } catch (error) {
+            logger.error('Failed to detect user tokens:', error);
+            // Don't let token detection failure break the app
+            showNotification('Connected, but could not fetch wallet tokens', 'warning');
+          }
           
           logger.info(`Connected to ${walletName} wallet: ${publicKey}`);
           showNotification(`Connected to ${walletName} wallet`, 'success');
@@ -273,16 +298,45 @@ const Swap = ({ currentUser, showNotification }) => {
     try {
       if (!walletAddress) return;
       
-      const connection = new solanaWeb3.Connection(
-        'https://api.mainnet-beta.solana.com',
-        { commitment: 'confirmed' }
-      );
+      // Try each RPC endpoint until one works
+      let connection = null;
+      let tokenAccounts = null;
+      let error = null;
       
-      // Get all token accounts for the wallet
-      const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
-        new PublicKey(walletAddress),
-        { programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') }
-      );
+      // Try each endpoint until one works
+      for (const endpoint of SOLANA_RPC_ENDPOINTS) {
+        try {
+          connection = new solanaWeb3.Connection(endpoint, { commitment: 'confirmed' });
+          
+          // Test connection first with a simple request
+          await connection.getSlot();
+          
+          // Get token accounts with a timeout to prevent hanging
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('RPC request timeout')), 10000)
+          );
+          
+          tokenAccounts = await Promise.race([
+            connection.getParsedTokenAccountsByOwner(
+              new PublicKey(walletAddress),
+              { programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') }
+            ),
+            timeoutPromise
+          ]);
+          
+          // If we get here, it worked, so break the loop
+          break;
+        } catch (err) {
+          logger.warn(`RPC endpoint ${endpoint} failed: ${err.message}`);
+          error = err;
+          // Continue to next endpoint
+        }
+      }
+      
+      // If all endpoints failed
+      if (!tokenAccounts) {
+        throw error || new Error('All RPC endpoints failed');
+      }
       
       // Filter for tokens with non-zero balance
       const userTokenAddresses = tokenAccounts.value
@@ -315,13 +369,15 @@ const Swap = ({ currentUser, showNotification }) => {
         const solToken = userTokensList.find(t => t.symbol === 'SOL' || t.symbol === 'WSOL');
         if (solToken) {
           setFromToken(solToken.address);
-        } else {
+        } else if (userTokensList.length > 0) {
           // Or use the first user token
           setFromToken(userTokensList[0].address);
         }
       }
     } catch (error) {
       logger.error('Error detecting user tokens:', error);
+      // Don't let token detection failure break the app
+      showNotification('Could not fetch wallet tokens, but you can still trade', 'warning');
     }
   };
   
@@ -330,8 +386,58 @@ const Swap = ({ currentUser, showNotification }) => {
     try {
       setLoading(true);
       
-      // Fetch tokens from Jupiter API
-      const response = await axios.get('https://token.jup.ag/all');
+      // Check localStorage for cached tokens first
+      const cachedTokensString = localStorage.getItem('jupiterTokens');
+      const cachedTimestamp = localStorage.getItem('jupiterTokensTimestamp');
+      const now = Date.now();
+      const CACHE_DURATION = 3600000; // 1 hour
+      
+      // Use cached tokens if they exist and are less than 1 hour old
+      let jupiterTokens = [];
+      if (cachedTokensString && cachedTimestamp && (now - parseInt(cachedTimestamp) < CACHE_DURATION)) {
+        try {
+          jupiterTokens = JSON.parse(cachedTokensString);
+          logger.info(`Using ${jupiterTokens.length} cached Solana tokens`);
+          
+          if (jupiterTokens.length > 0) {
+            processTokens(jupiterTokens);
+            setLoading(false);
+            
+            // Fetch fresh tokens in the background
+            fetchFreshTokens().catch(err => 
+              logger.warn('Background token refresh failed:', err)
+            );
+            return;
+          }
+        } catch (err) {
+          logger.warn('Error parsing cached tokens:', err);
+          // Continue to fetch tokens from API
+        }
+      }
+      
+      // Fetch fresh tokens (either because cache was invalid or to update UI immediately)
+      await fetchFreshTokens();
+      
+    } catch (error) {
+      logger.error('Failed to fetch Solana tokens:', error);
+      handleTokenError();
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Helper function to fetch fresh tokens from Jupiter API
+  const fetchFreshTokens = async () => {
+    try {
+      // Set a timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Token fetch timeout')), 15000)
+      );
+      
+      const response = await Promise.race([
+        axios.get('https://token.jup.ag/all'),
+        timeoutPromise
+      ]);
       
       if (response.data && Array.isArray(response.data)) {
         // Format tokens to our structure
@@ -344,61 +450,90 @@ const Swap = ({ currentUser, showNotification }) => {
           tags: token.tags || []
         }));
         
-        // Prioritize common tokens
-        const commonSymbols = ['SOL', 'USDC', 'USDT', 'BTC', 'ETH', 'BONK', 'JUP', 'RAY', 'ORCA'];
-        jupiterTokens.forEach(token => {
-          token.isCommon = commonSymbols.includes(token.symbol);
-        });
+        // Cache tokens in localStorage
+        localStorage.setItem('jupiterTokens', JSON.stringify(jupiterTokens));
+        localStorage.setItem('jupiterTokensTimestamp', Date.now().toString());
         
-        // Sort tokens: common tokens first, then alphabetically
-        jupiterTokens.sort((a, b) => {
-          if (a.isCommon && !b.isCommon) return -1;
-          if (!a.isCommon && b.isCommon) return 1;
-          return a.symbol.localeCompare(b.symbol);
-        });
-        
-        // Set tokens
-        setTokens(jupiterTokens);
-        
-        // Default to SOL and USDC
-        const solToken = jupiterTokens.find(t => t.symbol === 'SOL' || t.symbol === 'WSOL');
-        const usdcToken = jupiterTokens.find(t => t.symbol === 'USDC');
-        
-        if (solToken) setFromToken(solToken.address);
-        if (usdcToken) setToToken(usdcToken.address);
+        // Process the tokens
+        processTokens(jupiterTokens);
         
         logger.info(`Loaded ${jupiterTokens.length} Solana tokens from Jupiter API`);
       }
     } catch (error) {
-      logger.error('Failed to fetch Solana tokens:', error);
-      setError('Failed to load Solana tokens. Please refresh and try again.');
-      
-      // Set some default tokens as fallback
-      const defaultTokens = [
-        {
-          address: 'So11111111111111111111111111111111111111112',
-          name: 'Wrapped SOL',
-          symbol: 'SOL',
-          decimals: 9,
-          logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png',
-          isCommon: true
-        },
-        {
-          address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
-          name: 'USD Coin',
-          symbol: 'USDC',
-          decimals: 6,
-          logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
-          isCommon: true
-        }
-      ];
-      
-      setTokens(defaultTokens);
-      setFromToken(defaultTokens[0].address);
-      setToToken(defaultTokens[1].address);
-    } finally {
-      setLoading(false);
+      logger.error('Error fetching fresh tokens:', error);
+      throw error;
     }
+  };
+  
+  // Process tokens (mark common, sort, set default)
+  const processTokens = (jupiterTokens) => {
+    // Prioritize common tokens
+    const commonSymbols = ['SOL', 'USDC', 'USDT', 'BTC', 'ETH', 'BONK', 'JUP', 'RAY', 'ORCA'];
+    jupiterTokens.forEach(token => {
+      token.isCommon = commonSymbols.includes(token.symbol);
+    });
+    
+    // Sort tokens: common tokens first, then alphabetically
+    jupiterTokens.sort((a, b) => {
+      if (a.isCommon && !b.isCommon) return -1;
+      if (!a.isCommon && b.isCommon) return 1;
+      return a.symbol.localeCompare(b.symbol);
+    });
+    
+    // Set tokens
+    setTokens(jupiterTokens);
+    
+    // Default to SOL and USDC
+    const solToken = jupiterTokens.find(t => t.symbol === 'SOL' || t.symbol === 'WSOL');
+    const usdcToken = jupiterTokens.find(t => t.symbol === 'USDC');
+    
+    if (solToken && !fromToken) setFromToken(solToken.address);
+    if (usdcToken && !toToken) setToToken(usdcToken.address);
+  };
+  
+  // Handle token error (set default tokens)
+  const handleTokenError = () => {
+    setError('Failed to load Solana tokens. Using default list.');
+    
+    // Set some default tokens as fallback
+    const defaultTokens = [
+      {
+        address: 'So11111111111111111111111111111111111111112',
+        name: 'Wrapped SOL',
+        symbol: 'SOL',
+        decimals: 9,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png',
+        isCommon: true
+      },
+      {
+        address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+        name: 'USD Coin',
+        symbol: 'USDC',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
+        isCommon: true
+      },
+      {
+        address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+        name: 'USDT',
+        symbol: 'USDT',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB/logo.png',
+        isCommon: true
+      },
+      {
+        address: 'MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmvvWaxLac',
+        name: 'MNGO',
+        symbol: 'MNGO',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmvvWaxLac/logo.png',
+        isCommon: true
+      }
+    ];
+    
+    setTokens(defaultTokens);
+    if (!fromToken) setFromToken(defaultTokens[0].address);
+    if (!toToken) setToToken(defaultTokens[1].address);
   };
   
   // Get quote from Jupiter API
@@ -444,9 +579,17 @@ const Swap = ({ currentUser, showNotification }) => {
         quoteParams.feeAccount = FEE_RECIPIENT;
       }
       
-      const response = await axios.get(`${JUPITER_API_BASE_URL}/quote`, {
-        params: quoteParams
-      });
+      // Set a timeout to avoid hanging if the API is slow
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Quote request timeout')), 15000)
+      );
+      
+      const response = await Promise.race([
+        axios.get(`${JUPITER_API_BASE_URL}/quote`, {
+          params: quoteParams
+        }),
+        timeoutPromise
+      ]);
       
       if (response.data) {
         // Set the quote data
@@ -503,10 +646,15 @@ const Swap = ({ currentUser, showNotification }) => {
         wrapUnwrapSOL: true // Automatically wrap/unwrap SOL if needed
       };
       
-      const swapResponse = await axios.post(
-        `${JUPITER_API_BASE_URL}/swap`, 
-        swapParams
+      // Set a timeout to avoid hanging if the API is slow
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Swap transaction request timeout')), 20000)
       );
+      
+      const swapResponse = await Promise.race([
+        axios.post(`${JUPITER_API_BASE_URL}/swap`, swapParams),
+        timeoutPromise
+      ]);
       
       if (!swapResponse.data || !swapResponse.data.swapTransaction) {
         throw new Error('Invalid swap response from Jupiter API');
@@ -515,10 +663,15 @@ const Swap = ({ currentUser, showNotification }) => {
       // Deserialize the transaction
       const swapTransactionBuf = Buffer.from(swapResponse.data.swapTransaction, 'base64');
       
-      // Sign and send the transaction
-      const signature = await walletProvider.signAndSendTransaction(
-        swapTransactionBuf
+      // Sign and send the transaction with a timeout
+      const signTimeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Wallet signature timeout')), 60000)
       );
+      
+      const signature = await Promise.race([
+        walletProvider.signAndSendTransaction(swapTransactionBuf),
+        signTimeoutPromise
+      ]);
       
       logger.info('Swap transaction sent with signature:', signature);
       
@@ -536,7 +689,19 @@ const Swap = ({ currentUser, showNotification }) => {
       }, 3000);
     } catch (error) {
       logger.error('Error executing swap:', error);
-      setError('Failed to execute swap. Please try again.');
+      
+      // More user-friendly error messages based on common failure cases
+      let errorMessage = 'Failed to execute swap. Please try again.';
+      
+      if (error.message.includes('timeout')) {
+        errorMessage = 'Operation timed out. Please try again or check your internet connection.';
+      } else if (error.message.includes('User rejected')) {
+        errorMessage = 'Transaction was rejected in your wallet.';
+      } else if (error.message.includes('insufficient funds') || error.message.includes('insufficient balance')) {
+        errorMessage = 'Insufficient funds for this transaction.';
+      }
+      
+      setError(errorMessage);
       showNotification('Swap failed: ' + (error.message || 'Unknown error'), 'error');
     } finally {
       setSwapLoading(false);
