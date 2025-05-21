@@ -1101,7 +1101,7 @@ const Swap = ({ currentUser, showNotification }) => {
     detectWallets();
   }, []);
 
-  // Remove Jupiter-specific code and use Li.fi for all chains
+  // Add debugging and fix token selection after connecting wallet
   const getQuote = async () => {
     if (!fromToken || !toToken || !fromAmount || fromAmount <= 0) {
       setError('Please fill in all fields correctly');
@@ -1133,12 +1133,53 @@ const Swap = ({ currentUser, showNotification }) => {
     setToAmount('');  // Clear the to amount
 
     try {
+      // Enhanced token validation with detailed error reporting
       // Find the selected token to get its decimals
-      const selectedFromToken = tokens[fromChain]?.find(token => token.address === fromToken);
-      const selectedToToken = tokens[fromChain]?.find(token => token.address === toToken);
+      const selectedFromToken = fromChainTokens.find(token => 
+        token.address.toLowerCase() === fromToken.toLowerCase()
+      );
+      const selectedToToken = toChainTokens.find(token => 
+        token.address.toLowerCase() === toToken.toLowerCase()
+      );
       
-      if (!selectedFromToken || !selectedToToken) {
-        setError('Selected tokens not found in token list. Please try different tokens.');
+      // Detailed logging to diagnose token issues
+      logger.info('Token validation details:', {
+        fromToken,
+        toToken,
+        fromChain,
+        toChain: fromChain, // Same-chain swaps
+        fromTokenFound: !!selectedFromToken,
+        toTokenFound: !!selectedToToken,
+        fromChainTokensCount: fromChainTokens.length,
+        toChainTokensCount: toChainTokens.length
+      });
+      
+      if (!selectedFromToken) {
+        setError(`'From' token (${fromToken}) not found in token list. Please try selecting a different token.`);
+        // Try to fallback to a safe default token
+        const defaultToken = fromChainTokens[0];
+        if (defaultToken) {
+          setFromToken(defaultToken.address);
+          logger.info('Auto-selecting default token:', defaultToken.symbol);
+        }
+        setLoading(false);
+        return;
+      }
+      
+      if (!selectedToToken) {
+        setError(`'To' token (${toToken}) not found in token list. Please try selecting a different token.`);
+        // Try to fallback to a safe default token
+        const usdcToken = fromChainTokens.find(t => 
+          t.symbol.toLowerCase() === 'usdc' || 
+          t.symbol.toLowerCase() === 'usdt'
+        );
+        if (usdcToken) {
+          setToToken(usdcToken.address);
+          logger.info('Auto-selecting USDC/USDT token');
+        } else if (fromChainTokens.length > 1) {
+          setToToken(fromChainTokens[1].address);
+          logger.info('Auto-selecting second token in list');
+        }
         setLoading(false);
         return;
       }
@@ -1167,9 +1208,23 @@ const Swap = ({ currentUser, showNotification }) => {
         return;
       }
       
-      // Make sure Solana addresses don't have 0x prefix
-      const cleanFromToken = isSolanaFromChain ? fromToken.replace(/^0x/, '') : fromToken;
-      const cleanToToken = isSolanaFromChain ? toToken.replace(/^0x/, '') : toToken;
+      // Make sure Solana addresses don't have 0x prefix, but EVM addresses do have 0x prefix
+      let cleanFromToken = fromToken;
+      let cleanToToken = toToken;
+      
+      if (isSolanaFromChain) {
+        // For Solana, remove 0x prefix if present
+        cleanFromToken = fromToken.replace(/^0x/, '');
+        cleanToToken = toToken.replace(/^0x/, '');
+      } else {
+        // For EVM chains, ensure 0x prefix
+        if (!cleanFromToken.startsWith('0x')) {
+          cleanFromToken = '0x' + cleanFromToken;
+        }
+        if (!cleanToToken.startsWith('0x')) {
+          cleanToToken = '0x' + cleanToToken;
+        }
+      }
       
       // Set up parameters according to Li.fi documentation
       const requestParams = {
@@ -1188,6 +1243,15 @@ const Swap = ({ currentUser, showNotification }) => {
       };
       
       logger.info(`Quote request for ${selectedFromToken.symbol} to ${selectedToToken.symbol} on ${isSolanaFromChain ? 'Solana' : 'EVM chain'}`);
+      logger.info('Quote request parameters:', {
+        ...requestParams,
+        fromSymbol: selectedFromToken.symbol,
+        toSymbol: selectedToToken.symbol,
+        tokenDecimals: {
+          from: fromDecimals,
+          to: toDecimals
+        }
+      });
       
       // For Solana, always use the dedicated endpoint directly
       if (isSolanaFromChain) {
@@ -1213,7 +1277,7 @@ const Swap = ({ currentUser, showNotification }) => {
             return;
           } else {
             throw new Error('No routes found for Solana swap');
-          }
+        }
         } catch (solanaError) {
           logger.error('Solana quote error:', solanaError);
           
@@ -1972,7 +2036,26 @@ const Swap = ({ currentUser, showNotification }) => {
       });
       
       if (response.data && response.data.tokens && response.data.tokens[fromChain]) {
-        const newTokens = response.data.tokens[fromChain];
+        let newTokens = response.data.tokens[fromChain];
+        
+        // Normalize token addresses based on chain type
+        newTokens = newTokens.map(token => {
+          // Ensure addresses are in correct format for the chain
+          if (isSolanaFromChain && token.address.startsWith('0x')) {
+            return {
+              ...token,
+              address: token.address.replace(/^0x/, '')
+            };
+          } 
+          // For EVM chains, ensure addresses have 0x prefix
+          else if (!isSolanaFromChain && !token.address.startsWith('0x') && token.address !== '0') {
+            return {
+              ...token,
+              address: '0x' + token.address
+            };
+          }
+          return token;
+        });
         
         // If we have user tokens, mark them
         if (walletConnected) {
@@ -2002,26 +2085,66 @@ const Swap = ({ currentUser, showNotification }) => {
         const tokenCount = newTokens.length;
         showNotification && showNotification(`Loaded ${tokenCount} tokens for ${fromChain}`, 'success');
         
-        // If no token is selected, select the native token or USDC as default
-        if (!fromToken || fromToken === '') {
+        // Find suitable tokens to select by default
+        if (!fromToken || fromToken === '' || !toToken || toToken === '') {
           // Find native token (usually the first one) or USDC
-          const nativeToken = newTokens[0];
+          let nativeToken = newTokens[0];
+          
+          // For EVM chains, try to find ETH/MATIC/BNB
+          if (!isSolanaFromChain) {
+            const nativeTokens = newTokens.filter(token => 
+              token.address.toLowerCase() === '0x0000000000000000000000000000000000000000' ||
+              token.address.toLowerCase() === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+            );
+            if (nativeTokens.length > 0) {
+              nativeToken = nativeTokens[0];
+            }
+          } else {
+            // For Solana, find SOL
+            const solToken = newTokens.find(token => 
+              token.symbol.toUpperCase() === 'SOL' || 
+              token.address === '11111111111111111111111111111111'
+            );
+            if (solToken) {
+              nativeToken = solToken;
+            }
+          }
+          
           const usdcToken = newTokens.find(t => 
             t.symbol.toLowerCase() === 'usdc' || 
             t.symbol.toLowerCase() === 'usdt'
           );
           
-          if (nativeToken) {
+          logger.info('Default token selection:', {
+            nativeToken: nativeToken?.symbol,
+            nativeTokenAddress: nativeToken?.address,
+            usdcToken: usdcToken?.symbol,
+            usdcTokenAddress: usdcToken?.address,
+            totalTokens: newTokens.length
+          });
+          
+          // Set from token
+          if (nativeToken && (!fromToken || fromToken === '')) {
             setFromToken(nativeToken.address);
+            logger.info(`Set default 'from' token: ${nativeToken.symbol} (${nativeToken.address})`);
           }
           
-          if (usdcToken) {
+          // Set to token
+          if (usdcToken && (!toToken || toToken === '')) {
             setToToken(usdcToken.address);
-          } else if (newTokens.length > 1) {
-            // Set to token as the second token to avoid same token swap
-            setToToken(newTokens[1].address);
+            logger.info(`Set default 'to' token: ${usdcToken.symbol} (${usdcToken.address})`);
+          } else if (newTokens.length > 1 && (!toToken || toToken === '')) {
+            // Make sure we don't select the same token as fromToken
+            const secondToken = newTokens.find(t => t.address !== (nativeToken?.address || ''));
+            if (secondToken) {
+              setToToken(secondToken.address);
+              logger.info(`Set fallback 'to' token: ${secondToken.symbol} (${secondToken.address})`);
+            }
           }
         }
+      } else {
+        logger.error('Invalid token response format:', response.data);
+        showNotification && showNotification('Failed to load tokens: Invalid response format', 'error');
       }
     } catch (error) {
       logger.error('Error fetching all available tokens:', error);
@@ -2125,6 +2248,54 @@ const Swap = ({ currentUser, showNotification }) => {
     
     await getWalletTokens();
   };
+
+  // Add debugging function for token list validation
+  const validateTokenSelection = () => {
+    if (!fromChain || !fromToken || !toToken) {
+      logger.info('Token validation skipped - missing required values');
+      return;
+    }
+    
+    // Check if tokens exist in their respective lists
+    const fromTokenExists = fromChainTokens.some(token => 
+      token.address.toLowerCase() === fromToken.toLowerCase()
+    );
+    
+    const toTokenExists = toChainTokens.some(token => 
+      token.address.toLowerCase() === toToken.toLowerCase()
+    );
+    
+    logger.info('Token validation results:', {
+      fromTokenExists,
+      toTokenExists,
+      fromToken,
+      toToken,
+      fromTokensCount: fromChainTokens.length,
+      toTokensCount: toChainTokens.length,
+      chainId: fromChain
+    });
+    
+    if (!fromTokenExists) {
+      logger.warn(`Selected 'from' token (${fromToken}) not found in token list!`);
+    }
+    
+    if (!toTokenExists) {
+      logger.warn(`Selected 'to' token (${toToken}) not found in token list!`);
+    }
+    
+    // Sample token addresses for debugging
+    logger.debug('Sample tokens in list:', fromChainTokens.slice(0, 3).map(t => ({
+      symbol: t.symbol,
+      address: t.address
+    })));
+  };
+
+  // Call the validation whenever tokens change
+  useEffect(() => {
+    if (fromToken && toToken && fromChainTokens.length > 0) {
+      validateTokenSelection();
+    }
+  }, [fromToken, toToken, fromChainTokens.length]);
 
   return (
     <div className="bg-gray-900 p-4 sm:p-6 rounded-lg shadow-lg w-full text-white overflow-y-auto swap-container" style={{
