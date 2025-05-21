@@ -381,34 +381,10 @@ const Swap = ({ currentUser, showNotification }) => {
     setIsSolanaFromChain(isSolana);
     setIsSolanaToChain(isSolana); // Set both to same value since we're forcing same chain
     
-    // If tokens for this chain are already loaded
-    if (tokens[newChain]) {
-      setFromChainTokens(tokens[newChain]);
-      setToChainTokens(tokens[newChain]); // Set both to same chain's tokens
-      if (tokens[newChain].length > 0) {
-        setFromToken(tokens[newChain][0].address);
-        
-        // Try to set a different token for "to" if available
-        if (tokens[newChain].length > 1) {
-          // Prefer a stablecoin for the "to" token if available
-          const stablecoin = tokens[newChain].find(t => 
-            t.symbol.toLowerCase() === 'usdc' || 
-            t.symbol.toLowerCase() === 'usdt' ||
-            t.symbol.toLowerCase() === 'dai'
-          );
-          
-          if (stablecoin) {
-            setToToken(stablecoin.address);
-          } else {
-            // Otherwise use the second token in the list
-            setToToken(tokens[newChain][1].address);
-          }
-        } else {
-          // If only one token, use it (though this swap wouldn't make sense)
-          setToToken(tokens[newChain][0].address);
-        }
-      }
-    }
+    // Fetch all available tokens for the selected chain
+    setTimeout(() => {
+      fetchAllAvailableTokens();
+    }, 500);
   };
   
   const handleToChainChange = (e) => {
@@ -588,33 +564,13 @@ const Swap = ({ currentUser, showNotification }) => {
           // Set both from and to chain to the detected chain
           setFromChain(matchedChain.id);
           
-          // If tokens for this chain are already loaded, set them
-          if (tokens[matchedChain.id]) {
-            setFromChainTokens(tokens[matchedChain.id]);
-            setToChainTokens(tokens[matchedChain.id]);
-            
-            // Set default tokens
-            if (tokens[matchedChain.id].length > 0) {
-              setFromToken(tokens[matchedChain.id][0].address);
-              
-              // Try to set a different token for "to" if available
-              if (tokens[matchedChain.id].length > 1) {
-                // Prefer a stablecoin for the "to" token if available
-                const stablecoin = tokens[matchedChain.id].find(t => 
-                  t.symbol.toLowerCase() === 'usdc' || 
-                  t.symbol.toLowerCase() === 'usdt' ||
-                  t.symbol.toLowerCase() === 'dai'
-                );
-                
-                if (stablecoin) {
-                  setToToken(stablecoin.address);
-                } else {
-                  // Otherwise use the second token in the list
-                  setToToken(tokens[matchedChain.id][1].address);
-                }
-              }
-            }
-          }
+          // Force the toChain to match fromChain (same-chain only approach)
+          setToChain(matchedChain.id);
+          
+          // Trigger comprehensive token fetch for this chain
+          setTimeout(() => {
+            fetchAllAvailableTokens();
+          }, 500);
         }
         
         // Set up listener for chain changes
@@ -627,16 +583,16 @@ const Swap = ({ currentUser, showNotification }) => {
           if (newMatchedChain) {
             // Update chain selection in the UI
             setFromChain(newMatchedChain.id);
+            setToChain(newMatchedChain.id);
             
             // Reset tokens
             setFromToken('');
             setToToken('');
             
-            // Load tokens for the new chain
-            if (tokens[newMatchedChain.id]) {
-              setFromChainTokens(tokens[newMatchedChain.id]);
-              setToChainTokens(tokens[newMatchedChain.id]);
-            }
+            // Fetch tokens for the new chain
+            setTimeout(() => {
+              fetchAllAvailableTokens();
+            }, 500);
           }
         });
       } 
@@ -651,33 +607,12 @@ const Swap = ({ currentUser, showNotification }) => {
         if (solanaChain) {
           logger.info(`Auto-detected Solana chain: ${solanaChain.name} (${solanaChain.id})`);
           setFromChain(solanaChain.id);
+          setToChain(solanaChain.id);
           
-          // If tokens for Solana are already loaded, set them
-          if (tokens[solanaChain.id]) {
-            setFromChainTokens(tokens[solanaChain.id]);
-            setToChainTokens(tokens[solanaChain.id]);
-            
-            // Set default tokens
-            if (tokens[solanaChain.id].length > 0) {
-              setFromToken(tokens[solanaChain.id][0].address);
-              
-              // Try to set a different token for "to" if available
-              if (tokens[solanaChain.id].length > 1) {
-                // Prefer a stablecoin for the "to" token if available
-                const stablecoin = tokens[solanaChain.id].find(t => 
-                  t.symbol.toLowerCase() === 'usdc' || 
-                  t.symbol.toLowerCase() === 'usdt'
-                );
-                
-                if (stablecoin) {
-                  setToToken(stablecoin.address);
-                } else {
-                  // Otherwise use the second token in the list
-                  setToToken(tokens[solanaChain.id][1].address);
-                }
-              }
-            }
-          }
+          // Trigger comprehensive token fetch for Solana
+          setTimeout(() => {
+            fetchAllAvailableTokens();
+          }, 500);
         }
       }
     } catch (error) {
@@ -2016,9 +1951,164 @@ const Swap = ({ currentUser, showNotification }) => {
   // Update useEffect to scan for wallet tokens after wallet connection
   useEffect(() => {
     if (walletConnected && walletAddress) {
-      getWalletTokens();
+      // Call a comprehensive token fetch right after wallet connection
+      fetchAllAvailableTokens();
     }
   }, [walletConnected, walletAddress, walletType]);
+
+  // Add a new function to fetch all available tokens on the current chain
+  const fetchAllAvailableTokens = async () => {
+    if (!fromChain) return;
+    
+    try {
+      setLoading(true);
+      showNotification && showNotification('Loading all available tokens...', 'info');
+      
+      // For EVM chains - use Li.fi comprehensive token list
+      const response = await axios.get(`https://li.quest/v1/tokens?chains=${fromChain}&includeAllTokens=true`, {
+        headers: {
+          'x-lifi-api-key': LIFI_API_KEY
+        }
+      });
+      
+      if (response.data && response.data.tokens && response.data.tokens[fromChain]) {
+        const newTokens = response.data.tokens[fromChain];
+        
+        // If we have user tokens, mark them
+        if (walletConnected) {
+          // For simplicity, we'll just attempt to fetch balances only for the top tokens
+          try {
+            if (walletType === 'evm') {
+              await addUserEVMTokens(newTokens);
+            } else if (walletType === 'solana') {
+              await scanSolanaWalletTokens();
+            }
+          } catch (error) {
+            logger.error('Error marking user tokens:', error);
+          }
+        }
+        
+        // Update the token state
+        setTokens(prev => ({
+          ...prev,
+          [fromChain]: newTokens
+        }));
+        
+        // Update the token lists
+        setFromChainTokens(newTokens);
+        setToChainTokens(newTokens);
+        
+        // Show success notification
+        const tokenCount = newTokens.length;
+        showNotification && showNotification(`Loaded ${tokenCount} tokens for ${fromChain}`, 'success');
+        
+        // If no token is selected, select the native token or USDC as default
+        if (!fromToken || fromToken === '') {
+          // Find native token (usually the first one) or USDC
+          const nativeToken = newTokens[0];
+          const usdcToken = newTokens.find(t => 
+            t.symbol.toLowerCase() === 'usdc' || 
+            t.symbol.toLowerCase() === 'usdt'
+          );
+          
+          if (nativeToken) {
+            setFromToken(nativeToken.address);
+          }
+          
+          if (usdcToken) {
+            setToToken(usdcToken.address);
+          } else if (newTokens.length > 1) {
+            // Set to token as the second token to avoid same token swap
+            setToToken(newTokens[1].address);
+          }
+        }
+      }
+    } catch (error) {
+      logger.error('Error fetching all available tokens:', error);
+      showNotification && showNotification('Failed to load all tokens. Please try again.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Helper function to add user EVM tokens
+  const addUserEVMTokens = async (tokenList) => {
+    if (!walletConnected || walletType !== 'evm' || !window.ethereum) return;
+    
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const tokenAddresses = tokenList.map(t => t.address.toLowerCase());
+      
+      // Only check balances for most common tokens to avoid too many RPC calls
+      const topTokens = tokenList.slice(0, 50); // Check only top 50 tokens
+      
+      for (const token of topTokens) {
+        try {
+          // Skip if not ERC20
+          if (token.address === '0x0000000000000000000000000000000000000000') continue;
+          
+          // Create contract instance
+          const tokenContract = new ethers.Contract(
+            token.address,
+            [
+              'function balanceOf(address owner) view returns (uint256)',
+              'function decimals() view returns (uint8)'
+            ],
+            provider
+          );
+          
+          // Check balance
+          const balance = await tokenContract.balanceOf(walletAddress);
+          const decimals = token.decimals || await tokenContract.decimals();
+          
+          // Convert to readable format
+          const readableBalance = ethers.formatUnits(balance, decimals);
+          
+          // Mark as user token if balance > 0
+          if (parseFloat(readableBalance) > 0) {
+            const index = tokenList.findIndex(t => t.address.toLowerCase() === token.address.toLowerCase());
+            if (index !== -1) {
+              tokenList[index] = {
+                ...tokenList[index],
+                isUserToken: true,
+                balance: readableBalance
+              };
+            }
+          }
+        } catch (e) {
+          // Silently fail for individual tokens
+          continue;
+        }
+      }
+      
+      // Check ETH balance
+      try {
+        const ethBalance = await provider.getBalance(walletAddress);
+        const readableEthBalance = ethers.formatEther(ethBalance);
+        
+        // Find ETH/native token in the list
+        const nativeTokenIndex = tokenList.findIndex(t => 
+          t.address === '0x0000000000000000000000000000000000000000' || 
+          t.address === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'
+        );
+        
+        if (nativeTokenIndex !== -1 && parseFloat(readableEthBalance) > 0) {
+          tokenList[nativeTokenIndex] = {
+            ...tokenList[nativeTokenIndex],
+            isUserToken: true,
+            balance: readableEthBalance
+          };
+        }
+      } catch (e) {
+        // Silently fail for ETH balance
+      }
+      
+      return tokenList;
+    } catch (error) {
+      logger.error('Error checking user EVM tokens:', error);
+      return tokenList;
+    }
+  };
 
   // Add a refresh function for wallet tokens
   const refreshWalletTokens = async () => {
