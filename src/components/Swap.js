@@ -44,31 +44,50 @@ const Swap = ({ currentUser, showNotification }) => {
     styleEl.innerHTML = hideDuckHuntStyle;
     document.head.appendChild(styleEl);
     
-    // Hide duck hunt buttons
+    // Hide duck hunt buttons more aggressively
     const intervalId = setInterval(() => {
       const hideSelectors = [
         '#duck-hunt-button',
         '#start-duck-hunt',
         '.duck-hunt-button',
         '.start-duck-hunt',
-        '[data-testid="duck-hunt-button"]'
+        '[data-testid="duck-hunt-button"]',
+        '[id*="duck-hunt"]',
+        '[id*="start-duck"]',
+        '[class*="duck-hunt"]',
+        'div[style*="position: fixed"][style*="bottom"][style*="right"]'
       ];
       
       hideSelectors.forEach(selector => {
         try {
           document.querySelectorAll(selector).forEach(el => {
-        if (el) {
-          el.style.display = 'none';
-          el.style.visibility = 'hidden';
-          el.style.opacity = '0';
-          el.style.pointerEvents = 'none';
-        }
-      });
+            if (el) {
+              // Completely remove duck hunt elements
+              el.style.display = 'none';
+              el.style.visibility = 'hidden';
+              el.style.opacity = '0';
+              el.style.pointerEvents = 'none';
+              el.style.position = 'absolute';
+              el.style.height = '0';
+              el.style.width = '0';
+              el.style.overflow = 'hidden';
+              
+              // Try to remove from DOM if possible
+              if (el.parentNode && !el.getAttribute('data-kept')) {
+                try {
+                  el.parentNode.removeChild(el);
+                } catch (err) {
+                  // If can't remove, mark it as processed
+                  el.setAttribute('data-kept', 'true');
+                }
+              }
+            }
+          });
         } catch (e) {
           // Ignore errors
         }
       });
-    }, 2000);
+    }, 1000);
     
     // Load LiFi using iframe approach
     const loadLiFiWidget = () => {
@@ -98,12 +117,6 @@ const Swap = ({ currentUser, showNotification }) => {
         title="AquaSwap powered by LiFi"
         frameBorder="0"
         className="lifi-iframe"
-        style={{
-          width: '100%',
-          height: '600px',
-          borderRadius: '12px',
-          border: 'none',
-        }}
         allow="clipboard-write"
       />
     );

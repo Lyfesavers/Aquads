@@ -938,4 +938,143 @@
     height: 550px !important;
     transform: scale(0.92);
   }
+}
+
+/* Fix horizontal overflow issues */
+body, html {
+  overflow-x: hidden !important;
+  max-width: 100vw;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Container fixes */
+.swap-container {
+  padding: 0 !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Card fixes */
+.swap-card.lifi-container {
+  width: calc(100% - 20px) !important;
+  max-width: 480px !important;
+  margin: 0 auto !important;
+  padding: 12px !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+/* Improve LiFi widget mobile responsiveness */
+.lifi-container {
+  padding: 12px !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+
+.lifi-container iframe {
+  width: 100% !important;
+  height: 620px !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  transform-origin: top center !important;
+  border: none !important;
+  display: block !important;
+}
+
+/* Force no horizontal scroll */
+.lifi-iframe {
+  width: 100% !important;
+  min-width: 100% !important;
+  border: none !important;
+  overflow: hidden !important;
+  display: block !important;
+}
+
+/* Mobile-specific LiFi widget container */
+@media (max-width: 600px) {
+  .swap-card.lifi-container {
+    width: calc(100% - 16px) !important;
+    padding: 8px !important;
+    margin: 0 auto !important;
+  }
+  
+  .lifi-container iframe {
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    height: 650px !important;
+    transform: scale(0.98);
+    transform-origin: top center;
+    border-radius: 8px !important;
+  }
+  
+  .swap-header {
+    padding-left: 8px;
+    padding-right: 8px;
+    margin-bottom: 10px;
+  }
+  
+  .powered-by {
+    padding-left: 8px;
+    padding-right: 8px;
+    margin-top: 10px;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 375px) {
+  .swap-card.lifi-container {
+    width: calc(100% - 12px) !important;
+    padding: 6px !important;
+  }
+  
+  .lifi-container iframe {
+    height: 680px !important; /* Taller to show all content */
+    transform: scale(0.96);
+  }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 320px) {
+  .swap-card.lifi-container {
+    width: calc(100% - 10px) !important;
+    padding: 5px !important;
+  }
+  
+  .lifi-container iframe {
+    height: 700px !important; /* Even taller for very small screens */
+    transform: scale(0.95);
+  }
+  
+  .swap-header h2 {
+    font-size: 1.2rem;
+  }
+}
+
+/* Additional style to hide elements completely */
+div[data-testid="duck-hunt-button"],
+#duck-hunt-button,
+.duck-hunt-button,
+#start-duck-hunt,
+.start-duck-hunt,
+[id*="duck-hunt"],
+[id*="start-duck"],
+[class*="duck-hunt"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  height: 0 !important;
+  width: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  margin: -1px !important;
 } 
