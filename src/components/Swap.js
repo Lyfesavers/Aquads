@@ -122,98 +122,7 @@ const Swap = ({ currentUser, showNotification }) => {
     };
   }, []);
   
-  // Check wallet connection on mount and set up listeners
-  const checkWalletConnection = useCallback(async () => {
-    try {
-      // Check for Phantom wallet
-      const isPhantomInstalled = window.phantom?.solana?.isPhantom;
-      // Check for Solflare wallet
-      const isSolflareInstalled = window.solflare?.isSolflare;
-      // Check for Backpack wallet
-      const isBackpackInstalled = window.backpack?.isBackpack;
-      
-      let provider = null;
-      let walletName = '';
-      
-      if (isPhantomInstalled) {
-        provider = window.phantom.solana;
-        walletName = 'Phantom';
-      } else if (isSolflareInstalled) {
-        provider = window.solflare;
-        walletName = 'Solflare';
-      } else if (isBackpackInstalled) {
-        provider = window.backpack;
-        walletName = 'Backpack';
-      }
-      
-      if (provider) {
-        // Try to connect if autoConnect is enabled
-        try {
-          // Check if the wallet is already connected
-          if (provider.isConnected) {
-            const publicKey = provider.publicKey?.toString();
-            
-            if (publicKey) {
-              setWalletAddress(publicKey);
-              setWalletConnected(true);
-              setWalletType(walletName);
-              
-              // Detect user tokens once wallet is connected - wrap in try/catch to prevent app freezing
-              try {
-                await detectUserTokens(publicKey);
-              } catch (error) {
-                logger.error('Failed to detect user tokens:', error);
-              }
-              
-              logger.info(`Connected to ${walletName} wallet: ${publicKey}`);
-              showNotification(`Connected to ${walletName} wallet`, 'success');
-            }
-          }
-          
-          // Set up wallet change listener
-          provider.on('connect', (publicKey) => {
-            setWalletAddress(publicKey.toString());
-            setWalletConnected(true);
-            try {
-              detectUserTokens(publicKey.toString());
-            } catch (error) {
-              logger.error('Failed to detect user tokens:', error);
-            }
-            showNotification(`Connected to ${walletName} wallet`, 'success');
-          });
-          
-          provider.on('disconnect', () => {
-            setWalletAddress('');
-            setWalletConnected(false);
-            setUserTokens([]);
-            showNotification(`Disconnected from ${walletName} wallet`, 'info');
-          });
-          
-          provider.on('accountChanged', (publicKey) => {
-            if (publicKey) {
-              setWalletAddress(publicKey.toString());
-              try {
-                detectUserTokens(publicKey.toString());
-              } catch (error) {
-                logger.error('Failed to detect user tokens:', error);
-              }
-              showNotification('Wallet account changed', 'info');
-            } else {
-              setWalletAddress('');
-              setWalletConnected(false);
-              setUserTokens([]);
-            }
-          });
-        } catch (error) {
-          logger.error(`Error connecting to ${walletName} wallet:`, error);
-        }
-      }
-    } catch (error) {
-      logger.error('Error checking wallet connection:', error);
-    }
-  }, [showNotification]);
-  
-  // Connect wallet with better error handling
+  // Connect wallet with explicit user approval
   const connectWallet = async () => {
     try {
       setLoading(true);
@@ -241,38 +150,27 @@ const Swap = ({ currentUser, showNotification }) => {
       
       if (provider) {
         try {
-          logger.info(`Connecting to ${walletName} wallet...`);
+          logger.info(`Requesting connection to ${walletName} wallet...`);
           
-          // Check if wallet is already connected first
-          if (provider.isConnected && provider.publicKey) {
-            const publicKey = provider.publicKey.toString();
-            logger.info(`Wallet already connected: ${publicKey}`);
-            
-            setWalletAddress(publicKey);
-            setWalletConnected(true);
-            setWalletType(walletName);
-            
-            // Set some timeout to ensure UI updates before attempting RPC calls
-            setTimeout(async () => {
-              try {
-                // Detect user tokens once wallet is connected
-                await detectUserTokens(publicKey);
-              } catch (e) {
-                logger.error("Error detecting tokens from already connected wallet:", e);
-                showNotification("Connected to wallet, but couldn't fetch tokens", 'warning');
-              }
-            }, 500);
-            
-            showNotification(`Connected to ${walletName} wallet`, 'success');
-            setLoading(false);
-            return;
+          // Always disconnect first to ensure fresh connection with user approval
+          if (provider.isConnected) {
+            try {
+              // Attempt to disconnect silently first
+              await provider.disconnect();
+              logger.info('Disconnected existing wallet connection');
+            } catch (err) {
+              // Ignore errors during disconnect
+              logger.warn('Error during wallet disconnect:', err.message);
+            }
           }
           
-          // Connect to the wallet with timeout
-          const connectionPromise = provider.connect();
+          // Request a fresh connection with explicit approval
+          const connectionPromise = provider.connect({ onlyIfTrusted: false });
           const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Wallet connection timed out')), 30000)
+            setTimeout(() => reject(new Error('Wallet connection timed out. Please try again.')), 30000)
           );
+          
+          showNotification(`Please check your ${walletName} wallet to approve the connection`, 'info');
           
           const resp = await Promise.race([connectionPromise, timeoutPromise]);
           
@@ -281,7 +179,7 @@ const Swap = ({ currentUser, showNotification }) => {
           }
           
           const publicKey = resp.publicKey.toString();
-          logger.info(`Wallet connected: ${publicKey}`);
+          logger.info(`Wallet connected with user approval: ${publicKey}`);
           
           setWalletAddress(publicKey);
           setWalletConnected(true);
@@ -301,7 +199,19 @@ const Swap = ({ currentUser, showNotification }) => {
           
         } catch (error) {
           logger.error(`Error connecting to ${walletName} wallet:`, error);
-          showNotification(`Wallet connection issue: ${error.message}`, 'error');
+          
+          // Provide more specific error messages for common wallet errors
+          let errorMessage = 'Connection error';
+          
+          if (error.message.includes('User rejected')) {
+            errorMessage = 'Connection rejected by user';
+          } else if (error.message.includes('timeout')) {
+            errorMessage = 'Connection timed out';
+          } else {
+            errorMessage = error.message;
+          }
+          
+          showNotification(`Wallet connection issue: ${errorMessage}`, 'error');
           setLoading(false);
         }
       } else {
@@ -319,27 +229,120 @@ const Swap = ({ currentUser, showNotification }) => {
     }
   };
   
-  // Disconnect wallet
-  const disconnectWallet = async () => {
+  // Check wallet connection on mount and set up listeners
+  const checkWalletConnection = useCallback(async () => {
     try {
-      // Check which wallet is connected
-      if (window.phantom?.solana?.isConnected && walletType === 'Phantom') {
-        await window.phantom.solana.disconnect();
-      } else if (window.solflare?.isConnected && walletType === 'Solflare') {
-        await window.solflare.disconnect();
-      } else if (window.backpack?.isConnected && walletType === 'Backpack') {
-        await window.backpack.disconnect();
+      // Check for Phantom wallet
+      const isPhantomInstalled = window.phantom?.solana?.isPhantom;
+      // Check for Solflare wallet
+      const isSolflareInstalled = window.solflare?.isSolflare;
+      // Check for Backpack wallet
+      const isBackpackInstalled = window.backpack?.isBackpack;
+      
+      let provider = null;
+      let walletName = '';
+      
+      if (isPhantomInstalled) {
+        provider = window.phantom.solana;
+        walletName = 'Phantom';
+      } else if (isSolflareInstalled) {
+        provider = window.solflare;
+        walletName = 'Solflare';
+      } else if (isBackpackInstalled) {
+        provider = window.backpack;
+        walletName = 'Backpack';
       }
       
+      if (provider) {
+        // Don't auto-connect, but set up listeners for wallet events
+        
+        // Set up wallet change listener
+        provider.on('connect', (publicKey) => {
+          setWalletAddress(publicKey.toString());
+          setWalletConnected(true);
+          try {
+            detectUserTokens(publicKey.toString());
+          } catch (error) {
+            logger.error('Failed to detect user tokens:', error);
+          }
+          showNotification(`Connected to ${walletName} wallet`, 'success');
+        });
+        
+        provider.on('disconnect', () => {
+          setWalletAddress('');
+          setWalletConnected(false);
+          setUserTokens([]);
+          showNotification(`Disconnected from ${walletName} wallet`, 'info');
+        });
+        
+        provider.on('accountChanged', (publicKey) => {
+          if (publicKey) {
+            setWalletAddress(publicKey.toString());
+            try {
+              detectUserTokens(publicKey.toString());
+            } catch (error) {
+              logger.error('Failed to detect user tokens:', error);
+            }
+            showNotification('Wallet account changed', 'info');
+          } else {
+            setWalletAddress('');
+            setWalletConnected(false);
+            setUserTokens([]);
+          }
+        });
+      }
+    } catch (error) {
+      logger.error('Error checking wallet connection:', error);
+    }
+  }, [showNotification]);
+  
+  // Disconnect wallet with improved error handling
+  const disconnectWallet = async () => {
+    try {
+      setLoading(true);
+      
+      // Check which wallet is connected
+      let provider = null;
+      
+      if (window.phantom?.solana?.isConnected && walletType === 'Phantom') {
+        provider = window.phantom.solana;
+      } else if (window.solflare?.isConnected && walletType === 'Solflare') {
+        provider = window.solflare;
+      } else if (window.backpack?.isConnected && walletType === 'Backpack') {
+        provider = window.backpack;
+      }
+      
+      if (provider) {
+        logger.info(`Disconnecting from ${walletType} wallet...`);
+        
+        try {
+          // Set a timeout to prevent hanging
+          const disconnectPromise = provider.disconnect();
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Wallet disconnect timed out')), 10000)
+          );
+          
+          await Promise.race([disconnectPromise, timeoutPromise]);
+          logger.info('Wallet disconnected successfully');
+        } catch (err) {
+          // Even if the disconnect fails, we'll still reset the UI state
+          logger.warn(`Error during wallet disconnect: ${err.message}`);
+        }
+      }
+      
+      // Clean up state regardless of disconnect success
       setWalletAddress('');
       setWalletConnected(false);
       setWalletType('');
       setUserTokens([]);
+      setTokenBalances({});
       
       showNotification('Wallet disconnected', 'info');
     } catch (error) {
       logger.error('Error disconnecting wallet:', error);
-      showNotification('Failed to disconnect wallet', 'error');
+      showNotification('Failed to disconnect wallet: ' + error.message, 'error');
+    } finally {
+      setLoading(false);
     }
   };
   
