@@ -4,7 +4,7 @@ import logger from '../utils/logger';
 import './Swap.css';
 
 // Constants
-const FEE_PERCENTAGE = 0.10; // 0.10% fee
+const FEE_PERCENTAGE = 0.025; // 0.025% fee
 const FEE_WALLET = process.env.REACT_APP_FEE_WALLET || '6MtTEBWBXPTwbrVCqiHp4iTe84J8CfXHPspYYWTfBPG9'; // Default fee wallet
 
 // Style for notification button fix
