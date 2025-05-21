@@ -55,7 +55,7 @@ const Swap = ({ currentUser, showNotification }) => {
   // Simple iframe-based LiFi integration
   const renderLiFiWidget = () => {
     // Basic URL with essential parameters
-    const lifiUrl = `https://transferto.xyz/swap?integrator=AquaSwap&fee=${FEE_PERCENTAGE}&toAddress=${FEE_WALLET}&theme=dark`;
+    const lifiUrl = `https://transferto.xyz/swap?integrator=AquaSwap&fee=${FEE_PERCENTAGE}&toAddress=${FEE_WALLET}&theme=dark&variant=drawer&containerStyle=min-height:700px;&logoUrl=https://i.postimg.cc/Hng0xftp/Mafio-11.png&primaryColor=%234285F4`;
     
     return (
       <div className="iframe-container">
