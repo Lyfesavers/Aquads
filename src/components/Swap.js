@@ -11,30 +11,39 @@ import PropTypes from 'prop-types';
 // Add CSS to specifically target just the Duck Hunt button without affecting other content
 const hideDuckHuntStyle = `
   <style>
-    /* Only target the specific Duck Hunt button, which is typically a red circle in the bottom right */
-    div[style*="position: fixed"][style*="bottom: 20px"][style*="right: 20px"],
-    div[style*="position: fixed"][style*="bottom:20px"][style*="right:20px"],
-    div[style*="position: absolute"][style*="bottom: 20px"][style*="right: 20px"],
-    
-    /* Target the specific button and text by its contents */
+    /* Target Duck Hunt more aggressively */
+    div[style*="position: fixed"][style*="bottom"][style*="right"],
+    div[style*="position: absolute"][style*="bottom"][style*="right"],
     [data-testid="duck-hunt-button"],
-    [id="duck-hunt-button"],
-    [id="start-duck-hunt"],
-    [class*="duck-hunt-button"],
+    [id*="duck-hunt"],
+    [class*="duck-hunt"],
     
-    /* Target only the specific red circular button */
-    div[style*="border-radius: 50%"][style*="background-color: red"][style*="position: fixed"][style*="bottom:"],
-    div[style*="border-radius: 50%"][style*="background: red"][style*="position: fixed"][style*="bottom:"],
+    /* Target Duck Hunt text specifically */
+    div:has(> span:contains("Start Duck Hunt")),
+    div:has(> div:contains("Start Duck Hunt")),
     
-    /* These are very specific to the duck hunt button */
-    .duck-hunt-button,
-    .duck-hunt-trigger,
-    #duck-hunt-button,
-    #duck-hunt-trigger {
+    /* Additional selectors for the specific button */
+    div.start-duck-hunt,
+    div#start-duck-hunt,
+    #start-duck-hunt,
+    .start-duck-hunt,
+    
+    /* Target by text content */
+    *:not(style):not(script):contains("Start Duck Hunt") {
       display: none !important;
       visibility: hidden !important;
       opacity: 0 !important;
       pointer-events: none !important;
+      max-height: 0 !important;
+      max-width: 0 !important;
+      position: absolute !important;
+      left: -9999px !important;
+      top: -9999px !important;
+    }
+    
+    /* Adjust notification buttons */
+    .notification-button {
+      z-index: 5 !important;
     }
   </style>
 `;
@@ -210,82 +219,29 @@ const Swap = ({ currentUser, showNotification }) => {
     
     // Add a specific interval to target only the duck hunt button
     const intervalId = setInterval(() => {
-      // Only target elements that are likely to be the Duck Hunt button
-      const duckHuntElements = [
-        // By known IDs/classes
-        document.getElementById('duck-hunt-button'),
-        document.getElementById('start-duck-hunt'),
-        document.querySelector('.duck-hunt-button'),
-        document.querySelector('.duck-hunt-trigger'),
-        
-        // By test ID
-        document.querySelector('[data-testid="duck-hunt-button"]'),
-        
-        // By the specific characteristics - position, color, shape
-        document.querySelector('div[style*="position: fixed"][style*="bottom: 20px"][style*="right: 20px"]'),
-        document.querySelector('div[style*="border-radius: 50%"][style*="background-color: red"][style*="position: fixed"]')
-      ].filter(Boolean); // Filter out null elements
-      
-      // Hide any found elements
-      duckHuntElements.forEach(el => {
-        if (el) {
-          el.style.display = 'none';
-          el.style.visibility = 'hidden';
-          el.style.opacity = '0';
-          el.style.pointerEvents = 'none';
-        }
-      });
-      
-      // Look for elements that might be at the exact position of the Duck Hunt button
-      // without affecting other elements
-      const elements = document.querySelectorAll('div[style*="position: fixed"]');
-      for (let i = 0; i < elements.length; i++) {
-        const el = elements[i];
-        const rect = el.getBoundingClientRect();
-        const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-        const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
-        
-        // Very specifically target bottom right elements that are circular
-        if (rect.bottom > viewportHeight - 30 && 
-            rect.right > viewportWidth - 30 && 
-            rect.width <= 60 && 
-            rect.height <= 60 && 
-            (el.style.borderRadius === '50%' || el.style.borderRadius === '100%' || el.style.borderRadius === '999px')) {
-          
-          el.style.display = 'none';
-          el.style.visibility = 'hidden';
-          el.style.opacity = '0';
-          el.style.pointerEvents = 'none';
-        }
-        
-        // Target elements with exact text content of "Start Duck Hunt"
+      // Target by text content directly
+      document.querySelectorAll('div, button, span').forEach(el => {
         if (el.textContent && el.textContent.trim() === 'Start Duck Hunt') {
           el.style.display = 'none';
           el.style.visibility = 'hidden';
           el.style.opacity = '0';
           el.style.pointerEvents = 'none';
+          
+          // Also try to hide parent elements
+          if (el.parentElement) {
+            el.parentElement.style.display = 'none';
+          }
         }
-      }
+      });
       
-      // Handle the case where the button has specific text content
-      const textNodes = document.evaluate(
-        "//text()[contains(., 'Start Duck Hunt')]", 
-        document, 
-        null, 
-        XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, 
-        null
-      );
-      
-      for (let i = 0; i < textNodes.snapshotLength; i++) {
-        const textNode = textNodes.snapshotItem(i);
-        if (textNode.parentNode) {
-          textNode.parentNode.style.display = 'none';
-          textNode.parentNode.style.visibility = 'hidden';
-          textNode.parentNode.style.opacity = '0';
-          textNode.parentNode.style.pointerEvents = 'none';
-        }
-      }
-    }, 2000); // Check every 2 seconds to avoid performance issues
+      // Target specifically by ID pattern
+      document.querySelectorAll('[id*="duck"],[id*="hunt"],[class*="duck"],[class*="hunt"]').forEach(el => {
+        el.style.display = 'none';
+        el.style.visibility = 'hidden';
+        el.style.opacity = '0';
+        el.style.pointerEvents = 'none';
+      });
+    }, 1000); // Check every second for more aggressive removal
     
     // Fetch available chains
     const fetchChains = async () => {
@@ -2111,7 +2067,9 @@ const Swap = ({ currentUser, showNotification }) => {
       WebkitOverflowScrolling: 'touch',
       display: 'flex',
       flexDirection: 'column',
-      paddingBottom: '80px' // Add extra padding at bottom for mobile
+      paddingBottom: '100px', // Increased padding at bottom for mobile
+      position: 'relative', // Ensure positioning context
+      isolation: 'isolate' // Create stacking context
     }}>
       {/* Wallet Modal */}
       <WalletModal />
@@ -2380,30 +2338,30 @@ const Swap = ({ currentUser, showNotification }) => {
         </div>
         
         {/* Amount Inputs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-shrink-0">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-shrink-0">
           <div>
-            <label className="block text-gray-400 mb-1 text-xs sm:text-sm">You Pay</label>
-            <div className="relative">
+            <label className="block text-gray-400 mb-2 text-xs sm:text-sm">You Pay</label>
+            <div className="relative mb-1">
               <input
                 type="number"
                 value={fromAmount}
                 onChange={(e) => setFromAmount(e.target.value)}
                 placeholder="0.0"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white text-sm"
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white text-sm"
               />
-              <div className="absolute right-2 top-2 text-gray-400 text-xs">
+              <div className="absolute right-2 top-3 text-gray-400 text-xs">
                 + 0.5% fee
               </div>
             </div>
           </div>
           <div>
-            <label className="block text-gray-400 mb-1 text-xs sm:text-sm">You Receive</label>
+            <label className="block text-gray-400 mb-2 text-xs sm:text-sm">You Receive</label>
             <input
               type="text"
               value={toAmount}
               readOnly
               placeholder="0.0"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white text-sm"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white text-sm mb-1"
             />
           </div>
         </div>
@@ -2445,18 +2403,18 @@ const Swap = ({ currentUser, showNotification }) => {
         </div>
         
         {/* Fixed position action buttons */}
-        <div className="grid grid-cols-2 gap-3 flex-shrink-0 bottom-action-buttons fixed left-0 right-0 bottom-0 px-4 py-3 bg-gray-900 border-t border-gray-800 z-20 sm:static sm:border-0 sm:px-0 sm:py-0">
+        <div className="grid grid-cols-2 gap-3 flex-shrink-0 bottom-action-buttons fixed left-0 right-0 bottom-0 px-4 py-3 bg-gray-900 border-t border-gray-800 z-50 sm:static sm:border-0 sm:px-0 sm:py-0">
           <button
             onClick={getQuote}
             disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 sm:py-2 px-4 rounded-lg transition duration-200 disabled:opacity-50 text-sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 sm:py-2 px-4 rounded-lg transition duration-200 disabled:opacity-50 text-sm shadow-lg"
           >
             {loading ? 'Loading...' : 'Get Quote'}
           </button>
           <button
             onClick={executeSwap}
             disabled={loading || !selectedRoute || !walletConnected}
-            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 sm:py-2 px-4 rounded-lg transition duration-200 disabled:opacity-50 text-sm"
+            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 sm:py-2 px-4 rounded-lg transition duration-200 disabled:opacity-50 text-sm shadow-lg"
           >
             {loading ? 'Processing...' : 'Execute Swap'}
           </button>
