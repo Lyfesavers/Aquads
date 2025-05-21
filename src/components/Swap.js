@@ -1499,7 +1499,7 @@ const Swap = ({ currentUser, showNotification }) => {
               width="24" 
               height="24"
             />
-            AquaSwap
+            AquaSwap (UNDER CONSTRUCTION)
           </h2>
           <div className="swap-actions">
             <button 
