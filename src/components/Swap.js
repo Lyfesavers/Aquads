@@ -2,11 +2,18 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ethers } from 'ethers';
 import logger from '../utils/logger';
-// Add Solana imports
+// Solana imports
 import * as solanaWeb3 from '@solana/web3.js';
 import bs58 from 'bs58';
 // Import PropTypes for prop validation
 import PropTypes from 'prop-types';
+
+// Constants for Jupiter API
+const JUPITER_QUOTE_API = 'https://quote-api.jup.ag/v6';
+const JUPITER_SWAP_API = 'https://quote-api.jup.ag/v6';
+const JUPITER_TOKEN_LIST_API = 'https://token.jup.ag/all';
+const FEE_BPS = 50; // 0.5% fee = 50 basis points
+const FEE_RECIPIENT = process.env.REACT_APP_FEE_WALLET || '0x98BC1BEC892d9f74B606D478E6b45089D2faAB05'; // Converted to Solana address format when used
 
 // Replace the hideDuckHuntStyle with a simpler, more compatible version
 const hideDuckHuntStyle = `
@@ -46,29 +53,17 @@ const Swap = ({ currentUser, showNotification }) => {
   const [selectedRoute, setSelectedRoute] = useState(null);
   const [walletConnected, setWalletConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState('');
-  const [walletType, setWalletType] = useState(''); // Wallet connection type
-  const [chains, setChains] = useState([]);
-  const [tokens, setTokens] = useState({});  // Changed to object to store tokens per chain
-  const [fromChain, setFromChain] = useState('');
-  const [toChain, setToChain] = useState('');
-  const [fromChainTokens, setFromChainTokens] = useState([]);
-  const [toChainTokens, setToChainTokens] = useState([]);
-  const [apiKeyStatus, setApiKeyStatus] = useState('unknown');
+  const [walletType, setWalletType] = useState('solana'); // Default to Solana
+  const [tokens, setTokens] = useState([]); // Simplified to just an array of tokens
   const [walletOptions, setWalletOptions] = useState([]);
-  // New state for wallet connection modal
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [installingWallet, setInstallingWallet] = useState(null);
   
-  // Add Solana-specific state
+  // Solana-specific state
   const [solanaConnection, setSolanaConnection] = useState(null);
-  const [isSolanaFromChain, setIsSolanaFromChain] = useState(false);
-  const [isSolanaToChain, setIsSolanaToChain] = useState(false);
-  const [solanaWallets, setSolanaWallets] = useState([]);
   const [solanaProvider, setSolanaProvider] = useState(null);
   
-  const LIFI_API_KEY = process.env.REACT_APP_LIFI_API_KEY;
   const FEE_PERCENTAGE = 0.5; // 0.5% fee
-  const FEE_RECIPIENT = process.env.REACT_APP_FEE_WALLET || '0x98BC1BEC892d9f74B606D478E6b45089D2faAB05'; // Default to a wallet if not set
   
   // Add a state to track if we're showing user tokens first
   const [showUserTokensFirst, setShowUserTokensFirst] = useState(true);
@@ -137,29 +132,6 @@ const Swap = ({ currentUser, showNotification }) => {
   };
   
   useEffect(() => {
-    if (!LIFI_API_KEY) {
-      logger.error('LIFI_API_KEY is not set in environment variables');
-      setApiKeyStatus('missing');
-      setError('API key not found. Please check your environment variables.');
-    } else {
-      // Don't log the full API key for security reasons
-      const keyLength = LIFI_API_KEY.length;
-      const maskedKey = keyLength > 6 
-        ? `${LIFI_API_KEY.substring(0, 3)}...${LIFI_API_KEY.substring(keyLength - 3)}` 
-        : '***';
-      
-      logger.info(`LIFI_API_KEY is set (${maskedKey}) with length: ${keyLength}`);
-      setApiKeyStatus('available');
-    }
-    
-    // Log environment for debugging
-    logger.info('Environment check:', { 
-      nodeEnv: process.env.NODE_ENV,
-      hasApiKey: !!process.env.REACT_APP_LIFI_API_KEY,
-      hasFeeWallet: !!process.env.REACT_APP_FEE_WALLET,
-      isProduction: process.env.NODE_ENV === 'production'
-    });
-    
     // Initialize Solana connection
     const initializeSolanaConnection = async () => {
       try {
@@ -170,28 +142,29 @@ const Swap = ({ currentUser, showNotification }) => {
           confirmTransactionInitialTimeout: 60000
         };
         
-        // Instead of trying multiple endpoints that have CORS issues,
-        // we'll just set up a minimal connection that won't be used for direct RPC calls
-        // and rely on the Li.fi API for token data and swaps
+        // Connect to Solana mainnet
         const connection = new solanaWeb3.Connection(
           'https://api.mainnet-beta.solana.com',
           connectionConfig
         );
         
         setSolanaConnection(connection);
-        logger.info('Using Li.fi API for Solana operations to avoid CORS issues');
-        
-        // Set a flag to use Li.fi exclusively for Solana operations
-        window.useLifiForSolana = true;
+        logger.info('Connected to Solana mainnet for Jupiter operations');
       } catch (error) {
         logger.error('Failed to initialize Solana connection:', error);
-        window.useLifiForSolana = true;
       }
     };
     
     // Call the async function
     initializeSolanaConnection();
-  }, [LIFI_API_KEY]);
+    
+    // Log environment for debugging
+    logger.info('Environment check:', { 
+      nodeEnv: process.env.NODE_ENV,
+      hasFeeWallet: !!process.env.REACT_APP_FEE_WALLET,
+      isProduction: process.env.NODE_ENV === 'production'
+    });
+  }, []);
 
   useEffect(() => {
     // Inject CSS to hide Duck Hunt button and other third-party elements
@@ -241,105 +214,8 @@ const Swap = ({ currentUser, showNotification }) => {
       }
     }, 2000);
     
-    // Fetch available chains
-    const fetchChains = async () => {
-      try {
-        const response = await axios.get('https://li.quest/v1/chains', {
-          headers: {
-            'x-lifi-api-key': LIFI_API_KEY
-          }
-        });
-        
-        // Debug chain response
-        logger.info('Li.Fi chains response received', {
-          chainCount: response.data.chains?.length || 0 
-        });
-        
-        // Check if Solana is included in the chains
-        const solanaChain = response.data.chains.find(chain => 
-          chain.key?.toLowerCase() === 'sol' || 
-          chain.name?.toLowerCase() === 'solana' ||
-          chain.chainType === 'SVM' ||
-          chain.id === 'SOL'
-        );
-        
-        // If Solana is not included in the response but we know it's supported,
-        // add it manually to ensure it always appears
-        if (!solanaChain) {
-          logger.info('Adding Solana chain manually as it was not found in the Li.Fi response');
-          
-          const solanaChainEntry = {
-            key: 'sol',
-            chainType: 'SVM',
-            name: 'Solana',
-            coin: 'SOL',
-            id: 'SOL', // Solana uses string IDs in li.fi
-            mainnet: true,
-            logoURI: 'https://raw.githubusercontent.com/lifinance/types/main/src/assets/icons/chains/solana.svg'
-          };
-          
-          response.data.chains.push(solanaChainEntry);
-          logger.info('Added Solana chain:', solanaChainEntry);
-        } else {
-          logger.info('Solana chain found:', solanaChain);
-        }
-        
-        setChains(response.data.chains);
-        
-        if (response.data.chains.length > 0) {
-          // If user has a wallet connected, we want to default to their current chain
-          // Otherwise default to a popular chain
-          if (walletConnected && walletType === 'solana') {
-            const solChain = response.data.chains.find(c => 
-              c.key?.toLowerCase() === 'sol' || 
-              c.name?.toLowerCase() === 'solana' ||
-              c.chainType === 'SVM' ||
-              c.id === 'SOL'
-            );
-            
-            if (solChain) {
-              logger.info('Setting default chain to Solana based on connected wallet');
-              setFromChain(solChain.id);
-              setToChain(solChain.id);
-              setIsSolanaFromChain(true);
-              setIsSolanaToChain(true);
-              return;
-            }
-          }
-          
-          // Default to Ethereum if no wallet is connected
-          const ethereumChain = response.data.chains.find(chain => 
-            chain.name.toLowerCase().includes('ethereum')
-          ) || response.data.chains[0];
-          
-          setFromChain(ethereumChain.id);
-          setToChain(ethereumChain.id); // Same chain approach
-        }
-      } catch (error) {
-        logger.error('Error fetching chains:', error);
-        setError('Failed to load blockchain networks. Please try again later.');
-        
-        // Fallback: add Solana manually if the request failed
-        const fallbackChains = [
-          {
-            key: 'sol',
-            chainType: 'SVM',
-            name: 'Solana',
-            coin: 'SOL',
-            id: 'SOL',
-            mainnet: true,
-            logoURI: 'https://raw.githubusercontent.com/lifinance/types/main/src/assets/icons/chains/solana.svg'
-          }
-        ];
-        
-        setChains(fallbackChains);
-        setFromChain('SOL');
-        setToChain('SOL');
-        setIsSolanaFromChain(true);
-        setIsSolanaToChain(true);
-      }
-    };
-    fetchChains();
+    // Fetch tokens from Jupiter
+    fetchJupiterTokens();
     
     return () => {
       clearInterval(intervalId);
@@ -347,7 +223,122 @@ const Swap = ({ currentUser, showNotification }) => {
         styleEl.parentNode.removeChild(styleEl);
       }
     };
-  }, [LIFI_API_KEY, walletConnected, walletType]);
+  }, []);
+  
+  // Fetch tokens from Jupiter API
+  const fetchJupiterTokens = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch all tokens from Jupiter API
+      const response = await axios.get(JUPITER_TOKEN_LIST_API);
+      
+      if (response.data && Array.isArray(response.data)) {
+        logger.info(`Fetched ${response.data.length} tokens from Jupiter API`);
+        
+        // Format tokens to match our expected structure
+        const formattedTokens = response.data.map(token => ({
+          address: token.address, // Jupiter addresses already have no 0x prefix
+          symbol: token.symbol,
+          name: token.name,
+          decimals: token.decimals,
+          logoURI: token.logoURI || '',
+          chainId: 'SOL',
+          isUserToken: false // Will mark user tokens later
+        }));
+        
+        // Add common SOL token if not present
+        const hasSol = formattedTokens.some(token => 
+          token.symbol === 'SOL' || 
+          token.address === '11111111111111111111111111111111'
+        );
+        
+        if (!hasSol) {
+          formattedTokens.unshift({
+            address: '11111111111111111111111111111111', // Native SOL
+            chainId: 'SOL',
+            name: 'Solana',
+            symbol: 'SOL',
+            decimals: 9,
+            logoURI: 'https://raw.githubusercontent.com/lifinance/types/main/src/assets/icons/chains/solana.svg',
+            isUserToken: true
+          });
+        }
+        
+        // Set tokens state
+        setTokens(formattedTokens);
+        
+        // Find default tokens
+        const solToken = formattedTokens.find(t => 
+          t.symbol === 'SOL' || 
+          t.address === '11111111111111111111111111111111'
+        );
+        
+        const usdcToken = formattedTokens.find(t => 
+          t.symbol === 'USDC' || 
+          t.address === 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+        );
+        
+        // Set default tokens if available
+        if (solToken) {
+          setFromToken(solToken.address);
+          logger.info(`Set default 'from' token: ${solToken.symbol} (${solToken.address})`);
+        } else if (formattedTokens.length > 0) {
+          setFromToken(formattedTokens[0].address);
+        }
+        
+        if (usdcToken) {
+          setToToken(usdcToken.address);
+          logger.info(`Set default 'to' token: ${usdcToken.symbol} (${usdcToken.address})`);
+        } else if (formattedTokens.length > 1) {
+          // Set second token as 'to' token to avoid same token
+          setToToken(formattedTokens[1].address);
+        }
+      } else {
+        setError('Failed to load tokens from Jupiter. Invalid response format.');
+      }
+    } catch (error) {
+      logger.error('Error fetching Jupiter tokens:', error);
+      setError('Failed to load tokens. Please try again later.');
+      
+      // Add fallback tokens if fetch fails
+      const fallbackTokens = [
+        {
+          address: '11111111111111111111111111111111', // Native SOL
+          chainId: 'SOL',
+          name: 'Solana',
+          symbol: 'SOL',
+          decimals: 9,
+          logoURI: 'https://raw.githubusercontent.com/lifinance/types/main/src/assets/icons/chains/solana.svg',
+          isUserToken: true
+        },
+        {
+          address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
+          chainId: 'SOL',
+          name: 'USD Coin',
+          symbol: 'USDC',
+          decimals: 6,
+          logoURI: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png',
+          isUserToken: true
+        },
+        {
+          address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', // USDT
+          chainId: 'SOL',
+          name: 'Tether USD',
+          symbol: 'USDT',
+          decimals: 6,
+          logoURI: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png',
+          isUserToken: true
+        }
+      ];
+      
+      setTokens(fallbackTokens);
+      setFromToken(fallbackTokens[0].address);
+      setToToken(fallbackTokens[1].address);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Fetch all tokens for multiple chains at once
   useEffect(() => {
@@ -536,121 +527,13 @@ const Swap = ({ currentUser, showNotification }) => {
     return;
   };
   
-  // Fix MetaMask detection with much stronger verification
+  // Update wallet detection to focus only on Solana wallets
   const detectWallets = () => {
     const available = [];
     
-    // Check if window.ethereum exists at all
-    const hasEthereumProvider = typeof window.ethereum !== 'undefined';
-    
-    // CRITICAL: Add function to test if provider is actually accessible
-    const testProviderAccess = async (provider) => {
-      try {
-        // Try to call a safe, read-only method to verify provider works
-        await provider.request({ method: 'eth_chainId' });
-        return true;
-      } catch (error) {
-        logger.error('Provider test failed:', error);
-        return false;
-      }
-    };
-    
-    // MetaMask detection with thorough verification
-    let isMetaMaskInstalled = false;
-    if (hasEthereumProvider && window.ethereum?.isMetaMask) {
-      // Verify it's not another wallet pretending to be MetaMask
-      isMetaMaskInstalled = !window.ethereum.isCoinbaseWallet && 
-                           !window.ethereum.isBraveWallet && 
-                           !window.ethereum.isTrust && 
-                           !window.ethereum.isTrustWallet;
-    }
-    
-    available.push({ 
-      type: 'evm',
-      id: 'metamask', 
-      name: 'MetaMask',
-      icon: '🦊',
-      installed: isMetaMaskInstalled,
-      downloadUrl: 'https://metamask.io/download/'
-    });
-    
-    // Detect Coinbase Wallet
-    if (hasEthereumProvider && (window.ethereum?.isCoinbaseWallet || 
-        (window.ethereum?.providers && window.ethereum.providers.find(p => p.isCoinbaseWallet)))) {
-      available.push({ 
-        type: 'evm', 
-        id: 'coinbase',
-        name: 'Coinbase Wallet',
-        icon: '🔵',
-        installed: true,
-        downloadUrl: 'https://www.coinbase.com/wallet/downloads'
-      });
-    } else {
-      available.push({ 
-        type: 'evm', 
-        id: 'coinbase',
-        name: 'Coinbase Wallet',
-        icon: '🔵',
-        installed: false,
-        downloadUrl: 'https://www.coinbase.com/wallet/downloads'
-      });
-    }
-    
-    // Detect Trust Wallet
-    if (hasEthereumProvider && (window.ethereum?.isTrust || window.ethereum?.isTrustWallet)) {
-      available.push({ 
-        type: 'evm', 
-        id: 'trust',
-        name: 'Trust Wallet',
-        icon: '🔒',
-        installed: true,
-        downloadUrl: 'https://trustwallet.com/download'
-      });
-    } else {
-      available.push({ 
-        type: 'evm', 
-        id: 'trust',
-        name: 'Trust Wallet',
-        icon: '🔒',
-        installed: false,
-        downloadUrl: 'https://trustwallet.com/download'
-      });
-    }
-    
-    // Detect Brave Wallet
-    if (hasEthereumProvider && window.ethereum?.isBraveWallet) {
-      available.push({
-        id: 'brave',
-        name: 'Brave Wallet',
-        icon: '🦁',
-        type: 'evm',
-        installed: true,
-        downloadUrl: 'https://brave.com/wallet/'
-      });
-    } else {
-      available.push({
-        id: 'brave',
-        name: 'Brave Wallet',
-        icon: '🦁',
-        type: 'evm',
-        installed: false,
-        downloadUrl: 'https://brave.com/wallet/'
-      });
-    }
-    
-    // WalletConnect is always available as an option
-    available.push({
-      type: 'evm',
-      id: 'walletconnect',
-      name: 'WalletConnect',
-      icon: '🔗',
-      installed: true, // Always available
-      downloadUrl: 'https://walletconnect.com/'
-    });
-    
     // Detect Phantom Wallet (Solana)
     const hasPhantom = window.phantom?.solana || 
-                       (typeof window.solana !== 'undefined' && window.solana.isPhantom);
+                     (typeof window.solana !== 'undefined' && window.solana.isPhantom);
     
     available.push({
       type: 'solana',
@@ -675,7 +558,7 @@ const Swap = ({ currentUser, showNotification }) => {
     
     setWalletOptions(available);
     const installedWallets = available.filter(w => w.installed);
-    logger.info('Detected installed wallets:', installedWallets.map(w => w.name));
+    logger.info('Detected installed Solana wallets:', installedWallets.map(w => w.name));
     
     return installedWallets.length > 0;
   };
@@ -784,7 +667,7 @@ const Swap = ({ currentUser, showNotification }) => {
     }
   };
 
-  // Fix wallet connection logic for MetaMask with stronger verification
+  // Simplified wallet connection for Solana wallets only
   const connectWallet = async (walletId) => {
     try {
       // First check if user is authenticated to the website
@@ -815,326 +698,86 @@ const Swap = ({ currentUser, showNotification }) => {
       
       setLoading(true);
       
-      // Handle Solana wallets
-      if (selectedWallet.type === 'solana') {
-        if (walletId === 'phantom') {
-          try {
-            // Get the provider from window.solana (Phantom) or window.phantom.solana
-            const provider = window.phantom?.solana ?? window.solana;
-            
-            if (!provider) {
-              throw new Error('Phantom wallet not found');
-            }
-            
-            // Connect to the wallet
-            const response = await provider.connect();
-            const walletAddr = response.publicKey.toString();
-            
-            // Request signature to verify ownership
-            const message = `Verify wallet ownership for ${currentUser.username} on AquaSwap - ${new Date().toISOString()}`;
-            const encodedMessage = new TextEncoder().encode(message);
-            const signatureResponse = await provider.signMessage(encodedMessage, 'utf8');
-            
-            if (!signatureResponse || !signatureResponse.signature) {
-              throw new Error('Wallet signature verification failed');
-            }
-            
-            // Save the provider and public key
-            setSolanaProvider(provider);
-            setWalletAddress(walletAddr);
-            setWalletConnected(true);
-            setWalletType('solana');
-            setShowWalletModal(false);
-            
-            // Detect and set the chain automatically
-            await detectAndSetChain('solana', provider);
-            
-            logger.info(`Authenticated user ${currentUser.username} connected Phantom Wallet:`, walletAddr);
-            
-            // Store wallet address
-            storeWalletAddress('solana', walletAddr);
-          } catch (error) {
-            logger.error('Phantom wallet connection error:', error);
-            setError('Failed to connect to Phantom wallet. Signature required to verify wallet ownership.');
-            setWalletConnected(false);
-          }
-        }
-        else if (walletId === 'solflare') {
-          try {
-            // Get the provider from window.solflare
-            const provider = window.solflare;
-            
-            if (!provider) {
-              throw new Error('Solflare wallet not found');
-            }
-            
-            // Connect to the wallet
-            const response = await provider.connect();
-            const walletAddr = response.publicKey.toString();
-            
-            // Request signature to verify ownership
-            const message = `Verify wallet ownership for ${currentUser.username} on AquaSwap - ${new Date().toISOString()}`;
-            const encodedMessage = new TextEncoder().encode(message);
-            const signatureResponse = await provider.signMessage(encodedMessage, 'utf8');
-            
-            if (!signatureResponse || !signatureResponse.signature) {
-              throw new Error('Wallet signature verification failed');
-            }
-            
-            // Save the provider and public key
-            setSolanaProvider(provider);
-            setWalletAddress(walletAddr);
-            setWalletConnected(true);
-            setWalletType('solana');
-            setShowWalletModal(false);
-            
-            // Detect and set the chain automatically
-            await detectAndSetChain('solana', provider);
-            
-            logger.info(`Connected Solflare Wallet:`, walletAddr);
-            
-            // Store wallet address
-            storeWalletAddress('solana', walletAddr);
-          } catch (error) {
-            logger.error('Solflare wallet connection error:', error);
-            setError('Failed to connect to Solflare wallet. Signature required to verify wallet ownership.');
-            setWalletConnected(false);
-          }
-        }
-        
-        setLoading(false);
-        return;
-      }
-      
-      // MetaMask specific verification and connection
-      if (walletId === 'metamask') {
-        // Triple-check that MetaMask is really installed and accessible
-        if (!window.ethereum || 
-            !window.ethereum.isMetaMask || 
-            window.ethereum.isCoinbaseWallet || 
-            window.ethereum.isBraveWallet) {
-          setError('MetaMask is not installed or not accessible');
-          setLoading(false);
-          setWalletConnected(false);
-          return;
-        }
-        
-        // Test that provider is actually working
+      if (walletId === 'phantom') {
         try {
-          // First try a read-only method to check provider is working
-          const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+          // Get the provider from window.solana (Phantom) or window.phantom.solana
+          const provider = window.phantom?.solana ?? window.solana;
           
-          if (!chainId) {
-            throw new Error('Invalid chainId response');
+          if (!provider) {
+            throw new Error('Phantom wallet not found');
           }
           
-          // Request accounts
-          const accounts = await window.ethereum.request({ 
-            method: 'eth_requestAccounts'
-          });
+          // Connect to the wallet
+          const response = await provider.connect();
+          const walletAddr = response.publicKey.toString();
           
-          // Strict validation of returned accounts
-          if (accounts && 
-              Array.isArray(accounts) && 
-              accounts.length > 0 && 
-              accounts[0] && 
-              typeof accounts[0] === 'string' && 
-              accounts[0].startsWith('0x')) {
-            
-            // Require signature to verify wallet ownership
-            const provider = new ethers.BrowserProvider(window.ethereum);
-            const signer = await provider.getSigner();
-            
-            // Create a unique message to sign
-            const message = `Verify wallet ownership for ${currentUser.username} on AquaSwap - ${new Date().toISOString()}`;
-            
-            // Request personal signature
-            const signature = await signer.signMessage(message);
-            
-            if (!signature) {
-              throw new Error('Wallet signature verification failed');
-            }
-            
-            setWalletAddress(accounts[0]);
-            setWalletConnected(true);
-            setWalletType('evm');
-            setShowWalletModal(false);
-            
-            // Detect and set the chain automatically
-            await detectAndSetChain('evm', window.ethereum);
-            
-            logger.info(`Connected and verified MetaMask:`, accounts[0]);
-            
-            // Store wallet address
-            storeWalletAddress('evm', accounts[0]);
-          } else {
-            throw new Error('Invalid account data from MetaMask');
+          // Request signature to verify ownership
+          const message = `Verify wallet ownership for ${currentUser.username} on AquaSwap - ${new Date().toISOString()}`;
+          const encodedMessage = new TextEncoder().encode(message);
+          const signatureResponse = await provider.signMessage(encodedMessage, 'utf8');
+          
+          if (!signatureResponse || !signatureResponse.signature) {
+            throw new Error('Wallet signature verification failed');
           }
+          
+          // Save the provider and public key
+          setSolanaProvider(provider);
+          setWalletAddress(walletAddr);
+          setWalletConnected(true);
+          setWalletType('solana');
+          setShowWalletModal(false);
+          
+          logger.info(`Authenticated user ${currentUser.username} connected Phantom Wallet:`, walletAddr);
+          
+          // Refresh token list after wallet connection
+          fetchJupiterTokens();
         } catch (error) {
-          logger.error('MetaMask connection error:', error);
-          setError(`Failed to connect to MetaMask: ${error.message || 'Signature required to verify wallet ownership'}`);
+          logger.error('Phantom wallet connection error:', error);
+          setError('Failed to connect to Phantom wallet. Signature required to verify wallet ownership.');
           setWalletConnected(false);
-          setLoading(false);
-          return;
         }
       }
-      
-      // Coinbase Wallet
-      else if (walletId === 'coinbase') {
-        if (!window.ethereum?.isCoinbaseWallet && 
-            !(window.ethereum?.providers && window.ethereum.providers.find(p => p.isCoinbaseWallet))) {
-          setError('Coinbase Wallet is not installed or not accessible');
-          setLoading(false);
-          return;
-        }
-        
-        let provider = window.ethereum;
-        // Use specific provider if multiple are available
-        if (window.ethereum.providers) {
-          const coinbaseProvider = window.ethereum.providers.find(p => p.isCoinbaseWallet);
-          if (coinbaseProvider) provider = coinbaseProvider;
-        }
-        
+      else if (walletId === 'solflare') {
         try {
-          const accounts = await provider.request({ method: 'eth_requestAccounts' });
-          if (accounts && accounts.length > 0 && accounts[0]) {
-            // Require signature to verify wallet ownership
-            const ethersProvider = new ethers.BrowserProvider(provider);
-            const signer = await ethersProvider.getSigner();
-            
-            // Create a unique message to sign
-            const message = `Verify wallet ownership for ${currentUser.username} on AquaSwap - ${new Date().toISOString()}`;
-            
-            // Request personal signature
-            const signature = await signer.signMessage(message);
-            
-            if (!signature) {
-              throw new Error('Wallet signature verification failed');
-            }
-            
-            setWalletAddress(accounts[0]);
-            setWalletConnected(true);
-            setWalletType('evm');
-            setShowWalletModal(false);
-            
-            // Detect and set the chain automatically
-            await detectAndSetChain('evm', provider);
-            
-            logger.info(`Connected and verified Coinbase Wallet:`, accounts[0]);
-            
-            // Store wallet address
-            storeWalletAddress('evm', accounts[0]);
-          } else {
-            throw new Error('Invalid account response from Coinbase Wallet');
+          // Get the provider from window.solflare
+          const provider = window.solflare;
+          
+          if (!provider) {
+            throw new Error('Solflare wallet not found');
           }
+          
+          // Connect to the wallet
+          const response = await provider.connect();
+          const walletAddr = response.publicKey.toString();
+          
+          // Request signature to verify ownership
+          const message = `Verify wallet ownership for ${currentUser.username} on AquaSwap - ${new Date().toISOString()}`;
+          const encodedMessage = new TextEncoder().encode(message);
+          const signatureResponse = await provider.signMessage(encodedMessage, 'utf8');
+          
+          if (!signatureResponse || !signatureResponse.signature) {
+            throw new Error('Wallet signature verification failed');
+          }
+          
+          // Save the provider and public key
+          setSolanaProvider(provider);
+          setWalletAddress(walletAddr);
+          setWalletConnected(true);
+          setWalletType('solana');
+          setShowWalletModal(false);
+          
+          logger.info(`Connected Solflare Wallet:`, walletAddr);
+          
+          // Refresh token list after wallet connection
+          fetchJupiterTokens();
         } catch (error) {
-          logger.error('Coinbase Wallet connection error:', error);
-          setError('Failed to connect to Coinbase Wallet. Signature required to verify wallet ownership.');
+          logger.error('Solflare wallet connection error:', error);
+          setError('Failed to connect to Solflare wallet. Signature required to verify wallet ownership.');
           setWalletConnected(false);
         }
       }
-      // Trust Wallet
-      else if (walletId === 'trust') {
-        if (!window.ethereum?.isTrust && !window.ethereum?.isTrustWallet) {
-          setError('Trust Wallet is not installed or not accessible');
-          setLoading(false);
-          return;
-        }
-        
-        try {
-          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-          if (accounts && accounts.length > 0 && accounts[0]) {
-            // Require signature to verify wallet ownership
-            const provider = new ethers.BrowserProvider(window.ethereum);
-            const signer = await provider.getSigner();
-            
-            // Create a unique message to sign
-            const message = `Verify wallet ownership for ${currentUser.username} on AquaSwap - ${new Date().toISOString()}`;
-            
-            // Request personal signature
-            const signature = await signer.signMessage(message);
-            
-            if (!signature) {
-              throw new Error('Wallet signature verification failed');
-            }
-            
-            setWalletAddress(accounts[0]);
-            setWalletConnected(true);
-            setWalletType('evm');
-            setShowWalletModal(false);
-            
-            // Detect and set the chain automatically
-            await detectAndSetChain('evm', provider);
-            
-            logger.info(`Connected and verified Trust Wallet:`, accounts[0]);
-            
-            // Store wallet address
-            storeWalletAddress('evm', accounts[0]);
-          } else {
-            throw new Error('Invalid account response from Trust Wallet');
-          }
-        } catch (error) {
-          logger.error('Trust Wallet connection error:', error);
-          setError('Failed to connect to Trust Wallet. Signature required to verify wallet ownership.');
-          setWalletConnected(false);
-        }
-      }
-      // Brave Wallet
-      else if (walletId === 'brave') {
-        if (!window.ethereum?.isBraveWallet) {
-          setError('Brave Wallet is not installed or not accessible');
-          setLoading(false);
-          return;
-        }
-        
-        try {
-          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-          if (accounts && accounts.length > 0 && accounts[0]) {
-            // Require signature to verify wallet ownership
-            const provider = new ethers.BrowserProvider(window.ethereum);
-            const signer = await provider.getSigner();
-            
-            // Create a unique message to sign
-            const message = `Verify wallet ownership for ${currentUser.username} on AquaSwap - ${new Date().toISOString()}`;
-            
-            // Request personal signature
-            const signature = await signer.signMessage(message);
-            
-            if (!signature) {
-              throw new Error('Wallet signature verification failed');
-            }
-            
-            setWalletAddress(accounts[0]);
-            setWalletConnected(true);
-            setWalletType('evm');
-            setShowWalletModal(false);
-            
-            // Detect and set the chain automatically
-            await detectAndSetChain('evm', provider);
-            
-            logger.info(`Connected and verified Brave Wallet:`, accounts[0]);
-            
-            // Store wallet address
-            storeWalletAddress('evm', accounts[0]);
-          } else {
-            throw new Error('Invalid account response from Brave Wallet');
-          }
-        } catch (error) {
-          logger.error('Brave Wallet connection error:', error);
-          setError('Failed to connect to Brave Wallet. Signature required to verify wallet ownership.');
-          setWalletConnected(false);
-        }
-      }
-      // WalletConnect - placeholder for future implementation
-      else if (walletId === 'walletconnect') {
-        // For now, show message that we'd need to implement WalletConnect sdk
-        setError('WalletConnect requires additional SDK implementation. Please select another wallet.');
-        setLoading(false);
-      }
-      // Generic fallback for other wallet types
       else {
         setError('Unsupported wallet type selected.');
-        setLoading(false);
         setWalletConnected(false);
       }
       
@@ -1265,7 +908,7 @@ const Swap = ({ currentUser, showNotification }) => {
     detectWallets();
   }, []);
 
-  // Add debugging and fix token selection after connecting wallet
+  // Simplified getQuote function for Jupiter-only integration
   const getQuote = async () => {
     if (!fromToken || !toToken || !fromAmount || fromAmount <= 0) {
       setError('Please fill in all fields correctly');
@@ -1275,12 +918,6 @@ const Swap = ({ currentUser, showNotification }) => {
     if (!walletConnected) {
       setError('Please connect your wallet first to get a quote');
       setShowWalletModal(true);
-      return;
-    }
-
-    // Check if API key is available
-    if (apiKeyStatus === 'missing') {
-      setError('Cannot get quote: API key not configured. Please contact support.');
       return;
     }
 
@@ -1297,266 +934,148 @@ const Swap = ({ currentUser, showNotification }) => {
     setToAmount('');  // Clear the to amount
 
     try {
-      // Enhanced token validation with detailed error reporting
-      // Find the selected token to get its decimals
-      const selectedFromToken = fromChainTokens.find(token => {
-        const normalizedTokenAddress = isSolanaFromChain 
-          ? token.address.replace(/^0x/, '')
-          : token.address.toLowerCase();
-        
-        const normalizedFromToken = isSolanaFromChain
-          ? fromToken.replace(/^0x/, '')
-          : fromToken.toLowerCase();
-        
-        return normalizedTokenAddress === normalizedFromToken;
-      });
+      // Find the selected tokens to get their decimals
+      const selectedFromToken = tokens.find(token => 
+        token.address === fromToken
+      );
 
-      const selectedToToken = toChainTokens.find(token => {
-        const normalizedTokenAddress = isSolanaToChain 
-          ? token.address.replace(/^0x/, '')
-          : token.address.toLowerCase();
-        
-        const normalizedToToken = isSolanaToChain
-          ? toToken.replace(/^0x/, '')
-          : toToken.toLowerCase();
-        
-        return normalizedTokenAddress === normalizedToToken;
-      });
+      const selectedToToken = tokens.find(token => 
+        token.address === toToken
+      );
       
-      // Detailed logging to diagnose token issues
+      // Validation logging
       logger.info('Token validation details:', {
         fromToken,
         toToken,
-        fromChain,
-        toChain: fromChain, // Same-chain swaps
-        isSolanaFromChain,
-        isSolanaToChain,
-        normalizedFromToken: isSolanaFromChain ? fromToken.replace(/^0x/, '') : fromToken,
-        normalizedToToken: isSolanaToChain ? toToken.replace(/^0x/, '') : toToken,
         fromTokenFound: !!selectedFromToken,
         toTokenFound: !!selectedToToken,
-        fromChainTokensCount: fromChainTokens.length,
-        toChainTokensCount: toChainTokens.length,
-        sampleFromTokens: fromChainTokens.slice(0, 3).map(t => ({
-          symbol: t.symbol,
-          address: t.address,
-          has0xPrefix: t.address.startsWith('0x')
-        }))
+        tokensCount: tokens.length
       });
       
       if (!selectedFromToken) {
         setError(`'From' token (${fromToken}) not found in token list. Please try selecting a different token.`);
-        // Try to fallback to a safe default token
-        const defaultToken = fromChainTokens[0];
-        if (defaultToken) {
-          setFromToken(defaultToken.address);
-          logger.info('Auto-selecting default token:', defaultToken.symbol);
-        }
         setLoading(false);
         return;
       }
       
       if (!selectedToToken) {
         setError(`'To' token (${toToken}) not found in token list. Please try selecting a different token.`);
-        // Try to fallback to a safe default token
-        const usdcToken = fromChainTokens.find(t => 
-          t.symbol.toLowerCase() === 'usdc' || 
-          t.symbol.toLowerCase() === 'usdt'
-        );
-        if (usdcToken) {
-          setToToken(usdcToken.address);
-          logger.info('Auto-selecting USDC/USDT token');
-        } else if (fromChainTokens.length > 1) {
-          setToToken(fromChainTokens[1].address);
-          logger.info('Auto-selecting second token in list');
-        }
         setLoading(false);
         return;
       }
       
-      const fromDecimals = selectedFromToken?.decimals || 18;
-      const toDecimals = selectedToToken?.decimals || 18;
+      const fromDecimals = selectedFromToken?.decimals || 9; // Default to 9 for Solana
+      const toDecimals = selectedToToken?.decimals || 9; // Default to 9 for Solana
       
-      // Fee as a decimal fraction (0.005 for 0.5%)
-      const feeDecimal = FEE_PERCENTAGE / 100;
+      // Convert amount to Jupiter format (Lamports/smallest unit)
+      const inputAmount = Math.floor(parseFloat(fromAmount) * Math.pow(10, fromDecimals)).toString();
       
-      // Parse amount with proper decimals - DEFINE fromAmountInWei HERE FOR ALL CODE PATHS
-      let fromAmountInWei;
+      // Calculate slippage basis points (1% = 100 basis points)
+      const slippageBps = Math.floor(slippage * 100);
+      
+      // Clean token addresses (ensure no 0x prefix for Solana)
+      const cleanFromToken = normalizeTokenAddress(fromToken);
+      const cleanToToken = normalizeTokenAddress(toToken);
+      
+      // Fetch quote from Jupiter
       try {
-        // Special handling for Solana vs EVM chains
-        if (isSolanaFromChain) {
-          // Solana uses regular decimal string representation with the token's specific decimals
-          fromAmountInWei = (parseFloat(fromAmount) * Math.pow(10, fromDecimals)).toString();
-        } else {
-          // EVM chains use ethers.js to parse
-          fromAmountInWei = ethers.parseUnits(fromAmount, fromDecimals).toString();
-        }
-      } catch (e) {
-        logger.error('Error parsing amount:', e);
-        setError('Invalid amount format. Please check your input.');
-        setLoading(false);
-        return;
-      }
-      
-      // Make sure Solana addresses don't have 0x prefix, but EVM addresses do have 0x prefix
-      let cleanFromToken = fromToken;
-      let cleanToToken = toToken;
-      
-      // Set up parameters according to Li.fi documentation
-      const requestParams = {
-        fromChain,
-        toChain: fromChain, // For same-chain swaps
-        fromAmount: fromAmountInWei,
-        fromAddress: walletAddress,
-        toAddress: walletAddress, // Same address for same-chain swaps
-        slippage: slippage.toString(),
-        // Apply fee according to Li.fi documentation
-        fee: feeDecimal.toString(), // Pass fee as decimal fraction (e.g., "0.005")
-        integrator: 'AquaSwap', // Your integration name
-        referrer: FEE_RECIPIENT, // Your fee recipient wallet
-      };
-      
-      logger.info(`Quote request for ${selectedFromToken.symbol} to ${selectedToToken.symbol} on ${isSolanaFromChain ? 'Solana' : 'EVM chain'}`);
-      
-      // Add detailed parameter logging
-      logger.info('Quote request parameters:', {
-        fromSymbol: selectedFromToken.symbol,
-        toSymbol: selectedToToken.symbol,
-        fromAmount: fromAmountInWei,
-        tokenDecimals: {
-          from: fromDecimals,
-          to: toDecimals
-        }
-      });
-
-      if (isSolanaFromChain) {
-        // For Solana, completely remove 0x prefix if present
-        cleanFromToken = fromToken ? fromToken.replace(/^0x/, '') : '';
-        cleanToToken = toToken ? toToken.replace(/^0x/, '') : '';
+        logger.info(`Fetching Jupiter quote for ${selectedFromToken.symbol} to ${selectedToToken.symbol}`);
         
-        // Ensure we're using the Solana-specific endpoint
-        logger.info('Using Solana-specific endpoint with params:', {
-          fromChain,
-          toChain: fromChain,
-          fromToken: cleanFromToken,
-          toToken: cleanToToken,
-          fromAmount: fromAmountInWei
+        const jupiterQuote = await getJupiterQuote(
+          cleanFromToken,
+          cleanToToken,
+          inputAmount,
+          slippageBps
+        );
+        
+        if (!jupiterQuote) {
+          throw new Error('Failed to get quote from Jupiter');
+        }
+        
+        // Calculate the output amount in user-readable format
+        const outputAmount = (parseFloat(jupiterQuote.outputAmount) / Math.pow(10, toDecimals)).toString();
+        
+        // Store the quote details
+        setToAmount(outputAmount);
+        
+        // Create a route object compatible with our UI
+        const route = {
+          id: jupiterQuote.routePlan?.map(step => step.swapInfo.label).join('-') || 'jupiter-route',
+          fromToken: {
+            address: cleanFromToken,
+            symbol: selectedFromToken.symbol,
+            decimals: fromDecimals,
+            name: selectedFromToken.name,
+            chainId: 'SOL'
+          },
+          toToken: {
+            address: cleanToToken,
+            symbol: selectedToToken.symbol,
+            decimals: toDecimals,
+            name: selectedToToken.name,
+            chainId: 'SOL'
+          },
+          fromAmount: inputAmount,
+          toAmount: jupiterQuote.outputAmount,
+          gasCostUSD: '0.000001', // Solana gas is very cheap, placeholder value
+          steps: [
+            {
+              type: 'swap',
+              tool: 'Jupiter',
+              toolDetails: {
+                name: 'Jupiter',
+                displayName: 'Jupiter',
+                logoURI: 'https://jup.ag/jupiter-logo.svg'
+              },
+              action: {
+                fromToken: {
+                  address: cleanFromToken,
+                  symbol: selectedFromToken.symbol,
+                  decimals: fromDecimals,
+                  name: selectedFromToken.name
+                },
+                toToken: {
+                  address: cleanToToken,
+                  symbol: selectedToToken.symbol,
+                  decimals: toDecimals,
+                  name: selectedToToken.name
+                },
+                fromAmount: inputAmount,
+                toAmount: jupiterQuote.outputAmount,
+                slippage: slippage
+              },
+              estimate: {
+                fromAmount: inputAmount,
+                toAmount: jupiterQuote.outputAmount,
+                executionDuration: 20, // Estimate in seconds
+                approvalAddress: null
+              }
+            }
+          ],
+          // Store the Jupiter quote response
+          jupiterQuote: jupiterQuote
+        };
+        
+        setRoutes([route]);
+        setSelectedRoute(route);
+        
+        logger.info(`Quote received: ${fromAmount} ${selectedFromToken.symbol} → ${outputAmount} ${selectedToToken.symbol}`);
+      } catch (jupiterError) {
+        logger.error('Jupiter quote error:', jupiterError);
+        
+        // Detailed error logging
+        logger.error('Jupiter quote request details:', {
+          inputMint: cleanFromToken,
+          outputMint: cleanToToken,
+          amount: inputAmount,
+          slippageBps,
+          errorMessage: jupiterError.message || 'Unknown error'
         });
         
-        try {
-          // Use the Solana-specific endpoint directly for Solana chains - THIS IS THE KEY FIX
-          // The /v1/solana/quote endpoint should be used instead of /v1/quote for Solana chain
-          const solanaResponse = await axios.get('https://li.quest/v1/solana/quote', {
-            headers: {
-              'x-lifi-api-key': LIFI_API_KEY
-            },
-            params: {
-              fromChain: 'SOL',                  // Must be 'SOL' for Solana
-              toChain: 'SOL',                    // Must be 'SOL' for Solana swaps
-              fromToken: cleanFromToken,         // Solana token address with NO 0x prefix
-              toToken: cleanToToken,             // Solana token address with NO 0x prefix
-              fromAmount: fromAmountInWei,
-              fromAddress: walletAddress,
-              toAddress: walletAddress,
-              slippage: slippage.toString(),
-              fee: feeDecimal.toString(),
-              integrator: 'AquaSwap',
-              referrer: FEE_RECIPIENT
-            }
-          });
-          
-          if (solanaResponse.data && solanaResponse.data.routes && solanaResponse.data.routes.length > 0) {
-            setRoutes(solanaResponse.data.routes);
-            processRoutes(solanaResponse.data.routes, selectedToToken, toDecimals);
-            setLoading(false);
-            return;
-          } else {
-            throw new Error('No routes found for Solana swap');
-          }
-        } catch (solanaError) {
-          logger.error('Solana quote error:', solanaError);
-          
-          // More detailed logging for diagnosis
-          logger.error('Detailed Solana quote debug info:', {
-            endpoint: 'https://li.quest/v1/solana/quote',
-            fromChain: 'SOL',
-            toChain: 'SOL', 
-            fromToken: {
-              value: cleanFromToken,
-              has0xPrefix: cleanFromToken?.startsWith('0x'),
-              length: cleanFromToken?.length
-            },
-            toToken: {
-              value: cleanToToken,
-              has0xPrefix: cleanToToken?.startsWith('0x'),
-              length: cleanToToken?.length
-            },
-            walletConnected,
-            selectedFromTokenSymbol: selectedFromToken?.symbol,
-            selectedToTokenSymbol: selectedToToken?.symbol,
-            errorStatus: solanaError.response?.status,
-            errorMessage: solanaError.response?.data?.message || solanaError.message
-          });
-          
-          if (solanaError.response?.status === 404) {
-            // Provide more helpful error message for 404 errors, which are common with incorrect token formats
-            setError(`The requested Solana swap (${selectedFromToken?.symbol || 'unknown'} to ${selectedToToken?.symbol || 'unknown'}) is not available. This could be due to unsupported tokens or incorrect token addresses.`);
-            
-            // Show notification with Li.Fi API information for reference
-            if (showNotification) {
-              showNotification('Try using the Li.Fi widget directly: https://li.fi', 'info');
-            }
-          } else if (solanaError.response?.data?.message) {
-            setError(`Solana API Error: ${solanaError.response.data.message}`);
-          } else {
-            setError('Failed to get Solana quote. Please try different tokens or amount.');
-          }
-          setLoading(false);
-          return;
-        }
-      } else {
-        // For EVM chains, ensure 0x prefix
-        if (!cleanFromToken.startsWith('0x')) {
-          cleanFromToken = '0x' + cleanFromToken;
-        }
-        if (!cleanToToken.startsWith('0x')) {
-          cleanToToken = '0x' + cleanToToken;
-        }
-        
-        // Update request params with properly formatted tokens
-        requestParams.fromToken = cleanFromToken;
-        requestParams.toToken = cleanToToken;
-        
-        // Request quote from li.fi standard endpoint for EVM chains
-        try {
-          const response = await axios.get('https://li.quest/v1/quote', {
-            headers: {
-              'x-lifi-api-key': LIFI_API_KEY
-            },
-            params: requestParams
-          });
-
-          if (!response.data.routes || response.data.routes.length === 0) {
-            setError('No routes found for this swap. Please try different tokens or amount.');
-            setLoading(false);
-            return;
-          }
-
-          setRoutes(response.data.routes || []);
-          processRoutes(response.data.routes, selectedToToken, toDecimals);
-        } catch (error) {
-          logger.error('Quote error:', error);
-          
-          if (error.response?.data?.message) {
-            const errorMessage = error.response.data.message;
-            setError(`API Error: ${errorMessage}`);
-          } else {
-            setError('Failed to get quote. Please try different tokens or amount.');
-          }
-        }
+        setError(`Failed to get Jupiter quote: ${jupiterError.message || 'Unknown error'}`);
       }
     } catch (error) {
-      logger.error('Quote error:', error.response?.data || error.message || error);
+      logger.error('Quote error:', error);
       setError('Failed to get quote. Please try different tokens or amount.');
     } finally {
       setLoading(false);
@@ -1599,7 +1118,7 @@ const Swap = ({ currentUser, showNotification }) => {
     }
   };
 
-  // Swap execution function using Li.fi API
+  // Execute swap using Jupiter API directly
   const executeSwap = async () => {
     if (!selectedRoute || !walletConnected) {
       setError('Please connect your wallet and select a route first');
@@ -1613,91 +1132,47 @@ const Swap = ({ currentUser, showNotification }) => {
     setError(null);
 
     try {
-      // Check if this is a Solana transaction
-      const isSolanaTransaction = walletType === 'solana' || 
-        selectedRoute.fromChainId === 'SOL' || 
-        selectedRoute.toChainId === 'SOL' ||
-        isSolanaFromChain || 
-        isSolanaToChain;
+      // Verify Solana wallet is connected
+      if (!solanaProvider) {
+        throw new Error('Solana wallet not connected');
+      }
       
-      if (isSolanaTransaction) {
-        // Handle Solana transaction using Li.fi
-        if (!solanaProvider) {
-          throw new Error('Solana wallet not connected');
+      // Extract necessary data from the route
+      const fromMint = selectedRoute.fromToken.address;
+      const toMint = selectedRoute.toToken.address;
+      const amount = selectedRoute.fromAmount;
+      const slippageBps = Math.floor(slippage * 100);
+      
+      try {
+        // Execute the swap using our Jupiter wrapper function
+        const result = await executeJupiterSwap(
+          fromMint,
+          toMint,
+          amount,
+          slippageBps,
+          solanaProvider,
+          solanaConnection
+        );
+        
+        if (!result || !result.signature) {
+          throw new Error('Failed to execute swap: No transaction signature returned');
         }
-        
-        // Extract the transaction data from the selected route
-        const txData = selectedRoute.steps?.[0]?.transaction?.data;
-        
-        if (!txData) {
-          throw new Error('No transaction data found for Solana swap');
-        }
-        
-        try {
-          // Decode the base64 transaction data
-          const decodedTx = Buffer.from(txData, 'base64');
-          
-          // Solana transaction handling depends on the format
-          // Try different approach based on the format we received
-          let signature;
-          
-          try {
-            // First try as a versioned transaction
-            const deserializedTx = solanaWeb3.VersionedTransaction.deserialize(decodedTx);
-            signature = await solanaProvider.signAndSendTransaction(deserializedTx);
-          } catch (versionedError) {
-            logger.warn('Not a versioned transaction, trying regular format:', versionedError);
-            
-            // If not versioned, try as a regular transaction
-            const transaction = solanaWeb3.Transaction.from(decodedTx);
-            signature = await solanaProvider.signAndSendTransaction(transaction);
-          }
-          
-          // Wait for confirmation
-          if (solanaConnection) {
-            await solanaConnection.confirmTransaction(signature);
-          }
-          
-          setError(null);
-          
-          // Show success message with link to Solana Explorer
-          const explorerUrl = `https://explorer.solana.com/tx/${signature}?cluster=mainnet-beta`;
-          if (showNotification) {
-            showNotification(
-              `Swap completed! View on Solana Explorer: ${explorerUrl}`,
-              'success'
-            );
-          } else {
-            alert(`Solana swap completed successfully! Transaction: ${signature}`);
-          }
-        } catch (error) {
-          logger.error('Solana transaction error:', error);
-          throw new Error(`Solana transaction failed: ${error.message}`);
-        }
-      } else {
-        // Regular EVM transaction
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const signer = await provider.getSigner();
-
-        // Get the transaction request
-        const txRequest = {
-          ...selectedRoute.steps[0].transaction,
-          from: walletAddress
-        };
-
-        // Send the transaction
-        const tx = await signer.sendTransaction(txRequest);
-        
-        // Wait for transaction to be mined
-        await tx.wait();
         
         setError(null);
-        // Show success message
+        
+        // Show success message with link to Solana Explorer
+        const explorerUrl = `https://explorer.solana.com/tx/${result.signature}?cluster=mainnet-beta`;
         if (showNotification) {
-          showNotification('Swap completed successfully!', 'success');
+          showNotification(
+            `Swap completed! View on Solana Explorer: ${explorerUrl}`,
+            'success'
+          );
         } else {
-          alert('Swap completed successfully!');
+          alert(`Swap completed successfully! Transaction: ${result.signature}`);
         }
+      } catch (error) {
+        logger.error('Jupiter swap execution error:', error);
+        throw new Error(`Swap failed: ${error.message}`);
       }
     } catch (error) {
       logger.error('Swap execution error:', error);
@@ -1856,22 +1331,7 @@ const Swap = ({ currentUser, showNotification }) => {
     };
   };
 
-  // Add this helper function near the top of the component to centralize address normalization
-  const normalizeTokenAddress = (address, chainType) => {
-    if (!address) return '';
-    
-    // For Solana addresses, remove any 0x prefix
-    if (chainType === 'solana') {
-      return address.replace(/^0x/, '');
-    }
-    
-    // For EVM addresses, ensure 0x prefix exists
-    if (chainType === 'evm' && !address.startsWith('0x')) {
-      return '0x' + address;
-    }
-    
-    return address;
-  };
+  // Remove this function as we've replaced it with a simpler version below
 
   // Update the scanSolanaWalletTokens function to include explicit debugging
   const scanSolanaWalletTokens = async () => {
@@ -2556,44 +2016,185 @@ const Swap = ({ currentUser, showNotification }) => {
     }
   };
 
-  // Update the token selection dropdown handlers to better handle Solana addresses
+  // Update the token selection handlers for Jupiter (Solana only)
   const handleFromTokenChange = (e) => {
-    let tokenAddress = e.target.value;
-    if (isSolanaFromChain && tokenAddress.startsWith('0x')) {
-      tokenAddress = tokenAddress.replace(/^0x/, '');
-    } else if (!isSolanaFromChain && !tokenAddress.startsWith('0x') && tokenAddress !== '') {
-      tokenAddress = '0x' + tokenAddress;
-    }
+    const tokenAddress = e.target.value;
     setFromToken(tokenAddress);
     
     // If we're selecting the same token for both, reset the toToken
     if (tokenAddress === toToken) {
       // Find an alternative token
-      const alternativeToken = fromChainTokens.find(t => 
+      const alternativeToken = tokens.find(t => 
         t.address !== tokenAddress && 
         (t.symbol === 'USDC' || t.symbol === 'USDT' || t.isUserToken)
       );
       
       if (alternativeToken) {
-        let altTokenAddress = alternativeToken.address;
-        if (isSolanaToChain && altTokenAddress.startsWith('0x')) {
-          altTokenAddress = altTokenAddress.replace(/^0x/, '');
-        } else if (!isSolanaToChain && !altTokenAddress.startsWith('0x') && altTokenAddress !== '') {
-          altTokenAddress = '0x' + altTokenAddress;
-        }
-        setToToken(altTokenAddress);
+        setToToken(alternativeToken.address);
       }
     }
   };
 
   const handleToTokenChange = (e) => {
-    let tokenAddress = e.target.value;
-    if (isSolanaToChain && tokenAddress.startsWith('0x')) {
-      tokenAddress = tokenAddress.replace(/^0x/, '');
-    } else if (!isSolanaToChain && !tokenAddress.startsWith('0x') && tokenAddress !== '') {
-      tokenAddress = '0x' + tokenAddress;
-    }
+    const tokenAddress = e.target.value;
     setToToken(tokenAddress);
+  };
+
+  // Normalize token addresses (remove any 0x prefix for Solana)
+  const normalizeTokenAddress = (address) => {
+    if (!address) return '';
+    return address.replace(/^0x/, '');
+  };
+
+  // Add these Jupiter API functions
+  // 1. Function to fetch a quote from Jupiter
+  const getJupiterQuote = async (inputMint, outputMint, amount, slippageBps) => {
+    try {
+      logger.info('Fetching Jupiter quote:', { inputMint, outputMint, amount, slippageBps, feeBps: FEE_BPS });
+      
+      const response = await axios.get(`${JUPITER_QUOTE_API}/quote`, {
+        params: {
+          inputMint,               // Input token address
+          outputMint,              // Output token address
+          amount,                  // Amount in input token's smallest units
+          slippageBps,             // Slippage in basis points (1% = 100)
+          feeBps: FEE_BPS,         // Our fee in basis points (0.5% = 50)
+          onlyDirectRoutes: false, // Use all available routes
+          asLegacyTransaction: false, // Use versioned transactions
+          restrictIntermediateTokens: false
+          // feeAccount will be added in the swap execution
+        }
+      });
+      
+      logger.info('Jupiter quote received:', {
+        inputAmount: response.data.inputAmount,
+        outputAmount: response.data.outputAmount,
+        otherAmountThreshold: response.data.otherAmountThreshold,
+        routesCount: response.data.routesInfos?.length || 0
+      });
+      
+      return response.data;
+    } catch (error) {
+      logger.error('Jupiter quote error:', error.response?.data || error.message || error);
+      throw error;
+    }
+  };
+
+  // 2. Function to get swap instructions from Jupiter
+  const getJupiterSwapInstructions = async (quoteResponse, userPublicKey, feeAccount) => {
+    try {
+      logger.info('Getting Jupiter swap instructions');
+      
+      const swapRequest = {
+        quoteResponse,
+        userPublicKey,
+        feeAccount: feeAccount || FEE_RECIPIENT,
+        dynamicComputeUnitLimit: true, // Optimize compute units
+        prioritizationFeeLamports: 1000 // Small fee to prioritize tx
+      };
+      
+      const response = await axios.post(`${JUPITER_SWAP_API}/swap-instructions`, swapRequest);
+      
+      logger.info('Swap instructions received:', {
+        computeBudgetInstructions: !!response.data.computeBudgetInstructions,
+        setupInstructions: !!response.data.setupInstructions,
+        swapInstruction: !!response.data.swapInstruction,
+        cleanupInstruction: !!response.data.cleanupInstruction,
+      });
+      
+      return response.data;
+    } catch (error) {
+      logger.error('Jupiter swap instructions error:', error.response?.data || error.message || error);
+      throw error;
+    }
+  };
+
+  // 3. Function to convert Jupiter instructions to a Solana transaction
+  const createSolanaTransaction = async (swapInstructions, connection) => {
+    try {
+      // Create a new transaction
+      const transaction = new solanaWeb3.VersionedTransaction(
+        new solanaWeb3.TransactionMessage({
+          payerKey: new solanaWeb3.PublicKey(swapInstructions.userPublicKey),
+          recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
+          instructions: [
+            ...swapInstructions.computeBudgetInstructions || [],
+            ...swapInstructions.setupInstructions || [],
+            swapInstructions.swapInstruction,
+            ...swapInstructions.cleanupInstruction ? [swapInstructions.cleanupInstruction] : []
+          ].map(instruction => {
+            return {
+              programId: new solanaWeb3.PublicKey(instruction.programId),
+              keys: instruction.accounts.map(account => ({
+                pubkey: new solanaWeb3.PublicKey(account.pubkey),
+                isSigner: account.isSigner,
+                isWritable: account.isWritable
+              })),
+              data: bs58.decode(instruction.data)
+            };
+          })
+        }).compileToV0Message()
+      );
+      
+      return transaction;
+    } catch (error) {
+      logger.error('Error creating Solana transaction:', error);
+      throw error;
+    }
+  };
+
+  // 4. Function to execute a Jupiter swap
+  const executeJupiterSwap = async (fromMint, toMint, amount, slippageBps, wallet, connection) => {
+    try {
+      if (!wallet || !connection) {
+        throw new Error('Wallet or connection not available');
+      }
+      
+      // Convert fee recipient to Solana address format if needed
+      let feeAccount = FEE_RECIPIENT;
+      if (feeAccount.startsWith('0x')) {
+        // This is a simplified conversion and might not be accurate
+        // In a production app, you should use a properly formatted Solana address
+        feeAccount = new solanaWeb3.PublicKey(
+          Buffer.from(feeAccount.slice(2), 'hex')
+        ).toString();
+      }
+      
+      // 1. Get a quote
+      const quoteResponse = await getJupiterQuote(
+        fromMint,
+        toMint,
+        amount,
+        slippageBps
+      );
+      
+      // 2. Get swap instructions
+      const swapInstructions = await getJupiterSwapInstructions(
+        quoteResponse,
+        wallet.publicKey.toString(),
+        feeAccount
+      );
+      
+      // 3. Create transaction
+      const transaction = await createSolanaTransaction(swapInstructions, connection);
+      
+      // 4. Sign and send transaction
+      const signedTx = await wallet.signTransaction(transaction);
+      const signature = await connection.sendRawTransaction(signedTx.serialize());
+      
+      // 5. Wait for confirmation
+      const confirmation = await connection.confirmTransaction(signature);
+      
+      return {
+        signature,
+        success: !confirmation.value.err,
+        inputAmount: quoteResponse.inputAmount,
+        outputAmount: quoteResponse.outputAmount
+      };
+    } catch (error) {
+      logger.error('Error executing Jupiter swap:', error);
+      throw error;
+    }
   };
 
   return (
@@ -2697,40 +2298,22 @@ const Swap = ({ currentUser, showNotification }) => {
             )}
           </div>
 
-          {/* Network Selection - improved for desktop with better card styling */}
+          {/* Solana Network Info */}
           <div className="bg-gray-800/50 p-4 rounded-xl shadow-md border border-gray-700 hover:border-gray-600 transition-all">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-gray-400 mb-2 text-xs sm:text-sm font-medium">Chain {walletConnected && <span className="text-green-400 text-xs">(Auto-detected)</span>}</label>
-                <select 
-                  value={fromChain}
-                  onChange={handleFromChainChange}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                  disabled={walletConnected}
-                >
-                  <option value="">Select Chain</option>
-                  {chains.map(chain => (
-                    <option key={chain.id} value={chain.id}>
-                      {chain.name} {chain.chainType === 'SVM' || chain.key === 'sol' ? '(Solana)' : ''}
-                    </option>
-                  ))}
-                </select>
-                {walletConnected && fromChain && (
-                  <div className="mt-1 text-xs text-blue-400 flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    {chains.find(c => c.id === fromChain)?.name || fromChain} auto-detected
-                  </div>
-                )}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <img 
+                  src="https://raw.githubusercontent.com/lifinance/types/main/src/assets/icons/chains/solana.svg" 
+                  alt="Solana" 
+                  className="w-6 h-6 mr-2" 
+                />
+                <div>
+                  <div className="text-white font-medium">Solana Network</div>
+                  <div className="text-xs text-gray-400">Powered by Jupiter</div>
+                </div>
               </div>
-              <div className="flex flex-col justify-center items-center">
-                <div className="text-center text-base sm:text-lg text-blue-400 font-bold mb-1 sm:mb-2">
-                  Same-Chain Swaps Only
-                </div>
-                <div className="text-center text-xs text-gray-400">
-                  {walletConnected ? 'Chain auto-detected from wallet' : 'Connect wallet to auto-detect chain'}
-                </div>
+              <div className="bg-blue-900/30 px-3 py-1 rounded-full text-xs text-blue-300 border border-blue-600/30">
+                Same-Chain Swaps Only
               </div>
             </div>
           </div>
@@ -2744,18 +2327,17 @@ const Swap = ({ currentUser, showNotification }) => {
                   value={fromToken}
                   onChange={handleFromTokenChange}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                  disabled={!fromChain || fromChainTokens.length === 0}
+                  disabled={tokens.length === 0}
                 >
-                  {!fromChain && <option value="">Select chain first</option>}
-                  {fromChain && fromChainTokens.length === 0 && <option value="">Loading tokens...</option>}
+                  {tokens.length === 0 && <option value="">Loading tokens...</option>}
                   
-                  {fromChainTokens.length > 0 && (
+                  {tokens.length > 0 && (
                     <option value="" disabled>
                       {walletConnected ? '---- Select token (includes wallet tokens) ----' : '---- Select token ----'}
                     </option>
                   )}
                   
-                  {getSortedTokens(fromChainTokens).map(token => (
+                  {getSortedTokens(tokens).map(token => (
                     <option 
                       key={token.address} 
                       value={token.address} 
@@ -2765,10 +2347,10 @@ const Swap = ({ currentUser, showNotification }) => {
                     </option>
                   ))}
                 </select>
-                {fromToken && fromChainTokens.length > 0 && (
+                {fromToken && tokens.length > 0 && (
                   <div className="mt-2 flex items-center">
                     <img 
-                      src={fromChainTokens.find(t => t.address === fromToken)?.logoURI || '/placeholder-token.png'} 
+                      src={tokens.find(t => t.address === fromToken)?.logoURI || '/placeholder-token.png'} 
                       alt=""
                       className="w-6 h-6 mr-2 rounded-full shadow-md border border-gray-700"
                       onError={(e) => {
@@ -2776,7 +2358,7 @@ const Swap = ({ currentUser, showNotification }) => {
                         e.target.src = '/placeholder-token.png';
                       }}
                     />
-                    <span className="text-sm font-medium text-white">{fromChainTokens.find(t => t.address === fromToken)?.symbol}</span>
+                    <span className="text-sm font-medium text-white">{tokens.find(t => t.address === fromToken)?.symbol}</span>
                   </div>
                 )}
               </div>
@@ -2786,18 +2368,17 @@ const Swap = ({ currentUser, showNotification }) => {
                   value={toToken}
                   onChange={handleToTokenChange}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                  disabled={!toChain || toChainTokens.length === 0}
+                  disabled={tokens.length === 0}
                 >
-                  {!toChain && <option value="">Select chain first</option>}
-                  {toChain && toChainTokens.length === 0 && <option value="">Loading tokens...</option>}
+                  {tokens.length === 0 && <option value="">Loading tokens...</option>}
                   
-                  {toChainTokens.length > 0 && (
+                  {tokens.length > 0 && (
                     <option value="" disabled>
                       {walletConnected ? '---- Select token (includes wallet tokens) ----' : '---- Select token ----'}
                     </option>
                   )}
                   
-                  {getSortedTokens(toChainTokens).map(token => (
+                  {getSortedTokens(tokens).map(token => (
                     <option 
                       key={token.address} 
                       value={token.address}
@@ -2807,10 +2388,10 @@ const Swap = ({ currentUser, showNotification }) => {
                     </option>
                   ))}
                 </select>
-                {toToken && toChainTokens.length > 0 && (
+                {toToken && tokens.length > 0 && (
                   <div className="mt-2 flex items-center">
                     <img 
-                      src={toChainTokens.find(t => t.address === toToken)?.logoURI || '/placeholder-token.png'} 
+                      src={tokens.find(t => t.address === toToken)?.logoURI || '/placeholder-token.png'} 
                       alt=""
                       className="w-6 h-6 mr-2 rounded-full shadow-md border border-gray-700"
                       onError={(e) => {
@@ -2818,7 +2399,7 @@ const Swap = ({ currentUser, showNotification }) => {
                         e.target.src = '/placeholder-token.png';
                       }}
                     />
-                    <span className="text-sm font-medium text-white">{toChainTokens.find(t => t.address === toToken)?.symbol}</span>
+                    <span className="text-sm font-medium text-white">{tokens.find(t => t.address === toToken)?.symbol}</span>
                   </div>
                 )}
               </div>
