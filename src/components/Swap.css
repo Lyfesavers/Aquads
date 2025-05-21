@@ -1058,7 +1058,7 @@ body, html {
   }
 }
 
-/* Additional style to hide elements completely */
+/* Duck Hunt button visibility - restore on main site */
 div[data-testid="duck-hunt-button"],
 #duck-hunt-button,
 .duck-hunt-button,
@@ -1071,10 +1071,11 @@ div[data-testid="duck-hunt-button"],
   visibility: visible !important;
   opacity: 1 !important;
   pointer-events: auto !important;
-  position: fixed !important; /* Keep it fixed */
+  position: fixed !important;
   height: auto !important;
   width: auto !important;
   overflow: visible !important;
   clip: auto !important;
   margin: 0 !important;
+  z-index: 9999 !important;
 } 
