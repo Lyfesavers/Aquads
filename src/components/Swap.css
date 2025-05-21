@@ -870,15 +870,11 @@
 
 .lifi-container iframe {
   width: 100% !important;
-  height: 620px !important;
+  height: 630px !important;
   border-radius: 12px !important;
-  overflow: hidden !important;
-  transform-origin: top center !important;
-  border: none !important;
-  display: block !important;
-  background-color: transparent !important;
-  position: relative;
-  z-index: 2;
+  overflow: hidden;
+  transform: scale(0.98);
+  transform-origin: top center;
 }
 
 /* Mobile-specific adjustments */
@@ -910,10 +906,6 @@
   display: block;
   max-width: 100%;
   overflow: hidden;
-  background-color: transparent !important;
-  backdrop-filter: blur(4px);
-  position: relative;
-  z-index: 2;
 }
 
 /* Tablet-specific styles */
@@ -994,9 +986,6 @@ body, html {
   transform-origin: top center !important;
   border: none !important;
   display: block !important;
-  background-color: transparent !important;
-  position: relative;
-  z-index: 2;
 }
 
 /* Force no horizontal scroll */
@@ -1006,7 +995,6 @@ body, html {
   border: none !important;
   overflow: hidden !important;
   display: block !important;
-  background-color: transparent !important;
 }
 
 /* Mobile-specific LiFi widget container */
@@ -1025,7 +1013,6 @@ body, html {
     transform: scale(0.98);
     transform-origin: top center;
     border-radius: 8px !important;
-    background-color: transparent !important;
   }
   
   .swap-header {
@@ -1099,27 +1086,8 @@ div[data-testid="duck-hunt-button"],
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: url('/Aquaswapbg.svg') center center / cover no-repeat;
-  background-color: rgba(17, 24, 39, 0.85); /* Dark overlay */
-  border-radius: 12px;
-}
-
-/* Add a dark overlay on top of the background image */
-.iframe-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(17, 24, 39, 0.75); /* Dark semi-transparent overlay */
-  z-index: 1;
-  pointer-events: none; /* Make sure clicks pass through to the iframe */
-}
-
-/* Make sure iframe is on top of the background */
-.iframe-container iframe {
-  position: relative;
-  z-index: 2;
-  background-color: transparent !important; /* Ensure iframe background is transparent */
+  background-image: url('/AquaSwap.svg');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
 } 
