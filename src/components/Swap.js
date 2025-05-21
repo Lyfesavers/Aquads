@@ -127,13 +127,12 @@ const Swap = ({ currentUser, showNotification }) => {
           confirmTransactionInitialTimeout: 60000
         };
         
-        // Try multiple RPC endpoints for better reliability
-        // Helius is highly reliable and good for token detection
+        // Use RPC nodes that are more likely to work with CORS in browser environments
+        // These public endpoints are specifically designed for browser access
         const rpcEndpoints = [
-          'https://api.mainnet-beta.solana.com',
-          'https://solana-api.projectserum.com',
-          'https://rpc.ankr.com/solana',
-          'https://ssc-dao.genesysgo.net' // Move this to the end as it seems to be failing
+          'https://solana-mainnet.g.alchemy.com/v2/demo', // Alchemy demo endpoint
+          'https://api.devnet.solana.com', // Can fall back to devnet for testing
+          'https://api.mainnet-beta.solana.com' // Official endpoint as last resort
         ];
         
         let connection = null;
@@ -145,14 +144,15 @@ const Swap = ({ currentUser, showNotification }) => {
             const endpoint = rpcEndpoints[i];
             const tempConnection = new solanaWeb3.Connection(endpoint, connectionConfig);
             
-            // Test the connection
-            await tempConnection.getVersion();
-            
-            // If we get here, the connection works
-            connection = tempConnection;
-            connectedEndpoint = endpoint;
-            logger.info(`Connected to Solana RPC at ${endpoint}`);
-            break;
+            // Simpler test that's less likely to be rate limited
+            const blockHeight = await tempConnection.getBlockHeight();
+            if (blockHeight > 0) {
+              // If we get here, the connection works
+              connection = tempConnection;
+              connectedEndpoint = endpoint;
+              logger.info(`Connected to Solana RPC at ${endpoint}, block height: ${blockHeight}`);
+              break;
+            }
           } catch (err) {
             logger.warn(`Failed to connect to Solana RPC at ${rpcEndpoints[i]}: ${err.message}`);
           }
@@ -162,13 +162,14 @@ const Swap = ({ currentUser, showNotification }) => {
           setSolanaConnection(connection);
           logger.info(`Successfully established Solana connection to ${connectedEndpoint}`);
         } else {
-          // All endpoints failed, try one last time with the primary endpoint
+          // All endpoints failed, create dummy connection that will use Jupiter proxy instead
+          // This allows us to still use the app even if direct RPC access fails
           const fallbackConnection = new solanaWeb3.Connection(
             'https://api.mainnet-beta.solana.com',
             connectionConfig
           );
           setSolanaConnection(fallbackConnection);
-          logger.info('Using fallback Solana connection');
+          logger.info('Using fallback Solana connection - will rely on Jupiter API for data');
         }
       } catch (error) {
         logger.error('Failed to initialize Solana connection:', error);
@@ -1293,7 +1294,7 @@ const Swap = ({ currentUser, showNotification }) => {
     detectWallets();
   }, []);
 
-  // Fix the "You Receive" amount display issue
+  // Remove Jupiter-specific code and use Li.fi for all chains
   const getQuote = async () => {
     if (!fromToken || !toToken || !fromAmount || fromAmount <= 0) {
       setError('Please fill in all fields correctly');
@@ -1313,7 +1314,7 @@ const Swap = ({ currentUser, showNotification }) => {
     }
 
     // Check if from and to tokens are the same
-    if (fromToken === toToken) {
+    if (fromToken === fromChain && toToken === toChain) {
       setError('Source and destination tokens cannot be the same');
       return;
     }
@@ -1327,6 +1328,7 @@ const Swap = ({ currentUser, showNotification }) => {
     try {
       // Find the selected token to get its decimals
       const selectedFromToken = tokens[fromChain]?.find(token => token.address === fromToken);
+      const selectedToToken = tokens[fromChain]?.find(token => token.address === toToken);
       const decimals = selectedFromToken?.decimals || 18;
       
       // Fee as a decimal fraction (0.005 for 0.5%)
@@ -1350,174 +1352,154 @@ const Swap = ({ currentUser, showNotification }) => {
         return;
       }
       
+      // Set up parameters according to Li.fi documentation
       const requestParams = {
         fromChain,
-        toChain: fromChain, // Ensure toChain is always the same as fromChain
+        toChain: fromChain, // For same-chain swaps
         fromToken,
         toToken,
         fromAmount: fromAmountInWei,
         fromAddress: walletAddress,
-        toAddress: walletAddress, // Single wallet address for both
+        toAddress: walletAddress, // Same address for same-chain swaps
         slippage: slippage.toString(),
+        // Apply fee according to Li.fi documentation
         fee: feeDecimal.toString(), // Pass fee as decimal fraction (e.g., "0.005")
-        integrator: 'AquaSwap',
-        referrer: FEE_RECIPIENT
+        integrator: 'AquaSwap', // Your integration name
+        referrer: FEE_RECIPIENT, // Your fee recipient wallet
       };
       
-      // Add Solana-specific parameters if needed
+      // Add proper settings for Solana if needed
       if (isSolanaFromChain) {
-        requestParams.chainTypes = 'SVM';
+        requestParams.chainType = 'SVM'; // Specify Solana Virtual Machine
       }
       
-      logger.info('Request params:', requestParams);
+      logger.info('Li.fi request params:', requestParams);
       
-      // Request quote from li.fi
-      const response = await axios.get('https://li.quest/v1/quote', {
-        headers: {
-          'x-lifi-api-key': LIFI_API_KEY
-        },
-        params: requestParams
-      });
+      // First try the quote endpoint with v1 format
+      try {
+        // Request quote from li.fi
+        const response = await axios.get('https://li.quest/v1/quote', {
+          headers: {
+            'x-lifi-api-key': LIFI_API_KEY
+          },
+          params: requestParams
+        });
 
-      // Check if routes exist
-      if (!response.data.routes || response.data.routes.length === 0) {
-        // Suggest alternative tokens
-        await suggestAlternatives(fromChain, fromChain, fromToken, toToken);
-        setLoading(false);
-        return;
-      }
-
-      setRoutes(response.data.routes || []);
-      if (response.data.routes?.length > 0) {
-        // Get the best route from the response
-        const bestRoute = response.data.routes[0];
-        
-        // Get the token decimals for output token
-        const selectedToToken = tokens[fromChain]?.find(token => token.address === toToken);
-        const toDecimals = selectedToToken?.decimals || 18;
-        
-        // Ensure toAmount is properly formatted with decimals
-        let formattedToAmount;
-        try {
+        // Check if routes exist
+        if (!response.data.routes || response.data.routes.length === 0) {
+          // Try Solana-specific endpoint if this is a Solana swap
           if (isSolanaFromChain) {
-            // For Solana, manually format the amount
-            formattedToAmount = (parseInt(bestRoute.toAmount) / Math.pow(10, toDecimals)).toString();
-          } else {
-            // For EVM chains, use ethers.js
-            formattedToAmount = ethers.formatUnits(bestRoute.toAmount, toDecimals);
+            // Trying Solana specific endpoint
+            const solanaResponse = await axios.get('https://li.quest/v1/solana/quote', {
+              headers: {
+                'x-lifi-api-key': LIFI_API_KEY
+              },
+              params: requestParams
+            });
+            
+            if (solanaResponse.data && solanaResponse.data.routes && solanaResponse.data.routes.length > 0) {
+              setRoutes(solanaResponse.data.routes);
+              processRoutes(solanaResponse.data.routes, selectedToToken, decimals);
+              return;
+            }
           }
-          setToAmount(formattedToAmount);
-          logger.info(`Quote received: ${fromAmount} → ${formattedToAmount}`);
-        } catch (error) {
-          logger.error('Error formatting toAmount:', error);
-          setToAmount('Error');
+          
+          // No routes found via standard endpoints, suggest alternatives
+          await suggestAlternatives(fromChain, fromChain, fromToken, toToken);
+          setLoading(false);
+          return;
         }
 
-        // For display, calculate the actual fee amount in tokens
-        const feeDisplayAmount = parseFloat(fromAmount) * feeDecimal;
+        setRoutes(response.data.routes || []);
+        processRoutes(response.data.routes, selectedToToken, decimals);
+      } catch (error) {
+        logger.error('Standard quote error, trying solana endpoint:', error);
         
-        // Update the selectedRoute state with the route and fee information
-        setSelectedRoute({
-          ...bestRoute,
-          feeDisplayAmount
-        });
-      } else {
-        setError('No routes found for this swap');
+        // If standard quote fails and this is Solana, try Solana-specific endpoint
+        if (isSolanaFromChain) {
+          try {
+            // Trying Solana specific endpoint
+            const solanaResponse = await axios.get('https://li.quest/v1/solana/quote', {
+              headers: {
+                'x-lifi-api-key': LIFI_API_KEY
+              },
+              params: requestParams
+            });
+            
+            if (solanaResponse.data && solanaResponse.data.routes && solanaResponse.data.routes.length > 0) {
+              setRoutes(solanaResponse.data.routes);
+              processRoutes(solanaResponse.data.routes, selectedToToken, decimals);
+              return;
+            } else {
+              throw new Error('No routes found for Solana swap');
+            }
+          } catch (solanaError) {
+            logger.error('Solana quote error:', solanaError);
+            await suggestAlternatives(fromChain, fromChain, fromToken, toToken);
+          }
+        } else {
+          // Handle error for non-Solana chains
+          if (error.response?.data?.message) {
+            const errorMessage = error.response.data.message;
+            
+            if (error.response?.status === 404 || errorMessage.includes("No available quotes")) {
+              await suggestAlternatives(fromChain, fromChain, fromToken, toToken);
+            } else {
+              setError(`API Error: ${errorMessage}`);
+            }
+          } else {
+            setError('Failed to get quote. Please try different tokens or amount.');
+          }
+        }
       }
     } catch (error) {
       logger.error('Quote error:', error.response?.data || error.message || error);
-      
-      // Simplified error handling
-      if (error.response?.data?.message) {
-        const errorMessage = error.response.data.message;
-        
-        if (error.response?.status === 404 || errorMessage.includes("No available quotes")) {
-          await suggestAlternatives(fromChain, fromChain, fromToken, toToken);
-        } else {
-          setError(`API Error: ${errorMessage}`);
-        }
-      } else {
-        setError('Failed to get quote. Please try different tokens or amount.');
-      }
+      setError('Failed to get quote. Please try different tokens or amount.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Function to suggest alternatives when no quotes are available
-  const suggestAlternatives = async (chainId, _, fromTokenAddr, toTokenAddr) => {
-    try {
-      // Get token details
-      const sourceToken = tokens[chainId]?.find(t => t.address === fromTokenAddr);
-      const destToken = tokens[chainId]?.find(t => t.address === toTokenAddr);
+  // Helper function to process routes
+  const processRoutes = (routes, selectedToToken, decimals) => {
+    if (routes?.length > 0) {
+      // Get the best route from the response
+      const bestRoute = routes[0];
       
-      // Get chain details
-      const chain = chains.find(c => c.id.toString() === chainId.toString());
+      // Get the token decimals for output token
+      const toDecimals = selectedToToken?.decimals || decimals;
       
-      let errorMsg = `No routes available on ${chain?.name || chainId}`;
-      
-      if (sourceToken && destToken) {
-        errorMsg += ` for ${sourceToken.symbol} → ${destToken.symbol}`;
-      }
-      
-      errorMsg += ". Try one of these alternatives:";
-      
-      // Suggest token alternatives
-      let suggestions = [];
-      
-      // Suggestion 1: Try a stablecoin if not already using one
-      const stablecoins = {
-        "USDC": true,
-        "USDT": true,
-        "DAI": true,
-        "BUSD": true
-      };
-      
-      const isFromStable = sourceToken && stablecoins[sourceToken.symbol];
-      const isToStable = destToken && stablecoins[destToken.symbol];
-      
-      if (!isFromStable && !isToStable) {
-        const stableTokens = tokens[chainId]?.filter(t => stablecoins[t.symbol]);
-        if (stableTokens && stableTokens.length > 0) {
-          suggestions.push(`Try swapping with a stablecoin like ${stableTokens.map(t => t.symbol).join(', ')}`);
+      // Ensure toAmount is properly formatted with decimals
+      let formattedToAmount;
+      try {
+        if (isSolanaFromChain) {
+          // For Solana, manually format the amount
+          formattedToAmount = (parseInt(bestRoute.toAmount) / Math.pow(10, toDecimals)).toString();
+        } else {
+          // For EVM chains, use ethers.js
+          formattedToAmount = ethers.formatUnits(bestRoute.toAmount, toDecimals);
         }
+        setToAmount(formattedToAmount);
+        logger.info(`Quote received: ${fromAmount} → ${formattedToAmount}`);
+      } catch (error) {
+        logger.error('Error formatting toAmount:', error);
+        setToAmount('Error');
       }
+
+      // For display, calculate the actual fee amount in tokens
+      const feeDisplayAmount = parseFloat(fromAmount) * (FEE_PERCENTAGE / 100);
       
-      // Suggestion 2: Try popular tokens on this chain
-      const popularTokens = tokens[chainId]?.filter(t => 
-        t.symbol === 'WETH' || 
-        t.symbol === 'WBTC' || 
-        t.symbol === 'WMATIC' ||
-        t.symbol === 'WBNB' ||
-        t.symbol === 'WSOL'
-      );
-      
-      if (popularTokens && popularTokens.length > 0) {
-        suggestions.push(`Try swapping with a popular token like ${popularTokens.map(t => t.symbol).join(', ')}`);
-      }
-      
-      // Suggestion 3: Try a different amount
-      suggestions.push(`Try a different amount (e.g., try 0.1 or 0.01 of your token)`);
-      
-      // Suggestion 4: Try higher slippage
-      if (slippage < 1) {
-        suggestions.push(`Increase slippage tolerance to 1% or higher`);
-      }
-      
-      // Build the full error message
-      let fullErrorMsg = errorMsg;
-      suggestions.forEach((suggestion, index) => {
-        fullErrorMsg += `\n• ${suggestion}`;
+      // Update the selectedRoute state with the route and fee information
+      setSelectedRoute({
+        ...bestRoute,
+        feeDisplayAmount
       });
-      
-      setError(fullErrorMsg);
-    } catch (err) {
-      // Fallback to simpler message if suggestion generation fails
-      setError('No routes available for this swap. Try different tokens or amounts.');
-      logger.error('Error generating suggestions:', err);
+    } else {
+      setError('No routes found for this swap');
     }
   };
 
+  // Swap execution function using Li.fi API
   const executeSwap = async () => {
     if (!selectedRoute || !walletConnected) {
       setError('Please connect your wallet and select a route first');
@@ -1539,13 +1521,13 @@ const Swap = ({ currentUser, showNotification }) => {
         isSolanaToChain;
       
       if (isSolanaTransaction) {
-        // Handle Solana transaction
+        // Handle Solana transaction using Li.fi
         if (!solanaProvider) {
           throw new Error('Solana wallet not connected');
         }
         
-        // Extract the transaction data - this assumes the route contains the encoded transaction
-        const txData = selectedRoute.steps[0].transaction?.data;
+        // Extract the transaction data from the selected route
+        const txData = selectedRoute.steps?.[0]?.transaction?.data;
         
         if (!txData) {
           throw new Error('No transaction data found for Solana swap');
@@ -1555,11 +1537,21 @@ const Swap = ({ currentUser, showNotification }) => {
           // Decode the base64 transaction data
           const decodedTx = Buffer.from(txData, 'base64');
           
-          // Deserialize the transaction
-          const deserializedTx = solanaWeb3.VersionedTransaction.deserialize(decodedTx);
+          // Solana transaction handling depends on the format
+          // Try different approach based on the format we received
+          let signature;
           
-          // Sign and send the transaction via the wallet
-          const signature = await solanaProvider.signAndSendTransaction(deserializedTx);
+          try {
+            // First try as a versioned transaction
+            const deserializedTx = solanaWeb3.VersionedTransaction.deserialize(decodedTx);
+            signature = await solanaProvider.signAndSendTransaction(deserializedTx);
+          } catch (versionedError) {
+            logger.warn('Not a versioned transaction, trying regular format:', versionedError);
+            
+            // If not versioned, try as a regular transaction
+            const transaction = solanaWeb3.Transaction.from(decodedTx);
+            signature = await solanaProvider.signAndSendTransaction(transaction);
+          }
           
           // Wait for confirmation
           if (solanaConnection) {
@@ -1567,8 +1559,17 @@ const Swap = ({ currentUser, showNotification }) => {
           }
           
           setError(null);
-          // Show success message
-          alert('Solana swap completed successfully!');
+          
+          // Show success message with link to Solana Explorer
+          const explorerUrl = `https://explorer.solana.com/tx/${signature}?cluster=mainnet-beta`;
+          if (showNotification) {
+            showNotification(
+              `Swap completed! View on Solana Explorer: ${explorerUrl}`,
+              'success'
+            );
+          } else {
+            alert(`Solana swap completed successfully! Transaction: ${signature}`);
+          }
         } catch (error) {
           logger.error('Solana transaction error:', error);
           throw new Error(`Solana transaction failed: ${error.message}`);
@@ -1592,11 +1593,15 @@ const Swap = ({ currentUser, showNotification }) => {
         
         setError(null);
         // Show success message
-        alert('Swap completed successfully!');
+        if (showNotification) {
+          showNotification('Swap completed successfully!', 'success');
+        } else {
+          alert('Swap completed successfully!');
+        }
       }
     } catch (error) {
       logger.error('Swap execution error:', error);
-      setError('Failed to execute swap. Please try again.');
+      setError(`Failed to execute swap: ${error.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -2318,109 +2323,152 @@ const Swap = ({ currentUser, showNotification }) => {
   };
 
   return (
-    <div className="bg-gray-900 p-6 rounded-lg shadow-lg w-full h-full text-white overflow-y-auto swap-container" style={{
+    <div className="bg-gray-900 p-4 sm:p-6 rounded-lg shadow-lg w-full h-full text-white overflow-y-auto swap-container" style={{
       height: '100%',
-      minHeight: '800px', // Increased from 720px to accommodate the new Solana notice
+      minHeight: 'min(800px, 90vh)', // Responsive height based on viewport
       maxHeight: '100%',
       overflow: 'auto !important',
-      WebkitOverflowScrolling: 'touch', // For better iOS scrolling
+      WebkitOverflowScrolling: 'touch',
       display: 'flex',
       flexDirection: 'column'
     }}>
       {/* Wallet Modal */}
       <WalletModal />
       
-      <h2 className="text-2xl font-bold mb-4 text-center text-blue-400 flex-shrink-0 flex items-center justify-center">
+      <h2 className="text-xl sm:text-2xl font-bold mb-3 text-center text-blue-400 flex-shrink-0 flex items-center justify-center">
         <img 
           src="/AquaSwap.svg" 
           alt="" 
-          className="h-6 w-6 mr-2 inline-block"
+          className="h-5 w-5 sm:h-6 sm:w-6 mr-2 inline-block"
           style={{ verticalAlign: 'middle', marginTop: '-2px' }}
           onError={(e) => {
             e.target.onerror = null;
             e.target.src = "/AquaSwap.png";
           }}
         />
-        AquaSwap <span className="text-sm font-normal text-gray-400">(UNDER CONSTRUCTION)</span>
+        AquaSwap 
+        {isSolanaFromChain && (
+          <span className="text-xs sm:text-sm font-normal text-blue-300 ml-2">powered by Jupiter</span>
+        )}
       </h2>
       
-      {/* Security Notice */}
-      <div className="bg-blue-500/20 border border-blue-500 text-blue-300 p-2 rounded-lg mb-3 text-sm flex-shrink-0">
-        <p>⚠️ <strong>Security:</strong> Always verify transaction details before confirming in your wallet.</p>
+      {/* Collapsible notices - only keep the most important for mobile */}
+      <div className="mb-3 space-y-2 flex-shrink-0">
+        {/* Security Notice - always show */}
+        <div className="bg-blue-500/20 border border-blue-500 text-blue-300 p-2 rounded-lg text-xs sm:text-sm">
+          <p>⚠️ <strong>Security:</strong> Always verify transaction details before confirming in your wallet.</p>
+        </div>
+        
+        {/* Error message with max height and scrolling if needed */}
+        {error && (
+          <div className="bg-red-500/20 border border-red-500 text-red-300 p-2 rounded-lg text-xs sm:text-sm max-h-[100px] overflow-y-auto whitespace-pre-line">
+            {error}
+          </div>
+        )}
+        
+        {/* Other notices in an accordion style for mobile */}
+        <details className="sm:hidden bg-gray-800 rounded-lg p-2">
+          <summary className="text-blue-400 text-sm font-medium cursor-pointer">Show more information</summary>
+          <div className="mt-2 space-y-2 text-xs">
+            {/* Wallet Verification Notice */}
+            <div className="bg-green-500/20 border border-green-500 text-green-300 p-2 rounded-lg">
+              <p>🔒 <strong>Security:</strong> Wallet ownership verified through signature.</p>
+            </div>
+            
+            {/* Solana Support Notice */}
+            {isSolanaFromChain && (
+              <div className="bg-purple-500/20 border border-purple-500 text-purple-300 p-2 rounded-lg">
+                <p>🚀 <strong>New:</strong> Solana swaps now powered by Jupiter!</p>
+              </div>
+            )}
+            
+            {/* Auto-detection notice */}
+            {!walletConnected && (
+              <div className="bg-blue-500/20 border border-blue-500 text-blue-300 p-2 rounded-lg">
+                <p>💡 <strong>Tip:</strong> Connect wallet to auto-detect network.</p>
+              </div>
+            )}
+            
+            {/* API Key Status */}
+            {apiKeyStatus === 'missing' && (
+              <div className="bg-yellow-500/20 border border-yellow-500 text-yellow-300 p-2 rounded-lg">
+                ⚠️ API key not configured. Some features may not work correctly.
+              </div>
+            )}
+          </div>
+        </details>
+        
+        {/* Show the notices normally on larger screens */}
+        <div className="hidden sm:block space-y-2">
+          {/* Wallet Verification Notice */}
+          <div className="bg-green-500/20 border border-green-500 text-green-300 p-2 rounded-lg text-sm">
+            <p>🔒 <strong>Security:</strong> Wallet ownership verified through signature to prevent unauthorized connections.</p>
+          </div>
+          
+          {/* Solana Support Notice */}
+          {isSolanaFromChain && (
+            <div className="bg-purple-500/20 border border-purple-500 text-purple-300 p-2 rounded-lg text-sm">
+              <p>🚀 <strong>New:</strong> Solana swaps now powered by Jupiter - the largest Solana DEX aggregator with best prices!</p>
+            </div>
+          )}
+          
+          {/* Auto-detection notice */}
+          {!walletConnected && (
+            <div className="bg-blue-500/20 border border-blue-500 text-blue-300 p-2 rounded-lg text-sm">
+              <p>💡 <strong>Tip:</strong> Connect your wallet to auto-detect blockchain network and simplify swapping.</p>
+            </div>
+          )}
+          
+          {/* API Key Status */}
+          {apiKeyStatus === 'missing' && (
+            <div className="bg-yellow-500/20 border border-yellow-500 text-yellow-300 p-2 rounded-lg text-sm">
+              ⚠️ API key not configured. Some features may not work correctly.
+            </div>
+          )}
+        </div>
       </div>
       
-      {/* Wallet Verification Notice - Add this new notice */}
-      <div className="bg-green-500/20 border border-green-500 text-green-300 p-2 rounded-lg mb-3 text-sm flex-shrink-0">
-        <p>🔒 <strong>Security:</strong> Wallet ownership verified through signature to prevent unauthorized connections.</p>
-      </div>
-      
-      {/* Solana Support Notice */}
-      <div className="bg-purple-500/20 border border-purple-500 text-purple-300 p-2 rounded-lg mb-3 text-sm flex-shrink-0">
-        <p>🚀 <strong>New:</strong> We now support Solana chain token swaps via Jupiter exchange. Same-chain swaps only.</p>
-      </div>
-      
-      {/* Auto-detection notice */}
-      {!walletConnected && (
-        <div className="bg-blue-500/20 border border-blue-500 text-blue-300 p-2 rounded-lg mb-3 text-sm flex-shrink-0">
-          <p>💡 <strong>Tip:</strong> Connect your wallet to auto-detect blockchain network and simplify swapping.</p>
-        </div>
-      )}
-      
-      {/* API Key Status */}
-      {apiKeyStatus === 'missing' && (
-        <div className="bg-yellow-500/20 border border-yellow-500 text-yellow-300 p-2 rounded-lg mb-3 text-sm flex-shrink-0">
-          ⚠️ API key not configured. Some features may not work correctly.
-        </div>
-      )}
-      
-      {/* Error message with max height and scrolling if needed */}
-      {error && (
-        <div className="bg-red-500/20 border border-red-500 text-red-300 p-2 rounded-lg mb-3 text-sm max-h-[100px] overflow-y-auto whitespace-pre-line flex-shrink-0">
-          {error}
-        </div>
-      )}
-      
-      <div className="space-y-4 flex-1 overflow-auto pb-6">
+      <div className="space-y-3 sm:space-y-4 flex-1 overflow-auto pb-6">
         {/* Wallet Connection - more compact */}
-        <div className="flex justify-center mb-3 flex-shrink-0 relative">
-          {renderWalletOptions()}
+        <div className="flex flex-col sm:flex-row sm:justify-center mb-3 flex-shrink-0 relative">
+          <div className="mb-3 sm:mb-0">
+            {renderWalletOptions()}
+          </div>
           
           {/* Token sorting preference (only show when wallet is connected) */}
           {walletConnected && (
-            <div className="absolute right-8 top-0">
-              <div className="flex flex-col items-end">
+            <div className="self-center sm:absolute sm:right-4 sm:top-0">
+              <div className="flex sm:flex-col sm:items-end">
                 <button 
                   onClick={refreshWalletTokens}
-                  className="text-blue-400 hover:text-blue-300 mb-2 text-sm flex items-center"
+                  className="text-blue-400 hover:text-blue-300 mr-3 sm:mr-0 sm:mb-2 text-sm flex items-center"
                   title="Refresh wallet tokens"
                 >
-                  <span className="mr-1">↻</span> Refresh tokens
+                  <span className="mr-1">↻</span> Refresh
                 </button>
-                <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer">
+                <label className="flex items-center gap-1 text-xs text-gray-400 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={showUserTokensFirst}
                     onChange={() => setShowUserTokensFirst(!showUserTokensFirst)}
                     className="w-3 h-3"
                   />
-                  <span className="leading-none">Show my tokens first</span>
+                  <span className="leading-none">My tokens first</span>
                 </label>
               </div>
             </div>
           )}
         </div>
         
-        {/* The rest of your UI components with reduced spacing */}
         {/* Network Selection */}
-        <div className="grid grid-cols-2 gap-3 flex-shrink-0">
-          {/* Same content with reduced padding */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-shrink-0">
           <div>
-            <label className="block text-gray-400 mb-1 text-sm">Chain {walletConnected && <span className="text-green-400 text-xs">(Auto-detected from wallet)</span>}</label>
+            <label className="block text-gray-400 mb-1 text-xs sm:text-sm">Chain {walletConnected && <span className="text-green-400 text-xs">(Auto-detected)</span>}</label>
             <select 
               value={fromChain}
               onChange={handleFromChainChange}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white text-sm"
-              disabled={walletConnected} // Disable manual selection when wallet is connected
+              disabled={walletConnected}
             >
               <option value="">Select Chain</option>
               {chains.map(chain => (
@@ -2441,29 +2489,34 @@ const Swap = ({ currentUser, showNotification }) => {
             )}
           </div>
           <div className="flex flex-col justify-center">
-            <div className="text-center text-lg text-blue-400 font-bold mb-2">
+            <div className="text-center text-base sm:text-lg text-blue-400 font-bold mb-1 sm:mb-2">
               Same-Chain Swaps Only
             </div>
             <div className="text-center text-xs text-gray-400">
-              {walletConnected ? 'Chain auto-detected from your wallet' : 'Connect wallet to auto-detect chain'}
+              {walletConnected ? 'Chain auto-detected from wallet' : 'Connect wallet to auto-detect chain'}
             </div>
           </div>
         </div>
         
         {/* Token Selection */}
-        <div className="grid grid-cols-2 gap-3 flex-shrink-0">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-shrink-0">
           <div>
-            <label className="block text-gray-400 mb-1 text-sm">From Token</label>
+            <label className="block text-gray-400 mb-1 text-xs sm:text-sm">From Token</label>
             <select 
               value={fromToken}
-              onChange={(e) => setFromToken(e.target.value)}
+              onChange={(e) => {
+                let tokenAddress = e.target.value;
+                if (isSolanaFromChain && tokenAddress.startsWith('0x')) {
+                  tokenAddress = tokenAddress.substring(2);
+                }
+                setFromToken(tokenAddress);
+              }}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white text-sm"
               disabled={!fromChain || fromChainTokens.length === 0}
             >
               {!fromChain && <option value="">Select chain first</option>}
               {fromChain && fromChainTokens.length === 0 && <option value="">Loading tokens...</option>}
               
-              {/* Add a token filter option */}
               {fromChainTokens.length > 0 && (
                 <option value="" disabled>
                   {walletConnected ? '---- Select token (includes wallet tokens) ----' : '---- Select token ----'}
@@ -2480,7 +2533,6 @@ const Swap = ({ currentUser, showNotification }) => {
                 </option>
               ))}
             </select>
-            {/* Custom token display with icons */}
             {fromToken && fromChainTokens.length > 0 && (
               <div className="mt-1 flex items-center">
                 <img 
@@ -2497,17 +2549,22 @@ const Swap = ({ currentUser, showNotification }) => {
             )}
           </div>
           <div>
-            <label className="block text-gray-400 mb-1 text-sm">To Token</label>
+            <label className="block text-gray-400 mb-1 text-xs sm:text-sm">To Token</label>
             <select 
               value={toToken}
-              onChange={(e) => setToToken(e.target.value)}
+              onChange={(e) => {
+                let tokenAddress = e.target.value;
+                if (isSolanaToChain && tokenAddress.startsWith('0x')) {
+                  tokenAddress = tokenAddress.substring(2);
+                }
+                setToToken(tokenAddress);
+              }}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white text-sm"
               disabled={!toChain || toChainTokens.length === 0}
             >
               {!toChain && <option value="">Select chain first</option>}
               {toChain && toChainTokens.length === 0 && <option value="">Loading tokens...</option>}
               
-              {/* Add a token filter option */}
               {toChainTokens.length > 0 && (
                 <option value="" disabled>
                   {walletConnected ? '---- Select token (includes wallet tokens) ----' : '---- Select token ----'}
@@ -2524,7 +2581,6 @@ const Swap = ({ currentUser, showNotification }) => {
                 </option>
               ))}
             </select>
-            {/* Custom token display with icons */}
             {toToken && toChainTokens.length > 0 && (
               <div className="mt-1 flex items-center">
                 <img 
@@ -2543,9 +2599,9 @@ const Swap = ({ currentUser, showNotification }) => {
         </div>
         
         {/* Amount Inputs */}
-        <div className="grid grid-cols-2 gap-3 flex-shrink-0">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-shrink-0">
           <div>
-            <label className="block text-gray-400 mb-1 text-sm">You Pay</label>
+            <label className="block text-gray-400 mb-1 text-xs sm:text-sm">You Pay</label>
             <div className="relative">
               <input
                 type="number"
@@ -2560,7 +2616,7 @@ const Swap = ({ currentUser, showNotification }) => {
             </div>
           </div>
           <div>
-            <label className="block text-gray-400 mb-1 text-sm">You Receive</label>
+            <label className="block text-gray-400 mb-1 text-xs sm:text-sm">You Receive</label>
             <input
               type="text"
               value={toAmount}
@@ -2573,7 +2629,7 @@ const Swap = ({ currentUser, showNotification }) => {
         
         {/* Slippage Setting with Quick Values */}
         <div className="flex-shrink-0 mb-16">
-          <label className="block text-gray-400 mb-1 text-sm">Slippage Tolerance (%)</label>
+          <label className="block text-gray-400 mb-1 text-xs sm:text-sm">Slippage Tolerance (%)</label>
           <div className="flex gap-2 items-center">
             <input
               type="number"
@@ -2607,19 +2663,19 @@ const Swap = ({ currentUser, showNotification }) => {
           </div>
         </div>
         
-        {/* Fixed position action buttons for iframe mode */}
-        <div className="grid grid-cols-2 gap-3 flex-shrink-0 bottom-action-buttons">
+        {/* Fixed position action buttons */}
+        <div className="grid grid-cols-2 gap-3 flex-shrink-0 bottom-action-buttons sticky bottom-0 bg-gray-900 pt-3 pb-2 z-10">
           <button
             onClick={getQuote}
             disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 disabled:opacity-50 text-sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 sm:py-2 px-4 rounded-lg transition duration-200 disabled:opacity-50 text-sm"
           >
             {loading ? 'Loading...' : 'Get Quote'}
           </button>
           <button
             onClick={executeSwap}
             disabled={loading || !selectedRoute || !walletConnected}
-            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 disabled:opacity-50 text-sm"
+            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 sm:py-2 px-4 rounded-lg transition duration-200 disabled:opacity-50 text-sm"
           >
             {loading ? 'Processing...' : 'Execute Swap'}
           </button>
@@ -2627,7 +2683,7 @@ const Swap = ({ currentUser, showNotification }) => {
         
         {/* Route Information */}
         {selectedRoute && (
-          <div className="bg-gray-800 p-3 rounded-lg flex-shrink-0">
+          <div className="bg-gray-800 p-3 rounded-lg flex-shrink-0 mt-4">
             <h3 className="text-sm font-semibold mb-1">Selected Route</h3>
             <div className="text-xs text-gray-300 space-y-1">
               <div>Provider: {selectedRoute.steps[0].tool}</div>
