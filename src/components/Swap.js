@@ -352,90 +352,91 @@ const Swap = ({ currentUser, showNotification }) => {
       
       // Store token balances
       const balances = {};
+      const userTokenAddresses = [];
       
-      // Process token accounts in batches to avoid UI freezing
-      await new Promise(resolve => {
-        // Use setTimeout to yield to the browser's event loop
-        setTimeout(() => {
-          // Filter for tokens with non-zero balance
-          const userTokenAddresses = tokenAccounts.value
-            .filter(account => {
-              const tokenAmount = account.account.data.parsed.info.tokenAmount;
-              const amount = parseInt(tokenAmount.amount);
-              
-              if (amount > 0) {
-                // Store balance information
-                balances[account.account.data.parsed.info.mint] = {
-                  amount: amount,
-                  decimals: tokenAmount.decimals,
-                  uiAmount: tokenAmount.uiAmount
-                };
-                return true;
-              }
-              return false;
-            })
-            .map(account => account.account.data.parsed.info.mint);
+      // Process token accounts
+      for (const account of tokenAccounts.value) {
+        try {
+          const tokenAmount = account.account.data.parsed.info.tokenAmount;
+          const amount = parseInt(tokenAmount.amount);
+          const tokenAddress = account.account.data.parsed.info.mint;
           
-          resolve(userTokenAddresses);
-        }, 0);
-      });
+          if (amount > 0) {
+            // Store balance information
+            balances[tokenAddress] = {
+              amount: amount,
+              decimals: tokenAmount.decimals,
+              uiAmount: tokenAmount.uiAmount
+            };
+            userTokenAddresses.push(tokenAddress);
+          }
+        } catch (err) {
+          logger.warn(`Error processing token account: ${err.message}`);
+        }
+      }
       
       // Also check SOL balance
       try {
         const solBalance = await connection.getBalance(new PublicKey(walletAddress));
         if (solBalance > 0) {
           // SOL uses 9 decimal places
+          const solUiAmount = solBalance / 1000000000;
           balances['SOL'] = {
             amount: solBalance,
             decimals: 9,
-            uiAmount: solBalance / 1000000000
+            uiAmount: solUiAmount
           };
           // Also add under wrapped SOL address
-          balances['So11111111111111111111111111111111111111112'] = {
+          const wrappedSolAddress = 'So11111111111111111111111111111111111111112';
+          balances[wrappedSolAddress] = {
             amount: solBalance,
             decimals: 9,
-            uiAmount: solBalance / 1000000000
+            uiAmount: solUiAmount
           };
+          userTokenAddresses.push(wrappedSolAddress);
         }
       } catch (err) {
         logger.warn('Error getting SOL balance:', err);
       }
       
+      // Print the balances to check
+      logger.info(`User wallet balances:`, balances);
+      
       // Save balances
       setTokenBalances(balances);
+            
+      // Mark tokens in the main token list as user tokens
+      const updatedTokens = tokens.map(token => ({
+        ...token,
+        isUserToken: userTokenAddresses.includes(token.address) || 
+                     (token.symbol === 'SOL' && balances['SOL']) ||
+                     balances[token.address] != null
+      }));
       
-      // Use a non-blocking update for token list to avoid UI freezing
-      setTimeout(() => {
-        // Mark tokens in the main token list as user tokens
-        const updatedTokens = tokens.map(token => ({
-          ...token,
-          isUserToken: balances[token.address] != null
-        }));
-        
-        // Update the token list
-        setTokens(updatedTokens);
-        
-        // Extract user tokens
-        const userTokensList = updatedTokens.filter(token => 
-          balances[token.address] != null
-        );
-        
-        setUserTokens(userTokensList);
-        
-        logger.info(`Found ${userTokensList.length} tokens in user wallet`);
-        
-        // If from token not set and user has SOL, default to SOL
-        if (!fromToken && userTokensList.length > 0) {
-          const solToken = userTokensList.find(t => t.symbol === 'SOL' || t.symbol === 'WSOL');
-          if (solToken) {
-            setFromToken(solToken.address);
-          } else if (userTokensList.length > 0) {
-            // Or use the first user token
-            setFromToken(userTokensList[0].address);
-          }
+      // Update the token list
+      setTokens(updatedTokens);
+      
+      // Extract user tokens
+      const userTokensList = updatedTokens.filter(token => 
+        userTokenAddresses.includes(token.address) || 
+        (token.symbol === 'SOL' && balances['SOL']) ||
+        balances[token.address] != null
+      );
+      
+      setUserTokens(userTokensList);
+      
+      logger.info(`Found ${userTokensList.length} tokens in user wallet`);
+      
+      // If from token not set and user has SOL, default to SOL
+      if (!fromToken && userTokensList.length > 0) {
+        const solToken = userTokensList.find(t => t.symbol === 'SOL' || t.symbol === 'WSOL');
+        if (solToken) {
+          setFromToken(solToken.address);
+        } else if (userTokensList.length > 0) {
+          // Or use the first user token
+          setFromToken(userTokensList[0].address);
         }
-      }, 0);
-      
+      }
     } catch (error) {
       logger.error('Error detecting user tokens:', error);
       // Don't let token detection failure break the app
@@ -446,9 +447,11 @@ const Swap = ({ currentUser, showNotification }) => {
   
   // Get the user's balance for a specific token
   const getTokenBalance = (tokenAddress) => {
-    // Check for SOL special case
-    if (tokenAddress === 'SOL') {
-      return tokenBalances['SOL'] || null;
+    if (!tokenAddress) return null;
+    
+    // Check for SOL special case - many tools use both direct SOL and wrapped SOL
+    if (tokenAddress === 'SOL' || tokenAddress === 'So11111111111111111111111111111111111111112') {
+      return tokenBalances['SOL'] || tokenBalances['So11111111111111111111111111111111111111112'] || null;
     }
     
     // Check regular token
@@ -458,7 +461,7 @@ const Swap = ({ currentUser, showNotification }) => {
   // Get formatted balance string
   const getFormattedBalance = (tokenAddress) => {
     const balance = getTokenBalance(tokenAddress);
-    if (!balance) return 'N/A';
+    if (!balance) return '0';
     
     return balance.uiAmount.toLocaleString(undefined, {
       minimumFractionDigits: 0,
@@ -473,12 +476,29 @@ const Swap = ({ currentUser, showNotification }) => {
     const balance = getTokenBalance(fromToken);
     if (!balance) return;
     
-    // Set 99.5% of balance to account for fees
-    const maxAmount = balance.uiAmount * 0.995;
-    setFromAmount(maxAmount.toString());
+    // For SOL, leave some for gas fees (0.01 SOL minimum)
+    let maxAmount;
+    if (fromToken === 'So11111111111111111111111111111111111111112' || 
+        getTokenInfo(fromToken)?.symbol === 'SOL') {
+      // Keep 0.01 SOL (or more if it's a larger amount) for transaction fees
+      const reserveAmount = Math.max(0.01, balance.uiAmount * 0.01);
+      maxAmount = Math.max(0, balance.uiAmount - reserveAmount);
+    } else {
+      // For other tokens, use 99.5% of balance to account for fees
+      maxAmount = balance.uiAmount * 0.995;
+    }
     
-    // Trigger quote
-    getQuote(maxAmount.toString());
+    // Format with appropriate precision based on balance size
+    const formattedAmount = maxAmount.toFixed(
+      maxAmount < 0.01 ? 6 : 
+      maxAmount < 1 ? 4 : 2
+    );
+    
+    // Set the amount and update the form
+    setFromAmount(formattedAmount);
+    
+    // Trigger quote after a short delay to ensure state updates
+    setTimeout(() => getQuote(formattedAmount), 100);
   };
   
   // Handle from amount change - get quote when amount changes
@@ -1336,7 +1356,8 @@ const Swap = ({ currentUser, showNotification }) => {
                 />
               </div>
               
-              {walletConnected && fromToken && getTokenInfo(fromToken)?.isUserToken && (
+              {/* Always show balance when wallet is connected and token is selected */}
+              {walletConnected && fromToken && (
                 <div className="balance-info">
                   <span>Balance: {getFormattedBalance(fromToken)} {getTokenInfo(fromToken)?.symbol}</span>
                   <button 
@@ -1399,7 +1420,8 @@ const Swap = ({ currentUser, showNotification }) => {
                 />
               </div>
               
-              {walletConnected && toToken && getTokenInfo(toToken)?.isUserToken && (
+              {/* Always show to-token balance when wallet is connected */}
+              {walletConnected && toToken && (
                 <div className="balance-info-no-max">
                   <span>Balance: {getFormattedBalance(toToken)} {getTokenInfo(toToken)?.symbol}</span>
                 </div>
@@ -1459,12 +1481,21 @@ const Swap = ({ currentUser, showNotification }) => {
             <div className="wallet-address">
               {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
             </div>
-            <button 
-              className="disconnect-wallet-button"
-              onClick={disconnectWallet}
-            >
-              Disconnect
-            </button>
+            <div className="wallet-buttons">
+              <button 
+                className="refresh-wallet-button"
+                onClick={() => detectUserTokens(walletAddress)}
+                title="Refresh wallet balances"
+              >
+                🔄
+              </button>
+              <button 
+                className="disconnect-wallet-button"
+                onClick={disconnectWallet}
+              >
+                Disconnect
+              </button>
+            </div>
           </div>
         )}
         
