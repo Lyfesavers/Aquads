@@ -40,9 +40,9 @@
   align-items: center;
 }
 
-.swap-header h2::before {
-  content: "💧";
+.aquaswap-logo {
   margin-right: 8px;
+  object-fit: contain;
 }
 
 .swap-actions {
@@ -181,6 +181,14 @@
 .balance-info {
   display: flex;
   justify-content: space-between;
+  margin-top: 8px;
+  color: #9ca3af;
+  font-size: 0.75rem;
+}
+
+.balance-info-no-max {
+  display: flex;
+  justify-content: flex-start;
   margin-top: 8px;
   color: #9ca3af;
   font-size: 0.75rem;

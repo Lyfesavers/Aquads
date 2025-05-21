@@ -10,12 +10,13 @@ import './Swap.css';
 const JUPITER_API_BASE_URL = 'https://quote-api.jup.ag/v6';
 const FEE_PERCENTAGE = 0.5; // 0.5% fee
 const FEE_RECIPIENT = process.env.REACT_APP_FEE_WALLET || '6MtTEBWBXPTwbrVCqiHp4iTe84J8CfXHPspYYWTfBPG9'; // Default fee wallet
-// Use more reliable RPC endpoints with fallbacks
+// Use more reliable RPC endpoints with fallbacks - prefer public endpoints not requiring auth
 const SOLANA_RPC_ENDPOINTS = [
-  'https://solana-mainnet.rpc.extrnode.com',
-  'https://api.mainnet-beta.solana.com',
-  'https://rpc.ankr.com/solana',
-  'https://solana-api.projectserum.com'
+  'https://api.devnet.solana.com', // Start with devnet which is more permissive
+  'https://solana.public-rpc.com',
+  'https://solana-mainnet.g.alchemy.com/v2/demo', // Alchemy demo endpoint
+  'https://free.rpcpool.com',
+  'https://api.mainnet-beta.solana.com'
 ];
 
 // Style to hide unwanted UI elements
@@ -63,6 +64,7 @@ const Swap = ({ currentUser, showNotification }) => {
   const [walletAddress, setWalletAddress] = useState('');
   const [walletType, setWalletType] = useState('');
   const [userTokens, setUserTokens] = useState([]);
+  const [tokenBalances, setTokenBalances] = useState({}); // Store token balances
   
   // UI state
   const [showTokenSelector, setShowTokenSelector] = useState(false);
@@ -338,18 +340,56 @@ const Swap = ({ currentUser, showNotification }) => {
         throw error || new Error('All RPC endpoints failed');
       }
       
+      // Store token balances
+      const balances = {};
+      
       // Filter for tokens with non-zero balance
       const userTokenAddresses = tokenAccounts.value
         .filter(account => {
           const tokenAmount = account.account.data.parsed.info.tokenAmount;
-          return parseInt(tokenAmount.amount) > 0;
+          const amount = parseInt(tokenAmount.amount);
+          
+          if (amount > 0) {
+            // Store balance information
+            balances[account.account.data.parsed.info.mint] = {
+              amount: amount,
+              decimals: tokenAmount.decimals,
+              uiAmount: tokenAmount.uiAmount
+            };
+            return true;
+          }
+          return false;
         })
         .map(account => account.account.data.parsed.info.mint);
+      
+      // Also check SOL balance
+      try {
+        const solBalance = await connection.getBalance(new PublicKey(walletAddress));
+        if (solBalance > 0) {
+          // SOL uses 9 decimal places
+          balances['SOL'] = {
+            amount: solBalance,
+            decimals: 9,
+            uiAmount: solBalance / 1000000000
+          };
+          // Also add under wrapped SOL address
+          balances['So11111111111111111111111111111111111111112'] = {
+            amount: solBalance,
+            decimals: 9,
+            uiAmount: solBalance / 1000000000
+          };
+        }
+      } catch (err) {
+        logger.warn('Error getting SOL balance:', err);
+      }
+      
+      // Save balances
+      setTokenBalances(balances);
       
       // Mark tokens in the main token list as user tokens
       const updatedTokens = tokens.map(token => ({
         ...token,
-        isUserToken: userTokenAddresses.includes(token.address)
+        isUserToken: userTokenAddresses.includes(token.address) || (token.symbol === 'SOL' && balances['SOL'])
       }));
       
       // Update the token list
@@ -357,7 +397,7 @@ const Swap = ({ currentUser, showNotification }) => {
       
       // Extract user tokens
       const userTokensList = updatedTokens.filter(token => 
-        userTokenAddresses.includes(token.address)
+        userTokenAddresses.includes(token.address) || (token.symbol === 'SOL' && balances['SOL'])
       );
       
       setUserTokens(userTokensList);
@@ -381,165 +421,68 @@ const Swap = ({ currentUser, showNotification }) => {
     }
   };
   
-  // Fetch tokens from Jupiter API
-  const fetchSolanaTokens = async () => {
-    try {
-      setLoading(true);
-      
-      // Check localStorage for cached tokens first
-      const cachedTokensString = localStorage.getItem('jupiterTokens');
-      const cachedTimestamp = localStorage.getItem('jupiterTokensTimestamp');
-      const now = Date.now();
-      const CACHE_DURATION = 3600000; // 1 hour
-      
-      // Use cached tokens if they exist and are less than 1 hour old
-      let jupiterTokens = [];
-      if (cachedTokensString && cachedTimestamp && (now - parseInt(cachedTimestamp) < CACHE_DURATION)) {
-        try {
-          jupiterTokens = JSON.parse(cachedTokensString);
-          logger.info(`Using ${jupiterTokens.length} cached Solana tokens`);
-          
-          if (jupiterTokens.length > 0) {
-            processTokens(jupiterTokens);
-            setLoading(false);
-            
-            // Fetch fresh tokens in the background
-            fetchFreshTokens().catch(err => 
-              logger.warn('Background token refresh failed:', err)
-            );
-            return;
-          }
-        } catch (err) {
-          logger.warn('Error parsing cached tokens:', err);
-          // Continue to fetch tokens from API
-        }
-      }
-      
-      // Fetch fresh tokens (either because cache was invalid or to update UI immediately)
-      await fetchFreshTokens();
-      
-    } catch (error) {
-      logger.error('Failed to fetch Solana tokens:', error);
-      handleTokenError();
-    } finally {
-      setLoading(false);
+  // Get the user's balance for a specific token
+  const getTokenBalance = (tokenAddress) => {
+    // Check for SOL special case
+    if (tokenAddress === 'SOL') {
+      return tokenBalances['SOL'] || null;
     }
+    
+    // Check regular token
+    return tokenBalances[tokenAddress] || null;
   };
   
-  // Helper function to fetch fresh tokens from Jupiter API
-  const fetchFreshTokens = async () => {
-    try {
-      // Set a timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Token fetch timeout')), 15000)
-      );
-      
-      const response = await Promise.race([
-        axios.get('https://token.jup.ag/all'),
-        timeoutPromise
-      ]);
-      
-      if (response.data && Array.isArray(response.data)) {
-        // Format tokens to our structure
-        const jupiterTokens = response.data.map(token => ({
-          address: token.address,
-          name: token.name,
-          symbol: token.symbol,
-          decimals: token.decimals,
-          logoURI: token.logoURI || '',
-          tags: token.tags || []
-        }));
-        
-        // Cache tokens in localStorage
-        localStorage.setItem('jupiterTokens', JSON.stringify(jupiterTokens));
-        localStorage.setItem('jupiterTokensTimestamp', Date.now().toString());
-        
-        // Process the tokens
-        processTokens(jupiterTokens);
-        
-        logger.info(`Loaded ${jupiterTokens.length} Solana tokens from Jupiter API`);
-      }
-    } catch (error) {
-      logger.error('Error fetching fresh tokens:', error);
-      throw error;
-    }
-  };
-  
-  // Process tokens (mark common, sort, set default)
-  const processTokens = (jupiterTokens) => {
-    // Prioritize common tokens
-    const commonSymbols = ['SOL', 'USDC', 'USDT', 'BTC', 'ETH', 'BONK', 'JUP', 'RAY', 'ORCA'];
-    jupiterTokens.forEach(token => {
-      token.isCommon = commonSymbols.includes(token.symbol);
+  // Get formatted balance string
+  const getFormattedBalance = (tokenAddress) => {
+    const balance = getTokenBalance(tokenAddress);
+    if (!balance) return 'N/A';
+    
+    return balance.uiAmount.toLocaleString(undefined, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 6
     });
-    
-    // Sort tokens: common tokens first, then alphabetically
-    jupiterTokens.sort((a, b) => {
-      if (a.isCommon && !b.isCommon) return -1;
-      if (!a.isCommon && b.isCommon) return 1;
-      return a.symbol.localeCompare(b.symbol);
-    });
-    
-    // Set tokens
-    setTokens(jupiterTokens);
-    
-    // Default to SOL and USDC
-    const solToken = jupiterTokens.find(t => t.symbol === 'SOL' || t.symbol === 'WSOL');
-    const usdcToken = jupiterTokens.find(t => t.symbol === 'USDC');
-    
-    if (solToken && !fromToken) setFromToken(solToken.address);
-    if (usdcToken && !toToken) setToToken(usdcToken.address);
   };
   
-  // Handle token error (set default tokens)
-  const handleTokenError = () => {
-    setError('Failed to load Solana tokens. Using default list.');
+  // Set max amount from balance
+  const setMaxAmount = () => {
+    if (!fromToken) return;
     
-    // Set some default tokens as fallback
-    const defaultTokens = [
-      {
-        address: 'So11111111111111111111111111111111111111112',
-        name: 'Wrapped SOL',
-        symbol: 'SOL',
-        decimals: 9,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png',
-        isCommon: true
-      },
-      {
-        address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
-        name: 'USD Coin',
-        symbol: 'USDC',
-        decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
-        isCommon: true
-      },
-      {
-        address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
-        name: 'USDT',
-        symbol: 'USDT',
-        decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB/logo.png',
-        isCommon: true
-      },
-      {
-        address: 'MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmvvWaxLac',
-        name: 'MNGO',
-        symbol: 'MNGO',
-        decimals: 6,
-        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmvvWaxLac/logo.png',
-        isCommon: true
+    const balance = getTokenBalance(fromToken);
+    if (!balance) return;
+    
+    // Set 99.5% of balance to account for fees
+    const maxAmount = balance.uiAmount * 0.995;
+    setFromAmount(maxAmount.toString());
+    
+    // Trigger quote
+    getQuote(maxAmount.toString());
+  };
+  
+  // Handle from amount change - get quote when amount changes
+  const handleFromAmountChange = (e) => {
+    const value = e.target.value;
+    setFromAmount(value);
+    
+    // Debounce quote request
+    const timer = setTimeout(() => {
+      if (value && parseFloat(value) > 0) {
+        getQuote(value);
+      } else {
+        setToAmount('');
+        setSelectedRoute(null);
       }
-    ];
+    }, 500);
     
-    setTokens(defaultTokens);
-    if (!fromToken) setFromToken(defaultTokens[0].address);
-    if (!toToken) setToToken(defaultTokens[1].address);
+    return () => clearTimeout(timer);
   };
   
   // Get quote from Jupiter API
-  const getQuote = async () => {
+  const getQuote = async (amount = null) => {
     try {
-      if (!fromToken || !toToken || !fromAmount || parseFloat(fromAmount) <= 0) {
+      // Use provided amount or state amount
+      const inputAmount = amount || fromAmount;
+      
+      if (!fromToken || !toToken || !inputAmount || parseFloat(inputAmount) <= 0) {
         return;
       }
       
@@ -555,19 +498,37 @@ const Swap = ({ currentUser, showNotification }) => {
         return;
       }
       
+      // Check if user has enough balance (if connected to wallet)
+      if (walletConnected) {
+        const balance = getTokenBalance(fromToken);
+        
+        // Only check if we have balance info
+        if (balance) {
+          const amountInSmallestUnit = parseFloat(inputAmount) * (10 ** fromTokenInfo.decimals);
+          
+          if (amountInSmallestUnit > balance.amount) {
+            setError(`Insufficient balance. You have ${getFormattedBalance(fromToken)} ${fromTokenInfo.symbol}`);
+            setToAmount('');
+            setSelectedRoute(null);
+            setQuoteLoading(false);
+            return;
+          }
+        }
+      }
+      
       // Convert input amount to proper decimals
-      const inputAmount = Math.floor(parseFloat(fromAmount) * 10 ** fromTokenInfo.decimals);
+      const inputAmountInSmallestUnit = Math.floor(parseFloat(inputAmount) * 10 ** fromTokenInfo.decimals);
       
       // Calculate fee amount (0.5% of input)
       const feePercentage = FEE_PERCENTAGE / 100;
-      const feeAmount = Math.floor(inputAmount * feePercentage);
+      const feeAmount = Math.floor(inputAmountInSmallestUnit * feePercentage);
       const platformFeeBps = Math.floor(feePercentage * 10000); // Convert to basis points
       
       // Get quote from Jupiter API
       const quoteParams = {
         inputMint: fromToken,
         outputMint: toToken,
-        amount: inputAmount,
+        amount: inputAmountInSmallestUnit,
         slippageBps: Math.floor(slippage * 100),
         platformFeeBps: platformFeeBps > 0 ? platformFeeBps : undefined,
         onlyDirectRoutes: false,
@@ -711,24 +672,6 @@ const Swap = ({ currentUser, showNotification }) => {
   // Get token info by address
   const getTokenInfo = (address) => {
     return tokens.find(t => t.address === address) || null;
-  };
-  
-  // Handle from amount change - get quote when amount changes
-  const handleFromAmountChange = (e) => {
-    const value = e.target.value;
-    setFromAmount(value);
-    
-    // Debounce quote request
-    const timer = setTimeout(() => {
-      if (value && parseFloat(value) > 0) {
-        getQuote();
-      } else {
-        setToAmount('');
-        setSelectedRoute(null);
-      }
-    }, 500);
-    
-    return () => clearTimeout(timer);
   };
   
   // Switch tokens (from → to and to → from)
@@ -948,11 +891,175 @@ const Swap = ({ currentUser, showNotification }) => {
     );
   };
 
+  // Fetch tokens from Jupiter API
+  const fetchSolanaTokens = async () => {
+    try {
+      setLoading(true);
+      
+      // Check localStorage for cached tokens first
+      const cachedTokensString = localStorage.getItem('jupiterTokens');
+      const cachedTimestamp = localStorage.getItem('jupiterTokensTimestamp');
+      const now = Date.now();
+      const CACHE_DURATION = 3600000; // 1 hour
+      
+      // Use cached tokens if they exist and are less than 1 hour old
+      let jupiterTokens = [];
+      if (cachedTokensString && cachedTimestamp && (now - parseInt(cachedTimestamp) < CACHE_DURATION)) {
+        try {
+          jupiterTokens = JSON.parse(cachedTokensString);
+          logger.info(`Using ${jupiterTokens.length} cached Solana tokens`);
+          
+          if (jupiterTokens.length > 0) {
+            processTokens(jupiterTokens);
+            setLoading(false);
+            
+            // Fetch fresh tokens in the background
+            fetchFreshTokens().catch(err => 
+              logger.warn('Background token refresh failed:', err)
+            );
+            return;
+          }
+        } catch (err) {
+          logger.warn('Error parsing cached tokens:', err);
+          // Continue to fetch tokens from API
+        }
+      }
+      
+      // Fetch fresh tokens (either because cache was invalid or to update UI immediately)
+      await fetchFreshTokens();
+      
+    } catch (error) {
+      logger.error('Failed to fetch Solana tokens:', error);
+      handleTokenError();
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Helper function to fetch fresh tokens from Jupiter API
+  const fetchFreshTokens = async () => {
+    try {
+      // Set a timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Token fetch timeout')), 15000)
+      );
+      
+      const response = await Promise.race([
+        axios.get('https://token.jup.ag/all'),
+        timeoutPromise
+      ]);
+      
+      if (response.data && Array.isArray(response.data)) {
+        // Format tokens to our structure
+        const jupiterTokens = response.data.map(token => ({
+          address: token.address,
+          name: token.name,
+          symbol: token.symbol,
+          decimals: token.decimals,
+          logoURI: token.logoURI || '',
+          tags: token.tags || []
+        }));
+        
+        // Cache tokens in localStorage
+        localStorage.setItem('jupiterTokens', JSON.stringify(jupiterTokens));
+        localStorage.setItem('jupiterTokensTimestamp', Date.now().toString());
+        
+        // Process the tokens
+        processTokens(jupiterTokens);
+        
+        logger.info(`Loaded ${jupiterTokens.length} Solana tokens from Jupiter API`);
+      }
+    } catch (error) {
+      logger.error('Error fetching fresh tokens:', error);
+      throw error;
+    }
+  };
+  
+  // Process tokens (mark common, sort, set default)
+  const processTokens = (jupiterTokens) => {
+    // Prioritize common tokens
+    const commonSymbols = ['SOL', 'USDC', 'USDT', 'BTC', 'ETH', 'BONK', 'JUP', 'RAY', 'ORCA'];
+    jupiterTokens.forEach(token => {
+      token.isCommon = commonSymbols.includes(token.symbol);
+    });
+    
+    // Sort tokens: common tokens first, then alphabetically
+    jupiterTokens.sort((a, b) => {
+      if (a.isCommon && !b.isCommon) return -1;
+      if (!a.isCommon && b.isCommon) return 1;
+      return a.symbol.localeCompare(b.symbol);
+    });
+    
+    // Set tokens
+    setTokens(jupiterTokens);
+    
+    // Default to SOL and USDC
+    const solToken = jupiterTokens.find(t => t.symbol === 'SOL' || t.symbol === 'WSOL');
+    const usdcToken = jupiterTokens.find(t => t.symbol === 'USDC');
+    
+    if (solToken && !fromToken) setFromToken(solToken.address);
+    if (usdcToken && !toToken) setToToken(usdcToken.address);
+  };
+  
+  // Handle token error (set default tokens)
+  const handleTokenError = () => {
+    setError('Failed to load Solana tokens. Using default list.');
+    
+    // Set some default tokens as fallback
+    const defaultTokens = [
+      {
+        address: 'So11111111111111111111111111111111111111112',
+        name: 'Wrapped SOL',
+        symbol: 'SOL',
+        decimals: 9,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/So11111111111111111111111111111111111111112/logo.png',
+        isCommon: true
+      },
+      {
+        address: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+        name: 'USD Coin',
+        symbol: 'USDC',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v/logo.png',
+        isCommon: true
+      },
+      {
+        address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+        name: 'USDT',
+        symbol: 'USDT',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB/logo.png',
+        isCommon: true
+      },
+      {
+        address: 'MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmvvWaxLac',
+        name: 'MNGO',
+        symbol: 'MNGO',
+        decimals: 6,
+        logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/MangoCzJ36AjZyKwVj3VnYU4GTonjfVEnJmvvWaxLac/logo.png',
+        isCommon: true
+      }
+    ];
+    
+    setTokens(defaultTokens);
+    if (!fromToken) setFromToken(defaultTokens[0].address);
+    if (!toToken) setToToken(defaultTokens[1].address);
+  };
+
   return (
     <div className="swap-container">
       <div className="swap-card">
         <div className="swap-header">
-          <h2>AquaSwap</h2>
+          <h2>
+            <img 
+              src="/AquaSwap.svg" 
+              alt="AquaSwap" 
+              className="aquaswap-logo" 
+              width="24" 
+              height="24"
+            />
+            AquaSwap
+          </h2>
           <div className="swap-actions">
             <button 
               className="settings-button"
@@ -1017,8 +1124,13 @@ const Swap = ({ currentUser, showNotification }) => {
               
               {walletConnected && fromToken && getTokenInfo(fromToken)?.isUserToken && (
                 <div className="balance-info">
-                  {/* Balance would be shown here when implemented */}
-                  {/* <button className="max-button">MAX</button> */}
+                  <span>Balance: {getFormattedBalance(fromToken)} {getTokenInfo(fromToken)?.symbol}</span>
+                  <button 
+                    className="max-button"
+                    onClick={setMaxAmount}
+                  >
+                    MAX
+                  </button>
                 </div>
               )}
             </div>
@@ -1072,6 +1184,12 @@ const Swap = ({ currentUser, showNotification }) => {
                   disabled
                 />
               </div>
+              
+              {walletConnected && toToken && getTokenInfo(toToken)?.isUserToken && (
+                <div className="balance-info-no-max">
+                  <span>Balance: {getFormattedBalance(toToken)} {getTokenInfo(toToken)?.symbol}</span>
+                </div>
+              )}
             </div>
             
             {/* Swap Rate */}
