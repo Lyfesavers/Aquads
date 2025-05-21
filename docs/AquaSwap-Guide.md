@@ -2,7 +2,7 @@
 
 ## Overview
 
-AquaSwap is a custom DEX integration that uses the li.fi API to provide cross-chain swaps with a 0.5% fee that goes to the platform. This document explains how to set up and maintain the AquaSwap feature.
+AquaSwap is a custom DEX integration that uses the li.fi API to provide cross-chain swaps with a 0.10% fee that goes to the platform. This document explains how to set up and maintain the AquaSwap feature.
 
 ## Setup
 
@@ -22,7 +22,7 @@ AquaSwap is a custom DEX integration that uses the li.fi API to provide cross-ch
 
 ### Fee Mechanism
 
-The 0.5% fee is implemented at the API request level by including the `fee` parameter:
+The 0.10% fee is implemented at the API request level by including the `fee` parameter:
 
 ```javascript
 const feeAmount = parseFloat(fromAmount) * (FEE_PERCENTAGE / 100);
@@ -65,7 +65,7 @@ Li.fi may update their API. Key endpoints used:
 
 ### Fee Adjustments
 
-To change the fee percentage, update the `FEE_PERCENTAGE` constant in `src/components/Swap.js`. The current value is `0.5` (for 0.5%).
+To change the fee percentage, update the `FEE_PERCENTAGE` constant in `src/components/Swap.js`. The current value is `0.10` (for 0.10%).
 
 ## Troubleshooting
 
