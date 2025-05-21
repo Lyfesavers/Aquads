@@ -2047,402 +2047,374 @@ const Swap = ({ currentUser, showNotification }) => {
       display: 'flex',
       flexDirection: 'column',
       paddingBottom: '120px', // Space for buttons
-      position: 'relative'
+      position: 'relative',
+      background: 'linear-gradient(135deg, #111827 0%, #1E293B 100%)',
+      boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 0 10px rgba(59, 130, 246, 0.1)'
     }}>
       {/* Wallet Modal */}
       <WalletModal />
       
-      <h2 className="text-xl sm:text-2xl font-bold mb-3 text-center text-blue-400 flex-shrink-0 flex items-center justify-center">
-        <img 
-          src="/AquaSwap.svg" 
-          alt="" 
-          className="h-5 w-5 sm:h-6 sm:w-6 mr-2 inline-block"
-          style={{ verticalAlign: 'middle', marginTop: '-2px' }}
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = "/AquaSwap.png";
-          }}
-        />
-        AquaSwap 
-        {isSolanaFromChain && (
-          <span className="text-xs sm:text-sm font-normal text-blue-300 ml-2">powered by Jupiter</span>
-        )}
-      </h2>
-      
-      {/* Collapsible notices - only keep the most important for mobile */}
-      <div className="mb-3 space-y-2 flex-shrink-0">
-        {/* Security Notice - always show */}
-        <div className="bg-blue-500/20 border border-blue-500 text-blue-300 p-2 rounded-lg text-xs sm:text-sm">
-          <p>⚠️ <strong>Security:</strong> Always verify transaction details before confirming in your wallet.</p>
-        </div>
-        
-        {/* Error message with max height and scrolling if needed */}
-        {error && (
-          <div className="bg-red-500/20 border border-red-500 text-red-300 p-2 rounded-lg text-xs sm:text-sm max-h-[100px] overflow-y-auto whitespace-pre-line">
-            {error}
-          </div>
-        )}
-        
-        {/* Other notices in an accordion style for mobile */}
-        <details className="sm:hidden bg-gray-800 rounded-lg p-2">
-          <summary className="text-blue-400 text-sm font-medium cursor-pointer">Show more information</summary>
-          <div className="mt-2 space-y-2 text-xs">
-            {/* Wallet Verification Notice */}
-            <div className="bg-green-500/20 border border-green-500 text-green-300 p-2 rounded-lg">
-              <p>🔒 <strong>Security:</strong> Wallet ownership verified through signature.</p>
-            </div>
-            
-            {/* Solana Support Notice */}
-            {isSolanaFromChain && (
-              <div className="bg-purple-500/20 border border-purple-500 text-purple-300 p-2 rounded-lg">
-                <p>🚀 <strong>New:</strong> Solana swaps now powered by Jupiter!</p>
-              </div>
-            )}
-            
-            {/* Auto-detection notice */}
-            {!walletConnected && (
-              <div className="bg-blue-500/20 border border-blue-500 text-blue-300 p-2 rounded-lg">
-                <p>💡 <strong>Tip:</strong> Connect wallet to auto-detect network.</p>
-              </div>
-            )}
-            
-            {/* API Key Status */}
-            {apiKeyStatus === 'missing' && (
-              <div className="bg-yellow-500/20 border border-yellow-500 text-yellow-300 p-2 rounded-lg">
-                ⚠️ API key not configured. Some features may not work correctly.
-              </div>
-            )}
-          </div>
-        </details>
-        
-        {/* Show the notices normally on larger screens */}
-        <div className="hidden sm:block space-y-2">
-          {/* Wallet Verification Notice */}
-          <div className="bg-green-500/20 border border-green-500 text-green-300 p-2 rounded-lg text-sm">
-            <p>🔒 <strong>Security:</strong> Wallet ownership verified through signature to prevent unauthorized connections.</p>
-          </div>
-          
-          {/* Solana Support Notice */}
+      {/* Header with wallet connection moved to top right */}
+      <div className="relative flex flex-col sm:flex-row items-center justify-between mb-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-center text-blue-400 flex items-center justify-center sm:justify-start">
+          <img 
+            src="/AquaSwap.svg" 
+            alt="" 
+            className="h-5 w-5 sm:h-6 sm:w-6 mr-2 inline-block"
+            style={{ 
+              verticalAlign: 'middle', 
+              marginTop: '-2px', 
+              filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))' 
+            }}
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = "/AquaSwap.png";
+            }}
+          />
+          <span className="bg-gradient-to-r from-blue-400 to-blue-600 text-transparent bg-clip-text">
+            AquaSwap
+          </span>
           {isSolanaFromChain && (
-            <div className="bg-purple-500/20 border border-purple-500 text-purple-300 p-2 rounded-lg text-sm">
-              <p>🚀 <strong>New:</strong> Solana swaps now powered by Jupiter - the largest Solana DEX aggregator with best prices!</p>
-            </div>
+            <span className="text-xs sm:text-sm font-normal text-blue-300 ml-2">powered by Jupiter</span>
           )}
-          
-          {/* Auto-detection notice */}
-          {!walletConnected && (
-            <div className="bg-blue-500/20 border border-blue-500 text-blue-300 p-2 rounded-lg text-sm">
-              <p>💡 <strong>Tip:</strong> Connect your wallet to auto-detect blockchain network and simplify swapping.</p>
+        </h2>
+        
+        {/* Wallet connection - moved to top right on desktop */}
+        <div className="mt-3 sm:mt-0 sm:absolute sm:right-0 sm:top-0">
+          {walletConnected ? (
+            <div className="bg-gray-800 rounded-lg px-4 py-2 inline-block shadow-md border border-gray-700 hover:border-blue-500/50 transition-all">
+              <span className="text-gray-400 mr-2">Connected:</span>
+              {walletType === 'solana' ? (
+                <span className="text-blue-300 flex items-center">
+                  <img 
+                    src="https://raw.githubusercontent.com/lifinance/types/main/src/assets/icons/chains/solana.svg" 
+                    alt="SOL" 
+                    className="w-3 h-3 mr-1" 
+                  />
+                  {`${walletAddress.substring(0, 4)}...${walletAddress.substring(walletAddress.length - 4)}`}
+                </span>
+              ) : (
+                <span className="text-blue-300">{`${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}`}</span>
+              )}
             </div>
-          )}
-          
-          {/* API Key Status */}
-          {apiKeyStatus === 'missing' && (
-            <div className="bg-yellow-500/20 border border-yellow-500 text-yellow-300 p-2 rounded-lg text-sm">
-              ⚠️ API key not configured. Some features may not work correctly.
-            </div>
+          ) : (
+            <button 
+              onClick={() => setShowWalletModal(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200 flex items-center gap-2 shadow-lg border border-blue-500/50"
+            >
+              <span>Connect Wallet</span>
+              <span>→</span>
+            </button>
           )}
         </div>
       </div>
       
-      <div className="space-y-2 sm:space-y-4 flex-1 overflow-auto pb-20">
-        {/* Wallet Connection - more compact */}
-        <div className="flex flex-col sm:flex-row sm:justify-center mb-3 flex-shrink-0 relative">
-          <div className="mb-3 sm:mb-0">
-            {renderWalletOptions()}
+      {/* Main swap interface - centered with max-width for desktop */}
+      <div className="mx-auto w-full max-w-2xl">
+        <div className="space-y-6">
+          {/* Collapsible notices - improved styling */}
+          <div className="mb-4 space-y-2 flex-shrink-0">
+            {/* Security Notice - always show */}
+            <div className="bg-blue-500/20 border border-blue-500/40 text-blue-300 p-3 rounded-lg text-xs sm:text-sm shadow-inner">
+              <p className="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.618 5.984A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016zM12 9v2m0 4h.01" />
+                </svg>
+                <strong>Security:</strong> Always verify transaction details before confirming in your wallet.
+              </p>
+            </div>
+            
+            {/* Error message with max height and scrolling if needed */}
+            {error && (
+              <div className="bg-red-500/20 border border-red-500/40 text-red-300 p-3 rounded-lg text-xs sm:text-sm max-h-[100px] overflow-y-auto whitespace-pre-line shadow-inner">
+                <div className="flex">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>{error}</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Network Selection - improved for desktop with better card styling */}
+          <div className="bg-gray-800/50 p-4 rounded-xl shadow-md border border-gray-700 hover:border-gray-600 transition-all">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-gray-400 mb-2 text-xs sm:text-sm font-medium">Chain {walletConnected && <span className="text-green-400 text-xs">(Auto-detected)</span>}</label>
+                <select 
+                  value={fromChain}
+                  onChange={handleFromChainChange}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  disabled={walletConnected}
+                >
+                  <option value="">Select Chain</option>
+                  {chains.map(chain => (
+                    <option key={chain.id} value={chain.id}>
+                      {chain.name} {chain.chainType === 'SVM' || chain.key === 'sol' ? '(Solana)' : ''}
+                    </option>
+                  ))}
+                </select>
+                {walletConnected && fromChain && (
+                  <div className="mt-1 text-xs text-blue-400 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    {chains.find(c => c.id === fromChain)?.name || fromChain} auto-detected
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col justify-center items-center">
+                <div className="text-center text-base sm:text-lg text-blue-400 font-bold mb-1 sm:mb-2">
+                  Same-Chain Swaps Only
+                </div>
+                <div className="text-center text-xs text-gray-400">
+                  {walletConnected ? 'Chain auto-detected from wallet' : 'Connect wallet to auto-detect chain'}
+                </div>
+              </div>
+            </div>
           </div>
           
-          {/* Token sorting preference (only show when wallet is connected) */}
-          {walletConnected && (
-            <div className="self-center sm:absolute sm:right-4 sm:top-0">
-              <div className="flex sm:flex-col sm:items-end">
-                <button 
-                  onClick={refreshWalletTokens}
-                  className="text-blue-400 hover:text-blue-300 mr-3 sm:mr-0 sm:mb-2 text-sm flex items-center"
-                  title="Refresh wallet tokens"
+          {/* Token Selection - improved layout for desktop */}
+          <div className="bg-gray-800/50 p-4 rounded-xl shadow-md border border-gray-700 hover:border-gray-600 transition-all">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-gray-400 mb-2 text-xs sm:text-sm font-medium">From Token</label>
+                <select 
+                  value={fromToken}
+                  onChange={(e) => {
+                    let tokenAddress = e.target.value;
+                    if (isSolanaFromChain && tokenAddress.startsWith('0x')) {
+                      tokenAddress = tokenAddress.substring(2);
+                    }
+                    setFromToken(tokenAddress);
+                  }}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  disabled={!fromChain || fromChainTokens.length === 0}
                 >
-                  <span className="mr-1">↻</span> Refresh
-                </button>
-                <label className="flex items-center gap-1 text-xs text-gray-400 cursor-pointer">
+                  {!fromChain && <option value="">Select chain first</option>}
+                  {fromChain && fromChainTokens.length === 0 && <option value="">Loading tokens...</option>}
+                  
+                  {fromChainTokens.length > 0 && (
+                    <option value="" disabled>
+                      {walletConnected ? '---- Select token (includes wallet tokens) ----' : '---- Select token ----'}
+                    </option>
+                  )}
+                  
+                  {getSortedTokens(fromChainTokens).map(token => (
+                    <option 
+                      key={token.address} 
+                      value={token.address} 
+                      className={token.isUserToken ? 'text-green-400' : ''}
+                    >
+                      {token.symbol} {token.isUserToken ? '(in wallet)' : ''}
+                    </option>
+                  ))}
+                </select>
+                {fromToken && fromChainTokens.length > 0 && (
+                  <div className="mt-2 flex items-center">
+                    <img 
+                      src={fromChainTokens.find(t => t.address === fromToken)?.logoURI || '/placeholder-token.png'} 
+                      alt=""
+                      className="w-6 h-6 mr-2 rounded-full shadow-md border border-gray-700"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/placeholder-token.png';
+                      }}
+                    />
+                    <span className="text-sm font-medium text-white">{fromChainTokens.find(t => t.address === fromToken)?.symbol}</span>
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="block text-gray-400 mb-2 text-xs sm:text-sm font-medium">To Token</label>
+                <select 
+                  value={toToken}
+                  onChange={(e) => {
+                    let tokenAddress = e.target.value;
+                    if (isSolanaToChain && tokenAddress.startsWith('0x')) {
+                      tokenAddress = tokenAddress.substring(2);
+                    }
+                    setToToken(tokenAddress);
+                  }}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  disabled={!toChain || toChainTokens.length === 0}
+                >
+                  {!toChain && <option value="">Select chain first</option>}
+                  {toChain && toChainTokens.length === 0 && <option value="">Loading tokens...</option>}
+                  
+                  {toChainTokens.length > 0 && (
+                    <option value="" disabled>
+                      {walletConnected ? '---- Select token (includes wallet tokens) ----' : '---- Select token ----'}
+                    </option>
+                  )}
+                  
+                  {getSortedTokens(toChainTokens).map(token => (
+                    <option 
+                      key={token.address} 
+                      value={token.address}
+                      className={token.isUserToken ? 'text-green-400' : ''}
+                    >
+                      {token.symbol} {token.isUserToken ? '(in wallet)' : ''}
+                    </option>
+                  ))}
+                </select>
+                {toToken && toChainTokens.length > 0 && (
+                  <div className="mt-2 flex items-center">
+                    <img 
+                      src={toChainTokens.find(t => t.address === toToken)?.logoURI || '/placeholder-token.png'} 
+                      alt=""
+                      className="w-6 h-6 mr-2 rounded-full shadow-md border border-gray-700"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/placeholder-token.png';
+                      }}
+                    />
+                    <span className="text-sm font-medium text-white">{toChainTokens.find(t => t.address === toToken)?.symbol}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          {/* Amount Inputs - improved layout for desktop */}
+          <div className="bg-gray-800/50 p-4 rounded-xl shadow-md border border-gray-700 hover:border-gray-600 transition-all">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-gray-400 mb-2 text-xs sm:text-sm font-medium">You Pay</label>
+                <div className="relative mb-1">
                   <input
-                    type="checkbox"
-                    checked={showUserTokensFirst}
-                    onChange={() => setShowUserTokensFirst(!showUserTokensFirst)}
-                    className="w-3 h-3"
+                    type="number"
+                    value={fromAmount}
+                    onChange={(e) => setFromAmount(e.target.value)}
+                    placeholder="0.0"
+                    className="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                   />
-                  <span className="leading-none">My tokens first</span>
-                </label>
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs py-1 px-2 bg-gray-800 rounded-full">
+                    + 0.5% fee
+                  </div>
+                </div>
+                {fromToken && fromChainTokens.length > 0 && (
+                  <div className="mt-1 text-xs text-gray-400">
+                    Selected: {fromChainTokens.find(t => t.address === fromToken)?.symbol}
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className="block text-gray-400 mb-2 text-xs sm:text-sm font-medium">You Receive</label>
+                <input
+                  type="text"
+                  value={toAmount}
+                  readOnly
+                  placeholder="0.0"
+                  className="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white text-sm mb-1"
+                />
+                {toToken && toChainTokens.length > 0 && (
+                  <div className="mt-1 text-xs text-gray-400">
+                    Selected: {toChainTokens.find(t => t.address === toToken)?.symbol}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          {/* Slippage Setting - improved layout for desktop */}
+          <div className="bg-gray-800/50 p-4 rounded-xl shadow-md border border-gray-700 hover:border-gray-600 transition-all">
+            <label className="block text-gray-400 mb-2 text-xs sm:text-sm font-medium">Slippage Tolerance (%)</label>
+            <div className="flex gap-2 items-center">
+              <input
+                type="number"
+                value={slippage}
+                onChange={(e) => setSlippage(e.target.value)}
+                min="0.1"
+                max="5"
+                step="0.1"
+                className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2.5 text-white text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+              />
+              <div className="flex gap-1">
+                <button 
+                  onClick={() => setSlippage(0.5)}
+                  className={`px-3 py-2 rounded-lg text-xs font-medium ${slippage === 0.5 ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'} transition-all`}
+                >
+                  0.5%
+                </button>
+                <button 
+                  onClick={() => setSlippage(1.0)}
+                  className={`px-3 py-2 rounded-lg text-xs font-medium ${slippage === 1.0 ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'} transition-all`}
+                >
+                  1%
+                </button>
+                <button 
+                  onClick={() => setSlippage(2.0)}
+                  className={`px-3 py-2 rounded-lg text-xs font-medium ${slippage === 2.0 ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'} transition-all`}
+                >
+                  2%
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Route Information - improved styling */}
+          {selectedRoute && (
+            <div className="bg-gray-800/50 p-4 rounded-xl shadow-md border border-blue-600/30 hover:border-blue-500/50 transition-all">
+              <h3 className="text-sm font-medium mb-2 text-blue-400">Selected Route</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-300">
+                <div className="flex items-center">
+                  <span className="text-gray-500 mr-2">Provider:</span>
+                  <span className="text-white font-medium">{selectedRoute.steps[0].tool}</span>
+                </div>
+                <div className="flex items-center">
+                  <span className="text-gray-500 mr-2">Estimated Gas:</span>
+                  <span className="text-white font-medium">${parseFloat(selectedRoute.gasUSD).toFixed(2)} USD</span>
+                </div>
+                <div className="flex items-center">
+                  <span className="text-gray-500 mr-2">Execution Time:</span>
+                  <span className="text-white font-medium">~{selectedRoute.steps[0].estimate.executionDuration}s</span>
+                </div>
+                <div className="flex items-center text-yellow-400">
+                  <span className="text-yellow-500 mr-2">Fee:</span>
+                  <span className="font-medium">{FEE_PERCENTAGE}% ({selectedRoute.feeDisplayAmount?.toFixed(6) || parseFloat(fromAmount) * (FEE_PERCENTAGE / 100)} tokens)</span>
+                </div>
               </div>
             </div>
           )}
-        </div>
-        
-        {/* Network Selection */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-shrink-0">
-          <div>
-            <label className="block text-gray-400 mb-1 text-xs sm:text-sm">Chain {walletConnected && <span className="text-green-400 text-xs">(Auto-detected)</span>}</label>
-            <select 
-              value={fromChain}
-              onChange={handleFromChainChange}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white text-sm"
-              disabled={walletConnected}
-            >
-              <option value="">Select Chain</option>
-              {chains.map(chain => (
-                <option key={chain.id} value={chain.id}>
-                  {chain.name} {chain.chainType === 'SVM' || chain.key === 'sol' ? '(Solana)' : ''}
-                </option>
-              ))}
-            </select>
-            {walletConnected && fromChain && (
-              <div className="mt-1 text-xs text-blue-400 flex items-center">
-                <span>✓</span> {chains.find(c => c.id === fromChain)?.name || fromChain} auto-detected
-              </div>
-            )}
-            {!walletConnected && isSolanaFromChain && (
-              <div className="mt-1 text-xs text-blue-400 flex items-center">
-                <span>✓</span> Solana chain selected
-              </div>
-            )}
-          </div>
-          <div className="flex flex-col justify-center">
-            <div className="text-center text-base sm:text-lg text-blue-400 font-bold mb-1 sm:mb-2">
-              Same-Chain Swaps Only
-            </div>
-            <div className="text-center text-xs text-gray-400">
-              {walletConnected ? 'Chain auto-detected from wallet' : 'Connect wallet to auto-detect chain'}
-            </div>
-          </div>
-        </div>
-        
-        {/* Token Selection */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-shrink-0">
-          <div>
-            <label className="block text-gray-400 mb-1 text-xs sm:text-sm">From Token</label>
-            <select 
-              value={fromToken}
-              onChange={(e) => {
-                let tokenAddress = e.target.value;
-                if (isSolanaFromChain && tokenAddress.startsWith('0x')) {
-                  tokenAddress = tokenAddress.substring(2);
-                }
-                setFromToken(tokenAddress);
-              }}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white text-sm"
-              disabled={!fromChain || fromChainTokens.length === 0}
-            >
-              {!fromChain && <option value="">Select chain first</option>}
-              {fromChain && fromChainTokens.length === 0 && <option value="">Loading tokens...</option>}
-              
-              {fromChainTokens.length > 0 && (
-                <option value="" disabled>
-                  {walletConnected ? '---- Select token (includes wallet tokens) ----' : '---- Select token ----'}
-                </option>
-              )}
-              
-              {getSortedTokens(fromChainTokens).map(token => (
-                <option 
-                  key={token.address} 
-                  value={token.address} 
-                  className={token.isUserToken ? 'text-green-400' : ''}
-                >
-                  {token.symbol} {token.isUserToken ? '(in wallet)' : ''}
-                </option>
-              ))}
-            </select>
-            {fromToken && fromChainTokens.length > 0 && (
-              <div className="mt-1 flex items-center">
-                <img 
-                  src={fromChainTokens.find(t => t.address === fromToken)?.logoURI || '/placeholder-token.png'} 
-                  alt=""
-                  className="w-4 h-4 mr-1 rounded-full"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = '/placeholder-token.png';
-                  }}
-                />
-                <span className="text-xs">{fromChainTokens.find(t => t.address === fromToken)?.symbol}</span>
-              </div>
-            )}
-          </div>
-          <div>
-            <label className="block text-gray-400 mb-1 text-xs sm:text-sm">To Token</label>
-            <select 
-              value={toToken}
-              onChange={(e) => {
-                let tokenAddress = e.target.value;
-                if (isSolanaToChain && tokenAddress.startsWith('0x')) {
-                  tokenAddress = tokenAddress.substring(2);
-                }
-                setToToken(tokenAddress);
-              }}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white text-sm"
-              disabled={!toChain || toChainTokens.length === 0}
-            >
-              {!toChain && <option value="">Select chain first</option>}
-              {toChain && toChainTokens.length === 0 && <option value="">Loading tokens...</option>}
-              
-              {toChainTokens.length > 0 && (
-                <option value="" disabled>
-                  {walletConnected ? '---- Select token (includes wallet tokens) ----' : '---- Select token ----'}
-                </option>
-              )}
-              
-              {getSortedTokens(toChainTokens).map(token => (
-                <option 
-                  key={token.address} 
-                  value={token.address}
-                  className={token.isUserToken ? 'text-green-400' : ''}
-                >
-                  {token.symbol} {token.isUserToken ? '(in wallet)' : ''}
-                </option>
-              ))}
-            </select>
-            {toToken && toChainTokens.length > 0 && (
-              <div className="mt-1 flex items-center">
-                <img 
-                  src={toChainTokens.find(t => t.address === toToken)?.logoURI || '/placeholder-token.png'} 
-                  alt=""
-                  className="w-4 h-4 mr-1 rounded-full"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = '/placeholder-token.png';
-                  }}
-                />
-                <span className="text-xs">{toChainTokens.find(t => t.address === toToken)?.symbol}</span>
-              </div>
-            )}
-          </div>
-        </div>
-        
-        {/* Amount Inputs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-shrink-0">
-          <div>
-            <label className="block text-gray-400 mb-2 text-xs sm:text-sm">You Pay</label>
-            <div className="relative mb-1">
-              <input
-                type="number"
-                value={fromAmount}
-                onChange={(e) => setFromAmount(e.target.value)}
-                placeholder="0.0"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white text-sm"
-              />
-              <div className="absolute right-2 top-3 text-gray-400 text-xs">
-                + 0.5% fee
-              </div>
-            </div>
-          </div>
-          <div>
-            <label className="block text-gray-400 mb-2 text-xs sm:text-sm">You Receive</label>
-            <input
-              type="text"
-              value={toAmount}
-              readOnly
-              placeholder="0.0"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white text-sm mb-1"
-            />
-          </div>
-        </div>
-        
-        {/* Slippage Setting with Quick Values */}
-        <div className="flex-shrink-0 mb-5">
-          <label className="block text-gray-400 mb-1 text-xs sm:text-sm">Slippage Tolerance (%)</label>
-          <div className="flex gap-2 items-center">
-            <input
-              type="number"
-              value={slippage}
-              onChange={(e) => setSlippage(e.target.value)}
-              min="0.1"
-              max="5"
-              step="0.1"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-2 text-white text-sm"
-            />
-            <div className="flex gap-1">
-              <button 
-                onClick={() => setSlippage(0.5)}
-                className={`px-2 py-1 rounded text-xs ${slippage === 0.5 ? 'bg-blue-600' : 'bg-gray-700'}`}
-              >
-                0.5%
-              </button>
-              <button 
-                onClick={() => setSlippage(1.0)}
-                className={`px-2 py-1 rounded text-xs ${slippage === 1.0 ? 'bg-blue-600' : 'bg-gray-700'}`}
-              >
-                1%
-              </button>
-              <button 
-                onClick={() => setSlippage(2.0)}
-                className={`px-2 py-1 rounded text-xs ${slippage === 2.0 ? 'bg-blue-600' : 'bg-gray-700'}`}
-              >
-                2%
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        {/* Fixed position action buttons - simplified for maximum visibility */}
-        <div className="grid grid-cols-2 gap-3 flex-shrink-0 bottom-action-buttons fixed left-0 right-0 bottom-0 px-4 py-4 bg-gray-900 border-t border-gray-700 z-50">
-          <button
-            onClick={getQuote}
-            disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 text-sm shadow-lg"
-          >
-            {loading ? 'Loading...' : 'Get Quote'}
-          </button>
-          <button
-            onClick={executeSwap}
-            disabled={loading || !selectedRoute || !walletConnected}
-            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 text-sm shadow-lg"
-          >
-            {loading ? 'Processing...' : 'Execute Swap'}
-          </button>
-        </div>
-        
-        {/* Route Information */}
-        {selectedRoute && (
-          <div className="bg-gray-800 p-3 rounded-lg flex-shrink-0 mt-4">
-            <h3 className="text-sm font-semibold mb-1">Selected Route</h3>
-            <div className="text-xs text-gray-300 space-y-1">
-              <div>Provider: {selectedRoute.steps[0].tool}</div>
-              <div>Estimated Gas: {parseFloat(selectedRoute.gasUSD).toFixed(2)} USD</div>
-              <div>Execution Time: ~{selectedRoute.steps[0].estimate.executionDuration}s</div>
-              <div className="text-yellow-400">Fee: {FEE_PERCENTAGE}% ({selectedRoute.feeDisplayAmount?.toFixed(6) || parseFloat(fromAmount) * (FEE_PERCENTAGE / 100)} tokens)</div>
-            </div>
-          </div>
-        )}
 
-        {/* Troubleshooting information for Solana tokens */}
-        {isSolanaFromChain && error && (
-          <div className="bg-gray-800 p-3 rounded-lg flex-shrink-0 mt-4 border border-yellow-500/30">
-            <details>
-              <summary className="text-sm font-semibold mb-1 text-yellow-400 cursor-pointer">Solana Token Troubleshooting</summary>
-              <div className="text-xs text-gray-300 space-y-2 mt-2">
-                <p className="text-yellow-300">Note: We're using direct Li.fi integration for Solana to avoid CORS errors with RPC nodes.</p>
-                <p>For Solana tokens, please ensure:</p>
-                <ul className="list-disc pl-4 space-y-1">
-                  <li>Both tokens are valid Solana tokens</li>
-                  <li>Use native SOL (11111111111111111111111111111111) or USDC (EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v) for best results</li>
-                  <li>Some token pairs may not have liquidity pools available</li>
-                  <li>Try selecting different token pairs</li>
-                </ul>
-                <div className="text-xs mt-2">
-                  <p>Current token addresses:</p>
-                  <p className="text-blue-300 break-all">From: {fromToken || "Not selected"}</p>
-                  <p className="text-blue-300 break-all">To: {toToken || "Not selected"}</p>
-                </div>
-                <div className="mt-3 text-gray-400 text-xs">
-                  <p>Common Solana Tokens:</p>
-                  <ul className="list-disc pl-4">
-                    <li>SOL: 11111111111111111111111111111111</li>
-                    <li>USDC: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v</li>
-                    <li>USDT: Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB</li>
-                    <li>Wrapped SOL: So11111111111111111111111111111111111111112</li>
-                  </ul>
-                </div>
-              </div>
-            </details>
+          {/* Action Buttons on Desktop - not fixed, but in-flow */}
+          <div className="sm:flex sm:gap-4 hidden">
+            <button
+              onClick={getQuote}
+              disabled={loading}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 text-sm shadow-lg"
+            >
+              {loading ? 'Loading...' : 'Get Quote'}
+            </button>
+            <button
+              onClick={executeSwap}
+              disabled={loading || !selectedRoute || !walletConnected}
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 text-sm shadow-lg"
+            >
+              {loading ? 'Processing...' : 'Execute Swap'}
+            </button>
           </div>
-        )}
+        </div>
+      </div>
+
+      {/* Fixed position action buttons - only on mobile */}
+      <div className="grid grid-cols-2 gap-3 flex-shrink-0 bottom-action-buttons fixed left-0 right-0 bottom-0 px-4 py-4 bg-gray-900 border-t border-gray-700 z-50 sm:hidden">
+        <button
+          onClick={getQuote}
+          disabled={loading}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 text-sm shadow-lg"
+        >
+          {loading ? 'Loading...' : 'Get Quote'}
+        </button>
+        <button
+          onClick={executeSwap}
+          disabled={loading || !selectedRoute || !walletConnected}
+          className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 disabled:opacity-50 text-sm shadow-lg"
+        >
+          {loading ? 'Processing...' : 'Execute Swap'}
+        </button>
       </div>
     </div>
   );
