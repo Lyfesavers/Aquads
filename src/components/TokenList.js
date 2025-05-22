@@ -12,16 +12,10 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const DEX_OPTIONS = [
   {
-    name: 'TurboSwap',
-    icon: '🌪️',
-    url: 'https://bridge.turboctobsc.com/',
-    description: 'TurboSwap DEX'
-  },
-  {
     name: 'AquaSwap',
     icon: '💧',
     url: '/swap',
-    description: '',
+    description: 'the ultimate DEX for all your crypto needs',
     custom: true
   }
 ];
