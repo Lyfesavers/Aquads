@@ -5,7 +5,7 @@ import './Swap.css';
 
 // Constants
 const FEE_PERCENTAGE = 0.025; // 0.025% fee
-const FEE_WALLET = process.env.REACT_APP_FEE_WALLET || '6MtTEBWBXPTwbrVCqiHp4iTe84J8CfXHPspYYWTfBPG9'; // Default fee wallet
+const FEE_WALLET = process.env.REACT_APP_FEE_WALLET; // Use only Netlify environment variable
 
 // Style for notification button fix
 const notificationFixStyle = `
