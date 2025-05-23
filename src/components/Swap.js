@@ -41,6 +41,22 @@ const hideDuckHuntCSS = `
   }
 `;
 
+// CSS to replace the widget logo
+const replaceBrandingCSS = `
+  /* Override Jumper/LiFi branding with our own */
+  img[alt*="Jumper"],
+  img[alt*="jumper"],
+  img[alt*="LI.FI"],
+  img[alt*="li.fi"],
+  .jumper-logo,
+  .lifi-logo {
+    content: url("${window.location.origin}/AquaSwap.svg") !important;
+    width: 32px !important;
+    height: 32px !important;
+    object-fit: contain !important;
+  }
+`;
+
 const Swap = ({ currentUser, showNotification }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -56,8 +72,11 @@ const Swap = ({ currentUser, showNotification }) => {
 
   // Simple iframe-based LiFi integration
   const renderLiFiWidget = () => {
+    // Get absolute URL to logo
+    const logoUrl = new URL('/AquaSwap.svg', window.location.origin).toString();
+    
     // Basic URL with essential parameters
-    const lifiUrl = `https://transferto.xyz/swap?integrator=aquaswap&fee=${FEE_PERCENTAGE}&toAddress=${ETH_FEE_WALLET}&solanaToAddress=${SOLANA_FEE_WALLET}&suiToAddress=${SUI_FEE_WALLET}&theme=dark&variant=drawer&containerStyle=min-height:700px;&logoUrl=${encodeURIComponent(window.location.origin + '/AquaSwap.svg')}&primaryColor=%234285F4&hidePoweredBy=true&appTitle=AquaSwap&appearanceScheme=dark`;
+    const lifiUrl = `https://transferto.xyz/swap?integrator=aquaswap&fee=${FEE_PERCENTAGE}&toAddress=${ETH_FEE_WALLET}&solanaToAddress=${SOLANA_FEE_WALLET}&suiToAddress=${SUI_FEE_WALLET}&theme=dark&variant=drawer&containerStyle=min-height:700px;&logoUrl=${encodeURIComponent(logoUrl)}&primaryColor=%234285F4&hidePoweredBy=true&hideWalletBanner=true&disableI18n=true&appTitle=AquaSwap&appearanceScheme=dark`;
     
     return (
       <div className="iframe-container">
@@ -98,11 +117,25 @@ const Swap = ({ currentUser, showNotification }) => {
                 duckHuntElements.forEach(el => {
                   el.remove();
                 });
+                
+                // Inject our CSS to replace branding
+                if (!doc.querySelector('#aquaswap-branding-css')) {
+                  const styleEl = doc.createElement('style');
+                  styleEl.id = 'aquaswap-branding-css';
+                  styleEl.textContent = replaceBrandingCSS;
+                  doc.head.appendChild(styleEl);
+                }
               });
               
               // Start observing the iframe's document
               const doc = iframe.contentDocument;
               if (doc) {
+                // Inject our CSS right away
+                const styleEl = doc.createElement('style');
+                styleEl.id = 'aquaswap-branding-css';
+                styleEl.textContent = replaceBrandingCSS;
+                doc.head.appendChild(styleEl);
+                
                 observer.observe(doc.body, { 
                   childList: true, 
                   subtree: true
