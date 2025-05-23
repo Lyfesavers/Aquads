@@ -4,8 +4,10 @@ import logger from '../utils/logger';
 import './Swap.css';
 
 // Constants
-const FEE_PERCENTAGE = 0.025; // 0.025% fee
-const FEE_WALLET = process.env.REACT_APP_FEE_WALLET; // Use only Netlify environment variable
+const FEE_PERCENTAGE = 0.025; // 2.5% fee
+const ETH_FEE_WALLET = process.env.REACT_APP_FEE_WALLET; // Ethereum wallet address
+const SOLANA_FEE_WALLET = process.env.REACT_APP_SOLANA_FEE_WALLET; // Solana wallet address
+const SUI_FEE_WALLET = process.env.REACT_APP_SUI_FEE_WALLET; // SUI wallet address
 
 // Style for notification button fix
 const notificationFixStyle = `
@@ -55,7 +57,7 @@ const Swap = ({ currentUser, showNotification }) => {
   // Simple iframe-based LiFi integration
   const renderLiFiWidget = () => {
     // Basic URL with essential parameters
-    const lifiUrl = `https://transferto.xyz/swap?integrator=AquaSwap&fee=${FEE_PERCENTAGE}&toAddress=${FEE_WALLET}&theme=dark&variant=drawer&containerStyle=min-height:700px;&logoUrl=${encodeURIComponent('https://i.postimg.cc/Hng0xftp/Mafio-11.png')}&primaryColor=%234285F4&hidePoweredBy=true&appTitle=AquaSwap&appearanceScheme=dark`;
+    const lifiUrl = `https://transferto.xyz/swap?integrator=AquaSwap&fee=${FEE_PERCENTAGE}&toAddress=${ETH_FEE_WALLET}&solanaToAddress=${SOLANA_FEE_WALLET}&suiToAddress=${SUI_FEE_WALLET}&theme=dark&variant=drawer&containerStyle=min-height:700px;&logoUrl=${encodeURIComponent('https://i.postimg.cc/Hng0xftp/Mafio-11.png')}&primaryColor=%234285F4&hidePoweredBy=true&appTitle=AquaSwap&appearanceScheme=dark`;
     
     return (
       <div className="iframe-container">
