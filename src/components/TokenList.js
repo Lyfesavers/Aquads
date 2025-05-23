@@ -394,7 +394,11 @@ const TokenList = ({ currentUser, showNotification }) => {
               >
                 <div className="flex items-center relative z-10">
                   <span className="mr-2 text-blue-400">🔄</span>
-                  <span className="font-semibold text-blue-300">Quick DEX Access</span>
+                  <span className="font-semibold text-green-400 animate-pulse" style={{ 
+                    color: '#00ff00', 
+                    textShadow: '0 0 5px #00ff00, 0 0 10px #00ff00, 0 0 15px #00ff00, 0 0 20px #00ff00',
+                    animation: 'pulse 2s infinite'
+                  }}>Quick DEX Access</span>
                   <span className="ml-2 text-xs text-blue-400/70 bg-blue-500/10 px-2 py-1 rounded-full">Click to toggle</span>
                 </div>
                 <div className="flex items-center">
