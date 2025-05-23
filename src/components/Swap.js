@@ -51,7 +51,7 @@ const Swap = ({ currentUser, showNotification }) => {
     // Load widget after a short delay
     setTimeout(() => {
       setLoading(false);
-    }, 1000);
+    }, 100);
   }, []);
 
   // Simple iframe-based LiFi integration
