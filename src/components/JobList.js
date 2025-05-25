@@ -84,7 +84,17 @@ Best regards,
                   <p className="text-sm text-gray-400">
                     Posted by {job.ownerUsername} on {formatDate(job.createdAt)}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">{job.jobType === 'hiring' ? 'Hiring' : 'For Hire'}</p>
+                  <div className="mt-2">
+                    {job.jobType === 'hiring' ? (
+                      <span className="inline-block px-3 py-1 text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/30 rounded-full">
+                        Hiring
+                      </span>
+                    ) : (
+                      <span className="inline-block px-3 py-1 text-xs font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-full">
+                        For Hire
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
