@@ -136,7 +136,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [showReviewsModal, setShowReviewsModal] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
   const [expandedDescriptions, setExpandedDescriptions] = useState(new Set());
-  const [sortOption, setSortOption] = useState('newest');
+  const [sortOption, setSortOption] = useState('highest-rated');
   const [showBannerModal, setShowBannerModal] = useState(false);
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -940,10 +940,10 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                   onChange={(e) => setSortOption(e.target.value)}
                   className="bg-gray-700/80 text-white px-3 py-3 rounded-lg text-sm w-full sm:w-auto"
                 >
-                  <option value="newest">Newest First</option>
                   <option value="highest-rated">Highest Rated</option>
                   <option value="price-low">Price: Low to High</option>
                   <option value="price-high">Price: High to Low</option>
+                  <option value="newest">Newest First</option>
                 </select>
               </div>
             </div>

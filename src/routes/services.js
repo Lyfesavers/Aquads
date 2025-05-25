@@ -27,9 +27,14 @@ router.get('/', async (req, res) => {
           sortOptions.rating = -1;
           break;
         case 'newest':
-        default:
           sortOptions.createdAt = -1;
+          break;
+        default:
+          sortOptions.rating = -1;
       }
+    } else {
+      // Default sort when no sort parameter is provided
+      sortOptions.rating = -1;
     }
 
     const services = await Service.find(query)
@@ -78,7 +83,7 @@ router.get('/search', async (req, res) => {
 router.get('/category/:categoryId', async (req, res) => {
   try {
     const services = await Service.find({ category: req.params.categoryId })
-      .sort({ createdAt: -1 })
+      .sort({ rating: -1 })
       .populate('seller', 'username image rating reviews');
     res.json(services);
   } catch (error) {
