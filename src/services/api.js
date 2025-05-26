@@ -47,9 +47,7 @@ export const fetchAds = async () => {
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      console.log(`fetchAds: Attempt ${attempt}/${maxRetries} - Starting request to:`, `${API_URL}/ads`);
-      console.log('fetchAds: User agent:', navigator.userAgent);
-      console.log('fetchAds: Network type:', navigator.connection?.effectiveType || 'unknown');
+
       
       const startTime = Date.now();
       
@@ -68,25 +66,17 @@ export const fetchAds = async () => {
       clearTimeout(timeoutId);
       const responseTime = Date.now() - startTime;
       
-      console.log('fetchAds: Response received in', responseTime, 'ms');
-      console.log('fetchAds: Response status:', response.status);
-      console.log('fetchAds: Response ok:', response.ok);
-      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       const data = await response.json();
-      console.log('fetchAds: Data parsed successfully, ads count:', data.length);
       
       // Cache the ads
       localStorage.setItem('cachedAds', JSON.stringify(data));
       return data;
       
     } catch (error) {
-      console.error(`fetchAds: Attempt ${attempt} failed:`, error);
-      console.error('fetchAds: Error type:', error.name);
-      console.error('fetchAds: Error message:', error.message);
       
       // If this is the last attempt, or not a network error, don't retry
       if (attempt === maxRetries || (error.name !== 'TypeError' && error.name !== 'AbortError')) {
@@ -95,17 +85,14 @@ export const fetchAds = async () => {
         // Return cached ads if available
         const cachedAds = localStorage.getItem('cachedAds');
         if (cachedAds) {
-          console.log('fetchAds: Returning cached ads');
           return JSON.parse(cachedAds);
         } else {
-          console.log('fetchAds: No cached ads available, returning empty array');
           return [];
         }
       }
       
       // Wait before retrying (exponential backoff)
       const delay = Math.pow(2, attempt - 1) * 1000; // 1s, 2s, 4s
-      console.log(`fetchAds: Waiting ${delay}ms before retry...`);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
@@ -535,7 +522,6 @@ export const fetchServices = async () => {
     }
     
     const data = await response.json();
-    console.log('API response data:', data); // Debug log
     
     // Check if data has the expected structure
     if (data && data.services) {
@@ -546,7 +532,6 @@ export const fetchServices = async () => {
       return { services: data };
     } else {
       // Handle unexpected data structure
-      console.warn('Unexpected service data format:', data);
       return { services: [] };
     }
   } catch (error) {
@@ -1149,7 +1134,6 @@ export const testConnectivity = async () => {
     clearTimeout(timeoutId);
     return response.ok;
   } catch (error) {
-    console.error('Connectivity test failed:', error);
     return false;
   }
 }; 

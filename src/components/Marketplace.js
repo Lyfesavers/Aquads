@@ -216,7 +216,6 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const loadServices = async () => {
     try {
       const data = await fetchServices();
-      console.log('Fetched services data:', data); // Debug log
       
       // Check data structure and extract services array properly
       let servicesArray = [];
@@ -228,10 +227,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         servicesArray = data.services;
       } else if (data && typeof data === 'object') {
         // If data is an object but not in expected format
-        console.warn('Unexpected data format, trying to extract services:', data);
         servicesArray = data.services || [];
       } else {
-        console.error('Invalid service data format:', data);
         servicesArray = [];
       }
       
