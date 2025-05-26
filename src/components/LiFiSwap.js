@@ -25,7 +25,7 @@ const LiFiSwap = ({ currentUser, showNotification }) => {
   // Widget using iframe (same approach as current Swap)
   const renderWidget = () => {
     // Widget URL with AquaSwap branding - configured for swap/bridge mode
-    const widgetUrl = `https://widget.li.fi/swap?integrator=aquaswap&fee=${FEE_PERCENTAGE}&feeRecipient=${ETH_FEE_WALLET}&theme=dark&logoUrl=${encodeURIComponent(window.location.origin + '/AquaSwap.svg')}&primaryColor=%234285F4&appearance=dark`;
+    const widgetUrl = `https://widget.li.fi/?variant=wide&integrator=aquaswap&fee=${FEE_PERCENTAGE}&feeRecipient=${ETH_FEE_WALLET}&theme=dark&logoUrl=${encodeURIComponent(window.location.origin + '/AquaSwap.svg')}&primaryColor=%234285F4&appearance=dark&defaultTab=swap`;
     
     return (
       <div className="iframe-container">
