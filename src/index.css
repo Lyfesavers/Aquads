@@ -4056,13 +4056,3 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   background: rgba(52, 199, 89, 0.5);
 }
 
-/* Spin animation for loading indicator */
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
