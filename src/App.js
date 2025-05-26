@@ -46,6 +46,7 @@ import logger from './utils/logger';
 import './App.css';
 import FilterControls from './components/FilterControls';
 import Swap from './components/Swap';
+import LiFiSwap from './components/LiFiSwap';
 
 // Simple debounce function implementation
 const debounce = (func, wait) => {
@@ -3182,7 +3183,8 @@ function App() {
           <Route path="/how-to/:slug" element={<HowTo currentUser={currentUser} />} />
           <Route path="/affiliate" element={<Affiliate />} />
           <Route path="/terms" element={<Terms />} />
-          <Route path="/swap" element={<Swap currentUser={currentUser} showNotification={showNotification} />} />
+                      <Route path="/swap" element={<Swap currentUser={currentUser} showNotification={showNotification} />} />
+            <Route path="/lifi-swap" element={<LiFiSwap currentUser={currentUser} showNotification={showNotification} />} />
         </Routes>
       </Router>
     </AuthContext.Provider>
