@@ -22,17 +22,17 @@ const LiFiSwap = ({ currentUser, showNotification }) => {
     }, 100);
   }, []);
 
-  // Li.Fi widget using iframe (same approach as current Swap but with Li.Fi URL)
-  const renderLiFiWidget = () => {
-    // Li.Fi widget URL with AquaSwap branding
-    const lifiUrl = `https://widget.li.fi/?integrator=aquaswap&fee=${FEE_PERCENTAGE}&feeRecipient=${ETH_FEE_WALLET}&theme=dark&variant=drawer&logoUrl=${encodeURIComponent(window.location.origin + '/AquaSwap.svg')}&primaryColor=%234285F4&hidePoweredBy=false&appearance=dark`;
+  // Widget using iframe (same approach as current Swap)
+  const renderWidget = () => {
+    // Widget URL with AquaSwap branding - configured for swap/bridge mode
+    const widgetUrl = `https://widget.li.fi/swap?integrator=aquaswap&fee=${FEE_PERCENTAGE}&feeRecipient=${ETH_FEE_WALLET}&theme=dark&logoUrl=${encodeURIComponent(window.location.origin + '/AquaSwap.svg')}&primaryColor=%234285F4&appearance=dark`;
     
     return (
       <div className="iframe-container">
         <iframe
           ref={iframeRef}
-          src={lifiUrl}
-          title="AquaSwap powered by Li.Fi"
+          src={widgetUrl}
+          title="AquaSwap"
           frameBorder="0"
           className="lifi-iframe"
           allow="clipboard-write"
@@ -62,13 +62,13 @@ const LiFiSwap = ({ currentUser, showNotification }) => {
                 width="24" 
                 height="24"
               />
-              AquaSwap - Li.Fi
+              AquaSwap
             </h2>
           </div>
           <div className="swap-body">
             <div className="loading-container">
               <div className="loading-spinner"></div>
-              <p>Loading Li.Fi swap interface...</p>
+              <p>Loading swap interface...</p>
             </div>
           </div>
         </div>
@@ -90,7 +90,7 @@ const LiFiSwap = ({ currentUser, showNotification }) => {
                 width="24" 
                 height="24"
               />
-              AquaSwap - Li.Fi
+              AquaSwap
             </h2>
           </div>
           <div className="swap-body">
@@ -126,14 +126,13 @@ const LiFiSwap = ({ currentUser, showNotification }) => {
               width="24" 
               height="24"
             />
-            AquaSwap - Li.Fi
+            AquaSwap
           </h2>
         </div>
         
-        {renderLiFiWidget()}
+        {renderWidget()}
         
         <div className="powered-by">
-          <p>Powered by Li.Fi Protocol</p>
           <p className="fee-disclaimer">
             A {(FEE_PERCENTAGE * 100).toFixed(2)}% fee is applied to support AquaSwap development
           </p>
