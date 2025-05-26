@@ -416,6 +416,7 @@ function App() {
   });
   const [showScrollButtons, setShowScrollButtons] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('');
   const [showMarketplace, setShowMarketplace] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
@@ -591,7 +592,11 @@ function App() {
   useEffect(() => {
     const loadAdsFromApi = async () => {
       try {
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        
         setIsLoading(true);
+        setLoadingMessage(isMobile ? 'Connecting to server...' : 'Loading ads...');
+        
         const data = await fetchAds();
         const currentMaxSize = getMaxSize(); // Get current max size for this screen
         
@@ -655,6 +660,7 @@ function App() {
         
         setAds(repositionedAds);
         setIsLoading(false);
+        setLoadingMessage('');
         
         // Update any repositioned ads on the server (optional)
         for (const ad of repositionedAds) {
@@ -670,6 +676,8 @@ function App() {
       } catch (error) {
         logger.error('Error loading ads:', error);
         setIsLoading(false);
+        setLoadingMessage('');
+        showNotification('Connection issue. Using cached data.', 'warning');
       }
     };
 
@@ -2862,7 +2870,15 @@ function App() {
                     ) : (
                       <div className="flex items-center justify-center min-h-[50vh] flex-col">
                         {isLoading ? (
-                          <p className="text-gray-400 text-xl">Loading ads...</p>
+                          <div className="flex flex-col items-center">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+                            <p className="text-gray-400 text-xl">{loadingMessage || 'Loading ads...'}</p>
+                            {/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && (
+                              <p className="text-sm text-gray-500 mt-2 text-center px-4">
+                                Mobile networks may take longer to connect
+                              </p>
+                            )}
+                          </div>
                         ) : (
                           <>
                             <p className="text-gray-400 text-xl mb-2">No projects found</p>
