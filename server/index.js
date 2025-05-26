@@ -3,7 +3,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const http = require('http');
-const axios = require('axios');
 const Ad = require('./models/Ad');
 const User = require('./models/User');
 const BumpRequest = require('./models/BumpRequest');
@@ -492,31 +491,6 @@ const logger = winston.createLogger({
 // Add this to see if server is starting
 console.log('Starting server...');
 
-// Add server-side keep-alive to prevent Render from sleeping
-const KEEP_ALIVE_INTERVAL = 10 * 60 * 1000; // 10 minutes
-const SERVER_URL = process.env.RENDER_EXTERNAL_URL || 'https://aquads.onrender.com';
-
-const keepAlive = () => {
-  if (process.env.NODE_ENV === 'production') {
-    setInterval(async () => {
-      try {
-        const response = await axios.get(`${SERVER_URL}/api/health`, {
-          timeout: 10000 // 10 second timeout
-        });
-        if (response.status === 200) {
-          console.log('Keep-alive ping successful');
-        } else {
-          console.log('Keep-alive ping failed:', response.status);
-        }
-      } catch (error) {
-        console.log('Keep-alive ping error:', error.message);
-      }
-    }, KEEP_ALIVE_INTERVAL);
-    
-    console.log(`Keep-alive mechanism started - pinging every ${KEEP_ALIVE_INTERVAL / 60000} minutes`);
-  }
-};
-
 // Apply rate limiter BEFORE starting server
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -530,9 +504,6 @@ app.use('/api', apiLimiter);
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
-  
-  // Start keep-alive mechanism after server starts
-  keepAlive();
 });
 
 if (process.env.NODE_ENV === 'production') {

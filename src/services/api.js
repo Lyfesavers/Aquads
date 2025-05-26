@@ -39,49 +39,24 @@ const getAuthHeader = () => {
   }
 };
 
-// Add retry mechanism for cold starts
-const retryWithBackoff = async (fn, maxRetries = 3, baseDelay = 1000) => {
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      return await fn();
-    } catch (error) {
-      if (i === maxRetries - 1) throw error;
-      
-      const delay = baseDelay * Math.pow(2, i);
-      logger.log(`Request failed, retrying in ${delay}ms... (attempt ${i + 1}/${maxRetries})`);
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
-};
-
-// Fetch all ads with improved error handling and retry logic
+// Fetch all ads
 export const fetchAds = async () => {
   try {
-    const response = await retryWithBackoff(async () => {
-      const res = await fetch(`${API_URL}/ads`, {
-        timeout: 30000 // 30 second timeout for cold starts
-      });
-      
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-      
-      return res;
-    }, 3, 2000); // 3 retries with 2 second base delay
+    const response = await fetch(`${API_URL}/ads`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     
     const data = await response.json();
     // Cache the ads
     localStorage.setItem('cachedAds', JSON.stringify(data));
     return data;
   } catch (error) {
-    logger.error('Error fetching ads after retries:', error);
+    logger.error('Error fetching ads:', error);
     // Return cached ads if available
     const cachedAds = localStorage.getItem('cachedAds');
-    if (cachedAds) {
-      logger.log('Using cached ads due to fetch failure');
-      return JSON.parse(cachedAds);
-    }
-    return [];
+    return cachedAds ? JSON.parse(cachedAds) : [];
   }
 };
 

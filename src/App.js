@@ -419,10 +419,6 @@ function App() {
   const [showMarketplace, setShowMarketplace] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
-  const [showTermsModal, setShowTermsModal] = useState(false);
-  const [showWhitepaperModal, setShowWhitepaperModal] = useState(false);
-  const [isServerWaking, setIsServerWaking] = useState(false);
-  const [serverWakeMessage, setServerWakeMessage] = useState('');
   const [newUsername, setNewUsername] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeBookingId, setActiveBookingId] = useState(null);
@@ -1400,31 +1396,11 @@ function App() {
     };
   }, []);
 
-  // Add this effect to periodically refresh ads with server wake-up detection
+  // Add this effect to periodically refresh ads
   useEffect(() => {
     const fetchAds = async () => {
       try {
-        const startTime = Date.now();
-        setIsServerWaking(true);
-        setServerWakeMessage('Loading...');
-        
-        const response = await fetch(`${API_URL}/ads`, {
-          timeout: 30000 // 30 second timeout for cold starts
-        });
-        
-        const responseTime = Date.now() - startTime;
-        
-        // If response took longer than 5 seconds, it was likely a cold start
-        if (responseTime > 5000) {
-          setServerWakeMessage('Server was sleeping, now awake!');
-          setTimeout(() => {
-            setIsServerWaking(false);
-            setServerWakeMessage('');
-          }, 2000);
-        } else {
-          setIsServerWaking(false);
-          setServerWakeMessage('');
-        }
+        const response = await fetch(`${API_URL}/ads`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -1451,9 +1427,6 @@ function App() {
         setAds(filteredAds);
       } catch (error) {
         logger.error('Error fetching ads:', error);
-        setIsServerWaking(false);
-        setServerWakeMessage('');
-        
         // Use cached ads if available and the API call fails
         const cachedAds = localStorage.getItem('cachedAds');
         if (cachedAds) {
@@ -2535,33 +2508,6 @@ function App() {
 
               {/* Remove duplicate TokenBanner */}
               
-              {/* Server Wake-up Indicator */}
-              {isServerWaking && (
-                <div style={{
-                  position: 'fixed',
-                  top: '20px',
-                  right: '20px',
-                  background: 'rgba(0, 0, 0, 0.8)',
-                  color: 'white',
-                  padding: '10px 20px',
-                  borderRadius: '8px',
-                  zIndex: 300000,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px'
-                }}>
-                  <div style={{
-                    width: '20px',
-                    height: '20px',
-                    border: '2px solid #ffffff',
-                    borderTop: '2px solid transparent',
-                    borderRadius: '50%',
-                    animation: 'spin 1s linear infinite'
-                  }}></div>
-                  {serverWakeMessage}
-                </div>
-              )}
-
               {/* Main content wrapper */}
               <div className="relative z-10">
                 {/* Navigation and banner stay fixed */}
