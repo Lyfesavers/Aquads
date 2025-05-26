@@ -135,11 +135,6 @@ const adSchema = new mongoose.Schema({
   }
 });
 
-// Add indexes for better query performance
-adSchema.index({ status: 1 }); // Index for status queries
-adSchema.index({ createdAt: -1 }); // Index for sorting by creation date
-adSchema.index({ isBumped: 1, bumpExpiresAt: 1 }); // Index for bump queries
-
 // Remove the pre-save middleware as it's causing issues
 // We'll handle validation in the route instead
 

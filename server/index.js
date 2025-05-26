@@ -2,7 +2,6 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const compression = require('compression');
 const http = require('http');
 const Ad = require('./models/Ad');
 const User = require('./models/User');
@@ -41,7 +40,6 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use(compression()); // Add compression for better mobile performance
 
 // Add CORS headers middleware
 app.use((req, res, next) => {
@@ -123,11 +121,8 @@ app.use('/api/register', limiter);
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
-  serverSelectionTimeoutMS: 15000, // Increased to 15s for better mobile connectivity
+  serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
   socketTimeoutMS: 45000, // Close sockets after 45s
-  maxPoolSize: 10, // Maintain up to 10 socket connections
-  bufferMaxEntries: 0, // Disable mongoose buffering
-  bufferCommands: false, // Disable mongoose buffering
 }).then(() => {
   console.log('Connected to MongoDB');
 }).catch(err => {

@@ -42,18 +42,7 @@ const getAuthHeader = () => {
 // Fetch all ads
 export const fetchAds = async () => {
   try {
-    // Mobile-optimized timeout
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    const timeout = isMobile ? 10000 : 15000; // 10s mobile, 15s desktop
-    
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-    
-    const response = await fetch(`${API_URL}/ads`, {
-      signal: controller.signal
-    });
-    
-    clearTimeout(timeoutId);
+    const response = await fetch(`${API_URL}/ads`);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

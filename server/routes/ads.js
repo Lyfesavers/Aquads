@@ -138,17 +138,8 @@ setInterval(async () => {
 // GET route
 router.get('/', async (req, res) => {
   try {
-    // Add mobile-friendly caching headers
-    res.set({
-      'Cache-Control': 'public, max-age=30', // Cache for 30 seconds
-      'ETag': `ads-${Date.now()}`, // Simple ETag for cache validation
-    });
-    
     // Only show active or approved ads (not pending or rejected)
-    // Use lean() for faster queries and select only needed fields
-    const ads = await Ad.find({ status: { $in: ['active', 'approved'] } })
-      .select('id title logo url contractAddress blockchain size x y owner isBumped bumpExpiresAt createdAt bullishVotes bearishVotes')
-      .lean();
+    const ads = await Ad.find({ status: { $in: ['active', 'approved'] } });
     console.log(`Found ${ads.length} approved/active ads`);
     
     // Ensure all ad sizes are up-to-date before sending to clients
