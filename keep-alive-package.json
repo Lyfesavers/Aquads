@@ -1,0 +1,16 @@
+{
+  "name": "aquads-keep-alive",
+  "version": "1.0.0",
+  "description": "Keep-alive service for Aquads backend on Render",
+  "main": "keep-alive.js",
+  "scripts": {
+    "start": "node keep-alive.js",
+    "dev": "node keep-alive.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.9"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+} 
