@@ -56,11 +56,7 @@ export const fetchAds = async () => {
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
       
       const response = await fetch(`${API_URL}/ads`, {
-        signal: controller.signal,
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
+        signal: controller.signal
       });
       
       clearTimeout(timeoutId);
@@ -1124,11 +1120,7 @@ export const testConnectivity = async () => {
     
     const response = await fetch(`${API_URL}/health`, {
       signal: controller.signal,
-      method: 'GET',
-      headers: {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
-      }
+      method: 'GET'
     });
     
     clearTimeout(timeoutId);
