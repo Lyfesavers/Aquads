@@ -121,7 +121,7 @@ app.use('/api/register', limiter);
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
-  serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+  serverSelectionTimeoutMS: 10000, // Increased to 10s for better mobile connectivity
   socketTimeoutMS: 45000, // Close sockets after 45s
 }).then(() => {
   console.log('Connected to MongoDB');
