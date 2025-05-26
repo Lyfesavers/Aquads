@@ -121,13 +121,8 @@ app.use('/api/register', limiter);
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
-  serverSelectionTimeoutMS: 15000, // 15s timeout for initial connection
+  serverSelectionTimeoutMS: 10000, // Increased to 10s for better mobile connectivity
   socketTimeoutMS: 45000, // Close sockets after 45s
-  maxPoolSize: 10, // Maintain up to 10 socket connections
-  minPoolSize: 2, // Maintain at least 2 connections
-  maxIdleTimeMS: 30000, // Close connections after 30 seconds of inactivity
-  bufferMaxEntries: 0, // Disable mongoose buffering
-  bufferCommands: false, // Disable mongoose buffering
 }).then(() => {
   console.log('Connected to MongoDB');
 }).catch(err => {
@@ -405,19 +400,6 @@ app.post('/api/users/register', ipLimiter(3), deviceLimiter(3), async (req, res)
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', dbConnected: mongoose.connection.readyState === 1 });
 });
-
-// Database keep-alive to prevent MongoDB from going to sleep
-if (process.env.NODE_ENV === 'production') {
-  setInterval(async () => {
-    try {
-      // Ping the database to keep it awake
-      await mongoose.connection.db.admin().ping();
-      console.log('Database keep-alive ping successful');
-    } catch (error) {
-      console.error('Database keep-alive ping failed:', error);
-    }
-  }, 5 * 60 * 1000); // Ping every 5 minutes
-}
 
 // Add test endpoint
 app.get('/api/test', (req, res) => {
