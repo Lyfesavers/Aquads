@@ -41,22 +41,73 @@ const getAuthHeader = () => {
 
 // Fetch all ads
 export const fetchAds = async () => {
-  try {
-    const response = await fetch(`${API_URL}/ads`);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const maxRetries = isMobile ? 3 : 1;
+  const timeoutMs = isMobile ? 15000 : 10000; // Longer timeout for mobile
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`fetchAds: Attempt ${attempt}/${maxRetries} - Starting request to:`, `${API_URL}/ads`);
+      console.log('fetchAds: User agent:', navigator.userAgent);
+      console.log('fetchAds: Network type:', navigator.connection?.effectiveType || 'unknown');
+      
+      const startTime = Date.now();
+      
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      
+      const response = await fetch(`${API_URL}/ads`, {
+        signal: controller.signal,
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      
+      clearTimeout(timeoutId);
+      const responseTime = Date.now() - startTime;
+      
+      console.log('fetchAds: Response received in', responseTime, 'ms');
+      console.log('fetchAds: Response status:', response.status);
+      console.log('fetchAds: Response ok:', response.ok);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('fetchAds: Data parsed successfully, ads count:', data.length);
+      
+      // Cache the ads
+      localStorage.setItem('cachedAds', JSON.stringify(data));
+      return data;
+      
+    } catch (error) {
+      console.error(`fetchAds: Attempt ${attempt} failed:`, error);
+      console.error('fetchAds: Error type:', error.name);
+      console.error('fetchAds: Error message:', error.message);
+      
+      // If this is the last attempt, or not a network error, don't retry
+      if (attempt === maxRetries || (error.name !== 'TypeError' && error.name !== 'AbortError')) {
+        logger.error('Error fetching ads:', error);
+        
+        // Return cached ads if available
+        const cachedAds = localStorage.getItem('cachedAds');
+        if (cachedAds) {
+          console.log('fetchAds: Returning cached ads');
+          return JSON.parse(cachedAds);
+        } else {
+          console.log('fetchAds: No cached ads available, returning empty array');
+          return [];
+        }
+      }
+      
+      // Wait before retrying (exponential backoff)
+      const delay = Math.pow(2, attempt - 1) * 1000; // 1s, 2s, 4s
+      console.log(`fetchAds: Waiting ${delay}ms before retry...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
-    
-    const data = await response.json();
-    // Cache the ads
-    localStorage.setItem('cachedAds', JSON.stringify(data));
-    return data;
-  } catch (error) {
-    logger.error('Error fetching ads:', error);
-    // Return cached ads if available
-    const cachedAds = localStorage.getItem('cachedAds');
-    return cachedAds ? JSON.parse(cachedAds) : [];
   }
 };
 
@@ -1078,4 +1129,27 @@ export const rejectAd = async (adId, rejectionReason) => {
   });
   if (!response.ok) throw new Error('Failed to reject ad');
   return await response.json();
+};
+
+// Simple connectivity test for mobile
+export const testConnectivity = async () => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+    
+    const response = await fetch(`${API_URL}/health`, {
+      signal: controller.signal,
+      method: 'GET',
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      }
+    });
+    
+    clearTimeout(timeoutId);
+    return response.ok;
+  } catch (error) {
+    console.error('Connectivity test failed:', error);
+    return false;
+  }
 }; 

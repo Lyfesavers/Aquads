@@ -401,19 +401,6 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', dbConnected: mongoose.connection.readyState === 1 });
 });
 
-// Database keep-alive to prevent MongoDB from going to sleep
-if (process.env.NODE_ENV === 'production') {
-  setInterval(async () => {
-    try {
-      // Simple ping to keep database awake
-      await mongoose.connection.db.admin().ping();
-      console.log('Database keep-alive ping successful');
-    } catch (error) {
-      console.error('Database keep-alive ping failed:', error);
-    }
-  }, 5 * 60 * 1000); // Ping every 5 minutes
-}
-
 // Add test endpoint
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Backend is working!' });
