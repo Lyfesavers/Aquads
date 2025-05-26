@@ -959,34 +959,6 @@ body, html {
   box-sizing: border-box !important;
 }
 
-/* Li.Fi Widget specific styles */
-.lifi-widget-container {
-  width: 100%;
-  min-height: 700px;
-  border-radius: 12px;
-  overflow: hidden;
-  background: rgba(17, 24, 39, 0.5);
-}
-
-/* Ensure Li.Fi widget fits properly */
-.lifi-widget-container > div {
-  width: 100% !important;
-  border-radius: 12px !important;
-}
-
-/* Hide any potential duck hunt or unwanted elements in Li.Fi widget */
-.lifi-widget-container [data-testid*="duck"],
-.lifi-widget-container [id*="duck"],
-.lifi-widget-container [class*="duck"],
-.lifi-widget-container [data-testid*="hunt"],
-.lifi-widget-container [id*="hunt"],
-.lifi-widget-container [class*="hunt"] {
-  display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-}
-
 /* Card fixes */
 .swap-card.lifi-container {
   width: calc(100% - 20px) !important;
