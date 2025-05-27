@@ -14,9 +14,10 @@ const DEX_OPTIONS = [
   {
     name: 'AquaSwap',
     icon: '💧',
-    url: '/swap',
-    description: 'the ultimate DEX for all your crypto needs',
-    custom: true
+    url: '/aquaswap',
+    description: 'the ultimate cross-chain DEX for all your crypto needs',
+    custom: true,
+    featured: true
   }
 ];
 
@@ -170,7 +171,12 @@ const TokenList = ({ currentUser, showNotification }) => {
     
     // Special handling for AquaSwap
     if (dex.custom) {
-      // Instead of redirecting, we'll load the Swap component in the iframe
+      // For the new AquaSwap page, redirect directly
+      if (dex.url === '/aquaswap') {
+        window.location.href = dex.url;
+        return;
+      }
+      // For other custom DEXes, load in iframe
       const iframe = document.querySelector('.dex-iframe');
       if (iframe) {
         iframe.src = dex.url;
@@ -387,6 +393,34 @@ const TokenList = ({ currentUser, showNotification }) => {
       <div className="bg-gray-900/50 backdrop-blur-sm rounded-lg overflow-hidden">
         {viewMode === 'tokens' ? (
           <>
+            {/* AquaSwap Banner */}
+            <div className="aquaswap-banner bg-gradient-to-r from-blue-600/20 via-cyan-500/20 to-blue-600/20 border border-cyan-400/30 rounded-lg p-4 mb-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/10 to-transparent animate-pulse"></div>
+              <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <img 
+                    src="/AquaSwap.svg" 
+                    alt="AquaSwap" 
+                    className="w-8 h-8 filter drop-shadow-lg flex-shrink-0"
+                  />
+                  <div>
+                    <h3 className="text-cyan-300 font-bold text-lg mb-1">
+                      🚀 Try AquaSwap - Our New Cross-Chain DEX!
+                    </h3>
+                    <p className="text-gray-300 text-sm">
+                      Swap & bridge across 20+ blockchains with the best rates
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href="/aquaswap"
+                  className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-cyan-500/25 whitespace-nowrap"
+                >
+                  Launch AquaSwap
+                </a>
+              </div>
+            </div>
+
             <div className="relative">
               <button
                 className="w-full px-4 py-3 bg-gray-800/50 hover:bg-gray-700/50 text-white flex items-center justify-between border-b border-gray-700/30 relative overflow-hidden group animate-pulse-subtle"
