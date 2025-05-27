@@ -39,9 +39,9 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     // Use the Li.Fi playground URL with proper parameters for swap interface
     const lifiUrl = `https://playground.li.fi/?integrator=aquaswap&fee=${FEE_PERCENTAGE}&feeRecipient=${ETH_FEE_WALLET}&solanaFeeRecipient=${SOLANA_FEE_WALLET}&suiFeeRecipient=${SUI_FEE_WALLET}&theme=dark&variant=expandable&appearance=dark&hiddenUI=PoweredBy,language,toAddress&hidePoweredBy=true&hideFooter=true`;
 
-          return (
-        <div className="lifi-container" style={{ position: 'relative' }}>
-          <iframe
+    return (
+      <div className="lifi-container">
+        <iframe
           ref={iframeRef}
           src={lifiUrl}
           title="AquaSwap - Cross-Chain DEX"
@@ -119,36 +119,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
               // Silent catch - cross-origin restrictions may prevent this
               logger.debug('Could not access iframe content:', error);
             }
-          }}
-        />
-        
-        {/* Black overlay to cover "Powered by Li.Fi" text - positioned to match widget layout */}
-        <div 
-          className="lifi-branding-overlay"
-          style={{
-            position: 'absolute',
-            bottom: '16px',
-            right: '16px',
-            width: '130px',
-            height: '22px',
-            backgroundColor: '#1f1f1f',
-            zIndex: 10,
-            borderRadius: '4px'
-          }}
-        />
-        
-        {/* Additional gradient overlay for bottom area */}
-        <div 
-          style={{
-            position: 'absolute',
-            bottom: '0px',
-            left: '0px',
-            right: '0px',
-            height: '45px',
-            background: 'linear-gradient(transparent 0%, rgba(31, 31, 31, 0.8) 60%, #1f1f1f 100%)',
-            zIndex: 9,
-            borderRadius: '0 0 12px 12px',
-            pointerEvents: 'none'
           }}
         />
       </div>
