@@ -408,7 +408,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                       🚀 Try AquaSwap - Our New Cross-Chain DEX!
                     </h3>
                     <p className="text-gray-300 text-sm">
-                      Swap & bridge across 20+ blockchains with the best rates
+                      Swap & bridge across 38+ blockchains with the best rates
                     </p>
                   </div>
                 </div>
