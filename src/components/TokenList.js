@@ -580,10 +580,6 @@ const TokenList = ({ currentUser, showNotification }) => {
           <div className="fixed bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg">
             Loading tokens...
           </div>
-        ) : tokens.length > 0 && viewMode === 'tokens' ? (
-          <div className="fixed bottom-4 right-4 bg-blue-500/80 text-white px-4 py-2 rounded-lg shadow-lg backdrop-blur-sm">
-            {tokens.length} tokens cached
-          </div>
         ) : null}
       </div>
     </div>
