@@ -37,11 +37,11 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   // Li.Fi widget with iframe approach (avoiding build dependency issues)
   const renderLiFiWidget = () => {
     // Use the Li.Fi playground URL with proper parameters for swap interface
-    const lifiUrl = `https://playground.li.fi/?integrator=aquaswap&fee=${FEE_PERCENTAGE}&feeRecipient=${ETH_FEE_WALLET}&solanaFeeRecipient=${SOLANA_FEE_WALLET}&suiFeeRecipient=${SUI_FEE_WALLET}&theme=dark&variant=expandable&appearance=dark&hiddenUI=PoweredBy,language,toAddress,poweredBy,footer&hidePoweredBy=true&hideFooter=true&hideToAddress=true&hideLanguage=true`;
+    const lifiUrl = `https://playground.li.fi/?integrator=aquaswap&fee=${FEE_PERCENTAGE}&feeRecipient=${ETH_FEE_WALLET}&solanaFeeRecipient=${SOLANA_FEE_WALLET}&suiFeeRecipient=${SUI_FEE_WALLET}&theme=dark&variant=expandable&appearance=dark&hiddenUI=PoweredBy,language,toAddress&hidePoweredBy=true&hideFooter=true`;
 
-    return (
-      <div className="lifi-container" style={{ position: 'relative' }}>
-        <iframe
+          return (
+        <div className="lifi-container" style={{ position: 'relative' }}>
+          <iframe
           ref={iframeRef}
           src={lifiUrl}
           title="AquaSwap - Cross-Chain DEX"
@@ -61,112 +61,59 @@ const AquaSwap = ({ currentUser, showNotification }) => {
               const iframe = iframeRef.current;
               if (!iframe || !iframe.contentWindow) return;
               
-              // Function to aggressively hide Li.Fi branding
-              const hideLiFiBranding = () => {
+              // Create a MutationObserver to watch for and hide Li.Fi branding
+              const observer = new MutationObserver((mutations) => {
                 const doc = iframe.contentDocument;
                 if (!doc) return;
                 
-                // Hide "Powered by Li.Fi" elements with more comprehensive selectors
+                // Hide "Powered by Li.Fi" elements
                 const poweredByElements = [
-                  // Data attributes
                   ...doc.querySelectorAll('[data-testid*="powered"]'),
-                  ...doc.querySelectorAll('[data-testid*="footer"]'),
-                  ...doc.querySelectorAll('[data-cy*="powered"]'),
-                  
-                  // Class-based selectors
                   ...doc.querySelectorAll('[class*="powered"]'),
                   ...doc.querySelectorAll('[class*="PoweredBy"]'),
-                  ...doc.querySelectorAll('[class*="footer"]'),
-                  ...doc.querySelectorAll('[class*="Footer"]'),
                   ...doc.querySelectorAll('*[class*="lifi"]'),
                   ...doc.querySelectorAll('*[class*="LiFi"]'),
                   ...doc.querySelectorAll('*[class*="li-fi"]'),
-                  
-                  // Links
                   ...doc.querySelectorAll('a[href*="li.fi"]'),
                   ...doc.querySelectorAll('a[href*="lifi"]'),
-                  
-                  // Footer elements
-                  ...doc.querySelectorAll('footer'),
-                  ...doc.querySelectorAll('[role="contentinfo"]'),
-                  
-                  // Text content searches
-                  ...Array.from(doc.querySelectorAll('*')).filter(el => {
-                    const text = el.textContent || '';
-                    return text.toLowerCase().includes('powered by') ||
-                           text.includes('Li.Fi') ||
-                           text.includes('LiFi') ||
-                           text.toLowerCase().includes('lifi');
-                  }),
-                  
-                  // Common footer/branding containers
-                  ...doc.querySelectorAll('div[style*="position: fixed"]'),
-                  ...doc.querySelectorAll('div[style*="bottom"]'),
-                  ...doc.querySelectorAll('.MuiBox-root'),
-                  ...doc.querySelectorAll('[class*="MuiBox"]')
+                  // Look for text content containing "Powered by"
+                  ...Array.from(doc.querySelectorAll('*')).filter(el => 
+                    el.textContent && el.textContent.toLowerCase().includes('powered by')
+                  ),
+                  // Look for text content containing "Li.Fi"
+                  ...Array.from(doc.querySelectorAll('*')).filter(el => 
+                    el.textContent && (el.textContent.includes('Li.Fi') || el.textContent.includes('LiFi'))
+                  )
                 ];
                 
                 // Hide all identified elements
                 poweredByElements.forEach(el => {
                   if (el && el.style) {
-                    el.style.display = 'none !important';
-                    el.style.visibility = 'hidden !important';
-                    el.style.opacity = '0 !important';
-                    el.style.height = '0px !important';
-                    el.style.overflow = 'hidden !important';
-                    el.setAttribute('hidden', 'true');
+                    el.style.display = 'none';
+                    el.style.visibility = 'hidden';
+                    el.style.opacity = '0';
                   }
                 });
-                
-                // Also inject CSS to hide any remaining branding
-                const style = doc.createElement('style');
-                style.textContent = `
-                  [data-testid*="powered"],
-                  [class*="powered"],
-                  [class*="PoweredBy"],
-                  [class*="footer"],
-                  [class*="Footer"],
-                  footer,
-                  [role="contentinfo"],
-                  *[class*="lifi"],
-                  *[class*="LiFi"],
-                  *[class*="li-fi"],
-                  a[href*="li.fi"],
-                  a[href*="lifi"] {
-                    display: none !important;
-                    visibility: hidden !important;
-                    opacity: 0 !important;
-                    height: 0px !important;
-                    overflow: hidden !important;
-                  }
-                `;
-                doc.head.appendChild(style);
-              };
-              
-              // Create a MutationObserver to watch for and hide Li.Fi branding
-              const observer = new MutationObserver(() => {
-                hideLiFiBranding();
               });
               
               // Start observing the iframe's document
               const doc = iframe.contentDocument;
               if (doc) {
-                // Run immediately
-                hideLiFiBranding();
-                
-                // Start observing for changes
                 observer.observe(doc.body, { 
                   childList: true, 
                   subtree: true,
-                  characterData: true,
-                  attributes: true
+                  characterData: true
                 });
                 
-                // Run again after delays to catch dynamically loaded content
-                setTimeout(hideLiFiBranding, 500);
-                setTimeout(hideLiFiBranding, 1000);
-                setTimeout(hideLiFiBranding, 2000);
-                setTimeout(hideLiFiBranding, 5000);
+                // Also run immediately to catch existing elements
+                setTimeout(() => {
+                  observer.disconnect();
+                  observer.observe(doc.body, { 
+                    childList: true, 
+                    subtree: true,
+                    characterData: true
+                  });
+                }, 1000);
               }
             } catch (error) {
               // Silent catch - cross-origin restrictions may prevent this
@@ -175,18 +122,17 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           }}
         />
         
-        {/* CSS overlay to hide any remaining Li.Fi branding at the bottom */}
+        {/* Black overlay to cover "Powered by Li.Fi" text at bottom right */}
         <div 
           style={{
             position: 'absolute',
-            bottom: '0',
-            left: '0',
-            right: '0',
-            height: '60px',
-            background: 'linear-gradient(transparent, #1a1a1a)',
-            pointerEvents: 'none',
+            bottom: '8px',
+            right: '8px',
+            width: '120px',
+            height: '20px',
+            backgroundColor: '#1a1a1a',
             zIndex: 10,
-            borderRadius: '0 0 12px 12px'
+            borderRadius: '4px'
           }}
         />
       </div>
