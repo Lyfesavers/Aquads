@@ -26,7 +26,7 @@ const LiFiSwap = ({ currentUser, showNotification }) => {
   // Li.Fi widget integration
   const renderLiFiWidget = () => {
     // Li.Fi widget URL with complete AquaSwap branding and Li.Fi branding hidden
-    const lifiUrl = `https://transferto.xyz/swap?integrator=aquaswap&fee=${FEE_PERCENTAGE}&toAddress=${ETH_FEE_WALLET}&solanaToAddress=${SOLANA_FEE_WALLET}&suiToAddress=${SUI_FEE_WALLET}&theme=dark&variant=drawer&containerStyle=min-height:700px;&logoUrl=${encodeURIComponent(window.location.origin + '/AquaSwap.svg')}&primaryColor=%234285F4&hidePoweredBy=true&hideTooltips=true&hideHeader=true&hideLogo=true&appTitle=AquaSwap&appearanceScheme=dark&brandColor=%234285F4&fontFamily=inherit&hideFooter=true`;
+    const lifiUrl = `https://widget.li.fi/?integrator=aquaswap&fee=${FEE_PERCENTAGE}&toAddress=${ETH_FEE_WALLET}&solanaToAddress=${SOLANA_FEE_WALLET}&suiToAddress=${SUI_FEE_WALLET}&theme=dark&variant=drawer&containerStyle=min-height:700px;&logoUrl=${encodeURIComponent(window.location.origin + '/AquaSwap.svg')}&primaryColor=%234285F4&hidePoweredBy=true&hideTooltips=true&hideHeader=true&hideLogo=true&appTitle=AquaSwap&appearanceScheme=dark&brandColor=%234285F4&fontFamily=inherit&hideFooter=true`;
 
     return (
       <div className="iframe-container">
