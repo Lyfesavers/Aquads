@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { LiFiWidget } from '@lifi/widget';
 import logger from '../utils/logger';
 import './AquaSwap.css';
 
@@ -15,6 +14,7 @@ const SUI_FEE_WALLET = process.env.REACT_APP_SUI_FEE_WALLET; // SUI wallet addre
 const AquaSwap = ({ currentUser, showNotification }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const iframeRef = useRef(null);
 
   // Initialize on component mount
   useEffect(() => {
@@ -24,49 +24,27 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     }, 100);
   }, []);
 
-  // Li.Fi widget configuration with custom AquaSwap branding
-  const lifiConfig = {
-    integrator: 'aquaswap',
-    fee: FEE_PERCENTAGE,
-    feeConfig: {
-      fee: FEE_PERCENTAGE,
-      feeRecipient: ETH_FEE_WALLET,
-    },
-    theme: {
-      palette: {
-        mode: 'dark',
-        primary: {
-          main: '#4285F4',
-        },
-        secondary: {
-          main: '#00D4FF',
-        },
-        background: {
-          paper: '#1f2937',
-          default: '#111827',
-        },
-      },
-      shape: {
-        borderRadius: 12,
-      },
-    },
-    appearance: 'dark',
-    variant: 'expandable',
-    subvariant: 'default',
-    hiddenUI: ['poweredBy'],
-    buildUrl: true,
-    fromChain: 1, // Ethereum
-    toChain: 137, // Polygon
-    fromToken: '0x0000000000000000000000000000000000000000', // ETH
-    toToken: '0x0000000000000000000000000000000000000000', // MATIC
-  };
-
+  // Li.Fi widget with iframe approach (avoiding build dependency issues)
   const renderLiFiWidget = () => {
+    // Use the actual Li.Fi widget URL (not Jumper) with AquaSwap branding
+    const lifiUrl = `https://widget.li.fi/?integrator=aquaswap&fee=${FEE_PERCENTAGE}&feeRecipient=${ETH_FEE_WALLET}&theme=dark&variant=expandable&logoUrl=${encodeURIComponent(window.location.origin + '/AquaSwap.svg')}&primaryColor=%234285F4&appearance=dark&brandColor=%2300D4FF&accentColor=%234285F4&hidePoweredBy=false`;
+
     return (
       <div className="lifi-container">
-        <LiFiWidget 
-          config={lifiConfig}
-          integrator="aquaswap"
+        <iframe
+          ref={iframeRef}
+          src={lifiUrl}
+          title="AquaSwap - Powered by Li.Fi"
+          className="lifi-iframe"
+          style={{
+            width: '100%',
+            height: '700px',
+            border: 'none',
+            borderRadius: '12px',
+            overflow: 'hidden'
+          }}
+          allow="clipboard-write"
+          sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals allow-top-navigation-by-user-activation"
         />
       </div>
     );
