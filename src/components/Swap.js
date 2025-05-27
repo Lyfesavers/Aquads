@@ -64,7 +64,7 @@ const Swap = ({ currentUser, showNotification }) => {
         <iframe
           ref={iframeRef}
           src={lifiUrl}
-          title="AquaSwap powered by LiFi"
+          title="AquaSwap Cross-Chain DEX"
           frameBorder="0"
           className="lifi-iframe"
           allow="clipboard-write"

@@ -27,18 +27,20 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   // Li.Fi widget with iframe approach (avoiding build dependency issues)
   const renderLiFiWidget = () => {
     // Use the Li.Fi playground URL with proper parameters for swap interface
-    const lifiUrl = `https://playground.li.fi/?integrator=aquaswap&fee=${FEE_PERCENTAGE}&feeRecipient=${ETH_FEE_WALLET}&theme=dark&variant=expandable&appearance=dark&hiddenUI=poweredBy`;
+    const lifiUrl = `https://playground.li.fi/?integrator=aquaswap&fee=${FEE_PERCENTAGE}&feeRecipient=${ETH_FEE_WALLET}&theme=dark&variant=expandable&appearance=dark&hiddenUI=poweredBy,language,toAddress`;
 
     return (
       <div className="lifi-container">
         <iframe
           ref={iframeRef}
           src={lifiUrl}
-          title="AquaSwap - Powered by Li.Fi"
+          title="AquaSwap - Cross-Chain DEX"
           className="lifi-iframe"
           style={{
             width: '100%',
-            height: '700px',
+            height: 'calc(100vh - 160px)',
+            maxHeight: '800px',
+            minHeight: '500px',
             border: 'none',
             borderRadius: '12px',
             overflow: 'hidden'
@@ -101,7 +103,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
         <div className="powered-by">
           <div className="fee-disclaimer">
-            <p>✨ Powered by Li.Fi • 2.5% platform fee applies</p>
+            <p>✨ AquaSwap • 2.5% platform fee applies</p>
           </div>
           <p>
             Swap and bridge across 20+ blockchains with the best rates and lowest fees.
