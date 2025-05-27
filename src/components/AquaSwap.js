@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
+import { useNavigate } from 'react-router-dom';
 import logger from '../utils/logger';
 import './AquaSwap.css';
 
@@ -15,6 +16,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const iframeRef = useRef(null);
+  const navigate = useNavigate();
 
   // Initialize on component mount
   useEffect(() => {
@@ -71,6 +73,15 @@ const AquaSwap = ({ currentUser, showNotification }) => {
             <p className="aquaswap-subtitle">The Ultimate Cross-Chain DEX</p>
           </div>
           <div className="aquaswap-body">
+            <div className="aquaswap-nav">
+              <button 
+                className="back-to-main-button"
+                onClick={() => navigate('/')}
+                title="Back to Main Page"
+              >
+                ← Back to Main
+              </button>
+            </div>
             <div className="loading-container">
               <div className="loading-spinner"></div>
               <p>Loading AquaSwap...</p>
@@ -86,6 +97,15 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     <div className="aquaswap-container">
       <div className="aquaswap-card">
         <div className="aquaswap-header">
+          <div className="aquaswap-nav">
+            <button 
+              className="back-to-main-button"
+              onClick={() => navigate('/')}
+              title="Back to Main Page"
+            >
+              ← Back to Main
+            </button>
+          </div>
           <h1>
             <img 
               src="/AquaSwap.svg" 
