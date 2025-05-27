@@ -194,7 +194,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
         <div className="powered-by">
           <div className="fee-disclaimer">
-            <p>✨ AquaSwap • 2.5% platform fee applies</p>
+            <p>✨ AquaSwap</p>
           </div>
           <p>
             Swap and bridge across 38+ blockchains with the best rates and lowest fees.
