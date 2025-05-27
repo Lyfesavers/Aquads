@@ -14,7 +14,7 @@ const DEX_OPTIONS = [
   {
     name: 'AquaSwap',
     icon: '💧',
-    url: '/swap',
+    url: '/aquaswap',
     description: 'the ultimate cross-chain DEX for all your crypto needs',
     custom: true,
     featured: true
@@ -171,8 +171,8 @@ const TokenList = ({ currentUser, showNotification }) => {
     
     // Special handling for AquaSwap
     if (dex.custom) {
-              // For the new AquaSwap page, redirect directly
-        if (dex.url === '/swap') {
+      // For the new AquaSwap page, redirect directly
+      if (dex.url === '/aquaswap') {
         window.location.href = dex.url;
         return;
       }
@@ -413,7 +413,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                   </div>
                 </div>
                 <a
-                  href="/swap"
+                  href="/aquaswap"
                   className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-cyan-500/25 whitespace-nowrap"
                 >
                   Launch AquaSwap
