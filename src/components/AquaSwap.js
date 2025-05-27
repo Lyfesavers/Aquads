@@ -20,10 +20,18 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
   // Initialize on component mount
   useEffect(() => {
+    // Add class to body to enable scrolling
+    document.body.classList.add('aquaswap-page');
+    
     // Load widget after a short delay
     setTimeout(() => {
       setLoading(false);
     }, 100);
+
+    // Cleanup: remove class when component unmounts
+    return () => {
+      document.body.classList.remove('aquaswap-page');
+    };
   }, []);
 
   // Li.Fi widget with iframe approach (avoiding build dependency issues)
