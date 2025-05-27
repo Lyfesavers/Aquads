@@ -40,9 +40,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           className="lifi-iframe"
           style={{
             width: '100%',
-            height: 'calc(100vh - 160px)',
-            maxHeight: '800px',
-            minHeight: '500px',
+            height: '700px',
             border: 'none',
             borderRadius: '12px',
             overflow: 'hidden'
