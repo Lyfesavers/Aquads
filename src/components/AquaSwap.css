@@ -372,4 +372,43 @@ html, body {
 
 .aquaswap-header h1 {
   animation: glow 4s ease-in-out infinite;
+}
+
+/* Li.Fi branding overlay - responsive positioning */
+.lifi-branding-overlay {
+  /* Base positioning for desktop */
+  bottom: 16px !important;
+  right: 16px !important;
+  width: 130px !important;
+  height: 22px !important;
+}
+
+/* Tablet responsive */
+@media (max-width: 768px) {
+  .lifi-branding-overlay {
+    bottom: 14px !important;
+    right: 14px !important;
+    width: 120px !important;
+    height: 20px !important;
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 600px) {
+  .lifi-branding-overlay {
+    bottom: 12px !important;
+    right: 12px !important;
+    width: 110px !important;
+    height: 18px !important;
+  }
+}
+
+/* Small mobile responsive */
+@media (max-width: 320px) {
+  .lifi-branding-overlay {
+    bottom: 10px !important;
+    right: 10px !important;
+    width: 100px !important;
+    height: 16px !important;
+  }
 } 

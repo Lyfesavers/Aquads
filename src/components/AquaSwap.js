@@ -122,17 +122,33 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           }}
         />
         
-        {/* Black overlay to cover "Powered by Li.Fi" text at bottom right */}
+        {/* Black overlay to cover "Powered by Li.Fi" text - positioned to match widget layout */}
+        <div 
+          className="lifi-branding-overlay"
+          style={{
+            position: 'absolute',
+            bottom: '16px',
+            right: '16px',
+            width: '130px',
+            height: '22px',
+            backgroundColor: '#1f1f1f',
+            zIndex: 10,
+            borderRadius: '4px'
+          }}
+        />
+        
+        {/* Additional gradient overlay for bottom area */}
         <div 
           style={{
             position: 'absolute',
-            bottom: '8px',
-            right: '8px',
-            width: '120px',
-            height: '20px',
-            backgroundColor: '#1a1a1a',
-            zIndex: 10,
-            borderRadius: '4px'
+            bottom: '0px',
+            left: '0px',
+            right: '0px',
+            height: '45px',
+            background: 'linear-gradient(transparent 0%, rgba(31, 31, 31, 0.8) 60%, #1f1f1f 100%)',
+            zIndex: 9,
+            borderRadius: '0 0 12px 12px',
+            pointerEvents: 'none'
           }}
         />
       </div>
