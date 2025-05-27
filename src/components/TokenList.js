@@ -56,6 +56,7 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [selectedDex, setSelectedDex] = useState(null);
   const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState('tokens');
+  const [isTableExpanded, setIsTableExpanded] = useState(false);
 
   // Sorting functionality
   const handleSort = (key) => {
@@ -423,8 +424,21 @@ const TokenList = ({ currentUser, showNotification }) => {
 
 
 
-            {/* Token list table */}
-            {filteredTokens.length > 0 ? (
+            {/* Token list dropdown toggle */}
+            <div className="p-6 border-b border-gray-700/30">
+              <button
+                onClick={() => setIsTableExpanded(!isTableExpanded)}
+                className="flex items-center justify-between w-full bg-gray-700 hover:bg-gray-600 text-white px-4 py-3 rounded-lg transition-colors"
+              >
+                <span className="font-medium">Token List ({filteredTokens.length} tokens)</span>
+                <span className={`transform transition-transform ${isTableExpanded ? 'rotate-180' : ''}`}>
+                  ▼
+                </span>
+              </button>
+            </div>
+
+            {/* Collapsible Token list table */}
+            {isTableExpanded && filteredTokens.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="min-w-full">
                   <thead>
@@ -540,11 +554,11 @@ const TokenList = ({ currentUser, showNotification }) => {
                   </tbody>
                 </table>
               </div>
-            ) : (
+            ) : isTableExpanded && filteredTokens.length === 0 ? (
               <div className="text-center text-gray-400 py-8">
                 {isLoading ? 'Loading tokens...' : 'No tokens found'}
               </div>
-            )}
+            ) : null}
           </>
         ) : (
           <SocialMediaRaids 
