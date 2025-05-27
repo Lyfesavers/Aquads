@@ -402,11 +402,11 @@ const TokenList = ({ currentUser, showNotification }) => {
                   <img 
                     src="/AquaSwap.svg" 
                     alt="AquaSwap" 
-                    className="w-8 h-8 filter drop-shadow-lg flex-shrink-0"
+                    className="w-12 h-12 filter drop-shadow-lg flex-shrink-0"
                   />
                   <div>
                     <h3 className="text-cyan-300 font-bold text-lg mb-1">
-                      🚀 Try AquaSwap - Our New Cross-Chain DEX!
+                      🚀 Try AquaSwap - Our Cross-Chain DEX!
                     </h3>
                     <p className="text-gray-300 text-sm">
                       Swap & bridge across 38+ blockchains with the best rates
