@@ -36,8 +36,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
   // Li.Fi widget with iframe approach (avoiding build dependency issues)
   const renderLiFiWidget = () => {
-    // Use the proper Li.Fi widget URL (not playground)
-    const lifiUrl = `https://widget.li.fi/integrator/aquaswap?fee=${FEE_PERCENTAGE}&feeRecipient=${ETH_FEE_WALLET}&solanaFeeRecipient=${SOLANA_FEE_WALLET}&suiFeeRecipient=${SUI_FEE_WALLET}&theme=dark&variant=expandable&appearance=dark&hiddenUI=PoweredBy,language,toAddress&hidePoweredBy=true&hideFooter=true`;
+    // Use the Li.Fi playground URL with proper parameters for swap interface
+    const lifiUrl = `https://playground.li.fi/?integrator=aquaswap&fee=${FEE_PERCENTAGE}&feeRecipient=${ETH_FEE_WALLET}&solanaFeeRecipient=${SOLANA_FEE_WALLET}&suiFeeRecipient=${SUI_FEE_WALLET}&theme=dark&variant=expandable&appearance=dark&hiddenUI=PoweredBy,language,toAddress&hidePoweredBy=true&hideFooter=true`;
 
     return (
       <div className="lifi-container">
