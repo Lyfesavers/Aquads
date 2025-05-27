@@ -22,28 +22,26 @@ const LiFiSwap = ({ currentUser, showNotification }) => {
     }, 100);
   }, []);
 
-  // Widget using iframe (same approach as current Swap)
+  // Widget using new window (since Li.Fi blocks iframe embedding)
   const renderWidget = () => {
-    // Widget URL with AquaSwap branding - configured for swap/bridge mode
-    const widgetUrl = `https://li.fi/?fromChain=1&fromToken=0x0000000000000000000000000000000000000000&toChain=137&fromAmount=1&integrator=aquaswap&fee=${FEE_PERCENTAGE}&feeRecipient=${ETH_FEE_WALLET}&theme=dark&logoUrl=${encodeURIComponent(window.location.origin + '/AquaSwap.svg')}&primaryColor=%234285F4&appearance=dark&hidePoweredBy=true`;
+    // Try Li.Fi playground URL which might be more iframe-friendly
+    const widgetUrl = `https://playground.li.fi/?fromChain=1&fromToken=0x0000000000000000000000000000000000000000&toChain=137&fromAmount=1&integrator=aquaswap&fee=${FEE_PERCENTAGE}&feeRecipient=${ETH_FEE_WALLET}&theme=dark&logoUrl=${encodeURIComponent(window.location.origin + '/AquaSwap.svg')}&primaryColor=%234285F4&appearance=dark&hidePoweredBy=true`;
+    
+    const openLiFiWidget = () => {
+      window.open(widgetUrl, '_blank', 'width=500,height=700,scrollbars=yes,resizable=yes');
+    };
     
     return (
-      <div className="iframe-container">
-        <iframe
-          ref={iframeRef}
-          src={widgetUrl}
-          title="AquaSwap"
-          frameBorder="0"
-          className="lifi-iframe"
-          allow="clipboard-write"
-          style={{
-            width: '100%',
-            height: '630px',
-            border: 'none',
-            borderRadius: '12px',
-            overflow: 'hidden'
-          }}
-        />
+      <div className="widget-container">
+        <div className="widget-placeholder">
+          <div className="widget-info">
+            <h3>Li.Fi Swap Interface</h3>
+            <p>Click below to open the Li.Fi swap interface in a new window with your AquaSwap branding.</p>
+            <button onClick={openLiFiWidget} className="open-widget-button">
+              Open Li.Fi Swap
+            </button>
+          </div>
+        </div>
       </div>
     );
   };
