@@ -57,14 +57,14 @@ const Swap = ({ currentUser, showNotification }) => {
   // Simple iframe-based LiFi integration
   const renderLiFiWidget = () => {
     // Basic URL with essential parameters
-    const lifiUrl = `https://transferto.xyz/swap?integrator=aquaswap&fee=${FEE_PERCENTAGE}&toAddress=${ETH_FEE_WALLET}&solanaToAddress=${SOLANA_FEE_WALLET}&suiToAddress=${SUI_FEE_WALLET}&theme=dark&variant=drawer&containerStyle=min-height:700px;&logoUrl=${encodeURIComponent(window.location.origin + '/AquaSwap.svg')}&primaryColor=%234285F4&hidePoweredBy=true&appTitle=AquaSwap&appearanceScheme=dark`;
+    const lifiUrl = `https://playground.li.fi/?integrator=aquaswap&fee=${FEE_PERCENTAGE}&feeRecipient=${ETH_FEE_WALLET}&solanaFeeRecipient=${SOLANA_FEE_WALLET}&suiFeeRecipient=${SUI_FEE_WALLET}&theme=dark&variant=drawer&appearance=dark&hiddenUI=PoweredBy&hidePoweredBy=true&hideFooter=true`;
     
     return (
       <div className="iframe-container">
         <iframe
           ref={iframeRef}
           src={lifiUrl}
-          title="AquaSwap powered by LiFi"
+          title="AquaSwap"
           frameBorder="0"
           className="lifi-iframe"
           allow="clipboard-write"

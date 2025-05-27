@@ -37,7 +37,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   // Li.Fi widget with iframe approach (avoiding build dependency issues)
   const renderLiFiWidget = () => {
     // Use the Li.Fi playground URL with proper parameters for swap interface
-    const lifiUrl = `https://playground.li.fi/?integrator=aquaswap&fee=${FEE_PERCENTAGE}&feeRecipient=${ETH_FEE_WALLET}&theme=dark&variant=expandable&appearance=dark&hiddenUI=PoweredBy,language,toAddress`;
+    const lifiUrl = `https://playground.li.fi/?integrator=aquaswap&fee=${FEE_PERCENTAGE}&feeRecipient=${ETH_FEE_WALLET}&solanaFeeRecipient=${SOLANA_FEE_WALLET}&suiFeeRecipient=${SUI_FEE_WALLET}&theme=dark&variant=expandable&appearance=dark&hiddenUI=PoweredBy,language,toAddress&hidePoweredBy=true&hideFooter=true`;
 
     return (
       <div className="lifi-container">
@@ -55,6 +55,71 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           }}
           allow="clipboard-write"
           sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals allow-top-navigation-by-user-activation"
+          onLoad={() => {
+            try {
+              // Get access to the iframe's content window
+              const iframe = iframeRef.current;
+              if (!iframe || !iframe.contentWindow) return;
+              
+              // Create a MutationObserver to watch for and hide Li.Fi branding
+              const observer = new MutationObserver((mutations) => {
+                const doc = iframe.contentDocument;
+                if (!doc) return;
+                
+                // Hide "Powered by Li.Fi" elements
+                const poweredByElements = [
+                  ...doc.querySelectorAll('[data-testid*="powered"]'),
+                  ...doc.querySelectorAll('[class*="powered"]'),
+                  ...doc.querySelectorAll('[class*="PoweredBy"]'),
+                  ...doc.querySelectorAll('*[class*="lifi"]'),
+                  ...doc.querySelectorAll('*[class*="LiFi"]'),
+                  ...doc.querySelectorAll('*[class*="li-fi"]'),
+                  ...doc.querySelectorAll('a[href*="li.fi"]'),
+                  ...doc.querySelectorAll('a[href*="lifi"]'),
+                  // Look for text content containing "Powered by"
+                  ...Array.from(doc.querySelectorAll('*')).filter(el => 
+                    el.textContent && el.textContent.toLowerCase().includes('powered by')
+                  ),
+                  // Look for text content containing "Li.Fi"
+                  ...Array.from(doc.querySelectorAll('*')).filter(el => 
+                    el.textContent && (el.textContent.includes('Li.Fi') || el.textContent.includes('LiFi'))
+                  )
+                ];
+                
+                // Hide all identified elements
+                poweredByElements.forEach(el => {
+                  if (el && el.style) {
+                    el.style.display = 'none';
+                    el.style.visibility = 'hidden';
+                    el.style.opacity = '0';
+                  }
+                });
+              });
+              
+              // Start observing the iframe's document
+              const doc = iframe.contentDocument;
+              if (doc) {
+                observer.observe(doc.body, { 
+                  childList: true, 
+                  subtree: true,
+                  characterData: true
+                });
+                
+                // Also run immediately to catch existing elements
+                setTimeout(() => {
+                  observer.disconnect();
+                  observer.observe(doc.body, { 
+                    childList: true, 
+                    subtree: true,
+                    characterData: true
+                  });
+                }, 1000);
+              }
+            } catch (error) {
+              // Silent catch - cross-origin restrictions may prevent this
+              logger.debug('Could not access iframe content:', error);
+            }
+          }}
         />
       </div>
     );
