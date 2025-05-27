@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { LiFiWidget } from '@lifi/widget';
 import logger from '../utils/logger';
 import './AquaSwap.css';
 
@@ -9,32 +10,11 @@ const ETH_FEE_WALLET = process.env.REACT_APP_FEE_WALLET; // Ethereum wallet addr
 const SOLANA_FEE_WALLET = process.env.REACT_APP_SOLANA_FEE_WALLET; // Solana wallet address
 const SUI_FEE_WALLET = process.env.REACT_APP_SUI_FEE_WALLET; // SUI wallet address
 
-// CSS to hide duck hunt inside iframe
-const hideDuckHuntCSS = `
-  div[style*="position: fixed"][style*="bottom"][style*="right"],
-  div[data-testid="duck-hunt-button"],
-  [id*="duck-hunt"],
-  [id*="start-duck"],
-  [class*="duck-hunt"],
-  .start-duck-hunt,
-  #start-duck-hunt,
-  #duck-hunt-button,
-  .duck-hunt-button {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-    width: 0 !important;
-    height: 0 !important;
-    position: absolute !important;
-    z-index: -1 !important;
-  }
-`;
+
 
 const AquaSwap = ({ currentUser, showNotification }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const iframeRef = useRef(null);
 
   // Initialize on component mount
   useEffect(() => {
@@ -44,74 +24,49 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     }, 100);
   }, []);
 
-  // Li.Fi widget with custom AquaSwap branding
-  const renderLiFiWidget = () => {
-    // Use the actual Li.Fi widget URL with AquaSwap branding
-    const lifiUrl = `https://widget.li.fi/integrator/aquaswap?fee=${FEE_PERCENTAGE}&feeWallet=${ETH_FEE_WALLET}&solanaFeeWallet=${SOLANA_FEE_WALLET}&suiFeeWallet=${SUI_FEE_WALLET}&theme=dark&variant=expandable&logoUrl=${encodeURIComponent(window.location.origin + '/AquaSwap.svg')}&primaryColor=%234285F4&hidePoweredBy=false&integrator=aquaswap&appearance=dark&brandColor=%2300D4FF&accentColor=%234285F4`;
+  // Li.Fi widget configuration with custom AquaSwap branding
+  const lifiConfig = {
+    integrator: 'aquaswap',
+    fee: FEE_PERCENTAGE,
+    feeConfig: {
+      fee: FEE_PERCENTAGE,
+      feeRecipient: ETH_FEE_WALLET,
+    },
+    theme: {
+      palette: {
+        mode: 'dark',
+        primary: {
+          main: '#4285F4',
+        },
+        secondary: {
+          main: '#00D4FF',
+        },
+        background: {
+          paper: '#1f2937',
+          default: '#111827',
+        },
+      },
+      shape: {
+        borderRadius: 12,
+      },
+    },
+    appearance: 'dark',
+    variant: 'expandable',
+    subvariant: 'default',
+    hiddenUI: ['poweredBy'],
+    buildUrl: true,
+    fromChain: 1, // Ethereum
+    toChain: 137, // Polygon
+    fromToken: '0x0000000000000000000000000000000000000000', // ETH
+    toToken: '0x0000000000000000000000000000000000000000', // MATIC
+  };
 
+  const renderLiFiWidget = () => {
     return (
       <div className="lifi-container">
-        <iframe
-          ref={iframeRef}
-          src={lifiUrl}
-          title="AquaSwap - Powered by Li.Fi"
-          className="lifi-iframe"
-          sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals allow-top-navigation-by-user-activation"
-          referrerPolicy="no-referrer"
-          scrolling="yes"
-          allow="clipboard-write"
-          style={{
-            width: '100%',
-            height: '700px',
-            border: 'none',
-            borderRadius: '12px',
-            overflow: 'hidden'
-          }}
-          onLoad={() => {
-            try {
-              const iframe = iframeRef.current;
-              if (!iframe || !iframe.contentWindow) return;
-              
-              // Create a MutationObserver to watch for duck hunt elements
-              const observer = new MutationObserver(() => {
-                const doc = iframe.contentDocument;
-                if (!doc) return;
-                
-                // Remove duck hunt elements
-                const duckHuntElements = [
-                  ...doc.querySelectorAll('[data-testid="duck-hunt-button"]'),
-                  ...doc.querySelectorAll('[id*="duck-hunt"]'),
-                  ...doc.querySelectorAll('[id*="start-duck"]'),
-                  ...doc.querySelectorAll('[class*="duck-hunt"]'),
-                  ...doc.querySelectorAll('.start-duck-hunt'),
-                  ...doc.querySelectorAll('#start-duck-hunt'),
-                  ...doc.querySelectorAll('#duck-hunt-button'),
-                  ...doc.querySelectorAll('.duck-hunt-button'),
-                  ...doc.querySelectorAll('div[style*="position: fixed"][style*="bottom"][style*="right"]')
-                ];
-                
-                duckHuntElements.forEach(el => {
-                  el.remove();
-                });
-
-                // Inject CSS to hide duck hunt elements
-                const style = doc.createElement('style');
-                style.textContent = hideDuckHuntCSS;
-                doc.head.appendChild(style);
-              });
-
-              const doc = iframe.contentDocument;
-              if (doc) {
-                observer.observe(doc.body, { 
-                  childList: true, 
-                  subtree: true
-                });
-              }
-            } catch (error) {
-              // Silent catch - cross-origin restrictions may prevent this
-              logger.debug('Could not access iframe content:', error);
-            }
-          }}
+        <LiFiWidget 
+          config={lifiConfig}
+          integrator="aquaswap"
         />
       </div>
     );
