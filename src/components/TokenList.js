@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import TokenReviews from './TokenReviews';
 import { Chart } from 'chart.js/auto';
 import TokenRating from './TokenRating';
@@ -16,6 +17,13 @@ const DEX_OPTIONS = [
     icon: '💧',
     url: '/swap',
     description: 'the ultimate DEX for all your crypto needs',
+    custom: true
+  },
+  {
+    name: 'AquaSwap Li.Fi',
+    icon: '🌊',
+    url: '/lifi-swap',
+    description: 'cross-chain swaps powered by Li.Fi',
     custom: true
   }
 ];
@@ -39,6 +47,7 @@ const formatCurrency = (value) => {
 };
 
 const TokenList = ({ currentUser, showNotification }) => {
+  const navigate = useNavigate();
   const [tokens, setTokens] = useState([]);
   const [filteredTokens, setFilteredTokens] = useState([]);
   const [selectedToken, setSelectedToken] = useState(null);
@@ -168,9 +177,12 @@ const TokenList = ({ currentUser, showNotification }) => {
     setSelectedDex(dex);
     setShowDexFrame(true);
     
-    // Special handling for AquaSwap
+    // Special handling for custom DEX options
     if (dex.custom) {
-      // Instead of redirecting, we'll load the Swap component in the iframe
+      // Navigate to the appropriate page
+      navigate(dex.url);
+    } else {
+      // For external DEX options, load in iframe
       const iframe = document.querySelector('.dex-iframe');
       if (iframe) {
         iframe.src = dex.url;
