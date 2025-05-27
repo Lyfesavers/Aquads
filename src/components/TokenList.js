@@ -17,13 +17,6 @@ const DEX_OPTIONS = [
     url: '/swap',
     description: 'the ultimate DEX for all your crypto needs',
     custom: true
-  },
-  {
-    name: 'AquaSwap-LiFi',
-    icon: '🌊',
-    url: '/lifi-swap',
-    description: 'powered by Li.Fi Protocol - pure widget experience',
-    custom: true
   }
 ];
 
