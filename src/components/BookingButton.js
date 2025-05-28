@@ -44,7 +44,7 @@ const BookingButton = ({ service, currentUser, onBookingCreate, showNotification
         onClick={() => showNotification('Please login to book this service', 'info')}
         className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded transition-colors"
       >
-        Book Now
+        Contact {service.seller?.username || 'Seller'}
       </button>
     );
   }
@@ -59,7 +59,7 @@ const BookingButton = ({ service, currentUser, onBookingCreate, showNotification
         onClick={() => setShowModal(true)}
         className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded transition-colors"
       >
-        Book Now
+        Contact {service.seller?.username || 'Seller'}
       </button>
 
       {showModal && (
