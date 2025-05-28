@@ -37,6 +37,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   // Li.Fi widget with iframe approach (avoiding build dependency issues)
   const renderLiFiWidget = () => {
     // Use the Li.Fi playground URL with proper parameters for swap interface
+    // Using available theme parameters that match website colors
     const lifiUrl = `https://playground.li.fi/?integrator=aquaswap&fee=${FEE_PERCENTAGE}&feeRecipient=${ETH_FEE_WALLET}&solanaFeeRecipient=${SOLANA_FEE_WALLET}&suiFeeRecipient=${SUI_FEE_WALLET}&theme=dark&variant=expandable&appearance=dark&hiddenUI=PoweredBy,language,toAddress&hidePoweredBy=true&hideFooter=true`;
 
     return (
@@ -51,7 +52,10 @@ const AquaSwap = ({ currentUser, showNotification }) => {
             height: '700px',
             border: 'none',
             borderRadius: '12px',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            // Add custom styling to better match website theme
+            background: 'linear-gradient(135deg, rgba(17, 24, 39, 0.95), rgba(31, 41, 55, 0.9))',
+            boxShadow: '0 0 0 1px rgba(0, 212, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
           }}
           allow="clipboard-write"
           sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals allow-top-navigation-by-user-activation"
@@ -94,6 +98,63 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                     el.style.opacity = '0';
                   }
                 });
+
+                // Try to inject custom CSS to match website theme
+                try {
+                  const style = doc.createElement('style');
+                  style.textContent = `
+                    /* Custom theme to match AquaSwap website */
+                    :root {
+                      --primary-color: #00D4FF !important;
+                      --secondary-color: #4285F4 !important;
+                      --background-color: #111827 !important;
+                      --surface-color: #1F2937 !important;
+                    }
+                    
+                    /* Override LiFi widget colors */
+                    [class*="MuiButton-contained"] {
+                      background: linear-gradient(135deg, #00D4FF, #4285F4) !important;
+                      border: none !important;
+                    }
+                    
+                    [class*="MuiButton-outlined"] {
+                      border-color: #00D4FF !important;
+                      color: #00D4FF !important;
+                    }
+                    
+                    [class*="MuiPaper-root"] {
+                      background: rgba(31, 41, 55, 0.9) !important;
+                      border: 1px solid rgba(0, 212, 255, 0.2) !important;
+                    }
+                    
+                    /* Primary color overrides */
+                    .MuiButton-containedPrimary,
+                    [class*="primary"] {
+                      background: linear-gradient(135deg, #00D4FF, #4285F4) !important;
+                    }
+                    
+                    /* Text color overrides */
+                    [class*="MuiTypography-root"] {
+                      color: #FFFFFF !important;
+                    }
+                    
+                    /* Input field styling */
+                    [class*="MuiInputBase-root"] {
+                      background: rgba(17, 24, 39, 0.8) !important;
+                      border: 1px solid rgba(0, 212, 255, 0.3) !important;
+                      color: #FFFFFF !important;
+                    }
+                    
+                    /* Focus states */
+                    [class*="MuiInputBase-root"]:focus-within {
+                      border-color: #00D4FF !important;
+                      box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2) !important;
+                    }
+                  `;
+                  doc.head.appendChild(style);
+                } catch (styleError) {
+                  logger.debug('Could not inject custom styles:', styleError);
+                }
               });
               
               // Start observing the iframe's document
