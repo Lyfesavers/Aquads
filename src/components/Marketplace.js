@@ -195,7 +195,10 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         if (dynamicOgImage) dynamicOgImage.content = service.image;
         if (dynamicOgTitle) dynamicOgTitle.content = `${service.title} - Aquads Marketplace`;
         if (dynamicOgDesc) dynamicOgDesc.content = service.description?.slice(0, 200) + '...';
-        if (dynamicOgUrl) dynamicOgUrl.content = window.location.href;
+        
+        // Create clean URL without referral parameters for og:url
+        const cleanUrl = `${window.location.origin}/marketplace?service=${sharedServiceId}`;
+        if (dynamicOgUrl) dynamicOgUrl.content = cleanUrl;
 
         // Expand the description of the shared service
         setExpandedDescriptions(prev => new Set([...prev, sharedServiceId]));

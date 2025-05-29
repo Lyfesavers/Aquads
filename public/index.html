@@ -94,7 +94,10 @@
               if (ogTitleTag) ogTitleTag.content = blog.title + ' - Aquads Blog';
               if (ogDescTag) ogDescTag.content = description;
               if (ogImageTag && blog.bannerImage) ogImageTag.content = blog.bannerImage;
-              if (ogUrlTag) ogUrlTag.content = window.location.href;
+              
+              // Create clean URL without referral parameters for og:url
+              var cleanUrl = window.location.origin + '/how-to?blogId=' + blogId;
+              if (ogUrlTag) ogUrlTag.content = cleanUrl;
               
               // If blog has a bannerImage, set image dimensions meta tags
               if (blog.bannerImage) {
