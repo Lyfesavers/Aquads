@@ -6,7 +6,7 @@ import logger from '../utils/logger';
 import './AquaSwap.css';
 
 // Constants - using the same fee structure as the current swap
-const FEE_PERCENTAGE = 0.025; // 2.5% fee
+const FEE_PERCENTAGE = 0.015; // 1.5% fee
 const ETH_FEE_WALLET = process.env.REACT_APP_FEE_WALLET; // Ethereum wallet address
 const SOLANA_FEE_WALLET = process.env.REACT_APP_SOLANA_FEE_WALLET; // Solana wallet address
 const SUI_FEE_WALLET = process.env.REACT_APP_SUI_FEE_WALLET; // SUI wallet address
@@ -95,6 +95,11 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     },
     hiddenUI: ["poweredBy"],
     buildUrl: true,
+    // Show wallet management UI prominently
+    walletManagement: {
+      connect: true,
+      disconnect: true,
+    },
     // Wallet connection configuration
     walletConfig: {
       onConnectRequested: (requiredChainId) => {
