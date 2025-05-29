@@ -1,10 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import { LiFiWidget } from '@lifi/widget';
 import logger from '../utils/logger';
 import BannerDisplay from './BannerDisplay';
 import './AquaSwap.css';
+
+// Separate component for LiFi Widget to avoid WagmiProvider conflicts
+const LiFiWidgetComponent = () => {
+  const { LiFiWidget } = require('@lifi/widget');
+  
+  const widgetConfig = {
+    variant: "compact",
+    appearance: "dark",
+    integrator: "aquaswap",
+    // No wallet config - let widget handle everything independently
+    fee: 0.015, // 1.5% fee
+    feeConfig: {
+      fee: 0.015,
+      feeRecipient: process.env.REACT_APP_FEE_WALLET || "0x0000000000000000000000000000000000000000",
+      solanaFeeRecipient: process.env.REACT_APP_SOLANA_FEE_WALLET,
+      suiFeeRecipient: process.env.REACT_APP_SUI_FEE_WALLET,
+    },
+    hiddenUI: ["poweredBy"],
+  };
+
+  return (
+    <div className="lifi-widget">
+      <LiFiWidget integrator="aquaswap" config={widgetConfig} />
+    </div>
+  );
+};
 
 // Constants - using the same fee structure as the current swap
 const FEE_PERCENTAGE = 0.015; // 1.5% fee
@@ -31,26 +56,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       document.body.classList.remove('aquaswap-page');
     };
   }, []);
-
-  // LI.FI Widget configuration - force internal wallet management
-  const widgetConfig = {
-    variant: "compact",
-    appearance: "dark",
-    integrator: "aquaswap",
-    // Force the widget to show internal wallet management even with WagmiProvider
-    walletConfig: {
-      usePartialWalletManagement: true,
-    },
-    fee: FEE_PERCENTAGE,
-    feeConfig: {
-      fee: FEE_PERCENTAGE,
-      feeRecipient: ETH_FEE_WALLET || "0x0000000000000000000000000000000000000000",
-      // Multi-chain fee recipients
-      solanaFeeRecipient: SOLANA_FEE_WALLET,
-      suiFeeRecipient: SUI_FEE_WALLET,
-    },
-    hiddenUI: ["poweredBy"],
-  };
 
   // Loading state
   if (loading) {
@@ -120,10 +125,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         <p>The Ultimate Cross-Chain DEX</p>
       </div>
     
-      {/* LiFi Widget - Direct on page */}
-      <div className="lifi-widget">
-        <LiFiWidget integrator="aquaswap" config={widgetConfig} />
-      </div>
+      {/* LiFi Widget - Independent of WagmiProvider */}
+      <LiFiWidgetComponent />
 
       {/* Simple footer text */}
       <div className="simple-footer">
