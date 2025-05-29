@@ -33,7 +33,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
   // LI.FI Widget configuration with custom theme matching website colors
   const widgetConfig = {
-    variant: "compact",
+    variant: "expandable",
     appearance: "dark",
     theme: {
       colorSchemes: {
@@ -93,9 +93,9 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       solanaFeeRecipient: SOLANA_FEE_WALLET,
       suiFeeRecipient: SUI_FEE_WALLET,
     },
-    hiddenUI: ["poweredBy"], // Only hide powered by, show all wallet UI elements
+    hiddenUI: ["poweredBy"], // Only hide powered by, ensure wallet UI is visible
     buildUrl: true,
-    // Wallet management configuration
+    // Explicit wallet management configuration
     walletManagement: {
       connect: true,
       disconnect: true,
