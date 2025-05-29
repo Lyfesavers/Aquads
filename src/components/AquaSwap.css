@@ -533,189 +533,42 @@ body.aquaswap-page {
   overflow-y: auto !important;
 }
 
-/* ===== LiFi Widget Custom Styling ===== */
-/* Override LiFi widget styles to match AquaSwap theme */
+/* ===== LiFi Widget Color Theme Override ===== */
+/* Simple color changes to match AquaSwap cyan/blue theme */
 
-/* Main widget container */
-.lifi-widget {
-  background: rgba(31, 41, 55, 0.95) !important;
-  border-radius: 20px !important;
-  border: 1px solid rgba(0, 212, 255, 0.3) !important;
-  box-shadow: 
-    0 20px 40px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(0, 212, 255, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
-  backdrop-filter: blur(12px) !important;
-  max-width: 520px !important;
-  margin: 0 auto !important;
-}
-
-/* Widget header/app bar */
-.lifi-widget .MuiAppBar-root,
-.lifi-widget [class*="AppBar"] {
-  background: rgba(17, 24, 39, 0.9) !important;
-  border-bottom: 1px solid rgba(0, 212, 255, 0.2) !important;
-  backdrop-filter: blur(8px) !important;
-}
-
-/* Cards and containers */
-.lifi-widget .MuiCard-root,
-.lifi-widget [class*="Card"],
-.lifi-widget [class*="card"] {
-  background: rgba(17, 24, 39, 0.8) !important;
-  border: 1px solid rgba(0, 212, 255, 0.2) !important;
-  border-radius: 12px !important;
-  backdrop-filter: blur(8px) !important;
-}
-
-/* Input cards */
-.lifi-widget .MuiInputCard-root,
-.lifi-widget [class*="InputCard"],
-.lifi-widget [class*="input-card"] {
-  background: rgba(17, 24, 39, 0.9) !important;
-  border: 1px solid rgba(0, 212, 255, 0.3) !important;
-  border-radius: 16px !important;
-}
-
-/* Buttons */
-.lifi-widget .MuiButton-root,
-.lifi-widget button {
-  background: rgba(0, 212, 255, 0.1) !important;
-  border: 1px solid rgba(0, 212, 255, 0.3) !important;
-  color: #00D4FF !important;
-  border-radius: 12px !important;
-  transition: all 0.3s ease !important;
-}
-
-.lifi-widget .MuiButton-root:hover,
-.lifi-widget button:hover {
-  background: rgba(0, 212, 255, 0.2) !important;
-  border-color: rgba(0, 212, 255, 0.5) !important;
-  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2) !important;
-  transform: translateY(-1px) !important;
-}
-
-/* Primary buttons */
+/* Primary buttons and accents */
 .lifi-widget .MuiButton-contained,
 .lifi-widget [class*="contained"] {
   background: linear-gradient(135deg, #00D4FF, #4285F4) !important;
   color: #111827 !important;
-  font-weight: 600 !important;
-  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3) !important;
 }
 
 .lifi-widget .MuiButton-contained:hover {
   background: linear-gradient(135deg, #4285F4, #00D4FF) !important;
-  box-shadow: 0 6px 16px rgba(0, 212, 255, 0.4) !important;
+}
+
+/* Secondary buttons */
+.lifi-widget .MuiButton-outlined,
+.lifi-widget [class*="outlined"] {
+  border-color: #00D4FF !important;
+  color: #00D4FF !important;
+}
+
+.lifi-widget .MuiButton-outlined:hover {
+  background: rgba(0, 212, 255, 0.1) !important;
+  border-color: #4285F4 !important;
 }
 
 /* Icon buttons */
 .lifi-widget .MuiIconButton-root {
   color: #00D4FF !important;
-  background: rgba(0, 212, 255, 0.1) !important;
-  border-radius: 8px !important;
 }
 
 .lifi-widget .MuiIconButton-root:hover {
-  background: rgba(0, 212, 255, 0.2) !important;
-  color: #4285F4 !important;
-}
-
-/* Text colors */
-.lifi-widget,
-.lifi-widget .MuiTypography-root,
-.lifi-widget [class*="Typography"],
-.lifi-widget p,
-.lifi-widget span,
-.lifi-widget div {
-  color: #ffffff !important;
-}
-
-/* Secondary text */
-.lifi-widget .MuiTypography-body2,
-.lifi-widget [class*="secondary"] {
-  color: #9ca3af !important;
-}
-
-/* Input fields */
-.lifi-widget .MuiInputBase-root,
-.lifi-widget input,
-.lifi-widget textarea {
-  background: rgba(17, 24, 39, 0.8) !important;
-  color: #ffffff !important;
-  border: 1px solid rgba(0, 212, 255, 0.2) !important;
-  border-radius: 8px !important;
-}
-
-.lifi-widget .MuiInputBase-root:hover,
-.lifi-widget input:hover {
-  border-color: rgba(0, 212, 255, 0.4) !important;
-}
-
-.lifi-widget .MuiInputBase-root.Mui-focused,
-.lifi-widget input:focus {
-  border-color: #00D4FF !important;
-  box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2) !important;
-}
-
-/* Avatars (token/chain icons) */
-.lifi-widget .MuiAvatar-root {
-  border: 2px solid rgba(0, 212, 255, 0.3) !important;
-  box-shadow: 0 2px 8px rgba(0, 212, 255, 0.2) !important;
-}
-
-/* Tabs */
-.lifi-widget .MuiTabs-root {
-  background: rgba(17, 24, 39, 0.9) !important;
-  border-radius: 12px !important;
-  border: 1px solid rgba(0, 212, 255, 0.2) !important;
-}
-
-.lifi-widget .MuiTab-root {
-  color: #9ca3af !important;
-  transition: all 0.3s ease !important;
-}
-
-.lifi-widget .MuiTab-root.Mui-selected {
-  color: #00D4FF !important;
   background: rgba(0, 212, 255, 0.1) !important;
-}
-
-.lifi-widget .MuiTabs-indicator {
-  background: linear-gradient(90deg, #00D4FF, #4285F4) !important;
-  height: 3px !important;
-  border-radius: 2px !important;
-}
-
-/* Dividers */
-.lifi-widget .MuiDivider-root,
-.lifi-widget hr {
-  border-color: rgba(0, 212, 255, 0.2) !important;
-}
-
-/* Lists and menu items */
-.lifi-widget .MuiList-root,
-.lifi-widget .MuiMenuItem-root {
-  background: rgba(17, 24, 39, 0.9) !important;
-  color: #ffffff !important;
-}
-
-.lifi-widget .MuiMenuItem-root:hover {
-  background: rgba(0, 212, 255, 0.1) !important;
-}
-
-/* Chips */
-.lifi-widget .MuiChip-root {
-  background: rgba(0, 212, 255, 0.1) !important;
-  color: #00D4FF !important;
-  border: 1px solid rgba(0, 212, 255, 0.3) !important;
 }
 
 /* Progress indicators */
-.lifi-widget .MuiLinearProgress-root {
-  background: rgba(0, 212, 255, 0.1) !important;
-}
-
 .lifi-widget .MuiLinearProgress-bar {
   background: linear-gradient(90deg, #00D4FF, #4285F4) !important;
 }
@@ -724,145 +577,36 @@ body.aquaswap-page {
   color: #00D4FF !important;
 }
 
-/* Tooltips */
-.lifi-widget .MuiTooltip-tooltip {
-  background: rgba(17, 24, 39, 0.95) !important;
-  color: #ffffff !important;
-  border: 1px solid rgba(0, 212, 255, 0.3) !important;
-  backdrop-filter: blur(8px) !important;
+/* Tab indicators */
+.lifi-widget .MuiTabs-indicator {
+  background: #00D4FF !important;
 }
 
-/* Backdrop/overlay */
-.lifi-widget .MuiBackdrop-root {
-  background: rgba(17, 24, 39, 0.8) !important;
-  backdrop-filter: blur(4px) !important;
+.lifi-widget .MuiTab-root.Mui-selected {
+  color: #00D4FF !important;
 }
 
-/* Scrollbars */
-.lifi-widget ::-webkit-scrollbar {
-  width: 8px !important;
+/* Input focus states */
+.lifi-widget .MuiInputBase-root.Mui-focused {
+  border-color: #00D4FF !important;
 }
 
-.lifi-widget ::-webkit-scrollbar-track {
-  background: rgba(17, 24, 39, 0.5) !important;
-  border-radius: 4px !important;
+.lifi-widget .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #00D4FF !important;
 }
 
-.lifi-widget ::-webkit-scrollbar-thumb {
-  background: rgba(0, 212, 255, 0.3) !important;
-  border-radius: 4px !important;
+/* Links and interactive text */
+.lifi-widget a {
+  color: #00D4FF !important;
 }
 
-.lifi-widget ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 212, 255, 0.5) !important;
+.lifi-widget a:hover {
+  color: #4285F4 !important;
 }
 
-/* Route cards and step indicators */
-.lifi-widget [class*="route"],
-.lifi-widget [class*="step"] {
-  background: rgba(17, 24, 39, 0.8) !important;
-  border: 1px solid rgba(0, 212, 255, 0.2) !important;
-  border-radius: 12px !important;
-}
-
-/* Success states */
-.lifi-widget [class*="success"],
-.lifi-widget .Mui-success {
-  color: #10b981 !important;
-}
-
-/* Error states */
-.lifi-widget [class*="error"],
-.lifi-widget .Mui-error {
-  color: #ef4444 !important;
-}
-
-/* Warning states */
-.lifi-widget [class*="warning"],
-.lifi-widget .Mui-warning {
-  color: #f59e0b !important;
-}
-
-/* Skeleton loading */
-.lifi-widget .MuiSkeleton-root {
+/* Chips and badges */
+.lifi-widget .MuiChip-root {
   background: rgba(0, 212, 255, 0.1) !important;
-}
-
-/* Paper components */
-.lifi-widget .MuiPaper-root {
-  background: rgba(31, 41, 55, 0.9) !important;
-  border: 1px solid rgba(0, 212, 255, 0.2) !important;
-  backdrop-filter: blur(8px) !important;
-}
-
-/* Dialog/Modal styling */
-.lifi-widget .MuiDialog-paper {
-  background: rgba(31, 41, 55, 0.95) !important;
-  border: 1px solid rgba(0, 212, 255, 0.3) !important;
-  border-radius: 20px !important;
-  box-shadow: 
-    0 20px 40px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(0, 212, 255, 0.2) !important;
-}
-
-/* Specific widget elements with data attributes */
-.lifi-widget [data-testid*="button"],
-.lifi-widget [data-testid*="input"],
-.lifi-widget [data-testid*="card"] {
-  transition: all 0.3s ease !important;
-}
-
-/* Hover effects for interactive elements */
-.lifi-widget [role="button"]:hover,
-.lifi-widget [class*="clickable"]:hover {
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2) !important;
-}
-
-/* Widget glow effect */
-.lifi-widget::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, #00D4FF, #4285F4, #00D4FF);
-  background-size: 200% 100%;
-  animation: shimmer 3s ease-in-out infinite;
-  border-radius: 20px 20px 0 0;
-  z-index: 1;
-}
-
-/* Mobile responsiveness for widget */
-@media (max-width: 600px) {
-  .lifi-widget {
-    margin: 0 5px !important;
-    border-radius: 16px !important;
-  }
-  
-  .lifi-widget .MuiButton-root {
-    font-size: 0.875rem !important;
-    padding: 8px 16px !important;
-  }
-}
-
-/* Dark theme specific overrides */
-.lifi-widget [class*="dark"] {
-  background: rgba(17, 24, 39, 0.9) !important;
-}
-
-/* Ensure text readability */
-.lifi-widget * {
-  text-shadow: none !important;
-}
-
-.lifi-widget .MuiTypography-h1,
-.lifi-widget .MuiTypography-h2,
-.lifi-widget .MuiTypography-h3,
-.lifi-widget .MuiTypography-h4,
-.lifi-widget .MuiTypography-h5,
-.lifi-widget .MuiTypography-h6 {
-  color: #ffffff !important;
-  font-weight: 600 !important;
+  color: #00D4FF !important;
+  border-color: rgba(0, 212, 255, 0.3) !important;
 }
