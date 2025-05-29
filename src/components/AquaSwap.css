@@ -162,6 +162,8 @@
   z-index: 1;
 }
 
+/* Removed .lifi-iframe styles - no longer using iframe, using LiFi widget component instead */
+/*
 .lifi-iframe {
   width: 100%;
   min-width: 100%;
@@ -174,6 +176,7 @@
   position: relative;
   z-index: 2;
 }
+*/
 
 .powered-by {
   display: flex;
@@ -278,10 +281,13 @@
     font-size: 0.9rem;
   }
   
+  /* Removed iframe styles - using LiFi widget component now */
+  /*
   .lifi-iframe {
     height: 600px;
     border-radius: 8px;
   }
+  */
   
   .powered-by {
     padding-top: 15px;
@@ -309,9 +315,12 @@
     width: calc(100% - 6px);
   }
   
+  /* Removed iframe styles - using LiFi widget component now */
+  /*
   .lifi-iframe {
     height: 500px;
   }
+  */
   
   .aquaswap-header h1 {
     font-size: 1.5rem;
@@ -330,9 +339,12 @@
     padding: 20px;
   }
   
+  /* Removed iframe styles - using LiFi widget component now */
+  /*
   .lifi-iframe {
     height: 650px;
   }
+  */
 }
 
 /* Desktop enhancements */
@@ -341,9 +353,12 @@
     max-width: 520px;
   }
   
+  /* Removed iframe styles - using LiFi widget component now */
+  /*
   .lifi-iframe {
     height: 700px;
   }
+  */
   
   .aquaswap-card:hover {
     transform: translateY(-2px);
