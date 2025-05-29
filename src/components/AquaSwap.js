@@ -32,7 +32,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     };
   }, []);
 
-  // LI.FI Widget configuration - simplified to preserve wallet functionality
+  // LI.FI Widget configuration - with mobile wallet adapter support
   const widgetConfig = {
     variant: "compact",
     appearance: "dark",
@@ -46,6 +46,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     },
     // Hide branding but keep all wallet functionality
     hiddenUI: ["poweredBy"],
+    // Enable URL building for mobile wallet deep linking
+    buildUrl: true,
     // Simple theme configuration
     theme: {
       container: {
