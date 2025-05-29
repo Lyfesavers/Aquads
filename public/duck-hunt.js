@@ -239,6 +239,16 @@
   
   // Initialize game
   function init() {
+    // Don't run duck hunt on AquaSwap page as it interferes with mobile wallet interactions
+    if (window.location.pathname === '/aquaswap' || window.location.hash === '#/aquaswap') {
+      return;
+    }
+    
+    // Don't run if already initialized
+    if (gameStarted) {
+      return;
+    }
+    
     // Style game container
     gameContainer.style.position = 'fixed';
     gameContainer.style.top = '0';
@@ -303,9 +313,11 @@
     }
     
     // Add event listeners to unlock audio
-    document.addEventListener('click', unlockAudio);
-    document.addEventListener('touchstart', unlockAudio);
-    document.addEventListener('keydown', unlockAudio);
+    if (window.location.pathname !== '/aquaswap' && window.location.hash !== '#/aquaswap') {
+      document.addEventListener('click', unlockAudio);
+      document.addEventListener('touchstart', unlockAudio);
+      document.addEventListener('keydown', unlockAudio);
+    }
     
     // Add debug mode that can be activated with Shift+D
     let debugMode = false;
