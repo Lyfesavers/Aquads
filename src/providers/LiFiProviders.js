@@ -1,11 +1,7 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-// Sui wallet imports
-import { createNetworkConfig, SuiClientProvider, WalletProvider } from '@mysten/dapp-kit';
-import { getFullnodeUrl } from '@mysten/sui/client';
-
-// Create a query client for React Query
+// Create a query client for React Query (required by LiFi)
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -17,21 +13,10 @@ const queryClient = new QueryClient({
   },
 });
 
-// Sui network configuration
-const { networkConfig } = createNetworkConfig({
-  localnet: { url: getFullnodeUrl('localnet') },
-  mainnet: { url: getFullnodeUrl('mainnet') },
-  testnet: { url: getFullnodeUrl('testnet') },
-});
-
 export const LiFiProviders = ({ children }) => {
   return (
     <QueryClientProvider client={queryClient}>
-      <SuiClientProvider networks={networkConfig} defaultNetwork="mainnet">
-        <WalletProvider>
-          {children}
-        </WalletProvider>
-      </SuiClientProvider>
+      {children}
     </QueryClientProvider>
   );
 };
