@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import { LiFiWidget, WidgetConfig } from '@lifi/widget';
+import { LiFiWidget } from '@lifi/widget';
 import logger from '../utils/logger';
 import './AquaSwap.css';
 
@@ -88,10 +88,13 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     fee: FEE_PERCENTAGE,
     feeConfig: {
       fee: FEE_PERCENTAGE,
-      feeRecipient: ETH_FEE_WALLET,
+      feeRecipient: ETH_FEE_WALLET || "0x0000000000000000000000000000000000000000",
     },
     hiddenUI: ["poweredBy"],
     buildUrl: true,
+    // Disable problematic features that might cause build issues
+    disabledChains: [], // Enable all chains
+    enabledChains: undefined, // Let LiFi handle chain selection
   };
 
   // Loading state
