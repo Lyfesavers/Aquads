@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { LiFiWidget } from '@lifi/widget';
 import logger from '../utils/logger';
+import BannerDisplay from './BannerDisplay';
 import './AquaSwap.css';
 
 // Constants - using the same fee structure as the current swap
@@ -100,6 +101,9 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       >
         ← Back to Main
       </button>
+
+      {/* Banner Display */}
+      <BannerDisplay />
 
       {/* Simple title */}
       <div className="page-title">
