@@ -93,9 +93,9 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       solanaFeeRecipient: SOLANA_FEE_WALLET,
       suiFeeRecipient: SUI_FEE_WALLET,
     },
-    hiddenUI: ["poweredBy"],
+    hiddenUI: ["poweredBy"], // Only hide powered by, show all wallet UI elements
     buildUrl: true,
-    // Show wallet management UI prominently
+    // Wallet management configuration
     walletManagement: {
       connect: true,
       disconnect: true,
