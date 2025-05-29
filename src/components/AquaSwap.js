@@ -98,10 +98,10 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     // Wallet connection configuration
     walletConfig: {
       onConnectRequested: (requiredChainId) => {
-        console.log('Wallet connection requested for chain:', requiredChainId);
+        logger.log('Wallet connection requested for chain:', requiredChainId);
       },
       onSwitchChainRequested: (requiredChainId) => {
-        console.log('Chain switch requested to:', requiredChainId);
+        logger.log('Chain switch requested to:', requiredChainId);
       }
     },
     // Disable problematic features that might cause build issues
@@ -123,7 +123,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                 width="32" 
                 height="32"
               />
-              AquaSwap - UNDER CONSTRUCTION
+              AquaSwap
             </h1>
             <p className="aquaswap-subtitle">The Ultimate Cross-Chain DEX</p>
           </div>
