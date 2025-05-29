@@ -32,21 +32,19 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     };
   }, []);
 
-  // LI.FI Widget configuration - full wallet management
+  // LI.FI Widget configuration - minimal for full functionality
   const widgetConfig = {
     variant: "compact",
     appearance: "dark",
     integrator: "aquaswap",
-    // Let LiFi handle all wallet management - no walletConfig at all
     fee: FEE_PERCENTAGE,
     feeConfig: {
       fee: FEE_PERCENTAGE,
       feeRecipient: ETH_FEE_WALLET || "0x0000000000000000000000000000000000000000",
-      // Multi-chain fee recipients
       solanaFeeRecipient: SOLANA_FEE_WALLET,
       suiFeeRecipient: SUI_FEE_WALLET,
     },
-    // Only hide poweredBy, keep all wallet-related UI visible
+    // Hide branding but keep all wallet functionality
     hiddenUI: ["poweredBy"],
   };
 
