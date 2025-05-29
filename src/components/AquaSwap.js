@@ -32,15 +32,12 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     };
   }, []);
 
-  // LI.FI Widget configuration - force internal wallet management
+  // LI.FI Widget configuration - full wallet management
   const widgetConfig = {
     variant: "compact",
     appearance: "dark",
     integrator: "aquaswap",
-    // Force the widget to show internal wallet management even with WagmiProvider
-    walletConfig: {
-      usePartialWalletManagement: false,
-    },
+    // Let LiFi handle all wallet management - no walletConfig at all
     fee: FEE_PERCENTAGE,
     feeConfig: {
       fee: FEE_PERCENTAGE,
@@ -49,7 +46,12 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       solanaFeeRecipient: SOLANA_FEE_WALLET,
       suiFeeRecipient: SUI_FEE_WALLET,
     },
+    // Only hide poweredBy, keep all wallet-related UI visible
     hiddenUI: ["poweredBy"],
+    // Ensure no UI elements are disabled
+    disabledUI: [],
+    // Ensure wallet menu is not hidden
+    requiredUI: [],
   };
 
   // Loading state
@@ -120,7 +122,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         <p>The Ultimate Cross-Chain DEX</p>
       </div>
     
-      {/* LiFi Widget - Direct on page */}
+      {/* LiFi Widget - Full wallet management */}
       <div className="lifi-widget">
         <LiFiWidget integrator="aquaswap" config={widgetConfig} />
       </div>
