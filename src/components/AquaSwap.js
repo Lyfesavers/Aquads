@@ -48,10 +48,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     },
     // Only hide poweredBy, keep all wallet-related UI visible
     hiddenUI: ["poweredBy"],
-    // Ensure no UI elements are disabled
-    disabledUI: [],
-    // Ensure wallet menu is not hidden
-    requiredUI: [],
   };
 
   // Loading state
