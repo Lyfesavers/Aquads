@@ -30,13 +30,13 @@ const config = createConfig({
       metadata: {
         name: 'AquaSwap',
         description: 'The Ultimate Cross-Chain DEX',
-        url: 'https://aquaswap.com',
-        icons: ['https://aquaswap.com/favicon.ico']
+        url: 'https://www.aquads.xyz',
+        icons: ['https://www.aquads.xyz/favicon.ico']
       }
     }),
     coinbaseWallet({
       appName: 'AquaSwap',
-      appLogoUrl: 'https://aquaswap.com/favicon.ico'
+      appLogoUrl: 'https://www.aquads.xyz/favicon.ico'
     }),
   ],
   transports: {

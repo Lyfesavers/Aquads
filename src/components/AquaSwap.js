@@ -89,9 +89,21 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     feeConfig: {
       fee: FEE_PERCENTAGE,
       feeRecipient: ETH_FEE_WALLET || "0x0000000000000000000000000000000000000000",
+      // Multi-chain fee recipients
+      solanaFeeRecipient: SOLANA_FEE_WALLET,
+      suiFeeRecipient: SUI_FEE_WALLET,
     },
     hiddenUI: ["poweredBy"],
     buildUrl: true,
+    // Wallet connection configuration
+    walletConfig: {
+      onConnectRequested: (requiredChainId) => {
+        console.log('Wallet connection requested for chain:', requiredChainId);
+      },
+      onSwitchChainRequested: (requiredChainId) => {
+        console.log('Chain switch requested to:', requiredChainId);
+      }
+    },
     // Disable problematic features that might cause build issues
     disabledChains: [], // Enable all chains
     enabledChains: undefined, // Let LiFi handle chain selection
@@ -111,7 +123,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                 width="32" 
                 height="32"
               />
-              AquaSwap
+              AquaSwap - UNDER CONSTRUCTION
             </h1>
             <p className="aquaswap-subtitle">The Ultimate Cross-Chain DEX</p>
           </div>
