@@ -31,7 +31,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     };
   }, []);
 
-  // LI.FI Widget configuration - simplified to work with Reown AppKit
+  // LI.FI Widget configuration - simplified to avoid iframe-like rendering
   const widgetConfig = {
     variant: "compact",
     appearance: "dark",
@@ -46,8 +46,23 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     },
     hiddenUI: ["poweredBy"],
     buildUrl: true,
-    // Let the widget use the Reown AppKit wallet providers automatically
-    // Remove custom wallet management to avoid conflicts
+    // Explicit wallet management configuration
+    walletManagement: {
+      connect: true,
+      disconnect: true,
+    },
+    // Wallet connection configuration
+    walletConfig: {
+      onConnectRequested: (requiredChainId) => {
+        logger.log('Wallet connection requested for chain:', requiredChainId);
+      },
+      onSwitchChainRequested: (requiredChainId) => {
+        logger.log('Chain switch requested to:', requiredChainId);
+      }
+    },
+    // Disable problematic features that might cause build issues
+    disabledChains: [], // Enable all chains
+    enabledChains: undefined, // Let LiFi handle chain selection
   };
 
   // Loading state
@@ -113,11 +128,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           AquaSwap
         </h1>
         <p>The Ultimate Cross-Chain DEX</p>
-      </div>
-
-      {/* Wallet Connect Button for testing */}
-      <div className="wallet-test">
-        <appkit-button />
       </div>
     
       {/* LiFi Widget - Direct on page */}
