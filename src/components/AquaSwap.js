@@ -32,12 +32,15 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     };
   }, []);
 
-  // LI.FI Widget configuration - let widget handle wallet management
+  // LI.FI Widget configuration - force internal wallet management
   const widgetConfig = {
     variant: "compact",
     appearance: "dark",
     integrator: "aquaswap",
-    // Remove walletConfig to let widget show all wallet options by default
+    // Force the widget to show internal wallet management even with WagmiProvider
+    walletConfig: {
+      usePartialWalletManagement: true,
+    },
     fee: FEE_PERCENTAGE,
     feeConfig: {
       fee: FEE_PERCENTAGE,
