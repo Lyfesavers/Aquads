@@ -533,78 +533,27 @@ body.aquaswap-page {
   overflow-y: auto !important;
 }
 
-/* ===== LiFi Widget Color Theme Override ===== */
-/* Simple color changes to match AquaSwap cyan/blue theme */
-/* TEMPORARILY DISABLED TO TEST MOBILE WALLET ISSUES */
+/* ===== LiFi Widget Minimal Theme ===== */
+/* Basic styling to match website without interfering with functionality */
 
-/*
-.lifi-widget .MuiButton-contained,
-.lifi-widget [class*="contained"] {
-  background: linear-gradient(135deg, #00D4FF, #4285F4) !important;
-  color: #111827 !important;
+/* Basic color theming - no !important to avoid conflicts */
+.lifi-widget .MuiButton-contained {
+  background: linear-gradient(135deg, #00D4FF, #4285F4);
+  color: #111827;
 }
 
-.lifi-widget .MuiButton-contained:hover {
-  background: linear-gradient(135deg, #4285F4, #00D4FF) !important;
-}
-
-.lifi-widget .MuiButton-outlined,
-.lifi-widget [class*="outlined"] {
-  border-color: #00D4FF !important;
-  color: #00D4FF !important;
-}
-
-.lifi-widget .MuiButton-outlined:hover {
-  background: rgba(0, 212, 255, 0.1) !important;
-  border-color: #4285F4 !important;
-}
-
-.lifi-widget .MuiIconButton-root {
-  color: #00D4FF !important;
-}
-
-.lifi-widget .MuiIconButton-root:hover {
-  background: rgba(0, 212, 255, 0.1) !important;
-}
-
-.lifi-widget .MuiLinearProgress-bar {
-  background: linear-gradient(90deg, #00D4FF, #4285F4) !important;
-}
-
-.lifi-widget .MuiCircularProgress-root {
-  color: #00D4FF !important;
+.lifi-widget .MuiButton-outlined {
+  border-color: #00D4FF;
+  color: #00D4FF;
 }
 
 .lifi-widget .MuiTabs-indicator {
-  background: #00D4FF !important;
-}
-
-.lifi-widget .MuiTab-root.Mui-selected {
-  color: #00D4FF !important;
-}
-
-.lifi-widget .MuiInputBase-root.Mui-focused {
-  border-color: #00D4FF !important;
-}
-
-.lifi-widget .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-  border-color: #00D4FF !important;
+  background: #00D4FF;
 }
 
 .lifi-widget a {
-  color: #00D4FF !important;
+  color: #00D4FF;
 }
-
-.lifi-widget a:hover {
-  color: #4285F4 !important;
-}
-
-.lifi-widget .MuiChip-root {
-  background-color: rgba(0, 212, 255, 0.1) !important;
-  border: 1px solid rgba(0, 212, 255, 0.3) !important;
-  color: #00D4FF !important;
-}
-*/
 
 /* Mobile wallet adapter improvements */
 /* TEMPORARILY DISABLED TO TEST MOBILE WALLET ISSUES */
