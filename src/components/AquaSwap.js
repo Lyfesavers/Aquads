@@ -105,18 +105,18 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
   // Main AquaSwap interface
   return (
-    <div className="aquaswap-container">
-      {/* AquaSwap Branding Header */}
-      <div className="aquaswap-branding">
-        <div className="aquaswap-nav">
-          <button 
-            className="back-to-main-button"
-            onClick={() => navigate('/')}
-            title="Back to Main Page"
-          >
-            ← Back to Main
-          </button>
-        </div>
+    <div className="aquaswap-page">
+      {/* Simple back button */}
+      <button 
+        className="back-to-main-button"
+        onClick={() => navigate('/')}
+        title="Back to Main Page"
+      >
+        ← Back to Main
+      </button>
+
+      {/* Simple title */}
+      <div className="page-title">
         <h1>
           <img 
             src="/AquaSwap.svg" 
@@ -127,22 +127,15 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           />
           AquaSwap
         </h1>
-        <p className="aquaswap-subtitle">The Ultimate Cross-Chain DEX</p>
+        <p>The Ultimate Cross-Chain DEX</p>
       </div>
     
-      {/* LiFi Widget - No container styling */}
-      <div className="widget-wrapper">
-        <LiFiWidget integrator="aquaswap" config={widgetConfig} />
-      </div>
+      {/* LiFi Widget - Direct on page */}
+      <LiFiWidget integrator="aquaswap" config={widgetConfig} />
 
-      {/* AquaSwap Footer */}
-      <div className="aquaswap-footer">
-        <div className="fee-disclaimer">
-          <p>✨ AquaSwap</p>
-        </div>
-        <p>
-          Swap and bridge across 38+ blockchains with the best rates and lowest fees.
-        </p>
+      {/* Simple footer text */}
+      <div className="simple-footer">
+        <p>✨ Swap and bridge across 38+ blockchains with the best rates and lowest fees.</p>
       </div>
     </div>
   );

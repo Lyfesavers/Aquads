@@ -460,3 +460,75 @@ html, body {
   font-size: 0.875rem;
   color: #9ca3af;
 }
+
+/* Simple AquaSwap page styling - no cards or containers */
+.aquaswap-page {
+  min-height: 100vh;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.95), rgba(17, 24, 39, 0.8));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.back-to-main-button {
+  align-self: flex-start;
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 8px;
+  color: #00D4FF;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 8px 16px;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  outline: none;
+}
+
+.back-to-main-button:hover {
+  background: rgba(0, 212, 255, 0.2);
+  border-color: rgba(0, 212, 255, 0.5);
+}
+
+.page-title {
+  text-align: center;
+  color: white;
+}
+
+.page-title h1 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 2rem;
+  margin: 0 0 8px 0;
+  color: #fff;
+}
+
+.page-title p {
+  color: #00D4FF;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.aquaswap-logo {
+  filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.5));
+}
+
+.simple-footer {
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.875rem;
+  margin-top: 20px;
+}
+
+.simple-footer p {
+  margin: 0;
+}
+
+/* Ensure proper scrolling */
+body.aquaswap-page {
+  overflow-y: auto !important;
+}
