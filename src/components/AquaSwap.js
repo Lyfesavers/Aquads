@@ -94,9 +94,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       feeRecipient: ETH_FEE_WALLET,
       solanaFeeRecipient: SOLANA_FEE_WALLET,
       suiFeeRecipient: SUI_FEE_WALLET,
-      hiddenUI: ["PoweredBy", "language", "toAddress"],
-      hidePoweredBy: true,
-      hideFooter: true
+      hiddenUI: ["poweredBy"],
     };
 
     // Encode the config for URL
