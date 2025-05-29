@@ -1,5 +1,59 @@
 // Duck Hunt Background Game
 (function() {
+  // Completely prevent duck hunt from running on AquaSwap page
+  function isAquaSwapPage() {
+    // Check multiple ways the AquaSwap page could be identified
+    const path = window.location.pathname;
+    const hash = window.location.hash;
+    const url = window.location.href;
+    
+    // Check for various AquaSwap page indicators
+    if (path === '/aquaswap' || 
+        hash === '#/aquaswap' || 
+        hash.includes('/aquaswap') ||
+        url.includes('/aquaswap') ||
+        path.includes('aquaswap')) {
+      return true;
+    }
+    
+    // Also check if we're in a React Router environment and the current route is AquaSwap
+    if (window.location.hash.startsWith('#/') && window.location.hash.includes('aquaswap')) {
+      return true;
+    }
+    
+    return false;
+  }
+  
+  // Exit immediately if on AquaSwap page
+  if (isAquaSwapPage()) {
+    console.log('Duck Hunt: Skipping initialization on AquaSwap page');
+    return;
+  }
+  
+  // Also listen for route changes and disable if navigating to AquaSwap
+  let routeCheckInterval = setInterval(() => {
+    if (isAquaSwapPage()) {
+      console.log('Duck Hunt: AquaSwap page detected, stopping game');
+      if (typeof stopGame === 'function') {
+        stopGame();
+      }
+      // Remove all duck hunt elements
+      const gameContainer = document.querySelector('[style*="z-index: 9998"]');
+      if (gameContainer) {
+        gameContainer.remove();
+      }
+      const soundButton = document.getElementById('duck-hunt-sound-button');
+      if (soundButton) {
+        soundButton.remove();
+      }
+      const scoreDisplay = document.getElementById('duck-score');
+      if (scoreDisplay) {
+        scoreDisplay.remove();
+      }
+      clearInterval(routeCheckInterval);
+    }
+  }, 1000);
+  
   // Game container
   const gameContainer = document.createElement('div');
   

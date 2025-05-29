@@ -166,7 +166,31 @@
         });
       });
     </script>
-    <!-- Duck Hunt Game -->
-    <script src="%PUBLIC_URL%/duck-hunt.js"></script>
+    <!-- Duck Hunt Game - Load conditionally -->
+    <script>
+      // Only load duck hunt if not on AquaSwap page
+      function shouldLoadDuckHunt() {
+        const path = window.location.pathname;
+        const hash = window.location.hash;
+        const url = window.location.href;
+        
+        // Don't load on AquaSwap page
+        if (path === '/aquaswap' || 
+            hash === '#/aquaswap' || 
+            hash.includes('/aquaswap') ||
+            url.includes('/aquaswap') ||
+            path.includes('aquaswap')) {
+          return false;
+        }
+        
+        return true;
+      }
+      
+      if (shouldLoadDuckHunt()) {
+        const script = document.createElement('script');
+        script.src = '%PUBLIC_URL%/duck-hunt.js';
+        document.body.appendChild(script);
+      }
+    </script>
   </body>
 </html>
