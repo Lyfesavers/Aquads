@@ -31,11 +31,15 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     };
   }, []);
 
-  // LI.FI Widget configuration - simplified to avoid iframe-like rendering
+  // LI.FI Widget configuration - force internal wallet management
   const widgetConfig = {
     variant: "compact",
     appearance: "dark",
     integrator: "aquaswap",
+    // Force the widget to show internal wallet management even with WagmiProvider
+    walletConfig: {
+      usePartialWalletManagement: true,
+    },
     fee: FEE_PERCENTAGE,
     feeConfig: {
       fee: FEE_PERCENTAGE,
@@ -45,24 +49,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       suiFeeRecipient: SUI_FEE_WALLET,
     },
     hiddenUI: ["poweredBy"],
-    buildUrl: true,
-    // Explicit wallet management configuration
-    walletManagement: {
-      connect: true,
-      disconnect: true,
-    },
-    // Wallet connection configuration
-    walletConfig: {
-      onConnectRequested: (requiredChainId) => {
-        logger.log('Wallet connection requested for chain:', requiredChainId);
-      },
-      onSwitchChainRequested: (requiredChainId) => {
-        logger.log('Chain switch requested to:', requiredChainId);
-      }
-    },
-    // Disable problematic features that might cause build issues
-    disabledChains: [], // Enable all chains
-    enabledChains: undefined, // Let LiFi handle chain selection
   };
 
   // Loading state
