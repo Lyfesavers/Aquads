@@ -32,7 +32,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     };
   }, []);
 
-  // LI.FI Widget configuration - minimal but functional
+  // LI.FI Widget configuration - following official mobile wallet documentation
   const widgetConfig = {
     integrator: "aquaswap",
     fee: FEE_PERCENTAGE,
@@ -46,17 +46,15 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     hiddenUI: ["poweredBy"],
     // Basic dark appearance
     appearance: "dark",
-    // WalletConnect configuration for mobile wallet support
+    // Enable URL building for mobile deep linking
+    buildUrl: true,
+    // Simplified wallet configuration for mobile support
     walletConfig: {
       walletConnect: {
         projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || "2f5a2c8b8f4e6d3a1b9c7e5f8a2d4c6b",
-        metadata: {
-          name: "AquaSwap",
-          description: "Cross-chain DEX powered by LiFi",
-          url: "https://aquads.xyz",
-          icons: ["https://aquads.xyz/AquaSwap.svg"]
-        }
-      }
+      },
+      // Enable partial wallet management for better mobile compatibility
+      usePartialWalletManagement: true,
     },
     // Minimal theme
     theme: {
