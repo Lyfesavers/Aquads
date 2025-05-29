@@ -528,6 +528,12 @@ html, body {
   margin: 0;
 }
 
+.wallet-test {
+  margin: 20px 0;
+  display: flex;
+  justify-content: center;
+}
+
 /* Ensure proper scrolling */
 body.aquaswap-page {
   overflow-y: auto !important;

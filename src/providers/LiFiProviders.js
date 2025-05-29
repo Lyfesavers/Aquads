@@ -1,8 +1,9 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { WagmiProvider, createConfig, http } from 'wagmi';
-import { mainnet, polygon, arbitrum, optimism, base, bsc, avalanche } from 'wagmi/chains';
-import { injected, walletConnect, coinbaseWallet } from 'wagmi/connectors';
+import { WagmiProvider } from 'wagmi';
+import { createAppKit } from '@reown/appkit/react';
+import { mainnet, polygon, arbitrum, optimism, base, bsc, avalanche } from '@reown/appkit/networks';
+import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
 
 // Sui wallet imports
 import { createNetworkConfig, SuiClientProvider, WalletProvider } from '@mysten/dapp-kit';
@@ -20,35 +21,36 @@ const queryClient = new QueryClient({
   },
 });
 
-// Create Wagmi config with more comprehensive chain support
-const config = createConfig({
-  chains: [mainnet, polygon, arbitrum, optimism, base, bsc, avalanche],
-  connectors: [
-    injected(),
-    walletConnect({
-      projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'your-project-id',
-      metadata: {
-        name: 'AquaSwap',
-        description: 'The Ultimate Cross-Chain DEX',
-        url: 'https://www.aquads.xyz',
-        icons: ['https://www.aquads.xyz/favicon.ico']
-      }
-    }),
-    coinbaseWallet({
-      appName: 'AquaSwap',
-      appLogoUrl: 'https://www.aquads.xyz/favicon.ico'
-    }),
-  ],
-  transports: {
-    [mainnet.id]: http(),
-    [polygon.id]: http(),
-    [arbitrum.id]: http(),
-    [optimism.id]: http(),
-    [base.id]: http(),
-    [bsc.id]: http(),
-    [avalanche.id]: http(),
-  },
-  ssr: false, // Disable SSR for client-side only
+// Get projectId from environment variable
+const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'your-project-id';
+
+// Create metadata object
+const metadata = {
+  name: 'AquaSwap',
+  description: 'The Ultimate Cross-Chain DEX',
+  url: 'https://www.aquads.xyz',
+  icons: ['https://www.aquads.xyz/AquaSwap.svg']
+};
+
+// Set the networks - using more comprehensive chain support
+const networks = [mainnet, polygon, arbitrum, optimism, base, bsc, avalanche];
+
+// Create Wagmi Adapter
+const wagmiAdapter = new WagmiAdapter({
+  networks,
+  projectId,
+  ssr: false // Disable SSR for client-side only
+});
+
+// Create AppKit modal
+createAppKit({
+  adapters: [wagmiAdapter],
+  networks,
+  projectId,
+  metadata,
+  features: {
+    analytics: true // Optional - defaults to your Cloud configuration
+  }
 });
 
 // Sui network configuration
@@ -61,7 +63,7 @@ const { networkConfig } = createNetworkConfig({
 export const LiFiProviders = ({ children }) => {
   return (
     <QueryClientProvider client={queryClient}>
-      <WagmiProvider config={config}>
+      <WagmiProvider config={wagmiAdapter.wagmiConfig}>
         <SuiClientProvider networks={networkConfig} defaultNetwork="mainnet">
           <WalletProvider>
             {children}
