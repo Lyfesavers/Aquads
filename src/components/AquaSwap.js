@@ -16,21 +16,40 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  // Detect mobile device for mobile wallet functionality
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
   // Initialize on component mount
   useEffect(() => {
     // Add class to body to enable scrolling
     document.body.classList.add('aquaswap-page');
+    
+    // Add mobile classes for mobile wallet detection
+    if (isMobile) {
+      document.body.classList.add('mobile-device');
+    }
+    if (isAndroid) {
+      document.body.classList.add('android-device');
+    }
+    if (isIOS) {
+      document.body.classList.add('ios-device');
+    }
     
     // Load widget after a short delay
     setTimeout(() => {
       setLoading(false);
     }, 100);
 
-    // Cleanup: remove class when component unmounts
+    // Cleanup: remove classes when component unmounts
     return () => {
       document.body.classList.remove('aquaswap-page');
+      document.body.classList.remove('mobile-device');
+      document.body.classList.remove('android-device');
+      document.body.classList.remove('ios-device');
     };
-  }, []);
+  }, [isMobile, isAndroid, isIOS]);
 
   // LI.FI Widget configuration - with mobile wallet adapter support
   const widgetConfig = {
@@ -48,6 +67,25 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     hiddenUI: ["poweredBy"],
     // Enable URL building for mobile wallet deep linking
     buildUrl: true,
+    // Mobile-specific configuration
+    ...(isMobile && {
+      // Enable mobile wallet detection
+      walletConfig: {
+        // Enable mobile wallet adapter for Solana
+        onConnect: () => {
+          logger.log('Mobile wallet connected');
+          if (showNotification) {
+            showNotification('Mobile wallet connected successfully!', 'success');
+          }
+        },
+      },
+      // Container styling for mobile
+      containerStyle: {
+        width: '100%',
+        maxWidth: '100%',
+        margin: '0 auto',
+      },
+    }),
     // Simple theme configuration
     theme: {
       container: {
