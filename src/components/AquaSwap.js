@@ -67,25 +67,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     hiddenUI: ["poweredBy"],
     // Enable URL building for mobile wallet deep linking
     buildUrl: true,
-    // Mobile-specific configuration
-    ...(isMobile && {
-      // Enable mobile wallet detection
-      walletConfig: {
-        // Enable mobile wallet adapter for Solana
-        onConnect: () => {
-          logger.log('Mobile wallet connected');
-          if (showNotification) {
-            showNotification('Mobile wallet connected successfully!', 'success');
-          }
-        },
-      },
-      // Container styling for mobile
-      containerStyle: {
-        width: '100%',
-        maxWidth: '100%',
-        margin: '0 auto',
-      },
-    }),
     // Simple theme configuration
     theme: {
       container: {
