@@ -33,7 +33,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
   // LI.FI Widget configuration with custom theme matching website colors
   const widgetConfig = {
-    variant: "expandable",
+    variant: "compact",
     appearance: "dark",
     theme: {
       colorSchemes: {
