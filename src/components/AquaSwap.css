@@ -396,3 +396,67 @@ html, body {
 .aquaswap-header h1 {
   animation: glow 4s ease-in-out infinite;
 }
+
+/* AquaSwap Branding Header */
+.aquaswap-branding {
+  text-align: center;
+  margin-bottom: 24px;
+  padding: 24px;
+  background: rgba(31, 41, 55, 0.9);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(0, 212, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  position: relative;
+}
+
+.aquaswap-branding::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #00D4FF, #4285F4, #00D4FF);
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+.aquaswap-branding h1 {
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 16px 0 8px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+  animation: glow 4s ease-in-out infinite;
+}
+
+/* Widget Wrapper - Minimal styling */
+.widget-wrapper {
+  margin: 20px 0;
+  /* Let the widget render with its own styling */
+}
+
+/* AquaSwap Footer */
+.aquaswap-footer {
+  text-align: center;
+  margin-top: 24px;
+  padding: 20px 24px;
+  background: rgba(31, 41, 55, 0.9);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(0, 212, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  font-size: 0.875rem;
+  color: #9ca3af;
+}

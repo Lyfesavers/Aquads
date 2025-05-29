@@ -106,41 +106,43 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   // Main AquaSwap interface
   return (
     <div className="aquaswap-container">
-      <div className="aquaswap-card">
-        <div className="aquaswap-header">
-          <div className="aquaswap-nav">
-            <button 
-              className="back-to-main-button"
-              onClick={() => navigate('/')}
-              title="Back to Main Page"
-            >
-              ← Back to Main
-            </button>
-          </div>
-          <h1>
-            <img 
-              src="/AquaSwap.svg" 
-              alt="AquaSwap" 
-              className="aquaswap-logo" 
-              width="32" 
-              height="32"
-            />
-            AquaSwap
-          </h1>
-          <p className="aquaswap-subtitle">The Ultimate Cross-Chain DEX</p>
+      {/* AquaSwap Branding Header */}
+      <div className="aquaswap-branding">
+        <div className="aquaswap-nav">
+          <button 
+            className="back-to-main-button"
+            onClick={() => navigate('/')}
+            title="Back to Main Page"
+          >
+            ← Back to Main
+          </button>
         </div>
-      
-        {/* LiFi Widget without container styling */}
+        <h1>
+          <img 
+            src="/AquaSwap.svg" 
+            alt="AquaSwap" 
+            className="aquaswap-logo" 
+            width="32" 
+            height="32"
+          />
+          AquaSwap
+        </h1>
+        <p className="aquaswap-subtitle">The Ultimate Cross-Chain DEX</p>
+      </div>
+    
+      {/* LiFi Widget - No container styling */}
+      <div className="widget-wrapper">
         <LiFiWidget integrator="aquaswap" config={widgetConfig} />
+      </div>
 
-        <div className="powered-by">
-          <div className="fee-disclaimer">
-            <p>✨ AquaSwap</p>
-          </div>
-          <p>
-            Swap and bridge across 38+ blockchains with the best rates and lowest fees.
-          </p>
+      {/* AquaSwap Footer */}
+      <div className="aquaswap-footer">
+        <div className="fee-disclaimer">
+          <p>✨ AquaSwap</p>
         </div>
+        <p>
+          Swap and bridge across 38+ blockchains with the best rates and lowest fees.
+        </p>
       </div>
     </div>
   );
