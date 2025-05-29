@@ -16,45 +16,24 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Detect mobile device for mobile wallet functionality
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  const isAndroid = /Android/i.test(navigator.userAgent);
-  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-
   // Initialize on component mount
   useEffect(() => {
     // Add class to body to enable scrolling
     document.body.classList.add('aquaswap-page');
-    
-    // Add mobile classes for mobile wallet detection
-    if (isMobile) {
-      document.body.classList.add('mobile-device');
-    }
-    if (isAndroid) {
-      document.body.classList.add('android-device');
-    }
-    if (isIOS) {
-      document.body.classList.add('ios-device');
-    }
     
     // Load widget after a short delay
     setTimeout(() => {
       setLoading(false);
     }, 100);
 
-    // Cleanup: remove classes when component unmounts
+    // Cleanup: remove class when component unmounts
     return () => {
       document.body.classList.remove('aquaswap-page');
-      document.body.classList.remove('mobile-device');
-      document.body.classList.remove('android-device');
-      document.body.classList.remove('ios-device');
     };
-  }, [isMobile, isAndroid, isIOS]);
+  }, []);
 
-  // LI.FI Widget configuration - with mobile wallet adapter support
+  // LI.FI Widget configuration - minimal for maximum compatibility
   const widgetConfig = {
-    variant: "compact",
-    appearance: "dark",
     integrator: "aquaswap",
     fee: FEE_PERCENTAGE,
     feeConfig: {
@@ -62,20 +41,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       feeRecipient: ETH_FEE_WALLET || "0x0000000000000000000000000000000000000000",
       solanaFeeRecipient: SOLANA_FEE_WALLET,
       suiFeeRecipient: SUI_FEE_WALLET,
-    },
-    // Hide branding but keep all wallet functionality
-    hiddenUI: ["poweredBy"],
-    // Enable URL building for mobile wallet deep linking
-    buildUrl: true,
-    // Simple theme configuration
-    theme: {
-      container: {
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        borderRadius: '16px',
-      },
-      palette: {
-        mode: 'dark',
-      },
     },
   };
 

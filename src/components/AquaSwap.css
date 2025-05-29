@@ -535,8 +535,9 @@ body.aquaswap-page {
 
 /* ===== LiFi Widget Color Theme Override ===== */
 /* Simple color changes to match AquaSwap cyan/blue theme */
+/* TEMPORARILY DISABLED TO TEST MOBILE WALLET ISSUES */
 
-/* Primary buttons and accents */
+/*
 .lifi-widget .MuiButton-contained,
 .lifi-widget [class*="contained"] {
   background: linear-gradient(135deg, #00D4FF, #4285F4) !important;
@@ -547,7 +548,6 @@ body.aquaswap-page {
   background: linear-gradient(135deg, #4285F4, #00D4FF) !important;
 }
 
-/* Secondary buttons */
 .lifi-widget .MuiButton-outlined,
 .lifi-widget [class*="outlined"] {
   border-color: #00D4FF !important;
@@ -559,7 +559,6 @@ body.aquaswap-page {
   border-color: #4285F4 !important;
 }
 
-/* Icon buttons */
 .lifi-widget .MuiIconButton-root {
   color: #00D4FF !important;
 }
@@ -568,7 +567,6 @@ body.aquaswap-page {
   background: rgba(0, 212, 255, 0.1) !important;
 }
 
-/* Progress indicators */
 .lifi-widget .MuiLinearProgress-bar {
   background: linear-gradient(90deg, #00D4FF, #4285F4) !important;
 }
@@ -577,7 +575,6 @@ body.aquaswap-page {
   color: #00D4FF !important;
 }
 
-/* Tab indicators */
 .lifi-widget .MuiTabs-indicator {
   background: #00D4FF !important;
 }
@@ -586,7 +583,6 @@ body.aquaswap-page {
   color: #00D4FF !important;
 }
 
-/* Input focus states */
 .lifi-widget .MuiInputBase-root.Mui-focused {
   border-color: #00D4FF !important;
 }
@@ -595,7 +591,6 @@ body.aquaswap-page {
   border-color: #00D4FF !important;
 }
 
-/* Links and interactive text */
 .lifi-widget a {
   color: #00D4FF !important;
 }
@@ -604,39 +599,38 @@ body.aquaswap-page {
   color: #4285F4 !important;
 }
 
-/* Chips and badges */
 .lifi-widget .MuiChip-root {
   background-color: rgba(0, 212, 255, 0.1) !important;
   border: 1px solid rgba(0, 212, 255, 0.3) !important;
   color: #00D4FF !important;
 }
+*/
 
 /* Mobile wallet adapter improvements */
+/* TEMPORARILY DISABLED TO TEST MOBILE WALLET ISSUES */
+/*
 @media (max-width: 768px) {
-  /* Ensure proper mobile layout */
   .lifi-widget {
     width: 100% !important;
     max-width: none !important;
   }
   
-  /* Better modal backdrop on mobile */
   .lifi-widget .MuiBackdrop-root {
     background-color: rgba(0, 0, 0, 0.8) !important;
   }
   
-  /* Basic mobile button improvements without interfering with functionality */
   .lifi-widget button {
     min-height: 44px !important;
-    font-size: 16px !important; /* Prevents zoom on iOS */
+    font-size: 16px !important;
     touch-action: manipulation !important;
     -webkit-tap-highlight-color: transparent !important;
   }
 }
 
-/* Specific improvements for mobile wallet detection */
 @media (max-width: 480px) {
   .lifi-widget {
     width: 100% !important;
     max-width: none !important;
   }
 }
+*/
