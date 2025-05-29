@@ -16,19 +16,10 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Detect if user is on mobile
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
   // Initialize on component mount
   useEffect(() => {
     // Add class to body to enable scrolling
     document.body.classList.add('aquaswap-page');
-    
-    // Add mobile class if on mobile
-    if (isMobile) {
-      document.body.classList.add('mobile-device');
-    }
     
     // Load widget after a short delay
     setTimeout(() => {
@@ -38,11 +29,10 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     // Cleanup: remove class when component unmounts
     return () => {
       document.body.classList.remove('aquaswap-page');
-      document.body.classList.remove('mobile-device');
     };
-  }, [isMobile]);
+  }, []);
 
-  // LI.FI Widget configuration - optimized for mobile wallet support
+  // LI.FI Widget configuration - simplified to preserve wallet functionality
   const widgetConfig = {
     variant: "compact",
     appearance: "dark",
@@ -56,34 +46,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     },
     // Hide branding but keep all wallet functionality
     hiddenUI: ["poweredBy"],
-    // Mobile wallet configuration
-    walletConfig: {
-      onConnect: () => {
-        logger.log('Wallet connected');
-        if (showNotification) {
-          showNotification('Wallet connected successfully!', 'success');
-        }
-      },
-      onDisconnect: () => {
-        logger.log('Wallet disconnected');
-        if (showNotification) {
-          showNotification('Wallet disconnected', 'info');
-        }
-      },
-    },
-    // Enable mobile wallet detection and deep linking
-    buildUrl: true,
-    // Ensure all chains and wallets are available
-    chains: {
-      allow: [], // Allow all chains
-      deny: [], // Don't deny any chains
-    },
-    // Don't restrict any wallets - let LiFi detect all available wallets
-    wallets: {
-      allow: [], // Allow all wallets
-      deny: [], // Don't deny any wallets
-    },
-    // Mobile-specific settings
+    // Simple theme configuration
     theme: {
       container: {
         border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -93,42 +56,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         mode: 'dark',
       },
     },
-    // Enable deep linking for mobile wallets and better mobile support
-    sdkConfig: {
-      apiUrl: 'https://li.quest/v1',
-      rpcs: {}, // Let LiFi use default RPCs
-      defaultRouteOptions: {
-        allowSwitchChain: true, // Allow chain switching
-        bridges: {
-          allow: [], // Allow all bridges
-          deny: [], // Don't deny any bridges
-        },
-        exchanges: {
-          allow: [], // Allow all exchanges
-          deny: [], // Don't deny any exchanges
-        },
-      },
-      // Mobile-specific configurations
-      ...(isMobile && {
-        walletConnect: {
-          projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || 'default-project-id',
-          metadata: {
-            name: 'AquaSwap',
-            description: 'The Ultimate Cross-Chain DEX',
-            url: 'https://aquads.io',
-            icons: ['https://aquads.io/AquaSwap.svg'],
-          },
-        },
-      }),
-    },
-    // Additional mobile optimizations
-    ...(isMobile && {
-      containerStyle: {
-        width: '100%',
-        maxWidth: '100%',
-        margin: '0 auto',
-      },
-    }),
   };
 
   // Loading state

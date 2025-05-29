@@ -613,99 +613,15 @@ body.aquaswap-page {
 
 /* Mobile wallet adapter improvements */
 @media (max-width: 768px) {
-  /* Ensure wallet buttons are properly sized for mobile */
-  .lifi-widget button {
-    min-height: 44px !important; /* iOS recommended touch target size */
-    padding: 12px 16px !important;
-    font-size: 16px !important; /* Prevents zoom on iOS */
-  }
-  
-  /* Improve wallet selection modal on mobile */
-  .lifi-widget .MuiDialog-paper {
-    margin: 16px !important;
-    max-height: calc(100vh - 32px) !important;
-    width: calc(100vw - 32px) !important;
+  /* Ensure proper mobile layout */
+  .lifi-widget {
+    width: 100% !important;
     max-width: none !important;
-  }
-  
-  /* Better wallet list styling on mobile */
-  .lifi-widget .MuiList-root {
-    padding: 8px !important;
-  }
-  
-  .lifi-widget .MuiListItem-root {
-    padding: 12px 16px !important;
-    margin-bottom: 8px !important;
-    border-radius: 12px !important;
-    background: rgba(255, 255, 255, 0.05) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  }
-  
-  .lifi-widget .MuiListItem-root:hover {
-    background: rgba(0, 212, 255, 0.1) !important;
-    border-color: rgba(0, 212, 255, 0.3) !important;
-  }
-  
-  /* Improve wallet icons on mobile */
-  .lifi-widget .MuiAvatar-root {
-    width: 40px !important;
-    height: 40px !important;
-  }
-  
-  /* Better input field styling on mobile */
-  .lifi-widget .MuiInputBase-input {
-    font-size: 16px !important; /* Prevents zoom on iOS */
-    padding: 12px 14px !important;
-  }
-  
-  /* Improve dropdown menus on mobile */
-  .lifi-widget .MuiSelect-select {
-    padding: 12px 14px !important;
-    font-size: 16px !important;
   }
   
   /* Better modal backdrop on mobile */
   .lifi-widget .MuiBackdrop-root {
     background-color: rgba(0, 0, 0, 0.8) !important;
-  }
-  
-  /* Ensure proper scrolling in wallet modals */
-  .lifi-widget .MuiDialog-container {
-    align-items: flex-start !important;
-    padding-top: 20px !important;
-  }
-  
-  /* Improve wallet connection status indicators */
-  .lifi-widget .MuiChip-root {
-    height: 36px !important;
-    font-size: 14px !important;
-  }
-  
-  /* Better spacing for mobile */
-  .lifi-widget .MuiBox-root {
-    padding: 8px !important;
-  }
-  
-  /* Improve wallet adapter button specifically */
-  .lifi-widget button[aria-label*="wallet"],
-  .lifi-widget button[title*="wallet"],
-  .lifi-widget button:has([alt*="wallet"]) {
-    min-height: 48px !important;
-    padding: 14px 18px !important;
-    border-radius: 12px !important;
-    background: rgba(0, 212, 255, 0.1) !important;
-    border: 1px solid rgba(0, 212, 255, 0.3) !important;
-    color: #00D4FF !important;
-    font-weight: 500 !important;
-    transition: all 0.2s ease !important;
-  }
-  
-  .lifi-widget button[aria-label*="wallet"]:hover,
-  .lifi-widget button[title*="wallet"]:hover,
-  .lifi-widget button:has([alt*="wallet"]):hover {
-    background: rgba(0, 212, 255, 0.2) !important;
-    border-color: rgba(0, 212, 255, 0.5) !important;
-    transform: translateY(-1px) !important;
   }
 }
 
@@ -714,21 +630,5 @@ body.aquaswap-page {
   .lifi-widget {
     width: 100% !important;
     max-width: none !important;
-  }
-  
-  /* Ensure wallet buttons are full width on small screens */
-  .lifi-widget .MuiButton-fullWidth {
-    width: 100% !important;
-    margin-bottom: 8px !important;
-  }
-  
-  /* Better wallet grid layout on small screens */
-  .lifi-widget .MuiGrid-container {
-    margin: 0 !important;
-    width: 100% !important;
-  }
-  
-  .lifi-widget .MuiGrid-item {
-    padding: 4px !important;
   }
 }
