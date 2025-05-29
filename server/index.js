@@ -189,8 +189,13 @@ app.get('/share-blog/:id', async (req, res) => {
     // Get the URL with all query params
     let redirectUrl = `${process.env.NODE_ENV === 'production' ? 'https://www.aquads.xyz' : 'http://localhost:3000'}/how-to?blogId=${blog._id}`;
     
-    // Add any query parameters from the original request
+    // Create clean URL for meta tags without referral parameters
+    const cleanMetaUrl = `${process.env.NODE_ENV === 'production' ? 'https://www.aquads.xyz' : 'http://localhost:3000'}/how-to?blogId=${blog._id}`;
+    
+    // Add any query parameters from the original request (excluding referral parameters)
     const originalParams = new URLSearchParams(req.originalUrl.split('?')[1] || '');
+    // Remove referral parameter to prevent it from being baked into shared content
+    originalParams.delete('ref');
     if (originalParams.toString()) {
       redirectUrl += `&${originalParams.toString()}`;
     }
@@ -215,7 +220,7 @@ app.get('/share-blog/:id', async (req, res) => {
   <meta property="og:title" content="${blog.title} - Aquads Blog">
   <meta property="og:description" content="${description}">
   <meta property="og:image" content="${blog.bannerImage || 'https://www.aquads.xyz/logo712.png'}">
-  <meta property="og:url" content="${redirectUrl}">
+  <meta property="og:url" content="${cleanMetaUrl}">
   <meta property="og:type" content="article">
   
   <!-- Redirect to the actual blog page -->

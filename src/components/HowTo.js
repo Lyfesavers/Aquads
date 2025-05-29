@@ -352,7 +352,7 @@ const HowTo = ({ currentUser }) => {
             <meta property="og:title" content={`${sharedBlog.title} - Aquads Blog`} />
             <meta property="og:description" content={extractPlainText(sharedBlog.content)} />
             <meta property="og:image" content={sharedBlog.bannerImage} />
-            <meta property="og:url" content={window.location.href} />
+            <meta property="og:url" content={`${window.location.origin}/how-to?blogId=${sharedBlog._id}`} />
             <meta property="og:type" content="article" />
             <meta name="twitter:card" content="summary_large_image" />
             <meta name="twitter:title" content={`${sharedBlog.title} - Aquads Blog`} />
@@ -389,7 +389,7 @@ const HowTo = ({ currentUser }) => {
                 "description": sharedBlog.content?.replace(/<[^>]*>/g, '').slice(0, 160),
                 "mainEntityOfPage": {
                   "@type": "WebPage",
-                  "@id": window.location.href
+                  "@id": `${window.location.origin}/how-to?blogId=${sharedBlog._id}`
                 }
               })}
             </script>

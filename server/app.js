@@ -174,6 +174,9 @@ app.get('/marketplace', async (req, res, next) => {
         // Keep the existing head content
         const existingHead = indexHtml.substring(headStartIndex, headEndIndex);
         
+        // Create clean URL without referral parameters for meta tags
+        const cleanUrl = `${req.protocol}://${req.get('host')}/marketplace?service=${serviceId}`;
+        
         // Create a new head with the service-specific meta tags
         const newHead = `
           <meta charset="utf-8" />
@@ -196,7 +199,7 @@ app.get('/marketplace', async (req, res, next) => {
           <!-- Open Graph meta tags -->
           <meta property="og:type" content="product">
           <meta property="og:site_name" content="Aquads Marketplace">
-          <meta property="og:url" content="${req.protocol}://${req.get('host')}${req.originalUrl}">
+          <meta property="og:url" content="${cleanUrl}">
           <meta property="og:title" content="${service.title} - Aquads Marketplace">
           <meta property="og:description" content="${service.description.slice(0, 160)}...">
           <meta property="og:image" content="${service.image}">
@@ -292,7 +295,9 @@ app.get('/how-to', async (req, res, next) => {
           
           // Use the blog banner image or fall back to the new optimized image
           const imageUrl = blog.bannerImage || `${req.protocol}://${req.get('host')}/logo712.png`;
-          const fullUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
+          
+          // Create clean URL without referral parameters for meta tags
+          const cleanUrl = `${req.protocol}://${req.get('host')}/how-to?blogId=${blogId}`;
           
           // Create injected content with meta tags
           const injectedMeta = `
@@ -305,7 +310,7 @@ app.get('/how-to', async (req, res, next) => {
 
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="Aquads Blog">
-<meta property="og:url" content="${escapeHtml(fullUrl)}">
+<meta property="og:url" content="${escapeHtml(cleanUrl)}">
 <meta property="og:title" content="${escapeHtml(blog.title)} - Aquads Blog">
 <meta property="og:description" content="${escapeHtml(shortDescription)}">
 <meta property="og:image" content="${escapeHtml(imageUrl)}">
