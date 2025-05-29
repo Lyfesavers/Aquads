@@ -135,6 +135,8 @@
   margin-bottom: 20px;
 }
 
+/* Removed .lifi-container styles - widget now renders directly without custom container */
+/*
 .lifi-container {
   padding: 0;
   max-width: 100%;
@@ -160,21 +162,6 @@
   animation: shimmer 3s ease-in-out infinite;
   border-radius: 12px 12px 0 0;
   z-index: 1;
-}
-
-/* Removed .lifi-iframe styles - no longer using iframe, using LiFi widget component instead */
-/*
-.lifi-iframe {
-  width: 100%;
-  min-width: 100%;
-  height: 700px;
-  border: none;
-  overflow: hidden;
-  display: block;
-  border-radius: 12px;
-  background: transparent;
-  position: relative;
-  z-index: 2;
 }
 */
 
@@ -408,4 +395,4 @@ html, body {
 
 .aquaswap-header h1 {
   animation: glow 4s ease-in-out infinite;
-} 
+}

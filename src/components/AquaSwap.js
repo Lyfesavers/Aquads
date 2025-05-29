@@ -31,59 +31,10 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     };
   }, []);
 
-  // LI.FI Widget configuration with custom theme matching website colors
+  // LI.FI Widget configuration - simplified to avoid iframe-like rendering
   const widgetConfig = {
     variant: "compact",
     appearance: "dark",
-    theme: {
-      colorSchemes: {
-        light: {
-          palette: {
-            primary: {
-              main: "#00D4FF"
-            },
-            secondary: {
-              main: "#4285F4"
-            },
-            background: {
-              default: "#FFFFFF",
-              paper: "#F8F9FA"
-            },
-            text: {
-              primary: "#1F2937",
-              secondary: "#6B7280"
-            }
-          }
-        },
-        dark: {
-          palette: {
-            primary: {
-              main: "#00D4FF"
-            },
-            secondary: {
-              main: "#4285F4"
-            },
-            background: {
-              default: "#111827",
-              paper: "#1F2937"
-            },
-            text: {
-              primary: "#FFFFFF",
-              secondary: "#00D4FF"
-            }
-          }
-        }
-      },
-      typography: {
-        fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-      },
-      container: {
-        boxShadow: "0px 20px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 212, 255, 0.1)",
-        borderRadius: "12px",
-        background: "rgba(31, 41, 55, 0.9)",
-        border: "1px solid rgba(0, 212, 255, 0.2)"
-      }
-    },
     integrator: "aquaswap",
     fee: FEE_PERCENTAGE,
     feeConfig: {
@@ -93,7 +44,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       solanaFeeRecipient: SOLANA_FEE_WALLET,
       suiFeeRecipient: SUI_FEE_WALLET,
     },
-    hiddenUI: ["poweredBy"], // Only hide powered by, ensure wallet UI is visible
+    hiddenUI: ["poweredBy"],
     buildUrl: true,
     // Explicit wallet management configuration
     walletManagement: {
@@ -179,9 +130,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           <p className="aquaswap-subtitle">The Ultimate Cross-Chain DEX</p>
         </div>
       
-        <div className="lifi-container">
-          <LiFiWidget integrator="aquaswap" config={widgetConfig} />
-        </div>
+        {/* LiFi Widget without container styling */}
+        <LiFiWidget integrator="aquaswap" config={widgetConfig} />
 
         <div className="powered-by">
           <div className="fee-disclaimer">
