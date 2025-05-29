@@ -4,9 +4,11 @@
   "private": true,
   "dependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@bigmi/react": "^0.3.0",
     "@emailjs/browser": "^4.4.1",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
+    "@lifi/widget": "^3.21.3",
     "@mui/icons-material": "^7.1.0",
     "@mui/material": "^7.1.0",
     "@solana/wallet-adapter-base": "^0.9.26",

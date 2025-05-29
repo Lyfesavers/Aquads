@@ -4,13 +4,16 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import LiFiProviders from './providers/LiFiProviders';
 
 // Detect if user is on mobile
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <LiFiProviders>
+      <App />
+    </LiFiProviders>
   </React.StrictMode>,
   document.getElementById('root')
 );

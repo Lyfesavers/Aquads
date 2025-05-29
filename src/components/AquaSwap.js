@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
+import { LiFiWidget, WidgetConfig } from '@lifi/widget';
 import logger from '../utils/logger';
 import './AquaSwap.css';
 
@@ -10,12 +11,8 @@ const ETH_FEE_WALLET = process.env.REACT_APP_FEE_WALLET; // Ethereum wallet addr
 const SOLANA_FEE_WALLET = process.env.REACT_APP_SOLANA_FEE_WALLET; // Solana wallet address
 const SUI_FEE_WALLET = process.env.REACT_APP_SUI_FEE_WALLET; // SUI wallet address
 
-
-
 const AquaSwap = ({ currentUser, showNotification }) => {
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const iframeRef = useRef(null);
   const navigate = useNavigate();
 
   // Initialize on component mount
@@ -34,157 +31,67 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     };
   }, []);
 
-  // Li.Fi widget with iframe approach (avoiding build dependency issues)
-  const renderLiFiWidget = () => {
-    // Create the widget configuration with custom theme matching website colors
-    const widgetConfig = {
-      variant: "expandable",
-      appearance: "dark",
-      theme: {
-        colorSchemes: {
-          light: {
-            palette: {
-              primary: {
-                main: "#00D4FF"
-              },
-              secondary: {
-                main: "#4285F4"
-              },
-              background: {
-                default: "#FFFFFF",
-                paper: "#F8F9FA"
-              },
-              text: {
-                primary: "#1F2937",
-                secondary: "#6B7280"
-              }
-            }
-          },
-          dark: {
-            palette: {
-              primary: {
-                main: "#00D4FF"
-              },
-              secondary: {
-                main: "#4285F4"
-              },
-              background: {
-                default: "#111827",
-                paper: "#1F2937"
-              },
-              text: {
-                primary: "#FFFFFF",
-                secondary: "#00D4FF"
-              }
+  // LI.FI Widget configuration with custom theme matching website colors
+  const widgetConfig = {
+    variant: "expandable",
+    appearance: "dark",
+    theme: {
+      colorSchemes: {
+        light: {
+          palette: {
+            primary: {
+              main: "#00D4FF"
+            },
+            secondary: {
+              main: "#4285F4"
+            },
+            background: {
+              default: "#FFFFFF",
+              paper: "#F8F9FA"
+            },
+            text: {
+              primary: "#1F2937",
+              secondary: "#6B7280"
             }
           }
         },
-        typography: {
-          fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-        },
-        container: {
-          boxShadow: "0px 20px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 212, 255, 0.1)",
-          borderRadius: "12px",
-          background: "rgba(31, 41, 55, 0.9)",
-          border: "1px solid rgba(0, 212, 255, 0.2)"
+        dark: {
+          palette: {
+            primary: {
+              main: "#00D4FF"
+            },
+            secondary: {
+              main: "#4285F4"
+            },
+            background: {
+              default: "#111827",
+              paper: "#1F2937"
+            },
+            text: {
+              primary: "#FFFFFF",
+              secondary: "#00D4FF"
+            }
+          }
         }
       },
-      integrator: "aquaswap",
+      typography: {
+        fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+      },
+      container: {
+        boxShadow: "0px 20px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 212, 255, 0.1)",
+        borderRadius: "12px",
+        background: "rgba(31, 41, 55, 0.9)",
+        border: "1px solid rgba(0, 212, 255, 0.2)"
+      }
+    },
+    integrator: "aquaswap",
+    fee: FEE_PERCENTAGE,
+    feeConfig: {
       fee: FEE_PERCENTAGE,
       feeRecipient: ETH_FEE_WALLET,
-      solanaFeeRecipient: SOLANA_FEE_WALLET,
-      suiFeeRecipient: SUI_FEE_WALLET,
-      hiddenUI: ["poweredBy"],
-    };
-
-    // Encode the config for URL
-    const encodedConfig = encodeURIComponent(JSON.stringify(widgetConfig));
-    const lifiUrl = `https://playground.li.fi/?config=${encodedConfig}`;
-
-    return (
-      <div className="lifi-container">
-        <iframe
-          ref={iframeRef}
-          src={lifiUrl}
-          title="AquaSwap - Cross-Chain DEX"
-          className="lifi-iframe"
-          style={{
-            width: '100%',
-            height: '700px',
-            border: 'none',
-            borderRadius: '12px',
-            overflow: 'hidden'
-          }}
-          allow="clipboard-write"
-          sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals allow-top-navigation-by-user-activation"
-          onLoad={() => {
-            try {
-              // Get access to the iframe's content window
-              const iframe = iframeRef.current;
-              if (!iframe || !iframe.contentWindow) return;
-              
-              // Create a MutationObserver to watch for and hide Li.Fi branding
-              const observer = new MutationObserver((mutations) => {
-                const doc = iframe.contentDocument;
-                if (!doc) return;
-                
-                // Hide "Powered by Li.Fi" elements
-                const poweredByElements = [
-                  ...doc.querySelectorAll('[data-testid*="powered"]'),
-                  ...doc.querySelectorAll('[class*="powered"]'),
-                  ...doc.querySelectorAll('[class*="PoweredBy"]'),
-                  ...doc.querySelectorAll('*[class*="lifi"]'),
-                  ...doc.querySelectorAll('*[class*="LiFi"]'),
-                  ...doc.querySelectorAll('*[class*="li-fi"]'),
-                  ...doc.querySelectorAll('a[href*="li.fi"]'),
-                  ...doc.querySelectorAll('a[href*="lifi"]'),
-                  // Look for text content containing "Powered by"
-                  ...Array.from(doc.querySelectorAll('*')).filter(el => 
-                    el.textContent && el.textContent.toLowerCase().includes('powered by')
-                  ),
-                  // Look for text content containing "Li.Fi"
-                  ...Array.from(doc.querySelectorAll('*')).filter(el => 
-                    el.textContent && (el.textContent.includes('Li.Fi') || el.textContent.includes('LiFi'))
-                  )
-                ];
-                
-                // Hide all identified elements
-                poweredByElements.forEach(el => {
-                  if (el && el.style) {
-                    el.style.display = 'none';
-                    el.style.visibility = 'hidden';
-                    el.style.opacity = '0';
-                  }
-                });
-              });
-              
-              // Start observing the iframe's document
-              const doc = iframe.contentDocument;
-              if (doc) {
-                observer.observe(doc.body, { 
-                  childList: true, 
-                  subtree: true,
-                  characterData: true
-                });
-                
-                // Also run immediately to catch existing elements
-                setTimeout(() => {
-                  observer.disconnect();
-                  observer.observe(doc.body, { 
-                    childList: true, 
-                    subtree: true,
-                    characterData: true
-                  });
-                }, 1000);
-              }
-            } catch (error) {
-              // Silent catch - cross-origin restrictions may prevent this
-              logger.debug('Could not access iframe content:', error);
-            }
-          }}
-        />
-      </div>
-    );
+    },
+    hiddenUI: ["poweredBy"],
+    buildUrl: true,
   };
 
   // Loading state
@@ -252,7 +159,9 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           <p className="aquaswap-subtitle">The Ultimate Cross-Chain DEX</p>
         </div>
       
-        {renderLiFiWidget()}
+        <div className="lifi-container">
+          <LiFiWidget integrator="aquaswap" config={widgetConfig} />
+        </div>
 
         <div className="powered-by">
           <div className="fee-disclaimer">
