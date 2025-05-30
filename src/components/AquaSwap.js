@@ -13,18 +13,12 @@ const SOLANA_FEE_WALLET = process.env.REACT_APP_SOLANA_FEE_WALLET; // Solana wal
 const SUI_FEE_WALLET = process.env.REACT_APP_SUI_FEE_WALLET; // SUI wallet address
 
 const AquaSwap = ({ currentUser, showNotification }) => {
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   // Initialize on component mount
   useEffect(() => {
     // Add class to body to enable scrolling
     document.body.classList.add('aquaswap-page');
-    
-    // Load widget after a short delay
-    setTimeout(() => {
-      setLoading(false);
-    }, 100);
 
     // Cleanup: remove class when component unmounts
     return () => {
@@ -32,75 +26,10 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     };
   }, []);
 
-  // LI.FI Widget configuration - following official mobile wallet documentation
+  // LI.FI Widget configuration - MINIMAL TEST VERSION
   const widgetConfig = {
-    integrator: "aquaswap",
-    fee: FEE_PERCENTAGE,
-    feeConfig: {
-      fee: FEE_PERCENTAGE,
-      feeRecipient: ETH_FEE_WALLET || "0x0000000000000000000000000000000000000000",
-      solanaFeeRecipient: SOLANA_FEE_WALLET,
-      suiFeeRecipient: SUI_FEE_WALLET,
-    },
-    // Hide branding
-    hiddenUI: ["poweredBy"],
-    // Basic dark appearance
-    appearance: "dark",
-    // Enable URL building for mobile deep linking
-    buildUrl: true,
-    // Simplified wallet configuration for mobile support
-    walletConfig: {
-      walletConnect: {
-        projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || "2f5a2c8b8f4e6d3a1b9c7e5f8a2d4c6b",
-      },
-      // Enable partial wallet management for better mobile compatibility
-      usePartialWalletManagement: true,
-    },
-    // Minimal theme
-    theme: {
-      palette: {
-        mode: 'dark',
-      },
-    },
+    integrator: "aquaswap"
   };
-
-  // Loading state
-  if (loading) {
-    return (
-      <div className="aquaswap-container">
-        <div className="aquaswap-card">
-          <div className="aquaswap-header">
-            <h1>
-              <img 
-                src="/AquaSwap.svg" 
-                alt="AquaSwap" 
-                className="aquaswap-logo" 
-                width="32" 
-                height="32"
-              />
-              AquaSwap
-            </h1>
-            <p className="aquaswap-subtitle">The Ultimate Cross-Chain DEX</p>
-          </div>
-          <div className="aquaswap-body">
-            <div className="aquaswap-nav">
-              <button 
-                className="back-to-main-button"
-                onClick={() => navigate('/')}
-                title="Back to Main Page"
-              >
-                ← Back to Main
-              </button>
-            </div>
-            <div className="loading-container">
-              <div className="loading-spinner"></div>
-              <p>Loading AquaSwap...</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // Main AquaSwap interface
   return (
