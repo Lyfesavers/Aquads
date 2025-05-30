@@ -44,16 +44,10 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     appearance: "dark",
     // Enable URL building for mobile deep linking
     buildUrl: true,
-    // Enhanced wallet configuration for Solana support
+    // Simplified wallet configuration for mobile support
     walletConfig: {
       walletConnect: {
         projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || "2f5a2c8b8f4e6d3a1b9c7e5f8a2d4c6b",
-        metadata: {
-          name: "Aquads",
-          description: "Aquads - Web3 Crypto Hub & Freelancer Marketplace",
-          url: "https://aquads.xyz",
-          icons: ["https://aquads.xyz/logo192.png"],
-        },
       },
       // Enable partial wallet management for better mobile compatibility
       usePartialWalletManagement: true,

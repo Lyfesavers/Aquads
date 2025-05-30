@@ -1,6 +1,5 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { SolanaWalletProvider } from './SolanaWalletProvider';
 
 // Create a query client for React Query (required by LiFi)
 // Updated configuration for better mobile wallet compatibility
@@ -22,9 +21,7 @@ const queryClient = new QueryClient({
 export const LiFiProviders = ({ children }) => {
   return (
     <QueryClientProvider client={queryClient}>
-      <SolanaWalletProvider>
-        {children}
-      </SolanaWalletProvider>
+      {children}
     </QueryClientProvider>
   );
 };
