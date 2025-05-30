@@ -1,8 +1,5 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
-import { clusterApiUrl } from '@solana/web3.js';
 
 // Create a query client for React Query (required by LiFi)
 // Updated configuration for better mobile wallet compatibility
@@ -21,21 +18,10 @@ const queryClient = new QueryClient({
   },
 });
 
-// Solana configuration for LiFi widget
-const endpoint = clusterApiUrl(WalletAdapterNetwork.Mainnet);
-
-// Empty wallets array - LiFi widget will handle wallet detection automatically
-// This follows the LiFi documentation for Solana wallet integration
-const wallets = [];
-
 export const LiFiProviders = ({ children }) => {
   return (
     <QueryClientProvider client={queryClient}>
-      <ConnectionProvider endpoint={endpoint}>
-        <WalletProvider wallets={wallets} autoConnect={false}>
-          {children}
-        </WalletProvider>
-      </ConnectionProvider>
+      {children}
     </QueryClientProvider>
   );
 };
