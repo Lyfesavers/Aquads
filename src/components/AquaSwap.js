@@ -48,23 +48,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     walletConfig: {
       walletConnect: {
         projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || "2f5a2c8b8f4e6d3a1b9c7e5f8a2d4c6b",
-        metadata: {
-          name: "Aquads",
-          description: "Aquads - Web3 Crypto Hub & Freelancer Marketplace",
-          url: "https://aquads.xyz",
-          icons: ["https://aquads.xyz/logo192.png"],
-        },
-        // Add Solana chain support to WalletConnect
-        chains: [
-          "eip155:1",     // Ethereum Mainnet
-          "eip155:137",   // Polygon
-          "eip155:56",    // BSC
-          "eip155:43114", // Avalanche
-          "eip155:42161", // Arbitrum
-          "eip155:10",    // Optimism
-          "eip155:8453",  // Base
-          "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp", // Solana Mainnet
-        ],
       },
       // Enable partial wallet management for better mobile compatibility
       usePartialWalletManagement: true,
