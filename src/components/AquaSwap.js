@@ -28,7 +28,36 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
   // LI.FI Widget configuration - MINIMAL TEST VERSION
   const widgetConfig = {
-    integrator: "aquaswap"
+    integrator: "aquaswap",
+    fee: FEE_PERCENTAGE,
+    feeConfig: {
+      fee: FEE_PERCENTAGE,
+      feeRecipient: ETH_FEE_WALLET || "0x0000000000000000000000000000000000000000",
+      solanaFeeRecipient: SOLANA_FEE_WALLET,
+      suiFeeRecipient: SUI_FEE_WALLET,
+    },
+    // Hide branding - correct property name
+    hiddenUI: ["poweredBy", "toAddress"],
+    // Use compact variant to minimize branding
+    variant: "compact",
+    // Basic dark appearance
+    appearance: "dark",
+    // Enable URL building for mobile deep linking
+    buildUrl: true,
+    // Simplified wallet configuration for mobile support
+    walletConfig: {
+      walletConnect: {
+        projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || "2f5a2c8b8f4e6d3a1b9c7e5f8a2d4c6b",
+      },
+      // Enable partial wallet management for better mobile compatibility
+      usePartialWalletManagement: true,
+    },
+    // Minimal theme
+    theme: {
+      palette: {
+        mode: 'dark',
+      },
+    },
   };
 
   // Main AquaSwap interface
