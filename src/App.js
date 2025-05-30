@@ -46,6 +46,8 @@ import logger from './utils/logger';
 import './App.css';
 import FilterControls from './components/FilterControls';
 import AquaSwap from './components/AquaSwap';
+// Import Reown AppKit configuration for Solana wallet support
+import './config/reownConfig';
 
 // Simple debounce function implementation
 const debounce = (func, wait) => {
