@@ -2724,10 +2724,10 @@ function App() {
                           />
                           <div>
                             <h3 className="text-cyan-300 font-bold text-lg mb-1">
-                              🚀 Try AquaSwap - Our Cross-Chain DEX!
+                              🚀 Use AquaSwap - The Ultimate Cross-Chain DEX!
                             </h3>
                             <p className="text-gray-300 text-sm">
-                              Swap & bridge across 38+ blockchains with the best rates
+                              Swap & bridge across 38+ blockchains with the best rates & speed
                             </p>
                           </div>
                         </div>
