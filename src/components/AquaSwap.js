@@ -37,7 +37,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       suiFeeRecipient: SUI_FEE_WALLET,
     },
     // Hide branding - correct property name
-    hiddenUI: ["poweredBy", "toAddress"],
+    hiddenUI: ["poweredBy"],
     // Use compact variant to minimize branding
     variant: "compact",
     // Basic dark appearance
