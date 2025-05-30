@@ -177,11 +177,6 @@ const TokenList = ({ currentUser, showNotification }) => {
         window.location.href = dex.url;
         return;
       }
-      // For other custom DEXes, load in iframe
-      const iframe = document.querySelector('.dex-iframe');
-      if (iframe) {
-        iframe.src = dex.url;
-      }
     }
   };
 
