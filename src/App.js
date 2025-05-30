@@ -2711,6 +2711,36 @@ function App() {
 
                 {/* Main content - allow natural scrolling */}
                 <div className="pt-20">
+                  {/* AquaSwap Banner - positioned between token banner and filter controls */}
+                  <div className="container mx-auto px-4 mb-6">
+                    <div className="aquaswap-banner bg-gradient-to-r from-blue-600/20 via-cyan-500/20 to-blue-600/20 border border-cyan-400/30 rounded-lg p-4 relative overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/10 to-transparent animate-pulse"></div>
+                      <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <img 
+                            src="/AquaSwap.svg" 
+                            alt="AquaSwap" 
+                            className="w-12 h-12 filter drop-shadow-lg flex-shrink-0"
+                          />
+                          <div>
+                            <h3 className="text-cyan-300 font-bold text-lg mb-1">
+                              🚀 Try AquaSwap - Our Cross-Chain DEX!
+                            </h3>
+                            <p className="text-gray-300 text-sm">
+                              Swap & bridge across 38+ blockchains with the best rates
+                            </p>
+                          </div>
+                        </div>
+                        <a
+                          href="/aquaswap"
+                          className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-cyan-500/25 whitespace-nowrap"
+                        >
+                          Launch AquaSwap
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Filter controls */}
                   <div className="container mx-auto px-4">
                     <FilterControls 
