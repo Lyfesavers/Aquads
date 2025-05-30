@@ -44,12 +44,35 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     appearance: "dark",
     // Enable URL building for mobile deep linking
     buildUrl: true,
-    // Simplified wallet configuration for mobile support
+    // Enhanced wallet configuration with Solana support via Reown AppKit
     walletConfig: {
       walletConnect: {
         projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || "2f5a2c8b8f4e6d3a1b9c7e5f8a2d4c6b",
+        metadata: {
+          name: "Aquads",
+          description: "Aquads - Web3 Crypto Hub & Freelancer Marketplace",
+          url: "https://www.aquads.xyz",
+          icons: ["https://www.aquads.xyz/logo192.png"],
+        },
+        // Enable Solana support in Reown AppKit
+        enableSolana: true,
+        // Include Solana networks
+        networks: [
+          // EVM networks
+          "eip155:1",     // Ethereum Mainnet
+          "eip155:137",   // Polygon
+          "eip155:56",    // BSC
+          "eip155:43114", // Avalanche
+          "eip155:42161", // Arbitrum
+          "eip155:10",    // Optimism
+          "eip155:8453",  // Base
+          // Solana networks
+          "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp", // Solana Mainnet
+          "solana:4uhcVJyU9pJkvQyS88uRDiswHXSCkY3z", // Solana Testnet
+          "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1", // Solana Devnet
+        ],
       },
-      // Enable partial wallet management for better mobile compatibility
+      // Enable partial wallet management for better compatibility
       usePartialWalletManagement: true,
     },
     // Minimal theme
