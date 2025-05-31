@@ -26,7 +26,7 @@ html, body {
 body {
   margin: 0;
   background: #111827;
-  overflow: hidden;
+  overflow: auto;
 }
 .bubble {
   border-radius: 50%;
@@ -3943,11 +3943,11 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   border-radius: 20px;
   padding: 5px 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-  opacity: 0;
+    opacity: 0;
   transition: transform 0.2s ease, opacity 0.2s ease;
   z-index: 30;
   pointer-events: none;
-}
+  }
 
 .bubble:hover .vote-popup {
   transform: translateX(-50%) scale(1);
