@@ -47,7 +47,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     // Enhanced wallet configuration with Solana support via Reown AppKit
     walletConfig: {
       walletConnect: {
-        projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID || "2f5a2c8b8f4e6d3a1b9c7e5f8a2d4c6b",
+        projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID,
         metadata: {
           name: "Aquads",
           description: "Aquads - Web3 Crypto Hub & Freelancer Marketplace",
@@ -71,9 +71,18 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           "solana:4uhcVJyU9pJkvQyS88uRDiswHXSCkY3z", // Solana Testnet
           "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1", // Solana Devnet
         ],
+        // Add error handling for connection issues
+        onError: (error) => {
+          console.warn('WalletConnect error:', error);
+          if (showNotification) {
+            showNotification('Wallet connection issue. Please try again.', 'warning');
+          }
+        },
       },
       // Enable partial wallet management for better compatibility
       usePartialWalletManagement: true,
+      // Add wallet detection timeout
+      walletDetectionTimeoutMs: 3000,
     },
     // Minimal theme
     theme: {

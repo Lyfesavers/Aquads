@@ -479,6 +479,17 @@ body.aquaswap-page {
 /* ===== LiFi Widget Minimal Theme ===== */
 /* Basic styling to match website without interfering with functionality */
 
+/* Ensure wallet modals appear above all other content */
+.lifi-widget [role="dialog"],
+.lifi-widget .MuiDialog-root,
+.lifi-widget .MuiModal-root {
+  z-index: 50000 !important;
+}
+
+.lifi-widget .MuiBackdrop-root {
+  z-index: 49999 !important;
+}
+
 /* Basic color theming - no !important to avoid conflicts */
 .lifi-widget .MuiButton-contained {
   background: linear-gradient(135deg, #00D4FF, #4285F4);
@@ -499,8 +510,6 @@ body.aquaswap-page {
 }
 
 /* Mobile wallet adapter improvements */
-/* TEMPORARILY DISABLED TO TEST MOBILE WALLET ISSUES */
-/*
 @media (max-width: 768px) {
   .lifi-widget {
     width: 100% !important;
@@ -525,4 +534,3 @@ body.aquaswap-page {
     max-width: none !important;
   }
 }
-*/
