@@ -2304,7 +2304,6 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   cursor: pointer; /* Normal cursor behavior */
   transition: box-shadow 0.3s;
   position: relative;
-  z-index: 1;
 }
 
 /* Add colors for the remaining blockchains */
@@ -3947,7 +3946,7 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   transition: transform 0.2s ease, opacity 0.2s ease;
   z-index: 30;
   pointer-events: none;
-  }
+}
 
 .bubble:hover .vote-popup {
   transform: translateX(-50%) scale(1);
@@ -4030,7 +4029,7 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   /* Increase hit area by adding invisible padding */
   .vote-button::after {
     content: '';
-  position: absolute;
+    position: absolute;
     top: -15px;
     left: -15px;
     right: -15px;
