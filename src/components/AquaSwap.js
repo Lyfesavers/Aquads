@@ -44,18 +44,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     appearance: "dark",
     // Enable URL building for mobile deep linking
     buildUrl: true,
-    // Wallet configuration following Reown AppKit documentation
-    walletConfig: {
-      walletConnect: {
-        projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID,
-        metadata: {
-          name: "Aquads",
-          description: "Aquads - Web3 Crypto Hub & Freelancer Marketplace",
-          url: "https://www.aquads.xyz",
-          icons: ["https://www.aquads.xyz/logo192.png"],
-        },
-      },
-    },
     // SDK configuration for better performance
     sdkConfig: {
       rpcUrls: {
