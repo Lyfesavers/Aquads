@@ -26,7 +26,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     };
   }, []);
 
-  // LI.FI Widget configuration - MINIMAL TEST VERSION
+  // LI.FI Widget configuration following official documentation
   const widgetConfig = {
     integrator: "aquaswap",
     fee: FEE_PERCENTAGE,
@@ -36,15 +36,15 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       solanaFeeRecipient: SOLANA_FEE_WALLET,
       suiFeeRecipient: SUI_FEE_WALLET,
     },
-    // Hide branding - correct property name
+    // Hide branding
     hiddenUI: ["poweredBy"],
-    // Use compact variant to minimize branding
+    // Use compact variant
     variant: "compact",
-    // Basic dark appearance
+    // Dark appearance
     appearance: "dark",
     // Enable URL building for mobile deep linking
     buildUrl: true,
-    // Enhanced wallet configuration with Solana support via Reown AppKit
+    // Wallet configuration following Reown AppKit documentation
     walletConfig: {
       walletConnect: {
         projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID,
@@ -54,37 +54,17 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           url: "https://www.aquads.xyz",
           icons: ["https://www.aquads.xyz/logo192.png"],
         },
-        // Enable Solana support in Reown AppKit
-        enableSolana: true,
-        // Include Solana networks
-        networks: [
-          // EVM networks
-          "eip155:1",     // Ethereum Mainnet
-          "eip155:137",   // Polygon
-          "eip155:56",    // BSC
-          "eip155:43114", // Avalanche
-          "eip155:42161", // Arbitrum
-          "eip155:10",    // Optimism
-          "eip155:8453",  // Base
-          // Solana networks
-          "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp", // Solana Mainnet
-          "solana:4uhcVJyU9pJkvQyS88uRDiswHXSCkY3z", // Solana Testnet
-          "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1", // Solana Devnet
-        ],
-        // Add error handling for connection issues
-        onError: (error) => {
-          console.warn('WalletConnect error:', error);
-          if (showNotification) {
-            showNotification('Wallet connection issue. Please try again.', 'warning');
-          }
-        },
       },
-      // Enable partial wallet management for better compatibility
-      usePartialWalletManagement: true,
-      // Add wallet detection timeout
-      walletDetectionTimeoutMs: 3000,
     },
-    // Minimal theme
+    // SDK configuration for better performance
+    sdkConfig: {
+      rpcUrls: {
+        // Add your RPC URLs here if you have custom ones
+        // [ChainId.ETH]: ['https://your-ethereum-rpc.com/'],
+        // [ChainId.SOL]: ['https://your-solana-rpc.com/'],
+      },
+    },
+    // Theme configuration
     theme: {
       palette: {
         mode: 'dark',
@@ -122,7 +102,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         <p>The Ultimate Cross-Chain DEX</p>
       </div>
     
-      {/* LiFi Widget - Full wallet management */}
+      {/* LiFi Widget - Clean implementation */}
       <div className="lifi-widget">
         <LiFiWidget integrator="aquaswap" config={widgetConfig} />
       </div>
