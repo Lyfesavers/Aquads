@@ -29,7 +29,6 @@
 .back-to-main-button:hover {
   background: rgba(0, 212, 255, 0.2);
   border-color: rgba(0, 212, 255, 0.5);
-  transform: translateY(-1px);
 }
 
 .page-title {
@@ -80,57 +79,6 @@ body.aquaswap-page {
   max-width: 520px;
 }
 
-/* Fix for WalletConnect modal input search functionality */
-/* This overrides the global input:hover styles that are interfering */
-.lifi-widget input,
-.lifi-widget input:hover,
-.lifi-widget input:focus,
-[data-testid*="wallet"] input,
-[data-testid*="wallet"] input:hover,
-[data-testid*="wallet"] input:focus,
-[role="dialog"] input,
-[role="dialog"] input:hover,
-[role="dialog"] input:focus {
-  position: static !important;
-  z-index: auto !important;
-  transition: none !important;
-  cursor: text !important;
-  outline: auto !important;
-  -webkit-user-select: auto !important;
-  user-select: auto !important;
-  pointer-events: auto !important;
-}
-
-/* Ensure wallet modals appear above all other content */
-.lifi-widget [role="dialog"],
-.lifi-widget .MuiDialog-root,
-.lifi-widget .MuiModal-root {
-  z-index: 50000 !important;
-}
-
-.lifi-widget .MuiBackdrop-root {
-  z-index: 49999 !important;
-}
-
-/* Basic color theming - no !important to avoid conflicts */
-.lifi-widget .MuiButton-contained {
-  background: linear-gradient(135deg, #00D4FF, #4285F4);
-  color: #111827;
-}
-
-.lifi-widget .MuiButton-outlined {
-  border-color: #00D4FF;
-  color: #00D4FF;
-}
-
-.lifi-widget .MuiTabs-indicator {
-  background: #00D4FF;
-}
-
-.lifi-widget a {
-  color: #00D4FF;
-}
-
 /* Mobile responsiveness */
 @media (max-width: 768px) {
   .aquaswap-page {
@@ -142,19 +90,8 @@ body.aquaswap-page {
   }
   
   .lifi-widget {
-    width: 100% !important;
-    max-width: none !important;
-  }
-  
-  .lifi-widget .MuiBackdrop-root {
-    background-color: rgba(0, 0, 0, 0.8) !important;
-  }
-  
-  .lifi-widget button {
-    min-height: 44px !important;
-    font-size: 16px !important;
-    touch-action: manipulation !important;
-    -webkit-tap-highlight-color: transparent !important;
+    width: 100%;
+    max-width: 100%;
   }
 }
 
@@ -165,10 +102,5 @@ body.aquaswap-page {
   
   .page-title h1 {
     font-size: 1.5rem;
-  }
-  
-  .lifi-widget {
-    width: 100% !important;
-    max-width: none !important;
   }
 }
