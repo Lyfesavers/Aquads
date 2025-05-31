@@ -161,20 +161,34 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
 // Login user
 router.post('/login', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { identifier, username, password } = req.body;
+    
+    // Support both old 'username' field and new 'identifier' field for backward compatibility
+    const loginIdentifier = identifier || username;
 
     // Validate required fields
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Username and password are required' });
+    if (!loginIdentifier || !password) {
+      return res.status(400).json({ error: 'Username/Email and password are required' });
     }
 
-    // Find user by username (case-insensitive)
-    const user = await User.findOne({ 
-      username: { $regex: new RegExp(`^${username}$`, 'i') }
-    });
+    // Determine if the identifier is an email or username
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginIdentifier);
+    
+    let user;
+    if (isEmail) {
+      // Find user by email (case-insensitive)
+      user = await User.findOne({ 
+        email: { $regex: new RegExp(`^${loginIdentifier}$`, 'i') }
+      });
+    } else {
+      // Find user by username (case-insensitive)
+      user = await User.findOne({ 
+        username: { $regex: new RegExp(`^${loginIdentifier}$`, 'i') }
+      });
+    }
     
     if (!user) {
-      return res.status(401).json({ error: 'Invalid username or password' });
+      return res.status(401).json({ error: 'Invalid username/email or password' });
     }
 
     // Handle different password formats
@@ -198,7 +212,7 @@ router.post('/login', async (req, res) => {
     }
 
     if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid username or password' });
+      return res.status(401).json({ error: 'Invalid username/email or password' });
     }
 
     // Generate JWT token

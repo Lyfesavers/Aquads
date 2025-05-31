@@ -4,7 +4,7 @@ import ForgotPasswordModal from './ForgotPasswordModal';
 
 const LoginModal = ({ onClose, onLogin, onCreateAccount }) => {
   const [formData, setFormData] = useState({
-    username: '',
+    identifier: '',
     password: ''
   });
   const [error, setError] = useState('');
@@ -14,8 +14,8 @@ const LoginModal = ({ onClose, onLogin, onCreateAccount }) => {
     e.preventDefault();
     setError('');
 
-    if (!formData.username || !formData.password) {
-      setError('Username and password are required');
+    if (!formData.identifier || !formData.password) {
+      setError('Username/Email and password are required');
       return;
     }
 
@@ -65,14 +65,14 @@ const LoginModal = ({ onClose, onLogin, onCreateAccount }) => {
           <h2 className="text-2xl font-bold mb-6 text-white">Login</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-gray-300 mb-2">Username</label>
+              <label className="block text-gray-300 mb-2">Username or Email</label>
               <input
                 type="text"
-                name="username"
-                value={formData.username}
+                name="identifier"
+                value={formData.identifier}
                 onChange={handleChange}
                 required
-                placeholder="Enter username"
+                placeholder="Enter username or email"
                 className="w-full px-3 py-3 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 autoComplete="username"
               />
