@@ -2713,47 +2713,47 @@ function App() {
                 <div className="pt-20">
                   {/* AquaSwap Banner - positioned between token banner and filter controls */}
                   <div className="container mx-auto px-4 mb-4">
-                    <div className="aquaswap-banner bg-gradient-to-r from-purple-600 via-purple-500 to-purple-600 border border-purple-400 rounded-lg p-3 relative overflow-hidden shadow-lg shadow-purple-500/30">
+                    <div className="aquaswap-banner bg-gradient-to-r from-purple-600 via-purple-500 to-purple-600 border border-purple-400 rounded-lg p-2 sm:p-3 relative overflow-hidden shadow-lg shadow-purple-500/30">
                       {/* Animated background effects */}
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-purple-400/20 to-transparent animate-pulse"></div>
                       
                       {/* Floating blockchain icons */}
                       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                        <div className="absolute top-1 left-8 text-yellow-400/60 animate-bounce text-sm" style={{animationDelay: '0s', animationDuration: '3s'}}>⚡</div>
-                        <div className="absolute top-2 right-16 text-yellow-300/60 animate-bounce text-sm" style={{animationDelay: '1s', animationDuration: '2.5s'}}>🔗</div>
-                        <div className="absolute bottom-1 left-16 text-yellow-400/60 animate-bounce text-sm" style={{animationDelay: '2s', animationDuration: '3.5s'}}>💎</div>
-                        <div className="absolute bottom-1 right-8 text-yellow-300/60 animate-bounce text-sm" style={{animationDelay: '0.5s', animationDuration: '2.8s'}}>🌊</div>
-                        <div className="absolute top-1/2 left-1/4 text-yellow-400/60 animate-bounce text-sm" style={{animationDelay: '1.5s', animationDuration: '3.2s'}}>⭐</div>
-                        <div className="absolute top-1/3 right-1/3 text-yellow-300/60 animate-bounce text-sm" style={{animationDelay: '2.5s', animationDuration: '2.7s'}}>🚀</div>
+                        <div className="absolute top-1 left-8 text-yellow-400/60 animate-bounce text-xs sm:text-sm" style={{animationDelay: '0s', animationDuration: '3s'}}>⚡</div>
+                        <div className="absolute top-2 right-16 text-yellow-300/60 animate-bounce text-xs sm:text-sm" style={{animationDelay: '1s', animationDuration: '2.5s'}}>🔗</div>
+                        <div className="absolute bottom-1 left-16 text-yellow-400/60 animate-bounce text-xs sm:text-sm" style={{animationDelay: '2s', animationDuration: '3.5s'}}>💎</div>
+                        <div className="absolute bottom-1 right-8 text-yellow-300/60 animate-bounce text-xs sm:text-sm" style={{animationDelay: '0.5s', animationDuration: '2.8s'}}>🌊</div>
+                        <div className="absolute top-1/2 left-1/4 text-yellow-400/60 animate-bounce text-xs sm:text-sm" style={{animationDelay: '1.5s', animationDuration: '3.2s'}}>⭐</div>
+                        <div className="absolute top-1/3 right-1/3 text-yellow-300/60 animate-bounce text-xs sm:text-sm" style={{animationDelay: '2.5s', animationDuration: '2.7s'}}>🚀</div>
                       </div>
                       
                       {/* Animated border glow */}
                       <div className="absolute inset-0 rounded-lg border-2 border-transparent bg-gradient-to-r from-yellow-400/50 via-purple-400/50 to-yellow-400/50 opacity-60 animate-pulse"></div>
                       <div className="absolute inset-[2px] rounded-lg bg-purple-600/90 backdrop-blur-sm"></div>
                       
-                      <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                        <div className="flex items-center gap-3">
+                      <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
+                        <div className="flex items-center gap-2 sm:gap-3">
                           {/* Enhanced logo with glow effect */}
                           <div className="relative">
                             <img 
                               src="/AquaSwap.svg" 
                               alt="AquaSwap" 
-                              className="w-10 h-10 filter drop-shadow-lg flex-shrink-0 animate-pulse"
+                              className="w-8 h-8 sm:w-10 sm:h-10 filter drop-shadow-lg flex-shrink-0 animate-pulse"
                               style={{filter: 'drop-shadow(0 0 10px rgba(255, 255, 0, 0.8))'}}
                             />
-                            <div className="absolute inset-0 w-10 h-10 bg-yellow-400/30 rounded-full animate-ping"></div>
+                            <div className="absolute inset-0 w-8 h-8 sm:w-10 sm:h-10 bg-yellow-400/30 rounded-full animate-ping"></div>
                           </div>
                           
                           <div>
-                            <h3 className="text-yellow-300 font-bold text-base mb-1 flex items-center gap-2">
+                            <h3 className="text-yellow-300 font-bold text-sm sm:text-base mb-0.5 sm:mb-1 flex items-center gap-1 sm:gap-2">
                               🚀 Use AquaSwap - The Ultimate Cross-Chain DEX!
-                              <span className="text-xs bg-gradient-to-r from-yellow-400 to-yellow-300 text-purple-900 px-2 py-0.5 rounded-full font-bold animate-pulse">
+                              <span className="text-xs bg-gradient-to-r from-yellow-400 to-yellow-300 text-purple-900 px-1.5 py-0.5 sm:px-2 rounded-full font-bold animate-pulse">
                                 LIVE
                               </span>
                             </h3>
-                            <p className="text-yellow-100 text-sm flex items-center gap-2 mb-1">
+                            <p className="text-yellow-100 text-xs sm:text-sm flex items-center gap-1 sm:gap-2 mb-0.5 sm:mb-1">
                               <span className="flex items-center gap-1">
-                                <span className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></span>
+                                <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-yellow-400 rounded-full animate-pulse"></span>
                                 Swap & bridge across 38+ blockchains
                               </span>
                               <span className="hidden sm:inline text-yellow-300">•</span>
@@ -2762,13 +2762,13 @@ function App() {
                             
                             {/* Feature highlights */}
                             <div className="flex flex-wrap gap-1">
-                              <span className="text-xs bg-yellow-400/20 text-yellow-200 px-2 py-0.5 rounded-full border border-yellow-400/40">
+                              <span className="text-xs bg-yellow-400/20 text-yellow-200 px-1.5 py-0.5 sm:px-2 rounded-full border border-yellow-400/40">
                                 ⚡ Instant Swaps
                               </span>
-                              <span className="text-xs bg-yellow-400/20 text-yellow-200 px-2 py-0.5 rounded-full border border-yellow-400/40">
+                              <span className="text-xs bg-yellow-400/20 text-yellow-200 px-1.5 py-0.5 sm:px-2 rounded-full border border-yellow-400/40">
                                 🔗 Cross-Chain
                               </span>
-                              <span className="text-xs bg-yellow-400/20 text-yellow-200 px-2 py-0.5 rounded-full border border-yellow-400/40">
+                              <span className="text-xs bg-yellow-400/20 text-yellow-200 px-1.5 py-0.5 sm:px-2 rounded-full border border-yellow-400/40">
                                 💰 Best Rates
                               </span>
                             </div>
@@ -2779,7 +2779,7 @@ function App() {
                         <div className="relative">
                           <a
                             href="/aquaswap"
-                            className="relative bg-gradient-to-r from-yellow-400 to-yellow-300 hover:from-yellow-300 hover:to-yellow-200 text-purple-900 px-5 py-2 rounded-lg font-bold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-yellow-400/50 whitespace-nowrap flex items-center gap-2 group"
+                            className="relative bg-gradient-to-r from-yellow-400 to-yellow-300 hover:from-yellow-300 hover:to-yellow-200 text-purple-900 px-4 py-1.5 sm:px-5 sm:py-2 rounded-lg font-bold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-yellow-400/50 whitespace-nowrap flex items-center gap-2 group text-sm sm:text-base"
                           >
                             <span>Launch AquaSwap</span>
                             <span className="group-hover:translate-x-1 transition-transform duration-300">🚀</span>
@@ -2789,8 +2789,8 @@ function App() {
                           </a>
                           
                           {/* Floating sparkles around button */}
-                          <div className="absolute -top-1 -right-1 text-yellow-300 animate-ping text-sm">✨</div>
-                          <div className="absolute -bottom-1 -left-1 text-yellow-400 animate-ping text-sm" style={{animationDelay: '1s'}}>💫</div>
+                          <div className="absolute -top-1 -right-1 text-yellow-300 animate-ping text-xs sm:text-sm">✨</div>
+                          <div className="absolute -bottom-1 -left-1 text-yellow-400 animate-ping text-xs sm:text-sm" style={{animationDelay: '1s'}}>💫</div>
                         </div>
                       </div>
                       
