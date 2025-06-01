@@ -13,15 +13,34 @@ const rateLimit = require('express-rate-limit');
 const awardSocialMediaPoints = pointsModule.awardSocialMediaPoints;
 
 // Add Twitter API client
-const { TwitterApi } = require('twitter-api-v2');
+let twitterClient = null;
+let twitterApiAvailable = false;
 
-// Initialize Twitter client with your API credentials
-const twitterClient = new TwitterApi({
-  appKey: process.env.TWITTER_API_KEY,
-  appSecret: process.env.TWITTER_API_SECRET,
-  accessToken: process.env.TWITTER_ACCESS_TOKEN,
-  accessSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET,
-});
+try {
+  const { TwitterApi } = require('twitter-api-v2');
+  
+  // Check if all required environment variables are present
+  if (process.env.TWITTER_API_KEY && 
+      process.env.TWITTER_API_SECRET && 
+      process.env.TWITTER_ACCESS_TOKEN && 
+      process.env.TWITTER_ACCESS_TOKEN_SECRET) {
+    
+    // Initialize Twitter client with your API credentials
+    twitterClient = new TwitterApi({
+      appKey: process.env.TWITTER_API_KEY,
+      appSecret: process.env.TWITTER_API_SECRET,
+      accessToken: process.env.TWITTER_ACCESS_TOKEN,
+      accessSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET,
+    });
+    
+    twitterApiAvailable = true;
+    console.log('Twitter API initialized successfully');
+  } else {
+    console.log('Twitter API credentials not found - Twitter verification will be disabled');
+  }
+} catch (error) {
+  console.log('Twitter API module not available - Twitter verification will be disabled:', error.message);
+}
 
 // Function to verify if user completed Twitter actions
 const verifyTwitterActions = async (tweetId, twitterUsername) => {
@@ -32,6 +51,12 @@ const verifyTwitterActions = async (tweetId, twitterUsername) => {
       commented: false,
       error: null
     };
+
+    // Check if Twitter API is available
+    if (!twitterApiAvailable || !twitterClient) {
+      results.error = 'Twitter API verification is not available. Falling back to manual verification.';
+      return results;
+    }
 
     if (!twitterUsername) {
       results.error = 'Twitter username required for verification';
@@ -503,45 +528,76 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
 
     // If this is an auto-completed task with Twitter username, verify with Twitter API
     if (autoCompleted && twitterUsername && detectedTweetId) {
-      try {
-        console.log(`Verifying Twitter actions for user ${twitterUsername} on tweet ${detectedTweetId}`);
-        twitterVerification = await verifyTwitterActions(detectedTweetId, twitterUsername);
-        
-        if (twitterVerification.error) {
+      // Check if Twitter API is available
+      if (!twitterApiAvailable || !twitterClient) {
+        console.log('Twitter API not available, falling back to iframe verification');
+        // Fall back to iframe verification
+        if (iframeVerified === true && iframeInteractions >= 3) {
+          verificationMethod = 'iframe_interaction_fallback';
+          verificationNote = 'Twitter API unavailable, verified through iframe interaction as fallback';
+          verified = true;
+        } else {
           return res.status(400).json({ 
-            error: `Twitter verification failed: ${twitterVerification.error}`,
+            error: 'Twitter API verification is currently unavailable and iframe verification was not completed. Please try again later.',
             success: false
           });
         }
-
-        // Check if user completed all required actions
-        const allActionsCompleted = twitterVerification.liked && 
-                                   twitterVerification.retweeted && 
-                                   twitterVerification.commented;
-
-        if (!allActionsCompleted) {
-          const missingActions = [];
-          if (!twitterVerification.liked) missingActions.push('like');
-          if (!twitterVerification.retweeted) missingActions.push('retweet');
-          if (!twitterVerification.commented) missingActions.push('comment/reply');
+      } else {
+        try {
+          console.log(`Verifying Twitter actions for user ${twitterUsername} on tweet ${detectedTweetId}`);
+          twitterVerification = await verifyTwitterActions(detectedTweetId, twitterUsername);
           
-          return res.status(400).json({ 
-            error: `Twitter verification failed. Missing actions: ${missingActions.join(', ')}. Please complete all three actions on Twitter and try again.`,
-            success: false,
-            verification: twitterVerification
-          });
+          if (twitterVerification.error) {
+            // If Twitter API error, fall back to iframe verification
+            console.log('Twitter API error, falling back to iframe verification:', twitterVerification.error);
+            if (iframeVerified === true && iframeInteractions >= 3) {
+              verificationMethod = 'iframe_interaction_fallback';
+              verificationNote = `Twitter API error (${twitterVerification.error}), verified through iframe interaction as fallback`;
+              verified = true;
+            } else {
+              return res.status(400).json({ 
+                error: `Twitter verification failed: ${twitterVerification.error}. Please ensure you completed all actions on Twitter.`,
+                success: false
+              });
+            }
+          } else {
+            // Check if user completed all required actions
+            const allActionsCompleted = twitterVerification.liked && 
+                                       twitterVerification.retweeted && 
+                                       twitterVerification.commented;
+
+            if (!allActionsCompleted) {
+              const missingActions = [];
+              if (!twitterVerification.liked) missingActions.push('like');
+              if (!twitterVerification.retweeted) missingActions.push('retweet');
+              if (!twitterVerification.commented) missingActions.push('comment/reply');
+              
+              return res.status(400).json({ 
+                error: `Twitter verification failed. Missing actions: ${missingActions.join(', ')}. Please complete all three actions on Twitter and try again.`,
+                success: false,
+                verification: twitterVerification
+              });
+            }
+
+            verificationMethod = 'twitter_api_verified';
+            verificationNote = `All actions verified via Twitter API: liked=${twitterVerification.liked}, retweeted=${twitterVerification.retweeted}, commented=${twitterVerification.commented}`;
+            verified = true;
+          }
+
+        } catch (error) {
+          console.error('Twitter API verification error:', error);
+          // Fall back to iframe verification on API error
+          if (iframeVerified === true && iframeInteractions >= 3) {
+            verificationMethod = 'iframe_interaction_fallback';
+            verificationNote = `Twitter API service error, verified through iframe interaction as fallback`;
+            verified = true;
+          } else {
+            return res.status(500).json({ 
+              error: 'Twitter verification service temporarily unavailable. Please try again later.',
+              success: false
+            });
+          }
         }
-
-        verificationMethod = 'twitter_api_verified';
-        verificationNote = `All actions verified via Twitter API: liked=${twitterVerification.liked}, retweeted=${twitterVerification.retweeted}, commented=${twitterVerification.commented}`;
-        verified = true;
-
-      } catch (error) {
-        console.error('Twitter API verification error:', error);
-        return res.status(500).json({ 
-          error: 'Twitter verification service temporarily unavailable. Please try again later.',
-          success: false
-        });
       }
     }
     // Fallback to iframe verification for non-auto-completed tasks
