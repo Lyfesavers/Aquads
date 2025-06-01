@@ -3,7 +3,7 @@ import Modal from './Modal';
 import { API_URL } from '../services/api';
 import { FaSpinner } from 'react-icons/fa';
 
-const ServiceReviews = ({ service, onClose, currentUser, showNotification, onReviewsUpdate }) => {
+const ServiceReviews = ({ service, onClose, currentUser, showNotification, onReviewsUpdate, viewOnly = false }) => {
   const [reviews, setReviews] = useState([]);
   const [newReview, setNewReview] = useState({ rating: 5, comment: '', referralCode: '' });
   const [isLoading, setIsLoading] = useState(true);
@@ -228,7 +228,7 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
           </div>
         </div>
         
-        {currentUser && currentUser.username !== service.seller?.username && (
+        {!viewOnly && currentUser && currentUser.username !== service.seller?.username && (
           <>
             {!canReview ? (
               <div className="mb-8 bg-gray-800 p-4 rounded-lg">
@@ -301,28 +301,35 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
                         )}
                       </div>
                     </div>
-                    <div className="mt-4">
-                      <button
-                        type="submit"
-                        onClick={handleSubmitReview}
-                        disabled={isSubmitting}
-                        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <FaSpinner className="animate-spin mr-2" />
-                            Submitting...
-                          </>
-                        ) : (
-                          'Submit Review'
-                        )}
-                      </button>
-                    </div>
+                    
+                    <button
+                      type="submit"
+                      onClick={handleSubmitReview}
+                      disabled={isSubmitting}
+                      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <FaSpinner className="animate-spin mr-2" />
+                          Submitting...
+                        </>
+                      ) : (
+                        'Submit Review'
+                      )}
+                    </button>
                   </>
                 )}
               </form>
             )}
           </>
+        )}
+
+        {viewOnly && (
+          <div className="mb-6 bg-blue-900/20 border border-blue-500/40 p-4 rounded-lg">
+            <p className="text-blue-400 text-center">
+              💡 To leave a review, contact the service provider or book their service through the dashboard
+            </p>
+          </div>
         )}
 
         {isLoading ? (

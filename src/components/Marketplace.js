@@ -1292,6 +1292,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
           currentUser={currentUser}
           showNotification={showNotification}
           onReviewsUpdate={handleReviewsUpdate}
+          viewOnly={true}
         />
       )}
 
