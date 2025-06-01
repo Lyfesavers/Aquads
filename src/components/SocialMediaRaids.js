@@ -63,8 +63,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [iframeInteractions, setIframeInteractions] = useState({ liked: false, retweeted: false, commented: false });
   const [iframeVerified, setIframeVerified] = useState(false);
   const iframeContainerRef = useRef(null);
-  const [twitterUsername, setTwitterUsername] = useState('');
-  const [showUsernamePrompt, setShowUsernamePrompt] = useState(false);
   
   // For admin creation
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -704,11 +702,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       // Check if all three interactions are completed
       if (newInteractions.liked && newInteractions.retweeted && newInteractions.commented) {
         setIframeVerified(true);
-        
-        // Show username prompt after a short delay
-        setTimeout(() => {
-          setShowUsernamePrompt(true);
-        }, 1000);
       }
       
       return newInteractions;
@@ -866,128 +859,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       fetchRaids();
     } catch (error) {
       showNotification(error.message || 'Failed to reject raid', 'error');
-    }
-  };
-
-  // Function to handle Twitter username submission and verification
-  const handleTwitterVerification = async () => {
-    if (!twitterUsername.trim()) {
-      setError('Please enter your Twitter username');
-      return;
-    }
-
-    try {
-      if (!currentUser) {
-        showNotification('Please log in to complete Twitter raids', 'error');
-        return;
-      }
-
-      // Don't submit if already submitting or if user already completed this raid
-      if (submitting) return;
-      
-      // Check if user already completed this raid
-      const userCompleted = selectedRaid?.completions?.some(
-        completion => completion.userId && completion.userId.toString() === (currentUser?.id || currentUser?._id)
-      );
-      
-      if (userCompleted) {
-        showNotification('You have already completed this raid', 'info');
-        return;
-      }
-
-      // Set submitting state
-      setSubmitting(true);
-      setError(null);
-      setShowUsernamePrompt(false);
-      
-      // Save the raid ID before sending the request
-      const raidId = selectedRaid._id;
-      
-      try {
-        // Use fetchWithDelay instead of fetch
-        const response = await fetchWithDelay(`${API_URL}/api/twitter-raids/${raidId}/complete`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${currentUser.token}`
-          },
-          body: JSON.stringify({
-            tweetUrl: selectedRaid?.tweetUrl || tweetUrl || null,
-            iframeVerified: true,
-            directInteractions: 3,
-            tweetId: previewState.tweetId,
-            autoCompleted: true,
-            twitterUsername: twitterUsername.replace('@', '') // Remove @ if user included it
-          })
-        });
-        
-        // Get the raw text first to see if there's an error in JSON parsing
-        const responseText = await response.text();
-        
-        let data;
-        
-        try {
-          data = JSON.parse(responseText);
-        } catch (jsonError) {
-          throw new Error('Server returned an invalid response. Please try again later.');
-        }
-        
-        if (!response.ok) {
-          // Handle specific error for username requirement
-          if (data.requiresUsername) {
-            setShowUsernamePrompt(true);
-            setError(data.error);
-            setSubmitting(false);
-            return;
-          }
-          throw new Error(data.error || 'Failed to complete raid');
-        }
-        
-        // Update UI after successful completion
-        setSubmitting(false);
-        setTweetUrl('');
-        setTwitterUsername('');
-        setPreviewState({
-          loading: false,
-          error: false,
-          message: '',
-          tweetId: null
-        });
-        
-        // Show success message with verification details
-        const verificationNote = data.verificationMethod === 'twitter_api_verified' 
-          ? 'Verified via Twitter API!' 
-          : 'Task completed!';
-        
-        setSuccess(`${data.message} ${verificationNote}`);
-        showNotification(`🎉 Twitter raid verified and completed! You earned ${data.pointsAwarded || 50} points!`, 'success');
-        
-        // Reset interactions and verification status
-        setIframeInteractions({ liked: false, retweeted: false, commented: false });
-        setIframeVerified(false);
-        setShowIframe(false);
-        
-        // After a brief delay, reset selected raid and fetch new data
-        setTimeout(() => {
-          setSelectedRaid(null);
-          fetchRaids();
-        }, 2000);
-        
-      } catch (networkError) {
-        setError(networkError.message || 'Network error. Please try again.');
-        setSubmitting(false);
-      }
-    } catch (err) {
-      // Display more helpful error message
-      if (err.message && err.message.includes('TwitterRaid validation failed')) {
-        setError('There was a validation error with your submission. Please contact support.');
-      } else {
-        setError(err.message || 'Failed to submit task. Please try again.');
-      }
-      
-      // Notify with error
-      showNotification(err.message || 'Error completing raid', 'error');
-      setSubmitting(false);
     }
   };
 
@@ -1635,81 +1506,41 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                         <li>Use the buttons to like, retweet, and comment on the tweet</li>
                         <li>Each button will open Twitter in a new tab</li>
                         <li>Complete all three actions on Twitter</li>
-                        <li>Enter your Twitter username to verify and complete the task automatically!</li>
+                        <li>After all three actions are verified, click "Complete Task" to earn points</li>
                       </ol>
                     </div>
                     
-                    {/* Auto-completion status */}
-                    {iframeVerified && !showUsernamePrompt && (
-                      <div className="mb-4 p-4 bg-green-500/20 border border-green-500 rounded-lg">
-                        <div className="flex items-center text-green-400 font-medium mb-2">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          All Tweet Interactions Completed!
+                    {/* Form submission */}
+                    <form onSubmit={safeHandleSubmit} id="verification-form">
+                      {/* Hidden tweet URL input - keeping for backend compatibility */}
+                      <input
+                        type="hidden"
+                        id="tweetUrl"
+                        value={tweetUrl}
+                      />
+                      
+                      {iframeVerified && (
+                        <div className="mb-4 p-3 bg-green-500/20 border border-green-500 rounded-lg">
+                          <div className="flex items-center text-green-400 font-medium">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            All Tweet Interactions Verified!
+                          </div>
+                          <p className="text-gray-300 mt-1 text-sm">You can now complete the task to earn your points.</p>
                         </div>
-                        <p className="text-gray-300 text-sm">
-                          Preparing to verify your actions via Twitter API...
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Twitter Username Prompt */}
-                    {showUsernamePrompt && (
-                      <div className="mb-4 p-4 bg-blue-500/20 border border-blue-500 rounded-lg">
-                        <div className="flex items-center text-blue-400 font-medium mb-3">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          Verify Your Twitter Actions
-                        </div>
-                        <p className="text-gray-300 text-sm mb-3">
-                          To complete this raid, we need to verify that you actually performed the like, retweet, and comment actions on Twitter. Please enter your Twitter username:
-                        </p>
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            value={twitterUsername}
-                            onChange={(e) => setTwitterUsername(e.target.value)}
-                            placeholder="your_twitter_username"
-                            className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            disabled={submitting}
-                          />
-                          <button
-                            onClick={handleTwitterVerification}
-                            disabled={submitting || !twitterUsername.trim()}
-                            className={`px-4 py-2 rounded text-sm font-medium ${
-                              submitting || !twitterUsername.trim()
-                                ? 'bg-gray-600 cursor-not-allowed'
-                                : 'bg-blue-600 hover:bg-blue-700'
-                            } text-white`}
-                          >
-                            {submitting ? (
-                              <div className="flex items-center">
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                Verifying...
-                              </div>
-                            ) : (
-                              'Verify & Complete'
-                            )}
-                          </button>
-                        </div>
-                        <p className="text-gray-400 text-xs mt-2">
-                          We'll check your Twitter account to confirm you liked, retweeted, and replied to the tweet.
-                        </p>
-                        <button
-                          onClick={() => setShowUsernamePrompt(false)}
-                          className="text-gray-500 hover:text-gray-300 text-xs mt-2 underline"
-                          disabled={submitting}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    )}
-                    
-                    {/* Hidden form for compatibility - no longer visible to users */}
-                    <form onSubmit={safeHandleSubmit} id="verification-form" style={{display: 'none'}}>
-                      <input type="hidden" id="tweetUrl" value={tweetUrl} />
+                      )}
+                      
+                      <button
+                        type="submit"
+                        className={`w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors ${
+                          verifyingTweet || submitting ? 'opacity-70 cursor-wait' : 
+                          !iframeVerified ? 'opacity-50 cursor-not-allowed bg-gray-600 hover:bg-gray-600' : ''
+                        }`}
+                        disabled={verifyingTweet || submitting || !iframeVerified}
+                      >
+                        {verifyingTweet ? 'Verifying Tweet...' : submitting ? 'Submitting...' : iframeVerified ? 'Complete Task' : 'Complete All Three Actions to Continue'}
+                      </button>
                     </form>
                   </div>
                 </div>

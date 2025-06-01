@@ -7,137 +7,9 @@ const pointsModule = require('./points');
 const axios = require('axios');
 const { twitterRaidRateLimit } = require('../middleware/rateLimiter');
 const AffiliateEarning = require('../models/AffiliateEarning');
-const rateLimit = require('express-rate-limit');
 
 // Use the imported module function
 const awardSocialMediaPoints = pointsModule.awardSocialMediaPoints;
-
-// Add Twitter API client
-let twitterClient = null;
-let twitterApiAvailable = false;
-
-try {
-  const { TwitterApi } = require('twitter-api-v2');
-  
-  // Check if all required environment variables are present
-  if (process.env.TWITTER_API_KEY && 
-      process.env.TWITTER_API_SECRET && 
-      process.env.TWITTER_ACCESS_TOKEN && 
-      process.env.TWITTER_ACCESS_TOKEN_SECRET) {
-    
-    // Initialize Twitter client with your API credentials
-    twitterClient = new TwitterApi({
-      appKey: process.env.TWITTER_API_KEY,
-      appSecret: process.env.TWITTER_API_SECRET,
-      accessToken: process.env.TWITTER_ACCESS_TOKEN,
-      accessSecret: process.env.TWITTER_ACCESS_TOKEN_SECRET,
-    });
-    
-    twitterApiAvailable = true;
-    console.log('Twitter API initialized successfully');
-  } else {
-    console.log('Twitter API credentials not found - Twitter verification will be disabled');
-  }
-} catch (error) {
-  console.log('Twitter API module not available - Twitter verification will be disabled:', error.message);
-}
-
-// Function to verify if user completed Twitter actions
-const verifyTwitterActions = async (tweetId, twitterUsername) => {
-  try {
-    const results = {
-      liked: false,
-      retweeted: false,
-      commented: false,
-      error: null
-    };
-
-    // Check if Twitter API is available
-    if (!twitterApiAvailable || !twitterClient) {
-      results.error = 'Twitter API verification is not available. Falling back to manual verification.';
-      return results;
-    }
-
-    if (!twitterUsername) {
-      results.error = 'Twitter username required for verification';
-      return results;
-    }
-
-    // Get user ID from username
-    let userId;
-    try {
-      const userResponse = await twitterClient.v2.userByUsername(twitterUsername);
-      userId = userResponse.data?.id;
-      
-      if (!userId) {
-        results.error = 'Twitter user not found';
-        return results;
-      }
-    } catch (error) {
-      results.error = 'Failed to find Twitter user: ' + error.message;
-      return results;
-    }
-
-    // Check if user liked the tweet
-    try {
-      const likedTweets = await twitterClient.v2.userLikedTweets(userId, {
-        max_results: 100, // Check last 100 liked tweets
-        'tweet.fields': ['id']
-      });
-      
-      if (likedTweets.data) {
-        results.liked = likedTweets.data.some(tweet => tweet.id === tweetId);
-      }
-    } catch (error) {
-      console.log('Error checking likes:', error.message);
-    }
-
-    // Check if user retweeted the tweet
-    try {
-      const userTweets = await twitterClient.v2.userTimeline(userId, {
-        max_results: 100, // Check last 100 tweets
-        'tweet.fields': ['referenced_tweets', 'created_at']
-      });
-      
-      if (userTweets.data) {
-        results.retweeted = userTweets.data.some(tweet => 
-          tweet.referenced_tweets?.some(ref => 
-            ref.type === 'retweeted' && ref.id === tweetId
-          )
-        );
-      }
-    } catch (error) {
-      console.log('Error checking retweets:', error.message);
-    }
-
-    // Check if user replied to the tweet
-    try {
-      const userTweets = await twitterClient.v2.userTimeline(userId, {
-        max_results: 100, // Check last 100 tweets
-        'tweet.fields': ['referenced_tweets', 'in_reply_to_user_id']
-      });
-      
-      if (userTweets.data) {
-        results.commented = userTweets.data.some(tweet => 
-          tweet.referenced_tweets?.some(ref => 
-            ref.type === 'replied_to' && ref.id === tweetId
-          )
-        );
-      }
-    } catch (error) {
-      console.log('Error checking replies:', error.message);
-    }
-
-    return results;
-  } catch (error) {
-    return {
-      liked: false,
-      retweeted: false,
-      commented: false,
-      error: 'Twitter API verification failed: ' + error.message
-    };
-  }
-};
 
 // Get all active Twitter raids
 router.get('/', async (req, res) => {
@@ -473,7 +345,7 @@ const verifyTweetUrl = async (tweetUrl) => {
 // Complete a Twitter raid with rate limiting
 router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
   try {
-    const { twitterUsername, verificationCode, tweetUrl, iframeVerified, iframeInteractions, tweetId, autoCompleted } = req.body;
+    const { twitterUsername, verificationCode, tweetUrl, iframeVerified, iframeInteractions, tweetId } = req.body;
     const ipAddress = req.ip || req.connection.remoteAddress;
     
     // Get the user ID safely - checking both possible locations
@@ -502,113 +374,22 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
       return res.status(400).json({ error: 'You have already completed this raid' });
     }
 
-    // For auto-completed tasks, require Twitter username for verification
-    if (autoCompleted && !twitterUsername) {
-      return res.status(400).json({ 
-        error: 'Twitter username is required for automatic verification. Please provide your Twitter username.',
-        requiresUsername: true
-      });
-    }
-
+    // Check verification method - either iframe or tweet URL
     let verificationMethod = 'manual';
     let verificationNote = 'User verification was not validated';
     let verified = false;
     let detectedTweetId = null;
-    let twitterVerification = null;
-
-    // Extract tweet ID first
-    if (tweetId) {
-      detectedTweetId = tweetId;
-    } else if (raid.tweetUrl) {
-      const urlMatch = raid.tweetUrl.match(/\/status\/(\d+)/i);
-      if (urlMatch && urlMatch[1]) {
-        detectedTweetId = urlMatch[1];
-      }
-    }
-
-    // If this is an auto-completed task with Twitter username, verify with Twitter API
-    if (autoCompleted && twitterUsername && detectedTweetId) {
-      // Check if Twitter API is available
-      if (!twitterApiAvailable || !twitterClient) {
-        console.log('Twitter API not available, falling back to iframe verification');
-        // Fall back to iframe verification
-        if (iframeVerified === true && iframeInteractions >= 3) {
-          verificationMethod = 'iframe_interaction_fallback';
-          verificationNote = 'Twitter API unavailable, verified through iframe interaction as fallback';
-          verified = true;
-        } else {
-          return res.status(400).json({ 
-            error: 'Twitter API verification is currently unavailable and iframe verification was not completed. Please try again later.',
-            success: false
-          });
-        }
-      } else {
-        try {
-          console.log(`Verifying Twitter actions for user ${twitterUsername} on tweet ${detectedTweetId}`);
-          twitterVerification = await verifyTwitterActions(detectedTweetId, twitterUsername);
-          
-          if (twitterVerification.error) {
-            // If Twitter API error, fall back to iframe verification
-            console.log('Twitter API error, falling back to iframe verification:', twitterVerification.error);
-            if (iframeVerified === true && iframeInteractions >= 3) {
-              verificationMethod = 'iframe_interaction_fallback';
-              verificationNote = `Twitter API error (${twitterVerification.error}), verified through iframe interaction as fallback`;
-              verified = true;
-            } else {
-              return res.status(400).json({ 
-                error: `Twitter verification failed: ${twitterVerification.error}. Please ensure you completed all actions on Twitter.`,
-                success: false
-              });
-            }
-          } else {
-            // Check if user completed all required actions
-            const allActionsCompleted = twitterVerification.liked && 
-                                       twitterVerification.retweeted && 
-                                       twitterVerification.commented;
-
-            if (!allActionsCompleted) {
-              const missingActions = [];
-              if (!twitterVerification.liked) missingActions.push('like');
-              if (!twitterVerification.retweeted) missingActions.push('retweet');
-              if (!twitterVerification.commented) missingActions.push('comment/reply');
-              
-              return res.status(400).json({ 
-                error: `Twitter verification failed. Missing actions: ${missingActions.join(', ')}. Please complete all three actions on Twitter and try again.`,
-                success: false,
-                verification: twitterVerification
-              });
-            }
-
-            verificationMethod = 'twitter_api_verified';
-            verificationNote = `All actions verified via Twitter API: liked=${twitterVerification.liked}, retweeted=${twitterVerification.retweeted}, commented=${twitterVerification.commented}`;
-            verified = true;
-          }
-
-        } catch (error) {
-          console.error('Twitter API verification error:', error);
-          // Fall back to iframe verification on API error
-          if (iframeVerified === true && iframeInteractions >= 3) {
-            verificationMethod = 'iframe_interaction_fallback';
-            verificationNote = `Twitter API service error, verified through iframe interaction as fallback`;
-            verified = true;
-          } else {
-            return res.status(500).json({ 
-              error: 'Twitter verification service temporarily unavailable. Please try again later.',
-              success: false
-            });
-          }
-        }
-      }
-    }
-    // Fallback to iframe verification for non-auto-completed tasks
-    else if (iframeVerified === true && iframeInteractions >= 3) {
+    
+    // If iframe verification was used
+    if (iframeVerified === true && iframeInteractions >= 3) {
       verificationMethod = 'iframe_interaction';
       verificationNote = `Verified through iframe interaction (${iframeInteractions} interactions)`;
       verified = true;
-      detectedTweetId = tweetId || null;
+      detectedTweetId = tweetId || null; // Use the provided tweet ID if available
     }
-    // Check tweet URL format for manual submissions
+    // If tweet URL was provided
     else if (tweetUrl) {
+      // Just check basic URL format - be more flexible with validation
       const isValidFormat = !!tweetUrl.match(/(?:twitter\.com|x\.com)\/[^\/]+\/status\/\d+/i);
       
       if (!isValidFormat) {
@@ -617,18 +398,22 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
           success: false
         });
       }
-
+      
+      // Extract tweet ID from URL
       try {
         const urlMatch = tweetUrl.match(/\/status\/(\d+)/i);
         if (urlMatch && urlMatch[1]) {
           detectedTweetId = urlMatch[1];
         } else if (tweetId) {
+          // Use provided tweet ID if URL parsing fails
           detectedTweetId = tweetId;
         }
       } catch (error) {
+        // Fall back to provided ID if extraction fails
         detectedTweetId = tweetId || null;
       }
-
+      
+      // Check if URL contains "aquads.xyz" (case insensitive) - only as a note, not a requirement
       const containsVerificationTag = tweetUrl.toLowerCase().includes('aquads.xyz');
       if (!containsVerificationTag) {
         verificationMethod = 'tweet_embed';
@@ -646,8 +431,9 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
       });
     }
 
-    // Award points and save completion
+    // First award points directly to ensure the user gets them
     try {
+      // Award points directly - this is the important part that needs to work
       const pointsAmount = raid.points || 50;
       const user = await User.findById(userId);
       
@@ -665,37 +451,35 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
         createdAt: new Date()
       });
       
+      // Save the user with new points - make sure this is awaited
       await user.save();
       
-      // Record the completion with verification data
+      // Then record the completion with IP tracking and tweet ID
       raid.completions.push({
         userId: userId,
-        twitterUsername: twitterUsername || '',
+        twitterUsername: twitterUsername || '', // Make username optional
         verificationCode,
         verificationMethod,
         tweetUrl: tweetUrl || null,
-        tweetId: detectedTweetId,
+        tweetId: detectedTweetId, // Store the detected tweet ID
         verified: verified,
-        ipAddress,
+        ipAddress, // Store IP address
         verificationNote,
-        iframeVerified: iframeVerified || false,
-        iframeInteractions: iframeInteractions || 0,
-        twitterVerification: twitterVerification, // Store the API verification results
-        autoCompleted: autoCompleted || false,
+        iframeVerified: iframeVerified || false, // Store iframe verification status
+        iframeInteractions: iframeInteractions || 0, // Store interaction count
         completedAt: new Date()
       });
       
+      // Make sure to await this save operation as well
       await raid.save();
       
       // Success response
       const successResponse = {
         success: true,
         message: `Twitter raid completed successfully! You earned ${pointsAmount} points.`,
-        note: verified ? 'Your submission has been verified via Twitter API.' : 'Your submission has been recorded.',
+        note: 'Your submission has been recorded. Thank you for participating!',
         pointsAwarded: pointsAmount,
-        currentPoints: user.points,
-        verificationMethod: verificationMethod,
-        twitterVerification: twitterVerification
+        currentPoints: user.points
       };
       
       res.json(successResponse);
