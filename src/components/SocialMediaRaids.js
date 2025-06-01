@@ -1465,7 +1465,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                                             </p>
                                             {(iframeInteractions.likedLoading || iframeInteractions.retweetedLoading || iframeInteractions.commentedLoading) && (
                                               <p className="text-yellow-400 text-xs mt-1">
-                                                Verifying actions... Please wait 10 seconds after clicking each button.
+                                                Verifying actions... Please wait...
                                               </p>
                                             )}
                                           </div>
