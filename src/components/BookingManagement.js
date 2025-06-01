@@ -50,7 +50,7 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
         return (
           <div className="flex gap-2 mt-2">
             <button
-              onClick={() => onShowReviews(booking.serviceId)}
+              onClick={() => onShowReviews(booking.serviceId, booking, false)}
               className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/30"
             >
               Leave Review
@@ -181,7 +181,7 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
               {/* View service reviews button */}
               {booking.serviceId && (
                 <button
-                  onClick={() => onShowReviews(booking.serviceId)}
+                  onClick={() => onShowReviews(booking.serviceId, null, true)}
                   className="mt-2 px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm flex items-center"
                 >
                   <span className="mr-1">⭐</span> View Reviews

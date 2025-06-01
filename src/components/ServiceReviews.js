@@ -327,7 +327,7 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
         {viewOnly && (
           <div className="mb-6 bg-blue-900/20 border border-blue-500/40 p-4 rounded-lg">
             <p className="text-blue-400 text-center">
-              💡 To leave a review, contact the service provider or book their service through the dashboard
+              💡 To leave a review, book their service through the dashboard
             </p>
           </div>
         )}

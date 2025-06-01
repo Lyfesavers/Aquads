@@ -26,6 +26,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [activeTab, setActiveTab] = useState(initialActiveTab || 'ads');
   const [showReviews, setShowReviews] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [selectedViewOnly, setSelectedViewOnly] = useState(false);
   const [affiliateEarnings, setAffiliateEarnings] = useState(null);
   const [earningsSummary, setEarningsSummary] = useState(null);
   const [premiumRequests, setPremiumRequests] = useState([]);
@@ -454,14 +456,18 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   };
 
-  const handleShowReviews = (service) => {
+  const handleShowReviews = (service, booking = null, viewOnly = false) => {
     setSelectedService(service);
+    setSelectedBooking(booking);
+    setSelectedViewOnly(viewOnly);
     setShowReviews(true);
   };
 
   const handleCloseReviews = () => {
     setShowReviews(false);
     setSelectedService(null);
+    setSelectedBooking(null);
+    setSelectedViewOnly(false);
   };
 
   const renderAffiliateEarnings = () => {
@@ -1807,11 +1813,13 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       {showReviews && selectedService && (
         <ServiceReviews
           service={selectedService}
+          booking={selectedBooking}
           onClose={handleCloseReviews}
           currentUser={currentUser}
           showNotification={(message, type) => {
             alert(message);
           }}
+          viewOnly={selectedViewOnly}
         />
       )}
 
