@@ -406,7 +406,14 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     
     // Reset iframe-related states
     handleShowIframe(false);
-    setIframeInteractions({ liked: false, retweeted: false, commented: false });
+    setIframeInteractions({ 
+      liked: false, 
+      retweeted: false, 
+      commented: false,
+      likedLoading: false,
+      retweetedLoading: false,
+      commentedLoading: false
+    });
     setIframeVerified(false);
     setIframeLoading(true);
     
@@ -696,16 +703,32 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
 
   // Add missing handleIframeInteraction function
   const handleIframeInteraction = (type) => {
-    setIframeInteractions(prev => {
-      const newInteractions = { ...prev, [type]: true };
-      
-      // Check if all three interactions are completed
-      if (newInteractions.liked && newInteractions.retweeted && newInteractions.commented) {
-        setIframeVerified(true);
-      }
-      
-      return newInteractions;
-    });
+    // Immediately open the Twitter intent URL
+    // The actual completion will be marked after 10 seconds
+    
+    // Show a loading state for this specific interaction
+    setIframeInteractions(prev => ({
+      ...prev,
+      [`${type}Loading`]: true
+    }));
+    
+    // After 10 seconds, mark the interaction as completed
+    setTimeout(() => {
+      setIframeInteractions(prev => {
+        const newInteractions = { 
+          ...prev, 
+          [type]: true,
+          [`${type}Loading`]: false  // Remove loading state
+        };
+        
+        // Check if all three interactions are completed
+        if (newInteractions.liked && newInteractions.retweeted && newInteractions.commented) {
+          setIframeVerified(true);
+        }
+        
+        return newInteractions;
+      });
+    }, 10000); // 10 second delay
   };
 
   // Add a handler function for showing/hiding iframe
@@ -1355,58 +1378,64 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                                       
                                       <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-3">
                                         {/* Like button */}
-                                        <div className={`${iframeInteractions.liked ? 'bg-green-500/20 border-green-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-2 sm:p-3 text-center transition-colors w-full sm:max-w-[80px]`}>
+                                        <div className={`${iframeInteractions.liked ? 'bg-green-500/20 border-green-500' : iframeInteractions.likedLoading ? 'bg-yellow-500/20 border-yellow-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-2 sm:p-3 text-center transition-colors w-full sm:max-w-[80px]`}>
                                           <button 
                                             onClick={() => {
-                                              window.open(`https://twitter.com/intent/like?tweet_id=${previewState.tweetId}`, '_blank');
-                                              handleIframeInteraction('liked');
+                                              if (!iframeInteractions.liked && !iframeInteractions.likedLoading) {
+                                                window.open(`https://twitter.com/intent/like?tweet_id=${previewState.tweetId}`, '_blank');
+                                                handleIframeInteraction('liked');
+                                              }
                                             }}
-                                            disabled={iframeInteractions.liked}
-                                            className={`${iframeInteractions.liked ? 'opacity-70 cursor-default' : 'hover:text-pink-500'} w-full flex flex-row sm:flex-col items-center justify-center`}
+                                            disabled={iframeInteractions.liked || iframeInteractions.likedLoading}
+                                            className={`${(iframeInteractions.liked || iframeInteractions.likedLoading) ? 'opacity-70 cursor-default' : 'hover:text-pink-500'} w-full flex flex-row sm:flex-col items-center justify-center`}
                                           >
-                                            <svg className={`w-5 h-5 sm:w-6 sm:h-6 sm:mb-1 mr-2 sm:mr-0 ${iframeInteractions.liked ? 'text-pink-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
+                                            <svg className={`w-5 h-5 sm:w-6 sm:h-6 sm:mb-1 mr-2 sm:mr-0 ${iframeInteractions.liked ? 'text-pink-500' : iframeInteractions.likedLoading ? 'text-yellow-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
                                               <path d="M12 21.638h-.014C9.403 21.59 1.95 14.856 1.95 8.478c0-3.064 2.525-5.754 5.403-5.754 2.29 0 3.83 1.58 4.646 2.73.814-1.148 2.354-2.73 4.645-2.73 2.88 0 5.404 2.69 5.404 5.755 0 6.376-7.454 13.11-10.037 13.157H12z"/>
                                             </svg>
-                                            <span className={`${iframeInteractions.liked ? 'text-green-400' : 'text-gray-300'} font-medium text-xs`}>
-                                              {iframeInteractions.liked ? 'Liked ✓' : 'Like'}
+                                            <span className={`${iframeInteractions.liked ? 'text-green-400' : iframeInteractions.likedLoading ? 'text-yellow-400' : 'text-gray-300'} font-medium text-xs`}>
+                                              {iframeInteractions.liked ? 'Liked ✓' : iframeInteractions.likedLoading ? 'Verifying...' : 'Like'}
                                             </span>
                                           </button>
                                         </div>
                                         
                                         {/* Retweet button */}
-                                        <div className={`${iframeInteractions.retweeted ? 'bg-green-500/20 border-green-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-2 sm:p-3 text-center transition-colors w-full sm:max-w-[80px]`}>
+                                        <div className={`${iframeInteractions.retweeted ? 'bg-green-500/20 border-green-500' : iframeInteractions.retweetedLoading ? 'bg-yellow-500/20 border-yellow-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-2 sm:p-3 text-center transition-colors w-full sm:max-w-[80px]`}>
                                           <button 
                                             onClick={() => {
-                                              window.open(`https://twitter.com/intent/retweet?tweet_id=${previewState.tweetId}`, '_blank');
-                                              handleIframeInteraction('retweeted');
+                                              if (!iframeInteractions.retweeted && !iframeInteractions.retweetedLoading) {
+                                                window.open(`https://twitter.com/intent/retweet?tweet_id=${previewState.tweetId}`, '_blank');
+                                                handleIframeInteraction('retweeted');
+                                              }
                                             }}
-                                            disabled={iframeInteractions.retweeted}
-                                            className={`${iframeInteractions.retweeted ? 'opacity-70 cursor-default' : 'hover:text-green-500'} w-full flex flex-row sm:flex-col items-center justify-center`}
+                                            disabled={iframeInteractions.retweeted || iframeInteractions.retweetedLoading}
+                                            className={`${(iframeInteractions.retweeted || iframeInteractions.retweetedLoading) ? 'opacity-70 cursor-default' : 'hover:text-green-500'} w-full flex flex-row sm:flex-col items-center justify-center`}
                                           >
-                                            <svg className={`w-5 h-5 sm:w-6 sm:h-6 sm:mb-1 mr-2 sm:mr-0 ${iframeInteractions.retweeted ? 'text-green-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
+                                            <svg className={`w-5 h-5 sm:w-6 sm:h-6 sm:mb-1 mr-2 sm:mr-0 ${iframeInteractions.retweeted ? 'text-green-500' : iframeInteractions.retweetedLoading ? 'text-yellow-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
                                               <path d="M23.77 15.67c-.292-.293-.767-.293-1.06 0l-2.22 2.22V7.65c0-2.068-1.683-3.75-3.75-3.75h-5.85c-.414 0-.75.336-.75.75s.336.75.75.75h5.85c1.24 0 2.25 1.01 2.25 2.25v10.24l-2.22-2.22c-.293-.293-.768-.293-1.06 0s-.294.768 0 1.06l3.5 3.5c.145.147.337.22.53.22s.383-.072.53-.22l3.5-3.5c.294-.292.294-.767 0-1.06zm-10.66 3.28H7.26c-1.24 0-2.25-1.01-2.25-2.25V6.46l2.22 2.22c.148.147.34.22.532.22s.384-.073.53-.22c.293-.293.293-.768 0-1.06l-3.5-3.5c-.293-.294-.768-.294-1.06 0l-3.5 3.5c-.294.292-.294.767 0 1.06s.767.293 1.06 0l2.22-2.22V16.7c0 2.068 1.683 3.75 3.75 3.75h5.85c.414 0 .75-.336.75-.75s-.337-.75-.75-.75z"></path>
                                             </svg>
-                                            <span className={`${iframeInteractions.retweeted ? 'text-green-400' : 'text-gray-300'} font-medium text-xs`}>
-                                              {iframeInteractions.retweeted ? 'Retweeted ✓' : 'Retweet'}
+                                            <span className={`${iframeInteractions.retweeted ? 'text-green-400' : iframeInteractions.retweetedLoading ? 'text-yellow-400' : 'text-gray-300'} font-medium text-xs`}>
+                                              {iframeInteractions.retweeted ? 'Retweeted ✓' : iframeInteractions.retweetedLoading ? 'Verifying...' : 'Retweet'}
                                             </span>
                                           </button>
                                         </div>
                                         
                                         {/* Reply button */}
-                                        <div className={`${iframeInteractions.commented ? 'bg-green-500/20 border-green-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-2 sm:p-3 text-center transition-colors w-full sm:max-w-[80px]`}>
+                                        <div className={`${iframeInteractions.commented ? 'bg-green-500/20 border-green-500' : iframeInteractions.commentedLoading ? 'bg-yellow-500/20 border-yellow-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-2 sm:p-3 text-center transition-colors w-full sm:max-w-[80px]`}>
                                           <button 
                                             onClick={() => {
-                                              window.open(`https://twitter.com/intent/tweet?in_reply_to=${previewState.tweetId}`, '_blank');
-                                              handleIframeInteraction('commented');
+                                              if (!iframeInteractions.commented && !iframeInteractions.commentedLoading) {
+                                                window.open(`https://twitter.com/intent/tweet?in_reply_to=${previewState.tweetId}`, '_blank');
+                                                handleIframeInteraction('commented');
+                                              }
                                             }}
-                                            disabled={iframeInteractions.commented}
-                                            className={`${iframeInteractions.commented ? 'opacity-70 cursor-default' : 'hover:text-blue-500'} w-full flex flex-row sm:flex-col items-center justify-center`}
+                                            disabled={iframeInteractions.commented || iframeInteractions.commentedLoading}
+                                            className={`${(iframeInteractions.commented || iframeInteractions.commentedLoading) ? 'opacity-70 cursor-default' : 'hover:text-blue-500'} w-full flex flex-row sm:flex-col items-center justify-center`}
                                           >
-                                            <svg className={`w-5 h-5 sm:w-6 sm:h-6 sm:mb-1 mr-2 sm:mr-0 ${iframeInteractions.commented ? 'text-blue-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
+                                            <svg className={`w-5 h-5 sm:w-6 sm:h-6 sm:mb-1 mr-2 sm:mr-0 ${iframeInteractions.commented ? 'text-blue-500' : iframeInteractions.commentedLoading ? 'text-yellow-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
                                               <path d="M14.046 2.242l-4.148-.01h-.002c-4.374 0-7.8 3.427-7.8 7.802 0 4.098 3.186 7.206 7.465 7.37v3.828c0 .108.044.286.12.403.142.225.384.347.632.347.138 0 .277-.038.402-.118.264-.168 6.473-4.14 8.088-5.506 1.902-1.61 3.04-3.97 3.043-6.312v-.017c-.006-4.367-3.43-7.787-7.8-7.788zm3.787 12.972c-1.134.96-4.862 3.405-6.772 4.643V16.67c0-.414-.335-.75-.75-.75h-.396c-3.66 0-6.318-2.476-6.318-5.886 0-3.534 2.768-6.302 6.3-6.302l4.147.01h.002c3.532 0 6.3 2.766 6.302 6.296-.003 1.91-.942 3.844-2.514 5.176z"></path>
                                             </svg>
-                                            <span className={`${iframeInteractions.commented ? 'text-green-400' : 'text-gray-300'} font-medium text-xs`}>
-                                              {iframeInteractions.commented ? 'Replied ✓' : 'Reply'}
+                                            <span className={`${iframeInteractions.commented ? 'text-green-400' : iframeInteractions.commentedLoading ? 'text-yellow-400' : 'text-gray-300'} font-medium text-xs`}>
+                                              {iframeInteractions.commented ? 'Replied ✓' : iframeInteractions.commentedLoading ? 'Verifying...' : 'Reply'}
                                             </span>
                                           </button>
                                         </div>
@@ -1415,9 +1444,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                                       {/* Verification status */}
                                       <div className="mt-4 text-center">
                                         <div className="flex justify-center space-x-2 mb-2">
-                                          <div className={`w-3 h-3 rounded-full ${iframeInteractions.liked ? 'bg-green-500' : 'bg-gray-600'}`}></div>
-                                          <div className={`w-3 h-3 rounded-full ${iframeInteractions.retweeted ? 'bg-green-500' : 'bg-gray-600'}`}></div>
-                                          <div className={`w-3 h-3 rounded-full ${iframeInteractions.commented ? 'bg-green-500' : 'bg-gray-600'}`}></div>
+                                          <div className={`w-3 h-3 rounded-full ${iframeInteractions.liked ? 'bg-green-500' : iframeInteractions.likedLoading ? 'bg-yellow-500 animate-pulse' : 'bg-gray-600'}`}></div>
+                                          <div className={`w-3 h-3 rounded-full ${iframeInteractions.retweeted ? 'bg-green-500' : iframeInteractions.retweetedLoading ? 'bg-yellow-500 animate-pulse' : 'bg-gray-600'}`}></div>
+                                          <div className={`w-3 h-3 rounded-full ${iframeInteractions.commented ? 'bg-green-500' : iframeInteractions.commentedLoading ? 'bg-yellow-500 animate-pulse' : 'bg-gray-600'}`}></div>
                                         </div>
                                         
                                         {iframeVerified ? (
@@ -1428,11 +1457,18 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                                             All interactions verified!
                                           </div>
                                         ) : (
-                                          <p className="text-gray-400 text-sm">
-                                            {(iframeInteractions.liked ? 1 : 0) + 
-                                            (iframeInteractions.retweeted ? 1 : 0) + 
-                                            (iframeInteractions.commented ? 1 : 0)}/3 interactions completed
-                                          </p>
+                                          <div>
+                                            <p className="text-gray-400 text-sm">
+                                              {(iframeInteractions.liked ? 1 : 0) + 
+                                              (iframeInteractions.retweeted ? 1 : 0) + 
+                                              (iframeInteractions.commented ? 1 : 0)}/3 interactions completed
+                                            </p>
+                                            {(iframeInteractions.likedLoading || iframeInteractions.retweetedLoading || iframeInteractions.commentedLoading) && (
+                                              <p className="text-yellow-400 text-xs mt-1">
+                                                Verifying actions... Please wait 10 seconds after clicking each button.
+                                              </p>
+                                            )}
+                                          </div>
                                         )}
                                       </div>
                                     </>
