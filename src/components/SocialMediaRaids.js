@@ -64,6 +64,18 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [iframeVerified, setIframeVerified] = useState(false);
   const iframeContainerRef = useRef(null);
   
+  // Add anti-cheat tracking state
+  const [interactionTimes, setInteractionTimes] = useState({
+    liked: null,
+    retweeted: null,
+    commented: null
+  });
+  const [suspiciousActivity, setSuspiciousActivity] = useState({
+    liked: false,
+    retweeted: false,
+    commented: false
+  });
+  
   // For admin creation
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newRaid, setNewRaid] = useState({
@@ -167,6 +179,77 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     // Fetch user points from API
     fetchUserPoints();
   }, []);
+
+  // Add useEffect for anti-cheat window focus detection
+  useEffect(() => {
+    let focusTimeoutIds = {};
+
+    const handleWindowFocus = () => {
+      const currentTime = Date.now();
+      const minTimeAway = 8000; // Minimum 8 seconds away to be considered legitimate
+      
+      // Check each interaction that's currently loading
+      Object.keys(interactionTimes).forEach(type => {
+        const leaveTime = interactionTimes[type];
+        const isCurrentlyLoading = iframeInteractions[`${type}Loading`];
+        
+        if (leaveTime && isCurrentlyLoading) {
+          const timeAway = currentTime - leaveTime;
+          
+          if (timeAway < minTimeAway) {
+            // User returned too quickly - likely didn't complete the task
+            console.log(`Suspicious activity detected for ${type}: returned after ${timeAway}ms`);
+            
+            // Reset this interaction
+            setIframeInteractions(prev => ({
+              ...prev,
+              [`${type}Loading`]: false,
+              [type]: false
+            }));
+            
+            // Mark as suspicious
+            setSuspiciousActivity(prev => ({
+              ...prev,
+              [type]: true
+            }));
+            
+            // Clear the timeout for this interaction
+            if (focusTimeoutIds[type]) {
+              clearTimeout(focusTimeoutIds[type]);
+              delete focusTimeoutIds[type];
+            }
+            
+            // Show warning to user
+            showNotification(
+              `Please spend more time completing the ${type} action on Twitter. Returning too quickly suggests the task wasn't completed.`,
+              'warning'
+            );
+          }
+        }
+      });
+    };
+
+    const handleWindowBlur = () => {
+      // This is handled in the individual interaction functions
+    };
+
+    // Add event listeners
+    window.addEventListener('focus', handleWindowFocus);
+    window.addEventListener('blur', handleWindowBlur);
+    document.addEventListener('visibilitychange', handleWindowFocus);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('focus', handleWindowFocus);
+      window.removeEventListener('blur', handleWindowBlur);
+      document.removeEventListener('visibilitychange', handleWindowFocus);
+      
+      // Clear any pending timeouts
+      Object.values(focusTimeoutIds).forEach(timeoutId => {
+        clearTimeout(timeoutId);
+      });
+    };
+  }, [interactionTimes, iframeInteractions, showNotification]);
 
   useEffect(() => {
     // When tweet URL changes, try to embed it
@@ -416,6 +499,18 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     });
     setIframeVerified(false);
     setIframeLoading(true);
+    
+    // Reset anti-cheat states
+    setInteractionTimes({
+      liked: null,
+      retweeted: null,
+      commented: null
+    });
+    setSuspiciousActivity({
+      liked: false,
+      retweeted: false,
+      commented: false
+    });
     
     // Extract tweet ID and prepare for preview
     const tweetId = extractTweetId(raid.tweetUrl);
@@ -701,10 +796,20 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     }
   };
 
-  // Add missing handleIframeInteraction function
+  // Add missing handleIframeInteraction function with anti-cheat
   const handleIframeInteraction = (type) => {
-    // Immediately open the Twitter intent URL
-    // The actual completion will be marked after 10 seconds
+    // Record the time when user clicks (leaves for Twitter)
+    const currentTime = Date.now();
+    setInteractionTimes(prev => ({
+      ...prev,
+      [type]: currentTime
+    }));
+    
+    // Clear any previous suspicious activity for this action
+    setSuspiciousActivity(prev => ({
+      ...prev,
+      [type]: false
+    }));
     
     // Show a loading state for this specific interaction
     setIframeInteractions(prev => ({
@@ -712,21 +817,26 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       [`${type}Loading`]: true
     }));
     
-    // After 10 seconds, mark the interaction as completed
+    // After 10 seconds, mark the interaction as completed (if not reset by anti-cheat)
     setTimeout(() => {
       setIframeInteractions(prev => {
-        const newInteractions = { 
-          ...prev, 
-          [type]: true,
-          [`${type}Loading`]: false  // Remove loading state
-        };
-        
-        // Check if all three interactions are completed
-        if (newInteractions.liked && newInteractions.retweeted && newInteractions.commented) {
-          setIframeVerified(true);
+        // Only mark as completed if it's still in loading state
+        // (anti-cheat might have reset it)
+        if (prev[`${type}Loading`]) {
+          const newInteractions = { 
+            ...prev, 
+            [type]: true,
+            [`${type}Loading`]: false
+          };
+          
+          // Check if all three interactions are completed
+          if (newInteractions.liked && newInteractions.retweeted && newInteractions.commented) {
+            setIframeVerified(true);
+          }
+          
+          return newInteractions;
         }
-        
-        return newInteractions;
+        return prev;
       });
     }, 10000); // 10 second delay
   };
@@ -1378,7 +1488,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                                       
                                       <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-3">
                                         {/* Like button */}
-                                        <div className={`${iframeInteractions.liked ? 'bg-green-500/20 border-green-500' : iframeInteractions.likedLoading ? 'bg-yellow-500/20 border-yellow-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-2 sm:p-3 text-center transition-colors w-full sm:max-w-[80px]`}>
+                                        <div className={`${iframeInteractions.liked ? 'bg-green-500/20 border-green-500' : iframeInteractions.likedLoading ? 'bg-yellow-500/20 border-yellow-500' : suspiciousActivity.liked ? 'bg-red-500/20 border-red-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-2 sm:p-3 text-center transition-colors w-full sm:max-w-[80px]`}>
                                           <button 
                                             onClick={() => {
                                               if (!iframeInteractions.liked && !iframeInteractions.likedLoading) {
@@ -1389,17 +1499,17 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                                             disabled={iframeInteractions.liked || iframeInteractions.likedLoading}
                                             className={`${(iframeInteractions.liked || iframeInteractions.likedLoading) ? 'opacity-70 cursor-default' : 'hover:text-pink-500'} w-full flex flex-row sm:flex-col items-center justify-center`}
                                           >
-                                            <svg className={`w-5 h-5 sm:w-6 sm:h-6 sm:mb-1 mr-2 sm:mr-0 ${iframeInteractions.liked ? 'text-pink-500' : iframeInteractions.likedLoading ? 'text-yellow-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
+                                            <svg className={`w-5 h-5 sm:w-6 sm:h-6 sm:mb-1 mr-2 sm:mr-0 ${iframeInteractions.liked ? 'text-pink-500' : iframeInteractions.likedLoading ? 'text-yellow-500' : suspiciousActivity.liked ? 'text-red-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
                                               <path d="M12 21.638h-.014C9.403 21.59 1.95 14.856 1.95 8.478c0-3.064 2.525-5.754 5.403-5.754 2.29 0 3.83 1.58 4.646 2.73.814-1.148 2.354-2.73 4.645-2.73 2.88 0 5.404 2.69 5.404 5.755 0 6.376-7.454 13.11-10.037 13.157H12z"/>
                                             </svg>
-                                            <span className={`${iframeInteractions.liked ? 'text-green-400' : iframeInteractions.likedLoading ? 'text-yellow-400' : 'text-gray-300'} font-medium text-xs`}>
-                                              {iframeInteractions.liked ? 'Liked ✓' : iframeInteractions.likedLoading ? 'Verifying...' : 'Like'}
+                                            <span className={`${iframeInteractions.liked ? 'text-green-400' : iframeInteractions.likedLoading ? 'text-yellow-400' : suspiciousActivity.liked ? 'text-red-400' : 'text-gray-300'} font-medium text-xs`}>
+                                              {iframeInteractions.liked ? 'Liked ✓' : iframeInteractions.likedLoading ? 'Verifying...' : suspiciousActivity.liked ? 'Try Again' : 'Like'}
                                             </span>
                                           </button>
                                         </div>
                                         
                                         {/* Retweet button */}
-                                        <div className={`${iframeInteractions.retweeted ? 'bg-green-500/20 border-green-500' : iframeInteractions.retweetedLoading ? 'bg-yellow-500/20 border-yellow-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-2 sm:p-3 text-center transition-colors w-full sm:max-w-[80px]`}>
+                                        <div className={`${iframeInteractions.retweeted ? 'bg-green-500/20 border-green-500' : iframeInteractions.retweetedLoading ? 'bg-yellow-500/20 border-yellow-500' : suspiciousActivity.retweeted ? 'bg-red-500/20 border-red-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-2 sm:p-3 text-center transition-colors w-full sm:max-w-[80px]`}>
                                           <button 
                                             onClick={() => {
                                               if (!iframeInteractions.retweeted && !iframeInteractions.retweetedLoading) {
@@ -1410,17 +1520,17 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                                             disabled={iframeInteractions.retweeted || iframeInteractions.retweetedLoading}
                                             className={`${(iframeInteractions.retweeted || iframeInteractions.retweetedLoading) ? 'opacity-70 cursor-default' : 'hover:text-green-500'} w-full flex flex-row sm:flex-col items-center justify-center`}
                                           >
-                                            <svg className={`w-5 h-5 sm:w-6 sm:h-6 sm:mb-1 mr-2 sm:mr-0 ${iframeInteractions.retweeted ? 'text-green-500' : iframeInteractions.retweetedLoading ? 'text-yellow-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
+                                            <svg className={`w-5 h-5 sm:w-6 sm:h-6 sm:mb-1 mr-2 sm:mr-0 ${iframeInteractions.retweeted ? 'text-green-500' : iframeInteractions.retweetedLoading ? 'text-yellow-500' : suspiciousActivity.retweeted ? 'text-red-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
                                               <path d="M23.77 15.67c-.292-.293-.767-.293-1.06 0l-2.22 2.22V7.65c0-2.068-1.683-3.75-3.75-3.75h-5.85c-.414 0-.75.336-.75.75s.336.75.75.75h5.85c1.24 0 2.25 1.01 2.25 2.25v10.24l-2.22-2.22c-.293-.293-.768-.293-1.06 0s-.294.768 0 1.06l3.5 3.5c.145.147.337.22.53.22s.383-.072.53-.22l3.5-3.5c.294-.292.294-.767 0-1.06zm-10.66 3.28H7.26c-1.24 0-2.25-1.01-2.25-2.25V6.46l2.22 2.22c.148.147.34.22.532.22s.384-.073.53-.22c.293-.293.293-.768 0-1.06l-3.5-3.5c-.293-.294-.768-.294-1.06 0l-3.5 3.5c-.294.292-.294.767 0 1.06s.767.293 1.06 0l2.22-2.22V16.7c0 2.068 1.683 3.75 3.75 3.75h5.85c.414 0 .75-.336.75-.75s-.337-.75-.75-.75z"></path>
                                             </svg>
-                                            <span className={`${iframeInteractions.retweeted ? 'text-green-400' : iframeInteractions.retweetedLoading ? 'text-yellow-400' : 'text-gray-300'} font-medium text-xs`}>
-                                              {iframeInteractions.retweeted ? 'Retweeted ✓' : iframeInteractions.retweetedLoading ? 'Verifying...' : 'Retweet'}
+                                            <span className={`${iframeInteractions.retweeted ? 'text-green-400' : iframeInteractions.retweetedLoading ? 'text-yellow-400' : suspiciousActivity.retweeted ? 'text-red-400' : 'text-gray-300'} font-medium text-xs`}>
+                                              {iframeInteractions.retweeted ? 'Retweeted ✓' : iframeInteractions.retweetedLoading ? 'Verifying...' : suspiciousActivity.retweeted ? 'Try Again' : 'Retweet'}
                                             </span>
                                           </button>
                                         </div>
                                         
                                         {/* Reply button */}
-                                        <div className={`${iframeInteractions.commented ? 'bg-green-500/20 border-green-500' : iframeInteractions.commentedLoading ? 'bg-yellow-500/20 border-yellow-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-2 sm:p-3 text-center transition-colors w-full sm:max-w-[80px]`}>
+                                        <div className={`${iframeInteractions.commented ? 'bg-green-500/20 border-green-500' : iframeInteractions.commentedLoading ? 'bg-yellow-500/20 border-yellow-500' : suspiciousActivity.commented ? 'bg-red-500/20 border-red-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-2 sm:p-3 text-center transition-colors w-full sm:max-w-[80px]`}>
                                           <button 
                                             onClick={() => {
                                               if (!iframeInteractions.commented && !iframeInteractions.commentedLoading) {
@@ -1431,11 +1541,11 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                                             disabled={iframeInteractions.commented || iframeInteractions.commentedLoading}
                                             className={`${(iframeInteractions.commented || iframeInteractions.commentedLoading) ? 'opacity-70 cursor-default' : 'hover:text-blue-500'} w-full flex flex-row sm:flex-col items-center justify-center`}
                                           >
-                                            <svg className={`w-5 h-5 sm:w-6 sm:h-6 sm:mb-1 mr-2 sm:mr-0 ${iframeInteractions.commented ? 'text-blue-500' : iframeInteractions.commentedLoading ? 'text-yellow-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
+                                            <svg className={`w-5 h-5 sm:w-6 sm:h-6 sm:mb-1 mr-2 sm:mr-0 ${iframeInteractions.commented ? 'text-blue-500' : iframeInteractions.commentedLoading ? 'text-yellow-500' : suspiciousActivity.commented ? 'text-red-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
                                               <path d="M14.046 2.242l-4.148-.01h-.002c-4.374 0-7.8 3.427-7.8 7.802 0 4.098 3.186 7.206 7.465 7.37v3.828c0 .108.044.286.12.403.142.225.384.347.632.347.138 0 .277-.038.402-.118.264-.168 6.473-4.14 8.088-5.506 1.902-1.61 3.04-3.97 3.043-6.312v-.017c-.006-4.367-3.43-7.787-7.8-7.788zm3.787 12.972c-1.134.96-4.862 3.405-6.772 4.643V16.67c0-.414-.335-.75-.75-.75h-.396c-3.66 0-6.318-2.476-6.318-5.886 0-3.534 2.768-6.302 6.3-6.302l4.147.01h.002c3.532 0 6.3 2.766 6.302 6.296-.003 1.91-.942 3.844-2.514 5.176z"></path>
                                             </svg>
-                                            <span className={`${iframeInteractions.commented ? 'text-green-400' : iframeInteractions.commentedLoading ? 'text-yellow-400' : 'text-gray-300'} font-medium text-xs`}>
-                                              {iframeInteractions.commented ? 'Replied ✓' : iframeInteractions.commentedLoading ? 'Verifying...' : 'Reply'}
+                                            <span className={`${iframeInteractions.commented ? 'text-green-400' : iframeInteractions.commentedLoading ? 'text-yellow-400' : suspiciousActivity.commented ? 'text-red-400' : 'text-gray-300'} font-medium text-xs`}>
+                                              {iframeInteractions.commented ? 'Replied ✓' : iframeInteractions.commentedLoading ? 'Verifying...' : suspiciousActivity.commented ? 'Try Again' : 'Reply'}
                                             </span>
                                           </button>
                                         </div>
@@ -1470,6 +1580,37 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                                             )}
                                           </div>
                                         )}
+                                        
+                                        {/* Anti-cheat warning */}
+                                        {(suspiciousActivity.liked || suspiciousActivity.retweeted || suspiciousActivity.commented) && (
+                                          <div className="mt-3 p-2 bg-red-500/20 border border-red-500/50 rounded-lg text-left">
+                                            <div className="flex items-start">
+                                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-400 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                              </svg>
+                                              <div className="text-red-400 text-xs">
+                                                <p className="font-medium mb-1">Quick Return Detected</p>
+                                                <p>You returned too quickly from Twitter. Please spend more time completing the action to ensure it's legitimate.</p>
+                                                {suspiciousActivity.liked && <p className="mt-1">• Like action needs to be retried</p>}
+                                                {suspiciousActivity.retweeted && <p className="mt-1">• Retweet action needs to be retried</p>}
+                                                {suspiciousActivity.commented && <p className="mt-1">• Comment action needs to be retried</p>}
+                                              </div>
+                                            </div>
+                                          </div>
+                                        )}
+                                        
+                                        {/* Anti-cheat info */}
+                                        <div className="mt-3 p-2 bg-blue-500/10 border border-blue-500/30 rounded-lg text-left">
+                                          <div className="flex items-start">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-400 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <div className="text-blue-400 text-xs">
+                                              <p className="font-medium mb-1">Anti-Cheat System Active</p>
+                                              <p>Our system monitors how long you spend on Twitter. Please actually complete each action before returning to avoid being flagged.</p>
+                                            </div>
+                                          </div>
+                                        </div>
                                       </div>
                                     </>
                                   )}
