@@ -57,20 +57,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           url: "https://www.aquads.xyz",
           icons: ["https://www.aquads.xyz/logo192.png"],
         },
-        // Enable social authentication features
-        features: {
-          email: true, // Enable email login
-          socials: [
-            'google',
-            'x', 
-            'github',
-            'discord',
-            'apple',
-            'facebook'
-          ], // Enable social logins
-          emailShowWallets: true, // Show wallet options alongside social login
-          onramp: false // Disable onramp for cleaner experience
-        }
       },
     },
     // SDK configuration for better performance
