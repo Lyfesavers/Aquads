@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 
-const Modal = ({ children, onClose }) => {
+const Modal = ({ children, onClose, fullScreen = false }) => {
   // Prevent body scroll when modal is open
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -31,6 +31,37 @@ const Modal = ({ children, onClose }) => {
       pointer-events: all !important;
     }
   `;
+
+  if (fullScreen) {
+    return (
+      <>
+        {/* Style tag for modal */}
+        <style>{modalStyles}</style>
+        <div 
+          className="fixed inset-0 bg-gray-900 z-[300000] modal-backdrop"
+          onClick={handleBackdropClick}
+        >
+          <div 
+            className="w-full h-full relative modal-content"
+            onClick={handleModalContentClick}
+          >
+            <div className="absolute top-4 right-4 z-10">
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-white text-3xl focus:outline-none p-2 bg-gray-800 rounded-full"
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+            <div className="w-full h-full overflow-y-auto p-4 sm:p-6">
+              {children}
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
-import { FaCopy, FaCheck, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
+import { FaCopy, FaCheck, FaArrowLeft, FaArrowRight, FaBullhorn, FaUsers, FaTwitter, FaChartLine, FaGift, FaRocket } from 'react-icons/fa';
 
 const BLOCKCHAIN_OPTIONS = [
   {
@@ -148,28 +148,28 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
   };
 
   return (
-    <Modal onClose={onClose}>
-      <div className="text-white">
-        <h2 className="text-2xl font-bold mb-4">
-          {step === 1 ? 'List New Project' : 'Payment for Listing'}
-          <span className="text-sm text-gray-400 ml-3">Step {step} of 2</span>
+    <Modal onClose={onClose} fullScreen={true}>
+      <div className="text-white max-w-6xl mx-auto">
+        <h2 className="text-3xl font-bold mb-6 text-center">
+          {step === 1 ? 'List New Project' : 'Premium Listing Package'}
+          <span className="text-lg text-gray-400 ml-3 block sm:inline">Step {step} of 2</span>
         </h2>
         
         {step === 1 ? (
-          <form onSubmit={handleInfoSubmit} className="space-y-4">
+          <form onSubmit={handleInfoSubmit} className="space-y-6 max-w-2xl mx-auto">
             <div>
-              <label className="block mb-1">Title</label>
+              <label className="block mb-2 text-lg font-medium">Title</label>
               <input
                 type="text"
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
               />
             </div>
             <div>
-              <label className="block mb-1">Contract Address</label>
+              <label className="block mb-2 text-lg font-medium">Contract Address</label>
               <input
                 type="text"
                 name="contractAddress"
@@ -177,16 +177,16 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
                 onChange={handleChange}
                 placeholder="Enter contract address (0x...)"
                 required
-                className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
               />
             </div>
             <div>
-              <label className="block mb-1">Blockchain</label>
+              <label className="block mb-2 text-lg font-medium">Blockchain</label>
               <select
                 name="blockchain"
                 value={formData.blockchain}
                 onChange={handleChange}
-                className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
               >
                 <option value="ethereum">Ethereum</option>
                 <option value="bsc">Binance Smart Chain</option>
@@ -226,7 +226,7 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
               </select>
             </div>
             <div>
-              <label className="block mb-1">Logo URL (GIF or PNG)</label>
+              <label className="block mb-2 text-lg font-medium">Logo URL (GIF or PNG)</label>
               <input
                 type="url"
                 name="logo"
@@ -234,11 +234,11 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
                 onChange={handleChange}
                 placeholder="Enter image URL (GIF or PNG)"
                 required
-                className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
               />
               {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
               {previewUrl && (
-                <div className="mt-2 p-2 bg-gray-700 rounded">
+                <div className="mt-4 p-4 bg-gray-700 rounded-lg">
                   <p className="text-sm text-gray-300 mb-2">Preview:</p>
                   <img
                     src={previewUrl}
@@ -249,21 +249,21 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
               )}
             </div>
             <div>
-              <label className="block mb-1">Website URL</label>
+              <label className="block mb-2 text-lg font-medium">Website URL</label>
               <input
                 type="url"
                 name="url"
                 value={formData.url}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
               />
             </div>
             <div className="flex justify-end">
               <button
                 type="submit"
                 disabled={!!error}
-                className={`flex items-center px-4 py-2 rounded ${
+                className={`flex items-center px-6 py-3 rounded-lg text-lg ${
                   error 
                     ? 'bg-gray-500 cursor-not-allowed' 
                     : 'bg-blue-500 hover:bg-blue-600'
@@ -274,89 +274,159 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
             </div>
           </form>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4 mb-4">
-              <h3 className="text-lg font-semibold text-white mb-2">Listing Fee: $150 USDC</h3>
-              <p className="text-sm text-gray-300">
-                Your listing will be reviewed by our admins after payment confirmation. 
-                Once approved, your project will appear in the bubbles. If rejected you will refunded.
-              </p>
-            </div>
-            
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Select Network</h3>
-              <div className="grid grid-cols-2 gap-4">
-                {BLOCKCHAIN_OPTIONS.map((chain) => (
-                  <button
-                    key={chain.symbol}
-                    type="button"
-                    onClick={() => setSelectedChain(chain)}
-                    className={`p-4 rounded-lg border ${
-                      selectedChain === chain
-                        ? 'border-blue-500 bg-blue-500/20'
-                        : 'border-gray-600 hover:border-blue-400'
-                    }`}
-                  >
-                    <div className="flex justify-between items-center">
-                      <span>{chain.name}</span>
-                      <span>$150 {chain.amount}</span>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Premium Package Benefits */}
+            <div className="order-2 lg:order-1">
+              <div className="bg-gradient-to-br from-blue-900/50 to-purple-900/50 border border-blue-500/50 rounded-xl p-6 mb-6">
+                <h3 className="text-2xl font-bold text-white mb-4 flex items-center">
+                  <FaRocket className="mr-3 text-blue-400" />
+                  Premium Listing Package - $150 USDC
+                </h3>
+                <p className="text-gray-300 mb-6">
+                  Get maximum exposure and professional marketing support for your project with our comprehensive premium package.
+                </p>
+                
+                <div className="space-y-4">
+                  <div className="flex items-start space-x-4 p-4 bg-gray-800/50 rounded-lg">
+                    <div className="bg-green-500 p-2 rounded-full">
+                      <FaGift className="text-white" />
                     </div>
+                    <div>
+                      <h4 className="font-semibold text-white">3 Months Free Bubble Bumping</h4>
+                      <p className="text-gray-300 text-sm">Keep your project at the top of our bubble display for maximum visibility</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start space-x-4 p-4 bg-gray-800/50 rounded-lg">
+                    <div className="bg-blue-500 p-2 rounded-full">
+                      <FaBullhorn className="text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-white">PR Press Release Article</h4>
+                      <p className="text-gray-300 text-sm">Professional press release distributed across multiple crypto media platforms</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start space-x-4 p-4 bg-gray-800/50 rounded-lg">
+                    <div className="bg-purple-500 p-2 rounded-full">
+                      <FaUsers className="text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-white">Free AMA Services</h4>
+                      <p className="text-gray-300 text-sm">Host an Ask Me Anything session with our community to build trust and engagement</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start space-x-4 p-4 bg-gray-800/50 rounded-lg">
+                    <div className="bg-cyan-500 p-2 rounded-full">
+                      <FaTwitter className="text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-white">Community Twitter Raids</h4>
+                      <p className="text-gray-300 text-sm">Access to our coordinated Twitter raid campaigns for viral social media exposure</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start space-x-4 p-4 bg-gray-800/50 rounded-lg">
+                    <div className="bg-orange-500 p-2 rounded-full">
+                      <FaChartLine className="text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-white">Paid Ad Campaign Exposure</h4>
+                      <p className="text-gray-300 text-sm">Featured placement in our targeted advertising campaigns across multiple channels</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-6 p-4 bg-green-900/30 border border-green-500/50 rounded-lg">
+                  <p className="text-green-300 text-sm font-medium">
+                    ✓ Total Value: Over $500 in marketing services<br/>
+                    ✓ Your listing will be reviewed and approved by our admins<br/>
+                    ✓ Full refund if rejected for any reason
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Form */}
+            <div className="order-1 lg:order-2">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <h3 className="text-xl font-semibold text-white mb-4">Select Payment Network</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {BLOCKCHAIN_OPTIONS.map((chain) => (
+                      <button
+                        key={chain.symbol}
+                        type="button"
+                        onClick={() => setSelectedChain(chain)}
+                        className={`p-4 rounded-lg border transition-all ${
+                          selectedChain === chain
+                            ? 'border-blue-500 bg-blue-500/20 ring-2 ring-blue-500/50'
+                            : 'border-gray-600 hover:border-blue-400 hover:bg-gray-700/50'
+                        }`}
+                      >
+                        <div className="flex justify-between items-center">
+                          <span className="font-medium">{chain.name}</span>
+                          <span className="text-sm text-gray-300">$150 {chain.amount}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-semibold text-white mb-4">Payment Address</h3>
+                  <div className="flex items-center gap-3 p-4 bg-gray-700 rounded-lg">
+                    <input
+                      type="text"
+                      value={selectedChain.address}
+                      readOnly
+                      className="bg-transparent flex-1 outline-none text-sm font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleCopyAddress}
+                      className="text-blue-400 hover:text-blue-300 p-2 rounded"
+                    >
+                      {copiedAddress ? <FaCheck /> : <FaCopy />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-lg font-medium text-gray-300 mb-2">
+                    Transaction Signature
+                  </label>
+                  <input
+                    type="text"
+                    name="txSignature"
+                    value={formData.txSignature}
+                    onChange={handleChange}
+                    placeholder="Enter transaction signature after payment"
+                    className="w-full p-4 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
+                    required
+                  />
+                  {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+                </div>
+
+                <div className="flex justify-between pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setStep(1)}
+                    className="flex items-center px-6 py-3 rounded-lg bg-gray-600 hover:bg-gray-700 text-lg"
+                  >
+                    <FaArrowLeft className="mr-2" /> Back
                   </button>
-                ))}
-              </div>
+                  <button
+                    type="submit"
+                    className="flex items-center px-6 py-3 rounded-lg bg-blue-500 hover:bg-blue-600 text-lg"
+                  >
+                    Submit Payment
+                  </button>
+                </div>
+              </form>
             </div>
-
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Payment Address</h3>
-              <div className="flex items-center gap-2 p-4 bg-gray-700 rounded-lg">
-                <input
-                  type="text"
-                  value={selectedChain.address}
-                  readOnly
-                  className="bg-transparent flex-1 outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={handleCopyAddress}
-                  className="text-blue-400 hover:text-blue-300"
-                >
-                  {copiedAddress ? <FaCheck /> : <FaCopy />}
-                </button>
-              </div>
-            </div>
-
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Transaction Signature
-              </label>
-              <input
-                type="text"
-                name="txSignature"
-                value={formData.txSignature}
-                onChange={handleChange}
-                placeholder="Enter transaction signature"
-                className="w-full p-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-              {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
-            </div>
-
-            <div className="flex justify-between">
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="flex items-center px-4 py-2 rounded bg-gray-600 hover:bg-gray-700"
-              >
-                <FaArrowLeft className="mr-2" /> Back
-              </button>
-              <button
-                type="submit"
-                className="flex items-center px-4 py-2 rounded bg-blue-500 hover:bg-blue-600"
-              >
-                Submit Payment
-              </button>
-            </div>
-          </form>
+          </div>
         )}
       </div>
     </Modal>
