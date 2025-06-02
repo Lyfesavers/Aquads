@@ -10,9 +10,13 @@
       <stop offset="0%" stop-color="#0c4a6e" />
       <stop offset="100%" stop-color="#0284c7" />
     </linearGradient>
-    <linearGradient id="affiliateGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+    <linearGradient id="telegramGradient" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#064e3b" />
       <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+    <linearGradient id="marketingGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ea580c" />
+      <stop offset="100%" stop-color="#f97316" />
     </linearGradient>
     <pattern id="diagonalLines" patternUnits="userSpaceOnUse" width="40" height="40" patternTransform="rotate(45)">
       <line x1="0" y1="0" x2="0" y2="40" stroke="#4c1d95" stroke-width="2" />
@@ -21,22 +25,22 @@
   
   <!-- Clickable areas with links -->
   <a id="gamehub-link" href="/games">
-    <!-- GameHub Section (Left) -->
-    <rect x="0" y="0" width="616" height="200" fill="url(#gameHubGradient)" />
-    <rect x="0" y="0" width="616" height="200" fill="url(#diagonalLines)" opacity="0.2" />
+    <!-- GameHub Section (Left Quarter) -->
+    <rect x="0" y="0" width="462" height="200" fill="url(#gameHubGradient)" />
+    <rect x="0" y="0" width="462" height="200" fill="url(#diagonalLines)" opacity="0.2" />
     
     <!-- GameHub Text -->
-    <text x="308" y="80" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="white" text-anchor="middle">
+    <text x="231" y="80" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="white" text-anchor="middle">
       GAME HUB
     </text>
     
     <!-- GameHub Subtitle -->
-    <text x="308" y="120" font-family="Arial, sans-serif" font-size="20" fill="#d8b4fe" text-anchor="middle">
+    <text x="231" y="110" font-family="Arial, sans-serif" font-size="16" fill="#d8b4fe" text-anchor="middle">
       DISCOVER WEB3 GAMES
     </text>
     
     <!-- GameHub Icon -->
-    <g transform="translate(308, 160) scale(0.5)">
+    <g transform="translate(231, 140) scale(0.4)">
       <circle cx="0" cy="0" r="24" fill="#a855f7" />
       <polygon points="-12,-12 12,-12 12,12 -12,12" fill="white" transform="rotate(45)" />
       <circle cx="0" cy="0" r="8" fill="#a855f7" />
@@ -45,21 +49,21 @@
   </a>
   
   <a id="freelancer-link" href="/marketplace">
-    <!-- Freelancer Hub Section (Middle) -->
-    <rect x="616" y="0" width="616" height="200" fill="url(#freelancerGradient)" />
+    <!-- Freelancer Hub Section (Second Quarter) -->
+    <rect x="462" y="0" width="462" height="200" fill="url(#freelancerGradient)" />
     
     <!-- Freelancer Text -->
-    <text x="924" y="80" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="white" text-anchor="middle">
+    <text x="693" y="80" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="white" text-anchor="middle">
       FREELANCER HUB
     </text>
     
     <!-- Freelancer Subtitle -->
-    <text x="924" y="120" font-family="Arial, sans-serif" font-size="20" fill="#38bdf8" text-anchor="middle">
+    <text x="693" y="110" font-family="Arial, sans-serif" font-size="16" fill="#38bdf8" text-anchor="middle">
       CONNECT WITH TOP TALENT
     </text>
     
     <!-- Connection Hub Visualization -->
-    <g transform="translate(924, 160) scale(0.5)">
+    <g transform="translate(693, 140) scale(0.4)">
       <circle cx="0" cy="0" r="24" fill="#0284c7" />
       <circle cx="-15" cy="-15" r="8" fill="white" />
       <circle cx="15" cy="-15" r="8" fill="white" />
@@ -70,24 +74,52 @@
     </g>
   </a>
   
-  <a id="affiliate-link" href="/affiliate">
-    <!-- Affiliate Program Section (Right) -->
-    <rect x="1232" y="0" width="616" height="200" fill="url(#affiliateGradient)" />
+  <a id="telegram-link" href="https://t.me/aquadsbumpbot?start=_tgr_gMbuSho0MWJh" target="_blank" rel="noopener noreferrer">
+    <!-- Telegram Mini App Section (Third Quarter) -->
+    <rect x="924" y="0" width="462" height="200" fill="url(#telegramGradient)" />
     
-    <!-- Affiliate Text -->
-    <text x="1540" y="80" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="white" text-anchor="middle">
+    <!-- Telegram Text -->
+    <text x="1155" y="80" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="white" text-anchor="middle">
       TELEGRAM MINI APP
     </text>
     
-    <!-- Affiliate Subtitle -->
-    <text x="1540" y="120" font-family="Arial, sans-serif" font-size="20" fill="#34d399" text-anchor="middle">
-      CONNECT WITH OUR TELEGRAM BOT
+    <!-- Telegram Subtitle -->
+    <text x="1155" y="110" font-family="Arial, sans-serif" font-size="16" fill="#34d399" text-anchor="middle">
+      CONNECT WITH OUR BOT
     </text>
     
-    <!-- Affiliate Icon -->
-    <g transform="translate(1540, 160) scale(0.5)">
+    <!-- Telegram Icon -->
+    <g transform="translate(1155, 140) scale(0.4)">
       <circle cx="0" cy="0" r="24" fill="#10b981" />
       <path d="M-12,-5 L0,-17 L12,-5 L5,-5 L5,17 L-5,17 L-5,-5 Z" fill="white" />
+    </g>
+  </a>
+
+  <a id="marketing-link" href="https://coinbound.io/marketing-plan/?ref=Aquads" target="_blank" rel="noopener noreferrer">
+    <!-- Marketing Services Section (Right Quarter) -->
+    <rect x="1386" y="0" width="462" height="200" fill="url(#marketingGradient)" />
+    
+    <!-- Marketing Text -->
+    <text x="1617" y="70" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="white" text-anchor="middle">
+      MARKETING SERVICES
+    </text>
+    
+    <!-- Marketing Subtitle -->
+    <text x="1617" y="95" font-family="Arial, sans-serif" font-size="16" fill="#fed7aa" text-anchor="middle">
+      POWERED BY COINBOUND
+    </text>
+    
+    <!-- Coinbound Logo (simplified representation) -->
+    <g transform="translate(1617, 125) scale(0.3)">
+      <circle cx="0" cy="0" r="24" fill="#ffffff" />
+      <text x="0" y="8" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#ea580c" text-anchor="middle">CB</text>
+    </g>
+    
+    <!-- Marketing Icon -->
+    <g transform="translate(1617, 155) scale(0.3)">
+      <circle cx="0" cy="0" r="20" fill="#fed7aa" />
+      <path d="M-10,-10 L10,-10 L10,10 L-10,10 Z" fill="#ea580c" />
+      <circle cx="0" cy="0" r="6" fill="white" />
     </g>
   </a>
   
@@ -100,7 +132,8 @@
     
     #gamehub-link:hover text,
     #freelancer-link:hover text,
-    #affiliate-link:hover text {
+    #telegram-link:hover text,
+    #marketing-link:hover text {
       filter: drop-shadow(0 0 3px white);
     }
     
@@ -115,13 +148,16 @@
   </style>
   
   <!-- Animated particles -->
-  <circle class="particle" cx="308" cy="40" r="3" fill="white" opacity="0.7">
+  <circle class="particle" cx="231" cy="40" r="3" fill="white" opacity="0.7">
     <animate attributeName="opacity" values="0.3;0.7;0.3" dur="3s" repeatCount="indefinite" />
   </circle>
-  <circle class="particle" cx="924" cy="40" r="3" fill="white" opacity="0.7">
+  <circle class="particle" cx="693" cy="40" r="3" fill="white" opacity="0.7">
     <animate attributeName="opacity" values="0.3;0.7;0.3" dur="2.7s" repeatCount="indefinite" />
   </circle>
-  <circle class="particle" cx="1540" cy="40" r="3" fill="white" opacity="0.7">
+  <circle class="particle" cx="1155" cy="40" r="3" fill="white" opacity="0.7">
     <animate attributeName="opacity" values="0.3;0.7;0.3" dur="3.3s" repeatCount="indefinite" />
+  </circle>
+  <circle class="particle" cx="1617" cy="40" r="3" fill="white" opacity="0.7">
+    <animate attributeName="opacity" values="0.3;0.7;0.3" dur="2.5s" repeatCount="indefinite" />
   </circle>
 </svg> 
