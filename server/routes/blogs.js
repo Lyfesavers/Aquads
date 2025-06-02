@@ -65,10 +65,10 @@ router.post('/', auth, async (req, res) => {
 
     const { title, content, bannerImage } = req.body;
     
-    // Validate content length (max 5000 words)
+    // Validate content length (max 10000 words)
     const wordCount = content.trim().split(/\s+/).length;
-    if (wordCount > 5000) {
-      return res.status(400).json({ error: 'Content exceeds 5000 words limit' });
+    if (wordCount > 10000) {
+      return res.status(400).json({ error: 'Content exceeds 10000 words limit' });
     }
 
     // Get the full user information including image
@@ -111,8 +111,8 @@ router.patch('/:id', auth, async (req, res) => {
     // Validate content length if it's being updated
     if (req.body.content) {
       const wordCount = req.body.content.trim().split(/\s+/).length;
-      if (wordCount > 5000) {
-        return res.status(400).json({ error: 'Content exceeds 5000 words limit' });
+      if (wordCount > 10000) {
+        return res.status(400).json({ error: 'Content exceeds 10000 words limit' });
       }
     }
 

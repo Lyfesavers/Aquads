@@ -404,7 +404,7 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
         
         <div>
           <div className="flex justify-between items-center mb-1">
-            <label className="block text-sm font-medium">Content (Max 5000 words)</label>
+            <label className="block text-sm font-medium">Content (Max 10000 words)</label>
             <div className="flex gap-2 items-center">
               <span className="text-xs text-gray-400">Format Preservation:</span>
               <button
