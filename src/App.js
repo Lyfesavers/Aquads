@@ -47,11 +47,6 @@ import './App.css';
 import FilterControls from './components/FilterControls';
 import AquaSwap from './components/AquaSwap';
 
-// Add Reown AppKit imports for social authentication
-import { createAppKit } from '@reown/appkit/react';
-import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
-import { mainnet, arbitrum, polygon, optimism, base } from '@reown/appkit/networks';
-
 // Simple debounce function implementation
 const debounce = (func, wait) => {
   let timeout;
@@ -368,52 +363,6 @@ const NavigationListener = ({ onNavigate, arrangeDesktopGrid, adjustBubblesForMo
 };
 
 function App() {
-  // Initialize AppKit with social authentication (only once)
-  useEffect(() => {
-    const projectId = process.env.REACT_APP_WALLETCONNECT_PROJECT_ID;
-    
-    if (projectId && !window.reownAppKitInitialized) {
-      window.reownAppKitInitialized = true; // Prevent multiple initialization
-      
-      try {
-        // Create Wagmi adapter
-        const wagmiAdapter = new WagmiAdapter({
-          projectId,
-          networks: [mainnet, arbitrum, polygon, optimism, base]
-        });
-
-        // Create AppKit with social authentication features
-        createAppKit({
-          adapters: [wagmiAdapter],
-          projectId,
-          networks: [mainnet, arbitrum, polygon, optimism, base],
-          metadata: {
-            name: "Aquads",
-            description: "Aquads - Web3 Crypto Hub & Freelancer Marketplace",
-            url: "https://www.aquads.xyz",
-            icons: ["https://www.aquads.xyz/logo192.png"],
-          },
-          features: {
-            email: true, // Enable email login
-            socials: [
-              'google',
-              'x', 
-              'github',
-              'discord',
-              'apple',
-              'facebook'
-            ], // Enable social logins
-            emailShowWallets: true // Show wallet options alongside social login
-          }
-        });
-        
-        logger.log('Reown AppKit initialized successfully with social authentication');
-      } catch (error) {
-        logger.error('Failed to initialize Reown AppKit:', error);
-      }
-    }
-  }, []); // Run once on mount
-
   const [ads, setAds] = useState(() => {
     const cachedAds = localStorage.getItem('cachedAds');
     if (cachedAds) {
