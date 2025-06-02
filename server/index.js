@@ -54,8 +54,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json({ limit: '10kb' }));
-app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Create uploads directory if it doesn't exist
 // Ensure both the uploads and uploads/bookings directories exist
