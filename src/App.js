@@ -2999,10 +2999,11 @@ function App() {
                           src="/game-hub-section.svg"
                           alt="Game Hub"
                           className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px]"
+                          style={{ pointerEvents: 'none' }}
                         />
                         <Link 
                           to="/games" 
-                          className="absolute inset-0 w-full h-full block cursor-pointer"
+                          className="absolute inset-0 w-full h-full block cursor-pointer hover:bg-white/10 transition-all duration-200"
                           aria-label="Go to Game Hub"
                         >
                           <span className="sr-only">Game Hub</span>
@@ -3015,10 +3016,11 @@ function App() {
                           src="/freelancer-hub-section.svg"
                           alt="Freelancer Hub"
                           className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px]"
+                          style={{ pointerEvents: 'none' }}
                         />
                         <Link 
                           to="/marketplace" 
-                          className="absolute inset-0 w-full h-full block cursor-pointer"
+                          className="absolute inset-0 w-full h-full block cursor-pointer hover:bg-white/10 transition-all duration-200"
                           aria-label="Go to Freelancer Hub"
                         >
                           <span className="sr-only">Freelancer Hub</span>
@@ -3031,12 +3033,13 @@ function App() {
                           src="/telegram-section.svg"
                           alt="Telegram Mini App"
                           className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px]"
+                          style={{ pointerEvents: 'none' }}
                         />
                         <a 
                           href="https://t.me/aquads_bot" 
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="absolute inset-0 w-full h-full block cursor-pointer"
+                          className="absolute inset-0 w-full h-full block cursor-pointer hover:bg-white/10 transition-all duration-200"
                           aria-label="Go to Telegram Mini App"
                         >
                           <span className="sr-only">Telegram Mini App</span>
@@ -3049,12 +3052,13 @@ function App() {
                           src="/coinbound-section.svg"
                           alt="Free Marketing Plan"
                           className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px]"
+                          style={{ pointerEvents: 'none' }}
                         />
                         <a 
                           href="https://coinbound.io/marketing-plan/?ref=Aquads" 
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="absolute inset-0 w-full h-full block cursor-pointer"
+                          className="absolute inset-0 w-full h-full block cursor-pointer hover:bg-white/10 transition-all duration-200"
                           aria-label="Go to Coinbound Marketing Plan"
                         >
                           <span className="sr-only">Free Marketing Plan</span>
