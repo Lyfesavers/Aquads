@@ -3107,11 +3107,11 @@ function App() {
                           draggable="false"
                         />
                         {/* Coinbound Logo Overlay */}
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="absolute inset-0 flex items-center justify-start pl-4 pointer-events-none">
                           <img
                             src="/Coinbound.svg"
                             alt="Coinbound Logo"
-                            className="h-8 sm:h-12 md:h-16 w-auto"
+                            className="h-6 sm:h-8 md:h-10 w-auto"
                             style={{ 
                               pointerEvents: 'none', 
                               userSelect: 'none',
