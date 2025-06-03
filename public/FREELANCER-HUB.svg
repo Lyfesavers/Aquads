@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="1848" height="200" viewBox="0 0 1848 200" xmlns="http://www.w3.org/2000/svg">
+<svg width="2464" height="200" viewBox="0 0 2464 200" xmlns="http://www.w3.org/2000/svg">
   <!-- Background gradients -->
   <defs>
     <linearGradient id="gameHubGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -13,6 +13,10 @@
     <linearGradient id="affiliateGradient" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#064e3b" />
       <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+    <linearGradient id="coinboundGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ea580c" />
+      <stop offset="100%" stop-color="#f97316" />
     </linearGradient>
     <pattern id="diagonalLines" patternUnits="userSpaceOnUse" width="40" height="40" patternTransform="rotate(45)">
       <line x1="0" y1="0" x2="0" y2="40" stroke="#4c1d95" stroke-width="2" />
@@ -45,7 +49,7 @@
   </a>
   
   <a id="freelancer-link" href="/marketplace">
-    <!-- Freelancer Hub Section (Middle) -->
+    <!-- Freelancer Hub Section (Second) -->
     <rect x="616" y="0" width="616" height="200" fill="url(#freelancerGradient)" />
     
     <!-- Freelancer Text -->
@@ -71,7 +75,7 @@
   </a>
   
   <a id="affiliate-link" href="/affiliate">
-    <!-- Affiliate Program Section (Right) -->
+    <!-- Affiliate Program Section (Third) -->
     <rect x="1232" y="0" width="616" height="200" fill="url(#affiliateGradient)" />
     
     <!-- Affiliate Text -->
@@ -91,6 +95,29 @@
     </g>
   </a>
   
+  <a id="coinbound-link" href="https://coinbound.io/marketing-plan/?ref=Aquads" target="_blank">
+    <!-- Coinbound Section (Fourth) -->
+    <rect x="1848" y="0" width="616" height="200" fill="url(#coinboundGradient)" />
+    
+    <!-- Coinbound Text -->
+    <text x="2156" y="80" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="white" text-anchor="middle">
+      FREE MARKETING PLAN
+    </text>
+    
+    <!-- Coinbound Subtitle -->
+    <text x="2156" y="120" font-family="Arial, sans-serif" font-size="18" fill="#fed7aa" text-anchor="middle">
+      FROM OUR PARTNER COINBOUND
+    </text>
+    
+    <!-- Coinbound Logo -->
+    <g transform="translate(2156, 160) scale(0.4)">
+      <circle cx="0" cy="0" r="30" fill="#fff" opacity="0.9" />
+      <text x="0" y="8" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#ea580c" text-anchor="middle">
+        CB
+      </text>
+    </g>
+  </a>
+  
   <!-- Interactive highlights on hover -->
   <style>
     a:hover rect {
@@ -100,7 +127,8 @@
     
     #gamehub-link:hover text,
     #freelancer-link:hover text,
-    #affiliate-link:hover text {
+    #affiliate-link:hover text,
+    #coinbound-link:hover text {
       filter: drop-shadow(0 0 3px white);
     }
     
@@ -123,5 +151,8 @@
   </circle>
   <circle class="particle" cx="1540" cy="40" r="3" fill="white" opacity="0.7">
     <animate attributeName="opacity" values="0.3;0.7;0.3" dur="3.3s" repeatCount="indefinite" />
+  </circle>
+  <circle class="particle" cx="2156" cy="40" r="3" fill="white" opacity="0.7">
+    <animate attributeName="opacity" values="0.3;0.7;0.3" dur="2.9s" repeatCount="indefinite" />
   </circle>
 </svg> 
