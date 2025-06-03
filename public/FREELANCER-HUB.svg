@@ -74,7 +74,7 @@
     </g>
   </a>
   
-  <a id="affiliate-link" href="/affiliate">
+  <a id="affiliate-link" href="https://t.me/aquads_bot">
     <!-- Affiliate Program Section (Third) -->
     <rect x="1232" y="0" width="616" height="200" fill="url(#affiliateGradient)" />
     
@@ -98,9 +98,6 @@
   <a id="coinbound-link" href="https://coinbound.io/marketing-plan/?ref=Aquads" target="_blank">
     <!-- Coinbound Section (Fourth) -->
     <rect x="1848" y="0" width="616" height="200" fill="url(#coinboundGradient)" />
-    
-    <!-- Explicit clickable area -->
-    <rect x="1848" y="0" width="616" height="200" fill="transparent" style="pointer-events: all;" />
     
     <!-- Coinbound Text -->
     <text x="2156" y="80" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="white" text-anchor="middle">
