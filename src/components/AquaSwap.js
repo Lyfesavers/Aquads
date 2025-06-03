@@ -61,16 +61,32 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     },
     // SDK configuration for better performance
     sdkConfig: {
+      // Improved route options for better performance and user experience
+      routeOptions: {
+        // Prioritize speed and success rate
+        order: 'FASTEST',
+        // Allow partial routes for better UX
+        allowPartialRoutes: true,
+        // Maximum number of routes to fetch for better performance
+        maxPriceImpact: 0.4, // 40% max price impact
+      },
       rpcUrls: {
         // Add your RPC URLs here if you have custom ones
         // [ChainId.ETH]: ['https://your-ethereum-rpc.com/'],
         // [ChainId.SOL]: ['https://your-solana-rpc.com/'],
       },
     },
-    // Theme configuration
+    // Enhanced theme configuration
     theme: {
       palette: {
         mode: 'dark',
+      },
+      // Improved container styling
+      container: {
+        // Better border radius for modern look
+        borderRadius: '16px',
+        // Improved shadow for better depth
+        boxShadow: '0 8px 32px 0 rgba(0, 212, 255, 0.1)',
       },
     },
   };
