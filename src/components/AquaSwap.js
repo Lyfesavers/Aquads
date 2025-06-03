@@ -68,7 +68,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         // Allow partial routes for better UX
         allowPartialRoutes: true,
         // Maximum number of routes to fetch for better performance
-        maxPriceImpact: 0.4, // 40% max price impact
+        maxPriceImpact: 0.5, // 50% max price impact
       },
       rpcUrls: {
         // Add your RPC URLs here if you have custom ones
