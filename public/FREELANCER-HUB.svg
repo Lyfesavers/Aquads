@@ -75,20 +75,20 @@
   </a>
   
   <a id="affiliate-link" href="https://t.me/aquads_bot">
-    <!-- Affiliate Program Section (Third) -->
+    <!-- Telegram Mini App Section (Third) -->
     <rect x="1232" y="0" width="616" height="200" fill="url(#affiliateGradient)" />
     
-    <!-- Affiliate Text -->
+    <!-- Telegram Text -->
     <text x="1540" y="80" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="white" text-anchor="middle">
       TELEGRAM MINI APP
     </text>
     
-    <!-- Affiliate Subtitle -->
+    <!-- Telegram Subtitle -->
     <text x="1540" y="120" font-family="Arial, sans-serif" font-size="20" fill="#34d399" text-anchor="middle">
       CONNECT WITH OUR TELEGRAM BOT
     </text>
     
-    <!-- Affiliate Icon -->
+    <!-- Telegram Icon -->
     <g transform="translate(1540, 160) scale(0.5)">
       <circle cx="0" cy="0" r="24" fill="#10b981" />
       <path d="M-12,-5 L0,-17 L12,-5 L5,-5 L5,17 L-5,17 L-5,-5 Z" fill="white" />
