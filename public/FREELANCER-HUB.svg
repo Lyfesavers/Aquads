@@ -23,149 +23,70 @@
     </pattern>
   </defs>
   
-  <!-- Clickable areas with links -->
-  <a id="gamehub-link" href="/games">
-    <!-- GameHub Section (Left) -->
-    <rect x="0" y="0" width="616" height="200" fill="url(#gameHubGradient)" />
-    <rect x="0" y="0" width="616" height="200" fill="url(#diagonalLines)" opacity="0.2" />
-    
-    <!-- GameHub Text -->
-    <text x="308" y="80" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="white" text-anchor="middle">
-      GAME HUB
-    </text>
-    
-    <!-- GameHub Subtitle -->
-    <text x="308" y="120" font-family="Arial, sans-serif" font-size="20" fill="#d8b4fe" text-anchor="middle">
-      DISCOVER WEB3 GAMES
-    </text>
-    
-    <!-- GameHub Icon -->
-    <g transform="translate(308, 160) scale(0.5)">
-      <circle cx="0" cy="0" r="24" fill="#a855f7" />
-      <polygon points="-12,-12 12,-12 12,12 -12,12" fill="white" transform="rotate(45)" />
-      <circle cx="0" cy="0" r="8" fill="#a855f7" />
-      <circle cx="0" cy="0" r="5" fill="white" />
-    </g>
-  </a>
+  <!-- VISUAL ELEMENTS ONLY (No Clicks) -->
+  <!-- GameHub Section Visual -->
+  <rect x="0" y="0" width="616" height="200" fill="url(#gameHubGradient)" />
+  <rect x="0" y="0" width="616" height="200" fill="url(#diagonalLines)" opacity="0.2" />
+  <text x="308" y="80" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="white" text-anchor="middle">
+    GAME HUB
+  </text>
+  <text x="308" y="120" font-family="Arial, sans-serif" font-size="20" fill="#d8b4fe" text-anchor="middle">
+    DISCOVER WEB3 GAMES
+  </text>
+  <g transform="translate(308, 160) scale(0.5)">
+    <circle cx="0" cy="0" r="24" fill="#a855f7" />
+    <polygon points="-12,-12 12,-12 12,12 -12,12" fill="white" transform="rotate(45)" />
+    <circle cx="0" cy="0" r="8" fill="#a855f7" />
+    <circle cx="0" cy="0" r="5" fill="white" />
+  </g>
   
-  <a id="freelancer-link" href="/marketplace">
-    <!-- Freelancer Hub Section (Second) -->
-    <rect x="616" y="0" width="616" height="200" fill="url(#freelancerGradient)" />
-    
-    <!-- Freelancer Text -->
-    <text x="924" y="80" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="white" text-anchor="middle">
-      FREELANCER HUB
-    </text>
-    
-    <!-- Freelancer Subtitle -->
-    <text x="924" y="120" font-family="Arial, sans-serif" font-size="20" fill="#38bdf8" text-anchor="middle">
-      CONNECT WITH TOP TALENT
-    </text>
-    
-    <!-- Connection Hub Visualization -->
-    <g transform="translate(924, 160) scale(0.5)">
-      <circle cx="0" cy="0" r="24" fill="#0284c7" />
-      <circle cx="-15" cy="-15" r="8" fill="white" />
-      <circle cx="15" cy="-15" r="8" fill="white" />
-      <circle cx="0" cy="15" r="8" fill="white" />
-      <line x1="-15" y1="-15" x2="15" y2="-15" stroke="white" stroke-width="2" />
-      <line x1="-15" y1="-15" x2="0" y2="15" stroke="white" stroke-width="2" />
-      <line x1="15" y1="-15" x2="0" y2="15" stroke="white" stroke-width="2" />
-    </g>
-  </a>
+  <!-- Freelancer Hub Section Visual -->
+  <rect x="616" y="0" width="616" height="200" fill="url(#freelancerGradient)" />
+  <text x="924" y="80" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="white" text-anchor="middle">
+    FREELANCER HUB
+  </text>
+  <text x="924" y="120" font-family="Arial, sans-serif" font-size="20" fill="#38bdf8" text-anchor="middle">
+    CONNECT WITH TOP TALENT
+  </text>
+  <g transform="translate(924, 160) scale(0.5)">
+    <circle cx="0" cy="0" r="24" fill="#0284c7" />
+    <circle cx="-15" cy="-15" r="8" fill="white" />
+    <circle cx="15" cy="-15" r="8" fill="white" />
+    <circle cx="0" cy="15" r="8" fill="white" />
+    <line x1="-15" y1="-15" x2="15" y2="-15" stroke="white" stroke-width="2" />
+    <line x1="-15" y1="-15" x2="0" y2="15" stroke="white" stroke-width="2" />
+    <line x1="15" y1="-15" x2="0" y2="15" stroke="white" stroke-width="2" />
+  </g>
   
-  <a id="affiliate-link" href="https://t.me/aquads_bot">
-    <!-- Telegram Mini App Section (Third) -->
-    <rect x="1232" y="0" width="616" height="200" fill="url(#affiliateGradient)" />
-    
-    <!-- Telegram Text -->
-    <text x="1540" y="80" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="white" text-anchor="middle">
-      TELEGRAM MINI APP
-    </text>
-    
-    <!-- Telegram Subtitle -->
-    <text x="1540" y="120" font-family="Arial, sans-serif" font-size="20" fill="#34d399" text-anchor="middle">
-      CONNECT WITH OUR TELEGRAM BOT
-    </text>
-    
-    <!-- Telegram Icon -->
-    <g transform="translate(1540, 160) scale(0.5)">
-      <circle cx="0" cy="0" r="24" fill="#10b981" />
-      <path d="M-12,-5 L0,-17 L12,-5 L5,-5 L5,17 L-5,17 L-5,-5 Z" fill="white" />
-    </g>
-  </a>
+  <!-- Telegram Mini App Section Visual -->
+  <rect x="1232" y="0" width="616" height="200" fill="url(#affiliateGradient)" />
+  <text x="1540" y="80" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="white" text-anchor="middle">
+    TELEGRAM MINI APP
+  </text>
+  <text x="1540" y="120" font-family="Arial, sans-serif" font-size="20" fill="#34d399" text-anchor="middle">
+    CONNECT WITH OUR TELEGRAM BOT
+  </text>
+  <g transform="translate(1540, 160) scale(0.5)">
+    <circle cx="0" cy="0" r="24" fill="#10b981" />
+    <path d="M-12,-5 L0,-17 L12,-5 L5,-5 L5,17 L-5,17 L-5,-5 Z" fill="white" />
+  </g>
   
-  <a id="coinbound-link" href="https://coinbound.io/marketing-plan/?ref=Aquads" target="_blank">
-    <!-- Coinbound Section (Fourth) -->
-    <rect x="1848" y="0" width="616" height="200" fill="url(#coinboundGradient)" />
-    
-    <!-- Coinbound Text -->
-    <text x="2156" y="80" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="white" text-anchor="middle">
-      FREE MARKETING PLAN
-    </text>
-    
-    <!-- Coinbound Subtitle -->
-    <text x="2156" y="120" font-family="Arial, sans-serif" font-size="18" fill="#fed7aa" text-anchor="middle">
-      FROM OUR PARTNER COINBOUND
-    </text>
-    
-    <!-- Coinbound Logo -->
-    <g transform="translate(2156, 160) scale(0.35)">
-      <circle cx="0" cy="0" r="35" fill="#fff" opacity="0.9" />
-      <!-- Coinbound C logo path -->
-      <g transform="translate(-20, -20) scale(0.5)">
-        <path d="M40 10 C60 10, 70 25, 70 40 C70 55, 60 70, 40 70 L30 70 L30 60 L40 60 C54 60, 60 50, 60 40 C60 30, 54 20, 40 20 L30 20 L30 10 Z" 
-              fill="#ea580c" stroke="#ea580c" stroke-width="2"/>
-        <circle cx="25" cy="40" r="8" fill="#ea580c"/>
-      </g>
+  <!-- Coinbound Section Visual -->
+  <rect x="1848" y="0" width="616" height="200" fill="url(#coinboundGradient)" />
+  <text x="2156" y="80" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="white" text-anchor="middle">
+    FREE MARKETING PLAN
+  </text>
+  <text x="2156" y="120" font-family="Arial, sans-serif" font-size="18" fill="#fed7aa" text-anchor="middle">
+    FROM OUR PARTNERS AT COINBOUND
+  </text>
+  <g transform="translate(2156, 160) scale(0.35)">
+    <circle cx="0" cy="0" r="35" fill="#fff" opacity="0.9" />
+    <g transform="translate(-20, -20) scale(0.5)">
+      <path d="M40 10 C60 10, 70 25, 70 40 C70 55, 60 70, 40 70 L30 70 L30 60 L40 60 C54 60, 60 50, 60 40 C60 30, 54 20, 40 20 L30 20 L30 10 Z" 
+            fill="#ea580c" stroke="#ea580c" stroke-width="2"/>
+      <circle cx="25" cy="40" r="8" fill="#ea580c"/>
     </g>
-  </a>
-  
-  <!-- Interactive highlights on hover -->
-  <style>
-    a {
-      pointer-events: all;
-    }
-    
-    a:hover rect {
-      filter: brightness(1.2);
-      transition: filter 0.3s ease;
-    }
-    
-    #gamehub-link:hover text,
-    #freelancer-link:hover text,
-    #affiliate-link:hover text,
-    #coinbound-link:hover text {
-      filter: drop-shadow(0 0 3px white);
-    }
-    
-    /* Ensure sections don't overlap */
-    #gamehub-link {
-      pointer-events: all;
-    }
-    
-    #freelancer-link {
-      pointer-events: all;
-    }
-    
-    #affiliate-link {
-      pointer-events: all;
-    }
-    
-    #coinbound-link {
-      pointer-events: all;
-    }
-    
-    /* Animated elements */
-    .particle {
-      animation: float 3s infinite ease-in-out;
-      pointer-events: none;
-    }
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-5px); }
-    }
-  </style>
+  </g>
   
   <!-- Animated particles -->
   <circle class="particle" cx="308" cy="40" r="3" fill="white" opacity="0.7">
@@ -180,4 +101,39 @@
   <circle class="particle" cx="2156" cy="40" r="3" fill="white" opacity="0.7">
     <animate attributeName="opacity" values="0.3;0.7;0.3" dur="2.9s" repeatCount="indefinite" />
   </circle>
+  
+  <!-- CLICKABLE AREAS ONLY (On Top, Invisible) -->
+  <a href="/games" target="_self">
+    <rect x="0" y="0" width="616" height="200" fill="transparent" style="cursor: pointer;" />
+  </a>
+  
+  <a href="/marketplace" target="_self">
+    <rect x="616" y="0" width="616" height="200" fill="transparent" style="cursor: pointer;" />
+  </a>
+  
+  <a href="https://t.me/aquads_bot" target="_blank">
+    <rect x="1232" y="0" width="616" height="200" fill="transparent" style="cursor: pointer;" />
+  </a>
+  
+  <a href="https://coinbound.io/marketing-plan/?ref=Aquads" target="_blank">
+    <rect x="1848" y="0" width="616" height="200" fill="transparent" style="cursor: pointer;" />
+  </a>
+  
+  <!-- Interactive highlights on hover -->
+  <style>
+    .particle {
+      animation: float 3s infinite ease-in-out;
+      pointer-events: none;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+    
+    a:hover + rect,
+    a rect:hover {
+      filter: brightness(1.2);
+      transition: filter 0.3s ease;
+    }
+  </style>
 </svg> 
