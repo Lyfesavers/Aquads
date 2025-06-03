@@ -3106,22 +3106,6 @@ function App() {
                           }}
                           draggable="false"
                         />
-                        {/* Coinbound Logo Overlay */}
-                        <div className="absolute inset-0 flex items-center justify-start pl-2 sm:pl-4 pointer-events-none">
-                          <img
-                            src="/Coinbound.svg"
-                            alt="Coinbound Logo"
-                            className="h-4 sm:h-6 md:h-8 w-auto"
-                            style={{ 
-                              pointerEvents: 'none', 
-                              userSelect: 'none',
-                              WebkitUserSelect: 'none',
-                              MozUserSelect: 'none',
-                              msUserSelect: 'none'
-                            }}
-                            draggable="false"
-                          />
-                        </div>
                         <a 
                           href="https://coinbound.io/marketing-plan/?ref=Aquads" 
                           target="_blank"
