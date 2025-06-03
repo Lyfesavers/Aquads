@@ -2992,76 +2992,136 @@ function App() {
                   {/* Token list section - add z-index and proper background */}
                   <div className="relative z-10 bg-transparent">
                     {/* Multi-Section Banner (GameHub, Freelancer, Telegram, Coinbound) */}
-                    <div className="w-full overflow-hidden relative flex">
+                    <div className="w-full overflow-hidden flex">
                       {/* Game Hub Section */}
-                      <div className="flex-1 relative group">
+                      <div className="flex-1 relative">
                         <img
                           src="/game-hub-section.svg"
                           alt="Game Hub"
                           className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px] block"
-                          style={{ pointerEvents: 'none', userSelect: 'none' }}
+                          style={{ 
+                            pointerEvents: 'none', 
+                            userSelect: 'none',
+                            WebkitUserSelect: 'none',
+                            MozUserSelect: 'none',
+                            msUserSelect: 'none'
+                          }}
                           draggable="false"
                         />
                         <Link 
                           to="/games" 
-                          className="absolute inset-0 z-10 block"
-                          style={{ cursor: 'pointer' }}
-                          aria-label="Go to Game Hub"
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            display: 'block',
+                            zIndex: 10,
+                            cursor: 'pointer',
+                            textDecoration: 'none',
+                            backgroundColor: 'transparent'
+                          }}
                         />
                       </div>
                       
                       {/* Freelancer Hub Section */}
-                      <div className="flex-1 relative group">
+                      <div className="flex-1 relative">
                         <img
                           src="/freelancer-hub-section.svg"
                           alt="Freelancer Hub"
                           className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px] block"
-                          style={{ pointerEvents: 'none', userSelect: 'none' }}
+                          style={{ 
+                            pointerEvents: 'none', 
+                            userSelect: 'none',
+                            WebkitUserSelect: 'none',
+                            MozUserSelect: 'none',
+                            msUserSelect: 'none'
+                          }}
                           draggable="false"
                         />
                         <Link 
                           to="/marketplace" 
-                          className="absolute inset-0 z-10 block"
-                          style={{ cursor: 'pointer' }}
-                          aria-label="Go to Freelancer Hub"
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            display: 'block',
+                            zIndex: 10,
+                            cursor: 'pointer',
+                            textDecoration: 'none',
+                            backgroundColor: 'transparent'
+                          }}
                         />
                       </div>
                       
                       {/* Telegram Mini App Section */}
-                      <div className="flex-1 relative group">
+                      <div className="flex-1 relative">
                         <img
                           src="/telegram-section.svg"
                           alt="Telegram Mini App"
                           className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px] block"
-                          style={{ pointerEvents: 'none', userSelect: 'none' }}
+                          style={{ 
+                            pointerEvents: 'none', 
+                            userSelect: 'none',
+                            WebkitUserSelect: 'none',
+                            MozUserSelect: 'none',
+                            msUserSelect: 'none'
+                          }}
                           draggable="false"
                         />
                         <a 
                           href="https://t.me/aquads_bot" 
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="absolute inset-0 z-10 block"
-                          style={{ cursor: 'pointer' }}
-                          aria-label="Go to Telegram Mini App"
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            display: 'block',
+                            zIndex: 10,
+                            cursor: 'pointer',
+                            textDecoration: 'none',
+                            backgroundColor: 'transparent'
+                          }}
                         />
                       </div>
                       
                       {/* Coinbound Section */}
-                      <div className="flex-1 relative group">
+                      <div className="flex-1 relative">
                         <img
                           src="/coinbound-section.svg"
                           alt="Free Marketing Plan"
                           className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px] block"
-                          style={{ pointerEvents: 'none', userSelect: 'none' }}
+                          style={{ 
+                            pointerEvents: 'none', 
+                            userSelect: 'none',
+                            WebkitUserSelect: 'none',
+                            MozUserSelect: 'none',
+                            msUserSelect: 'none'
+                          }}
                           draggable="false"
                         />
                         <a 
                           href="https://coinbound.io/marketing-plan/?ref=Aquads" 
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="absolute inset-0 z-10 block"
-                          style={{ cursor: 'pointer' }}
-                          aria-label="Go to Coinbound Marketing Plan"
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            display: 'block',
+                            zIndex: 10,
+                            cursor: 'pointer',
+                            textDecoration: 'none',
+                            backgroundColor: 'transparent'
+                          }}
                         />
                       </div>
                     </div>
