@@ -10,27 +10,25 @@
     </pattern>
   </defs>
   
-  <a href="/games">
-    <rect x="0" y="0" width="616" height="200" fill="url(#gameHubGradient)" />
-    <rect x="0" y="0" width="616" height="200" fill="url(#diagonalLines)" opacity="0.2" />
-    
-    <text x="308" y="80" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="white" text-anchor="middle">
-      GAME HUB
-    </text>
-    
-    <text x="308" y="120" font-family="Arial, sans-serif" font-size="20" fill="#d8b4fe" text-anchor="middle">
-      DISCOVER WEB3 GAMES
-    </text>
-    
-    <g transform="translate(308, 160) scale(0.5)">
-      <circle cx="0" cy="0" r="24" fill="#a855f7" />
-      <polygon points="-12,-12 12,-12 12,12 -12,12" fill="white" transform="rotate(45)" />
-      <circle cx="0" cy="0" r="8" fill="#a855f7" />
-      <circle cx="0" cy="0" r="5" fill="white" />
-    </g>
-    
-    <circle cx="308" cy="40" r="3" fill="white" opacity="0.7">
-      <animate attributeName="opacity" values="0.3;0.7;0.3" dur="3s" repeatCount="indefinite" />
-    </circle>
-  </a>
+  <rect x="0" y="0" width="616" height="200" fill="url(#gameHubGradient)" />
+  <rect x="0" y="0" width="616" height="200" fill="url(#diagonalLines)" opacity="0.2" />
+  
+  <text x="308" y="80" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="white" text-anchor="middle">
+    GAME HUB
+  </text>
+  
+  <text x="308" y="120" font-family="Arial, sans-serif" font-size="20" fill="#d8b4fe" text-anchor="middle">
+    DISCOVER WEB3 GAMES
+  </text>
+  
+  <g transform="translate(308, 160) scale(0.5)">
+    <circle cx="0" cy="0" r="24" fill="#a855f7" />
+    <polygon points="-12,-12 12,-12 12,12 -12,12" fill="white" transform="rotate(45)" />
+    <circle cx="0" cy="0" r="8" fill="#a855f7" />
+    <circle cx="0" cy="0" r="5" fill="white" />
+  </g>
+  
+  <circle cx="308" cy="40" r="3" fill="white" opacity="0.7">
+    <animate attributeName="opacity" values="0.3;0.7;0.3" dur="3s" repeatCount="indefinite" />
+  </circle>
 </svg> 

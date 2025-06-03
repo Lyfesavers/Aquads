@@ -7,28 +7,26 @@
     </linearGradient>
   </defs>
   
-  <a href="https://coinbound.io/marketing-plan/?ref=Aquads" target="_blank">
-    <rect x="0" y="0" width="616" height="200" fill="url(#coinboundGradient)" />
-    
-    <text x="308" y="80" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="white" text-anchor="middle">
-      FREE MARKETING PLAN
-    </text>
-    
-    <text x="308" y="120" font-family="Arial, sans-serif" font-size="18" fill="#fed7aa" text-anchor="middle">
-      FROM OUR PARTNERS AT COINBOUND
-    </text>
-    
-    <g transform="translate(308, 160) scale(0.35)">
-      <circle cx="0" cy="0" r="35" fill="#fff" opacity="0.9" />
-      <g transform="translate(-20, -20) scale(0.5)">
-        <path d="M40 10 C60 10, 70 25, 70 40 C70 55, 60 70, 40 70 L30 70 L30 60 L40 60 C54 60, 60 50, 60 40 C60 30, 54 20, 40 20 L30 20 L30 10 Z" 
-              fill="#ea580c" stroke="#ea580c" stroke-width="2"/>
-        <circle cx="25" cy="40" r="8" fill="#ea580c"/>
-      </g>
+  <rect x="0" y="0" width="616" height="200" fill="url(#coinboundGradient)" />
+  
+  <text x="308" y="80" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="white" text-anchor="middle">
+    FREE MARKETING PLAN
+  </text>
+  
+  <text x="308" y="120" font-family="Arial, sans-serif" font-size="18" fill="#fed7aa" text-anchor="middle">
+    FROM OUR PARTNERS AT COINBOUND
+  </text>
+  
+  <g transform="translate(308, 160) scale(0.35)">
+    <circle cx="0" cy="0" r="35" fill="#fff" opacity="0.9" />
+    <g transform="translate(-20, -20) scale(0.5)">
+      <path d="M40 10 C60 10, 70 25, 70 40 C70 55, 60 70, 40 70 L30 70 L30 60 L40 60 C54 60, 60 50, 60 40 C60 30, 54 20, 40 20 L30 20 L30 10 Z" 
+            fill="#ea580c" stroke="#ea580c" stroke-width="2"/>
+      <circle cx="25" cy="40" r="8" fill="#ea580c"/>
     </g>
-    
-    <circle cx="308" cy="40" r="3" fill="white" opacity="0.7">
-      <animate attributeName="opacity" values="0.3;0.7;0.3" dur="2.9s" repeatCount="indefinite" />
-    </circle>
-  </a>
+  </g>
+  
+  <circle cx="308" cy="40" r="3" fill="white" opacity="0.7">
+    <animate attributeName="opacity" values="0.3;0.7;0.3" dur="2.9s" repeatCount="indefinite" />
+  </circle>
 </svg> 
