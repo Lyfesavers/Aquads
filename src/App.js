@@ -3092,26 +3092,20 @@ function App() {
                       </div>
                       
                       {/* Coinbound Section */}
-                      <div className="flex-1 relative bg-gradient-to-r from-purple-600 to-indigo-600 p-4 flex items-center justify-center min-h-[100px] sm:min-h-[150px] md:min-h-[200px]">
-                        {/* Coinbound Logo */}
-                        <div className="flex flex-col items-center">
-                          <img
-                            src="/Coinbound.svg"
-                            alt="Coinbound - Free Marketing Plan"
-                            className="h-12 sm:h-16 md:h-20 w-auto mb-2"
-                            style={{ 
-                              pointerEvents: 'none', 
-                              userSelect: 'none',
-                              WebkitUserSelect: 'none',
-                              MozUserSelect: 'none',
-                              msUserSelect: 'none'
-                            }}
-                            draggable="false"
-                          />
-                          <p className="text-white text-xs sm:text-sm text-center font-medium">
-                            Free Marketing Plan
-                          </p>
-                        </div>
+                      <div className="flex-1 relative">
+                        <img
+                          src="/coinbound-section.svg"
+                          alt="Free Marketing Plan"
+                          className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px] block"
+                          style={{ 
+                            pointerEvents: 'none', 
+                            userSelect: 'none',
+                            WebkitUserSelect: 'none',
+                            MozUserSelect: 'none',
+                            msUserSelect: 'none'
+                          }}
+                          draggable="false"
+                        />
                         <a 
                           href="https://coinbound.io/marketing-plan/?ref=Aquads" 
                           target="_blank"
