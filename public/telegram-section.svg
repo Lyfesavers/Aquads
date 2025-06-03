@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="616" height="200" viewBox="0 0 616 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="telegramGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#064e3b" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+  </defs>
+  
+  <a href="https://t.me/aquads_bot" target="_blank">
+    <rect x="0" y="0" width="616" height="200" fill="url(#telegramGradient)" />
+    
+    <text x="308" y="80" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="white" text-anchor="middle">
+      TELEGRAM MINI APP
+    </text>
+    
+    <text x="308" y="120" font-family="Arial, sans-serif" font-size="20" fill="#34d399" text-anchor="middle">
+      CONNECT WITH OUR TELEGRAM BOT
+    </text>
+    
+    <g transform="translate(308, 160) scale(0.5)">
+      <circle cx="0" cy="0" r="24" fill="#10b981" />
+      <path d="M-12,-5 L0,-17 L12,-5 L5,-5 L5,17 L-5,17 L-5,-5 Z" fill="white" />
+    </g>
+    
+    <circle cx="308" cy="40" r="3" fill="white" opacity="0.7">
+      <animate attributeName="opacity" values="0.3;0.7;0.3" dur="3.3s" repeatCount="indefinite" />
+    </circle>
+  </a>
+  
+  <style>
+    a:hover rect {
+      filter: brightness(1.2);
+      transition: filter 0.3s ease;
+    }
+    a:hover text {
+      filter: drop-shadow(0 0 3px white);
+    }
+  </style>
+</svg> 

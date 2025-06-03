@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="616" height="200" viewBox="0 0 616 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gameHubGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4c1d95" />
+      <stop offset="100%" stop-color="#7e22ce" />
+    </linearGradient>
+    <pattern id="diagonalLines" patternUnits="userSpaceOnUse" width="40" height="40" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="40" stroke="#4c1d95" stroke-width="2" />
+    </pattern>
+  </defs>
+  
+  <a href="/games">
+    <rect x="0" y="0" width="616" height="200" fill="url(#gameHubGradient)" />
+    <rect x="0" y="0" width="616" height="200" fill="url(#diagonalLines)" opacity="0.2" />
+    
+    <text x="308" y="80" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="white" text-anchor="middle">
+      GAME HUB
+    </text>
+    
+    <text x="308" y="120" font-family="Arial, sans-serif" font-size="20" fill="#d8b4fe" text-anchor="middle">
+      DISCOVER WEB3 GAMES
+    </text>
+    
+    <g transform="translate(308, 160) scale(0.5)">
+      <circle cx="0" cy="0" r="24" fill="#a855f7" />
+      <polygon points="-12,-12 12,-12 12,12 -12,12" fill="white" transform="rotate(45)" />
+      <circle cx="0" cy="0" r="8" fill="#a855f7" />
+      <circle cx="0" cy="0" r="5" fill="white" />
+    </g>
+    
+    <circle cx="308" cy="40" r="3" fill="white" opacity="0.7">
+      <animate attributeName="opacity" values="0.3;0.7;0.3" dur="3s" repeatCount="indefinite" />
+    </circle>
+  </a>
+  
+  <style>
+    a:hover rect {
+      filter: brightness(1.2);
+      transition: filter 0.3s ease;
+    }
+    a:hover text {
+      filter: drop-shadow(0 0 3px white);
+    }
+  </style>
+</svg> 
