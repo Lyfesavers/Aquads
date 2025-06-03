@@ -2994,75 +2994,75 @@ function App() {
                     {/* Multi-Section Banner (GameHub, Freelancer, Telegram, Coinbound) */}
                     <div className="w-full overflow-hidden relative flex">
                       {/* Game Hub Section */}
-                      <div className="flex-1 relative">
+                      <div className="flex-1 relative group">
                         <img
                           src="/game-hub-section.svg"
                           alt="Game Hub"
-                          className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px]"
-                          style={{ pointerEvents: 'none' }}
+                          className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px] block"
+                          style={{ pointerEvents: 'none', userSelect: 'none' }}
+                          draggable="false"
                         />
                         <Link 
                           to="/games" 
-                          className="absolute inset-0 w-full h-full block cursor-pointer hover:bg-white/10 transition-all duration-200"
+                          className="absolute inset-0 z-10 block"
+                          style={{ cursor: 'pointer' }}
                           aria-label="Go to Game Hub"
-                        >
-                          <span className="sr-only">Game Hub</span>
-                        </Link>
+                        />
                       </div>
                       
                       {/* Freelancer Hub Section */}
-                      <div className="flex-1 relative">
+                      <div className="flex-1 relative group">
                         <img
                           src="/freelancer-hub-section.svg"
                           alt="Freelancer Hub"
-                          className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px]"
-                          style={{ pointerEvents: 'none' }}
+                          className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px] block"
+                          style={{ pointerEvents: 'none', userSelect: 'none' }}
+                          draggable="false"
                         />
                         <Link 
                           to="/marketplace" 
-                          className="absolute inset-0 w-full h-full block cursor-pointer hover:bg-white/10 transition-all duration-200"
+                          className="absolute inset-0 z-10 block"
+                          style={{ cursor: 'pointer' }}
                           aria-label="Go to Freelancer Hub"
-                        >
-                          <span className="sr-only">Freelancer Hub</span>
-                        </Link>
+                        />
                       </div>
                       
                       {/* Telegram Mini App Section */}
-                      <div className="flex-1 relative">
+                      <div className="flex-1 relative group">
                         <img
                           src="/telegram-section.svg"
                           alt="Telegram Mini App"
-                          className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px]"
-                          style={{ pointerEvents: 'none' }}
+                          className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px] block"
+                          style={{ pointerEvents: 'none', userSelect: 'none' }}
+                          draggable="false"
                         />
                         <a 
                           href="https://t.me/aquads_bot" 
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="absolute inset-0 w-full h-full block cursor-pointer hover:bg-white/10 transition-all duration-200"
+                          className="absolute inset-0 z-10 block"
+                          style={{ cursor: 'pointer' }}
                           aria-label="Go to Telegram Mini App"
-                        >
-                          <span className="sr-only">Telegram Mini App</span>
-                        </a>
+                        />
                       </div>
                       
                       {/* Coinbound Section */}
-                      <div className="flex-1 relative">
+                      <div className="flex-1 relative group">
                         <img
                           src="/coinbound-section.svg"
                           alt="Free Marketing Plan"
-                          className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px]"
-                          style={{ pointerEvents: 'none' }}
+                          className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px] block"
+                          style={{ pointerEvents: 'none', userSelect: 'none' }}
+                          draggable="false"
                         />
                         <a 
                           href="https://coinbound.io/marketing-plan/?ref=Aquads" 
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="absolute inset-0 w-full h-full block cursor-pointer hover:bg-white/10 transition-all duration-200"
+                          className="absolute inset-0 z-10 block"
+                          style={{ cursor: 'pointer' }}
                           aria-label="Go to Coinbound Marketing Plan"
-                        >
-                          <span className="sr-only">Free Marketing Plan</span>
-                        </a>
+                        />
                       </div>
                     </div>
                     

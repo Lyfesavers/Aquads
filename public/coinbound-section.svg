@@ -31,14 +31,4 @@
       <animate attributeName="opacity" values="0.3;0.7;0.3" dur="2.9s" repeatCount="indefinite" />
     </circle>
   </a>
-  
-  <style>
-    a:hover rect {
-      filter: brightness(1.2);
-      transition: filter 0.3s ease;
-    }
-    a:hover text {
-      filter: drop-shadow(0 0 3px white);
-    }
-  </style>
 </svg> 
