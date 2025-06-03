@@ -2998,7 +2998,7 @@ function App() {
                         <img
                           src="/game-hub-section.svg"
                           alt="Game Hub"
-                          className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px] block"
+                          className="w-full h-auto max-h-[140px] sm:max-h-[180px] md:max-h-[220px] lg:max-h-[250px] block"
                           style={{ 
                             pointerEvents: 'none', 
                             userSelect: 'none',
@@ -3030,7 +3030,7 @@ function App() {
                         <img
                           src="/freelancer-hub-section.svg"
                           alt="Freelancer Hub"
-                          className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px] block"
+                          className="w-full h-auto max-h-[140px] sm:max-h-[180px] md:max-h-[220px] lg:max-h-[250px] block"
                           style={{ 
                             pointerEvents: 'none', 
                             userSelect: 'none',
@@ -3062,7 +3062,7 @@ function App() {
                         <img
                           src="/telegram-section.svg"
                           alt="Telegram Mini App"
-                          className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px] block"
+                          className="w-full h-auto max-h-[140px] sm:max-h-[180px] md:max-h-[220px] lg:max-h-[250px] block"
                           style={{ 
                             pointerEvents: 'none', 
                             userSelect: 'none',
@@ -3096,7 +3096,7 @@ function App() {
                         <img
                           src="/coinbound-section.svg"
                           alt="Free Marketing Plan"
-                          className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px] block"
+                          className="w-full h-auto max-h-[140px] sm:max-h-[180px] md:max-h-[220px] lg:max-h-[250px] block"
                           style={{ 
                             pointerEvents: 'none', 
                             userSelect: 'none',
