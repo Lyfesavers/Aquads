@@ -99,6 +99,9 @@
     <!-- Coinbound Section (Fourth) -->
     <rect x="1848" y="0" width="616" height="200" fill="url(#coinboundGradient)" />
     
+    <!-- Explicit clickable area -->
+    <rect x="1848" y="0" width="616" height="200" fill="transparent" style="pointer-events: all;" />
+    
     <!-- Coinbound Text -->
     <text x="2156" y="80" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="white" text-anchor="middle">
       FREE MARKETING PLAN
@@ -120,6 +123,10 @@
   
   <!-- Interactive highlights on hover -->
   <style>
+    a {
+      pointer-events: all;
+    }
+    
     a:hover rect {
       filter: brightness(1.2);
       transition: filter 0.3s ease;
@@ -132,9 +139,27 @@
       filter: drop-shadow(0 0 3px white);
     }
     
+    /* Ensure sections don't overlap */
+    #gamehub-link {
+      pointer-events: all;
+    }
+    
+    #freelancer-link {
+      pointer-events: all;
+    }
+    
+    #affiliate-link {
+      pointer-events: all;
+    }
+    
+    #coinbound-link {
+      pointer-events: all;
+    }
+    
     /* Animated elements */
     .particle {
       animation: float 3s infinite ease-in-out;
+      pointer-events: none;
     }
     @keyframes float {
       0%, 100% { transform: translateY(0); }
