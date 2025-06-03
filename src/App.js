@@ -2991,46 +2991,42 @@ function App() {
 
                   {/* Token list section - add z-index and proper background */}
                   <div className="relative z-10 bg-transparent">
-                    {/* Multi-Section Banner (GameHub, Freelancer, Affiliate) */}
-                    <div className="w-full overflow-hidden relative">
-                      {/* Background SVG Banner Image */}
-                      <img
-                        src="/FREELANCER-HUB.svg"
-                        alt="Navigation Banner"
-                        className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px]"
-                        style={{ pointerEvents: "none" }} /* Disable clicks on image */
-                      />
+                    {/* Multi-Section Banner (GameHub, Freelancer, Telegram, Coinbound) */}
+                    <div className="w-full overflow-hidden relative flex">
+                      {/* Game Hub Section */}
+                      <div className="flex-1">
+                        <img
+                          src="/game-hub-section.svg"
+                          alt="Game Hub"
+                          className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px]"
+                        />
+                      </div>
                       
-                      {/* Clickable overlay areas using <Link> and <a> directly */}
-                      <div className="absolute inset-0 flex">
-                        {/* GameHub Section (left third) */}
-                        <Link 
-                          to="/games" 
-                          className="flex-1 h-full block"
-                          aria-label="Go to Game Hub"
-                        >
-                          <span className="sr-only">Game Hub</span>
-                        </Link>
-                        
-                        {/* Freelancer Hub Section (middle third) */}
-                        <Link 
-                          to="/marketplace" 
-                          className="flex-1 h-full block"
-                          aria-label="Go to Freelancer Hub"
-                        >
-                          <span className="sr-only">Freelancer Hub</span>
-                        </Link>
-                        
-                        {/* Telegram Mini App Section (right third) */}
-                        <a 
-                          href="https://t.me/aquadsbumpbot?start=_tgr_gMbuSho0MWJh" 
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex-1 h-full block"
-                          aria-label="Go to Telegram Mini App"
-                        >
-                          <span className="sr-only">Telegram Mini App</span>
-                        </a>
+                      {/* Freelancer Hub Section */}
+                      <div className="flex-1">
+                        <img
+                          src="/freelancer-hub-section.svg"
+                          alt="Freelancer Hub"
+                          className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px]"
+                        />
+                      </div>
+                      
+                      {/* Telegram Mini App Section */}
+                      <div className="flex-1">
+                        <img
+                          src="/telegram-section.svg"
+                          alt="Telegram Mini App"
+                          className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px]"
+                        />
+                      </div>
+                      
+                      {/* Coinbound Section */}
+                      <div className="flex-1">
+                        <img
+                          src="/coinbound-section.svg"
+                          alt="Free Marketing Plan"
+                          className="w-full h-auto max-h-[100px] sm:max-h-[150px] md:max-h-[200px]"
+                        />
                       </div>
                     </div>
                     
