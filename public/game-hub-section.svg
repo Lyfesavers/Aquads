@@ -13,11 +13,11 @@
   <rect x="0" y="0" width="616" height="200" fill="url(#gameHubGradient)" />
   <rect x="0" y="0" width="616" height="200" fill="url(#diagonalLines)" opacity="0.2" />
   
-  <text x="308" y="80" font-family="Arial, sans-serif" font-size="60" font-weight="bold" fill="white" text-anchor="middle">
+  <text x="308" y="80" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="white" text-anchor="middle">
     GAME HUB
   </text>
   
-  <text x="308" y="120" font-family="Arial, sans-serif" font-size="28" fill="#d8b4fe" text-anchor="middle">
+  <text x="308" y="120" font-family="Arial, sans-serif" font-size="32" fill="#d8b4fe" text-anchor="middle">
     DISCOVER WEB3 GAMES
   </text>
   

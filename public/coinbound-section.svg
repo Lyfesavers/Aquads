@@ -9,11 +9,11 @@
   
   <rect x="0" y="0" width="616" height="200" fill="url(#coinboundGradient)" />
   
-  <text x="308" y="80" font-family="Arial, sans-serif" font-size="56" font-weight="bold" fill="white" text-anchor="middle">
+  <text x="308" y="80" font-family="Arial, sans-serif" font-size="44" font-weight="bold" fill="white" text-anchor="middle">
     FREE MARKETING PLAN
   </text>
   
-  <text x="308" y="120" font-family="Arial, sans-serif" font-size="26" fill="#fed7aa" text-anchor="middle">
+  <text x="308" y="120" font-family="Arial, sans-serif" font-size="30" fill="#fed7aa" text-anchor="middle">
     FROM OUR PARTNERS AT COINBOUND
   </text>
   
