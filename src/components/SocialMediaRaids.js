@@ -183,6 +183,12 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   // Add useEffect for anti-cheat window focus detection
   useEffect(() => {
     let focusTimeoutIds = {};
+    let lastPageVisible = true;
+    let mobileCheckInterval = null;
+
+    // Mobile detection
+    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
     const handleWindowFocus = () => {
       const currentTime = Date.now();
@@ -233,16 +239,58 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       // This is handled in the individual interaction functions
     };
 
+    // Mobile-specific visibility checking
+    const checkMobileVisibility = () => {
+      const isCurrentlyVisible = !document.hidden && document.visibilityState === 'visible';
+      
+      if (lastPageVisible && !isCurrentlyVisible) {
+        // Page just became hidden - trigger focus handler
+        handleWindowFocus();
+      }
+      
+      lastPageVisible = isCurrentlyVisible;
+    };
+
     // Add event listeners
     window.addEventListener('focus', handleWindowFocus);
     window.addEventListener('blur', handleWindowBlur);
     document.addEventListener('visibilitychange', handleWindowFocus);
+    
+    // For mobile devices, also add a polling mechanism as backup
+    if (isMobile) {
+      document.addEventListener('visibilitychange', checkMobileVisibility);
+      // Also check periodically in case events don't fire
+      mobileCheckInterval = setInterval(checkMobileVisibility, 1000);
+      
+      // Add mobile-specific event listeners
+      window.addEventListener('pageshow', handleWindowFocus);
+      window.addEventListener('pagehide', handleWindowBlur);
+      
+      // Additional mobile events
+      document.addEventListener('resume', handleWindowFocus);
+      document.addEventListener('pause', handleWindowBlur);
+    }
 
     // Cleanup
     return () => {
       window.removeEventListener('focus', handleWindowFocus);
       window.removeEventListener('blur', handleWindowBlur);
       document.removeEventListener('visibilitychange', handleWindowFocus);
+      
+      if (isMobile) {
+        document.removeEventListener('visibilitychange', checkMobileVisibility);
+        if (mobileCheckInterval) {
+          clearInterval(mobileCheckInterval);
+        }
+        
+        // Remove mobile-specific event listeners
+        window.removeEventListener('pageshow', handleWindowFocus);
+        window.removeEventListener('pagehide', handleWindowBlur);
+        
+        // Additional mobile events
+        document.removeEventListener('resume', handleWindowFocus);
+        document.removeEventListener('pause', handleWindowBlur);
+      }
       
       // Clear any pending timeouts
       Object.values(focusTimeoutIds).forEach(timeoutId => {
@@ -817,28 +865,79 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       [`${type}Loading`]: true
     }));
     
-    // After 10 seconds, mark the interaction as completed (if not reset by anti-cheat)
-    setTimeout(() => {
-      setIframeInteractions(prev => {
-        // Only mark as completed if it's still in loading state
-        // (anti-cheat might have reset it)
-        if (prev[`${type}Loading`]) {
-          const newInteractions = { 
-            ...prev, 
-            [type]: true,
-            [`${type}Loading`]: false
-          };
+    // Mobile detection
+    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    
+    // Create a more robust timer system for mobile
+    const createMobileTimer = () => {
+      let checkCount = 0;
+      const maxChecks = isMobile ? 15 : 10; // 15 seconds for mobile, 10 for desktop
+      
+      const checkTimer = setInterval(() => {
+        checkCount++;
+        
+        // Check if page is currently visible and focused
+        const isPageVisible = !document.hidden && document.visibilityState === 'visible';
+        const isWindowFocused = document.hasFocus ? document.hasFocus() : true; // Fallback to true if hasFocus not available
+        
+        // Additional checks for mobile browsers
+        const isTabActive = !document.hidden;
+        const isDocumentVisible = document.visibilityState !== 'hidden';
+        
+        // Combined check - page is considered "back in focus" if any of these are true
+        const userHasReturned = (isPageVisible && isWindowFocused) || 
+                               (isTabActive && isDocumentVisible) ||
+                               (isMobile && isPageVisible); // More lenient for mobile
+        
+        // If we've reached max time or page becomes visible again (user returned)
+        if (checkCount >= maxChecks || userHasReturned) {
+          clearInterval(checkTimer);
           
-          // Check if all three interactions are completed
-          if (newInteractions.liked && newInteractions.retweeted && newInteractions.commented) {
-            setIframeVerified(true);
+          // Check if user returned too quickly (less than 8 seconds)
+          const timeElapsed = checkCount * 1000;
+          const minTimeRequired = isMobile ? 6000 : 8000; // Slightly more lenient for mobile (6s vs 8s)
+          
+          if (timeElapsed < minTimeRequired && userHasReturned) {
+            // User returned too quickly - mark as suspicious
+            setIframeInteractions(prev => ({
+              ...prev,
+              [`${type}Loading`]: false,
+              [type]: false
+            }));
+            
+            setSuspiciousActivity(prev => ({
+              ...prev,
+              [type]: true
+            }));
+            
+            showNotification(
+              `Please spend more time completing the ${type} action on Twitter. Returning too quickly suggests the task wasn't completed.`,
+              'warning'
+            );
+          } else {
+            // Mark interaction as completed
+            setIframeInteractions(prev => {
+              const newInteractions = { 
+                ...prev, 
+                [type]: true,
+                [`${type}Loading`]: false
+              };
+              
+              // Check if all three interactions are completed
+              if (newInteractions.liked && newInteractions.retweeted && newInteractions.commented) {
+                setIframeVerified(true);
+              }
+              
+              return newInteractions;
+            });
           }
-          
-          return newInteractions;
         }
-        return prev;
-      });
-    }, 10000); // 10 second delay
+      }, 1000); // Check every second
+    };
+    
+    // Start the improved timer
+    createMobileTimer();
   };
 
   // Add a handler function for showing/hiding iframe
