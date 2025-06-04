@@ -2998,7 +2998,7 @@ function App() {
                         <img
                           src="/game-hub-section.svg"
                           alt="Game Hub"
-                          className="w-full h-auto max-h-[180px] sm:max-h-[220px] md:max-h-[280px] lg:max-h-[320px] block"
+                          className="w-full h-auto max-h-[260px] sm:max-h-[300px] md:max-h-[350px] lg:max-h-[400px] block"
                           style={{ 
                             pointerEvents: 'none', 
                             userSelect: 'none',
@@ -3030,7 +3030,7 @@ function App() {
                         <img
                           src="/freelancer-hub-section.svg"
                           alt="Freelancer Hub"
-                          className="w-full h-auto max-h-[180px] sm:max-h-[220px] md:max-h-[280px] lg:max-h-[320px] block"
+                          className="w-full h-auto max-h-[260px] sm:max-h-[300px] md:max-h-[350px] lg:max-h-[400px] block"
                           style={{ 
                             pointerEvents: 'none', 
                             userSelect: 'none',
@@ -3062,7 +3062,7 @@ function App() {
                         <img
                           src="/telegram-section.svg"
                           alt="Telegram Mini App"
-                          className="w-full h-auto max-h-[180px] sm:max-h-[220px] md:max-h-[280px] lg:max-h-[320px] block"
+                          className="w-full h-auto max-h-[260px] sm:max-h-[300px] md:max-h-[350px] lg:max-h-[400px] block"
                           style={{ 
                             pointerEvents: 'none', 
                             userSelect: 'none',
@@ -3096,7 +3096,7 @@ function App() {
                         <img
                           src="/coinbound-section.svg"
                           alt="Free Marketing Plan"
-                          className="w-full h-auto max-h-[180px] sm:max-h-[220px] md:max-h-[280px] lg:max-h-[320px] block"
+                          className="w-full h-auto max-h-[260px] sm:max-h-[300px] md:max-h-[350px] lg:max-h-[400px] block"
                           style={{ 
                             pointerEvents: 'none', 
                             userSelect: 'none',
