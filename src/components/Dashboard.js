@@ -1040,14 +1040,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
               Admin
             </button>
           )}
-          {currentUser.isAdmin && (
-            <button
-              className={`px-4 py-2 ${activeTab === 'premium' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
-              onClick={() => setActiveTab('premium')}
-            >
-              Premium Requests
-            </button>
-          )}
+
           {currentUser.isAdmin && (
             <button
               className={`px-4 py-2 ${activeTab === 'twitterRaids' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
@@ -1367,6 +1360,16 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   >
                     📱 All Ads Management
                   </button>
+                  <button
+                    onClick={() => setActiveAdminSection('premium')}
+                    className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
+                      activeAdminSection === 'premium' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                    }`}
+                  >
+                    💎 Premium Requests
+                  </button>
                 </nav>
               </div>
 
@@ -1606,45 +1609,49 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                     )}
                   </div>
                 )}
+
+                {activeAdminSection === 'premium' && (
+                  <div>
+                    <h3 className="text-2xl font-semibold text-white mb-6">Premium Service Requests</h3>
+                    {premiumRequests.length === 0 ? (
+                      <p className="text-gray-400 text-center py-8">No pending premium requests</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {premiumRequests.map(request => (
+                          <div key={request._id} className="bg-gray-700 rounded-lg p-4">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h4 className="font-medium text-white">{request.title}</h4>
+                                <p className="text-sm text-gray-400">
+                                  Seller: {request.seller?.username}
+                                </p>
+                                <p className="text-sm text-gray-400">
+                                  Payment ID: {request.premiumPaymentId}
+                                </p>
+                                <p className="text-sm text-gray-400">
+                                  Requested: {new Date(request.premiumRequestedAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleApprovePremium(request._id)}
+                                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                                >
+                                  Approve
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          {activeTab === 'premium' && currentUser?.isAdmin && (
-            <div className="space-y-4">
-              <h3 className="text-xl font-semibold mb-4">Premium Service Requests</h3>
-              {premiumRequests.length === 0 ? (
-                <p className="text-gray-400">No pending premium requests</p>
-              ) : (
-                premiumRequests.map(request => (
-                  <div key={request._id} className="bg-gray-800 p-4 rounded-lg">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-medium">{request.title}</h4>
-                        <p className="text-sm text-gray-400">
-                          Seller: {request.seller?.username}
-                        </p>
-                        <p className="text-sm text-gray-400">
-                          Payment ID: {request.premiumPaymentId}
-                        </p>
-                        <p className="text-sm text-gray-400">
-                          Requested: {new Date(request.premiumRequestedAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleApprovePremium(request._id)}
-                          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                        >
-                          Approve
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
+
 
           {/* Add the Twitter Raids tab content */}
           {activeTab === 'twitterRaids' && currentUser?.isAdmin && renderTwitterRaidsTab()}
