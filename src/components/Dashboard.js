@@ -6,6 +6,7 @@ import JobList from './JobList';
 import BookingConversation from './BookingConversation';
 import BumpStore from './BumpStore';
 import EasterEggAnimation from './EasterEggAnimation';
+import CreateJobModal from './CreateJobModal';
 
 const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, onRejectBump, onApproveBump, initialBookingId, initialActiveTab }) => {
   const [bumpRequests, setBumpRequests] = useState([]);
@@ -49,6 +50,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [selectedListing, setSelectedListing] = useState(null);
   const [listingRejectionReason, setListingRejectionReason] = useState('');
   const [isLoadingListings, setIsLoadingListings] = useState(false);
+  const [jobToEdit, setJobToEdit] = useState(null);
 
   // Update activeTab when initialActiveTab changes
   useEffect(() => {
@@ -557,7 +559,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   };
 
-  const handleEditJob = async (jobData) => {
+  const handleUpdateJob = async (jobData) => {
     try {
       const response = await fetch(`${API_URL}/jobs/${jobData._id}`, {
         method: 'PATCH',
@@ -579,6 +581,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       console.error('Error updating job:', error);
       showNotification('Failed to update job', 'error');
     }
+  };
+
+  const handleEditJob = (job) => {
+    setJobToEdit(job);
   };
 
   const handleRefreshJob = async (jobId) => {
@@ -1836,6 +1842,15 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         <EasterEggAnimation 
           points={pointsInfo.points} 
           onClose={handleCloseEasterEgg} 
+        />
+      )}
+
+      {/* Edit Job Modal */}
+      {jobToEdit && (
+        <CreateJobModal
+          job={jobToEdit}
+          onClose={() => setJobToEdit(null)}
+          onCreateJob={handleUpdateJob}
         />
       )}
 
