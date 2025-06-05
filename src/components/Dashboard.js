@@ -1312,43 +1312,71 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                 <nav className="space-y-2">
                   <button
                     onClick={() => setActiveAdminSection('bumps')}
-                    className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
+                    className={`w-full text-left px-3 py-2 rounded-md transition-colors relative ${
                       activeAdminSection === 'bumps' 
                         ? 'bg-blue-600 text-white' 
+                        : pendingBumpAds.length > 0
+                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white bg-red-900/30 border-l-4 border-red-500'
                         : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                     }`}
                   >
                     📈 Bump Approvals
+                    {pendingBumpAds.length > 0 && (
+                      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
+                        {pendingBumpAds.length}
+                      </span>
+                    )}
                   </button>
                   <button
                     onClick={() => setActiveAdminSection('banners')}
-                    className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
+                    className={`w-full text-left px-3 py-2 rounded-md transition-colors relative ${
                       activeAdminSection === 'banners' 
                         ? 'bg-blue-600 text-white' 
+                        : bannerAds.filter(banner => banner.status === 'pending').length > 0
+                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white bg-orange-900/30 border-l-4 border-orange-500'
                         : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                     }`}
                   >
                     🎯 Banner Management
+                    {bannerAds.filter(banner => banner.status === 'pending').length > 0 && (
+                      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
+                        {bannerAds.filter(banner => banner.status === 'pending').length}
+                      </span>
+                    )}
                   </button>
                   <button
                     onClick={() => setActiveAdminSection('giftcards')}
-                    className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
+                    className={`w-full text-left px-3 py-2 rounded-md transition-colors relative ${
                       activeAdminSection === 'giftcards' 
                         ? 'bg-blue-600 text-white' 
+                        : pendingRedemptions.length > 0
+                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white bg-yellow-900/30 border-l-4 border-yellow-500'
                         : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                     }`}
                   >
                     🎁 Gift Card Redemptions
+                    {pendingRedemptions.length > 0 && (
+                      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
+                        {pendingRedemptions.length}
+                      </span>
+                    )}
                   </button>
                   <button
                     onClick={() => setActiveAdminSection('listings')}
-                    className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
+                    className={`w-full text-left px-3 py-2 rounded-md transition-colors relative ${
                       activeAdminSection === 'listings' 
                         ? 'bg-blue-600 text-white' 
+                        : pendingListings.length > 0
+                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white bg-green-900/30 border-l-4 border-green-500'
                         : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                     }`}
                   >
                     🫧 Bubble Listings
+                    {pendingListings.length > 0 && (
+                      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
+                        {pendingListings.length}
+                      </span>
+                    )}
                   </button>
                   <button
                     onClick={() => setActiveAdminSection('allads')}
@@ -1362,13 +1390,20 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   </button>
                   <button
                     onClick={() => setActiveAdminSection('premium')}
-                    className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
+                    className={`w-full text-left px-3 py-2 rounded-md transition-colors relative ${
                       activeAdminSection === 'premium' 
                         ? 'bg-blue-600 text-white' 
+                        : premiumRequests.length > 0
+                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white bg-purple-900/30 border-l-4 border-purple-500'
                         : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                     }`}
                   >
                     💎 Premium Requests
+                    {premiumRequests.length > 0 && (
+                      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-purple-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
+                        {premiumRequests.length}
+                      </span>
+                    )}
                   </button>
                 </nav>
               </div>
