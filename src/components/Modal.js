@@ -38,7 +38,7 @@ const Modal = ({ children, onClose, fullScreen = false }) => {
         {/* Style tag for modal */}
         <style>{modalStyles}</style>
         <div 
-          className="fixed inset-0 bg-gradient-to-br from-gray-900 to-black z-[300000] modal-backdrop"
+          className="fixed inset-0 bg-gradient-to-br from-gray-900 to-black z-[9999999] modal-backdrop"
           onClick={handleBackdropClick}
         >
           {/* Radial gradient overlay to match site theme */}
@@ -71,7 +71,7 @@ const Modal = ({ children, onClose, fullScreen = false }) => {
       {/* Style tag for modal */}
       <style>{modalStyles}</style>
       <div 
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[300000] p-2 sm:p-4 overflow-y-auto modal-backdrop"
+        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999999] p-2 sm:p-4 overflow-y-auto modal-backdrop"
         onClick={handleBackdropClick}
       >
         <div 
