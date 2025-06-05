@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
 
 const EditAdModal = ({ ad, onEditAd, onClose }) => {
@@ -10,6 +10,14 @@ const EditAdModal = ({ ad, onEditAd, onClose }) => {
   });
   const [previewUrl, setPreviewUrl] = useState(ad.logo);
   const [error, setError] = useState('');
+
+  // Prevent body scroll when modal is open (same as original Modal component)
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, []);
 
   const validateImageUrl = async (url) => {
     try {
@@ -60,115 +68,144 @@ const EditAdModal = ({ ad, onEditAd, onClose }) => {
   };
 
   return (
-    <Modal onClose={onClose}>
-      <div className="text-white">
-        <h2 className="text-2xl font-bold mb-4">Edit Ad</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block mb-1">Title</label>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block mb-1">Blockchain</label>
-            <select
-              name="blockchain"
-              value={formData.blockchain}
-              onChange={handleChange}
-              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="ethereum">Ethereum</option>
-              <option value="bsc">Binance Smart Chain</option>
-              <option value="polygon">Polygon</option>
-              <option value="solana">Solana</option>
-              <option value="avalanche">Avalanche</option>
-              <option value="arbitrum">Arbitrum</option>
-              <option value="optimism">Optimism</option>
-              <option value="base">Base</option>
-              <option value="sui">Sui</option>
-              <option value="near">NEAR</option>
-              <option value="fantom">Fantom</option>
-              <option value="tron">TRON</option>
-              <option value="cronos">Cronos</option>
-              <option value="celo">Celo</option>
-              <option value="harmony">Harmony</option>
-              <option value="moonbeam">Moonbeam</option>
-              <option value="moonriver">Moonriver</option>
-              <option value="cosmos">Cosmos</option>
-              <option value="polkadot">Polkadot</option>
-              <option value="hedera">Hedera</option>
-              <option value="kadena">Kadena</option>
-              <option value="stacks">Stacks</option>
-              <option value="oasis">Oasis</option>
-              <option value="zilliqa">Zilliqa</option>
-              <option value="elrond">MultiversX (Elrond)</option>
-              <option value="kava">Kava</option>
-              <option value="injective">Injective</option>
-              <option value="aptos">Aptos</option>
-              <option value="algorand">Algorand</option>
-              <option value="stellar">Stellar</option>
-              <option value="flow">Flow</option>
-              <option value="cardano">Cardano</option>
-              <option value="ton">TON</option>
-              <option value="tezos">Tezos</option>
-            </select>
-          </div>
-          <div>
-            <label className="block mb-1">Logo URL (GIF or PNG)</label>
-            <input
-              type="url"
-              name="logo"
-              value={formData.logo}
-              onChange={handleChange}
-              placeholder="Enter image URL (GIF or PNG)"
-              required
-              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
-            {previewUrl && (
-              <div className="mt-2 p-2 bg-gray-700 rounded">
-                <p className="text-sm text-gray-300 mb-2">Preview:</p>
-                <img
-                  src={previewUrl}
-                  alt="Logo preview"
-                  className="max-w-full h-32 object-contain mx-auto rounded"
-                />
-              </div>
-            )}
-          </div>
-          <div>
-            <label className="block mb-1">Website URL</label>
-            <input
-              type="url"
-              name="url"
-              value={formData.url}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div className="flex justify-end">
+    <>
+      {/* Force high z-index with inline styles */}
+      <style>{`
+        .edit-ad-modal-overlay {
+          z-index: 99999999 !important;
+          position: fixed !important;
+        }
+      `}</style>
+      <div 
+        className="edit-ad-modal-overlay fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto"
+        style={{ zIndex: 99999999 }}
+        onClick={onClose}
+      >
+        <div 
+          className="bg-gray-800 rounded-lg p-3 sm:p-6 w-full max-w-md mx-auto my-4 sm:my-8 relative"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex justify-end mb-2 sm:mb-4">
             <button
-              type="submit"
-              disabled={!!error}
-              className={`px-4 py-2 rounded ${
-                error 
-                  ? 'bg-gray-500 cursor-not-allowed' 
-                  : 'bg-blue-500 hover:bg-blue-600'
-              }`}
+              onClick={onClose}
+              className="text-gray-400 hover:text-white text-2xl focus:outline-none p-2"
+              aria-label="Close"
             >
-              Save Changes
+              ×
             </button>
           </div>
-        </form>
+          <div className="max-h-[calc(100vh-8rem)] overflow-y-auto pb-2">
+            <div className="text-white">
+              <h2 className="text-2xl font-bold mb-4">Edit Ad</h2>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block mb-1">Title</label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1">Blockchain</label>
+                  <select
+                    name="blockchain"
+                    value={formData.blockchain}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="ethereum">Ethereum</option>
+                    <option value="bsc">Binance Smart Chain</option>
+                    <option value="polygon">Polygon</option>
+                    <option value="solana">Solana</option>
+                    <option value="avalanche">Avalanche</option>
+                    <option value="arbitrum">Arbitrum</option>
+                    <option value="optimism">Optimism</option>
+                    <option value="base">Base</option>
+                    <option value="sui">Sui</option>
+                    <option value="near">NEAR</option>
+                    <option value="fantom">Fantom</option>
+                    <option value="tron">TRON</option>
+                    <option value="cronos">Cronos</option>
+                    <option value="celo">Celo</option>
+                    <option value="harmony">Harmony</option>
+                    <option value="moonbeam">Moonbeam</option>
+                    <option value="moonriver">Moonriver</option>
+                    <option value="cosmos">Cosmos</option>
+                    <option value="polkadot">Polkadot</option>
+                    <option value="hedera">Hedera</option>
+                    <option value="kadena">Kadena</option>
+                    <option value="stacks">Stacks</option>
+                    <option value="oasis">Oasis</option>
+                    <option value="zilliqa">Zilliqa</option>
+                    <option value="elrond">MultiversX (Elrond)</option>
+                    <option value="kava">Kava</option>
+                    <option value="injective">Injective</option>
+                    <option value="aptos">Aptos</option>
+                    <option value="algorand">Algorand</option>
+                    <option value="stellar">Stellar</option>
+                    <option value="flow">Flow</option>
+                    <option value="cardano">Cardano</option>
+                    <option value="ton">TON</option>
+                    <option value="tezos">Tezos</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block mb-1">Logo URL (GIF or PNG)</label>
+                  <input
+                    type="url"
+                    name="logo"
+                    value={formData.logo}
+                    onChange={handleChange}
+                    placeholder="Enter image URL (GIF or PNG)"
+                    required
+                    className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+                  {previewUrl && (
+                    <div className="mt-2 p-2 bg-gray-700 rounded">
+                      <p className="text-sm text-gray-300 mb-2">Preview:</p>
+                      <img
+                        src={previewUrl}
+                        alt="Logo preview"
+                        className="max-w-full h-32 object-contain mx-auto rounded"
+                      />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label className="block mb-1">Website URL</label>
+                  <input
+                    type="url"
+                    name="url"
+                    value={formData.url}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={!!error}
+                    className={`px-4 py-2 rounded ${
+                      error 
+                        ? 'bg-gray-500 cursor-not-allowed' 
+                        : 'bg-blue-500 hover:bg-blue-600'
+                    }`}
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
       </div>
-    </Modal>
+    </>
   );
 };
 
