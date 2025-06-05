@@ -1196,56 +1196,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                 )}
               </div>
 
-              {/* Gift Card Redemptions (Admin Only) */}
-              {currentUser?.isAdmin && (
-                <>
-                  {/* Gift Card Redemptions Section */}
-                  {currentUser?.isAdmin && (
-                    <div className="mb-8">
-                      <h3 className="text-xl font-semibold text-white mb-4">Pending Gift Card Redemptions</h3>
-                      {!Array.isArray(pendingRedemptions) ? (
-                        <p className="text-gray-400 text-center py-4">Error loading redemptions. Please try again.</p>
-                      ) : pendingRedemptions.length === 0 ? (
-                        <p className="text-gray-400 text-center py-4">No pending gift card redemptions.</p>
-                      ) : (
-                        <div className="space-y-4">
-                          {pendingRedemptions.map(user => (
-                            <div key={user._id} className="bg-gray-700 rounded-lg p-4">
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <h4 className="text-white font-semibold">{user.username}</h4>
-                                  {Array.isArray(user.giftCardRedemptions) && user.giftCardRedemptions.map((redemption, index) => (
-                                    redemption.status === 'pending' && (
-                                      <div key={index} className="text-gray-400 text-sm">
-                                        <p>Amount: ${redemption.amount}</p>
-                                        <p>Requested: {new Date(redemption.requestedAt).toLocaleString()}</p>
-                                      </div>
-                                    )
-                                  ))}
-                                </div>
-                                <div className="flex space-x-2">
-                                  <button
-                                    onClick={() => handleProcessRedemption(user._id, 'approved')}
-                                    className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
-                                  >
-                                    Approve
-                                  </button>
-                                  <button
-                                    onClick={() => handleProcessRedemption(user._id, 'rejected')}
-                                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                                  >
-                                    Reject
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
+
 
               {/* Reject Modal */}
               {showRejectModal && (
