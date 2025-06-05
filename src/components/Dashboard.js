@@ -381,7 +381,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       }).filter(Boolean)
     : [];
 
-  const userAds = currentUser?.isAdmin ? ads : ads.filter(ad => ad.owner === currentUser?.username);
+  const userAds = ads.filter(ad => ad.owner === currentUser?.username);
 
   const handleProcessRedemption = async (userId, status) => {
     try {
@@ -1235,7 +1235,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
               {/* User's Ads */}
               <div>
                 <h3 className="text-xl font-semibold text-white mb-4">
-                  {currentUser?.isAdmin ? 'All Ads' : 'Your Ads'}
+                  Your Ads
                 </h3>
                 {userAds.length === 0 ? (
                   <p className="text-gray-400 text-center py-8">No ads found.</p>
@@ -1273,25 +1273,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                               Bump Pending
                             </span>
                           )}
-                          {currentUser?.isAdmin ? (
-                            <button
-                              onClick={() => {
-                                if (window.confirm('Are you sure you want to delete this ad?')) {
-                                  onDeleteAd(ad.id);
-                                }
-                              }}
-                              className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                            >
-                              Delete
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => onEditAd(ad)}
-                              className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
-                            >
-                              Edit
-                            </button>
-                          )}
+                          <button
+                            onClick={() => onEditAd(ad)}
+                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
+                          >
+                            Edit
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -1574,6 +1561,72 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* All Ads Section (Admin Only) */}
+              <div className="mt-8">
+                <h3 className="text-xl font-bold mb-4">All Ads Management</h3>
+                {ads.length === 0 ? (
+                  <p className="text-gray-400 text-center py-8">No ads found.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {ads.map(ad => (
+                      <div
+                        key={ad.id}
+                        className="bg-gray-700 rounded-lg p-4 flex items-center justify-between"
+                      >
+                        <div className="flex items-center space-x-4">
+                          <img
+                            src={ad.logo}
+                            alt={ad.title}
+                            className="w-12 h-12 object-contain rounded"
+                          />
+                          <div>
+                            <h3 className="text-white font-semibold">{ad.title}</h3>
+                            <p className="text-gray-400 text-sm">{ad.url}</p>
+                            <p className="text-gray-400 text-sm">Owner: {ad.owner}</p>
+                            {ad.status === 'pending' && (
+                              <p className="text-yellow-500 text-sm">Bump Pending</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                          {!ad.status || ad.status !== 'pending' ? (
+                            <button
+                              onClick={() => handleBumpClick(ad.id)}
+                              className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+                              title="Bump this ad"
+                            >
+                              Bump
+                            </button>
+                          ) : (
+                            <span className="text-yellow-500 px-3 py-1">
+                              Bump Pending
+                            </span>
+                          )}
+                          <button
+                            onClick={() => onEditAd(ad)}
+                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
+                            title="Edit this ad"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (window.confirm('Are you sure you want to delete this ad?')) {
+                                onDeleteAd(ad.id);
+                              }
+                            }}
+                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                            title="Delete this ad"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </>
           )}
