@@ -1196,64 +1196,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                 )}
               </div>
 
-              {/* Pending Bump Approvals (Admin Only) */}
+              {/* Banner Ad Management Section (Admin Only) */}
               {currentUser?.isAdmin && (
                 <>
-                  <div className="mb-8">
-                    <h3 className="text-xl font-semibold text-white mb-4">Pending Bump Approvals</h3>
-                    {pendingBumpAds.length === 0 ? (
-                      <p className="text-gray-400 text-center py-4">No pending bump approvals.</p>
-                    ) : (
-                      <div className="space-y-4">
-                        {pendingBumpAds.map(ad => (
-                          <div
-                            key={ad.id}
-                            className="bg-gray-700 rounded-lg p-4"
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-4">
-                                <img
-                                  src={ad.logo}
-                                  alt={ad.title}
-                                  className="w-12 h-12 object-contain rounded"
-                                />
-                                <div>
-                                  <h4 className="text-white font-semibold">{ad.title}</h4>
-                                  <p className="text-gray-400 text-sm">Owner: {ad.owner}</p>
-                                  <p className="text-gray-400 text-sm">Requested: {new Date(ad.bumpRequest.createdAt).toLocaleString()}</p>
-                                </div>
-                              </div>
-                              <div className="flex flex-col items-end">
-                                <a
-                                  href={`https://solscan.io/tx/${ad.bumpRequest.txSignature}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-blue-400 hover:text-blue-300 text-sm mb-2"
-                                >
-                                  View Transaction
-                                </a>
-                                <div className="flex space-x-2">
-                                  <button
-                                    onClick={() => handleApprove(ad)}
-                                    className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
-                                  >
-                                    Approve
-                                  </button>
-                                  <button
-                                    onClick={() => handleReject(ad)}
-                                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                                  >
-                                    Reject
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
                   {/* Banner Ad Management Section */}
                   <div className="mb-8">
                     <h3 className="text-xl font-semibold text-white mb-4">Banner Ad Management</h3>
