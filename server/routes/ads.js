@@ -327,7 +327,7 @@ router.put('/:id', auth, async (req, res) => {
     
     // Extract only allowed fields to update
     const updateData = {};
-    const allowedUpdates = ['x', 'y', 'size', 'url', 'title', 'status', 'blockchain'];
+    const allowedUpdates = ['x', 'y', 'size', 'url', 'title', 'status', 'blockchain', 'logo'];
     
     allowedUpdates.forEach(field => {
       if (updates[field] !== undefined) {
