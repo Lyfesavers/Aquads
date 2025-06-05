@@ -51,6 +51,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [listingRejectionReason, setListingRejectionReason] = useState('');
   const [isLoadingListings, setIsLoadingListings] = useState(false);
   const [jobToEdit, setJobToEdit] = useState(null);
+  const [activeAdminSection, setActiveAdminSection] = useState('bumps');
 
   // Update activeTab when initialActiveTab changes
   useEffect(() => {
@@ -1311,324 +1312,302 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           )}
 
           {activeTab === 'admin' && currentUser.isAdmin && (
-            <>
-              <div className="mb-8">
-                <h3 className="text-xl font-semibold text-white mb-4">Pending Bump Approvals</h3>
-                {pendingBumpAds.length === 0 ? (
-                  <p className="text-gray-400 text-center py-4">No pending bump approvals.</p>
-                ) : (
-                  <div className="space-y-4">
-                    {pendingBumpAds.map(ad => (
-                      <div
-                        key={ad.id}
-                        className="bg-gray-700 rounded-lg p-4"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <img
-                              src={ad.logo}
-                              alt={ad.title}
-                              className="w-12 h-12 object-contain rounded"
-                            />
-                            <div>
-                              <h4 className="text-white font-semibold">{ad.title}</h4>
-                              <p className="text-gray-400 text-sm">Owner: {ad.owner}</p>
-                              <p className="text-gray-400 text-sm">Requested: {new Date(ad.bumpRequest.createdAt).toLocaleString()}</p>
-                            </div>
-                          </div>
-                          <div className="flex flex-col items-end">
-                            <a
-                              href={`https://solscan.io/tx/${ad.bumpRequest.txSignature}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-400 hover:text-blue-300 text-sm mb-2"
-                            >
-                              View Transaction
-                            </a>
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() => handleApprove(ad)}
-                                className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
-                              >
-                                Approve
-                              </button>
-                              <button
-                                onClick={() => handleReject(ad)}
-                                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                              >
-                                Reject
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+            <div className="flex h-full">
+              {/* Left Sidebar Navigation */}
+              <div className="w-64 bg-gray-800 rounded-l-lg p-4 border-r border-gray-700">
+                <h3 className="text-lg font-semibold text-white mb-4">Admin Sections</h3>
+                <nav className="space-y-2">
+                  <button
+                    onClick={() => setActiveAdminSection('bumps')}
+                    className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
+                      activeAdminSection === 'bumps' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                    }`}
+                  >
+                    📈 Bump Approvals
+                  </button>
+                  <button
+                    onClick={() => setActiveAdminSection('banners')}
+                    className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
+                      activeAdminSection === 'banners' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                    }`}
+                  >
+                    🎯 Banner Management
+                  </button>
+                  <button
+                    onClick={() => setActiveAdminSection('giftcards')}
+                    className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
+                      activeAdminSection === 'giftcards' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                    }`}
+                  >
+                    🎁 Gift Card Redemptions
+                  </button>
+                  <button
+                    onClick={() => setActiveAdminSection('listings')}
+                    className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
+                      activeAdminSection === 'listings' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                    }`}
+                  >
+                    🫧 Bubble Listings
+                  </button>
+                  <button
+                    onClick={() => setActiveAdminSection('allads')}
+                    className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
+                      activeAdminSection === 'allads' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                    }`}
+                  >
+                    📱 All Ads Management
+                  </button>
+                </nav>
               </div>
 
-              {/* Banner Ad Management Section */}
-              <div className="mb-8">
-                <h3 className="text-xl font-semibold text-white mb-4">Banner Ad Management</h3>
-                {bannerAds.filter(banner => banner.status !== 'rejected').map(banner => (
-                  <div key={banner._id} className="bg-gray-700 rounded-lg p-4">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h4 className="text-white font-semibold">{banner.title}</h4>
-                        <p className="text-gray-400 text-sm">Status: {banner.status}</p>
-                        <p className="text-gray-400 text-sm">Created: {new Date(banner.createdAt).toLocaleString()}</p>
-                        <a 
-                          href={banner.url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-blue-400 hover:text-blue-300 text-sm"
-                        >
-                          {banner.url}
-                        </a>
-                      </div>
-                      {banner.status === 'pending' && (
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleApproveBanner(banner._id)}
-                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => {
-                              const reason = prompt('Enter rejection reason:');
-                              if (reason) handleRejectBanner(banner._id, reason);
-                            }}
-                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                    <div className="mt-4">
-                      <img 
-                        src={banner.gif} 
-                        alt={banner.title}
-                        className="max-h-32 rounded object-contain bg-gray-800"
-                      />
-                    </div>
-                    {/* Add delete button for expired banners */}
-                    {currentUser?.isAdmin && banner.status === 'active' && (
-                      <div className="mt-2">
-                        <button
-                          onClick={() => handleDeleteBanner(banner._id)}
-                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                        >
-                          Delete Banner
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Add this section after the Banner Ad Management section */}
-              {currentUser?.isAdmin && (
-                <div className="mb-8">
-                  <h3 className="text-xl font-semibold text-white mb-4">Pending Gift Card Redemptions</h3>
-                  {!Array.isArray(pendingRedemptions) ? (
-                    <p className="text-gray-400 text-center py-4">Error loading redemptions. Please try again.</p>
-                  ) : pendingRedemptions.length === 0 ? (
-                    <p className="text-gray-400 text-center py-4">No pending gift card redemptions.</p>
-                  ) : (
-                    <div className="space-y-4">
-                      {pendingRedemptions.map(user => (
-                        <div key={user._id} className="bg-gray-700 rounded-lg p-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h4 className="text-white font-semibold">{user.username}</h4>
-                              {Array.isArray(user.giftCardRedemptions) && user.giftCardRedemptions.map((redemption, index) => (
-                                redemption.status === 'pending' && (
-                                  <div key={index} className="text-gray-400 text-sm">
-                                    <p>Amount: ${redemption.amount}</p>
-                                    <p>Requested: {new Date(redemption.requestedAt).toLocaleString()}</p>
-                                  </div>
-                                )
-                              ))}
-                            </div>
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() => handleProcessRedemption(user._id, 'approved')}
-                                className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
-                              >
-                                Approve
-                              </button>
-                              <button
-                                onClick={() => handleProcessRedemption(user._id, 'rejected')}
-                                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                              >
-                                Reject
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Bubble Listing Approvals Section */}
-              <div className="mt-8">
-                <h3 className="text-xl font-bold mb-4">Bubble Listing Approvals</h3>
-                <div className="bg-gray-800 rounded-lg p-4">
-                  {isLoadingListings ? (
-                    <div className="text-center py-4">
-                      <div className="spinner"></div>
-                      <p className="mt-2 text-gray-400">Loading pending listings...</p>
-                    </div>
-                  ) : pendingListings.length === 0 ? (
-                    <div className="text-center py-6 text-gray-400">
-                      No pending bubble listings to approve
-                    </div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="border-b border-gray-700">
-                            <th className="px-4 py-2 text-left">Project</th>
-                            <th className="px-4 py-2 text-left">Owner</th>
-                            <th className="px-4 py-2 text-left">Payment</th>
-                            <th className="px-4 py-2 text-left">Date</th>
-                            <th className="px-4 py-2 text-left">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {pendingListings.map((listing) => (
-                            <tr key={listing.id} className="border-b border-gray-700">
-                              <td className="px-4 py-3">
-                                <div className="flex items-center">
-                                  <img 
-                                    src={listing.logo} 
-                                    alt={listing.title} 
-                                    className="w-8 h-8 rounded-full mr-3"
-                                    onError={(e) => { e.target.src = 'https://placehold.co/40x40?text=?' }}
-                                  />
-                                  <div>
-                                    <div className="font-medium">{listing.title}</div>
-                                    <div className="text-sm text-gray-400">
-                                      <a 
-                                        href={listing.url} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="hover:text-blue-400"
-                                      >
-                                        {listing.url?.replace(/(^\w+:|^)\/\//, '')}
-                                      </a>
-                                    </div>
-                                  </div>
+              {/* Main Content Area */}
+              <div className="flex-1 bg-gray-900 rounded-r-lg p-6">
+                {activeAdminSection === 'bumps' && (
+                  <div>
+                    <h3 className="text-2xl font-semibold text-white mb-6">Pending Bump Approvals</h3>
+                    {pendingBumpAds.length === 0 ? (
+                      <p className="text-gray-400 text-center py-8">No pending bump approvals.</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {pendingBumpAds.map(ad => (
+                          <div key={ad.id} className="bg-gray-700 rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-4">
+                                <img src={ad.logo} alt={ad.title} className="w-12 h-12 object-contain rounded" />
+                                <div>
+                                  <h4 className="text-white font-semibold">{ad.title}</h4>
+                                  <p className="text-gray-400 text-sm">Owner: {ad.owner}</p>
+                                  <p className="text-gray-400 text-sm">Requested: {new Date(ad.bumpRequest.createdAt).toLocaleString()}</p>
                                 </div>
-                              </td>
-                              <td className="px-4 py-3">{listing.owner}</td>
-                              <td className="px-4 py-3">
-                                <div className="text-sm">
-                                  <div>Chain: {listing.paymentChain}</div>
-                                  <div className="text-gray-400 text-xs truncate max-w-[160px]" 
-                                        title={listing.txSignature}>
-                                    Tx: {listing.txSignature?.substring(0, 8)}...
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-4 py-3">
-                                {new Date(listing.createdAt).toLocaleDateString()}
-                              </td>
-                              <td className="px-4 py-3">
+                              </div>
+                              <div className="flex flex-col items-end">
+                                <a href={`https://solscan.io/tx/${ad.bumpRequest.txSignature}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 text-sm mb-2">
+                                  View Transaction
+                                </a>
                                 <div className="flex space-x-2">
-                                  <button
-                                    onClick={() => handleApproveListing(listing.id)}
-                                    className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded-md text-sm"
-                                  >
+                                  <button onClick={() => handleApprove(ad)} className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded">
                                     Approve
                                   </button>
-                                  <button
-                                    onClick={() => openRejectModal(listing)}
-                                    className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded-md text-sm"
-                                  >
+                                  <button onClick={() => handleReject(ad)} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">
                                     Reject
                                   </button>
                                 </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
-              {/* All Ads Section (Admin Only) */}
-              <div className="mt-8">
-                <h3 className="text-xl font-bold mb-4">All Ads Management</h3>
-                {ads.length === 0 ? (
-                  <p className="text-gray-400 text-center py-8">No ads found.</p>
-                ) : (
-                  <div className="space-y-4">
-                    {ads.map(ad => (
-                      <div
-                        key={ad.id}
-                        className="bg-gray-700 rounded-lg p-4 flex items-center justify-between"
-                      >
-                        <div className="flex items-center space-x-4">
-                          <img
-                            src={ad.logo}
-                            alt={ad.title}
-                            className="w-12 h-12 object-contain rounded"
-                          />
-                          <div>
-                            <h3 className="text-white font-semibold">{ad.title}</h3>
-                            <p className="text-gray-400 text-sm">{ad.url}</p>
-                            <p className="text-gray-400 text-sm">Owner: {ad.owner}</p>
-                            {ad.status === 'pending' && (
-                              <p className="text-yellow-500 text-sm">Bump Pending</p>
+                {activeAdminSection === 'banners' && (
+                  <div>
+                    <h3 className="text-2xl font-semibold text-white mb-6">Banner Ad Management</h3>
+                    <div className="space-y-4">
+                      {bannerAds.filter(banner => banner.status !== 'rejected').map(banner => (
+                        <div key={banner._id} className="bg-gray-700 rounded-lg p-4">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h4 className="text-white font-semibold">{banner.title}</h4>
+                              <p className="text-gray-400 text-sm">Status: {banner.status}</p>
+                              <p className="text-gray-400 text-sm">Created: {new Date(banner.createdAt).toLocaleString()}</p>
+                              <a href={banner.url} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 text-sm">
+                                {banner.url}
+                              </a>
+                            </div>
+                            {banner.status === 'pending' && (
+                              <div className="flex space-x-2">
+                                <button onClick={() => handleApproveBanner(banner._id)} className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded">
+                                  Approve
+                                </button>
+                                <button onClick={() => { const reason = prompt('Enter rejection reason:'); if (reason) handleRejectBanner(banner._id, reason); }} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">
+                                  Reject
+                                </button>
+                              </div>
                             )}
                           </div>
-                        </div>
-                        <div className="flex space-x-2">
-                          {!ad.status || ad.status !== 'pending' ? (
-                            <button
-                              onClick={() => handleBumpClick(ad.id)}
-                              className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
-                              title="Bump this ad"
-                            >
-                              Bump
-                            </button>
-                          ) : (
-                            <span className="text-yellow-500 px-3 py-1">
-                              Bump Pending
-                            </span>
+                          <div className="mt-4">
+                            <img src={banner.gif} alt={banner.title} className="max-h-32 rounded object-contain bg-gray-800" />
+                          </div>
+                          {currentUser?.isAdmin && banner.status === 'active' && (
+                            <div className="mt-2">
+                              <button onClick={() => handleDeleteBanner(banner._id)} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">
+                                Delete Banner
+                              </button>
+                            </div>
                           )}
-                          <button
-                            onClick={() => onEditAd(ad)}
-                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
-                            title="Edit this ad"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (window.confirm('Are you sure you want to delete this ad?')) {
-                                onDeleteAd(ad.id);
-                              }
-                            }}
-                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                            title="Delete this ad"
-                          >
-                            Delete
-                          </button>
                         </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {activeAdminSection === 'giftcards' && (
+                  <div>
+                    <h3 className="text-2xl font-semibold text-white mb-6">Pending Gift Card Redemptions</h3>
+                    {!Array.isArray(pendingRedemptions) ? (
+                      <p className="text-gray-400 text-center py-8">Error loading redemptions. Please try again.</p>
+                    ) : pendingRedemptions.length === 0 ? (
+                      <p className="text-gray-400 text-center py-8">No pending gift card redemptions.</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {pendingRedemptions.map(user => (
+                          <div key={user._id} className="bg-gray-700 rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h4 className="text-white font-semibold">{user.username}</h4>
+                                {Array.isArray(user.giftCardRedemptions) && user.giftCardRedemptions.map((redemption, index) => (
+                                  redemption.status === 'pending' && (
+                                    <div key={index} className="text-gray-400 text-sm">
+                                      <p>Amount: ${redemption.amount}</p>
+                                      <p>Requested: {new Date(redemption.requestedAt).toLocaleString()}</p>
+                                    </div>
+                                  )
+                                ))}
+                              </div>
+                              <div className="flex space-x-2">
+                                <button onClick={() => handleProcessRedemption(user._id, 'approved')} className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded">
+                                  Approve
+                                </button>
+                                <button onClick={() => handleProcessRedemption(user._id, 'rejected')} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">
+                                  Reject
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
+                  </div>
+                )}
+
+                {activeAdminSection === 'listings' && (
+                  <div>
+                    <h3 className="text-2xl font-semibold text-white mb-6">Bubble Listing Approvals</h3>
+                    <div className="bg-gray-700 rounded-lg p-4">
+                      {isLoadingListings ? (
+                        <div className="text-center py-8">
+                          <div className="spinner"></div>
+                          <p className="mt-2 text-gray-400">Loading pending listings...</p>
+                        </div>
+                      ) : pendingListings.length === 0 ? (
+                        <div className="text-center py-8 text-gray-400">
+                          No pending bubble listings to approve
+                        </div>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="border-b border-gray-600">
+                                <th className="px-4 py-2 text-left text-white">Project</th>
+                                <th className="px-4 py-2 text-left text-white">Owner</th>
+                                <th className="px-4 py-2 text-left text-white">Payment</th>
+                                <th className="px-4 py-2 text-left text-white">Date</th>
+                                <th className="px-4 py-2 text-left text-white">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {pendingListings.map((listing) => (
+                                <tr key={listing.id} className="border-b border-gray-600">
+                                  <td className="px-4 py-3">
+                                    <div className="flex items-center">
+                                      <img src={listing.logo} alt={listing.title} className="w-8 h-8 rounded-full mr-3" onError={(e) => { e.target.src = 'https://placehold.co/40x40?text=?' }} />
+                                      <div>
+                                        <div className="font-medium text-white">{listing.title}</div>
+                                        <div className="text-sm text-gray-400">
+                                          <a href={listing.url} target="_blank" rel="noopener noreferrer" className="hover:text-blue-400">
+                                            {listing.url?.replace(/(^\w+:|^)\/\//, '')}
+                                          </a>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-3 text-gray-300">{listing.owner}</td>
+                                  <td className="px-4 py-3 text-gray-300">
+                                    <div className="text-sm">
+                                      <div>Chain: {listing.paymentChain}</div>
+                                      <div className="text-gray-400 text-xs truncate max-w-[160px]" title={listing.txSignature}>
+                                        Tx: {listing.txSignature?.substring(0, 8)}...
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-3 text-gray-300">{new Date(listing.createdAt).toLocaleDateString()}</td>
+                                  <td className="px-4 py-3">
+                                    <div className="flex space-x-2">
+                                      <button onClick={() => handleApproveListing(listing.id)} className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded-md text-sm">
+                                        Approve
+                                      </button>
+                                      <button onClick={() => openRejectModal(listing)} className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded-md text-sm">
+                                        Reject
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {activeAdminSection === 'allads' && (
+                  <div>
+                    <h3 className="text-2xl font-semibold text-white mb-6">All Ads Management</h3>
+                    {ads.length === 0 ? (
+                      <p className="text-gray-400 text-center py-8">No ads found.</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {ads.map(ad => (
+                          <div key={ad.id} className="bg-gray-700 rounded-lg p-4 flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                              <img src={ad.logo} alt={ad.title} className="w-12 h-12 object-contain rounded" />
+                              <div>
+                                <h3 className="text-white font-semibold">{ad.title}</h3>
+                                <p className="text-gray-400 text-sm">{ad.url}</p>
+                                <p className="text-gray-400 text-sm">Owner: {ad.owner}</p>
+                                {ad.status === 'pending' && (
+                                  <p className="text-yellow-500 text-sm">Bump Pending</p>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex space-x-2">
+                              {!ad.status || ad.status !== 'pending' ? (
+                                <button onClick={() => handleBumpClick(ad.id)} className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded" title="Bump this ad">
+                                  Bump
+                                </button>
+                              ) : (
+                                <span className="text-yellow-500 px-3 py-1">
+                                  Bump Pending
+                                </span>
+                              )}
+                              <button onClick={() => onEditAd(ad)} className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded" title="Edit this ad">
+                                Edit
+                              </button>
+                              <button onClick={() => { if (window.confirm('Are you sure you want to delete this ad?')) { onDeleteAd(ad.id); } }} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded" title="Delete this ad">
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            </>
+            </div>
           )}
 
           {activeTab === 'premium' && currentUser?.isAdmin && (
