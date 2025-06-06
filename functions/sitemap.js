@@ -9,72 +9,57 @@ function createSlug(title) {
 }
 
 exports.handler = async (event, context) => {
-  try {
-    const baseUrl = 'https://aquads.xyz';
-    const currentDate = new Date().toISOString().split('T')[0];
-    
-    // Static pages with priorities and change frequencies
-    const staticPages = [
-      { url: '', priority: '1.0', changefreq: 'daily' },
-      { url: '/marketplace', priority: '0.9', changefreq: 'daily' },
-      { url: '/how-to', priority: '0.8', changefreq: 'daily' },
-      { url: '/dashboard', priority: '0.8', changefreq: 'weekly' },
-      { url: '/whitepaper', priority: '0.7', changefreq: 'monthly' },
-      { url: '/affiliate', priority: '0.7', changefreq: 'monthly' },
-      { url: '/terms', priority: '0.5', changefreq: 'monthly' }
-    ];
-    
-    // Start XML
-    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
-    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n';
-    
-    // Add static pages
-    staticPages.forEach(page => {
-      xml += `  <url>\n`;
-      xml += `    <loc>${baseUrl}${page.url}</loc>\n`;
-      xml += `    <lastmod>${currentDate}</lastmod>\n`;
-      xml += `    <changefreq>${page.changefreq}</changefreq>\n`;
-      xml += `    <priority>${page.priority}</priority>\n`;
-      xml += `  </url>\n`;
-    });
-    
-    // TODO: Add database connection for dynamic content
-    // Future: Add services and blogs from database
-    // const { MongoClient } = require('mongodb');
-    // const db = await connectDB();
-    // ... database operations
-    
-    // Close XML
-    xml += '</urlset>';
-    
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/xml',
-        'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
-      },
-      body: xml
-    };
-  } catch (error) {
-    console.error('Error generating sitemap:', error);
-    
-    // Return a minimal valid sitemap on error
-    const fallbackXml = `<?xml version="1.0" encoding="UTF-8"?>
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://aquads.xyz</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <loc>https://aquads.xyz/</loc>
+    <lastmod>2024-12-19</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
+  <url>
+    <loc>https://aquads.xyz/marketplace</loc>
+    <lastmod>2024-12-19</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://aquads.xyz/how-to</loc>
+    <lastmod>2024-12-19</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://aquads.xyz/dashboard</loc>
+    <lastmod>2024-12-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://aquads.xyz/whitepaper</loc>
+    <lastmod>2024-12-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://aquads.xyz/affiliate</loc>
+    <lastmod>2024-12-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://aquads.xyz/terms</loc>
+    <lastmod>2024-12-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
 </urlset>`;
-    
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/xml',
-      },
-      body: fallbackXml
-    };
-  }
+
+  return {
+    statusCode: 200,
+    headers: {
+      'Content-Type': 'application/xml; charset=utf-8',
+    },
+    body: xml
+  };
 }; 
