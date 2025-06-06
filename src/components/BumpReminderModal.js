@@ -20,9 +20,8 @@ const BumpReminderModal = ({
   };
 
   return (
-    <Modal onClose={onClose}>
-      <div className="bg-gray-900 rounded-lg md:rounded-none p-6 max-w-lg md:max-w-none w-full md:w-screen md:h-screen mx-4 md:mx-0 border-2 md:border-0 border-purple-500 shadow-2xl md:shadow-none flex flex-col justify-center">
-        <div className="md:max-w-2xl md:mx-auto">
+    <Modal onClose={onClose} fullScreen={true}>
+      <div className="text-white max-w-2xl mx-auto">
           {/* Header with animated icon */}
         <div className="text-center mb-6">
           <div className="flex justify-center mb-4">
@@ -111,11 +110,10 @@ const BumpReminderModal = ({
           </button>
         </div>
 
-          {/* Small disclaimer */}
-          <p className="text-xs text-gray-500 text-center mt-4">
-            Bumping keeps your project visible and competitive in the marketplace
-          </p>
-        </div>
+        {/* Small disclaimer */}
+        <p className="text-xs text-gray-500 text-center mt-4">
+          Bumping keeps your project visible and competitive in the marketplace
+        </p>
       </div>
     </Modal>
   );
