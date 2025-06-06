@@ -3,29 +3,10 @@ import { Helmet } from 'react-helmet';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import BlogList from './BlogList';
 import CreateBlogModal from './CreateBlogModal';
-import { API_URL, deleteBlog } from '../services/api';
-import { Markdown } from 'tiptap-markdown';
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
+import { API_URL } from '../services/api';
 
-// Helper function to create URL-friendly slugs
-const createSlug = (title) => {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-};
 
-// Helper function to extract blogId from slug URL
-const extractBlogIdFromPath = (pathname) => {
-  if (pathname.startsWith('/how-to/')) {
-    const slug = pathname.substring('/how-to/'.length);
-    const slugParts = slug.split('-');
-    // The ID should be the last part after the last dash
-    return slugParts[slugParts.length - 1];
-  }
-  return null;
-};
+
 
 const HowTo = ({ currentUser }) => {
   const [blogs, setBlogs] = useState([]);
@@ -47,95 +28,11 @@ const HowTo = ({ currentUser }) => {
       navigate(location.pathname, { replace: true, state: {} });
     }
     
-    // On component mount, check if we're coming from an SEO-friendly URL
-    const params = new URLSearchParams(location.search);
-    const queryBlogId = params.get('blogId');
-    
-    // Check if we're on a path-based URL
-    const pathBlogId = extractBlogIdFromPath(location.pathname);
-    
-    // If we have a blogId in the path but not in query params, redirect to the query param version
-    // This keeps our app's internal logic consistent while supporting SEO-friendly URLs
-    if (pathBlogId && !queryBlogId) {
-      // Keep any existing query parameters when redirecting
-      const existingParams = location.search ? location.search : '';
-      const separator = existingParams ? '&' : '?';
-      
-      navigate(`/how-to${existingParams}${separator}blogId=${pathBlogId}`, { replace: true });
-    }
-    
-    // Use either the query param blogId or path blogId to fetch and display the blog
-    const blogIdToUse = queryBlogId || pathBlogId;
-    if (blogIdToUse) {
-      fetchBlogs().then(() => {
-        setSharedBlogId(blogIdToUse);
-      });
-    } else {
-      fetchBlogs();
-    }
+    // Fetch blogs for the list view
+    fetchBlogs();
   }, [location, navigate]);
 
-  useEffect(() => {
-    // Handle URL parameters for shared blogs
-    const params = new URLSearchParams(location.search);
-    const blogId = params.get('blogId');
-    
-    if (blogId && blogs.length > 0) {
-      // Find the blog post with the matching ID
-      const sharedBlog = blogs.find(blog => blog._id === blogId);
-      
-      if (sharedBlog) {
-        // Update page title for SEO
-        document.title = `${sharedBlog.title} - Aquads Blog`;
-        
-        // Update meta tags for sharing
-        const dynamicTwitterImage = document.getElementById('dynamic-twitter-image');
-        const dynamicTwitterTitle = document.getElementById('dynamic-twitter-title');
-        const dynamicTwitterDesc = document.getElementById('dynamic-twitter-description');
-        const dynamicOgImage = document.getElementById('dynamic-og-image');
-        const dynamicOgTitle = document.getElementById('dynamic-og-title');
-        const dynamicOgDesc = document.getElementById('dynamic-og-description');
-        const dynamicOgUrl = document.getElementById('dynamic-og-url');
-        
-        // Create slug for SEO-friendly URL
-        const slug = createSlug(sharedBlog.title);
-        const seoUrl = `${window.location.origin}/how-to/${slug}-${blogId}`;
-        
-        // Clean the description for social media
-        const cleanDescription = sharedBlog.content
-          ? sharedBlog.content.replace(/<[^>]*>/g, '').slice(0, 200) + '...'
-          : 'Read our latest blog post on Aquads!';
 
-        if (dynamicTwitterImage) dynamicTwitterImage.content = sharedBlog.bannerImage || 'https://www.aquads.xyz/logo712.png';
-        if (dynamicTwitterTitle) dynamicTwitterTitle.content = `${sharedBlog.title} - Aquads Blog`;
-        if (dynamicTwitterDesc) dynamicTwitterDesc.content = cleanDescription;
-        if (dynamicOgImage) dynamicOgImage.content = sharedBlog.bannerImage || 'https://www.aquads.xyz/logo712.png';
-        if (dynamicOgTitle) dynamicOgTitle.content = `${sharedBlog.title} - Aquads Blog`;
-        if (dynamicOgDesc) dynamicOgDesc.content = cleanDescription;
-        if (dynamicOgUrl) dynamicOgUrl.content = seoUrl;
-        
-        // Add canonical URL for SEO
-        let canonicalUrl = document.querySelector('link[rel="canonical"]');
-        if (!canonicalUrl) {
-          canonicalUrl = document.createElement('link');
-          canonicalUrl.setAttribute('rel', 'canonical');
-          document.head.appendChild(canonicalUrl);
-        }
-        canonicalUrl.setAttribute('href', seoUrl);
-        
-        // Scroll to and highlight the blog post
-        const blogElement = document.getElementById(`blog-${blogId}`);
-        if (blogElement) {
-          blogElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          // Highlight the shared blog post
-          blogElement.classList.add('ring-2', 'ring-blue-500');
-          setTimeout(() => {
-            blogElement.classList.remove('ring-2', 'ring-blue-500');
-          }, 2000);
-        }
-      }
-    }
-  }, [location.search, blogs]);
 
   const fetchBlogs = async () => {
     try {
@@ -284,17 +181,7 @@ const HowTo = ({ currentUser }) => {
     }
   };
 
-  // Get the currently shared blog
-  const getSharedBlog = () => {
-    const params = new URLSearchParams(location.search);
-    const blogId = params.get('blogId');
-    if (blogId && blogs.length > 0) {
-      return blogs.find(blog => blog._id === blogId);
-    }
-    return null;
-  };
 
-  const sharedBlog = getSharedBlog();
 
   // Set up a blog for editing
   const handleBlogEdit = (blog) => {
@@ -302,115 +189,14 @@ const HowTo = ({ currentUser }) => {
     setShowCreateModal(true);
   };
 
-  // Function to check if content is Markdown
-  const isMarkdownContent = (content) => {
-    if (!content || typeof content !== 'string') return false;
-    
-    // More comprehensive check for Markdown patterns
-    return (
-      /^#+ .+/m.test(content) || // Headers
-      /\n#+ .+/m.test(content) || // Headers after newline
-      /\n- .+/m.test(content) || // List items after newline
-      /^- .+/m.test(content) || // List items at start
-      /\n\* .+/m.test(content) || // Asterisk list items
-      /^(>\s.*)+$/m.test(content) || // Blockquotes
-      /\*\*[^*]+\*\*/m.test(content) || // Bold text
-      /\*[^*]+\*/m.test(content) || // Italic text
-      /\[.+\]\(.+\)/m.test(content) || // Links
-      /`[^`]+`/m.test(content) || // Inline code
-      /^\s*```[\s\S]*?```\s*$/m.test(content) // Code blocks
-    );
-  };
-  
-  // Function to extract plain text from either Markdown or HTML
-  const extractPlainText = (content, maxLength = 160) => {
-    if (!content || typeof content !== 'string') return '';
-    
-    // Check if content is likely Markdown
-    if (isMarkdownContent(content)) {
-      // For Markdown, strip out markdown syntax
-      return content
-        .replace(/#{1,6}\s+/g, '') // Remove headers
-        .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold
-        .replace(/\*(.*?)\*/g, '$1') // Remove italic
-        .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Remove links but keep text
-        .replace(/^\s*[-*+]\s+/gm, '') // Remove list markers
-        .replace(/^\s*\d+\.\s+/gm, '') // Remove numbered list markers
-        .replace(/\n/g, ' ') // Replace newlines with spaces
-        .replace(/\s+/g, ' ') // Normalize spaces
-        .trim()
-        .slice(0, maxLength) + (content.length > maxLength ? '...' : '');
-    } else {
-      // For HTML, strip tags
-      return content
-        .replace(/<[^>]*>/g, '')
-        .trim()
-        .slice(0, maxLength) + (content.length > maxLength ? '...' : '');
-    }
-  };
+
 
   return (
     <div className="h-screen overflow-y-auto bg-gray-900 text-white">
       <Helmet>
-        {sharedBlog ? (
-          // Dynamic meta tags for a specific blog post
-          <>
-            <title>{`${sharedBlog.title} - Aquads How To Guide`}</title>
-            <meta name="description" content={extractPlainText(sharedBlog.content)} />
-            <meta property="og:title" content={`${sharedBlog.title} - Aquads Blog`} />
-            <meta property="og:description" content={extractPlainText(sharedBlog.content)} />
-            <meta property="og:image" content={sharedBlog.bannerImage} />
-            <meta property="og:url" content={`${window.location.origin}/how-to?blogId=${sharedBlog._id}`} />
-            <meta property="og:type" content="article" />
-            <meta name="twitter:card" content="summary_large_image" />
-            <meta name="twitter:title" content={`${sharedBlog.title} - Aquads Blog`} />
-            <meta name="twitter:description" content={extractPlainText(sharedBlog.content)} />
-            <meta name="twitter:image" content={sharedBlog.bannerImage} />
-            
-            {/* Canonical link for SEO */}
-            <link 
-              rel="canonical" 
-              href={`${window.location.origin}/how-to/${createSlug(sharedBlog.title)}-${sharedBlog._id}`} 
-            />
-            
-            {/* JSON-LD BlogPosting schema.org structured data */}
-            <script type="application/ld+json">
-              {JSON.stringify({
-                "@context": "https://schema.org",
-                "@type": "BlogPosting",
-                "headline": sharedBlog.title,
-                "image": sharedBlog.bannerImage,
-                "datePublished": sharedBlog.createdAt,
-                "dateModified": sharedBlog.updatedAt || sharedBlog.createdAt,
-                "author": {
-                  "@type": "Person",
-                  "name": sharedBlog.authorUsername || sharedBlog.author
-                },
-                "publisher": {
-                  "@type": "Organization",
-                  "name": "Aquads",
-                  "logo": {
-                    "@type": "ImageObject",
-                    "url": "https://aquads.xyz/logo192.png"
-                  }
-                },
-                "description": sharedBlog.content?.replace(/<[^>]*>/g, '').slice(0, 160),
-                "mainEntityOfPage": {
-                  "@type": "WebPage",
-                  "@id": `${window.location.origin}/how-to?blogId=${sharedBlog._id}`
-                }
-              })}
-            </script>
-          </>
-        ) : (
-          // Default meta tags for the How To page
-          <>
-            <title>How To Guide - Aquads</title>
-            <meta name="description" content="Learn how to use Aquads platform with our video tutorials and community blog posts" />
-          </>
-        )}
+        <title>How To Guide - Aquads</title>
+        <meta name="description" content="Learn how to use Aquads platform with our video tutorials and community blog posts" />
         <link rel="canonical" href={`${window.location.origin}${location.pathname.split('?')[0]}`} />
-        {location.search && <meta name="robots" content="noindex, follow" />}
       </Helmet>
 
       {/* Header */}
