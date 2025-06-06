@@ -43,6 +43,7 @@ import { motion } from 'framer-motion';
 import emailService from './services/emailService';
 import emailjs from '@emailjs/browser';
 import NotificationBell from './components/NotificationBell';
+import BumpReminderModal from './components/BumpReminderModal';
 import logger from './utils/logger';
 import './App.css';
 import FilterControls from './components/FilterControls';
@@ -418,6 +419,8 @@ function App() {
   const [showScrollButtons, setShowScrollButtons] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
+  const [showBumpReminderModal, setShowBumpReminderModal] = useState(false);
+  const [unbumpedAd, setUnbumpedAd] = useState(null);
   const [showMarketplace, setShowMarketplace] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
@@ -895,8 +898,13 @@ function App() {
           return ad;
         });
       });
+
+      // Check for unbumped ad if user is already logged in
+      if (currentUser) {
+        checkForUnbumpedAd(currentUser);
+      }
     }
-  }, [ads.length]);
+  }, [ads.length, currentUser]);
 
   const showNotification = (message, type = 'info', adDetails = null) => {
     const id = Date.now();
@@ -923,6 +931,32 @@ function App() {
     }
   };
 
+  // Function to check if user has an unbumped ad and show reminder
+  const checkForUnbumpedAd = (user) => {
+    if (!user || !ads.length) return;
+    
+    // Find the user's ad
+    const userAd = ads.find(ad => ad.owner === user.username);
+    
+    if (userAd) {
+      // Check if the ad is not bumped or bump has expired
+      const isNotBumped = !userAd.isBumped;
+      const isBumpExpired = userAd.bumpExpiresAt && new Date() > new Date(userAd.bumpExpiresAt);
+      
+      if (isNotBumped || isBumpExpired) {
+        setUnbumpedAd(userAd);
+        setShowBumpReminderModal(true);
+      }
+    }
+  };
+
+  // Function to handle when user clicks "Bump Now" from the reminder modal
+  const handleBumpFromReminder = (adId) => {
+    setSelectedAdId(adId);
+    setShowBumpStore(true);
+    setShowBumpReminderModal(false);
+  };
+
   const handleLogin = async (credentials) => {
     try {
       const user = await loginUser(credentials);
@@ -930,6 +964,11 @@ function App() {
       localStorage.setItem('currentUser', JSON.stringify(user));
       setShowLoginModal(false);
       showNotification('Successfully logged in!', 'success');
+      
+      // Check if user has an unbumped ad after successful login
+      setTimeout(() => {
+        checkForUnbumpedAd(user);
+      }, 1000); // Small delay to ensure ads are loaded
     } catch (error) {
       logger.error('Login error:', error);
       showNotification(error.message || 'Login failed', 'error');
@@ -3217,6 +3256,16 @@ function App() {
                     username={currentUser.username}
                     referralCode={currentUser.referralCode}
                     onClose={() => setShowWelcomeModal(false)}
+                  />
+                )}
+
+                {/* Bump Reminder Modal */}
+                {showBumpReminderModal && unbumpedAd && (
+                  <BumpReminderModal
+                    isOpen={showBumpReminderModal}
+                    onClose={() => setShowBumpReminderModal(false)}
+                    onBumpNow={handleBumpFromReminder}
+                    userAd={unbumpedAd}
                   />
                 )}
 
