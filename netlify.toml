@@ -11,13 +11,6 @@
 [functions]
   directory = "functions"
 
-# IMPORTANT: Sitemap redirect (must be first!)
-[[redirects]]
-  from = "/sitemap.xml"
-  to = "/.netlify/functions/sitemap"
-  status = 200
-  force = true
-
 # Serve prerendered version for bots, regular app for users
 [[redirects]]
   from = "/how-to/*-:id"
