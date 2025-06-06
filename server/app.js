@@ -13,6 +13,7 @@ const sitemapRoutes = require('./routes/sitemap');
 const Service = require('./models/Service');
 const path = require('path');
 const fs = require('fs');
+const fsPromises = require('fs').promises;
 const adsRoutes = require('./routes/ads');
 const bumpRoutes = require('./routes/bumps');
 const tokensRoutes = require('./routes/tokens');
@@ -165,7 +166,7 @@ app.get('/marketplace', async (req, res, next) => {
       const service = await Service.findById(serviceId);
       if (service) {
         // Read the index.html file
-        let indexHtml = await fs.readFile(path.join(__dirname, '../build/index.html'), 'utf8');
+        let indexHtml = await fsPromises.readFile(path.join(__dirname, '../build/index.html'), 'utf8');
         
         // Completely replace the head section with a new one containing all meta tags
         const headStartIndex = indexHtml.indexOf('<head>') + 6;
@@ -272,7 +273,7 @@ app.get('/how-to', async (req, res, next) => {
           console.log('Found blog:', blog.title, 'with banner:', blog.bannerImage);
           
           // Read the index.html file
-          let indexHtml = await fs.readFile(path.join(__dirname, '../build/index.html'), 'utf8');
+          let indexHtml = await fsPromises.readFile(path.join(__dirname, '../build/index.html'), 'utf8');
           
           // Strip HTML from content for meta description
           const stripHtml = (html) => {
@@ -482,18 +483,137 @@ app.get('/api/config', (req, res) => {
   });
 });
 
-// SEO-friendly URL handler for blog posts
+// SEO-friendly URL handler for blog posts - with meta tag support
 // This needs to be before the React catch-all route
-app.get('/how-to/:slug', (req, res, next) => {
-  // Extract the ID from the slug (format: title-id)
-  const slugParts = req.params.slug.split('-');
-  const blogId = slugParts[slugParts.length - 1];
+app.get('/how-to/:slug', async (req, res, next) => {
+  try {
+    // Extract the ID from the slug (format: title-id)
+    const slugParts = req.params.slug.split('-');
+    const blogId = slugParts[slugParts.length - 1];
+    
+    console.log('SEO URL request for blog:', blogId);
+    
+    if (blogId) {
+      // Import Blog model here to avoid circular dependencies
+      const Blog = require('./models/Blog');
+      
+      try {
+        const blog = await Blog.findById(blogId);
+        
+        if (blog) {
+          console.log('Found blog via SEO URL:', blog.title);
+          
+          // Read the index.html file
+          let indexHtml = await fsPromises.readFile(path.join(__dirname, '../build/index.html'), 'utf8');
+          
+          // Strip HTML from content for meta description
+          const stripHtml = (html) => {
+            return html ? html.replace(/<\/?[^>]+(>|$)/g, "") : "";
+          };
+          
+          // Escape function for HTML safety
+          const escapeHtml = (string) => {
+            return string
+              .replace(/&/g, '&amp;')
+              .replace(/</g, '&lt;')
+              .replace(/>/g, '&gt;')
+              .replace(/"/g, '&quot;')
+              .replace(/'/g, '&#039;');
+          };
+          
+          // Create slug helper function
+          const createSlug = (title) => {
+            return title
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/(^-|-$)/g, '');
+          };
+          
+          // Get short description from blog content
+          const blogContent = stripHtml(blog.content);
+          const shortDescription = blogContent.length > 160 ? blogContent.substring(0, 160) + '...' : blogContent;
+          
+          // Use the blog banner image or fall back to the default image
+          const imageUrl = blog.bannerImage || `${req.protocol}://${req.get('host')}/logo712.png`;
+          
+          // Create the canonical SEO-friendly URL
+          const slug = createSlug(blog.title);
+          const canonicalUrl = `${req.protocol}://${req.get('host')}/how-to/${slug}-${blogId}`;
+          
+          // Create injected content with meta tags for SEO-friendly URLs
+          const injectedMeta = `
+<!-- START: Dynamic Meta Tags for Blog SEO URL: ${canonicalUrl} -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@Aquads">
+<meta name="twitter:title" content="${escapeHtml(blog.title)} - Aquads Blog">
+<meta name="twitter:description" content="${escapeHtml(shortDescription)}">
+<meta name="twitter:image" content="${escapeHtml(imageUrl)}">
+
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Aquads Blog">
+<meta property="og:url" content="${escapeHtml(canonicalUrl)}">
+<meta property="og:title" content="${escapeHtml(blog.title)} - Aquads Blog">
+<meta property="og:description" content="${escapeHtml(shortDescription)}">
+<meta property="og:image" content="${escapeHtml(imageUrl)}">
+<meta property="article:published_time" content="${blog.createdAt}">
+<meta property="article:modified_time" content="${blog.updatedAt || blog.createdAt}">
+<meta property="article:author" content="${escapeHtml(blog.authorUsername || 'Aquads')}">
+
+<meta name="description" content="${escapeHtml(shortDescription)}">
+<link rel="canonical" href="${escapeHtml(canonicalUrl)}">
+
+<!-- JSON-LD Structured Data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "${escapeHtml(blog.title)}",
+  "image": "${escapeHtml(imageUrl)}",
+  "datePublished": "${blog.createdAt}",
+  "dateModified": "${blog.updatedAt || blog.createdAt}",
+  "author": {
+    "@type": "Person",
+    "name": "${escapeHtml(blog.authorUsername || 'Aquads')}"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Aquads",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "${req.protocol}://${req.get('host')}/logo192.png"
+    }
+  },
+  "description": "${escapeHtml(shortDescription)}",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "${escapeHtml(canonicalUrl)}"
+  },
+  "url": "${escapeHtml(canonicalUrl)}"
+}
+</script>
+<!-- END: Dynamic Meta Tags -->
+`;
+          
+          // Insert the new meta tags at the beginning of the head
+          indexHtml = indexHtml.replace('<head>', '<head>' + injectedMeta);
+          
+          // Update the title
+          indexHtml = indexHtml.replace(/<title>.*?<\/title>/, `<title>${escapeHtml(blog.title)} - Aquads Blog</title>`);
+          
+          console.log('Sending SEO HTML with blog meta tags for:', blog.title);
+          return res.send(indexHtml);
+        } else {
+          console.log('Blog not found with ID from SEO URL:', blogId);
+        }
+      } catch (err) {
+        console.error('Error finding blog from SEO URL:', err.message);
+      }
+    }
+  } catch (error) {
+    console.error('Error handling SEO blog URL:', error);
+  }
   
-  // Redirect to the parameter-based URL but keep it internal
-  // This maintains compatibility with existing code
-  req.url = `/how-to?blogId=${blogId}`;
-  
-  // Continue to the next middleware (which will be the React app handler)
+  // If we couldn't find the blog or there was an error, continue to next middleware
   next();
 });
 
