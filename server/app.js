@@ -60,7 +60,6 @@ app.use(express.static(path.join(__dirname, '../build')));
 // Make uploads directory accessible with proper headers
 app.use('/uploads', (req, res, next) => {
   // Log request for debugging
-  console.log(`File request: ${req.path}`);
   
   // Set appropriate CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -119,7 +118,6 @@ app.use('/uploads/bookings', express.static(path.join(__dirname, 'uploads/bookin
 app.get('/api/uploads/bookings/:filename', (req, res) => {
   try {
     const filePath = path.join(__dirname, 'uploads/bookings', req.params.filename);
-    console.log('API endpoint file access:', filePath);
     
     // Check if file exists
     if (!fs.existsSync(filePath)) {
@@ -154,7 +152,6 @@ app.get('/api/uploads/bookings/:filename', (req, res) => {
 
 // Log all requests to uploads for debugging
 app.use('/uploads', (req, res, next) => {
-  console.log(`Static file request: ${req.method} ${req.url}`);
   next();
 });
 
@@ -246,7 +243,6 @@ app.get('/marketplace', async (req, res, next) => {
         // Replace the old head with the new one
         const modifiedHtml = indexHtml.substring(0, headStartIndex) + newHead + indexHtml.substring(headEndIndex);
         
-        console.log('Sending HTML with service meta tags for:', service.title);
         return res.send(modifiedHtml);
       }
     }
@@ -260,7 +256,6 @@ app.get('/marketplace', async (req, res, next) => {
 app.get('/how-to', async (req, res, next) => {
   try {
     const blogId = req.query.blogId;
-    console.log('Blog request received, blogId:', blogId);
     
     if (blogId) {
       // Import Blog model here to avoid circular dependencies
@@ -270,7 +265,6 @@ app.get('/how-to', async (req, res, next) => {
         const blog = await Blog.findById(blogId);
         
         if (blog) {
-          console.log('Found blog:', blog.title, 'with banner:', blog.bannerImage);
           
           // Read the index.html file
           let indexHtml = await fsPromises.readFile(path.join(__dirname, '../build/index.html'), 'utf8');
@@ -366,23 +360,18 @@ app.get('/how-to', async (req, res, next) => {
 </head>
 `);
           
-          console.log('Sending HTML with blog meta tags');
           return res.send(indexHtml);
         } else {
-          console.log('Blog not found with ID:', blogId);
         }
       } catch (err) {
-        console.error('Error finding blog:', err.message);
       }
     }
   } catch (error) {
-    console.error('Error handling blog meta tags:', error);
   }
   next();
 });
 
 // Make sure this comes BEFORE any catch-all routes
-console.log('Registering routes...');
 
 // Routes
 app.use('/api/users', userRoutes);
@@ -398,12 +387,9 @@ app.use('/api/sitemap', sitemapRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/games', gamesRoutes);
 
-console.log('Notifications routes registered:', typeof notificationsRoutes === 'function' ? '✓' : '✗');
-console.log('Games routes registered:', typeof gamesRoutes === 'function' ? '✓' : '✗');
 
 // Test route to verify API is working
 app.get('/api/test', (req, res) => {
-  console.log('Test route hit');
   res.json({
     message: 'API is working',
     routes: {
@@ -418,7 +404,6 @@ app.get('/api/test', (req, res) => {
 // Add this before the 404 handler (after the test route)
 // Configuration endpoint to help debug the API
 app.get('/api/config', (req, res) => {
-  console.log('Configuration endpoint hit');
   
   // Build a list of registered routes
   const routes = [];
@@ -491,7 +476,6 @@ app.get('/how-to/:slug', async (req, res, next) => {
     const slugParts = req.params.slug.split('-');
     const blogId = slugParts[slugParts.length - 1];
     
-    console.log('SEO URL request for blog:', blogId);
     
     if (blogId) {
       // Import Blog model here to avoid circular dependencies
@@ -501,7 +485,6 @@ app.get('/how-to/:slug', async (req, res, next) => {
         const blog = await Blog.findById(blogId);
         
         if (blog) {
-          console.log('Found blog via SEO URL:', blog.title);
           
           // Read the index.html file
           let indexHtml = await fsPromises.readFile(path.join(__dirname, '../build/index.html'), 'utf8');
@@ -600,17 +583,15 @@ app.get('/how-to/:slug', async (req, res, next) => {
           // Update the title
           indexHtml = indexHtml.replace(/<title>.*?<\/title>/, `<title>${escapeHtml(blog.title)} - Aquads Blog</title>`);
           
-          console.log('Sending SEO HTML with blog meta tags for:', blog.title);
           return res.send(indexHtml);
         } else {
-          console.log('Blog not found with ID from SEO URL:', blogId);
         }
       } catch (err) {
-        console.error('Error finding blog from SEO URL:', err.message);
+        // Error finding blog from SEO URL
       }
     }
   } catch (error) {
-    console.error('Error handling SEO blog URL:', error);
+    // Error handling SEO blog URL
   }
   
   // If we couldn't find the blog or there was an error, continue to next middleware
@@ -627,11 +608,9 @@ app.get('/uploads/bookings/:filename', (req, res) => {
   try {
     // Construct the absolute path to the file
     const filePath = path.join(__dirname, 'uploads/bookings', req.params.filename);
-    console.log('Direct file access request:', filePath);
     
     // Check if file exists
     if (!fs.existsSync(filePath)) {
-      console.error('File not found:', filePath);
       return res.status(404).send('File not found');
     }
     
@@ -655,34 +634,17 @@ app.get('/uploads/bookings/:filename', (req, res) => {
     // Send the file
     res.sendFile(filePath);
   } catch (error) {
-    console.error('Error serving file:', error);
     res.status(500).send('Error serving file');
   }
 });
 
-// Add before your 404 handler
-// Debug middleware to log 404 requests
+// 404 handler
 app.use((req, res, next) => {
-  console.log(`⚠️ Route not found: ${req.method} ${req.originalUrl}`);
-  
-  // If it's an API route that's missing, log more details
-  if (req.originalUrl.includes('/api/')) {
-    console.log('API 404 Details:', {
-      method: req.method,
-      url: req.originalUrl,
-      headers: req.headers,
-      auth: req.headers.authorization ? '✓ Token present' : '✗ No token', 
-      params: req.params,
-      query: req.query,
-    });
-  }
-  
   next();
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Server error:', err);
   res.status(500).json({ error: 'Internal server error' });
 });
 
