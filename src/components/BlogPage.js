@@ -6,6 +6,7 @@ import { Markdown } from 'tiptap-markdown';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import LinkExtension from '@tiptap/extension-link';
+import CreateBlogModal from './CreateBlogModal';
 import { API_URL } from '../services/api';
 
 // Helper function to create URL-friendly slugs
@@ -68,6 +69,7 @@ const BlogPage = ({ currentUser }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [relatedBlogs, setRelatedBlogs] = useState([]);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   // Extract blog ID from slug or URL params
   const blogId = extractBlogIdFromSlug(slug) || new URLSearchParams(location.search).get('blogId');
@@ -134,12 +136,48 @@ const BlogPage = ({ currentUser }) => {
   };
 
   const handleEdit = () => {
-    // Navigate back to the how-to page with edit mode
-    navigate('/how-to', { 
-      state: { 
-        editBlog: blog 
-      } 
-    });
+    setShowEditModal(true);
+  };
+
+  const handleEditBlog = async (blogData) => {
+    try {
+      const token = currentUser?.token || localStorage.getItem('token');
+      
+      if (!token) {
+        alert('Authentication required. Please log in again.');
+        return;
+      }
+
+      // Check if user is either the blog author or an admin
+      if (blog.author !== currentUser.userId && !currentUser.isAdmin) {
+        alert('You do not have permission to edit this blog post');
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/blogs/${blog._id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: blogData.title,
+          content: blogData.content,
+          bannerImage: blogData.bannerImage
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update blog');
+      }
+
+      // Refresh the blog data to show updated content
+      await fetchBlog();
+      setShowEditModal(false);
+      alert('Blog updated successfully!');
+    } catch (error) {
+      alert(error.message || 'Failed to update blog. Please try again.');
+    }
   };
 
   const handleDelete = async () => {
@@ -416,11 +454,20 @@ const BlogPage = ({ currentUser }) => {
                 </Link>
               ))}
             </div>
-          </section>
-        )}
-      </div>
+                     </section>
+         )}
+       </div>
 
-      <style jsx global>{`
+       {/* Edit Blog Modal */}
+       {showEditModal && (
+         <CreateBlogModal
+           onClose={() => setShowEditModal(false)}
+           onSubmit={handleEditBlog}
+           initialData={blog}
+         />
+       )}
+
+       <style jsx global>{`
         .blog-content-wrapper .blog-content {
           font-size: 1.125rem;
           line-height: 1.8;
