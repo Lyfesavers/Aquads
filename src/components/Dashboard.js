@@ -1273,6 +1273,13 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                           >
                             Edit
                           </button>
+                          <button
+                            onClick={() => { if (window.confirm('Are you sure you want to delete this ad?')) { onDeleteAd(ad.id); } }}
+                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                            title="Delete this ad"
+                          >
+                            Delete
+                          </button>
                         </div>
                       </div>
                     ))}
