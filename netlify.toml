@@ -11,7 +11,7 @@
 [functions]
   directory = "functions"
 
-# Sitemap redirect to function
+# IMPORTANT: Sitemap redirect (must be first!)
 [[redirects]]
   from = "/sitemap.xml"
   to = "/.netlify/functions/sitemap"
