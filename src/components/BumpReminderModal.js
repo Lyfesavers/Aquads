@@ -21,8 +21,9 @@ const BumpReminderModal = ({
 
   return (
     <Modal onClose={onClose}>
-      <div className="bg-gray-900 rounded-lg p-4 sm:p-6 lg:p-8 max-w-2xl w-full mx-4 sm:mx-6 md:mx-8 border-2 border-purple-500 shadow-2xl">
-        {/* Header with animated icon */}
+      <div className="bg-gray-900 rounded-lg md:rounded-none p-6 max-w-lg md:max-w-none w-full md:w-screen md:h-screen mx-4 md:mx-0 border-2 md:border-0 border-purple-500 shadow-2xl md:shadow-none flex flex-col justify-center">
+        <div className="md:max-w-2xl md:mx-auto">
+          {/* Header with animated icon */}
         <div className="text-center mb-6">
           <div className="flex justify-center mb-4">
             <div className="relative">
@@ -34,10 +35,10 @@ const BumpReminderModal = ({
               </div>
             </div>
           </div>
-          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-2">
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
             Boost Your Visibility!
           </h2>
-          <p className="text-sm sm:text-base text-gray-300 px-2">
+          <p className="text-base md:text-lg text-gray-300 px-2">
             Your bubble ad "<span className="text-blue-400 font-semibold break-words">{userAd.title}</span>" needs a bump to stay at the top!
           </p>
         </div>
@@ -110,10 +111,11 @@ const BumpReminderModal = ({
           </button>
         </div>
 
-        {/* Small disclaimer */}
-        <p className="text-xs text-gray-500 text-center mt-4">
-          Bumping keeps your project visible and competitive in the marketplace
-        </p>
+          {/* Small disclaimer */}
+          <p className="text-xs text-gray-500 text-center mt-4">
+            Bumping keeps your project visible and competitive in the marketplace
+          </p>
+        </div>
       </div>
     </Modal>
   );
