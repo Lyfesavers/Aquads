@@ -1,3 +1,6 @@
+# Sitemap redirect to Netlify function
+/sitemap.xml /.netlify/functions/sitemap 200
+
 # SEO-friendly URL redirect for blogs
 /how-to/*-:id /how-to?blogId=:id 301
 
