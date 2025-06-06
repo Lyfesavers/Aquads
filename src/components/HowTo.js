@@ -39,6 +39,14 @@ const HowTo = ({ currentUser }) => {
   const PLAYLIST_ID = 'PLKHtulN0_0h8hun9lEhYHPGm4Mqophidj';
 
   useEffect(() => {
+    // Check if we're coming from BlogPage with edit state
+    if (location.state?.editBlog) {
+      setEditingBlog(location.state.editBlog);
+      setShowCreateModal(true);
+      // Clear the state to prevent re-triggering
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+    
     // On component mount, check if we're coming from an SEO-friendly URL
     const params = new URLSearchParams(location.search);
     const queryBlogId = params.get('blogId');

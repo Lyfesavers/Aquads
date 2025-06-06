@@ -35,6 +35,7 @@ import WelcomeModal from './components/WelcomeModal';
 import Footer from './components/Footer';
 import Whitepaper from './components/Whitepaper';
 import HowTo from './components/HowTo';
+import BlogPage from './components/BlogPage';
 import Affiliate from './components/Affiliate';
 import Terms from './components/Terms';import BannerDisplay from './components/BannerDisplay';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
@@ -3361,7 +3362,7 @@ function App() {
           } />
           <Route path="/whitepaper" element={<Whitepaper />} />
           <Route path="/how-to" element={<HowTo currentUser={currentUser} />} />
-          <Route path="/how-to/:slug" element={<HowTo currentUser={currentUser} />} />
+          <Route path="/how-to/:slug" element={<BlogPage currentUser={currentUser} />} />
           <Route path="/affiliate" element={<Affiliate />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/swap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} />} />

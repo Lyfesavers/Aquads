@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { FaShare, FaEdit, FaTrash } from 'react-icons/fa';
 import DOMPurify from 'dompurify';
 import { Markdown } from 'tiptap-markdown';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import Link from '@tiptap/extension-link';
+import LinkExtension from '@tiptap/extension-link';
 
 // Helper function to create URL-friendly slugs
 const createSlug = (title) => {
@@ -23,7 +24,7 @@ const MarkdownRenderer = ({ content }) => {
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Link.configure({
+      LinkExtension.configure({
         openOnClick: true,
         HTMLAttributes: {
           class: 'blog-link',
@@ -90,21 +91,6 @@ const MarkdownRenderer = ({ content }) => {
 };
 
 const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
-  const [expandedBlogId, setExpandedBlogId] = useState(null);
-  // Track blogs that have been expanded at least once to keep their full content
-  const [expandedBlogs, setExpandedBlogs] = useState({});
-  
-  // Function to toggle blog expansion
-  const toggleBlogExpansion = (blogId) => {
-    // If expanding a blog for the first time, store it in expandedBlogs
-    if (blogId !== expandedBlogId) {
-      setExpandedBlogs(prev => ({
-        ...prev,
-        [blogId]: true
-      }));
-    }
-    setExpandedBlogId(expandedBlogId === blogId ? null : blogId);
-  };
 
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString('en-US', {
@@ -249,29 +235,13 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
             {/* Title */}
             <h2 className="text-xl font-bold text-white mb-2">{blog.title}</h2>
 
-            {/* Content Preview - conditionally render based on content type */}
+            {/* Content Preview - always show truncated version */}
             {isMarkdownContent(blog.content) ? (
-              <div className={`markdown-content ${expandedBlogId === blog._id ? 'expanded' : 'max-h-24 overflow-hidden'}`}>
+              <div className="markdown-content max-h-24 overflow-hidden">
                 <MarkdownRenderer 
-                  content={expandedBlogId === blog._id || expandedBlogs[blog._id] ? blog.content : truncateContent(blog.content)} 
+                  content={truncateContent(blog.content)} 
                 />
                 <style jsx global>{`
-                  /* Full height styles to ensure all content is visible */
-                  .markdown-content.expanded {
-                    max-height: none !important;
-                    height: auto !important;
-                    overflow: visible !important;
-                    display: block !important;
-                  }
-                  
-                  .markdown-content.expanded .ProseMirror {
-                    display: block !important;
-                    height: auto !important;
-                    min-height: auto !important;
-                    max-height: none !important;
-                    overflow: visible !important;
-                  }
-                  
                   .markdown-content .ProseMirror {
                     min-height: auto !important;
                     padding: 0 !important;
@@ -374,13 +344,9 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
               </div>
             ) : (
               <div 
-                className={`prose prose-invert max-w-none ${
-                  expandedBlogId === blog._id ? '' : 'line-clamp-3'
-                }`}
+                className="prose prose-invert max-w-none line-clamp-3"
                 dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(
-                    expandedBlogId === blog._id ? blog.content : truncateContent(blog.content)
-                  )
+                  __html: DOMPurify.sanitize(truncateContent(blog.content))
                 }}
               />
             )}
@@ -401,13 +367,13 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
               }
             `}</style>
 
-            {/* Read More Button */}
-            <button
-              onClick={() => toggleBlogExpansion(blog._id)}
-              className="mt-2 text-blue-400 hover:text-blue-300 transition-colors"
+            {/* Read More Link */}
+            <Link
+              to={`/how-to/${createSlug(blog.title)}-${blog._id}`}
+              className="mt-2 text-blue-400 hover:text-blue-300 transition-colors inline-block"
             >
-              {expandedBlogId === blog._id ? 'Show Less' : 'Read More'}
-            </button>
+              Read More
+            </Link>
           </div>
         </div>
       ))}
