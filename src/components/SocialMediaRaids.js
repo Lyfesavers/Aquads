@@ -109,49 +109,152 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     loading: { liked: false, retweeted: false, commented: false }
   });
 
-  // Tweet metrics scraping function
+  // Enhanced tweet metrics scraping with multiple methods
   const scrapeTweetMetrics = async (tweetUrl) => {
-    try {
-      // Use CORS proxy to scrape tweet metrics
-      const proxyUrl = 'https://api.allorigins.win/raw?url=';
-      const response = await fetch(proxyUrl + encodeURIComponent(tweetUrl));
-      const html = await response.text();
-      
-      // Extract metrics using regex patterns
-      const extractCount = (patterns) => {
-        for (const pattern of patterns) {
-          const match = pattern.exec(html);
-          if (match && match[1]) {
-            return parseInt(match[1].replace(/,/g, ''), 10);
-          }
+    const methods = [
+      // Method 1: Twitter oEmbed API (most reliable)
+      async () => {
+        try {
+          const response = await fetch(`https://publish.twitter.com/oembed?url=${encodeURIComponent(tweetUrl)}&omit_script=1`);
+          const data = await response.json();
+          return parseOEmbedHTML(data.html);
+        } catch (e) {
+          throw new Error('oEmbed failed');
         }
-        return 0;
-      };
+      },
+      
+      // Method 2: Direct scraping with updated patterns
+      async () => {
+        try {
+          const proxyUrl = 'https://api.allorigins.win/raw?url=';
+          const response = await fetch(proxyUrl + encodeURIComponent(tweetUrl));
+          const html = await response.text();
+          return parseTwitterHTML(html);
+        } catch (e) {
+          throw new Error('Direct scraping failed');
+        }
+      },
+      
+      // Method 3: Alternative proxy
+      async () => {
+        try {
+          const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+          const response = await fetch(proxyUrl + tweetUrl);
+          const html = await response.text();
+          return parseTwitterHTML(html);
+        } catch (e) {
+          throw new Error('Alternative proxy failed');
+        }
+      },
+      
+      // Method 4: Syndication endpoint (Twitter's public API)
+      async () => {
+        try {
+          const tweetId = extractTweetId(tweetUrl);
+          if (!tweetId) throw new Error('No tweet ID');
+          
+          const syndicationUrl = `https://cdn.syndication.twimg.com/tweet-result?id=${tweetId}&lang=en`;
+          const response = await fetch(syndicationUrl);
+          const data = await response.json();
+          
+          return {
+            likes: data.favorite_count || 0,
+            retweets: data.retweet_count || 0,
+            replies: data.reply_count || 0
+          };
+        } catch (e) {
+          throw new Error('Syndication API failed');
+        }
+      }
+    ];
 
-      const likes = extractCount([
-        /"favoriteCount":(\d+)/gi,
-        /(\d+(?:,\d+)*)\s*(?:like|favorites?)/gi,
-        /"favorite_count":(\d+)/gi
-      ]);
-
-      const retweets = extractCount([
-        /"retweetCount":(\d+)/gi,
-        /(\d+(?:,\d+)*)\s*(?:retweet|reposts?)/gi,
-        /"retweet_count":(\d+)/gi
-      ]);
-
-      const replies = extractCount([
-        /"replyCount":(\d+)/gi,
-        /(\d+(?:,\d+)*)\s*(?:repl|comments?)/gi,
-        /"reply_count":(\d+)/gi
-      ]);
-
-      console.log('Scraped metrics:', { likes, retweets, replies });
-      return { likes, retweets, replies };
-    } catch (error) {
-      console.log('Metrics scraping failed:', error);
-      return { likes: 0, retweets: 0, replies: 0 };
+    // Try each method until one succeeds
+    for (let i = 0; i < methods.length; i++) {
+      try {
+        console.log(`Trying metrics method ${i + 1}...`);
+        const metrics = await methods[i]();
+        
+        // Validate that we got real data
+        if (metrics.likes > 0 || metrics.retweets > 0 || metrics.replies > 0 || 
+            (metrics.likes === 0 && metrics.retweets === 0 && metrics.replies === 0)) {
+          console.log(`✅ Method ${i + 1} succeeded:`, metrics);
+          return metrics;
+        }
+      } catch (error) {
+        console.log(`❌ Method ${i + 1} failed:`, error.message);
+        continue;
+      }
     }
+
+    // If all methods fail, return zeros but log warning
+    console.warn('⚠️ All metrics scraping methods failed, returning zeros');
+    return { likes: 0, retweets: 0, replies: 0 };
+  };
+
+  // Parse Twitter HTML with comprehensive regex patterns
+  const parseTwitterHTML = (html) => {
+    const extractMetric = (patterns) => {
+      for (const pattern of patterns) {
+        // Reset regex lastIndex to avoid issues with global flag
+        pattern.lastIndex = 0;
+        const match = pattern.exec(html);
+        if (match && match[1]) {
+          const count = parseInt(match[1].replace(/[,\s]/g, ''), 10);
+          if (!isNaN(count)) return count;
+        }
+      }
+      return 0;
+    };
+
+    // Updated patterns for current Twitter HTML structure
+    const likePatterns = [
+      /"favoriteCount":(\d+)/gi,
+      /"favorite_count":(\d+)/gi,
+      /data-testid="like"[^>]*aria-label="[^"]*?(\d+(?:,\d+)*)/gi,
+      /aria-label="(\d+(?:,\d+)*)[^"]*(?:like|Like)/gi,
+      /"engagement":\s*{[^}]*"likeCount":(\d+)/gi,
+      /\"likeCount\":(\d+)/gi,
+      /like[_-]?count[\"']:\s*[\"']?(\d+)/gi
+    ];
+
+    const retweetPatterns = [
+      /"retweetCount":(\d+)/gi,
+      /"retweet_count":(\d+)/gi,
+      /data-testid="retweet"[^>]*aria-label="[^"]*?(\d+(?:,\d+)*)/gi,
+      /aria-label="(\d+(?:,\d+)*)[^"]*(?:retweet|Retweet|reposts?)/gi,
+      /"engagement":\s*{[^}]*"retweetCount":(\d+)/gi,
+      /\"retweetCount\":(\d+)/gi,
+      /retweet[_-]?count[\"']:\s*[\"']?(\d+)/gi
+    ];
+
+    const replyPatterns = [
+      /"replyCount":(\d+)/gi,
+      /"reply_count":(\d+)/gi,
+      /data-testid="reply"[^>]*aria-label="[^"]*?(\d+(?:,\d+)*)/gi,
+      /aria-label="(\d+(?:,\d+)*)[^"]*(?:repl|Reply|comment)/gi,
+      /"engagement":\s*{[^}]*"replyCount":(\d+)/gi,
+      /\"replyCount\":(\d+)/gi,
+      /reply[_-]?count[\"']:\s*[\"']?(\d+)/gi
+    ];
+
+    const result = {
+      likes: extractMetric(likePatterns),
+      retweets: extractMetric(retweetPatterns),
+      replies: extractMetric(replyPatterns)
+    };
+
+    console.log('Parsed HTML metrics:', result);
+    return result;
+  };
+
+  // Parse oEmbed HTML response
+  const parseOEmbedHTML = (embedHtml) => {
+    if (!embedHtml) return { likes: 0, retweets: 0, replies: 0 };
+    
+    // Extract metrics from embed HTML
+    const result = parseTwitterHTML(embedHtml);
+    console.log('Parsed oEmbed metrics:', result);
+    return result;
   };
 
   // Initialize metrics when raid is selected
@@ -239,6 +342,12 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           const metric = type === 'liked' ? 'likes' : 
                          type === 'retweeted' ? 'retweets' : 'replies';
           
+          console.log(`🔍 Checking ${type} verification:`, {
+            initial: metricsVerification.initialMetrics[metric],
+            final: newMetrics[metric],
+            increased: newMetrics[metric] > metricsVerification.initialMetrics[metric]
+          });
+
           const increased = newMetrics[metric] > metricsVerification.initialMetrics[metric];
           
           if (increased) {
@@ -255,7 +364,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
               [`${type}Loading`]: false
             }));
             
-            showNotification(`✅ ${type} verified! Metrics increased from ${metricsVerification.initialMetrics[metric]} to ${newMetrics[metric]}`, 'success');
+            showNotification(`✅ ${type} verified! ${metric} increased from ${metricsVerification.initialMetrics[metric]} to ${newMetrics[metric]}`, 'success');
             
             // Check if all actions are complete
             const allVerified = ['liked', 'retweeted', 'commented'].every(actionType => {
@@ -269,11 +378,51 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
             }
             
           } else {
-            showNotification(`❌ ${type} action not detected. Please try again and make sure to complete the action.`, 'error');
-            setIframeInteractions(prev => ({
-              ...prev,
-              [`${type}Loading`]: false
-            }));
+            // Check if metrics are still zero (scraping issue) vs just no increase
+            const allZero = newMetrics.likes === 0 && newMetrics.retweets === 0 && newMetrics.replies === 0;
+            const initialAllZero = metricsVerification.initialMetrics.likes === 0 && 
+                                  metricsVerification.initialMetrics.retweets === 0 && 
+                                  metricsVerification.initialMetrics.replies === 0;
+            
+            if (allZero && initialAllZero) {
+              showNotification(`⚠️ Unable to track metrics for this tweet. This might be due to privacy settings or API limitations. Please try a different tweet or contact support.`, 'warning');
+            } else if (allZero) {
+              showNotification(`⚠️ Metrics tracking failed. Trying alternative verification method...`, 'info');
+              
+              // Try to re-scrape metrics with a delay
+              setTimeout(async () => {
+                const retryMetrics = await scrapeTweetMetrics(tweetUrl);
+                console.log('🔄 Retry metrics:', retryMetrics);
+                
+                setMetricsVerification(prev => ({
+                  ...prev,
+                  currentMetrics: retryMetrics,
+                  loading: { ...prev.loading, [type]: false }
+                }));
+                
+                const retryIncreased = retryMetrics[metric] > metricsVerification.initialMetrics[metric];
+                if (retryIncreased) {
+                  setMetricsVerification(prev => ({
+                    ...prev,
+                    verified: { ...prev.verified, [type]: true }
+                  }));
+                  setIframeInteractions(prev => ({
+                    ...prev,
+                    [type]: true,
+                    [`${type}Loading`]: false
+                  }));
+                  showNotification(`✅ ${type} verified on retry!`, 'success');
+                } else {
+                  showNotification(`❌ ${type} action not detected. Please ensure you completed the action on Twitter.`, 'error');
+                }
+              }, 5000);
+            } else {
+              showNotification(`❌ ${type} action not detected. Please try again and make sure to complete the action on Twitter.`, 'error');
+              setIframeInteractions(prev => ({
+                ...prev,
+                [`${type}Loading`]: false
+              }));
+            }
           }
         }, 3000); // 3 second delay for metrics to update
       }
@@ -535,9 +684,30 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       // Handle cases where someone might paste "@URL" by mistake
       const cleanUrl = url.startsWith('@') ? url.substring(1) : url;
       
-      // Try multiple approaches to extract the tweet ID
+      // Multiple extraction patterns
+      const patterns = [
+        // Standard Twitter/X URLs
+        /(?:twitter\.com|x\.com)\/[^\/]+\/status\/(\d+)/i,
+        // Direct status URLs
+        /\/status\/(\d+)/i,
+        // Just the ID if it's a number
+        /^(\d{10,})$/,
+        // Mobile URLs
+        /mobile\.twitter\.com\/[^\/]+\/status\/(\d+)/i,
+        // International domains
+        /(?:twitter|x)\.com\/[^\/]+\/status\/(\d+)/i
+      ];
       
-      // Approach 1: Try to parse as a URL first
+      // Try regex patterns first
+      for (const pattern of patterns) {
+        const match = cleanUrl.match(pattern);
+        if (match && match[1]) {
+          console.log('✅ Extracted tweet ID:', match[1]);
+          return match[1];
+        }
+      }
+      
+      // Try URL parsing approach
       let parsedUrl;
       try {
         // Check if URL has protocol, add if missing
@@ -557,6 +727,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           // Extract ID from pathname
           const match = parsedUrl.pathname.match(/\/status\/(\d+)/);
           if (match && match[1]) {
+            console.log('✅ Extracted tweet ID via URL parsing:', match[1]);
             return match[1];
           }
         }
