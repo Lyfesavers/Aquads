@@ -543,9 +543,9 @@ router.post('/:raidId/completions/:completionId/approve', auth, async (req, res)
         createdAt: new Date()
       });
       await user.save();
-    }
+         }
 
-    await raid.save();
+    await raid.save({ validateBeforeSave: false });
 
     res.json({
       success: true,
@@ -588,7 +588,7 @@ router.post('/:raidId/completions/:completionId/reject', auth, async (req, res) 
     completion.rejectionReason = rejectionReason || 'No reason provided';
     completion.pointsAwarded = false;
 
-    await raid.save();
+    await raid.save({ validateBeforeSave: false });
 
     res.json({
       success: true,
