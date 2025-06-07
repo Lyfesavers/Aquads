@@ -75,6 +75,18 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     retweeted: false,
     commented: false
   });
+
+  // New Playwright verification state
+  const [playwrightVerification, setPlaywrightVerification] = useState({
+    enabled: false,
+    sessionId: null,
+    status: 'idle', // idle, starting, waiting_for_completion, verifying, completed, failed
+    initialMetrics: null,
+    finalMetrics: null,
+    differences: null,
+    verified: false,
+    error: null
+  });
   
   // For admin creation
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -100,6 +112,131 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     message: '',
     tweetId: null
   });
+
+  // New Playwright verification functions
+  const startPlaywrightVerification = async (raidId, tweetUrl) => {
+    try {
+      setPlaywrightVerification(prev => ({
+        ...prev,
+        status: 'starting',
+        error: null
+      }));
+
+      const response = await fetch(`${API_URL}/api/playwright-verification/start-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({
+          tweetUrl,
+          raidId
+        })
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to start verification');
+      }
+
+      setPlaywrightVerification(prev => ({
+        ...prev,
+        enabled: true,
+        sessionId: result.sessionId,
+        status: 'waiting_for_completion',
+        initialMetrics: result.initialMetrics,
+        error: null
+      }));
+
+      showNotification('Verification started! Initial metrics captured. Please complete your Twitter actions.', 'info');
+      return result;
+
+    } catch (error) {
+      console.error('Error starting Playwright verification:', error);
+      setPlaywrightVerification(prev => ({
+        ...prev,
+        status: 'failed',
+        error: error.message || 'Failed to start verification'
+      }));
+      showNotification(error.message || 'Failed to start verification', 'error');
+      throw error;
+    }
+  };
+
+  const completePlaywrightVerification = async () => {
+    try {
+      setPlaywrightVerification(prev => ({
+        ...prev,
+        status: 'verifying'
+      }));
+
+      const response = await fetch(`${API_URL}/api/playwright-verification/complete-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({
+          sessionId: playwrightVerification.sessionId
+        })
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to complete verification');
+      }
+
+      setPlaywrightVerification(prev => ({
+        ...prev,
+        status: 'completed',
+        finalMetrics: result.finalMetrics,
+        differences: result.differences,
+        verified: result.verified,
+        error: null
+      }));
+
+      if (result.verified) {
+        showNotification('Verification successful! All Twitter actions were completed.', 'success');
+        setIframeVerified(true);
+        return true;
+      } else {
+        showNotification('Verification failed. Not all required actions were detected.', 'error');
+        return false;
+      }
+
+    } catch (error) {
+      console.error('Error completing Playwright verification:', error);
+      setPlaywrightVerification(prev => ({
+        ...prev,
+        status: 'failed',
+        error: error.message || 'Failed to complete verification'
+      }));
+      showNotification(error.message || 'Failed to complete verification', 'error');
+      return false;
+    }
+  };
+
+  const validateTweetWithPlaywright = async (tweetUrl) => {
+    try {
+      const response = await fetch(`${API_URL}/api/playwright-verification/validate-tweet`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({ tweetUrl })
+      });
+
+      const result = await response.json();
+      return result;
+
+    } catch (error) {
+      console.error('Error validating tweet with Playwright:', error);
+      return { success: false, error: error.message };
+    }
+  };
 
   // Fetch user points data from the backend API
   const fetchUserPoints = async () => {
@@ -522,7 +659,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     return !!tweetId;
   };
 
-  const handleRaidClick = (raid) => {
+  const handleRaidClick = async (raid) => {
     // Don't allow interaction with pending raids
     if (raid.isPaid && raid.paymentStatus === 'pending') {
       showNotification('This raid is pending admin approval', 'warning');
@@ -559,6 +696,18 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       retweeted: false,
       commented: false
     });
+
+    // Reset Playwright verification state
+    setPlaywrightVerification({
+      enabled: false,
+      sessionId: null,
+      status: 'idle',
+      initialMetrics: null,
+      finalMetrics: null,
+      differences: null,
+      verified: false,
+      error: null
+    });
     
     // Extract tweet ID and prepare for preview
     const tweetId = extractTweetId(raid.tweetUrl);
@@ -571,6 +720,16 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       });
       // Set iframeLoading to false since tweet ID is ready
       setIframeLoading(false);
+
+      // Auto-start Playwright verification if user is logged in
+      if (currentUser?.token) {
+        try {
+          await startPlaywrightVerification(raid._id, raid.tweetUrl);
+        } catch (error) {
+          console.log('Playwright verification failed to start, falling back to manual verification');
+          // Continue with manual verification as fallback
+        }
+      }
     } else {
       setPreviewState({
         loading: false,
@@ -622,16 +781,26 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         return;
       }
 
-      // Verify all interactions are completed
-      if (!iframeVerified) {
-        setError('Please complete all three Twitter interactions first (like, retweet, and comment)');
-        return;
-      }
+      // If Playwright verification is enabled, use it
+      if (playwrightVerification.enabled && playwrightVerification.status === 'waiting_for_completion') {
+        // Complete Playwright verification
+        const verified = await completePlaywrightVerification();
+        if (!verified) {
+          setError('Playwright verification failed. Please ensure you completed all Twitter actions (like, retweet, comment).');
+          return;
+        }
+      } else {
+        // Fallback to manual verification
+        if (!iframeVerified) {
+          setError('Please complete all three Twitter interactions first (like, retweet, and comment)');
+          return;
+        }
 
-      // Run verification check
-      const verified = await verifyUserCompletion();
-      if (!verified) {
-        return;
+        // Run verification check
+        const verified = await verifyUserCompletion();
+        if (!verified) {
+          return;
+        }
       }
 
       // Set submitting state
@@ -651,9 +820,16 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           },
           body: JSON.stringify({
             tweetUrl: selectedRaid?.tweetUrl || tweetUrl || null,
-            iframeVerified: true, // Always set to true since we require this
+            iframeVerified: playwrightVerification.verified || iframeVerified, // Use Playwright verification if available
             directInteractions: iframeInteractions, // Include all interaction data
-            tweetId: previewState.tweetId // Include the tweet ID explicitly
+            tweetId: previewState.tweetId, // Include the tweet ID explicitly
+            playwrightVerification: playwrightVerification.enabled ? {
+              sessionId: playwrightVerification.sessionId,
+              verified: playwrightVerification.verified,
+              initialMetrics: playwrightVerification.initialMetrics,
+              finalMetrics: playwrightVerification.finalMetrics,
+              differences: playwrightVerification.differences
+            } : null
           })
         });
         
@@ -1679,6 +1855,52 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                                         
                                         {/* Anti-cheat warning removed */}
                                         
+                                        {/* Playwright Verification Status */}
+                                        {playwrightVerification.enabled && (
+                                          <div className="mt-3 p-3 bg-purple-500/10 border border-purple-500/30 rounded-lg text-left">
+                                            <div className="flex items-start">
+                                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-purple-400 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                              </svg>
+                                              <div className="text-purple-400 text-xs">
+                                                <p className="font-medium mb-1">Playwright Verification Active</p>
+                                                <p className="mb-2">
+                                                  Status: <span className={`font-medium ${
+                                                    playwrightVerification.status === 'starting' ? 'text-yellow-400' :
+                                                    playwrightVerification.status === 'waiting_for_completion' ? 'text-blue-400' :
+                                                    playwrightVerification.status === 'verifying' ? 'text-yellow-400' :
+                                                    playwrightVerification.status === 'completed' ? 'text-green-400' :
+                                                    playwrightVerification.status === 'failed' ? 'text-red-400' :
+                                                    'text-gray-400'
+                                                  }`}>
+                                                    {playwrightVerification.status === 'starting' && 'Starting verification...'}
+                                                    {playwrightVerification.status === 'waiting_for_completion' && 'Waiting for actions'}
+                                                    {playwrightVerification.status === 'verifying' && 'Verifying completion...'}
+                                                    {playwrightVerification.status === 'completed' && playwrightVerification.verified ? 'Verified ✓' : playwrightVerification.status === 'completed' ? 'Verification failed' : ''}
+                                                    {playwrightVerification.status === 'failed' && 'Verification error'}
+                                                    {playwrightVerification.status === 'idle' && 'Ready'}
+                                                  </span>
+                                                </p>
+                                                {playwrightVerification.initialMetrics && (
+                                                  <div className="text-gray-400 text-xs">
+                                                    <p>Initial metrics captured:</p>
+                                                    <p>♥️ {playwrightVerification.initialMetrics.likes} | 🔄 {playwrightVerification.initialMetrics.retweets} | 💬 {playwrightVerification.initialMetrics.replies}</p>
+                                                  </div>
+                                                )}
+                                                {playwrightVerification.differences && (
+                                                  <div className="text-green-400 text-xs mt-1">
+                                                    <p>Changes detected:</p>
+                                                    <p>♥️ +{playwrightVerification.differences.likes} | 🔄 +{playwrightVerification.differences.retweets} | 💬 +{playwrightVerification.differences.replies}</p>
+                                                  </div>
+                                                )}
+                                                {playwrightVerification.error && (
+                                                  <p className="text-red-400 text-xs mt-1">Error: {playwrightVerification.error}</p>
+                                                )}
+                                              </div>
+                                            </div>
+                                          </div>
+                                        )}
+
                                         {/* Anti-cheat info */}
                                         <div className="mt-3 p-2 bg-blue-500/10 border border-blue-500/30 rounded-lg text-left">
                                           <div className="flex items-start">
@@ -1686,8 +1908,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
                                             <div className="text-blue-400 text-xs">
-                                              <p className="font-medium mb-1">Anti-Cheat System Active</p>
-                                              <p>Please actually complete each action before returning to avoid being flagged.</p>
+                                              <p className="font-medium mb-1">{playwrightVerification.enabled ? 'Automated + Manual Verification' : 'Anti-Cheat System Active'}</p>
+                                              <p>{playwrightVerification.enabled ? 'System automatically verifies Tweet metrics while tracking your interactions.' : 'Please actually complete each action before returning to avoid being flagged.'}</p>
                                             </div>
                                           </div>
                                         </div>
@@ -1792,11 +2014,16 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                         type="submit"
                         className={`w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors ${
                           verifyingTweet || submitting ? 'opacity-70 cursor-wait' : 
-                          !iframeVerified ? 'opacity-50 cursor-not-allowed bg-gray-600 hover:bg-gray-600' : ''
+                          (!iframeVerified && (!playwrightVerification.enabled || !playwrightVerification.verified)) ? 'opacity-50 cursor-not-allowed bg-gray-600 hover:bg-gray-600' : ''
                         }`}
-                        disabled={verifyingTweet || submitting || !iframeVerified}
+                        disabled={verifyingTweet || submitting || (!iframeVerified && (!playwrightVerification.enabled || !playwrightVerification.verified))}
                       >
-                        {verifyingTweet ? 'Verifying Tweet...' : submitting ? 'Submitting...' : iframeVerified ? 'Complete Task' : 'Complete All Three Actions to Continue'}
+                        {verifyingTweet ? 'Verifying Tweet...' : 
+                         submitting ? 'Submitting...' : 
+                         playwrightVerification.status === 'verifying' ? 'Verifying with Playwright...' :
+                         (iframeVerified || playwrightVerification.verified) ? 'Complete Task' : 
+                         playwrightVerification.enabled ? 'Complete Actions & Verification' :
+                         'Complete All Three Actions to Continue'}
                       </button>
                     </form>
                   </div>
