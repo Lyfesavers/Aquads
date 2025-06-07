@@ -911,10 +911,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
               [type]: true
             }));
             
-            showNotification(
-              `Please spend more time completing the ${type} action on Twitter. Returning too quickly suggests the task wasn't completed.`,
-              'warning'
-            );
+            // Notification removed - continue without warning
           } else {
             // Mark interaction as completed
             setIframeInteractions(prev => {
@@ -1680,23 +1677,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                                           </div>
                                         )}
                                         
-                                        {/* Anti-cheat warning */}
-                                        {(suspiciousActivity.liked || suspiciousActivity.retweeted || suspiciousActivity.commented) && (
-                                          <div className="mt-3 p-2 bg-red-500/20 border border-red-500/50 rounded-lg text-left">
-                                            <div className="flex items-start">
-                                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-400 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                              </svg>
-                                              <div className="text-red-400 text-xs">
-                                                <p className="font-medium mb-1">Quick Return Detected</p>
-                                                <p>You returned too quickly from Twitter. Please spend more time completing the action to ensure it's legitimate.</p>
-                                                {suspiciousActivity.liked && <p className="mt-1">• Like action needs to be retried</p>}
-                                                {suspiciousActivity.retweeted && <p className="mt-1">• Retweet action needs to be retried</p>}
-                                                {suspiciousActivity.commented && <p className="mt-1">• Comment action needs to be retried</p>}
-                                              </div>
-                                            </div>
-                                          </div>
-                                        )}
+                                        {/* Anti-cheat warning removed */}
                                         
                                         {/* Anti-cheat info */}
                                         <div className="mt-3 p-2 bg-blue-500/10 border border-blue-500/30 rounded-lg text-left">
