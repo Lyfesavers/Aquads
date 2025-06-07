@@ -756,7 +756,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const fetchPendingTwitterRaids = async () => {
     setLoadingTwitterRaids(true);
     try {
-      const response = await fetch(`${API_URL}/twitter-raids/completions/pending`, {
+      const response = await fetch(`${API_URL}/api/twitter-raids/completions/pending`, {
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
         }
@@ -779,7 +779,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   // Add these functions to handle Twitter raid completion approvals and rejections
   const handleApproveTwitterRaid = async (completion) => {
     try {
-      const response = await fetch(`${API_URL}/twitter-raids/${completion.raidId}/completions/${completion.completionId}/approve`, {
+      const response = await fetch(`${API_URL}/api/twitter-raids/${completion.raidId}/completions/${completion.completionId}/approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -813,7 +813,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     try {
       if (!selectedTwitterRaid) return;
       
-      const response = await fetch(`${API_URL}/twitter-raids/${selectedTwitterRaid.raidId}/completions/${selectedTwitterRaid.completionId}/reject`, {
+      const response = await fetch(`${API_URL}/api/twitter-raids/${selectedTwitterRaid.raidId}/completions/${selectedTwitterRaid.completionId}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
