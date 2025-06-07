@@ -69,7 +69,7 @@ const twitterRaidSchema = new Schema({
     },
     twitterUsername: {
       type: String,
-      required: true
+      required: false // We validate this in the route instead
     },
     tweetUrl: String,
     tweetId: {

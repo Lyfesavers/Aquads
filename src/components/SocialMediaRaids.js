@@ -633,8 +633,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       }
 
       // Validate Twitter username format (basic validation)
+      const cleanUsername = twitterUsername.trim().replace(/^@/, ''); // Remove @ if present
       const usernameRegex = /^[a-zA-Z0-9_]{1,15}$/;
-      if (!usernameRegex.test(twitterUsername.trim())) {
+      if (!usernameRegex.test(cleanUsername)) {
         setError('Please enter a valid Twitter username (letters, numbers, underscore only, max 15 characters)');
         return;
       }
@@ -668,7 +669,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           },
           body: JSON.stringify({
             tweetUrl: selectedRaid?.tweetUrl || tweetUrl || null,
-            twitterUsername: twitterUsername.trim(),
+            twitterUsername: cleanUsername,
             iframeVerified: true, // Always set to true since we require this
             directInteractions: iframeInteractions, // Include all interaction data
             tweetId: previewState.tweetId // Include the tweet ID explicitly
@@ -1836,14 +1837,14 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                         type="submit"
                         className={`w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors ${
                           verifyingTweet || submitting ? 'opacity-70 cursor-wait' : 
-                          (!iframeVerified || !twitterUsername.trim()) ? 'opacity-50 cursor-not-allowed bg-gray-600 hover:bg-gray-600' : ''
+                          (!iframeVerified || !twitterUsername.trim().replace(/^@/, '')) ? 'opacity-50 cursor-not-allowed bg-gray-600 hover:bg-gray-600' : ''
                         }`}
-                        disabled={verifyingTweet || submitting || !iframeVerified || !twitterUsername.trim()}
+                        disabled={verifyingTweet || submitting || !iframeVerified || !twitterUsername.trim().replace(/^@/, '')}
                       >
-                        {verifyingTweet ? 'Verifying Tweet...' : 
+                                                 {verifyingTweet ? 'Verifying Tweet...' : 
                          submitting ? 'Submitting for Approval...' : 
-                         iframeVerified && twitterUsername.trim() ? 'Submit for Admin Approval' : 
-                         !twitterUsername.trim() ? 'Enter Your Twitter Username' :
+                         iframeVerified && twitterUsername.trim().replace(/^@/, '') ? 'Submit for Admin Approval' : 
+                         !twitterUsername.trim().replace(/^@/, '') ? 'Enter Your Twitter Username' :
                          'Complete All Three Actions to Continue'}
                       </button>
                     </form>

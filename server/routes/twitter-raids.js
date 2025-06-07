@@ -357,13 +357,14 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
 
     // Validate Twitter username is provided
     if (!twitterUsername || !twitterUsername.trim()) {
-      return res.status(400).json({ error: 'Twitter username is required' });
+      return res.status(400).json({ error: 'Twitter username is required. Please enter your Twitter username.' });
     }
 
-    // Validate Twitter username format
+    // Validate Twitter username format (more flexible)
+    const cleanUsername = twitterUsername.trim().replace(/^@/, ''); // Remove @ if present
     const usernameRegex = /^[a-zA-Z0-9_]{1,15}$/;
-    if (!usernameRegex.test(twitterUsername.trim())) {
-      return res.status(400).json({ error: 'Invalid Twitter username format' });
+    if (!usernameRegex.test(cleanUsername)) {
+      return res.status(400).json({ error: 'Invalid Twitter username format. Use only letters, numbers, and underscores (max 15 characters).' });
     }
     
     const raid = await TwitterRaid.findById(req.params.id);
@@ -454,7 +455,7 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
       // Record the completion as pending approval - DO NOT award points yet
       raid.completions.push({
         userId: userId,
-        twitterUsername: twitterUsername.trim(),
+        twitterUsername: cleanUsername,
         verificationCode,
         verificationMethod,
         tweetUrl: tweetUrl || null,
