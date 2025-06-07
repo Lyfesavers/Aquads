@@ -504,8 +504,14 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
 
 // Admin endpoint to approve a completion
 router.post('/:raidId/completions/:completionId/approve', auth, async (req, res) => {
+  console.log('=== APPROVE ENDPOINT HIT ===');
+  console.log('Request params:', req.params);
+  console.log('User:', req.user);
+  console.log('============================');
+  
   try {
     if (!req.user.isAdmin) {
+      console.log('Admin check failed:', req.user.isAdmin);
       return res.status(403).json({ error: 'Only admins can approve completions' });
     }
 
@@ -533,7 +539,7 @@ router.post('/:raidId/completions/:completionId/approve', auth, async (req, res)
     }
 
     const pointsAmount = raid.points || 50;
-    user.points += pointsAmount;
+    user.points = (user.points || 0) + pointsAmount;
     user.pointsHistory.push({
       amount: pointsAmount,
       reason: `Twitter raid approved: ${raid.title}`,
@@ -565,8 +571,14 @@ router.post('/:raidId/completions/:completionId/approve', auth, async (req, res)
 
 // Admin endpoint to reject a completion
 router.post('/:raidId/completions/:completionId/reject', auth, async (req, res) => {
+  console.log('=== REJECT ENDPOINT HIT ===');
+  console.log('Request params:', req.params);
+  console.log('User:', req.user);
+  console.log('============================');
+  
   try {
     if (!req.user.isAdmin) {
+      console.log('Admin check failed:', req.user.isAdmin);
       return res.status(403).json({ error: 'Only admins can reject completions' });
     }
 
