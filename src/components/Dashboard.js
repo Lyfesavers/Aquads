@@ -752,35 +752,34 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     setSelectedAdForBump(null);
   };
 
-  // Add this function to fetch pending Twitter raids
+  // Add this function to fetch pending Twitter raid completions
   const fetchPendingTwitterRaids = async () => {
     setLoadingTwitterRaids(true);
     try {
-      const response = await fetch(`${API_URL}/twitter-raids`, {
+      const response = await fetch(`${API_URL}/api/twitter-raids/completions/pending`, {
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
         }
       });
       
       if (!response.ok) {
-        throw new Error('Failed to fetch Twitter raids');
+        throw new Error('Failed to fetch pending completions');
       }
       
-      const raids = await response.json();
-      // Filter to only get the paid raids with pending payment status
-      const pendingRaids = raids.filter(raid => raid.isPaid && raid.paymentStatus === 'pending');
-      setPendingTwitterRaids(pendingRaids);
+      const data = await response.json();
+      setPendingTwitterRaids(data.pendingCompletions || []);
     } catch (error) {
-      console.error('Error fetching pending Twitter raids:', error);
+      console.error('Error fetching pending completions:', error);
+      setPendingTwitterRaids([]);
     } finally {
       setLoadingTwitterRaids(false);
     }
   };
 
-  // Add these functions to handle Twitter raid approvals and rejections
-  const handleApproveTwitterRaid = async (raidId) => {
+  // Add these functions to handle Twitter raid completion approvals and rejections
+  const handleApproveTwitterRaid = async (completion) => {
     try {
-      const response = await fetch(`${API_URL}/twitter-raids/${raidId}/approve`, {
+      const response = await fetch(`${API_URL}/api/twitter-raids/${completion.raidId}/completions/${completion.completionId}/approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -789,20 +788,23 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       });
       
       if (!response.ok) {
-        throw new Error('Failed to approve Twitter raid');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to approve completion');
       }
       
-      // Refresh the list of pending raids
+      const result = await response.json();
+      
+      // Refresh the list of pending completions
       fetchPendingTwitterRaids();
-      alert('Twitter raid approved successfully!');
+      alert(result.message || 'Completion approved successfully!');
     } catch (error) {
-      console.error('Error approving Twitter raid:', error);
-      alert('Error approving Twitter raid: ' + error.message);
+      console.error('Error approving completion:', error);
+      alert('Error approving completion: ' + error.message);
     }
   };
 
-  const handleRejectTwitterRaidClick = (raid) => {
-    setSelectedTwitterRaid(raid);
+  const handleRejectTwitterRaidClick = (completion) => {
+    setSelectedTwitterRaid(completion);
     setTwitterRaidRejectionReason('');
     setShowTwitterRaidRejectModal(true);
   };
@@ -811,7 +813,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     try {
       if (!selectedTwitterRaid) return;
       
-      const response = await fetch(`${API_URL}/twitter-raids/${selectedTwitterRaid._id}/reject`, {
+      const response = await fetch(`${API_URL}/api/twitter-raids/${selectedTwitterRaid.raidId}/completions/${selectedTwitterRaid.completionId}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -821,16 +823,19 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       });
       
       if (!response.ok) {
-        throw new Error('Failed to reject Twitter raid');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to reject completion');
       }
       
-      // Refresh the list of pending raids
+      const result = await response.json();
+      
+      // Refresh the list of pending completions
       fetchPendingTwitterRaids();
       setShowTwitterRaidRejectModal(false);
-      alert('Twitter raid rejected successfully!');
+      alert(result.message || 'Completion rejected successfully!');
     } catch (error) {
-      console.error('Error rejecting Twitter raid:', error);
-      alert('Error rejecting Twitter raid: ' + error.message);
+      console.error('Error rejecting completion:', error);
+      alert('Error rejecting completion: ' + error.message);
     }
   };
 
@@ -838,53 +843,90 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const renderTwitterRaidsTab = () => {
     return (
       <div className="space-y-4">
-        <h3 className="text-xl font-semibold mb-4">Twitter Raids Pending Approval</h3>
+        <h3 className="text-xl font-semibold mb-4">Twitter Raid Completions Pending Approval</h3>
         
         {loadingTwitterRaids ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto"></div>
-            <p className="mt-4 text-gray-400">Loading pending Twitter raids...</p>
+            <p className="mt-4 text-gray-400">Loading pending completions...</p>
           </div>
         ) : pendingTwitterRaids.length === 0 ? (
-          <p className="text-gray-400 text-center py-4">No pending Twitter raids to approve.</p>
+          <p className="text-gray-400 text-center py-4">No pending completions to approve.</p>
         ) : (
           <div className="space-y-4">
-            {pendingTwitterRaids.map(raid => (
-              <div key={raid._id} className="bg-gray-800 p-4 rounded-lg">
-                <div className="flex justify-between items-start">
-                  <div className="space-y-2">
-                    <h4 className="font-medium text-white">{raid.title}</h4>
-                    <p className="text-sm text-gray-400">
-                      Created by: {raid.createdBy?.username || "Unknown"}
-                    </p>
-                    <p className="text-sm text-gray-400">
-                      Created at: {new Date(raid.createdAt).toLocaleString()}
-                    </p>
-                    <p className="text-sm">
-                      <span className="text-gray-400">Transaction ID: </span>
-                      <span className="text-blue-400 font-mono">{raid.txSignature}</span>
-                    </p>
-                    <p className="text-sm">
-                      <span className="text-gray-400">Payment Chain: </span>
-                      <span className="text-green-400">{raid.paymentChain || "Unknown"}</span>
-                    </p>
-                    <p className="text-sm text-gray-400">
-                      Tweet URL: <a href={raid.tweetUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">{raid.tweetUrl}</a>
-                    </p>
+            {pendingTwitterRaids.map(completion => (
+              <div key={`${completion.raidId}-${completion.completionId}`} className="bg-gray-800 p-4 rounded-lg">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  <div className="lg:col-span-2 space-y-2">
+                    <h4 className="font-medium text-white">{completion.raidTitle}</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <p className="text-sm">
+                          <span className="text-gray-400">User: </span>
+                          <span className="text-white font-medium">{completion.user?.username || "Unknown"}</span>
+                        </p>
+                        <p className="text-sm">
+                          <span className="text-gray-400">Twitter Username: </span>
+                          <span className="text-blue-400 font-medium">@{completion.twitterUsername}</span>
+                        </p>
+                        <p className="text-sm">
+                          <span className="text-gray-400">Points: </span>
+                          <span className="text-green-400 font-medium">{completion.pointsAmount}</span>
+                        </p>
+                        <p className="text-sm">
+                          <span className="text-gray-400">Completed: </span>
+                          <span className="text-gray-300">{new Date(completion.completedAt).toLocaleString()}</span>
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-sm">
+                          <span className="text-gray-400">Verification: </span>
+                          <span className={`${completion.iframeVerified ? 'text-green-400' : 'text-yellow-400'} font-medium`}>
+                            {completion.iframeVerified ? 'Iframe Verified' : 'Manual'}
+                          </span>
+                        </p>
+                        <p className="text-sm">
+                          <span className="text-gray-400">Method: </span>
+                          <span className="text-gray-300">{completion.verificationMethod}</span>
+                        </p>
+                        <p className="text-sm">
+                          <span className="text-gray-400">IP: </span>
+                          <span className="text-gray-300 font-mono text-xs">{completion.ipAddress}</span>
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <p className="text-sm text-gray-400">
+                        Tweet URL: <a href={completion.raidTweetUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+                          {completion.raidTweetUrl}
+                        </a>
+                      </p>
+                      <p className="text-sm text-gray-400 mt-1">
+                        Check if <span className="text-blue-400 font-medium">@{completion.twitterUsername}</span> actually liked, retweeted, and commented on this tweet.
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col gap-2">
                     <button
-                      onClick={() => handleApproveTwitterRaid(raid._id)}
-                      className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                      onClick={() => handleApproveTwitterRaid(completion)}
+                      className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 font-medium"
                     >
-                      Approve
+                      ✓ Approve ({completion.pointsAmount} pts)
                     </button>
                     <button
-                      onClick={() => handleRejectTwitterRaidClick(raid)}
-                      className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                      onClick={() => handleRejectTwitterRaidClick(completion)}
+                      className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 font-medium"
                     >
-                      Reject
+                      ✗ Reject
                     </button>
+                    <a
+                      href={completion.raidTweetUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 font-medium text-center"
+                    >
+                      🔗 View Tweet
+                    </a>
                   </div>
                 </div>
               </div>
@@ -896,9 +938,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         {showTwitterRaidRejectModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
-              <h3 className="text-lg font-semibold mb-4">Reject Twitter Raid</h3>
+              <h3 className="text-lg font-semibold mb-4">Reject Completion</h3>
               <p className="mb-4 text-gray-300">
-                Are you sure you want to reject this Twitter raid? This action cannot be undone.
+                Are you sure you want to reject this completion? The user will not receive points and this action cannot be undone.
               </p>
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-400 mb-2">
@@ -909,7 +951,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   onChange={(e) => setTwitterRaidRejectionReason(e.target.value)}
                   className="w-full p-2 rounded bg-gray-700 text-white"
                   rows="3"
-                  placeholder="Enter reason for rejection (optional)"
+                  placeholder="Enter reason for rejection (e.g., 'Twitter username did not interact with the tweet')"
                 ></textarea>
               </div>
               <div className="flex justify-end space-x-2">
@@ -923,7 +965,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   onClick={handleRejectTwitterRaid}
                   className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
                 >
-                  Reject Raid
+                  Reject Completion
                 </button>
               </div>
             </div>

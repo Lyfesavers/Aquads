@@ -67,7 +67,10 @@ const twitterRaidSchema = new Schema({
       type: Schema.Types.ObjectId,
       ref: 'User'
     },
-    twitterUsername: String,
+    twitterUsername: {
+      type: String,
+      required: true
+    },
     tweetUrl: String,
     tweetId: {
       type: String,
@@ -80,6 +83,28 @@ const twitterRaidSchema = new Schema({
       default: 'automatic'
     },
     verified: {
+      type: Boolean,
+      default: false
+    },
+    approvalStatus: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending'
+    },
+    approvedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    approvedAt: {
+      type: Date,
+      default: null
+    },
+    rejectionReason: {
+      type: String,
+      default: null
+    },
+    pointsAwarded: {
       type: Boolean,
       default: false
     },

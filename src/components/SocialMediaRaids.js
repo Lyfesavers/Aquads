@@ -53,6 +53,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const [isValidUrl, setIsValidUrl] = useState(true);
   const tweetEmbedRef = useRef(null);
   const [userData, setUserData] = useState(currentUser);
+  const [twitterUsername, setTwitterUsername] = useState('');
   // Add a dedicated state for points
   const [pointsData, setPointsData] = useState({ points: 0 });
   const [loadingPoints, setLoadingPoints] = useState(true);
@@ -535,6 +536,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     setTweetUrl(raid.tweetUrl);
     setIsValidUrl(true);
     
+    // Reset Twitter username for new raid
+    setTwitterUsername('');
+    
     // Reset iframe-related states
     handleShowIframe(false);
     setIframeInteractions({ 
@@ -622,6 +626,19 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         return;
       }
 
+      // Check if Twitter username is provided
+      if (!twitterUsername.trim()) {
+        setError('Please enter your Twitter username');
+        return;
+      }
+
+      // Validate Twitter username format (basic validation)
+      const usernameRegex = /^[a-zA-Z0-9_]{1,15}$/;
+      if (!usernameRegex.test(twitterUsername.trim())) {
+        setError('Please enter a valid Twitter username (letters, numbers, underscore only, max 15 characters)');
+        return;
+      }
+
       // Verify all interactions are completed
       if (!iframeVerified) {
         setError('Please complete all three Twitter interactions first (like, retweet, and comment)');
@@ -651,6 +668,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           },
           body: JSON.stringify({
             tweetUrl: selectedRaid?.tweetUrl || tweetUrl || null,
+            twitterUsername: twitterUsername.trim(),
             iframeVerified: true, // Always set to true since we require this
             directInteractions: iframeInteractions, // Include all interaction data
             tweetId: previewState.tweetId // Include the tweet ID explicitly
@@ -686,12 +704,13 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         });
         
         // Step 2: Show success message
-        setSuccess(data.message || 'Task completed! You earned points.');
-        showNotification(data.message || 'Successfully completed Twitter raid!', 'success');
+        setSuccess(data.message || 'Task submitted for admin approval! Points will be awarded after verification.');
+        showNotification(data.message || 'Twitter raid submitted successfully! Pending admin approval.', 'success');
         
         // Step 3: After a brief delay, reset selected raid and fetch new data
         setTimeout(() => {
           setSelectedRaid(null);
+          setTwitterUsername(''); // Reset Twitter username
           fetchRaids();
         }, 50);
       } catch (networkError) {
@@ -1776,6 +1795,31 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                         value={tweetUrl}
                       />
                       
+                      {/* Twitter Username Input */}
+                      <div className="mb-4">
+                        <label htmlFor="twitterUsername" className="block text-sm font-medium text-gray-300 mb-2">
+                          Your Twitter Username <span className="text-red-400">*</span>
+                        </label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span className="text-gray-400">@</span>
+                          </div>
+                          <input
+                            type="text"
+                            id="twitterUsername"
+                            value={twitterUsername}
+                            onChange={(e) => setTwitterUsername(e.target.value)}
+                            className="w-full pl-8 pr-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="username"
+                            maxLength="15"
+                            required
+                          />
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1">
+                          Enter your Twitter username so we can verify your completion
+                        </p>
+                      </div>
+                      
                       {iframeVerified && (
                         <div className="mb-4 p-3 bg-green-500/20 border border-green-500 rounded-lg">
                           <div className="flex items-center text-green-400 font-medium">
@@ -1792,11 +1836,15 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                         type="submit"
                         className={`w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors ${
                           verifyingTweet || submitting ? 'opacity-70 cursor-wait' : 
-                          !iframeVerified ? 'opacity-50 cursor-not-allowed bg-gray-600 hover:bg-gray-600' : ''
+                          (!iframeVerified || !twitterUsername.trim()) ? 'opacity-50 cursor-not-allowed bg-gray-600 hover:bg-gray-600' : ''
                         }`}
-                        disabled={verifyingTweet || submitting || !iframeVerified}
+                        disabled={verifyingTweet || submitting || !iframeVerified || !twitterUsername.trim()}
                       >
-                        {verifyingTweet ? 'Verifying Tweet...' : submitting ? 'Submitting...' : iframeVerified ? 'Complete Task' : 'Complete All Three Actions to Continue'}
+                        {verifyingTweet ? 'Verifying Tweet...' : 
+                         submitting ? 'Submitting for Approval...' : 
+                         iframeVerified && twitterUsername.trim() ? 'Submit for Admin Approval' : 
+                         !twitterUsername.trim() ? 'Enter Your Twitter Username' :
+                         'Complete All Three Actions to Continue'}
                       </button>
                     </form>
                   </div>

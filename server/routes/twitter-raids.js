@@ -354,6 +354,17 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
     if (!userId) {
       return res.status(400).json({ error: 'User ID not found in request' });
     }
+
+    // Validate Twitter username is provided
+    if (!twitterUsername || !twitterUsername.trim()) {
+      return res.status(400).json({ error: 'Twitter username is required' });
+    }
+
+    // Validate Twitter username format
+    const usernameRegex = /^[a-zA-Z0-9_]{1,15}$/;
+    if (!usernameRegex.test(twitterUsername.trim())) {
+      return res.status(400).json({ error: 'Invalid Twitter username format' });
+    }
     
     const raid = await TwitterRaid.findById(req.params.id);
     
@@ -431,9 +442,8 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
       });
     }
 
-    // First award points directly to ensure the user gets them
+    // Create a pending completion that requires admin approval
     try {
-      // Award points directly - this is the important part that needs to work
       const pointsAmount = raid.points || 50;
       const user = await User.findById(userId);
       
@@ -441,45 +451,37 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
         throw new Error(`User not found with ID: ${userId}`);
       }
       
-      // Award points directly on the user object
-      const previousPoints = user.points;
-      user.points += pointsAmount;
-      user.pointsHistory.push({
-        amount: pointsAmount,
-        reason: `Completed Twitter raid: ${raid.title}`,
-        socialRaidId: raid._id,
-        createdAt: new Date()
-      });
-      
-      // Save the user with new points - make sure this is awaited
-      await user.save();
-      
-      // Then record the completion with IP tracking and tweet ID
+      // Record the completion as pending approval - DO NOT award points yet
       raid.completions.push({
         userId: userId,
-        twitterUsername: twitterUsername || '', // Make username optional
+        twitterUsername: twitterUsername.trim(),
         verificationCode,
         verificationMethod,
         tweetUrl: tweetUrl || null,
-        tweetId: detectedTweetId, // Store the detected tweet ID
+        tweetId: detectedTweetId,
         verified: verified,
-        ipAddress, // Store IP address
+        approvalStatus: 'pending', // This is the key change
+        approvedBy: null,
+        approvedAt: null,
+        rejectionReason: null,
+        pointsAwarded: false,
+        ipAddress,
         verificationNote,
-        iframeVerified: iframeVerified || false, // Store iframe verification status
-        iframeInteractions: iframeInteractions || 0, // Store interaction count
+        iframeVerified: iframeVerified || false,
+        iframeInteractions: iframeInteractions || 0,
         completedAt: new Date()
       });
       
-      // Make sure to await this save operation as well
+      // Save the raid with the pending completion
       await raid.save();
       
-      // Success response
+      // Success response - indicate pending approval
       const successResponse = {
         success: true,
-        message: `Twitter raid completed successfully! You earned ${pointsAmount} points.`,
-        note: 'Your submission has been recorded. Thank you for participating!',
-        pointsAwarded: pointsAmount,
-        currentPoints: user.points
+        message: `Twitter raid submitted successfully! Your submission is pending admin approval.`,
+        note: 'An admin will review your Twitter username and actions before awarding points.',
+        pointsAmount: pointsAmount,
+        status: 'pending_approval'
       };
       
       res.json(successResponse);
@@ -496,6 +498,163 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
       error: errorMessage,
       success: false 
     });
+  }
+});
+
+// Admin endpoint to approve a completion
+router.post('/:raidId/completions/:completionId/approve', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Only admins can approve completions' });
+    }
+
+    const { raidId, completionId } = req.params;
+    const adminId = req.user.id || req.user.userId || req.user._id;
+
+    const raid = await TwitterRaid.findById(raidId);
+    if (!raid) {
+      return res.status(404).json({ error: 'Twitter raid not found' });
+    }
+
+    const completion = raid.completions.id(completionId);
+    if (!completion) {
+      return res.status(404).json({ error: 'Completion not found' });
+    }
+
+    if (completion.approvalStatus !== 'pending') {
+      return res.status(400).json({ error: 'This completion has already been processed' });
+    }
+
+    // Award points to the user
+    const user = await User.findById(completion.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const pointsAmount = raid.points || 50;
+    user.points += pointsAmount;
+    user.pointsHistory.push({
+      amount: pointsAmount,
+      reason: `Twitter raid approved: ${raid.title}`,
+      socialRaidId: raid._id,
+      createdAt: new Date()
+    });
+
+    // Update completion status
+    completion.approvalStatus = 'approved';
+    completion.approvedBy = adminId;
+    completion.approvedAt = new Date();
+    completion.pointsAwarded = true;
+
+    // Save both user and raid
+    await Promise.all([user.save(), raid.save()]);
+
+    res.json({
+      success: true,
+      message: `Completion approved! ${pointsAmount} points awarded to ${user.username}.`,
+      pointsAwarded: pointsAmount,
+      userCurrentPoints: user.points
+    });
+
+  } catch (error) {
+    console.error('Error approving completion:', error);
+    res.status(500).json({ error: 'Failed to approve completion' });
+  }
+});
+
+// Admin endpoint to reject a completion
+router.post('/:raidId/completions/:completionId/reject', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Only admins can reject completions' });
+    }
+
+    const { raidId, completionId } = req.params;
+    const { rejectionReason } = req.body;
+    const adminId = req.user.id || req.user.userId || req.user._id;
+
+    const raid = await TwitterRaid.findById(raidId);
+    if (!raid) {
+      return res.status(404).json({ error: 'Twitter raid not found' });
+    }
+
+    const completion = raid.completions.id(completionId);
+    if (!completion) {
+      return res.status(404).json({ error: 'Completion not found' });
+    }
+
+    if (completion.approvalStatus !== 'pending') {
+      return res.status(400).json({ error: 'This completion has already been processed' });
+    }
+
+    // Update completion status
+    completion.approvalStatus = 'rejected';
+    completion.approvedBy = adminId;
+    completion.approvedAt = new Date();
+    completion.rejectionReason = rejectionReason || 'No reason provided';
+    completion.pointsAwarded = false;
+
+    await raid.save();
+
+    res.json({
+      success: true,
+      message: 'Completion rejected successfully.',
+      rejectionReason: completion.rejectionReason
+    });
+
+  } catch (error) {
+    console.error('Error rejecting completion:', error);
+    res.status(500).json({ error: 'Failed to reject completion' });
+  }
+});
+
+// Admin endpoint to get all pending completions
+router.get('/completions/pending', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Only admins can view pending completions' });
+    }
+
+    const raids = await TwitterRaid.find({
+      'completions.approvalStatus': 'pending'
+    })
+    .populate('completions.userId', 'username email')
+    .populate('createdBy', 'username')
+    .sort({ 'completions.completedAt': -1 });
+
+    // Extract pending completions with raid info
+    const pendingCompletions = [];
+    
+    raids.forEach(raid => {
+      raid.completions.forEach(completion => {
+        if (completion.approvalStatus === 'pending') {
+          pendingCompletions.push({
+            completionId: completion._id,
+            raidId: raid._id,
+            raidTitle: raid.title,
+            raidTweetUrl: raid.tweetUrl,
+            pointsAmount: raid.points || 50,
+            user: completion.userId,
+            twitterUsername: completion.twitterUsername,
+            verificationMethod: completion.verificationMethod,
+            verificationNote: completion.verificationNote,
+            iframeVerified: completion.iframeVerified,
+            completedAt: completion.completedAt,
+            ipAddress: completion.ipAddress
+          });
+        }
+      });
+    });
+
+    res.json({
+      success: true,
+      pendingCompletions,
+      total: pendingCompletions.length
+    });
+
+  } catch (error) {
+    console.error('Error fetching pending completions:', error);
+    res.status(500).json({ error: 'Failed to fetch pending completions' });
   }
 });
 
