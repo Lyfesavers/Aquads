@@ -7,6 +7,7 @@ const pointsModule = require('./points');
 const axios = require('axios');
 const { twitterRaidRateLimit } = require('../middleware/rateLimiter');
 const AffiliateEarning = require('../models/AffiliateEarning');
+const mongoose = require('mongoose');
 
 // Use the imported module function
 const awardSocialMediaPoints = pointsModule.awardSocialMediaPoints;
@@ -504,19 +505,21 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
 
 // Admin endpoint to approve a completion
 router.post('/:raidId/completions/:completionId/approve', auth, async (req, res) => {
-  console.log('=== APPROVE ENDPOINT HIT ===');
-  console.log('Request params:', req.params);
-  console.log('User:', req.user);
-  console.log('============================');
-  
   try {
     if (!req.user.isAdmin) {
-      console.log('Admin check failed:', req.user.isAdmin);
       return res.status(403).json({ error: 'Only admins can approve completions' });
     }
 
     const { raidId, completionId } = req.params;
     const adminId = req.user.id || req.user.userId || req.user._id;
+
+    // Validate ObjectIds
+    if (!mongoose.Types.ObjectId.isValid(raidId)) {
+      return res.status(400).json({ error: 'Invalid raid ID' });
+    }
+    if (!mongoose.Types.ObjectId.isValid(completionId)) {
+      return res.status(400).json({ error: 'Invalid completion ID' });
+    }
 
     const raid = await TwitterRaid.findById(raidId);
     if (!raid) {
@@ -554,7 +557,8 @@ router.post('/:raidId/completions/:completionId/approve', auth, async (req, res)
     completion.pointsAwarded = true;
 
     // Save both user and raid
-    await Promise.all([user.save(), raid.save()]);
+    await user.save();
+    await raid.save();
 
     res.json({
       success: true,
@@ -571,20 +575,22 @@ router.post('/:raidId/completions/:completionId/approve', auth, async (req, res)
 
 // Admin endpoint to reject a completion
 router.post('/:raidId/completions/:completionId/reject', auth, async (req, res) => {
-  console.log('=== REJECT ENDPOINT HIT ===');
-  console.log('Request params:', req.params);
-  console.log('User:', req.user);
-  console.log('============================');
-  
   try {
     if (!req.user.isAdmin) {
-      console.log('Admin check failed:', req.user.isAdmin);
       return res.status(403).json({ error: 'Only admins can reject completions' });
     }
 
     const { raidId, completionId } = req.params;
     const { rejectionReason } = req.body;
     const adminId = req.user.id || req.user.userId || req.user._id;
+
+    // Validate ObjectIds
+    if (!mongoose.Types.ObjectId.isValid(raidId)) {
+      return res.status(400).json({ error: 'Invalid raid ID' });
+    }
+    if (!mongoose.Types.ObjectId.isValid(completionId)) {
+      return res.status(400).json({ error: 'Invalid completion ID' });
+    }
 
     const raid = await TwitterRaid.findById(raidId);
     if (!raid) {
