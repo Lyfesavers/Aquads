@@ -479,7 +479,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const fetchRaids = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/api/twitter-raids`);
+      const response = await fetch(`${API_URL}/twitter-raids`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch Twitter raids');
@@ -660,7 +660,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       
       try {
         // Use fetchWithDelay instead of fetch
-        const response = await fetchWithDelay(`${API_URL}/api/twitter-raids/${raidId}/complete`, {
+        const response = await fetchWithDelay(`${API_URL}/twitter-raids/${raidId}/complete`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -755,7 +755,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     setSubmitting(true);
     
     try {
-      const response = await fetch(`${API_URL}/api/twitter-raids`, {
+      const response = await fetch(`${API_URL}/twitter-raids`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -801,7 +801,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     }
     
     try {
-      const response = await fetch(`${API_URL}/api/twitter-raids/${raidId}`, {
+      const response = await fetch(`${API_URL}/twitter-raids/${raidId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
@@ -968,7 +968,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   // Add utility function to create a points-based Twitter raid
   const createPointsTwitterRaid = async (data, token) => {
     try {
-      const response = await fetch(`${API_URL}/api/twitter-raids/points`, {
+      const response = await fetch(`${API_URL}/twitter-raids/points`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1051,7 +1051,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     }
     
     try {
-      const response = await fetch(`${API_URL}/api/twitter-raids/${raidId}/approve`, {
+      const response = await fetch(`${API_URL}/twitter-raids/${raidId}/approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1086,7 +1086,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     if (reason === null) return; // User cancelled
     
     try {
-      const response = await fetch(`${API_URL}/api/twitter-raids/${raidId}/reject`, {
+      const response = await fetch(`${API_URL}/twitter-raids/${raidId}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
