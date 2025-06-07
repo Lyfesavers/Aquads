@@ -506,109 +506,84 @@ router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
 // Admin endpoint to approve a completion
 router.post('/:raidId/completions/:completionId/approve', auth, async (req, res) => {
   try {
-    if (!req.user.isAdmin) {
-      return res.status(403).json({ error: 'Only admins can approve completions' });
+    // Basic validation
+    if (!req.user?.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
     }
 
     const { raidId, completionId } = req.params;
-    const adminId = req.user.id || req.user.userId || req.user._id;
-
-    // Validate ObjectIds
-    if (!mongoose.Types.ObjectId.isValid(raidId)) {
-      return res.status(400).json({ error: 'Invalid raid ID' });
-    }
-    if (!mongoose.Types.ObjectId.isValid(completionId)) {
-      return res.status(400).json({ error: 'Invalid completion ID' });
-    }
-
+    
+    // Find the raid
     const raid = await TwitterRaid.findById(raidId);
     if (!raid) {
-      return res.status(404).json({ error: 'Twitter raid not found' });
+      return res.status(404).json({ error: 'Raid not found' });
     }
 
-    const completion = raid.completions.id(completionId);
+    // Find the completion
+    const completion = raid.completions.find(c => c._id.toString() === completionId);
     if (!completion) {
       return res.status(404).json({ error: 'Completion not found' });
     }
 
-    if (completion.approvalStatus !== 'pending') {
-      return res.status(400).json({ error: 'This completion has already been processed' });
-    }
-
-    // Award points to the user
-    const user = await User.findById(completion.userId);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    const pointsAmount = raid.points || 50;
-    user.points = (user.points || 0) + pointsAmount;
-    user.pointsHistory.push({
-      amount: pointsAmount,
-      reason: `Twitter raid approved: ${raid.title}`,
-      socialRaidId: raid._id,
-      createdAt: new Date()
-    });
-
-    // Update completion status
+    // Update completion
     completion.approvalStatus = 'approved';
-    completion.approvedBy = adminId;
+    completion.approvedBy = req.user.id;
     completion.approvedAt = new Date();
     completion.pointsAwarded = true;
 
-    // Save both user and raid
-    await user.save();
+    // Award points to user
+    const user = await User.findById(completion.userId);
+    if (user) {
+      const points = raid.points || 50;
+      user.points = (user.points || 0) + points;
+      user.pointsHistory.push({
+        amount: points,
+        reason: `Twitter raid approved: ${raid.title}`,
+        socialRaidId: raid._id,
+        createdAt: new Date()
+      });
+      await user.save();
+    }
+
     await raid.save();
 
     res.json({
       success: true,
-      message: `Completion approved! ${pointsAmount} points awarded to ${user.username}.`,
-      pointsAwarded: pointsAmount,
-      userCurrentPoints: user.points
+      message: 'Completion approved successfully'
     });
 
   } catch (error) {
-    console.error('Error approving completion:', error);
-    res.status(500).json({ error: 'Failed to approve completion' });
+    console.error('Approve error:', error);
+    res.status(500).json({ error: error.message || 'Failed to approve' });
   }
 });
 
 // Admin endpoint to reject a completion
 router.post('/:raidId/completions/:completionId/reject', auth, async (req, res) => {
   try {
-    if (!req.user.isAdmin) {
-      return res.status(403).json({ error: 'Only admins can reject completions' });
+    // Basic validation
+    if (!req.user?.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
     }
 
     const { raidId, completionId } = req.params;
     const { rejectionReason } = req.body;
-    const adminId = req.user.id || req.user.userId || req.user._id;
-
-    // Validate ObjectIds
-    if (!mongoose.Types.ObjectId.isValid(raidId)) {
-      return res.status(400).json({ error: 'Invalid raid ID' });
-    }
-    if (!mongoose.Types.ObjectId.isValid(completionId)) {
-      return res.status(400).json({ error: 'Invalid completion ID' });
-    }
-
+    
+    // Find the raid
     const raid = await TwitterRaid.findById(raidId);
     if (!raid) {
-      return res.status(404).json({ error: 'Twitter raid not found' });
+      return res.status(404).json({ error: 'Raid not found' });
     }
 
-    const completion = raid.completions.id(completionId);
+    // Find the completion
+    const completion = raid.completions.find(c => c._id.toString() === completionId);
     if (!completion) {
       return res.status(404).json({ error: 'Completion not found' });
     }
 
-    if (completion.approvalStatus !== 'pending') {
-      return res.status(400).json({ error: 'This completion has already been processed' });
-    }
-
-    // Update completion status
+    // Update completion
     completion.approvalStatus = 'rejected';
-    completion.approvedBy = adminId;
+    completion.approvedBy = req.user.id;
     completion.approvedAt = new Date();
     completion.rejectionReason = rejectionReason || 'No reason provided';
     completion.pointsAwarded = false;
@@ -617,13 +592,12 @@ router.post('/:raidId/completions/:completionId/reject', auth, async (req, res) 
 
     res.json({
       success: true,
-      message: 'Completion rejected successfully.',
-      rejectionReason: completion.rejectionReason
+      message: 'Completion rejected successfully'
     });
 
   } catch (error) {
-    console.error('Error rejecting completion:', error);
-    res.status(500).json({ error: 'Failed to reject completion' });
+    console.error('Reject error:', error);
+    res.status(500).json({ error: error.message || 'Failed to reject' });
   }
 });
 
