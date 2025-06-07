@@ -32,6 +32,19 @@
   to = "/service.html"
   status = 200
 
+# Ensure sitemap.xml is served with correct content-type
+[[headers]]
+  for = "/sitemap.xml"
+  [headers.values]
+    Content-Type = "application/xml"
+
+# Specific rule for sitemap.xml
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/sitemap.xml"
+  status = 200
+  force = true
+
 # Default SPA redirect (keep this last)
 [[redirects]]
   from = "/*"
