@@ -227,7 +227,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
             
             // Show warning to user
             showNotification(
-              `Please spend more time completing the ${type} action on Twitter. Returning too quickly suggests the task wasn't completed.`,
+              `Please actually complete the ${type} action on Twitter.`,
               'warning'
             );
           }
@@ -1687,7 +1687,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                                             </svg>
                                             <div className="text-blue-400 text-xs">
                                               <p className="font-medium mb-1">Anti-Cheat System Active</p>
-                                              <p>Our system monitors how long you spend on Twitter. Please actually complete each action before returning to avoid being flagged.</p>
+                                              <p>Please actually complete each action before returning to avoid being flagged.</p>
                                             </div>
                                           </div>
                                         </div>
