@@ -101,470 +101,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     tweetId: null
   });
 
-  // Simple metrics-based verification system
-  const [metricsVerification, setMetricsVerification] = useState({
-    initialMetrics: { likes: null, retweets: null, replies: null },
-    currentMetrics: { likes: null, retweets: null, replies: null },
-    verified: { liked: false, retweeted: false, commented: false },
-    loading: { liked: false, retweeted: false, commented: false }
-  });
-
-  // Real metrics scraping using popup window + content script injection
-  const scrapeTweetMetrics = async (tweetUrl) => {
-    return new Promise(async (resolve) => {
-      console.log('📊 Attempting to scrape real metrics from:', tweetUrl);
-      
-      // First try: Attempt to get tweet ID and use alternative methods
-      const tweetId = extractTweetId(tweetUrl);
-      if (tweetId) {
-        try {
-          // Try using Twitter's oEmbed API (might work for public tweets)
-          const oembedUrl = `https://publish.twitter.com/oembed?url=${encodeURIComponent(tweetUrl)}`;
-          const response = await fetch(oembedUrl);
-          
-          if (response.ok) {
-            const data = await response.json();
-            console.log('📊 oEmbed data received:', data);
-            
-            // oEmbed doesn't provide metrics, but we can try other approaches
-            // Fall through to popup method
-          }
-        } catch (e) {
-          console.log('oEmbed failed, trying popup method:', e);
-        }
-      }
-      
-      // Main method: Open tweet in a popup window
-      const popup = window.open(
-        tweetUrl,
-        'metrics_scraper',
-        'width=900,height=800,scrollbars=yes,resizable=yes'
-      );
-
-      if (!popup) {
-        console.log('❌ Popup blocked by browser');
-        showNotification('Please allow popups to verify tweet metrics.', 'error');
-        resolve({ likes: 0, retweets: 0, replies: 0 });
-        return;
-      }
-
-      let metricsFound = false;
-      
-      // Create a bookmarklet-style script that can run in the popup context
-      const createMetricsBookmarklet = () => {
-        return `
-          javascript:(function(){
-            const getMetrics = () => {
-              // Updated Twitter selectors for 2024
-              const findMetric = (selectors) => {
-                for (const selector of selectors) {
-                  try {
-                    const elements = document.querySelectorAll(selector);
-                    for (const element of elements) {
-                      let text = element.textContent || element.innerText || '';
-                      // Look for numbers in various formats
-                      const match = text.match(/(\\d+(?:[.,]\\d+)*[KMB]?)/i);
-                      if (match) {
-                        let num = match[1];
-                        // Convert K, M, B to actual numbers
-                        if (num.includes('K')) num = parseFloat(num) * 1000;
-                        else if (num.includes('M')) num = parseFloat(num) * 1000000;
-                        else if (num.includes('B')) num = parseFloat(num) * 1000000000;
-                        else num = parseInt(num.replace(/[.,]/g, ''), 10);
-                        if (!isNaN(num) && num >= 0) return Math.floor(num);
-                      }
-                    }
-                  } catch (e) { continue; }
-                }
-                return 0;
-              };
-
-              // Modern Twitter selectors (as of 2024)
-              const likes = findMetric([
-                '[data-testid="like"] span[data-testid="app-text-transition-container"] span',
-                '[data-testid="like"] span',
-                '[aria-label*="Like" i] span',
-                '[aria-label*="♥" i]',
-                'button[data-testid="like"] div[dir="auto"]',
-                'div[role="button"][aria-label*="Like"] span'
-              ]);
-
-              const retweets = findMetric([
-                '[data-testid="retweet"] span[data-testid="app-text-transition-container"] span',
-                '[data-testid="retweet"] span',
-                '[aria-label*="Repost" i] span',
-                '[aria-label*="Retweet" i] span',
-                'button[data-testid="retweet"] div[dir="auto"]',
-                'div[role="button"][aria-label*="Repost"] span'
-              ]);
-
-              const replies = findMetric([
-                '[data-testid="reply"] span[data-testid="app-text-transition-container"] span',
-                '[data-testid="reply"] span',
-                '[aria-label*="Reply" i] span',
-                '[aria-label*="Comment" i] span',
-                'button[data-testid="reply"] div[dir="auto"]',
-                'div[role="button"][aria-label*="Reply"] span'
-              ]);
-
-              return { likes, retweets, replies };
-            };
-
-            // Try multiple times with delay
-            let attempts = 0;
-            const maxAttempts = 10;
-            
-            const tryGetMetrics = () => {
-              attempts++;
-              const metrics = getMetrics();
-              
-              // Check if we got any meaningful data
-              if (metrics.likes > 0 || metrics.retweets > 0 || metrics.replies > 0 || attempts >= maxAttempts) {
-                console.log('Tweet metrics found:', metrics);
-                alert('METRICS:' + JSON.stringify(metrics));
-                return metrics;
-              }
-              
-              // Try again after a delay
-              setTimeout(tryGetMetrics, 500);
-            };
-            
-            // Start after page loads
-            setTimeout(tryGetMetrics, 2000);
-          })();
-        `;
-      };
-
-      // Function to ask user to run the bookmarklet
-      const askUserToRunBookmarklet = () => {
-        const bookmarklet = createMetricsBookmarklet();
-        
-        // Show instructions to user
-        setTimeout(() => {
-          if (!popup.closed && !metricsFound) {
-            alert(`
-To get accurate metrics:
-
-1. In the Twitter popup window, press F12 to open Developer Tools
-2. Go to the Console tab
-3. Paste this code and press Enter:
-
-${bookmarklet.replace('javascript:', '')}
-
-4. Wait for the alert with metrics, then come back here
-            `);
-            
-            // Wait for user to complete, then ask for metrics
-            setTimeout(() => {
-              if (!popup.closed && !metricsFound) {
-                askUserForMetrics(popup, resolve);
-              }
-            }, 10000);
-          }
-        }, 3000);
-      };
-
-      // Backup: Try to inject script via different methods
-      const tryInjectScript = () => {
-        // Method 1: Try postMessage with script
-        try {
-          popup.postMessage({
-            type: 'INJECT_SCRIPT',
-            script: createMetricsBookmarklet().replace('javascript:', '')
-          }, '*');
-        } catch (e) {
-          console.log('PostMessage failed:', e);
-        }
-
-        // Method 2: Try setting popup location to bookmarklet
-        setTimeout(() => {
-          try {
-            if (!popup.closed && !metricsFound) {
-              // This might work in some browsers
-              popup.location.href = createMetricsBookmarklet();
-            }
-          } catch (e) {
-            console.log('Bookmarklet injection failed:', e);
-          }
-        }, 1000);
-      };
-
-      // Listen for any alerts or console logs from popup
-      const originalAlert = window.alert;
-      window.alert = function(message) {
-        if (typeof message === 'string' && message.startsWith('METRICS:')) {
-          try {
-            const metricsData = JSON.parse(message.replace('METRICS:', ''));
-            console.log('✅ Received metrics via alert:', metricsData);
-            metricsFound = true;
-            popup.close();
-            window.alert = originalAlert; // Restore original alert
-            resolve(metricsData);
-            return;
-          } catch (e) {
-            console.log('Failed to parse metrics from alert:', e);
-          }
-        }
-        return originalAlert.apply(this, arguments);
-      };
-
-      // Start the injection attempts
-      setTimeout(() => {
-        tryInjectScript();
-        askUserToRunBookmarklet();
-      }, 2000);
-
-      // Cleanup and fallback after 30 seconds
-      setTimeout(() => {
-        if (!metricsFound) {
-          window.alert = originalAlert; // Restore original alert
-          if (!popup.closed) {
-            askUserForMetrics(popup, resolve);
-          }
-        }
-      }, 30000);
-    });
-  };
-
-  // Extract metrics from document
-  const extractMetricsFromDocument = (doc) => {
-    const findMetric = (selectors) => {
-      for (const selector of selectors) {
-        try {
-          const elements = doc.querySelectorAll(selector);
-          for (const element of elements) {
-            const text = element.textContent || element.innerText || '';
-            const match = text.match(/(\d+(?:,\d+)*)/);
-            if (match) {
-              return parseInt(match[1].replace(/,/g, ''), 10);
-            }
-          }
-        } catch (e) {
-          continue;
-        }
-      }
-      return 0;
-    };
-
-    return {
-      likes: findMetric([
-        '[data-testid="like"] span',
-        '[aria-label*="like" i] span',
-        '.r-1471scf span',
-        'span[dir="ltr"]'
-      ]),
-      retweets: findMetric([
-        '[data-testid="retweet"] span',
-        '[aria-label*="retweet" i] span',
-        '[aria-label*="repost" i] span'
-      ]),
-      replies: findMetric([
-        '[data-testid="reply"] span',
-        '[aria-label*="reply" i] span',
-        '[aria-label*="comment" i] span'
-      ])
-    };
-  };
-
-  // Fallback: Ask user to manually input metrics they can see
-  const askUserForMetrics = (popup, resolve) => {
-    // Give user time to see the tweet metrics
-    setTimeout(() => {
-      const likes = prompt(`Please look at the tweet in the popup window and enter the number of LIKES you see:\n\n(Look for the heart icon ❤️ and count the number next to it)`) || '0';
-      const retweets = prompt(`Now enter the number of RETWEETS/REPOSTS you see:\n\n(Look for the retweet icon 🔁 and count the number next to it)`) || '0';
-      const replies = prompt(`Finally, enter the number of REPLIES/COMMENTS you see:\n\n(Look for the comment icon 💬 and count the number next to it)`) || '0';
-      
-      const metrics = {
-        likes: parseInt(likes.replace(/[^\d]/g, ''), 10) || 0,
-        retweets: parseInt(retweets.replace(/[^\d]/g, ''), 10) || 0,
-        replies: parseInt(replies.replace(/[^\d]/g, ''), 10) || 0
-      };
-      
-      console.log('📝 User manually entered metrics:', metrics);
-      popup.close();
-      resolve(metrics);
-    }, 1000);
-  };
-
-  // Initialize metrics when raid is selected
-  const initializeMetrics = async () => {
-    if (!selectedRaid?.tweetUrl) return;
-    
-    showNotification('📊 Loading initial tweet metrics...', 'info');
-    const initialMetrics = await scrapeTweetMetrics(selectedRaid.tweetUrl);
-    
-    setMetricsVerification(prev => ({
-      ...prev,
-      initialMetrics,
-      currentMetrics: initialMetrics
-    }));
-  };
-
-  // Check if metrics increased for a specific action
-  const checkMetricsIncrease = (type) => {
-    const { initialMetrics, currentMetrics } = metricsVerification;
-    
-    const metric = type === 'liked' ? 'likes' : 
-                   type === 'retweeted' ? 'retweets' : 'replies';
-    
-    return currentMetrics[metric] > initialMetrics[metric];
-  };
-
-  // Handle user interaction with metrics verification
-  const handleMetricsBasedInteraction = async (type) => {
-    const tweetId = previewState.tweetId;
-    const tweetUrl = selectedRaid?.tweetUrl;
-    
-    if (!tweetId || !tweetUrl) {
-      showNotification('Tweet information not found. Please try refreshing.', 'error');
-      return;
-    }
-
-    // Set loading state
-    setMetricsVerification(prev => ({
-      ...prev,
-      loading: { ...prev.loading, [type]: true }
-    }));
-
-    // Open Twitter action
-    const twitterUrls = {
-      liked: `https://twitter.com/intent/like?tweet_id=${tweetId}`,
-      retweeted: `https://twitter.com/intent/retweet?tweet_id=${tweetId}`,
-      commented: `https://twitter.com/intent/tweet?in_reply_to=${tweetId}`
-    };
-
-    const popup = window.open(
-      twitterUrls[type],
-      `twitter_${type}`,
-      'width=600,height=700,scrollbars=yes,resizable=yes'
-    );
-
-    if (!popup) {
-      showNotification('Please allow popups to complete Twitter actions.', 'error');
-      setMetricsVerification(prev => ({
-        ...prev,
-        loading: { ...prev.loading, [type]: false }
-      }));
-      return;
-    }
-
-    showNotification(`🎯 Complete the ${type} action on Twitter, then come back here.`, 'info');
-
-    // Monitor popup closure
-    const checkPopup = setInterval(async () => {
-      if (popup.closed) {
-        clearInterval(checkPopup);
-        
-        // Wait a moment for Twitter to update metrics
-        showNotification(`🔍 Checking if ${type} metrics increased...`, 'info');
-        
-        setTimeout(async () => {
-          // Actually scrape new metrics from the tweet
-          const newMetrics = await scrapeTweetMetrics(tweetUrl);
-          const metric = type === 'liked' ? 'likes' : 
-                         type === 'retweeted' ? 'retweets' : 'replies';
-          
-          setMetricsVerification(prev => ({
-            ...prev,
-            currentMetrics: newMetrics,
-            loading: { ...prev.loading, [type]: false }
-          }));
-          
-          console.log(`🔍 Checking ${type} verification:`, {
-            initial: metricsVerification.initialMetrics[metric],
-            current: newMetrics[metric],
-            increased: newMetrics[metric] > metricsVerification.initialMetrics[metric]
-          });
-
-          const increased = newMetrics[metric] > metricsVerification.initialMetrics[metric];
-          
-          if (increased) {
-            // Mark as verified
-            setMetricsVerification(prev => ({
-              ...prev,
-              verified: { ...prev.verified, [type]: true }
-            }));
-            
-            // Update iframe interactions for UI
-            setIframeInteractions(prev => ({
-              ...prev,
-              [type]: true,
-              [`${type}Loading`]: false
-            }));
-            
-            showNotification(`✅ ${type} verified! ${metric} increased from ${metricsVerification.initialMetrics[metric]} to ${newMetrics[metric]}`, 'success');
-            
-            // Check if all actions are complete
-            const allVerified = ['liked', 'retweeted', 'commented'].every(actionType => {
-              if (actionType === type) return true; // Current action just verified
-              return metricsVerification.verified[actionType];
-            });
-            
-            if (allVerified) {
-              setIframeVerified(true);
-              showNotification('🎉 All Twitter actions verified! You can now submit.', 'success');
-            }
-            
-          } else {
-            // Check if metrics are still zero (scraping issue) vs just no increase
-            const allZero = newMetrics.likes === 0 && newMetrics.retweets === 0 && newMetrics.replies === 0;
-            const initialAllZero = metricsVerification.initialMetrics.likes === 0 && 
-                                  metricsVerification.initialMetrics.retweets === 0 && 
-                                  metricsVerification.initialMetrics.replies === 0;
-            
-            if (allZero && initialAllZero) {
-              showNotification(`⚠️ Unable to track metrics for this tweet. This might be due to privacy settings or API limitations. Please try a different tweet or contact support.`, 'warning');
-            } else if (allZero) {
-              showNotification(`⚠️ Metrics tracking failed. Trying alternative verification method...`, 'info');
-              
-              // Try to re-scrape metrics with a delay
-              setTimeout(async () => {
-                const retryMetrics = await scrapeTweetMetrics(tweetUrl);
-                console.log('🔄 Retry metrics:', retryMetrics);
-                
-                setMetricsVerification(prev => ({
-                  ...prev,
-                  currentMetrics: retryMetrics,
-                  loading: { ...prev.loading, [type]: false }
-                }));
-                
-                const retryIncreased = retryMetrics[metric] > metricsVerification.initialMetrics[metric];
-                if (retryIncreased) {
-                  setMetricsVerification(prev => ({
-                    ...prev,
-                    verified: { ...prev.verified, [type]: true }
-                  }));
-                  setIframeInteractions(prev => ({
-                    ...prev,
-                    [type]: true,
-                    [`${type}Loading`]: false
-                  }));
-                  showNotification(`✅ ${type} verified on retry!`, 'success');
-                } else {
-                  showNotification(`❌ ${type} action not detected. Please ensure you completed the action on Twitter.`, 'error');
-                }
-              }, 5000);
-            } else {
-              showNotification(`❌ ${type} action not detected. Please try again and make sure to complete the action on Twitter.`, 'error');
-              setIframeInteractions(prev => ({
-                ...prev,
-                [`${type}Loading`]: false
-              }));
-            }
-          }
-        }, 3000); // 3 second delay for metrics to update
-      }
-    }, 1000);
-
-    // Cleanup after 5 minutes
-    setTimeout(() => {
-      clearInterval(checkPopup);
-      if (!popup.closed) {
-        popup.close();
-      }
-    }, 300000);
-  };
-
   // Fetch user points data from the backend API
   const fetchUserPoints = async () => {
     if (!currentUser?.token) {
@@ -812,30 +348,9 @@ ${bookmarklet.replace('javascript:', '')}
       // Handle cases where someone might paste "@URL" by mistake
       const cleanUrl = url.startsWith('@') ? url.substring(1) : url;
       
-      // Multiple extraction patterns
-      const patterns = [
-        // Standard Twitter/X URLs
-        /(?:twitter\.com|x\.com)\/[^\/]+\/status\/(\d+)/i,
-        // Direct status URLs
-        /\/status\/(\d+)/i,
-        // Just the ID if it's a number
-        /^(\d{10,})$/,
-        // Mobile URLs
-        /mobile\.twitter\.com\/[^\/]+\/status\/(\d+)/i,
-        // International domains
-        /(?:twitter|x)\.com\/[^\/]+\/status\/(\d+)/i
-      ];
+      // Try multiple approaches to extract the tweet ID
       
-      // Try regex patterns first
-      for (const pattern of patterns) {
-        const match = cleanUrl.match(pattern);
-        if (match && match[1]) {
-          console.log('✅ Extracted tweet ID:', match[1]);
-          return match[1];
-        }
-      }
-      
-      // Try URL parsing approach
+      // Approach 1: Try to parse as a URL first
       let parsedUrl;
       try {
         // Check if URL has protocol, add if missing
@@ -855,7 +370,6 @@ ${bookmarklet.replace('javascript:', '')}
           // Extract ID from pathname
           const match = parsedUrl.pathname.match(/\/status\/(\d+)/);
           if (match && match[1]) {
-            console.log('✅ Extracted tweet ID via URL parsing:', match[1]);
             return match[1];
           }
         }
@@ -1046,14 +560,6 @@ ${bookmarklet.replace('javascript:', '')}
       commented: false
     });
     
-    // Reset metrics verification state
-    setMetricsVerification({
-      initialMetrics: { likes: null, retweets: null, replies: null },
-      currentMetrics: { likes: null, retweets: null, replies: null },
-      verified: { liked: false, retweeted: false, commented: false },
-      loading: { liked: false, retweeted: false, commented: false }
-    });
-    
     // Extract tweet ID and prepare for preview
     const tweetId = extractTweetId(raid.tweetUrl);
     if (tweetId) {
@@ -1078,11 +584,6 @@ ${bookmarklet.replace('javascript:', '')}
     
     // Clear error message but keep success message if present
     setError(null);
-    
-    // Initialize metrics tracking after a short delay
-    setTimeout(() => {
-      initializeMetrics();
-    }, 500);
     
     // Scroll to the form section for better UX
     setTimeout(() => {
@@ -1343,8 +844,98 @@ ${bookmarklet.replace('javascript:', '')}
     }
   };
 
-  // Use the new metrics-based verification
-  const handleIframeInteraction = handleMetricsBasedInteraction;
+  // Add missing handleIframeInteraction function with anti-cheat
+  const handleIframeInteraction = (type) => {
+    // Record the time when user clicks (leaves for Twitter)
+    const currentTime = Date.now();
+    setInteractionTimes(prev => ({
+      ...prev,
+      [type]: currentTime
+    }));
+    
+    // Clear any previous suspicious activity for this action
+    setSuspiciousActivity(prev => ({
+      ...prev,
+      [type]: false
+    }));
+    
+    // Show a loading state for this specific interaction
+    setIframeInteractions(prev => ({
+      ...prev,
+      [`${type}Loading`]: true
+    }));
+    
+    // Mobile detection
+    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    
+    // Create a more robust timer system for mobile
+    const createMobileTimer = () => {
+      let checkCount = 0;
+      const maxChecks = isMobile ? 15 : 10; // 15 seconds for mobile, 10 for desktop
+      
+      const checkTimer = setInterval(() => {
+        checkCount++;
+        
+        // Check if page is currently visible and focused
+        const isPageVisible = !document.hidden && document.visibilityState === 'visible';
+        const isWindowFocused = document.hasFocus ? document.hasFocus() : true; // Fallback to true if hasFocus not available
+        
+        // Additional checks for mobile browsers
+        const isTabActive = !document.hidden;
+        const isDocumentVisible = document.visibilityState !== 'hidden';
+        
+        // Combined check - page is considered "back in focus" if any of these are true
+        const userHasReturned = (isPageVisible && isWindowFocused) || 
+                               (isTabActive && isDocumentVisible) ||
+                               (isMobile && isPageVisible); // More lenient for mobile
+        
+        // If we've reached max time or page becomes visible again (user returned)
+        if (checkCount >= maxChecks || userHasReturned) {
+          clearInterval(checkTimer);
+          
+          // Check if user returned too quickly (less than 8 seconds)
+          const timeElapsed = checkCount * 1000;
+          const minTimeRequired = isMobile ? 6000 : 8000; // Slightly more lenient for mobile (6s vs 8s)
+          
+          if (timeElapsed < minTimeRequired && userHasReturned) {
+            // User returned too quickly - mark as suspicious
+            setIframeInteractions(prev => ({
+              ...prev,
+              [`${type}Loading`]: false,
+              [type]: false
+            }));
+            
+            setSuspiciousActivity(prev => ({
+              ...prev,
+              [type]: true
+            }));
+            
+            // Notification removed - continue without warning
+          } else {
+            // Mark interaction as completed
+            setIframeInteractions(prev => {
+              const newInteractions = { 
+                ...prev, 
+                [type]: true,
+                [`${type}Loading`]: false
+              };
+              
+              // Check if all three interactions are completed
+              if (newInteractions.liked && newInteractions.retweeted && newInteractions.commented) {
+                setIframeVerified(true);
+              }
+              
+              return newInteractions;
+            });
+          }
+        }
+      }, 1000); // Check every second
+    };
+    
+    // Start the improved timer
+    createMobileTimer();
+  };
 
   // Add a handler function for showing/hiding iframe
   const handleShowIframe = (show) => {
@@ -1960,62 +1551,9 @@ ${bookmarklet.replace('javascript:', '')}
                             {/* Show iframe if enabled */}
                             {showIframe ? (
                               <div className="w-full bg-gray-800/50 rounded-lg overflow-hidden border border-gray-700">
-                                <div className="text-gray-400 text-sm p-3 bg-gradient-to-r from-blue-900/30 to-green-900/30 border-l-4 border-blue-500">
-                                  <div className="flex items-start gap-2">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                    </svg>
-                                    <div>
-                                      <p className="text-sm mt-1">We track tweet engagement before and after your actions to verify completion automatically.</p>
-                                      <div className="text-xs mt-2">
-                                        <p>✅ Fully automated - no manual verification needed</p>
-                                      </div>
-                                    </div>
-                                  </div>
+                                <div className="text-gray-400 text-sm p-2 bg-gray-800">
+                                  <span className="font-semibold">Instructions:</span> Click the buttons below to interact with the tweet on Twitter. Complete all 3 interactions to verify.
                                 </div>
-                                
-                                {/* Metrics Display */}
-                                {metricsVerification.initialMetrics.likes !== null && (
-                                  <div className="p-4 bg-gray-700/30 border border-gray-600/50 rounded-lg mb-4">
-                                    <div className="flex items-start gap-2 mb-3">
-                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                      </svg>
-                                      <div className="flex-1">
-                                        <h4 className="text-sm font-medium text-green-300 mb-2">Current Tweet Metrics</h4>
-                                        <div className="grid grid-cols-3 gap-3 text-xs">
-                                          <div className="bg-gray-800/50 rounded p-2 text-center">
-                                            <div className="text-pink-400 font-medium">❤️ Likes</div>
-                                            <div className="text-lg font-bold text-white mt-1">
-                                              {metricsVerification.currentMetrics.likes}
-                                            </div>
-                                            {metricsVerification.verified.liked && (
-                                              <div className="text-green-400 text-xs mt-1">✅ Verified</div>
-                                            )}
-                                          </div>
-                                          <div className="bg-gray-800/50 rounded p-2 text-center">
-                                            <div className="text-green-400 font-medium">🔄 Retweets</div>
-                                            <div className="text-lg font-bold text-white mt-1">
-                                              {metricsVerification.currentMetrics.retweets}
-                                            </div>
-                                            {metricsVerification.verified.retweeted && (
-                                              <div className="text-green-400 text-xs mt-1">✅ Verified</div>
-                                            )}
-                                          </div>
-                                          <div className="bg-gray-800/50 rounded p-2 text-center">
-                                            <div className="text-blue-400 font-medium">💬 Replies</div>
-                                            <div className="text-lg font-bold text-white mt-1">
-                                              {metricsVerification.currentMetrics.replies}
-                                            </div>
-                                            {metricsVerification.verified.commented && (
-                                              <div className="text-green-400 text-xs mt-1">✅ Verified</div>
-                                            )}
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
                                 
                                 {/* Tweet interaction buttons */}
                                 <div 
@@ -2046,61 +1584,64 @@ ${bookmarklet.replace('javascript:', '')}
                                       
                                       <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-3">
                                         {/* Like button */}
-                                        <div className={`${metricsVerification.verified.liked ? 'bg-green-500/20 border-green-500' : metricsVerification.loading.liked ? 'bg-yellow-500/20 border-yellow-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-2 sm:p-3 text-center transition-colors w-full sm:max-w-[80px]`}>
+                                        <div className={`${iframeInteractions.liked ? 'bg-green-500/20 border-green-500' : iframeInteractions.likedLoading ? 'bg-yellow-500/20 border-yellow-500' : suspiciousActivity.liked ? 'bg-red-500/20 border-red-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-2 sm:p-3 text-center transition-colors w-full sm:max-w-[80px]`}>
                                           <button 
                                             onClick={() => {
-                                              if (!metricsVerification.verified.liked && !metricsVerification.loading.liked) {
+                                              if (!iframeInteractions.liked && !iframeInteractions.likedLoading) {
+                                                window.open(`https://twitter.com/intent/like?tweet_id=${previewState.tweetId}`, '_blank');
                                                 handleIframeInteraction('liked');
                                               }
                                             }}
-                                            disabled={metricsVerification.verified.liked || metricsVerification.loading.liked}
-                                            className={`${(metricsVerification.verified.liked || metricsVerification.loading.liked) ? 'opacity-70 cursor-default' : 'hover:text-pink-500'} w-full flex flex-row sm:flex-col items-center justify-center`}
+                                            disabled={iframeInteractions.liked || iframeInteractions.likedLoading}
+                                            className={`${(iframeInteractions.liked || iframeInteractions.likedLoading) ? 'opacity-70 cursor-default' : 'hover:text-pink-500'} w-full flex flex-row sm:flex-col items-center justify-center`}
                                           >
-                                            <svg className={`w-5 h-5 sm:w-6 sm:h-6 sm:mb-1 mr-2 sm:mr-0 ${metricsVerification.verified.liked ? 'text-pink-500' : metricsVerification.loading.liked ? 'text-yellow-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
+                                            <svg className={`w-5 h-5 sm:w-6 sm:h-6 sm:mb-1 mr-2 sm:mr-0 ${iframeInteractions.liked ? 'text-pink-500' : iframeInteractions.likedLoading ? 'text-yellow-500' : suspiciousActivity.liked ? 'text-red-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
                                               <path d="M12 21.638h-.014C9.403 21.59 1.95 14.856 1.95 8.478c0-3.064 2.525-5.754 5.403-5.754 2.29 0 3.83 1.58 4.646 2.73.814-1.148 2.354-2.73 4.645-2.73 2.88 0 5.404 2.69 5.404 5.755 0 6.376-7.454 13.11-10.037 13.157H12z"/>
                                             </svg>
-                                            <span className={`${metricsVerification.verified.liked ? 'text-green-400' : metricsVerification.loading.liked ? 'text-yellow-400' : 'text-gray-300'} font-medium text-xs`}>
-                                              {metricsVerification.verified.liked ? 'Verified ✓' : metricsVerification.loading.liked ? 'Checking...' : 'Like'}
+                                            <span className={`${iframeInteractions.liked ? 'text-green-400' : iframeInteractions.likedLoading ? 'text-yellow-400' : suspiciousActivity.liked ? 'text-red-400' : 'text-gray-300'} font-medium text-xs`}>
+                                              {iframeInteractions.liked ? 'Liked ✓' : iframeInteractions.likedLoading ? 'Verifying...' : suspiciousActivity.liked ? 'Try Again' : 'Like'}
                                             </span>
                                           </button>
                                         </div>
                                         
                                         {/* Retweet button */}
-                                        <div className={`${metricsVerification.verified.retweeted ? 'bg-green-500/20 border-green-500' : metricsVerification.loading.retweeted ? 'bg-yellow-500/20 border-yellow-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-2 sm:p-3 text-center transition-colors w-full sm:max-w-[80px]`}>
+                                        <div className={`${iframeInteractions.retweeted ? 'bg-green-500/20 border-green-500' : iframeInteractions.retweetedLoading ? 'bg-yellow-500/20 border-yellow-500' : suspiciousActivity.retweeted ? 'bg-red-500/20 border-red-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-2 sm:p-3 text-center transition-colors w-full sm:max-w-[80px]`}>
                                           <button 
                                             onClick={() => {
-                                              if (!metricsVerification.verified.retweeted && !metricsVerification.loading.retweeted) {
+                                              if (!iframeInteractions.retweeted && !iframeInteractions.retweetedLoading) {
+                                                window.open(`https://twitter.com/intent/retweet?tweet_id=${previewState.tweetId}`, '_blank');
                                                 handleIframeInteraction('retweeted');
                                               }
                                             }}
-                                            disabled={metricsVerification.verified.retweeted || metricsVerification.loading.retweeted}
-                                            className={`${(metricsVerification.verified.retweeted || metricsVerification.loading.retweeted) ? 'opacity-70 cursor-default' : 'hover:text-green-500'} w-full flex flex-row sm:flex-col items-center justify-center`}
+                                            disabled={iframeInteractions.retweeted || iframeInteractions.retweetedLoading}
+                                            className={`${(iframeInteractions.retweeted || iframeInteractions.retweetedLoading) ? 'opacity-70 cursor-default' : 'hover:text-green-500'} w-full flex flex-row sm:flex-col items-center justify-center`}
                                           >
-                                            <svg className={`w-5 h-5 sm:w-6 sm:h-6 sm:mb-1 mr-2 sm:mr-0 ${metricsVerification.verified.retweeted ? 'text-green-500' : metricsVerification.loading.retweeted ? 'text-yellow-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
+                                            <svg className={`w-5 h-5 sm:w-6 sm:h-6 sm:mb-1 mr-2 sm:mr-0 ${iframeInteractions.retweeted ? 'text-green-500' : iframeInteractions.retweetedLoading ? 'text-yellow-500' : suspiciousActivity.retweeted ? 'text-red-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
                                               <path d="M23.77 15.67c-.292-.293-.767-.293-1.06 0l-2.22 2.22V7.65c0-2.068-1.683-3.75-3.75-3.75h-5.85c-.414 0-.75.336-.75.75s.336.75.75.75h5.85c1.24 0 2.25 1.01 2.25 2.25v10.24l-2.22-2.22c-.293-.293-.768-.293-1.06 0s-.294.768 0 1.06l3.5 3.5c.145.147.337.22.53.22s.383-.072.53-.22l3.5-3.5c.294-.292.294-.767 0-1.06zm-10.66 3.28H7.26c-1.24 0-2.25-1.01-2.25-2.25V6.46l2.22 2.22c.148.147.34.22.532.22s.384-.073.53-.22c.293-.293.293-.768 0-1.06l-3.5-3.5c-.293-.294-.768-.294-1.06 0l-3.5 3.5c-.294.292-.294.767 0 1.06s.767.293 1.06 0l2.22-2.22V16.7c0 2.068 1.683 3.75 3.75 3.75h5.85c.414 0 .75-.336.75-.75s-.337-.75-.75-.75z"></path>
                                             </svg>
-                                            <span className={`${metricsVerification.verified.retweeted ? 'text-green-400' : metricsVerification.loading.retweeted ? 'text-yellow-400' : 'text-gray-300'} font-medium text-xs`}>
-                                              {metricsVerification.verified.retweeted ? 'Verified ✓' : metricsVerification.loading.retweeted ? 'Checking...' : 'Retweet'}
+                                            <span className={`${iframeInteractions.retweeted ? 'text-green-400' : iframeInteractions.retweetedLoading ? 'text-yellow-400' : suspiciousActivity.retweeted ? 'text-red-400' : 'text-gray-300'} font-medium text-xs`}>
+                                              {iframeInteractions.retweeted ? 'Retweeted ✓' : iframeInteractions.retweetedLoading ? 'Verifying...' : suspiciousActivity.retweeted ? 'Try Again' : 'Retweet'}
                                             </span>
                                           </button>
                                         </div>
                                         
                                         {/* Reply button */}
-                                        <div className={`${metricsVerification.verified.commented ? 'bg-green-500/20 border-green-500' : metricsVerification.loading.commented ? 'bg-yellow-500/20 border-yellow-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-2 sm:p-3 text-center transition-colors w-full sm:max-w-[80px]`}>
+                                        <div className={`${iframeInteractions.commented ? 'bg-green-500/20 border-green-500' : iframeInteractions.commentedLoading ? 'bg-yellow-500/20 border-yellow-500' : suspiciousActivity.commented ? 'bg-red-500/20 border-red-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-2 sm:p-3 text-center transition-colors w-full sm:max-w-[80px]`}>
                                           <button 
                                             onClick={() => {
-                                              if (!metricsVerification.verified.commented && !metricsVerification.loading.commented) {
+                                              if (!iframeInteractions.commented && !iframeInteractions.commentedLoading) {
+                                                window.open(`https://twitter.com/intent/tweet?in_reply_to=${previewState.tweetId}`, '_blank');
                                                 handleIframeInteraction('commented');
                                               }
                                             }}
-                                            disabled={metricsVerification.verified.commented || metricsVerification.loading.commented}
-                                            className={`${(metricsVerification.verified.commented || metricsVerification.loading.commented) ? 'opacity-70 cursor-default' : 'hover:text-blue-500'} w-full flex flex-row sm:flex-col items-center justify-center`}
+                                            disabled={iframeInteractions.commented || iframeInteractions.commentedLoading}
+                                            className={`${(iframeInteractions.commented || iframeInteractions.commentedLoading) ? 'opacity-70 cursor-default' : 'hover:text-blue-500'} w-full flex flex-row sm:flex-col items-center justify-center`}
                                           >
-                                            <svg className={`w-5 h-5 sm:w-6 sm:h-6 sm:mb-1 mr-2 sm:mr-0 ${metricsVerification.verified.commented ? 'text-blue-500' : metricsVerification.loading.commented ? 'text-yellow-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
+                                            <svg className={`w-5 h-5 sm:w-6 sm:h-6 sm:mb-1 mr-2 sm:mr-0 ${iframeInteractions.commented ? 'text-blue-500' : iframeInteractions.commentedLoading ? 'text-yellow-500' : suspiciousActivity.commented ? 'text-red-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
                                               <path d="M14.046 2.242l-4.148-.01h-.002c-4.374 0-7.8 3.427-7.8 7.802 0 4.098 3.186 7.206 7.465 7.37v3.828c0 .108.044.286.12.403.142.225.384.347.632.347.138 0 .277-.038.402-.118.264-.168 6.473-4.14 8.088-5.506 1.902-1.61 3.04-3.97 3.043-6.312v-.017c-.006-4.367-3.43-7.787-7.8-7.788zm3.787 12.972c-1.134.96-4.862 3.405-6.772 4.643V16.67c0-.414-.335-.75-.75-.75h-.396c-3.66 0-6.318-2.476-6.318-5.886 0-3.534 2.768-6.302 6.3-6.302l4.147.01h.002c3.532 0 6.3 2.766 6.302 6.296-.003 1.91-.942 3.844-2.514 5.176z"></path>
                                             </svg>
-                                            <span className={`${metricsVerification.verified.commented ? 'text-green-400' : metricsVerification.loading.commented ? 'text-yellow-400' : 'text-gray-300'} font-medium text-xs`}>
-                                              {metricsVerification.verified.commented ? 'Verified ✓' : metricsVerification.loading.commented ? 'Checking...' : 'Reply'}
+                                            <span className={`${iframeInteractions.commented ? 'text-green-400' : iframeInteractions.commentedLoading ? 'text-yellow-400' : suspiciousActivity.commented ? 'text-red-400' : 'text-gray-300'} font-medium text-xs`}>
+                                              {iframeInteractions.commented ? 'Replied ✓' : iframeInteractions.commentedLoading ? 'Verifying...' : suspiciousActivity.commented ? 'Try Again' : 'Reply'}
                                             </span>
                                           </button>
                                         </div>
