@@ -7,6 +7,21 @@
   NPM_FLAGS = "--legacy-peer-deps"
   DISABLE_ESLINT_PLUGIN = "true"
 
+# Ensure sitemap.xml is served with correct content-type
+[[headers]]
+  for = "/sitemap.xml"
+  [headers.values]
+    Content-Type = "application/xml; charset=UTF-8"
+    X-Robots-Tag = "noarchive"
+
+# Specific rule for sitemap.xml - must come before other redirects
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/sitemap.xml"
+  status = 200
+  force = true
+  conditions = {Path = "/sitemap.xml"}
+
 # Function to prerender blog posts for social media crawlers
 [functions]
   directory = "functions"
@@ -31,19 +46,6 @@
   from = "/service/*"
   to = "/service.html"
   status = 200
-
-# Ensure sitemap.xml is served with correct content-type
-[[headers]]
-  for = "/sitemap.xml"
-  [headers.values]
-    Content-Type = "application/xml"
-
-# Specific rule for sitemap.xml
-[[redirects]]
-  from = "/sitemap.xml"
-  to = "/sitemap.xml"
-  status = 200
-  force = true
 
 # Default SPA redirect (keep this last)
 [[redirects]]
