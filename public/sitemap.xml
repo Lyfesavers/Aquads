@@ -43,23 +43,4 @@
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
-  <!-- Blog categories and popular pages -->
-  <url>
-    <loc>https://aquads.xyz/how-to?category=tutorials</loc>
-    <lastmod>2025-06-06</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://aquads.xyz/how-to?category=guides</loc>
-    <lastmod>2025-06-06</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://aquads.xyz/marketplace?category=all</loc>
-    <lastmod>2025-06-06</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
 </urlset> 
