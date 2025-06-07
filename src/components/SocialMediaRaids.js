@@ -101,19 +101,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     tweetId: null
   });
 
-  // Add new state for URL verification
-  const [urlVerification, setUrlVerification] = useState({
-    likeUrl: '',
-    retweetUrl: '',
-    commentUrl: ''
-  });
-  const [urlVerificationStatus, setUrlVerificationStatus] = useState({
-    likeUrl: false,
-    retweetUrl: false,
-    commentUrl: false
-  });
-  const [showUrlVerification, setShowUrlVerification] = useState(false);
-
   // Fetch user points data from the backend API
   const fetchUserPoints = async () => {
     if (!currentUser?.token) {
@@ -1104,64 +1091,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     }
   };
 
-  // Replace the timer-based verification with URL verification
-  const handleUrlVerification = (type, url) => {
-    // Simple URL validation for Twitter interactions
-    const isValidTwitterUrl = (url) => {
-      if (!url) return false;
-      
-      const tweetIdPattern = /\/status\/(\d+)/;
-      const match = url.match(tweetIdPattern);
-      
-      if (!match) return false;
-      
-      // Extract the original tweet ID and compare
-      const originalTweetId = extractTweetId(selectedRaid?.tweetUrl);
-      const providedTweetId = match[1];
-      
-      // For likes and retweets, the URL should contain the original tweet ID
-      if (type === 'liked' || type === 'retweeted') {
-        return providedTweetId === originalTweetId;
-      }
-      
-      // For comments, it's a different tweet (reply), so just validate format
-      if (type === 'commented') {
-        return url.includes('twitter.com') || url.includes('x.com');
-      }
-      
-      return false;
-    };
-
-    const isValid = isValidTwitterUrl(url);
-    
-    setUrlVerification(prev => ({
-      ...prev,
-      [`${type}Url`]: url
-    }));
-    
-    setUrlVerificationStatus(prev => ({
-      ...prev,
-      [`${type}Url`]: isValid
-    }));
-    
-    // Update iframe interactions based on URL verification
-    setIframeInteractions(prev => {
-      const newInteractions = {
-        ...prev,
-        [type]: isValid
-      };
-      
-      // Check if all three interactions are completed
-      if (newInteractions.liked && newInteractions.retweeted && newInteractions.commented) {
-        setIframeVerified(true);
-      } else {
-        setIframeVerified(false);
-      }
-      
-      return newInteractions;
-    });
-  };
-
   if (loading && raids.length === 0) {
     return <div className="text-center p-4">Loading Twitter raids...</div>;
   }
@@ -1611,17 +1540,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                               : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                           }`}
                         >
-                          Quick Verify (Buttons)
-                        </button>
-                        <button
-                          onClick={() => setShowUrlVerification(!showUrlVerification)}
-                          className={`flex-1 py-2 px-4 text-center text-sm font-medium ${
-                            showUrlVerification 
-                              ? 'bg-green-600/30 text-green-400 border-b-2 border-green-500' 
-                              : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                          }`}
-                        >
-                          URL Verification (Recommended)
+                          {showIframe ? 'Hide Interaction Buttons' : 'Show Interaction Buttons'}
                         </button>
                       </div>
                       
@@ -1629,124 +1548,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                         {/* Tweet preview and interaction UI */}
                         {previewState.tweetId ? (
                           <>
-                            {/* Show URL verification form */}
-                            {showUrlVerification ? (
-                              <div className="w-full bg-gray-800/50 rounded-lg border border-gray-700 p-4">
-                                <div className="text-gray-400 text-sm mb-4 bg-green-500/10 border border-green-500/30 rounded p-3">
-                                  <div className="flex items-start">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <div>
-                                      <p className="font-semibold text-green-400 mb-1">📋 URL Verification Instructions:</p>
-                                      <ol className="list-decimal list-inside space-y-1 text-xs">
-                                        <li>Click "Open Original Tweet" above to go to Twitter</li>
-                                        <li>Complete each action (like, retweet, comment) on Twitter</li>
-                                        <li>After each action, copy the browser URL and paste it below</li>
-                                        <li>All 3 URLs must be verified to complete the task</li>
-                                      </ol>
-                                    </div>
-                                  </div>
-                                </div>
-                                
-                                <div className="space-y-4">
-                                  {/* Like URL Input */}
-                                  <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                                      ❤️ Step 1: Like the Tweet
-                                    </label>
-                                    <div className="flex gap-2">
-                                      <input
-                                        type="url"
-                                        placeholder="After liking, paste the Twitter page URL here..."
-                                        value={urlVerification.likeUrl}
-                                        onChange={(e) => handleUrlVerification('liked', e.target.value)}
-                                        className="flex-1 bg-gray-800 border border-gray-600 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-red-400 focus:outline-none"
-                                      />
-                                      {urlVerificationStatus.likeUrl && (
-                                        <div className="flex items-center px-2">
-                                          <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                          </svg>
-                                        </div>
-                                      )}
-                                    </div>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                      Like the original tweet, then copy the URL from your browser
-                                    </p>
-                                  </div>
-                                  
-                                  {/* Retweet URL Input */}
-                                  <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                                      🔄 Step 2: Retweet the Tweet
-                                    </label>
-                                    <div className="flex gap-2">
-                                      <input
-                                        type="url"
-                                        placeholder="After retweeting, paste the Twitter page URL here..."
-                                        value={urlVerification.retweetUrl}
-                                        onChange={(e) => handleUrlVerification('retweeted', e.target.value)}
-                                        className="flex-1 bg-gray-800 border border-gray-600 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-green-400 focus:outline-none"
-                                      />
-                                      {urlVerificationStatus.retweetUrl && (
-                                        <div className="flex items-center px-2">
-                                          <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                          </svg>
-                                        </div>
-                                      )}
-                                    </div>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                      Retweet the original tweet, then copy the URL from your browser
-                                    </p>
-                                  </div>
-                                  
-                                  {/* Comment URL Input */}
-                                  <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                                      💬 Step 3: Reply to the Tweet
-                                    </label>
-                                    <div className="flex gap-2">
-                                      <input
-                                        type="url"
-                                        placeholder="After commenting, paste the URL of your reply here..."
-                                        value={urlVerification.commentUrl}
-                                        onChange={(e) => handleUrlVerification('commented', e.target.value)}
-                                        className="flex-1 bg-gray-800 border border-gray-600 rounded px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-blue-400 focus:outline-none"
-                                      />
-                                      {urlVerificationStatus.commentUrl && (
-                                        <div className="flex items-center px-2">
-                                          <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                          </svg>
-                                        </div>
-                                      )}
-                                    </div>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                      Reply to the original tweet, then copy the URL of your specific reply
-                                    </p>
-                                  </div>
-                                  
-                                  {/* Progress indicator */}
-                                  <div className="mt-4 p-3 bg-gray-900/50 rounded-lg">
-                                    <div className="flex justify-between items-center mb-2">
-                                      <span className="text-sm font-medium text-gray-300">Progress</span>
-                                      <span className="text-sm text-gray-400">
-                                        {(urlVerificationStatus.likeUrl ? 1 : 0) + 
-                                         (urlVerificationStatus.retweetUrl ? 1 : 0) + 
-                                         (urlVerificationStatus.commentUrl ? 1 : 0)}/3 completed
-                                      </span>
-                                    </div>
-                                    <div className="flex space-x-2">
-                                      <div className={`w-3 h-3 rounded-full ${urlVerificationStatus.likeUrl ? 'bg-green-500' : 'bg-gray-600'}`}></div>
-                                      <div className={`w-3 h-3 rounded-full ${urlVerificationStatus.retweetUrl ? 'bg-green-500' : 'bg-gray-600'}`}></div>
-                                      <div className={`w-3 h-3 rounded-full ${urlVerificationStatus.commentUrl ? 'bg-green-500' : 'bg-gray-600'}`}></div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            ) : showIframe ? (
+                            {/* Show iframe if enabled */}
+                            {showIframe ? (
                               <div className="w-full bg-gray-800/50 rounded-lg overflow-hidden border border-gray-700">
                                 <div className="text-gray-400 text-sm p-2 bg-gray-800">
                                   <span className="font-semibold">Instructions:</span> Click the buttons below to interact with the tweet on Twitter. Complete all 3 interactions to verify.
