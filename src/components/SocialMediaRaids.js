@@ -109,152 +109,281 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     loading: { liked: false, retweeted: false, commented: false }
   });
 
-  // Enhanced tweet metrics scraping with multiple methods
+  // Real metrics scraping using popup window + content script injection
   const scrapeTweetMetrics = async (tweetUrl) => {
-    const methods = [
-      // Method 1: Twitter oEmbed API (most reliable)
-      async () => {
-        try {
-          const response = await fetch(`https://publish.twitter.com/oembed?url=${encodeURIComponent(tweetUrl)}&omit_script=1`);
-          const data = await response.json();
-          return parseOEmbedHTML(data.html);
-        } catch (e) {
-          throw new Error('oEmbed failed');
-        }
-      },
+    return new Promise(async (resolve) => {
+      console.log('📊 Attempting to scrape real metrics from:', tweetUrl);
       
-      // Method 2: Direct scraping with updated patterns
-      async () => {
+      // First try: Attempt to get tweet ID and use alternative methods
+      const tweetId = extractTweetId(tweetUrl);
+      if (tweetId) {
         try {
-          const proxyUrl = 'https://api.allorigins.win/raw?url=';
-          const response = await fetch(proxyUrl + encodeURIComponent(tweetUrl));
-          const html = await response.text();
-          return parseTwitterHTML(html);
-        } catch (e) {
-          throw new Error('Direct scraping failed');
-        }
-      },
-      
-      // Method 3: Alternative proxy
-      async () => {
-        try {
-          const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-          const response = await fetch(proxyUrl + tweetUrl);
-          const html = await response.text();
-          return parseTwitterHTML(html);
-        } catch (e) {
-          throw new Error('Alternative proxy failed');
-        }
-      },
-      
-      // Method 4: Syndication endpoint (Twitter's public API)
-      async () => {
-        try {
-          const tweetId = extractTweetId(tweetUrl);
-          if (!tweetId) throw new Error('No tweet ID');
+          // Try using Twitter's oEmbed API (might work for public tweets)
+          const oembedUrl = `https://publish.twitter.com/oembed?url=${encodeURIComponent(tweetUrl)}`;
+          const response = await fetch(oembedUrl);
           
-          const syndicationUrl = `https://cdn.syndication.twimg.com/tweet-result?id=${tweetId}&lang=en`;
-          const response = await fetch(syndicationUrl);
-          const data = await response.json();
-          
-          return {
-            likes: data.favorite_count || 0,
-            retweets: data.retweet_count || 0,
-            replies: data.reply_count || 0
-          };
+          if (response.ok) {
+            const data = await response.json();
+            console.log('📊 oEmbed data received:', data);
+            
+            // oEmbed doesn't provide metrics, but we can try other approaches
+            // Fall through to popup method
+          }
         } catch (e) {
-          throw new Error('Syndication API failed');
+          console.log('oEmbed failed, trying popup method:', e);
         }
       }
-    ];
+      
+      // Main method: Open tweet in a popup window
+      const popup = window.open(
+        tweetUrl,
+        'metrics_scraper',
+        'width=900,height=800,scrollbars=yes,resizable=yes'
+      );
 
-    // Try each method until one succeeds
-    for (let i = 0; i < methods.length; i++) {
-      try {
-        console.log(`Trying metrics method ${i + 1}...`);
-        const metrics = await methods[i]();
+      if (!popup) {
+        console.log('❌ Popup blocked by browser');
+        showNotification('Please allow popups to verify tweet metrics.', 'error');
+        resolve({ likes: 0, retweets: 0, replies: 0 });
+        return;
+      }
+
+      let metricsFound = false;
+      
+      // Create a bookmarklet-style script that can run in the popup context
+      const createMetricsBookmarklet = () => {
+        return `
+          javascript:(function(){
+            const getMetrics = () => {
+              // Updated Twitter selectors for 2024
+              const findMetric = (selectors) => {
+                for (const selector of selectors) {
+                  try {
+                    const elements = document.querySelectorAll(selector);
+                    for (const element of elements) {
+                      let text = element.textContent || element.innerText || '';
+                      // Look for numbers in various formats
+                      const match = text.match(/(\\d+(?:[.,]\\d+)*[KMB]?)/i);
+                      if (match) {
+                        let num = match[1];
+                        // Convert K, M, B to actual numbers
+                        if (num.includes('K')) num = parseFloat(num) * 1000;
+                        else if (num.includes('M')) num = parseFloat(num) * 1000000;
+                        else if (num.includes('B')) num = parseFloat(num) * 1000000000;
+                        else num = parseInt(num.replace(/[.,]/g, ''), 10);
+                        if (!isNaN(num) && num >= 0) return Math.floor(num);
+                      }
+                    }
+                  } catch (e) { continue; }
+                }
+                return 0;
+              };
+
+              // Modern Twitter selectors (as of 2024)
+              const likes = findMetric([
+                '[data-testid="like"] span[data-testid="app-text-transition-container"] span',
+                '[data-testid="like"] span',
+                '[aria-label*="Like" i] span',
+                '[aria-label*="♥" i]',
+                'button[data-testid="like"] div[dir="auto"]',
+                'div[role="button"][aria-label*="Like"] span'
+              ]);
+
+              const retweets = findMetric([
+                '[data-testid="retweet"] span[data-testid="app-text-transition-container"] span',
+                '[data-testid="retweet"] span',
+                '[aria-label*="Repost" i] span',
+                '[aria-label*="Retweet" i] span',
+                'button[data-testid="retweet"] div[dir="auto"]',
+                'div[role="button"][aria-label*="Repost"] span'
+              ]);
+
+              const replies = findMetric([
+                '[data-testid="reply"] span[data-testid="app-text-transition-container"] span',
+                '[data-testid="reply"] span',
+                '[aria-label*="Reply" i] span',
+                '[aria-label*="Comment" i] span',
+                'button[data-testid="reply"] div[dir="auto"]',
+                'div[role="button"][aria-label*="Reply"] span'
+              ]);
+
+              return { likes, retweets, replies };
+            };
+
+            // Try multiple times with delay
+            let attempts = 0;
+            const maxAttempts = 10;
+            
+            const tryGetMetrics = () => {
+              attempts++;
+              const metrics = getMetrics();
+              
+              // Check if we got any meaningful data
+              if (metrics.likes > 0 || metrics.retweets > 0 || metrics.replies > 0 || attempts >= maxAttempts) {
+                console.log('Tweet metrics found:', metrics);
+                alert('METRICS:' + JSON.stringify(metrics));
+                return metrics;
+              }
+              
+              // Try again after a delay
+              setTimeout(tryGetMetrics, 500);
+            };
+            
+            // Start after page loads
+            setTimeout(tryGetMetrics, 2000);
+          })();
+        `;
+      };
+
+      // Function to ask user to run the bookmarklet
+      const askUserToRunBookmarklet = () => {
+        const bookmarklet = createMetricsBookmarklet();
         
-        // Validate that we got real data
-        if (metrics.likes > 0 || metrics.retweets > 0 || metrics.replies > 0 || 
-            (metrics.likes === 0 && metrics.retweets === 0 && metrics.replies === 0)) {
-          console.log(`✅ Method ${i + 1} succeeded:`, metrics);
-          return metrics;
-        }
-      } catch (error) {
-        console.log(`❌ Method ${i + 1} failed:`, error.message);
-        continue;
-      }
-    }
+        // Show instructions to user
+        setTimeout(() => {
+          if (!popup.closed && !metricsFound) {
+            alert(`
+To get accurate metrics:
 
-    // If all methods fail, return zeros but log warning
-    console.warn('⚠️ All metrics scraping methods failed, returning zeros');
-    return { likes: 0, retweets: 0, replies: 0 };
+1. In the Twitter popup window, press F12 to open Developer Tools
+2. Go to the Console tab
+3. Paste this code and press Enter:
+
+${bookmarklet.replace('javascript:', '')}
+
+4. Wait for the alert with metrics, then come back here
+            `);
+            
+            // Wait for user to complete, then ask for metrics
+            setTimeout(() => {
+              if (!popup.closed && !metricsFound) {
+                askUserForMetrics(popup, resolve);
+              }
+            }, 10000);
+          }
+        }, 3000);
+      };
+
+      // Backup: Try to inject script via different methods
+      const tryInjectScript = () => {
+        // Method 1: Try postMessage with script
+        try {
+          popup.postMessage({
+            type: 'INJECT_SCRIPT',
+            script: createMetricsBookmarklet().replace('javascript:', '')
+          }, '*');
+        } catch (e) {
+          console.log('PostMessage failed:', e);
+        }
+
+        // Method 2: Try setting popup location to bookmarklet
+        setTimeout(() => {
+          try {
+            if (!popup.closed && !metricsFound) {
+              // This might work in some browsers
+              popup.location.href = createMetricsBookmarklet();
+            }
+          } catch (e) {
+            console.log('Bookmarklet injection failed:', e);
+          }
+        }, 1000);
+      };
+
+      // Listen for any alerts or console logs from popup
+      const originalAlert = window.alert;
+      window.alert = function(message) {
+        if (typeof message === 'string' && message.startsWith('METRICS:')) {
+          try {
+            const metricsData = JSON.parse(message.replace('METRICS:', ''));
+            console.log('✅ Received metrics via alert:', metricsData);
+            metricsFound = true;
+            popup.close();
+            window.alert = originalAlert; // Restore original alert
+            resolve(metricsData);
+            return;
+          } catch (e) {
+            console.log('Failed to parse metrics from alert:', e);
+          }
+        }
+        return originalAlert.apply(this, arguments);
+      };
+
+      // Start the injection attempts
+      setTimeout(() => {
+        tryInjectScript();
+        askUserToRunBookmarklet();
+      }, 2000);
+
+      // Cleanup and fallback after 30 seconds
+      setTimeout(() => {
+        if (!metricsFound) {
+          window.alert = originalAlert; // Restore original alert
+          if (!popup.closed) {
+            askUserForMetrics(popup, resolve);
+          }
+        }
+      }, 30000);
+    });
   };
 
-  // Parse Twitter HTML with comprehensive regex patterns
-  const parseTwitterHTML = (html) => {
-    const extractMetric = (patterns) => {
-      for (const pattern of patterns) {
-        // Reset regex lastIndex to avoid issues with global flag
-        pattern.lastIndex = 0;
-        const match = pattern.exec(html);
-        if (match && match[1]) {
-          const count = parseInt(match[1].replace(/[,\s]/g, ''), 10);
-          if (!isNaN(count)) return count;
+  // Extract metrics from document
+  const extractMetricsFromDocument = (doc) => {
+    const findMetric = (selectors) => {
+      for (const selector of selectors) {
+        try {
+          const elements = doc.querySelectorAll(selector);
+          for (const element of elements) {
+            const text = element.textContent || element.innerText || '';
+            const match = text.match(/(\d+(?:,\d+)*)/);
+            if (match) {
+              return parseInt(match[1].replace(/,/g, ''), 10);
+            }
+          }
+        } catch (e) {
+          continue;
         }
       }
       return 0;
     };
 
-    // Updated patterns for current Twitter HTML structure
-    const likePatterns = [
-      /"favoriteCount":(\d+)/gi,
-      /"favorite_count":(\d+)/gi,
-      /data-testid="like"[^>]*aria-label="[^"]*?(\d+(?:,\d+)*)/gi,
-      /aria-label="(\d+(?:,\d+)*)[^"]*(?:like|Like)/gi,
-      /"engagement":\s*{[^}]*"likeCount":(\d+)/gi,
-      /\"likeCount\":(\d+)/gi,
-      /like[_-]?count[\"']:\s*[\"']?(\d+)/gi
-    ];
-
-    const retweetPatterns = [
-      /"retweetCount":(\d+)/gi,
-      /"retweet_count":(\d+)/gi,
-      /data-testid="retweet"[^>]*aria-label="[^"]*?(\d+(?:,\d+)*)/gi,
-      /aria-label="(\d+(?:,\d+)*)[^"]*(?:retweet|Retweet|reposts?)/gi,
-      /"engagement":\s*{[^}]*"retweetCount":(\d+)/gi,
-      /\"retweetCount\":(\d+)/gi,
-      /retweet[_-]?count[\"']:\s*[\"']?(\d+)/gi
-    ];
-
-    const replyPatterns = [
-      /"replyCount":(\d+)/gi,
-      /"reply_count":(\d+)/gi,
-      /data-testid="reply"[^>]*aria-label="[^"]*?(\d+(?:,\d+)*)/gi,
-      /aria-label="(\d+(?:,\d+)*)[^"]*(?:repl|Reply|comment)/gi,
-      /"engagement":\s*{[^}]*"replyCount":(\d+)/gi,
-      /\"replyCount\":(\d+)/gi,
-      /reply[_-]?count[\"']:\s*[\"']?(\d+)/gi
-    ];
-
-    const result = {
-      likes: extractMetric(likePatterns),
-      retweets: extractMetric(retweetPatterns),
-      replies: extractMetric(replyPatterns)
+    return {
+      likes: findMetric([
+        '[data-testid="like"] span',
+        '[aria-label*="like" i] span',
+        '.r-1471scf span',
+        'span[dir="ltr"]'
+      ]),
+      retweets: findMetric([
+        '[data-testid="retweet"] span',
+        '[aria-label*="retweet" i] span',
+        '[aria-label*="repost" i] span'
+      ]),
+      replies: findMetric([
+        '[data-testid="reply"] span',
+        '[aria-label*="reply" i] span',
+        '[aria-label*="comment" i] span'
+      ])
     };
-
-    console.log('Parsed HTML metrics:', result);
-    return result;
   };
 
-  // Parse oEmbed HTML response
-  const parseOEmbedHTML = (embedHtml) => {
-    if (!embedHtml) return { likes: 0, retweets: 0, replies: 0 };
-    
-    // Extract metrics from embed HTML
-    const result = parseTwitterHTML(embedHtml);
-    console.log('Parsed oEmbed metrics:', result);
-    return result;
+  // Fallback: Ask user to manually input metrics they can see
+  const askUserForMetrics = (popup, resolve) => {
+    // Give user time to see the tweet metrics
+    setTimeout(() => {
+      const likes = prompt(`Please look at the tweet in the popup window and enter the number of LIKES you see:\n\n(Look for the heart icon ❤️ and count the number next to it)`) || '0';
+      const retweets = prompt(`Now enter the number of RETWEETS/REPOSTS you see:\n\n(Look for the retweet icon 🔁 and count the number next to it)`) || '0';
+      const replies = prompt(`Finally, enter the number of REPLIES/COMMENTS you see:\n\n(Look for the comment icon 💬 and count the number next to it)`) || '0';
+      
+      const metrics = {
+        likes: parseInt(likes.replace(/[^\d]/g, ''), 10) || 0,
+        retweets: parseInt(retweets.replace(/[^\d]/g, ''), 10) || 0,
+        replies: parseInt(replies.replace(/[^\d]/g, ''), 10) || 0
+      };
+      
+      console.log('📝 User manually entered metrics:', metrics);
+      popup.close();
+      resolve(metrics);
+    }, 1000);
   };
 
   // Initialize metrics when raid is selected
@@ -330,21 +459,20 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         showNotification(`🔍 Checking if ${type} metrics increased...`, 'info');
         
         setTimeout(async () => {
+          // Actually scrape new metrics from the tweet
           const newMetrics = await scrapeTweetMetrics(tweetUrl);
+          const metric = type === 'liked' ? 'likes' : 
+                         type === 'retweeted' ? 'retweets' : 'replies';
           
           setMetricsVerification(prev => ({
             ...prev,
             currentMetrics: newMetrics,
             loading: { ...prev.loading, [type]: false }
           }));
-
-          // Check if this specific metric increased
-          const metric = type === 'liked' ? 'likes' : 
-                         type === 'retweeted' ? 'retweets' : 'replies';
           
           console.log(`🔍 Checking ${type} verification:`, {
             initial: metricsVerification.initialMetrics[metric],
-            final: newMetrics[metric],
+            current: newMetrics[metric],
             increased: newMetrics[metric] > metricsVerification.initialMetrics[metric]
           });
 
@@ -1838,10 +1966,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                                     </svg>
                                     <div>
-                                      <span className="font-semibold text-blue-400">📊 Metrics-Based Verification:</span>
                                       <p className="text-sm mt-1">We track tweet engagement before and after your actions to verify completion automatically.</p>
                                       <div className="text-xs mt-2">
-                                        <p>✅ Real proof of completion through metrics increase</p>
                                         <p>✅ Fully automated - no manual verification needed</p>
                                       </div>
                                     </div>
