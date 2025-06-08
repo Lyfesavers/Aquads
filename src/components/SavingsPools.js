@@ -179,7 +179,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
   };
 
   const checkWalletConnection = async () => {
-    // Check if WalletConnect provider exists
+    // Check if WalletConnect provider exists and is connected
     if (walletProvider) {
       try {
         const accounts = await walletProvider.request({ method: 'eth_accounts' });
@@ -189,19 +189,6 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         }
       } catch (error) {
         console.error('Error checking WalletConnect:', error);
-      }
-    }
-    
-    // Fallback to MetaMask/window.ethereum
-    if (typeof window.ethereum !== 'undefined') {
-      try {
-        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-        if (accounts.length > 0) {
-          setWalletConnected(true);
-          setConnectedAddress(accounts[0]);
-        }
-      } catch (error) {
-        console.error('Error checking wallet:', error);
       }
     }
   };
@@ -230,59 +217,37 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     }
   };
 
-  // Connect wallet with WalletConnect support
-  const connectWallet = async (walletType = 'auto') => {
+  // Connect wallet via WalletConnect only
+  const connectWallet = async () => {
     try {
-      if (walletType === 'walletconnect' || walletType === 'auto') {
-        // Try WalletConnect first
-        let provider = walletProvider;
-        if (!provider) {
-          provider = await initWalletConnect();
-        }
-        
-        if (provider) {
-          const accounts = await provider.enable();
-          if (accounts.length > 0) {
-            setWalletProvider(provider);
-            setWalletConnected(true);
-            setConnectedAddress(accounts[0]);
-            setShowWalletModal(false);
-            showNotification('Wallet connected successfully!', 'success');
-            
-            // Check network
-            const chainId = await provider.request({ method: 'eth_chainId' });
-            if (chainId !== '0x1') {
-              showNotification('Please switch to Ethereum Mainnet for the best experience', 'warning');
-            }
-            return;
-          }
-        }
+      let provider = walletProvider;
+      if (!provider) {
+        provider = await initWalletConnect();
       }
       
-      // Fallback to MetaMask/injected wallet
-      if (typeof window.ethereum !== 'undefined') {
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      if (provider) {
+        const accounts = await provider.enable();
         if (accounts.length > 0) {
+          setWalletProvider(provider);
           setWalletConnected(true);
           setConnectedAddress(accounts[0]);
-          setShowWalletModal(false);
           showNotification('Wallet connected successfully!', 'success');
           
-          // Check if we're on Ethereum mainnet
-          const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+          // Check network
+          const chainId = await provider.request({ method: 'eth_chainId' });
           if (chainId !== '0x1') {
             showNotification('Please switch to Ethereum Mainnet for the best experience', 'warning');
           }
         }
       } else {
-        showNotification('Please install MetaMask or use WalletConnect', 'error');
+        showNotification('Failed to initialize WalletConnect. Please try again.', 'error');
       }
     } catch (error) {
       console.error('Error connecting wallet:', error);
       if (error.code === 4001) {
         showNotification('Please approve the connection request', 'error');
       } else {
-        showNotification('Failed to connect wallet', 'error');
+        showNotification('Failed to connect wallet. Please try again.', 'error');
       }
     }
   };
@@ -317,13 +282,14 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     setIsDepositing(true);
     
     try {
-      // Get user's wallet and provider (support both WalletConnect and MetaMask)
-      const web3Provider = walletProvider || window.ethereum;
-      if (!web3Provider) {
-        showNotification('No wallet provider found', 'error');
+      // Get user's wallet and provider (WalletConnect only)
+      if (!walletProvider) {
+        showNotification('Please connect your wallet first', 'error');
         setIsDepositing(false);
         return;
       }
+      
+      const web3Provider = walletProvider;
       
       const provider = new ethers.BrowserProvider(web3Provider);
       const signer = await provider.getSigner();
@@ -600,13 +566,14 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     setLoading(true);
     
     try {
-      // Get user's wallet and provider (support both WalletConnect and MetaMask)
-      const web3Provider = walletProvider || window.ethereum;
-      if (!web3Provider) {
-        showNotification('No wallet provider found', 'error');
+      // Get user's wallet and provider (WalletConnect only)
+      if (!walletProvider) {
+        showNotification('Please connect your wallet first', 'error');
         setLoading(false);
         return;
       }
+      
+      const web3Provider = walletProvider;
       
       const provider = new ethers.BrowserProvider(web3Provider);
       const signer = await provider.getSigner();
@@ -762,21 +729,18 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
               ⚠️ <strong>Real Money Warning:</strong> This will make actual blockchain transactions with real funds and gas fees.
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="flex justify-center">
             <button
-              onClick={() => connectWallet('walletconnect')}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors flex items-center gap-2 justify-center"
+              onClick={connectWallet}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg transition-colors flex items-center gap-2 justify-center font-semibold"
             >
-              <FaWallet className="w-4 h-4" />
-              WalletConnect
-            </button>
-            <button
-              onClick={() => connectWallet('metamask')}
-              className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg transition-colors flex items-center gap-2 justify-center"
-            >
-              🦊 MetaMask
+              <FaWallet className="w-5 h-5" />
+              Connect Wallet
             </button>
           </div>
+          <p className="text-sm text-gray-400 text-center mt-3">
+            Supports 50+ wallets including MetaMask, Trust Wallet, Coinbase Wallet, and more
+          </p>
         </div>
       )}
 
