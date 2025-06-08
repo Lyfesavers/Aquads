@@ -936,11 +936,10 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         <div className="flex items-start gap-3">
           <FaInfoCircle className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
           <div>
-            <h4 className="text-white font-semibold mb-2">How BexFi Works</h4>
+            <h4 className="text-white font-semibold mb-2">How AquaFi Works</h4>
             <ul className="text-gray-300 text-sm space-y-1">
               <li>• Your funds are deposited directly to audited DeFi protocols (Aave, Compound, Yearn)</li>
               <li>• Aquads charges {(FEE_CONFIG.SAVINGS_MANAGEMENT_FEE * 100).toFixed(1)}% management fee on earned yield only</li>
-              <li>• Fees are collected to the same wallets used by AquaSwap: {AQUADS_WALLETS.ETHEREUM.slice(0, 6)}...{AQUADS_WALLETS.ETHEREUM.slice(-4)}</li>
               <li>• You maintain full custody and can withdraw anytime (small {(FEE_CONFIG.SAVINGS_WITHDRAWAL_FEE * 100).toFixed(1)}% withdrawal fee)</li>
               <li>• All transactions are transparent and verifiable on-chain</li>
               <li>• Real-time APY data powered by DeFiLlama API</li>
