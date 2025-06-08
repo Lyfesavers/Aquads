@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaTwitter, FaTelegram, FaEnvelope, FaFileAlt, FaDiscord } from 'react-icons/fa';
+import { FaTwitter, FaTelegram, FaEnvelope, FaFileAlt, FaDiscord, FaCoins } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 
 const Footer = () => {
@@ -63,6 +63,13 @@ const Footer = () => {
             >
               <FaFileAlt className="mr-2" />
               <span>Terms</span>
+            </Link>
+            <Link
+              to="/aquafi"
+              className="hover:text-blue-400 transition-colors flex items-center justify-center sm:justify-start"
+            >
+              <FaCoins className="mr-2" />
+              <span>AquaFi</span>
             </Link>
           </div>
           <div className="text-sm text-gray-400 text-center md:text-right">
