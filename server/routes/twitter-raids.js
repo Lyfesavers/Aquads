@@ -8,6 +8,7 @@ const axios = require('axios');
 const { twitterRaidRateLimit } = require('../middleware/rateLimiter');
 const AffiliateEarning = require('../models/AffiliateEarning');
 const mongoose = require('mongoose');
+const { createNotification } = require('./notifications');
 
 // Use the imported module function
 const awardSocialMediaPoints = pointsModule.awardSocialMediaPoints;
@@ -589,6 +590,29 @@ router.post('/:raidId/completions/:completionId/reject', auth, async (req, res) 
     completion.pointsAwarded = false;
 
     await raid.save({ validateBeforeSave: false });
+
+    // Send notification to the user about the rejection
+    try {
+      const userId = completion.userId;
+      const reason = rejectionReason || 'No reason provided';
+      const notificationMessage = `Your Twitter raid submission for "${raid.title}" was rejected. Reason: ${reason}`;
+      
+      await createNotification(
+        userId,
+        'status',
+        notificationMessage,
+        '/dashboard',
+        {
+          relatedId: raidId,
+          relatedModel: 'TwitterRaid'
+        }
+      );
+      
+      console.log(`Rejection notification sent to user ${userId} for raid ${raidId}`);
+    } catch (notificationError) {
+      console.error('Error sending rejection notification:', notificationError);
+      // Continue execution even if notification fails
+    }
 
     res.json({
       success: true,
