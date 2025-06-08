@@ -3,6 +3,7 @@ import { ethers } from 'ethers';
 import { FaExternalLinkAlt, FaInfoCircle, FaWallet, FaArrowDown, FaArrowUp } from 'react-icons/fa';
 import { AQUADS_WALLETS, FEE_CONFIG, SUPPORTED_CHAINS, PROTOCOL_CONTRACTS, TOKEN_ADDRESSES, getWalletForChain } from '../config/wallets';
 import { getPoolAPYs, formatAPY, formatTVL, getRiskAssessment } from '../services/defiService';
+import { EthereumProvider } from '@walletconnect/ethereum-provider';
 
 // Production-ready pool configurations using real contract addresses
 const PROTOCOL_POOLS = [
@@ -118,6 +119,9 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
   const [userPositions, setUserPositions] = useState([]);
   const [walletConnected, setWalletConnected] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [walletProvider, setWalletProvider] = useState(null);
+  const [connectedAddress, setConnectedAddress] = useState(null);
+  const [showWalletModal, setShowWalletModal] = useState(false);
 
   // Format currency helper
   const formatCurrency = (value) => {
@@ -175,34 +179,130 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
   };
 
   const checkWalletConnection = async () => {
+    // Check if WalletConnect provider exists
+    if (walletProvider) {
+      try {
+        const accounts = await walletProvider.request({ method: 'eth_accounts' });
+        if (accounts.length > 0) {
+          setWalletConnected(true);
+          setConnectedAddress(accounts[0]);
+        }
+      } catch (error) {
+        console.error('Error checking WalletConnect:', error);
+      }
+    }
+    
+    // Fallback to MetaMask/window.ethereum
     if (typeof window.ethereum !== 'undefined') {
       try {
         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-        setWalletConnected(accounts.length > 0);
+        if (accounts.length > 0) {
+          setWalletConnected(true);
+          setConnectedAddress(accounts[0]);
+        }
       } catch (error) {
         console.error('Error checking wallet:', error);
       }
     }
   };
 
-  // Connect wallet
-  const connectWallet = async () => {
-    if (typeof window.ethereum === 'undefined') {
-      showNotification('Please install MetaMask or another Web3 wallet', 'error');
-      return;
-    }
-
+  // Initialize WalletConnect provider
+  const initWalletConnect = async () => {
     try {
-      await window.ethereum.request({ method: 'eth_requestAccounts' });
-      setWalletConnected(true);
-      showNotification('Wallet connected successfully!', 'success');
+      const provider = await EthereumProvider.init({
+        projectId: process.env.REACT_APP_WALLETCONNECT_PROJECT_ID,
+        chains: [1], // Ethereum mainnet
+        optionalChains: [137, 42161, 10, 8453, 43114], // Polygon, Arbitrum, Optimism, Base, Avalanche
+        metadata: {
+          name: "AquaFi",
+          description: "AquaFi - Bicentralized Exchange Savings Pools",
+          url: "https://www.aquads.xyz",
+          icons: ["https://www.aquads.xyz/logo192.png"],
+        },
+        showQrModal: true
+      });
+      
+      setWalletProvider(provider);
+      return provider;
     } catch (error) {
-      console.error('Error connecting wallet:', error);
-      showNotification('Failed to connect wallet', 'error');
+      console.error('Error initializing WalletConnect:', error);
+      return null;
     }
   };
 
-  // Handle deposit with production-ready integration
+  // Connect wallet with WalletConnect support
+  const connectWallet = async (walletType = 'auto') => {
+    try {
+      if (walletType === 'walletconnect' || walletType === 'auto') {
+        // Try WalletConnect first
+        let provider = walletProvider;
+        if (!provider) {
+          provider = await initWalletConnect();
+        }
+        
+        if (provider) {
+          const accounts = await provider.enable();
+          if (accounts.length > 0) {
+            setWalletProvider(provider);
+            setWalletConnected(true);
+            setConnectedAddress(accounts[0]);
+            setShowWalletModal(false);
+            showNotification('Wallet connected successfully!', 'success');
+            
+            // Check network
+            const chainId = await provider.request({ method: 'eth_chainId' });
+            if (chainId !== '0x1') {
+              showNotification('Please switch to Ethereum Mainnet for the best experience', 'warning');
+            }
+            return;
+          }
+        }
+      }
+      
+      // Fallback to MetaMask/injected wallet
+      if (typeof window.ethereum !== 'undefined') {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        if (accounts.length > 0) {
+          setWalletConnected(true);
+          setConnectedAddress(accounts[0]);
+          setShowWalletModal(false);
+          showNotification('Wallet connected successfully!', 'success');
+          
+          // Check if we're on Ethereum mainnet
+          const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+          if (chainId !== '0x1') {
+            showNotification('Please switch to Ethereum Mainnet for the best experience', 'warning');
+          }
+        }
+      } else {
+        showNotification('Please install MetaMask or use WalletConnect', 'error');
+      }
+    } catch (error) {
+      console.error('Error connecting wallet:', error);
+      if (error.code === 4001) {
+        showNotification('Please approve the connection request', 'error');
+      } else {
+        showNotification('Failed to connect wallet', 'error');
+      }
+    }
+  };
+
+  // Disconnect wallet
+  const disconnectWallet = async () => {
+    try {
+      if (walletProvider) {
+        await walletProvider.disconnect();
+        setWalletProvider(null);
+      }
+      setWalletConnected(false);
+      setConnectedAddress(null);
+      showNotification('Wallet disconnected', 'info');
+    } catch (error) {
+      console.error('Error disconnecting wallet:', error);
+    }
+  };
+
+  // Handle deposit with real blockchain transactions
   const handleDeposit = async () => {
     if (!selectedPool || !depositAmount || !walletConnected) {
       showNotification('Please connect wallet and enter deposit amount', 'error');
@@ -217,28 +317,129 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     setIsDepositing(true);
     
     try {
-      // Get user's wallet and provider
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      // Get user's wallet and provider (support both WalletConnect and MetaMask)
+      const web3Provider = walletProvider || window.ethereum;
+      if (!web3Provider) {
+        showNotification('No wallet provider found', 'error');
+        setIsDepositing(false);
+        return;
+      }
+      
+      const provider = new ethers.BrowserProvider(web3Provider);
       const signer = await provider.getSigner();
       const userAddress = await signer.getAddress();
       
-      // Calculate fees
-      const depositAmountBN = ethers.parseUnits(depositAmount, 18);
+      // Check if we're on the correct network
+      const network = await provider.getNetwork();
+      if (Number(network.chainId) !== selectedPool.chainId) {
+        showNotification(`Please switch to ${selectedPool.chain} network`, 'error');
+        setIsDepositing(false);
+        return;
+      }
+      
+      // Calculate deposit amount and fees
+      const isETH = selectedPool.token === 'ETH';
+      const decimals = isETH ? 18 : 6; // ETH = 18, USDC/USDT/DAI = 6
+      const depositAmountBN = ethers.parseUnits(depositAmount, decimals);
       const managementFee = FEE_CONFIG.SAVINGS_MANAGEMENT_FEE;
+      const feeAmount = depositAmountBN * BigInt(Math.floor(managementFee * 10000)) / BigInt(10000);
       
-      // Simulate transaction delay (replace with actual smart contract calls)
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      let txHash = '';
       
-      // In production, this would:
-      // 1. Check token allowance
-      // 2. Approve token spending if needed
-      // 3. Call deposit function on protocol contract
-      // 4. Set up fee collection mechanism
-      // 5. Track position in your database
+      if (isETH) {
+        // Direct ETH deposit to protocol
+        const protocolContract = new ethers.Contract(
+          selectedPool.contractAddress,
+          ['function deposit() payable'],
+          signer
+        );
+        
+        // Send ETH with management fee to our wallet
+        const feeWalletTx = await signer.sendTransaction({
+          to: selectedPool.feeWallet,
+          value: feeAmount,
+          gasLimit: 21000
+        });
+        await feeWalletTx.wait();
+        
+        // Deposit remaining ETH to protocol
+        const netAmount = depositAmountBN - feeAmount;
+        const depositTx = await protocolContract.deposit({ 
+          value: netAmount,
+          gasLimit: 300000 
+        });
+        const receipt = await depositTx.wait();
+        txHash = receipt.hash;
+        
+      } else {
+        // ERC20 token deposit
+        const tokenABI = [
+          'function allowance(address owner, address spender) view returns (uint256)',
+          'function approve(address spender, uint256 amount) returns (bool)',
+          'function transfer(address to, uint256 amount) returns (bool)',
+          'function balanceOf(address account) view returns (uint256)'
+        ];
+        
+        const tokenContract = new ethers.Contract(selectedPool.tokenAddress, tokenABI, signer);
+        
+        // Check user balance
+        const balance = await tokenContract.balanceOf(userAddress);
+        if (balance < depositAmountBN) {
+          showNotification(`Insufficient ${selectedPool.token} balance`, 'error');
+          setIsDepositing(false);
+          return;
+        }
+        
+        // Send management fee to our fee wallet
+        const feeTx = await tokenContract.transfer(selectedPool.feeWallet, feeAmount, {
+          gasLimit: 100000
+        });
+        await feeTx.wait();
+        
+        // Check allowance for protocol contract
+        const netAmount = depositAmountBN - feeAmount;
+        const allowance = await tokenContract.allowance(userAddress, selectedPool.contractAddress);
+        
+        if (allowance < netAmount) {
+          // Approve protocol contract to spend tokens
+          const approveTx = await tokenContract.approve(selectedPool.contractAddress, netAmount, {
+            gasLimit: 100000
+          });
+          await approveTx.wait();
+          showNotification('Token approval confirmed, proceeding with deposit...', 'info');
+        }
+        
+        // Deposit to protocol (simplified - actual ABI would depend on specific protocol)
+        const protocolABI = [
+          'function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode)',
+          'function deposit(uint256 amount)',
+          'function mint(uint256 amount)'
+        ];
+        
+        const protocolContract = new ethers.Contract(selectedPool.contractAddress, protocolABI, signer);
+        
+        let depositTx;
+        if (selectedPool.protocol === 'Aave') {
+          depositTx = await protocolContract.supply(
+            selectedPool.tokenAddress,
+            netAmount,
+            userAddress,
+            0,
+            { gasLimit: 400000 }
+          );
+        } else if (selectedPool.protocol === 'Compound') {
+          depositTx = await protocolContract.mint(netAmount, { gasLimit: 300000 });
+        } else if (selectedPool.protocol === 'Yearn') {
+          depositTx = await protocolContract.deposit(netAmount, { gasLimit: 300000 });
+        }
+        
+        const receipt = await depositTx.wait();
+        txHash = receipt.hash;
+      }
       
-      showNotification(`Successfully deposited ${depositAmount} ${selectedPool.token} to ${selectedPool.protocol}!`, 'success');
+      showNotification(`Successfully deposited ${depositAmount} ${selectedPool.token} to ${selectedPool.protocol}! TX: ${txHash.slice(0, 10)}...`, 'success');
       
-      // Create position with production data
+      // Create position with real transaction data
       const newPosition = {
         id: Date.now(),
         poolId: selectedPool.id,
@@ -253,7 +454,9 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         userAddress: userAddress,
         contractAddress: selectedPool.contractAddress,
         tokenAddress: selectedPool.tokenAddress,
-        managementFee: managementFee
+        managementFee: managementFee,
+        txHash: txHash,
+        netAmount: parseFloat(depositAmount) * (1 - managementFee)
       };
       
       setUserPositions(prev => [...prev, newPosition]);
@@ -268,13 +471,23 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       
     } catch (error) {
       console.error('Deposit error:', error);
-      showNotification('Deposit failed. Please try again.', 'error');
+      let errorMessage = 'Deposit failed. Please try again.';
+      
+      if (error.code === 'INSUFFICIENT_FUNDS') {
+        errorMessage = 'Insufficient funds for gas fees.';
+      } else if (error.code === 'USER_REJECTED') {
+        errorMessage = 'Transaction rejected by user.';
+      } else if (error.message?.includes('insufficient funds')) {
+        errorMessage = 'Insufficient token balance or ETH for gas.';
+      }
+      
+      showNotification(errorMessage, 'error');
     } finally {
       setIsDepositing(false);
     }
   };
 
-  // Handle withdraw (placeholder)
+  // Handle withdraw with real blockchain transactions
   const handleWithdraw = async (position) => {
     if (!walletConnected) {
       showNotification('Please connect your wallet', 'error');
@@ -284,16 +497,98 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     setLoading(true);
     
     try {
-      // Simulate transaction
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Get user's wallet and provider (support both WalletConnect and MetaMask)
+      const web3Provider = walletProvider || window.ethereum;
+      if (!web3Provider) {
+        showNotification('No wallet provider found', 'error');
+        setLoading(false);
+        return;
+      }
       
-      // Remove position
+      const provider = new ethers.BrowserProvider(web3Provider);
+      const signer = await provider.getSigner();
+      const userAddress = await signer.getAddress();
+      
+      // Check if we're on the correct network
+      const network = await provider.getNetwork();
+      const pool = pools.find(p => p.id === position.poolId);
+      if (Number(network.chainId) !== pool.chainId) {
+        showNotification(`Please switch to ${pool.chain} network`, 'error');
+        setLoading(false);
+        return;
+      }
+      
+      const isETH = position.token === 'ETH';
+      const decimals = isETH ? 18 : 6;
+      const withdrawAmount = ethers.parseUnits(position.netAmount.toString(), decimals);
+      
+      let txHash = '';
+      
+      if (isETH) {
+        // Withdraw ETH from protocol
+        const protocolContract = new ethers.Contract(
+          position.contractAddress,
+          ['function withdraw(uint256 amount) returns (uint256)'],
+          signer
+        );
+        
+        const withdrawTx = await protocolContract.withdraw(withdrawAmount, {
+          gasLimit: 400000
+        });
+        const receipt = await withdrawTx.wait();
+        txHash = receipt.hash;
+        
+      } else {
+        // Withdraw ERC20 tokens from protocol
+        const protocolABI = [
+          'function withdraw(address asset, uint256 amount, address to) returns (uint256)',
+          'function redeem(uint256 redeemTokens) returns (uint256)',
+          'function withdraw(uint256 amount) returns (uint256)'
+        ];
+        
+        const protocolContract = new ethers.Contract(position.contractAddress, protocolABI, signer);
+        
+        let withdrawTx;
+        if (position.protocol === 'Aave') {
+          withdrawTx = await protocolContract.withdraw(
+            position.tokenAddress,
+            withdrawAmount,
+            userAddress,
+            { gasLimit: 400000 }
+          );
+        } else if (position.protocol === 'Compound') {
+          withdrawTx = await protocolContract.redeem(withdrawAmount, { gasLimit: 300000 });
+        } else if (position.protocol === 'Yearn') {
+          withdrawTx = await protocolContract.withdraw(withdrawAmount, { gasLimit: 300000 });
+        }
+        
+        const receipt = await withdrawTx.wait();
+        txHash = receipt.hash;
+      }
+      
+      // Remove position after successful withdrawal
       setUserPositions(prev => prev.filter(p => p.id !== position.id));
-      showNotification(`Successfully withdrew ${position.amount} ${position.token}!`, 'success');
+      showNotification(`Successfully withdrew ${position.netAmount.toFixed(4)} ${position.token}! TX: ${txHash.slice(0, 10)}...`, 'success');
+      
+      // Update callbacks for parent component
+      if (onBalanceUpdate) {
+        const remainingBalance = userPositions.filter(p => p.id !== position.id).reduce((sum, pos) => sum + pos.currentValue, 0);
+        onBalanceUpdate(remainingBalance);
+      }
       
     } catch (error) {
       console.error('Withdraw error:', error);
-      showNotification('Withdraw failed. Please try again.', 'error');
+      let errorMessage = 'Withdraw failed. Please try again.';
+      
+      if (error.code === 'INSUFFICIENT_FUNDS') {
+        errorMessage = 'Insufficient funds for gas fees.';
+      } else if (error.code === 'USER_REJECTED') {
+        errorMessage = 'Transaction rejected by user.';
+      } else if (error.message?.includes('insufficient funds')) {
+        errorMessage = 'Insufficient ETH for gas fees.';
+      }
+      
+      showNotification(errorMessage, 'error');
     } finally {
       setLoading(false);
     }
@@ -306,12 +601,47 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-6 text-center">
           <FaWallet className="w-8 h-8 text-yellow-400 mx-auto mb-3" />
           <h3 className="text-lg font-semibold text-white mb-2">Connect Your Wallet</h3>
-          <p className="text-gray-300 mb-4">Connect your wallet to start earning yield on your crypto assets</p>
+          <p className="text-gray-300 mb-4">Connect your wallet to start making real deposits and earning yield on your crypto assets</p>
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 mb-4">
+            <p className="text-sm text-blue-300">
+              ⚠️ <strong>Real Money Warning:</strong> This will make actual blockchain transactions with real funds and gas fees.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={() => connectWallet('walletconnect')}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors flex items-center gap-2 justify-center"
+            >
+              <FaWallet className="w-4 h-4" />
+              WalletConnect
+            </button>
+            <button
+              onClick={() => connectWallet('metamask')}
+              className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg transition-colors flex items-center gap-2 justify-center"
+            >
+              🦊 MetaMask
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Connected Wallet Info */}
+      {walletConnected && connectedAddress && (
+        <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+              <FaWallet className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <p className="text-white font-medium">Wallet Connected</p>
+              <p className="text-gray-400 text-sm">{connectedAddress.slice(0, 6)}...{connectedAddress.slice(-4)}</p>
+            </div>
+          </div>
           <button
-            onClick={connectWallet}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
+            onClick={disconnectWallet}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors text-sm"
           >
-            Connect Wallet
+            Disconnect
           </button>
         </div>
       )}
@@ -332,9 +662,17 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
                   <div className="text-sm text-gray-400">
                     Deposited: {position.amount.toFixed(4)} {position.token}
                   </div>
+                  <div className="text-sm text-gray-400">
+                    Net Amount: {position.netAmount?.toFixed(4) || position.amount.toFixed(4)} {position.token}
+                  </div>
                   <div className="text-sm text-green-400">
                     Earned: +{position.earned.toFixed(4)} {position.token}
                   </div>
+                  {position.txHash && (
+                    <div className="text-sm text-blue-400">
+                      TX: {position.txHash.slice(0, 10)}...
+                    </div>
+                  )}
                 </div>
                 <button
                   onClick={() => handleWithdraw(position)}
@@ -397,7 +735,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
                     className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg transition-colors flex items-center gap-2"
                   >
                     <FaArrowDown className="w-4 h-4" />
-                    Deposit
+                    {walletConnected ? 'Deposit' : 'Connect Wallet'}
                   </button>
                   <a
                     href={`https://etherscan.io/address/${pool.contractAddress}`}
