@@ -329,17 +329,61 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       const signer = await provider.getSigner();
       const userAddress = await signer.getAddress();
       
-      // Check if we're on the correct network
+      // Check if we're on the correct network and switch if needed
       const network = await provider.getNetwork();
       if (Number(network.chainId) !== selectedPool.chainId) {
-        showNotification(`Please switch to ${selectedPool.chain} network`, 'error');
-        setIsDepositing(false);
-        return;
+        try {
+          // Try to switch network automatically
+          await web3Provider.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: `0x${selectedPool.chainId.toString(16)}` }],
+          });
+          showNotification(`Switched to ${selectedPool.chain} network`, 'success');
+        } catch (switchError) {
+          if (switchError.code === 4902) {
+            // Network not added, try to add it
+            try {
+              const chainConfig = getChainConfig(selectedPool.chainId);
+              await web3Provider.request({
+                method: 'wallet_addEthereumChain',
+                params: [{
+                  chainId: `0x${selectedPool.chainId.toString(16)}`,
+                  chainName: chainConfig.name,
+                  nativeCurrency: {
+                    name: chainConfig.symbol,
+                    symbol: chainConfig.symbol,
+                    decimals: 18,
+                  },
+                  rpcUrls: [chainConfig.rpcUrl],
+                  blockExplorerUrls: [chainConfig.explorerUrl],
+                }],
+              });
+              showNotification(`Added and switched to ${selectedPool.chain} network`, 'success');
+            } catch (addError) {
+              showNotification(`Please manually switch to ${selectedPool.chain} network`, 'error');
+              setIsDepositing(false);
+              return;
+            }
+          } else {
+            showNotification(`Please switch to ${selectedPool.chain} network`, 'error');
+            setIsDepositing(false);
+            return;
+          }
+        }
       }
       
-      // Calculate deposit amount and fees
+      // Calculate deposit amount and fees with correct decimals
       const isETH = selectedPool.token === 'ETH';
-      const decimals = isETH ? 18 : 6; // ETH = 18, USDC/USDT/DAI = 6
+      const getTokenDecimals = (token) => {
+        switch (token) {
+          case 'ETH': return 18;
+          case 'USDC': return 6;
+          case 'USDT': return 6;
+          case 'DAI': return 18;
+          default: return 18;
+        }
+      };
+      const decimals = getTokenDecimals(selectedPool.token);
       const depositAmountBN = ethers.parseUnits(depositAmount, decimals);
       const managementFee = FEE_CONFIG.SAVINGS_MANAGEMENT_FEE;
       const feeAmount = depositAmountBN * BigInt(Math.floor(managementFee * 10000)) / BigInt(10000);
@@ -347,27 +391,53 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       let txHash = '';
       
       if (isETH) {
-        // Direct ETH deposit to protocol
-        const protocolContract = new ethers.Contract(
-          selectedPool.contractAddress,
-          ['function deposit() payable'],
-          signer
-        );
+        // Direct ETH deposit to protocol with proper gas estimation
         
         // Send ETH with management fee to our wallet
+        const feeGasEstimate = await provider.estimateGas({
+          to: selectedPool.feeWallet,
+          value: feeAmount,
+          from: userAddress
+        });
+        
         const feeWalletTx = await signer.sendTransaction({
           to: selectedPool.feeWallet,
           value: feeAmount,
-          gasLimit: 21000
+          gasLimit: feeGasEstimate + BigInt(10000) // Add buffer
         });
         await feeWalletTx.wait();
         
-        // Deposit remaining ETH to protocol
+        // Deposit remaining ETH to protocol with Aave V3 ABI
         const netAmount = depositAmountBN - feeAmount;
-        const depositTx = await protocolContract.deposit({ 
-          value: netAmount,
-          gasLimit: 300000 
-        });
+        const protocolContract = new ethers.Contract(
+          selectedPool.contractAddress,
+          [
+            'function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) payable',
+            'function supplyWithPermit(address asset, uint256 amount, address onBehalfOf, uint16 referralCode, uint256 deadline, uint8 v, bytes32 r, bytes32 s) payable'
+          ],
+          signer
+        );
+        
+        // Use WETH address for ETH deposits in Aave
+        const WETH_ADDRESS = TOKEN_ADDRESSES.ETHEREUM.WETH;
+        const gasEstimate = await protocolContract.supply.estimateGas(
+          WETH_ADDRESS,
+          netAmount,
+          userAddress,
+          0,
+          { value: netAmount }
+        );
+        
+        const depositTx = await protocolContract.supply(
+          WETH_ADDRESS,
+          netAmount,
+          userAddress,
+          0,
+          { 
+            value: netAmount,
+            gasLimit: gasEstimate + BigInt(20000) // Add buffer
+          }
+        );
         const receipt = await depositTx.wait();
         txHash = receipt.hash;
         
@@ -390,9 +460,10 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
           return;
         }
         
-        // Send management fee to our fee wallet
+        // Send management fee to our fee wallet with gas estimation
+        const feeGasEstimate = await tokenContract.transfer.estimateGas(selectedPool.feeWallet, feeAmount);
         const feeTx = await tokenContract.transfer(selectedPool.feeWallet, feeAmount, {
-          gasLimit: 100000
+          gasLimit: feeGasEstimate + BigInt(10000)
         });
         await feeTx.wait();
         
@@ -401,36 +472,60 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         const allowance = await tokenContract.allowance(userAddress, selectedPool.contractAddress);
         
         if (allowance < netAmount) {
-          // Approve protocol contract to spend tokens
+          // Approve protocol contract to spend tokens with gas estimation
+          const approveGasEstimate = await tokenContract.approve.estimateGas(selectedPool.contractAddress, netAmount);
           const approveTx = await tokenContract.approve(selectedPool.contractAddress, netAmount, {
-            gasLimit: 100000
+            gasLimit: approveGasEstimate + BigInt(10000)
           });
           await approveTx.wait();
           showNotification('Token approval confirmed, proceeding with deposit...', 'info');
         }
         
-        // Deposit to protocol (simplified - actual ABI would depend on specific protocol)
-        const protocolABI = [
-          'function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode)',
-          'function deposit(uint256 amount)',
-          'function mint(uint256 amount)'
-        ];
-        
-        const protocolContract = new ethers.Contract(selectedPool.contractAddress, protocolABI, signer);
-        
+        // Deposit to protocol with proper ABIs and gas estimation
         let depositTx;
+        let gasEstimate;
+        
         if (selectedPool.protocol === 'Aave') {
+          const aaveABI = [
+            'function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode)'
+          ];
+          const protocolContract = new ethers.Contract(selectedPool.contractAddress, aaveABI, signer);
+          
+          gasEstimate = await protocolContract.supply.estimateGas(
+            selectedPool.tokenAddress,
+            netAmount,
+            userAddress,
+            0
+          );
+          
           depositTx = await protocolContract.supply(
             selectedPool.tokenAddress,
             netAmount,
             userAddress,
             0,
-            { gasLimit: 400000 }
+            { gasLimit: gasEstimate + BigInt(30000) }
           );
         } else if (selectedPool.protocol === 'Compound') {
-          depositTx = await protocolContract.mint(netAmount, { gasLimit: 300000 });
+          const compoundABI = [
+            'function supply(address asset, uint256 amount)'
+          ];
+          const protocolContract = new ethers.Contract(selectedPool.contractAddress, compoundABI, signer);
+          
+          gasEstimate = await protocolContract.supply.estimateGas(selectedPool.tokenAddress, netAmount);
+          depositTx = await protocolContract.supply(selectedPool.tokenAddress, netAmount, {
+            gasLimit: gasEstimate + BigInt(30000)
+          });
         } else if (selectedPool.protocol === 'Yearn') {
-          depositTx = await protocolContract.deposit(netAmount, { gasLimit: 300000 });
+          const yearnABI = [
+            'function deposit(uint256 _amount) returns (uint256)',
+            'function deposit(uint256 _amount, address recipient) returns (uint256)'
+          ];
+          const protocolContract = new ethers.Contract(selectedPool.contractAddress, yearnABI, signer);
+          
+          gasEstimate = await protocolContract.deposit.estimateGas(netAmount);
+          depositTx = await protocolContract.deposit(netAmount, {
+            gasLimit: gasEstimate + BigInt(30000)
+          });
         }
         
         const receipt = await depositTx.wait();
@@ -473,12 +568,20 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       console.error('Deposit error:', error);
       let errorMessage = 'Deposit failed. Please try again.';
       
-      if (error.code === 'INSUFFICIENT_FUNDS') {
+      if (error.code === 'INSUFFICIENT_FUNDS' || error.code === -32000) {
         errorMessage = 'Insufficient funds for gas fees.';
-      } else if (error.code === 'USER_REJECTED') {
+      } else if (error.code === 'ACTION_REJECTED' || error.code === 4001) {
         errorMessage = 'Transaction rejected by user.';
       } else if (error.message?.includes('insufficient funds')) {
         errorMessage = 'Insufficient token balance or ETH for gas.';
+      } else if (error.message?.includes('gas required exceeds allowance')) {
+        errorMessage = 'Gas limit too low. Please try again.';
+      } else if (error.message?.includes('nonce too high')) {
+        errorMessage = 'Transaction nonce error. Please reset your wallet.';
+      } else if (error.message?.includes('replacement fee too low')) {
+        errorMessage = 'Transaction fee too low. Please try with higher gas.';
+      } else if (error.reason) {
+        errorMessage = `Contract error: ${error.reason}`;
       }
       
       showNotification(errorMessage, 'error');
@@ -509,57 +612,109 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       const signer = await provider.getSigner();
       const userAddress = await signer.getAddress();
       
-      // Check if we're on the correct network
+      // Check if we're on the correct network and switch if needed
       const network = await provider.getNetwork();
       const pool = pools.find(p => p.id === position.poolId);
       if (Number(network.chainId) !== pool.chainId) {
-        showNotification(`Please switch to ${pool.chain} network`, 'error');
-        setLoading(false);
-        return;
+        try {
+          await web3Provider.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: `0x${pool.chainId.toString(16)}` }],
+          });
+          showNotification(`Switched to ${pool.chain} network`, 'success');
+        } catch (switchError) {
+          showNotification(`Please switch to ${pool.chain} network`, 'error');
+          setLoading(false);
+          return;
+        }
       }
       
       const isETH = position.token === 'ETH';
-      const decimals = isETH ? 18 : 6;
+      const getTokenDecimals = (token) => {
+        switch (token) {
+          case 'ETH': return 18;
+          case 'USDC': return 6;
+          case 'USDT': return 6;
+          case 'DAI': return 18;
+          default: return 18;
+        }
+      };
+      const decimals = getTokenDecimals(position.token);
       const withdrawAmount = ethers.parseUnits(position.netAmount.toString(), decimals);
       
       let txHash = '';
       
       if (isETH) {
-        // Withdraw ETH from protocol
+        // Withdraw ETH from protocol (Aave V3)
+        const aaveABI = [
+          'function withdraw(address asset, uint256 amount, address to) returns (uint256)'
+        ];
         const protocolContract = new ethers.Contract(
           position.contractAddress,
-          ['function withdraw(uint256 amount) returns (uint256)'],
+          aaveABI,
           signer
         );
         
-        const withdrawTx = await protocolContract.withdraw(withdrawAmount, {
-          gasLimit: 400000
-        });
+        const WETH_ADDRESS = TOKEN_ADDRESSES.ETHEREUM.WETH;
+        const gasEstimate = await protocolContract.withdraw.estimateGas(
+          WETH_ADDRESS,
+          withdrawAmount,
+          userAddress
+        );
+        
+        const withdrawTx = await protocolContract.withdraw(
+          WETH_ADDRESS,
+          withdrawAmount,
+          userAddress,
+          { gasLimit: gasEstimate + BigInt(30000) }
+        );
         const receipt = await withdrawTx.wait();
         txHash = receipt.hash;
         
       } else {
-        // Withdraw ERC20 tokens from protocol
-        const protocolABI = [
-          'function withdraw(address asset, uint256 amount, address to) returns (uint256)',
-          'function redeem(uint256 redeemTokens) returns (uint256)',
-          'function withdraw(uint256 amount) returns (uint256)'
-        ];
-        
-        const protocolContract = new ethers.Contract(position.contractAddress, protocolABI, signer);
-        
+        // Withdraw ERC20 tokens from protocol with proper ABIs and gas estimation
         let withdrawTx;
+        let gasEstimate;
+        
         if (position.protocol === 'Aave') {
+          const aaveABI = [
+            'function withdraw(address asset, uint256 amount, address to) returns (uint256)'
+          ];
+          const protocolContract = new ethers.Contract(position.contractAddress, aaveABI, signer);
+          
+          gasEstimate = await protocolContract.withdraw.estimateGas(
+            position.tokenAddress,
+            withdrawAmount,
+            userAddress
+          );
+          
           withdrawTx = await protocolContract.withdraw(
             position.tokenAddress,
             withdrawAmount,
             userAddress,
-            { gasLimit: 400000 }
+            { gasLimit: gasEstimate + BigInt(30000) }
           );
         } else if (position.protocol === 'Compound') {
-          withdrawTx = await protocolContract.redeem(withdrawAmount, { gasLimit: 300000 });
+          const compoundABI = [
+            'function withdraw(address asset, uint256 amount)'
+          ];
+          const protocolContract = new ethers.Contract(position.contractAddress, compoundABI, signer);
+          
+          gasEstimate = await protocolContract.withdraw.estimateGas(position.tokenAddress, withdrawAmount);
+          withdrawTx = await protocolContract.withdraw(position.tokenAddress, withdrawAmount, {
+            gasLimit: gasEstimate + BigInt(30000)
+          });
         } else if (position.protocol === 'Yearn') {
-          withdrawTx = await protocolContract.withdraw(withdrawAmount, { gasLimit: 300000 });
+          const yearnABI = [
+            'function withdraw(uint256 maxShares) returns (uint256)',
+            'function withdraw(uint256 maxShares, address recipient) returns (uint256)'
+          ];
+          const protocolContract = new ethers.Contract(position.contractAddress, yearnABI, signer);
+          
+          gasEstimate = await protocolContract.withdraw.estimateGas(withdrawAmount);
+          withdrawTx = await protocolContract.withdraw(withdrawAmount, {
+            gasLimit: gasEstimate + BigInt(30000)
+          });
         }
         
         const receipt = await withdrawTx.wait();

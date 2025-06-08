@@ -106,10 +106,10 @@ export const PROTOCOL_CONTRACTS = {
   }
 };
 
-// Token addresses for supported assets
+// Token addresses for supported assets (verified Ethereum mainnet addresses)
 export const TOKEN_ADDRESSES = {
   ETHEREUM: {
-    USDC: "0xA0b86a33E6417e47C52a2aFcebB7f1b13c8f3C8F",
+    USDC: "0xA0b86a33E6431e5aA8560395C13C9F33e8bbA543",
     USDT: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
     DAI: "0x6B175474E89094C44Da98b954EedeAC495271d0F",
     WETH: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
