@@ -56,7 +56,7 @@ const AquaFi = ({ currentUser, showNotification }) => {
               <FaCoins className="w-6 h-6 text-white" />
             </div>
             <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
-              AquaFi
+              AquaFi - STILL UNDER CONSTRUCTION
             </h1>
           </div>
           <p className="text-xl text-gray-300 mb-6 max-w-3xl mx-auto">
