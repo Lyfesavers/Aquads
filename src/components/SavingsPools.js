@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { FaExternalLinkAlt, FaInfoCircle, FaWallet, FaArrowDown, FaArrowUp } from 'react-icons/fa';
-import { AQUADS_WALLETS, FEE_CONFIG, SUPPORTED_CHAINS, PROTOCOL_CONTRACTS, TOKEN_ADDRESSES, getWalletForChain } from '../config/wallets';
-import { ETHEREUM_TOKEN_ADDRESSES } from '../config/tokenAddresses';
+import { AQUADS_WALLETS, FEE_CONFIG, SUPPORTED_CHAINS, getWalletForChain } from '../config/wallets';
+import tokenAddresses from '../config/tokenAddresses';
 import { getPoolAPYs, formatAPY, formatTVL, getRiskAssessment } from '../services/defiService';
 import { EthereumProvider } from '@walletconnect/ethereum-provider';
 
@@ -386,7 +386,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         );
         
         // Use WETH address for ETH deposits in Aave
-        const WETH_ADDRESS = ETHEREUM_TOKEN_ADDRESSES.WETH;
+        const WETH_ADDRESS = tokenAddresses.WETH;
         const gasEstimate = await protocolContract.supply.estimateGas(
           WETH_ADDRESS,
           netAmount,
@@ -623,7 +623,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
           signer
         );
         
-        const WETH_ADDRESS = ETHEREUM_TOKEN_ADDRESSES.WETH;
+        const WETH_ADDRESS = tokenAddresses.WETH;
         const gasEstimate = await protocolContract.withdraw.estimateGas(
           WETH_ADDRESS,
           withdrawAmount,
