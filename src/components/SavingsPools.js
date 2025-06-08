@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { FaExternalLinkAlt, FaInfoCircle, FaWallet, FaArrowDown, FaArrowUp } from 'react-icons/fa';
 import { AQUADS_WALLETS, FEE_CONFIG, SUPPORTED_CHAINS, PROTOCOL_CONTRACTS, TOKEN_ADDRESSES, getWalletForChain } from '../config/wallets';
+import { ETHEREUM_TOKEN_ADDRESSES } from '../config/tokenAddresses';
 import { getPoolAPYs, formatAPY, formatTVL, getRiskAssessment } from '../services/defiService';
 import { EthereumProvider } from '@walletconnect/ethereum-provider';
 
@@ -18,7 +19,7 @@ const PROTOCOL_POOLS = [
     logo: '🏦',
     description: 'Earn yield by lending USDC on Aave V3',
     contractAddress: PROTOCOL_CONTRACTS.AAVE_V3.ETHEREUM,
-    tokenAddress: TOKEN_ADDRESSES.ETHEREUM.USDC,
+    tokenAddress: ETHEREUM_TOKEN_ADDRESSES.USDC,
     chain: 'Ethereum',
     chainId: 1,
     minDeposit: 1,
@@ -69,7 +70,7 @@ const PROTOCOL_POOLS = [
     logo: '🏛️',
     description: 'Auto-compound USDC through Yearn strategies',
     contractAddress: PROTOCOL_CONTRACTS.YEARN_V2.ETHEREUM,
-    tokenAddress: TOKEN_ADDRESSES.ETHEREUM.USDC,
+    tokenAddress: ETHEREUM_TOKEN_ADDRESSES.USDC,
     chain: 'Ethereum',
     chainId: 1,
     minDeposit: 1,
@@ -385,7 +386,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         );
         
         // Use WETH address for ETH deposits in Aave
-        const WETH_ADDRESS = TOKEN_ADDRESSES.ETHEREUM.WETH;
+        const WETH_ADDRESS = ETHEREUM_TOKEN_ADDRESSES.WETH;
         const gasEstimate = await protocolContract.supply.estimateGas(
           WETH_ADDRESS,
           netAmount,
@@ -622,7 +623,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
           signer
         );
         
-        const WETH_ADDRESS = TOKEN_ADDRESSES.ETHEREUM.WETH;
+        const WETH_ADDRESS = ETHEREUM_TOKEN_ADDRESSES.WETH;
         const gasEstimate = await protocolContract.withdraw.estimateGas(
           WETH_ADDRESS,
           withdrawAmount,
