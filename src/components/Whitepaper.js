@@ -28,6 +28,13 @@ const Whitepaper = () => {
       <div className="relative z-10 max-w-4xl mx-auto px-4 py-8">
         <div className="prose prose-invert">
           <h1 className="text-4xl font-bold mb-4">Aquads Business Plan</h1>
+          <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-500/30 rounded-lg p-6 mb-8">
+            <h3 className="text-xl font-bold text-yellow-400 mb-2">🚀 Industry First: The World's First BEX (Bicentralized Exchange)</h3>
+            <p className="text-gray-200">
+              Aquads proudly introduces the revolutionary concept of a <strong>Bicentralized Exchange (BEX)</strong> – a groundbreaking hybrid model that combines the best of both centralized and decentralized systems. This innovative approach provides users with the security and control of decentralization while maintaining the user-friendly experience and efficiency of centralized platforms, creating an optimal trading and service environment that has never existed before in the Web3 space.
+            </p>
+          </div>
+
           <h2 className="text-2xl mb-8">All-in-One Web3 Crypto Hub, Freelancer Marketplace, and Game Hub</h2>
           <p className="text-yellow-400 italic mb-8">(Note: This is not a token project – no crypto tokens will ever be created.)</p>
 
@@ -52,12 +59,7 @@ const Whitepaper = () => {
               <li>A new Twitter Raid Feature that rewards users with points for engaging with Twitter posts</li>
             </ul>
             
-            <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-500/30 rounded-lg p-6 mb-6">
-              <h3 className="text-xl font-bold text-yellow-400 mb-2">🚀 Industry First: The World's First BEX (Bicentralized Exchange)</h3>
-              <p className="text-gray-200">
-                Aquads proudly introduces the revolutionary concept of a <strong>Bicentralized Exchange (BEX)</strong> – a groundbreaking hybrid model that combines the best of both centralized and decentralized systems. This innovative approach provides users with the security and control of decentralization while maintaining the user-friendly experience and efficiency of centralized platforms, creating an optimal trading and service environment that has never existed before in the Web3 space.
-              </p>
-            </div>
+
             
             <p>Our mission is to bridge the gap between crypto projects, service providers, and the broader Web3 community while providing an integrated suite of tools designed to drive growth, foster transparency, and empower all users within the ecosystem.</p>
           </section>
