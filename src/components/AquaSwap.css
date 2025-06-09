@@ -114,7 +114,7 @@
   display: flex;
   justify-content: center;
   gap: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
 }
 
 .provider-btn {
@@ -152,6 +152,50 @@
   font-size: 0.75rem;
   opacity: 0.8;
   font-weight: 400;
+}
+
+/* DexTools Pair Selector */
+.dextools-pair-selector {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(0, 212, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 212, 255, 0.1);
+}
+
+.pair-label {
+  color: #9ca3af;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.pair-select {
+  background: rgba(31, 41, 55, 0.8);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 6px;
+  color: #ffffff;
+  padding: 8px 12px;
+  font-size: 0.875rem;
+  outline: none;
+  transition: all 0.3s ease;
+  min-width: 200px;
+}
+
+.pair-select:hover,
+.pair-select:focus {
+  border-color: rgba(0, 212, 255, 0.5);
+  background: rgba(31, 41, 55, 1);
+}
+
+.pair-select option {
+  background: rgba(31, 41, 55, 1);
+  color: #ffffff;
+  padding: 8px;
 }
 
 .chart-container {
@@ -242,6 +286,18 @@ body.aquaswap-page {
     max-width: 200px;
   }
 
+  .dextools-pair-selector {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .pair-select {
+    min-width: auto;
+    width: 100%;
+    max-width: 250px;
+  }
+
   .chart-container {
     height: 400px;
   }
@@ -271,6 +327,15 @@ body.aquaswap-page {
 
   .provider-desc {
     font-size: 0.6875rem;
+  }
+
+  .pair-label {
+    font-size: 0.75rem;
+  }
+
+  .pair-select {
+    font-size: 0.75rem;
+    padding: 6px 8px;
   }
 
   .chart-container {

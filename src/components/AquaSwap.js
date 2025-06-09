@@ -12,10 +12,39 @@ const ETH_FEE_WALLET = process.env.REACT_APP_FEE_WALLET; // Ethereum wallet addr
 const SOLANA_FEE_WALLET = process.env.REACT_APP_SOLANA_FEE_WALLET; // Solana wallet address
 const SUI_FEE_WALLET = process.env.REACT_APP_SUI_FEE_WALLET; // SUI wallet address
 
+// Popular DexTools token pairs for quick access
+const POPULAR_DEXTOOLS_PAIRS = [
+  {
+    name: 'PEPE/ETH',
+    chain: 'ether',
+    address: '0xa43fe16908251ee70ef74718545e4fe6c5ccec9f',
+    description: 'PEPE Token'
+  },
+  {
+    name: 'SHIB/ETH', 
+    chain: 'ether',
+    address: '0x811beed0119b4afce20d2583eb608c6f7af1954f',
+    description: 'Shiba Inu'
+  },
+  {
+    name: 'FLOKI/ETH',
+    chain: 'ether', 
+    address: '0xf4d2888d29d722226fafa5d9b24f9164c092421e',
+    description: 'Floki Inu'
+  },
+  {
+    name: 'BONK/SOL',
+    chain: 'solana',
+    address: 'BqnpCdDLPV2pFdAaLnVidmn3G93RP2p5oRdGEY2sJGez',
+    description: 'Bonk (Solana)'
+  }
+];
+
 const AquaSwap = ({ currentUser, showNotification }) => {
   const navigate = useNavigate();
   const [showChart, setShowChart] = useState(false);
   const [chartProvider, setChartProvider] = useState('tradingview');
+  const [selectedDexToolsPair, setSelectedDexToolsPair] = useState(POPULAR_DEXTOOLS_PAIRS[0]);
   const tradingViewRef = useRef(null);
   const dexToolsRef = useRef(null);
 
@@ -65,29 +94,39 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     }
   }, [showChart, chartProvider]);
 
-  // Load DexTools widget
+  // Load DexTools widget using official implementation
   useEffect(() => {
     if (showChart && chartProvider === 'dextools' && dexToolsRef.current) {
       // Clear previous widget
       dexToolsRef.current.innerHTML = '';
       
-      // Create DexTools iframe
+      // Create DexTools iframe using official widget format
       const iframe = document.createElement('iframe');
-      iframe.src = 'https://www.dextools.io/app/en/ether/pool-explorer';
-      iframe.style.width = '100%';
-      iframe.style.height = '100%';
+      iframe.id = 'dextools-widget';
+      iframe.title = 'DexTools Trading Chart';
+      iframe.width = '100%';
+      iframe.height = '100%';
       iframe.style.border = 'none';
       iframe.style.borderRadius = '8px';
-      iframe.title = 'DexTools Chart';
+      
+      // Build DexTools widget URL according to their documentation
+      const widgetUrl = `https://www.dextools.io/widget-chart/en/${selectedDexToolsPair.chain}/pe-light/${selectedDexToolsPair.address}?theme=dark&chartType=1&chartResolution=15&drawingToolbars=false&tvPlatformColor=111827&tvPaneColor=1f2937&headerColor=111827`;
+      
+      iframe.src = widgetUrl;
       iframe.allow = 'fullscreen';
       
       dexToolsRef.current.appendChild(iframe);
     }
-  }, [showChart, chartProvider]);
+  }, [showChart, chartProvider, selectedDexToolsPair]);
 
   // Toggle chart visibility
   const toggleChart = () => {
     setShowChart(!showChart);
+  };
+
+  // Handle DexTools pair selection
+  const handleDexToolsPairChange = (pairIndex) => {
+    setSelectedDexToolsPair(POPULAR_DEXTOOLS_PAIRS[pairIndex]);
   };
 
   // LI.FI Widget configuration following official documentation
@@ -217,6 +256,24 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                 <span className="provider-desc">Meme & DEX Tokens</span>
               </button>
             </div>
+            
+            {/* DexTools pair selector */}
+            {chartProvider === 'dextools' && (
+              <div className="dextools-pair-selector">
+                <label className="pair-label">Popular Tokens:</label>
+                <select 
+                  value={POPULAR_DEXTOOLS_PAIRS.indexOf(selectedDexToolsPair)}
+                  onChange={(e) => handleDexToolsPairChange(parseInt(e.target.value))}
+                  className="pair-select"
+                >
+                  {POPULAR_DEXTOOLS_PAIRS.map((pair, index) => (
+                    <option key={index} value={index}>
+                      {pair.name} - {pair.description}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
           
           <div className="chart-container">
@@ -246,9 +303,9 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                 </>
               ) : (
                 <>
-                  🚀 <strong>DexTools (Meme & DEX Tokens):</strong> Perfect for PEPE, SHIB, DOGE and new tokens on Uniswap/PancakeSwap
+                  🚀 <strong>DexTools (Meme & DEX Tokens):</strong> Real-time DEX data for {selectedDexToolsPair.name} on {selectedDexToolsPair.chain}
                   <br />
-                  📈 Search for any token contract address or find trending meme coins
+                  📈 Switch between popular meme tokens using the dropdown above, or visit DexTools directly to search any token
                 </>
               )}
             </p>
