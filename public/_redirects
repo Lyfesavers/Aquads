@@ -1,5 +1,8 @@
 # SEO-friendly URL redirect for blogs
 /how-to/*-:id /how-to?blogId=:id 301
 
-# Default SPA redirect
+# Serve static sitemap file (must be before SPA catch-all)
+/sitemap.xml /sitemap.xml 200
+
+# Default SPA redirect (keep this last)
 /* /index.html 200 
