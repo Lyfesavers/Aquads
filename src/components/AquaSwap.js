@@ -216,7 +216,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
             />
             AquaSwap
           </h1>
-          <p>The Ultimate Cross-Chain DEX</p>
+          <p>The Ultimate Cross-Chain BEX</p>
         </div>
       </div>
 
