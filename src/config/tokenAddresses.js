@@ -14,7 +14,7 @@ const tokenAddresses = {
 
   // Aave V3 - Official Pool Contract  
   AAVE_V3: {
-    POOL: '0x87870Bce3F226b9aBc9294c6a9E536fCBd47c29f',        // Main Aave V3 Pool
+    POOL: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2',        // Main Aave V3 Pool
     AUSDC: '0x98C23E9d8f34FEFb1B7BD6a91B7FF122F4e16F5c',       // aUSDC token
     AUSDT: '0x23878914EFE38d27C4D67Ab83ed1b93A74D4086a',       // aUSDT token 
     ADAI: '0x018008bfb33d285247A21d44E50697654f754e63'        // aDAI token

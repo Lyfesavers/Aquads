@@ -1,5 +1,7 @@
 // DeFi Service for fetching real-time APY data and managing protocol integrations
 
+import logger from '../utils/logger';
+
 const DEFILLAMA_API_BASE = 'https://yields.llama.fi';
 
 // Cache for APY data to reduce API calls
@@ -60,7 +62,7 @@ export const fetchAllPools = async () => {
     const data = await response.json();
     return data.data || [];
   } catch (error) {
-    console.error('Error fetching DeFiLlama pools:', error);
+    logger.error('Error fetching DeFiLlama pools:', error);
     return [];
   }
 };
@@ -109,7 +111,7 @@ export const getPoolAPYs = async () => {
     
     return poolAPYs;
   } catch (error) {
-    console.error('Error fetching pool APYs:', error);
+    logger.error('Error fetching pool APYs:', error);
     return {};
   }
 };

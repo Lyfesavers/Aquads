@@ -5,6 +5,7 @@ import { AQUADS_WALLETS, FEE_CONFIG, SUPPORTED_CHAINS, getWalletForChain } from 
 import tokenAddresses from '../config/tokenAddresses';
 import { getPoolAPYs, formatAPY, formatTVL, getRiskAssessment } from '../services/defiService';
 import { EthereumProvider } from '@walletconnect/ethereum-provider';
+import logger from '../utils/logger';
 
 // Production-ready pool configurations using real contract addresses
 const PROTOCOL_POOLS = [
@@ -18,7 +19,7 @@ const PROTOCOL_POOLS = [
     risk: 'Low',
     logo: '🏦',
     description: 'Earn yield by lending USDC on Aave V3',
-    contractAddress: '0x87870Bce3F226b9aBc9294c6a9E536fCBd47c29f',
+    contractAddress: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2',
     tokenAddress: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
     chain: 'Ethereum',
     chainId: 1,
@@ -52,7 +53,7 @@ const PROTOCOL_POOLS = [
     risk: 'Low',
     logo: '🏦',
     description: 'Earn yield by lending ETH on Aave V3',
-    contractAddress: '0x87870Bce3F226b9aBc9294c6a9E536fCBd47c29f',
+    contractAddress: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2',
     tokenAddress: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
     chain: 'Ethereum',
     chainId: 1,
@@ -69,7 +70,7 @@ const PROTOCOL_POOLS = [
     risk: 'Medium',
     logo: '🏛️',
     description: 'Auto-compound USDC through Yearn strategies',
-    contractAddress: '0xE15461B18EE31b7379019Dc523231C57d1Cbc18c',
+    contractAddress: '0x5f18C75AbDAe578b483E5F43f12a39cF75b973a9',
     tokenAddress: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
     chain: 'Ethereum',
     chainId: 1,
@@ -77,16 +78,16 @@ const PROTOCOL_POOLS = [
     feeWallet: AQUADS_WALLETS.ETHEREUM
   },
   {
-    id: 'compound-dai',
-    protocol: 'Compound',
+    id: 'aave-dai',
+    protocol: 'Aave',
     name: 'DAI Supply Pool',
     token: 'DAI',
     apy: 4.1,
     tvl: 680000000,
     risk: 'Low',
     logo: '🔄',
-    description: 'Supply DAI to Compound V3 for steady yield',
-    contractAddress: '0xc3d688B66703497DAA19211EEdff47f25384cdc3',
+    description: 'Supply DAI to Aave V3 for steady yield',
+    contractAddress: '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2',
     tokenAddress: '0x6B175474E89094C44Da98b954EedeAC495271d0F',
     chain: 'Ethereum',
     chainId: 1,
@@ -103,7 +104,7 @@ const PROTOCOL_POOLS = [
     risk: 'Medium',
     logo: '🏛️',
     description: 'Auto-compound ETH through Yearn strategies',
-    contractAddress: '0xE15461B18EE31b7379019Dc523231C57d1Cbc18c',
+    contractAddress: '0xa258C4606Ca8206D8aA700cE2143D7db854D168c',
     tokenAddress: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
     chain: 'Ethereum',
     chainId: 1,
@@ -156,41 +157,37 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
   // Fetch real-time APY data from DeFiLlama
   const fetchRealTimeAPYs = async () => {
     try {
-      const realTimeAPYs = await getPoolAPYs();
+      const apyData = await getPoolAPYs();
       
-      // Update pools with real-time data
-      const updatedPools = PROTOCOL_POOLS.map(pool => {
-        const realTimeData = realTimeAPYs[pool.id];
-        if (realTimeData) {
-          return {
-            ...pool,
-            apy: realTimeData.apy || pool.apy,
-            tvl: realTimeData.tvlUsd || pool.tvl
-          };
-        }
-        return pool;
-      });
-      
-      setPools(updatedPools);
+      if (apyData && Object.keys(apyData).length > 0) {
+        const updatedPools = pools.map(pool => {
+          const poolKey = `${pool.protocol.toLowerCase()}-${pool.token.toLowerCase()}`;
+          if (apyData[poolKey] && apyData[poolKey].apy) {
+            return { ...pool, apy: apyData[poolKey].apy };
+          }
+          return pool;
+        });
+        setPools(updatedPools);
+      }
     } catch (error) {
-      console.error('Error fetching real-time APYs:', error);
-      // Fallback to static data if API fails
-      setPools(PROTOCOL_POOLS);
+      logger.error('Error fetching real-time APYs:', error);
+      // Silently fail and use default APYs
     }
   };
 
+  // Check WalletConnect connection status
   const checkWalletConnection = async () => {
-    // Check if WalletConnect provider exists and is connected
-    if (walletProvider) {
-      try {
-        const accounts = await walletProvider.request({ method: 'eth_accounts' });
-        if (accounts.length > 0) {
-          setWalletConnected(true);
-          setConnectedAddress(accounts[0]);
+    try {
+      if (walletProvider && typeof walletProvider.connected !== 'undefined') {
+        setWalletConnected(walletProvider.connected);
+        if (walletProvider.connected && walletProvider.accounts?.length > 0) {
+          setConnectedAddress(walletProvider.accounts[0]);
         }
-      } catch (error) {
-        console.error('Error checking WalletConnect:', error);
       }
+    } catch (error) {
+      logger.error('Error checking WalletConnect:', error);
+      setWalletConnected(false);
+      setConnectedAddress(null);
     }
   };
 
@@ -213,7 +210,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       setWalletProvider(provider);
       return provider;
     } catch (error) {
-      console.error('Error initializing WalletConnect:', error);
+      logger.error('Error initializing WalletConnect:', error);
       return null;
     }
   };
@@ -244,7 +241,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         showNotification('Failed to initialize WalletConnect. Please try again.', 'error');
       }
     } catch (error) {
-      console.error('Error connecting wallet:', error);
+      logger.error('Error connecting wallet:', error);
       if (error.code === 4001) {
         showNotification('Please approve the connection request', 'error');
       } else {
@@ -264,7 +261,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       setConnectedAddress(null);
       showNotification('Wallet disconnected', 'info');
     } catch (error) {
-      console.error('Error disconnecting wallet:', error);
+      logger.error('Error disconnecting wallet:', error);
     }
   };
 
@@ -532,27 +529,8 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       }
       
     } catch (error) {
-      console.error('Deposit error:', error);
-      let errorMessage = 'Deposit failed. Please try again.';
-      
-      if (error.code === 'INSUFFICIENT_FUNDS' || error.code === -32000) {
-        errorMessage = 'Insufficient funds for gas fees.';
-      } else if (error.code === 'ACTION_REJECTED' || error.code === 4001) {
-        errorMessage = 'Transaction rejected by user.';
-      } else if (error.message?.includes('insufficient funds')) {
-        errorMessage = 'Insufficient token balance or ETH for gas.';
-      } else if (error.message?.includes('gas required exceeds allowance')) {
-        errorMessage = 'Gas limit too low. Please try again.';
-      } else if (error.message?.includes('nonce too high')) {
-        errorMessage = 'Transaction nonce error. Please reset your wallet.';
-      } else if (error.message?.includes('replacement fee too low')) {
-        errorMessage = 'Transaction fee too low. Please try with higher gas.';
-      } else if (error.reason) {
-        errorMessage = `Contract error: ${error.reason}`;
-      }
-      
-      showNotification(errorMessage, 'error');
-    } finally {
+      logger.error('Deposit error:', error);
+      showNotification(`Deposit failed: ${error.message}`, 'error');
       setIsDepositing(false);
     }
   };
@@ -700,18 +678,8 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       }
       
     } catch (error) {
-      console.error('Withdraw error:', error);
-      let errorMessage = 'Withdraw failed. Please try again.';
-      
-      if (error.code === 'INSUFFICIENT_FUNDS') {
-        errorMessage = 'Insufficient funds for gas fees.';
-      } else if (error.code === 'USER_REJECTED') {
-        errorMessage = 'Transaction rejected by user.';
-      } else if (error.message?.includes('insufficient funds')) {
-        errorMessage = 'Insufficient ETH for gas fees.';
-      }
-      
-      showNotification(errorMessage, 'error');
+      logger.error('Withdraw error:', error);
+      showNotification(`Withdrawal failed: ${error.message}`, 'error');
     } finally {
       setLoading(false);
     }

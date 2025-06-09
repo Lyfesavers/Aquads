@@ -391,7 +391,6 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
         setError(error.message || 'Failed to create account. Please try again.');
       }
       setIsSubmitting(false);
-      console.error('Signup error:', error);
     }
   };
 

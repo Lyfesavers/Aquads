@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { API_URL } from '../services/api';
+import logger from '../utils/logger';
 
 const BannerDisplay = () => {
   const [banners, setBanners] = useState([]);
@@ -16,7 +17,7 @@ const BannerDisplay = () => {
           }
         }
       } catch (error) {
-        console.error('Failed to fetch active banners:', error);
+        logger.error('Failed to fetch active banners:', error);
       }
     };
 
