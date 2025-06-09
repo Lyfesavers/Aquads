@@ -15,9 +15,7 @@ const SUI_FEE_WALLET = process.env.REACT_APP_SUI_FEE_WALLET; // SUI wallet addre
 const AquaSwap = ({ currentUser, showNotification }) => {
   const navigate = useNavigate();
   const [showChart, setShowChart] = useState(false);
-  const [chartType, setChartType] = useState('tradingview');
   const tradingViewRef = useRef(null);
-  const dexScreenerRef = useRef(null);
 
   // Initialize on component mount
   useEffect(() => {
@@ -32,7 +30,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
   // Load TradingView widget
   useEffect(() => {
-    if (showChart && chartType === 'tradingview' && tradingViewRef.current) {
+    if (showChart && tradingViewRef.current) {
       // Clear previous widget
       tradingViewRef.current.innerHTML = '';
       
@@ -63,27 +61,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       
       tradingViewRef.current.appendChild(script);
     }
-  }, [showChart, chartType]);
-
-  // Load DexScreener widget
-  useEffect(() => {
-    if (showChart && chartType === 'dexscreener' && dexScreenerRef.current) {
-      // Clear previous content
-      dexScreenerRef.current.innerHTML = '';
-      
-      // Create iframe for DexScreener
-      const iframe = document.createElement('iframe');
-      iframe.src = 'https://dexscreener.com/';
-      iframe.style.width = '100%';
-      iframe.style.height = '100%';
-      iframe.style.border = 'none';
-      iframe.style.borderRadius = '8px';
-      iframe.title = 'DexScreener Chart';
-      iframe.allow = 'fullscreen';
-      
-      dexScreenerRef.current.appendChild(iframe);
-    }
-  }, [showChart, chartType]);
+  }, [showChart]);
 
   // Toggle chart visibility
   const toggleChart = () => {
@@ -200,43 +178,23 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       {showChart && (
         <div className="chart-section">
           <div className="chart-header">
-            <div className="chart-controls">
-              <div className="chart-type-selector">
-                <label className="chart-label">Chart Provider:</label>
-                <select 
-                  value={chartType} 
-                  onChange={(e) => setChartType(e.target.value)}
-                  className="token-select"
-                >
-                  <option value="tradingview">TradingView (Search Any Token)</option>
-                  <option value="dexscreener">DexScreener (Search Any Token)</option>
-                </select>
-              </div>
-            </div>
+            <h3 className="chart-title">Professional Trading Charts</h3>
+            <p className="chart-subtitle">Powered by TradingView</p>
           </div>
           
           <div className="chart-container">
-            {chartType === 'tradingview' && (
-              <div 
-                ref={tradingViewRef}
-                id="tradingview_widget" 
-                style={{ height: '100%', width: '100%' }}
-              />
-            )}
-            
-            {chartType === 'dexscreener' && (
-              <div 
-                ref={dexScreenerRef}
-                style={{ height: '100%', width: '100%' }}
-              />
-            )}
+            <div 
+              ref={tradingViewRef}
+              id="tradingview_widget" 
+              style={{ height: '100%', width: '100%' }}
+            />
           </div>
           
           <div className="chart-info">
             <p className="chart-note">
-              💡 <strong>TradingView:</strong> Use the search bar in the chart to find any token (e.g., "BTCUSDT", "ETHUSDT", "SOLUSDT")
+              💡 <strong>Search Any Token:</strong> Use the search bar in the chart above to find any cryptocurrency (e.g., "BTCUSDT", "ETHUSDT", "SOLUSDT", "PEPEUSDT")
               <br />
-              📊 <strong>DexScreener:</strong> Navigate directly on their platform to search and analyze any DEX token
+              📊 <strong>Full TradingView Features:</strong> Professional indicators, drawing tools, multiple timeframes, and real-time data
             </p>
           </div>
         </div>
