@@ -293,21 +293,33 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       return;
     }
 
+    // Validate wallet connection state
+    if (!walletProvider || !connectedAddress) {
+      showNotification('Wallet connection lost. Please reconnect your wallet.', 'error');
+      setWalletConnected(false);
+      setConnectedAddress(null);
+      return;
+    }
+
     setIsDepositing(true);
     
     try {
       // Get user's wallet and provider (WalletConnect only)
       if (!walletProvider) {
         showNotification('Please connect your wallet first', 'error');
-        setIsDepositing(false);
         return;
       }
+      
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Transaction timeout - please try again')), 60000)
+      );
       
       const web3Provider = walletProvider;
       
       const provider = new ethers.BrowserProvider(web3Provider);
-      const signer = await provider.getSigner();
-      const userAddress = await signer.getAddress();
+      const signer = await Promise.race([provider.getSigner(), timeoutPromise]);
+      const userAddress = await Promise.race([signer.getAddress(), timeoutPromise]);
       
       // Check if we're on the correct network and switch if needed
       const network = await provider.getNetwork();
@@ -546,7 +558,20 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       
     } catch (error) {
       logger.error('Deposit error:', error);
-      showNotification(`Deposit failed: ${error.message}`, 'error');
+      
+      // Handle specific error types
+      if (error.message.includes('timeout')) {
+        showNotification('Transaction timed out. Please check your wallet and try again.', 'error');
+      } else if (error.message.includes('user rejected') || error.code === 4001) {
+        showNotification('Transaction cancelled by user', 'warning');
+      } else if (error.message.includes('insufficient funds')) {
+        showNotification('Insufficient funds for transaction', 'error');
+      } else if (error.message.includes('network')) {
+        showNotification('Network error - please check your connection', 'error');
+      } else {
+        showNotification(`Deposit failed: ${error.message}`, 'error');
+      }
+    } finally {
       setIsDepositing(false);
     }
   };
