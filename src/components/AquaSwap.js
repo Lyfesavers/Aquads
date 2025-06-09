@@ -254,12 +254,41 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                       className="chain-select"
                     >
                       <option value="ether">Ethereum</option>
-                      <option value="bnb">BNB Chain</option>
+                      <option value="bnb">BNB Chain (BSC)</option>
                       <option value="polygon">Polygon</option>
-                      <option value="solana">Solana</option>
                       <option value="arbitrum">Arbitrum</option>
                       <option value="optimism">Optimism</option>
                       <option value="base">Base</option>
+                      <option value="avalanche">Avalanche</option>
+                      <option value="fantom">Fantom</option>
+                      <option value="cronos">Cronos</option>
+                      <option value="solana">Solana</option>
+                      <option value="sui">Sui</option>
+                      <option value="aptos">Aptos</option>
+                      <option value="near">Near</option>
+                      <option value="aurora">Aurora</option>
+                      <option value="celo">Celo</option>
+                      <option value="moonbeam">Moonbeam</option>
+                      <option value="moonriver">Moonriver</option>
+                      <option value="harmony">Harmony</option>
+                      <option value="okx">OKX Chain</option>
+                      <option value="kcc">KCC</option>
+                      <option value="heco">Heco</option>
+                      <option value="velas">Velas</option>
+                      <option value="milkomeda">Milkomeda</option>
+                      <option value="fuse">Fuse</option>
+                      <option value="metis">Metis</option>
+                      <option value="boba">Boba</option>
+                      <option value="dogechain">Dogechain</option>
+                      <option value="evmos">Evmos</option>
+                      <option value="kava">Kava</option>
+                      <option value="klaytn">Klaytn</option>
+                      <option value="oasis">Oasis</option>
+                      <option value="step">Step Network</option>
+                      <option value="syscoin">Syscoin</option>
+                      <option value="telos">Telos</option>
+                      <option value="wanchain">Wanchain</option>
+                      <option value="zilliqa">Zilliqa</option>
                     </select>
                   </div>
                   

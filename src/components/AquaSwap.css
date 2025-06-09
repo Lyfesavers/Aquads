@@ -211,6 +211,20 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
+/* Fix dropdown styling */
+.chain-select option {
+  background: #1f2937;
+  color: #ffffff;
+  padding: 8px;
+  border: none;
+}
+
+.chain-select option:hover,
+.chain-select option:focus {
+  background: #374151;
+  color: #00d4ff;
+}
+
 .token-search-input::placeholder {
   color: #666666;
 }
