@@ -125,6 +125,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
   const [connectedAddress, setConnectedAddress] = useState(null);
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [activeTab, setActiveTab] = useState('All');
+  const [isConnecting, setIsConnecting] = useState(false);
 
   // Get unique protocols for tabs
   const protocols = ['All', ...new Set(pools.map(pool => pool.protocol))];
@@ -224,6 +225,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
   // Connect wallet via WalletConnect only
   const connectWallet = async () => {
+    setIsConnecting(true);
     try {
       let provider = walletProvider;
       if (!provider) {
@@ -232,7 +234,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       
       if (provider) {
         const accounts = await provider.enable();
-        if (accounts.length > 0) {
+        if (accounts && accounts.length > 0) {
           setWalletProvider(provider);
           setWalletConnected(true);
           setConnectedAddress(accounts[0]);
@@ -243,6 +245,8 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
           if (chainId !== '0x1') {
             showNotification('Please switch to Ethereum Mainnet for the best experience', 'warning');
           }
+        } else {
+          showNotification('No accounts found. Please try connecting again.', 'error');
         }
       } else {
         showNotification('Failed to initialize WalletConnect. Please try again.', 'error');
@@ -254,6 +258,11 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       } else {
         showNotification('Failed to connect wallet. Please try again.', 'error');
       }
+      // Reset states on error
+      setWalletConnected(false);
+      setConnectedAddress(null);
+    } finally {
+      setIsConnecting(false);
     }
   };
 
@@ -703,20 +712,21 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         
         {/* Compact Wallet Connect */}
         <div className="flex items-center gap-3">
-          {!walletConnected ? (
+          {!walletConnected || !connectedAddress ? (
             <button
               onClick={connectWallet}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors flex items-center gap-2"
+              disabled={isConnecting}
+              className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-6 py-2 rounded-lg transition-colors flex items-center gap-2"
             >
               <FaWallet className="w-4 h-4" />
-              Connect Wallet
+              {isConnecting ? 'Connecting...' : 'Connect Wallet'}
             </button>
           ) : (
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-lg px-3 py-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                 <span className="text-green-400 text-sm font-medium">
-                  {connectedAddress.slice(0, 6)}...{connectedAddress.slice(-4)}
+                  {connectedAddress ? `${connectedAddress.slice(0, 6)}...${connectedAddress.slice(-4)}` : 'Connected'}
                 </span>
               </div>
               <button
