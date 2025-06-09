@@ -80,7 +80,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       // Clear previous widget
       dexToolsRef.current.innerHTML = '';
       
-      // Create DexTools iframe using official widget format
+      // Create DexTools iframe using official widget format with mobile optimizations
       const iframe = document.createElement('iframe');
       iframe.id = 'dextools-widget';
       iframe.title = 'DexTools Trading Chart';
@@ -88,12 +88,20 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       iframe.height = '100%';
       iframe.style.border = 'none';
       iframe.style.borderRadius = '8px';
+      iframe.style.minHeight = '400px'; // Ensure minimum height for mobile
+      iframe.frameBorder = '0';
+      iframe.scrolling = 'no';
       
-      // Build DexTools widget URL according to their documentation
+      // Build DexTools widget URL according to their documentation with mobile-friendly parameters
       const widgetUrl = `https://www.dextools.io/widget-chart/en/${selectedChain}/pe-light/${tokenSearch.trim()}?theme=dark&chartType=1&chartResolution=15&drawingToolbars=false&tvPlatformColor=111827&tvPaneColor=1f2937&headerColor=111827`;
       
       iframe.src = widgetUrl;
       iframe.allow = 'fullscreen';
+      
+      // Add mobile-specific attributes
+      iframe.setAttribute('allowfullscreen', 'true');
+      iframe.setAttribute('webkitallowfullscreen', 'true');
+      iframe.setAttribute('mozallowfullscreen', 'true');
       
       dexToolsRef.current.appendChild(iframe);
     } else if (chartProvider === 'dextools' && dexToolsRef.current && !tokenSearch.trim()) {

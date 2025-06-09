@@ -270,6 +270,17 @@
   margin: 0 20px;
   overflow: hidden;
   min-height: 400px;
+  position: relative;
+}
+
+/* Ensure iframe responsiveness */
+.chart-container iframe {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: inherit;
+  border: none;
+  border-radius: 8px;
 }
 
 /* Chart Info */
@@ -323,7 +334,6 @@
   .trading-interface.with-charts {
     flex-direction: column;
     height: auto;
-    min-height: calc(100vh - 160px);
   }
   
   .swap-section {
@@ -331,16 +341,10 @@
     border-right: none;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     max-width: none;
-    padding: 15px;
   }
   
   .chart-section {
-    flex: 1;
-    min-height: 700px;
-  }
-  
-  .chart-container {
-    min-height: 500px;
+    min-height: 600px;
   }
   
   .search-controls {
@@ -364,17 +368,10 @@
     font-size: 2rem;
   }
   
-  .trading-interface.with-charts {
-    min-height: calc(100vh - 140px);
-  }
 
+  
   .swap-section {
     padding: 15px;
-    min-height: auto;
-  }
-  
-  .chart-section {
-    min-height: 800px;
   }
   
   .chart-header {
@@ -383,7 +380,13 @@
   
   .chart-container {
     margin: 0 15px;
-    min-height: 600px;
+    min-height: 500px;
+  }
+  
+  /* Mobile iframe optimizations */
+  .chart-container iframe {
+    min-height: 500px !important;
+    touch-action: pan-x pan-y;
   }
   
   .chart-provider-selector {
