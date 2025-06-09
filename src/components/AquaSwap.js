@@ -16,22 +16,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   const navigate = useNavigate();
   const [showChart, setShowChart] = useState(false);
   const [chartType, setChartType] = useState('tradingview');
-  const [selectedSymbol, setSelectedSymbol] = useState('BTCUSDT');
   const tradingViewRef = useRef(null);
-
-  // Popular trading pairs for quick access
-  const popularPairs = [
-    { symbol: 'BTCUSDT', name: 'Bitcoin/USDT' },
-    { symbol: 'ETHUSDT', name: 'Ethereum/USDT' },
-    { symbol: 'BNBUSDT', name: 'BNB/USDT' },
-    { symbol: 'SOLUSDT', name: 'Solana/USDT' },
-    { symbol: 'XRPUSDT', name: 'XRP/USDT' },
-    { symbol: 'ADAUSDT', name: 'Cardano/USDT' },
-    { symbol: 'DOGEUSDT', name: 'Dogecoin/USDT' },
-    { symbol: 'AVAXUSDT', name: 'Avalanche/USDT' },
-    { symbol: 'MATICUSDT', name: 'Polygon/USDT' },
-    { symbol: 'LINKUSDT', name: 'Chainlink/USDT' }
-  ];
+  const dexScreenerRef = useRef(null);
 
   // Initialize on component mount
   useEffect(() => {
@@ -57,7 +43,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       script.async = true;
       script.innerHTML = JSON.stringify({
         "autosize": true,
-        "symbol": selectedSymbol,
+        "symbol": "BTCUSDT",
         "interval": "D",
         "timezone": "Etc/UTC",
         "theme": "dark",
@@ -69,21 +55,39 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         "hide_top_toolbar": false,
         "hide_legend": false,
         "save_image": false,
-        "container_id": "tradingview_widget"
+        "container_id": "tradingview_widget",
+        "toolbar_bg": "#1f2937",
+        "withdateranges": true,
+        "allow_symbol_change": true
       });
       
       tradingViewRef.current.appendChild(script);
     }
-  }, [showChart, chartType, selectedSymbol]);
+  }, [showChart, chartType]);
+
+  // Load DexScreener widget
+  useEffect(() => {
+    if (showChart && chartType === 'dexscreener' && dexScreenerRef.current) {
+      // Clear previous content
+      dexScreenerRef.current.innerHTML = '';
+      
+      // Create iframe for DexScreener
+      const iframe = document.createElement('iframe');
+      iframe.src = 'https://dexscreener.com/';
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      iframe.style.border = 'none';
+      iframe.style.borderRadius = '8px';
+      iframe.title = 'DexScreener Chart';
+      iframe.allow = 'fullscreen';
+      
+      dexScreenerRef.current.appendChild(iframe);
+    }
+  }, [showChart, chartType]);
 
   // Toggle chart visibility
   const toggleChart = () => {
     setShowChart(!showChart);
-  };
-
-  // Handle symbol change
-  const handleSymbolChange = (symbol) => {
-    setSelectedSymbol(symbol);
   };
 
   // LI.FI Widget configuration following official documentation
@@ -197,21 +201,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         <div className="chart-section">
           <div className="chart-header">
             <div className="chart-controls">
-              <div className="token-selector">
-                <label className="chart-label">Trading Pair:</label>
-                <select 
-                  value={selectedSymbol} 
-                  onChange={(e) => handleSymbolChange(e.target.value)}
-                  className="token-select"
-                >
-                  {popularPairs.map(pair => (
-                    <option key={pair.symbol} value={pair.symbol}>
-                      {pair.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
               <div className="chart-type-selector">
                 <label className="chart-label">Chart Provider:</label>
                 <select 
@@ -219,9 +208,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                   onChange={(e) => setChartType(e.target.value)}
                   className="token-select"
                 >
-                  <option value="tradingview">TradingView</option>
-                  <option value="dexscreener">DexScreener</option>
-                  <option value="geckoterminal">GeckoTerminal</option>
+                  <option value="tradingview">TradingView (Search Any Token)</option>
+                  <option value="dexscreener">DexScreener (Search Any Token)</option>
                 </select>
               </div>
             </div>
@@ -237,36 +225,18 @@ const AquaSwap = ({ currentUser, showNotification }) => {
             )}
             
             {chartType === 'dexscreener' && (
-              <iframe
-                src={`https://dexscreener.com/${selectedSymbol.toLowerCase().replace('usdt', '/usd')}?embed=1&theme=dark`}
-                style={{ 
-                  width: '100%', 
-                  height: '100%', 
-                  border: 'none',
-                  borderRadius: '8px'
-                }}
-                title="DexScreener Chart"
-              />
-            )}
-            
-            {chartType === 'geckoterminal' && (
-              <iframe
-                src={`https://www.geckoterminal.com/embed/eth/pools?embed=1&info=0&swaps=0&theme=dark`}
-                style={{ 
-                  width: '100%', 
-                  height: '100%', 
-                  border: 'none',
-                  borderRadius: '8px'
-                }}
-                title="GeckoTerminal Chart"
+              <div 
+                ref={dexScreenerRef}
+                style={{ height: '100%', width: '100%' }}
               />
             )}
           </div>
           
           <div className="chart-info">
             <p className="chart-note">
-              💡 Professional trading charts powered by industry-leading providers. 
-              Switch between different chart sources using the dropdown above.
+              💡 <strong>TradingView:</strong> Use the search bar in the chart to find any token (e.g., "BTCUSDT", "ETHUSDT", "SOLUSDT")
+              <br />
+              📊 <strong>DexScreener:</strong> Navigate directly on their platform to search and analyze any DEX token
             </p>
           </div>
         </div>
