@@ -15,7 +15,9 @@ const SUI_FEE_WALLET = process.env.REACT_APP_SUI_FEE_WALLET; // SUI wallet addre
 const AquaSwap = ({ currentUser, showNotification }) => {
   const navigate = useNavigate();
   const [showChart, setShowChart] = useState(false);
+  const [chartProvider, setChartProvider] = useState('tradingview');
   const tradingViewRef = useRef(null);
+  const dexToolsRef = useRef(null);
 
   // Initialize on component mount
   useEffect(() => {
@@ -30,7 +32,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
   // Load TradingView widget
   useEffect(() => {
-    if (showChart && tradingViewRef.current) {
+    if (showChart && chartProvider === 'tradingview' && tradingViewRef.current) {
       // Clear previous widget
       tradingViewRef.current.innerHTML = '';
       
@@ -61,7 +63,27 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       
       tradingViewRef.current.appendChild(script);
     }
-  }, [showChart]);
+  }, [showChart, chartProvider]);
+
+  // Load DexTools widget
+  useEffect(() => {
+    if (showChart && chartProvider === 'dextools' && dexToolsRef.current) {
+      // Clear previous widget
+      dexToolsRef.current.innerHTML = '';
+      
+      // Create DexTools iframe
+      const iframe = document.createElement('iframe');
+      iframe.src = 'https://www.dextools.io/app/en/ether/pool-explorer';
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      iframe.style.border = 'none';
+      iframe.style.borderRadius = '8px';
+      iframe.title = 'DexTools Chart';
+      iframe.allow = 'fullscreen';
+      
+      dexToolsRef.current.appendChild(iframe);
+    }
+  }, [showChart, chartProvider]);
 
   // Toggle chart visibility
   const toggleChart = () => {
@@ -179,22 +201,56 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         <div className="chart-section">
           <div className="chart-header">
             <h3 className="chart-title">Professional Trading Charts</h3>
-            <p className="chart-subtitle">Powered by TradingView</p>
+            <div className="chart-provider-selector">
+              <button 
+                className={`provider-btn ${chartProvider === 'tradingview' ? 'active' : ''}`}
+                onClick={() => setChartProvider('tradingview')}
+              >
+                📊 TradingView
+                <span className="provider-desc">Major Tokens</span>
+              </button>
+              <button 
+                className={`provider-btn ${chartProvider === 'dextools' ? 'active' : ''}`}
+                onClick={() => setChartProvider('dextools')}
+              >
+                🚀 DexTools
+                <span className="provider-desc">Meme & DEX Tokens</span>
+              </button>
+            </div>
           </div>
           
           <div className="chart-container">
-            <div 
-              ref={tradingViewRef}
-              id="tradingview_widget" 
-              style={{ height: '100%', width: '100%' }}
-            />
+            {chartProvider === 'tradingview' && (
+              <div 
+                ref={tradingViewRef}
+                id="tradingview_widget" 
+                style={{ height: '100%', width: '100%' }}
+              />
+            )}
+            
+            {chartProvider === 'dextools' && (
+              <div 
+                ref={dexToolsRef}
+                style={{ height: '100%', width: '100%' }}
+              />
+            )}
           </div>
           
           <div className="chart-info">
             <p className="chart-note">
-              💡 <strong>Search Any Token:</strong> Use the search bar in the chart above to find any cryptocurrency (e.g., "BTCUSDT", "ETHUSDT", "SOLUSDT", "PEPEUSDT")
-              <br />
-              📊 <strong>Full TradingView Features:</strong> Professional indicators, drawing tools, multiple timeframes, and real-time data
+              {chartProvider === 'tradingview' ? (
+                <>
+                  💡 <strong>TradingView (Major Tokens):</strong> Perfect for BTC, ETH, BNB, SOL and other established cryptocurrencies
+                  <br />
+                  📊 Use the search bar to find tokens like "BTCUSDT", "ETHUSDT", "SOLUSDT"
+                </>
+              ) : (
+                <>
+                  🚀 <strong>DexTools (Meme & DEX Tokens):</strong> Perfect for PEPE, SHIB, DOGE and new tokens on Uniswap/PancakeSwap
+                  <br />
+                  📈 Search for any token contract address or find trending meme coins
+                </>
+              )}
             </p>
           </div>
         </div>
