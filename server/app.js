@@ -9,7 +9,7 @@ const pointsRoutes = require('./routes/points');
 const bookingsRoutes = require('./routes/bookings');
 const affiliateRoutes = require('./routes/affiliates');
 const jobsRoutes = require('./routes/jobs');
-const sitemapRoutes = require('./routes/sitemap');
+// const sitemapRoutes = require('./routes/sitemap'); // Disabled - using static sitemap
 const Service = require('./models/Service');
 const path = require('path');
 const fs = require('fs');
@@ -383,7 +383,7 @@ app.use('/api/bookings', bookingsRoutes);
 app.use('/api/affiliates', affiliateRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/blogs', blogsRoutes);
-app.use('/api/sitemap', sitemapRoutes);
+// app.use('/api/sitemap', sitemapRoutes); // Disabled - using static sitemap
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/games', gamesRoutes);
 
