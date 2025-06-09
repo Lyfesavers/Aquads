@@ -236,26 +236,28 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         <div className="chart-section">
           <div className="chart-header">
             <h3 className="chart-title">Professional Trading Charts</h3>
-            <div className="chart-provider-selector">
-              <button 
-                className={`provider-btn ${chartProvider === 'tradingview' ? 'active' : ''}`}
-                onClick={() => setChartProvider('tradingview')}
-              >
-                📊 TradingView
-                <span className="provider-desc">Major Tokens</span>
-              </button>
-              <button 
-                className={`provider-btn ${chartProvider === 'dextools' ? 'active' : ''}`}
-                onClick={() => setChartProvider('dextools')}
-              >
-                🚀 DexTools
-                <span className="provider-desc">Search Any Token</span>
-              </button>
-            </div>
             
-            {/* DexTools search interface */}
-            {chartProvider === 'dextools' && (
-              <div className="dextools-search-section">
+            {/* Compact controls row */}
+            <div className="chart-controls-row">
+              <div className="chart-provider-selector">
+                <button 
+                  className={`provider-btn ${chartProvider === 'tradingview' ? 'active' : ''}`}
+                  onClick={() => setChartProvider('tradingview')}
+                >
+                  📊 TradingView
+                  <span className="provider-desc">Major</span>
+                </button>
+                <button 
+                  className={`provider-btn ${chartProvider === 'dextools' ? 'active' : ''}`}
+                  onClick={() => setChartProvider('dextools')}
+                >
+                  🚀 DexTools
+                  <span className="provider-desc">Any Token</span>
+                </button>
+              </div>
+              
+              {/* DexTools search interface - inline */}
+              {chartProvider === 'dextools' && (
                 <div className="search-controls">
                   <div className="chain-selector">
                     <label className="search-label">Chain:</label>
@@ -304,17 +306,22 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                   </div>
                   
                   <div className="token-search">
-                    <label className="search-label">Contract Address:</label>
+                    <label className="search-label">Address:</label>
                     <input
                       type="text"
                       value={tokenSearch}
                       onChange={(e) => setTokenSearch(e.target.value)}
-                      placeholder="Enter token contract address (e.g., 0xa43fe16908251ee70ef74718545e4fe6c5ccec9f)"
+                      placeholder="Contract address (e.g., 0xa43fe16908251ee70ef74718545e4fe6c5ccec9f)"
                       className="token-search-input"
                     />
                   </div>
                 </div>
-                
+              )}
+            </div>
+            
+            {/* Popular tokens - only show for DexTools */}
+            {chartProvider === 'dextools' && (
+              <div className="dextools-search-section">
                 <div className="popular-tokens">
                   <span className="popular-label">Popular:</span>
                   {POPULAR_TOKEN_EXAMPLES.map((token, index) => (
