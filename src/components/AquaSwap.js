@@ -188,159 +188,167 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   // Main AquaSwap interface
   return (
     <div className="aquaswap-page">
-      {/* Simple back button */}
-      <button 
-        className="back-to-main-button"
-        onClick={() => navigate('/')}
-        title="Back to Main Page"
-      >
-        ← Back to Main
-      </button>
-
-      {/* Banner Display */}
-      <BannerDisplay />
-
-      {/* Simple title */}
-      <div className="page-title">
-        <h1>
-          <img 
-            src="/AquaSwap.svg" 
-            alt="AquaSwap" 
-            className="aquaswap-logo" 
-            width="32" 
-            height="32"
-          />
-          AquaSwap
-        </h1>
-        <p>The Ultimate Cross-Chain DEX</p>
-      </div>
-
-      {/* Chart Toggle Button */}
-      <div className="chart-toggle-container">
+      {/* Header Section */}
+      <div className="header-section">
+        {/* Back button */}
         <button 
-          className="chart-toggle-button"
-          onClick={toggleChart}
-          title={showChart ? "Hide Charts" : "Show Charts"}
+          className="back-to-main-button"
+          onClick={() => navigate('/')}
+          title="Back to Main Page"
         >
-          📈 {showChart ? "Hide Charts" : "Show Trading Charts"}
+          ← Back to Main
         </button>
+
+        {/* Banner Display */}
+        <BannerDisplay />
+
+        {/* Title */}
+        <div className="page-title">
+          <h1>
+            <img 
+              src="/AquaSwap.svg" 
+              alt="AquaSwap" 
+              className="aquaswap-logo" 
+              width="32" 
+              height="32"
+            />
+            AquaSwap
+          </h1>
+          <p>The Ultimate Cross-Chain DEX</p>
+        </div>
+
+        {/* Chart Toggle Button */}
+        <div className="chart-toggle-container">
+          <button 
+            className="chart-toggle-button"
+            onClick={toggleChart}
+            title={showChart ? "Hide Charts" : "Show Charts"}
+          >
+            📈 {showChart ? "Hide Charts" : "Show Trading Charts"}
+          </button>
+        </div>
       </div>
 
-      {/* Chart Section */}
-      {showChart && (
-        <div className="chart-section">
-          <div className="chart-header">
-            <h3 className="chart-title">Professional Trading Charts</h3>
-            <div className="chart-provider-selector">
-              <button 
-                className={`provider-btn ${chartProvider === 'tradingview' ? 'active' : ''}`}
-                onClick={() => setChartProvider('tradingview')}
-              >
-                📊 TradingView
-                <span className="provider-desc">Major Tokens</span>
-              </button>
-              <button 
-                className={`provider-btn ${chartProvider === 'dextools' ? 'active' : ''}`}
-                onClick={() => setChartProvider('dextools')}
-              >
-                🚀 DexTools
-                <span className="provider-desc">Search Any Token</span>
-              </button>
-            </div>
-            
-            {/* DexTools search interface */}
-            {chartProvider === 'dextools' && (
-              <div className="dextools-search-section">
-                <div className="search-controls">
-                  <div className="chain-selector">
-                    <label className="search-label">Chain:</label>
-                    <select 
-                      value={selectedChain}
-                      onChange={(e) => setSelectedChain(e.target.value)}
-                      className="chain-select"
-                    >
-                      <option value="ether">Ethereum</option>
-                      <option value="bnb">BNB Chain</option>
-                      <option value="polygon">Polygon</option>
-                      <option value="solana">Solana</option>
-                      <option value="arbitrum">Arbitrum</option>
-                      <option value="optimism">Optimism</option>
-                      <option value="base">Base</option>
-                    </select>
-                  </div>
-                  
-                  <div className="token-search">
-                    <label className="search-label">Contract Address:</label>
-                    <input
-                      type="text"
-                      value={tokenSearch}
-                      onChange={(e) => setTokenSearch(e.target.value)}
-                      placeholder="Enter token contract address (e.g., 0xa43fe16908251ee70ef74718545e4fe6c5ccec9f)"
-                      className="token-search-input"
-                    />
-                  </div>
-                </div>
-                
-                <div className="popular-tokens">
-                  <span className="popular-label">Popular:</span>
-                  {POPULAR_TOKEN_EXAMPLES.map((token, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handlePopularTokenClick(token)}
-                      className="popular-token-btn"
-                      title={`${token.name}: ${token.address}`}
-                    >
-                      {token.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-          
-          <div className="chart-container">
-            {chartProvider === 'tradingview' && (
-              <div 
-                ref={tradingViewRef}
-                id="tradingview_widget" 
-                style={{ height: '100%', width: '100%' }}
-              />
-            )}
-            
-            {chartProvider === 'dextools' && (
-              <div 
-                ref={dexToolsRef}
-                style={{ height: '100%', width: '100%' }}
-              />
-            )}
-          </div>
-          
-          <div className="chart-info">
-            <p className="chart-note">
-              {chartProvider === 'tradingview' ? (
-                <>
-                  💡 <strong>TradingView (Major Tokens):</strong> Perfect for BTC, ETH, BNB, SOL and other established cryptocurrencies
-                  <br />
-                  📊 Use the search bar in the chart to find tokens like "BTCUSDT", "ETHUSDT", "SOLUSDT"
-                </>
-              ) : (
-                <>
-                  🚀 <strong>DexTools (Any Token):</strong> Enter any token's contract address to view its chart and trading data
-                  <br />
-                  📈 Find contract addresses on CoinGecko, Etherscan, or the token's official website
-                </>
-              )}
-            </p>
+      {/* Main Trading Interface */}
+      <div className={`trading-interface ${showChart ? 'with-charts' : 'swap-only'}`}>
+        {/* Left Side - Swap Widget */}
+        <div className="swap-section">
+          <div className="lifi-widget">
+            <LiFiWidget integrator="aquaswap" config={widgetConfig} />
           </div>
         </div>
-      )}
-    
-      {/* LiFi Widget - Clean implementation */}
-      <div className="lifi-widget">
-        <LiFiWidget integrator="aquaswap" config={widgetConfig} />
+
+        {/* Right Side - Charts (when enabled) */}
+        {showChart && (
+          <div className="chart-section">
+            <div className="chart-header">
+              <h3 className="chart-title">Professional Trading Charts</h3>
+              <div className="chart-provider-selector">
+                <button 
+                  className={`provider-btn ${chartProvider === 'tradingview' ? 'active' : ''}`}
+                  onClick={() => setChartProvider('tradingview')}
+                >
+                  📊 TradingView
+                  <span className="provider-desc">Major Tokens</span>
+                </button>
+                <button 
+                  className={`provider-btn ${chartProvider === 'dextools' ? 'active' : ''}`}
+                  onClick={() => setChartProvider('dextools')}
+                >
+                  🚀 DexTools
+                  <span className="provider-desc">Search Any Token</span>
+                </button>
+              </div>
+              
+              {/* DexTools search interface */}
+              {chartProvider === 'dextools' && (
+                <div className="dextools-search-section">
+                  <div className="search-controls">
+                    <div className="chain-selector">
+                      <label className="search-label">Chain:</label>
+                      <select 
+                        value={selectedChain}
+                        onChange={(e) => setSelectedChain(e.target.value)}
+                        className="chain-select"
+                      >
+                        <option value="ether">Ethereum</option>
+                        <option value="bnb">BNB Chain</option>
+                        <option value="polygon">Polygon</option>
+                        <option value="solana">Solana</option>
+                        <option value="arbitrum">Arbitrum</option>
+                        <option value="optimism">Optimism</option>
+                        <option value="base">Base</option>
+                      </select>
+                    </div>
+                    
+                    <div className="token-search">
+                      <label className="search-label">Contract Address:</label>
+                      <input
+                        type="text"
+                        value={tokenSearch}
+                        onChange={(e) => setTokenSearch(e.target.value)}
+                        placeholder="Enter token contract address (e.g., 0xa43fe16908251ee70ef74718545e4fe6c5ccec9f)"
+                        className="token-search-input"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="popular-tokens">
+                    <span className="popular-label">Popular:</span>
+                    {POPULAR_TOKEN_EXAMPLES.map((token, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handlePopularTokenClick(token)}
+                        className="popular-token-btn"
+                        title={`${token.name}: ${token.address}`}
+                      >
+                        {token.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="chart-container">
+              {chartProvider === 'tradingview' && (
+                <div 
+                  ref={tradingViewRef}
+                  id="tradingview_widget" 
+                  style={{ height: '100%', width: '100%' }}
+                />
+              )}
+              
+              {chartProvider === 'dextools' && (
+                <div 
+                  ref={dexToolsRef}
+                  style={{ height: '100%', width: '100%' }}
+                />
+              )}
+            </div>
+            
+            <div className="chart-info">
+              <p className="chart-note">
+                {chartProvider === 'tradingview' ? (
+                  <>
+                    💡 <strong>TradingView (Major Tokens):</strong> Perfect for BTC, ETH, BNB, SOL and other established cryptocurrencies
+                    <br />
+                    📊 Use the search bar in the chart to find tokens like "BTCUSDT", "ETHUSDT", "SOLUSDT"
+                  </>
+                ) : (
+                  <>
+                    🚀 <strong>DexTools (Any Token):</strong> Enter any token's contract address to view its chart and trading data
+                    <br />
+                    📈 Find contract addresses on CoinGecko, Etherscan, or the token's official website
+                  </>
+                )}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Simple footer text */}
+      {/* Footer */}
       <div className="simple-footer">
         <p>✨ Swap and bridge across 38+ blockchains with the best rates and lowest fees.</p>
       </div>
