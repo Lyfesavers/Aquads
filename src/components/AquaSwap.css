@@ -323,6 +323,7 @@
   .trading-interface.with-charts {
     flex-direction: column;
     height: auto;
+    min-height: calc(100vh - 160px);
   }
   
   .swap-section {
@@ -330,10 +331,16 @@
     border-right: none;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     max-width: none;
+    padding: 15px;
   }
   
   .chart-section {
-    min-height: 600px;
+    flex: 1;
+    min-height: 700px;
+  }
+  
+  .chart-container {
+    min-height: 500px;
   }
   
   .search-controls {
@@ -357,10 +364,17 @@
     font-size: 2rem;
   }
   
+  .trading-interface.with-charts {
+    min-height: calc(100vh - 140px);
+  }
 
-  
   .swap-section {
     padding: 15px;
+    min-height: auto;
+  }
+  
+  .chart-section {
+    min-height: 800px;
   }
   
   .chart-header {
@@ -369,7 +383,7 @@
   
   .chart-container {
     margin: 0 15px;
-    min-height: 500px;
+    min-height: 600px;
   }
   
   .chart-provider-selector {
