@@ -22,7 +22,7 @@ const upload = require('./middleware/upload');
 const usersRouter = require('./routes/users');
 const jobsRoutes = require('./routes/jobs');
 const blogsRoutes = require('./routes/blogs');
-const sitemapRoutes = require('./routes/sitemap');
+// const sitemapRoutes = require('./routes/sitemap'); // Disabled - using static sitemap
 const socketModule = require('./socket');
 const ipLimiter = require('./middleware/ipLimiter');
 const deviceLimiter = require('./middleware/deviceLimiter');
@@ -165,7 +165,7 @@ app.use('/api/bookings', require('./routes/bookings'));
 app.use('/api/affiliates', affiliateRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/blogs', blogsRoutes);
-app.use('/api/sitemap', sitemapRoutes);
+// app.use('/api/sitemap', sitemapRoutes); // Disabled - using static sitemap
 app.use('/api/games', require('./routes/games'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/twitter-raids', require('./routes/twitter-raids'));
@@ -525,13 +525,13 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-// Add the sitemap.xml route at the root level for search engines
-app.get('/sitemap.xml', async (req, res) => {
-  try {
-    // Forward the request to our sitemap route handler
-    res.redirect('/api/sitemap');
-  } catch (error) {
-    console.error('Error serving sitemap:', error);
-    res.status(500).send('Error generating sitemap');
-  }
-}); 
+// Sitemap.xml route disabled - using static sitemap file instead
+// app.get('/sitemap.xml', async (req, res) => {
+//   try {
+//     // Forward the request to our sitemap route handler
+//     res.redirect('/api/sitemap');
+//   } catch (error) {
+//     console.error('Error serving sitemap:', error);
+//     res.status(500).send('Error generating sitemap');
+//   }
+// }); 
