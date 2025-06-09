@@ -124,6 +124,13 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
   const [walletProvider, setWalletProvider] = useState(null);
   const [connectedAddress, setConnectedAddress] = useState(null);
   const [showWalletModal, setShowWalletModal] = useState(false);
+  const [activeTab, setActiveTab] = useState('All');
+
+  // Get unique protocols for tabs
+  const protocols = ['All', ...new Set(pools.map(pool => pool.protocol))];
+
+  // Filter pools based on active tab
+  const filteredPools = activeTab === 'All' ? pools : pools.filter(pool => pool.protocol === activeTab);
 
   // Format currency helper
   const formatCurrency = (value) => {
@@ -687,52 +694,41 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
   return (
     <div className="space-y-8">
-      {/* Wallet Connection */}
-      {!walletConnected && (
-        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-6 text-center">
-          <FaWallet className="w-8 h-8 text-yellow-400 mx-auto mb-3" />
-          <h3 className="text-lg font-semibold text-white mb-2">Connect Your Wallet</h3>
-          <p className="text-gray-300 mb-4">Connect your wallet to start making real deposits and earning yield on your crypto assets</p>
-          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 mb-4">
-            <p className="text-sm text-blue-300">
-              ⚠️ <strong>Real Money Warning:</strong> This will make actual blockchain transactions with real funds and gas fees.
-            </p>
-          </div>
-          <div className="flex justify-center">
+      {/* Header with Wallet Connect */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-white">AquaFi Savings Pools</h2>
+          <p className="text-gray-400">Earn yield on your crypto with leading DeFi protocols</p>
+        </div>
+        
+        {/* Compact Wallet Connect */}
+        <div className="flex items-center gap-3">
+          {!walletConnected ? (
             <button
               onClick={connectWallet}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg transition-colors flex items-center gap-2 justify-center font-semibold"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors flex items-center gap-2"
             >
-              <FaWallet className="w-5 h-5" />
+              <FaWallet className="w-4 h-4" />
               Connect Wallet
             </button>
-          </div>
-          <p className="text-sm text-gray-400 text-center mt-3">
-            Supports 50+ wallets including MetaMask, Trust Wallet, Coinbase Wallet, and more
-          </p>
-        </div>
-      )}
-
-      {/* Connected Wallet Info */}
-      {walletConnected && connectedAddress && (
-        <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-              <FaWallet className="w-4 h-4 text-white" />
+          ) : (
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-lg px-3 py-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-green-400 text-sm font-medium">
+                  {connectedAddress.slice(0, 6)}...{connectedAddress.slice(-4)}
+                </span>
+              </div>
+              <button
+                onClick={disconnectWallet}
+                className="bg-gray-600 hover:bg-gray-500 text-white px-3 py-2 rounded-lg transition-colors text-sm"
+              >
+                Disconnect
+              </button>
             </div>
-            <div>
-              <p className="text-white font-medium">Wallet Connected</p>
-              <p className="text-gray-400 text-sm">{connectedAddress.slice(0, 6)}...{connectedAddress.slice(-4)}</p>
-            </div>
-          </div>
-          <button
-            onClick={disconnectWallet}
-            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors text-sm"
-          >
-            Disconnect
-          </button>
+          )}
         </div>
-      )}
+      </div>
 
       {/* User Positions */}
       {walletConnected && userPositions.length > 0 && (
@@ -778,10 +774,39 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
 
       {/* Available Pools */}
       <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
-        <h3 className="text-xl font-semibold text-white mb-6">Available Savings Pools</h3>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <h3 className="text-xl font-semibold text-white">Available Savings Pools</h3>
+          
+          {/* Protocol Tabs */}
+          <div className="flex flex-wrap gap-2">
+            {protocols.map((protocol) => (
+              <button
+                key={protocol}
+                onClick={() => setActiveTab(protocol)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === protocol
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                {protocol} ({protocol === 'All' ? pools.length : pools.filter(p => p.protocol === protocol).length})
+              </button>
+            ))}
+          </div>
+        </div>
+        
+        {/* Warning Notice */}
+        {!walletConnected && (
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 mb-6">
+            <p className="text-sm text-blue-300 flex items-center gap-2">
+              <FaInfoCircle className="w-4 h-4 flex-shrink-0" />
+              <span>⚠️ <strong>Real Money:</strong> This platform makes actual blockchain transactions with real funds and gas fees.</span>
+            </p>
+          </div>
+        )}
         
         <div className="grid gap-6">
-          {pools.map((pool) => (
+          {filteredPools.map((pool) => (
             <div key={pool.id} className="bg-gray-700/30 rounded-xl p-6 border border-gray-600/30 hover:border-blue-500/50 transition-all">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div className="flex-1">
