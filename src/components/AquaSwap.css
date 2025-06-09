@@ -308,6 +308,23 @@
   box-shadow: 0 8px 32px rgba(0, 212, 255, 0.1);
 }
 
+/* Swap Footer */
+.swap-footer {
+  margin-top: 20px;
+  padding: 15px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.swap-footer p {
+  margin: 0;
+  color: #a0a0a0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
 /* Widget customization */
 .lifi-widget [data-widget] {
   background: rgba(0, 0, 0, 0.3) !important;
@@ -315,19 +332,7 @@
   border-radius: 16px !important;
 }
 
-/* Footer */
-.simple-footer {
-  text-align: center;
-  padding: 20px;
-  color: #a0a0a0;
-  background: rgba(0, 0, 0, 0.3);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
 
-.simple-footer p {
-  margin: 0;
-  font-size: 1rem;
-}
 
 /* Responsive Design */
 @media (max-width: 1200px) {

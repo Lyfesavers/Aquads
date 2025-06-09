@@ -227,6 +227,9 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           <div className="lifi-widget">
             <LiFiWidget integrator="aquaswap" config={widgetConfig} />
           </div>
+          <div className="swap-footer">
+            <p>✨ Swap and bridge across 38+ blockchains with the best rates and lowest fees.</p>
+          </div>
         </div>
 
         {/* Right Side - Charts */}
@@ -366,10 +369,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="simple-footer">
-        <p>✨ Swap and bridge across 38+ blockchains with the best rates and lowest fees.</p>
-      </div>
+
     </div>
   );
 };
