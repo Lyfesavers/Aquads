@@ -154,48 +154,109 @@
   font-weight: 400;
 }
 
-/* DexTools Pair Selector */
-.dextools-pair-selector {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  margin-top: 12px;
-  padding: 12px;
+/* DexTools Search Section */
+.dextools-search-section {
+  margin-top: 16px;
+  padding: 20px;
   background: rgba(0, 212, 255, 0.05);
-  border-radius: 8px;
+  border-radius: 12px;
   border: 1px solid rgba(0, 212, 255, 0.1);
 }
 
-.pair-label {
+.search-controls {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  align-items: end;
+}
+
+.chain-selector,
+.token-search {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.token-search {
+  flex: 1;
+}
+
+.search-label {
   color: #9ca3af;
   font-size: 0.875rem;
   font-weight: 500;
-  white-space: nowrap;
 }
 
-.pair-select {
+.chain-select,
+.token-search-input {
   background: rgba(31, 41, 55, 0.8);
   border: 1px solid rgba(0, 212, 255, 0.3);
-  border-radius: 6px;
+  border-radius: 8px;
   color: #ffffff;
-  padding: 8px 12px;
+  padding: 10px 12px;
   font-size: 0.875rem;
   outline: none;
   transition: all 0.3s ease;
-  min-width: 200px;
 }
 
-.pair-select:hover,
-.pair-select:focus {
+.chain-select {
+  min-width: 120px;
+}
+
+.token-search-input {
+  min-width: 300px;
+}
+
+.chain-select:hover,
+.chain-select:focus,
+.token-search-input:hover,
+.token-search-input:focus {
   border-color: rgba(0, 212, 255, 0.5);
   background: rgba(31, 41, 55, 1);
 }
 
-.pair-select option {
+.chain-select option {
   background: rgba(31, 41, 55, 1);
   color: #ffffff;
-  padding: 8px;
+}
+
+.token-search-input::placeholder {
+  color: #6b7280;
+  opacity: 1;
+}
+
+.popular-tokens {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.popular-label {
+  color: #9ca3af;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-right: 4px;
+}
+
+.popular-token-btn {
+  background: rgba(31, 41, 55, 0.6);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  border-radius: 6px;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 6px 12px;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.popular-token-btn:hover {
+  background: rgba(0, 212, 255, 0.1);
+  border-color: rgba(0, 212, 255, 0.3);
+  color: #00D4FF;
+  transform: translateY(-1px);
 }
 
 .chart-container {
@@ -286,16 +347,22 @@ body.aquaswap-page {
     max-width: 200px;
   }
 
-  .dextools-pair-selector {
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
+  .dextools-search-section {
+    padding: 16px;
   }
 
-  .pair-select {
+  .search-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .token-search-input {
     min-width: auto;
-    width: 100%;
-    max-width: 250px;
+  }
+
+  .popular-tokens {
+    justify-content: center;
   }
 
   .chart-container {
@@ -329,13 +396,31 @@ body.aquaswap-page {
     font-size: 0.6875rem;
   }
 
-  .pair-label {
+  .dextools-search-section {
+    padding: 12px;
+  }
+
+  .search-label {
     font-size: 0.75rem;
   }
 
-  .pair-select {
+  .chain-select,
+  .token-search-input {
     font-size: 0.75rem;
-    padding: 6px 8px;
+    padding: 8px 10px;
+  }
+
+  .token-search-input {
+    font-size: 0.6875rem;
+  }
+
+  .popular-label {
+    font-size: 0.75rem;
+  }
+
+  .popular-token-btn {
+    font-size: 0.6875rem;
+    padding: 4px 8px;
   }
 
   .chart-container {

@@ -12,39 +12,20 @@ const ETH_FEE_WALLET = process.env.REACT_APP_FEE_WALLET; // Ethereum wallet addr
 const SOLANA_FEE_WALLET = process.env.REACT_APP_SOLANA_FEE_WALLET; // Solana wallet address
 const SUI_FEE_WALLET = process.env.REACT_APP_SUI_FEE_WALLET; // SUI wallet address
 
-// Popular DexTools token pairs for quick access
-const POPULAR_DEXTOOLS_PAIRS = [
-  {
-    name: 'PEPE/ETH',
-    chain: 'ether',
-    address: '0xa43fe16908251ee70ef74718545e4fe6c5ccec9f',
-    description: 'PEPE Token'
-  },
-  {
-    name: 'SHIB/ETH', 
-    chain: 'ether',
-    address: '0x811beed0119b4afce20d2583eb608c6f7af1954f',
-    description: 'Shiba Inu'
-  },
-  {
-    name: 'FLOKI/ETH',
-    chain: 'ether', 
-    address: '0xf4d2888d29d722226fafa5d9b24f9164c092421e',
-    description: 'Floki Inu'
-  },
-  {
-    name: 'BONK/SOL',
-    chain: 'solana',
-    address: 'BqnpCdDLPV2pFdAaLnVidmn3G93RP2p5oRdGEY2sJGez',
-    description: 'Bonk (Solana)'
-  }
+// Popular token examples for quick access
+const POPULAR_TOKEN_EXAMPLES = [
+  { name: 'PEPE', address: '0xa43fe16908251ee70ef74718545e4fe6c5ccec9f', chain: 'ether' },
+  { name: 'SHIB', address: '0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce', chain: 'ether' },
+  { name: 'FLOKI', address: '0xcf0c122c6b73ff809c693db761e7baebe62b6a2e', chain: 'ether' },
+  { name: 'DOGE', address: '0x4206931337dc273a630d328da6441786bfad668f', chain: 'ether' }
 ];
 
 const AquaSwap = ({ currentUser, showNotification }) => {
   const navigate = useNavigate();
   const [showChart, setShowChart] = useState(false);
   const [chartProvider, setChartProvider] = useState('tradingview');
-  const [selectedDexToolsPair, setSelectedDexToolsPair] = useState(POPULAR_DEXTOOLS_PAIRS[0]);
+  const [tokenSearch, setTokenSearch] = useState('');
+  const [selectedChain, setSelectedChain] = useState('ether');
   const tradingViewRef = useRef(null);
   const dexToolsRef = useRef(null);
 
@@ -96,7 +77,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
   // Load DexTools widget using official implementation
   useEffect(() => {
-    if (showChart && chartProvider === 'dextools' && dexToolsRef.current) {
+    if (showChart && chartProvider === 'dextools' && dexToolsRef.current && tokenSearch.trim()) {
       // Clear previous widget
       dexToolsRef.current.innerHTML = '';
       
@@ -110,23 +91,33 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       iframe.style.borderRadius = '8px';
       
       // Build DexTools widget URL according to their documentation
-      const widgetUrl = `https://www.dextools.io/widget-chart/en/${selectedDexToolsPair.chain}/pe-light/${selectedDexToolsPair.address}?theme=dark&chartType=1&chartResolution=15&drawingToolbars=false&tvPlatformColor=111827&tvPaneColor=1f2937&headerColor=111827`;
+      const widgetUrl = `https://www.dextools.io/widget-chart/en/${selectedChain}/pe-light/${tokenSearch.trim()}?theme=dark&chartType=1&chartResolution=15&drawingToolbars=false&tvPlatformColor=111827&tvPaneColor=1f2937&headerColor=111827`;
       
       iframe.src = widgetUrl;
       iframe.allow = 'fullscreen';
       
       dexToolsRef.current.appendChild(iframe);
+    } else if (showChart && chartProvider === 'dextools' && dexToolsRef.current && !tokenSearch.trim()) {
+      // Show placeholder when no search term
+      dexToolsRef.current.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: rgba(0, 0, 0, 0.2); border-radius: 8px; color: #9ca3af;">
+          <div style="font-size: 3rem; margin-bottom: 16px;">🔍</div>
+          <h3 style="color: #ffffff; margin: 0 0 8px 0;">Search Any Token</h3>
+          <p style="margin: 0; text-align: center; line-height: 1.5;">Enter a contract address above to view any token's chart</p>
+        </div>
+      `;
     }
-  }, [showChart, chartProvider, selectedDexToolsPair]);
+  }, [showChart, chartProvider, tokenSearch, selectedChain]);
 
   // Toggle chart visibility
   const toggleChart = () => {
     setShowChart(!showChart);
   };
 
-  // Handle DexTools pair selection
-  const handleDexToolsPairChange = (pairIndex) => {
-    setSelectedDexToolsPair(POPULAR_DEXTOOLS_PAIRS[pairIndex]);
+  // Handle popular token selection
+  const handlePopularTokenClick = (token) => {
+    setTokenSearch(token.address);
+    setSelectedChain(token.chain);
   };
 
   // LI.FI Widget configuration following official documentation
@@ -253,25 +244,56 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                 onClick={() => setChartProvider('dextools')}
               >
                 🚀 DexTools
-                <span className="provider-desc">Meme & DEX Tokens</span>
+                <span className="provider-desc">Search Any Token</span>
               </button>
             </div>
             
-            {/* DexTools pair selector */}
+            {/* DexTools search interface */}
             {chartProvider === 'dextools' && (
-              <div className="dextools-pair-selector">
-                <label className="pair-label">Popular Tokens:</label>
-                <select 
-                  value={POPULAR_DEXTOOLS_PAIRS.indexOf(selectedDexToolsPair)}
-                  onChange={(e) => handleDexToolsPairChange(parseInt(e.target.value))}
-                  className="pair-select"
-                >
-                  {POPULAR_DEXTOOLS_PAIRS.map((pair, index) => (
-                    <option key={index} value={index}>
-                      {pair.name} - {pair.description}
-                    </option>
+              <div className="dextools-search-section">
+                <div className="search-controls">
+                  <div className="chain-selector">
+                    <label className="search-label">Chain:</label>
+                    <select 
+                      value={selectedChain}
+                      onChange={(e) => setSelectedChain(e.target.value)}
+                      className="chain-select"
+                    >
+                      <option value="ether">Ethereum</option>
+                      <option value="bnb">BNB Chain</option>
+                      <option value="polygon">Polygon</option>
+                      <option value="solana">Solana</option>
+                      <option value="arbitrum">Arbitrum</option>
+                      <option value="optimism">Optimism</option>
+                      <option value="base">Base</option>
+                    </select>
+                  </div>
+                  
+                  <div className="token-search">
+                    <label className="search-label">Contract Address:</label>
+                    <input
+                      type="text"
+                      value={tokenSearch}
+                      onChange={(e) => setTokenSearch(e.target.value)}
+                      placeholder="Enter token contract address (e.g., 0xa43fe16908251ee70ef74718545e4fe6c5ccec9f)"
+                      className="token-search-input"
+                    />
+                  </div>
+                </div>
+                
+                <div className="popular-tokens">
+                  <span className="popular-label">Popular:</span>
+                  {POPULAR_TOKEN_EXAMPLES.map((token, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handlePopularTokenClick(token)}
+                      className="popular-token-btn"
+                      title={`${token.name}: ${token.address}`}
+                    >
+                      {token.name}
+                    </button>
                   ))}
-                </select>
+                </div>
               </div>
             )}
           </div>
@@ -299,13 +321,13 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                 <>
                   💡 <strong>TradingView (Major Tokens):</strong> Perfect for BTC, ETH, BNB, SOL and other established cryptocurrencies
                   <br />
-                  📊 Use the search bar to find tokens like "BTCUSDT", "ETHUSDT", "SOLUSDT"
+                  📊 Use the search bar in the chart to find tokens like "BTCUSDT", "ETHUSDT", "SOLUSDT"
                 </>
               ) : (
                 <>
-                  🚀 <strong>DexTools (Meme & DEX Tokens):</strong> Real-time DEX data for {selectedDexToolsPair.name} on {selectedDexToolsPair.chain}
+                  🚀 <strong>DexTools (Any Token):</strong> Enter any token's contract address to view its chart and trading data
                   <br />
-                  📈 Switch between popular meme tokens using the dropdown above, or visit DexTools directly to search any token
+                  📈 Find contract addresses on CoinGecko, Etherscan, or the token's official website
                 </>
               )}
             </p>
