@@ -193,40 +193,40 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       {/* Header Section */}
       <div className="header-section">
         {/* Back button */}
-        <button 
-          className="back-to-main-button"
-          onClick={() => navigate('/')}
-          title="Back to Main Page"
-        >
-          ← Back to Main
-        </button>
+      <button 
+        className="back-to-main-button"
+        onClick={() => navigate('/')}
+        title="Back to Main Page"
+      >
+        ← Back to Main
+      </button>
 
-        {/* Banner Display */}
-        <BannerDisplay />
+      {/* Banner Display */}
+      <BannerDisplay />
 
         {/* Title */}
-        <div className="page-title">
-          <h1>
-            <img 
-              src="/AquaSwap.svg" 
-              alt="AquaSwap" 
-              className="aquaswap-logo" 
-              width="32" 
-              height="32"
-            />
-            AquaSwap
-          </h1>
+      <div className="page-title">
+        <h1>
+          <img 
+            src="/AquaSwap.svg" 
+            alt="AquaSwap" 
+            className="aquaswap-logo" 
+            width="32" 
+            height="32"
+          />
+          AquaSwap
+        </h1>
           <p>The Ultimate Cross-Chain BEX</p>
         </div>
       </div>
-
+    
       {/* Main Trading Interface */}
       <div className="trading-interface with-charts">
         {/* Left Side - Swap Widget */}
         <div className="swap-section">
-          <div className="lifi-widget">
-            <LiFiWidget integrator="aquaswap" config={widgetConfig} />
-          </div>
+      <div className="lifi-widget">
+        <LiFiWidget integrator="aquaswap" config={widgetConfig} />
+      </div>
           <div className="swap-footer">
             <p>✨ Swap and bridge across 38+ blockchains with the best rates and lowest fees.</p>
           </div>
@@ -266,99 +266,221 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                       onChange={(e) => setSelectedChain(e.target.value)}
                       className="chain-select"
                     >
+                      {/* Major Layer 1 Blockchains */}
                       <option value="ether">Ethereum</option>
-                      <option value="bnb">BNB Chain</option>
+                      <option value="bitcoin">Bitcoin</option>
+                      <option value="bnb">BNB Chain (BSC)</option>
+                      <option value="solana">Solana</option>
+                      <option value="cardano">Cardano</option>
+                      <option value="avalanche">Avalanche</option>
                       <option value="polygon">Polygon</option>
+                      <option value="tron">TRON</option>
+                      <option value="near">NEAR Protocol</option>
+                      <option value="aptos">Aptos</option>
+                      <option value="sui">Sui</option>
+                      <option value="ton">TON</option>
+                      <option value="cosmos">Cosmos</option>
+                      <option value="polkadot">Polkadot</option>
+                      <option value="kusama">Kusama</option>
+                      <option value="chainlink">Chainlink</option>
+                      <option value="stellar">Stellar</option>
+                      <option value="algorand">Algorand</option>
+                      <option value="hedera">Hedera</option>
+                      <option value="icp">Internet Computer</option>
+                      <option value="flow">Flow</option>
+                      <option value="elrond">MultiversX (Elrond)</option>
+                      <option value="terra">Terra</option>
+                      <option value="xrp">XRP Ledger</option>
+                      <option value="litecoin">Litecoin</option>
+                      <option value="monero">Monero</option>
+                      <option value="zcash">Zcash</option>
+                      <option value="dash">Dash</option>
+                      
+                      {/* Layer 2 & Scaling Solutions */}
+                      <option value="arbitrum">Arbitrum One</option>
+                      <option value="arbitrumnova">Arbitrum Nova</option>
+                      <option value="optimism">Optimism</option>
+                      <option value="base">Base</option>
+                      <option value="linea">Linea</option>
+                      <option value="scroll">Scroll</option>
+                      <option value="zksync">zkSync Era</option>
+                      <option value="polygonzkevm">Polygon zkEVM</option>
+                      <option value="starknet">Starknet</option>
+                      <option value="immutablex">Immutable X</option>
+                      <option value="loopring">Loopring</option>
+                      <option value="metis">Metis</option>
+                      <option value="boba">Boba Network</option>
+                      <option value="mantle">Mantle</option>
+                      <option value="mode">Mode</option>
+                      <option value="blast">Blast</option>
+                      <option value="manta">Manta Pacific</option>
+                      
+                      {/* EVM Compatible Chains */}
                       <option value="fantom">Fantom</option>
                       <option value="cronos">Cronos</option>
-                      <option value="avalanche">Avalanche</option>
-                      <option value="velas">Velas</option>
-                      <option value="oasis">Oasis</option>
-                      <option value="kucoin">KCC</option>
-                      <option value="metis">Metis</option>
-                      <option value="optimism">Optimism</option>
-                      <option value="arbitrum">Arbitrum</option>
-                      <option value="celo">Celo</option>
-                      <option value="telos">Telos</option>
-                      <option value="aurora">Aurora</option>
                       <option value="moonbeam">Moonbeam</option>
                       <option value="moonriver">Moonriver</option>
+                      <option value="celo">Celo</option>
+                      <option value="aurora">Aurora (NEAR)</option>
                       <option value="harmony">Harmony</option>
-                      <option value="fuse">Fuse</option>
-                      <option value="heco">Heco</option>
-                      <option value="oktc">OKTC</option>
-                      <option value="astar">Astar</option>
                       <option value="klaytn">Klaytn</option>
-                      <option value="iotex">IoTeX</option>
-                      <option value="milkomeda">Milkomeda</option>
-                      <option value="dfk">Avalanche DFK</option>
-                      <option value="solana">Solana</option>
                       <option value="evmos">Evmos</option>
-                      <option value="dogechain">Dogechain</option>
-                      <option value="etc">Ethereum Classic</option>
-                      <option value="gnosis">Gnosis</option>
-                      <option value="bitgert">Bitgert</option>
-                      <option value="canto">Canto</option>
-                      <option value="flare">Flare</option>
-                      <option value="arbitrumnova">Arbitrum Nova</option>
-                      <option value="redlight">Redlight</option>
-                      <option value="conflux">Conflux</option>
-                      <option value="smartbch">SmartBCH</option>
-                      <option value="kardia">Kardia</option>
-                      <option value="tomb">Tomb</option>
-                      <option value="wan">Wanchain</option>
-                      <option value="boba">Boba</option>
-                      <option value="elastos">Elastos</option>
-                      <option value="nova">Nova</option>
-                      <option value="hoo">Hoo</option>
-                      <option value="shiden">Shiden</option>
-                      <option value="fusion">Fusion</option>
-                      <option value="rsk">RSK</option>
-                      <option value="cube">Cube</option>
-                      <option value="syscoin">Syscoin</option>
                       <option value="kava">Kava</option>
+                      <option value="canto">Canto</option>
+                      <option value="gnosis">Gnosis Chain</option>
+                      <option value="oasis">Oasis Network</option>
+                      <option value="fuse">Fuse</option>
+                      <option value="velas">Velas</option>
+                      <option value="syscoin">Syscoin</option>
+                      <option value="telos">Telos</option>
+                      <option value="wanchain">Wanchain</option>
                       <option value="thundercore">ThunderCore</option>
-                      <option value="echelon">Echelon</option>
+                      <option value="iotex">IoTeX</option>
+                      <option value="conflux">Conflux eSpace</option>
                       <option value="meter">Meter</option>
-                      <option value="kek">KEK</option>
-                      <option value="tomo">TomoChain</option>
+                      <option value="elastos">Elastos Smart Chain</option>
+                      <option value="energi">Energi</option>
+                      <option value="neon">Neon EVM</option>
+                      <option value="milkomeda">Milkomeda</option>
+                      
+                      {/* Other Major Chains */}
+                      <option value="astar">Astar</option>
+                      <option value="shiden">Shiden</option>
+                      <option value="acala">Acala</option>
+                      <option value="karura">Karura</option>
+                      <option value="bifrost">Bifrost</option>
+                      <option value="centrifuge">Centrifuge</option>
+                      <option value="unique">Unique Network</option>
+                      <option value="zeitgeist">Zeitgeist</option>
+                      <option value="parallel">Parallel</option>
+                      <option value="clover">Clover</option>
+                      <option value="composable">Composable</option>
+                      
+                      {/* Exchange Chains */}
+                      <option value="kucoin">KuCoin Community Chain</option>
+                      <option value="heco">Huobi ECO Chain</option>
+                      <option value="okx">OKX Chain</option>
+                      <option value="gate">Gate Chain</option>
+                      <option value="bitgert">Bitgert</option>
+                      
+                      {/* Gaming & NFT Chains */}
                       <option value="ronin">Ronin</option>
+                      <option value="wax">WAX</option>
+                      <option value="enjin">Enjin</option>
+                      <option value="xai">Xai</option>
+                      <option value="gala">Gala</option>
+                      <option value="immutable">Immutable zkEVM</option>
+                      <option value="beam">Beam</option>
+                      <option value="treasure">Treasure</option>
+                      
+                      {/* Meme & Community Chains */}
+                      <option value="dogechain">Dogechain</option>
                       <option value="shib">Shibarium</option>
+                      <option value="floki">FlokiFi</option>
+                      <option value="babydoge">Baby Doge Chain</option>
+                      <option value="pulse">PulseChain</option>
+                      
+                      {/* Enterprise & Institutional */}
+                      <option value="quorum">Quorum</option>
+                      <option value="hyperledger">Hyperledger Besu</option>
+                      <option value="rsk">RSK (Rootstock)</option>
+                      <option value="liquid">Liquid Network</option>
+                      <option value="elements">Elements</option>
+                      
+                      {/* Privacy Chains */}
+                      <option value="secret">Secret Network</option>
+                      <option value="oasis-privacy">Oasis Privacy</option>
+                      <option value="aztec">Aztec</option>
+                      <option value="railgun">Railgun</option>
+                      
+                      {/* Cross-Chain & Interoperability */}
+                      <option value="thorchain">THORChain</option>
+                      <option value="anyswap">Multichain</option>
+                      <option value="router">Router Protocol</option>
+                      <option value="axelar">Axelar</option>
+                      <option value="wormhole">Wormhole</option>
+                      
+                      {/* DeFi Specialized */}
+                      <option value="osmosis">Osmosis</option>
+                      <option value="juno">Juno</option>
+                      <option value="terra2">Terra 2.0</option>
+                      <option value="kujira">Kujira</option>
+                      <option value="injective">Injective</option>
+                      <option value="dydx">dYdX</option>
+                      <option value="degen">Degen Chain</option>
+                      
+                      {/* Emerging & New Chains */}
+                      <option value="sei">Sei</option>
+                      <option value="celestia">Celestia</option>
+                      <option value="berachain">Berachain</option>
+                      <option value="monad">Monad</option>
+                      <option value="fuel">Fuel</option>
+                      <option value="eclipse">Eclipse</option>
+                      <option value="zeta">ZetaChain</option>
+                      <option value="taiko">Taiko</option>
+                      <option value="polygon2">Polygon 2.0</option>
+                      <option value="ethereum2">Ethereum 2.0</option>
+                      
+                      {/* Testnets & Development */}
+                      <option value="goerli">Goerli Testnet</option>
+                      <option value="sepolia">Sepolia Testnet</option>
+                      <option value="mumbai">Mumbai Testnet</option>
+                      <option value="fuji">Fuji Testnet</option>
+                      <option value="fantom-testnet">Fantom Testnet</option>
+                      <option value="bsc-testnet">BSC Testnet</option>
+                      
+                      {/* Additional Chains */}
+                      <option value="etc">Ethereum Classic</option>
                       <option value="ethw">Ethereum PoW</option>
-                      <option value="dis">DIS</option>
-                      <option value="muu">MUU</option>
-                      <option value="sx">SX</option>
-                      <option value="alvey">Alvey</option>
-                      <option value="aptos">Aptos</option>
-                      <option value="multiversx">MultiversX</option>
+                      <option value="ethf">Ethereum Fair</option>
+                      <option value="nova">Nova Network</option>
+                      <option value="cube">Cube Network</option>
+                      <option value="step">Step Network</option>
+                      <option value="hoo">Hoo Smart Chain</option>
+                      <option value="smartbch">SmartBCH</option>
+                      <option value="kardia">KardiaChain</option>
+                      <option value="tomb">Tomb Chain</option>
+                      <option value="redlight">Redlight Chain</option>
+                      <option value="alvey">Alvey Chain</option>
+                      <option value="echelon">Echelon</option>
+                      <option value="kek">KEK Chain</option>
+                      <option value="tomo">TomoChain</option>
+                      <option value="muu">MUU Chain</option>
+                      <option value="sx">SX Network</option>
+                      <option value="dis">DIS Chain</option>
                       <option value="pom">Proof of Memes</option>
                       <option value="exosama">Exosama</option>
-                      <option value="energi">Energi</option>
-                      <option value="ethergoerli">Goerli</option>
+                      <option value="dfk">DeFi Kingdoms</option>
+                      <option value="swimmer">Swimmer Network</option>
+                      <option value="godwoken">Godwoken</option>
+                      <option value="bittorrent">BitTorrent Chain</option>
                       <option value="coredao">Core DAO</option>
-                      <option value="filecoin">Filecoin</option>
-                      <option value="zksync">zkSync</option>
-                      <option value="polygonzkevm">Polygon zkEVM</option>
-                      <option value="pulse">Pulse</option>
-                      <option value="linea">Linea</option>
-                      <option value="base">Base</option>
-                      <option value="mantle">Mantle</option>
-                      <option value="bitrock">Bitrock</option>
-                      <option value="opbnb">OpBNB</option>
-                      <option value="starknet">Starknet</option>
-                      <option value="scroll">Scroll</option>
-                      <option value="manta">Manta</option>
-                      <option value="kujira">Kujira</option>
-                      <option value="blast">Blast</option>
-                      <option value="bittorrent">BitTorrent</option>
-                      <option value="osmosis">Osmosis</option>
+                      <option value="opbnb">opBNB</option>
                       <option value="xlayer">X Layer</option>
                       <option value="shimmer">ShimmerEVM</option>
-                      <option value="mode">Mode</option>
-                      <option value="ton">TON</option>
-                      <option value="hedera">Hedera</option>
-                      <option value="near">NEAR</option>
-                      <option value="tron">TRON</option>
+                      <option value="flare">Flare Network</option>
+                      <option value="songbird">Songbird</option>
+                      <option value="zilliqa">Zilliqa</option>
+                      <option value="neo">NEO</option>
+                      <option value="ontology">Ontology</option>
+                      <option value="qtum">Qtum</option>
+                      <option value="waves">Waves</option>
+                      <option value="lisk">Lisk</option>
+                      <option value="stratis">Stratis</option>
+                      <option value="ark">ARK</option>
+                      <option value="icon">ICON</option>
+                      <option value="aelf">aelf</option>
+                      <option value="ardor">Ardor</option>
+                      <option value="nxt">NXT</option>
+                      <option value="nem">NEM</option>
+                      <option value="symbol">Symbol</option>
+                      <option value="xdc">XDC Network</option>
+                      <option value="vechain">VeChain</option>
+                      <option value="chia">Chia</option>
+                      <option value="filecoin">Filecoin</option>
+                      <option value="arweave">Arweave</option>
+                      <option value="storj">Storj</option>
+                      <option value="siacoin">Siacoin</option>
                     </select>
                   </div>
                   
