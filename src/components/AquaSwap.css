@@ -56,6 +56,122 @@
   filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.5));
 }
 
+/* Chart Toggle Button */
+.chart-toggle-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 520px;
+}
+
+.chart-toggle-button {
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 8px;
+  color: #00D4FF;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 12px 24px;
+  transition: all 0.3s ease;
+  outline: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-toggle-button:hover {
+  background: rgba(0, 212, 255, 0.2);
+  border-color: rgba(0, 212, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+/* Chart Section */
+.chart-section {
+  width: 100%;
+  max-width: 1200px;
+  background: rgba(17, 24, 39, 0.9);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: 16px;
+  padding: 24px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px 0 rgba(0, 212, 255, 0.1);
+}
+
+.chart-header {
+  margin-bottom: 20px;
+}
+
+.chart-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.token-selector,
+.chart-type-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-label {
+  color: #9ca3af;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.token-select {
+  background: rgba(31, 41, 55, 0.8);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 8px;
+  color: #ffffff;
+  padding: 8px 12px;
+  font-size: 0.875rem;
+  outline: none;
+  transition: all 0.3s ease;
+  min-width: 150px;
+}
+
+.token-select:hover,
+.token-select:focus {
+  border-color: rgba(0, 212, 255, 0.5);
+  background: rgba(31, 41, 55, 1);
+}
+
+.token-select option {
+  background: rgba(31, 41, 55, 1);
+  color: #ffffff;
+}
+
+.chart-container {
+  width: 100%;
+  height: 500px;
+  position: relative;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 212, 255, 0.1);
+}
+
+.chart-info {
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(0, 212, 255, 0.05);
+  border-radius: 8px;
+  border-left: 3px solid rgba(0, 212, 255, 0.3);
+}
+
+.chart-note {
+  color: #9ca3af;
+  font-size: 0.875rem;
+  margin: 0;
+  line-height: 1.5;
+}
+
 .simple-footer {
   text-align: center;
   color: #9ca3af;
@@ -93,6 +209,29 @@ body.aquaswap-page {
     width: 100%;
     max-width: 100%;
   }
+
+  .chart-section {
+    padding: 16px;
+  }
+
+  .chart-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .token-selector,
+  .chart-type-selector {
+    justify-content: space-between;
+  }
+
+  .token-select {
+    min-width: auto;
+    flex: 1;
+  }
+
+  .chart-container {
+    height: 400px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -102,5 +241,26 @@ body.aquaswap-page {
   
   .page-title h1 {
     font-size: 1.5rem;
+  }
+
+  .chart-section {
+    padding: 12px;
+  }
+
+  .chart-container {
+    height: 350px;
+  }
+
+  .chart-controls {
+    gap: 12px;
+  }
+
+  .chart-label {
+    font-size: 0.75rem;
+  }
+
+  .token-select {
+    font-size: 0.75rem;
+    padding: 6px 8px;
   }
 }

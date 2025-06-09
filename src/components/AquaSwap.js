@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { LiFiWidget } from '@lifi/widget';
@@ -14,6 +14,24 @@ const SUI_FEE_WALLET = process.env.REACT_APP_SUI_FEE_WALLET; // SUI wallet addre
 
 const AquaSwap = ({ currentUser, showNotification }) => {
   const navigate = useNavigate();
+  const [showChart, setShowChart] = useState(false);
+  const [chartType, setChartType] = useState('tradingview');
+  const [selectedSymbol, setSelectedSymbol] = useState('BTCUSDT');
+  const tradingViewRef = useRef(null);
+
+  // Popular trading pairs for quick access
+  const popularPairs = [
+    { symbol: 'BTCUSDT', name: 'Bitcoin/USDT' },
+    { symbol: 'ETHUSDT', name: 'Ethereum/USDT' },
+    { symbol: 'BNBUSDT', name: 'BNB/USDT' },
+    { symbol: 'SOLUSDT', name: 'Solana/USDT' },
+    { symbol: 'XRPUSDT', name: 'XRP/USDT' },
+    { symbol: 'ADAUSDT', name: 'Cardano/USDT' },
+    { symbol: 'DOGEUSDT', name: 'Dogecoin/USDT' },
+    { symbol: 'AVAXUSDT', name: 'Avalanche/USDT' },
+    { symbol: 'MATICUSDT', name: 'Polygon/USDT' },
+    { symbol: 'LINKUSDT', name: 'Chainlink/USDT' }
+  ];
 
   // Initialize on component mount
   useEffect(() => {
@@ -25,6 +43,48 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       document.body.classList.remove('aquaswap-page');
     };
   }, []);
+
+  // Load TradingView widget
+  useEffect(() => {
+    if (showChart && chartType === 'tradingview' && tradingViewRef.current) {
+      // Clear previous widget
+      tradingViewRef.current.innerHTML = '';
+      
+      // Create TradingView widget
+      const script = document.createElement('script');
+      script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+      script.type = 'text/javascript';
+      script.async = true;
+      script.innerHTML = JSON.stringify({
+        "autosize": true,
+        "symbol": selectedSymbol,
+        "interval": "D",
+        "timezone": "Etc/UTC",
+        "theme": "dark",
+        "style": "1",
+        "locale": "en",
+        "enable_publishing": false,
+        "backgroundColor": "rgba(17, 24, 39, 1)",
+        "gridColor": "rgba(255, 255, 255, 0.1)",
+        "hide_top_toolbar": false,
+        "hide_legend": false,
+        "save_image": false,
+        "container_id": "tradingview_widget"
+      });
+      
+      tradingViewRef.current.appendChild(script);
+    }
+  }, [showChart, chartType, selectedSymbol]);
+
+  // Toggle chart visibility
+  const toggleChart = () => {
+    setShowChart(!showChart);
+  };
+
+  // Handle symbol change
+  const handleSymbolChange = (symbol) => {
+    setSelectedSymbol(symbol);
+  };
 
   // LI.FI Widget configuration following official documentation
   const widgetConfig = {
@@ -120,6 +180,97 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         </h1>
         <p>The Ultimate Cross-Chain DEX</p>
       </div>
+
+      {/* Chart Toggle Button */}
+      <div className="chart-toggle-container">
+        <button 
+          className="chart-toggle-button"
+          onClick={toggleChart}
+          title={showChart ? "Hide Charts" : "Show Charts"}
+        >
+          📈 {showChart ? "Hide Charts" : "Show Trading Charts"}
+        </button>
+      </div>
+
+      {/* Chart Section */}
+      {showChart && (
+        <div className="chart-section">
+          <div className="chart-header">
+            <div className="chart-controls">
+              <div className="token-selector">
+                <label className="chart-label">Trading Pair:</label>
+                <select 
+                  value={selectedSymbol} 
+                  onChange={(e) => handleSymbolChange(e.target.value)}
+                  className="token-select"
+                >
+                  {popularPairs.map(pair => (
+                    <option key={pair.symbol} value={pair.symbol}>
+                      {pair.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="chart-type-selector">
+                <label className="chart-label">Chart Provider:</label>
+                <select 
+                  value={chartType} 
+                  onChange={(e) => setChartType(e.target.value)}
+                  className="token-select"
+                >
+                  <option value="tradingview">TradingView</option>
+                  <option value="dexscreener">DexScreener</option>
+                  <option value="geckoterminal">GeckoTerminal</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div className="chart-container">
+            {chartType === 'tradingview' && (
+              <div 
+                ref={tradingViewRef}
+                id="tradingview_widget" 
+                style={{ height: '100%', width: '100%' }}
+              />
+            )}
+            
+            {chartType === 'dexscreener' && (
+              <iframe
+                src={`https://dexscreener.com/${selectedSymbol.toLowerCase().replace('usdt', '/usd')}?embed=1&theme=dark`}
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  border: 'none',
+                  borderRadius: '8px'
+                }}
+                title="DexScreener Chart"
+              />
+            )}
+            
+            {chartType === 'geckoterminal' && (
+              <iframe
+                src={`https://www.geckoterminal.com/embed/eth/pools?embed=1&info=0&swaps=0&theme=dark`}
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  border: 'none',
+                  borderRadius: '8px'
+                }}
+                title="GeckoTerminal Chart"
+              />
+            )}
+          </div>
+          
+          <div className="chart-info">
+            <p className="chart-note">
+              💡 Professional trading charts powered by industry-leading providers. 
+              Switch between different chart sources using the dropdown above.
+            </p>
+          </div>
+        </div>
+      )}
     
       {/* LiFi Widget - Clean implementation */}
       <div className="lifi-widget">
