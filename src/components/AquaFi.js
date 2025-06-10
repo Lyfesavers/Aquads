@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import BannerDisplay from './BannerDisplay';
 import SavingsPools from './SavingsPools';
 import FlashLoans from './FlashLoans';
-import { FaArrowLeft, FaCoins, FaChartLine, FaShieldAlt, FaLightning, FaPiggyBank } from 'react-icons/fa';
+import { FaArrowLeft, FaCoins, FaChartLine, FaShieldAlt, FaBolt, FaPiggyBank } from 'react-icons/fa';
 import './AquaFi.css';
 
 const AquaFi = ({ currentUser, showNotification }) => {
@@ -115,9 +115,9 @@ const AquaFi = ({ currentUser, showNotification }) => {
                     ? 'bg-gradient-to-r from-yellow-500 to-orange-600 text-white shadow-lg'
                     : 'text-gray-300 hover:text-white hover:bg-gray-700/50'
                 }`}
-              >
-                <FaLightning className="w-4 h-4" />
-                Flash Loans
+                             >
+                 <FaBolt className="w-4 h-4" />
+                 Flash Loans
               </button>
             </div>
           </div>

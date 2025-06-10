@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
-import { FaLightning, FaInfoCircle, FaWallet, FaExternalLinkAlt, FaExclamationTriangle } from 'react-icons/fa';
+import { FaBolt, FaInfoCircle, FaWallet, FaExternalLinkAlt, FaExclamationTriangle } from 'react-icons/fa';
 import { EthereumProvider } from '@walletconnect/ethereum-provider';
 import logger from '../utils/logger';
 
@@ -82,6 +82,7 @@ const FlashLoans = ({ currentUser, showNotification }) => {
   const [connectedAddress, setConnectedAddress] = useState(null);
   const [isExecuting, setIsExecuting] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [customLogic, setCustomLogic] = useState('');
 
   const formatNumber = (num) => {
     if (num >= 1e9) return `${(num / 1e9).toFixed(1)}B`;
@@ -152,7 +153,7 @@ const FlashLoans = ({ currentUser, showNotification }) => {
       <div className="text-center">
         <div className="inline-flex items-center gap-3 mb-4">
           <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-xl flex items-center justify-center">
-            <FaLightning className="w-6 h-6 text-white" />
+            <FaBolt className="w-6 h-6 text-white" />
           </div>
           <h2 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">
             Flash Loans
@@ -206,7 +207,7 @@ const FlashLoans = ({ currentUser, showNotification }) => {
       {/* Flash Loan Interface */}
       <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
         <h3 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
-          <FaLightning className="text-yellow-400" />
+          <FaBolt className="text-yellow-400" />
           Execute Flash Loan
         </h3>
 
@@ -305,7 +306,7 @@ const FlashLoans = ({ currentUser, showNotification }) => {
                   'Executing...'
                 ) : (
                   <>
-                    <FaLightning />
+                    <FaBolt />
                     Execute Flash Loan
                   </>
                 )}
