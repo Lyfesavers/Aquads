@@ -261,41 +261,9 @@ const SimpleFlashLoans = ({ currentUser, showNotification }) => {
         </p>
       </div>
 
-      {/* Simple Status */}
-      <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
-        <div className="flex items-start gap-3">
-          <FaCheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-          <div>
-            <h4 className="text-green-400 font-semibold mb-1">🚀 LIVE PRODUCTION MODE</h4>
-            <p className="text-green-300 text-sm">
-              Real flash loans with instant fee collection. Every transaction generates revenue directly to your wallet.
-            </p>
-          </div>
-        </div>
-      </div>
 
-      {/* Last Transaction Result */}
-      {lastResult && (
-        <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
-          <div className="flex items-start gap-3">
-            <FaCheckCircle className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <h4 className="text-blue-400 font-semibold mb-1">💰 Flash Loan Fee Collected</h4>
-              <p className="text-blue-300 text-sm mb-2">{lastResult.message}</p>
-              {lastResult.transactionHash && (
-                <a
-                  href={`https://etherscan.io/tx/${lastResult.transactionHash}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-400 hover:text-blue-300 text-sm break-all"
-                >
-                  View on Etherscan: {lastResult.transactionHash}
-                </a>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+
+
 
       {/* Flash Loan Interface */}
       <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50">
