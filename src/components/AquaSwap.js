@@ -20,213 +20,6 @@ const POPULAR_TOKEN_EXAMPLES = [
   { name: 'DOGE', address: '0x4206931337dc273a630d328da6441786bfad668f', chain: 'ether' }
 ];
 
-// Chain detection utility function
-const detectChainFromAddress = (address) => {
-  if (!address || typeof address !== 'string') return null;
-  
-  const cleanAddress = address.trim();
-  
-  // Bitcoin and Bitcoin-like addresses
-  if (/^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$/.test(cleanAddress) || // Legacy (P2PKH/P2SH)
-      /^bc1[a-z0-9]{39,59}$/.test(cleanAddress)) { // Bech32
-    return 'bitcoin';
-  }
-  
-  // Litecoin addresses
-  if (/^[LM3][a-km-zA-HJ-NP-Z1-9]{26,33}$/.test(cleanAddress) || // Legacy
-      /^ltc1[a-z0-9]{39,59}$/.test(cleanAddress)) { // Bech32
-    return 'litecoin';
-  }
-  
-  // Dogecoin addresses
-  if (/^D[5-9A-HJ-NP-U][1-9A-HJ-NP-Za-km-z]{32}$/.test(cleanAddress)) {
-    return 'dogechain';
-  }
-  
-  // Dash addresses
-  if (/^X[1-9A-HJ-NP-Za-km-z]{33}$/.test(cleanAddress)) {
-    return 'dash';
-  }
-  
-  // Zcash addresses
-  if (/^t1[a-zA-Z0-9]{33}$/.test(cleanAddress) || // Transparent
-      /^zc[a-zA-Z0-9]{93}$/.test(cleanAddress) || // Sprout shielded
-      /^zs1[a-z0-9]{75}$/.test(cleanAddress)) { // Sapling shielded
-    return 'zcash';
-  }
-  
-  // Monero addresses (integrated addresses are longer)
-  if (/^4[0-9AB][1-9A-HJ-NP-Za-km-z]{93}$/.test(cleanAddress) || // Standard
-      /^8[0-9AB][1-9A-HJ-NP-Za-km-z]{93}$/.test(cleanAddress)) { // Integrated
-    return 'monero';
-  }
-  
-  // XRP addresses
-  if (/^r[rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm8oFqi1tuvAxyz]{27,34}$/.test(cleanAddress)) {
-    return 'xrp';
-  }
-  
-  // Stellar addresses
-  if (/^G[A-Z2-7]{55}$/.test(cleanAddress)) {
-    return 'stellar';
-  }
-  
-  // Algorand addresses
-  if (/^[A-Z2-7]{58}$/.test(cleanAddress)) {
-    return 'algorand';
-  }
-  
-  // Hedera addresses (0.0.xxxx format)
-  if (/^0\.0\.\d+$/.test(cleanAddress)) {
-    return 'hedera';
-  }
-  
-  // TRON addresses (Base58, starts with T)
-  if (/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(cleanAddress)) {
-    return 'tron';
-  }
-  
-  // Near Protocol addresses (typically end with .near or are hex)
-  if (cleanAddress.endsWith('.near') || 
-      (/^[a-f0-9]{64}$/.test(cleanAddress) && cleanAddress.length === 64)) {
-    return 'near';
-  }
-  
-  // Solana addresses (Base58, typically 32-44 characters, no 0x prefix)
-  if (/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(cleanAddress) && !cleanAddress.startsWith('0x')) {
-    return 'solana';
-  }
-  
-  // Cosmos ecosystem addresses (bech32 format with specific prefixes)
-  if (/^cosmos[a-z0-9]{39}$/.test(cleanAddress)) return 'cosmos';
-  if (/^osmo[a-z0-9]{39}$/.test(cleanAddress)) return 'osmosis';
-  if (/^juno[a-z0-9]{39}$/.test(cleanAddress)) return 'juno';
-  if (/^kujira[a-z0-9]{39}$/.test(cleanAddress)) return 'kujira';
-  if (/^terra[a-z0-9]{39}$/.test(cleanAddress)) return 'terra';
-  if (/^secret[a-z0-9]{39}$/.test(cleanAddress)) return 'secret';
-  if (/^injective[a-z0-9]{39}$/.test(cleanAddress)) return 'injective';
-  if (/^sei[a-z0-9]{39}$/.test(cleanAddress)) return 'sei';
-  
-  // Polkadot addresses (SS58 format, typically 47-48 characters)
-  if (/^[1-9A-HJ-NP-Za-km-z]{47,48}$/.test(cleanAddress) && 
-      (cleanAddress.startsWith('1') || cleanAddress.startsWith('5'))) {
-    return 'polkadot';
-  }
-  
-  // Kusama addresses (SS58 format, different prefixes)
-  if (/^[C-J][1-9A-HJ-NP-Za-km-z]{46,47}$/.test(cleanAddress)) {
-    return 'kusama';
-  }
-  
-  // Cardano addresses (Bech32 format starting with addr)
-  if (/^addr[a-z0-9]{98,}$/.test(cleanAddress)) {
-    return 'cardano';
-  }
-  
-  // Flow addresses (0x + 16 hex characters)
-  if (/^0x[a-fA-F0-9]{16}$/.test(cleanAddress)) {
-    return 'flow';
-  }
-  
-  // Aptos addresses (0x + up to 64 hex characters, typically shorter than EVM)
-  if (/^0x[a-fA-F0-9]{1,64}$/.test(cleanAddress) && cleanAddress.length <= 66) {
-    // Could be Aptos, Sui, or EVM - need more sophisticated detection
-    if (cleanAddress.length <= 34) { // Aptos addresses are typically shorter
-      return 'aptos';
-    }
-  }
-  
-  // SUI addresses (0x + up to 64 hex characters, typically very short)
-  if (/^0x[a-fA-F0-9]{1,64}$/.test(cleanAddress) && cleanAddress.length <= 20) {
-    return 'sui';
-  }
-  
-  // TON addresses (various formats)
-  if (/^[a-zA-Z0-9_-]{48}$/.test(cleanAddress) || 
-      /^[0-9]+:[a-fA-F0-9]{64}$/.test(cleanAddress) ||
-      /^EQ[A-Za-z0-9_-]{46}$/.test(cleanAddress)) {
-    return 'ton';
-  }
-  
-  // Filecoin addresses
-  if (/^f[014][a-z2-7]{38,86}$/.test(cleanAddress)) {
-    return 'filecoin';
-  }
-  
-  // Arweave addresses (43 characters, alphanumeric + - and _)
-  if (/^[a-zA-Z0-9_-]{43}$/.test(cleanAddress)) {
-    return 'arweave';
-  }
-  
-  // VeChain addresses (0x + 40 hex, but we can differentiate by known patterns)
-  // For now, we'll let it fall through to EVM detection
-  
-  // Chia addresses (xch format)
-  if (/^xch1[a-z0-9]{58}$/.test(cleanAddress)) {
-    return 'chia';
-  }
-  
-  // Internet Computer (ICP) addresses
-  if (/^[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{3}$/.test(cleanAddress)) {
-    return 'icp';
-  }
-  
-  // Zilliqa addresses (0x + 40 hex, but starts with specific pattern)
-  if (/^0x[a-fA-F0-9]{40}$/.test(cleanAddress) && cleanAddress.toLowerCase().startsWith('0x1')) {
-    return 'zilliqa';
-  }
-  
-  // NEO addresses (34 characters, starts with A)
-  if (/^A[a-zA-Z0-9]{33}$/.test(cleanAddress)) {
-    return 'neo';
-  }
-  
-  // Ontology addresses (34 characters, starts with A)
-  if (/^A[a-zA-Z0-9]{33}$/.test(cleanAddress)) {
-    return 'ontology'; // Note: Same format as NEO, hard to distinguish
-  }
-  
-  // Waves addresses (35 characters, starts with 3P)
-  if (/^3P[a-zA-Z0-9]{33}$/.test(cleanAddress)) {
-    return 'waves';
-  }
-  
-  // QTUM addresses (similar to Bitcoin)
-  if (/^Q[a-km-zA-HJ-NP-Z1-9]{33}$/.test(cleanAddress)) {
-    return 'qtum';
-  }
-  
-  // ICON addresses (hx + 40 hex characters)
-  if (/^hx[a-fA-F0-9]{40}$/.test(cleanAddress)) {
-    return 'icon';
-  }
-  
-  // NEM/Symbol addresses (39 characters, starts with N for NEM, T for Symbol)
-  if (/^N[A-Z2-7]{38}$/.test(cleanAddress)) {
-    return 'nem';
-  }
-  if (/^T[A-Z2-7]{38}$/.test(cleanAddress)) {
-    return 'symbol';
-  }
-  
-  // XDC Network addresses (xdc + 40 hex characters)
-  if (/^xdc[a-fA-F0-9]{40}$/.test(cleanAddress)) {
-    return 'xdc';
-  }
-  
-  // EVM-based chains (Ethereum format: 0x + 40 hex characters)
-  // This covers: Ethereum, BSC, Polygon, Avalanche, Arbitrum, Optimism, Base, etc.
-  if (/^0x[a-fA-F0-9]{40}$/.test(cleanAddress)) {
-    // For EVM addresses, we could enhance this by checking against known contract addresses
-    // or by analyzing the first few bytes, but for now default to Ethereum
-    // Most EVM chains share the same address format
-    return 'ether'; // Default to Ethereum for standard EVM addresses
-  }
-  
-  // Return null if no pattern matches
-  return null;
-};
-
 const AquaSwap = ({ currentUser, showNotification }) => {
   const navigate = useNavigate();
   const [chartProvider, setChartProvider] = useState('tradingview');
@@ -327,111 +120,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   const handlePopularTokenClick = (token) => {
     setTokenSearch(token.address);
     setSelectedChain(token.chain);
-  };
-
-  // Handle token search input with automatic chain detection
-  const handleTokenSearchChange = (e) => {
-    const newAddress = e.target.value;
-    setTokenSearch(newAddress);
-    
-    // Auto-detect chain if address looks valid
-    if (newAddress.trim().length > 10) { // Only detect for reasonably long addresses
-      const detectedChain = detectChainFromAddress(newAddress);
-      if (detectedChain && detectedChain !== selectedChain) {
-        setSelectedChain(detectedChain);
-        // Show notification about auto-detection
-        if (showNotification) {
-          const chainName = getChainDisplayName(detectedChain);
-          showNotification(`Auto-detected ${chainName} chain for this address`, 'info');
-        }
-      }
-    }
-  };
-
-  // Helper function to get display name for chain
-  const getChainDisplayName = (chainId) => {
-    const chainNames = {
-      'ether': 'Ethereum',
-      'bitcoin': 'Bitcoin',
-      'litecoin': 'Litecoin',
-      'dogechain': 'Dogechain',
-      'dash': 'Dash',
-      'zcash': 'Zcash',
-      'monero': 'Monero',
-      'xrp': 'XRP Ledger',
-      'stellar': 'Stellar',
-      'algorand': 'Algorand',
-      'hedera': 'Hedera',
-      'tron': 'TRON',
-      'near': 'NEAR Protocol',
-      'solana': 'Solana',
-      'cosmos': 'Cosmos',
-      'osmosis': 'Osmosis',
-      'juno': 'Juno',
-      'kujira': 'Kujira',
-      'terra': 'Terra',
-      'secret': 'Secret Network',
-      'injective': 'Injective',
-      'sei': 'Sei',
-      'polkadot': 'Polkadot',
-      'kusama': 'Kusama',
-      'cardano': 'Cardano',
-      'flow': 'Flow',
-      'aptos': 'Aptos',
-      'sui': 'Sui',
-      'ton': 'TON',
-      'filecoin': 'Filecoin',
-      'arweave': 'Arweave',
-      'chia': 'Chia',
-      'icp': 'Internet Computer',
-      'zilliqa': 'Zilliqa',
-      'neo': 'NEO',
-      'ontology': 'Ontology',
-      'waves': 'Waves',
-      'qtum': 'Qtum',
-      'icon': 'ICON',
-      'nem': 'NEM',
-      'symbol': 'Symbol',
-      'xdc': 'XDC Network',
-      'bnb': 'BNB Chain (BSC)',
-      'polygon': 'Polygon',
-      'avalanche': 'Avalanche',
-      'arbitrum': 'Arbitrum',
-      'optimism': 'Optimism',
-      'base': 'Base',
-      'fantom': 'Fantom',
-      'cronos': 'Cronos',
-      'moonbeam': 'Moonbeam',
-      'celo': 'Celo',
-      'aurora': 'Aurora',
-      'harmony': 'Harmony',
-      'klaytn': 'Klaytn',
-      'evmos': 'Evmos',
-      'kava': 'Kava',
-      'canto': 'Canto',
-      'gnosis': 'Gnosis Chain',
-      'oasis': 'Oasis Network',
-      'fuse': 'Fuse',
-      'velas': 'Velas',
-      'syscoin': 'Syscoin',
-      'telos': 'Telos',
-      'metis': 'Metis',
-      'boba': 'Boba Network',
-      'mantle': 'Mantle',
-      'mode': 'Mode',
-      'blast': 'Blast',
-      'manta': 'Manta Pacific',
-      'linea': 'Linea',
-      'scroll': 'Scroll',
-      'zksync': 'zkSync Era',
-      'polygonzkevm': 'Polygon zkEVM',
-      'starknet': 'Starknet',
-      'ronin': 'Ronin',
-      'shib': 'Shibarium',
-      'pulse': 'PulseChain',
-      'vechain': 'VeChain'
-    };
-    return chainNames[chainId] || chainId;
   };
 
   // LI.FI Widget configuration following official documentation
@@ -676,6 +364,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                       <option value="bitgert">Bitgert</option>
                       
                       {/* Gaming & NFT Chains */}
+                      <option value="ronin">Ronin</option>
                       <option value="wax">WAX</option>
                       <option value="enjin">Enjin</option>
                       <option value="xai">Xai</option>
@@ -685,6 +374,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                       <option value="treasure">Treasure</option>
                       
                       {/* Meme & Community Chains */}
+                      <option value="dogechain">Dogechain</option>
                       <option value="shib">Shibarium</option>
                       <option value="floki">FlokiFi</option>
                       <option value="babydoge">Baby Doge Chain</option>
@@ -698,6 +388,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                       <option value="elements">Elements</option>
                       
                       {/* Privacy Chains */}
+                      <option value="secret">Secret Network</option>
                       <option value="oasis-privacy">Oasis Privacy</option>
                       <option value="aztec">Aztec</option>
                       <option value="railgun">Railgun</option>
@@ -711,6 +402,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                       
                       {/* DeFi Specialized */}
                       <option value="osmosis">Osmosis</option>
+                      <option value="juno">Juno</option>
                       <option value="terra2">Terra 2.0</option>
                       <option value="kujira">Kujira</option>
                       <option value="injective">Injective</option>
@@ -718,6 +410,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                       <option value="degen">Degen Chain</option>
                       
                       {/* Emerging & New Chains */}
+                      <option value="sei">Sei</option>
                       <option value="celestia">Celestia</option>
                       <option value="berachain">Berachain</option>
                       <option value="monad">Monad</option>
@@ -767,12 +460,20 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                       <option value="shimmer">ShimmerEVM</option>
                       <option value="flare">Flare Network</option>
                       <option value="songbird">Songbird</option>
+                      <option value="zilliqa">Zilliqa</option>
+                      <option value="neo">NEO</option>
+                      <option value="ontology">Ontology</option>
+                      <option value="qtum">Qtum</option>
+                      <option value="waves">Waves</option>
                       <option value="lisk">Lisk</option>
                       <option value="stratis">Stratis</option>
                       <option value="ark">ARK</option>
+                      <option value="icon">ICON</option>
                       <option value="aelf">aelf</option>
                       <option value="ardor">Ardor</option>
                       <option value="nxt">NXT</option>
+                      <option value="nem">NEM</option>
+                      <option value="symbol">Symbol</option>
                       <option value="xdc">XDC Network</option>
                       <option value="vechain">VeChain</option>
                       <option value="chia">Chia</option>
@@ -788,8 +489,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                     <input
                       type="text"
                       value={tokenSearch}
-                      onChange={handleTokenSearchChange}
-                      placeholder="Contract address (auto-detects chain)"
+                      onChange={(e) => setTokenSearch(e.target.value)}
+                      placeholder="Contract address (e.g., 0xa43fe16908251ee70ef74718545e4fe6c5ccec9f)"
                       className="token-search-input"
                     />
                   </div>
@@ -846,7 +547,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                 <>
                   🚀 <strong>DexTools (Any Token):</strong> Enter any token's contract address to view its chart and trading data
                   <br />
-                  📈 Contract addresses are auto-detected for chain selection. Find addresses on CoinGecko, Etherscan, or token websites
+                  📈 Find contract addresses on CoinGecko, Etherscan, or the token's official website
                 </>
               )}
             </p>
