@@ -3,6 +3,7 @@ import { ethers } from 'ethers';
 import { FaBolt, FaInfoCircle, FaWallet, FaExternalLinkAlt, FaExclamationTriangle, FaSpinner, FaCheckCircle, FaDollarSign } from 'react-icons/fa';
 import { EthereumProvider } from '@walletconnect/ethereum-provider';
 import simpleFlashLoanService from '../services/simpleFlashLoanService';
+import realFlashLoanService from '../services/realFlashLoanService';
 import { AQUADS_WALLETS } from '../config/wallets';
 import logger from '../utils/logger';
 
@@ -51,6 +52,8 @@ const SimpleFlashLoans = ({ currentUser, showNotification }) => {
   const [lastResult, setLastResult] = useState(null);
   const [userBalance, setUserBalance] = useState('0');
   const [fees, setFees] = useState({ platformFee: '0', aaveFee: '0', totalFees: '0' });
+  const [isRealContract, setIsRealContract] = useState(false);
+  const [contractInfo, setContractInfo] = useState(null);
 
   const formatNumber = (num) => {
     if (num >= 1e9) return `${(num / 1e9).toFixed(1)}B`;
@@ -59,24 +62,41 @@ const SimpleFlashLoans = ({ currentUser, showNotification }) => {
     return num.toString();
   };
 
-  const platformFeeRate = simpleFlashLoanService.getPlatformFeeRate();
+  // Use real service if contract is deployed, otherwise use simple service
+  const activeService = isRealContract ? realFlashLoanService : simpleFlashLoanService;
+  const platformFeeRate = isRealContract ? 0.2 : simpleFlashLoanService.getPlatformFeeRate();
 
   // Calculate fees when amount changes
   useEffect(() => {
-    if (loanAmount && parseFloat(loanAmount) > 0) {
-      const newFees = simpleFlashLoanService.calculateFees(loanAmount, selectedAsset.decimals);
-      setFees(newFees);
-    } else {
-      setFees({ platformFee: '0', aaveFee: '0', totalFees: '0' });
-    }
-  }, [loanAmount, selectedAsset]);
+    const calculateFees = async () => {
+      if (loanAmount && parseFloat(loanAmount) > 0) {
+        try {
+          let newFees;
+          if (isRealContract && serviceReady) {
+            newFees = await activeService.calculateFees(loanAmount, selectedAsset.decimals);
+          } else {
+            newFees = simpleFlashLoanService.calculateFees(loanAmount, selectedAsset.decimals);
+          }
+          setFees(newFees);
+        } catch (error) {
+          // Fallback to simple calculation
+          const newFees = simpleFlashLoanService.calculateFees(loanAmount, selectedAsset.decimals);
+          setFees(newFees);
+        }
+      } else {
+        setFees({ platformFee: '0', aaveFee: '0', totalFees: '0' });
+      }
+    };
+    
+    calculateFees();
+  }, [loanAmount, selectedAsset, isRealContract, serviceReady, activeService]);
 
   // Check user balance when asset or amount changes
   useEffect(() => {
     const checkBalance = async () => {
       if (serviceReady && walletConnected && loanAmount) {
         try {
-          const balanceInfo = await simpleFlashLoanService.checkUserBalance(selectedAsset.address, loanAmount);
+          const balanceInfo = await activeService.checkUserBalance(selectedAsset.address, loanAmount);
           setUserBalance(balanceInfo.balance);
         } catch (error) {
           logger.error('Error checking balance:', error);
@@ -85,7 +105,7 @@ const SimpleFlashLoans = ({ currentUser, showNotification }) => {
     };
     
     checkBalance();
-  }, [serviceReady, walletConnected, selectedAsset, loanAmount]);
+  }, [serviceReady, walletConnected, selectedAsset, loanAmount, activeService]);
 
   // Initialize WalletConnect provider - same pattern as savings pools
   const initWalletConnect = async () => {
@@ -194,20 +214,30 @@ const SimpleFlashLoans = ({ currentUser, showNotification }) => {
       let result;
       if (isDemo) {
         showNotification('🚀 Starting demo flash loan...', 'info');
-        result = await simpleFlashLoanService.executeDemoFlashLoan(
+        result = await activeService.executeDemoFlashLoan(
           selectedAsset.address,
           loanAmount,
           options
         );
         showNotification(`✅ ${result.message}`, 'success');
       } else {
-        showNotification('🚀 Collecting platform fee and preparing flash loan...', 'info');
-        result = await simpleFlashLoanService.executeRealFlashLoan(
-          selectedAsset.address,
-          loanAmount,
-          options
-        );
-        showNotification(`✅ Platform fee collected! ${result.collectedFee} ${selectedAsset.symbol}`, 'success');
+        if (isRealContract) {
+          showNotification('🚀 Executing real Aave flash loan...', 'info');
+          result = await activeService.executeRealFlashLoan(
+            selectedAsset.address,
+            loanAmount,
+            options
+          );
+          showNotification(`✅ Real flash loan executed! ${result.collectedFee} ${selectedAsset.symbol} fee collected`, 'success');
+        } else {
+          showNotification('🚀 Collecting platform fee and preparing flash loan...', 'info');
+          result = await activeService.executeRealFlashLoan(
+            selectedAsset.address,
+            loanAmount,
+            options
+          );
+          showNotification(`✅ Platform fee collected! ${result.collectedFee} ${selectedAsset.symbol}`, 'success');
+        }
       }
 
       setLastResult(result);
@@ -222,17 +252,48 @@ const SimpleFlashLoans = ({ currentUser, showNotification }) => {
     }
   };
 
+  // Check if real contract is deployed
+  useEffect(() => {
+    const checkContract = async () => {
+      const isDeployed = await realFlashLoanService.isContractDeployed();
+      setIsRealContract(isDeployed);
+      
+      if (isDeployed) {
+        logger.info('Real flash loan contract detected!');
+      } else {
+        logger.info('Using simple flash loan service (no contract deployed)');
+      }
+    };
+    
+    checkContract();
+  }, []);
+
   // Initialize service when wallet connects
   useEffect(() => {
     const initializeService = async () => {
       if (walletProvider && walletConnected && connectedAddress) {
         try {
-          const isReady = await simpleFlashLoanService.initialize(walletProvider, connectedAddress);
-          setServiceReady(isReady);
+          let isReady = false;
           
-          if (isReady) {
-            showNotification('✅ Flash loan service ready!', 'success');
+          if (isRealContract) {
+            // Try to initialize real service first
+            isReady = await realFlashLoanService.initialize(walletProvider, connectedAddress);
+            if (isReady) {
+              const info = await realFlashLoanService.getContractInfo();
+              setContractInfo(info);
+              showNotification('✅ Real Aave flash loans ready!', 'success');
+            }
           }
+          
+          if (!isReady) {
+            // Fallback to simple service
+            isReady = await simpleFlashLoanService.initialize(walletProvider, connectedAddress);
+            if (isReady) {
+              showNotification('✅ Flash loan service ready!', 'success');
+            }
+          }
+          
+          setServiceReady(isReady);
         } catch (error) {
           logger.error('Failed to initialize flash loan service:', error);
           setServiceReady(false);
@@ -243,7 +304,7 @@ const SimpleFlashLoans = ({ currentUser, showNotification }) => {
     if (walletConnected && walletProvider) {
       initializeService();
     }
-  }, [walletConnected, walletProvider, connectedAddress]);
+  }, [walletConnected, walletProvider, connectedAddress, isRealContract]);
 
   return (
     <div className="space-y-6">
@@ -254,11 +315,16 @@ const SimpleFlashLoans = ({ currentUser, showNotification }) => {
           <h2 className="text-3xl font-bold text-white">Simple Flash Loans</h2>
         </div>
         <p className="text-gray-300 max-w-2xl mx-auto">
-          Instant flash loans with automatic fee collection. Zero setup required - production ready!
+          {isRealContract 
+            ? "Real Aave flash loans with automatic fee collection. Production ready!" 
+            : "Instant flash loans with automatic fee collection. Zero setup required - production ready!"
+          }
         </p>
-        <p className="text-sm text-green-400 mt-2">
-          ✅ Revenue Collection: {platformFeeRate}% platform fee → {AQUADS_WALLETS.ETHEREUM}
-        </p>
+        {isRealContract && contractInfo && (
+          <p className="text-sm text-green-400 mt-2">
+            🔗 Contract: {contractInfo.contractAddress.slice(0, 10)}...{contractInfo.contractAddress.slice(-6)}
+          </p>
+        )}
       </div>
 
 
