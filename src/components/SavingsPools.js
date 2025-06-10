@@ -665,7 +665,12 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         }
       };
       const decimals = getTokenDecimals(position.token);
-      const withdrawAmount = ethers.parseUnits(position.netAmount.toString(), decimals);
+      const totalWithdrawAmount = ethers.parseUnits(position.netAmount.toString(), decimals);
+      
+      // Calculate withdrawal fee (0.5%)
+      const withdrawalFee = FEE_CONFIG.SAVINGS_WITHDRAWAL_FEE;
+      const feeAmount = calculateFeeWithValidation(totalWithdrawAmount, withdrawalFee);
+      const withdrawAmount = totalWithdrawAmount - feeAmount;
       
       let txHash = '';
       
@@ -695,6 +700,21 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         );
         const receipt = await withdrawTx.wait();
         txHash = receipt.hash;
+        
+        // Send withdrawal fee to fee wallet (ETH)
+        if (feeAmount > 0) {
+          const feeGasEstimate = await provider.estimateGas({
+            to: position.feeWallet,
+            value: feeAmount,
+            from: userAddress
+          });
+          
+          await signer.sendTransaction({
+            to: position.feeWallet,
+            value: feeAmount,
+            gasLimit: feeGasEstimate + BigInt(10000)
+          });
+        }
         
       } else {
         // Withdraw ERC20 tokens from protocol with proper ABIs and gas estimation
@@ -744,6 +764,19 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         
         const receipt = await withdrawTx.wait();
         txHash = receipt.hash;
+        
+        // Send withdrawal fee to fee wallet (ERC20)
+        if (feeAmount > 0) {
+          const tokenABI = [
+            'function transfer(address to, uint256 amount) returns (bool)'
+          ];
+          const tokenContract = new ethers.Contract(position.tokenAddress, tokenABI, signer);
+          
+          const feeGasEstimate = await tokenContract.transfer.estimateGas(position.feeWallet, feeAmount);
+          await tokenContract.transfer(position.feeWallet, feeAmount, {
+            gasLimit: feeGasEstimate + BigInt(10000)
+          });
+        }
       }
       
       // Remove position after successful withdrawal
@@ -1005,8 +1038,8 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
             <h4 className="text-white font-semibold mb-2">How AquaFi Works</h4>
             <ul className="text-gray-300 text-sm space-y-1">
               <li>• Your funds are deposited directly to audited DeFi protocols (Aave, Compound, Yearn)</li>
-              <li>• Aquads charges {(FEE_CONFIG.SAVINGS_MANAGEMENT_FEE * 100).toFixed(1)}% management fee on earned yield only</li>
-              <li>• You maintain full custody and can withdraw anytime (small {(FEE_CONFIG.SAVINGS_WITHDRAWAL_FEE * 100).toFixed(1)}% withdrawal fee)</li>
+              <li>• Simple fee structure: {(FEE_CONFIG.SAVINGS_MANAGEMENT_FEE * 100).toFixed(1)}% on deposit, {(FEE_CONFIG.SAVINGS_WITHDRAWAL_FEE * 100).toFixed(1)}% on withdrawal</li>
+              <li>• You maintain full custody and can withdraw anytime</li>
               <li>• All transactions are transparent and verifiable on-chain</li>
               <li>• Real-time APY data powered by DeFiLlama API</li>
             </ul>

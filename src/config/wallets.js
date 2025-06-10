@@ -21,10 +21,9 @@ export const FEE_CONFIG = {
   // AquaSwap fees (existing)
   SWAP_FEE_PERCENTAGE: 0.02, // 2%
   
-  // BexFi fees (new)
-  SAVINGS_MANAGEMENT_FEE: 0.005, // 0.5% of yield earned
-  SAVINGS_PERFORMANCE_FEE: 0.10, // 10% of profits above baseline
-  SAVINGS_WITHDRAWAL_FEE: 0.001, // 0.1% on withdrawals
+  // BexFi fees (simple flat structure)
+  SAVINGS_MANAGEMENT_FEE: 0.05, // 5% flat fee on deposit
+  SAVINGS_WITHDRAWAL_FEE: 0.005, // 0.5% fee on withdrawal
   
   // Fee thresholds
   MIN_FEE_AMOUNT: 0.0001, // Minimum fee to collect (in native token)
