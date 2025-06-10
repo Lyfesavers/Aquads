@@ -2,13 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BannerDisplay from './BannerDisplay';
 import SavingsPools from './SavingsPools';
-import { FaArrowLeft, FaCoins, FaChartLine, FaShieldAlt } from 'react-icons/fa';
+import FlashLoans from './FlashLoans';
+import { FaArrowLeft, FaCoins, FaChartLine, FaShieldAlt, FaLightning, FaPiggyBank } from 'react-icons/fa';
 import './AquaFi.css';
 
 const AquaFi = ({ currentUser, showNotification }) => {
   const navigate = useNavigate();
   const [totalTVL, setTotalTVL] = useState(0);
   const [userBalance, setUserBalance] = useState(0);
+  const [activeTab, setActiveTab] = useState('savings');
 
   useEffect(() => {
     // Add class to body for page-specific styling
@@ -85,19 +87,56 @@ const AquaFi = ({ currentUser, showNotification }) => {
 
         {/* BEX Callout */}
         <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-500/30 rounded-xl p-6 mb-8">
-          <h3 className="text-xl font-bold text-yellow-400 mb-2">🚀 World's First BEX (Bicentralized Exchange) Savings</h3>
+          <h3 className="text-xl font-bold text-yellow-400 mb-2">🚀 World's First BEX (Bicentralized Exchange) DeFi Hub</h3>
           <p className="text-gray-200">
-            Experience the perfect blend of centralized convenience and decentralized security. Choose between simple one-click deposits or advanced DeFi strategies - all in one platform.
+            Experience the perfect blend of centralized convenience and decentralized security. Access savings pools and flash loans - all in one platform.
           </p>
         </div>
 
-        {/* Savings Pools Component */}
-        <SavingsPools 
-          currentUser={currentUser} 
-          showNotification={showNotification}
-          onTVLUpdate={setTotalTVL}
-          onBalanceUpdate={setUserBalance}
-        />
+        {/* Tab Navigation */}
+        <div className="flex justify-center mb-8">
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-2 border border-gray-700/50">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setActiveTab('savings')}
+                className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
+                  activeTab === 'savings'
+                    ? 'bg-blue-600 text-white shadow-lg'
+                    : 'text-gray-300 hover:text-white hover:bg-gray-700/50'
+                }`}
+              >
+                <FaPiggyBank className="w-4 h-4" />
+                Savings Pools
+              </button>
+              <button
+                onClick={() => setActiveTab('flash-loans')}
+                className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
+                  activeTab === 'flash-loans'
+                    ? 'bg-gradient-to-r from-yellow-500 to-orange-600 text-white shadow-lg'
+                    : 'text-gray-300 hover:text-white hover:bg-gray-700/50'
+                }`}
+              >
+                <FaLightning className="w-4 h-4" />
+                Flash Loans
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'savings' ? (
+          <SavingsPools 
+            currentUser={currentUser} 
+            showNotification={showNotification}
+            onTVLUpdate={setTotalTVL}
+            onBalanceUpdate={setUserBalance}
+          />
+        ) : (
+          <FlashLoans 
+            currentUser={currentUser} 
+            showNotification={showNotification}
+          />
+        )}
       </div>
     </div>
   );
