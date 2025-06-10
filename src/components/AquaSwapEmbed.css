@@ -1,0 +1,196 @@
+/* AquaSwapEmbed.css - Optimized styling for iframe embedding */
+
+/* Reset and base styles for embed */
+body.aquaswap-embed {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+  color: #ffffff;
+  overflow: hidden; /* Prevent scrollbars in iframe */
+}
+
+/* Main container */
+.aquaswap-embed-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  min-height: 600px;
+  background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+  color: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 212, 255, 0.1);
+}
+
+/* Compact header */
+.embed-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  min-height: 44px;
+}
+
+.embed-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #00d4ff;
+}
+
+.embed-logo {
+  filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.3));
+}
+
+.powered-by-link {
+  color: #a0a0a0;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+}
+
+.powered-by-link:hover {
+  color: #00d4ff;
+  background: rgba(0, 212, 255, 0.1);
+  border-color: rgba(0, 212, 255, 0.3);
+  text-decoration: none;
+}
+
+/* Widget container */
+.embed-widget {
+  flex: 1;
+  padding: 16px;
+  background: transparent;
+  overflow-y: auto;
+  min-height: 0; /* Allow flex shrinking */
+}
+
+/* LiFi Widget styling for embed */
+.embed-widget [data-widget] {
+  background: rgba(0, 0, 0, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 12px !important;
+  height: 100% !important;
+}
+
+/* Footer */
+.embed-footer {
+  padding: 8px 16px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.embed-footer p {
+  margin: 0;
+  color: #a0a0a0;
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+/* Responsive adjustments for smaller embeds */
+@media (max-width: 400px) {
+  .embed-header {
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 12px;
+    min-height: auto;
+  }
+  
+  .embed-title {
+    font-size: 0.9rem;
+  }
+  
+  .powered-by-link {
+    font-size: 0.75rem;
+  }
+  
+  .embed-widget {
+    padding: 12px;
+  }
+  
+  .embed-footer {
+    padding: 6px 12px;
+  }
+  
+  .embed-footer p {
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-height: 500px) {
+  .embed-header {
+    padding: 8px 16px;
+    min-height: 36px;
+  }
+  
+  .embed-footer {
+    padding: 6px 16px;
+    min-height: 28px;
+  }
+  
+  .embed-footer p {
+    font-size: 0.75rem;
+  }
+}
+
+/* Custom scrollbar for webkit browsers */
+.embed-widget::-webkit-scrollbar {
+  width: 6px;
+}
+
+.embed-widget::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.embed-widget::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 255, 0.3);
+  border-radius: 3px;
+}
+
+.embed-widget::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 212, 255, 0.5);
+}
+
+/* Smooth animations */
+* {
+  transition: all 0.3s ease;
+}
+
+/* Ensure iframe content is interactive */
+.aquaswap-embed-container * {
+  pointer-events: auto;
+}
+
+/* Widget optimization for embedding */
+.embed-widget .lifi-widget {
+  height: 100%;
+  min-height: 400px;
+}
+
+/* Hide unnecessary elements when embedded */
+.aquaswap-embed-container .lifi-widget [data-testid="poweredBy"] {
+  display: none !important;
+}
+
+/* Ensure responsive behavior in iframes */
+.aquaswap-embed-container {
+  max-width: 100%;
+  overflow-x: hidden;
+} 

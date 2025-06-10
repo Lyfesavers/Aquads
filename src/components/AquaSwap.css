@@ -69,6 +69,33 @@
   filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.3));
 }
 
+/* Embed Toggle Button */
+.embed-toggle-button {
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  color: #00d4ff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  margin-top: 12px;
+  font-size: 0.9rem;
+}
+
+.embed-toggle-button:hover {
+  background: rgba(0, 212, 255, 0.2);
+  border-color: #00d4ff;
+  transform: translateY(-1px);
+}
+
+/* Embed Section */
+.embed-section {
+  padding: 0 20px 20px 20px;
+  background: rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 
 
 /* Main Trading Interface - Professional Layout */

@@ -40,6 +40,7 @@ import Affiliate from './components/Affiliate';
 import Terms from './components/Terms';
 import AquaFi from './components/AquaFi';
 import AquaSwap from './components/AquaSwap';
+import AquaSwapEmbed from './components/AquaSwapEmbed';
 import BannerDisplay from './components/BannerDisplay';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -3419,6 +3420,7 @@ function App() {
           <Route path="/aquafi" element={<AquaFi currentUser={currentUser} showNotification={showNotification} />} />
           <Route path="/swap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} />} />
           <Route path="/aquaswap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} />} />
+          <Route path="/embed/aquaswap" element={<AquaSwapEmbed />} />
         </Routes>
       </Router>
     </AuthContext.Provider>

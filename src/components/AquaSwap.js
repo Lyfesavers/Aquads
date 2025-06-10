@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { LiFiWidget } from '@lifi/widget';
 import logger from '../utils/logger';
 import BannerDisplay from './BannerDisplay';
+import EmbedCodeGenerator from './EmbedCodeGenerator';
 import './AquaSwap.css';
 
 // Constants - using the same fee structure as the current swap
@@ -25,6 +26,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   const [chartProvider, setChartProvider] = useState('tradingview');
   const [tokenSearch, setTokenSearch] = useState('');
   const [selectedChain, setSelectedChain] = useState('ether');
+  const [showEmbedCode, setShowEmbedCode] = useState(false);
   const tradingViewRef = useRef(null);
   const dexToolsRef = useRef(null);
 
@@ -217,8 +219,24 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           AquaSwap
         </h1>
           <p>The Ultimate Cross-Chain BEX</p>
+          
+          {/* Embed Button */}
+          <button 
+            className="embed-toggle-button"
+            onClick={() => setShowEmbedCode(!showEmbedCode)}
+            title="Get embed code to add AquaSwap to your website"
+          >
+            {showEmbedCode ? '❌ Close Embed Code' : '🔗 Embed on Your Site'}
+          </button>
         </div>
       </div>
+      
+      {/* Embed Code Generator Section */}
+      {showEmbedCode && (
+        <div className="embed-section">
+          <EmbedCodeGenerator />
+        </div>
+      )}
     
       {/* Main Trading Interface */}
       <div className="trading-interface with-charts">
