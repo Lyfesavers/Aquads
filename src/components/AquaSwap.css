@@ -25,12 +25,13 @@
   background: rgba(0, 212, 255, 0.1);
   border: 1px solid rgba(0, 212, 255, 0.3);
   color: #00d4ff;
-  padding: 8px 16px;
-  border-radius: 8px;
+  padding: 6px 12px;
+  border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
+  font-size: 0.85rem;
   transition: all 0.3s ease;
-  margin-bottom: 20px;
+  margin-bottom: 8px;
   display: inline-block;
 }
 
@@ -87,6 +88,12 @@
   background: rgba(0, 212, 255, 0.2);
   border-color: #00d4ff;
   transform: translateY(-1px);
+}
+
+/* Banner Container */
+.banner-container {
+  margin-top: 0;
+  margin-bottom: 16px;
 }
 
 /* Embed Section */
@@ -415,11 +422,19 @@
     padding: 15px;
   }
   
+  .back-to-main-button {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    margin-bottom: 6px;
+  }
+
+  .banner-container {
+    margin-bottom: 12px;
+  }
+  
   .page-title h1 {
     font-size: 2rem;
   }
-  
-
   
   .swap-section {
     padding: 15px;
