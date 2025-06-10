@@ -281,6 +281,30 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
     }
   };
 
+  // Add contract validation helper
+  const validateContractAddress = async (address, expectedType = 'contract') => {
+    try {
+      const provider = new ethers.BrowserProvider(walletProvider);
+      const code = await provider.getCode(address);
+      return code !== '0x'; // Contract exists if code is not empty
+    } catch (error) {
+      logger.error('Contract validation error:', error);
+      return false;
+    }
+  };
+
+  // Enhanced fee calculation with safety checks
+  const calculateFeeWithValidation = (depositAmount, feeRate) => {
+    if (feeRate < 0 || feeRate > 0.1) { // Max 10% fee cap
+      throw new Error('Invalid fee rate');
+    }
+    
+    const feeRateBN = BigInt(Math.floor(feeRate * 10000));
+    const feeDenominator = BigInt(10000);
+    
+    return (depositAmount * feeRateBN) / feeDenominator;
+  };
+
   // Handle deposit with real blockchain transactions
   const handleDeposit = async () => {
     if (!selectedPool || !depositAmount || !walletConnected) {
@@ -321,6 +345,14 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       const signer = await Promise.race([provider.getSigner(), timeoutPromise]);
       const userAddress = await Promise.race([signer.getAddress(), timeoutPromise]);
       
+      // Validate contract address before proceeding
+      const isValidContract = await validateContractAddress(selectedPool.contractAddress);
+      if (!isValidContract) {
+        showNotification('Invalid contract address detected. Please contact support.', 'error');
+        setIsDepositing(false);
+        return;
+      }
+
       // Check if we're on the correct network and switch if needed
       const network = await provider.getNetwork();
       if (Number(network.chainId) !== selectedPool.chainId) {
@@ -364,7 +396,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         }
       }
       
-      // Calculate deposit amount and fees with correct decimals
+      // Calculate deposit amount and fees with enhanced validation
       const isETH = selectedPool.token === 'ETH';
       const getTokenDecimals = (token) => {
         switch (token) {
@@ -378,7 +410,9 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
       const decimals = getTokenDecimals(selectedPool.token);
       const depositAmountBN = ethers.parseUnits(depositAmount, decimals);
       const managementFee = FEE_CONFIG.SAVINGS_MANAGEMENT_FEE;
-      const feeAmount = depositAmountBN * BigInt(Math.floor(managementFee * 10000)) / BigInt(10000);
+      
+      // Use enhanced fee calculation
+      const feeAmount = calculateFeeWithValidation(depositAmountBN, managementFee);
       
       let txHash = '';
       
