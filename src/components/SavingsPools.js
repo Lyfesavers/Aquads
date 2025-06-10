@@ -7,7 +7,11 @@ import { getPoolAPYs, formatAPY, formatTVL, getRiskAssessment } from '../service
 import { EthereumProvider } from '@walletconnect/ethereum-provider';
 import logger from '../utils/logger';
 
+// Use the exact same fee wallet as AquaSwap
+const ETH_FEE_WALLET = process.env.REACT_APP_FEE_WALLET;
+
 // Production-ready pool configurations using real contract addresses
+// Now using the exact same ETH_FEE_WALLET as AquaSwap
 const PROTOCOL_POOLS = [
   {
     id: 'aave-usdc',
@@ -24,7 +28,7 @@ const PROTOCOL_POOLS = [
     chain: 'Ethereum',
     chainId: 1,
     minDeposit: 1,
-    feeWallet: AQUADS_WALLETS.ETHEREUM
+    feeWallet: ETH_FEE_WALLET
   },
   {
     id: 'compound-usdt',
@@ -41,7 +45,7 @@ const PROTOCOL_POOLS = [
     chain: 'Ethereum',
     chainId: 1,
     minDeposit: 1,
-    feeWallet: AQUADS_WALLETS.ETHEREUM
+    feeWallet: ETH_FEE_WALLET
   },
   {
     id: 'aave-eth',
@@ -58,7 +62,7 @@ const PROTOCOL_POOLS = [
     chain: 'Ethereum',
     chainId: 1,
     minDeposit: 0.01,
-    feeWallet: AQUADS_WALLETS.ETHEREUM
+    feeWallet: ETH_FEE_WALLET
   },
   {
     id: 'yearn-usdc',
@@ -75,7 +79,7 @@ const PROTOCOL_POOLS = [
     chain: 'Ethereum',
     chainId: 1,
     minDeposit: 1,
-    feeWallet: AQUADS_WALLETS.ETHEREUM
+    feeWallet: ETH_FEE_WALLET
   },
   {
     id: 'aave-dai',
@@ -92,7 +96,7 @@ const PROTOCOL_POOLS = [
     chain: 'Ethereum',
     chainId: 1,
     minDeposit: 1,
-    feeWallet: AQUADS_WALLETS.ETHEREUM
+    feeWallet: ETH_FEE_WALLET
   },
   {
     id: 'yearn-eth',
@@ -109,7 +113,7 @@ const PROTOCOL_POOLS = [
     chain: 'Ethereum',
     chainId: 1,
     minDeposit: 0.01,
-    feeWallet: AQUADS_WALLETS.ETHEREUM
+    feeWallet: ETH_FEE_WALLET
   }
 ];
 
@@ -352,7 +356,7 @@ const SavingsPools = ({ currentUser, showNotification, onTVLUpdate, onBalanceUpd
         setIsDepositing(false);
         return;
       }
-
+      
       // Check if we're on the correct network and switch if needed
       const network = await provider.getNetwork();
       if (Number(network.chainId) !== selectedPool.chainId) {
