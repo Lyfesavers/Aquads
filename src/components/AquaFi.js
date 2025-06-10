@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BannerDisplay from './BannerDisplay';
 import SavingsPools from './SavingsPools';
-import FlashLoans from './FlashLoans';
+import SimpleFlashLoans from './SimpleFlashLoans';
 import { FaArrowLeft, FaCoins, FaChartLine, FaShieldAlt, FaBolt, FaPiggyBank } from 'react-icons/fa';
 import './AquaFi.css';
 
@@ -132,7 +132,7 @@ const AquaFi = ({ currentUser, showNotification }) => {
             onBalanceUpdate={setUserBalance}
           />
         ) : (
-          <FlashLoans 
+          <SimpleFlashLoans 
             currentUser={currentUser} 
             showNotification={showNotification}
           />
