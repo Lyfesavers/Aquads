@@ -119,7 +119,7 @@ function getDefaultHtml() {
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#000000" />
-    <meta name="description" content="Aquads - All in one Web3 crypto Hub and Freelancer marketplace!" />
+    <meta name="description" content="Aquads - World's First BEX - Bicentralized Exchange Hub" />
     
     <!-- Twitter Card meta tags -->
     <meta name="twitter:card" content="summary_large_image">
@@ -134,7 +134,7 @@ function getDefaultHtml() {
     <meta property="og:url" content="https://aquads.xyz">
     <meta property="og:type" content="website">
     
-    <title>Aquads - All in one Web3 crypto Hub and Freelancer marketplace!</title>
+    <title>Aquads - World's First BEX - Bicentralized Exchange Hub</title>
     <script>
       // Redirect to the app
       window.location.href = '/how-to';
