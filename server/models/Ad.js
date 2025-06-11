@@ -107,7 +107,7 @@ const adSchema = new mongoose.Schema({
   },
   listingFee: {
     type: Number,
-    default: 350 // $350 USDC
+    default: 199 // $199 USDC
   },
   rejectionReason: {
     type: String,
