@@ -350,7 +350,7 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
                 
                 <div className="mt-6 p-4 bg-green-900/30 border border-green-500/50 rounded-lg">
                   <p className="text-green-300 text-sm font-medium">
-                    ✓ Total Value: Over $500 in marketing services<br/>
+                    ✓ Total Value: Over $1000 in marketing services<br/>
                     ✓ Your listing will be reviewed and approved by our admins<br/>
                     ✓ Full refund if rejected for any reason
                   </p>
