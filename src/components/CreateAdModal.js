@@ -280,7 +280,7 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
               <div className="bg-gradient-to-br from-blue-900/50 to-purple-900/50 border border-blue-500/50 rounded-xl p-6 mb-6">
                 <h3 className="text-2xl font-bold text-white mb-4 flex items-center">
                   <FaRocket className="mr-3 text-blue-400" />
-                  Premium Listing Package - $199 USDC
+                  Premium Listing Package - $299 USDC
                 </h3>
                 <p className="text-gray-300 mb-6">
                   Get maximum exposure and professional marketing support for your project with our comprehensive premium package.
@@ -377,7 +377,7 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
                       >
                         <div className="flex justify-between items-center">
                           <span className="font-medium">{chain.name}</span>
-                          <span className="text-sm text-gray-300">$199 {chain.amount}</span>
+                          <span className="text-sm text-gray-300">$299 {chain.amount}</span>
                         </div>
                       </button>
                     ))}
