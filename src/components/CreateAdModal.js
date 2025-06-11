@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
-import { FaCopy, FaCheck, FaArrowLeft, FaArrowRight, FaBullhorn, FaUsers, FaTwitter, FaChartLine, FaGift, FaRocket } from 'react-icons/fa';
+import { FaCopy, FaCheck, FaArrowLeft, FaArrowRight, FaBullhorn, FaUsers, FaTwitter, FaChartLine, FaGift, FaRocket, FaNewspaper } from 'react-icons/fa';
 
 const BLOCKCHAIN_OPTIONS = [
   {
@@ -302,8 +302,18 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
                       <FaBullhorn className="text-white" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-white">PR Press Release Article</h4>
-                      <p className="text-gray-300 text-sm">Professional press release distributed across multiple crypto media platforms</p>
+                      <h4 className="font-semibold text-white">PR Press Release Distribution</h4>
+                      <p className="text-gray-300 text-sm">Professional press release distributed across 20+ major crypto newsroom platforms including Aquads and leading industry publications</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start space-x-4 p-4 bg-gray-800/50 rounded-lg">
+                    <div className="bg-indigo-500 p-2 rounded-full">
+                      <FaNewspaper className="text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-white">Premium Platform Access</h4>
+                      <p className="text-gray-300 text-sm">Access to premium distribution channels including CoinDesk, CoinMarketCap and other tier-1 platforms (additional premium services available)</p>
                     </div>
                   </div>
                   
