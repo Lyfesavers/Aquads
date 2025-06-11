@@ -302,8 +302,8 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
                       <FaBullhorn className="text-white" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-white">PR Press Release Distribution</h4>
-                      <p className="text-gray-300 text-sm">Professional press release distributed across 20+ major crypto newsroom platforms including Aquads and leading industry publications</p>
+                      <h4 className="font-semibold text-white">PR Press Release Publication</h4>
+                      <p className="text-gray-300 text-sm">Professional press release published on Aquads and our partner publications, with access to 20+ premium newsroom platforms available for upgrade</p>
                     </div>
                   </div>
                   
