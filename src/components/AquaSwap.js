@@ -54,8 +54,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         const validAds = ads.filter(ad => 
           ad.status !== 'pending' && 
           ad.status !== 'rejected' &&
-          ad.contractAddress && 
-          ad.contractAddress.trim() !== ''
+          ad.pairAddress && 
+          ad.pairAddress.trim() !== ''
         );
         
         // Sort by bullish votes (descending) and take top 10
@@ -65,7 +65,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         // Convert ads to popular token format
         const bubbleTokens = topAds.map(ad => ({
           name: ad.title,
-          address: ad.contractAddress,
+          address: ad.pairAddress,
           chain: getChainForBlockchain(ad.blockchain || 'ethereum'),
           logo: ad.logo,
           blockchain: ad.blockchain,

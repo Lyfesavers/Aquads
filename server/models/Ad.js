@@ -71,7 +71,7 @@ const adSchema = new mongoose.Schema({
     enum: ['active', 'pending', 'approved', 'rejected'],
     default: 'active'
   },
-  contractAddress: {
+  pairAddress: {
     type: String,
     required: true,
     trim: true,
@@ -80,7 +80,7 @@ const adSchema = new mongoose.Schema({
         // Only check if string exists and is not empty after trimming
         return v && v.trim().length > 0;
       },
-      message: 'Contract address is required'
+      message: 'Pair address is required'
     }
   },
   blockchain: {

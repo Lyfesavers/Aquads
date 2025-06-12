@@ -207,7 +207,7 @@ const calculateBumpAmount = (type) => {
 // POST route for creating new ad
 router.post('/', auth, async (req, res) => {
   try {
-    const { title, logo, url, contractAddress, blockchain, referredBy, x, y, preferredSize, txSignature, paymentChain, chainSymbol, chainAddress } = req.body;
+    const { title, logo, url, pairAddress, blockchain, referredBy, x, y, preferredSize, txSignature, paymentChain, chainSymbol, chainAddress } = req.body;
     
     // Use client's preferred size if provided, otherwise use MAX_SIZE
     const bubbleSize = preferredSize || MAX_SIZE;
@@ -222,7 +222,7 @@ router.post('/', auth, async (req, res) => {
       title,
       logo,
       url,
-      contractAddress,
+      pairAddress,
       blockchain,
       size: validatedSize, // Use validated size
       x: x || 0,

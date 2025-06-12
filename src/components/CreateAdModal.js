@@ -34,7 +34,7 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
     title: '',
     logo: '',
     url: '',
-    contractAddress: '',
+    pairAddress: '',
     blockchain: 'ethereum',
     txSignature: '',
     paymentChain: BLOCKCHAIN_OPTIONS[0].name,
@@ -58,7 +58,7 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
     }
   };
 
-  const validateContractAddress = (address) => {
+  const validatePairAddress = (address) => {
     // Sui format (0x...::module::TOKEN)
     const suiRegex = /^0x[0-9a-fA-F]+::[a-zA-Z0-9_]+::[A-Z0-9_]+$/;
     
@@ -109,8 +109,8 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
       return;
     }
 
-    if (!validateContractAddress(formData.contractAddress)) {
-      setError('Please enter a valid contract address');
+    if (!validatePairAddress(formData.pairAddress)) {
+      setError('Please enter a valid pair address');
       return;
     }
 
@@ -169,13 +169,13 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
               />
             </div>
             <div>
-              <label className="block mb-2 text-lg font-medium">Contract Address</label>
+              <label className="block mb-2 text-lg font-medium">Pair Address</label>
               <input
                 type="text"
-                name="contractAddress"
-                value={formData.contractAddress}
+                name="pairAddress"
+                value={formData.pairAddress}
                 onChange={handleChange}
-                placeholder="Enter contract address (0x...)"
+                placeholder="Enter pair address (0x...)"
                 required
                 className="w-full px-4 py-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
               />
