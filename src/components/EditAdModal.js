@@ -95,6 +95,11 @@ const EditAdModal = ({ ad, onEditAd, onClose }) => {
     try {
       await onEditAd(ad.id, formData);
       showNotification('success', 'Ad updated successfully!');
+      
+      // Close the modal after a short delay to allow user to see the confirmation
+      setTimeout(() => {
+        onClose();
+      }, 1500);
     } catch (error) {
       showNotification('error', 'Failed to update ad. Please try again.');
       console.error('Error updating ad:', error);
