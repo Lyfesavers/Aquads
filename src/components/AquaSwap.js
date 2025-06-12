@@ -44,7 +44,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     const fetchBubbleTokens = async () => {
       try {
         console.log('Fetching bubble tokens...');
-        const response = await fetch(`${API_URL}/ads`);
+        const response = await fetch(`${API_URL}/api/ads`);
         if (!response.ok) {
           throw new Error('Failed to fetch ads');
         }
