@@ -13,13 +13,10 @@ const ETH_FEE_WALLET = process.env.REACT_APP_FEE_WALLET; // Ethereum wallet addr
 const SOLANA_FEE_WALLET = process.env.REACT_APP_SOLANA_FEE_WALLET; // Solana wallet address
 const SUI_FEE_WALLET = process.env.REACT_APP_SUI_FEE_WALLET; // SUI wallet address
 
-// Popular token examples for quick access
-const POPULAR_TOKEN_EXAMPLES = [
-  { name: 'PEPE', address: '0xa43fe16908251ee70ef74718545e4fe6c5ccec9f', chain: 'ether' },
-  { name: 'SHIB', address: '0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce', chain: 'ether' },
-  { name: 'FLOKI', address: '0xcf0c122c6b73ff809c693db761e7baebe62b6a2e', chain: 'ether' },
-  { name: 'DOGE', address: '0x4206931337dc273a630d328da6441786bfad668f', chain: 'ether' }
-];
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
+// Fallback popular token examples if ads can't be loaded
+const FALLBACK_TOKEN_EXAMPLES = [];
 
 const AquaSwap = ({ currentUser, showNotification }) => {
   const navigate = useNavigate();
@@ -27,6 +24,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   const [tokenSearch, setTokenSearch] = useState('');
   const [selectedChain, setSelectedChain] = useState('ether');
   const [showEmbedCode, setShowEmbedCode] = useState(false);
+  const [popularTokens, setPopularTokens] = useState(FALLBACK_TOKEN_EXAMPLES);
   const tradingViewRef = useRef(null);
   const dexToolsRef = useRef(null);
 
@@ -40,6 +38,67 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       document.body.classList.remove('aquaswap-page');
     };
   }, []);
+
+  // Fetch bubble ads and convert to popular tokens
+  useEffect(() => {
+    const fetchBubbleTokens = async () => {
+      try {
+        const response = await fetch(`${API_URL}/ads`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch ads');
+        }
+        
+        const ads = await response.json();
+        
+        // Filter out pending and rejected ads, then sort by bullish votes
+        const validAds = ads.filter(ad => 
+          ad.status !== 'pending' && 
+          ad.status !== 'rejected' &&
+          ad.contractAddress && 
+          ad.contractAddress.trim() !== ''
+        );
+        
+        // Sort by bullish votes (highest first) and take top 10
+        const topAds = validAds
+          .sort((a, b) => (b.bullishVotes || 0) - (a.bullishVotes || 0))
+          .slice(0, 10);
+        
+        // Convert ads to popular token format
+        const bubbleTokens = topAds.map(ad => ({
+          name: ad.title,
+          address: ad.contractAddress,
+          chain: getChainForBlockchain(ad.blockchain || 'ethereum')
+        }));
+        
+        // Update popular tokens if we have any bubble tokens
+        if (bubbleTokens.length > 0) {
+          setPopularTokens(bubbleTokens);
+        }
+        
+      } catch (error) {
+        logger.error('Error fetching bubble tokens:', error);
+        // Keep fallback tokens if fetch fails
+      }
+    };
+
+    fetchBubbleTokens();
+  }, []);
+
+  // Convert blockchain names to dextools chain format
+  const getChainForBlockchain = (blockchain) => {
+    const chainMap = {
+      'ethereum': 'ether',
+      'bsc': 'bnb',
+      'polygon': 'polygon',
+      'arbitrum': 'arbitrum',
+      'optimism': 'optimism',
+      'base': 'base',
+      'avalanche': 'avalanche',
+      'fantom': 'fantom',
+      'cronos': 'cronos'
+    };
+    return chainMap[blockchain.toLowerCase()] || 'ether';
+  };
 
   // Load TradingView widget
   useEffect(() => {
@@ -521,7 +580,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
               <div className="dextools-search-section">
                 <div className="popular-tokens">
                   <span className="popular-label">Popular:</span>
-                  {POPULAR_TOKEN_EXAMPLES.map((token, index) => (
+                  {popularTokens.map((token, index) => (
                     <button
                       key={index}
                       onClick={() => handlePopularTokenClick(token)}
