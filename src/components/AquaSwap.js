@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { LiFiWidget } from '@lifi/widget';
+import FiatPurchase from './FiatPurchase';
 import logger from '../utils/logger';
 import BannerDisplay from './BannerDisplay';
 import EmbedCodeGenerator from './EmbedCodeGenerator';
@@ -25,6 +26,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   const [selectedChain, setSelectedChain] = useState('ether');
   const [showEmbedCode, setShowEmbedCode] = useState(false);
   const [popularTokens, setPopularTokens] = useState(FALLBACK_TOKEN_EXAMPLES);
+  const [swapMode, setSwapMode] = useState('crypto'); // 'crypto' for LiFi, 'fiat' for fiat purchase
   const tradingViewRef = useRef(null);
   const dexToolsRef = useRef(null);
 
@@ -343,12 +345,40 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       <div className="trading-interface with-charts">
         {/* Left Side - Swap Widget */}
         <div className="swap-section">
-      <div className="lifi-widget">
-        <LiFiWidget integrator="aquaswap" config={widgetConfig} />
-      </div>
-          <div className="swap-footer">
-            <p>✨ Swap and bridge across 38+ blockchains with the best rates and lowest fees.</p>
+          {/* Swap Mode Toggle */}
+          <div className="swap-mode-toggle">
+            <button 
+              className={`mode-btn ${swapMode === 'crypto' ? 'active' : ''}`}
+              onClick={() => setSwapMode('crypto')}
+              title="Swap between cryptocurrencies"
+            >
+              🔄 Crypto Swap
+            </button>
+            <button 
+              className={`mode-btn ${swapMode === 'fiat' ? 'active' : ''}`}
+              onClick={() => setSwapMode('fiat')}
+              title="Buy crypto with credit/debit card"
+            >
+              💳 Buy with Card
+            </button>
           </div>
+
+          {/* Conditional Widget Display */}
+          {swapMode === 'crypto' ? (
+            <>
+              <div className="lifi-widget">
+                <LiFiWidget integrator="aquaswap" config={widgetConfig} />
+              </div>
+              <div className="swap-footer">
+                <p>✨ Swap and bridge across 38+ blockchains with the best rates and lowest fees.</p>
+              </div>
+            </>
+          ) : (
+            <FiatPurchase 
+              userWallet={currentUser?.walletAddress} 
+              showNotification={showNotification}
+            />
+          )}
         </div>
 
         {/* Right Side - Charts */}
