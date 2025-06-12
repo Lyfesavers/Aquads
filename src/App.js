@@ -2784,7 +2784,7 @@ function App() {
                           
                           <div>
                             <h3 className="text-yellow-300 font-bold text-sm sm:text-base mb-0.5 sm:mb-1 flex items-center gap-1 sm:gap-2">
-                              🚀 Use AquaSwap - The Ultimate Cross-Chain DEX!
+                              🚀 Use AquaSwap - The Ultimate Cross-Chain BEX!
                               <span className="text-xs bg-gradient-to-r from-yellow-400 to-yellow-300 text-purple-900 px-1.5 py-0.5 sm:px-2 rounded-full font-bold animate-pulse">
                                 LIVE
                               </span>
@@ -2819,7 +2819,7 @@ function App() {
                             href="/aquaswap"
                             className="relative bg-gradient-to-r from-yellow-400 to-yellow-300 hover:from-yellow-300 hover:to-yellow-200 text-purple-900 px-4 py-1.5 sm:px-5 sm:py-2 rounded-lg font-bold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-yellow-400/50 whitespace-nowrap flex items-center gap-2 group text-sm sm:text-base"
                           >
-                            <span>Launch AquaSwap</span>
+                            <span>Buy Crypto</span>
                             <span className="group-hover:translate-x-1 transition-transform duration-300">🚀</span>
                             
                             {/* Button glow effect */}
