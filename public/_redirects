@@ -1,5 +1,8 @@
-# SEO-friendly URL redirect for blogs
+# SEO-friendly URL redirect for blogs (for regular users)
 /how-to/*-:id /how-to?blogId=:id 301
+
+# Handle service pages
+/service/* /service.html 200
 
 # Default SPA redirect (keep this last)
 /* /index.html 200 
