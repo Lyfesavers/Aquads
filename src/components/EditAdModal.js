@@ -11,6 +11,8 @@ const EditAdModal = ({ ad, onEditAd, onClose }) => {
   });
   const [previewUrl, setPreviewUrl] = useState(ad.logo);
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notification, setNotification] = useState({ show: false, type: '', message: '' });
 
   // Prevent body scroll when modal is open (same as original Modal component)
   useEffect(() => {
@@ -69,6 +71,13 @@ const EditAdModal = ({ ad, onEditAd, onClose }) => {
     }
   };
 
+  const showNotification = (type, message) => {
+    setNotification({ show: true, type, message });
+    setTimeout(() => {
+      setNotification({ show: false, type: '', message: '' });
+    }, 3000);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!previewUrl) {
@@ -79,7 +88,19 @@ const EditAdModal = ({ ad, onEditAd, onClose }) => {
       setError('Please enter a valid pair address');
       return;
     }
-    onEditAd(ad.id, formData);
+    
+    setIsSubmitting(true);
+    setError('');
+    
+    try {
+      await onEditAd(ad.id, formData);
+      showNotification('success', 'Ad updated successfully!');
+    } catch (error) {
+      showNotification('error', 'Failed to update ad. Please try again.');
+      console.error('Error updating ad:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e) => {
@@ -121,6 +142,18 @@ const EditAdModal = ({ ad, onEditAd, onClose }) => {
           <div className="max-h-[calc(100vh-8rem)] overflow-y-auto pb-2">
             <div className="text-white">
               <h2 className="text-2xl font-bold mb-4">Edit Ad</h2>
+              
+              {/* Notification */}
+              {notification.show && (
+                <div className={`p-3 rounded-lg mb-4 ${
+                  notification.type === 'success' 
+                    ? 'bg-green-500 bg-opacity-20 border border-green-500 text-green-400' 
+                    : 'bg-red-500 bg-opacity-20 border border-red-500 text-red-400'
+                }`}>
+                  {notification.message}
+                </div>
+              )}
+              
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block mb-1">Title</label>
@@ -226,14 +259,17 @@ const EditAdModal = ({ ad, onEditAd, onClose }) => {
                 <div className="flex justify-end">
                   <button
                     type="submit"
-                    disabled={!!error}
-                    className={`px-4 py-2 rounded ${
-                      error 
+                    disabled={!!error || isSubmitting}
+                    className={`px-4 py-2 rounded flex items-center gap-2 ${
+                      error || isSubmitting
                         ? 'bg-gray-500 cursor-not-allowed' 
                         : 'bg-blue-500 hover:bg-blue-600'
                     }`}
                   >
-                    Save Changes
+                    {isSubmitting && (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    )}
+                    {isSubmitting ? 'Updating...' : 'Save Changes'}
                   </button>
                 </div>
               </form>
