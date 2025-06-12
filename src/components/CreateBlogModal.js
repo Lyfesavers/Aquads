@@ -6,10 +6,6 @@ import { Markdown } from 'tiptap-markdown';
 import Modal from './Modal';
 
 const MenuBar = ({ editor }) => {
-  if (!editor) {
-    return null;
-  }
-
   const setLink = useCallback(() => {
     const previousUrl = editor.getAttributes('link').href
     const url = window.prompt('Enter the URL', previousUrl)
@@ -30,6 +26,10 @@ const MenuBar = ({ editor }) => {
     editor.chain().focus().extendMarkRange('link').setLink({ href: url })
       .run()
   }, [editor])
+
+  if (!editor) {
+    return null;
+  }
 
   return (
     <div className="flex flex-wrap gap-1 p-2 bg-gray-700 rounded-t border-b border-gray-600">

@@ -1419,10 +1419,6 @@ function App() {
 
   // Add these socket event listeners in useEffect
   useEffect(() => {
-    socket.on('reviewAdded', (review) => {
-      setReviews(prevReviews => [...prevReviews, review]);
-    });
-
     socket.on('userAuthenticated', (userData) => {
       setCurrentUser(userData);
     });
@@ -1441,7 +1437,6 @@ function App() {
     });
 
     return () => {
-      socket.off('reviewAdded');
       socket.off('userAuthenticated');
       socket.off('adVoteUpdated'); // Remove listener on cleanup
     };

@@ -1006,7 +1006,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       setPendingListings(data);
     } catch (error) {
       console.error('Error fetching pending listings:', error);
-      setError('Failed to fetch pending bubble listings');
+      showNotification('Failed to fetch pending bubble listings', 'error');
     } finally {
       setIsLoadingListings(false);
     }
