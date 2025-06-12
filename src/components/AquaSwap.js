@@ -617,35 +617,40 @@ const AquaSwap = ({ currentUser, showNotification }) => {
               )}
             </div>
             
-            {/* Popular tokens - only show for DexTools */}
+            {/* Trending tokens - only show for DexTools */}
             {chartProvider === 'dextools' && popularTokens.length > 0 && (
               <div className="dextools-search-section">
                 <div className="popular-tokens">
-                  <span className="popular-label">Popular:</span>
+                  <span className="popular-label">Trending:</span>
                   <div className="popular-tokens-container">
                     <div className="popular-tokens-scroll">
                       {/* Duplicate tokens for seamless scrolling */}
-                      {popularTokens.concat(popularTokens).map((token, index) => (
-                        <button
-                          key={`${token.address}-${index}`}
-                          onClick={() => handlePopularTokenClick(token)}
-                          className={`popular-token-btn ${token.isBumped ? 'bumped' : ''}`}
-                          title={`${token.name} on ${token.blockchain || 'Ethereum'}${token.isBumped ? ' - BUMPED' : ''} - ${token.bullishVotes} votes - Address: ${token.address}`}
-                          style={{ flexShrink: 0 }}
-                        >
-                          {token.logo && (
-                            <img 
-                              src={token.logo} 
-                              alt={token.name}
-                              className="token-logo"
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                              }}
-                            />
-                          )}
-                          <span>{token.name}</span>
-                        </button>
-                      ))}
+                      {popularTokens.concat(popularTokens).map((token, index) => {
+                        // Calculate the original rank (1-10) for display
+                        const rank = (index % popularTokens.length) + 1;
+                        return (
+                          <button
+                            key={`${token.address}-${index}`}
+                            onClick={() => handlePopularTokenClick(token)}
+                            className={`popular-token-btn ${token.isBumped ? 'bumped' : ''}`}
+                            title={`#${rank} ${token.name} on ${token.blockchain || 'Ethereum'}${token.isBumped ? ' - BUMPED' : ''} - ${token.bullishVotes} votes - Address: ${token.address}`}
+                            style={{ flexShrink: 0 }}
+                          >
+                            <span className="token-rank">#{rank}</span>
+                            {token.logo && (
+                              <img 
+                                src={token.logo} 
+                                alt={token.name}
+                                className="token-logo"
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                }}
+                              />
+                            )}
+                            <span>{token.name}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -682,7 +687,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                 <>
                   🚀 <strong>DexTools (Any Token):</strong> Enter any token's contract address to view its chart and trading data
                   <br />
-                  📈 Popular tokens above are ranked first by bumped status, then by community votes from our bubble ads
+                  📈 Trending tokens above are ranked first by bumped status, then by community votes from our bubble ads
                   <br />
                   ⚠️ Some tokens may not load if they lack trading pairs or liquidity on DEXs
                 </>
