@@ -6,6 +6,7 @@ const EditAdModal = ({ ad, onEditAd, onClose }) => {
     title: ad.title,
     logo: ad.logo,
     url: ad.url,
+    pairAddress: ad.pairAddress || '',
     blockchain: ad.blockchain || 'ethereum'
   });
   const [previewUrl, setPreviewUrl] = useState(ad.logo);
@@ -28,6 +29,25 @@ const EditAdModal = ({ ad, onEditAd, onClose }) => {
     } catch (error) {
       return false;
     }
+  };
+
+  const validatePairAddress = (address) => {
+    // Sui format (0x...::module::TOKEN)
+    const suiRegex = /^0x[0-9a-fA-F]+::[a-zA-Z0-9_]+::[A-Z0-9_]+$/;
+    
+    // Base58 format (for Solana)
+    const base58Regex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+    
+    // Hex format with 0x prefix (for ETH, BSC etc)
+    const hexRegex = /^0x[0-9a-fA-F]{40,64}$/;
+    
+    // General alphanumeric format for other chains
+    const generalRegex = /^[0-9a-zA-Z]{15,70}$/;
+
+    return suiRegex.test(address) || 
+           base58Regex.test(address) || 
+           hexRegex.test(address) || 
+           generalRegex.test(address);
   };
 
   const handleLogoChange = async (e) => {
@@ -53,6 +73,10 @@ const EditAdModal = ({ ad, onEditAd, onClose }) => {
     e.preventDefault();
     if (!previewUrl) {
       setError('Please enter a valid image URL');
+      return;
+    }
+    if (!validatePairAddress(formData.pairAddress)) {
+      setError('Please enter a valid pair address');
       return;
     }
     onEditAd(ad.id, formData);
@@ -105,6 +129,18 @@ const EditAdModal = ({ ad, onEditAd, onClose }) => {
                     name="title"
                     value={formData.title}
                     onChange={handleChange}
+                    required
+                    className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1">Pair Address</label>
+                  <input
+                    type="text"
+                    name="pairAddress"
+                    value={formData.pairAddress}
+                    onChange={handleChange}
+                    placeholder="Enter pair address (0x...)"
                     required
                     className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
