@@ -622,26 +622,32 @@ const AquaSwap = ({ currentUser, showNotification }) => {
               <div className="dextools-search-section">
                 <div className="popular-tokens">
                   <span className="popular-label">Popular:</span>
-                  {popularTokens.map((token, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handlePopularTokenClick(token)}
-                      className={`popular-token-btn ${token.isBumped ? 'bumped' : ''}`}
-                      title={`${token.name} on ${token.blockchain || 'Ethereum'}${token.isBumped ? ' - BUMPED' : ''} - ${token.bullishVotes} votes - Address: ${token.address}`}
-                    >
-                      {token.logo && (
-                        <img 
-                          src={token.logo} 
-                          alt={token.name}
-                          className="token-logo"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                          }}
-                        />
-                      )}
-                      <span>{token.name}</span>
-                    </button>
-                  ))}
+                  <div className="popular-tokens-container">
+                    <div className="popular-tokens-scroll">
+                      {/* Duplicate tokens for seamless scrolling */}
+                      {popularTokens.concat(popularTokens).map((token, index) => (
+                        <button
+                          key={`${token.address}-${index}`}
+                          onClick={() => handlePopularTokenClick(token)}
+                          className={`popular-token-btn ${token.isBumped ? 'bumped' : ''}`}
+                          title={`${token.name} on ${token.blockchain || 'Ethereum'}${token.isBumped ? ' - BUMPED' : ''} - ${token.bullishVotes} votes - Address: ${token.address}`}
+                          style={{ flexShrink: 0 }}
+                        >
+                          {token.logo && (
+                            <img 
+                              src={token.logo} 
+                              alt={token.name}
+                              className="token-logo"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                              }}
+                            />
+                          )}
+                          <span>{token.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
