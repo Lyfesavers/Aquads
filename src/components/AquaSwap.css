@@ -295,11 +295,21 @@
   font-size: 0.8rem;
   font-weight: 500;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .popular-token-btn:hover {
   background: rgba(0, 212, 255, 0.2);
   transform: scale(1.05);
+}
+
+.popular-token-btn .token-logo {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 /* Chart Container */

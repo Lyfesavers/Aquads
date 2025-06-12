@@ -43,12 +43,14 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   useEffect(() => {
     const fetchBubbleTokens = async () => {
       try {
+        console.log('Fetching bubble tokens...');
         const response = await fetch(`${API_URL}/ads`);
         if (!response.ok) {
           throw new Error('Failed to fetch ads');
         }
         
         const ads = await response.json();
+        console.log('Fetched ads:', ads.length);
         
         // Filter out pending and rejected ads, then sort by bullish votes
         const validAds = ads.filter(ad => 
@@ -58,25 +60,36 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           ad.contractAddress.trim() !== ''
         );
         
+        console.log('Valid ads with contract addresses:', validAds.length);
+        
         // Sort by bullish votes (highest first) and take top 10
         const topAds = validAds
           .sort((a, b) => (b.bullishVotes || 0) - (a.bullishVotes || 0))
           .slice(0, 10);
         
+        console.log('Top 10 ads:', topAds);
+        
         // Convert ads to popular token format
         const bubbleTokens = topAds.map(ad => ({
           name: ad.title,
           address: ad.contractAddress,
-          chain: getChainForBlockchain(ad.blockchain || 'ethereum')
+          chain: getChainForBlockchain(ad.blockchain || 'ethereum'),
+          logo: ad.logo
         }));
+        
+        console.log('Converted bubble tokens:', bubbleTokens);
         
         // Update popular tokens if we have any bubble tokens
         if (bubbleTokens.length > 0) {
           setPopularTokens(bubbleTokens);
+          console.log('Updated popular tokens');
+        } else {
+          console.log('No valid bubble tokens found');
         }
         
       } catch (error) {
         logger.error('Error fetching bubble tokens:', error);
+        console.error('Error fetching bubble tokens:', error);
         // Keep fallback tokens if fetch fails
       }
     };
@@ -576,7 +589,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
             </div>
             
             {/* Popular tokens - only show for DexTools */}
-            {chartProvider === 'dextools' && (
+            {chartProvider === 'dextools' && popularTokens.length > 0 && (
               <div className="dextools-search-section">
                 <div className="popular-tokens">
                   <span className="popular-label">Popular:</span>
@@ -587,7 +600,17 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                       className="popular-token-btn"
                       title={`${token.name}: ${token.address}`}
                     >
-                      {token.name}
+                      {token.logo && (
+                        <img 
+                          src={token.logo} 
+                          alt={token.name}
+                          className="token-logo"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                      )}
+                      <span>{token.name}</span>
                     </button>
                   ))}
                 </div>
