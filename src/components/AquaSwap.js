@@ -43,14 +43,12 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   useEffect(() => {
     const fetchBubbleTokens = async () => {
       try {
-        console.log('Fetching bubble tokens...');
         const response = await fetch(`${API_URL}/api/ads`);
         if (!response.ok) {
           throw new Error('Failed to fetch ads');
         }
         
         const ads = await response.json();
-        console.log('Fetched ads:', ads.length);
         
         // Filter out pending and rejected ads, then sort by bullish votes
         const validAds = ads.filter(ad => 
@@ -60,37 +58,29 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           ad.contractAddress.trim() !== ''
         );
         
-        console.log('Valid ads with contract addresses:', validAds.length);
-        
-        // Sort by bullish votes (highest first) and take top 10
-        const topAds = validAds
-          .sort((a, b) => (b.bullishVotes || 0) - (a.bullishVotes || 0))
-          .slice(0, 10);
-        
-        console.log('Top 10 ads:', topAds);
+        // Sort by bullish votes (descending) and take top 10
+        const sortedAds = validAds.sort((a, b) => (b.bullishVotes || 0) - (a.bullishVotes || 0));
+        const topAds = sortedAds.slice(0, 10);
         
         // Convert ads to popular token format
         const bubbleTokens = topAds.map(ad => ({
           name: ad.title,
           address: ad.contractAddress,
           chain: getChainForBlockchain(ad.blockchain || 'ethereum'),
-          logo: ad.logo
+          logo: ad.logo,
+          blockchain: ad.blockchain,
+          bullishVotes: ad.bullishVotes || 0
         }));
-        
-        console.log('Converted bubble tokens:', bubbleTokens);
         
         // Update popular tokens if we have any bubble tokens
         if (bubbleTokens.length > 0) {
           setPopularTokens(bubbleTokens);
-          console.log('Updated popular tokens');
-        } else {
-          console.log('No valid bubble tokens found');
         }
         
       } catch (error) {
-        logger.error('Error fetching bubble tokens:', error);
         console.error('Error fetching bubble tokens:', error);
-        // Keep fallback tokens if fetch fails
+        // Keep existing popular tokens or empty array on error
+        setPopularTokens([]);
       }
     };
 
@@ -100,17 +90,47 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   // Convert blockchain names to dextools chain format
   const getChainForBlockchain = (blockchain) => {
     const chainMap = {
+      // Main blockchains from your BLOCKCHAIN_OPTIONS
       'ethereum': 'ether',
       'bsc': 'bnb',
       'polygon': 'polygon',
+      'solana': 'solana',
+      'avalanche': 'avalanche',
       'arbitrum': 'arbitrum',
       'optimism': 'optimism',
       'base': 'base',
-      'avalanche': 'avalanche',
+      'sui': 'sui',
+      'near': 'near',
       'fantom': 'fantom',
-      'cronos': 'cronos'
+      'tron': 'tron',
+      'cronos': 'cronos',
+      'celo': 'celo',
+      'harmony': 'harmony',
+      'polkadot': 'polkadot',
+      'cosmos': 'cosmos',
+      'aptos': 'aptos',
+      'flow': 'flow',
+      'cardano': 'cardano',
+      'kaspa': 'kaspa',
+      
+      // Alternative naming variations
+      'binance smart chain': 'bnb',
+      'bnb chain': 'bnb',
+      'binance': 'bnb',
+      'eth': 'ether',
+      'ethereum mainnet': 'ether',
+      'matic': 'polygon',
+      'polygon matic': 'polygon',
+      'avax': 'avalanche',
+      'ftm': 'fantom',
+      'arb': 'arbitrum',
+      'op': 'optimism'
     };
-    return chainMap[blockchain.toLowerCase()] || 'ether';
+    
+    const normalizedBlockchain = blockchain.toLowerCase().trim();
+    const mappedChain = chainMap[normalizedBlockchain] || 'ether';
+    
+    return mappedChain;
   };
 
   // Load TradingView widget
@@ -598,7 +618,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                       key={index}
                       onClick={() => handlePopularTokenClick(token)}
                       className="popular-token-btn"
-                      title={`${token.name}: ${token.address}`}
+                      title={`${token.name} on ${token.blockchain || 'Ethereum'} - ${token.bullishVotes} votes - Address: ${token.address}`}
                     >
                       {token.logo && (
                         <img 
@@ -647,7 +667,9 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                 <>
                   🚀 <strong>DexTools (Any Token):</strong> Enter any token's contract address to view its chart and trading data
                   <br />
-                  📈 Find contract addresses on CoinGecko, Etherscan, or the token's official website
+                  📈 Popular tokens above are ranked by community votes from our bubble ads
+                  <br />
+                  ⚠️ Some tokens may not load if they lack trading pairs or liquidity on DEXs
                 </>
               )}
             </p>
