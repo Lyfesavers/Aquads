@@ -50,7 +50,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         
         const ads = await response.json();
         
-        // Filter out pending and rejected ads, then sort by bullish votes
+        // Filter out pending and rejected ads, then sort by bumped status and bullish votes
         const validAds = ads.filter(ad => 
           ad.status !== 'pending' && 
           ad.status !== 'rejected' &&
@@ -58,8 +58,16 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           ad.pairAddress.trim() !== ''
         );
         
-        // Sort by bullish votes (descending) and take top 10
-        const sortedAds = validAds.sort((a, b) => (b.bullishVotes || 0) - (a.bullishVotes || 0));
+        // Sort using the same logic as main bubble display: bumped first, then by bullish votes
+        const sortedAds = validAds.sort((a, b) => {
+          // First prioritize bumped bubbles - all bumped bubbles come before unbumped ones
+          if (a.isBumped && !b.isBumped) return -1;
+          if (!a.isBumped && b.isBumped) return 1;
+          
+          // Then sort by bullish votes (highest first)
+          return (b.bullishVotes || 0) - (a.bullishVotes || 0);
+        });
+        
         const topAds = sortedAds.slice(0, 10);
         
         // Convert ads to popular token format
@@ -69,7 +77,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           chain: getChainForBlockchain(ad.blockchain || 'ethereum'),
           logo: ad.logo,
           blockchain: ad.blockchain,
-          bullishVotes: ad.bullishVotes || 0
+          bullishVotes: ad.bullishVotes || 0,
+          isBumped: ad.isBumped || false
         }));
         
         // Update popular tokens if we have any bubble tokens
@@ -617,8 +626,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                     <button
                       key={index}
                       onClick={() => handlePopularTokenClick(token)}
-                      className="popular-token-btn"
-                      title={`${token.name} on ${token.blockchain || 'Ethereum'} - ${token.bullishVotes} votes - Address: ${token.address}`}
+                      className={`popular-token-btn ${token.isBumped ? 'bumped' : ''}`}
+                      title={`${token.name} on ${token.blockchain || 'Ethereum'}${token.isBumped ? ' - BUMPED' : ''} - ${token.bullishVotes} votes - Address: ${token.address}`}
                     >
                       {token.logo && (
                         <img 
@@ -667,7 +676,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                 <>
                   🚀 <strong>DexTools (Any Token):</strong> Enter any token's contract address to view its chart and trading data
                   <br />
-                  📈 Popular tokens above are ranked by community votes from our bubble ads
+                  📈 Popular tokens above are ranked first by bumped status, then by community votes from our bubble ads
                   <br />
                   ⚠️ Some tokens may not load if they lack trading pairs or liquidity on DEXs
                 </>

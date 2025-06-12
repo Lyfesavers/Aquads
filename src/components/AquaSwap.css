@@ -312,6 +312,19 @@
   object-fit: cover;
 }
 
+/* Special styling for bumped tokens */
+.popular-token-btn.bumped {
+  background: rgba(255, 215, 0, 0.15);
+  border: 1px solid rgba(255, 215, 0, 0.5);
+  color: #ffd700;
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
+}
+
+.popular-token-btn.bumped:hover {
+  background: rgba(255, 215, 0, 0.25);
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.5);
+}
+
 /* Chart Container */
 .chart-container {
   flex: 1;
