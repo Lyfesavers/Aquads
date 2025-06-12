@@ -327,7 +327,7 @@ router.put('/:id', auth, async (req, res) => {
     
     // Extract only allowed fields to update
     const updateData = {};
-    const allowedUpdates = ['x', 'y', 'size', 'url', 'title', 'status', 'blockchain', 'logo'];
+    const allowedUpdates = ['x', 'y', 'size', 'url', 'title', 'status', 'blockchain', 'logo', 'pairAddress'];
     
     allowedUpdates.forEach(field => {
       if (updates[field] !== undefined) {
@@ -335,12 +335,29 @@ router.put('/:id', auth, async (req, res) => {
       }
     });
     
+    // Handle migration: if pairAddress is being updated, remove old contractAddress field
+    if (updates.pairAddress !== undefined) {
+      updateData.$unset = { contractAddress: "" };
+    }
+    
     console.log('Filtered update data:', JSON.stringify(updateData));
+    
+    // Prepare update operations
+    const updateOperations = {};
+    
+    // Separate $set and $unset operations
+    const { $unset, ...setData } = updateData;
+    if (Object.keys(setData).length > 0) {
+      updateOperations.$set = setData;
+    }
+    if ($unset) {
+      updateOperations.$unset = $unset;
+    }
     
     // Use findOneAndUpdate which is more resilient to validation issues
     const updatedAd = await Ad.findOneAndUpdate(
       { id },
-      { $set: updateData },
+      updateOperations,
       { new: true, runValidators: false }
     );
     

@@ -6,7 +6,7 @@ const EditAdModal = ({ ad, onEditAd, onClose }) => {
     title: ad.title,
     logo: ad.logo,
     url: ad.url,
-    pairAddress: ad.pairAddress || '',
+    pairAddress: ad.pairAddress || ad.contractAddress || '',
     blockchain: ad.blockchain || 'ethereum'
   });
   const [previewUrl, setPreviewUrl] = useState(ad.logo);
