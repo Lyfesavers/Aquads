@@ -3378,7 +3378,7 @@ function App() {
                 )}
 
                 {/* Regular notifications - keep these for non-vote notifications */}
-                <div className="fixed bottom-4 right-4 space-y-2 z-50">
+                <div className="fixed bottom-4 right-4 space-y-2" style={{ zIndex: 999999999 }}>
                   {notifications.map(({ id, message, type }) => (
                     <div
                       key={id}
