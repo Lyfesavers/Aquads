@@ -11,6 +11,13 @@
 [functions]
   directory = "functions"
 
+# Serve sitemap via Netlify function to ensure XML content
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/.netlify/functions/sitemap"
+  status = 200
+  force = true
+
 # Serve prerendered version for bots only
 [[redirects]]
   from = "/how-to/*-:id"

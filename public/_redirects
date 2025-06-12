@@ -1,5 +1,5 @@
-# Serve sitemap directly (must be first)
-/sitemap.xml /sitemap.xml 200
+# Serve sitemap via Netlify function (must be first)
+/sitemap.xml /.netlify/functions/sitemap 200
 
 # SEO-friendly URL redirect for blogs (for regular users)
 /how-to/*-:id /how-to?blogId=:id 301
