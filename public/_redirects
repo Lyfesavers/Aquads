@@ -1,3 +1,6 @@
+# Handle sitemap with trailing slash
+/sitemap.xml/ /.netlify/functions/sitemap 200
+
 # Serve sitemap via Netlify function (must be first)
 /sitemap.xml /.netlify/functions/sitemap 200
 

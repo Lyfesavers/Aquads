@@ -11,6 +11,13 @@
 [functions]
   directory = "functions"
 
+# Handle sitemap with trailing slash
+[[redirects]]
+  from = "/sitemap.xml/"
+  to = "/.netlify/functions/sitemap"
+  status = 200
+  force = true
+
 # Serve sitemap via Netlify function to ensure XML content
 [[redirects]]
   from = "/sitemap.xml"
