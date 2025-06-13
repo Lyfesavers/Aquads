@@ -343,12 +343,40 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       <div className="trading-interface with-charts">
         {/* Left Side - Swap Widget */}
         <div className="swap-section">
-      <div className="lifi-widget">
-        <LiFiWidget integrator="aquaswap" config={widgetConfig} />
-      </div>
-          <div className="swap-footer">
-            <p>✨ Swap and bridge across 38+ blockchains with the best rates and lowest fees.</p>
+          {/* Swap Mode Toggle */}
+          <div className="swap-mode-toggle">
+            <button 
+              className={`mode-btn ${swapMode === 'crypto' ? 'active' : ''}`}
+              onClick={() => setSwapMode('crypto')}
+              title="Swap between cryptocurrencies"
+            >
+              🔄 Crypto Swap
+            </button>
+            <button 
+              className={`mode-btn ${swapMode === 'fiat' ? 'active' : ''}`}
+              onClick={() => setSwapMode('fiat')}
+              title="Buy crypto with credit/debit card"
+            >
+              💳 Buy with Card
+            </button>
           </div>
+
+          {/* Conditional Widget Display */}
+          {swapMode === 'crypto' ? (
+            <>
+              <div className="lifi-widget">
+                <LiFiWidget integrator="aquaswap" config={widgetConfig} />
+              </div>
+              <div className="swap-footer">
+                <p>✨ Swap and bridge across 38+ blockchains with the best rates and lowest fees.</p>
+              </div>
+            </>
+          ) : (
+            <FiatPurchase 
+              userWallet={currentUser?.walletAddress} 
+              showNotification={showNotification}
+            />
+          )}
         </div>
 
         {/* Right Side - Charts */}
