@@ -1,208 +1,69 @@
-# Transak Integration Setup Guide
+# Transak Integration Setup
 
 ## Overview
+The Transak integration has been implemented as a separate page following Transak's official documentation and React routing best practices.
 
-AquaSwap now includes a professional Transak integration for secure fiat-to-crypto purchases. This implementation follows Transak's official best practices and uses the latest NPM SDK package for optimal performance and security.
+## Features
+- ✅ Separate dedicated page (`/buy-crypto`)
+- ✅ Official Transak SDK v1.2 integration
+- ✅ Production-ready configuration
+- ✅ Revenue sharing automatically configured
+- ✅ Proper event handling and navigation
+- ✅ Professional UI with trust indicators
+- ✅ Mobile responsive design
+- ✅ Error handling and loading states
 
-## Installation
+## Required Environment Variables
 
-The Transak SDK is already installed as a dependency:
+Add these to your `.env` file:
 
 ```bash
-npm install @transak/transak-sdk
-```
-
-## Environment Configuration
-
-### Required Environment Variables
-
-Create or update your `.env` file with the following variables:
-
-```env
 # Transak Configuration
-REACT_APP_TRANSAK_API_KEY=your_transak_api_key_here
+REACT_APP_TRANSAK_API_KEY=your-production-api-key-here
 REACT_APP_TRANSAK_ENVIRONMENT=PRODUCTION
 ```
 
-### Environment Options
+## How to Get Transak API Key
 
-- **STAGING**: For development and testing
-- **PRODUCTION**: For live production environment
+1. Visit [Transak Partner Dashboard](https://partners.transak.com/)
+2. Sign up for a partner account
+3. Complete the onboarding process
+4. Get your production API key from the dashboard
+5. Configure revenue sharing settings
 
-## Getting Your Transak API Key
+## Implementation Details
 
-1. **Visit Transak Partner Dashboard**
-   - Go to [https://transak.com/](https://transak.com/)
-   - Click "Integrate Now" or "Partner Login"
+### Route Structure
+- **Main swap page**: `/aquaswap` - LiFi widget for crypto-to-crypto swaps
+- **Fiat purchase page**: `/buy-crypto` - Transak widget for fiat-to-crypto purchases
 
-2. **Create Partner Account**
-   - Sign up for a partner account
-   - Complete the business verification process
-   - This may take 1-3 business days for approval
+### Navigation
+- Users can access fiat purchases via the "💳 Buy with Card" button
+- Automatic navigation back to AquaSwap after successful purchases
+- Clean separation between crypto swapping and fiat purchasing
 
-3. **Generate API Keys**
-   - Once approved, access your partner dashboard
-   - Navigate to "API Keys" section
-   - Generate separate keys for STAGING and PRODUCTION
-   - Copy the keys to your environment variables
+### Revenue Sharing
+- Automatically configured using user's wallet address
+- Commission earned on successful purchases
+- Transparent disclosure to users
 
-4. **Configure Revenue Sharing**
-   - Set up your wallet address for commission payments
-   - Configure revenue sharing percentage (typically 0.5-1%)
-   - AquaSwap automatically passes user wallet addresses for revenue attribution
+### Supported Features
+- **Payment Methods**: Credit cards, bank transfers, Apple Pay, Google Pay
+- **Cryptocurrencies**: BTC, ETH, USDC, USDT, BNB, MATIC, AVAX, SOL
+- **Fiat Currencies**: USD, EUR, GBP, CAD, AUD
+- **Networks**: Ethereum, Polygon, BSC, Avalanche, Solana, Arbitrum, Optimism, Base
 
-## Technical Implementation
+## Testing
 
-### Architecture
+1. Set `REACT_APP_TRANSAK_ENVIRONMENT=STAGING` for testing
+2. Use Transak's test credentials
+3. Switch to `PRODUCTION` for live deployment
 
-- **Route-based Integration**: Dedicated `/buy-crypto` page
-- **NPM SDK**: Uses official `@transak/transak-sdk` package
-- **Container-based**: Widget renders in dedicated container element
-- **Event-driven**: Comprehensive event handling for all order states
-
-### Key Features
-
-1. **Professional UI**
-   - Trust indicators and security badges
-   - Responsive design for all devices
-   - Loading states and error handling
-   - Modern gradient styling matching AquaSwap theme
-
-2. **Comprehensive Event Handling**
-   - Order creation notifications
-   - Payment success/failure handling
-   - Automatic navigation after completion
-   - Detailed error reporting and recovery
-
-3. **Revenue Optimization**
-   - Automatic wallet address passing for revenue sharing
-   - Partner order ID generation for tracking
-   - Customer ID mapping for analytics
-
-4. **Security & Compliance**
-   - Bank-grade security standards
-   - KYC compliance built-in
-   - Regulated financial service provider
-   - Industry-leading fraud protection
-
-## Supported Features
-
-### Cryptocurrencies
-- Bitcoin (BTC)
-- Ethereum (ETH)
-- USD Coin (USDC)
-- Tether (USDT)
-- Binance Coin (BNB)
-- Polygon (MATIC)
-- Avalanche (AVAX)
-- Solana (SOL)
-
-### Fiat Currencies
-- US Dollar (USD)
-- Euro (EUR)
-- British Pound (GBP)
-- Canadian Dollar (CAD)
-- Australian Dollar (AUD)
-
-### Payment Methods
-- Credit/Debit Cards
-- Bank Transfers
-- Apple Pay
-- Google Pay
-- Local payment methods (varies by region)
-
-### Supported Networks
-- Ethereum
-- Polygon
-- Binance Smart Chain
-- Avalanche
-- Solana
-- Arbitrum
-- Optimism
-- Base
-
-## Benefits of New Implementation
-
-### For Users
-- **Seamless Experience**: Dedicated page instead of modal overlay
-- **No Conflicts**: Complete isolation from LiFi swap widget
-- **Mobile Optimized**: Responsive design for all devices
-- **Trust Indicators**: Clear security and compliance information
-- **Fast Loading**: NPM package approach eliminates CDN issues
-
-### For Developers
-- **Best Practices**: Follows official Transak documentation
-- **Maintainable**: Clean separation of concerns
-- **Scalable**: Environment-based configuration
-- **Debuggable**: Comprehensive logging and error handling
-- **SEO Friendly**: Proper routing and page structure
-
-### For Business
-- **Revenue Generation**: Automatic commission tracking
-- **Global Reach**: 161+ countries supported
-- **Compliance**: Regulated and licensed service
-- **Analytics**: Detailed transaction tracking
-- **Brand Trust**: Association with established fintech provider
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Widget Not Loading**
-   - Verify API key is correctly set in environment variables
-   - Check that environment is set to correct value (STAGING/PRODUCTION)
-   - Ensure ad blockers are not interfering
-   - Check browser console for specific error messages
-
-2. **API Key Issues**
-   - Confirm API key is valid and not expired
-   - Verify you're using the correct key for your environment
-   - Check that your Transak account is approved and active
-
-3. **Payment Failures**
-   - Ensure user's region is supported
-   - Check that selected cryptocurrency is available in user's location
-   - Verify payment method is supported for user's region
-
-4. **Revenue Tracking**
-   - Confirm wallet address is properly configured
-   - Check that revenue sharing is enabled in partner dashboard
-   - Verify partner order IDs are being generated correctly
-
-### Error Messages
-
-- **"Failed to initialize payment system"**: API key or configuration issue
-- **"Unable to load payment system"**: Network or CDN connectivity issue
-- **"Payment method not available"**: Regional restriction or unsupported method
-
-## Support
-
-For technical issues:
-1. Check browser console for detailed error messages
-2. Verify environment configuration
-3. Test with different browsers/devices
-4. Contact Transak support through partner dashboard
-
-For business inquiries:
-- Visit [Transak Partner Support](https://transak.com/)
-- Email: partners@transak.com
-- Access partner dashboard for account-specific support
-
-## Security Notes
-
-- Never expose API keys in client-side code (use environment variables)
-- Regularly rotate API keys for security
-- Monitor transaction logs for suspicious activity
-- Keep SDK package updated to latest version
-- Implement proper error handling to avoid exposing sensitive information
-
-## Performance Optimization
-
-- Widget loads asynchronously to avoid blocking main thread
-- Proper cleanup prevents memory leaks
-- Event listeners are efficiently managed
-- Loading states provide smooth user experience
-- Error boundaries prevent application crashes
+## Security & Compliance
+- Bank-grade security
+- KYC compliant
+- Licensed financial service provider
+- User funds protected by industry-leading security measures
 
 ## Files Created/Modified
 
