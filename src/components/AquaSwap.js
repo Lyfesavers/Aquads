@@ -5,6 +5,7 @@ import { LiFiWidget } from '@lifi/widget';
 import logger from '../utils/logger';
 import BannerDisplay from './BannerDisplay';
 import EmbedCodeGenerator from './EmbedCodeGenerator';
+import FiatPurchase from './FiatPurchase';
 import './AquaSwap.css';
 
 // Constants - using the same fee structure as the current swap
@@ -25,6 +26,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   const [selectedChain, setSelectedChain] = useState('ether');
   const [showEmbedCode, setShowEmbedCode] = useState(false);
   const [popularTokens, setPopularTokens] = useState(FALLBACK_TOKEN_EXAMPLES);
+  const [swapMode, setSwapMode] = useState('crypto'); // 'crypto' or 'fiat'
   const tradingViewRef = useRef(null);
   const dexToolsRef = useRef(null);
 
@@ -343,9 +345,33 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       <div className="trading-interface with-charts">
         {/* Left Side - Swap Widget */}
         <div className="swap-section">
-      <div className="lifi-widget">
-        <LiFiWidget integrator="aquaswap" config={widgetConfig} />
-      </div>
+          {/* Toggle Buttons */}
+          <div className="swap-mode-toggle">
+            <button 
+              className={`mode-toggle-btn ${swapMode === 'crypto' ? 'active' : ''}`}
+              onClick={() => setSwapMode('crypto')}
+            >
+              🔄 Crypto Swap
+            </button>
+            <button 
+              className={`mode-toggle-btn ${swapMode === 'fiat' ? 'active' : ''}`}
+              onClick={() => setSwapMode('fiat')}
+            >
+              💳 Buy with Card
+            </button>
+          </div>
+          
+          {/* Conditional Widget Display */}
+          {swapMode === 'crypto' ? (
+            <div className="lifi-widget">
+              <LiFiWidget integrator="aquaswap" config={widgetConfig} />
+            </div>
+          ) : (
+            <FiatPurchase 
+              userWallet={currentUser?.wallet || null}
+              showNotification={showNotification}
+            />
+          )}
           <div className="swap-footer">
             <p>✨ Swap and bridge across 38+ blockchains with the best rates and lowest fees.</p>
           </div>
