@@ -365,10 +365,6 @@ const TransakPage = ({ currentUser, showNotification }) => {
         </div>
         
         <div className="footer-disclaimer">
-          <p>
-            <strong>Powered by Transak</strong> - Licensed and regulated financial service provider. 
-            Using official Transak SDK for maximum compatibility and security.
-          </p>
         </div>
       </div>
     </div>
