@@ -31,11 +31,17 @@ const TransakPage = ({ currentUser, showNotification }) => {
         return;
       }
 
-      // TEMPORARY: Force staging until production API key is activated
-      const environment = 'STAGING';
+      // Use environment variables from Netlify
+      const environment = process.env.REACT_APP_TRANSAK_ENVIRONMENT || 'STAGING';
+      const apiKey = process.env.REACT_APP_TRANSAK_API_KEY;
       
-      // Use staging API key that you confirmed works
-      const apiKey = 'af88b688-a2e5-4feb-a306-ac073bbfed63';
+      // Check if API key is available
+      if (!apiKey) {
+        logger.error('Transak API key not found in environment variables');
+        setError('missing_api_key');
+        setIsLoading(false);
+        return;
+      }
       
       const transakConfig = {
         apiKey: apiKey,
@@ -219,7 +225,12 @@ const TransakPage = ({ currentUser, showNotification }) => {
       </div>
       <h3>Unable to load payment system</h3>
       <div className="error-details">
-        {error === 'sdk_initialization_error' ? (
+        {error === 'missing_api_key' ? (
+          <div>
+            <p>Configuration error: Transak API key is not configured.</p>
+            <p>Please contact support for assistance.</p>
+          </div>
+        ) : error === 'sdk_initialization_error' ? (
           <div>
             <p>Failed to initialize the Transak payment system.</p>
             <p>This could be due to:</p>
