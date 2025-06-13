@@ -146,7 +146,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
   // Load TradingView widget
   useEffect(() => {
-    if (chartProvider === 'tradingview' && tradingViewRef.current) {
+    if (swapMode === 'crypto' && chartProvider === 'tradingview' && tradingViewRef.current) {
       // Clear previous widget
       tradingViewRef.current.innerHTML = '';
       
@@ -177,11 +177,12 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       
       tradingViewRef.current.appendChild(script);
     }
-  }, [chartProvider]);
+  }, [swapMode, chartProvider]);
 
   // Load DexTools widget with improved error handling
   useEffect(() => {
-    if (chartProvider === 'dextools' && dexToolsRef.current && tokenSearch.trim()) {
+    // Only load DexTools when we're in crypto mode to avoid conflicts
+    if (swapMode === 'crypto' && chartProvider === 'dextools' && dexToolsRef.current && tokenSearch.trim()) {
       // Clear previous widget
       dexToolsRef.current.innerHTML = '';
       
@@ -194,7 +195,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         </div>
       `;
       
-      // Create DexTools iframe directly without delay
+      // Create DexTools iframe with minimal restrictions
       const iframe = document.createElement('iframe');
       iframe.id = 'dextools-widget';
       iframe.title = 'DexTools Trading Chart';
@@ -206,13 +207,35 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       iframe.frameBorder = '0';
       iframe.scrolling = 'no';
       
-      // Build DexTools widget URL - simplified without problematic parameters
-      const widgetUrl = `https://www.dextools.io/widget-chart/en/${selectedChain}/pe-light/${tokenSearch.trim()}?theme=dark&chartType=1&chartResolution=15&drawingToolbars=false`;
+      // Build DexTools widget URL - minimal parameters to avoid conflicts
+      const widgetUrl = `https://www.dextools.io/widget-chart/en/${selectedChain}/pe-light/${tokenSearch.trim()}?theme=dark`;
+      
+      // Add error handling for iframe loading
+      iframe.onload = () => {
+        // Chart loaded successfully
+        if (dexToolsRef.current) {
+          const loadingDiv = dexToolsRef.current.querySelector('.loading-indicator');
+          if (loadingDiv) {
+            loadingDiv.remove();
+          }
+        }
+      };
+      
+      iframe.onerror = () => {
+        // Handle iframe loading error
+        if (dexToolsRef.current) {
+          dexToolsRef.current.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: rgba(0, 0, 0, 0.2); border-radius: 8px; color: #9ca3af;">
+              <div style="font-size: 2rem; margin-bottom: 16px;">⚠️</div>
+              <h3 style="color: #ffffff; margin: 0 0 8px 0;">Chart Loading Error</h3>
+              <p style="margin: 0; text-align: center; line-height: 1.5;">Unable to load DexTools chart. Please try a different token or refresh the page.</p>
+            </div>
+          `;
+        }
+      };
       
       iframe.src = widgetUrl;
       iframe.allow = 'fullscreen';
-      iframe.loading = 'lazy'; // Improve loading performance
-      iframe.sandbox = 'allow-scripts allow-same-origin allow-popups allow-forms'; // Add security sandbox
       
       // Add mobile-specific attributes
       iframe.setAttribute('allowfullscreen', 'true');
@@ -225,7 +248,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         dexToolsRef.current.appendChild(iframe);
       }
       
-    } else if (chartProvider === 'dextools' && dexToolsRef.current && !tokenSearch.trim()) {
+    } else if (swapMode === 'crypto' && chartProvider === 'dextools' && dexToolsRef.current && !tokenSearch.trim()) {
       // Show placeholder when no search term
       dexToolsRef.current.innerHTML = `
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: rgba(0, 0, 0, 0.2); border-radius: 8px; color: #9ca3af;">
@@ -235,7 +258,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         </div>
       `;
     }
-  }, [chartProvider, tokenSearch, selectedChain]);
+  }, [swapMode, chartProvider, tokenSearch, selectedChain]);
 
   // Handle popular token selection
   const handlePopularTokenClick = (token) => {
@@ -393,7 +416,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           </div>
         </div>
 
-        {/* Right Side - Charts */}
+        {/* Right Side - Charts - Only show in crypto mode */}
+        {swapMode === 'crypto' && (
         <div className="chart-section">
           <div className="chart-header">
             <h3 className="chart-title">Professional Trading Charts</h3>
@@ -737,6 +761,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
             </p>
           </div>
         </div>
+        )}
       </div>
 
 
