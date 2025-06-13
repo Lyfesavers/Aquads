@@ -131,6 +131,19 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
+  animation: modalFadeIn 0.3s ease-out;
+  user-select: none;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(10px);
+  }
 }
 
 .fiat-purchase-wrapper {
@@ -144,6 +157,19 @@
   overflow-y: auto;
   position: relative;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  animation: modalSlideIn 0.3s ease-out;
+  user-select: text;
+}
+
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(-20px) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
 }
 
 .close-fiat-btn {
@@ -159,6 +185,8 @@
   font-weight: 500;
   transition: all 0.3s ease;
   font-size: 0.8rem;
+  z-index: 10;
+  user-select: none;
 }
 
 .close-fiat-btn:hover {

@@ -41,6 +41,7 @@ const FiatPurchase = ({ userWallet, showNotification }) => {
   const [walletAddress, setWalletAddress] = useState(userWallet || '');
   const [isLoading, setIsLoading] = useState(false);
   const [transakSDK, setTransakSDK] = useState(null);
+  const [sdkLoading, setSdkLoading] = useState(true);
 
   useEffect(() => {
     if (userWallet) {
@@ -55,6 +56,7 @@ const FiatPurchase = ({ userWallet, showNotification }) => {
         // Check if SDK is already loaded
         if (window.transakSDK) {
           setTransakSDK(window.transakSDK);
+          setSdkLoading(false);
           return;
         }
 
@@ -66,10 +68,12 @@ const FiatPurchase = ({ userWallet, showNotification }) => {
           if (window.transakSDK) {
             setTransakSDK(window.transakSDK);
           }
+          setSdkLoading(false);
         };
         script.onerror = () => {
           logger.error('Failed to load Transak SDK');
           showNotification?.('Failed to load payment system. Please refresh and try again.', 'error');
+          setSdkLoading(false);
         };
         document.head.appendChild(script);
       } catch (error) {
@@ -83,12 +87,14 @@ const FiatPurchase = ({ userWallet, showNotification }) => {
 
   // Initialize Transak widget
   const initializeTransak = () => {
-    if (!transakSDK && !window.transakSDK) {
-      showNotification?.('Payment system not loaded. Please try again.', 'error');
+    // Check for SDK availability
+    const SDK = transakSDK || window.transakSDK;
+    if (!SDK) {
+      showNotification?.('Payment system not loaded. Please refresh and try again.', 'error');
       return null;
     }
 
-    const TransakSDK = transakSDK || window.transakSDK;
+    const TransakSDK = SDK;
 
     const transakConfig = {
       apiKey: TRANSAK_CONFIG.apiKey,
@@ -193,7 +199,10 @@ const FiatPurchase = ({ userWallet, showNotification }) => {
           <div className="currency-amount-group">
             <select 
               value={selectedFiat}
-              onChange={(e) => setSelectedFiat(e.target.value)}
+              onChange={(e) => {
+                e.preventDefault();
+                setSelectedFiat(e.target.value);
+              }}
               className="currency-select"
             >
               {FIAT_CURRENCIES.map(currency => (
@@ -206,9 +215,16 @@ const FiatPurchase = ({ userWallet, showNotification }) => {
             <input
               type="number"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                // Only allow positive numbers
+                if (value === '' || (!isNaN(value) && parseFloat(value) >= 0)) {
+                  setAmount(value);
+                }
+              }}
               placeholder="100"
               min="20"
+              step="1"
               className="amount-input"
             />
           </div>
@@ -256,7 +272,10 @@ const FiatPurchase = ({ userWallet, showNotification }) => {
           <input
             type="text"
             value={walletAddress}
-            onChange={(e) => setWalletAddress(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value.trim();
+              setWalletAddress(value);
+            }}
             placeholder="Enter your wallet address..."
             className="wallet-input"
           />
@@ -273,11 +292,19 @@ const FiatPurchase = ({ userWallet, showNotification }) => {
         {/* Purchase Button */}
         <button
           onClick={handlePurchase}
-          disabled={isLoading || !walletAddress.trim() || !amount || !transakSDK}
+          disabled={sdkLoading || isLoading || !walletAddress.trim() || !amount || parseFloat(amount) < 20}
           className="purchase-btn"
         >
-          {isLoading ? (
-            <div className="loading-spinner" />
+          {sdkLoading ? (
+            <>
+              <div className="loading-spinner" />
+              Loading Payment System...
+            </>
+          ) : isLoading ? (
+            <>
+              <div className="loading-spinner" />
+              Opening Payment Window...
+            </>
           ) : (
             <>
               <FaShoppingCart />

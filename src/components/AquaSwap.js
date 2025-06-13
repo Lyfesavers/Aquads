@@ -390,11 +390,23 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
       {/* Fiat Purchase Section - Separate from main trading interface */}
       {showFiatPurchase && (
-        <div className="fiat-purchase-section">
+        <div 
+          className="fiat-purchase-section"
+          onClick={(e) => {
+            // Close modal when clicking on backdrop
+            if (e.target === e.currentTarget) {
+              setShowFiatPurchase(false);
+            }
+          }}
+        >
           <div className="fiat-purchase-wrapper">
             <button 
               className="close-fiat-btn"
-              onClick={() => setShowFiatPurchase(false)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowFiatPurchase(false);
+              }}
               title="Close Fiat Purchase"
             >
               ❌ Close
