@@ -2830,7 +2830,7 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 }
 
 .animate-scroll {
-  animation: scroll 40s linear infinite;
+  animation: scroll 180s linear infinite;
 }
 
 .animate-scroll:hover {
