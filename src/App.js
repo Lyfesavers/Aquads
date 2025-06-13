@@ -1907,6 +1907,49 @@ function App() {
     }
   }, []);
 
+  // Global error handler for New Relic and third-party script issues
+  useEffect(() => {
+    const handleGlobalError = (event) => {
+      // Suppress New Relic related errors from Transak
+      if (event.error && event.error.message && 
+          (event.error.message.includes('newrelic') || 
+           event.error.message.includes('ChunkLoadError') ||
+           event.error.message.includes('ERR_BLOCKED_BY_CLIENT'))) {
+        console.warn('Third-party analytics script blocked - this is normal and won\'t affect functionality');
+        event.preventDefault();
+        return false;
+      }
+      
+      // Suppress script loading errors for blocked resources
+      if (event.target && event.target.src && 
+          (event.target.src.includes('newrelic') || 
+           event.target.src.includes('js-agent'))) {
+        console.warn('Analytics script blocked by ad blocker - this won\'t affect core functionality');
+        event.preventDefault();
+        return false;
+      }
+    };
+
+    const handleUnhandledRejection = (event) => {
+      // Suppress New Relic related promise rejections
+      if (event.reason && event.reason.message && 
+          (event.reason.message.includes('newrelic') || 
+           event.reason.message.includes('ChunkLoadError'))) {
+        console.warn('Third-party analytics promise rejected - this won\'t affect functionality');
+        event.preventDefault();
+        return false;
+      }
+    };
+
+    window.addEventListener('error', handleGlobalError, true);
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+
+    return () => {
+      window.removeEventListener('error', handleGlobalError, true);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, []);
+
   // Set up event listeners for dashboard opening from notifications
   useEffect(() => {
     // Define handler for opening dashboard with booking

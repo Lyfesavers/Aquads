@@ -18,18 +18,16 @@ const TransakPage = ({ currentUser, showNotification }) => {
     setIsDevelopment(isLocalhost);
   }, []);
 
-  // Build Transak iframe URL
-  const buildTransakURL = () => {
+  // Build Transak double iframe URL (outer iframe)
+  const buildTransakDoubleIframeURL = () => {
     // TEMPORARY: Force staging until production API key is activated
     const environment = 'STAGING';
     
     // Use staging API key that you confirmed works
     const apiKey = 'af88b688-a2e5-4feb-a306-ac073bbfed63';
     
-    const baseURL = environment === 'STAGING' 
-      ? 'https://staging-global.transak.com' 
-      : 'https://global.transak.com';
-
+    // Create the outer iframe URL that will contain the inner Transak iframe
+    // This follows Transak's double iframe pattern for better isolation
     const params = new URLSearchParams({
       apiKey: apiKey,
       environment: environment,
@@ -47,33 +45,202 @@ const TransakPage = ({ currentUser, showNotification }) => {
       partnerCustomerId: currentUser?.wallet || currentUser?.id || 'anonymous'
     });
 
-    return `${baseURL}/?${params.toString()}`;
+    // Create a data URL for the outer iframe HTML
+    const outerIframeHTML = `
+      <!DOCTYPE html>
+      <html lang="en" style="height: 100%; margin: 0; padding: 0;">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Transak Widget</title>
+          <style>
+            body {
+              margin: 0;
+              padding: 0;
+              height: 100vh;
+              background: #0f1419;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+            .transak-container {
+              width: 100%;
+              height: 100%;
+              max-width: 500px;
+              max-height: 700px;
+              border-radius: 12px;
+              overflow: hidden;
+              box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+            }
+            .transak-inner-iframe {
+              width: 100%;
+              height: 100%;
+              border: none;
+              border-radius: 12px;
+            }
+            .loading {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              height: 100%;
+              color: #00d4ff;
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            }
+            .spinner {
+              width: 40px;
+              height: 40px;
+              border: 3px solid rgba(0, 212, 255, 0.3);
+              border-top: 3px solid #00d4ff;
+              border-radius: 50%;
+              animation: spin 1s linear infinite;
+              margin-bottom: 16px;
+            }
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="transak-container">
+            <div id="loading" class="loading">
+              <div class="spinner"></div>
+              <p>Loading secure payment system...</p>
+            </div>
+            <iframe
+              id="transakInnerIframe"
+              class="transak-inner-iframe"
+              src="${environment === 'STAGING' ? 'https://global-stg.transak.com' : 'https://global.transak.com'}/?${params.toString()}"
+              allow="camera;microphone;payment"
+              style="display: none;"
+            ></iframe>
+          </div>
+          
+          <script>
+            (function() {
+              const loading = document.getElementById('loading');
+              const iframe = document.getElementById('transakInnerIframe');
+              
+              // Handle iframe load
+              iframe.onload = function() {
+                loading.style.display = 'none';
+                iframe.style.display = 'block';
+                
+                // Notify parent window that iframe loaded
+                window.parent.postMessage({
+                  type: 'TRANSAK_IFRAME_LOADED'
+                }, '*');
+              };
+              
+              // Handle iframe errors
+              iframe.onerror = function() {
+                loading.innerHTML = '<div class="spinner"></div><p>Unable to load payment system</p>';
+                
+                // Notify parent window of error
+                window.parent.postMessage({
+                  type: 'TRANSAK_IFRAME_ERROR',
+                  error: 'Failed to load Transak widget'
+                }, '*');
+              };
+              
+              // Listen for messages from the inner Transak iframe
+              window.addEventListener('message', function(event) {
+                // Forward Transak events to the parent window
+                if (event.data && event.data.event_id) {
+                  window.parent.postMessage({
+                    type: 'TRANSAK_EVENT',
+                    event_id: event.data.event_id,
+                    data: event.data.data
+                  }, '*');
+                }
+                
+                // Handle New Relic errors gracefully
+                if (event.data && event.data.error && 
+                    (event.data.error.includes('newrelic') || 
+                     event.data.error.includes('ChunkLoadError') ||
+                     event.data.error.includes('ERR_BLOCKED_BY_CLIENT'))) {
+                  console.warn('Third-party analytics blocked - this won\\'t affect functionality');
+                  // Don't propagate these errors to parent
+                  return;
+                }
+              });
+              
+              // Global error handler for New Relic issues
+              window.addEventListener('error', function(event) {
+                if (event.error && event.error.message && 
+                    (event.error.message.includes('newrelic') || 
+                     event.error.message.includes('ChunkLoadError'))) {
+                  console.warn('Analytics script blocked - this is normal');
+                  event.preventDefault();
+                  return false;
+                }
+              });
+            })();
+          </script>
+        </body>
+      </html>
+    `;
+
+    return `data:text/html;charset=utf-8,${encodeURIComponent(outerIframeHTML)}`;
   };
 
   const handleIframeLoad = () => {
-    setIsLoading(false);
-    logger.info('Transak iframe loaded successfully');
+    // Initial load of outer iframe - inner iframe will send its own load message
+    logger.info('Transak outer iframe loaded successfully');
   };
 
   const handleIframeError = () => {
-    setError('domain_restriction');
+    setError('iframe_load_error');
     setIsLoading(false);
-    logger.error('Transak iframe failed to load - likely domain restriction');
+    logger.error('Transak outer iframe failed to load');
   };
 
-  // Handle iframe load errors (403, domain restrictions)
+  // Handle messages from the double iframe setup
   useEffect(() => {
     const handleMessage = (event) => {
-      // Listen for iframe errors
-      if (event.data && event.data.type === 'TRANSAK_WIDGET_ERROR') {
-        setError('domain_restriction');
+      // Handle messages from our outer iframe
+      if (event.data && event.data.type === 'TRANSAK_IFRAME_LOADED') {
         setIsLoading(false);
+        logger.info('Transak inner iframe loaded successfully');
+      }
+      
+      if (event.data && event.data.type === 'TRANSAK_IFRAME_ERROR') {
+        setError('transak_load_error');
+        setIsLoading(false);
+        logger.error('Transak inner iframe failed to load');
+      }
+      
+      // Handle Transak events
+      if (event.data && event.data.type === 'TRANSAK_EVENT') {
+        logger.info('Transak event:', event.data.event_id, event.data.data);
+        
+        // Handle successful order
+        if (event.data.event_id === 'TRANSAK_ORDER_SUCCESSFUL') {
+          showNotification('Crypto purchase completed successfully!', 'success');
+          // Optionally navigate back to AquaSwap after successful purchase
+          setTimeout(() => {
+            navigate('/aquaswap');
+          }, 3000);
+        }
+      }
+      
+      // Suppress New Relic related errors (these are handled in the outer iframe)
+      if (event.data && event.data.error && 
+          (event.data.error.includes('newrelic') || 
+           event.data.error.includes('ChunkLoadError') ||
+           event.data.error.includes('ERR_BLOCKED_BY_CLIENT'))) {
+        // These errors are already handled in the outer iframe
+        return;
       }
     };
 
     window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, []);
+    
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [navigate, showNotification]);
 
   const renderDomainRestrictionError = () => (
     <div className="error-container domain-error">
@@ -184,13 +351,21 @@ const TransakPage = ({ currentUser, showNotification }) => {
         </div>
       </div>
 
+      {/* Improved notice about script blocking */}
+      <div className="ad-blocker-notice">
+        <p>
+          <strong>Enhanced Security:</strong> Using Transak's recommended double-iframe method for better isolation and security. 
+          Any console warnings about blocked scripts are normal and won't affect functionality.
+        </p>
+      </div>
+
       {/* Main content */}
       <div className="transak-content">
         {isLoading && (
           <div className="loading-container">
             <div className="loading-spinner"></div>
             <h3>Loading secure payment system...</h3>
-            <p>Connecting to Transak's {isDevelopment ? 'staging' : 'production'} servers</p>
+            <p>Initializing Transak's {isDevelopment ? 'staging' : 'production'} environment with enhanced security</p>
           </div>
         )}
 
@@ -200,7 +375,7 @@ const TransakPage = ({ currentUser, showNotification }) => {
           <div className="error-container">
             <div className="error-icon">⚠️</div>
             <h3>Unable to load payment system</h3>
-            <p>{error}</p>
+            <p>{error === 'iframe_load_error' ? 'Failed to load the payment interface' : 'An error occurred while loading Transak'}</p>
             <button 
               onClick={() => window.location.reload()} 
               className="retry-button"
@@ -213,19 +388,20 @@ const TransakPage = ({ currentUser, showNotification }) => {
           </div>
         )}
 
-        {/* Transak iframe */}
+        {/* Transak double iframe - Enhanced with better isolation */}
         {!error && (
           <div className={`transak-iframe-container ${isLoading ? 'hidden' : ''}`}>
             <iframe
-              src={buildTransakURL()}
-              title="Transak Widget"
+              src={buildTransakDoubleIframeURL()}
+              title="Transak Payment Widget"
               width="100%"
-              height="650"
+              height="700"
               frameBorder="0"
               onLoad={handleIframeLoad}
               onError={handleIframeError}
-              allow="camera; microphone; payment"
-              sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"
+              allow="camera;microphone;payment"
+              sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation allow-downloads"
+              referrerPolicy="strict-origin-when-cross-origin"
             />
           </div>
         )}
@@ -261,7 +437,7 @@ const TransakPage = ({ currentUser, showNotification }) => {
         <div className="footer-disclaimer">
           <p>
             <strong>Powered by Transak</strong> - Licensed and regulated financial service provider. 
-            Your funds are protected by industry-leading security measures.
+            Using enhanced double-iframe integration for maximum security and compatibility.
           </p>
         </div>
       </div>

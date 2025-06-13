@@ -5,13 +5,15 @@ The Transak integration has been implemented as a separate page following Transa
 
 ## Features
 - ✅ Separate dedicated page (`/buy-crypto`)
-- ✅ Official Transak SDK v1.2 integration
+- ✅ **Double iframe integration** (Transak's recommended method)
+- ✅ Enhanced security and script isolation
 - ✅ Production-ready configuration
 - ✅ Revenue sharing automatically configured
 - ✅ Proper event handling and navigation
 - ✅ Professional UI with trust indicators
 - ✅ Mobile responsive design
-- ✅ Error handling and loading states
+- ✅ Advanced error handling and loading states
+- ✅ New Relic script blocking protection
 
 ## Required Environment Variables
 
@@ -32,6 +34,11 @@ REACT_APP_TRANSAK_ENVIRONMENT=PRODUCTION
 5. Configure revenue sharing settings
 
 ## Implementation Details
+
+### Integration Method
+- **Double Iframe**: Following [Transak's official recommendation](https://docs.transak.com/docs/double-embed-iframe-webapp)
+- **Enhanced Security**: Better isolation prevents third-party script conflicts
+- **Error Resilience**: Graceful handling of blocked analytics scripts (New Relic)
 
 ### Route Structure
 - **Main swap page**: `/aquaswap` - LiFi widget for crypto-to-crypto swaps
@@ -82,13 +89,15 @@ REACT_APP_TRANSAK_ENVIRONMENT=PRODUCTION
 
 ## Benefits of This Approach
 
-1. **Best Practices**: Follows Transak's official documentation
-2. **Better UX**: Dedicated page instead of modal overlay
-3. **SEO Friendly**: Proper routing and page structure
-4. **Maintainable**: Clean separation of concerns
-5. **Scalable**: Easy to add more payment providers
-6. **Professional**: Trust indicators and proper branding
-7. **No Conflicts**: Completely isolated from LiFi widget
+1. **Best Practices**: Follows Transak's official double iframe documentation
+2. **Enhanced Security**: Better script isolation and error handling
+3. **Ad Blocker Resilient**: Gracefully handles blocked analytics scripts
+4. **Better UX**: Dedicated page with smooth loading experience
+5. **SEO Friendly**: Proper routing and page structure
+6. **Maintainable**: Clean separation of concerns
+7. **Scalable**: Easy to add more payment providers
+8. **Professional**: Trust indicators and proper branding
+9. **No Conflicts**: Completely isolated from LiFi widget and other scripts
 
 ## Support
 

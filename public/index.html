@@ -6,6 +6,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#000000" />
     <meta name="google-site-verification" content="UMC2vp6y4mZgNAXQYgv9nqe83JsEKOIg7Tv8tDT7_TA" />
+    <!-- Content Security Policy to handle third-party script loading gracefully -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:;
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' 
+        https://cdn.jsdelivr.net 
+        https://static.ads-twitter.com 
+        https://staging-global.transak.com 
+        https://global.transak.com 
+        https://js-agent.newrelic.com 
+        https://*.newrelic.com;
+      connect-src 'self' 
+        https://api.aquads.xyz 
+        https://www.aquads.xyz 
+        https://staging-global.transak.com 
+        https://global.transak.com 
+        https://*.newrelic.com 
+        wss: ws:;
+      frame-src 'self' 
+        https://staging-global.transak.com 
+        https://global.transak.com;
+      img-src 'self' data: https: blob:;
+      style-src 'self' 'unsafe-inline' https:;
+      font-src 'self' data: https:;
+    " />
     <meta
       name="description"
       content="Aquads - World's First BEX - Bicentralized Exchange Hub"
