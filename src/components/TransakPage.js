@@ -23,6 +23,14 @@ const TransakPage = ({ currentUser, showNotification }) => {
   // Initialize Transak SDK
   const initializeTransak = () => {
     try {
+      // Wait for container to be available
+      const container = document.getElementById('transak-widget-container');
+      if (!container) {
+        logger.warn('Transak container not found, retrying...');
+        setTimeout(initializeTransak, 100);
+        return;
+      }
+
       // TEMPORARY: Force staging until production API key is activated
       const environment = 'STAGING';
       
@@ -32,7 +40,7 @@ const TransakPage = ({ currentUser, showNotification }) => {
       const transakConfig = {
         apiKey: apiKey,
         environment: environment === 'STAGING' ? Transak.ENVIRONMENTS.STAGING : Transak.ENVIRONMENTS.PRODUCTION,
-        // Note: No containerId for modal UI (default behavior)
+        containerId: 'transak-widget-container', // Embed in page instead of modal
         defaultCryptoCurrency: 'ETH',
         cryptoCurrencyList: 'BTC,ETH,USDC,USDT,BNB,MATIC,AVAX,SOL',
         defaultFiatCurrency: 'USD',
@@ -93,13 +101,10 @@ const TransakPage = ({ currentUser, showNotification }) => {
       Transak.on(Transak.EVENTS.TRANSAK_ORDER_SUCCESSFUL, (orderData) => {
         logger.info('Transak order successful:', orderData);
         showNotification('Crypto purchase completed successfully!', 'success');
-        // Close the modal and navigate back to AquaSwap
-        if (transakRef.current) {
-          transakRef.current.close();
-        }
+        // Navigate back to AquaSwap after successful purchase
         setTimeout(() => {
           navigate('/aquaswap');
-        }, 2000);
+        }, 3000);
       });
 
       // Order created (doesn't guarantee payment completion)
@@ -171,12 +176,12 @@ const TransakPage = ({ currentUser, showNotification }) => {
     return () => {
       window.removeEventListener('error', handleGlobalError, true);
       
-      // Clean up Transak SDK (using close() for modal UI)
+      // Clean up Transak SDK (using cleanup() for embedded UI)
       if (transakRef.current) {
         try {
-          transakRef.current.close();
+          transakRef.current.cleanup();
         } catch (error) {
-          logger.warn('Error closing Transak SDK:', error);
+          logger.warn('Error cleaning up Transak SDK:', error);
         }
       }
     };
@@ -212,7 +217,7 @@ const TransakPage = ({ currentUser, showNotification }) => {
             // Clean up any existing instance first
             if (transakRef.current) {
               try {
-                transakRef.current.close();
+                transakRef.current.cleanup();
               } catch (e) {
                 // Ignore cleanup errors
               }
@@ -285,7 +290,7 @@ const TransakPage = ({ currentUser, showNotification }) => {
       <div className="sdk-notice">
         <p>
           <strong>Enhanced Integration:</strong> Using Transak's official SDK for the best user experience. 
-          The payment modal will open automatically when ready.
+          The payment interface will load below.
         </p>
       </div>
 
@@ -301,31 +306,17 @@ const TransakPage = ({ currentUser, showNotification }) => {
 
         {error && renderError()}
 
-        {/* Transak SDK Status */}
-        {!error && !isLoading && (
+        {/* Transak SDK will render here */}
+        {!error && (
           <div className="transak-sdk-container">
-            <div className="sdk-info">
-              <p>✅ Transak SDK loaded successfully</p>
-              <p>The payment modal should have opened automatically. If you don't see it, click the button below.</p>
-              <button 
-                onClick={() => {
-                  if (transakRef.current) {
-                    try {
-                      transakRef.current.init();
-                    } catch (e) {
-                      logger.warn('Error reopening Transak:', e);
-                      // Reinitialize if needed
-                      initializeTransak();
-                    }
-                  } else {
-                    initializeTransak();
-                  }
-                }}
-                className="open-transak-button"
-              >
-                Open Payment Modal
-              </button>
-            </div>
+            {!isLoading && (
+              <div className="sdk-info">
+                <p>✅ Transak SDK loaded successfully</p>
+                <p>The payment interface should appear below. If you don't see it, try refreshing the page.</p>
+              </div>
+            )}
+            {/* This is where the Transak widget will be rendered */}
+            <div id="transak-widget-container" className="transak-widget-container"></div>
           </div>
         )}
       </div>
