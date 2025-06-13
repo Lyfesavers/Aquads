@@ -146,14 +146,24 @@
   font-size: 1.1rem;
 }
 
-/* Transak Widget Container */
-.transak-widget-container {
-  width: 100%;
-  min-height: 650px;
+/* Open Transak Button */
+.open-transak-button {
+  background: linear-gradient(135deg, #00d4ff, #0099cc);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
   margin-top: 1rem;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #1a1a1a;
+  transition: all 0.3s ease;
+}
+
+.open-transak-button:hover {
+  background: linear-gradient(135deg, #0099cc, #007399);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
 }
 
 /* Main content */
