@@ -311,14 +311,7 @@ const TransakPage = ({ currentUser, showNotification }) => {
         </div>
       </div>
 
-      {/* SDK Notice */}
-      <div className="sdk-notice">
-        <p>
-          <strong>Enhanced Integration:</strong> Using Transak's official SDK for the best user experience. 
-          The payment interface will load below.
-        </p>
-      </div>
-
+      
       {/* Main content */}
       <div className="transak-content">
         {isLoading && (
@@ -336,8 +329,6 @@ const TransakPage = ({ currentUser, showNotification }) => {
           <div className="transak-sdk-container">
             {!isLoading && (
               <div className="sdk-info">
-                <p>✅ Transak SDK loaded successfully</p>
-                <p>The payment interface should appear below. If you don't see it, try refreshing the page.</p>
               </div>
             )}
             {/* This is where the Transak widget will be rendered */}
