@@ -263,9 +263,6 @@ const TransakPage = ({ currentUser, showNotification }) => {
             <strong>Powered by Transak</strong> - Licensed and regulated financial service provider. 
             Your funds are protected by industry-leading security measures.
           </p>
-          <p className="revenue-note">
-            AquaSwap earns a small commission on successful purchases to support platform development.
-          </p>
         </div>
       </div>
     </div>
