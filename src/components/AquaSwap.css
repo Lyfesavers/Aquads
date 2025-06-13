@@ -109,90 +109,19 @@
   font-weight: 500;
   transition: all 0.3s ease;
   font-size: 0.9rem;
+  text-decoration: none;
+  display: inline-block;
 }
 
 .fiat-purchase-button:hover {
   background: rgba(255, 165, 0, 0.2);
   border-color: #ffa500;
   transform: translateY(-1px);
+  color: #ffa500;
+  text-decoration: none;
 }
 
-/* Fiat Purchase Section */
-.fiat-purchase-section {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(10px);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  animation: modalFadeIn 0.3s ease-out;
-  user-select: none;
-}
 
-@keyframes modalFadeIn {
-  from {
-    opacity: 0;
-    backdrop-filter: blur(0px);
-  }
-  to {
-    opacity: 1;
-    backdrop-filter: blur(10px);
-  }
-}
-
-.fiat-purchase-wrapper {
-  background: linear-gradient(135deg, #0f1419 0%, #1a2332 100%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 20px;
-  max-width: 500px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-  position: relative;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-  animation: modalSlideIn 0.3s ease-out;
-  user-select: text;
-}
-
-@keyframes modalSlideIn {
-  from {
-    transform: translateY(-20px) scale(0.95);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-}
-
-.close-fiat-btn {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  background: rgba(255, 0, 0, 0.1);
-  border: 1px solid rgba(255, 0, 0, 0.3);
-  color: #ff4444;
-  padding: 6px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  font-size: 0.8rem;
-  z-index: 10;
-  user-select: none;
-}
-
-.close-fiat-btn:hover {
-  background: rgba(255, 0, 0, 0.2);
-  border-color: #ff4444;
-}
 
 /* Banner Container */
 .banner-container {

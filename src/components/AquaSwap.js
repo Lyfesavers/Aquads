@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { LiFiWidget } from '@lifi/widget';
 import logger from '../utils/logger';
 import BannerDisplay from './BannerDisplay';
 import EmbedCodeGenerator from './EmbedCodeGenerator';
-import FiatPurchase from './FiatPurchase';
+
 import './AquaSwap.css';
 
 // Constants - using the same fee structure as the current swap
@@ -26,7 +26,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   const [selectedChain, setSelectedChain] = useState('ether');
   const [showEmbedCode, setShowEmbedCode] = useState(false);
   const [popularTokens, setPopularTokens] = useState(FALLBACK_TOKEN_EXAMPLES);
-  const [showFiatPurchase, setShowFiatPurchase] = useState(false);
+
   const tradingViewRef = useRef(null);
   const dexToolsRef = useRef(null);
 
@@ -370,13 +370,13 @@ const AquaSwap = ({ currentUser, showNotification }) => {
             >
               {showEmbedCode ? '❌ Close Embed Code' : '🔗 Embed on Your Site'}
             </button>
-            <button 
+            <Link 
+              to="/buy-crypto"
               className="fiat-purchase-button"
-              onClick={() => setShowFiatPurchase(!showFiatPurchase)}
               title="Buy crypto with credit/debit card"
             >
-              {showFiatPurchase ? '❌ Close Card Purchase' : '💳 Buy with Card'}
-            </button>
+              💳 Buy with Card
+            </Link>
           </div>
         </div>
       </div>
@@ -388,36 +388,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         </div>
       )}
 
-      {/* Fiat Purchase Section - Separate from main trading interface */}
-      {showFiatPurchase && (
-        <div 
-          className="fiat-purchase-section"
-          onClick={(e) => {
-            // Close modal when clicking on backdrop
-            if (e.target === e.currentTarget) {
-              setShowFiatPurchase(false);
-            }
-          }}
-        >
-          <div className="fiat-purchase-wrapper">
-            <button 
-              className="close-fiat-btn"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setShowFiatPurchase(false);
-              }}
-              title="Close Fiat Purchase"
-            >
-              ❌ Close
-            </button>
-            <FiatPurchase 
-              userWallet={currentUser?.wallet || null}
-              showNotification={showNotification}
-            />
-          </div>
-        </div>
-      )}
+
     
       {/* Main Trading Interface - Original Setup */}
       <div className="trading-interface with-charts">
