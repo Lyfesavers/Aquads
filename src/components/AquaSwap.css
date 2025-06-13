@@ -70,6 +70,15 @@
   filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.3));
 }
 
+/* Header Buttons Container */
+.header-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
 /* Embed Toggle Button */
 .embed-toggle-button {
   background: rgba(0, 212, 255, 0.1);
@@ -80,7 +89,6 @@
   cursor: pointer;
   font-weight: 500;
   transition: all 0.3s ease;
-  margin-top: 12px;
   font-size: 0.9rem;
 }
 
@@ -88,6 +96,74 @@
   background: rgba(0, 212, 255, 0.2);
   border-color: #00d4ff;
   transform: translateY(-1px);
+}
+
+/* Fiat Purchase Button */
+.fiat-purchase-button {
+  background: rgba(255, 165, 0, 0.1);
+  border: 1px solid rgba(255, 165, 0, 0.3);
+  color: #ffa500;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.fiat-purchase-button:hover {
+  background: rgba(255, 165, 0, 0.2);
+  border-color: #ffa500;
+  transform: translateY(-1px);
+}
+
+/* Fiat Purchase Section */
+.fiat-purchase-section {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.fiat-purchase-wrapper {
+  background: linear-gradient(135deg, #0f1419 0%, #1a2332 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 20px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.close-fiat-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(255, 0, 0, 0.1);
+  border: 1px solid rgba(255, 0, 0, 0.3);
+  color: #ff4444;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  font-size: 0.8rem;
+}
+
+.close-fiat-btn:hover {
+  background: rgba(255, 0, 0, 0.2);
+  border-color: #ff4444;
 }
 
 /* Banner Container */
@@ -685,37 +761,3 @@
 }
 
 /* Swap Mode Toggle Buttons */
-.swap-mode-toggle {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
-  padding: 4px;
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.mode-toggle-btn {
-  flex: 1;
-  background: transparent;
-  border: none;
-  color: #a0a0a0;
-  padding: 10px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
-}
-
-.mode-toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: #ffffff;
-}
-
-.mode-toggle-btn.active {
-  background: linear-gradient(135deg, #00d4ff, #0099cc);
-  color: #ffffff;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
-}

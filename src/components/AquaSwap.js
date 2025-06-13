@@ -26,7 +26,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   const [selectedChain, setSelectedChain] = useState('ether');
   const [showEmbedCode, setShowEmbedCode] = useState(false);
   const [popularTokens, setPopularTokens] = useState(FALLBACK_TOKEN_EXAMPLES);
-  const [swapMode, setSwapMode] = useState('crypto'); // 'crypto' or 'fiat'
+  const [showFiatPurchase, setShowFiatPurchase] = useState(false);
   const tradingViewRef = useRef(null);
   const dexToolsRef = useRef(null);
 
@@ -146,7 +146,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
   // Load TradingView widget
   useEffect(() => {
-    if (swapMode === 'crypto' && chartProvider === 'tradingview' && tradingViewRef.current) {
+    if (chartProvider === 'tradingview' && tradingViewRef.current) {
       // Clear previous widget
       tradingViewRef.current.innerHTML = '';
       
@@ -177,12 +177,11 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       
       tradingViewRef.current.appendChild(script);
     }
-  }, [swapMode, chartProvider]);
+  }, [chartProvider]);
 
   // Load DexTools widget with improved error handling
   useEffect(() => {
-    // Only load DexTools when we're in crypto mode to avoid conflicts
-    if (swapMode === 'crypto' && chartProvider === 'dextools' && dexToolsRef.current && tokenSearch.trim()) {
+    if (chartProvider === 'dextools' && dexToolsRef.current && tokenSearch.trim()) {
       // Clear previous widget
       dexToolsRef.current.innerHTML = '';
       
@@ -248,7 +247,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         dexToolsRef.current.appendChild(iframe);
       }
       
-    } else if (swapMode === 'crypto' && chartProvider === 'dextools' && dexToolsRef.current && !tokenSearch.trim()) {
+    } else if (chartProvider === 'dextools' && dexToolsRef.current && !tokenSearch.trim()) {
       // Show placeholder when no search term
       dexToolsRef.current.innerHTML = `
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: rgba(0, 0, 0, 0.2); border-radius: 8px; color: #9ca3af;">
@@ -258,7 +257,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         </div>
       `;
     }
-  }, [swapMode, chartProvider, tokenSearch, selectedChain]);
+  }, [chartProvider, tokenSearch, selectedChain]);
 
   // Handle popular token selection
   const handlePopularTokenClick = (token) => {
@@ -362,14 +361,23 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         </h1>
           <p>The Ultimate Cross-Chain BEX</p>
           
-          {/* Embed Button */}
-          <button 
-            className="embed-toggle-button"
-            onClick={() => setShowEmbedCode(!showEmbedCode)}
-            title="Get embed code to add AquaSwap to your website"
-          >
-            {showEmbedCode ? '❌ Close Embed Code' : '🔗 Embed on Your Site'}
-          </button>
+          {/* Action Buttons */}
+          <div className="header-buttons">
+            <button 
+              className="embed-toggle-button"
+              onClick={() => setShowEmbedCode(!showEmbedCode)}
+              title="Get embed code to add AquaSwap to your website"
+            >
+              {showEmbedCode ? '❌ Close Embed Code' : '🔗 Embed on Your Site'}
+            </button>
+            <button 
+              className="fiat-purchase-button"
+              onClick={() => setShowFiatPurchase(!showFiatPurchase)}
+              title="Buy crypto with credit/debit card"
+            >
+              {showFiatPurchase ? '❌ Close Card Purchase' : '💳 Buy with Card'}
+            </button>
+          </div>
         </div>
       </div>
       
@@ -379,45 +387,39 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           <EmbedCodeGenerator />
         </div>
       )}
-    
-      {/* Main Trading Interface */}
-      <div className="trading-interface with-charts">
-        {/* Left Side - Swap Widget */}
-        <div className="swap-section">
-          {/* Toggle Buttons */}
-          <div className="swap-mode-toggle">
+
+      {/* Fiat Purchase Section - Separate from main trading interface */}
+      {showFiatPurchase && (
+        <div className="fiat-purchase-section">
+          <div className="fiat-purchase-wrapper">
             <button 
-              className={`mode-toggle-btn ${swapMode === 'crypto' ? 'active' : ''}`}
-              onClick={() => setSwapMode('crypto')}
+              className="close-fiat-btn"
+              onClick={() => setShowFiatPurchase(false)}
+              title="Close Fiat Purchase"
             >
-              🔄 Crypto Swap
+              ❌ Close
             </button>
-            <button 
-              className={`mode-toggle-btn ${swapMode === 'fiat' ? 'active' : ''}`}
-              onClick={() => setSwapMode('fiat')}
-            >
-              💳 Buy with Card
-            </button>
-          </div>
-          
-          {/* Conditional Widget Display */}
-          {swapMode === 'crypto' ? (
-            <div className="lifi-widget">
-              <LiFiWidget integrator="aquaswap" config={widgetConfig} />
-            </div>
-          ) : (
             <FiatPurchase 
               userWallet={currentUser?.wallet || null}
               showNotification={showNotification}
             />
-          )}
+          </div>
+        </div>
+      )}
+    
+      {/* Main Trading Interface - Original Setup */}
+      <div className="trading-interface with-charts">
+        {/* Left Side - Swap Widget */}
+        <div className="swap-section">
+          <div className="lifi-widget">
+            <LiFiWidget integrator="aquaswap" config={widgetConfig} />
+          </div>
           <div className="swap-footer">
             <p>✨ Swap and bridge across 38+ blockchains with the best rates and lowest fees.</p>
           </div>
         </div>
 
-        {/* Right Side - Charts - Only show in crypto mode */}
-        {swapMode === 'crypto' && (
+        {/* Right Side - Charts */}
         <div className="chart-section">
           <div className="chart-header">
             <h3 className="chart-title">Professional Trading Charts</h3>
@@ -761,7 +763,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
             </p>
           </div>
         </div>
-        )}
       </div>
 
 
