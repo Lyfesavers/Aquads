@@ -20,18 +20,11 @@ const TransakPage = ({ currentUser, showNotification }) => {
 
   // Build Transak iframe URL
   const buildTransakURL = () => {
-    // Use staging for development, production for live sites
-    const environment = isDevelopment ? 'STAGING' : 'PRODUCTION';
+    // TEMPORARY: Force staging until production API key is activated
+    const environment = 'STAGING';
     
-    // Use different API keys for different environments
-    let apiKey;
-    if (isDevelopment) {
-      // Staging API key (more permissive for development)
-      apiKey = '4fcd6904-706b-4aff-bd9d-77422813bbb4'; // Public staging key
-    } else {
-      // Production API key from environment
-      apiKey = process.env.REACT_APP_TRANSAK_API_KEY || '8330ddd4-106a-41f0-8153-f2aa741cb18c';
-    }
+    // Use staging API key that you confirmed works
+    const apiKey = 'af88b688-a2e5-4feb-a306-ac073bbfed63';
     
     const baseURL = environment === 'STAGING' 
       ? 'https://staging-global.transak.com' 
