@@ -149,12 +149,35 @@
 /* Transak Widget Container */
 .transak-widget-container {
   width: 100%;
-  min-height: 650px;
+  height: 700px;
+  min-height: 700px;
   margin-top: 1rem;
   border-radius: 12px;
-  overflow: hidden;
-  background: #1a1a1a;
+  overflow: visible;
+  background: transparent;
   border: 1px solid #333;
+  position: relative;
+}
+
+/* Ensure Transak iframe gets proper dimensions */
+.transak-widget-container iframe {
+  width: 100% !important;
+  height: 700px !important;
+  min-height: 700px !important;
+  border: none !important;
+  border-radius: 12px !important;
+}
+
+/* Additional Transak widget styling */
+.transak-widget-container > div {
+  width: 100% !important;
+  height: 700px !important;
+  min-height: 700px !important;
+}
+
+/* Ensure any nested elements get proper sizing */
+.transak-widget-container * {
+  box-sizing: border-box;
 }
 
 /* Main content */

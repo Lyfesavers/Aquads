@@ -53,6 +53,9 @@ const TransakPage = ({ currentUser, showNotification }) => {
         partnerOrderId: `aquads-${Date.now()}`,
         walletAddress: currentUser?.wallet || '',
         partnerCustomerId: currentUser?.wallet || currentUser?.id || 'anonymous',
+        // Widget dimensions
+        widgetHeight: '700px',
+        widgetWidth: '100%',
         // Error handling options
         disableWalletAddressForm: false,
         isAutoFillUserData: false
@@ -118,13 +121,18 @@ const TransakPage = ({ currentUser, showNotification }) => {
         logger.error('Transak SDK error:', error);
         clearTimeout(initTimeout);
         
-        // Check if it's a New Relic related error and suppress it
+        // Check if it's a third-party analytics related error and suppress it
         if (error && error.message && 
             (error.message.includes('newrelic') || 
              error.message.includes('ChunkLoadError') ||
-             error.message.includes('ERR_BLOCKED_BY_CLIENT'))) {
-          console.warn('Third-party analytics blocked - this won\'t affect functionality');
-          return; // Don't set error state for New Relic issues
+             error.message.includes('ERR_BLOCKED_BY_CLIENT') ||
+             error.message.includes('LogRocket') ||
+             error.message.includes('lrkt-in.com') ||
+             error.message.includes('Content Security Policy') ||
+             error.message.includes('403') ||
+             error.message.includes('logr-ingest'))) {
+          console.warn('Third-party analytics blocked - this won\'t affect Transak functionality');
+          return; // Don't set error state for analytics issues
         }
         
         setError('sdk_initialization_error');
@@ -155,19 +163,35 @@ const TransakPage = ({ currentUser, showNotification }) => {
 
   // Initialize Transak when component mounts
   useEffect(() => {
-    // Add global error handler for New Relic issues
+    // Add global error handler for third-party script issues
     const handleGlobalError = (event) => {
       if (event.error && event.error.message && 
           (event.error.message.includes('newrelic') || 
            event.error.message.includes('ChunkLoadError') ||
-           event.error.message.includes('ERR_BLOCKED_BY_CLIENT'))) {
-        console.warn('Third-party analytics script blocked - this is normal');
+           event.error.message.includes('ERR_BLOCKED_BY_CLIENT') ||
+           event.error.message.includes('LogRocket') ||
+           event.error.message.includes('lrkt-in.com') ||
+           event.error.message.includes('Content Security Policy'))) {
+        console.warn('Third-party analytics script blocked - this is normal and won\'t affect functionality');
+        event.preventDefault();
+        return false;
+      }
+    };
+
+    // Also handle CSP violations
+    const handleCSPViolation = (event) => {
+      if (event.blockedURI && 
+          (event.blockedURI.includes('lrkt-in.com') ||
+           event.blockedURI.includes('newrelic') ||
+           event.blockedURI.includes('logr-ingest'))) {
+        console.warn('Analytics script blocked by CSP - this is expected and won\'t affect functionality');
         event.preventDefault();
         return false;
       }
     };
 
     window.addEventListener('error', handleGlobalError, true);
+    window.addEventListener('securitypolicyviolation', handleCSPViolation, true);
 
     // Initialize Transak SDK
     initializeTransak();
@@ -175,6 +199,7 @@ const TransakPage = ({ currentUser, showNotification }) => {
     // Cleanup function
     return () => {
       window.removeEventListener('error', handleGlobalError, true);
+      window.removeEventListener('securitypolicyviolation', handleCSPViolation, true);
       
       // Clean up Transak SDK (using cleanup() for embedded UI)
       if (transakRef.current) {
