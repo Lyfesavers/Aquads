@@ -1,175 +1,53 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FaArrowLeft, FaCreditCard, FaShieldAlt, FaGlobe, FaLock, FaCheckCircle } from 'react-icons/fa';
 import logger from '../utils/logger';
 import './TransakPage.css';
 
-// Transak configuration following official documentation
-const TRANSAK_CONFIG = {
-  apiKey: process.env.REACT_APP_TRANSAK_API_KEY || 'your-api-key-here',
-  environment: process.env.REACT_APP_TRANSAK_ENVIRONMENT || 'PRODUCTION', // STAGING or PRODUCTION
-  hostURL: window.location.origin,
-  widgetHeight: '650px',
-  widgetWidth: '100%',
-  // Revenue sharing configuration
-  partnerOrderId: `aquads-${Date.now()}`,
-  // Supported cryptocurrencies
-  defaultCryptoCurrency: 'ETH',
-  cryptoCurrencyList: 'BTC,ETH,USDC,USDT,BNB,MATIC,AVAX,SOL',
-  // Supported fiat currencies
-  defaultFiatCurrency: 'USD',
-  fiatCurrency: 'USD,EUR,GBP,CAD,AUD',
-  // UI customization
-  themeColor: '00d4ff',
-  colorMode: 'dark',
-  hideMenu: true,
-  hideExchangeScreen: false,
-  // Network configurations
-  networks: 'ethereum,polygon,bsc,avalanche,solana,arbitrum,optimism,base'
-};
-
 const TransakPage = ({ currentUser, showNotification }) => {
   const navigate = useNavigate();
-  const transakRef = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [transakInstance, setTransakInstance] = useState(null);
   const [error, setError] = useState(null);
 
-  // Load Transak SDK
-  useEffect(() => {
-    const loadTransakSDK = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
+  // Build Transak iframe URL
+  const buildTransakURL = () => {
+    const apiKey = process.env.REACT_APP_TRANSAK_API_KEY || 'your-api-key-here';
+    const environment = process.env.REACT_APP_TRANSAK_ENVIRONMENT || 'PRODUCTION';
+    
+    const baseURL = environment === 'STAGING' 
+      ? 'https://staging-global.transak.com' 
+      : 'https://global.transak.com';
 
-        // Check if SDK is already loaded
-        if (window.TransakSDK) {
-          initializeTransak();
-          return;
-        }
+    const params = new URLSearchParams({
+      apiKey: apiKey,
+      environment: environment,
+      defaultCryptoCurrency: 'ETH',
+      cryptoCurrencyList: 'BTC,ETH,USDC,USDT,BNB,MATIC,AVAX,SOL',
+      defaultFiatCurrency: 'USD',
+      fiatCurrency: 'USD,EUR,GBP,CAD,AUD',
+      themeColor: '00d4ff',
+      colorMode: 'dark',
+      hideMenu: 'true',
+      hideExchangeScreen: 'false',
+      networks: 'ethereum,polygon,bsc,avalanche,solana,arbitrum,optimism,base',
+      partnerOrderId: `aquads-${Date.now()}`,
+      walletAddress: currentUser?.wallet || '',
+      partnerCustomerId: currentUser?.wallet || currentUser?.id || 'anonymous'
+    });
 
-        // Load Transak SDK script
-        const script = document.createElement('script');
-        script.src = 'https://global.transak.com/sdk/v1.2/widget.js';
-        script.async = true;
-        
-        script.onload = () => {
-          if (window.TransakSDK) {
-            initializeTransak();
-          } else {
-            setError('Failed to load Transak SDK');
-            setIsLoading(false);
-          }
-        };
-        
-        script.onerror = () => {
-          setError('Failed to load Transak payment system');
-          setIsLoading(false);
-          logger.error('Failed to load Transak SDK script');
-        };
-        
-        document.head.appendChild(script);
-
-        // Cleanup function
-        return () => {
-          if (script.parentNode) {
-            script.parentNode.removeChild(script);
-          }
-        };
-      } catch (err) {
-        logger.error('Error loading Transak SDK:', err);
-        setError('Failed to initialize payment system');
-        setIsLoading(false);
-      }
-    };
-
-    loadTransakSDK();
-  }, []);
-
-  // Initialize Transak widget
-  const initializeTransak = () => {
-    try {
-      if (!window.TransakSDK) {
-        throw new Error('Transak SDK not available');
-      }
-
-      const config = {
-        ...TRANSAK_CONFIG,
-        containerId: 'transak-widget-container',
-        // Add wallet address if user is connected
-        walletAddress: currentUser?.wallet || '',
-        // Revenue sharing
-        partnerCustomerId: currentUser?.wallet || currentUser?.id || 'anonymous',
-      };
-
-      logger.info('Initializing Transak with config:', config);
-
-      const transak = new window.TransakSDK.default(config);
-
-      // Event listeners following official documentation
-      transak.on(transak.ALL_EVENTS, (data) => {
-        logger.info('Transak event:', data);
-      });
-
-      transak.on(transak.EVENTS.TRANSAK_WIDGET_INITIALISED, () => {
-        logger.info('Transak widget initialized');
-        setIsLoading(false);
-      });
-
-      transak.on(transak.EVENTS.TRANSAK_WIDGET_CLOSE, () => {
-        logger.info('Transak widget closed');
-        // Navigate back to AquaSwap
-        navigate('/aquaswap');
-      });
-
-      transak.on(transak.EVENTS.TRANSAK_ORDER_CREATED, (orderData) => {
-        logger.info('Transak order created:', orderData);
-        showNotification?.('Order created successfully! Complete your payment to receive crypto.', 'success');
-      });
-
-      transak.on(transak.EVENTS.TRANSAK_ORDER_SUCCESSFUL, (orderData) => {
-        logger.info('Transak order successful:', orderData);
-        showNotification?.('Payment successful! Your crypto will arrive shortly.', 'success');
-        
-        // Optional: Navigate to success page or back to swap
-        setTimeout(() => {
-          navigate('/aquaswap');
-        }, 3000);
-      });
-
-      transak.on(transak.EVENTS.TRANSAK_ORDER_FAILED, (orderData) => {
-        logger.error('Transak order failed:', orderData);
-        showNotification?.('Payment failed. Please try again or contact support.', 'error');
-      });
-
-      transak.on(transak.EVENTS.TRANSAK_ORDER_CANCELLED, (orderData) => {
-        logger.info('Transak order cancelled:', orderData);
-        showNotification?.('Payment cancelled.', 'info');
-      });
-
-      // Initialize the widget
-      transak.init();
-      setTransakInstance(transak);
-
-    } catch (err) {
-      logger.error('Error initializing Transak:', err);
-      setError('Failed to initialize payment system');
-      setIsLoading(false);
-    }
+    return `${baseURL}/?${params.toString()}`;
   };
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (transakInstance) {
-        try {
-          transakInstance.close();
-        } catch (err) {
-          logger.error('Error closing Transak instance:', err);
-        }
-      }
-    };
-  }, [transakInstance]);
+  const handleIframeLoad = () => {
+    setIsLoading(false);
+    logger.info('Transak iframe loaded successfully');
+  };
+
+  const handleIframeError = () => {
+    setError('Failed to load Transak payment system');
+    setIsLoading(false);
+    logger.error('Transak iframe failed to load');
+  };
 
   return (
     <div className="transak-page">
@@ -236,12 +114,22 @@ const TransakPage = ({ currentUser, showNotification }) => {
           </div>
         )}
 
-        {/* Transak widget container */}
-        <div 
-          id="transak-widget-container" 
-          className={`transak-widget-container ${isLoading ? 'hidden' : ''}`}
-          ref={transakRef}
-        />
+        {/* Transak iframe */}
+        {!error && (
+          <div className={`transak-iframe-container ${isLoading ? 'hidden' : ''}`}>
+            <iframe
+              src={buildTransakURL()}
+              title="Transak Widget"
+              width="100%"
+              height="650"
+              frameBorder="0"
+              onLoad={handleIframeLoad}
+              onError={handleIframeError}
+              allow="camera; microphone; payment"
+              sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"
+            />
+          </div>
+        )}
       </div>
 
       {/* Footer info */}
