@@ -146,6 +146,16 @@
   font-size: 1.1rem;
 }
 
+/* Transak Widget Container */
+.transak-widget-container {
+  width: 100%;
+  min-height: 650px;
+  margin-top: 1rem;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #1a1a1a;
+}
+
 /* Main content */
 .transak-content {
   max-width: 1200px;

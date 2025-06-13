@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FaArrowLeft, FaCreditCard, FaShieldAlt, FaGlobe, FaLock, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
-import transakSDK from '@transak/transak-sdk';
+import { Transak } from '@transak/transak-sdk';
 import logger from '../utils/logger';
 import './TransakPage.css';
 
@@ -31,7 +31,8 @@ const TransakPage = ({ currentUser, showNotification }) => {
       
       const transakConfig = {
         apiKey: apiKey,
-        environment: environment,
+        environment: environment === 'STAGING' ? Transak.ENVIRONMENTS.STAGING : Transak.ENVIRONMENTS.PRODUCTION,
+        containerId: 'transak-widget-container', // We'll create this container
         defaultCryptoCurrency: 'ETH',
         cryptoCurrencyList: 'BTC,ETH,USDC,USDT,BNB,MATIC,AVAX,SOL',
         defaultFiatCurrency: 'USD',
@@ -53,25 +54,34 @@ const TransakPage = ({ currentUser, showNotification }) => {
       };
 
       // Initialize Transak SDK
-      const transak = new transakSDK(transakConfig);
+      const transak = new Transak(transakConfig);
 
       // Event listeners for Transak SDK
-      transak.on(transak.EVENTS.TRANSAK_WIDGET_INITIALISED, () => {
+      // Listen for all events
+      Transak.on('*', (data) => {
+        logger.info('Transak event:', data);
+      });
+
+      // Widget initialization
+      Transak.on(Transak.EVENTS.TRANSAK_WIDGET_INITIALISED, () => {
         logger.info('Transak SDK initialized successfully');
         setIsLoading(false);
       });
 
-      transak.on(transak.EVENTS.TRANSAK_WIDGET_OPEN, () => {
+      // Widget opened
+      Transak.on(Transak.EVENTS.TRANSAK_WIDGET_OPEN, () => {
         logger.info('Transak widget opened');
       });
 
-      transak.on(transak.EVENTS.TRANSAK_WIDGET_CLOSE, () => {
+      // Widget closed
+      Transak.on(Transak.EVENTS.TRANSAK_WIDGET_CLOSE, () => {
         logger.info('Transak widget closed');
         // Navigate back to AquaSwap when user closes the widget
         navigate('/aquaswap');
       });
 
-      transak.on(transak.EVENTS.TRANSAK_ORDER_SUCCESSFUL, (orderData) => {
+      // Order successful
+      Transak.on(Transak.EVENTS.TRANSAK_ORDER_SUCCESSFUL, (orderData) => {
         logger.info('Transak order successful:', orderData);
         showNotification('Crypto purchase completed successfully!', 'success');
         // Navigate back to AquaSwap after successful purchase
@@ -80,18 +90,14 @@ const TransakPage = ({ currentUser, showNotification }) => {
         }, 3000);
       });
 
-      transak.on(transak.EVENTS.TRANSAK_ORDER_FAILED, (error) => {
-        logger.error('Transak order failed:', error);
-        showNotification('Purchase failed. Please try again.', 'error');
-      });
-
-      transak.on(transak.EVENTS.TRANSAK_ORDER_CANCELLED, () => {
-        logger.info('Transak order cancelled by user');
-        showNotification('Purchase cancelled', 'info');
+      // Order created (doesn't guarantee payment completion)
+      Transak.on(Transak.EVENTS.TRANSAK_ORDER_CREATED, (orderData) => {
+        logger.info('Transak order created:', orderData);
+        showNotification('Order created successfully', 'info');
       });
 
       // Handle any initialization errors
-      transak.on('error', (error) => {
+      Transak.on('error', (error) => {
         logger.error('Transak SDK error:', error);
         
         // Check if it's a New Relic related error and suppress it
@@ -146,9 +152,9 @@ const TransakPage = ({ currentUser, showNotification }) => {
       // Clean up Transak SDK
       if (transakRef.current) {
         try {
-          transakRef.current.close();
+          transakRef.current.cleanup();
         } catch (error) {
-          logger.warn('Error closing Transak SDK:', error);
+          logger.warn('Error cleaning up Transak SDK:', error);
         }
       }
     };
@@ -181,6 +187,14 @@ const TransakPage = ({ currentUser, showNotification }) => {
           onClick={() => {
             setError(null);
             setIsLoading(true);
+            // Clean up any existing instance first
+            if (transakRef.current) {
+              try {
+                transakRef.current.cleanup();
+              } catch (e) {
+                // Ignore cleanup errors
+              }
+            }
             initializeTransak();
           }} 
           className="retry-button"
@@ -214,7 +228,7 @@ const TransakPage = ({ currentUser, showNotification }) => {
           
           <div className="header-title">
             <FaCreditCard className="title-icon" />
-            <h1>Buy Crypto with Card</h1>
+            <h1>Buy Crypto with Card -UNDER CONSTRUCTION</h1>
             <p>Secure fiat-to-crypto purchases powered by Transak</p>
             {isDevelopment && (
               <div className="dev-badge">
@@ -272,6 +286,8 @@ const TransakPage = ({ currentUser, showNotification }) => {
               <p>✅ Transak SDK loaded successfully</p>
               <p>The payment interface should appear below. If you don't see it, try refreshing the page.</p>
             </div>
+            {/* This is where the Transak widget will be rendered */}
+            <div id="transak-widget-container" className="transak-widget-container"></div>
           </div>
         )}
       </div>
