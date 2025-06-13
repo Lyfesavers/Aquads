@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { FaArrowLeft, FaCreditCard, FaShieldAlt, FaGlobe, FaLock, FaCheckCircle } from 'react-icons/fa';
+import { FaArrowLeft, FaCreditCard, FaShieldAlt, FaGlobe, FaLock, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
 import logger from '../utils/logger';
 import './TransakPage.css';
 
@@ -8,11 +8,30 @@ const TransakPage = ({ currentUser, showNotification }) => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isDevelopment, setIsDevelopment] = useState(false);
+
+  useEffect(() => {
+    // Check if we're in development mode
+    const isLocalhost = window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1' ||
+                       window.location.hostname.includes('localhost');
+    setIsDevelopment(isLocalhost);
+  }, []);
 
   // Build Transak iframe URL
   const buildTransakURL = () => {
-    const apiKey = process.env.REACT_APP_TRANSAK_API_KEY || 'your-api-key-here';
-    const environment = process.env.REACT_APP_TRANSAK_ENVIRONMENT || 'PRODUCTION';
+    // Use staging for development, production for live sites
+    const environment = isDevelopment ? 'STAGING' : 'PRODUCTION';
+    
+    // Use different API keys for different environments
+    let apiKey;
+    if (isDevelopment) {
+      // Staging API key (more permissive for development)
+      apiKey = '4fcd6904-706b-4aff-bd9d-77422813bbb4'; // Public staging key
+    } else {
+      // Production API key from environment
+      apiKey = process.env.REACT_APP_TRANSAK_API_KEY || '8330ddd4-106a-41f0-8153-f2aa741cb18c';
+    }
     
     const baseURL = environment === 'STAGING' 
       ? 'https://staging-global.transak.com' 
@@ -44,10 +63,90 @@ const TransakPage = ({ currentUser, showNotification }) => {
   };
 
   const handleIframeError = () => {
-    setError('Failed to load Transak payment system');
+    setError('domain_restriction');
     setIsLoading(false);
-    logger.error('Transak iframe failed to load');
+    logger.error('Transak iframe failed to load - likely domain restriction');
   };
+
+  // Handle iframe load errors (403, domain restrictions)
+  useEffect(() => {
+    const handleMessage = (event) => {
+      // Listen for iframe errors
+      if (event.data && event.data.type === 'TRANSAK_WIDGET_ERROR') {
+        setError('domain_restriction');
+        setIsLoading(false);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  const renderDomainRestrictionError = () => (
+    <div className="error-container domain-error">
+      <div className="error-icon">
+        <FaExclamationTriangle />
+      </div>
+      <h3>Domain Access Restricted</h3>
+      <div className="error-details">
+        <p>The Transak API key is currently restricted to specific domains.</p>
+        
+        {isDevelopment ? (
+          <div className="dev-info">
+            <h4>Development Mode Detected</h4>
+            <p>You're running on localhost. The staging environment should work, but if you see this error:</p>
+            <ol>
+              <li>The staging API key may also have restrictions</li>
+              <li>Try running on a different port</li>
+              <li>Contact Transak support to allowlist localhost</li>
+            </ol>
+          </div>
+        ) : (
+          <div className="production-info">
+            <h4>Production Environment</h4>
+            <p>Current domain: <code>{window.location.hostname}</code></p>
+            <p>To fix this issue:</p>
+            <ol>
+              <li>Contact Transak support at <a href="mailto:support@transak.com">support@transak.com</a></li>
+              <li>Request to add your domain: <strong>{window.location.hostname}</strong></li>
+              <li>Provide your API key: <code>8330ddd4-106a-41f0-8153-f2aa741cb18c</code></li>
+              <li>Mention error code: <strong>T-INF-101</strong></li>
+            </ol>
+          </div>
+        )}
+        
+        <div className="alternative-options">
+          <h4>Alternative Options</h4>
+          <p>While waiting for domain approval, users can:</p>
+          <ul>
+            <li>Visit <a href="https://global.transak.com" target="_blank" rel="noopener noreferrer">Transak directly</a></li>
+            <li>Use other crypto purchase methods</li>
+            <li>Contact support for assistance</li>
+          </ul>
+        </div>
+      </div>
+      
+      <div className="error-actions">
+        <button 
+          onClick={() => window.location.reload()} 
+          className="retry-button"
+        >
+          Try Again
+        </button>
+        <Link to="/aquaswap" className="back-link">
+          Return to AquaSwap
+        </Link>
+        <a 
+          href="https://global.transak.com" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="external-link"
+        >
+          Open Transak Directly
+        </a>
+      </div>
+    </div>
+  );
 
   return (
     <div className="transak-page">
@@ -63,6 +162,11 @@ const TransakPage = ({ currentUser, showNotification }) => {
             <FaCreditCard className="title-icon" />
             <h1>Buy Crypto with Card</h1>
             <p>Secure fiat-to-crypto purchases powered by Transak</p>
+            {isDevelopment && (
+              <div className="dev-badge">
+                <span>Development Mode - Using Staging Environment</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -93,11 +197,13 @@ const TransakPage = ({ currentUser, showNotification }) => {
           <div className="loading-container">
             <div className="loading-spinner"></div>
             <h3>Loading secure payment system...</h3>
-            <p>Connecting to Transak's encrypted servers</p>
+            <p>Connecting to Transak's {isDevelopment ? 'staging' : 'production'} servers</p>
           </div>
         )}
 
-        {error && (
+        {error === 'domain_restriction' && renderDomainRestrictionError()}
+
+        {error && error !== 'domain_restriction' && (
           <div className="error-container">
             <div className="error-icon">⚠️</div>
             <h3>Unable to load payment system</h3>
