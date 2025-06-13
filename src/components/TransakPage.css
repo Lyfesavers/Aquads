@@ -99,6 +99,53 @@
   font-size: 1.2rem;
 }
 
+/* SDK Notice */
+.sdk-notice {
+  max-width: 1200px;
+  margin: 0 auto 2rem auto;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.sdk-notice p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #00d4ff;
+}
+
+.sdk-notice strong {
+  color: #fff;
+}
+
+/* SDK Container */
+.transak-sdk-container {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: rgba(0, 212, 255, 0.05);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.sdk-info {
+  color: #ffffff;
+}
+
+.sdk-info p {
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}
+
+.sdk-info p:first-child {
+  color: #00d4ff;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
 /* Main content */
 .transak-content {
   max-width: 1200px;

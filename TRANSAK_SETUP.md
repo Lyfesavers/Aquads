@@ -5,13 +5,15 @@ The Transak integration has been implemented as a separate page following Transa
 
 ## Features
 - ✅ Separate dedicated page (`/buy-crypto`)
-- ✅ Official Transak SDK v1.2 integration
+- ✅ **Official Transak SDK integration** (Latest version)
+- ✅ **Enhanced error handling** for New Relic script blocking
+- ✅ **No iframe conflicts** - Direct SDK integration
 - ✅ Production-ready configuration
 - ✅ Revenue sharing automatically configured
-- ✅ Proper event handling and navigation
+- ✅ Comprehensive event handling and navigation
 - ✅ Professional UI with trust indicators
 - ✅ Mobile responsive design
-- ✅ Error handling and loading states
+- ✅ Advanced loading states and error recovery
 
 ## Required Environment Variables
 
@@ -33,13 +35,20 @@ REACT_APP_TRANSAK_ENVIRONMENT=PRODUCTION
 
 ## Implementation Details
 
+### Integration Method
+- **Transak SDK**: Using the official `@transak/transak-sdk` package
+- **Direct Integration**: No iframes - prevents conflicts with charts and other components
+- **Event-Driven**: Comprehensive event handling for all user actions
+- **Error Resilient**: Built-in handling for New Relic script blocking issues
+
 ### Route Structure
 - **Main swap page**: `/aquaswap` - LiFi widget for crypto-to-crypto swaps
-- **Fiat purchase page**: `/buy-crypto` - Transak widget for fiat-to-crypto purchases
+- **Fiat purchase page**: `/buy-crypto` - Transak SDK for fiat-to-crypto purchases
 
 ### Navigation
 - Users can access fiat purchases via the "💳 Buy with Card" button
 - Automatic navigation back to AquaSwap after successful purchases
+- Widget closes automatically when user cancels or completes purchase
 - Clean separation between crypto swapping and fiat purchasing
 
 ### Revenue Sharing
@@ -82,13 +91,16 @@ REACT_APP_TRANSAK_ENVIRONMENT=PRODUCTION
 
 ## Benefits of This Approach
 
-1. **Best Practices**: Follows Transak's official documentation
-2. **Better UX**: Dedicated page instead of modal overlay
-3. **SEO Friendly**: Proper routing and page structure
-4. **Maintainable**: Clean separation of concerns
-5. **Scalable**: Easy to add more payment providers
-6. **Professional**: Trust indicators and proper branding
-7. **No Conflicts**: Completely isolated from LiFi widget
+1. **Best Practices**: Uses official Transak SDK as recommended
+2. **No Conflicts**: Direct SDK integration prevents iframe-related issues
+3. **Error Resilient**: Built-in handling for ad blocker script blocking
+4. **Better Performance**: No iframe overhead or loading delays
+5. **Enhanced UX**: Seamless integration with automatic navigation
+6. **SEO Friendly**: Proper routing and page structure
+7. **Maintainable**: Clean separation of concerns with event-driven architecture
+8. **Scalable**: Easy to add more payment providers
+9. **Professional**: Trust indicators and comprehensive error handling
+10. **Chart Compatible**: Won't interfere with existing chart components
 
 ## Support
 

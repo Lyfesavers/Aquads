@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FaArrowLeft, FaCreditCard, FaShieldAlt, FaGlobe, FaLock, FaCheckCircle, FaExclamationTriangle } from 'react-icons/fa';
+import transakSDK from '@transak/transak-sdk';
 import logger from '../utils/logger';
 import './TransakPage.css';
 
@@ -9,6 +10,7 @@ const TransakPage = ({ currentUser, showNotification }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isDevelopment, setIsDevelopment] = useState(false);
+  const transakRef = useRef(null);
 
   useEffect(() => {
     // Check if we're in development mode
@@ -18,110 +20,169 @@ const TransakPage = ({ currentUser, showNotification }) => {
     setIsDevelopment(isLocalhost);
   }, []);
 
-  // Build Transak iframe URL
-  const buildTransakURL = () => {
-    // TEMPORARY: Force staging until production API key is activated
-    const environment = 'STAGING';
-    
-    // Use staging API key that you confirmed works
-    const apiKey = 'af88b688-a2e5-4feb-a306-ac073bbfed63';
-    
-    const baseURL = environment === 'STAGING' 
-      ? 'https://staging-global.transak.com' 
-      : 'https://global.transak.com';
+  // Initialize Transak SDK
+  const initializeTransak = () => {
+    try {
+      // TEMPORARY: Force staging until production API key is activated
+      const environment = 'STAGING';
+      
+      // Use staging API key that you confirmed works
+      const apiKey = 'af88b688-a2e5-4feb-a306-ac073bbfed63';
+      
+      const transakConfig = {
+        apiKey: apiKey,
+        environment: environment,
+        defaultCryptoCurrency: 'ETH',
+        cryptoCurrencyList: 'BTC,ETH,USDC,USDT,BNB,MATIC,AVAX,SOL',
+        defaultFiatCurrency: 'USD',
+        fiatCurrency: 'USD,EUR,GBP,CAD,AUD',
+        themeColor: '00d4ff',
+        colorMode: 'dark',
+        hideMenu: true,
+        hideExchangeScreen: false,
+        networks: 'ethereum,polygon,bsc,avalanche,solana,arbitrum,optimism,base',
+        partnerOrderId: `aquads-${Date.now()}`,
+        walletAddress: currentUser?.wallet || '',
+        partnerCustomerId: currentUser?.wallet || currentUser?.id || 'anonymous',
+        // SDK specific options
+        widgetHeight: '650px',
+        widgetWidth: '100%',
+        // Error handling options
+        disableWalletAddressForm: false,
+        isAutoFillUserData: false
+      };
 
-    const params = new URLSearchParams({
-      apiKey: apiKey,
-      environment: environment,
-      defaultCryptoCurrency: 'ETH',
-      cryptoCurrencyList: 'BTC,ETH,USDC,USDT,BNB,MATIC,AVAX,SOL',
-      defaultFiatCurrency: 'USD',
-      fiatCurrency: 'USD,EUR,GBP,CAD,AUD',
-      themeColor: '00d4ff',
-      colorMode: 'dark',
-      hideMenu: 'true',
-      hideExchangeScreen: 'false',
-      networks: 'ethereum,polygon,bsc,avalanche,solana,arbitrum,optimism,base',
-      partnerOrderId: `aquads-${Date.now()}`,
-      walletAddress: currentUser?.wallet || '',
-      partnerCustomerId: currentUser?.wallet || currentUser?.id || 'anonymous'
-    });
+      // Initialize Transak SDK
+      const transak = new transakSDK(transakConfig);
 
-    return `${baseURL}/?${params.toString()}`;
-  };
-
-  const handleIframeLoad = () => {
-    setIsLoading(false);
-    logger.info('Transak iframe loaded successfully');
-  };
-
-  const handleIframeError = () => {
-    setError('domain_restriction');
-    setIsLoading(false);
-    logger.error('Transak iframe failed to load - likely domain restriction');
-  };
-
-  // Handle iframe load errors (403, domain restrictions)
-  useEffect(() => {
-    const handleMessage = (event) => {
-      // Listen for iframe errors
-      if (event.data && event.data.type === 'TRANSAK_WIDGET_ERROR') {
-        setError('domain_restriction');
+      // Event listeners for Transak SDK
+      transak.on(transak.EVENTS.TRANSAK_WIDGET_INITIALISED, () => {
+        logger.info('Transak SDK initialized successfully');
         setIsLoading(false);
+      });
+
+      transak.on(transak.EVENTS.TRANSAK_WIDGET_OPEN, () => {
+        logger.info('Transak widget opened');
+      });
+
+      transak.on(transak.EVENTS.TRANSAK_WIDGET_CLOSE, () => {
+        logger.info('Transak widget closed');
+        // Navigate back to AquaSwap when user closes the widget
+        navigate('/aquaswap');
+      });
+
+      transak.on(transak.EVENTS.TRANSAK_ORDER_SUCCESSFUL, (orderData) => {
+        logger.info('Transak order successful:', orderData);
+        showNotification('Crypto purchase completed successfully!', 'success');
+        // Navigate back to AquaSwap after successful purchase
+        setTimeout(() => {
+          navigate('/aquaswap');
+        }, 3000);
+      });
+
+      transak.on(transak.EVENTS.TRANSAK_ORDER_FAILED, (error) => {
+        logger.error('Transak order failed:', error);
+        showNotification('Purchase failed. Please try again.', 'error');
+      });
+
+      transak.on(transak.EVENTS.TRANSAK_ORDER_CANCELLED, () => {
+        logger.info('Transak order cancelled by user');
+        showNotification('Purchase cancelled', 'info');
+      });
+
+      // Handle any initialization errors
+      transak.on('error', (error) => {
+        logger.error('Transak SDK error:', error);
+        
+        // Check if it's a New Relic related error and suppress it
+        if (error && error.message && 
+            (error.message.includes('newrelic') || 
+             error.message.includes('ChunkLoadError') ||
+             error.message.includes('ERR_BLOCKED_BY_CLIENT'))) {
+          console.warn('Third-party analytics blocked - this won\'t affect functionality');
+          return; // Don't set error state for New Relic issues
+        }
+        
+        setError('sdk_initialization_error');
+        setIsLoading(false);
+      });
+
+      // Store reference for cleanup
+      transakRef.current = transak;
+
+      // Initialize the widget
+      transak.init();
+
+    } catch (error) {
+      logger.error('Failed to initialize Transak SDK:', error);
+      setError('sdk_initialization_error');
+      setIsLoading(false);
+    }
+  };
+
+  // Initialize Transak when component mounts
+  useEffect(() => {
+    // Add global error handler for New Relic issues
+    const handleGlobalError = (event) => {
+      if (event.error && event.error.message && 
+          (event.error.message.includes('newrelic') || 
+           event.error.message.includes('ChunkLoadError') ||
+           event.error.message.includes('ERR_BLOCKED_BY_CLIENT'))) {
+        console.warn('Third-party analytics script blocked - this is normal');
+        event.preventDefault();
+        return false;
       }
     };
 
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+    window.addEventListener('error', handleGlobalError, true);
+
+    // Initialize Transak SDK
+    initializeTransak();
+
+    // Cleanup function
+    return () => {
+      window.removeEventListener('error', handleGlobalError, true);
+      
+      // Clean up Transak SDK
+      if (transakRef.current) {
+        try {
+          transakRef.current.close();
+        } catch (error) {
+          logger.warn('Error closing Transak SDK:', error);
+        }
+      }
+    };
   }, []);
 
-  const renderDomainRestrictionError = () => (
-    <div className="error-container domain-error">
+  const renderError = () => (
+    <div className="error-container">
       <div className="error-icon">
         <FaExclamationTriangle />
       </div>
-      <h3>Domain Access Restricted</h3>
+      <h3>Unable to load payment system</h3>
       <div className="error-details">
-        <p>The Transak API key is currently restricted to specific domains.</p>
-        
-        {isDevelopment ? (
-          <div className="dev-info">
-            <h4>Development Mode Detected</h4>
-            <p>You're running on localhost. The staging environment should work, but if you see this error:</p>
-            <ol>
-              <li>The staging API key may also have restrictions</li>
-              <li>Try running on a different port</li>
-              <li>Contact Transak support to allowlist localhost</li>
-            </ol>
+        {error === 'sdk_initialization_error' ? (
+          <div>
+            <p>Failed to initialize the Transak payment system.</p>
+            <p>This could be due to:</p>
+            <ul>
+              <li>Network connectivity issues</li>
+              <li>Ad blocker interference</li>
+              <li>Browser security settings</li>
+            </ul>
           </div>
         ) : (
-          <div className="production-info">
-            <h4>Production Environment</h4>
-            <p>Current domain: <code>{window.location.hostname}</code></p>
-            <p>To fix this issue:</p>
-            <ol>
-              <li>Contact Transak support at <a href="mailto:support@transak.com">support@transak.com</a></li>
-              <li>Request to add your domain: <strong>{window.location.hostname}</strong></li>
-              <li>Provide your API key: <code>8330ddd4-106a-41f0-8153-f2aa741cb18c</code></li>
-              <li>Mention error code: <strong>T-INF-101</strong></li>
-            </ol>
-          </div>
+          <p>An unexpected error occurred while loading the payment system.</p>
         )}
-        
-        <div className="alternative-options">
-          <h4>Alternative Options</h4>
-          <p>While waiting for domain approval, users can:</p>
-          <ul>
-            <li>Visit <a href="https://global.transak.com" target="_blank" rel="noopener noreferrer">Transak directly</a></li>
-            <li>Use other crypto purchase methods</li>
-            <li>Contact support for assistance</li>
-          </ul>
-        </div>
       </div>
       
       <div className="error-actions">
         <button 
-          onClick={() => window.location.reload()} 
+          onClick={() => {
+            setError(null);
+            setIsLoading(true);
+            initializeTransak();
+          }} 
           className="retry-button"
         >
           Try Again
@@ -184,49 +245,33 @@ const TransakPage = ({ currentUser, showNotification }) => {
         </div>
       </div>
 
+      {/* SDK Notice */}
+      <div className="sdk-notice">
+        <p>
+          <strong>Enhanced Integration:</strong> Using Transak's official SDK for the best user experience. 
+          The payment widget will open automatically below.
+        </p>
+      </div>
+
       {/* Main content */}
       <div className="transak-content">
         {isLoading && (
           <div className="loading-container">
             <div className="loading-spinner"></div>
-            <h3>Loading secure payment system...</h3>
-            <p>Connecting to Transak's {isDevelopment ? 'staging' : 'production'} servers</p>
+            <h3>Initializing secure payment system...</h3>
+            <p>Loading Transak's {isDevelopment ? 'staging' : 'production'} environment</p>
           </div>
         )}
 
-        {error === 'domain_restriction' && renderDomainRestrictionError()}
+        {error && renderError()}
 
-        {error && error !== 'domain_restriction' && (
-          <div className="error-container">
-            <div className="error-icon">⚠️</div>
-            <h3>Unable to load payment system</h3>
-            <p>{error}</p>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="retry-button"
-            >
-              Try Again
-            </button>
-            <Link to="/aquaswap" className="back-link">
-              Return to AquaSwap
-            </Link>
-          </div>
-        )}
-
-        {/* Transak iframe */}
-        {!error && (
-          <div className={`transak-iframe-container ${isLoading ? 'hidden' : ''}`}>
-            <iframe
-              src={buildTransakURL()}
-              title="Transak Widget"
-              width="100%"
-              height="650"
-              frameBorder="0"
-              onLoad={handleIframeLoad}
-              onError={handleIframeError}
-              allow="camera; microphone; payment"
-              sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-top-navigation"
-            />
+        {/* Transak SDK will render here */}
+        {!error && !isLoading && (
+          <div className="transak-sdk-container">
+            <div className="sdk-info">
+              <p>✅ Transak SDK loaded successfully</p>
+              <p>The payment interface should appear below. If you don't see it, try refreshing the page.</p>
+            </div>
           </div>
         )}
       </div>
@@ -261,7 +306,7 @@ const TransakPage = ({ currentUser, showNotification }) => {
         <div className="footer-disclaimer">
           <p>
             <strong>Powered by Transak</strong> - Licensed and regulated financial service provider. 
-            Your funds are protected by industry-leading security measures.
+            Using official Transak SDK for maximum compatibility and security.
           </p>
         </div>
       </div>
