@@ -8,25 +8,38 @@ import './TransakPage.css';
 import { TransakConfig, Transak } from '@transak/transak-sdk';
 
 // Transak configuration following official documentation
-const TRANSAK_CONFIG = {
-  apiKey: process.env.REACT_APP_TRANSAK_API_KEY || 'your-api-key-here',
-  environment: process.env.REACT_APP_TRANSAK_ENVIRONMENT === 'STAGING' ? Transak.ENVIRONMENTS.STAGING : Transak.ENVIRONMENTS.PRODUCTION,
-  containerId: 'transak-widget-container',
-  // Revenue sharing configuration
-  partnerOrderId: `aquads-${Date.now()}`,
-  // Supported cryptocurrencies
-  defaultCryptoCurrency: 'ETH',
-  cryptoCurrencyList: 'BTC,ETH,USDC,USDT,BNB,MATIC,AVAX,SOL',
-  // Supported fiat currencies
-  defaultFiatCurrency: 'USD',
-  fiatCurrency: 'USD,EUR,GBP,CAD,AUD',
-  // UI customization
-  themeColor: '00d4ff',
-  colorMode: 'dark',
-  hideMenu: true,
-  hideExchangeScreen: false,
-  // Network configurations
-  networks: 'ethereum,polygon,bsc,avalanche,solana,arbitrum,optimism,base'
+const getTransakConfig = () => {
+  const apiKey = process.env.REACT_APP_TRANSAK_API_KEY;
+  const environment = process.env.REACT_APP_TRANSAK_ENVIRONMENT || 'PRODUCTION';
+  
+  // Log configuration for debugging (without exposing full API key)
+  logger.info('Transak Config:', {
+    hasApiKey: !!apiKey,
+    apiKeyPrefix: apiKey ? `${apiKey.substring(0, 8)}...` : 'NOT_SET',
+    environment,
+    nodeEnv: process.env.NODE_ENV
+  });
+
+  return {
+    apiKey: apiKey || 'demo-api-key', // Fallback for development
+    environment: environment === 'STAGING' ? Transak.ENVIRONMENTS.STAGING : Transak.ENVIRONMENTS.PRODUCTION,
+    containerId: 'transak-widget-container',
+    // Revenue sharing configuration
+    partnerOrderId: `aquads-${Date.now()}`,
+    // Supported cryptocurrencies
+    defaultCryptoCurrency: 'ETH',
+    cryptoCurrencyList: 'BTC,ETH,USDC,USDT,BNB,MATIC,AVAX,SOL',
+    // Supported fiat currencies
+    defaultFiatCurrency: 'USD',
+    fiatCurrency: 'USD,EUR,GBP,CAD,AUD',
+    // UI customization
+    themeColor: '00d4ff',
+    colorMode: 'dark',
+    hideMenu: true,
+    hideExchangeScreen: false,
+    // Network configurations
+    networks: 'ethereum,polygon,bsc,avalanche,solana,arbitrum,optimism,base'
+  };
 };
 
 const TransakPage = ({ currentUser, showNotification }) => {
@@ -43,15 +56,25 @@ const TransakPage = ({ currentUser, showNotification }) => {
         setIsLoading(true);
         setError(null);
 
+        const baseConfig = getTransakConfig();
+        
+        // Check if API key is properly configured
+        if (!process.env.REACT_APP_TRANSAK_API_KEY || process.env.REACT_APP_TRANSAK_API_KEY === 'your-api-key-here') {
+          throw new Error('INVALID_API_KEY');
+        }
+
         const config = {
-          ...TRANSAK_CONFIG,
+          ...baseConfig,
           // Add wallet address if user is connected
           walletAddress: currentUser?.wallet || '',
           // Revenue sharing
           partnerCustomerId: currentUser?.wallet || currentUser?.id || 'anonymous',
         };
 
-        logger.info('Initializing Transak with config:', config);
+        logger.info('Initializing Transak with config:', {
+          ...config,
+          apiKey: `${config.apiKey.substring(0, 8)}...` // Don't log full API key
+        });
 
         const transak = new Transak(config);
 
@@ -61,7 +84,7 @@ const TransakPage = ({ currentUser, showNotification }) => {
         });
 
         Transak.on(Transak.EVENTS.TRANSAK_WIDGET_INITIALISED, () => {
-          logger.info('Transak widget initialized');
+          logger.info('Transak widget initialized successfully');
           setIsLoading(false);
         });
 
@@ -102,7 +125,17 @@ const TransakPage = ({ currentUser, showNotification }) => {
 
       } catch (err) {
         logger.error('Error initializing Transak:', err);
-        setError('Failed to initialize payment system. Please check your API key configuration.');
+        
+        if (err.message === 'INVALID_API_KEY') {
+          setError('API key not configured. Please set up your Transak API key in the environment variables.');
+        } else if (err.message?.includes('403') || err.message?.includes('Forbidden')) {
+          setError('Invalid API key or insufficient permissions. Please check your Transak API key configuration.');
+        } else if (err.message?.includes('network') || err.message?.includes('fetch')) {
+          setError('Network connection issue. Please check your internet connection and try again.');
+        } else {
+          setError(`Failed to initialize payment system: ${err.message || 'Unknown error'}`);
+        }
+        
         setIsLoading(false);
       }
     };
@@ -122,6 +155,10 @@ const TransakPage = ({ currentUser, showNotification }) => {
       }
     };
   }, [transakInstance]);
+
+  // Check if we're in development mode
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const hasApiKey = process.env.REACT_APP_TRANSAK_API_KEY && process.env.REACT_APP_TRANSAK_API_KEY !== 'your-api-key-here';
 
   return (
     <div className="transak-page">
@@ -168,6 +205,13 @@ const TransakPage = ({ currentUser, showNotification }) => {
             <div className="loading-spinner"></div>
             <h3>Loading secure payment system...</h3>
             <p>Connecting to Transak's encrypted servers</p>
+            {isDevelopment && (
+              <div className="dev-info">
+                <p><strong>Development Mode:</strong></p>
+                <p>API Key: {hasApiKey ? '✅ Configured' : '❌ Missing'}</p>
+                <p>Environment: {process.env.REACT_APP_TRANSAK_ENVIRONMENT || 'PRODUCTION'}</p>
+              </div>
+            )}
           </div>
         )}
 
@@ -188,13 +232,22 @@ const TransakPage = ({ currentUser, showNotification }) => {
               </Link>
             </div>
             <div className="error-help">
-              <p><strong>Need help?</strong></p>
+              <p><strong>Troubleshooting:</strong></p>
               <ul>
-                <li>Make sure you have a valid Transak API key configured</li>
-                <li>Check your internet connection</li>
+                <li>If you're seeing 403 errors, your API key may be invalid or expired</li>
+                <li>Make sure your Transak API key is properly configured in Netlify environment variables</li>
+                <li>Check that your API key has the correct permissions for your domain</li>
                 <li>Try disabling ad blockers or privacy extensions</li>
-                <li>Contact support if the issue persists</li>
+                <li>Contact Transak support if the issue persists</li>
               </ul>
+              {isDevelopment && (
+                <div className="dev-debug">
+                  <p><strong>Debug Info:</strong></p>
+                  <p>Environment: {process.env.NODE_ENV}</p>
+                  <p>Transak Env: {process.env.REACT_APP_TRANSAK_ENVIRONMENT || 'PRODUCTION'}</p>
+                  <p>API Key Set: {hasApiKey ? 'Yes' : 'No'}</p>
+                </div>
+              )}
             </div>
           </div>
         )}

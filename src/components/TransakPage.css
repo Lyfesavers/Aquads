@@ -134,7 +134,7 @@
 
 .loading-container h3 {
   margin: 0 0 10px 0;
-  color: #ffffff;
+  color: #00d4ff;
   font-size: 1.5rem;
 }
 
@@ -142,6 +142,48 @@
   margin: 0;
   color: #a0a0a0;
   font-size: 1rem;
+}
+
+.dev-info {
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+  text-align: left;
+  max-width: 300px;
+}
+
+.dev-info p {
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  color: #ffc107;
+}
+
+.dev-info p:first-child {
+  font-weight: 600;
+  color: #ff9800;
+}
+
+.dev-debug {
+  background: rgba(108, 117, 125, 0.1);
+  border: 1px solid rgba(108, 117, 125, 0.3);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.dev-debug p {
+  margin: 0.3rem 0;
+  font-size: 0.85rem;
+  color: #6c757d;
+  font-family: 'Courier New', monospace;
+}
+
+.dev-debug p:first-child {
+  font-weight: 600;
+  color: #495057;
+  font-family: inherit;
 }
 
 /* Error state */
