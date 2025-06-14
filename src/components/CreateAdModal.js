@@ -34,11 +34,11 @@ const ADDON_PACKAGES = [
   {
     id: 'aqua_ripple',
     name: 'AquaRipple',
-    price: 400,
+    price: 500,
     icon: FaStar,
     color: 'from-blue-500 to-cyan-500',
     features: [
-      '3+ Media Pickups Guaranteed',
+      '4+ Media Pickups Guaranteed',
       'Estimated Reach: 5k-15k',
       '<24 Hour Distribution',
     ]
@@ -52,9 +52,7 @@ const ADDON_PACKAGES = [
     features: [
       '9+ Media Pickups Guaranteed',
       'Estimated Reach: 75k-250k',
-      '24-72 Hour Distribution',
-      'Sample Analytics Report'
-    ]
+      '24-72 Hour Distribution'    ]
   },
   {
     id: 'aqua_flow',
@@ -115,7 +113,8 @@ const ADDON_PACKAGES = [
       'Cryptopolitan • Bitcolumnist',
       'CoinGape • CryptoNews',
       'Yahoo Finance',
-      '6-72 Hour Distribution'
+      '6-72 Hour Distribution',
+      'Requirements: 500-word maximum'
     ]
   }
 ];
