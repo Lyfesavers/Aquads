@@ -41,7 +41,6 @@ const ADDON_PACKAGES = [
       '3+ Media Pickups Guaranteed',
       'Estimated Reach: 5k-15k',
       '<24 Hour Distribution',
-      'Chat Ticket Support'
     ]
   },
   {
@@ -60,7 +59,7 @@ const ADDON_PACKAGES = [
   {
     id: 'aqua_flow',
     name: 'AquaFlow',
-    price: 3100,
+    price: 3500,
     icon: FaChartLine,
     color: 'from-purple-500 to-indigo-500',
     features: [
