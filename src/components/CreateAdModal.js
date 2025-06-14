@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
-import { FaCopy, FaCheck, FaArrowLeft, FaArrowRight, FaBullhorn, FaUsers, FaTwitter, FaChartLine, FaGift, FaRocket, FaNewspaper } from 'react-icons/fa';
+import { FaCopy, FaCheck, FaArrowLeft, FaArrowRight, FaBullhorn, FaUsers, FaTwitter, FaChartLine, FaGift, FaRocket, FaNewspaper, FaCrown, FaStar, FaFire, FaGem, FaLightbulb, FaSparkles } from 'react-icons/fa';
 
 const BLOCKCHAIN_OPTIONS = [
   {
@@ -29,6 +29,103 @@ const BLOCKCHAIN_OPTIONS = [
   }
 ];
 
+// Aquads-branded marketing add-on packages
+const ADDON_PACKAGES = [
+  {
+    id: 'aqua_ripple',
+    name: 'AquaRipple',
+    price: 400,
+    icon: FaStar,
+    color: 'from-blue-500 to-cyan-500',
+    features: [
+      '4+ Media Pickups Guaranteed',
+      'Includes publication to Aquads Newsroom',
+      'Estimated Reach: 5k-15k',
+      '<24 Hour Distribution',
+      'Chat Ticket Support'
+    ]
+  },
+  {
+    id: 'aqua_wave',
+    name: 'AquaWave',
+    price: 1600,
+    icon: FaRocket,
+    color: 'from-green-500 to-teal-500',
+    features: [
+      '9+ Media Pickups Guaranteed',
+      'Estimated Reach: 75k-250k',
+      '24-72 Hour Distribution',
+      'Chat Ticket Support',
+      'Sample Analytics Report'
+    ]
+  },
+  {
+    id: 'aqua_flow',
+    name: 'AquaFlow',
+    price: 3100,
+    icon: FaChartLine,
+    color: 'from-purple-500 to-indigo-500',
+    features: [
+      'CoinMarketCap (Community Section)',
+      'CryptoPolitan',
+      'CoinCodex',
+      'BraveNewCoin',
+      'Bitcolumnist',
+      '24-72 Hour Distribution',
+      'Chat Ticket Support',
+      'SEO Optimizations'
+    ]
+  },
+  {
+    id: 'aqua_storm',
+    name: 'AquaStorm',
+    price: 7000,
+    icon: FaFire,
+    color: 'from-orange-500 to-red-500',
+    features: [
+      'Everything from AquaWave, plus:',
+      '75+ Media Pickups Guaranteed',
+      'Site Audience of 75M+',
+      'Guaranteed coverage from Yahoo Finance and MarketWatch',
+      'Requirements: 500-word maximum'
+    ]
+  },
+  {
+    id: 'aqua_tidal',
+    name: 'AquaTidal',
+    price: 15000,
+    icon: FaGem,
+    color: 'from-indigo-500 to-purple-500',
+    features: [
+      'Everything from AquaStorm plus:',
+      '125+ Media Pickups Guaranteed',
+      'Site Audience of 300M+',
+      'Video Chat Support',
+      'Coverage from: Cointelegraph',
+      'CoinMarketCap (Community Section)',
+      'Requirements: 500-word maximum'
+    ]
+  },
+  {
+    id: 'aqua_legend',
+    name: 'AquaLegend',
+    price: 25000,
+    icon: FaCrown,
+    color: 'from-pink-500 to-rose-500',
+    features: [
+      'Coverage from top crypto publications:',
+      'Cointelegraph • CoinMarketCap',
+      'Bitcoin.com • AMB Crypto',
+      'Coinspeaker • Coincodex',
+      'Cryptopolitan • Bitcolumnist',
+      'CoinGape • CryptoNews',
+      'Yahoo Finance',
+      'Video Chat Support',
+      '6-72 Hour Distribution'
+    ]
+  }
+];
+
 const CreateAdModal = ({ onCreateAd, onClose }) => {
   const [formData, setFormData] = useState({
     title: '',
@@ -39,7 +136,9 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
     txSignature: '',
     paymentChain: BLOCKCHAIN_OPTIONS[0].name,
     chainSymbol: BLOCKCHAIN_OPTIONS[0].symbol,
-    chainAddress: BLOCKCHAIN_OPTIONS[0].address
+    chainAddress: BLOCKCHAIN_OPTIONS[0].address,
+    selectedAddons: [], // Track selected add-on packages
+    totalAmount: 299 // Base listing fee
   });
   const [previewUrl, setPreviewUrl] = useState('');
   const [error, setError] = useState('');
@@ -145,6 +244,25 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
+  };
+
+  const handleAddonToggle = (addonId) => {
+    setFormData(prev => {
+      const selectedAddons = prev.selectedAddons.includes(addonId)
+        ? prev.selectedAddons.filter(id => id !== addonId)
+        : [...prev.selectedAddons, addonId];
+      
+      const addonTotal = selectedAddons.reduce((sum, id) => {
+        const addon = ADDON_PACKAGES.find(pkg => pkg.id === id);
+        return sum + (addon ? addon.price : 0);
+      }, 0);
+      
+      return {
+        ...prev,
+        selectedAddons,
+        totalAmount: 299 + addonTotal // Base fee + add-ons
+      };
+    });
   };
 
   return (
@@ -276,7 +394,7 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Premium Package Benefits */}
-            <div className="order-2 lg:order-1">
+            <div className="order-2 lg:order-1 max-h-[80vh] overflow-y-auto">
               <div className="bg-gradient-to-br from-blue-900/50 to-purple-900/50 border border-blue-500/50 rounded-xl p-6 mb-6">
                 <h3 className="text-2xl font-bold text-white mb-4 flex items-center">
                   <FaRocket className="mr-3 text-blue-400" />
@@ -356,11 +474,101 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
                   </p>
                 </div>
               </div>
+
+              {/* Marketing Add-on Packages */}
+              <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 border border-gray-600/50 rounded-xl p-6">
+                <h3 className="text-xl font-bold text-white mb-4 flex items-center">
+                  <FaSparkles className="mr-3 text-purple-400" />
+                  Marketing Add-on Packages
+                </h3>
+                <p className="text-gray-300 mb-4 text-sm">
+                  Supercharge your listing with premium marketing packages designed to maximize your project's reach and impact.
+                </p>
+                
+                <div className="space-y-3">
+                  {ADDON_PACKAGES.map((addon) => {
+                    const IconComponent = addon.icon;
+                    const isSelected = formData.selectedAddons.includes(addon.id);
+                    
+                    return (
+                      <div
+                        key={addon.id}
+                        className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                          isSelected
+                            ? 'border-blue-500 bg-blue-500/10 ring-1 ring-blue-500/50'
+                            : 'border-gray-600 hover:border-gray-500 hover:bg-gray-700/20'
+                        }`}
+                        onClick={() => handleAddonToggle(addon.id)}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start space-x-3">
+                            <div className={`bg-gradient-to-r ${addon.color} p-2 rounded-lg`}>
+                              <IconComponent className="text-white text-sm" />
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-white flex items-center">
+                                {addon.name}
+                                <span className="ml-2 text-sm font-bold text-green-400">
+                                  ${addon.price.toLocaleString()} USDC
+                                </span>
+                              </h4>
+                              <ul className="text-xs text-gray-400 mt-1 space-y-1">
+                                {addon.features.slice(0, 3).map((feature, idx) => (
+                                  <li key={idx}>• {feature}</li>
+                                ))}
+                                {addon.features.length > 3 && (
+                                  <li className="text-gray-500">
+                                    + {addon.features.length - 3} more features...
+                                  </li>
+                                )}
+                              </ul>
+                            </div>
+                          </div>
+                          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                            isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-400'
+                          }`}>
+                            {isSelected && <FaCheck className="text-white text-xs" />}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
             {/* Payment Form */}
             <div className="order-1 lg:order-2">
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Total Amount Display */}
+                <div className="bg-gradient-to-r from-green-900/30 to-blue-900/30 border border-green-500/50 rounded-lg p-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-white font-medium">Total Amount:</span>
+                    <span className="text-2xl font-bold text-green-400">
+                      ${formData.totalAmount.toLocaleString()} USDC
+                    </span>
+                  </div>
+                  {formData.selectedAddons.length > 0 && (
+                    <div className="mt-2 pt-2 border-t border-gray-600">
+                      <div className="text-sm text-gray-300">
+                        <div className="flex justify-between">
+                          <span>Base Listing:</span>
+                          <span>$299 USDC</span>
+                        </div>
+                        {formData.selectedAddons.map(addonId => {
+                          const addon = ADDON_PACKAGES.find(pkg => pkg.id === addonId);
+                          return addon ? (
+                            <div key={addonId} className="flex justify-between">
+                              <span>{addon.name}:</span>
+                              <span>${addon.price.toLocaleString()} USDC</span>
+                            </div>
+                          ) : null;
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <div>
                   <h3 className="text-xl font-semibold text-white mb-4">Select Payment Network</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -377,7 +585,7 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
                       >
                         <div className="flex justify-between items-center">
                           <span className="font-medium">{chain.name}</span>
-                          <span className="text-sm text-gray-300">$299 {chain.amount}</span>
+                          <span className="text-sm text-gray-300">${formData.totalAmount} {chain.amount}</span>
                         </div>
                       </button>
                     ))}

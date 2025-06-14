@@ -207,7 +207,7 @@ const calculateBumpAmount = (type) => {
 // POST route for creating new ad
 router.post('/', auth, async (req, res) => {
   try {
-    const { title, logo, url, pairAddress, blockchain, referredBy, x, y, preferredSize, txSignature, paymentChain, chainSymbol, chainAddress } = req.body;
+    const { title, logo, url, pairAddress, blockchain, referredBy, x, y, preferredSize, txSignature, paymentChain, chainSymbol, chainAddress, selectedAddons, totalAmount } = req.body;
     
     // Use client's preferred size if provided, otherwise use MAX_SIZE
     const bubbleSize = preferredSize || MAX_SIZE;
@@ -232,6 +232,9 @@ router.post('/', auth, async (req, res) => {
       paymentChain,
       chainSymbol,
       chainAddress,
+      selectedAddons: selectedAddons || [],
+      totalAmount: totalAmount || 299,
+      listingFee: 299, // Base listing fee remains the same
       // Set status to 'pending' for non-admin users, 'active' for admins
       status: req.user.isAdmin ? 'active' : 'pending'
     });
