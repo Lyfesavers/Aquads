@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
-import { FaCopy, FaCheck, FaArrowLeft, FaArrowRight, FaBullhorn, FaUsers, FaTwitter, FaChartLine, FaGift, FaRocket, FaNewspaper, FaCrown, FaStar, FaFire, FaGem, FaLightbulb, FaSparkles } from 'react-icons/fa';
+import { FaCopy, FaCheck, FaArrowLeft, FaArrowRight, FaBullhorn, FaUsers, FaTwitter, FaChartLine, FaGift, FaRocket, FaNewspaper, FaCrown, FaStar, FaFire, FaGem, FaLightbulb } from 'react-icons/fa';
 
 const BLOCKCHAIN_OPTIONS = [
   {
@@ -478,7 +478,7 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
               {/* Marketing Add-on Packages */}
               <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 border border-gray-600/50 rounded-xl p-6">
                 <h3 className="text-xl font-bold text-white mb-4 flex items-center">
-                  <FaSparkles className="mr-3 text-purple-400" />
+                  <FaGift className="mr-3 text-purple-400" />
                   Marketing Add-on Packages
                 </h3>
                 <p className="text-gray-300 mb-4 text-sm">
