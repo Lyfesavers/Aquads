@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
-import { FaCopy, FaCheck, FaArrowLeft, FaArrowRight, FaBullhorn, FaUsers, FaTwitter, FaChartLine, FaGift, FaRocket, FaNewspaper, FaCrown, FaStar, FaFire, FaGem, FaLightbulb } from 'react-icons/fa';
+import { FaCopy, FaCheck, FaArrowLeft, FaArrowRight, FaBullhorn, FaUsers, FaTwitter, FaChartLine, FaGift, FaRocket, FaNewspaper, FaCrown, FaStar, FaFire, FaGem, FaLightbulb, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 
 const BLOCKCHAIN_OPTIONS = [
   {
@@ -145,6 +145,7 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
   const [step, setStep] = useState(1);
   const [selectedChain, setSelectedChain] = useState(BLOCKCHAIN_OPTIONS[0]);
   const [copiedAddress, setCopiedAddress] = useState(false);
+  const [expandedPackages, setExpandedPackages] = useState(new Set()); // Track expanded packages
 
   const validateImageUrl = async (url) => {
     try {
@@ -262,6 +263,18 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
         selectedAddons,
         totalAmount: 299 + addonTotal // Base fee + add-ons
       };
+    });
+  };
+
+  const togglePackageExpansion = (packageId) => {
+    setExpandedPackages(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(packageId)) {
+        newSet.delete(packageId);
+      } else {
+        newSet.add(packageId);
+      }
+      return newSet;
     });
   };
 
@@ -489,44 +502,71 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
                   {ADDON_PACKAGES.map((addon) => {
                     const IconComponent = addon.icon;
                     const isSelected = formData.selectedAddons.includes(addon.id);
+                    const isExpanded = expandedPackages.has(addon.id);
+                    const hasMoreFeatures = addon.features.length > 3;
                     
                     return (
                       <div
                         key={addon.id}
-                        className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                        className={`border rounded-lg p-4 transition-all ${
                           isSelected
                             ? 'border-blue-500 bg-blue-500/10 ring-1 ring-blue-500/50'
                             : 'border-gray-600 hover:border-gray-500 hover:bg-gray-700/20'
                         }`}
-                        onClick={() => handleAddonToggle(addon.id)}
                       >
                         <div className="flex items-start justify-between">
-                          <div className="flex items-start space-x-3">
+                          <div className="flex items-start space-x-3 flex-1">
                             <div className={`bg-gradient-to-r ${addon.color} p-2 rounded-lg`}>
                               <IconComponent className="text-white text-sm" />
                             </div>
                             <div className="flex-1">
-                              <h4 className="font-semibold text-white flex items-center">
-                                {addon.name}
-                                <span className="ml-2 text-sm font-bold text-green-400">
-                                  ${addon.price.toLocaleString()} USDC
-                                </span>
-                              </h4>
+                              <div className="flex items-center justify-between">
+                                <h4 className="font-semibold text-white flex items-center">
+                                  {addon.name}
+                                  <span className="ml-2 text-sm font-bold text-green-400">
+                                    ${addon.price.toLocaleString()} USDC
+                                  </span>
+                                </h4>
+                                {hasMoreFeatures && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      togglePackageExpansion(addon.id);
+                                    }}
+                                    className="text-gray-400 hover:text-white transition-colors p-1"
+                                    title={isExpanded ? 'Show less' : 'Show more features'}
+                                  >
+                                    {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
+                                  </button>
+                                )}
+                              </div>
                               <ul className="text-xs text-gray-400 mt-1 space-y-1">
-                                {addon.features.slice(0, 3).map((feature, idx) => (
+                                {(isExpanded ? addon.features : addon.features.slice(0, 3)).map((feature, idx) => (
                                   <li key={idx}>• {feature}</li>
                                 ))}
-                                {addon.features.length > 3 && (
+                                {!isExpanded && hasMoreFeatures && (
                                   <li className="text-gray-500">
                                     + {addon.features.length - 3} more features...
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        togglePackageExpansion(addon.id);
+                                      }}
+                                      className="ml-1 text-blue-400 hover:text-blue-300 underline"
+                                    >
+                                      Click to expand
+                                    </button>
                                   </li>
                                 )}
                               </ul>
                             </div>
                           </div>
-                          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                            isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-400'
-                          }`}>
+                          <div 
+                            className={`w-5 h-5 rounded border-2 flex items-center justify-center cursor-pointer ${
+                              isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-400'
+                            }`}
+                            onClick={() => handleAddonToggle(addon.id)}
+                          >
                             {isSelected && <FaCheck className="text-white text-xs" />}
                           </div>
                         </div>
