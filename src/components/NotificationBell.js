@@ -354,6 +354,8 @@ const NotificationBell = ({ currentUser }) => {
         return '📅';
       case 'status':
         return '🔔';
+      case 'affiliate':
+        return '🎉';
       default:
         return '📌';
     }
@@ -446,7 +448,8 @@ const NotificationBell = ({ currentUser }) => {
                         <div className="mr-3 text-xl">
                           {notification.type === 'message' ? '💬' : 
                            notification.type === 'booking' ? '📅' : 
-                           notification.type === 'review' ? '⭐' : '📣'}
+                           notification.type === 'review' ? '⭐' : 
+                           notification.type === 'affiliate' ? '🎉' : '📣'}
                         </div>
                         <div className="flex-1">
                           <p className="text-sm text-white">{notification.message}</p>

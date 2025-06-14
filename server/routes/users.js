@@ -6,6 +6,7 @@ const User = require('../models/User');
 const auth = require('../middleware/auth');
 const crypto = require('crypto');
 const { awardAffiliatePoints } = require('./points');
+const { createNotification } = require('./notifications');
 const rateLimit = require('express-rate-limit');
 const ipLimiter = require('../middleware/ipLimiter');
 const deviceLimiter = require('../middleware/deviceLimiter');
@@ -107,6 +108,20 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
           // Award points to referrer
           await awardAffiliatePoints(user.referredBy, user._id);
           console.log('Affiliate points awarded for:', username);
+          
+          // Create notification for the referrer about new affiliate
+          try {
+            await createNotification(
+              referringUser._id,
+              'affiliate',
+              `🎉 New affiliate joined! ${user.username} has signed up using your referral code.`,
+              '/dashboard'
+            );
+            console.log('Affiliate notification created for user:', referringUser.username);
+          } catch (notificationError) {
+            console.error('Error creating affiliate notification:', notificationError);
+            // Don't fail registration if notification creation fails
+          }
         }
       } catch (error) {
         console.error('Error handling affiliate relationship:', error);
