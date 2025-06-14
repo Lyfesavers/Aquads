@@ -38,8 +38,7 @@ const ADDON_PACKAGES = [
     icon: FaStar,
     color: 'from-blue-500 to-cyan-500',
     features: [
-      '4+ Media Pickups Guaranteed',
-      'Includes publication to Aquads Newsroom',
+      '3+ Media Pickups Guaranteed',
       'Estimated Reach: 5k-15k',
       '<24 Hour Distribution',
       'Chat Ticket Support'
@@ -55,7 +54,6 @@ const ADDON_PACKAGES = [
       '9+ Media Pickups Guaranteed',
       'Estimated Reach: 75k-250k',
       '24-72 Hour Distribution',
-      'Chat Ticket Support',
       'Sample Analytics Report'
     ]
   },
@@ -72,7 +70,6 @@ const ADDON_PACKAGES = [
       'BraveNewCoin',
       'Bitcolumnist',
       '24-72 Hour Distribution',
-      'Chat Ticket Support',
       'SEO Optimizations'
     ]
   },
@@ -100,7 +97,6 @@ const ADDON_PACKAGES = [
       'Everything from AquaStorm plus:',
       '125+ Media Pickups Guaranteed',
       'Site Audience of 300M+',
-      'Video Chat Support',
       'Coverage from: Cointelegraph',
       'CoinMarketCap (Community Section)',
       'Requirements: 500-word maximum'
@@ -120,7 +116,6 @@ const ADDON_PACKAGES = [
       'Cryptopolitan • Bitcolumnist',
       'CoinGape • CryptoNews',
       'Yahoo Finance',
-      'Video Chat Support',
       '6-72 Hour Distribution'
     ]
   }
