@@ -19,6 +19,9 @@ import PremiumPaymentModal from './PremiumPaymentModal';
 import CreateJobModal from './CreateJobModal';
 import JobList from './JobList';
 import NotificationBell from './NotificationBell';
+import OnlineStatusIndicator from './OnlineStatusIndicator';
+import useUserPresence from '../hooks/useUserPresence';
+import useUserStatusUpdates from '../hooks/useUserStatusUpdates';
 import logger from '../utils/logger';
 
 // Helper function for country flags - using images instead of emojis
@@ -154,6 +157,10 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [jobToEdit, setJobToEdit] = useState(null);
   const [isLoading, setIsLoading] = useState({ jobs: true });
 
+  // Initialize user presence tracking
+  useUserPresence(currentUser);
+  const { getUserStatus, bulkUpdateUserStatuses } = useUserStatusUpdates();
+
   const categories = [
     { id: 'smart-contract', name: 'Smart Contract', icon: '📝' },
     { id: 'audit', name: 'Audit', icon: '🔍' },
@@ -256,6 +263,13 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
       setServices(servicesWithReviews);
       setOriginalServices(servicesWithReviews);
+      
+      // Initialize user statuses for all service sellers
+      const sellers = servicesWithReviews
+        .map(service => service.seller)
+        .filter(seller => seller && seller._id);
+      bulkUpdateUserStatuses(sellers);
+      
       setLoading(false);
     } catch (error) {
       logger.error('Error loading services:', error);
@@ -1078,19 +1092,27 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                             />
                             <div className="flex-1">
                               <div className="flex items-center justify-between">
-                                <h4 className="font-medium">
-                                  {service.seller?.username}
-                                  {service.isPremium && (
-                                    <span className="inline-flex items-center justify-center ml-1 w-4 h-4 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full">
-                                      <FaCheck className="text-white text-xs" />
-                                    </span>
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-medium">
+                                    {service.seller?.username}
+                                    {service.isPremium && (
+                                      <span className="inline-flex items-center justify-center ml-1 w-4 h-4 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full">
+                                        <FaCheck className="text-white text-xs" />
+                                      </span>
+                                    )}
+                                    {service.seller?.country && (
+                                      <span className="ml-2" title={service.seller.country}>
+                                        <CountryFlag countryCode={service.seller.country} />
+                                      </span>
+                                    )}
+                                  </h4>
+                                  {service.seller?._id && (
+                                    <OnlineStatusIndicator 
+                                      user={getUserStatus(service.seller._id) || service.seller} 
+                                      size="small"
+                                    />
                                   )}
-                                  {service.seller?.country && (
-                                    <span className="ml-2" title={service.seller.country}>
-                                      <CountryFlag countryCode={service.seller.country} />
-                                    </span>
-                                  )}
-                                </h4>
+                                </div>
                                 {service.linkedin && (
                                   <a
                                     href={service.linkedin}

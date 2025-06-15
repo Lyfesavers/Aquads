@@ -651,4 +651,57 @@ router.get('/verify/:username', async (req, res) => {
   }
 });
 
+// Get user online status
+router.get('/status/:userId', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId)
+      .select('username isOnline lastSeen lastActivity');
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({
+      userId: user._id,
+      username: user.username,
+      isOnline: user.isOnline,
+      lastSeen: user.lastSeen,
+      lastActivity: user.lastActivity
+    });
+  } catch (error) {
+    console.error('Error fetching user status:', error);
+    res.status(500).json({ message: 'Error fetching user status', error: error.message });
+  }
+});
+
+// Get multiple users' online status
+router.post('/status/bulk', async (req, res) => {
+  try {
+    const { userIds } = req.body;
+    
+    if (!userIds || !Array.isArray(userIds)) {
+      return res.status(400).json({ message: 'User IDs array is required' });
+    }
+
+    const users = await User.find({ _id: { $in: userIds } })
+      .select('username isOnline lastSeen lastActivity');
+    
+    const statusMap = {};
+    users.forEach(user => {
+      statusMap[user._id] = {
+        userId: user._id,
+        username: user.username,
+        isOnline: user.isOnline,
+        lastSeen: user.lastSeen,
+        lastActivity: user.lastActivity
+      };
+    });
+
+    res.json(statusMap);
+  } catch (error) {
+    console.error('Error fetching bulk user status:', error);
+    res.status(500).json({ message: 'Error fetching user status', error: error.message });
+  }
+});
+
 module.exports = router; 

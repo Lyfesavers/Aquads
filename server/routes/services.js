@@ -43,7 +43,7 @@ router.get('/', async (req, res) => {
       .sort(sortOptions)
       .limit(parseInt(limit))
       .skip((parseInt(page) - 1) * parseInt(limit))
-      .populate('seller', 'username image rating reviews country');
+      .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity');
 
     const total = await Service.countDocuments(query);
 
@@ -74,7 +74,7 @@ router.get('/search', async (req, res) => {
       { score: { $meta: 'textScore' } }
     )
     .sort({ score: { $meta: 'textScore' } })
-    .populate('seller', 'username image rating reviews country');
+    .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity');
 
     res.json(services);
   } catch (error) {
@@ -87,7 +87,7 @@ router.get('/category/:categoryId', async (req, res) => {
   try {
     const services = await Service.find({ category: req.params.categoryId })
       .sort({ rating: -1 })
-      .populate('seller', 'username image rating reviews country');
+      .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity');
     res.json(services);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching services by category', error: error.message });
@@ -149,7 +149,7 @@ router.post('/', auth, async (req, res) => {
       // Don't fail the service creation if points awarding fails
     }
     
-    await service.populate('seller', 'username image rating reviews country');
+    await service.populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity');
     console.log('Service populated with seller info');
 
     res.status(201).json(service);
@@ -186,7 +186,7 @@ router.put('/:id', auth, upload.single('image'), async (req, res) => {
     });
 
     await service.save();
-    await service.populate('seller', 'username image rating reviews country');
+    await service.populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity');
 
     res.json(service);
   } catch (error) {

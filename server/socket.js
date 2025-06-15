@@ -1,6 +1,9 @@
 // Socket.io singleton instance
 let io;
 
+// Store connected users
+const connectedUsers = new Map();
+
 // Initialize the socket.io instance
 function init(server) {
   io = require('socket.io')(server, {
@@ -13,10 +16,93 @@ function init(server) {
   
   // Add socket event handlers
   io.on('connection', (socket) => {
-    socket.on('error', (error) => {
+    console.log('User connected:', socket.id);
+
+    // Handle user authentication and online status
+    socket.on('userOnline', async (userData) => {
+      if (userData && userData.userId) {
+        try {
+          const User = require('./models/User');
+          
+          // Update user online status in database
+          await User.findByIdAndUpdate(userData.userId, {
+            isOnline: true,
+            lastActivity: new Date()
+          });
+
+          // Store user in connected users map
+          connectedUsers.set(socket.id, {
+            userId: userData.userId,
+            username: userData.username,
+            joinedAt: new Date()
+          });
+
+          // Join user to their own room for direct messages
+          socket.join(`user_${userData.userId}`);
+
+          // Broadcast user online status to all clients
+          socket.broadcast.emit('userStatusChanged', {
+            userId: userData.userId,
+            username: userData.username,
+            isOnline: true
+          });
+
+          console.log(`User ${userData.username} is now online`);
+        } catch (error) {
+          console.error('Error updating user online status:', error);
+        }
+      }
     });
 
-    socket.on('disconnect', (reason) => {
+    // Handle user activity heartbeat
+    socket.on('userActivity', async (userData) => {
+      if (userData && userData.userId) {
+        try {
+          const User = require('./models/User');
+          await User.findByIdAndUpdate(userData.userId, {
+            lastActivity: new Date()
+          });
+        } catch (error) {
+          console.error('Error updating user activity:', error);
+        }
+      }
+    });
+
+    socket.on('error', (error) => {
+      console.error('Socket error:', error);
+    });
+
+    socket.on('disconnect', async (reason) => {
+      console.log('User disconnected:', socket.id, reason);
+      
+      // Handle user going offline
+      const userInfo = connectedUsers.get(socket.id);
+      if (userInfo) {
+        try {
+          const User = require('./models/User');
+          
+          // Update user offline status in database
+          await User.findByIdAndUpdate(userInfo.userId, {
+            isOnline: false,
+            lastSeen: new Date()
+          });
+
+          // Remove from connected users
+          connectedUsers.delete(socket.id);
+
+          // Broadcast user offline status to all clients
+          socket.broadcast.emit('userStatusChanged', {
+            userId: userInfo.userId,
+            username: userInfo.username,
+            isOnline: false,
+            lastSeen: new Date()
+          });
+
+          console.log(`User ${userInfo.username} is now offline`);
+        } catch (error) {
+          console.error('Error updating user offline status:', error);
+        }
+      }
     });
 
     // Add back real-time ad updates
@@ -53,8 +139,32 @@ function emitAdUpdate(type, ad) {
   io.emit('adsUpdated', { type, ad });
 }
 
+// Utility function to get online users count
+function getOnlineUsersCount() {
+  return connectedUsers.size;
+}
+
+// Utility function to check if user is online
+function isUserOnline(userId) {
+  for (const [socketId, userInfo] of connectedUsers.entries()) {
+    if (userInfo.userId === userId) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Utility function to get connected users
+function getConnectedUsers() {
+  return Array.from(connectedUsers.values());
+}
+
 module.exports = {
   init,
   getIO: () => getIO(),
-  emitAdUpdate
+  emitAdUpdate,
+  getOnlineUsersCount,
+  isUserOnline,
+  getConnectedUsers,
+  connectedUsers
 }; 

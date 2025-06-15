@@ -123,6 +123,19 @@ const userSchema = new Schema({
   isVipAffiliate: {
     type: Boolean,
     default: false
+  },
+  // Online status tracking fields
+  isOnline: {
+    type: Boolean,
+    default: false
+  },
+  lastSeen: {
+    type: Date,
+    default: Date.now
+  },
+  lastActivity: {
+    type: Date,
+    default: Date.now
   }
 });
 

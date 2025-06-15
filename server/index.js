@@ -31,6 +31,31 @@ const app = express();
 const server = http.createServer(app);
 const io = socketModule.init(server);
 
+// Periodic cleanup task for offline users
+setInterval(async () => {
+  try {
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    
+    // Set users as offline if they haven't been active in the last 5 minutes
+    const result = await User.updateMany(
+      {
+        isOnline: true,
+        lastActivity: { $lt: fiveMinutesAgo }
+      },
+      {
+        isOnline: false,
+        lastSeen: new Date()
+      }
+    );
+    
+    if (result.modifiedCount > 0) {
+      console.log(`Set ${result.modifiedCount} inactive users as offline`);
+    }
+  } catch (error) {
+    console.error('Error in user cleanup task:', error);
+  }
+}, 2 * 60 * 1000); // Run every 2 minutes
+
 // Middleware
 const corsOptions = {
   origin: ['https://www.aquads.xyz', 'https://aquads.xyz', 'http://localhost:3000'],
