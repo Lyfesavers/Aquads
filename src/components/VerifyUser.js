@@ -88,8 +88,9 @@ const VerifyUser = () => {
               />
               <button
                 type="submit"
+                onClick={handleSearch}
                 disabled={loading || !username.trim()}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white p-2 rounded-md transition-colors"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white p-2 rounded-md transition-colors z-10"
               >
                 {loading ? (
                   <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
