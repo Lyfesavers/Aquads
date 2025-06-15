@@ -621,7 +621,7 @@ router.get('/verify/:username', async (req, res) => {
 
     // All registered users are considered "verified" users of Aquads
     // Determine the role and status based on user properties
-    let role = 'Registered User';
+    let role = 'Registered Affiliate/Listing Agent';
     let hasVipStatus = false;
     
     if (user.isAdmin) {
