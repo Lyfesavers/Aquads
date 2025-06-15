@@ -80,6 +80,13 @@ const Footer = () => {
               <FaCoins className="mr-2" />
               <span>AquaFi</span>
             </Link>
+            <Link
+              to="/verify-user"
+              className="hover:text-blue-400 transition-colors flex items-center justify-center sm:justify-start"
+            >
+              <FaFileAlt className="mr-2" />
+              <span>Verify User</span>
+            </Link>
           </div>
           <div className="text-sm text-gray-400 text-center md:text-right">
             © {new Date().getFullYear()} Aquads. All rights reserved.

@@ -1128,4 +1128,32 @@ export const testConnectivity = async () => {
   } catch (error) {
     return false;
   }
+};
+
+// Verify user status (listing agent/affiliate)
+export const verifyUserStatus = async (username) => {
+  try {
+    const response = await fetch(`${API_URL}/users/verify/${encodeURIComponent(username)}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      if (response.status === 404) {
+        return {
+          username: username,
+          isVerified: false,
+          message: 'User not found in our verified database'
+        };
+      }
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    logger.error('User verification failed:', error);
+    throw error;
+  }
 }; 

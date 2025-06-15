@@ -42,6 +42,7 @@ import AquaFi from './components/AquaFi';
 import AquaSwap from './components/AquaSwap';
 import AquaSwapEmbed from './components/AquaSwapEmbed';
 import TransakPage from './components/TransakPage';
+import VerifyUser from './components/VerifyUser';
 import BannerDisplay from './components/BannerDisplay';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -3408,16 +3409,17 @@ function App() {
               </div>
             </div>
           } />
-          <Route path="/whitepaper" element={<Whitepaper />} />
-          <Route path="/how-to" element={<HowTo currentUser={currentUser} />} />
-          <Route path="/how-to/:slug" element={<BlogPage currentUser={currentUser} />} />
-          <Route path="/affiliate" element={<Affiliate />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/aquafi" element={<AquaFi currentUser={currentUser} showNotification={showNotification} />} />
-          <Route path="/swap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} />} />
-          <Route path="/aquaswap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} />} />
-          <Route path="/buy-crypto" element={<TransakPage currentUser={currentUser} showNotification={showNotification} />} />
-          <Route path="/embed/aquaswap" element={<AquaSwapEmbed />} />
+                      <Route path="/whitepaper" element={<Whitepaper />} />
+            <Route path="/how-to" element={<HowTo currentUser={currentUser} />} />
+            <Route path="/how-to/:slug" element={<BlogPage currentUser={currentUser} />} />
+            <Route path="/affiliate" element={<Affiliate />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/verify-user" element={<VerifyUser />} />
+            <Route path="/aquafi" element={<AquaFi currentUser={currentUser} showNotification={showNotification} />} />
+            <Route path="/swap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} />} />
+            <Route path="/aquaswap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} />} />
+            <Route path="/buy-crypto" element={<TransakPage currentUser={currentUser} showNotification={showNotification} />} />
+            <Route path="/embed/aquaswap" element={<AquaSwapEmbed />} />
         </Routes>
       </Router>
     </AuthContext.Provider>
