@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaTwitter, FaTelegram, FaEnvelope, FaFileAlt, FaDiscord, FaCoins } from 'react-icons/fa';
+import { FaTwitter, FaTelegram, FaEnvelope, FaFileAlt, FaDiscord, FaCoins, FaMedium } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 
 const Footer = () => {
@@ -35,6 +35,15 @@ const Footer = () => {
             >
               <FaDiscord className="mr-2" />
               <span>Discord</span>
+            </a>
+            <a
+              href="https://medium.com/@aquads.info"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-blue-400 transition-colors flex items-center justify-center sm:justify-start"
+            >
+              <FaMedium className="mr-2" />
+              <span>Medium</span>
             </a>
             <a
               href="mailto:aquads.info@gmail.com"
