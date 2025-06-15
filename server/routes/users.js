@@ -601,4 +601,54 @@ router.get('/multiple-device-registrations', auth, async (req, res) => {
   }
 });
 
+// Verify user status (public endpoint for checking verified users)
+router.get('/verify/:username', async (req, res) => {
+  try {
+    const username = req.params.username.trim();
+
+    // Find user by username (case-insensitive)
+    const user = await User.findOne({ 
+      username: { $regex: new RegExp(`^${username}$`, 'i') }
+    }).select('username image createdAt isVipAffiliate isAdmin userType');
+    
+    if (!user) {
+      return res.status(404).json({
+        username: username,
+        isVerified: false,
+        message: 'User not found in our database'
+      });
+    }
+
+    // All registered users are considered "verified" users of Aquads
+    // Determine the role and status based on user properties
+    let role = 'Registered User';
+    let hasVipStatus = false;
+    
+    if (user.isAdmin) {
+      role = 'Admin';
+    } else if (user.isVipAffiliate) {
+      role = 'VIP Affiliate';
+      hasVipStatus = true;
+    }
+
+    return res.json({
+      username: user.username,
+      isVerified: true, // All registered users are verified
+      role: role,
+      hasVipStatus: hasVipStatus,
+      profileImage: user.image || 'https://i.imgur.com/6VBx3io.png',
+      joinDate: user.createdAt,
+      verificationDate: user.createdAt,
+      status: 'Active'
+    });
+
+  } catch (error) {
+    console.error('User verification error:', error);
+    res.status(500).json({ 
+      error: 'Error verifying user status',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 module.exports = router; 

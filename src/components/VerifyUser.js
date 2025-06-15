@@ -40,8 +40,8 @@ const VerifyUser = () => {
             Verify Aquads Users
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Check if a user is a verified listing agent or affiliate partner of Aquads.xyz. 
-            Enter their username below to see their verification status.
+            Check if a user is a verified member of Aquads.xyz. 
+            Enter their username below to see their verification status and VIP level.
           </p>
         </div>
 
@@ -88,15 +88,20 @@ const VerifyUser = () => {
                     </div>
                   </div>
 
-                  {/* User Info */}
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                      ✓ Verified User
-                    </h2>
-                    <p className="text-lg text-green-600 font-semibold mb-4">
-                      @{verificationResult.username} is a verified {verificationResult.role} of Aquads.xyz
-                    </p>
-                  </div>
+                                     {/* User Info */}
+                   <div>
+                     <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                       ✓ Verified User
+                     </h2>
+                     <p className="text-lg text-green-600 font-semibold mb-4">
+                       @{verificationResult.username} is a verified {verificationResult.role} of Aquads.xyz
+                       {verificationResult.hasVipStatus && (
+                         <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                           ⭐ VIP Status
+                         </span>
+                       )}
+                     </p>
+                   </div>
 
                   {/* Profile Image */}
                   <div className="flex justify-center">
@@ -134,10 +139,12 @@ const VerifyUser = () => {
                           {new Date(verificationResult.joinDate).toLocaleDateString()}
                         </span>
                       </div>
-                      <div>
-                        <span className="font-semibold text-gray-700">Status:</span>
-                        <span className="ml-2 text-green-600 font-semibold">Active</span>
-                      </div>
+                                             <div>
+                         <span className="font-semibold text-gray-700">Status:</span>
+                         <span className="ml-2 text-green-600 font-semibold">
+                           Active {verificationResult.hasVipStatus && '⭐ VIP'}
+                         </span>
+                       </div>
                     </div>
                   </div>
                 </div>
@@ -172,11 +179,10 @@ const VerifyUser = () => {
 
                   {/* Info Box */}
                   <div className="bg-gray-50 p-6 rounded-lg">
-                    <p className="text-sm text-gray-600 text-left">
-                      <strong>Note:</strong> This system only shows users who are verified listing agents 
-                      or affiliate partners of Aquads.xyz. If you believe this is an error, please contact 
-                      our support team.
-                    </p>
+                                         <p className="text-sm text-gray-600 text-left">
+                       <strong>Note:</strong> This system shows all registered users of Aquads.xyz. 
+                       If you believe this is an error, please contact our support team.
+                     </p>
                   </div>
                 </div>
               )}
@@ -191,17 +197,17 @@ const VerifyUser = () => {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-600">
             <div>
-              <h4 className="font-semibold text-gray-800 mb-2">Verified Listing Agents</h4>
+              <h4 className="font-semibold text-gray-800 mb-2">Verified Users</h4>
               <p>
-                These are professional real estate agents who have been verified by Aquads.xyz 
-                to list properties and provide real estate services on our platform.
+                All registered users on Aquads.xyz are verified members of our platform. 
+                You can trust that they are legitimate users who have completed our registration process.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-800 mb-2">Affiliate Partners</h4>
+              <h4 className="font-semibold text-gray-800 mb-2">VIP Status</h4>
               <p>
-                These are verified business partners who promote Aquads.xyz services and 
-                have met our partnership requirements and standards.
+                Some users have special VIP status, indicating they are premium members, 
+                top affiliates, or have special privileges on the Aquads.xyz platform.
               </p>
             </div>
           </div>
