@@ -1,14 +1,6 @@
 import React from 'react';
 
 const OnlineStatusIndicator = ({ user, showText = false, size = 'small' }) => {
-  // Debug: Log the user data
-  console.log('OnlineStatusIndicator user data:', {
-    username: user?.username,
-    isOnline: user?.isOnline,
-    lastSeen: user?.lastSeen,
-    lastActivity: user?.lastActivity
-  });
-
   // Determine if user is online or recently active
   const isOnline = user?.isOnline || false;
   const lastSeen = user?.lastSeen;

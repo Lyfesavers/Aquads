@@ -97,9 +97,6 @@ router.get('/category/:categoryId', async (req, res) => {
 // Create a new service
 router.post('/', auth, async (req, res) => {
   try {
-    console.log('Service creation request received');
-    console.log('Request body:', req.body);
-    
     const { title, description, category, price, deliveryTime, requirements, image, telegramUsername, twitter, discord, email, linkedin } = req.body;
 
     // Validate required fields
@@ -135,22 +132,17 @@ router.post('/', auth, async (req, res) => {
       seller: req.user.userId
     });
 
-    console.log('Service object created:', service);
-
     await service.save();
-    console.log('Service saved successfully');
     
     // Award points for creating a listing
     try {
       await awardListingPoints(req.user.userId);
-      console.log('Points awarded for service listing');
     } catch (pointsError) {
       console.error('Error awarding points:', pointsError);
       // Don't fail the service creation if points awarding fails
     }
     
     await service.populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity');
-    console.log('Service populated with seller info');
 
     res.status(201).json(service);
   } catch (error) {

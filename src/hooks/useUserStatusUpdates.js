@@ -39,7 +39,7 @@ const useUserStatusUpdates = () => {
 
     // Handle socket connection events
     socketInstance.on('connect', () => {
-      console.log('Status listener connected to server');
+      // Silent connection
     });
 
     socketInstance.on('connect_error', (error) => {

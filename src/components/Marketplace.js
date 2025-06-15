@@ -1111,11 +1111,6 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                                       user={(() => {
                                         const realTimeStatus = getUserStatus(service.seller._id);
                                         const userData = realTimeStatus || service.seller;
-                                        console.log(`Status for ${service.seller.username}:`, {
-                                          realTimeStatus,
-                                          originalSeller: service.seller,
-                                          final: userData
-                                        });
                                         return userData;
                                       })()} 
                                       size="small"

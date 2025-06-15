@@ -16,39 +16,24 @@ function init(server) {
   
   // Add socket event handlers
   io.on('connection', (socket) => {
-    console.log('User connected:', socket.id);
 
     // Handle user authentication and online status
     socket.on('userOnline', async (userData) => {
-      console.log('Received userOnline event:', userData);
       if (userData && userData.userId) {
         try {
           const User = require('./models/User');
           
-          console.log(`Attempting to set user ${userData.username} (${userData.userId}) as online`);
-          
           // First check if user exists
           const existingUser = await User.findById(userData.userId);
           if (!existingUser) {
-            console.error(`User with ID ${userData.userId} not found in database`);
             return;
           }
-          
-          console.log(`Found user in database: ${existingUser.username}, current isOnline: ${existingUser.isOnline}`);
           
           // Update user online status in database
           const result = await User.findByIdAndUpdate(userData.userId, {
             isOnline: true,
             lastActivity: new Date()
           }, { new: true });
-
-          console.log(`Database update result for ${userData.username}:`, {
-            userId: result?._id,
-            username: result?.username,
-            isOnline: result?.isOnline,
-            lastActivity: result?.lastActivity,
-            updateSuccessful: result ? true : false
-          });
 
           // Store user in connected users map
           connectedUsers.set(socket.id, {
@@ -67,14 +52,9 @@ function init(server) {
             isOnline: true
           });
 
-          console.log(`User ${userData.username} is now online. Connected users: ${connectedUsers.size}`);
         } catch (error) {
-          console.error('Error updating user online status:', error);
-          console.error('Error details:', error.message);
-          console.error('Stack trace:', error.stack);
+          // Silent error handling
         }
-      } else {
-        console.log('Invalid userData received - missing userId:', userData);
       }
     });
 
@@ -87,18 +67,16 @@ function init(server) {
             lastActivity: new Date()
           });
         } catch (error) {
-          console.error('Error updating user activity:', error);
+          // Silent error handling
         }
       }
     });
 
     socket.on('error', (error) => {
-      console.error('Socket error:', error);
+      // Silent error handling
     });
 
     socket.on('disconnect', async (reason) => {
-      console.log('User disconnected:', socket.id, reason);
-      
       // Handle user going offline
       const userInfo = connectedUsers.get(socket.id);
       if (userInfo) {
@@ -122,9 +100,8 @@ function init(server) {
             lastSeen: new Date()
           });
 
-          console.log(`User ${userInfo.username} is now offline`);
         } catch (error) {
-          console.error('Error updating user offline status:', error);
+          // Silent error handling
         }
       }
     });

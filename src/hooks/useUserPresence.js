@@ -34,11 +34,6 @@ const useUserPresence = (currentUser) => {
 
       // Emit user online status when connected
       socketRef.current.on('connect', () => {
-        console.log('Connected to server for user:', currentUser.username);
-        console.log('Emitting userOnline with:', {
-          userId: currentUser.userId,
-          username: currentUser.username
-        });
         socketRef.current.emit('userOnline', {
           userId: currentUser.userId,
           username: currentUser.username
@@ -52,7 +47,6 @@ const useUserPresence = (currentUser) => {
 
       // Handle reconnection
       socketRef.current.on('reconnect', () => {
-        console.log('Reconnected to server');
         socketRef.current.emit('userOnline', {
           userId: currentUser.userId,
           username: currentUser.username
