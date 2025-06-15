@@ -20,14 +20,22 @@ function init(server) {
 
     // Handle user authentication and online status
     socket.on('userOnline', async (userData) => {
+      console.log('Received userOnline event:', userData);
       if (userData && userData.userId) {
         try {
           const User = require('./models/User');
           
+          console.log(`Setting user ${userData.username} (${userData.userId}) as online`);
+          
           // Update user online status in database
-          await User.findByIdAndUpdate(userData.userId, {
+          const result = await User.findByIdAndUpdate(userData.userId, {
             isOnline: true,
             lastActivity: new Date()
+          }, { new: true });
+
+          console.log(`Database update result for ${userData.username}:`, {
+            isOnline: result?.isOnline,
+            lastActivity: result?.lastActivity
           });
 
           // Store user in connected users map
@@ -47,10 +55,12 @@ function init(server) {
             isOnline: true
           });
 
-          console.log(`User ${userData.username} is now online`);
+          console.log(`User ${userData.username} is now online. Connected users: ${connectedUsers.size}`);
         } catch (error) {
           console.error('Error updating user online status:', error);
         }
+      } else {
+        console.log('Invalid userData received:', userData);
       }
     });
 

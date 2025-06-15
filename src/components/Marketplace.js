@@ -1108,7 +1108,16 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                                   </h4>
                                   {service.seller?._id && (
                                     <OnlineStatusIndicator 
-                                      user={getUserStatus(service.seller._id) || service.seller} 
+                                      user={(() => {
+                                        const realTimeStatus = getUserStatus(service.seller._id);
+                                        const userData = realTimeStatus || service.seller;
+                                        console.log(`Status for ${service.seller.username}:`, {
+                                          realTimeStatus,
+                                          originalSeller: service.seller,
+                                          final: userData
+                                        });
+                                        return userData;
+                                      })()} 
                                       size="small"
                                     />
                                   )}
