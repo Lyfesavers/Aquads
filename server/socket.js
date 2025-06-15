@@ -25,7 +25,16 @@ function init(server) {
         try {
           const User = require('./models/User');
           
-          console.log(`Setting user ${userData.username} (${userData.userId}) as online`);
+          console.log(`Attempting to set user ${userData.username} (${userData.userId}) as online`);
+          
+          // First check if user exists
+          const existingUser = await User.findById(userData.userId);
+          if (!existingUser) {
+            console.error(`User with ID ${userData.userId} not found in database`);
+            return;
+          }
+          
+          console.log(`Found user in database: ${existingUser.username}, current isOnline: ${existingUser.isOnline}`);
           
           // Update user online status in database
           const result = await User.findByIdAndUpdate(userData.userId, {
@@ -34,8 +43,11 @@ function init(server) {
           }, { new: true });
 
           console.log(`Database update result for ${userData.username}:`, {
+            userId: result?._id,
+            username: result?.username,
             isOnline: result?.isOnline,
-            lastActivity: result?.lastActivity
+            lastActivity: result?.lastActivity,
+            updateSuccessful: result ? true : false
           });
 
           // Store user in connected users map
@@ -58,9 +70,11 @@ function init(server) {
           console.log(`User ${userData.username} is now online. Connected users: ${connectedUsers.size}`);
         } catch (error) {
           console.error('Error updating user online status:', error);
+          console.error('Error details:', error.message);
+          console.error('Stack trace:', error.stack);
         }
       } else {
-        console.log('Invalid userData received:', userData);
+        console.log('Invalid userData received - missing userId:', userData);
       }
     });
 
