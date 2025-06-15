@@ -77,25 +77,27 @@ const VerifyUser = () => {
         {/* Search Form */}
         <div className="bg-gray-800/50 backdrop-blur-sm border border-blue-500/30 rounded-xl shadow-lg p-8 mb-8">
           <form onSubmit={handleSearch} className="max-w-md mx-auto">
-            <div className="relative">
+            <div className="flex">
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Enter username to verify..."
-                className="w-full px-4 py-3 pr-12 bg-gray-700/50 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder-gray-400"
+                className="flex-1 px-4 py-3 bg-gray-700/50 border border-gray-600 text-white rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder-gray-400"
                 disabled={loading}
               />
               <button
                 type="submit"
-                onClick={handleSearch}
                 disabled={loading || !username.trim()}
-                className="absolute right-2 top-2 bg-blue-600 disabled:bg-gray-600 text-white p-2 rounded-md z-10"
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white px-6 py-3 rounded-r-lg flex items-center"
               >
                 {loading ? (
-                  <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                  <span className="text-sm">Loading...</span>
                 ) : (
-                  <FaSearch className="h-4 w-4" />
+                  <>
+                    <FaSearch className="mr-2" />
+                    Search
+                  </>
                 )}
               </button>
             </div>
