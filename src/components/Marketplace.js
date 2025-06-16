@@ -156,6 +156,9 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [jobs, setJobs] = useState([]);
   const [jobToEdit, setJobToEdit] = useState(null);
   const [isLoading, setIsLoading] = useState({ jobs: true });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, pages: 0, currentPage: 1 });
+  const servicesPerPage = 30;
 
   // Initialize user presence tracking
   useUserPresence(currentUser);
@@ -176,8 +179,34 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
   // Load services when component mounts
   useEffect(() => {
-    loadServices();
+    loadServices(1, true);
   }, []);
+
+  // Reload services when category or sort changes
+  useEffect(() => {
+    if (selectedCategory !== null || sortOption !== 'highest-rated') {
+      loadServices(1, true);
+    }
+  }, [selectedCategory, sortOption]);
+
+  // Handle search changes (server-side search)
+  useEffect(() => {
+    const searchDebounce = setTimeout(() => {
+      if (searchTerm !== undefined) { // Only reload if search term has been set (not initial load)
+        loadServices(1, true);
+      }
+    }, 500); // Debounce search for 500ms to avoid too many API calls
+
+    return () => clearTimeout(searchDebounce);
+  }, [searchTerm]);
+
+  // Handle premium filter changes (client-side)
+  useEffect(() => {
+    // Reset to first page when premium filter changes
+    if (showPremiumOnly) {
+      setCurrentPage(1);
+    }
+  }, [showPremiumOnly]);
 
   // Add effect to handle shared service links
   useEffect(() => {
@@ -223,23 +252,30 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     }
   }, [services]);
 
-  const loadServices = async () => {
+  const loadServices = async (page = 1, resetServices = false) => {
     try {
-      const data = await fetchServices();
+      setLoading(true);
+      setError(null);
+      
+      const data = await fetchServices(page, servicesPerPage, selectedCategory, sortOption, searchTerm);
       
       // Check data structure and extract services array properly
       let servicesArray = [];
       if (Array.isArray(data)) {
         // If data is already an array of services
         servicesArray = data;
+        setPagination({ total: data.length, pages: 1, currentPage: 1 });
       } else if (data && Array.isArray(data.services)) {
         // If data has a services property that is an array
         servicesArray = data.services;
+        setPagination(data.pagination || { total: 0, pages: 0, currentPage: page });
       } else if (data && typeof data === 'object') {
         // If data is an object but not in expected format
         servicesArray = data.services || [];
+        setPagination(data.pagination || { total: 0, pages: 0, currentPage: page });
       } else {
         servicesArray = [];
+        setPagination({ total: 0, pages: 0, currentPage: page });
       }
       
       // Fetch initial review data for each service
@@ -261,8 +297,15 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         }
       }));
 
-      setServices(servicesWithReviews);
-      setOriginalServices(servicesWithReviews);
+      if (resetServices || page === 1) {
+        setServices(servicesWithReviews);
+        setOriginalServices(servicesWithReviews);
+      } else {
+        setServices(prev => [...prev, ...servicesWithReviews]);
+        setOriginalServices(prev => [...prev, ...servicesWithReviews]);
+      }
+      
+      setCurrentPage(page);
       
       // Initialize user statuses for all service sellers
       const sellers = servicesWithReviews
@@ -274,6 +317,10 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     } catch (error) {
       logger.error('Error loading services:', error);
       setError('Failed to load services');
+      if (resetServices || page === 1) {
+        setServices([]);
+        setOriginalServices([]);
+      }
       setLoading(false);
     }
   };
@@ -426,42 +473,20 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     return sortedServices;
   };
 
-  // Update the filtered services to include sorting
-  const filteredServices = sortServices(
-    services
-      .filter(service => {
-        // First check premium filter
-        if (showPremiumOnly && !service.isPremium) {
-          return false;
-        }
-        
-        // Then check category filter
-        if (selectedCategory && service.category !== selectedCategory) {
-          return false;
-        }
-        
-        // Then apply search term filter if there is one
-        if (searchTerm && searchTerm.trim() !== '') {
-          const searchQuery = searchTerm.toLowerCase();
-          const username = service.seller?.username?.toLowerCase() || '';
-          const title = service.title?.toLowerCase() || '';
-          const description = service.description?.toLowerCase() || '';
-          const category = service.category?.toLowerCase() || '';
-          
-          return username.includes(searchQuery) || 
-                 title.includes(searchQuery) || 
-                 description.includes(searchQuery) ||
-                 category.includes(searchQuery);
-        }
-        
-        // If we get here, show the service (it passed all filters)
-        return true;
-      }),
-    sortOption
-  );
+  // Apply client-side filters only for features not handled by server
+  // Note: Category, sort, and search are now handled server-side via API
+  const displayedServices = services.filter(service => {
+    // Premium filter (client-side only)
+    if (showPremiumOnly && !service.isPremium) {
+      return false;
+    }
+    
+    return true;
+  });
 
   const handleSortChange = (e) => {
     setSortOption(e.target.value);
+    // The useEffect will handle reloading services
   };
 
   const toggleDescription = (serviceId) => {
@@ -1039,8 +1064,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                 </div>
               ) : (
                 <>
-                  {filteredServices.length > 0 ? (
-                    filteredServices.map((service) => (
+                  {displayedServices.length > 0 ? (
+                    displayedServices.map((service) => (
                       <div 
                         key={service._id} 
                         id={`service-${service._id}`}
@@ -1283,6 +1308,102 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                     </div>
                   )}
                 </>
+              )}
+
+              {/* Pagination Controls */}
+              {!loading && !showJobs && pagination.pages > 1 && (
+                <div className="flex justify-center items-center mt-8 mb-4 space-x-2">
+                  <button
+                    onClick={() => loadServices(currentPage - 1, true)}
+                    disabled={currentPage <= 1}
+                    className={`px-4 py-2 rounded-lg transition-colors ${
+                      currentPage <= 1
+                        ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                        : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                    }`}
+                  >
+                    Previous
+                  </button>
+                  
+                  <div className="flex items-center space-x-1">
+                    {/* Show page numbers */}
+                    {(() => {
+                      const pages = [];
+                      const totalPages = pagination.pages;
+                      const current = currentPage;
+                      
+                      // Always show first page
+                      if (current > 3) {
+                        pages.push(
+                          <button
+                            key={1}
+                            onClick={() => loadServices(1, true)}
+                            className="px-3 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition-colors"
+                          >
+                            1
+                          </button>
+                        );
+                        if (current > 4) {
+                          pages.push(<span key="ellipsis1" className="text-gray-400">...</span>);
+                        }
+                      }
+                      
+                      // Show pages around current page
+                      for (let i = Math.max(1, current - 2); i <= Math.min(totalPages, current + 2); i++) {
+                        pages.push(
+                          <button
+                            key={i}
+                            onClick={() => loadServices(i, true)}
+                            className={`px-3 py-2 rounded-lg transition-colors ${
+                              i === current
+                                ? 'bg-indigo-600 text-white'
+                                : 'bg-gray-700 hover:bg-gray-600 text-white'
+                            }`}
+                          >
+                            {i}
+                          </button>
+                        );
+                      }
+                      
+                      // Always show last page
+                      if (current < totalPages - 2) {
+                        if (current < totalPages - 3) {
+                          pages.push(<span key="ellipsis2" className="text-gray-400">...</span>);
+                        }
+                        pages.push(
+                          <button
+                            key={totalPages}
+                            onClick={() => loadServices(totalPages, true)}
+                            className="px-3 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition-colors"
+                          >
+                            {totalPages}
+                          </button>
+                        );
+                      }
+                      
+                      return pages;
+                    })()}
+                  </div>
+                  
+                  <button
+                    onClick={() => loadServices(currentPage + 1, true)}
+                    disabled={currentPage >= pagination.pages}
+                    className={`px-4 py-2 rounded-lg transition-colors ${
+                      currentPage >= pagination.pages
+                        ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                        : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                    }`}
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+
+              {/* Pagination Info */}
+              {!loading && !showJobs && pagination.total > 0 && (
+                <div className="text-center text-gray-400 text-sm mb-4">
+                  Showing {((currentPage - 1) * servicesPerPage) + 1} to {Math.min(currentPage * servicesPerPage, pagination.total)} of {pagination.total} services
+                </div>
               )}
             </div>
           </div>
