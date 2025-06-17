@@ -567,23 +567,6 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
                     );
                   })}
                 </div>
-
-                {/* Add-on Package Disclaimer */}
-                {formData.selectedAddons.length > 0 && (
-                  <div className="mt-6 p-4 bg-gradient-to-r from-red-900/30 to-orange-900/30 border-2 border-red-500/50 rounded-lg">
-                    <div className="flex items-start space-x-3">
-                      <div className="bg-red-500 p-2 rounded-full flex-shrink-0">
-                        <FaLightbulb className="text-white text-sm" />
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-red-400 mb-2">Important Content Guidelines</h4>
-                        <p className="text-red-200 text-sm leading-relaxed">
-                          I confirm the content I will be submitting for PR does not promote casinos, scams, or HYIP, and does not promise returns on investment. Please note that failure to comply will result in failure to process any refunds.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -618,6 +601,23 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
                     </div>
                   )}
                 </div>
+
+                {/* Add-on Package Disclaimer */}
+                {formData.selectedAddons.length > 0 && (
+                  <div className="p-4 bg-gradient-to-r from-red-900/30 to-orange-900/30 border-2 border-red-500/50 rounded-lg">
+                    <div className="flex items-start space-x-3">
+                      <div className="bg-red-500 p-2 rounded-full flex-shrink-0">
+                        <FaLightbulb className="text-white text-sm" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-red-400 mb-2">Important Content Guidelines</h4>
+                        <p className="text-red-200 text-sm leading-relaxed">
+                          I confirm the content I will be submitting for PR does not promote casinos, scams, or HYIP, and does not promise returns on investment. Please note that failure to comply will result in failure to process any refunds.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <h3 className="text-xl font-semibold text-white mb-4">Select Payment Network</h3>
