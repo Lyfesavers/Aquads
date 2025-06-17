@@ -34,7 +34,7 @@ const ADDON_PACKAGES = [
   {
     id: 'aqua_ripple',
     name: 'AquaRipple',
-    price: 500,
+    price: 299,
     icon: FaStar,
     color: 'from-blue-500 to-cyan-500',
     features: [
@@ -46,7 +46,7 @@ const ADDON_PACKAGES = [
   {
     id: 'aqua_wave',
     name: 'AquaWave',
-    price: 1600,
+    price: 1399,
     icon: FaRocket,
     color: 'from-green-500 to-teal-500',
     features: [
@@ -57,7 +57,7 @@ const ADDON_PACKAGES = [
   {
     id: 'aqua_flow',
     name: 'AquaFlow',
-    price: 3500,
+    price: 2899,
     icon: FaChartLine,
     color: 'from-purple-500 to-indigo-500',
     features: [
@@ -73,7 +73,7 @@ const ADDON_PACKAGES = [
   {
     id: 'aqua_storm',
     name: 'AquaStorm',
-    price: 7000,
+    price: 6499,
     icon: FaFire,
     color: 'from-orange-500 to-red-500',
     features: [
@@ -87,7 +87,7 @@ const ADDON_PACKAGES = [
   {
     id: 'aqua_tidal',
     name: 'AquaTidal',
-    price: 15000,
+    price: 12999,
     icon: FaGem,
     color: 'from-indigo-500 to-purple-500',
     features: [
@@ -102,7 +102,7 @@ const ADDON_PACKAGES = [
   {
     id: 'aqua_legend',
     name: 'AquaLegend',
-    price: 25000,
+    price: 21999,
     icon: FaCrown,
     color: 'from-pink-500 to-rose-500',
     features: [
