@@ -109,10 +109,20 @@ router.post('/claim-xpx-card', auth, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Check if user has already claimed the Xpx card
-    if (user.xpxCardClaimed) {
+    // Check if user has already claimed the Xpx card (old system) or has a pending/approved claim (new system)
+    const hasOldClaim = user.xpxCardClaimed;
+    const hasApprovedClaim = user.xpxCardClaims.some(claim => claim.status === 'approved');
+    const hasPendingClaim = user.xpxCardClaims.some(claim => claim.status === 'pending');
+    
+    if (hasOldClaim || hasApprovedClaim) {
       return res.status(400).json({ 
         error: 'You have already claimed your Xpx Gold Visa card' 
+      });
+    }
+    
+    if (hasPendingClaim) {
+      return res.status(400).json({ 
+        error: 'You already have a pending Xpx card claim request' 
       });
     }
 
@@ -132,19 +142,23 @@ router.post('/claim-xpx-card', auth, async (req, res) => {
       });
     }
 
-    // Mark as claimed and deduct points
-    user.xpxCardClaimed = true;
-    user.xpxCardClaimedAt = new Date();
+    // Create claim request
+    user.xpxCardClaims.push({
+      status: 'pending',
+      requestedAt: new Date()
+    });
+
+    // Deduct points
     user.points -= 10000;
     user.pointsHistory.push({
       amount: -10000,
-      reason: 'Xpx Gold Visa card claim',
+      reason: 'Xpx Gold Visa card claim request',
       createdAt: new Date()
     });
 
     await user.save();
     res.json({ 
-      message: 'Xpx Gold Visa card claimed successfully! You can now register at https://dash.xpxpay.com/register?ref=38053024',
+      message: 'Xpx card claim request submitted successfully! Our team will process your request soon.',
       user 
     });
   } catch (error) {
@@ -215,6 +229,74 @@ router.post('/redemptions/:userId/process', auth, async (req, res) => {
     res.json({ message: 'Redemption processed successfully', user });
   } catch (error) {
     res.status(500).json({ error: 'Failed to process redemption' });
+  }
+});
+
+// Admin: Get all pending Xpx card claims
+router.get('/xpx-claims/pending', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    const users = await User.find({
+      'xpxCardClaims': {
+        $elemMatch: { status: 'pending' }
+      }
+    }).select('username xpxCardClaims');
+
+    const pendingUsers = users.filter(user => 
+      user.xpxCardClaims.some(claim => claim.status === 'pending')
+    );
+
+    res.json(pendingUsers);
+  } catch (error) {
+    console.error('Error fetching Xpx claims:', error);
+    res.status(500).json({ error: 'Failed to fetch Xpx claims' });
+  }
+});
+
+// Admin: Process Xpx card claim
+router.post('/xpx-claims/:userId/process', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    const { status } = req.body;
+    if (!['approved', 'rejected'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+
+    const user = await User.findById(req.params.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const claim = user.xpxCardClaims.find(c => c.status === 'pending');
+    if (!claim) {
+      return res.status(404).json({ error: 'No pending Xpx card claim found' });
+    }
+
+    claim.status = status;
+    claim.processedAt = new Date();
+    claim.processedBy = req.user.username;
+
+    // If rejected, refund points
+    if (status === 'rejected') {
+      user.points += 10000;
+      user.pointsHistory.push({
+        amount: 10000,
+        reason: 'Xpx card claim rejected - points refunded',
+        createdAt: new Date()
+      });
+    }
+
+    await user.save();
+    res.json({ message: 'Xpx card claim processed successfully', user });
+  } catch (error) {
+    console.error('Error processing Xpx claim:', error);
+    res.status(500).json({ error: 'Failed to process Xpx card claim' });
   }
 });
 

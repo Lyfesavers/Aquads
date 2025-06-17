@@ -116,6 +116,19 @@ const userSchema = new Schema({
     type: Date,
     default: null
   },
+  xpxCardClaims: [{
+    status: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending'
+    },
+    requestedAt: {
+      type: Date,
+      default: Date.now
+    },
+    processedAt: Date,
+    processedBy: String
+  }],
   resetToken: {
     type: String,
     default: null
