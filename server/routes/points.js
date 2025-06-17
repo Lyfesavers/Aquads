@@ -100,6 +100,59 @@ router.post('/redeem', auth, async (req, res) => {
   }
 });
 
+// Request Xpx Gold Visa card claim
+router.post('/claim-xpx-card', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if user has already claimed the Xpx card
+    if (user.xpxCardClaimed) {
+      return res.status(400).json({ 
+        error: 'You have already claimed your Xpx Gold Visa card' 
+      });
+    }
+
+    // Check account age
+    const accountAge = Date.now() - user.createdAt.getTime();
+    const minimumAge = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+    
+    if (accountAge < minimumAge) {
+      return res.status(400).json({ 
+        error: 'Account must be at least 7 days old to claim Xpx card' 
+      });
+    }
+
+    if (user.points < 10000) {
+      return res.status(400).json({ 
+        error: 'Insufficient points. You need 10,000 points to claim an Xpx Gold Visa card.' 
+      });
+    }
+
+    // Mark as claimed and deduct points
+    user.xpxCardClaimed = true;
+    user.xpxCardClaimedAt = new Date();
+    user.points -= 10000;
+    user.pointsHistory.push({
+      amount: -10000,
+      reason: 'Xpx Gold Visa card claim',
+      createdAt: new Date()
+    });
+
+    await user.save();
+    res.json({ 
+      message: 'Xpx Gold Visa card claimed successfully! You can now register at https://dash.xpxpay.com/register?ref=38053024',
+      user 
+    });
+  } catch (error) {
+    console.error('Error claiming Xpx card:', error);
+    res.status(500).json({ error: 'Failed to process Xpx card claim' });
+  }
+});
+
 // Admin: Get all pending redemptions
 router.get('/redemptions/pending', auth, async (req, res) => {
   try {

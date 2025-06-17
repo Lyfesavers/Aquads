@@ -21,6 +21,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [pointsInfo, setPointsInfo] = useState(null);
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [redeemError, setRedeemError] = useState('');
+  const [isClaimingXpx, setIsClaimingXpx] = useState(false);
+  const [xpxClaimError, setXpxClaimError] = useState('');
   const [isLoadingAffiliates, setIsLoadingAffiliates] = useState(true);
   const [pendingRedemptions, setPendingRedemptions] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -263,6 +265,35 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       setRedeemError(error.message);
     } finally {
       setIsRedeeming(false);
+    }
+  };
+
+  const handleClaimXpxCard = async () => {
+    try {
+      setIsClaimingXpx(true);
+      setXpxClaimError('');
+
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/points/claim-xpx-card`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to claim Xpx card');
+      }
+
+      // Refresh points info after claiming
+      fetchAffiliateInfo();
+      alert('Xpx Gold Visa card claimed successfully! You can now register at https://dash.xpxpay.com/register?ref=38053024');
+    } catch (error) {
+      setXpxClaimError(error.message);
+    } finally {
+      setIsClaimingXpx(false);
     }
   };
 
@@ -1154,22 +1185,40 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                         <h4 className="text-lg font-medium text-white">Your Points</h4>
                         <p className="text-3xl font-bold text-blue-400">{pointsInfo.points}</p>
                       </div>
-                      {pointsInfo.points >= 10000 && (
-                        <button
-                          onClick={handleRedeemPoints}
-                          disabled={isRedeeming}
-                          className={`px-4 py-2 rounded ${
-                            isRedeeming 
-                              ? 'bg-gray-500 cursor-not-allowed' 
-                              : 'bg-green-500 hover:bg-green-600'
-                          }`}
-                        >
-                          {isRedeeming ? 'Processing...' : 'Redeem $100 Gift Card'}
-                        </button>
-                      )}
+                      <div className="flex space-x-2">
+                        {pointsInfo.points >= 10000 && !pointsInfo.xpxCardClaimed && (
+                          <button
+                            onClick={handleClaimXpxCard}
+                            disabled={isClaimingXpx}
+                            className={`px-4 py-2 rounded ${
+                              isClaimingXpx 
+                                ? 'bg-gray-500 cursor-not-allowed' 
+                                : 'bg-purple-500 hover:bg-purple-600'
+                            }`}
+                          >
+                            {isClaimingXpx ? 'Processing...' : 'Claim Xpx Gold Visa'}
+                          </button>
+                        )}
+                        {pointsInfo.points >= 10000 && (
+                          <button
+                            onClick={handleRedeemPoints}
+                            disabled={isRedeeming}
+                            className={`px-4 py-2 rounded ${
+                              isRedeeming 
+                                ? 'bg-gray-500 cursor-not-allowed' 
+                                : 'bg-green-500 hover:bg-green-600'
+                            }`}
+                          >
+                            {isRedeeming ? 'Processing...' : 'Redeem $100 Gift Card'}
+                          </button>
+                        )}
+                      </div>
                     </div>
                     {redeemError && (
                       <p className="text-red-500 text-sm mt-2">{redeemError}</p>
+                    )}
+                    {xpxClaimError && (
+                      <p className="text-red-500 text-sm mt-2">{xpxClaimError}</p>
                     )}
                     
                     {/* Points Rules */}
@@ -1182,6 +1231,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       <p>• Earn 200 points when your affiliates list a freelancer service or bubble ad</p>
                       <p>• Earn 500 points when you leave a review in the freelancer hub</p>
                       <p>• Earn 1000 points when you sign up with a referral link</p>
+                      <p>• Redeem 10,000 points for an Xpx Gold Visa card (one-time only)</p>
                       <p>• Redeem 10,000 points for a $100 gift card(Canadian Dollars)</p>
                     </div>
                     

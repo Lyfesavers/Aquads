@@ -108,6 +108,14 @@ const userSchema = new Schema({
     processedAt: Date,
     processedBy: String
   }],
+  xpxCardClaimed: {
+    type: Boolean,
+    default: false
+  },
+  xpxCardClaimedAt: {
+    type: Date,
+    default: null
+  },
   resetToken: {
     type: String,
     default: null
