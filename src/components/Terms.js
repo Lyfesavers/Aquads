@@ -64,6 +64,10 @@ const Terms = () => {
                     <li>A dynamic advertising system tailored for crypto projects.</li>
                     <li>A specialized freelancer marketplace.</li>
                     <li>A real-time token information hub.</li>
+                    <li>A game hub</li>
+                    <li>A swap & bridge Hub.</li>
+                    <li>An onRamp/offRamp Hub.</li>
+                    <li>A savings and staking Hub.</li>
                   </ul>
                 </div>
                 <div>
