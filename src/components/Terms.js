@@ -71,7 +71,7 @@ const Terms = () => {
                   </ul>
                 </div>
                 <div>
-                  <p><span className="text-blue-400 font-semibold">Purpose:</span> Our aim is to provide a secure, efficient, and supportive environment where Freelancers and Employers can connect, collaborate, and grow their businesses.</p>
+                  <p><span className="text-blue-400 font-semibold">Purpose:</span> Our aim is to provide a secure, efficient, and supportive environment where Crypto Users, Freelancers and Employers can explore, connect, collaborate, and grow toegther.</p>
                 </div>
               </div>
             </section>
@@ -198,7 +198,7 @@ const Terms = () => {
                   <li>
                     <span className="text-blue-400">Email:</span>{' '}
                     <a href="mailto:aquads.info@gmail.com" className="text-blue-400 hover:text-blue-300">
-                      aquads.info@gmail.com
+                      info@aquads.xyz
                     </a>
                   </li>
                   <li>
