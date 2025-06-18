@@ -47,15 +47,7 @@ const serviceSchema = new mongoose.Schema({
   videoUrl: {
     type: String,
     trim: true,
-    validate: {
-      validator: function(v) {
-        if (!v) return true; // Optional field
-        // Allow YouTube URLs in various formats
-        const youtubeRegex = /^https?:\/\/(www\.)?(youtube\.com\/(watch\?v=|embed\/)|youtu\.be\/)[a-zA-Z0-9_-]{11}$/;
-        return youtubeRegex.test(v);
-      },
-      message: 'Please enter a valid YouTube URL (youtube.com/watch?v= or youtu.be/)'
-    }
+    default: ''
   },
   requirements: {
     type: String,

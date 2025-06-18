@@ -57,6 +57,17 @@ const EditServiceModal = ({ service, onClose, onEditService, categories }) => {
       setError('Please enter a valid image URL');
       return;
     }
+    
+    // Validate video URL if provided (same as games)
+    if (formData.videoUrl && formData.videoUrl.trim() !== '') {
+      if (!(formData.videoUrl.includes('youtube.com/watch?v=') || 
+            formData.videoUrl.includes('youtube.com/embed/') ||
+            formData.videoUrl.includes('youtu.be/'))) {
+        setError('Only YouTube videos are supported. Please provide a YouTube link.');
+        return;
+      }
+    }
+    
     onEditService(service._id, formData);
   };
 
