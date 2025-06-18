@@ -97,7 +97,7 @@ router.get('/category/:categoryId', async (req, res) => {
 // Create a new service
 router.post('/', auth, async (req, res) => {
   try {
-    const { title, description, category, price, deliveryTime, requirements, image, telegramUsername, twitter, discord, email, linkedin } = req.body;
+    const { title, description, category, price, deliveryTime, requirements, image, videoUrl, telegramUsername, twitter, discord, email, linkedin, website } = req.body;
 
     // Validate required fields
     if (!title || !description || !category || !price || !deliveryTime || !image) {
@@ -124,11 +124,13 @@ router.post('/', auth, async (req, res) => {
       deliveryTime,
       requirements: requirements || '',
       image,
+      videoUrl: videoUrl || '',
       telegramUsername: telegramUsername ? telegramUsername.replace('@', '') : '', // Remove @ if present
       twitter,
       discord,
       email,
       linkedin,
+      website,
       seller: req.user.userId
     });
 
