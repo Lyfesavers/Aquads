@@ -60,13 +60,23 @@ const useUserStatusUpdates = (currentUser = null) => {
       // Add current user's status as online when they're logged in
       setUserStatuses(prevStatuses => {
         const newStatuses = new Map(prevStatuses);
-        newStatuses.set(currentUser.userId, {
+        const userStatusData = {
           userId: currentUser.userId,
           username: currentUser.username,
           isOnline: true,
           lastSeen: new Date(),
           lastActivity: new Date()
-        });
+        };
+        
+        // Store using both possible keys to handle property name differences
+        // currentUser uses 'userId' while service.seller uses '_id'
+        newStatuses.set(currentUser.userId, userStatusData);
+        
+        // If currentUser has an _id property, also store with that key
+        if (currentUser._id) {
+          newStatuses.set(currentUser._id, userStatusData);
+        }
+        
         return newStatuses;
       });
     }
