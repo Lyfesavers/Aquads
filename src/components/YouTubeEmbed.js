@@ -26,7 +26,10 @@ const YouTubeEmbed = ({ url, className = '', autoplay = false, muted = true }) =
     controls: '1',           // Show minimal controls (needed for sound)
     modestbranding: '1',     // Remove YouTube logo
     rel: '0',                // Don't show related videos
-    showinfo: '0',           // Hide video info
+    showinfo: '0',           // Hide video info (deprecated but still works)
+    title: '0',              // Hide video title
+    byline: '0',             // Hide video byline
+    portrait: '0',           // Hide portrait
     fs: '0',                 // Disable fullscreen
     cc_load_policy: '0',     // Hide captions
     iv_load_policy: '3',     // Hide annotations
@@ -35,6 +38,7 @@ const YouTubeEmbed = ({ url, className = '', autoplay = false, muted = true }) =
     disablekb: '1',          // Disable keyboard controls
     playsinline: '1',        // Play inline on mobile
     enablejsapi: '1',        // Enable JavaScript API
+    color: 'white',          // Use white progress bar (cleaner look)
     origin: window.location.origin // Required for JS API
   }).toString();
 
