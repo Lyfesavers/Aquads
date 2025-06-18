@@ -9,6 +9,7 @@ const EditServiceModal = ({ service, onClose, onEditService, categories }) => {
     currency: service.currency || 'USDC',
     deliveryTime: service.deliveryTime || '3',
     image: service.image || '',
+    videoUrl: service.videoUrl || '',
     requirements: service.requirements || '',
     telegramUsername: service.telegramUsername || '',
     twitter: service.twitter || '',
@@ -273,6 +274,23 @@ const EditServiceModal = ({ service, onClose, onEditService, categories }) => {
                         />
                       </div>
                     )}
+                  </div>
+
+                  {/* Service Video (Optional) */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Service Video URL (Optional)
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="Enter YouTube URL (youtube.com/watch?v= or youtu.be/)"
+                      className="w-full px-4 py-2 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
+                      value={formData.videoUrl}
+                      onChange={(e) => setFormData(prev => ({ ...prev, videoUrl: e.target.value }))}
+                    />
+                    <p className="text-gray-400 text-xs mt-1">
+                      Adding a video can increase engagement and showcase your work better!
+                    </p>
                   </div>
 
                   {/* Requirements */}

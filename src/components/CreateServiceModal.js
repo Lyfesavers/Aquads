@@ -9,6 +9,7 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
     currency: 'USDC',
     deliveryTime: '3',
     image: '',
+    videoUrl: '',
     requirements: '',
     telegramUsername: '',
     twitter: '',
@@ -245,7 +246,7 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
           {/* Service Image */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Service Image URL - https://youtu.be/gt41bzMM6Fk (W500PX X H300PX)
+              Service Image URL (W500PX X H300PX)
             </label>
             <input
               type="url"
@@ -265,6 +266,23 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
                 />
               </div>
             )}
+          </div>
+
+          {/* Service Video (Optional) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Service Video URL (Optional)
+            </label>
+            <input
+              type="url"
+              placeholder="Enter YouTube URL (youtube.com/watch?v= or youtu.be/)"
+              className="w-full px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+              value={formData.videoUrl}
+              onChange={(e) => setFormData(prev => ({ ...prev, videoUrl: e.target.value }))}
+            />
+            <p className="text-gray-400 text-xs mt-1">
+              Adding a video can increase engagement and showcase your work better!
+            </p>
           </div>
 
           {/* Requirements */}

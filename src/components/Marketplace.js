@@ -22,6 +22,7 @@ import NotificationBell from './NotificationBell';
 import OnlineStatusIndicator from './OnlineStatusIndicator';
 import useUserPresence from '../hooks/useUserPresence';
 import useUserStatusUpdates from '../hooks/useUserStatusUpdates';
+import ServiceMediaDisplay from './ServiceMediaDisplay';
 import logger from '../utils/logger';
 
 // Helper function for country flags - using images instead of emojis
@@ -1047,10 +1048,9 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                         className="bg-gray-800/50 backdrop-blur-sm rounded-lg overflow-hidden group hover:shadow-lg hover:shadow-indigo-500/20 transition-all duration-300"
                       >
                         <div className="aspect-w-16 aspect-h-9 relative">
-                          <ServiceImageComponent 
-                            src={service.image}
-                            alt={service.title}
-                            className="w-full h-48 object-cover"
+                          <ServiceMediaDisplay 
+                            service={service}
+                            className="w-full h-48"
                           />
                           <ServiceBadgeComponent badge={service.badge} />
                           {service.isPremium && <PremiumBadge />}
