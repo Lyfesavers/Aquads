@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 const YouTubeEmbed = ({ url, className = '', autoplay = false, muted = true }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const iframeRef = useRef(null);
 
   // Extract video ID from various YouTube URL formats
   const getVideoId = (url) => {
@@ -14,6 +15,21 @@ const YouTubeEmbed = ({ url, className = '', autoplay = false, muted = true }) =
   };
 
   const videoId = getVideoId(url);
+
+  // Handle dynamic muting via postMessage to YouTube iframe
+  useEffect(() => {
+    if (iframeRef.current && isLoaded) {
+      const iframe = iframeRef.current;
+      const command = muted ? '{"event":"command","func":"mute","args":""}' : '{"event":"command","func":"unMute","args":""}';
+      
+      // Send command to YouTube iframe
+      try {
+        iframe.contentWindow.postMessage(command, 'https://www.youtube.com');
+      } catch (error) {
+        // Silently handle any postMessage errors
+      }
+    }
+  }, [muted, isLoaded]);
 
   if (!videoId) {
     return null;
@@ -71,6 +87,7 @@ const YouTubeEmbed = ({ url, className = '', autoplay = false, muted = true }) =
         </div>
       )}
       <iframe
+        ref={iframeRef}
         src={embedUrl}
         title="Service Video"
         frameBorder="0"
