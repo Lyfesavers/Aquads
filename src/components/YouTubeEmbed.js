@@ -1,9 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 
 const YouTubeEmbed = ({ url, className = '', autoplay = false, muted = true }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const iframeRef = useRef(null);
 
   // Extract video ID from various YouTube URL formats
   const getVideoId = (url) => {
@@ -16,30 +15,15 @@ const YouTubeEmbed = ({ url, className = '', autoplay = false, muted = true }) =
 
   const videoId = getVideoId(url);
 
-  // Handle dynamic muting via postMessage to YouTube iframe
-  useEffect(() => {
-    if (iframeRef.current && isLoaded) {
-      const iframe = iframeRef.current;
-      const command = muted ? '{"event":"command","func":"mute","args":""}' : '{"event":"command","func":"unMute","args":""}';
-      
-      // Send command to YouTube iframe
-      try {
-        iframe.contentWindow.postMessage(command, 'https://www.youtube.com');
-      } catch (error) {
-        // Silently handle any postMessage errors
-      }
-    }
-  }, [muted, isLoaded]);
-
   if (!videoId) {
     return null;
   }
 
-  // YouTube embed parameters for clean look
+  // YouTube embed parameters for clean look with minimal controls
   const embedParams = new URLSearchParams({
     autoplay: autoplay ? '1' : '0',
     mute: muted ? '1' : '0',
-    controls: '0',           // Hide player controls
+    controls: '1',           // Show minimal controls (needed for sound)
     modestbranding: '1',     // Remove YouTube logo
     rel: '0',                // Don't show related videos
     showinfo: '0',           // Hide video info
@@ -50,7 +34,7 @@ const YouTubeEmbed = ({ url, className = '', autoplay = false, muted = true }) =
     playlist: videoId,       // Required for loop to work
     disablekb: '1',          // Disable keyboard controls
     playsinline: '1',        // Play inline on mobile
-    enablejsapi: '1',        // Enable JavaScript API for better control
+    enablejsapi: '1',        // Enable JavaScript API
     origin: window.location.origin // Required for JS API
   }).toString();
 
@@ -87,7 +71,6 @@ const YouTubeEmbed = ({ url, className = '', autoplay = false, muted = true }) =
         </div>
       )}
       <iframe
-        ref={iframeRef}
         src={embedUrl}
         title="Service Video"
         frameBorder="0"
