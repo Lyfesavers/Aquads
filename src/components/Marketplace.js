@@ -159,7 +159,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
   // Initialize user presence tracking
   useUserPresence(currentUser);
-  const { getUserStatus, bulkUpdateUserStatuses } = useUserStatusUpdates();
+  const { getUserStatus, bulkUpdateUserStatuses } = useUserStatusUpdates(currentUser);
 
   const categories = [
     { id: 'smart-contract', name: 'Smart Contract', icon: '📝' },

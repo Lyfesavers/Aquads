@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 
-const useUserStatusUpdates = () => {
+const useUserStatusUpdates = (currentUser = null) => {
   const [userStatuses, setUserStatuses] = useState(new Map());
   const [socket, setSocket] = useState(null);
 
@@ -53,6 +53,24 @@ const useUserStatusUpdates = () => {
       }
     };
   }, []);
+
+  // Add effect to handle current user's status
+  useEffect(() => {
+    if (currentUser && currentUser.userId) {
+      // Add current user's status as online when they're logged in
+      setUserStatuses(prevStatuses => {
+        const newStatuses = new Map(prevStatuses);
+        newStatuses.set(currentUser.userId, {
+          userId: currentUser.userId,
+          username: currentUser.username,
+          isOnline: true,
+          lastSeen: new Date(),
+          lastActivity: new Date()
+        });
+        return newStatuses;
+      });
+    }
+  }, [currentUser]);
 
   // Function to get user status by ID
   const getUserStatus = (userId) => {
