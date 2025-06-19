@@ -655,7 +655,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                   </div>
                   
                   <div className="token-search">
-                    <label className="search-label">Address:</label>
+                    <label className="search-label">Pair Address:</label>
                     <input
                       type="text"
                       value={tokenSearch}
@@ -736,7 +736,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                 </>
               ) : (
                 <>
-                  🚀 <strong>DexTools (Any Token):</strong> Enter any token's contract address to view its chart and trading data
+                  🚀 <strong>DexTools (Any Token):</strong> Enter any token's pair address to view its chart and trading data
                   <br />
                   📈 Trending tokens above are ranked first by bumped status, then by community votes from our bubble ads
                   <br />
