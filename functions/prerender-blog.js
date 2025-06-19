@@ -59,10 +59,22 @@ exports.handler = async (event, context) => {
 
 // Helper function to create URL-friendly slugs
 function createSlug(title) {
-  return (title || '')
+  const slug = (title || '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '');
+  
+  // Limit slug length to prevent extremely long URLs (keep first 50 characters)
+  // This helps prevent 5xx errors due to URL length limits
+  const maxLength = 50;
+  if (slug.length > maxLength) {
+    // Find the last complete word within the limit to avoid cutting words in half
+    const truncated = slug.substring(0, maxLength);
+    const lastDash = truncated.lastIndexOf('-');
+    return lastDash > 20 ? truncated.substring(0, lastDash) : truncated;
+  }
+  
+  return slug;
 }
 
 // Function to generate HTML with blog metadata
