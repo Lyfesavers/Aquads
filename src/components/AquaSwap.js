@@ -253,7 +253,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: rgba(0, 0, 0, 0.2); border-radius: 8px; color: #9ca3af;">
           <div style="font-size: 3rem; margin-bottom: 16px;">🔍</div>
           <h3 style="color: #ffffff; margin: 0 0 8px 0;">Search Any Token</h3>
-          <p style="margin: 0; text-align: center; line-height: 1.5;">Enter a contract address above to view any token's chart</p>
+          <p style="margin: 0; text-align: center; line-height: 1.5;">Enter a Pair address above to view any token's chart</p>
         </div>
       `;
     }
@@ -660,7 +660,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                       type="text"
                       value={tokenSearch}
                       onChange={(e) => setTokenSearch(e.target.value)}
-                      placeholder="Contract address (e.g., 0xa43fe16908251ee70ef74718545e4fe6c5ccec9f)"
+                      placeholder="Pair address"
                       className="token-search-input"
                     />
                   </div>
