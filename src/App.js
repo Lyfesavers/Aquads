@@ -1043,8 +1043,24 @@ function App() {
     }
   };
 
-  const handleEmailVerificationComplete = (message) => {
+  const handleEmailVerificationComplete = async (message) => {
     alert(message);
+    
+    // Send welcome email after successful verification
+    if (pendingVerificationEmail && currentUser) {
+      logger.log('Sending welcome email after verification...');
+      try {
+        await emailService.sendWelcomeEmail(
+          pendingVerificationEmail,
+          currentUser.username,
+          currentUser.referralCode
+        );
+        logger.log('Welcome email sent successfully after verification');
+      } catch (emailError) {
+        logger.error('Failed to send welcome email after verification:', emailError);
+      }
+    }
+    
     setShowWelcomeModal(true);
     setShowEmailVerificationModal(false);
     setPendingVerificationEmail('');
