@@ -161,7 +161,7 @@ const ServiceMediaDisplay = ({ service, className = "w-full h-48" }) => {
             url={service.videoUrl}
             className="w-full h-full"
             autoplay={true}
-            muted={true}
+            muted={window.innerWidth > 768}
           />
         </div>
       )}

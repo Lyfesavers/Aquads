@@ -35,7 +35,6 @@ const YouTubeEmbed = ({ url, className = '', autoplay = false, muted = true }) =
     iv_load_policy: '3',     // Hide annotations
     loop: '1',               // Loop the video
     playlist: videoId,       // Required for loop to work
-    disablekb: '1',          // Disable keyboard controls
     playsinline: '1',        // Play inline on mobile
     enablejsapi: '1',        // Enable JavaScript API
     color: 'white',          // Use white progress bar (cleaner look)
