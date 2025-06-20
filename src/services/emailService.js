@@ -72,6 +72,41 @@ const emailService = {
       logger.error('EmailJS Error for booking:', error.text || error.message);
       return false;
     }
+  },
+
+  sendVerificationEmail: async (email, username, verificationCode) => {
+    try {
+      logger.log('EmailJS Config for verification:', {
+        serviceId: process.env.REACT_APP_EMAILJS_SERVICE_ID,
+        templateId: process.env.REACT_APP_EMAILJS_VERIFICATION_TEMPLATE,
+        publicKey: process.env.REACT_APP_EMAILJS_PUBLIC_KEY
+      });
+
+      const templateParams = {
+        to_email: email,
+        username: username,
+        verification_code: verificationCode,
+        site_name: 'Aquads'
+      };
+
+      logger.log('Sending verification email with data:', templateParams);
+
+      const response = await emailjs.send(
+        process.env.REACT_APP_EMAILJS_SERVICE_ID,
+        process.env.REACT_APP_EMAILJS_VERIFICATION_TEMPLATE,
+        templateParams,
+        process.env.REACT_APP_EMAILJS_PUBLIC_KEY
+      );
+
+      if (response.status === 200) {
+        logger.log('Verification email sent successfully');
+        return true;
+      }
+      return false;
+    } catch (error) {
+      logger.error('EmailJS Error for verification:', error.text || error.message);
+      return false;
+    }
   }
 };
 

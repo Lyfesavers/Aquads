@@ -7,7 +7,6 @@ const auth = require('../middleware/auth');
 const crypto = require('crypto');
 const { awardAffiliatePoints, awardPendingAffiliatePoints } = require('./points');
 const { createNotification } = require('./notifications');
-const emailService = require('../utils/emailService');
 const rateLimit = require('express-rate-limit');
 const ipLimiter = require('../middleware/ipLimiter');
 const deviceLimiter = require('../middleware/deviceLimiter');
@@ -104,14 +103,6 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
     await user.save();
     console.log('User saved successfully:', { username: user.username });
 
-    // Send verification email
-    try {
-      await emailService.sendVerificationEmail(email, verificationCode, username);
-    } catch (emailError) {
-      console.error('Failed to send verification email:', emailError);
-      // Don't fail registration if email sending fails
-    }
-
     // If user was referred, update affiliate relationship and award points
     if (user.referredBy) {
       try {
@@ -119,8 +110,7 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
         if (referringUser) {
           // Add new user to referrer's affiliates list
           await referringUser.addAffiliate(user._id);
-          
-          // Award points to referrer (deferred until email verification)
+          // Points will be awarded after email verification
           console.log('Affiliate points deferred until email verification for:', username);
           
           // Create notification for the referrer about new affiliate
@@ -153,7 +143,7 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
       { expiresIn: '24h' }
     );
 
-    // Return user data and token with verification status
+    // Return user data and token with verification info
     return res.status(201).json({
       userId: user._id,
       username: user.username,
@@ -163,6 +153,7 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
       token,
       emailVerified: false,
       verificationRequired: true,
+      verificationCode: verificationCode, // Send code to frontend for EmailJS
       message: 'Account created! Please check your email for verification code.'
     });
   } catch (error) {
@@ -796,15 +787,10 @@ router.post('/resend-verification', async (req, res) => {
     user.emailVerificationExpiry = verificationExpiry;
     await user.save();
 
-    // Send verification email
-    try {
-      await emailService.sendVerificationEmail(email, verificationCode, user.username);
-    } catch (emailError) {
-      console.error('Failed to send verification email:', emailError);
-      // Don't fail the resend if email sending fails
-    }
-
-    res.json({ message: 'Verification code resent successfully!' });
+    res.json({ 
+      message: 'Verification code resent successfully!',
+      verificationCode: verificationCode // Send to frontend for EmailJS
+    });
   } catch (error) {
     console.error('Resend verification error:', error);
     res.status(500).json({ error: 'Error resending verification code' });

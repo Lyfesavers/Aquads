@@ -353,13 +353,13 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
     setError('');
 
     // Validate required fields
-    if (!formData.username || !formData.password) {
-      setError('Username and password are required');
+    if (!formData.username || !formData.password || !formData.email) {
+      setError('Username, password, and email are required');
       return;
     }
 
-    // Validate email format if provided
-    if (formData.email && !validateEmail(formData.email)) {
+    // Validate email format
+    if (!validateEmail(formData.email)) {
       setError('Please enter a valid email address');
       return;
     }
@@ -548,13 +548,14 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
               />
             </div>
             <div>
-              <label className="block text-gray-300 mb-2">Email</label>
+              <label className="block text-gray-300 mb-2">Email *</label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="Enter email (Required)"
+                required
+                placeholder="Enter email (Required for verification)"
                 className="w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>

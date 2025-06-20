@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
 import { FaSpinner, FaEnvelope } from 'react-icons/fa';
+import emailService from '../services/emailService';
+import logger from '../utils/logger';
 
 const EmailVerificationModal = ({ email, onVerificationComplete, onClose }) => {
   const [verificationCode, setVerificationCode] = useState('');
@@ -73,7 +75,24 @@ const EmailVerificationModal = ({ email, onVerificationComplete, onClose }) => {
         throw new Error(data.error || 'Failed to resend code');
       }
 
-      alert('Verification code resent successfully!');
+      // Send email using EmailJS
+      if (data.verificationCode) {
+        logger.log('Resending verification email...');
+        try {
+          await emailService.sendVerificationEmail(
+            email,
+            'User', // We don't have username here, could be improved
+            data.verificationCode
+          );
+          logger.log('Verification email resent successfully');
+          alert('Verification code resent successfully! Please check your email.');
+        } catch (emailError) {
+          logger.error('Failed to resend verification email:', emailError);
+          alert('New code generated but failed to send email. Please contact support.');
+        }
+      } else {
+        alert('Verification code resent successfully!');
+      }
     } catch (error) {
       setError(error.message);
     } finally {

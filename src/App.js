@@ -998,6 +998,22 @@ function App() {
         
         // Check if email verification is required
         if (user.verificationRequired && !user.emailVerified) {
+          // Send verification email
+          if (user.verificationCode) {
+            logger.log('Attempting to send verification email...');
+            try {
+              await emailService.sendVerificationEmail(
+                user.email,
+                user.username,
+                user.verificationCode
+              );
+              logger.log('Verification email sent successfully');
+            } catch (emailError) {
+              logger.error('Failed to send verification email:', emailError);
+              alert('Account created but failed to send verification email. Please try resending.');
+            }
+          }
+          
           setPendingVerificationEmail(user.email);
           setShowEmailVerificationModal(true);
           setShowCreateAccountModal(false);
