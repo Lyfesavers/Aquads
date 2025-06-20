@@ -5,8 +5,9 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 const crypto = require('crypto');
-const { awardAffiliatePoints } = require('./points');
+const { awardAffiliatePoints, awardPendingAffiliatePoints } = require('./points');
 const { createNotification } = require('./notifications');
+const emailService = require('../utils/emailService');
 const rateLimit = require('express-rate-limit');
 const ipLimiter = require('../middleware/ipLimiter');
 const deviceLimiter = require('../middleware/deviceLimiter');
@@ -30,8 +31,8 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
     console.log('Registration attempt for username:', username);
 
     // Enhanced validation
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Username and password are required' });
+    if (!username || !password || !email) {
+      return res.status(400).json({ error: 'Username, password, and email are required for verification' });
     }
 
     // Username requirements
@@ -62,22 +63,27 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
       return res.status(400).json({ error: 'Username already exists' });
     }
 
-    // Check if email already exists (only if email is provided)
-    if (email) {
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        return res.status(400).json({ error: 'Invalid email format' });
-      }
-      const existingEmail = await User.findOne({ email: email.toLowerCase() });
-      if (existingEmail) {
-        return res.status(400).json({ error: 'Email already exists' });
-      }
+    // Validate and check email
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
     }
+    const existingEmail = await User.findOne({ email: email.toLowerCase() });
+    if (existingEmail) {
+      return res.status(400).json({ error: 'Email already exists' });
+    }
+
+    // Generate 6-digit verification code
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
     // Create user object
     const userData = {
       username,
       password,
-      email: email ? email.toLowerCase() : undefined,
+      email: email.toLowerCase(),
+      emailVerificationCode: verificationCode,
+      emailVerificationExpiry: verificationExpiry,
+      emailVerified: false,
       image: image || undefined,
       userType: req.body.userType || 'freelancer', // Add userType with default fallback
       ipAddress: req.clientIp, // Store client IP address
@@ -98,6 +104,14 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
     await user.save();
     console.log('User saved successfully:', { username: user.username });
 
+    // Send verification email
+    try {
+      await emailService.sendVerificationEmail(email, verificationCode, username);
+    } catch (emailError) {
+      console.error('Failed to send verification email:', emailError);
+      // Don't fail registration if email sending fails
+    }
+
     // If user was referred, update affiliate relationship and award points
     if (user.referredBy) {
       try {
@@ -105,9 +119,9 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
         if (referringUser) {
           // Add new user to referrer's affiliates list
           await referringUser.addAffiliate(user._id);
-          // Award points to referrer
-          await awardAffiliatePoints(user.referredBy, user._id);
-          console.log('Affiliate points awarded for:', username);
+          
+          // Award points to referrer (deferred until email verification)
+          console.log('Affiliate points deferred until email verification for:', username);
           
           // Create notification for the referrer about new affiliate
           try {
@@ -129,24 +143,8 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
       }
     }
 
-    // If user was referred, award them points
-    if (user.referredBy) {
-      // Update the new user's points
-      await User.findByIdAndUpdate(
-        user._id,
-        {
-          $inc: { points: 1000 },
-          $push: {
-            pointsHistory: {
-              amount: 1000,
-              reason: 'Signup bonus with affiliate code',
-              createdAt: new Date()
-            }
-          }
-        },
-        { new: true }
-      );
-    }
+    // Signup bonus points will be awarded after email verification
+    console.log('Signup bonus points deferred until email verification');
 
     // Generate JWT token
     const token = jwt.sign(
@@ -155,14 +153,17 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
       { expiresIn: '24h' }
     );
 
-    // Return user data and token
+    // Return user data and token with verification status
     return res.status(201).json({
       userId: user._id,
       username: user.username,
       email: user.email,
       image: user.image,
       referralCode: user.referralCode,
-      token
+      token,
+      emailVerified: false,
+      verificationRequired: true,
+      message: 'Account created! Please check your email for verification code.'
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -701,6 +702,112 @@ router.post('/status/bulk', async (req, res) => {
   } catch (error) {
     console.error('Error fetching bulk user status:', error);
     res.status(500).json({ message: 'Error fetching user status', error: error.message });
+  }
+});
+
+// Email verification endpoint
+router.post('/verify-email', async (req, res) => {
+  try {
+    const { email, verificationCode } = req.body;
+
+    if (!email || !verificationCode) {
+      return res.status(400).json({ error: 'Email and verification code are required' });
+    }
+
+    // Find user by email
+    const user = await User.findOne({ 
+      email: email.toLowerCase(),
+      emailVerificationCode: verificationCode,
+      emailVerificationExpiry: { $gt: new Date() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: 'Invalid or expired verification code' });
+    }
+
+    // Update user as verified
+    user.emailVerified = true;
+    user.emailVerificationCode = null;
+    user.emailVerificationExpiry = null;
+    await user.save();
+
+    // Award pending affiliate points to referrer
+    if (user.referredBy) {
+      try {
+        await awardPendingAffiliatePoints(user._id);
+        console.log('Affiliate points awarded after email verification');
+      } catch (error) {
+        console.error('Error awarding pending affiliate points:', error);
+      }
+    }
+
+    // Award signup bonus points to new user
+    if (user.referredBy) {
+      await User.findByIdAndUpdate(
+        user._id,
+        {
+          $inc: { points: 1000 },
+          $push: {
+            pointsHistory: {
+              amount: 1000,
+              reason: 'Signup bonus with affiliate code (email verified)',
+              createdAt: new Date()
+            }
+          }
+        },
+        { new: true }
+      );
+    }
+
+    res.json({ 
+      message: 'Email verified successfully! Points have been awarded.',
+      emailVerified: true 
+    });
+  } catch (error) {
+    console.error('Email verification error:', error);
+    res.status(500).json({ error: 'Error verifying email' });
+  }
+});
+
+// Resend verification code endpoint
+router.post('/resend-verification', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    // Find user by email
+    const user = await User.findOne({ 
+      email: email.toLowerCase(),
+      emailVerified: false
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: 'User not found or already verified' });
+    }
+
+    // Generate new verification code
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+    user.emailVerificationCode = verificationCode;
+    user.emailVerificationExpiry = verificationExpiry;
+    await user.save();
+
+    // Send verification email
+    try {
+      await emailService.sendVerificationEmail(email, verificationCode, user.username);
+    } catch (emailError) {
+      console.error('Failed to send verification email:', emailError);
+      // Don't fail the resend if email sending fails
+    }
+
+    res.json({ message: 'Verification code resent successfully!' });
+  } catch (error) {
+    console.error('Resend verification error:', error);
+    res.status(500).json({ error: 'Error resending verification code' });
   }
 });
 

@@ -302,25 +302,66 @@ router.post('/xpx-claims/:userId/process', auth, async (req, res) => {
 
 // Helper functions for awarding points
 function awardAffiliatePoints(referrerId, referredUserId) {
-  return User.findByIdAndUpdate(
-    referrerId,
-    {
-      $inc: { points: 100 },
-      $push: {
-        pointsHistory: {
-          amount: 100,
-          reason: 'New affiliate referral',
-          referredUser: referredUserId,
-          createdAt: new Date()
-        }
+  return User.findById(referredUserId)
+    .then(referredUser => {
+      // Only award points if referred user has verified their email  
+      if (!referredUser.emailVerified && referredUser.email) {
+        console.log('Points not awarded - referred user email not verified');
+        return null; // Don't award points yet
       }
-    },
-    { new: true }
-  ).then(user => {
-    return user;
-  }).catch(error => {
-    throw error;
-  });
+      
+      return User.findByIdAndUpdate(
+        referrerId,
+        {
+          $inc: { points: 100 },
+          $push: {
+            pointsHistory: {
+              amount: 100,
+              reason: 'New affiliate referral',
+              referredUser: referredUserId,
+              createdAt: new Date()
+            }
+          }
+        },
+        { new: true }
+      );
+    })
+    .then(user => {
+      return user;
+    }).catch(error => {
+      throw error;
+    });
+}
+
+// New function to award pending affiliate points after email verification
+function awardPendingAffiliatePoints(userId) {
+  return User.findById(userId)
+    .then(user => {
+      if (!user || !user.referredBy) {
+        return null;
+      }
+      
+      // Award points to referrer now that email is verified
+      return User.findByIdAndUpdate(
+        user.referredBy,
+        {
+          $inc: { points: 100 },
+          $push: {
+            pointsHistory: {
+              amount: 100,
+              reason: 'New affiliate referral (email verified)',
+              referredUser: userId,
+              createdAt: new Date()
+            }
+          }
+        },
+        { new: true }
+      );
+    })
+    .catch(error => {
+      console.error('Error awarding pending affiliate points:', error);
+      throw error;
+    });
 }
 
 // Helper function to award points for social media raids
@@ -561,4 +602,5 @@ module.exports.awardListingPoints = awardListingPoints;
 module.exports.awardAffiliateReviewPoints = awardAffiliateReviewPoints;
 module.exports.awardGameVotePoints = awardGameVotePoints;
 module.exports.revokeGameVotePoints = revokeGameVotePoints;
-module.exports.awardSocialMediaPoints = awardSocialMediaPoints; 
+module.exports.awardSocialMediaPoints = awardSocialMediaPoints;
+module.exports.awardPendingAffiliatePoints = awardPendingAffiliatePoints; 

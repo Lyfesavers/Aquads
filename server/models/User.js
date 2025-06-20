@@ -22,6 +22,18 @@ const userSchema = new Schema({
       message: 'Please enter a valid email address'
     }
   },
+  emailVerified: {
+    type: Boolean,
+    default: false
+  },
+  emailVerificationCode: {
+    type: String,
+    default: null
+  },
+  emailVerificationExpiry: {
+    type: Date,
+    default: null
+  },
   userType: {
     type: String,
     required: true,

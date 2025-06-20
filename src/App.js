@@ -23,6 +23,7 @@ import BumpStore from './components/BumpStore';
 import LoginModal from './components/LoginModal';
 import CreateAdModal from './components/CreateAdModal';
 import CreateAccountModal from './components/CreateAccountModal';
+import EmailVerificationModal from './components/EmailVerificationModal';
 import Dashboard from './components/Dashboard';
 import EditAdModal from './components/EditAdModal';
 import TokenBanner from './components/TokenBanner';
@@ -411,6 +412,8 @@ function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
+  const [showEmailVerificationModal, setShowEmailVerificationModal] = useState(false);
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
   const [showBumpStore, setShowBumpStore] = useState(false);
   const [selectedAdId, setSelectedAdId] = useState(null);
   const [showDashboard, setShowDashboard] = useState(false);
@@ -993,28 +996,42 @@ function App() {
         setCurrentUser(user);
         setNewUsername(user.username);
         
-        // Send welcome email if email is provided
-        if (formData.email) {
-          logger.log('Attempting to send welcome email...');
-          try {
-            await emailService.sendWelcomeEmail(
-              formData.email,
-              user.username,
-              user.referralCode
-            );
-            logger.log('Welcome email sent successfully');
-          } catch (emailError) {
-            logger.error('Failed to send welcome email:', emailError);
+        // Check if email verification is required
+        if (user.verificationRequired && !user.emailVerified) {
+          setPendingVerificationEmail(user.email);
+          setShowEmailVerificationModal(true);
+          setShowCreateAccountModal(false);
+        } else {
+          // Send welcome email if email is provided and verified
+          if (formData.email) {
+            logger.log('Attempting to send welcome email...');
+            try {
+              await emailService.sendWelcomeEmail(
+                formData.email,
+                user.username,
+                user.referralCode
+              );
+              logger.log('Welcome email sent successfully');
+            } catch (emailError) {
+              logger.error('Failed to send welcome email:', emailError);
+            }
           }
+          
+          setShowWelcomeModal(true);
+          setShowCreateAccountModal(false);
         }
-        
-        setShowWelcomeModal(true);
-        setShowCreateAccountModal(false);
       }
     } catch (error) {
       logger.error('Error creating account:', error);
       alert(error.message || 'Failed to create account');
     }
+  };
+
+  const handleEmailVerificationComplete = (message) => {
+    alert(message);
+    setShowWelcomeModal(true);
+    setShowEmailVerificationModal(false);
+    setPendingVerificationEmail('');
   };
 
   const handleCreateAd = async (adData) => {
@@ -3201,6 +3218,17 @@ function App() {
                     isOpen={showCreateAccountModal}
                     onCreateAccount={handleCreateAccount}
                     onClose={() => setShowCreateAccountModal(false)}
+                  />
+                )}
+
+                {showEmailVerificationModal && (
+                  <EmailVerificationModal
+                    email={pendingVerificationEmail}
+                    onVerificationComplete={handleEmailVerificationComplete}
+                    onClose={() => {
+                      setShowEmailVerificationModal(false);
+                      setPendingVerificationEmail('');
+                    }}
                   />
                 )}
 
