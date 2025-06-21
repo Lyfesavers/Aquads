@@ -255,8 +255,12 @@
             
             update() {
                 // Update shooting bubble
-                if (this.shootingBubble && this.shootingBubble.moving) {
+                if (this.shootingBubble) {
                     const bubble = this.shootingBubble;
+                    
+                    // Store previous position for collision detection
+                    const prevX = bubble.x;
+                    const prevY = bubble.y;
                     
                     bubble.x += bubble.vx;
                     bubble.y += bubble.vy;
@@ -270,15 +274,15 @@
                         bubble.vx *= -1;
                     }
                     
-                    // Hit ceiling
+                    // Hit ceiling - attach to top row
                     if (bubble.y <= this.bubbleRadius + 50) {
-                        this.attachBubble(bubble.x, bubble.y, bubble.color);
+                        this.attachBubbleToGrid(bubble.x, 50 + this.bubbleRadius, bubble.color);
                         return;
                     }
                     
-                    // Check collision with grid bubbles
-                    if (this.checkGridCollision(bubble)) {
-                        this.attachBubble(bubble.x, bubble.y, bubble.color);
+                    // Check collision with existing bubbles
+                    if (this.checkBubbleCollision(bubble)) {
+                        this.attachBubbleToGrid(prevX, prevY, bubble.color);
                         return;
                     }
                 }
@@ -294,7 +298,7 @@
                 
                 // Update level complete message
                 if (this.levelCompleteMessage) {
-                    this.levelCompleteMessage.time -= 16; // Assuming 60fps
+                    this.levelCompleteMessage.time -= 16;
                     this.levelCompleteMessage.alpha = Math.max(0, this.levelCompleteMessage.time / 2000);
                     
                     if (this.levelCompleteMessage.time <= 0) {
@@ -303,7 +307,8 @@
                 }
             }
             
-            checkGridCollision(bubble) {
+            checkBubbleCollision(bubble) {
+                // Check collision with all existing bubbles
                 for (let col = 0; col < this.gridCols; col++) {
                     for (let row = 0; row < this.gridRows; row++) {
                         if (this.grid[col][row]) {
@@ -312,7 +317,8 @@
                             const dy = coords.y - bubble.y;
                             const distance = Math.sqrt(dx * dx + dy * dy);
                             
-                            if (distance < this.bubbleRadius * 2) {
+                            // Use a slightly larger collision radius to prevent pass-through
+                            if (distance < this.bubbleRadius * 1.9) {
                                 return true;
                             }
                         }
@@ -321,60 +327,63 @@
                 return false;
             }
             
-            attachBubble(x, y, color) {
+            attachBubbleToGrid(x, y, color) {
+                // Find the best grid position for this bubble
                 const gridPos = this.getGridPosition(x, y);
                 
-                // Find nearest empty position
-                const nearestPos = this.findNearestEmptyPosition(gridPos.col, gridPos.row);
+                // Look for the nearest empty spot
+                let bestCol = gridPos.col;
+                let bestRow = gridPos.row;
                 
-                if (nearestPos) {
-                    this.grid[nearestPos.col][nearestPos.row] = {
+                // If the target position is occupied, find nearest empty
+                if (this.grid[bestCol] && this.grid[bestCol][bestRow]) {
+                    const found = this.findNearestEmpty(bestCol, bestRow);
+                    if (found) {
+                        bestCol = found.col;
+                        bestRow = found.row;
+                    }
+                }
+                
+                // Place the bubble
+                if (bestCol >= 0 && bestCol < this.gridCols && bestRow >= 0 && bestRow < this.gridRows) {
+                    this.grid[bestCol][bestRow] = {
                         color: color,
-                        col: nearestPos.col,
-                        row: nearestPos.row
+                        col: bestCol,
+                        row: bestRow
                     };
                     
+                    // Clear the shooting bubble
                     this.shootingBubble = null;
                     
-                    // Check matches after a short delay to allow for visual feedback
-                    setTimeout(() => this.checkMatches(nearestPos.col, nearestPos.row), 50);
+                    // Check for matches immediately (no delay)
+                    this.processMatches(bestCol, bestRow);
                 }
             }
             
-            findNearestEmptyPosition(targetCol, targetRow) {
-                // Start with the target position if it's empty
-                if (!this.grid[targetCol] || !this.grid[targetCol][targetRow]) {
-                    return { col: targetCol, row: targetRow };
-                }
-                
-                // Search in expanding rings around the target
-                for (let radius = 1; radius <= 3; radius++) {
+            findNearestEmpty(targetCol, targetRow) {
+                // Search in expanding rings for empty position
+                for (let radius = 1; radius <= 2; radius++) {
                     for (let col = Math.max(0, targetCol - radius); col <= Math.min(this.gridCols - 1, targetCol + radius); col++) {
                         for (let row = Math.max(0, targetRow - radius); row <= Math.min(this.gridRows - 1, targetRow + radius); row++) {
-                            if (!this.grid[col][row]) {
-                                // Check if this position has at least one neighbor (not floating)
-                                const neighbors = this.getNeighbors(col, row);
-                                const hasNeighbor = neighbors.some(n => this.grid[n.col] && this.grid[n.col][n.row]);
-                                
-                                if (hasNeighbor || row === 0) { // Top row is always valid
-                                    return { col: col, row: row };
-                                }
+                            if (!this.grid[col] || !this.grid[col][row]) {
+                                return { col: col, row: row };
                             }
                         }
                     }
                 }
-                
                 return null;
             }
             
-            getNeighbors(col, row) {
+            getValidNeighbors(col, row) {
                 const neighbors = [];
                 
-                // Hexagonal neighbor offsets
-                const evenRowOffsets = [[-1, -1], [0, -1], [-1, 0], [1, 0], [-1, 1], [0, 1]];
-                const oddRowOffsets = [[0, -1], [1, -1], [-1, 0], [1, 0], [0, 1], [1, 1]];
-                
-                const offsets = (row % 2 === 0) ? evenRowOffsets : oddRowOffsets;
+                // Simple 6-direction hexagonal neighbors
+                const offsets = [
+                    [-1, 0], [1, 0],  // left, right
+                    [0, -1], [0, 1],  // up, down
+                    [(row % 2 === 0) ? -1 : 0, -1], // up-left/up-right based on row
+                    [(row % 2 === 0) ? -1 : 0, 1]   // down-left/down-right based on row
+                ];
                 
                 for (const [dx, dy] of offsets) {
                     const newCol = col + dx;
@@ -388,49 +397,52 @@
                 return neighbors;
             }
             
-            checkMatches(col, row) {
+            processMatches(col, row) {
                 const bubble = this.grid[col][row];
                 if (!bubble) return;
                 
-                const matches = this.findConnectedBubbles(col, row, bubble.color);
+                // Find all bubbles of same color connected to this one
+                const matches = this.findConnectedSameColor(col, row, bubble.color);
                 
                 if (matches.length >= 3) {
                     // Remove matched bubbles
                     matches.forEach(pos => {
-                        this.grid[pos.col][pos.row] = null;
+                        if (this.grid[pos.col] && this.grid[pos.col][pos.row]) {
+                            this.grid[pos.col][pos.row] = null;
+                        }
                     });
                     
                     this.score += matches.length * 10;
-                    this.createParticlesFromGrid(matches);
+                    this.createExplosionParticles(matches);
                     
-                    // Remove floating bubbles after a match
-                    setTimeout(() => {
-                        this.removeFloatingBubbles();
-                    }, 150);
+                    // Remove floating bubbles
+                    this.removeFloatingBubbles();
                 }
                 
+                this.updateUI();
                 this.checkWin();
             }
             
-            findConnectedBubbles(startCol, startRow, targetColor) {
+            findConnectedSameColor(startCol, startRow, targetColor) {
                 const visited = new Set();
                 const matches = [];
                 const toCheck = [{ col: startCol, row: startRow }];
                 
                 while (toCheck.length > 0) {
-                    const current = toCheck.pop();
+                    const current = toCheck.shift(); // Use shift for breadth-first
                     const key = `${current.col},${current.row}`;
                     
                     if (visited.has(key)) continue;
                     visited.add(key);
                     
-                    const bubble = this.grid[current.col] && this.grid[current.col][current.row];
-                    if (!bubble || bubble.color !== targetColor) continue;
+                    // Check if bubble exists and has correct color
+                    if (!this.grid[current.col] || !this.grid[current.col][current.row]) continue;
+                    if (this.grid[current.col][current.row].color !== targetColor) continue;
                     
                     matches.push(current);
                     
-                    // Check all neighbors
-                    const neighbors = this.getNeighbors(current.col, current.row);
+                    // Add all valid neighbors to check
+                    const neighbors = this.getValidNeighbors(current.col, current.row);
                     for (const neighbor of neighbors) {
                         const neighborKey = `${neighbor.col},${neighbor.row}`;
                         if (!visited.has(neighborKey)) {
@@ -442,56 +454,56 @@
                 return matches;
             }
             
-            removeBubbles(bubbles) {
-                bubbles.forEach(bubble => {
-                    const index = this.bubbles.indexOf(bubble);
-                    if (index > -1) this.bubbles.splice(index, 1);
-                });
-            }
+
             
             removeFloatingBubbles() {
                 const connected = new Set();
                 const toCheck = [];
                 
-                // Find all bubbles connected to the top row
+                // Start with all bubbles in the top row
                 for (let col = 0; col < this.gridCols; col++) {
-                    if (this.grid[col][0]) {
+                    if (this.grid[col] && this.grid[col][0]) {
                         toCheck.push({ col: col, row: 0 });
                     }
                 }
                 
-                // Use BFS to find all connected bubbles
+                // Find all connected bubbles using BFS
                 while (toCheck.length > 0) {
-                    const current = toCheck.pop();
+                    const current = toCheck.shift();
                     const key = `${current.col},${current.row}`;
                     
                     if (connected.has(key)) continue;
                     connected.add(key);
                     
-                    const neighbors = this.getNeighbors(current.col, current.row);
+                    // Check all neighbors
+                    const neighbors = this.getValidNeighbors(current.col, current.row);
                     for (const neighbor of neighbors) {
                         const neighborKey = `${neighbor.col},${neighbor.row}`;
-                        if (!connected.has(neighborKey) && this.grid[neighbor.col] && this.grid[neighbor.col][neighbor.row]) {
+                        if (!connected.has(neighborKey) && 
+                            this.grid[neighbor.col] && 
+                            this.grid[neighbor.col][neighbor.row]) {
                             toCheck.push(neighbor);
                         }
                     }
                 }
                 
-                // Remove floating bubbles
-                const floatingBubbles = [];
+                // Remove floating bubbles and count them
+                let floatingCount = 0;
+                const floatingPositions = [];
+                
                 for (let col = 0; col < this.gridCols; col++) {
-                    for (let row = 0; row < this.gridRows; row++) {
-                        if (this.grid[col][row] && !connected.has(`${col},${row}`)) {
-                            floatingBubbles.push({ col: col, row: row });
+                    for (let row = 1; row < this.gridRows; row++) { // Skip top row
+                        if (this.grid[col] && this.grid[col][row] && !connected.has(`${col},${row}`)) {
+                            floatingPositions.push({ col: col, row: row });
                             this.grid[col][row] = null;
+                            floatingCount++;
                         }
                     }
                 }
                 
-                if (floatingBubbles.length > 0) {
-                    this.score += floatingBubbles.length * 5; // Bonus points for floating bubbles
-                    this.createParticlesFromGrid(floatingBubbles);
-                    this.updateUI();
+                if (floatingCount > 0) {
+                    this.score += floatingCount * 5;
+                    this.createExplosionParticles(floatingPositions);
                 }
             }
             
@@ -510,19 +522,18 @@
                 });
             }
             
-            createParticlesFromGrid(gridPositions) {
+            createExplosionParticles(gridPositions) {
                 gridPositions.forEach(pos => {
                     const coords = this.getGridCoordinates(pos.col, pos.row);
-                    const bubble = this.grid[pos.col] && this.grid[pos.col][pos.row];
                     
-                    for (let i = 0; i < 6; i++) {
+                    for (let i = 0; i < 8; i++) {
                         this.particles.push({
                             x: coords.x,
                             y: coords.y,
-                            vx: (Math.random() - 0.5) * 8,
-                            vy: (Math.random() - 0.5) * 8,
-                            color: bubble ? bubble.color : this.colors[0],
-                            life: 1
+                            vx: (Math.random() - 0.5) * 10,
+                            vy: (Math.random() - 0.5) * 10,
+                            color: this.colors[Math.floor(Math.random() * this.colors.length)],
+                            life: 1.2
                         });
                     }
                 });
@@ -693,4 +704,5 @@
         });
     </script>
 </body>
+</html> 
 </html> 
