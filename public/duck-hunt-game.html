@@ -243,27 +243,106 @@
             transform: translateY(-2px);
         }
         
-        /* Instructions overlay */
-        .instructions {
+        /* How to Play Button */
+        .how-to-play-btn {
             position: absolute;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
             background: rgba(0,0,0,0.85);
             color: white;
-            padding: 20px 30px;
+            padding: 15px 25px;
             border-radius: 12px;
-            text-align: center;
-            z-index: 1000;
-            font-size: 18px;
             border: 2px solid #FFD700;
-            max-width: 90%;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            z-index: 1000;
         }
         
-        .instructions h3 {
+        .how-to-play-btn:hover {
+            background: rgba(255,215,0,0.2);
+            transform: translateX(-50%) translateY(-2px);
+        }
+        
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 999999;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background-color: #1a1a1a;
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            color: white;
+            border: 2px solid #FFD700;
+            position: relative;
+        }
+        
+        .modal-content h3 {
             color: #FFD700;
-            margin-bottom: 10px;
-            font-size: 20px;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        
+        .modal-content p {
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            color: #cccccc;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #cccccc;
+            font-size: 24px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: color 0.2s;
+        }
+        
+        .modal-close:hover {
+            color: white;
+        }
+        
+        .modal-got-it {
+            background-color: #FFD700;
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 20px;
+        }
+        
+        .modal-got-it:hover {
+            background-color: #FFC107;
+            transform: translateY(-2px);
+        }
+        
+        .hidden {
+            display: none;
         }
         
         /* Make sure the game area covers the full screen */
@@ -326,15 +405,50 @@
     <!-- Back to Hub Button -->
     <a href="/" class="back-button">← Back to Hub</a>
     
-    <!-- Instructions -->
-    <div class="instructions">
-        <h3>🎯 How to Play</h3>
-        Start game by clicking on the sound icon.<br>
-        Click to shoot the ducks before they fly away!<br>
-        Score points for each successful hit 🦆
+    <!-- How to Play Button -->
+    <button class="how-to-play-btn" onclick="openModal()">
+        🎯 How to Play
+    </button>
+    
+    <!-- How to Play Modal -->
+    <div id="howToPlayModal" class="modal-overlay hidden" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeModal()">×</button>
+            <h3>🎯 How to Play Duck Hunt</h3>
+            <p>Start the game by clicking on the sound icon in the top right corner.</p>
+            <p>Click anywhere on the screen to shoot the ducks before they fly away!</p>
+            <p>Score points for each successful hit 🦆</p>
+            <p>Try to get the highest score possible!</p>
+            <button class="modal-got-it" onclick="closeModal()">Got It!</button>
+        </div>
     </div>
     
     <!-- Load the existing Duck Hunt game script -->
     <script src="duck-hunt.js"></script>
+    
+    <!-- Modal JavaScript -->
+    <script>
+        function openModal() {
+            document.getElementById('howToPlayModal').classList.remove('hidden');
+            // Prevent body scroll when modal is open
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeModal(event) {
+            // Close if clicking on overlay or close button
+            if (!event || event.target === event.currentTarget || event.target.classList.contains('modal-close') || event.target.classList.contains('modal-got-it')) {
+                document.getElementById('howToPlayModal').classList.add('hidden');
+                // Restore body scroll
+                document.body.style.overflow = 'auto';
+            }
+        }
+        
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
 </body>
 </html> 
