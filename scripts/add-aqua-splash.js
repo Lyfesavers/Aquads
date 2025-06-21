@@ -46,14 +46,14 @@ const addAquaSplashGame = async () => {
     
     // Create the game entry
     const aquaSplashGame = new Game({
-      title: 'Aqua Splash',
-      description: 'Dive into the ultimate water droplet puzzle experience! Match colorful water droplets to create spectacular splash effects and chain reactions. With stunning visual effects, progressive difficulty, and mesmerizing water physics, Aqua Splash will keep you hooked for hours. Perfect your strategy to achieve massive combos and climb the leaderboards!',
+      title: 'Aqua Splash - Ultimate Water Odyssey',
+      description: '🌊 Dive into the most advanced water droplet puzzle experience ever created! Features: ⚡ Campaign Mode with 50+ levels and boss battles, ♾️ Endless Mode for infinite gameplay, 🏆 Achievement system with unlockables, 💥 Four epic power-ups (Tsunami Bomb, Lightning Strike, Time Freeze, Rainbow Drop), 🎮 Multiple game modes and daily challenges, 💎 8 rare droplet types with unique properties, ✨ Spectacular particle effects and modern UI. Master the art of water manipulation and become the ultimate Aqua Champion!',
       bannerType: 'image',
       bannerUrl: '/aqua-splash-banner.svg',
       gameUrl: '/aqua-splash.html',
       projectName: 'Aqua Splash',
       category: 'puzzle',
-      tags: ['puzzle', 'match-3', 'water', 'strategy', 'casual', 'aquads-original'],
+      tags: ['puzzle', 'match-3', 'water', 'strategy', 'campaign', 'powerups', 'achievements', 'modern', 'aquads-original'],
       owner: adminUser._id,
       votes: 0,
       blockchain: 'other', // HTML5 game, not blockchain specific

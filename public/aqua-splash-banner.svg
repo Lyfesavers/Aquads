@@ -58,10 +58,13 @@
   </circle>
   
   <!-- Title -->
-  <text x="200" y="50" font-family="Arial, sans-serif" font-size="32" font-weight="bold" text-anchor="middle" fill="#ffffff" filter="url(#glow)">
+  <text x="200" y="45" font-family="Orbitron, Arial, sans-serif" font-size="36" font-weight="900" text-anchor="middle" fill="#ffffff" filter="url(#glow)">
     AQUA SPLASH
   </text>
+  <text x="200" y="70" font-family="Orbitron, Arial, sans-serif" font-size="12" text-anchor="middle" fill="#66d9ff" opacity="0.8">
+    ULTIMATE WATER ODYSSEY
+  </text>
   <text x="200" y="180" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#66d9ff">
-    Match water droplets • Create chain reactions • Dive deep!
+    🌊 Campaign Mode • ♾️ Endless • ⚡ Challenge • 🏆 Achievements
   </text>
 </svg> 
