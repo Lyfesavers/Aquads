@@ -142,6 +142,31 @@ class AquaSplashEngine {
         this.startLevel();
     }
     
+    generateDailyChallenge() {
+        // Generate a unique daily challenge based on current date
+        const today = new Date().toDateString();
+        const seed = this.hashCode(today);
+        
+        // Create a challenging level with specific objectives
+        this.currentLevel = 1;
+        this.challengeObjective = {
+            type: 'score', // score, combos, specific_droplets
+            target: 10000 + (seed % 5000),
+            moves: 20 + (seed % 10),
+            description: `Score ${this.challengeObjective?.target || 10000} points in ${this.challengeObjective?.moves || 25} moves!`
+        };
+    }
+    
+    hashCode(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32bit integer
+        }
+        return Math.abs(hash);
+    }
+    
     hideMainMenu() {
         document.getElementById('mainMenu').classList.add('hidden');
         document.getElementById('gameHud').style.display = 'flex';
@@ -173,6 +198,33 @@ class AquaSplashEngine {
             }
         });
         this.updatePowerupUI();
+    }
+    
+    updatePowerupUI() {
+        Object.keys(this.powerups).forEach(key => {
+            const powerup = this.powerups[key];
+            const button = document.getElementById(`${key}Powerup`);
+            const cooldownElement = document.getElementById(`${key}Cooldown`);
+            
+            if (button) {
+                // Update button state
+                if (powerup.cooldown > 0 || powerup.uses <= 0) {
+                    button.classList.add('disabled');
+                } else {
+                    button.classList.remove('disabled');
+                }
+                
+                // Update cooldown display
+                if (cooldownElement) {
+                    if (powerup.cooldown > 0) {
+                        cooldownElement.style.display = 'flex';
+                        cooldownElement.textContent = Math.ceil(powerup.cooldown);
+                    } else {
+                        cooldownElement.style.display = 'none';
+                    }
+                }
+            }
+        });
     }
     
     initializeGrid() {
@@ -311,6 +363,293 @@ class AquaSplashEngine {
         setTimeout(() => this.processMatches(), 500);
     }
     
+    activateLightningPowerup() {
+        // Clear entire columns and rows with lightning
+        const targetRow = Math.floor(Math.random() * this.gridHeight);
+        const targetCol = Math.floor(Math.random() * this.gridWidth);
+        
+        // Clear row
+        for (let x = 0; x < this.gridWidth; x++) {
+            if (this.grid[targetRow][x]) {
+                if (effectsSystem) {
+                    effectsSystem.createPowerupEffect(
+                        this.offsetX + x * this.cellSize + this.cellSize / 2,
+                        this.offsetY + targetRow * this.cellSize + this.cellSize / 2,
+                        'lightning'
+                    );
+                }
+                this.grid[targetRow][x] = null;
+            }
+        }
+        
+        // Clear column  
+        for (let y = 0; y < this.gridHeight; y++) {
+            if (this.grid[y][targetCol]) {
+                if (effectsSystem) {
+                    effectsSystem.createPowerupEffect(
+                        this.offsetX + targetCol * this.cellSize + this.cellSize / 2,
+                        this.offsetY + y * this.cellSize + this.cellSize / 2,
+                        'lightning'
+                    );
+                }
+                this.grid[y][targetCol] = null;
+            }
+        }
+        
+        this.screenShake = 15;
+        setTimeout(() => this.processMatches(), 300);
+    }
+    
+    activateFreezePowerup() {
+        // Slow down time for a few seconds
+        this.timeScale = 0.3;
+        this.flashEffect = 0.2;
+        
+        setTimeout(() => {
+            this.timeScale = 1.0;
+        }, 3000);
+    }
+    
+    activateRainbowPowerup() {
+        // Transform random droplets into rainbow droplets that match everything
+        const transformCount = 5;
+        const positions = [];
+        
+        // Find all droplet positions
+        for (let y = 0; y < this.gridHeight; y++) {
+            for (let x = 0; x < this.gridWidth; x++) {
+                if (this.grid[y][x]) {
+                    positions.push({x, y});
+                }
+            }
+        }
+        
+        // Transform random droplets
+        for (let i = 0; i < Math.min(transformCount, positions.length); i++) {
+            const randomIndex = Math.floor(Math.random() * positions.length);
+            const pos = positions.splice(randomIndex, 1)[0];
+            
+            if (this.grid[pos.y][pos.x]) {
+                this.grid[pos.y][pos.x].type = -1; // Special rainbow type
+                this.grid[pos.y][pos.x].isRainbow = true;
+                
+                if (effectsSystem) {
+                    effectsSystem.createPowerupEffect(
+                        this.offsetX + pos.x * this.cellSize + this.cellSize / 2,
+                        this.offsetY + pos.y * this.cellSize + this.cellSize / 2,
+                        'rainbow'
+                    );
+                }
+            }
+        }
+    }
+    
+    createExplosionEffect(x, y) {
+        if (effectsSystem) {
+            effectsSystem.createSplashEffect(x, y, '#ff4444', 3);
+        }
+    }
+    
+    createSelectionEffect(x, y) {
+        if (effectsSystem) {
+            effectsSystem.createSplashEffect(x, y, '#ffffff', 0.5);
+        }
+    }
+    
+    createPowerupEffect(type) {
+        const centerX = this.canvas.width / 2;
+        const centerY = this.canvas.height / 2;
+        
+        if (effectsSystem) {
+            effectsSystem.createPowerupEffect(centerX, centerY, type);
+        }
+        
+        if (audioSystem) {
+            audioSystem.playSound('powerup');
+        }
+    }
+    
+    processMatches() {
+        this.dropDroplets();
+        setTimeout(() => this.checkMatches(), 300);
+    }
+    
+    dropDroplets() {
+        // Make droplets fall down to fill empty spaces
+        for (let x = 0; x < this.gridWidth; x++) {
+            let writeY = this.gridHeight - 1;
+            
+            for (let y = this.gridHeight - 1; y >= 0; y--) {
+                if (this.grid[y][x]) {
+                    if (y !== writeY) {
+                        this.grid[writeY][x] = this.grid[y][x];
+                        this.grid[writeY][x].y = writeY;
+                        this.grid[y][x] = null;
+                    }
+                    writeY--;
+                }
+            }
+        }
+        
+        this.spawnNewDroplets();
+    }
+    
+    spawnNewDroplets() {
+        // Fill empty spaces with new droplets
+        for (let x = 0; x < this.gridWidth; x++) {
+            for (let y = 0; y < this.gridHeight; y++) {
+                if (!this.grid[y][x]) {
+                    const dropletType = this.getRandomDropletType();
+                    this.grid[y][x] = {
+                        type: dropletType,
+                        x: x,
+                        y: y,
+                        scale: 0,
+                        rotation: Math.random() * Math.PI * 2,
+                        glowIntensity: 0.5 + Math.random() * 0.5,
+                        id: Math.random().toString(36).substr(2, 9)
+                    };
+                    
+                    // Animate appearance
+                    this.animateDropletAppear(this.grid[y][x]);
+                }
+            }
+        }
+    }
+    
+    animateDropletAppear(droplet) {
+        const startTime = Date.now();
+        const duration = 300;
+        
+        const animate = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            droplet.scale = this.easeOutBounce(progress);
+            
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            }
+        };
+        
+        animate();
+    }
+    
+    easeOutBounce(t) {
+        if (t < 1 / 2.75) {
+            return 7.5625 * t * t;
+        } else if (t < 2 / 2.75) {
+            return 7.5625 * (t -= 1.5 / 2.75) * t + 0.75;
+        } else if (t < 2.5 / 2.75) {
+            return 7.5625 * (t -= 2.25 / 2.75) * t + 0.9375;
+        } else {
+            return 7.5625 * (t -= 2.625 / 2.75) * t + 0.984375;
+        }
+    }
+    
+    checkMatches() {
+        const matches = this.findMatches();
+        if (matches.length > 0) {
+            this.removeMatches(matches);
+            this.combo++;
+            this.score += matches.length * 10 * this.combo;
+            
+            if (effectsSystem) {
+                effectsSystem.createComboEffect(
+                    this.canvas.width / 2,
+                    this.canvas.height / 2,
+                    this.combo
+                );
+            }
+            
+            if (audioSystem) {
+                audioSystem.playSound('combo');
+            }
+            
+            setTimeout(() => this.processMatches(), 500);
+        } else {
+            this.combo = 0;
+        }
+        this.updateUI();
+    }
+    
+    findMatches() {
+        const matches = [];
+        const visited = new Set();
+        
+        for (let y = 0; y < this.gridHeight; y++) {
+            for (let x = 0; x < this.gridWidth; x++) {
+                if (this.grid[y][x] && !visited.has(`${x},${y}`)) {
+                    const group = this.findConnectedGroup(x, y, this.grid[y][x].type, visited);
+                    if (group.length >= 3) {
+                        matches.push(...group);
+                    }
+                }
+            }
+        }
+        
+        return matches;
+    }
+    
+    findConnectedGroup(startX, startY, type, visited) {
+        const group = [];
+        const stack = [{ x: startX, y: startY }];
+        
+        while (stack.length > 0) {
+            const { x, y } = stack.pop();
+            const key = `${x},${y}`;
+            
+            if (visited.has(key)) continue;
+            if (!this.isValidPosition(x, y)) continue;
+            if (!this.grid[y][x]) continue;
+            
+            // Rainbow droplets match everything
+            if (this.grid[y][x].type !== type && 
+                !this.grid[y][x].isRainbow && 
+                !this.grid[startY][startX].isRainbow) continue;
+            
+            visited.add(key);
+            group.push({ x, y });
+            
+            // Check 4 directions
+            stack.push({ x: x + 1, y });
+            stack.push({ x: x - 1, y });
+            stack.push({ x, y: y + 1 });
+            stack.push({ x, y: y - 1 });
+        }
+        
+        return group;
+    }
+    
+    removeMatches(matches) {
+        matches.forEach(match => {
+            const { x, y } = match;
+            if (this.grid[y][x]) {
+                const dropletType = this.dropletTypes[this.grid[y][x].type] || this.dropletTypes[0];
+                
+                if (effectsSystem) {
+                    effectsSystem.createSplashEffect(
+                        this.offsetX + x * this.cellSize + this.cellSize / 2,
+                        this.offsetY + y * this.cellSize + this.cellSize / 2,
+                        dropletType.color
+                    );
+                }
+                
+                this.grid[y][x] = null;
+            }
+        });
+        
+        if (audioSystem) {
+            audioSystem.playSound('splash');
+        }
+    }
+    
+    startLevel() {
+        this.initializeGrid();
+        this.gameRunning = true;
+        this.updateUI();
+    }
+    
     draw() {
         // Clear canvas with animated background
         this.drawAnimatedBackground();
@@ -385,6 +724,63 @@ class AquaSplashEngine {
         this.updateCooldowns();
         this.updateParticles();
         this.updateAnimations();
+    }
+    
+    updateCooldowns() {
+        Object.keys(this.powerups).forEach(key => {
+            if (this.powerups[key].cooldown > 0) {
+                this.powerups[key].cooldown -= 1/60;
+                if (this.powerups[key].cooldown <= 0) {
+                    this.powerups[key].cooldown = 0;
+                }
+            }
+        });
+        this.updatePowerupUI();
+    }
+    
+    updateParticles() {
+        this.particles = this.particles.filter(particle => {
+            // Update particle physics
+            particle.x += particle.vx;
+            particle.y += particle.vy;
+            
+            if (particle.gravity) {
+                particle.vy += particle.gravity;
+            }
+            
+            // Apply bounce if particle hits boundaries
+            if (particle.bounce) {
+                if (particle.x < 0 || particle.x > this.canvas.width) {
+                    particle.vx *= -particle.bounce;
+                    particle.x = Math.max(0, Math.min(this.canvas.width, particle.x));
+                }
+                if (particle.y > this.canvas.height) {
+                    particle.vy *= -particle.bounce;
+                    particle.y = this.canvas.height;
+                }
+            }
+            
+            particle.life -= particle.decay;
+            
+            // Draw particle using effects system
+            if (particle.life > 0 && effectsSystem) {
+                effectsSystem.drawParticle(particle);
+                return true;
+            }
+            return false;
+        });
+    }
+    
+    updateAnimations() {
+        this.animations = this.animations.filter(animation => {
+            animation.life -= animation.decay;
+            
+            if (animation.life > 0 && effectsSystem) {
+                effectsSystem.drawAnimation(animation);
+                return true;
+            }
+            return false;
+        });
     }
     
     updateUI() {
