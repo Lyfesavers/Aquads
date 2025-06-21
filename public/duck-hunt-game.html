@@ -83,12 +83,14 @@
         /* Floating clouds */
         .clouds {
             position: absolute;
-            top: 5%;
+            top: 0;
             left: 0;
             right: 0;
-            height: 50%;  /* Limit to sky area only */
+            height: 60%;  /* Match the sky gradient area exactly */
             z-index: 2;
             pointer-events: none;
+            /* Ensure clouds don't overflow into grass area */
+            overflow: hidden;
         }
         
         .cloud {
@@ -116,7 +118,7 @@
         .cloud1 {
             width: 100px;
             height: 50px;
-            top: 20%;  /* Keep in upper sky */
+            top: 10%;  /* Upper sky area */
             left: 15%;
             animation: cloudFloat1 25s infinite linear;
         }
@@ -139,7 +141,7 @@
         .cloud2 {
             width: 80px;
             height: 40px;
-            top: 10%;  /* Keep in upper sky */
+            top: 5%;  /* Very top of sky */
             left: 65%;
             animation: cloudFloat2 30s infinite linear;
         }
@@ -162,7 +164,7 @@
         .cloud3 {
             width: 60px;
             height: 30px;
-            top: 35%;  /* Keep in middle-upper sky */
+            top: 25%;  /* Middle of sky area */
             left: 45%;
             animation: cloudFloat3 35s infinite linear;
         }
@@ -329,6 +331,7 @@
     <!-- Instructions -->
     <div class="instructions">
         <h3>🎯 How to Play</h3>
+        Start game by clicking on the sound icon.<br>
         Click to shoot the ducks before they fly away!<br>
         Score points for each successful hit 🦆
     </div>
