@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duck Hunt - Aquads Game Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            height: 100vh;
+            /* Classic Duck Hunt sky-to-ground gradient */
+            background: linear-gradient(
+                to bottom,
+                #87CEEB 0%,     /* Sky blue at top */
+                #87CEEB 60%,    /* Sky blue continues */
+                #228B22 60%,    /* Grass green starts */
+                #228B22 80%,    /* Grass green continues */
+                #8B4513 80%,    /* Brown ground */
+                #8B4513 100%    /* Brown ground continues */
+            );
+            cursor: crosshair;
+        }
+        
+        /* Classic Duck Hunt landscape elements */
+        .landscape {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40%;
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        /* Background trees */
+        .trees {
+            position: absolute;
+            bottom: 20%;
+            left: 0;
+            right: 0;
+            height: 20%;
+            background: linear-gradient(to right,
+                transparent 0%, transparent 8%,
+                #006400 8%, #006400 12%, transparent 12%,
+                transparent 20%, #006400 20%, #006400 28%, transparent 28%,
+                transparent 35%, #006400 35%, #006400 40%, transparent 40%,
+                transparent 55%, #006400 55%, #006400 62%, transparent 62%,
+                transparent 70%, #006400 70%, #006400 78%, transparent 78%,
+                transparent 85%, #006400 85%, #006400 92%, transparent 92%
+            );
+        }
+        
+        /* Tree tops/canopies */
+        .tree-tops {
+            position: absolute;
+            bottom: 30%;
+            left: 0;
+            right: 0;
+            height: 15%;
+        }
+        
+        .tree-top {
+            position: absolute;
+            background: #228B22;
+            border-radius: 50% 50% 0 0;
+        }
+        
+        /* Individual tree tops positioned */
+        .tree-top:nth-child(1) { left: 6%; width: 8%; height: 100%; }
+        .tree-top:nth-child(2) { left: 18%; width: 12%; height: 120%; }
+        .tree-top:nth-child(3) { left: 33%; width: 9%; height: 100%; }
+        .tree-top:nth-child(4) { left: 53%; width: 11%; height: 110%; }
+        .tree-top:nth-child(5) { left: 68%; width: 12%; height: 100%; }
+        .tree-top:nth-child(6) { left: 83%; width: 10%; height: 105%; }
+        
+        /* Floating clouds */
+        .clouds {
+            position: absolute;
+            top: 10%;
+            left: 0;
+            right: 0;
+            height: 25%;
+            z-index: 2;
+            pointer-events: none;
+        }
+        
+        .cloud {
+            position: absolute;
+            background: white;
+            border-radius: 50px;
+            opacity: 0.9;
+        }
+        
+        .cloud:before {
+            content: '';
+            position: absolute;
+            background: white;
+            border-radius: 50px;
+        }
+        
+        .cloud:after {
+            content: '';
+            position: absolute;
+            background: white;
+            border-radius: 50px;
+        }
+        
+        /* Cloud 1 - Large drifting cloud */
+        .cloud1 {
+            width: 100px;
+            height: 50px;
+            top: 15%;
+            left: 15%;
+            animation: cloudFloat1 25s infinite linear;
+        }
+        
+        .cloud1:before {
+            width: 60px;
+            height: 40px;
+            top: -20px;
+            left: 15px;
+        }
+        
+        .cloud1:after {
+            width: 70px;
+            height: 35px;
+            top: -12px;
+            right: 20px;
+        }
+        
+        /* Cloud 2 - Medium cloud */
+        .cloud2 {
+            width: 80px;
+            height: 40px;
+            top: 8%;
+            left: 65%;
+            animation: cloudFloat2 30s infinite linear;
+        }
+        
+        .cloud2:before {
+            width: 50px;
+            height: 30px;
+            top: -15px;
+            left: 10px;
+        }
+        
+        .cloud2:after {
+            width: 55px;
+            height: 25px;
+            top: -8px;
+            right: 15px;
+        }
+        
+        /* Cloud 3 - Small cloud */
+        .cloud3 {
+            width: 60px;
+            height: 30px;
+            top: 25%;
+            left: 45%;
+            animation: cloudFloat3 35s infinite linear;
+        }
+        
+        .cloud3:before {
+            width: 35px;
+            height: 25px;
+            top: -12px;
+            left: 8px;
+        }
+        
+        .cloud3:after {
+            width: 40px;
+            height: 20px;
+            top: -6px;
+            right: 10px;
+        }
+        
+        /* Cloud animations */
+        @keyframes cloudFloat1 {
+            from { transform: translateX(-120px); }
+            to { transform: translateX(calc(100vw + 120px)); }
+        }
+        
+        @keyframes cloudFloat2 {
+            from { transform: translateX(-100px); }
+            to { transform: translateX(calc(100vw + 100px)); }
+        }
+        
+        @keyframes cloudFloat3 {
+            from { transform: translateX(-80px); }
+            to { transform: translateX(calc(100vw + 80px)); }
+        }
+        
+        /* Duck Hunt title */
+        .game-title {
+            position: absolute;
+            top: 15%;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #FFD700;
+            font-size: 3.5rem;
+            font-weight: bold;
+            text-shadow: 4px 4px 8px rgba(0,0,0,0.8);
+            z-index: 1000;
+            animation: titleFade 4s ease-in-out 2s forwards;
+            text-align: center;
+        }
+        
+        @keyframes titleFade {
+            from { opacity: 1; }
+            to { opacity: 0; pointer-events: none; }
+        }
+        
+        /* Back to Hub button */
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #333;
+            color: white;
+            border: 2px solid #666;
+            border-radius: 8px;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.2s;
+            z-index: 1000;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .back-button:hover {
+            background: #555;
+            border-color: #888;
+            transform: translateY(-2px);
+        }
+        
+        /* Instructions overlay */
+        .instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            text-align: center;
+            z-index: 1000;
+            font-size: 18px;
+            border: 2px solid #FFD700;
+            max-width: 90%;
+        }
+        
+        .instructions h3 {
+            color: #FFD700;
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+        
+        /* Make sure the game area covers the full screen */
+        #game-area {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 100;
+        }
+        
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+            .game-title {
+                font-size: 2.5rem;
+                top: 10%;
+            }
+            
+            .instructions {
+                font-size: 16px;
+                padding: 15px 20px;
+                bottom: 10px;
+            }
+            
+            .back-button {
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Classic Duck Hunt Background Landscape -->
+    <div class="landscape">
+        <!-- Floating clouds -->
+        <div class="clouds">
+            <div class="cloud cloud1"></div>
+            <div class="cloud cloud2"></div>
+            <div class="cloud cloud3"></div>
+        </div>
+        
+        <!-- Background trees -->
+        <div class="trees"></div>
+        
+        <!-- Tree canopies -->
+        <div class="tree-tops">
+            <div class="tree-top"></div>
+            <div class="tree-top"></div>
+            <div class="tree-top"></div>
+            <div class="tree-top"></div>
+            <div class="tree-top"></div>
+            <div class="tree-top"></div>
+        </div>
+    </div>
+    
+    <!-- Game Title -->
+    <div class="game-title">DUCK HUNT</div>
+    
+    <!-- Back to Hub Button -->
+    <a href="/" class="back-button">← Back to Hub</a>
+    
+    <!-- Instructions -->
+    <div class="instructions">
+        <h3>🎯 How to Play</h3>
+        Click to shoot the ducks before they fly away!<br>
+        Score points for each successful hit 🦆
+    </div>
+    
+    <!-- Load the existing Duck Hunt game script -->
+    <script src="duck-hunt.js"></script>
+</body>
+</html> 
