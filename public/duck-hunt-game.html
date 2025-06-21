@@ -82,15 +82,13 @@
         
         /* Floating clouds */
         .clouds {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            height: 60%;  /* Match the sky gradient area exactly */
+            height: 30vh;  /* Top 30% of viewport height */
             z-index: 2;
             pointer-events: none;
-            /* Ensure clouds don't overflow into grass area */
-            overflow: hidden;
         }
         
         .cloud {
@@ -118,7 +116,7 @@
         .cloud1 {
             width: 100px;
             height: 50px;
-            top: 10%;  /* Upper sky area */
+            top: 30px;  /* Fixed distance from top */
             left: 15%;
             animation: cloudFloat1 25s infinite linear;
         }
@@ -141,7 +139,7 @@
         .cloud2 {
             width: 80px;
             height: 40px;
-            top: 5%;  /* Very top of sky */
+            top: 10px;  /* Very top */
             left: 65%;
             animation: cloudFloat2 30s infinite linear;
         }
@@ -164,7 +162,7 @@
         .cloud3 {
             width: 60px;
             height: 30px;
-            top: 25%;  /* Middle of sky area */
+            top: 60px;  /* Fixed distance from top */
             left: 45%;
             animation: cloudFloat3 35s infinite linear;
         }
@@ -299,15 +297,15 @@
     </style>
 </head>
 <body>
+    <!-- Floating clouds at top of screen -->
+    <div class="clouds">
+        <div class="cloud cloud1"></div>
+        <div class="cloud cloud2"></div>
+        <div class="cloud cloud3"></div>
+    </div>
+    
     <!-- Classic Duck Hunt Background Landscape -->
     <div class="landscape">
-        <!-- Floating clouds -->
-        <div class="clouds">
-            <div class="cloud cloud1"></div>
-            <div class="cloud cloud2"></div>
-            <div class="cloud cloud3"></div>
-        </div>
-        
         <!-- Background trees -->
         <div class="trees"></div>
         
