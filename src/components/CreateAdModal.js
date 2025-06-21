@@ -34,7 +34,8 @@ const ADDON_PACKAGES = [
   {
     id: 'aqua_ripple',
     name: 'AquaRipple',
-    price: 299,
+    originalPrice: 299, // Current price
+    price: 284, // 5% discount: 299 * 0.95 = 284.05, rounded to 284
     icon: FaStar,
     color: 'from-blue-500 to-cyan-500',
     features: [
@@ -46,7 +47,8 @@ const ADDON_PACKAGES = [
   {
     id: 'aqua_wave',
     name: 'AquaWave',
-    price: 1399,
+    originalPrice: 1399, // Current price
+    price: 1329, // 5% discount: 1399 * 0.95 = 1329.05, rounded to 1329
     icon: FaRocket,
     color: 'from-green-500 to-teal-500',
     features: [
@@ -57,7 +59,8 @@ const ADDON_PACKAGES = [
   {
     id: 'aqua_flow',
     name: 'AquaFlow',
-    price: 2899,
+    originalPrice: 2899, // Current price
+    price: 2754, // 5% discount: 2899 * 0.95 = 2754.05, rounded to 2754
     icon: FaChartLine,
     color: 'from-purple-500 to-indigo-500',
     features: [
@@ -73,7 +76,8 @@ const ADDON_PACKAGES = [
   {
     id: 'aqua_storm',
     name: 'AquaStorm',
-    price: 6499,
+    originalPrice: 6499, // Current price
+    price: 6174, // 5% discount: 6499 * 0.95 = 6174.05, rounded to 6174
     icon: FaFire,
     color: 'from-orange-500 to-red-500',
     features: [
@@ -87,7 +91,8 @@ const ADDON_PACKAGES = [
   {
     id: 'aqua_tidal',
     name: 'AquaTidal',
-    price: 12999,
+    originalPrice: 12999, // Current price
+    price: 12349, // 5% discount: 12999 * 0.95 = 12349.05, rounded to 12349
     icon: FaGem,
     color: 'from-indigo-500 to-purple-500',
     features: [
@@ -102,7 +107,8 @@ const ADDON_PACKAGES = [
   {
     id: 'aqua_legend',
     name: 'AquaLegend',
-    price: 21999,
+    originalPrice: 21999, // Current price
+    price: 20899, // 5% discount: 21999 * 0.95 = 20899.05, rounded to 20899
     icon: FaCrown,
     color: 'from-pink-500 to-rose-500',
     features: [
@@ -487,6 +493,19 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
                   <FaGift className="mr-3 text-purple-400" />
                   Marketing Add-on Packages
                 </h3>
+                
+                {/* 5% Discount Promotion Banner */}
+                <div className="mb-4 p-3 bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-500/50 rounded-lg">
+                  <div className="flex items-center justify-center space-x-2">
+                    <span className="bg-red-500 text-white text-sm px-3 py-1 rounded-full font-bold animate-pulse">
+                      🎉 SPECIAL OFFER: 5% OFF ALL ADD-ON PACKAGES
+                    </span>
+                  </div>
+                  <p className="text-center text-red-200 text-xs mt-1">
+                    Save on premium marketing services - confirmed discount from our partners!
+                  </p>
+                </div>
+                
                 <p className="text-gray-300 mb-4 text-sm">
                   Supercharge your listing with premium marketing packages designed to maximize your project's reach and impact.
                 </p>
@@ -516,9 +535,17 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
                               <div className="flex items-center justify-between">
                                 <h4 className="font-semibold text-white flex items-center">
                                   {addon.name}
-                                  <span className="ml-2 text-sm font-bold text-green-400">
-                                    ${addon.price.toLocaleString()} USDC
-                                  </span>
+                                  <div className="ml-2 flex items-center space-x-2">
+                                    <span className="text-xs text-gray-400 line-through">
+                                      ${addon.originalPrice.toLocaleString()}
+                                    </span>
+                                    <span className="text-sm font-bold text-green-400">
+                                      ${addon.price.toLocaleString()} USDC
+                                    </span>
+                                    <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                                      5% OFF
+                                    </span>
+                                  </div>
                                 </h4>
                                 {hasMoreFeatures && (
                                   <button
