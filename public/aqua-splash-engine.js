@@ -232,22 +232,47 @@ class AquaSplashEngine {
         for (let y = 0; y < this.gridHeight; y++) {
             this.grid[y] = [];
             for (let x = 0; x < this.gridWidth; x++) {
-                if (y < this.gridHeight - 4) {
-                    this.grid[y][x] = null;
-                } else {
-                    // Create droplet with weighted rarity
-                    const dropletType = this.getRandomDropletType();
-                    this.grid[y][x] = {
-                        type: dropletType,
-                        x: x,
-                        y: y,
-                        scale: 1,
-                        rotation: Math.random() * Math.PI * 2,
-                        glowIntensity: 0.5 + Math.random() * 0.5,
-                        id: Math.random().toString(36).substr(2, 9)
-                    };
-                }
+                // Create droplet with weighted rarity
+                const dropletType = this.getRandomDropletType();
+                this.grid[y][x] = {
+                    type: dropletType,
+                    x: x,
+                    y: y,
+                    scale: 1,
+                    rotation: Math.random() * Math.PI * 2,
+                    glowIntensity: 0.5 + Math.random() * 0.5,
+                    id: Math.random().toString(36).substr(2, 9)
+                };
             }
+        }
+        
+        // Remove initial matches to ensure fair start
+        this.removeInitialMatches();
+    }
+    
+    removeInitialMatches() {
+        let hasMatches = true;
+        let attempts = 0;
+        
+        while (hasMatches && attempts < 50) {
+            const matches = this.findMatches();
+            if (matches.length === 0) {
+                hasMatches = false;
+            } else {
+                // Replace matched droplets with different types
+                matches.forEach(match => {
+                    const { x, y } = match;
+                    let newType;
+                    let attempts = 0;
+                    do {
+                        newType = this.getRandomDropletType();
+                        attempts++;
+                    } while (newType === this.grid[y][x].type && attempts < 10);
+                    
+                    this.grid[y][x].type = newType;
+                });
+            }
+            attempts++;
         }
     }
     
@@ -297,6 +322,112 @@ class AquaSplashEngine {
         const y = e.clientY - rect.top;
         
         this.dropDroplet(x, y);
+    }
+    
+    handleTouchStart(e) {
+        e.preventDefault();
+        if (!this.gameRunning) return;
+        
+        const rect = this.canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        
+        this.mousePos = { x, y };
+        this.selectDroplet(x, y);
+    }
+    
+    handleTouchMove(e) {
+        e.preventDefault();
+        const rect = this.canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        
+        this.mousePos = { x, y };
+    }
+    
+    handleTouchEnd(e) {
+        e.preventDefault();
+        if (!this.selectedDroplet) return;
+        
+        const rect = this.canvas.getBoundingClientRect();
+        const touch = e.changedTouches[0];
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        
+        this.dropDroplet(x, y);
+    }
+    
+    handleKeyDown(e) {
+        if (!this.gameRunning) return;
+        
+        switch(e.key) {
+            case 'Escape':
+                this.showMainMenu();
+                break;
+            case '1':
+                this.usePowerup('bomb');
+                break;
+            case '2':
+                this.usePowerup('lightning');
+                break;
+            case '3':
+                this.usePowerup('freeze');
+                break;
+            case '4':
+                this.usePowerup('rainbow');
+                break;
+        }
+    }
+    
+    dropDroplet(x, y) {
+        const gridX = Math.floor((x - this.offsetX) / this.cellSize);
+        const gridY = Math.floor((y - this.offsetY) / this.cellSize);
+        
+        if (!this.isValidPosition(gridX, gridY)) {
+            this.clearSelection();
+            return;
+        }
+        
+        // Check if dropping in same position
+        if (this.selectedDroplet.x === gridX && this.selectedDroplet.y === gridY) {
+            this.clearSelection();
+            return;
+        }
+        
+        // Swap droplets
+        this.swapDroplets(this.selectedDroplet.x, this.selectedDroplet.y, gridX, gridY);
+        this.clearSelection();
+        
+        // Check for matches after swap
+        setTimeout(() => this.checkMatches(), 100);
+    }
+    
+    swapDroplets(x1, y1, x2, y2) {
+        const temp = this.grid[y1][x1];
+        this.grid[y1][x1] = this.grid[y2][x2];
+        this.grid[y2][x2] = temp;
+        
+        // Update position references
+        if (this.grid[y1][x1]) {
+            this.grid[y1][x1].x = x1;
+            this.grid[y1][x1].y = y1;
+        }
+        if (this.grid[y2][x2]) {
+            this.grid[y2][x2].x = x2;
+            this.grid[y2][x2].y = y2;
+        }
+    }
+    
+    clearSelection() {
+        if (this.selectedDroplet) {
+            const droplet = this.grid[this.selectedDroplet.y][this.selectedDroplet.x];
+            if (droplet) {
+                droplet.scale = 1;
+            }
+        }
+        this.selectedDroplet = null;
     }
     
     selectDroplet(x, y) {
@@ -679,6 +810,154 @@ class AquaSplashEngine {
         if (this.screenShake > 0) {
             this.ctx.restore();
         }
+    }
+    
+    drawGrid() {
+        // Draw grid background
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        this.ctx.lineWidth = 1;
+        
+        for (let x = 0; x <= this.gridWidth; x++) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(this.offsetX + x * this.cellSize, this.offsetY);
+            this.ctx.lineTo(this.offsetX + x * this.cellSize, this.offsetY + this.gridHeight * this.cellSize);
+            this.ctx.stroke();
+        }
+        
+        for (let y = 0; y <= this.gridHeight; y++) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(this.offsetX, this.offsetY + y * this.cellSize);
+            this.ctx.lineTo(this.offsetX + this.gridWidth * this.cellSize, this.offsetY + y * this.cellSize);
+            this.ctx.stroke();
+        }
+    }
+    
+    drawDroplets() {
+        const time = Date.now() * 0.001;
+        
+        for (let y = 0; y < this.gridHeight; y++) {
+            for (let x = 0; x < this.gridWidth; x++) {
+                const droplet = this.grid[y][x];
+                if (!droplet) continue;
+                
+                const centerX = this.offsetX + x * this.cellSize + this.cellSize / 2;
+                const centerY = this.offsetY + y * this.cellSize + this.cellSize / 2;
+                const radius = (this.cellSize * 0.35) * (droplet.scale || 1);
+                
+                const dropletType = this.dropletTypes[droplet.type] || this.dropletTypes[0];
+                
+                this.ctx.save();
+                
+                // Apply rotation and hover effects
+                this.ctx.translate(centerX, centerY);
+                this.ctx.rotate(droplet.rotation + time * 0.5);
+                
+                // Draw glow effect
+                const glowRadius = radius * 1.5;
+                const glow = this.ctx.createRadialGradient(0, 0, radius * 0.5, 0, 0, glowRadius);
+                glow.addColorStop(0, dropletType.glow + '80');
+                glow.addColorStop(0.7, dropletType.glow + '20');
+                glow.addColorStop(1, 'transparent');
+                
+                this.ctx.fillStyle = glow;
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, glowRadius, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // Draw main droplet
+                const gradient = this.ctx.createRadialGradient(-radius * 0.3, -radius * 0.3, 0, 0, 0, radius);
+                gradient.addColorStop(0, this.lightenColor(dropletType.color, 30));
+                gradient.addColorStop(0.7, dropletType.color);
+                gradient.addColorStop(1, this.darkenColor(dropletType.color, 20));
+                
+                this.ctx.fillStyle = gradient;
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, radius, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // Draw highlight
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                this.ctx.beginPath();
+                this.ctx.arc(-radius * 0.3, -radius * 0.3, radius * 0.3, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // Draw selection indicator
+                if (this.selectedDroplet && this.selectedDroplet.x === x && this.selectedDroplet.y === y) {
+                    this.ctx.strokeStyle = '#ffffff';
+                    this.ctx.lineWidth = 3;
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, radius * 1.2, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                }
+                
+                // Draw rainbow effect for special droplets
+                if (droplet.isRainbow) {
+                    const rainbowGradient = this.ctx.createLinearGradient(-radius, -radius, radius, radius);
+                    rainbowGradient.addColorStop(0, '#ff0000');
+                    rainbowGradient.addColorStop(0.16, '#ff8800');
+                    rainbowGradient.addColorStop(0.33, '#ffff00');
+                    rainbowGradient.addColorStop(0.5, '#00ff00');
+                    rainbowGradient.addColorStop(0.66, '#0088ff');
+                    rainbowGradient.addColorStop(0.83, '#4400ff');
+                    rainbowGradient.addColorStop(1, '#ff0088');
+                    
+                    this.ctx.fillStyle = rainbowGradient;
+                    this.ctx.globalAlpha = 0.7;
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, radius, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    this.ctx.globalAlpha = 1;
+                }
+                
+                this.ctx.restore();
+            }
+        }
+    }
+    
+    drawParticles() {
+        this.particles.forEach(particle => {
+            this.ctx.save();
+            this.ctx.globalAlpha = particle.life;
+            this.ctx.fillStyle = particle.color;
+            this.ctx.beginPath();
+            this.ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.restore();
+        });
+    }
+    
+    drawAnimations() {
+        this.animations.forEach(animation => {
+            this.ctx.save();
+            this.ctx.globalAlpha = animation.life;
+            this.ctx.fillStyle = animation.color;
+            this.ctx.font = `${animation.size}px Arial`;
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText(animation.text, animation.x, animation.y);
+            this.ctx.restore();
+        });
+    }
+    
+    lightenColor(color, percent) {
+        const num = parseInt(color.replace("#", ""), 16);
+        const amt = Math.round(2.55 * percent);
+        const R = (num >> 16) + amt;
+        const G = (num >> 8 & 0x00FF) + amt;
+        const B = (num & 0x0000FF) + amt;
+        return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+            (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+            (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+    }
+    
+    darkenColor(color, percent) {
+        const num = parseInt(color.replace("#", ""), 16);
+        const amt = Math.round(2.55 * percent);
+        const R = (num >> 16) - amt;
+        const G = (num >> 8 & 0x00FF) - amt;
+        const B = (num & 0x0000FF) - amt;
+        return "#" + (0x1000000 + (R > 255 ? 255 : R < 0 ? 0 : R) * 0x10000 +
+            (G > 255 ? 255 : G < 0 ? 0 : G) * 0x100 +
+            (B > 255 ? 255 : B < 0 ? 0 : B)).toString(16).slice(1);
     }
     
     drawAnimatedBackground() {

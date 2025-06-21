@@ -426,7 +426,14 @@
             }
         }
         
+        // Global variables
+        let game;
+        let effectsSystem;
+        let audioSystem;
+        
         function initializeGame() {
+            if (game) return; // Already initialized
+            
             game = new AquaSplashEngine();
             effectsSystem = new EffectsSystem(game);
             audioSystem = new AudioSystem();
@@ -442,8 +449,9 @@
         
         // Initialize when page loads
         window.addEventListener('load', () => {
-            // Game will be initialized when user clicks a menu button
-                 });
+            // Pre-initialize game systems
+            initializeGame();
+        });
                 
     </script>
 </body>
