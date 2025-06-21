@@ -11,8 +11,10 @@ class AquaSplashEngine {
         this.combo = 0;
         this.maxCombo = 0;
         this.lives = 3;
+        this.moves = 30;
         this.experience = 0;
         this.playerLevel = 1;
+        this.isProcessing = false;
         
         // Grid System
         this.gridWidth = 10;
@@ -182,10 +184,12 @@ class AquaSplashEngine {
         this.score = 0;
         this.combo = 0;
         this.lives = 3;
+        this.moves = this.gameMode === 'endless' ? 999 : 30;
         this.grid = [];
         this.particles = [];
         this.animations = [];
         this.selectedDroplet = null;
+        this.isProcessing = false;
         this.resetPowerups();
         this.updateUI();
     }
@@ -385,7 +389,7 @@ class AquaSplashEngine {
         const gridX = Math.floor((x - this.offsetX) / this.cellSize);
         const gridY = Math.floor((y - this.offsetY) / this.cellSize);
         
-        if (!this.isValidPosition(gridX, gridY)) {
+        if (!this.isValidPosition(gridX, gridY) || !this.grid[gridY][gridX]) {
             this.clearSelection();
             return;
         }
@@ -396,12 +400,31 @@ class AquaSplashEngine {
             return;
         }
         
-        // Swap droplets
-        this.swapDroplets(this.selectedDroplet.x, this.selectedDroplet.y, gridX, gridY);
-        this.clearSelection();
+        // Only allow adjacent swaps
+        const dx = Math.abs(this.selectedDroplet.x - gridX);
+        const dy = Math.abs(this.selectedDroplet.y - gridY);
         
-        // Check for matches after swap
-        setTimeout(() => this.checkMatches(), 100);
+        if (dx + dy !== 1) {
+            this.clearSelection();
+            return;
+        }
+        
+        // Test swap to see if it creates matches
+        this.swapDroplets(this.selectedDroplet.x, this.selectedDroplet.y, gridX, gridY);
+        const matches = this.findMatches();
+        
+        if (matches.length === 0) {
+            // Invalid move - swap back
+            this.swapDroplets(gridX, gridY, this.selectedDroplet.x, this.selectedDroplet.y);
+            this.clearSelection();
+            return;
+        }
+        
+        // Valid move - process the game
+        this.clearSelection();
+        this.moves--;
+        this.updateUI();
+        this.processAllMatches();
     }
     
     swapDroplets(x1, y1, x2, y2) {
@@ -600,13 +623,59 @@ class AquaSplashEngine {
         }
     }
     
-    processMatches() {
-        this.dropDroplets();
-        setTimeout(() => this.checkMatches(), 300);
+    async processAllMatches() {
+        if (this.isProcessing) return;
+        this.isProcessing = true;
+        
+        let hasMatches = true;
+        let matchRound = 0;
+        
+        while (hasMatches && matchRound < 10) { // Prevent infinite loops
+            const matches = this.findMatches();
+            if (matches.length === 0) {
+                hasMatches = false;
+            } else {
+                // Remove matches with effects
+                this.removeMatches(matches);
+                this.combo++;
+                
+                // Calculate score based on match size and combo
+                const baseScore = matches.length * 10;
+                const comboBonus = this.combo * 5;
+                const matchBonus = matches.length > 5 ? (matches.length - 3) * 20 : 0;
+                this.score += baseScore + comboBonus + matchBonus;
+                
+                // Wait for visual effects
+                await this.wait(400);
+                
+                // Drop existing droplets
+                this.dropDroplets();
+                await this.wait(300);
+                
+                // Fill empty spaces
+                this.fillEmptySpaces();
+                await this.wait(300);
+                
+                matchRound++;
+            }
+        }
+        
+        if (matchRound === 0) {
+            this.combo = 0; // Reset combo if no matches
+        }
+        
+        this.isProcessing = false;
+        this.updateUI();
+        this.checkGameEnd();
+    }
+    
+    wait(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
     
     dropDroplets() {
         // Make droplets fall down to fill empty spaces
+        let moved = false;
         for (let x = 0; x < this.gridWidth; x++) {
             let writeY = this.gridHeight - 1;
             
@@ -616,17 +685,17 @@ class AquaSplashEngine {
                         this.grid[writeY][x] = this.grid[y][x];
                         this.grid[writeY][x].y = writeY;
                         this.grid[y][x] = null;
+                        moved = true;
                     }
                     writeY--;
                 }
             }
         }
-        
-        this.spawnNewDroplets();
+        return moved;
     }
     
-    spawnNewDroplets() {
-        // Fill empty spaces with new droplets
+    fillEmptySpaces() {
+        // Fill only the top empty spaces with new droplets
         for (let x = 0; x < this.gridWidth; x++) {
             for (let y = 0; y < this.gridHeight; y++) {
                 if (!this.grid[y][x]) {
@@ -635,16 +704,88 @@ class AquaSplashEngine {
                         type: dropletType,
                         x: x,
                         y: y,
-                        scale: 0,
+                        scale: 1,
                         rotation: Math.random() * Math.PI * 2,
                         glowIntensity: 0.5 + Math.random() * 0.5,
                         id: Math.random().toString(36).substr(2, 9)
                     };
-                    
-                    // Animate appearance
-                    this.animateDropletAppear(this.grid[y][x]);
                 }
             }
+        }
+    }
+    
+    checkGameEnd() {
+        if (this.moves <= 0) {
+            this.endGame();
+        }
+    }
+    
+    endGame() {
+        this.gameRunning = false;
+        document.getElementById('finalScore').textContent = this.score.toLocaleString();
+        document.getElementById('finalLevel').textContent = this.currentLevel;
+        document.getElementById('gameOver').style.display = 'block';
+        
+        // Save best score
+        const bestScore = localStorage.getItem('aquaSplashBestScore') || 0;
+        if (this.score > bestScore) {
+            localStorage.setItem('aquaSplashBestScore', this.score);
+        }
+    }
+    
+    // Find possible moves to prevent deadlock
+    findPossibleMoves() {
+        const moves = [];
+        
+        for (let y = 0; y < this.gridHeight; y++) {
+            for (let x = 0; x < this.gridWidth; x++) {
+                if (!this.grid[y][x]) continue;
+                
+                // Check adjacent positions
+                const directions = [
+                    {dx: 1, dy: 0}, {dx: -1, dy: 0},
+                    {dx: 0, dy: 1}, {dx: 0, dy: -1}
+                ];
+                
+                for (const dir of directions) {
+                    const newX = x + dir.dx;
+                    const newY = y + dir.dy;
+                    
+                    if (this.isValidPosition(newX, newY) && this.grid[newY][newX]) {
+                        // Test this swap
+                        this.swapDroplets(x, y, newX, newY);
+                        const matches = this.findMatches();
+                        this.swapDroplets(newX, newY, x, y); // Swap back
+                        
+                        if (matches.length > 0) {
+                            moves.push({x1: x, y1: y, x2: newX, y2: newY});
+                        }
+                    }
+                }
+            }
+        }
+        
+        return moves;
+    }
+    
+    showHint() {
+        const possibleMoves = this.findPossibleMoves();
+        if (possibleMoves.length > 0) {
+            const hint = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+            
+            // Highlight the suggested move
+            setTimeout(() => {
+                const droplet1 = this.grid[hint.y1][hint.x1];
+                const droplet2 = this.grid[hint.y2][hint.x2];
+                
+                if (droplet1) droplet1.hint = true;
+                if (droplet2) droplet2.hint = true;
+                
+                setTimeout(() => {
+                    if (droplet1) droplet1.hint = false;
+                    if (droplet2) droplet2.hint = false;
+                }, 2000);
+            }, 100);
         }
     }
     
@@ -678,31 +819,7 @@ class AquaSplashEngine {
         }
     }
     
-    checkMatches() {
-        const matches = this.findMatches();
-        if (matches.length > 0) {
-            this.removeMatches(matches);
-            this.combo++;
-            this.score += matches.length * 10 * this.combo;
-            
-            if (effectsSystem) {
-                effectsSystem.createComboEffect(
-                    this.canvas.width / 2,
-                    this.canvas.height / 2,
-                    this.combo
-                );
-            }
-            
-            if (audioSystem) {
-                audioSystem.playSound('combo');
-            }
-            
-            setTimeout(() => this.processMatches(), 500);
-        } else {
-            this.combo = 0;
-        }
-        this.updateUI();
-    }
+    // This method is now replaced by processAllMatches() for better control
     
     findMatches() {
         const matches = [];
@@ -762,7 +879,8 @@ class AquaSplashEngine {
                     effectsSystem.createSplashEffect(
                         this.offsetX + x * this.cellSize + this.cellSize / 2,
                         this.offsetY + y * this.cellSize + this.cellSize / 2,
-                        dropletType.color
+                        dropletType.color,
+                        1.5
                     );
                 }
                 
@@ -770,8 +888,22 @@ class AquaSplashEngine {
             }
         });
         
+        // Create combo effect if combo > 1
+        if (this.combo > 1 && effectsSystem) {
+            effectsSystem.createComboEffect(
+                this.canvas.width / 2,
+                this.canvas.height / 2,
+                this.combo
+            );
+        }
+        
+        // Play appropriate sound
         if (audioSystem) {
-            audioSystem.playSound('splash');
+            if (this.combo > 1) {
+                audioSystem.playSound('combo');
+            } else {
+                audioSystem.playSound('splash');
+            }
         }
     }
     
@@ -888,6 +1020,17 @@ class AquaSplashEngine {
                     this.ctx.beginPath();
                     this.ctx.arc(0, 0, radius * 1.2, 0, Math.PI * 2);
                     this.ctx.stroke();
+                }
+                
+                // Draw hint indicator
+                if (droplet.hint) {
+                    this.ctx.strokeStyle = '#ffff00';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.setLineDash([5, 5]);
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, radius * 1.3, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                    this.ctx.setLineDash([]);
                 }
                 
                 // Draw rainbow effect for special droplets
@@ -1066,6 +1209,7 @@ class AquaSplashEngine {
         document.getElementById('score').textContent = this.score.toLocaleString();
         document.getElementById('level').textContent = this.currentLevel;
         document.getElementById('combo').textContent = this.combo;
+        document.getElementById('moves').textContent = this.moves;
         
         // Update progress bar based on game mode
         let progress = 0;
@@ -1074,8 +1218,21 @@ class AquaSplashEngine {
             if (levelData) {
                 progress = Math.min(100, (this.score / levelData.target) * 100);
             }
+        } else if (this.gameMode === 'endless') {
+            // Progress based on moves remaining
+            progress = Math.max(0, (this.moves / 999) * 100);
         }
         document.getElementById('levelProgress').style.width = progress + '%';
+        
+        // Change moves color when low
+        const movesElement = document.getElementById('moves');
+        if (this.moves <= 5) {
+            movesElement.style.color = '#ff4444';
+        } else if (this.moves <= 10) {
+            movesElement.style.color = '#ffaa44';
+        } else {
+            movesElement.style.color = '#00ccff';
+        }
     }
     
     // Utility methods
