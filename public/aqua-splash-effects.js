@@ -375,8 +375,66 @@ class AudioSystem {
             }, index * 50);
         });
     }
+    
+    createPowerupSound() {
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+        
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(300, this.audioContext.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1200, this.audioContext.currentTime + 0.1);
+        osc.frequency.exponentialRampToValueAtTime(600, this.audioContext.currentTime + 0.3);
+        
+        gain.gain.setValueAtTime(this.masterVolume * 0.7, this.audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3);
+        
+        osc.connect(gain);
+        gain.connect(this.audioContext.destination);
+        
+        osc.start();
+        osc.stop(this.audioContext.currentTime + 0.3);
+    }
+    
+    createLevelUpSound() {
+        // Triumphant ascending melody
+        const notes = [261, 329, 392, 523]; // C, E, G, C (octave)
+        notes.forEach((freq, index) => {
+            setTimeout(() => {
+                const osc = this.audioContext.createOscillator();
+                const gain = this.audioContext.createGain();
+                
+                osc.type = 'square';
+                osc.frequency.value = freq;
+                
+                gain.gain.setValueAtTime(this.masterVolume * 0.4, this.audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.4);
+                
+                osc.connect(gain);
+                gain.connect(this.audioContext.destination);
+                
+                osc.start();
+                osc.stop(this.audioContext.currentTime + 0.4);
+            }, index * 100);
+        });
+    }
+    
+    createSelectSound() {
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+        
+        osc.type = 'sine';
+        osc.frequency.value = 600;
+        
+        gain.gain.setValueAtTime(this.masterVolume * 0.3, this.audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1);
+        
+        osc.connect(gain);
+        gain.connect(this.audioContext.destination);
+        
+        osc.start();
+        osc.stop(this.audioContext.currentTime + 0.1);
+    }
 }
 
-// Global effects and audio systems
-let effectsSystem;
-let audioSystem; 
+// Effects and Audio systems are used globally
+// Variables are declared in the main engine file 
