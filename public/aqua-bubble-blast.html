@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aqua Bubble Blast</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #0a1429, #1a2744, #2a3f5f);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .game-container {
+            position: relative;
+            text-align: center;
+        }
+        
+        canvas {
+            border: 3px solid #00ccff;
+            border-radius: 15px;
+            background: linear-gradient(180deg, #001122, #002244);
+            box-shadow: 0 0 50px rgba(0, 204, 255, 0.3);
+        }
+        
+        .ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            justify-content: space-between;
+            color: white;
+            font-weight: bold;
+            z-index: 100;
+        }
+        
+        .ui div {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: 2px solid #00ccff;
+        }
+        
+        .start-screen {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+        
+        .title {
+            font-size: 3rem;
+            color: #00ccff;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 20px #00ccff;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #00ccff, #0099cc);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 10px;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .instructions {
+            position: absolute;
+            bottom: 20px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="ui">
+            <div>Score: <span id="score">0</span></div>
+            <div>Level: <span id="level">1</span></div>
+            <div>Bubbles: <span id="bubbles">20</span></div>
+        </div>
+        
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        
+        <div class="start-screen" id="startScreen">
+            <div class="title">AQUA BUBBLE BLAST</div>
+            <p>Aim and shoot bubbles to match 3 or more!</p>
+            <button class="btn" onclick="startGame()">START GAME</button>
+        </div>
+        
+        <div class="instructions">
+            🎯 Aim with mouse • Click to shoot • Match 3+ bubbles
+        </div>
+    </div>
+
+    <script>
+        class BubbleGame {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.gameRunning = false;
+                
+                this.score = 0;
+                this.level = 1;
+                this.bubblesLeft = 20;
+                
+                this.bubbleRadius = 20;
+                this.colors = ['#ff4757', '#ffa726', '#ffeb3b', '#4caf50', '#26c6da', '#42a5f5'];
+                
+                this.shooter = {
+                    x: this.canvas.width / 2,
+                    y: this.canvas.height - 40,
+                    angle: 0,
+                    currentBubble: null
+                };
+                
+                this.bubbles = [];
+                this.particles = [];
+                
+                this.init();
+            }
+            
+            init() {
+                this.setupEventListeners();
+                this.generateLevel();
+                this.createShooterBubble();
+                this.gameLoop();
+            }
+            
+            setupEventListeners() {
+                this.canvas.addEventListener('mousemove', (e) => {
+                    if (!this.gameRunning) return;
+                    const rect = this.canvas.getBoundingClientRect();
+                    const mouseX = e.clientX - rect.left;
+                    const mouseY = e.clientY - rect.top;
+                    this.shooter.angle = Math.atan2(mouseY - this.shooter.y, mouseX - this.shooter.x);
+                });
+                
+                this.canvas.addEventListener('click', () => {
+                    if (this.gameRunning) this.shoot();
+                });
+            }
+            
+            generateLevel() {
+                this.bubbles = [];
+                const rows = 5 + this.level;
+                
+                for (let row = 0; row < Math.min(rows, 8); row++) {
+                    for (let col = 0; col < 15; col++) {
+                        if (Math.random() > 0.3) {
+                            const x = col * this.bubbleRadius * 2 + this.bubbleRadius + (row % 2) * this.bubbleRadius;
+                            const y = row * this.bubbleRadius * 1.8 + this.bubbleRadius + 50;
+                            
+                            if (x < this.canvas.width - this.bubbleRadius) {
+                                this.bubbles.push({
+                                    x: x,
+                                    y: y,
+                                    color: this.colors[Math.floor(Math.random() * this.colors.length)],
+                                    row: row,
+                                    col: col
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            
+            createShooterBubble() {
+                this.shooter.currentBubble = {
+                    color: this.colors[Math.floor(Math.random() * this.colors.length)],
+                    x: this.shooter.x,
+                    y: this.shooter.y
+                };
+            }
+            
+            shoot() {
+                if (!this.shooter.currentBubble) return;
+                
+                const speed = 8;
+                this.bubbles.push({
+                    x: this.shooter.x,
+                    y: this.shooter.y,
+                    vx: Math.cos(this.shooter.angle) * speed,
+                    vy: Math.sin(this.shooter.angle) * speed,
+                    color: this.shooter.currentBubble.color,
+                    moving: true
+                });
+                
+                this.bubblesLeft--;
+                this.createShooterBubble();
+                this.updateUI();
+            }
+            
+            update() {
+                // Update moving bubbles
+                this.bubbles.forEach(bubble => {
+                    if (bubble.moving) {
+                        bubble.x += bubble.vx;
+                        bubble.y += bubble.vy;
+                        
+                        // Wall bounce
+                        if (bubble.x <= this.bubbleRadius || bubble.x >= this.canvas.width - this.bubbleRadius) {
+                            bubble.vx *= -1;
+                        }
+                        
+                        // Check collision
+                        this.checkCollision(bubble);
+                        
+                        // Hit ceiling
+                        if (bubble.y <= this.bubbleRadius + 50) {
+                            this.attachBubble(bubble);
+                        }
+                    }
+                });
+                
+                // Update particles
+                this.particles = this.particles.filter(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.3;
+                    p.life -= 0.02;
+                    return p.life > 0;
+                });
+            }
+            
+            checkCollision(movingBubble) {
+                for (let bubble of this.bubbles) {
+                    if (bubble === movingBubble || bubble.moving) continue;
+                    
+                    const dx = bubble.x - movingBubble.x;
+                    const dy = bubble.y - movingBubble.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < this.bubbleRadius * 2) {
+                        this.attachBubble(movingBubble);
+                        return;
+                    }
+                }
+            }
+            
+            attachBubble(bubble) {
+                bubble.moving = false;
+                
+                // Snap to grid
+                const bestPos = this.findGridPosition(bubble.x, bubble.y);
+                bubble.x = bestPos.x;
+                bubble.y = bestPos.y;
+                
+                // Check matches
+                setTimeout(() => this.checkMatches(bubble), 100);
+            }
+            
+            findGridPosition(x, y) {
+                let bestPos = { x: x, y: y };
+                let minDistance = Infinity;
+                
+                for (let row = 0; row < 15; row++) {
+                    for (let col = 0; col < 15; col++) {
+                        const gridX = col * this.bubbleRadius * 2 + this.bubbleRadius + (row % 2) * this.bubbleRadius;
+                        const gridY = row * this.bubbleRadius * 1.8 + this.bubbleRadius + 50;
+                        
+                        if (gridX < this.canvas.width - this.bubbleRadius) {
+                            const dx = gridX - x;
+                            const dy = gridY - y;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+                            
+                            const occupied = this.bubbles.some(b => 
+                                !b.moving && Math.abs(b.x - gridX) < 5 && Math.abs(b.y - gridY) < 5
+                            );
+                            
+                            if (!occupied && distance < minDistance) {
+                                minDistance = distance;
+                                bestPos = { x: gridX, y: gridY };
+                            }
+                        }
+                    }
+                }
+                
+                return bestPos;
+            }
+            
+            checkMatches(targetBubble) {
+                const matches = this.findConnected(targetBubble);
+                
+                if (matches.length >= 3) {
+                    this.removeBubbles(matches);
+                    this.score += matches.length * 10;
+                    this.createParticles(matches);
+                }
+                
+                this.checkWin();
+            }
+            
+            findConnected(startBubble, visited = new Set()) {
+                const matches = [startBubble];
+                visited.add(startBubble);
+                
+                this.bubbles.forEach(bubble => {
+                    if (bubble.moving || visited.has(bubble) || bubble.color !== startBubble.color) return;
+                    
+                    const dx = bubble.x - startBubble.x;
+                    const dy = bubble.y - startBubble.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < this.bubbleRadius * 2.5) {
+                        visited.add(bubble);
+                        matches.push(...this.findConnected(bubble, visited));
+                    }
+                });
+                
+                return matches;
+            }
+            
+            removeBubbles(bubbles) {
+                bubbles.forEach(bubble => {
+                    const index = this.bubbles.indexOf(bubble);
+                    if (index > -1) this.bubbles.splice(index, 1);
+                });
+            }
+            
+            createParticles(bubbles) {
+                bubbles.forEach(bubble => {
+                    for (let i = 0; i < 6; i++) {
+                        this.particles.push({
+                            x: bubble.x,
+                            y: bubble.y,
+                            vx: (Math.random() - 0.5) * 8,
+                            vy: (Math.random() - 0.5) * 8,
+                            color: bubble.color,
+                            life: 1
+                        });
+                    }
+                });
+            }
+            
+            checkWin() {
+                const remaining = this.bubbles.filter(b => !b.moving).length;
+                
+                if (remaining === 0) {
+                    this.level++;
+                    this.bubblesLeft = 20;
+                    this.generateLevel();
+                } else if (this.bubblesLeft <= 0) {
+                    this.gameRunning = false;
+                    alert(`Game Over! Final Score: ${this.score}`);
+                    document.getElementById('startScreen').style.display = 'flex';
+                }
+                
+                this.updateUI();
+            }
+            
+            draw() {
+                // Clear canvas
+                this.ctx.fillStyle = 'rgba(0, 17, 34, 0.1)';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw aim line
+                if (this.gameRunning && this.shooter.currentBubble) {
+                    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.setLineDash([5, 5]);
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(this.shooter.x, this.shooter.y);
+                    this.ctx.lineTo(
+                        this.shooter.x + Math.cos(this.shooter.angle) * 100,
+                        this.shooter.y + Math.sin(this.shooter.angle) * 100
+                    );
+                    this.ctx.stroke();
+                    this.ctx.setLineDash([]);
+                }
+                
+                // Draw bubbles
+                this.bubbles.forEach(bubble => this.drawBubble(bubble));
+                
+                // Draw shooter bubble
+                if (this.shooter.currentBubble) {
+                    this.drawBubble(this.shooter.currentBubble);
+                }
+                
+                // Draw particles
+                this.particles.forEach(particle => {
+                    this.ctx.save();
+                    this.ctx.globalAlpha = particle.life;
+                    this.ctx.fillStyle = particle.color;
+                    this.ctx.beginPath();
+                    this.ctx.arc(particle.x, particle.y, 3, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    this.ctx.restore();
+                });
+            }
+            
+            drawBubble(bubble) {
+                // Glow effect
+                this.ctx.save();
+                this.ctx.shadowColor = bubble.color;
+                this.ctx.shadowBlur = 10;
+                
+                // Main bubble
+                this.ctx.fillStyle = bubble.color;
+                this.ctx.beginPath();
+                this.ctx.arc(bubble.x, bubble.y, this.bubbleRadius, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // Highlight
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                this.ctx.beginPath();
+                this.ctx.arc(bubble.x - 5, bubble.y - 5, this.bubbleRadius * 0.3, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                this.ctx.restore();
+            }
+            
+            updateUI() {
+                document.getElementById('score').textContent = this.score;
+                document.getElementById('level').textContent = this.level;
+                document.getElementById('bubbles').textContent = this.bubblesLeft;
+            }
+            
+            gameLoop() {
+                if (this.gameRunning) this.update();
+                this.draw();
+                requestAnimationFrame(() => this.gameLoop());
+            }
+        }
+        
+        let game;
+        
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            game = new BubbleGame();
+            game.gameRunning = true;
+        }
+        
+        // Initialize
+        window.addEventListener('load', () => {
+            game = new BubbleGame();
+        });
+    </script>
+</body>
+</html> 
