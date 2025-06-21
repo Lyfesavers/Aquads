@@ -9,15 +9,28 @@
   
   <rect x="0" y="0" width="616" height="200" fill="url(#coinboundGradient)" />
   
-  <text x="308" y="80" font-family="Arial, sans-serif" font-size="44" font-weight="bold" fill="white" text-anchor="middle">
+  <!-- 3.5% Discount Badge -->
+  <g transform="translate(520, 30)">
+    <circle cx="0" cy="0" r="35" fill="#dc2626" stroke="#ffffff" stroke-width="3" opacity="0.95">
+      <animate attributeName="r" values="35;38;35" dur="2s" repeatCount="indefinite" />
+    </circle>
+    <text x="0" y="-8" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white" text-anchor="middle">3.5%</text>
+    <text x="0" y="8" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white" text-anchor="middle">OFF</text>
+  </g>
+  
+  <text x="308" y="70" font-family="Arial, sans-serif" font-size="42" font-weight="bold" fill="white" text-anchor="middle">
     FREE MARKETING PLAN
   </text>
   
-  <text x="308" y="120" font-family="Arial, sans-serif" font-size="30" fill="#fed7aa" text-anchor="middle">
+  <text x="308" y="105" font-family="Arial, sans-serif" font-size="24" fill="#fed7aa" text-anchor="middle">
     FROM OUR PARTNERS AT COINBOUND
   </text>
   
-  <g transform="translate(308, 160) scale(0.35)">
+  <text x="308" y="130" font-family="Arial, sans-serif" font-size="18" fill="#ffedd5" text-anchor="middle">
+    + 3.5% DISCOUNT ON ALL MARKETING SERVICES
+  </text>
+  
+  <g transform="translate(308, 165) scale(0.3)">
     <circle cx="0" cy="0" r="35" fill="#fff" opacity="0.9" />
     <g transform="translate(-20, -20) scale(0.5)">
       <path d="M40 10 C60 10, 70 25, 70 40 C70 55, 60 70, 40 70 L30 70 L30 60 L40 60 C54 60, 60 50, 60 40 C60 30, 54 20, 40 20 L30 20 L30 10 Z" 
