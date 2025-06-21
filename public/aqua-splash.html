@@ -382,18 +382,18 @@
     <script>
         // Game initialization and menu functions
         function startCampaignMode() {
-            if (!game) initializeGame();
-            game.startCampaignMode();
+            if (!window.game) initializeGame();
+            window.game.startCampaignMode();
         }
         
         function startEndlessMode() {
-            if (!game) initializeGame();
-            game.startEndlessMode();
+            if (!window.game) initializeGame();
+            window.game.startEndlessMode();
         }
         
         function startChallengeMode() {
-            if (!game) initializeGame();
-            game.startChallengeMode();
+            if (!window.game) initializeGame();
+            window.game.startChallengeMode();
         }
         
         function showAchievements() {
@@ -407,42 +407,39 @@
         }
         
         function showMainMenu() {
-            if (game) {
-                game.showMainMenu();
+            if (window.game) {
+                window.game.showMainMenu();
             }
         }
         
         function restartGame() {
-            if (game) {
-                game.resetGame();
-                game.hideMainMenu();
-                game.startLevel();
+            if (window.game) {
+                window.game.resetGame();
+                window.game.hideMainMenu();
+                window.game.startLevel();
             }
         }
         
         function usePowerup(type) {
-            if (game) {
-                game.usePowerup(type);
+            if (window.game) {
+                window.game.usePowerup(type);
             }
         }
         
-        // Global variables
-        let game;
-        let effectsSystem;
-        let audioSystem;
+        // Global variables are declared in the engine file
         
         function initializeGame() {
-            if (game) return; // Already initialized
+            if (window.game) return; // Already initialized
             
-            game = new AquaSplashEngine();
-            effectsSystem = new EffectsSystem(game);
-            audioSystem = new AudioSystem();
-            audioSystem.init();
+            window.game = new AquaSplashEngine();
+            window.effectsSystem = new EffectsSystem(window.game);
+            window.audioSystem = new AudioSystem();
+            window.audioSystem.init();
             
             // Enable audio on first user interaction
             document.addEventListener('click', () => {
-                if (audioSystem.audioContext && audioSystem.audioContext.state === 'suspended') {
-                    audioSystem.audioContext.resume();
+                if (window.audioSystem.audioContext && window.audioSystem.audioContext.state === 'suspended') {
+                    window.audioSystem.audioContext.resume();
                 }
             }, { once: true });
         }

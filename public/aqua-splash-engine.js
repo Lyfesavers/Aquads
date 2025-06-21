@@ -1104,5 +1104,7 @@ class AquaSplashEngine {
     }
 }
 
-// Global game instance
-let game; 
+// Global game instances
+let game;
+let effectsSystem;
+let audioSystem; 
