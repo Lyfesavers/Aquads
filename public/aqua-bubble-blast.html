@@ -238,6 +238,16 @@
                     p.life -= 0.02;
                     return p.life > 0;
                 });
+                
+                // Update level complete message
+                if (this.levelCompleteMessage) {
+                    this.levelCompleteMessage.time -= 16; // Assuming 60fps
+                    this.levelCompleteMessage.alpha = Math.max(0, this.levelCompleteMessage.time / 2000);
+                    
+                    if (this.levelCompleteMessage.time <= 0) {
+                        this.levelCompleteMessage = null;
+                    }
+                }
             }
             
             checkCollision(movingBubble) {
@@ -303,27 +313,41 @@
                     this.removeBubbles(matches);
                     this.score += matches.length * 10;
                     this.createParticles(matches);
+                    
+                    // Remove floating bubbles after a match
+                    setTimeout(() => {
+                        this.removeFloatingBubbles();
+                    }, 150);
                 }
                 
                 this.checkWin();
             }
             
             findConnected(startBubble, visited = new Set()) {
-                const matches = [startBubble];
-                visited.add(startBubble);
+                const matches = [];
+                const toCheck = [startBubble];
                 
-                this.bubbles.forEach(bubble => {
-                    if (bubble.moving || visited.has(bubble) || bubble.color !== startBubble.color) return;
+                while (toCheck.length > 0) {
+                    const currentBubble = toCheck.pop();
                     
-                    const dx = bubble.x - startBubble.x;
-                    const dy = bubble.y - startBubble.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    if (visited.has(currentBubble)) continue;
+                    visited.add(currentBubble);
+                    matches.push(currentBubble);
                     
-                    if (distance < this.bubbleRadius * 2.5) {
-                        visited.add(bubble);
-                        matches.push(...this.findConnected(bubble, visited));
-                    }
-                });
+                    // Find all adjacent bubbles of the same color
+                    this.bubbles.forEach(bubble => {
+                        if (bubble.moving || visited.has(bubble) || bubble.color !== currentBubble.color) return;
+                        
+                        const dx = bubble.x - currentBubble.x;
+                        const dy = bubble.y - currentBubble.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        // Check if bubbles are adjacent (touching or very close)
+                        if (distance <= this.bubbleRadius * 2.1) {
+                            toCheck.push(bubble);
+                        }
+                    });
+                }
                 
                 return matches;
             }
@@ -333,6 +357,50 @@
                     const index = this.bubbles.indexOf(bubble);
                     if (index > -1) this.bubbles.splice(index, 1);
                 });
+            }
+            
+            removeFloatingBubbles() {
+                const connected = new Set();
+                const toCheck = [];
+                
+                // Find all bubbles connected to the top
+                this.bubbles.forEach(bubble => {
+                    if (!bubble.moving && bubble.y <= this.bubbleRadius * 1.8 + this.bubbleRadius + 50 + 10) {
+                        toCheck.push(bubble);
+                    }
+                });
+                
+                // Use BFS to find all connected bubbles
+                while (toCheck.length > 0) {
+                    const current = toCheck.pop();
+                    if (connected.has(current)) continue;
+                    
+                    connected.add(current);
+                    
+                    this.bubbles.forEach(bubble => {
+                        if (bubble.moving || connected.has(bubble)) return;
+                        
+                        const dx = bubble.x - current.x;
+                        const dy = bubble.y - current.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance <= this.bubbleRadius * 2.1) {
+                            toCheck.push(bubble);
+                        }
+                    });
+                }
+                
+                // Remove floating bubbles
+                const floatingBubbles = this.bubbles.filter(bubble => 
+                    !bubble.moving && !connected.has(bubble)
+                );
+                
+                if (floatingBubbles.length > 0) {
+                    this.score += floatingBubbles.length * 5; // Bonus points for floating bubbles
+                    this.createParticles(floatingBubbles);
+                    this.removeBubbles(floatingBubbles);
+                    this.updateUI();
+                }
             }
             
             createParticles(bubbles) {
@@ -354,12 +422,19 @@
                 const remaining = this.bubbles.filter(b => !b.moving).length;
                 
                 if (remaining === 0) {
-                    this.level++;
-                    this.bubblesLeft = 20;
-                    this.generateLevel();
+                    // Level completed!
+                    this.score += 100 * this.level; // Bonus points for completing level
+                    this.showLevelComplete();
+                    
+                    setTimeout(() => {
+                        this.level++;
+                        this.bubblesLeft = Math.max(15, 25 - this.level); // Fewer bubbles at higher levels
+                        this.generateLevel();
+                        this.updateUI();
+                    }, 2000);
                 } else if (this.bubblesLeft <= 0) {
                     this.gameRunning = false;
-                    alert(`Game Over! Final Score: ${this.score}`);
+                    alert(`Game Over! Final Score: ${this.score}\nReached Level: ${this.level}`);
                     document.getElementById('startScreen').style.display = 'flex';
                 }
                 
@@ -404,6 +479,20 @@
                     this.ctx.fill();
                     this.ctx.restore();
                 });
+                
+                // Draw level complete message
+                if (this.levelCompleteMessage) {
+                    this.ctx.save();
+                    this.ctx.globalAlpha = this.levelCompleteMessage.alpha;
+                    this.ctx.fillStyle = '#00ccff';
+                    this.ctx.font = 'bold 48px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.strokeStyle = '#ffffff';
+                    this.ctx.lineWidth = 3;
+                    this.ctx.strokeText(this.levelCompleteMessage.text, this.canvas.width / 2, this.canvas.height / 2);
+                    this.ctx.fillText(this.levelCompleteMessage.text, this.canvas.width / 2, this.canvas.height / 2);
+                    this.ctx.restore();
+                }
             }
             
             drawBubble(bubble) {
@@ -425,6 +514,27 @@
                 this.ctx.fill();
                 
                 this.ctx.restore();
+            }
+            
+            showLevelComplete() {
+                // Create celebration particles
+                for (let i = 0; i < 30; i++) {
+                    this.particles.push({
+                        x: this.canvas.width / 2,
+                        y: this.canvas.height / 2,
+                        vx: (Math.random() - 0.5) * 15,
+                        vy: (Math.random() - 0.5) * 15,
+                        color: this.colors[Math.floor(Math.random() * this.colors.length)],
+                        life: 1.5
+                    });
+                }
+                
+                // Show level complete message
+                this.levelCompleteMessage = {
+                    text: `LEVEL ${this.level} COMPLETE!`,
+                    alpha: 1,
+                    time: 2000
+                };
             }
             
             updateUI() {
