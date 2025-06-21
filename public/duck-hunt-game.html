@@ -83,10 +83,10 @@
         /* Floating clouds */
         .clouds {
             position: absolute;
-            top: 10%;
+            top: 5%;
             left: 0;
             right: 0;
-            height: 25%;
+            height: 50%;  /* Limit to sky area only */
             z-index: 2;
             pointer-events: none;
         }
@@ -116,7 +116,7 @@
         .cloud1 {
             width: 100px;
             height: 50px;
-            top: 15%;
+            top: 20%;  /* Keep in upper sky */
             left: 15%;
             animation: cloudFloat1 25s infinite linear;
         }
@@ -139,7 +139,7 @@
         .cloud2 {
             width: 80px;
             height: 40px;
-            top: 8%;
+            top: 10%;  /* Keep in upper sky */
             left: 65%;
             animation: cloudFloat2 30s infinite linear;
         }
@@ -162,7 +162,7 @@
         .cloud3 {
             width: 60px;
             height: 30px;
-            top: 25%;
+            top: 35%;  /* Keep in middle-upper sky */
             left: 45%;
             animation: cloudFloat3 35s infinite linear;
         }
