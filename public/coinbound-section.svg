@@ -9,13 +9,13 @@
   
   <rect x="0" y="0" width="616" height="200" fill="url(#coinboundGradient)" />
   
-  <!-- 3.5% Discount Badge -->
-  <g transform="translate(520, 30)">
-    <circle cx="0" cy="0" r="35" fill="#dc2626" stroke="#ffffff" stroke-width="3" opacity="0.95">
-      <animate attributeName="r" values="35;38;35" dur="2s" repeatCount="indefinite" />
+  <!-- 3.5% Discount Badge - repositioned to top-left -->
+  <g transform="translate(60, 25)">
+    <circle cx="0" cy="0" r="28" fill="#dc2626" stroke="#ffffff" stroke-width="2" opacity="0.95">
+      <animate attributeName="r" values="28;31;28" dur="2s" repeatCount="indefinite" />
     </circle>
-    <text x="0" y="-8" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white" text-anchor="middle">3.5%</text>
-    <text x="0" y="8" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white" text-anchor="middle">OFF</text>
+    <text x="0" y="-6" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">3.5%</text>
+    <text x="0" y="8" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="white" text-anchor="middle">OFF</text>
   </g>
   
   <text x="308" y="70" font-family="Arial, sans-serif" font-size="42" font-weight="bold" fill="white" text-anchor="middle">
