@@ -182,6 +182,7 @@ app.use('/api/reviews', require('./routes/reviews'));
 app.use('/api/ads', require('./routes/ads'));
 app.use('/api/service-reviews', require('./routes/serviceReviews'));
 app.use('/api/tokens', require('./routes/tokens'));
+app.use('/api/user-tokens', require('./routes/user-tokens'));
 app.use('/api/services', require('./routes/services'));
 app.use('/api/users', usersRouter);
 app.use('/api/bannerAds', bannerAdsRoutes);

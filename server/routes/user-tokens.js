@@ -1,0 +1,323 @@
+const express = require('express');
+const router = express.Router();
+const auth = require('../middleware/auth');
+const User = require('../models/User');
+const Booking = require('../models/Booking');
+const TokenPurchase = require('../models/TokenPurchase');
+const { createNotification } = require('../utils/emailService');
+
+// Get user's token balance and history
+router.get('/balance', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select('tokens tokenHistory');
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Get pending purchases
+    const pendingPurchases = await TokenPurchase.find({ 
+      userId: req.user.userId, 
+      status: 'pending' 
+    }).sort({ createdAt: -1 });
+
+    // Add pending purchases to history with special formatting
+    const combinedHistory = [...user.tokenHistory];
+    
+    pendingPurchases.forEach(purchase => {
+      combinedHistory.push({
+        type: 'pending',
+        amount: purchase.amount,
+        reason: `Token purchase pending approval (${purchase.amount} tokens - $${purchase.cost})`,
+        relatedId: purchase._id.toString(),
+        balanceBefore: user.tokens,
+        balanceAfter: user.tokens, // No change yet
+        createdAt: purchase.createdAt
+      });
+    });
+
+    res.json({
+      tokens: user.tokens,
+      history: combinedHistory.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
+      pendingPurchases: pendingPurchases.length
+    });
+  } catch (error) {
+    console.error('Get token balance error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Create token purchase order
+router.post('/purchase', auth, async (req, res) => {
+  try {
+    const { amount, paymentMethod = 'crypto', txSignature, paymentChain, chainSymbol, chainAddress } = req.body;
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ message: 'Invalid token amount' });
+    }
+
+    if (!txSignature) {
+      return res.status(400).json({ message: 'Transaction signature is required' });
+    }
+
+    const cost = amount; // 1 token = 1 USDC
+    const tokenPurchase = new TokenPurchase({
+      userId: req.user.userId,
+      amount,
+      cost,
+      paymentMethod,
+      txSignature,
+      paymentChain,
+      chainSymbol,
+      chainAddress,
+      status: 'pending' // Requires admin approval
+    });
+
+    await tokenPurchase.save();
+
+    // Create notification for admins
+    const User = require('../models/User');
+    const admins = await User.find({ isAdmin: true });
+    
+    for (const admin of admins) {
+      await createNotification(
+        admin._id,
+        'admin',
+        `New token purchase pending approval: ${amount} tokens ($${cost}) from ${req.user.username}`,
+        '/admin/token-purchases',
+        {
+          relatedId: tokenPurchase._id,
+          relatedModel: 'TokenPurchase'
+        }
+      );
+    }
+
+    res.json({
+      purchaseId: tokenPurchase._id,
+      amount,
+      cost,
+      currency: 'USDC',
+      status: 'pending',
+      message: 'Purchase submitted for admin approval'
+    });
+  } catch (error) {
+    console.error('Create token purchase error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Admin approve token purchase
+router.post('/purchase/:purchaseId/approve', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ message: 'Only admins can approve token purchases' });
+    }
+
+    const { purchaseId } = req.params;
+    const tokenPurchase = await TokenPurchase.findById(purchaseId).populate('userId', 'username');
+    
+    if (!tokenPurchase) {
+      return res.status(404).json({ message: 'Purchase not found' });
+    }
+
+    if (tokenPurchase.status !== 'pending') {
+      return res.status(400).json({ message: 'Purchase already processed' });
+    }
+
+    // Update purchase status
+    tokenPurchase.status = 'approved';
+    tokenPurchase.approvedBy = req.user.userId;
+    tokenPurchase.approvedAt = new Date();
+    tokenPurchase.completedAt = new Date();
+    await tokenPurchase.save();
+
+    // Add tokens to user account
+    const user = await User.findById(tokenPurchase.userId);
+    const balanceBefore = user.tokens;
+    user.tokens += tokenPurchase.amount;
+    
+    // Add to token history
+    user.tokenHistory.push({
+      type: 'purchase',
+      amount: tokenPurchase.amount,
+      reason: `Token purchase approved (${tokenPurchase.amount} tokens)`,
+      relatedId: tokenPurchase._id.toString(),
+      balanceBefore,
+      balanceAfter: user.tokens
+    });
+
+    await user.save();
+
+    // Create notification for user
+    await createNotification(
+      tokenPurchase.userId._id,
+      'tokens',
+      `Your token purchase has been approved! ${tokenPurchase.amount} tokens added to your account`,
+      '/dashboard?tab=tokens',
+      {
+        relatedId: tokenPurchase._id,
+        relatedModel: 'TokenPurchase'
+      }
+    );
+
+    res.json({
+      success: true,
+      message: 'Token purchase approved successfully',
+      purchase: tokenPurchase
+    });
+  } catch (error) {
+    console.error('Approve token purchase error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Admin reject token purchase
+router.post('/purchase/:purchaseId/reject', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ message: 'Only admins can reject token purchases' });
+    }
+
+    const { purchaseId } = req.params;
+    const { rejectionReason } = req.body;
+    const tokenPurchase = await TokenPurchase.findById(purchaseId).populate('userId', 'username');
+    
+    if (!tokenPurchase) {
+      return res.status(404).json({ message: 'Purchase not found' });
+    }
+
+    if (tokenPurchase.status !== 'pending') {
+      return res.status(400).json({ message: 'Purchase already processed' });
+    }
+
+    // Update purchase status
+    tokenPurchase.status = 'rejected';
+    tokenPurchase.rejectionReason = rejectionReason || 'Payment verification failed';
+    await tokenPurchase.save();
+
+    // Create notification for user
+    await createNotification(
+      tokenPurchase.userId._id,
+      'tokens',
+      `Your token purchase was rejected: ${tokenPurchase.rejectionReason}`,
+      '/dashboard?tab=tokens',
+      {
+        relatedId: tokenPurchase._id,
+        relatedModel: 'TokenPurchase'
+      }
+    );
+
+    res.json({
+      success: true,
+      message: 'Token purchase rejected',
+      purchase: tokenPurchase
+    });
+  } catch (error) {
+    console.error('Reject token purchase error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get all pending token purchases (admin only)
+router.get('/admin/pending', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ message: 'Admin access required' });
+    }
+
+    const pendingPurchases = await TokenPurchase.find({ status: 'pending' })
+      .populate('userId', 'username email')
+      .sort({ createdAt: -1 });
+
+    res.json(pendingPurchases);
+  } catch (error) {
+    console.error('Get pending purchases error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Unlock booking with tokens
+router.post('/unlock-booking/:bookingId', auth, async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const tokensRequired = 2; // 2 tokens to unlock 1 lead
+
+    const booking = await Booking.findById(bookingId)
+      .populate('serviceId')
+      .populate('sellerId', 'username');
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    // Check if user is the seller
+    if (booking.sellerId._id.toString() !== req.user.userId) {
+      return res.status(403).json({ message: 'Only the seller can unlock this booking' });
+    }
+
+    // Check if already unlocked
+    if (booking.isUnlocked) {
+      return res.status(400).json({ message: 'Booking already unlocked' });
+    }
+
+    // Get user and check token balance
+    const user = await User.findById(req.user.userId);
+    
+    if (user.tokens < tokensRequired) {
+      return res.status(400).json({ 
+        message: 'Insufficient tokens',
+        required: tokensRequired,
+        available: user.tokens
+      });
+    }
+
+    // Deduct tokens
+    const balanceBefore = user.tokens;
+    user.tokens -= tokensRequired;
+    
+    // Add to token history
+    user.tokenHistory.push({
+      type: 'spend',
+      amount: tokensRequired,
+      reason: `Unlocked booking lead for "${booking.serviceId.title}"`,
+      relatedId: bookingId,
+      balanceBefore,
+      balanceAfter: user.tokens
+    });
+
+    await user.save();
+
+    // Update booking
+    booking.isUnlocked = true;
+    booking.unlockedAt = new Date();
+    booking.tokensSpent = tokensRequired;
+    await booking.save();
+
+    res.json({
+      success: true,
+      newBalance: user.tokens,
+      tokensSpent: tokensRequired,
+      booking: {
+        ...booking.toObject(),
+        isUnlocked: true
+      }
+    });
+  } catch (error) {
+    console.error('Unlock booking error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get token packages/pricing
+router.get('/packages', (req, res) => {
+  const packages = [
+    { tokens: 10, price: 10, popular: false },
+    { tokens: 25, price: 25, popular: false, discount: 0 },
+    { tokens: 50, price: 47.5, popular: true, discount: 5 }, // 5% discount
+    { tokens: 100, price: 90, popular: false, discount: 10 }, // 10% discount
+  ];
+
+  res.json(packages);
+});
+
+module.exports = router; 

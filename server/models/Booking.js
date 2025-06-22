@@ -56,6 +56,19 @@ const bookingSchema = new mongoose.Schema({
   isReviewed: {
     type: Boolean,
     default: false
+  },
+  // Token system for lead unlocking
+  isUnlocked: {
+    type: Boolean,
+    default: false
+  },
+  unlockedAt: {
+    type: Date,
+    default: null
+  },
+  tokensSpent: {
+    type: Number,
+    default: 0
   }
 });
 

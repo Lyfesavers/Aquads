@@ -1,6 +1,38 @@
-import React from 'react';
+import React, { useState } from 'react';
+import axios from 'axios';
 
-const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotification, onShowReviews, onOpenConversation }) => {
+const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotification, onShowReviews, onOpenConversation, refreshBookings }) => {
+  const [unlockingBooking, setUnlockingBooking] = useState(null);
+
+  const unlockLead = async (bookingId) => {
+    try {
+      setUnlockingBooking(bookingId);
+      const token = localStorage.getItem('token');
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/user-tokens/unlock-booking/${bookingId}`,
+        {},
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+
+      if (response.data.success) {
+        showNotification(`Lead unlocked successfully! (${response.data.tokensSpent} tokens spent)`, 'success');
+        if (refreshBookings) {
+          refreshBookings(); // Refresh the bookings list
+        }
+      }
+    } catch (error) {
+      console.error('Unlock lead error:', error);
+      const message = error.response?.data?.message || 'Failed to unlock lead';
+      showNotification(message, 'error');
+    } finally {
+      setUnlockingBooking(null);
+    }
+  };
+
   const getStatusBadgeClass = (status) => {
     switch (status) {
       case 'pending':
@@ -134,30 +166,73 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
 
   return (
     <div className="space-y-4">
-      {bookings.map((booking) => (
-        <div key={booking._id} className="bg-gray-800 rounded-lg p-4">
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="text-lg font-semibold text-white">
-                {booking.serviceId.title}
-              </h3>
-              <p className="text-sm text-gray-400">
-                {booking.sellerId._id === currentUser.userId ? 'Buyer' : 'Seller'}: {
-                  booking.sellerId._id === currentUser.userId 
-                    ? booking.buyerName
-                    : booking.sellerId.username
-                }
-              </p>
+      {bookings.map((booking) => {
+        const isSeller = booking.sellerId._id === currentUser.userId;
+        const isLocked = isSeller && !booking.isUnlocked;
+        
+        return (
+          <div key={booking._id} className={`bg-gray-800 rounded-lg p-4 ${isLocked ? 'border-2 border-yellow-500/50' : ''}`}>
+            {/* Locked Lead Banner */}
+            {isLocked && (
+              <div className="bg-yellow-500/20 border border-yellow-500/40 rounded-lg p-3 mb-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <span className="text-yellow-400 text-xl mr-2">🔒</span>
+                    <div>
+                      <h4 className="text-yellow-400 font-semibold">New Lead Available</h4>
+                      <p className="text-yellow-300 text-sm">Unlock this lead to see buyer details and communicate</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => unlockLead(booking._id)}
+                    disabled={unlockingBooking === booking._id}
+                    className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed text-black font-semibold rounded-lg transition-colors"
+                  >
+                    {unlockingBooking === booking._id ? 'Unlocking...' : 'Unlock for 2 Tokens'}
+                  </button>
+                </div>
+              </div>
+            )}
 
-              <p className="text-sm text-gray-400">
-                Price: {booking.price} {booking.currency}
-              </p>
-              {booking.requirements && (
-                <p className="text-sm text-gray-400 mt-2">
-                  Requirements: {booking.requirements}
-                </p>
-              )}
-            </div>
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="text-lg font-semibold text-white">
+                  {booking.serviceId.title}
+                </h3>
+                
+                {/* Show limited info if locked, full info if unlocked */}
+                {isLocked ? (
+                  <>
+                    <p className="text-sm text-gray-400">
+                      New booking request from a buyer
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      Price: {booking.price} {booking.currency}
+                    </p>
+                    <p className="text-sm text-yellow-400 mt-2">
+                      🔒 Unlock to see buyer details and requirements
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm text-gray-400">
+                      {booking.sellerId._id === currentUser.userId ? 'Buyer' : 'Seller'}: {
+                        booking.sellerId._id === currentUser.userId 
+                          ? booking.buyerName
+                          : booking.sellerId.username
+                      }
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      Price: {booking.price} {booking.currency}
+                    </p>
+                    {booking.requirements && (
+                      <p className="text-sm text-gray-400 mt-2">
+                        Requirements: {booking.requirements}
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
             <div className="text-right">
               <span className={`inline-block px-3 py-1 rounded-full text-sm border ${getStatusBadgeClass(booking.status)}`}>
                 {getStatusText(booking.status)}
@@ -168,10 +243,16 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
               
               {/* Messages button */}
               <button
-                onClick={() => onOpenConversation(booking)}
-                className="mt-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm flex items-center"
+                onClick={isLocked ? undefined : () => onOpenConversation(booking)}
+                disabled={isLocked}
+                className={`mt-2 px-3 py-1 rounded text-sm flex items-center ${
+                  isLocked 
+                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed' 
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
               >
-                <span className="mr-1">💬</span> Messages
+                <span className="mr-1">{isLocked ? '🔒' : '💬'}</span> 
+                {isLocked ? 'Messages (Locked)' : 'Messages'}
               </button>
               
               {/* View service reviews button */}
@@ -185,9 +266,10 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
               )}
             </div>
           </div>
-          {renderActions(booking)}
+          {!isLocked && renderActions(booking)}
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

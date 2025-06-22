@@ -87,6 +87,41 @@ const userSchema = new Schema({
     type: Number,
     default: 0
   },
+  tokens: {
+    type: Number,
+    default: 0
+  },
+  tokenHistory: [{
+    type: {
+      type: String,
+      enum: ['purchase', 'spend', 'refund'],
+      required: true
+    },
+    amount: {
+      type: Number,
+      required: true
+    },
+    reason: {
+      type: String,
+      required: true
+    },
+    relatedId: {
+      type: String,
+      default: null
+    },
+    balanceBefore: {
+      type: Number,
+      required: true
+    },
+    balanceAfter: {
+      type: Number,
+      required: true
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   pointsHistory: [{
     amount: Number,
     reason: String,

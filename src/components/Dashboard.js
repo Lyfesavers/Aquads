@@ -1459,6 +1459,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                 }}
                 onShowReviews={handleShowReviews}
                 onOpenConversation={handleOpenConversation}
+                refreshBookings={fetchBookings}
               />
             )
           )}
