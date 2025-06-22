@@ -148,11 +148,7 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
                     : booking.sellerId.username
                 }
               </p>
-              {booking.sellerId._id === currentUser.userId && booking.buyerId.email && (
-                <p className="text-sm text-gray-400">
-                  Buyer Email: {booking.buyerId.email}
-                </p>
-              )}
+
               <p className="text-sm text-gray-400">
                 Price: {booking.price} {booking.currency}
               </p>
