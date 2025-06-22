@@ -1528,6 +1528,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                 <TokenBalance 
                   onPurchaseClick={() => setShowTokenPurchaseModal(true)}
                   showNotification={showNotification}
+                  currentUser={currentUser}
                 />
               </div>
               
@@ -2168,9 +2169,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       {/* Token Purchase Modal */}
       {showTokenPurchaseModal && (
         <TokenPurchaseModal
+          isOpen={showTokenPurchaseModal}
           onClose={() => setShowTokenPurchaseModal(false)}
           showNotification={showNotification}
           onPurchaseComplete={handleTokenPurchaseComplete}
+          currentUser={currentUser}
         />
       )}
     </div>

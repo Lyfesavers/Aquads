@@ -29,7 +29,7 @@ const BLOCKCHAIN_OPTIONS = [
   }
 ];
 
-const TokenPurchaseModal = ({ isOpen, onClose, onPurchaseComplete }) => {
+const TokenPurchaseModal = ({ isOpen, onClose, onPurchaseComplete, showNotification, currentUser }) => {
   const [packages, setPackages] = useState([]);
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [selectedChain, setSelectedChain] = useState(BLOCKCHAIN_OPTIONS[0]);
@@ -60,7 +60,14 @@ const TokenPurchaseModal = ({ isOpen, onClose, onPurchaseComplete }) => {
 
   const fetchBalance = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = currentUser?.token;
+      if (!token) {
+        console.error('No authentication token found');
+        if (showNotification) {
+          showNotification('Please log in to view token balance', 'error');
+        }
+        return;
+      }
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/user-tokens/balance`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -84,7 +91,16 @@ const TokenPurchaseModal = ({ isOpen, onClose, onPurchaseComplete }) => {
     
     try {
       setPurchasing(true);
-      const token = localStorage.getItem('token');
+      const token = currentUser?.token;
+      if (!token) {
+        const message = 'Authentication error. Please log in again.';
+        if (showNotification) {
+          showNotification(message, 'error');
+        } else {
+          alert(message);
+        }
+        return;
+      }
       
       // Submit purchase for admin approval
       await axios.post(
@@ -102,7 +118,12 @@ const TokenPurchaseModal = ({ isOpen, onClose, onPurchaseComplete }) => {
         }
       );
 
-      alert('Purchase submitted successfully! Your payment will be verified by an admin and tokens will be added to your account once approved.');
+      const successMessage = 'Purchase submitted successfully! Your payment will be verified by an admin and tokens will be added to your account once approved.';
+      if (showNotification) {
+        showNotification(successMessage, 'success');
+      } else {
+        alert(successMessage);
+      }
       
       // Reset form
       setTxSignature('');
@@ -112,7 +133,11 @@ const TokenPurchaseModal = ({ isOpen, onClose, onPurchaseComplete }) => {
     } catch (error) {
       console.error('Error creating purchase:', error);
       const message = error.response?.data?.message || 'Failed to submit purchase';
-      alert(message);
+      if (showNotification) {
+        showNotification(message, 'error');
+      } else {
+        alert(message);
+      }
     } finally {
       setPurchasing(false);
     }

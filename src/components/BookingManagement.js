@@ -7,7 +7,12 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
   const unlockLead = async (bookingId) => {
     try {
       setUnlockingBooking(bookingId);
-      const token = localStorage.getItem('token');
+      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+      const token = currentUser?.token;
+      if (!token) {
+        showNotification('Authentication error. Please log in again.', 'error');
+        return;
+      }
       const response = await axios.post(
         `${process.env.REACT_APP_API_URL}/api/user-tokens/unlock-booking/${bookingId}`,
         {},

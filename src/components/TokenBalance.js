@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import TokenPurchaseModal from './TokenPurchaseModal';
 
-const TokenBalance = ({ onBalanceUpdate }) => {
+const TokenBalance = ({ onBalanceUpdate, onPurchaseClick, showNotification, currentUser }) => {
   const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
@@ -17,7 +17,14 @@ const TokenBalance = ({ onBalanceUpdate }) => {
   const fetchBalance = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = currentUser?.token;
+      if (!token) {
+        console.error('No authentication token found');
+        if (showNotification) {
+          showNotification('Please log in to view token balance', 'error');
+        }
+        return;
+      }
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/user-tokens/balance`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -101,7 +108,7 @@ const TokenBalance = ({ onBalanceUpdate }) => {
       {/* Action Buttons */}
       <div className="space-y-2 mb-4">
         <button
-          onClick={() => setShowPurchaseModal(true)}
+          onClick={onPurchaseClick || (() => setShowPurchaseModal(true))}
           className="w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
         >
           Purchase More Tokens
