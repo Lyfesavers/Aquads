@@ -4,7 +4,7 @@ const auth = require('../middleware/auth');
 const User = require('../models/User');
 const Booking = require('../models/Booking');
 const TokenPurchase = require('../models/TokenPurchase');
-const { createNotification } = require('../utils/emailService');
+const Notification = require('../models/Notification');
 
 // Get user's token balance and history
 router.get('/balance', auth, async (req, res) => {
@@ -84,16 +84,15 @@ router.post('/purchase', auth, async (req, res) => {
       const username = purchaseUser ? purchaseUser.username : 'Unknown User';
       
       for (const admin of admins) {
-        await createNotification(
-          admin._id,
-          'admin',
-          `New token purchase pending approval: ${amount} tokens ($${cost}) from ${username}`,
-          '/admin/token-purchases',
-          {
-            relatedId: tokenPurchase._id,
-            relatedModel: 'TokenPurchase'
-          }
-        );
+        const notification = new Notification({
+          userId: admin._id,
+          type: 'admin',
+          message: `New token purchase pending approval: ${amount} tokens ($${cost}) from ${username}`,
+          link: '/admin/token-purchases',
+          relatedId: tokenPurchase._id,
+          relatedModel: 'TokenPurchase'
+        });
+        await notification.save();
       }
     } catch (notificationError) {
       // Don't fail the purchase if notifications fail
@@ -156,16 +155,15 @@ router.post('/purchase/:purchaseId/approve', auth, async (req, res) => {
     await user.save();
 
     // Create notification for user
-    await createNotification(
-      tokenPurchase.userId,
-      'tokens',
-      `Your token purchase has been approved! ${tokenPurchase.amount} tokens added to your account`,
-      '/dashboard?tab=tokens',
-      {
-        relatedId: tokenPurchase._id,
-        relatedModel: 'TokenPurchase'
-      }
-    );
+    const notification = new Notification({
+      userId: tokenPurchase.userId,
+      type: 'tokens',
+      message: `Your token purchase has been approved! ${tokenPurchase.amount} tokens added to your account`,
+      link: '/dashboard?tab=tokens',
+      relatedId: tokenPurchase._id,
+      relatedModel: 'TokenPurchase'
+    });
+    await notification.save();
 
     res.json({
       message: 'Token purchase approved successfully',
@@ -202,16 +200,15 @@ router.post('/purchase/:purchaseId/reject', auth, async (req, res) => {
     await tokenPurchase.save();
 
     // Create notification for user
-    await createNotification(
-      tokenPurchase.userId,
-      'tokens',
-      `Your token purchase was rejected: ${tokenPurchase.rejectionReason}`,
-      '/dashboard?tab=tokens',
-      {
-        relatedId: tokenPurchase._id,
-        relatedModel: 'TokenPurchase'
-      }
-    );
+    const notification = new Notification({
+      userId: tokenPurchase.userId,
+      type: 'tokens',
+      message: `Your token purchase was rejected: ${tokenPurchase.rejectionReason}`,
+      link: '/dashboard?tab=tokens',
+      relatedId: tokenPurchase._id,
+      relatedModel: 'TokenPurchase'
+    });
+    await notification.save();
 
     res.json({
       message: 'Token purchase rejected',
