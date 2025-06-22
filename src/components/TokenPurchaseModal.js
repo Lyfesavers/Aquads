@@ -132,7 +132,7 @@ const TokenPurchaseModal = ({ isOpen, onClose, onPurchaseComplete, showNotificat
 
     } catch (error) {
       console.error('Error creating purchase:', error);
-      const message = error.response?.data?.message || 'Failed to submit purchase';
+      const message = error.response?.data?.error || error.response?.data?.message || 'Failed to submit purchase';
       if (showNotification) {
         showNotification(message, 'error');
       } else {

@@ -31,7 +31,7 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
       }
     } catch (error) {
       console.error('Unlock lead error:', error);
-      const message = error.response?.data?.message || 'Failed to unlock lead';
+      const message = error.response?.data?.error || error.response?.data?.message || 'Failed to unlock lead';
       showNotification(message, 'error');
     } finally {
       setUnlockingBooking(null);

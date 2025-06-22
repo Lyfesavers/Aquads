@@ -787,7 +787,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     if (!currentUser?.isAdmin) return;
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/user-tokens/admin/token-purchases`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/user-tokens/admin/pending`, {
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
         }
@@ -806,7 +806,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   const handleApproveTokenPurchase = async (purchaseId) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/user-tokens/admin/approve/${purchaseId}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/user-tokens/purchase/${purchaseId}/approve`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
@@ -818,7 +818,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         fetchPendingTokenPurchases();
       } else {
         const error = await response.json();
-        showNotification(error.message || 'Failed to approve token purchase', 'error');
+        showNotification(error.error || error.message || 'Failed to approve token purchase', 'error');
       }
     } catch (error) {
       console.error('Error approving token purchase:', error);
@@ -831,13 +831,13 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     if (!reason) return;
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/user-tokens/admin/reject/${purchaseId}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/user-tokens/purchase/${purchaseId}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
         },
-        body: JSON.stringify({ reason })
+        body: JSON.stringify({ rejectionReason: reason })
       });
       
       if (response.ok) {
@@ -845,7 +845,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         fetchPendingTokenPurchases();
       } else {
         const error = await response.json();
-        showNotification(error.message || 'Failed to reject token purchase', 'error');
+        showNotification(error.error || error.message || 'Failed to reject token purchase', 'error');
       }
     } catch (error) {
       console.error('Error rejecting token purchase:', error);

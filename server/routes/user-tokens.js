@@ -12,7 +12,7 @@ router.get('/balance', auth, async (req, res) => {
     const user = await User.findById(req.user.userId).select('tokens tokenHistory');
     
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ error: 'User not found' });
     }
 
     // Get pending purchases
@@ -43,7 +43,7 @@ router.get('/balance', auth, async (req, res) => {
     });
   } catch (error) {
     console.error('Get token balance error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ error: 'Failed to fetch token balance' });
   }
 });
 
@@ -53,11 +53,11 @@ router.post('/purchase', auth, async (req, res) => {
     const { amount, paymentMethod = 'crypto', txSignature, paymentChain, chainSymbol, chainAddress } = req.body;
 
     if (!amount || amount <= 0) {
-      return res.status(400).json({ message: 'Invalid token amount' });
+      return res.status(400).json({ error: 'Invalid token amount' });
     }
 
     if (!txSignature) {
-      return res.status(400).json({ message: 'Transaction signature is required' });
+      return res.status(400).json({ error: 'Transaction signature is required' });
     }
 
     const cost = amount; // 1 token = 1 USDC
@@ -76,33 +76,36 @@ router.post('/purchase', auth, async (req, res) => {
     await tokenPurchase.save();
 
     // Create notification for admins
-    const User = require('../models/User');
-    const admins = await User.find({ isAdmin: true });
-    
-    for (const admin of admins) {
-      await createNotification(
-        admin._id,
-        'admin',
-        `New token purchase pending approval: ${amount} tokens ($${cost}) from ${req.user.username}`,
-        '/admin/token-purchases',
-        {
-          relatedId: tokenPurchase._id,
-          relatedModel: 'TokenPurchase'
-        }
-      );
+    try {
+      const admins = await User.find({ isAdmin: true });
+      
+      // Get the user who made the purchase to get their username
+      const purchaseUser = await User.findById(req.user.userId).select('username');
+      const username = purchaseUser ? purchaseUser.username : 'Unknown User';
+      
+      for (const admin of admins) {
+        await createNotification(
+          admin._id,
+          'admin',
+          `New token purchase pending approval: ${amount} tokens ($${cost}) from ${username}`,
+          '/admin/token-purchases',
+          {
+            relatedId: tokenPurchase._id,
+            relatedModel: 'TokenPurchase'
+          }
+        );
+      }
+    } catch (notificationError) {
+      // Don't fail the purchase if notifications fail
     }
 
-    res.json({
-      purchaseId: tokenPurchase._id,
-      amount,
-      cost,
-      currency: 'USDC',
-      status: 'pending',
-      message: 'Purchase submitted for admin approval'
+    res.status(201).json({
+      message: 'Token purchase created successfully! It will be processed once payment is approved.',
+      purchase: tokenPurchase
     });
   } catch (error) {
     console.error('Create token purchase error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ error: 'Failed to create token purchase' });
   }
 });
 
@@ -110,18 +113,18 @@ router.post('/purchase', auth, async (req, res) => {
 router.post('/purchase/:purchaseId/approve', auth, async (req, res) => {
   try {
     if (!req.user.isAdmin) {
-      return res.status(403).json({ message: 'Only admins can approve token purchases' });
+      return res.status(403).json({ error: 'Only admins can approve token purchases' });
     }
 
     const { purchaseId } = req.params;
     const tokenPurchase = await TokenPurchase.findById(purchaseId).populate('userId', 'username');
     
     if (!tokenPurchase) {
-      return res.status(404).json({ message: 'Purchase not found' });
+      return res.status(404).json({ error: 'Purchase not found' });
     }
 
     if (tokenPurchase.status !== 'pending') {
-      return res.status(400).json({ message: 'Purchase already processed' });
+      return res.status(400).json({ error: 'Purchase already processed' });
     }
 
     // Update purchase status
@@ -161,13 +164,12 @@ router.post('/purchase/:purchaseId/approve', auth, async (req, res) => {
     );
 
     res.json({
-      success: true,
       message: 'Token purchase approved successfully',
       purchase: tokenPurchase
     });
   } catch (error) {
     console.error('Approve token purchase error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ error: 'Failed to approve token purchase' });
   }
 });
 
@@ -175,7 +177,7 @@ router.post('/purchase/:purchaseId/approve', auth, async (req, res) => {
 router.post('/purchase/:purchaseId/reject', auth, async (req, res) => {
   try {
     if (!req.user.isAdmin) {
-      return res.status(403).json({ message: 'Only admins can reject token purchases' });
+      return res.status(403).json({ error: 'Only admins can reject token purchases' });
     }
 
     const { purchaseId } = req.params;
@@ -183,11 +185,11 @@ router.post('/purchase/:purchaseId/reject', auth, async (req, res) => {
     const tokenPurchase = await TokenPurchase.findById(purchaseId).populate('userId', 'username');
     
     if (!tokenPurchase) {
-      return res.status(404).json({ message: 'Purchase not found' });
+      return res.status(404).json({ error: 'Purchase not found' });
     }
 
     if (tokenPurchase.status !== 'pending') {
-      return res.status(400).json({ message: 'Purchase already processed' });
+      return res.status(400).json({ error: 'Purchase already processed' });
     }
 
     // Update purchase status
@@ -208,13 +210,12 @@ router.post('/purchase/:purchaseId/reject', auth, async (req, res) => {
     );
 
     res.json({
-      success: true,
       message: 'Token purchase rejected',
       purchase: tokenPurchase
     });
   } catch (error) {
     console.error('Reject token purchase error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ error: 'Failed to reject token purchase' });
   }
 });
 
@@ -222,7 +223,7 @@ router.post('/purchase/:purchaseId/reject', auth, async (req, res) => {
 router.get('/admin/pending', auth, async (req, res) => {
   try {
     if (!req.user.isAdmin) {
-      return res.status(403).json({ message: 'Admin access required' });
+      return res.status(403).json({ error: 'Admin access required' });
     }
 
     const pendingPurchases = await TokenPurchase.find({ status: 'pending' })
@@ -232,7 +233,7 @@ router.get('/admin/pending', auth, async (req, res) => {
     res.json(pendingPurchases);
   } catch (error) {
     console.error('Get pending purchases error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ error: 'Failed to fetch pending purchases' });
   }
 });
 
@@ -247,17 +248,17 @@ router.post('/unlock-booking/:bookingId', auth, async (req, res) => {
       .populate('sellerId', 'username');
 
     if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
+      return res.status(404).json({ error: 'Booking not found' });
     }
 
     // Check if user is the seller
     if (booking.sellerId._id.toString() !== req.user.userId) {
-      return res.status(403).json({ message: 'Only the seller can unlock this booking' });
+      return res.status(403).json({ error: 'Only the seller can unlock this booking' });
     }
 
     // Check if already unlocked
     if (booking.isUnlocked) {
-      return res.status(400).json({ message: 'Booking already unlocked' });
+      return res.status(400).json({ error: 'Booking already unlocked' });
     }
 
     // Get user and check token balance
@@ -265,7 +266,7 @@ router.post('/unlock-booking/:bookingId', auth, async (req, res) => {
     
     if (user.tokens < tokensRequired) {
       return res.status(400).json({ 
-        message: 'Insufficient tokens',
+        error: 'Insufficient tokens',
         required: tokensRequired,
         available: user.tokens
       });
@@ -304,7 +305,7 @@ router.post('/unlock-booking/:bookingId', auth, async (req, res) => {
     });
   } catch (error) {
     console.error('Unlock booking error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ error: 'Failed to unlock booking' });
   }
 });
 
