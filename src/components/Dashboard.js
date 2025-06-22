@@ -7,6 +7,8 @@ import BookingConversation from './BookingConversation';
 import BumpStore from './BumpStore';
 import EasterEggAnimation from './EasterEggAnimation';
 import CreateJobModal from './CreateJobModal';
+import TokenBalance from './TokenBalance';
+import TokenPurchaseModal from './TokenPurchaseModal';
 
 const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, onRejectBump, onApproveBump, initialBookingId, initialActiveTab }) => {
   const [bumpRequests, setBumpRequests] = useState([]);
@@ -55,6 +57,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [isLoadingListings, setIsLoadingListings] = useState(false);
   const [jobToEdit, setJobToEdit] = useState(null);
   const [activeAdminSection, setActiveAdminSection] = useState('bumps');
+  const [showTokenPurchaseModal, setShowTokenPurchaseModal] = useState(false);
+  const [pendingTokenPurchases, setPendingTokenPurchases] = useState([]);
 
   // Update activeTab when initialActiveTab changes
   useEffect(() => {
@@ -229,6 +233,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   useEffect(() => {
     if (currentUser?.isAdmin && activeTab === 'admin') {
       fetchPendingBubbleListings();
+      fetchPendingTokenPurchases();
     }
   }, [currentUser, activeTab]);
 
@@ -770,6 +775,81 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     } else {
       // Fallback to a simple alert
       alert(message);
+    }
+  };
+
+  const handleTokenPurchaseComplete = () => {
+    // Refresh bookings after token purchase
+    fetchBookings();
+  };
+
+  const fetchPendingTokenPurchases = async () => {
+    if (!currentUser?.isAdmin) return;
+    
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/user-tokens/admin/token-purchases`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setPendingTokenPurchases(data);
+      } else {
+        console.error('Failed to fetch pending token purchases');
+      }
+    } catch (error) {
+      console.error('Error fetching pending token purchases:', error);
+    }
+  };
+
+  const handleApproveTokenPurchase = async (purchaseId) => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/user-tokens/admin/approve/${purchaseId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      
+      if (response.ok) {
+        showNotification('Token purchase approved successfully', 'success');
+        fetchPendingTokenPurchases();
+      } else {
+        const error = await response.json();
+        showNotification(error.message || 'Failed to approve token purchase', 'error');
+      }
+    } catch (error) {
+      console.error('Error approving token purchase:', error);
+      showNotification('Error approving token purchase', 'error');
+    }
+  };
+
+  const handleRejectTokenPurchase = async (purchaseId) => {
+    const reason = prompt('Enter rejection reason:');
+    if (!reason) return;
+    
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/user-tokens/admin/reject/${purchaseId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({ reason })
+      });
+      
+      if (response.ok) {
+        showNotification('Token purchase rejected', 'success');
+        fetchPendingTokenPurchases();
+      } else {
+        const error = await response.json();
+        showNotification(error.message || 'Failed to reject token purchase', 'error');
+      }
+    } catch (error) {
+      console.error('Error rejecting token purchase:', error);
+      showNotification('Error rejecting token purchase', 'error');
     }
   };
 
@@ -1442,26 +1522,36 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           )}
 
           {activeTab === 'bookings' && (
-            activeBookingConversation ? (
-              <BookingConversation 
-                booking={activeBookingConversation} 
-                currentUser={currentUser} 
-                onClose={handleCloseConversation}
-                showNotification={showNotification}
-              />
-            ) : (
-              <BookingManagement
-                bookings={bookings}
-                currentUser={currentUser}
-                onStatusUpdate={handleBookingStatusUpdate}
-                showNotification={(message, type) => {
-                  alert(message);
-                }}
-                onShowReviews={handleShowReviews}
-                onOpenConversation={handleOpenConversation}
-                refreshBookings={fetchBookings}
-              />
-            )
+            <div>
+              {/* Token Balance Widget */}
+              <div className="mb-6">
+                <TokenBalance 
+                  onPurchaseClick={() => setShowTokenPurchaseModal(true)}
+                  showNotification={showNotification}
+                />
+              </div>
+              
+              {activeBookingConversation ? (
+                <BookingConversation 
+                  booking={activeBookingConversation} 
+                  currentUser={currentUser} 
+                  onClose={handleCloseConversation}
+                  showNotification={showNotification}
+                />
+              ) : (
+                <BookingManagement
+                  bookings={bookings}
+                  currentUser={currentUser}
+                  onStatusUpdate={handleBookingStatusUpdate}
+                  showNotification={(message, type) => {
+                    alert(message);
+                  }}
+                  onShowReviews={handleShowReviews}
+                  onOpenConversation={handleOpenConversation}
+                  refreshBookings={fetchBookings}
+                />
+              )}
+            </div>
           )}
 
           {activeTab === 'admin' && currentUser.isAdmin && (
@@ -1562,6 +1652,23 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                     {premiumRequests.length > 0 && (
                       <span className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-purple-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
                         {premiumRequests.length}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setActiveAdminSection('tokens')}
+                    className={`w-full text-left px-3 py-2 rounded-md transition-colors relative ${
+                      activeAdminSection === 'tokens' 
+                        ? 'bg-blue-600 text-white' 
+                        : pendingTokenPurchases.length > 0
+                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white bg-pink-900/30 border-l-4 border-pink-500'
+                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                    }`}
+                  >
+                    🪙 Token Purchases
+                    {pendingTokenPurchases.length > 0 && (
+                      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-pink-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
+                        {pendingTokenPurchases.length}
                       </span>
                     )}
                   </button>
@@ -1885,6 +1992,60 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                     )}
                   </div>
                 )}
+
+                {activeAdminSection === 'tokens' && (
+                  <div>
+                    <h3 className="text-2xl font-semibold text-white mb-6">Token Purchase Requests</h3>
+                    {pendingTokenPurchases.length === 0 ? (
+                      <p className="text-gray-400 text-center py-8">No pending token purchases</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {pendingTokenPurchases.map(purchase => (
+                          <div key={purchase._id} className="bg-gray-700 rounded-lg p-4">
+                            <div className="flex justify-between items-start">
+                              <div className="space-y-2">
+                                <h4 className="font-medium text-white">
+                                  {purchase.amount} Tokens Purchase
+                                </h4>
+                                <p className="text-sm text-gray-400">
+                                  User: <span className="text-white">{purchase.user?.username}</span>
+                                </p>
+                                <p className="text-sm text-gray-400">
+                                  Cost: <span className="text-green-400 font-medium">${purchase.cost} {purchase.currency}</span>
+                                </p>
+                                <p className="text-sm text-gray-400">
+                                  Payment Chain: <span className="text-blue-400">{purchase.paymentChain}</span>
+                                </p>
+                                {purchase.txSignature && (
+                                  <p className="text-sm text-gray-400">
+                                    TX: <span className="text-blue-400 font-mono text-xs break-all">{purchase.txSignature}</span>
+                                  </p>
+                                )}
+                                <p className="text-sm text-gray-400">
+                                  Requested: <span className="text-gray-300">{new Date(purchase.createdAt).toLocaleString()}</span>
+                                </p>
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleApproveTokenPurchase(purchase._id)}
+                                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  onClick={() => handleRejectTokenPurchase(purchase._id)}
+                                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -2002,6 +2163,15 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
             </div>
           </div>
         </div>
+      )}
+
+      {/* Token Purchase Modal */}
+      {showTokenPurchaseModal && (
+        <TokenPurchaseModal
+          onClose={() => setShowTokenPurchaseModal(false)}
+          showNotification={showNotification}
+          onPurchaseComplete={handleTokenPurchaseComplete}
+        />
       )}
     </div>
   );
