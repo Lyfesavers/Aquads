@@ -15,21 +15,19 @@ const BookingButton = ({ service, currentUser, onBookingCreate, showNotification
       const response = await onBookingCreate(service._id, requirements);
 
       
-      // Send booking notification to seller (if they have email)
-      if (service.seller?.email) {
-        await emailService.sendBookingNotification(
-          service.seller.email,
-          {
-            sellerUsername: service.seller.username,
-            serviceTitle: service.title,
-            bookingId: response._id,
-            price: service.price,
-            currency: service.currency,
-            buyerUsername: currentUser.username,
-            requirements: requirements
-          }
-        );
-      }
+      // Send booking notification to seller
+      await emailService.sendBookingNotification(
+        service.email,
+        {
+          sellerUsername: service.seller.username,
+          serviceTitle: service.title,
+          bookingId: response._id,
+          price: service.price,
+          currency: service.currency,
+          buyerUsername: currentUser.username,
+          requirements: requirements
+        }
+      );
 
       setShowModal(false);
       showNotification('Booking request sent successfully!', 'success');
