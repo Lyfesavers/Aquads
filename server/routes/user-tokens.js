@@ -136,8 +136,12 @@ router.post('/purchase/:purchaseId/approve', auth, async (req, res) => {
 
     // Add tokens to user account
     const user = await User.findById(tokenPurchase.userId);
-    const balanceBefore = user.tokens;
-    user.tokens += tokenPurchase.amount;
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    const balanceBefore = user.tokens || 0;
+    user.tokens = (user.tokens || 0) + tokenPurchase.amount;
     
     // Add to token history
     user.tokenHistory.push({
@@ -153,7 +157,7 @@ router.post('/purchase/:purchaseId/approve', auth, async (req, res) => {
 
     // Create notification for user
     await createNotification(
-      tokenPurchase.userId._id,
+      tokenPurchase.userId,
       'tokens',
       `Your token purchase has been approved! ${tokenPurchase.amount} tokens added to your account`,
       '/dashboard?tab=tokens',
@@ -199,7 +203,7 @@ router.post('/purchase/:purchaseId/reject', auth, async (req, res) => {
 
     // Create notification for user
     await createNotification(
-      tokenPurchase.userId._id,
+      tokenPurchase.userId,
       'tokens',
       `Your token purchase was rejected: ${tokenPurchase.rejectionReason}`,
       '/dashboard?tab=tokens',
