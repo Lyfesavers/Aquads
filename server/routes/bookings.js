@@ -78,6 +78,21 @@ router.post('/', auth, async (req, res) => {
 
     await booking.save();
     
+    // Create notification for the seller about the new booking
+    const bookingLink = `/dashboard?tab=bookings&booking=${booking._id}`;
+    const notificationMessage = `New booking request for "${service.title}" from ${req.user.username}`;
+
+    await createNotification(
+      service.seller._id,
+      'booking',
+      notificationMessage,
+      bookingLink,
+      {
+        relatedId: booking._id,
+        relatedModel: 'Booking'
+      }
+    );
+    
     // Populate the saved booking with service and user details
     const populatedBooking = await Booking.findById(booking._id)
       .populate('serviceId')
