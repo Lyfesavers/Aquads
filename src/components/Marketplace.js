@@ -11,7 +11,7 @@ import { Button } from 'react-bootstrap';
 import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
 import EditServiceModal from './EditServiceModal';
-import { FaTelegram, FaTwitter, FaDiscord, FaEnvelope, FaLinkedin, FaGlobe, FaCrown, FaCheck } from 'react-icons/fa';
+import { FaCrown, FaCheck } from 'react-icons/fa';
 import BookingButton from './BookingButton';
 import Dashboard from './Dashboard';
 import PremiumBadge from './PremiumBadge';
@@ -1199,70 +1199,6 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                             </div>
                           </div>
                           <div className="mt-4 flex flex-wrap gap-2">
-                            {service.telegramUsername && (
-                              <a
-                                href={`https://t.me/${service.telegramUsername}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center px-3 py-1.5 text-sm bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-full transition-all duration-300"
-                              >
-                                <FaTelegram className="mr-1" />
-                                <span>Telegram</span>
-                              </a>
-                            )}
-                            {service.twitter && (
-                              <a
-                                href={service.twitter}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center px-3 py-1.5 text-sm bg-sky-500/20 hover:bg-sky-500/30 text-sky-400 rounded-full transition-all duration-300"
-                              >
-                                <FaTwitter className="mr-1" />
-                                <span>Twitter</span>
-                              </a>
-                            )}
-                            {service.discord && (
-                              <a
-                                href={service.discord}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center px-3 py-1.5 text-sm bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 rounded-full transition-all duration-300"
-                              >
-                                <FaDiscord className="mr-1" />
-                                <span>Discord</span>
-                              </a>
-                            )}
-                            {service.email && (
-                              <a
-                                href={`mailto:${service.email}`}
-                                className="inline-flex items-center px-3 py-1.5 text-sm bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-full transition-all duration-300"
-                              >
-                                <FaEnvelope className="mr-1" />
-                                <span>Email</span>
-                              </a>
-                            )}
-                            {service.linkedin && (
-                              <a
-                                href={service.linkedin}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center px-3 py-1.5 text-sm bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded-full transition-all duration-300"
-                              >
-                                <FaLinkedin className="mr-1" />
-                                <span>LinkedIn</span>
-                              </a>
-                            )}
-                            {service.website && (
-                              <a
-                                href={service.website}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center px-3 py-1.5 text-sm bg-gray-500/20 hover:bg-gray-500/30 text-gray-400 rounded-full transition-all duration-300"
-                              >
-                                <FaGlobe className="mr-1" />
-                                <span>Website</span>
-                              </a>
-                            )}
                             <button
                               onClick={() => {
                                 const referralCode = currentUser?.username || ''; // Get current user's username as referral code

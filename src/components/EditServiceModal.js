@@ -11,12 +11,7 @@ const EditServiceModal = ({ service, onClose, onEditService, categories }) => {
     image: service.image || '',
     videoUrl: service.videoUrl || '',
     requirements: service.requirements || '',
-    telegramUsername: service.telegramUsername || '',
-    twitter: service.twitter || '',
-    discord: service.discord || '',
-    email: service.email || '',
-    linkedin: service.linkedin || '',
-    website: service.website || ''
+
   });
   const [previewUrl, setPreviewUrl] = useState(service.image || '');
   const [error, setError] = useState('');
@@ -132,98 +127,7 @@ const EditServiceModal = ({ service, onClose, onEditService, categories }) => {
                     />
                   </div>
 
-                  {/* Contact Information Section */}
-                  <div className="border-t border-gray-700 pt-6">
-                    <h3 className="text-lg font-medium mb-4 text-white">Contact Information</h3>
-                    <div className="space-y-4">
-                      {/* Telegram Username */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                          Telegram Username
-                        </label>
-                        <div className="relative">
-                          <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">@</span>
-                          <input
-                            type="text"
-                            placeholder="your_telegram_username"
-                            className="w-full pl-8 px-4 py-2 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
-                            value={formData.telegramUsername}
-                            onChange={(e) => setFormData(prev => ({ ...prev, telegramUsername: e.target.value.replace('@', '') }))}
-                          />
-                        </div>
-                      </div>
 
-                      {/* Twitter Profile */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                          Twitter Profile URL
-                        </label>
-                        <input
-                          type="url"
-                          placeholder="https://twitter.com/username"
-                          className="w-full px-4 py-2 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
-                          value={formData.twitter}
-                          onChange={(e) => setFormData(prev => ({ ...prev, twitter: e.target.value }))}
-                        />
-                      </div>
-
-                      {/* Discord Username */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                          Discord Username
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="username#0000"
-                          className="w-full px-4 py-2 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
-                          value={formData.discord}
-                          onChange={(e) => setFormData(prev => ({ ...prev, discord: e.target.value }))}
-                        />
-                      </div>
-
-                      {/* Email Address */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                          Email Address
-                        </label>
-                        <input
-                          type="email"
-                          placeholder="your@email.com"
-                          className="w-full px-4 py-2 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
-                          value={formData.email}
-                          onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                        />
-                      </div>
-
-                      {/* LinkedIn Profile */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                          LinkedIn Profile URL
-                        </label>
-                        <input
-                          type="url"
-                          placeholder="https://linkedin.com/in/your-profile"
-                          className="w-full px-4 py-2 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
-                          value={formData.linkedin}
-                          onChange={(e) => setFormData(prev => ({ ...prev, linkedin: e.target.value }))}
-                        />
-                      </div>
-
-                      {/* Website */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                          Website URL
-                        </label>
-                        <input
-                          type="url"
-                          placeholder="https://yourwebsite.com"
-                          className="w-full px-4 py-2 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
-                          value={formData.website}
-                          onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
-                        />
-                      </div>
-                    </div>
-                  </div>
 
                   {/* Price and Delivery Time */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

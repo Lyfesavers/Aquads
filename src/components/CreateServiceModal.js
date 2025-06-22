@@ -11,12 +11,7 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
     image: '',
     videoUrl: '',
     requirements: '',
-    telegramUsername: '',
-    twitter: '',
-    discord: '',
-    email: '',
-    linkedin: '',
-    website: ''
+
   });
   const [previewUrl, setPreviewUrl] = useState('');
   const [error, setError] = useState('');
@@ -130,92 +125,7 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
             />
           </div>
 
-          <div className="border-t border-gray-700 pt-6">
-            <h3 className="text-lg font-medium mb-4">Contact Information</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Telegram Username
-                </label>
-                <input
-                  type="text"
-                  name="telegramUsername"
-                  value={formData.telegramUsername}
-                  onChange={(e) => setFormData(prev => ({ ...prev, telegramUsername: e.target.value }))}
-                  placeholder="@username"
-                  className="w-full px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Twitter Profile URL
-                </label>
-                <input
-                  type="url"
-                  name="twitter"
-                  value={formData.twitter}
-                  onChange={(e) => setFormData(prev => ({ ...prev, twitter: e.target.value }))}
-                  placeholder="https://twitter.com/username"
-                  className="w-full px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Discord Username
-                </label>
-                <input
-                  type="text"
-                  name="discord"
-                  value={formData.discord}
-                  onChange={(e) => setFormData(prev => ({ ...prev, discord: e.target.value }))}
-                  placeholder="username#0000"
-                  className="w-full px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                  placeholder="your@email.com"
-                  className="w-full px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  LinkedIn Profile URL
-                </label>
-                <input
-                  type="url"
-                  name="linkedin"
-                  value={formData.linkedin}
-                  onChange={(e) => setFormData(prev => ({ ...prev, linkedin: e.target.value }))}
-                  placeholder="https://linkedin.com/in/username"
-                  className="w-full px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block mb-1">Website</label>
-                <input
-                  type="url"
-                  name="website"
-                  value={formData.website}
-                  onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
-                  placeholder="https://yourwebsite.com"
-                  className="w-full px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                />
-              </div>
-            </div>
-          </div>
 
           {/* Price and Delivery Time */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
