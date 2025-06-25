@@ -142,8 +142,38 @@ const Terms = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4 text-blue-400">10. Data, Privacy & Cookies</h2>
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 space-y-4">
-                <p><span className="text-blue-400 font-semibold">10.1 Privacy Policy.</span> Our Privacy Policy describes data collection, use, retention, and user rights (access, deletion).</p>
-                <p><span className="text-blue-400 font-semibold">10.2 Cookies.</span> We use cookies and similar technologies; see our Cookie Policy for details and opt‑out instructions.</p>
+                <p><span className="text-blue-400 font-semibold">10.1 Privacy Policy.</span> We maintain a separate Privacy Policy detailing what personal data we collect and how we use it. We do not collect or store wallet addresses—onboarding, identity verification, and wallet linking are managed entirely by our third-party providers (e.g., Transak, LiFi, Reown).</p>
+                
+                <div>
+                  <p><span className="text-blue-400 font-semibold">10.2 Data Collected.</span> We may collect:</p>
+                  <ul className="list-disc pl-6 mt-2 space-y-1">
+                    <li>Registration details (name, email, username)</li>
+                    <li>Usage analytics (feature interactions, page views)</li>
+                    <li>Cookies and tracking data for site performance and personalization</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <p><span className="text-blue-400 font-semibold">10.3 Use of Data.</span> Collected data is used to:</p>
+                  <ul className="list-disc pl-6 mt-2 space-y-1">
+                    <li>Provide and improve the Services</li>
+                    <li>Generate leads in the Freelancer Hub</li>
+                    <li>Analyze platform usage</li>
+                    <li>Send transactional and service-related communications</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <p><span className="text-blue-400 font-semibold">10.4 Data Sharing.</span> We share data only with:</p>
+                  <ul className="list-disc pl-6 mt-2 space-y-1">
+                    <li>Third-party service partners (Transak, LiFi, Coinbound.io, Reown) as required to deliver Services</li>
+                    <li>Analytics and performance providers under strict confidentiality</li>
+                  </ul>
+                </div>
+
+                <p><span className="text-blue-400 font-semibold">10.5 Cookies & Tracking.</span> We use cookies and similar technologies. Refer to our Cookie Policy for details and opt-out mechanisms.</p>
+                
+                <p><span className="text-blue-400 font-semibold">10.6 User Rights.</span> You have rights to access, correct, or delete your personal data held by Aquads. Contact us at <a href="mailto:info@aquads.xyz" className="text-blue-400 hover:text-blue-300">info@aquads.xyz</a> to exercise these rights.</p>
               </div>
             </section>
 
