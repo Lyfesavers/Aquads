@@ -71,7 +71,7 @@ const Footer = () => {
               className="hover:text-blue-400 transition-colors flex items-center justify-center sm:justify-start"
             >
               <FaFileAlt className="mr-2" />
-              <span>Terms</span>
+              <span>Terms and Conditions</span>
             </Link>
             <Link
               to="/aquafi"
