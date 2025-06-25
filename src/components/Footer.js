@@ -64,6 +64,13 @@ const Footer = () => {
                   <span>Whitepaper</span>
                 </Link>
                 <Link
+                  to="/how-to"
+                  className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
+                >
+                  <FaFileAlt className="mr-2" />
+                  <span>Learn</span>
+                </Link>
+                <Link
                   to="/affiliate"
                   className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
                 >
@@ -97,6 +104,27 @@ const Footer = () => {
                 >
                   <FaCoins className="mr-2" />
                   <span>AquaFi</span>
+                </Link>
+                <Link
+                  to="/swap"
+                  className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
+                >
+                  <FaCoins className="mr-2" />
+                  <span>AquaSwap</span>
+                </Link>
+                <Link
+                  to="/marketplace"
+                  className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
+                >
+                  <FaFileAlt className="mr-2" />
+                  <span>Freelancer Hub</span>
+                </Link>
+                <Link
+                  to="/games"
+                  className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
+                >
+                  <FaFileAlt className="mr-2" />
+                  <span>Game Hub</span>
                 </Link>
               </div>
             </div>
