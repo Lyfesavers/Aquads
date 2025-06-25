@@ -32,7 +32,18 @@ const BookingButton = ({ service, currentUser, onBookingCreate, showNotification
       setShowModal(false);
       showNotification('Booking request sent successfully!', 'success');
     } catch (error) {
-      showNotification(error.message || 'Failed to create booking', 'error');
+      // Handle different types of errors, including content filtering
+      if (error.response && error.response.data) {
+        const errorData = error.response.data;
+        if (errorData.blockedContent) {
+          // Show specific error for blocked content in requirements
+          showNotification(errorData.error, 'error');
+        } else {
+          showNotification(errorData.error || error.message || 'Failed to create booking', 'error');
+        }
+      } else {
+        showNotification(error.message || 'Failed to create booking', 'error');
+      }
     } finally {
       setIsSubmitting(false);
     }

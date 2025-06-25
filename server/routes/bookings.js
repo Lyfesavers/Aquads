@@ -9,6 +9,7 @@ const path = require('path');
 const fs = require('fs');
 const { createNotification } = require('./notifications');
 const mongoose = require('mongoose');
+const contentFilter = require('../utils/contentFilter');
 
 // Require sharp module directly (make it mandatory, not optional)
 const sharp = require('sharp');
@@ -64,6 +65,19 @@ router.post('/', auth, async (req, res) => {
     // Check if buyer is not the seller
     if (service.seller._id.toString() === req.user.userId) {
       return res.status(400).json({ error: 'You cannot book your own service' });
+    }
+
+    // Content filtering - check for blocked content in requirements
+    if (requirements && requirements.trim()) {
+      const filterResult = contentFilter.containsBlockedContent(requirements);
+      if (filterResult.blocked) {
+        const errorMessage = contentFilter.getBlockedContentMessage(filterResult.reasons);
+        return res.status(400).json({ 
+          error: errorMessage,
+          blockedContent: true,
+          reasons: filterResult.reasons
+        });
+      }
     }
 
     const booking = new Booking({
@@ -363,6 +377,19 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
     // Validate message if there's no file attachment
     if (!req.file && (!message || message.trim() === '')) {
       return res.status(400).json({ error: 'Message or attachment is required' });
+    }
+
+    // Content filtering - check for blocked content in messages
+    if (message && message.trim()) {
+      const filterResult = contentFilter.containsBlockedContent(message);
+      if (filterResult.blocked) {
+        const errorMessage = contentFilter.getBlockedContentMessage(filterResult.reasons);
+        return res.status(400).json({ 
+          error: errorMessage,
+          blockedContent: true,
+          reasons: filterResult.reasons
+        });
+      }
     }
 
     // Verify the booking exists

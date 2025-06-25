@@ -350,8 +350,21 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
         fileInputRef.current.value = '';
       }
     } catch (err) {
-      setError('Failed to send message. Please try again.');
-      showNotification('Failed to send message. Please try again.', 'error');
+      // Handle different types of errors
+      if (err.response && err.response.data) {
+        const errorData = err.response.data;
+        if (errorData.blockedContent) {
+          // Show specific error for blocked content
+          setError(errorData.error);
+          showNotification(errorData.error, 'error');
+        } else {
+          setError(errorData.error || 'Failed to send message. Please try again.');
+          showNotification(errorData.error || 'Failed to send message. Please try again.', 'error');
+        }
+      } else {
+        setError('Failed to send message. Please try again.');
+        showNotification('Failed to send message. Please try again.', 'error');
+      }
     }
   };
 
