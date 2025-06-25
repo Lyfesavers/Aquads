@@ -39,6 +39,7 @@ import HowTo from './components/HowTo';
 import BlogPage from './components/BlogPage';
 import Affiliate from './components/Affiliate';
 import Terms from './components/Terms';
+import PrivacyPolicy from './components/PrivacyPolicy';
 import AquaFi from './components/AquaFi';
 import AquaSwap from './components/AquaSwap';
 import AquaSwapEmbed from './components/AquaSwapEmbed';
@@ -3474,6 +3475,7 @@ function App() {
             <Route path="/how-to/:slug" element={<BlogPage currentUser={currentUser} />} />
             <Route path="/affiliate" element={<Affiliate />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/verify-user" element={<VerifyUser />} />
             <Route path="/aquafi" element={<AquaFi currentUser={currentUser} showNotification={showNotification} />} />
             <Route path="/swap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} />} />
