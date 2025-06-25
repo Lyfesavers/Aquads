@@ -6,8 +6,8 @@ const Terms = () => {
   return (
     <div className="h-screen overflow-y-auto text-white">
       <Helmet>
-        <title>Terms and Conditions - Aquads</title>
-        <meta name="description" content="Terms and Conditions for using Aquads - World's First BEX - Bicentralized Exchange Hub" />
+        <title>Terms & Conditions - Aquads</title>
+        <meta name="description" content="Terms & Conditions for using Aquads - World's First BEX - Bicentralized Exchange Hub" />
       </Helmet>
 
       {/* Fixed Background */}
@@ -33,14 +33,14 @@ const Terms = () => {
       {/* Main Content */}
       <div className="relative z-10 max-w-4xl mx-auto px-4 py-8">
         <div className="prose prose-invert">
-          <h1 className="text-4xl font-bold mb-4">Aquads.xyz Terms and Conditions</h1>
-          <p className="text-gray-400 mb-8">Effective Date: 02/22/2025</p>
+          <h1 className="text-4xl font-bold mb-4">Aquads.xyz Terms & Conditions</h1>
+          <p className="text-gray-400 mb-8">Effective Date: June 25, 2025</p>
 
           <div className="space-y-8">
             {/* Welcome Section */}
             <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6">
               <p className="mb-4">
-                Welcome to Aquads.xyz (the "Site"), the AllinOne Web3 Crypto Hub and Freelancer Marketplace. These Terms and Conditions ("Terms") govern your use of our website, mobile applications, and all related services (collectively, the "Services") provided by Aquads ("we," "us," or "our"). By accessing or using our Services, you agree to be bound by these Terms and our Privacy Policy. If you do not agree with these Terms, please do not use our Services.
+                Welcome to Aquads.xyz ("Aquads", "we", "us"). These Terms & Conditions ("Terms") govern your access to and use of our website, applications, and related services (collectively, the "Services"). Please read them carefully. By accessing or using our Services, you agree to be bound by these Terms and our Privacy Policy. If you do not agree, please do not use the Services.
               </p>
             </div>
 
@@ -48,8 +48,8 @@ const Terms = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4 text-blue-400">1. Acceptance of Terms</h2>
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 space-y-4">
-                <p><span className="text-blue-400 font-semibold">Agreement:</span> By accessing and using the Site and Services, you agree to be bound by these Terms and any future amendments.</p>
-                <p><span className="text-blue-400 font-semibold">Additional Policies:</span> Your use of our Services is also governed by our Privacy Policy, Cookie Policy, and any additional guidelines posted on the Site. These documents are incorporated by reference.</p>
+                <p><span className="text-blue-400 font-semibold">1.1 Agreement.</span> Your access to and use of the Services constitutes an agreement to these Terms. We may update these Terms from time to time; material changes will be notified by posting a revised version on the Site. Continued use after notification constitutes acceptance.</p>
+                <p><span className="text-blue-400 font-semibold">1.2 Other Policies.</span> You also agree to our Privacy Policy, Cookie Policy, and any other policies or guidelines posted on the Site. All such policies are incorporated by reference.</p>
               </div>
             </section>
 
@@ -57,165 +57,183 @@ const Terms = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4 text-blue-400">2. Description of Services</h2>
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 space-y-4">
-                <div>
-                  <p className="mb-2"><span className="text-blue-400 font-semibold">Overview:</span></p>
-                  <p className="mb-2">Aquads.xyz is a digital marketplace connecting freelancers ("Freelancers") and employers ("Employers") within the Web3 and crypto space. Our Services include:</p>
-                  <ul className="list-disc pl-6 mb-4">
-                    <li>A dynamic advertising system tailored for crypto projects.</li>
-                    <li>A specialized freelancer marketplace.</li>
-                    <li>A real-time token information hub.</li>
-                    <li>A game hub</li>
-                    <li>A swap & bridge Hub.</li>
-                    <li>An onRamp/offRamp Hub.</li>
-                    <li>A savings and staking Hub.</li>
-                  </ul>
-                </div>
-                <div>
-                  <p><span className="text-blue-400 font-semibold">Purpose:</span> Our aim is to provide a secure, efficient, and supportive environment where Crypto Users, Freelancers and Employers can explore, connect, collaborate, and grow toegther.</p>
-                </div>
+                <p className="mb-2">Aquads.xyz is a Web3 platform offering:</p>
+                <ul className="list-disc pl-6 mb-4 space-y-2">
+                  <li><span className="text-blue-400 font-semibold">Freelancer Hub (Lead Generator):</span> A directory and referral service connecting Freelancers to Employers; Aquads does not process payments or contract work.</li>
+                  <li><span className="text-blue-400 font-semibold">AquaSwap (Third-Party Swaps):</span> Cross-chain swap and bridging via licensed providers Transak and LiFi.</li>
+                  <li><span className="text-blue-400 font-semibold">On-Ramp/Off-Ramp:</span> Fiat-to-crypto and crypto-to-fiat services through Transak and LiFi.</li>
+                  <li><span className="text-blue-400 font-semibold">Project Hub & Bubble Ads:</span> Interactive bubble-based project listings, free tier and paid bump options.</li>
+                  <li><span className="text-blue-400 font-semibold">Marketing & PR:</span> Campaigns managed by Coinbound.io and other PR partners (Forbes, Yahoo Finance, Benzinga).</li>
+                  <li><span className="text-blue-400 font-semibold">Game Hub:</span> Play‑to‑earn events, mini‑games, and token rewards operated by Aquads.</li>
+                  <li><span className="text-blue-400 font-semibold">Savings & Staking Hub:</span> Third-party integrations for yield and staking services.</li>
+                  <li><span className="text-blue-400 font-semibold">Telegram Mini‑App:</span> Access to core Services within Telegram's interface.</li>
+                </ul>
               </div>
             </section>
 
             {/* Section 3 */}
             <section>
-              <h2 className="text-2xl font-semibold mb-4 text-blue-400">3. User Categories</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-blue-400">3. User Accounts & Registration</h2>
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 space-y-4">
-                <p><span className="text-blue-400 font-semibold">Freelancers:</span> Independent contractors who offer their services on the platform.</p>
-                <p><span className="text-blue-400 font-semibold">Employers:</span> Individuals or organizations seeking to hire Freelancers.</p>
-                <p><span className="text-blue-400 font-semibold">General Users:</span> Visitors or registered users who use the Site for information or community engagement.</p>
+                <p><span className="text-blue-400 font-semibold">3.1 Eligibility.</span> You must be qualified in the services you are offering and have legal capacity to enter into contracts.</p>
+                <p><span className="text-blue-400 font-semibold">3.2 Account Creation.</span> You agree to provide accurate information; you are responsible for activity under your account. Notify us immediately of any unauthorized use.</p>
+                <p><span className="text-blue-400 font-semibold">3.3 Account Suspension.</span> We may suspend or terminate accounts at our sole discretion, without liability.</p>
               </div>
             </section>
 
             {/* Section 4 */}
             <section>
-              <h2 className="text-2xl font-semibold mb-4 text-blue-400">4. Registration and Account Responsibility</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-blue-400">4. Third‑Party Service Partners</h2>
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 space-y-4">
-                <p><span className="text-blue-400 font-semibold">Account Creation:</span> To access certain features, you must register for an account. During registration, you agree to provide accurate and complete information. Your chosen username may serve as your referral code if you opt into our affiliate program.</p>
-                <p><span className="text-blue-400 font-semibold">Security:</span> You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. Notify us immediately of any unauthorized use.</p>
-                <p><span className="text-blue-400 font-semibold">Eligibility:</span> You must be at least 18 years old and have the legal capacity to enter into these Terms. By registering, you represent that you meet these requirements.</p>
+                <p><span className="text-blue-400 font-semibold">4.1 List of Partners.</span> Services rely on third parties: Transak, LiFi (swap/on‑ramp/off‑ramp), Coinbound.io (marketing/PR), PR outlets (Forbes, Benzinga, Yahoo Finance), and others.</p>
+                <p><span className="text-blue-400 font-semibold">4.2 Disclaimers.</span> Aquads is not responsible for partner performance, fees, KYC/AML processes, or availability. You agree that use of third-party services is subject to their own terms and policies.</p>
+                <p><span className="text-blue-400 font-semibold">4.3 Referrals & Affiliates.</span> Aquads may receive referral fees. We will disclose affiliate relationships where required by law.</p>
               </div>
             </section>
 
             {/* Section 5 */}
             <section>
-              <h2 className="text-2xl font-semibold mb-4 text-blue-400">5. User Conduct and Obligations</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-blue-400">5. Freelancer Hub (Lead Generator)</h2>
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 space-y-4">
-                <div>
-                  <p><span className="text-blue-400 font-semibold">General Conduct:</span></p>
-                  <p className="mb-2">You agree to use the Services only for lawful purposes and in compliance with these Terms. You must not:</p>
-                  <ul className="list-disc pl-6 mb-4">
-                    <li>Engage in fraudulent, abusive, or harmful activities.</li>
-                    <li>Post or transmit content that is defamatory, obscene, or infringes upon the rights of others.</li>
-                    <li>Attempt to gain unauthorized access to any part of the Site.</li>
-                  </ul>
-                </div>
-                <p><span className="text-blue-400 font-semibold">Freelancers and Employers:</span> Both parties are responsible for their communications and engagements. Aquads.xyz is a neutral intermediary; disputes should be resolved directly between users in accordance with the dispute resolution procedures outlined below.</p>
+                <p><span className="text-blue-400 font-semibold">5.1 Lead‑Only Service.</span> Aquads provides referrals; we do not mediate contracts or payments. You engage with Freelancers/Employers at your own risk.</p>
+                <p><span className="text-blue-400 font-semibold">5.2 User Responsibilities.</span> You must resolve any disputes directly; Aquads bears no liability for work quality, performance, or payment.</p>
               </div>
             </section>
 
             {/* Section 6 */}
             <section>
-              <h2 className="text-2xl font-semibold mb-4 text-blue-400">6. Fees, Payments, and Commission (If Applicable)</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-blue-400">6. Project Hub & Bubble Ads</h2>
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 space-y-4">
-                <p><span className="text-blue-400 font-semibold">Service Fees:</span> Certain premium features or job postings may incur fees. These fees will be clearly displayed prior to purchase.</p>
-                
-                <div>
-                  <p><span className="text-blue-400 font-semibold">Affiliate Commissions:</span></p>
-                  <p className="mb-2">For users participating in the affiliate program:</p>
-                  <ul className="list-disc pl-6 mb-4">
-                    <li>Tier 1: $2,500 in referred sales earns a 10% commission.</li>
-                    <li>Tier 2: $5,000 in referred sales earns a 15% commission.</li>
-                    <li>Tier 3: $25,000 in referred sales earns a 20% commission.</li>
-                  </ul>
-                  <p className="mb-4">Commissions are calculated based on Aquads profits generated from referred users. Payouts are issued when your commission balance reaches a minimum of $100, via crypto or other approved methods.</p>
-                </div>
-                
-                <p><span className="text-blue-400 font-semibold">Taxes:</span> All affiliates are independent contractors and are solely responsible for their own tax filings. Aquads does not withhold any taxes from commission payments, and all earnings are considered gross income for the recipient.</p>
+                <p><span className="text-blue-400 font-semibold">6.1 Free Listing & Bump Options.</span> Projects may list for free. Paid bump placements are subject to published rates and availability.</p>
+                <p><span className="text-blue-400 font-semibold">6.2 Content Guidelines.</span> You represent that all ad content is accurate, lawful, and non‑infringing. Aquads may reject or remove any listing at its discretion.</p>
+                <p><span className="text-blue-400 font-semibold">6.3 Billing & Refunds.</span> Paid features are non‑refundable except as required by law. Disputes must be submitted in writing within 30 days.</p>
               </div>
             </section>
 
             {/* Section 7 */}
             <section>
-              <h2 className="text-2xl font-semibold mb-4 text-blue-400">7. Intellectual Property</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-blue-400">7. Marketing & PR Services</h2>
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 space-y-4">
-                <p><span className="text-blue-400 font-semibold">Aquads' IP:</span> All content, design elements, logos, and software on Aquads.xyz are owned by Aquads or its licensors. You may not reproduce, modify, or distribute any of this intellectual property without prior written consent.</p>
-                <p><span className="text-blue-400 font-semibold">User Content:</span> You retain ownership of any content you post. However, by posting content on the Site, you grant Aquads a nonexclusive, worldwide, royalty-free license to use, display, and distribute your content solely to operate and promote the Services.</p>
+                <p><span className="text-blue-400 font-semibold">7.1 Coinbound & PR Partners.</span> Aquads connects you to Coinbound.io for campaign execution. All campaign terms, fees, and refunds are governed by Coinbound's agreement.</p>
+                <p><span className="text-blue-400 font-semibold">7.2 User Content & Accuracy.</span> You are responsible for providing lawful, accurate materials. PR partners may revise or reject submissions that fail editorial or legal standards.</p>
               </div>
             </section>
 
             {/* Section 8 */}
             <section>
-              <h2 className="text-2xl font-semibold mb-4 text-blue-400">8. Disclaimers and Limitation of Liability</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-blue-400">8. Game Hub & Rewards</h2>
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 space-y-4">
-                <p><span className="text-blue-400 font-semibold">No Warranty:</span> The Services are provided "as is" and "as available," without any warranties of any kind, either express or implied. Aquads does not guarantee uninterrupted or error-free service.</p>
-                <p><span className="text-blue-400 font-semibold">Limitation of Liability:</span> To the fullest extent permitted by law, Aquads shall not be liable for any indirect, incidental, or consequential damages arising from your use of the Services. In no event shall our total liability exceed the fees paid by you to Aquads in the 12 months preceding the claim.</p>
-                <p><span className="text-blue-400 font-semibold">Risk Acknowledgment:</span> You acknowledge that using a digital platform and engaging in online transactions involves inherent risks, and you agree to use the Services at your own risk.</p>
+                <p><span className="text-blue-400 font-semibold">8.1 Service Rules.</span> Participation in Game Hub events is subject to rules posted with each event. Aquads may modify or cancel events at any time.</p>
+                <p><span className="text-blue-400 font-semibold">8.2 Reward Distribution.</span> Token rewards are governed by separate distribution policies; you are solely responsible for tax and reporting requirements.</p>
+                <p><span className="text-blue-400 font-semibold">8.3 Anti‑Fraud.</span> Aquads reserves the right to disqualify users for fraud, abuse, or manipulation.</p>
               </div>
             </section>
 
             {/* Section 9 */}
             <section>
-              <h2 className="text-2xl font-semibold mb-4 text-blue-400">9. Dispute Resolution</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-blue-400">9. KYC, AML & Sanctions Screening</h2>
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 space-y-4">
-                <p><span className="text-blue-400 font-semibold">Governing Law:</span> These Terms shall be governed by and construed in accordance with the laws of Ontario Canada, without regard to its conflict of law provisions.</p>
-                <p><span className="text-blue-400 font-semibold">Resolution Process:</span> Any disputes arising from these Terms or your use of the Services shall be resolved through binding arbitration in Ontario Canada or, if arbitration is not applicable, in the courts of Ontario Canada. You hereby waive your right to a jury trial.</p>
+                <p><span className="text-blue-400 font-semibold">9.1 Performed by Partners.</span> Identity verification and AML checks are conducted by Transak, LiFi, and other providers.</p>
+                <p><span className="text-blue-400 font-semibold">9.2 Right to Block.</span> Aquads may restrict or terminate user access based on partner findings or sanction lists (e.g., OFAC).</p>
               </div>
             </section>
 
             {/* Section 10 */}
             <section>
-              <h2 className="text-2xl font-semibold mb-4 text-blue-400">10. Termination</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-blue-400">10. Data, Privacy & Cookies</h2>
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 space-y-4">
-                <p><span className="text-blue-400 font-semibold">Termination by Aquads:</span> We reserve the right to suspend or terminate your access to the Services at any time for any reason, without liability.</p>
-                <p><span className="text-blue-400 font-semibold">Termination by You:</span> You may terminate your account at any time by ceasing use of the Services. Any outstanding fees or commissions will remain payable.</p>
-                <p><span className="text-blue-400 font-semibold">Survival:</span> The provisions regarding intellectual property, disclaimers, and limitations of liability will survive termination.</p>
+                <p><span className="text-blue-400 font-semibold">10.1 Privacy Policy.</span> Our Privacy Policy describes data collection, use, retention, and user rights (access, deletion).</p>
+                <p><span className="text-blue-400 font-semibold">10.2 Cookies.</span> We use cookies and similar technologies; see our Cookie Policy for details and opt‑out instructions.</p>
               </div>
             </section>
 
             {/* Section 11 */}
             <section>
-              <h2 className="text-2xl font-semibold mb-4 text-blue-400">11. Amendments</h2>
-              <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6">
-                <p>Aquads reserves the right to modify these Terms at any time. We will notify you of material changes by posting an updated version on the Site. Your continued use of the Services constitutes acceptance of the updated Terms.</p>
+              <h2 className="text-2xl font-semibold mb-4 text-blue-400">11. Intellectual Property & User Content</h2>
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 space-y-4">
+                <p><span className="text-blue-400 font-semibold">11.1 Aquads IP.</span> All Site content, logos, and software are owned by Aquads or licensors. You may not copy, modify, or distribute without permission.</p>
+                <p><span className="text-blue-400 font-semibold">11.2 User Content License.</span> By posting, you grant Aquads a worldwide, royalty-free license to use and display your content in the Services.</p>
+                <p><span className="text-blue-400 font-semibold">11.3 Infringement.</span> To report IP violations, contact us at <a href="mailto:info@aquads.xyz" className="text-blue-400 hover:text-blue-300">info@aquads.xyz</a>; we will respond in accordance with applicable law.</p>
               </div>
             </section>
 
             {/* Section 12 */}
             <section>
-              <h2 className="text-2xl font-semibold mb-4 text-blue-400">12. Miscellaneous</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-blue-400">12. Fees, Payments & Commissions</h2>
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 space-y-4">
-                <p><span className="text-blue-400 font-semibold">Entire Agreement:</span> These Terms, together with our Privacy Policy and any other policies referenced herein, constitute the entire agreement between you and Aquads regarding the use of the Services.</p>
-                <p><span className="text-blue-400 font-semibold">Severability:</span> If any provision of these Terms is found to be invalid or unenforceable, the remaining provisions shall remain in full force and effect.</p>
+                <p><span className="text-blue-400 font-semibold">12.1 Affiliate Program.</span> Commission tiers and payout thresholds are as published. Affiliates are independent contractors responsible for taxes.</p>
+                <p><span className="text-blue-400 font-semibold">12.2 Paid Services.</span> Fees for bubble bumping, PR, or premium features will be disclosed before purchase; all payments are in USDC or crypto equivalent.</p>
+                <p><span className="text-blue-400 font-semibold">12.3 Refund Policy.</span> Except where required by law, paid services are non‑refundable.</p>
               </div>
             </section>
 
-            {/* Contact Information */}
+            {/* Section 13 */}
             <section>
-              <h2 className="text-2xl font-semibold mb-4 text-blue-400">Contact Information</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-blue-400">13. Indemnification</h2>
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6">
-                <p className="mb-4">For questions about these Terms, please contact us at:</p>
-                <ul className="space-y-2">
-                  <li>
-                    <span className="text-blue-400">Email:</span>{' '}
-                    <a href="mailto:aquads.info@gmail.com" className="text-blue-400 hover:text-blue-300">
-                      info@aquads.xyz
-                    </a>
-                  </li>
-                  <li>
-                    <span className="text-blue-400">Telegram:</span>{' '}
-                    <a href="https://t.co/TE6WbzWh9K" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
-                      https://t.co/TE6WbzWh9K
-                    </a>
-                  </li>
-                  <li>
-                    <span className="text-blue-400">Website:</span>{' '}
-                    <a href="https://aquads.xyz" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300">
-                      https://aquads.xyz
-                    </a>
-                  </li>
-                </ul>
+                <p>You agree to indemnify, defend, and hold harmless Aquads and its affiliates from any claims arising out of your breach of these Terms, misuse of the Services, or violations of law.</p>
               </div>
             </section>
+
+            {/* Section 14 */}
+            <section>
+              <h2 className="text-2xl font-semibold mb-4 text-blue-400">14. Disclaimers & Limitation of Liability</h2>
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 space-y-4">
+                <p><span className="text-blue-400 font-semibold">14.1 No Warranty.</span> Services are provided "as is" and "as available". Aquads disclaims all warranties, express or implied.</p>
+                <p><span className="text-blue-400 font-semibold">14.2 Limitation of Liability.</span> To the maximum extent permitted, Aquads's total liability shall not exceed the amount paid by you in the 12 months preceding the claim.</p>
+                <p><span className="text-blue-400 font-semibold">14.3 Risk Acknowledgment.</span> You assume all risks associated with digital assets, online communications, and third‑party services.</p>
+              </div>
+            </section>
+
+            {/* Section 15 */}
+            <section>
+              <h2 className="text-2xl font-semibold mb-4 text-blue-400">15. Arbitration & Governing Law</h2>
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 space-y-4">
+                <p><span className="text-blue-400 font-semibold">15.1 Informal Resolution.</span> Before arbitration, parties must attempt to resolve disputes informally by written notice.</p>
+                <p><span className="text-blue-400 font-semibold">15.2 Arbitration.</span> Disputes not resolved informally shall be settled by binding arbitration in Ontario, Canada, under Canadian Arbitration Association rules.</p>
+                <p><span className="text-blue-400 font-semibold">15.3 Jurisdiction.</span> These Terms are governed by Ontario law. Users outside Ontario consent to Ontario jurisdiction, unless local law requires otherwise.</p>
+              </div>
+            </section>
+
+            {/* Section 16 */}
+            <section>
+              <h2 className="text-2xl font-semibold mb-4 text-blue-400">16. Force Majeure</h2>
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6">
+                <p>Neither party shall be liable for delays due to causes beyond reasonable control (e.g., acts of God, cyber attacks, regulatory changes).</p>
+              </div>
+            </section>
+
+            {/* Section 17 */}
+            <section>
+              <h2 className="text-2xl font-semibold mb-4 text-blue-400">17. Amendments</h2>
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6">
+                <p>Aquads reserves the right to modify or discontinue features, fees, or these Terms at any time. Material changes will be notified on the Site; continued use implies acceptance.</p>
+              </div>
+            </section>
+
+            {/* Section 18 */}
+            <section>
+              <h2 className="text-2xl font-semibold mb-4 text-blue-400">18. Miscellaneous</h2>
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 space-y-4">
+                <p><span className="text-blue-400 font-semibold">18.1 Severability.</span> Invalid provisions will be replaced with valid ones reflecting original intent. Other provisions remain in force.</p>
+                <p><span className="text-blue-400 font-semibold">18.2 Entire Agreement.</span> These Terms, together with referenced policies, constitute the entire agreement between you and Aquads.</p>
+                <div>
+                  <p><span className="text-blue-400 font-semibold">18.3 Contact.</span> For questions, please reach us at:</p>
+                  <div className="ml-4 space-y-2">
+                    <p>Email: <a href="mailto:info@aquads.xyz" className="text-blue-400 hover:text-blue-300">info@aquads.xyz</a></p>
+                    <p>Telegram: <a href="https://t.me/aquads_support" className="text-blue-400 hover:text-blue-300" target="_blank" rel="noopener noreferrer">https://t.me/aquads_support</a></p>
+                    <p>Website: <a href="https://aquads.xyz" className="text-blue-400 hover:text-blue-300" target="_blank" rel="noopener noreferrer">https://aquads.xyz</a></p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Closing Message */}
+            <div className="bg-gradient-to-r from-blue-800/50 to-purple-800/50 backdrop-blur-sm rounded-lg p-6 text-center">
+              <p className="text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+                Thank you for using Aquads.xyz. Let's build the future of Web3 together!
+              </p>
+            </div>
           </div>
         </div>
       </div>
