@@ -40,13 +40,6 @@ const Footer = () => {
                   <FaDiscord className="mr-2" />
                   <span>Discord</span>
                 </a>
-              </div>
-            </div>
-
-            {/* Resources */}
-            <div className="space-y-3">
-              <h4 className="text-blue-400 font-semibold text-sm uppercase tracking-wide">Resources</h4>
-              <div className="space-y-2">
                 <a
                   href="https://medium.com/@aquads.info"
                   target="_blank"
@@ -56,12 +49,33 @@ const Footer = () => {
                   <FaMedium className="mr-2" />
                   <span>Medium</span>
                 </a>
+              </div>
+            </div>
+
+            {/* Resources */}
+            <div className="space-y-3">
+              <h4 className="text-blue-400 font-semibold text-sm uppercase tracking-wide">Resources</h4>
+              <div className="space-y-2">
                 <Link
                   to="/whitepaper"
                   className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
                 >
                   <FaFileAlt className="mr-2" />
                   <span>Whitepaper</span>
+                </Link>
+                <Link
+                  to="/affiliate"
+                  className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
+                >
+                  <FaFileAlt className="mr-2" />
+                  <span>Affiliate</span>
+                </Link>
+                <Link
+                  to="/verify-user"
+                  className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
+                >
+                  <FaFileAlt className="mr-2" />
+                  <span>Verify User</span>
                 </Link>
                 <a
                   href="mailto:aquads.info@gmail.com"
@@ -83,20 +97,6 @@ const Footer = () => {
                 >
                   <FaCoins className="mr-2" />
                   <span>AquaFi</span>
-                </Link>
-                <Link
-                  to="/affiliate"
-                  className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
-                >
-                  <FaFileAlt className="mr-2" />
-                  <span>Affiliate</span>
-                </Link>
-                <Link
-                  to="/verify-user"
-                  className="hover:text-blue-400 transition-colors flex items-center justify-center lg:justify-start text-sm"
-                >
-                  <FaFileAlt className="mr-2" />
-                  <span>Verify User</span>
                 </Link>
               </div>
             </div>
