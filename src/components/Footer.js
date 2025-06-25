@@ -74,6 +74,13 @@ const Footer = () => {
               <span>Terms and Conditions</span>
             </Link>
             <Link
+              to="/privacy-policy"
+              className="hover:text-blue-400 transition-colors flex items-center justify-center sm:justify-start"
+            >
+              <FaFileAlt className="mr-2" />
+              <span>Privacy Policy</span>
+            </Link>
+            <Link
               to="/aquafi"
               className="hover:text-blue-400 transition-colors flex items-center justify-center sm:justify-start"
             >
