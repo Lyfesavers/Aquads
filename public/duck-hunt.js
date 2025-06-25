@@ -926,6 +926,7 @@
       if (Math.random() < 0.25) {
         setTimeout(() => {
           playSound('dogLaugh');
+          showLaughingDog(); // Show the laughing dog visual
         }, 800);
       }
     }
@@ -1017,6 +1018,196 @@
         }
       }, 1000);
     }, 1500);
+  }
+  
+  // Show laughing dog (classic Duck Hunt style)
+  function showLaughingDog() {
+    // Remove any existing dog first
+    const existingDog = document.getElementById('laughing-dog');
+    if (existingDog) {
+      existingDog.remove();
+    }
+    
+    // Create dog container
+    const dog = document.createElement('div');
+    dog.id = 'laughing-dog';
+    dog.style.position = 'fixed';
+    dog.style.bottom = '20%';
+    dog.style.left = '50%';
+    dog.style.transform = 'translateX(-50%)';
+    dog.style.width = '120px';
+    dog.style.height = '100px';
+    dog.style.zIndex = '10002';
+    dog.style.pointerEvents = 'none';
+    dog.style.imageRendering = 'pixelated';
+    
+    // Dog body (main brown rectangle)
+    const body = document.createElement('div');
+    body.style.position = 'absolute';
+    body.style.width = '80px';
+    body.style.height = '60px';
+    body.style.backgroundColor = '#8B4513'; // Brown
+    body.style.bottom = '0px';
+    body.style.left = '20px';
+    body.style.border = '2px solid #000000';
+    dog.appendChild(body);
+    
+    // Dog head (overlapping circle)
+    const head = document.createElement('div');
+    head.style.position = 'absolute';
+    head.style.width = '50px';
+    head.style.height = '45px';
+    head.style.backgroundColor = '#8B4513'; // Brown
+    head.style.borderRadius = '50%';
+    head.style.top = '10px';
+    head.style.left = '35px';
+    head.style.border = '2px solid #000000';
+    dog.appendChild(head);
+    
+    // Dog snout
+    const snout = document.createElement('div');
+    snout.style.position = 'absolute';
+    snout.style.width = '25px';
+    snout.style.height = '20px';
+    snout.style.backgroundColor = '#D2B48C'; // Lighter brown
+    snout.style.borderRadius = '50%';
+    snout.style.top = '25px';
+    snout.style.left = '75px';
+    snout.style.border = '2px solid #000000';
+    dog.appendChild(snout);
+    
+    // Dog nose
+    const nose = document.createElement('div');
+    nose.style.position = 'absolute';
+    nose.style.width = '8px';
+    nose.style.height = '6px';
+    nose.style.backgroundColor = '#000000';
+    nose.style.borderRadius = '50%';
+    nose.style.top = '28px';
+    nose.style.left = '85px';
+    dog.appendChild(nose);
+    
+    // Dog eyes (closed/laughing)
+    const leftEye = document.createElement('div');
+    leftEye.style.position = 'absolute';
+    leftEye.style.width = '12px';
+    leftEye.style.height = '3px';
+    leftEye.style.backgroundColor = '#000000';
+    leftEye.style.top = '20px';
+    leftEye.style.left = '45px';
+    leftEye.style.borderRadius = '50%';
+    dog.appendChild(leftEye);
+    
+    const rightEye = document.createElement('div');
+    rightEye.style.position = 'absolute';
+    rightEye.style.width = '12px';
+    rightEye.style.height = '3px';
+    rightEye.style.backgroundColor = '#000000';
+    rightEye.style.top = '20px';
+    rightEye.style.left = '60px';
+    rightEye.style.borderRadius = '50%';
+    dog.appendChild(rightEye);
+    
+    // Dog mouth (laughing smile)
+    const mouth = document.createElement('div');
+    mouth.style.position = 'absolute';
+    mouth.style.width = '20px';
+    mouth.style.height = '10px';
+    mouth.style.backgroundColor = '#000000';
+    mouth.style.borderRadius = '0 0 20px 20px';
+    mouth.style.top = '32px';
+    mouth.style.left = '50px';
+    dog.appendChild(mouth);
+    
+    // Dog tongue
+    const tongue = document.createElement('div');
+    tongue.style.position = 'absolute';
+    tongue.style.width = '8px';
+    tongue.style.height = '6px';
+    tongue.style.backgroundColor = '#FF69B4'; // Pink
+    tongue.style.borderRadius = '50%';
+    tongue.style.top = '36px';
+    tongue.style.left = '56px';
+    dog.appendChild(tongue);
+    
+    // Dog ears
+    const leftEar = document.createElement('div');
+    leftEar.style.position = 'absolute';
+    leftEar.style.width = '18px';
+    leftEar.style.height = '25px';
+    leftEar.style.backgroundColor = '#654321'; // Darker brown
+    leftEar.style.borderRadius = '50%';
+    leftEar.style.top = '8px';
+    leftEar.style.left = '25px';
+    leftEar.style.border = '2px solid #000000';
+    leftEar.style.transform = 'rotate(-20deg)';
+    dog.appendChild(leftEar);
+    
+    const rightEar = document.createElement('div');
+    rightEar.style.position = 'absolute';
+    rightEar.style.width = '18px';
+    rightEar.style.height = '25px';
+    rightEar.style.backgroundColor = '#654321'; // Darker brown
+    rightEar.style.borderRadius = '50%';
+    rightEar.style.top = '8px';
+    rightEar.style.left = '75px';
+    rightEar.style.border = '2px solid #000000';
+    rightEar.style.transform = 'rotate(20deg)';
+    dog.appendChild(rightEar);
+    
+    // Dog paws sticking up
+    const leftPaw = document.createElement('div');
+    leftPaw.style.position = 'absolute';
+    leftPaw.style.width = '15px';
+    leftPaw.style.height = '8px';
+    leftPaw.style.backgroundColor = '#8B4513';
+    leftPaw.style.borderRadius = '50%';
+    leftPaw.style.top = '45px';
+    leftPaw.style.left = '10px';
+    leftPaw.style.border = '2px solid #000000';
+    dog.appendChild(leftPaw);
+    
+    const rightPaw = document.createElement('div');
+    rightPaw.style.position = 'absolute';
+    rightPaw.style.width = '15px';
+    rightPaw.style.height = '8px';
+    rightPaw.style.backgroundColor = '#8B4513';
+    rightPaw.style.borderRadius = '50%';
+    rightPaw.style.top = '45px';
+    rightPaw.style.right = '10px';
+    rightPaw.style.border = '2px solid #000000';
+    dog.appendChild(rightPaw);
+    
+    // Add laughing animation
+    dog.style.animation = 'dogLaugh 0.3s ease-in-out 6'; // Shake 6 times
+    
+    // Add animation keyframes
+    const dogLaughStyle = document.createElement('style');
+    dogLaughStyle.textContent = `
+      @keyframes dogLaugh {
+        0%, 100% { transform: translateX(-50%) rotate(0deg); }
+        25% { transform: translateX(-50%) rotate(-2deg) scale(1.05); }
+        75% { transform: translateX(-50%) rotate(2deg) scale(1.05); }
+      }
+    `;
+    document.head.appendChild(dogLaughStyle);
+    
+    // Add to screen
+    document.body.appendChild(dog);
+    
+    // Remove dog after animation completes (about 2.5 seconds total)
+    setTimeout(() => {
+      if (dog.parentNode) {
+        // Fade out
+        dog.style.transition = 'opacity 0.5s';
+        dog.style.opacity = '0';
+        setTimeout(() => {
+          if (dog.parentNode) {
+            document.body.removeChild(dog);
+          }
+        }, 500);
+      }
+    }, 2500);
   }
   
   // Game loop
