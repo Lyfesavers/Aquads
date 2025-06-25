@@ -61,7 +61,7 @@
   let ducks = [];
   let score = 0;
   let ducksCreated = 0;
-  const maxDucks = 3; // Maximum number of ducks on screen
+  const maxDucks = 5; // Maximum number of ducks on screen - increased for more action
   let feathers = []; // Track all feather particles
   let soundEnabled = false; // Track if sounds are enabled
   let soundsCreated = false; // Track if sounds are created
@@ -89,7 +89,9 @@
       headColor: '#000000', // Black head
       beakColor: '#FF6600', // Orange beak
       wingColor: '#000000', // Black wings
-      accentColor: '#FFFFFF' // White accent
+      accentColor: '#FFFFFF', // White accent
+      points: 10, // Standard points
+      isSpecial: false
     },
     {
       // Red duck (classic alternate duck)
@@ -97,7 +99,9 @@
       headColor: '#CC0000', // Red head
       beakColor: '#FF6600', // Orange beak
       wingColor: '#CC0000', // Red wings
-      accentColor: '#FFFFFF' // White accent
+      accentColor: '#FFFFFF', // White accent
+      points: 10, // Standard points
+      isSpecial: false
     },
     {
       // Blue duck (NES color palette inspired)
@@ -105,7 +109,19 @@
       headColor: '#0000CC', // Blue head
       beakColor: '#FF6600', // Orange beak
       wingColor: '#0000CC', // Blue wings
-      accentColor: '#FFFFFF' // White accent
+      accentColor: '#FFFFFF', // White accent
+      points: 10, // Standard points
+      isSpecial: false
+    },
+    {
+      // Golden bonus duck (rare, worth more points)
+      bodyColor: '#FFD700', // Gold body
+      headColor: '#FFD700', // Gold head
+      beakColor: '#FF6600', // Orange beak
+      wingColor: '#FFA500', // Orange wings
+      accentColor: '#FFFFFF', // White accent
+      points: 50, // Bonus points!
+      isSpecial: true
     }
   ];
   
@@ -568,8 +584,8 @@
       clearInterval(duckSpawningInterval);
     }
     
-    // Start spawning ducks occasionally - less frequently (8-12 seconds)
-    duckSpawningInterval = setInterval(spawnDuck, 8000 + Math.random() * 4000);
+    // Start spawning ducks more frequently (3-6 seconds for more action)
+    duckSpawningInterval = setInterval(spawnDuck, 3000 + Math.random() * 3000);
     
     // Spawn first duck immediately
     spawnDuck();
@@ -583,8 +599,16 @@
     // Limit number of ducks
     if (ducks.length >= maxDucks) return;
     
-    // Choose a random duck species
-    const species = duckSpecies[Math.floor(Math.random() * duckSpecies.length)];
+    // Choose a random duck species with weighted probability (golden duck is rare)
+    let species;
+    const specialChance = Math.random();
+    if (specialChance < 0.85) {
+      // 85% chance for regular ducks (black, red, blue)
+      species = duckSpecies[Math.floor(Math.random() * 3)];
+    } else {
+      // 15% chance for golden bonus duck
+      species = duckSpecies[3]; // Golden duck
+    }
     
     // Size with slight variation
     const size = {
@@ -600,36 +624,42 @@
     if (spawnMode < 3) { // Left side - 30% chance
       x = -size.width;
       y = 100 + Math.random() * (window.innerHeight - 300);
-      speedX = 3 + Math.random() * 3; // Faster horizontal speed
-      speedY = (Math.random() - 0.5) * 1; // Reduced vertical component
+      speedX = 4 + Math.random() * 4; // Increased speed for more excitement (was 3+3)
+      speedY = (Math.random() - 0.5) * 1.5; // Slightly more vertical movement
       startFromLeft = true;
     } 
     else if (spawnMode < 6) { // Right side - 30% chance
       x = window.innerWidth;
       y = 100 + Math.random() * (window.innerHeight - 300);
-      speedX = -(3 + Math.random() * 3); // Faster horizontal speed
-      speedY = (Math.random() - 0.5) * 1; // Reduced vertical component
+      speedX = -(4 + Math.random() * 4); // Increased speed for more excitement (was 3+3)
+      speedY = (Math.random() - 0.5) * 1.5; // Slightly more vertical movement
       startFromLeft = false;
     }
     else if (spawnMode < 8) { // Bottom (flying up) - 20% chance
       x = Math.random() * (window.innerWidth - size.width);
       y = window.innerHeight;
-      speedX = (Math.random() - 0.5) * 2; // Reduced horizontal direction
-      speedY = -(3 + Math.random() * 2); // Stronger upward movement
+      speedX = (Math.random() - 0.5) * 3; // Increased horizontal movement (was 2)
+      speedY = -(4 + Math.random() * 3); // Faster upward movement (was 3+2)
       startFromLeft = speedX >= 0; // Face direction of movement
     }
     else { // Random position on screen - 20% chance
       x = 50 + Math.random() * (window.innerWidth - size.width - 100);
       y = Math.max(50, window.innerHeight - 200);
       // Move in clear direction (mostly upward)
-      speedX = (Math.random() - 0.5) * 4; // Stronger horizontal component
-      speedY = -(2 + Math.random() * 3); // Ensure upward movement
+      speedX = (Math.random() - 0.5) * 5; // Stronger horizontal component (was 4)
+      speedY = -(3 + Math.random() * 4); // Faster upward movement (was 2+3)
       startFromLeft = speedX >= 0;
     }
     
     // Add slight wave motion
     const waveAmplitude = Math.random() * 1.5 + 0.5; // Random amplitude between 0.5 and 2
     const waveFrequency = Math.random() * 0.01 + 0.005; // Random frequency
+    
+    // Make golden ducks faster and more challenging
+    if (species.isSpecial) {
+      speedX *= 1.4; // 40% faster
+      speedY *= 1.3; // 30% faster vertical movement
+    }
     
     // Create duck container
     const duck = document.createElement('div');
@@ -644,6 +674,22 @@
     duck.style.pointerEvents = 'auto';
     duck.style.cursor = 'crosshair';
     duck.style.imageRendering = 'pixelated'; // Add pixel rendering style
+    
+    // Add special glow effect for golden ducks
+    if (species.isSpecial) {
+      duck.style.filter = 'drop-shadow(0 0 8px #FFD700) drop-shadow(0 0 16px #FFD700)';
+      duck.style.animation = 'goldenGlow 2s ease-in-out infinite';
+      
+      // Add golden glow animation keyframes
+      const glowStyle = document.createElement('style');
+      glowStyle.textContent = `
+        @keyframes goldenGlow {
+          0%, 100% { filter: drop-shadow(0 0 8px #FFD700) drop-shadow(0 0 16px #FFD700); }
+          50% { filter: drop-shadow(0 0 12px #FFD700) drop-shadow(0 0 24px #FFD700) drop-shadow(0 0 8px #FFA500); }
+        }
+      `;
+      document.head.appendChild(glowStyle);
+    }
     
     // Create duck body (main part)
     const body = document.createElement('div');
@@ -856,9 +902,15 @@
     // Create pixel feather particles
     createFeathers(duck.x, duck.y, 8); // Fewer but more noticeable pixels
     
-    // Update score
-    score++;
+    // Update score based on duck species
+    const pointsEarned = duck.species.points;
+    score += pointsEarned;
     updateScore();
+    
+    // Show special bonus message for golden ducks
+    if (duck.species.isSpecial) {
+      showBonusMessage(pointsEarned);
+    }
     
     // Play sound effects if enabled
     if (soundEnabled) {
@@ -931,8 +983,40 @@
   function updateScore() {
     const scoreDisplay = document.getElementById('duck-score');
     if (scoreDisplay) {
-      scoreDisplay.textContent = `Ducks: ${score}`;
+      scoreDisplay.textContent = `Score: ${score}`;
     }
+  }
+  
+  // Show bonus message for special ducks
+  function showBonusMessage(points) {
+    const bonusMsg = document.createElement('div');
+    bonusMsg.textContent = `BONUS! +${points} points!`;
+    bonusMsg.style.position = 'fixed';
+    bonusMsg.style.top = '50%';
+    bonusMsg.style.left = '50%';
+    bonusMsg.style.transform = 'translate(-50%, -50%)';
+    bonusMsg.style.color = '#FFD700';
+    bonusMsg.style.fontSize = '24px';
+    bonusMsg.style.fontWeight = 'bold';
+    bonusMsg.style.textShadow = '2px 2px 4px rgba(0,0,0,0.8)';
+    bonusMsg.style.zIndex = '10001';
+    bonusMsg.style.pointerEvents = 'none';
+    bonusMsg.style.fontFamily = 'Courier New, monospace';
+    
+    document.body.appendChild(bonusMsg);
+    
+    // Animate and remove the message
+    setTimeout(() => {
+      bonusMsg.style.transition = 'opacity 1s, transform 1s';
+      bonusMsg.style.opacity = '0';
+      bonusMsg.style.transform = 'translate(-50%, -70%) scale(1.2)';
+      
+      setTimeout(() => {
+        if (bonusMsg.parentNode) {
+          document.body.removeChild(bonusMsg);
+        }
+      }, 1000);
+    }, 1500);
   }
   
   // Game loop
@@ -993,10 +1077,15 @@
         }
         
         // Don't change direction at screen edges - let ducks fly across screen
-        // Only small chance to change direction randomly for more unpredictable movement
-        if (Math.random() < 0.0005) { // Reduced to make it more rare
+        // Increased chance to change direction randomly for more unpredictable movement
+        if (Math.random() < 0.001) { // Doubled the chance for more erratic movement
           duck.speedX *= -1;
           duck.element.style.transform = duck.speedX > 0 ? 'scaleX(1)' : 'scaleX(-1)';
+        }
+        
+        // Occasionally change vertical direction for more dynamic flight patterns
+        if (Math.random() < 0.0008) {
+          duck.speedY *= -0.7; // Change direction but reduce speed slightly
         }
         
         // Remove duck if it flies too far off-screen (increased distance to ensure they cross full screen)
