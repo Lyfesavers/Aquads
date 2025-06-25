@@ -87,7 +87,17 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
       userType: req.body.userType || 'freelancer', // Add userType with default fallback
       ipAddress: req.clientIp, // Store client IP address
       deviceFingerprint: req.deviceFingerprint || deviceFingerprint || null, // Store device fingerprint
-      country: country || null // Store country code
+      country: country || null, // Store country code
+      tokens: 5, // Give 5 tokens to new signups
+      tokenHistory: [{
+        type: 'purchase',
+        amount: 5,
+        reason: 'Signup bonus tokens',
+        relatedId: null,
+        balanceBefore: 0,
+        balanceAfter: 5,
+        createdAt: new Date()
+      }]
     };
 
     // If referral code provided, find referring user by username
@@ -101,7 +111,7 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
     // Create and save new user
     const user = new User(userData);
     await user.save();
-    console.log('User saved successfully:', { username: user.username });
+    console.log('User saved successfully:', { username: user.username, tokens: user.tokens });
 
     // If user was referred, update affiliate relationship and award points
     if (user.referredBy) {
@@ -751,7 +761,7 @@ router.post('/verify-email', async (req, res) => {
     }
 
     res.json({ 
-      message: 'Email verified successfully! Points have been awarded.',
+      message: 'Email verified successfully! Points have been awarded. You also received 5 bonus tokens on signup.',
       emailVerified: true 
     });
   } catch (error) {
