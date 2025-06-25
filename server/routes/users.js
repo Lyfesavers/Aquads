@@ -111,7 +111,7 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
     // Create and save new user
     const user = new User(userData);
     await user.save();
-    console.log('User saved successfully:', { username: user.username, tokens: user.tokens });
+    console.log('User saved successfully:', { username: user.username });
 
     // If user was referred, update affiliate relationship and award points
     if (user.referredBy) {
