@@ -607,7 +607,7 @@ router.post('/:raidId/completions/:completionId/reject', auth, async (req, res) 
       });
       
       await notification.save();
-      console.log(`Rejection notification sent to user ${userId} for raid ${raidId}`);
+  
     } catch (notificationError) {
       console.error('Error sending rejection notification:', notificationError);
       // Continue execution even if notification fails

@@ -27,7 +27,7 @@ const tempTokenStore = new Map();
 router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), async (req, res) => {
   try {
     const { username, email, password, image, referralCode, deviceFingerprint, country } = req.body;
-    console.log('Registration attempt for username:', username);
+
 
     // Enhanced validation
     if (!username || !password || !email) {
@@ -111,7 +111,7 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
     // Create and save new user
     const user = new User(userData);
     await user.save();
-    console.log('User saved successfully:', { username: user.username });
+
 
     // If user was referred, update affiliate relationship and award points
     if (user.referredBy) {
@@ -121,7 +121,7 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
           // Add new user to referrer's affiliates list
           await referringUser.addAffiliate(user._id);
           // Points will be awarded after email verification
-          console.log('Affiliate points deferred until email verification for:', username);
+
           
           // Create notification for the referrer about new affiliate
           try {
@@ -131,7 +131,7 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
               `🎉 New affiliate joined! ${user.username} has signed up using your referral code.`,
               '/dashboard'
             );
-            console.log('Affiliate notification created for user:', referringUser.username);
+
           } catch (notificationError) {
             console.error('Error creating affiliate notification:', notificationError);
             // Don't fail registration if notification creation fails
@@ -144,7 +144,7 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
     }
 
     // Signup bonus points will be awarded after email verification
-    console.log('Signup bonus points deferred until email verification');
+
 
     // Generate JWT token
     const token = jwt.sign(
@@ -736,7 +736,7 @@ router.post('/verify-email', async (req, res) => {
     if (user.referredBy) {
       try {
         await awardPendingAffiliatePoints(user._id);
-        console.log('Affiliate points awarded after email verification');
+
       } catch (error) {
         console.error('Error awarding pending affiliate points:', error);
       }

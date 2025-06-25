@@ -5,15 +5,8 @@ const emailService = {
   // For now, just console log - replace with actual email sending in production
   sendVerificationEmail: async (email, verificationCode, username) => {
     try {
-      console.log('='.repeat(60));
-      console.log('📧 EMAIL VERIFICATION CODE');
-      console.log('='.repeat(60));
-      console.log(`To: ${email}`);
-      console.log(`Username: ${username}`);
-      console.log(`Code: ${verificationCode}`);
-      console.log('='.repeat(60));
-      console.log('⚠️  In production, integrate with actual email service!');
-      console.log('='.repeat(60));
+      // Email service implementation placeholder
+      // In production, integrate with actual email service like SendGrid, Nodemailer, etc.
       
       // In production, replace this with actual email sending:
       /*

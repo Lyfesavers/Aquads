@@ -29,9 +29,7 @@ const updateAdSize = async (ad) => {
       const currentDate = new Date();
       const expiryDate = new Date(ad.bumpExpiresAt);
       
-      console.log('\n=== EXPIRY CHECK ===');
-      console.log('Ad ID:', ad.id);
-      console.log('Current Time:', currentDate.toISOString());
+      
       console.log('Expiry Time:', expiryDate.toISOString());
       console.log('Current Timestamp:', currentDate.getTime());
       console.log('Expiry Timestamp:', expiryDate.getTime());

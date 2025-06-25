@@ -9,12 +9,12 @@ const { awardAffiliateReviewPoints } = require('./points');
 // Get reviews for a service
 router.get('/:serviceId', async (req, res) => {
   try {
-    console.log('Fetching reviews for service:', req.params.serviceId);
+
     const reviews = await ServiceReview.find({ 
       serviceId: req.params.serviceId 
     }).sort({ createdAt: -1 });
     
-    console.log('Found reviews:', reviews);
+
     res.json(reviews);
   } catch (error) {
     console.error('Error fetching service reviews:', error);
@@ -65,11 +65,11 @@ router.post('/', auth, async (req, res) => {
     // NEW CODE: Check if the user is an affiliate and award points
     const user = await User.findById(req.user.userId);
     if (user && user.referralCode) {
-      console.log('Reviewer is an affiliate, awarding points');
+
       await awardAffiliateReviewPoints(req.user.userId);
     }
 
-    console.log('Saved service review:', savedReview);
+
     res.status(201).json(savedReview);
   } catch (error) {
     console.error('Error creating service review:', error);

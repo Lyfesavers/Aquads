@@ -6,7 +6,7 @@ const User = require('../models/User');
 
 // Debug route
 router.get('/test', (req, res) => {
-  console.log('Test route hit');
+
   res.json({ message: 'Jobs API is working' });
 });
 

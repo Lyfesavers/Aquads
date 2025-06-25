@@ -306,7 +306,7 @@ function awardAffiliatePoints(referrerId, referredUserId) {
     .then(referredUser => {
       // Only award points if referred user has verified their email  
       if (!referredUser.emailVerified && referredUser.email) {
-        console.log('Points not awarded - referred user email not verified');
+
         return null; // Don't award points yet
       }
       

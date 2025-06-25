@@ -12,7 +12,7 @@ const mongoose = require('mongoose');
 
 // Require sharp module directly (make it mandatory, not optional)
 const sharp = require('sharp');
-console.log('Sharp module loaded successfully');
+
 
 // Set up storage for uploaded files
 const storage = multer.diskStorage({
@@ -20,7 +20,7 @@ const storage = multer.diskStorage({
     const dir = path.join(__dirname, '../uploads/bookings');
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
-      console.log('Created upload directory:', dir);
+
     }
     cb(null, dir);
   },
@@ -338,7 +338,7 @@ async function addWatermark(inputPath, outputPath, watermarkText) {
       ])
       .toFile(outputPath);
     
-    console.log('Watermark added successfully with full coverage');
+    
     return true;
   } catch (error) {
     console.error('Error adding watermark:', error);
@@ -389,13 +389,6 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
     let isWatermarked = false;
 
     if (req.file) {
-      console.log('File uploaded successfully:', {
-        originalname: req.file.originalname,
-        mimetype: req.file.mimetype,
-        size: req.file.size,
-        path: req.file.path,
-        filename: req.file.filename
-      });
       
       // Save attachment as relative URL path
       const filename = req.file.filename;
@@ -425,7 +418,7 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
             // Use watermarked file instead
             attachment = `/uploads/bookings/${watermarkedFilename}`;
             isWatermarked = true;
-            console.log('Using watermarked image:', attachment);
+
             
             // Store original file path for later use
             // We keep the original file so when the booking is completed, we can serve the non-watermarked version
@@ -439,7 +432,7 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
             
             // Copy original file
             fs.copyFileSync(uploadedFilePath, originalDestination);
-            console.log('Original file saved at:', originalDestination);
+
             
             // For data URL generation we'll use the watermarked version
             originalFilePath = watermarkedFilePath;
@@ -449,7 +442,7 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
             // Delete the original uploaded file to clean up
             try {
               fs.unlinkSync(uploadedFilePath);
-              console.log('Deleted original file after watermarking failure');
+
             } catch (deleteError) {
               console.error('Failed to delete original file:', deleteError);
             }
@@ -460,7 +453,7 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
           // If any error occurs, abort the message
           try {
             fs.unlinkSync(uploadedFilePath);
-            console.log('Deleted original file after watermarking error');
+
           } catch (deleteError) {
             console.error('Failed to delete original file:', deleteError);
           }
@@ -473,12 +466,12 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
         isWatermarked = false;
       }
       
-      console.log('Generated file URL (relative path):', attachment);
+
       
       // Check if the file exists
       const savedFilePath = originalFilePath || path.join(__dirname, '../uploads/bookings', filename);
-      console.log('Checking if file exists at:', savedFilePath);
-      console.log('File exists:', fs.existsSync(savedFilePath));
+
+
       
       // If it's an image, create a data URL as fallback
       if (attachmentType === 'image' && fs.existsSync(savedFilePath)) {
@@ -491,8 +484,7 @@ router.post('/:bookingId/messages', auth, upload.single('attachment'), async (re
           const mimeType = req.file.mimetype || 'image/png';
           dataUrl = `data:${mimeType};base64,${base64}`;
           
-          console.log('Created data URL for image fallback (truncated):', 
-                   dataUrl.substring(0, 50) + '...');
+
         } catch (error) {
           console.error('Error creating data URL:', error);
         }
@@ -563,7 +555,7 @@ router.get('/uploads/:filename', (req, res) => {
   try {
     // Use absolute path for file access
     const filePath = path.resolve(__dirname, '../uploads/bookings', req.params.filename);
-    console.log('Serving file from (route handler):', filePath);
+
     
     if (!fs.existsSync(filePath)) {
       console.error('File not found at path:', filePath);
@@ -732,7 +724,7 @@ router.get('/file', async (req, res) => {
         const booking = await Booking.findById(bookingId);
         if (booking && booking.status === 'completed') {
           useOriginalFile = true;
-          console.log('Booking is completed, serving original file instead of watermarked');
+      
         }
       } catch (err) {
         console.error('Error checking booking status:', err);
@@ -747,11 +739,11 @@ router.get('/file', async (req, res) => {
       // If booking is completed, serve the original file
       const originalFilename = 'original-' + sanitizedFilename.replace('watermarked-', '');
       filePath = path.join(__dirname, '../uploads/bookings/originals', originalFilename);
-      console.log('Serving original file for completed booking:', filePath);
+  
     } else {
       // Otherwise serve the requested file (watermarked or regular)
       filePath = path.join(__dirname, '../uploads/bookings', sanitizedFilename);
-      console.log('Serving file through query param:', filePath);
+    
     }
     
     // Check if file exists
@@ -788,7 +780,7 @@ router.get('/file', async (req, res) => {
 // Test route to verify the notification creation is working
 router.get('/test-notification', auth, async (req, res) => {
   try {
-    console.log('Testing notification creation for user:', req.user.userId);
+
     
     // Create a test notification
     const notification = await createNotification(
@@ -814,7 +806,7 @@ router.get('/test-notification', auth, async (req, res) => {
 router.get('/user-notifications', auth, async (req, res) => {
   try {
     const userId = req.user.userId;
-    console.log(`Getting notifications for user ${userId} via bookings route`);
+  
     
     // Import the Notification model directly here to avoid circular dependencies
     let Notification;
@@ -841,7 +833,7 @@ router.get('/user-notifications', auth, async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(20);
     
-    console.log(`Found ${notifications.length} notifications for user ${userId}`);
+  
     res.json(notifications);
   } catch (error) {
     console.error('Error in /bookings/user-notifications:', error);
@@ -853,7 +845,7 @@ router.get('/user-notifications', auth, async (req, res) => {
 router.patch('/user-notifications/mark-all-read', auth, async (req, res) => {
   try {
     const userId = req.user.userId;
-    console.log(`Marking all notifications as read for user ${userId}`);
+  
     
     // Import the Notification model
     let Notification;
@@ -882,7 +874,7 @@ router.patch('/user-notifications/mark-all-read', auth, async (req, res) => {
       { $set: { isRead: true } }
     );
     
-    console.log(`Marked ${result.modifiedCount} notifications as read for user ${userId}`);
+  
     res.json({ success: true, modifiedCount: result.modifiedCount });
   } catch (error) {
     console.error('Error marking notifications as read:', error);
@@ -895,7 +887,7 @@ router.patch('/user-notifications/:id', auth, async (req, res) => {
   try {
     const userId = req.user.userId;
     const notificationId = req.params.id;
-    console.log(`Marking notification ${notificationId} as read for user ${userId}`);
+  
     
     // Import the Notification model
     let Notification;
@@ -918,7 +910,7 @@ router.patch('/user-notifications/:id', auth, async (req, res) => {
       return res.status(404).json({ message: 'Notification not found or not owned by user' });
     }
     
-    console.log(`Marked notification ${notificationId} as read`);
+
     res.json({ success: true, notification });
   } catch (error) {
     console.error('Error marking notification as read:', error);
@@ -932,7 +924,7 @@ router.get('/notification/:id', auth, async (req, res) => {
     const notificationId = req.params.id;
     const userId = req.user.userId;
     
-    console.log('Processing notification redirect:', notificationId, 'for user:', userId);
+  
     
     // Find the notification
     const Notification = mongoose.model('Notification');
@@ -942,7 +934,7 @@ router.get('/notification/:id', auth, async (req, res) => {
     });
     
     if (!notification) {
-      console.log('Notification not found:', notificationId);
+  
       return res.redirect('/dashboard');
     }
     
@@ -969,7 +961,7 @@ router.get('/notification/:id', auth, async (req, res) => {
       redirectUrl = notification.link;
     }
     
-    console.log('Redirecting notification to:', redirectUrl);
+  
     res.redirect(redirectUrl);
   } catch (error) {
     console.error('Error handling notification redirect:', error);

@@ -34,7 +34,7 @@ const generateInvoiceNumber = async () => {
 // Create a new invoice
 router.post('/', auth, async (req, res) => {
   try {
-    console.log('Received invoice creation request:', JSON.stringify(req.body));
+  
     
     const { 
       bookingId, 
@@ -136,7 +136,7 @@ router.post('/', auth, async (req, res) => {
     }
 
     const invoiceNumber = await generateInvoiceNumber();
-    console.log('Generated invoice number:', invoiceNumber);
+  
 
     // Create invoice document data
     const invoiceData = {
@@ -154,14 +154,14 @@ router.post('/', auth, async (req, res) => {
       templateId: templateId || 'default',
     };
 
-    console.log('Creating invoice with data:', JSON.stringify(invoiceData));
+  
 
     // Create and save the new invoice
     const newInvoice = new Invoice(invoiceData);
-    console.log('Saving new invoice...');
+  
 
     await newInvoice.save();
-    console.log('Invoice saved successfully with ID:', newInvoice._id);
+  
 
     // Create notification for the buyer
     const notification = new Notification({
@@ -175,7 +175,7 @@ router.post('/', auth, async (req, res) => {
     
     try {
       await notification.save();
-      console.log('Notification created for buyer');
+  
     } catch (notificationError) {
       console.error('Error creating notification:', notificationError);
       // Don't fail the invoice creation if notification fails

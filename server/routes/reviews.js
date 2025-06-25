@@ -6,12 +6,12 @@ const auth = require('../middleware/auth');
 // Get reviews for a token
 router.get('/:symbol', async (req, res) => {
   try {
-    console.log('Fetching reviews for:', req.params.symbol);
+
     const reviews = await Review.find({ 
       tokenSymbol: req.params.symbol.toLowerCase() 
     }).sort({ createdAt: -1 });
     
-    console.log('Found reviews:', reviews);
+
     res.json(reviews);
   } catch (error) {
     console.error('Error fetching reviews:', error);
@@ -47,7 +47,7 @@ router.post('/', auth, async (req, res) => {
     });
 
     const savedReview = await review.save();
-    console.log('Saved review:', savedReview);
+
     res.status(201).json(savedReview);
   } catch (error) {
     console.error('Error creating review:', error);

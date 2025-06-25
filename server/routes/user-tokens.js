@@ -111,16 +111,16 @@ router.post('/purchase', auth, async (req, res) => {
 // Admin approve token purchase
 router.post('/purchase/:purchaseId/approve', auth, async (req, res) => {
   try {
-    console.log('Approve token purchase request:', { purchaseId: req.params.purchaseId, admin: req.user.username });
+
     
     if (!req.user.isAdmin) {
       return res.status(403).json({ error: 'Only admins can approve token purchases' });
     }
 
     const { purchaseId } = req.params;
-    console.log('Finding token purchase:', purchaseId);
+
     const tokenPurchase = await TokenPurchase.findById(purchaseId).populate('userId', 'username');
-    console.log('Token purchase found:', tokenPurchase ? 'Yes' : 'No');
+
     
     if (!tokenPurchase) {
       return res.status(404).json({ error: 'Purchase not found' });
@@ -131,26 +131,26 @@ router.post('/purchase/:purchaseId/approve', auth, async (req, res) => {
     }
 
     // Update purchase status
-    console.log('Updating purchase status to approved');
+
     tokenPurchase.status = 'approved';
     tokenPurchase.approvedBy = req.user.userId;
     tokenPurchase.approvedAt = new Date();
     tokenPurchase.completedAt = new Date();
     await tokenPurchase.save();
-    console.log('Purchase status updated successfully');
+
 
     // Add tokens to user account
-    console.log('Finding user to add tokens:', tokenPurchase.userId);
+
     const user = await User.findById(tokenPurchase.userId);
     if (!user) {
-      console.log('User not found!');
+
       return res.status(404).json({ error: 'User not found' });
     }
-    console.log('User found, current tokens:', user.tokens);
+
     
     const balanceBefore = user.tokens || 0;
     user.tokens = (user.tokens || 0) + tokenPurchase.amount;
-    console.log('New token balance:', user.tokens);
+
     
     // Add to token history
     user.tokenHistory.push({
@@ -162,13 +162,13 @@ router.post('/purchase/:purchaseId/approve', auth, async (req, res) => {
       balanceAfter: user.tokens
     });
 
-    console.log('Saving user with updated tokens');
+
     await user.save();
-    console.log('User saved successfully');
+
 
     // Create notification for user (with error handling)
     try {
-      console.log('Creating notification for user');
+
       const notification = new Notification({
         userId: tokenPurchase.userId,
         type: 'tokens',
@@ -178,13 +178,13 @@ router.post('/purchase/:purchaseId/approve', auth, async (req, res) => {
         relatedModel: 'TokenPurchase'
       });
       await notification.save();
-      console.log('Notification created successfully');
+
     } catch (notificationError) {
       console.error('Error creating approval notification:', notificationError);
       // Don't fail the entire request if notification fails
     }
 
-    console.log('Sending success response');
+
     res.json({
       message: 'Token purchase approved successfully',
       purchase: tokenPurchase

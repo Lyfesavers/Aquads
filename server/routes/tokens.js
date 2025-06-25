@@ -9,12 +9,12 @@ const UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutes
 const updateTokenCache = async (force = false) => {
   const now = Date.now();
   if (!force && now - lastUpdateTime < UPDATE_INTERVAL) {
-    console.log('Skipping update - within interval');
+
     return null;
   }
 
   try {
-    console.log('Updating token cache...');
+
     const response = await axios.get(
       'https://api.coingecko.com/api/v3/coins/markets',
       {
@@ -74,7 +74,7 @@ const updateTokenCache = async (force = false) => {
 
     await Token.bulkWrite(bulkOps, { ordered: false });
     lastUpdateTime = now;
-    console.log(`Updated ${tokens.length} tokens in cache`);
+
     return tokens;
   } catch (error) {
     console.error('Token cache update failed:', error.message);

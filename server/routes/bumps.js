@@ -84,11 +84,7 @@ router.post('/approve', async (req, res) => {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + duration);
 
-    console.log('=== BUMP APPROVAL ===');
-    console.log('Duration (ms):', duration);
-    console.log('Now:', now.toISOString());
-    console.log('Expires:', expiresAt.toISOString());
-    console.log('Time until expiry (hours):', (duration / (1000 * 60 * 60)).toFixed(2));
+
 
     // Update the ad
     const ad = await Ad.findOneAndUpdate(
@@ -130,7 +126,7 @@ router.post('/approve', async (req, res) => {
           adAmount = 300; // 300 USDC
         }
 
-        console.log('Calculating commission for USDC amount:', adAmount);
+  
 
         const commissionRate = await AffiliateEarning.calculateCommissionRate(adOwner.referredBy);
         const commissionEarned = AffiliateEarning.calculateCommission(adAmount, commissionRate);
@@ -146,7 +142,7 @@ router.post('/approve', async (req, res) => {
         });
         
         await earning.save();
-        console.log('Affiliate commission recorded for bump approval:', earning);
+  
       }
     } catch (commissionError) {
       console.error('Error recording affiliate commission:', commissionError);
