@@ -584,15 +584,40 @@
       clearInterval(duckSpawningInterval);
     }
     
-    // Start spawning ducks more frequently (3-6 seconds for more action)
-    duckSpawningInterval = setInterval(spawnDuck, 3000 + Math.random() * 3000);
+    // Start spawning duck groups more frequently (3-6 seconds for more action)
+    duckSpawningInterval = setInterval(spawnDuckGroup, 3000 + Math.random() * 3000);
     
-    // Spawn first duck immediately
-    spawnDuck();
+    // Spawn first duck group immediately
+    spawnDuckGroup();
   }
   
-  // Create a new duck
-  function spawnDuck() {
+  // Spawn a group of 2-3 ducks at once
+  function spawnDuckGroup() {
+    // Don't spawn ducks if the game hasn't been started
+    if (!gameStarted) return;
+    
+    // Determine how many ducks to spawn (2-3 ducks)
+    const numDucks = Math.random() < 0.6 ? 2 : 3; // 60% chance for 2 ducks, 40% chance for 3 ducks
+    
+    // Calculate how many ducks we can actually spawn without exceeding maxDucks
+    const availableSlots = maxDucks - ducks.length;
+    const ducksToSpawn = Math.min(numDucks, availableSlots);
+    
+    if (ducksToSpawn <= 0) return;
+    
+    // Choose a spawn pattern for the group
+    const groupPattern = Math.floor(Math.random() * 4);
+    
+    for (let i = 0; i < ducksToSpawn; i++) {
+      // Add slight delays between duck spawns for a more natural flock appearance
+      setTimeout(() => {
+        createSingleDuck(groupPattern, i, ducksToSpawn);
+      }, i * 200); // 200ms delay between each duck in the group
+    }
+  }
+
+  // Create a single duck (renamed from spawnDuck)
+  function createSingleDuck(groupPattern = 0, duckIndex = 0, totalDucks = 1) {
     // Don't spawn ducks if the game hasn't been started
     if (!gameStarted) return;
     
@@ -616,39 +641,54 @@
       height: duckSizes.height + Math.random() * 10
     };
     
-    // New spawn positioning - random locations and directions
-    const spawnMode = Math.floor(Math.random() * 10); // Weight probabilities
+    // Group spawn positioning based on pattern
     let x, y, speedX, speedY, startFromLeft;
     
-    // Mostly spawn from sides to ensure ducks cross the screen (60% chance)
-    if (spawnMode < 3) { // Left side - 30% chance
-      x = -size.width;
-      y = 100 + Math.random() * (window.innerHeight - 300);
-      speedX = 4 + Math.random() * 4; // Increased speed for more excitement (was 3+3)
-      speedY = (Math.random() - 0.5) * 1.5; // Slightly more vertical movement
-      startFromLeft = true;
-    } 
-    else if (spawnMode < 6) { // Right side - 30% chance
-      x = window.innerWidth;
-      y = 100 + Math.random() * (window.innerHeight - 300);
-      speedX = -(4 + Math.random() * 4); // Increased speed for more excitement (was 3+3)
-      speedY = (Math.random() - 0.5) * 1.5; // Slightly more vertical movement
-      startFromLeft = false;
-    }
-    else if (spawnMode < 8) { // Bottom (flying up) - 20% chance
-      x = Math.random() * (window.innerWidth - size.width);
-      y = window.innerHeight;
-      speedX = (Math.random() - 0.5) * 3; // Increased horizontal movement (was 2)
-      speedY = -(4 + Math.random() * 3); // Faster upward movement (was 3+2)
-      startFromLeft = speedX >= 0; // Face direction of movement
-    }
-    else { // Random position on screen - 20% chance
-      x = 50 + Math.random() * (window.innerWidth - size.width - 100);
-      y = Math.max(50, window.innerHeight - 200);
-      // Move in clear direction (mostly upward)
-      speedX = (Math.random() - 0.5) * 5; // Stronger horizontal component (was 4)
-      speedY = -(3 + Math.random() * 4); // Faster upward movement (was 2+3)
-      startFromLeft = speedX >= 0;
+    // Calculate spacing for group formations
+    const verticalSpacing = 80; // Vertical spacing between ducks
+    const horizontalSpacing = 100; // Horizontal spacing between ducks
+    
+    switch (groupPattern) {
+      case 0: // Left side formation
+        x = -size.width - (duckIndex * 50); // Stagger horizontal position slightly
+        y = 100 + Math.random() * (window.innerHeight - 400) + (duckIndex * verticalSpacing);
+        speedX = 4 + Math.random() * 4;
+        speedY = (Math.random() - 0.5) * 1.5;
+        startFromLeft = true;
+        break;
+        
+      case 1: // Right side formation
+        x = window.innerWidth + (duckIndex * 50); // Stagger horizontal position slightly
+        y = 100 + Math.random() * (window.innerHeight - 400) + (duckIndex * verticalSpacing);
+        speedX = -(4 + Math.random() * 4);
+        speedY = (Math.random() - 0.5) * 1.5;
+        startFromLeft = false;
+        break;
+        
+      case 2: // Bottom formation (flying up in a line)
+        x = (window.innerWidth / (totalDucks + 1)) * (duckIndex + 1) - size.width/2;
+        y = window.innerHeight + (duckIndex * 60); // Stagger vertical position
+        speedX = (Math.random() - 0.5) * 2;
+        speedY = -(4 + Math.random() * 3);
+        startFromLeft = speedX >= 0;
+        break;
+        
+      case 3: // V-formation from top
+        const centerX = window.innerWidth / 2;
+        const vSpread = duckIndex * horizontalSpacing - ((totalDucks - 1) * horizontalSpacing / 2);
+        x = centerX + vSpread;
+        y = -size.height - (Math.abs(vSpread) * 0.3); // V-shape: outer ducks higher
+        speedX = (vSpread > 0 ? 1 : -1) * (2 + Math.random() * 2); // Slight inward movement
+        speedY = 3 + Math.random() * 2;
+        startFromLeft = speedX >= 0;
+        break;
+        
+      default: // Fallback to random positioning
+        x = Math.random() * (window.innerWidth - size.width);
+        y = 100 + Math.random() * (window.innerHeight - 300);
+        speedX = (Math.random() - 0.5) * 6;
+        speedY = (Math.random() - 0.5) * 4;
+        startFromLeft = speedX >= 0;
     }
     
     // Add slight wave motion
