@@ -337,7 +337,18 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
       });
       
       if (!response.ok) {
-        throw new Error('Failed to send message');
+        // Try to parse error response for detailed error message
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch {
+          errorData = { error: 'Failed to send message' };
+        }
+        
+        // Create an error object that includes the response data
+        const error = new Error(errorData.error || 'Failed to send message');
+        error.responseData = errorData;
+        throw error;
       }
       
       const sentMessage = await response.json();
@@ -351,8 +362,8 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
       }
     } catch (err) {
       // Handle different types of errors
-      if (err.response && err.response.data) {
-        const errorData = err.response.data;
+      if (err.responseData) {
+        const errorData = err.responseData;
         if (errorData.blockedContent) {
           // Show specific error for blocked content
           setError(errorData.error);
@@ -362,8 +373,8 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
           showNotification(errorData.error || 'Failed to send message. Please try again.', 'error');
         }
       } else {
-        setError('Failed to send message. Please try again.');
-        showNotification('Failed to send message. Please try again.', 'error');
+        setError(err.message || 'Failed to send message. Please try again.');
+        showNotification(err.message || 'Failed to send message. Please try again.', 'error');
       }
     }
   };
