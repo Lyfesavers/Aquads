@@ -149,7 +149,7 @@ router.options('/:id/status', (req, res) => {
 router.put('/:id/status', auth, async (req, res) => {
   try {
     const { status } = req.body;
-    const booking = await Booking.findById(req.params.id);
+    const booking = await Booking.findById(req.params.id).populate('serviceId');
 
     if (!booking) {
       return res.status(404).json({ error: 'Booking not found' });
@@ -172,6 +172,42 @@ router.put('/:id/status', auth, async (req, res) => {
       case 'declined':
         if (booking.sellerId.toString() !== req.user.userId) {
           return res.status(403).json({ error: 'Only the seller can decline' });
+        }
+        
+        // Refund tokens if the booking was unlocked
+        if (booking.isUnlocked && booking.tokensSpent > 0) {
+          const User = require('../models/User');
+          const seller = await User.findById(booking.sellerId);
+          
+          if (seller) {
+            // Refund the tokens
+            const balanceBefore = seller.tokens;
+            seller.tokens += booking.tokensSpent;
+            
+            // Add to token history
+            seller.tokenHistory.push({
+              type: 'refund',
+              amount: booking.tokensSpent,
+              reason: `Refund for declined booking lead: "${booking.serviceId?.title || 'Service'}"`,
+              relatedId: booking._id,
+              balanceBefore,
+              balanceAfter: seller.tokens
+            });
+            
+            await seller.save();
+            
+            // Create notification about token refund
+            await createNotification(
+              booking.sellerId,
+              'token_refund',
+              `${booking.tokensSpent} tokens refunded for declining booking: "${booking.serviceId?.title || 'Service'}"`,
+              '/dashboard?tab=bookings',
+              {
+                relatedId: booking._id,
+                relatedModel: 'Booking'
+              }
+            );
+          }
         }
         break;
       

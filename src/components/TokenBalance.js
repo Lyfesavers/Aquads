@@ -63,7 +63,7 @@ const TokenBalance = ({ onBalanceUpdate, onPurchaseClick, showNotification, curr
       case 'spend':
         return '🔓';
       case 'refund':
-        return '↩️';
+        return '💰';
       case 'pending':
         return '⏳';
       default:
@@ -146,7 +146,7 @@ const TokenBalance = ({ onBalanceUpdate, onPurchaseClick, showNotification, curr
                     </div>
                     <div className="text-right">
                       <span className={`font-semibold ${
-                        transaction.type === 'purchase' 
+                        transaction.type === 'purchase' || transaction.type === 'refund'
                           ? 'text-green-400' 
                           : transaction.type === 'spend'
                           ? 'text-red-400'
@@ -154,7 +154,7 @@ const TokenBalance = ({ onBalanceUpdate, onPurchaseClick, showNotification, curr
                           ? 'text-yellow-400'
                           : 'text-blue-400'
                       }`}>
-                        {transaction.type === 'purchase' ? '+' : transaction.type === 'pending' ? '⏳' : '-'}{transaction.amount}
+                        {transaction.type === 'purchase' || transaction.type === 'refund' ? '+' : transaction.type === 'pending' ? '⏳' : '-'}{transaction.amount}
                       </span>
                       <p className="text-gray-400 text-xs">
                         Balance: {transaction.balanceAfter}
@@ -174,6 +174,7 @@ const TokenBalance = ({ onBalanceUpdate, onPurchaseClick, showNotification, curr
         <ul className="text-gray-300 text-xs space-y-1">
           <li>• 2 tokens unlock 1 booking lead</li>
           <li>• 1 token = $1 USDC</li>
+          <li>• Tokens refunded if seller declines</li>
           <li>• Tokens never expire</li>
           <li>• Volume discounts available</li>
         </ul>
