@@ -452,10 +452,10 @@ function awardListingPoints(userId) {
         return User.findByIdAndUpdate(
           user.referredBy,
           {
-            $inc: { points: 200 },
+            $inc: { points: 100 },
             $push: {
               pointsHistory: {
-                amount: 200,
+                amount: 100,
                 reason: 'Referred user listed service/ad',
                 referredUser: userId,
                 createdAt: new Date()
@@ -532,10 +532,10 @@ const awardGameVotePoints = async (userId, gameId) => {
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       {
-        $inc: { points: 200 },
+        $inc: { points: 100 },
         $push: {
           pointsHistory: {
-            amount: 200,
+            amount: 100,
             reason: reason,
             gameId: gameId,
             createdAt: new Date()
@@ -574,10 +574,10 @@ const revokeGameVotePoints = async (userId, gameId) => {
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       {
-        $inc: { points: -200 },
+        $inc: { points: -100 },
         $push: {
           pointsHistory: {
-            amount: -200,
+            amount: -100,
             reason: 'Removed vote for a game',
             gameId: gameId,
             createdAt: new Date()

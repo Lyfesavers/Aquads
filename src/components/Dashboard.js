@@ -1355,8 +1355,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       <p>• Earn 20 points for voting on a project bubble</p>
                       <p>• Earn 50 points for completing social media raids</p>
                       <p>• Earn 100 points for each new affiliate</p>
-                      <p>• Earn 200 points for each game vote in the gamehub</p>
-                      <p>• Earn 200 points when your affiliates list a freelancer service or bubble ad</p>
+                      <p>• Earn 100 points for each game vote in the gamehub</p>
+                      <p>• Earn 100 points when your affiliates list a freelancer service or bubble ad</p>
                       <p>• Earn 500 points when you leave a review in the freelancer hub</p>
                       <p>• Earn 1000 points when you sign up with a referral link</p>
                       <p>• Redeem 10,000 points for an Xpx Gold Visa card (one-time only)</p>
