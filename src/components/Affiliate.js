@@ -173,6 +173,106 @@ const Affiliate = () => {
               </ul>
             </div>
 
+            <div className="bg-gray-800 rounded-lg p-8 shadow-lg mb-8">
+              <h2 className="text-2xl font-bold mb-6 text-blue-400">Affiliate Points System</h2>
+              
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-xl font-semibold mb-3 text-indigo-400">How the Points System Works:</h3>
+                  <p className="text-gray-300 mb-4">
+                    As an affiliate, you'll earn points for various activities that help grow the Aquads community. These points can be redeemed for valuable rewards and help you track your engagement level within our ecosystem.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-semibold mb-3 text-indigo-400">Points Earning Breakdown:</h3>
+                  <div className="bg-gray-700/50 rounded-lg p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center py-2 border-b border-gray-600">
+                          <span className="text-gray-300">Voting on project bubbles</span>
+                          <span className="text-green-400 font-bold">20 pts</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b border-gray-600">
+                          <span className="text-gray-300">Completing social media raids</span>
+                          <span className="text-green-400 font-bold">50 pts</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b border-gray-600">
+                          <span className="text-gray-300">Each new affiliate referral</span>
+                          <span className="text-green-400 font-bold">100 pts</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b border-gray-600">
+                          <span className="text-gray-300">Game votes in GameHub</span>
+                          <span className="text-green-400 font-bold">200 pts</span>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center py-2 border-b border-gray-600">
+                          <span className="text-gray-300">Affiliate lists service/ad</span>
+                          <span className="text-green-400 font-bold">200 pts</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b border-gray-600">
+                          <span className="text-gray-300">Leaving freelancer reviews</span>
+                          <span className="text-green-400 font-bold">500 pts</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b border-gray-600">
+                          <span className="text-gray-300">Signup with referral code</span>
+                          <span className="text-green-400 font-bold">1000 pts</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2">
+                          <span className="text-gray-300 italic">Bonus points awarded to new users</span>
+                          <span className="text-blue-400 font-bold">Free!</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-semibold mb-3 text-indigo-400">Point Redemption Options:</h3>
+                  <div className="bg-gradient-to-r from-yellow-900/30 to-yellow-800/30 border border-yellow-600/50 rounded-lg p-6">
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-yellow-400">🏆</span>
+                          <span className="text-gray-300">Xpx Gold Visa Card (one-time only)</span>
+                        </div>
+                        <span className="text-yellow-400 font-bold">10,000 pts</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-green-400">💳</span>
+                          <span className="text-gray-300">$100 CAD Gift Card</span>
+                        </div>
+                        <span className="text-green-400 font-bold">10,000 pts</span>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-400 mt-4">
+                      * Minimum redemption threshold: You must have at least 10,000 points to redeem rewards
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-semibold mb-3 text-indigo-400">Why Points Matter:</h3>
+                  <ul className="list-disc list-inside text-gray-300 space-y-2">
+                    <li>Track your engagement and contribution to the Aquads community</li>
+                    <li>Unlock exclusive rewards and recognition as a top performer</li>
+                    <li>Build credibility and trust with your referrals</li>
+                    <li>Demonstrate your commitment to the Web3 freelancing ecosystem</li>
+                    <li>Earn additional incentives on top of commission payments</li>
+                  </ul>
+                </div>
+
+                <div className="bg-blue-900/30 border border-blue-600/50 rounded-lg p-4">
+                  <p className="text-blue-300 text-sm">
+                    <strong>💡 Pro Tip:</strong> Points are automatically awarded when you or your referrals complete qualifying actions. 
+                    Check your dashboard regularly to track your points balance and see your earning history!
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div className="bg-gray-800 rounded-lg p-8 shadow-lg">
               <h2 className="text-2xl font-bold mb-6 text-blue-400">Ready to Get Started?</h2>
               
