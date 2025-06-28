@@ -551,15 +551,19 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
                                 <h4 className="font-semibold text-white flex items-center">
                                   {addon.name}
                                   <div className="ml-2 flex items-center space-x-2">
-                                    <span className="text-xs text-gray-400 line-through">
-                                      ${addon.originalPrice.toLocaleString()}
-                                    </span>
+                                    {addon.originalPrice > addon.price && (
+                                      <span className="text-xs text-gray-400 line-through">
+                                        ${addon.originalPrice.toLocaleString()}
+                                      </span>
+                                    )}
                                     <span className="text-sm font-bold text-green-400">
                                       ${addon.price.toLocaleString()} USDC
                                     </span>
-                                    <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
-                                      5% OFF
-                                    </span>
+                                    {addon.originalPrice > addon.price && (
+                                      <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                                        5% OFF
+                                      </span>
+                                    )}
                                   </div>
                                 </h4>
                                 {hasMoreFeatures && (
