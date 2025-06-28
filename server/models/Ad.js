@@ -107,7 +107,7 @@ const adSchema = new mongoose.Schema({
   },
   listingFee: {
     type: Number,
-    default: 299 // $299 USDC
+    default: 199 // $199 USDC
   },
   // Marketing add-on package fields
   selectedAddons: {
@@ -116,7 +116,7 @@ const adSchema = new mongoose.Schema({
   },
   totalAmount: {
     type: Number,
-    default: 299 // Base listing fee + any add-ons
+    default: 199 // Base listing fee + any add-ons
   },
   rejectionReason: {
     type: String,

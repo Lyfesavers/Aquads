@@ -32,6 +32,21 @@ const BLOCKCHAIN_OPTIONS = [
 // Aquads-branded marketing add-on packages
 const ADDON_PACKAGES = [
   {
+    id: 'aqua_splash',
+    name: 'AquaSplash',
+    originalPrice: 99, // Current price
+    price: 99, // No discount for this entry-level package
+    icon: FaNewspaper,
+    color: 'from-green-500 to-emerald-500',
+    features: [
+      'Newsroom Press Release',
+      'Leading Web3 Press Release Site',
+      'Approx. Monthly Visitors: 15000',
+      'Includes Social Media Posting',
+      'Domain Authority: 43'
+    ]
+  },
+  {
     id: 'aqua_ripple',
     name: 'AquaRipple',
     originalPrice: 299, // Current price
@@ -137,7 +152,7 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
     chainSymbol: BLOCKCHAIN_OPTIONS[0].symbol,
     chainAddress: BLOCKCHAIN_OPTIONS[0].address,
     selectedAddons: [], // Track selected add-on packages
-    totalAmount: 299 // Base listing fee
+    totalAmount: 199 // Base listing fee
   });
   const [previewUrl, setPreviewUrl] = useState('');
   const [error, setError] = useState('');
@@ -260,7 +275,7 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
       return {
         ...prev,
         selectedAddons,
-        totalAmount: 299 + addonTotal // Base fee + add-ons
+        totalAmount: 199 + addonTotal // Base fee + add-ons
       };
     });
   };
@@ -410,7 +425,7 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
               <div className="bg-gradient-to-br from-blue-900/50 to-purple-900/50 border border-blue-500/50 rounded-xl p-6 mb-6">
                 <h3 className="text-2xl font-bold text-white mb-4 flex items-center">
                   <FaRocket className="mr-3 text-blue-400" />
-                  Premium Listing Package - $299 USDC
+                  Premium Listing Package - $199 USDC
                 </h3>
                 <p className="text-gray-300 mb-6">
                   Get maximum exposure and professional marketing support for your project with our comprehensive premium package.
@@ -423,7 +438,7 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
                     </div>
                     <div>
                       <h4 className="font-semibold text-white">3 Months Free Bubble Bumping</h4>
-                      <p className="text-gray-300 text-sm">Keep your project at the top of our bubble display for maximum visibility</p>
+                      <p className="text-gray-300 text-sm">Keep your project at the top of our bubble display for maximum visibility. Get access to full features like voting, ranking and being on the main page.</p>
                     </div>
                   </div>
                   
@@ -433,7 +448,7 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
                     </div>
                     <div>
                       <h4 className="font-semibold text-white">PR Press Release Publication</h4>
-                      <p className="text-gray-300 text-sm">Professional press release published on Aquads and our partner publications, with access to 20+ premium newsroom platforms available for upgrade</p>
+                      <p className="text-gray-300 text-sm">One Professional press release published on Aquads and our partner publications website, with access to 20+ premium newsroom platforms available for upgrade</p>
                     </div>
                   </div>
                   
@@ -443,7 +458,7 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
                     </div>
                     <div>
                       <h4 className="font-semibold text-white">Premium Platform Access</h4>
-                      <p className="text-gray-300 text-sm">Access to premium distribution channels including CoinDesk, CoinMarketCap and other tier-1 platforms (additional premium services available)</p>
+                      <p className="text-gray-300 text-sm">Access to premium distribution channels including CoinDesk, CoinMarketCap and other tier-1 platforms (additional premium services available as add-ons)</p>
                     </div>
                   </div>
                   
@@ -613,7 +628,7 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
                       <div className="text-sm text-gray-300">
                         <div className="flex justify-between">
                           <span>Base Listing:</span>
-                          <span>$299 USDC</span>
+                          <span>$199 USDC</span>
                         </div>
                         {formData.selectedAddons.map(addonId => {
                           const addon = ADDON_PACKAGES.find(pkg => pkg.id === addonId);
