@@ -485,7 +485,7 @@
   border-radius: 8px;
   margin: 0 20px;
   overflow: hidden;
-  min-height: 400px;
+  min-height: 600px;
   position: relative;
 }
 
@@ -499,22 +499,7 @@
   border-radius: 8px;
 }
 
-/* Chart Info */
-.chart-info {
-  padding: 12px 20px 15px 20px;
-  background: rgba(0, 0, 0, 0.2);
-}
 
-.chart-note {
-  color: #a0a0a0;
-  font-size: 0.8rem;
-  line-height: 1.5;
-  margin: 0;
-}
-
-.chart-note strong {
-  color: #00d4ff;
-}
 
 /* LiFi Widget Styling */
 .lifi-widget {
@@ -622,12 +607,12 @@
   
   .chart-container {
     margin: 0 15px;
-    min-height: 500px;
+    min-height: 600px;
   }
   
   /* Mobile iframe optimizations */
   .chart-container iframe {
-    min-height: 500px !important;
+    min-height: 600px !important;
     touch-action: pan-x pan-y;
   }
   
@@ -688,7 +673,7 @@
   }
   
   .chart-section {
-    min-height: 700px;
+    min-height: 750px;
   }
 }
 

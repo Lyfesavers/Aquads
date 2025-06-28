@@ -838,33 +838,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
             )}
           </div>
           
-          <div className="chart-info">
-            <p className="chart-note">
-              {chartProvider === 'tradingview' ? (
-                <>
-                  💡 <strong>TradingView (Major Tokens):</strong> Perfect for BTC, ETH, BNB, SOL and other established cryptocurrencies
-                  <br />
-                  📊 Use the search bar in the chart to find tokens like "BTCUSDT", "ETHUSDT", "SOLUSDT"
-                </>
-              ) : chartProvider === 'dextools' ? (
-                <>
-                  🚀 <strong>DexTools (Any Token):</strong> Enter any token's pair address to view its chart and trading data
-                  <br />
-                  📈 Trending tokens above are ranked first by bumped status, then by community votes from our bubble ads
-                  <br />
-                  ⚠️ Some tokens may not load if they lack trading pairs or liquidity on DEXs
-                </>
-              ) : (
-                <>
-                  🔍 <strong>DEXScreener (Reliable):</strong> Enter any token's pair address to view its chart and trading data
-                  <br />
-                  📈 Trending tokens above are ranked first by bumped status, then by community votes from our bubble ads
-                  <br />
-                  ✅ More reliable loading with better uptime and fewer errors than other free chart providers
-                </>
-              )}
-            </p>
-          </div>
+
         </div>
       </div>
 
