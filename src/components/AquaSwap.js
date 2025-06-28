@@ -261,8 +261,11 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
   // Handle popular token selection
   const handlePopularTokenClick = (token) => {
-    setTokenSearch(token.address);
-    setSelectedChain(token.chain);
+    // Batch state updates to prevent iframe recreation race condition
+    setTimeout(() => {
+      setSelectedChain(token.chain);
+      setTokenSearch(token.address);
+    }, 0);
   };
 
   // LI.FI Widget configuration following official documentation
