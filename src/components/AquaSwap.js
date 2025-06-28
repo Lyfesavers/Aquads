@@ -26,9 +26,11 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   const [selectedChain, setSelectedChain] = useState('ether');
   const [showEmbedCode, setShowEmbedCode] = useState(false);
   const [popularTokens, setPopularTokens] = useState(FALLBACK_TOKEN_EXAMPLES);
+  const [isLoadingChart, setIsLoadingChart] = useState(false);
 
   const tradingViewRef = useRef(null);
   const dexToolsRef = useRef(null);
+  const loadingTimeoutRef = useRef(null);
 
   // Initialize on component mount
   useEffect(() => {
@@ -38,6 +40,9 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     // Cleanup: remove class when component unmounts
     return () => {
       document.body.classList.remove('aquaswap-page');
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -179,75 +184,106 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     }
   }, [chartProvider]);
 
-  // Load DexTools widget with improved error handling
+  // Load DexTools widget with improved error handling and debouncing
   useEffect(() => {
+    // Clear any existing loading timeout
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current);
+    }
+
     if (chartProvider === 'dextools' && dexToolsRef.current && tokenSearch.trim()) {
-      // Clear previous widget
-      dexToolsRef.current.innerHTML = '';
+      setIsLoadingChart(true);
       
-      // Create loading indicator
-      dexToolsRef.current.innerHTML = `
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: rgba(0, 0, 0, 0.2); border-radius: 8px; color: #9ca3af;">
-          <div style="font-size: 2rem; margin-bottom: 16px;">📊</div>
-          <h3 style="color: #ffffff; margin: 0 0 8px 0;">Loading Chart...</h3>
-          <p style="margin: 0; text-align: center; line-height: 1.5;">Connecting to DexTools</p>
-        </div>
-      `;
-      
-      // Create DexTools iframe with minimal restrictions
-      const iframe = document.createElement('iframe');
-      iframe.id = 'dextools-widget';
-      iframe.title = 'DexTools Trading Chart';
-      iframe.width = '100%';
-      iframe.height = '100%';
-      iframe.style.border = 'none';
-      iframe.style.borderRadius = '8px';
-      iframe.style.minHeight = '400px';
-      iframe.frameBorder = '0';
-      iframe.scrolling = 'no';
-      
-      // Build DexTools widget URL - minimal parameters to avoid conflicts
-      const widgetUrl = `https://www.dextools.io/widget-chart/en/${selectedChain}/pe-light/${tokenSearch.trim()}?theme=dark`;
-      
-      // Add error handling for iframe loading
-      iframe.onload = () => {
-        // Chart loaded successfully
-        if (dexToolsRef.current) {
-          const loadingDiv = dexToolsRef.current.querySelector('.loading-indicator');
-          if (loadingDiv) {
-            loadingDiv.remove();
-          }
-        }
-      };
-      
-      iframe.onerror = () => {
-        // Handle iframe loading error
-        if (dexToolsRef.current) {
-          dexToolsRef.current.innerHTML = `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: rgba(0, 0, 0, 0.2); border-radius: 8px; color: #9ca3af;">
-              <div style="font-size: 2rem; margin-bottom: 16px;">⚠️</div>
-              <h3 style="color: #ffffff; margin: 0 0 8px 0;">Chart Loading Error</h3>
-              <p style="margin: 0; text-align: center; line-height: 1.5;">Unable to load DexTools chart. Please try a different token or refresh the page.</p>
-            </div>
-          `;
-        }
-      };
-      
-      iframe.src = widgetUrl;
-      iframe.allow = 'fullscreen';
-      
-      // Add mobile-specific attributes
-      iframe.setAttribute('allowfullscreen', 'true');
-      iframe.setAttribute('webkitallowfullscreen', 'true');
-      iframe.setAttribute('mozallowfullscreen', 'true');
-      
-      // Clear loading indicator and add iframe
-      if (dexToolsRef.current) {
+      // Debounce the iframe loading to prevent multiple rapid recreations
+      loadingTimeoutRef.current = setTimeout(() => {
+        // Clear previous widget
         dexToolsRef.current.innerHTML = '';
-        dexToolsRef.current.appendChild(iframe);
-      }
+        
+        // Create loading indicator
+        dexToolsRef.current.innerHTML = `
+          <div class="chart-loading-indicator" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: rgba(0, 0, 0, 0.2); border-radius: 8px; color: #9ca3af;">
+            <div style="font-size: 2rem; margin-bottom: 16px;">📊</div>
+            <h3 style="color: #ffffff; margin: 0 0 8px 0;">Loading Chart...</h3>
+            <p style="margin: 0; text-align: center; line-height: 1.5;">Connecting to DexTools</p>
+            <div style="width: 200px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 16px; overflow: hidden;">
+              <div style="width: 100%; height: 100%; background: linear-gradient(90deg, transparent, #00d4ff, transparent); animation: loading-slide 2s infinite;"></div>
+            </div>
+          </div>
+        `;
+        
+        // Create DexTools iframe with optimized settings
+        const iframe = document.createElement('iframe');
+        iframe.id = 'dextools-widget';
+        iframe.title = 'DexTools Trading Chart';
+        iframe.width = '100%';
+        iframe.height = '100%';
+        iframe.style.border = 'none';
+        iframe.style.borderRadius = '8px';
+        iframe.style.minHeight = '400px';
+        iframe.frameBorder = '0';
+        iframe.scrolling = 'no';
+        
+        // Build DexTools widget URL with optimized parameters
+        const widgetUrl = `https://www.dextools.io/widget-chart/en/${selectedChain}/pe-light/${tokenSearch.trim()}?theme=dark&chartType=2&chartResolution=15&drawingToolbar=false`;
+        
+        // Optimized iframe loading with proper error handling
+        let loadingTimer;
+        
+        const handleLoad = () => {
+          setIsLoadingChart(false);
+          if (loadingTimer) clearTimeout(loadingTimer);
+          
+          // Remove loading indicator
+          if (dexToolsRef.current) {
+            const loadingDiv = dexToolsRef.current.querySelector('.chart-loading-indicator');
+            if (loadingDiv) {
+              loadingDiv.remove();
+            }
+          }
+        };
+        
+        const handleError = () => {
+          setIsLoadingChart(false);
+          if (loadingTimer) clearTimeout(loadingTimer);
+          
+          // Handle iframe loading error
+          if (dexToolsRef.current) {
+            dexToolsRef.current.innerHTML = `
+              <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: rgba(0, 0, 0, 0.2); border-radius: 8px; color: #9ca3af;">
+                <div style="font-size: 2rem; margin-bottom: 16px;">⚠️</div>
+                <h3 style="color: #ffffff; margin: 0 0 8px 0;">Chart Loading Error</h3>
+                <p style="margin: 0; text-align: center; line-height: 1.5;">Unable to load DexTools chart. Please try a different token or refresh the page.</p>
+                <button onclick="location.reload()" style="margin-top: 16px; padding: 8px 16px; background: #00d4ff; color: #000; border: none; border-radius: 8px; cursor: pointer;">Retry</button>
+              </div>
+            `;
+          }
+        };
+        
+        // Set up loading timeout (15 seconds)
+        loadingTimer = setTimeout(() => {
+          handleError();
+        }, 15000);
+        
+        iframe.onload = handleLoad;
+        iframe.onerror = handleError;
+        
+        // Set iframe source
+        iframe.src = widgetUrl;
+        
+        // Fix attribute warnings by using proper HTML5 attributes
+        iframe.setAttribute('allowfullscreen', '');
+        iframe.setAttribute('allow', 'fullscreen');
+        
+        // Add iframe to container
+        if (dexToolsRef.current) {
+          dexToolsRef.current.innerHTML = '';
+          dexToolsRef.current.appendChild(iframe);
+        }
+      }, 300); // 300ms debounce delay
       
     } else if (chartProvider === 'dextools' && dexToolsRef.current && !tokenSearch.trim()) {
+      setIsLoadingChart(false);
+      
       // Show placeholder when no search term
       dexToolsRef.current.innerHTML = `
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: rgba(0, 0, 0, 0.2); border-radius: 8px; color: #9ca3af;">
@@ -257,12 +293,28 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         </div>
       `;
     }
+    
+    // Cleanup function
+    return () => {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
+    };
   }, [chartProvider, tokenSearch, selectedChain]);
 
-  // Handle popular token selection
+  // Handle popular token selection with debouncing
   const handlePopularTokenClick = (token) => {
+    // Prevent multiple rapid clicks
+    if (isLoadingChart) return;
+    
+    // Use functional updates to ensure both states are updated together
     setTokenSearch(token.address);
     setSelectedChain(token.chain);
+    
+    // Provide user feedback
+    if (showNotification) {
+      showNotification(`Loading ${token.name} chart...`, 'info');
+    }
   };
 
   // LI.FI Widget configuration following official documentation

@@ -481,11 +481,13 @@
 /* Chart Container */
 .chart-container {
   flex: 1;
-  background: #111827;
-  border-radius: 8px;
-  margin: 0 20px;
+  height: 600px;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   overflow: hidden;
-  min-height: 400px;
+  margin: 0 20px;
   position: relative;
 }
 
@@ -497,6 +499,53 @@
   min-height: inherit;
   border: none;
   border-radius: 8px;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.chart-container iframe:not([src]) {
+  opacity: 0;
+}
+
+/* Loading Animation */
+@keyframes loading-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Chart loading state optimizations */
+.chart-loading-indicator {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Error state styling */
+.chart-error-state {
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  color: #ef4444;
+}
+
+.chart-error-state button {
+  transition: all 0.3s ease;
+}
+
+.chart-error-state button:hover {
+  background: #0ea5e9 !important;
+  transform: scale(1.05);
 }
 
 /* Chart Info */
