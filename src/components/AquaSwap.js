@@ -308,8 +308,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       
       const dexScreenerChain = dexScreenerChainMap[selectedChain] || 'ethereum';
       
-      // Build DEXScreener embed URL - use simple format that's more likely to work
-      const widgetUrl = `https://dexscreener.com/${dexScreenerChain}/${tokenSearch.trim()}`;
+      // Build DEXScreener embed URL with dark theme
+      const widgetUrl = `https://dexscreener.com/${dexScreenerChain}/${tokenSearch.trim()}?theme=dark`;
       
       // Add error handling for iframe loading
       iframe.onload = () => {
