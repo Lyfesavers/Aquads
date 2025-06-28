@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import Modal from './Modal';
 
 const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotification, onShowReviews, onOpenConversation, refreshBookings }) => {
   const [unlockingBooking, setUnlockingBooking] = useState(null);
+  const [showAcceptConfirmation, setShowAcceptConfirmation] = useState(false);
+  const [bookingToAccept, setBookingToAccept] = useState(null);
 
   const unlockLead = async (bookingId) => {
     try {
@@ -77,6 +80,28 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
     }
   };
 
+  const handleAcceptClick = (booking) => {
+    setBookingToAccept(booking);
+    setShowAcceptConfirmation(true);
+  };
+
+  const handleConfirmAccept = async () => {
+    if (bookingToAccept) {
+      try {
+        await handleStatusUpdate(bookingToAccept._id, 'accepted_by_seller');
+        setShowAcceptConfirmation(false);
+        setBookingToAccept(null);
+      } catch (error) {
+        // Error is already handled by handleStatusUpdate
+      }
+    }
+  };
+
+  const handleCancelAccept = () => {
+    setShowAcceptConfirmation(false);
+    setBookingToAccept(null);
+  };
+
   const renderActions = (booking) => {
     const isSeller = booking.sellerId._id === currentUser.userId;
     const isBuyer = booking.buyerId._id === currentUser.userId;
@@ -108,7 +133,7 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
         {isSeller && booking.status === 'pending' && (
           <>
             <button
-              onClick={() => handleStatusUpdate(booking._id, 'accepted_by_seller')}
+              onClick={() => handleAcceptClick(booking)}
               className="px-3 py-1 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30"
             >
               Accept
@@ -170,112 +195,153 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
   }
 
   return (
-    <div className="space-y-4">
-      {bookings.map((booking) => {
-        const isSeller = booking.sellerId._id === currentUser.userId;
-        const isLocked = isSeller && !booking.isUnlocked;
-        
-        return (
-          <div key={booking._id} className={`bg-gray-800 rounded-lg p-4 ${isLocked ? 'border-2 border-yellow-500/50' : ''}`}>
-            {/* Locked Lead Banner */}
-            {isLocked && (
-              <div className="bg-yellow-500/20 border border-yellow-500/40 rounded-lg p-3 mb-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <span className="text-yellow-400 text-xl mr-2">🔒</span>
-                    <div>
-                      <h4 className="text-yellow-400 font-semibold">New Lead Available</h4>
-                      <p className="text-yellow-300 text-sm">Unlock this lead to see buyer details and communicate</p>
+    <>
+      <div className="space-y-4">
+        {bookings.map((booking) => {
+          const isSeller = booking.sellerId._id === currentUser.userId;
+          const isLocked = isSeller && !booking.isUnlocked;
+          
+          return (
+            <div key={booking._id} className={`bg-gray-800 rounded-lg p-4 ${isLocked ? 'border-2 border-yellow-500/50' : ''}`}>
+              {/* Locked Lead Banner */}
+              {isLocked && (
+                <div className="bg-yellow-500/20 border border-yellow-500/40 rounded-lg p-3 mb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <span className="text-yellow-400 text-xl mr-2">🔒</span>
+                      <div>
+                        <h4 className="text-yellow-400 font-semibold">New Lead Available</h4>
+                        <p className="text-yellow-300 text-sm">Unlock this lead to see buyer details and communicate</p>
+                      </div>
                     </div>
+                    <button
+                      onClick={() => unlockLead(booking._id)}
+                      disabled={unlockingBooking === booking._id}
+                      className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed text-black font-semibold rounded-lg transition-colors"
+                    >
+                      {unlockingBooking === booking._id ? 'Unlocking...' : 'Unlock for 2 Tokens'}
+                    </button>
                   </div>
+                </div>
+              )}
+
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-lg font-semibold text-white">
+                    {booking.serviceId.title}
+                  </h3>
+                  
+                  {/* Show limited info if locked, full info if unlocked */}
+                  {isLocked ? (
+                    <>
+                      <p className="text-sm text-gray-400">
+                        New booking request from a buyer
+                      </p>
+                      <p className="text-sm text-gray-400">
+                        Price: {booking.price} {booking.currency}
+                      </p>
+                      <p className="text-sm text-yellow-400 mt-2">
+                        🔒 Unlock to see buyer details and requirements
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-gray-400">
+                        {booking.sellerId._id === currentUser.userId ? 'Buyer' : 'Seller'}: {
+                          booking.sellerId._id === currentUser.userId 
+                            ? booking.buyerName
+                            : booking.sellerId.username
+                        }
+                      </p>
+                      <p className="text-sm text-gray-400">
+                        Price: {booking.price} {booking.currency}
+                      </p>
+                      {booking.requirements && (
+                        <p className="text-sm text-gray-400 mt-2">
+                          Requirements: {booking.requirements}
+                        </p>
+                      )}
+                    </>
+                  )}
+                </div>
+                <div className="text-right">
+                  <span className={`inline-block px-3 py-1 rounded-full text-sm border ${getStatusBadgeClass(booking.status)}`}>
+                    {getStatusText(booking.status)}
+                  </span>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {new Date(booking.createdAt).toLocaleDateString()}
+                  </p>
+                  
+                  {/* Messages button */}
                   <button
-                    onClick={() => unlockLead(booking._id)}
-                    disabled={unlockingBooking === booking._id}
-                    className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed text-black font-semibold rounded-lg transition-colors"
+                    onClick={isLocked ? undefined : () => onOpenConversation(booking)}
+                    disabled={isLocked}
+                    className={`mt-2 px-3 py-1 rounded text-sm flex items-center ${
+                      isLocked 
+                        ? 'bg-gray-600 text-gray-400 cursor-not-allowed' 
+                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    }`}
                   >
-                    {unlockingBooking === booking._id ? 'Unlocking...' : 'Unlock for 2 Tokens'}
+                    <span className="mr-1">{isLocked ? '🔒' : '💬'}</span> 
+                    {isLocked ? 'Messages (Locked)' : 'Messages'}
                   </button>
+                  
+                  {/* View service reviews button */}
+                  {booking.serviceId && (
+                    <button
+                      onClick={() => onShowReviews(booking.serviceId, null, true)}
+                      className="mt-2 px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm flex items-center"
+                    >
+                      <span className="mr-1">⭐</span> View Reviews
+                    </button>
+                  )}
                 </div>
               </div>
-            )}
-
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="text-lg font-semibold text-white">
-                  {booking.serviceId.title}
-                </h3>
-                
-                {/* Show limited info if locked, full info if unlocked */}
-                {isLocked ? (
-                  <>
-                    <p className="text-sm text-gray-400">
-                      New booking request from a buyer
-                    </p>
-                    <p className="text-sm text-gray-400">
-                      Price: {booking.price} {booking.currency}
-                    </p>
-                    <p className="text-sm text-yellow-400 mt-2">
-                      🔒 Unlock to see buyer details and requirements
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-sm text-gray-400">
-                      {booking.sellerId._id === currentUser.userId ? 'Buyer' : 'Seller'}: {
-                        booking.sellerId._id === currentUser.userId 
-                          ? booking.buyerName
-                          : booking.sellerId.username
-                      }
-                    </p>
-                    <p className="text-sm text-gray-400">
-                      Price: {booking.price} {booking.currency}
-                    </p>
-                    {booking.requirements && (
-                      <p className="text-sm text-gray-400 mt-2">
-                        Requirements: {booking.requirements}
-                      </p>
-                    )}
-                  </>
-                )}
-              </div>
-            <div className="text-right">
-              <span className={`inline-block px-3 py-1 rounded-full text-sm border ${getStatusBadgeClass(booking.status)}`}>
-                {getStatusText(booking.status)}
-              </span>
-              <p className="text-xs text-gray-400 mt-1">
-                {new Date(booking.createdAt).toLocaleDateString()}
+              {!isLocked && renderActions(booking)}
+            </div>
+          );
+        })}
+      </div>
+      
+      {/* Accept Lead Confirmation Modal */}
+      {showAcceptConfirmation && (
+        <Modal onClose={handleCancelAccept}>
+          <div className="text-center">
+            <div className="text-6xl mb-4">⚠️</div>
+            <h2 className="text-2xl font-bold text-white mb-4">
+              Confirm Lead Acceptance
+            </h2>
+            <div className="text-gray-300 mb-6 text-left space-y-3">
+              <p>
+                You are about to accept this lead. Please note:
               </p>
-              
-              {/* Messages button */}
+              <div className="bg-yellow-500/20 border border-yellow-500/40 rounded-lg p-4">
+                <p className="text-yellow-300 font-semibold">
+                  ⚠️ Important: Once you accept this lead, tokens spent cannot be refunded.
+                </p>
+              </div>
+              <p>
+                By accepting, you confirm that you understand this policy and are ready to proceed with the booking.
+              </p>
+            </div>
+            <div className="flex gap-3 justify-center">
               <button
-                onClick={isLocked ? undefined : () => onOpenConversation(booking)}
-                disabled={isLocked}
-                className={`mt-2 px-3 py-1 rounded text-sm flex items-center ${
-                  isLocked 
-                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed' 
-                    : 'bg-blue-600 hover:bg-blue-700 text-white'
-                }`}
+                onClick={handleCancelAccept}
+                className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
               >
-                <span className="mr-1">{isLocked ? '🔒' : '💬'}</span> 
-                {isLocked ? 'Messages (Locked)' : 'Messages'}
+                Cancel
               </button>
-              
-              {/* View service reviews button */}
-              {booking.serviceId && (
-                <button
-                  onClick={() => onShowReviews(booking.serviceId, null, true)}
-                  className="mt-2 px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm flex items-center"
-                >
-                  <span className="mr-1">⭐</span> View Reviews
-                </button>
-              )}
+              <button
+                onClick={handleConfirmAccept}
+                className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+              >
+                Accept Lead
+              </button>
             </div>
           </div>
-          {!isLocked && renderActions(booking)}
-        </div>
-        );
-      })}
-    </div>
+        </Modal>
+      )}
+    </>
   );
 };
 
