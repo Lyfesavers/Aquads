@@ -196,7 +196,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         </div>
       `;
       
-      // Create DEXScreener iframe
+      // Create DEXScreener iframe with desktop-optimized settings
       const iframe = document.createElement('iframe');
       iframe.id = 'dexscreener-widget';
       iframe.title = 'DEXScreener Trading Chart';
@@ -204,9 +204,12 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       iframe.height = '100%';
       iframe.style.border = 'none';
       iframe.style.borderRadius = '8px';
-      iframe.style.minHeight = '400px';
+      iframe.style.minHeight = '600px';
+      iframe.style.minWidth = '800px';
+      iframe.style.maxWidth = '100%';
       iframe.frameBorder = '0';
       iframe.scrolling = 'no';
+      iframe.setAttribute('data-desktop', 'true');
       
       // Convert chain names to DEXScreener format
       const dexScreenerChainMap = {
@@ -229,8 +232,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       
       const dexScreenerChain = dexScreenerChainMap[selectedChain] || 'ethereum';
       
-      // Build DEXScreener embed URL with dark theme
-      const widgetUrl = `https://dexscreener.com/${dexScreenerChain}/${tokenSearch.trim()}?theme=dark`;
+      // Build DEXScreener embed URL with desktop-optimized parameters
+      const widgetUrl = `https://dexscreener.com/${dexScreenerChain}/${tokenSearch.trim()}?theme=dark&embed=1&info=0&trades=0`;
       
       // Add error handling for iframe loading
       iframe.onload = () => {

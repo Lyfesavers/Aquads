@@ -499,6 +499,22 @@
   border-radius: 8px;
 }
 
+/* DEXScreener specific desktop layout enforcement */
+.chart-container #dexscreener-widget {
+  min-width: 800px !important;
+  min-height: 600px !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
+}
+
+/* Force desktop layout on all screen sizes */
+@media (min-width: 768px) {
+  .chart-container #dexscreener-widget {
+    min-width: 1000px !important;
+    min-height: 700px !important;
+  }
+}
+
 
 
 /* LiFi Widget Styling */
