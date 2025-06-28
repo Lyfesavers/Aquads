@@ -28,7 +28,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   const [popularTokens, setPopularTokens] = useState(FALLBACK_TOKEN_EXAMPLES);
 
   const tradingViewRef = useRef(null);
-  const dexToolsRef = useRef(null);
   const dexScreenerRef = useRef(null);
 
   // Initialize on component mount
@@ -99,7 +98,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     fetchBubbleTokens();
   }, []);
 
-  // Convert blockchain names to dextools chain format
+  // Convert blockchain names to chain format
   const getChainForBlockchain = (blockchain) => {
     const chainMap = {
       // Main blockchains from your BLOCKCHAIN_OPTIONS
@@ -180,85 +179,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     }
   }, [chartProvider]);
 
-  // Load DexTools widget with improved error handling
-  useEffect(() => {
-    if (chartProvider === 'dextools' && dexToolsRef.current && tokenSearch.trim()) {
-      // Clear previous widget
-      dexToolsRef.current.innerHTML = '';
-      
-      // Create loading indicator
-      dexToolsRef.current.innerHTML = `
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: rgba(0, 0, 0, 0.2); border-radius: 8px; color: #9ca3af;">
-          <div style="font-size: 2rem; margin-bottom: 16px;">📊</div>
-          <h3 style="color: #ffffff; margin: 0 0 8px 0;">Loading Chart...</h3>
-          <p style="margin: 0; text-align: center; line-height: 1.5;">Connecting to DexTools</p>
-        </div>
-      `;
-      
-      // Create DexTools iframe with minimal restrictions
-      const iframe = document.createElement('iframe');
-      iframe.id = 'dextools-widget';
-      iframe.title = 'DexTools Trading Chart';
-      iframe.width = '100%';
-      iframe.height = '100%';
-      iframe.style.border = 'none';
-      iframe.style.borderRadius = '8px';
-      iframe.style.minHeight = '400px';
-      iframe.frameBorder = '0';
-      iframe.scrolling = 'no';
-      
-      // Build DexTools widget URL - minimal parameters to avoid conflicts
-      const widgetUrl = `https://www.dextools.io/widget-chart/en/${selectedChain}/pe-light/${tokenSearch.trim()}?theme=dark`;
-      
-      // Add error handling for iframe loading
-      iframe.onload = () => {
-        // Chart loaded successfully
-        if (dexToolsRef.current) {
-          const loadingDiv = dexToolsRef.current.querySelector('.loading-indicator');
-          if (loadingDiv) {
-            loadingDiv.remove();
-          }
-        }
-      };
-      
-      iframe.onerror = () => {
-        // Handle iframe loading error
-        if (dexToolsRef.current) {
-          dexToolsRef.current.innerHTML = `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: rgba(0, 0, 0, 0.2); border-radius: 8px; color: #9ca3af;">
-              <div style="font-size: 2rem; margin-bottom: 16px;">⚠️</div>
-              <h3 style="color: #ffffff; margin: 0 0 8px 0;">Chart Loading Error</h3>
-              <p style="margin: 0; text-align: center; line-height: 1.5;">Unable to load DexTools chart. Please try a different token or refresh the page.</p>
-            </div>
-          `;
-        }
-      };
-      
-      iframe.src = widgetUrl;
-      iframe.allow = 'fullscreen';
-      
-      // Add mobile-specific attributes
-      iframe.setAttribute('allowfullscreen', 'true');
-      iframe.setAttribute('webkitallowfullscreen', 'true');
-      iframe.setAttribute('mozallowfullscreen', 'true');
-      
-      // Clear loading indicator and add iframe
-      if (dexToolsRef.current) {
-        dexToolsRef.current.innerHTML = '';
-        dexToolsRef.current.appendChild(iframe);
-      }
-      
-    } else if (chartProvider === 'dextools' && dexToolsRef.current && !tokenSearch.trim()) {
-      // Show placeholder when no search term
-      dexToolsRef.current.innerHTML = `
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: rgba(0, 0, 0, 0.2); border-radius: 8px; color: #9ca3af;">
-          <div style="font-size: 3rem; margin-bottom: 16px;">🔍</div>
-          <h3 style="color: #ffffff; margin: 0 0 8px 0;">Search Any Token</h3>
-          <p style="margin: 0; text-align: center; line-height: 1.5;">Enter a Pair address above to view any token's chart</p>
-        </div>
-      `;
-    }
-  }, [chartProvider, tokenSearch, selectedChain]);
+
 
   // Load DEXScreener widget with improved reliability
   useEffect(() => {
@@ -287,7 +208,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       iframe.frameBorder = '0';
       iframe.scrolling = 'no';
       
-      // Convert chain names to DEXScreener format (similar to DexTools)
+      // Convert chain names to DEXScreener format
       const dexScreenerChainMap = {
         'ether': 'ethereum',
         'bnb': 'bsc', 
@@ -516,13 +437,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                   <span className="provider-desc">Major</span>
                 </button>
                 <button 
-                  className={`provider-btn ${chartProvider === 'dextools' ? 'active' : ''}`}
-                  onClick={() => setChartProvider('dextools')}
-                >
-                  🚀 DexTools
-                  <span className="provider-desc">Any Token</span>
-                </button>
-                <button 
                   className={`provider-btn ${chartProvider === 'dexscreener' ? 'active' : ''}`}
                   onClick={() => setChartProvider('dexscreener')}
                 >
@@ -531,8 +445,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                 </button>
               </div>
               
-              {/* DexTools and DEXScreener search interface - inline */}
-              {(chartProvider === 'dextools' || chartProvider === 'dexscreener') && (
+              {/* DEXScreener search interface - inline */}
+              {chartProvider === 'dexscreener' && (
                 <div className="search-controls">
                   <div className="chain-selector">
                     <label className="search-label">Chain:</label>
@@ -773,9 +687,9 @@ const AquaSwap = ({ currentUser, showNotification }) => {
               )}
             </div>
             
-            {/* Trending tokens - show for DexTools and DEXScreener */}
-            {(chartProvider === 'dextools' || chartProvider === 'dexscreener') && popularTokens.length > 0 && (
-              <div className="dextools-search-section">
+            {/* Trending tokens - show for DEXScreener */}
+            {chartProvider === 'dexscreener' && popularTokens.length > 0 && (
+              <div className="chart-search-section">
                 <div className="popular-tokens">
                   <span className="popular-label">Trending:</span>
                   <div className="popular-tokens-container">
@@ -819,13 +733,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
               <div 
                 ref={tradingViewRef}
                 id="tradingview_widget" 
-                style={{ height: '100%', width: '100%' }}
-              />
-            )}
-            
-            {chartProvider === 'dextools' && (
-              <div 
-                ref={dexToolsRef}
                 style={{ height: '100%', width: '100%' }}
               />
             )}
