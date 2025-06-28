@@ -29,6 +29,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
   const tradingViewRef = useRef(null);
   const dexToolsRef = useRef(null);
+  const dexScreenerRef = useRef(null);
 
   // Initialize on component mount
   useEffect(() => {
@@ -259,13 +260,107 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     }
   }, [chartProvider, tokenSearch, selectedChain]);
 
+  // Load DEXScreener widget with improved reliability
+  useEffect(() => {
+    if (chartProvider === 'dexscreener' && dexScreenerRef.current && tokenSearch.trim()) {
+      // Clear previous widget
+      dexScreenerRef.current.innerHTML = '';
+      
+      // Create loading indicator
+      dexScreenerRef.current.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: rgba(0, 0, 0, 0.2); border-radius: 8px; color: #9ca3af;">
+          <div style="font-size: 2rem; margin-bottom: 16px;">📊</div>
+          <h3 style="color: #ffffff; margin: 0 0 8px 0;">Loading Chart...</h3>
+          <p style="margin: 0; text-align: center; line-height: 1.5;">Connecting to DEXScreener</p>
+        </div>
+      `;
+      
+      // Create DEXScreener iframe
+      const iframe = document.createElement('iframe');
+      iframe.id = 'dexscreener-widget';
+      iframe.title = 'DEXScreener Trading Chart';
+      iframe.width = '100%';
+      iframe.height = '100%';
+      iframe.style.border = 'none';
+      iframe.style.borderRadius = '8px';
+      iframe.style.minHeight = '400px';
+      iframe.frameBorder = '0';
+      iframe.scrolling = 'no';
+      
+      // Convert chain names to DEXScreener format (similar to DexTools)
+      const dexScreenerChainMap = {
+        'ether': 'ethereum',
+        'bnb': 'bsc', 
+        'polygon': 'polygon',
+        'solana': 'solana',
+        'avalanche': 'avalanche',
+        'arbitrum': 'arbitrum',
+        'optimism': 'optimism',
+        'base': 'base',
+        'fantom': 'fantom',
+        'cronos': 'cronos',
+        'celo': 'celo',
+        'harmony': 'harmony',
+        'near': 'near',
+        'sui': 'sui',
+        'aptos': 'aptos'
+      };
+      
+      const dexScreenerChain = dexScreenerChainMap[selectedChain] || 'ethereum';
+      
+      // Build DEXScreener embed URL - use simple format that's more likely to work
+      const widgetUrl = `https://dexscreener.com/${dexScreenerChain}/${tokenSearch.trim()}`;
+      
+      // Add error handling for iframe loading
+      iframe.onload = () => {
+        // Chart loaded successfully
+        if (dexScreenerRef.current) {
+          const loadingDiv = dexScreenerRef.current.querySelector('div');
+          if (loadingDiv) {
+            loadingDiv.remove();
+          }
+        }
+      };
+      
+      iframe.onerror = () => {
+        // Handle iframe loading error
+        if (dexScreenerRef.current) {
+          dexScreenerRef.current.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: rgba(0, 0, 0, 0.2); border-radius: 8px; color: #9ca3af;">
+              <div style="font-size: 2rem; margin-bottom: 16px;">⚠️</div>
+              <h3 style="color: #ffffff; margin: 0 0 8px 0;">Chart Loading Error</h3>
+              <p style="margin: 0; text-align: center; line-height: 1.5;">Unable to load DEXScreener chart. Please try a different token or refresh the page.</p>
+            </div>
+          `;
+        }
+      };
+      
+      iframe.src = widgetUrl;
+      iframe.setAttribute('allowfullscreen', '');
+      iframe.setAttribute('allow', 'fullscreen');
+      
+      // Clear loading indicator and add iframe
+      if (dexScreenerRef.current) {
+        dexScreenerRef.current.innerHTML = '';
+        dexScreenerRef.current.appendChild(iframe);
+      }
+      
+    } else if (chartProvider === 'dexscreener' && dexScreenerRef.current && !tokenSearch.trim()) {
+      // Show placeholder when no search term
+      dexScreenerRef.current.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: rgba(0, 0, 0, 0.2); border-radius: 8px; color: #9ca3af;">
+          <div style="font-size: 3rem; margin-bottom: 16px;">🔍</div>
+          <h3 style="color: #ffffff; margin: 0 0 8px 0;">Search Any Token</h3>
+          <p style="margin: 0; text-align: center; line-height: 1.5;">Enter a Pair address above to view any token's chart</p>
+        </div>
+      `;
+    }
+  }, [chartProvider, tokenSearch, selectedChain]);
+
   // Handle popular token selection
   const handlePopularTokenClick = (token) => {
-    // Batch state updates to prevent iframe recreation race condition
-    setTimeout(() => {
-      setSelectedChain(token.chain);
-      setTokenSearch(token.address);
-    }, 0);
+    setTokenSearch(token.address);
+    setSelectedChain(token.chain);
   };
 
   // LI.FI Widget configuration following official documentation
@@ -427,10 +522,17 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                   🚀 DexTools
                   <span className="provider-desc">Any Token</span>
                 </button>
+                <button 
+                  className={`provider-btn ${chartProvider === 'dexscreener' ? 'active' : ''}`}
+                  onClick={() => setChartProvider('dexscreener')}
+                >
+                  🔍 DEXScreener
+                  <span className="provider-desc">Reliable</span>
+                </button>
               </div>
               
-              {/* DexTools search interface - inline */}
-              {chartProvider === 'dextools' && (
+              {/* DexTools and DEXScreener search interface - inline */}
+              {(chartProvider === 'dextools' || chartProvider === 'dexscreener') && (
                 <div className="search-controls">
                   <div className="chain-selector">
                     <label className="search-label">Chain:</label>
@@ -671,8 +773,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
               )}
             </div>
             
-            {/* Trending tokens - only show for DexTools */}
-            {chartProvider === 'dextools' && popularTokens.length > 0 && (
+            {/* Trending tokens - show for DexTools and DEXScreener */}
+            {(chartProvider === 'dextools' || chartProvider === 'dexscreener') && popularTokens.length > 0 && (
               <div className="dextools-search-section">
                 <div className="popular-tokens">
                   <span className="popular-label">Trending:</span>
@@ -727,6 +829,13 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                 style={{ height: '100%', width: '100%' }}
               />
             )}
+            
+            {chartProvider === 'dexscreener' && (
+              <div 
+                ref={dexScreenerRef}
+                style={{ height: '100%', width: '100%' }}
+              />
+            )}
           </div>
           
           <div className="chart-info">
@@ -737,13 +846,21 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                   <br />
                   📊 Use the search bar in the chart to find tokens like "BTCUSDT", "ETHUSDT", "SOLUSDT"
                 </>
-              ) : (
+              ) : chartProvider === 'dextools' ? (
                 <>
                   🚀 <strong>DexTools (Any Token):</strong> Enter any token's pair address to view its chart and trading data
                   <br />
                   📈 Trending tokens above are ranked first by bumped status, then by community votes from our bubble ads
                   <br />
                   ⚠️ Some tokens may not load if they lack trading pairs or liquidity on DEXs
+                </>
+              ) : (
+                <>
+                  🔍 <strong>DEXScreener (Reliable):</strong> Enter any token's pair address to view its chart and trading data
+                  <br />
+                  📈 Trending tokens above are ranked first by bumped status, then by community votes from our bubble ads
+                  <br />
+                  ✅ More reliable loading with better uptime and fewer errors than other free chart providers
                 </>
               )}
             </p>
