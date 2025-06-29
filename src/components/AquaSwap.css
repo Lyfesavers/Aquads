@@ -160,6 +160,9 @@
   border-right: 1px solid rgba(255, 255, 255, 0.1);
   padding: 20px;
   overflow-y: auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Right Side - Charts */
@@ -507,9 +510,10 @@
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 8px 32px rgba(0, 212, 255, 0.1);
-  min-height: 600px;
+  flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 /* Swap Footer */
@@ -520,6 +524,7 @@
   background: rgba(0, 0, 0, 0.2);
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  flex: none;
 }
 
 .swap-footer p {
@@ -535,7 +540,8 @@
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   border-radius: 16px !important;
   flex: 1 !important;
-  min-height: 100% !important;
+  height: 100% !important;
+  min-height: 500px !important;
 }
 
 
