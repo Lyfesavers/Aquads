@@ -184,6 +184,12 @@
 @media (max-width: 1366px) {
   .swap-section {
     flex: 0 0 320px; /* More room for HD laptops - gives chart ~996px */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+  }
+  
+  .swap-section::-webkit-scrollbar {
+    display: none; /* Chrome/Safari/Webkit */
   }
 }
 
