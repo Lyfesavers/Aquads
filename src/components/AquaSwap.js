@@ -203,8 +203,10 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       iframe.width = '100%';
       iframe.height = '100%';
       iframe.style.border = 'none';
-      iframe.style.borderRadius = '8px';
+      iframe.style.borderRadius = '0px';
       iframe.style.minHeight = '400px';
+      iframe.style.flex = '1';
+      iframe.style.display = 'block';
       iframe.frameBorder = '0';
       iframe.scrolling = 'no';
       
