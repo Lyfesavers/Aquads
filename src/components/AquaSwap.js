@@ -200,7 +200,26 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       const iframe = document.createElement('iframe');
       iframe.id = 'dexscreener-widget';
       iframe.title = 'DEXScreener Trading Chart';
-      iframe.width = '1200';
+      
+      // Set iframe width based on screen size to ensure full interface
+      const screenWidth = window.innerWidth;
+      let iframeWidth;
+      
+      if (screenWidth >= 2560) {
+        iframeWidth = '1200'; // Large monitors - works perfectly
+      } else if (screenWidth >= 1920) {
+        iframeWidth = '1400'; // Full HD monitors
+      } else if (screenWidth >= 1600) {
+        iframeWidth = '1500'; // Large laptops
+      } else if (screenWidth >= 1440) {
+        iframeWidth = '1600'; // Standard laptops
+      } else if (screenWidth >= 1366) {
+        iframeWidth = '1700'; // HD laptops
+      } else {
+        iframeWidth = '1800'; // Small laptops
+      }
+      
+      iframe.width = iframeWidth;
       iframe.height = '100%';
       iframe.style.border = 'none';
       iframe.style.borderRadius = '0px';
