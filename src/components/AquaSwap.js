@@ -200,11 +200,13 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       const iframe = document.createElement('iframe');
       iframe.id = 'dexscreener-widget';
       iframe.title = 'DEXScreener Trading Chart';
-      iframe.width = '100%';
+      iframe.width = '1200';
       iframe.height = '100%';
       iframe.style.border = 'none';
       iframe.style.borderRadius = '0px';
       iframe.style.minHeight = '400px';
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
       iframe.style.flex = '1';
       iframe.style.display = 'block';
       iframe.frameBorder = '0';

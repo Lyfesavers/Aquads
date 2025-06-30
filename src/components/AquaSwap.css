@@ -168,7 +168,7 @@
   background: rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  min-width: 1200px; /* Ensures full professional trading interface width */
+  min-width: 800px; /* Reasonable minimum while maintaining side-by-side layout */
   width: 100%;
 }
 
@@ -483,7 +483,8 @@
   border-radius: 0;
   background: rgba(0, 0, 0, 0.2);
   min-height: 400px;
-  min-width: 1200px; /* Ensures full professional trading interface width */
+  transform: scale(1);
+  transform-origin: 0 0;
 }
 
 /* LiFi Widget Styling - Compact */
@@ -518,7 +519,7 @@
 }
 
 /* Responsive Design - Optimized */
-@media (max-width: 1400px) {
+@media (max-width: 1024px) {
   .trading-interface.with-charts {
     flex-direction: column;
     height: auto;
