@@ -201,22 +201,28 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       iframe.id = 'dexscreener-widget';
       iframe.title = 'DEXScreener Trading Chart';
       
-      // Set iframe width based on screen size to ensure full interface
+      // Calculate actual available width and set iframe accordingly
       const screenWidth = window.innerWidth;
-      let iframeWidth;
+      let swapWidth, iframeWidth;
       
       if (screenWidth >= 2560) {
+        swapWidth = 380;
         iframeWidth = '1200'; // Large monitors - works perfectly
       } else if (screenWidth >= 1920) {
-        iframeWidth = '1400'; // Full HD monitors
+        swapWidth = 280;
+        iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // Full HD
       } else if (screenWidth >= 1600) {
-        iframeWidth = '1500'; // Large laptops
+        swapWidth = 260;
+        iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // Large laptops
       } else if (screenWidth >= 1440) {
-        iframeWidth = '1600'; // Standard laptops
+        swapWidth = 240;
+        iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // Standard laptops
       } else if (screenWidth >= 1366) {
-        iframeWidth = '1700'; // HD laptops
+        swapWidth = 220;
+        iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // HD laptops
       } else {
-        iframeWidth = '1800'; // Small laptops
+        swapWidth = 220;
+        iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // Small laptops
       }
       
       iframe.width = iframeWidth;
