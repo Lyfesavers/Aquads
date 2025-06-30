@@ -168,7 +168,7 @@
   background: rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  min-width: 600px; /* Ensures proper width reporting to iframe for desktop view */
+  min-width: 1200px; /* Ensures full professional trading interface width */
   width: 100%;
 }
 
@@ -483,7 +483,7 @@
   border-radius: 0;
   background: rgba(0, 0, 0, 0.2);
   min-height: 400px;
-  min-width: 600px; /* Ensures iframe reports proper width for desktop view */
+  min-width: 1200px; /* Ensures full professional trading interface width */
 }
 
 /* LiFi Widget Styling - Compact */
@@ -518,7 +518,7 @@
 }
 
 /* Responsive Design - Optimized */
-@media (max-width: 1024px) {
+@media (max-width: 1400px) {
   .trading-interface.with-charts {
     flex-direction: column;
     height: auto;
@@ -532,7 +532,11 @@
   
   .chart-section {
     min-height: 500px;
-    min-width: 0; /* Reset min-width on mobile to prevent horizontal scroll */
+    min-width: 0; /* Reset min-width on smaller screens to prevent horizontal scroll */
+  }
+  
+  .chart-container iframe {
+    min-width: 0; /* Reset iframe min-width on smaller screens */
   }
   
   .search-controls {
