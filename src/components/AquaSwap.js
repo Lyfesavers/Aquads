@@ -203,7 +203,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       
       // Calculate optimal iframe width based on screen size
       const screenWidth = window.innerWidth;
-      const swapWidth = screenWidth <= 1500 ? 300 : 380;
+      const swapWidth = screenWidth <= 1500 ? 350 : 380;
       const availableWidth = screenWidth - swapWidth - 50; // 50px for margins/borders
       const iframeWidth = Math.max(1200, availableWidth); // Ensure minimum 1200px for full interface
       
