@@ -506,64 +506,23 @@
   transform-origin: 0 0;
 }
 
-/* Progressive Chart Scaling for All Screen Sizes */
+/* Simple Chart Container - Safe Approach */
 
-/* Large laptops/small monitors (1600px and below) */
-@media (max-width: 1600px) and (min-width: 1441px) {
-  .chart-container {
-    overflow: hidden;
-  }
-  
-  .chart-container iframe {
-    min-width: 1200px;
-    transform-origin: top left;
-    /* No scaling needed - should fit naturally */
-  }
+.chart-container {
+  overflow-x: auto; /* Allow horizontal scroll if needed for zoom edge cases */
+  overflow-y: hidden;
+  position: relative;
 }
 
-/* Standard laptops (1440px and below) */
-@media (max-width: 1440px) and (min-width: 1367px) {
-  .chart-container {
-    overflow: hidden;
-  }
-  
-  .chart-container iframe {
-    transform: scale(0.95);
-    transform-origin: top left;
-    width: 105% !important; /* Compensate for scale */
-    height: 105% !important;
-    min-width: 1200px;
-  }
-}
-
-/* HD Laptops (1366x768 and similar) */
-@media (max-width: 1366px) and (min-width: 1281px) {
-  .chart-container {
-    overflow: hidden;
-  }
-  
-  .chart-container iframe {
-    transform: scale(0.8);
-    transform-origin: top left;
-    width: 125% !important; /* Compensate for scale (1/0.8 = 1.25) */
-    height: 125% !important;
-    min-width: 1200px;
-  }
-}
-
-/* Small laptops (1280px and below) */
-@media (max-width: 1280px) and (min-width: 1025px) {
-  .chart-container {
-    overflow: hidden;
-  }
-  
-  .chart-container iframe {
-    transform: scale(0.75);
-    transform-origin: top left;
-    width: 133% !important; /* Compensate for scale (1/0.75 = 1.33) */
-    height: 133% !important;
-    min-width: 1200px;
-  }
+.chart-container iframe {
+  min-width: 1200px;
+  transform-origin: top left;
+  width: 100% !important;
+  height: 100% !important;
+  border: none;
+  border-radius: 0;
+  background: rgba(0, 0, 0, 0.2);
+  min-height: 400px;
 }
 
 /* LiFi Widget Styling - Compact */

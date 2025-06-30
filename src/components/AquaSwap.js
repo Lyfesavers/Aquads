@@ -286,6 +286,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       if (dexScreenerRef.current) {
         dexScreenerRef.current.innerHTML = '';
         dexScreenerRef.current.appendChild(iframe);
+        
+
       }
       
     } else if (chartProvider === 'dexscreener' && dexScreenerRef.current && !tokenSearch.trim()) {
