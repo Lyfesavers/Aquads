@@ -183,7 +183,7 @@
 
 @media (max-width: 1366px) {
   .swap-section {
-    flex: 0 0 315px; /* Balanced for HD laptops - gives chart ~1001px */
+    flex: 0 0 320px; /* More room for HD laptops - gives chart ~996px */
   }
 }
 

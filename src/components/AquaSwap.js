@@ -218,10 +218,10 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         swapWidth = 290;
         iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // Standard laptops
       } else if (screenWidth >= 1366) {
-        swapWidth = 315;
+        swapWidth = 320;
         iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // HD laptops
       } else {
-        swapWidth = 315;
+        swapWidth = 320;
         iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // Small laptops
       }
       
@@ -323,12 +323,21 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       solanaFeeRecipient: SOLANA_FEE_WALLET,
       suiFeeRecipient: SUI_FEE_WALLET,
     },
-    // Hide branding
-    hiddenUI: ["poweredBy"],
-    // Use compact variant
+    // Hide branding and minimize UI elements
+    hiddenUI: ["poweredBy", "history", "toAddress", "fromAmount"],
+    // Use most compact variant
     variant: "compact",
     // Dark appearance
     appearance: "dark",
+    // Minimize widget size
+    containerStyle: {
+      maxWidth: "100%",
+      padding: "8px",
+    },
+    // Compact design settings
+    design: {
+      compact: true,
+    },
     // Enable URL building for mobile deep linking
     buildUrl: true,
     // Wallet configuration - using partial management for mobile Solana support
