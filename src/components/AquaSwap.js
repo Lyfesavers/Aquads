@@ -196,11 +196,18 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         </div>
       `;
       
-      // Create DEXScreener iframe
+      // Create DEXScreener iframe with responsive width
       const iframe = document.createElement('iframe');
       iframe.id = 'dexscreener-widget';
       iframe.title = 'DEXScreener Trading Chart';
-      iframe.width = '1200';
+      
+      // Calculate optimal iframe width based on screen size
+      const screenWidth = window.innerWidth;
+      const swapWidth = screenWidth <= 1500 ? 300 : 380;
+      const availableWidth = screenWidth - swapWidth - 50; // 50px for margins/borders
+      const iframeWidth = Math.max(1200, availableWidth); // Ensure minimum 1200px for full interface
+      
+      iframe.width = iframeWidth.toString();
       iframe.height = '100%';
       iframe.style.border = 'none';
       iframe.style.borderRadius = '0px';
