@@ -218,10 +218,10 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         swapWidth = 290;
         iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // Standard laptops
       } else if (screenWidth >= 1366) {
-        swapWidth = 340;
+        swapWidth = 330;
         iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // HD laptops
       } else {
-        swapWidth = 340;
+        swapWidth = 330;
         iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // Small laptops
       }
       
