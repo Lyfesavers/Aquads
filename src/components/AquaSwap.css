@@ -183,59 +183,7 @@
 
 @media (max-width: 1366px) {
   .swap-section {
-    flex: 0 0 310px; /* Compact for HD laptops - gives chart ~1006px */
-    padding: 8px 12px 16px 12px; /* Tighter padding */
-  }
-  
-  /* Aggressive compact styling for LiFi widget elements */
-  .swap-section .lifi-widget {
-    font-size: 0.8rem !important;
-  }
-  
-  /* Target LiFi widget internal elements */
-  .swap-section [data-widget] * {
-    font-size: 0.8rem !important;
-  }
-  
-  .swap-section [data-widget] button {
-    padding: 4px 8px !important;
-    font-size: 0.75rem !important;
-    border-radius: 6px !important;
-  }
-  
-  .swap-section [data-widget] input {
-    padding: 6px 8px !important;
-    font-size: 0.8rem !important;
-  }
-  
-  .swap-section [data-widget] .MuiInputBase-root {
-    padding: 4px 8px !important;
-    font-size: 0.8rem !important;
-  }
-  
-  .swap-section [data-widget] .MuiButton-root {
-    padding: 4px 12px !important;
-    font-size: 0.75rem !important;
-    min-width: auto !important;
-  }
-  
-  .swap-section [data-widget] .MuiTypography-root {
-    font-size: 0.8rem !important;
-  }
-  
-  /* Compact spacing */
-  .swap-section [data-widget] > * {
-    margin: 4px 0 !important;
-  }
-  
-  .swap-section .swap-footer {
-    margin-top: 6px;
-    padding: 4px;
-  }
-  
-  .swap-section .swap-footer p {
-    font-size: 0.65rem;
-    line-height: 1.1;
+    flex: 0 0 315px; /* Balanced for HD laptops - gives chart ~1001px */
   }
 }
 
