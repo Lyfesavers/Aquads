@@ -191,6 +191,11 @@
   .swap-section::-webkit-scrollbar {
     display: none; /* Chrome/Safari/Webkit */
   }
+  
+  /* Maximize chart height on smaller screens */
+  .chart-container {
+    height: calc(100vh - 120px); /* Less header space on smaller screens */
+  }
 }
 
 /* Right Side - Charts */
@@ -502,6 +507,7 @@
   overflow: hidden;
   position: relative;
   min-height: 400px;
+  height: calc(100vh - 140px); /* Fill available screen height minus header */
   display: flex;
   flex-direction: column;
 }
