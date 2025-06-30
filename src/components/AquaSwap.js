@@ -209,19 +209,19 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         swapWidth = 380;
         iframeWidth = '1200'; // Large monitors - works perfectly
       } else if (screenWidth >= 1920) {
-        swapWidth = 280;
+        swapWidth = 320;
         iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // Full HD
       } else if (screenWidth >= 1600) {
-        swapWidth = 260;
+        swapWidth = 300;
         iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // Large laptops
       } else if (screenWidth >= 1440) {
-        swapWidth = 240;
+        swapWidth = 290;
         iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // Standard laptops
       } else if (screenWidth >= 1366) {
-        swapWidth = 220;
+        swapWidth = 280;
         iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // HD laptops
       } else {
-        swapWidth = 220;
+        swapWidth = 280;
         iframeWidth = Math.max(1200, screenWidth - swapWidth - 50).toString(); // Small laptops
       }
       

@@ -162,28 +162,28 @@
   min-height: 600px;
 }
 
-/* Aggressively reduce swap width on smaller screens to give chart more space */
+/* Balanced swap width reduction - keeps swap usable while maximizing chart space */
 @media (max-width: 1920px) {
   .swap-section {
-    flex: 0 0 280px; /* Reduce for Full HD */
+    flex: 0 0 320px; /* Reduce for Full HD - gives chart ~1550px */
   }
 }
 
 @media (max-width: 1600px) {
   .swap-section {
-    flex: 0 0 260px; /* Reduce for large laptops */
+    flex: 0 0 300px; /* Reduce for large laptops - gives chart ~1250px */
   }
 }
 
 @media (max-width: 1440px) {
   .swap-section {
-    flex: 0 0 240px; /* Reduce for standard laptops */
+    flex: 0 0 290px; /* Reduce for standard laptops - gives chart ~1100px */
   }
 }
 
 @media (max-width: 1366px) {
   .swap-section {
-    flex: 0 0 220px; /* Minimal for HD laptops - gives chart ~1146px */
+    flex: 0 0 280px; /* Balanced for HD laptops - gives chart ~1036px */
   }
 }
 
