@@ -1096,8 +1096,11 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                                   <h4 className="font-medium">
                                     {service.seller?.username}
                                     {service.isPremium && (
-                                      <span className="inline-flex items-center justify-center ml-1 w-4 h-4 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full">
-                                        <FaCheck className="text-white text-xs" />
+                                      <span className="inline-flex items-center ml-1 gap-1">
+                                        <span className="text-yellow-500 text-sm font-medium">verified</span>
+                                        <span className="inline-flex items-center justify-center w-4 h-4 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full">
+                                          <FaCheck className="text-white text-xs" />
+                                        </span>
                                       </span>
                                     )}
                                     {service.seller?.country && (
