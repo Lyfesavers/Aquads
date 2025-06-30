@@ -163,15 +163,47 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const { getUserStatus, bulkUpdateUserStatuses } = useUserStatusUpdates(currentUser);
 
   const categories = [
+    // Web3/Crypto Categories
     { id: 'smart-contract', name: 'Smart Contract', icon: '📝' },
     { id: 'audit', name: 'Audit', icon: '🔍' },
-    { id: 'marketing', name: 'Marketing', icon: '📈' },
-    { id: 'community', name: 'Community', icon: '👥' },
-    { id: 'web3', name: 'Web3', icon: '🌐' },
     { id: 'tokenomics', name: 'Tokenomics', icon: '📊' },
-    { id: 'writing', name: 'Writing', icon: '✍️' },
+    { id: 'web3', name: 'Web3', icon: '🌐' },
+    { id: 'community', name: 'Community', icon: '👥' },
+    // Development Categories
+    { id: 'web-developer', name: 'Web Developer', icon: '💻' },
+    { id: 'mobile-developer', name: 'Mobile Developer', icon: '📱' },
+    { id: 'software-developer', name: 'Software Developer', icon: '⚡' },
+    { id: 'database-admin', name: 'Database Admin', icon: '🗄️' },
+    { id: 'devops-engineer', name: 'DevOps Engineer', icon: '⚙️' },
+    { id: 'qa-tester', name: 'QA Tester', icon: '🔬' },
+    // Design Categories
+    { id: 'ui-ux-designer', name: 'UI/UX Designer', icon: '🎨' },
+    { id: 'graphic-designer', name: 'Graphic Designer', icon: '🖌️' },
+    { id: 'web-designer', name: 'Web Designer', icon: '🖥️' },
+    { id: 'logo-designer', name: 'Logo Designer', icon: '🎯' },
+    { id: 'video-editor', name: 'Video Editor', icon: '🎬' },
+    { id: 'photographer', name: 'Photographer', icon: '📸' },
+    // Marketing Categories
+    { id: 'marketing', name: 'Marketing', icon: '📈' },
+    { id: 'seo-specialist', name: 'SEO Specialist', icon: '🔍' },
+    { id: 'social-media-manager', name: 'Social Media Manager', icon: '📲' },
+    { id: 'content-creator', name: 'Content Creator', icon: '📹' },
+    { id: 'copywriter', name: 'Copywriter', icon: '✍️' },
+    { id: 'email-marketing', name: 'Email Marketing', icon: '📧' },
+    { id: 'ppc-specialist', name: 'PPC Specialist', icon: '💰' },
+    // Business/Admin Categories
+    { id: 'virtual-assistant', name: 'Virtual Assistant', icon: '🤝' },
+    { id: 'project-manager', name: 'Project Manager', icon: '📋' },
+    { id: 'data-analyst', name: 'Data Analyst', icon: '📊' },
+    { id: 'business-analyst', name: 'Business Analyst', icon: '💼' },
+    { id: 'customer-support', name: 'Customer Support', icon: '🎧' },
+    { id: 'sales-specialist', name: 'Sales Specialist', icon: '💪' },
+    // Content/Writing Categories
+    { id: 'writing', name: 'Writing', icon: '📝' },
+    { id: 'technical-writer', name: 'Technical Writer', icon: '📖' },
+    { id: 'translator', name: 'Translator', icon: '🌍' },
+    { id: 'voice-over', name: 'Voice Over', icon: '🎤' },
     { id: 'consulting', name: 'Consulting', icon: '💡' },
-    { id: 'graphic-designer', name: 'Graphic Designer', icon: '🎨' },
     { id: 'other', name: 'Other', icon: '🔧' }
   ];
 

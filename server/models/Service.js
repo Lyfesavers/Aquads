@@ -14,15 +14,47 @@ const serviceSchema = new mongoose.Schema({
     type: String,
     required: true,
     enum: [
+      // Web3/Crypto Categories
       'smart-contract',
       'audit',
-      'marketing',
-      'community',
-      'web3',
       'tokenomics',
-      'writing',
-      'consulting',
+      'web3',
+      'community',
+      // Development Categories
+      'web-developer',
+      'mobile-developer',
+      'software-developer',
+      'database-admin',
+      'devops-engineer',
+      'qa-tester',
+      // Design Categories
+      'ui-ux-designer',
       'graphic-designer',
+      'web-designer',
+      'logo-designer',
+      'video-editor',
+      'photographer',
+      // Marketing Categories
+      'marketing',
+      'seo-specialist',
+      'social-media-manager',
+      'content-creator',
+      'copywriter',
+      'email-marketing',
+      'ppc-specialist',
+      // Business/Admin Categories
+      'virtual-assistant',
+      'project-manager',
+      'data-analyst',
+      'business-analyst',
+      'customer-support',
+      'sales-specialist',
+      // Content/Writing Categories
+      'writing',
+      'technical-writer',
+      'translator',
+      'voice-over',
+      'consulting',
       'other'
     ]
   },
