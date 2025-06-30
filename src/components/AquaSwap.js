@@ -196,29 +196,11 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         </div>
       `;
       
-      // Create DEXScreener iframe with responsive width
+      // Create DEXScreener iframe
       const iframe = document.createElement('iframe');
       iframe.id = 'dexscreener-widget';
       iframe.title = 'DEXScreener Trading Chart';
-      
-      // Calculate optimal iframe width based on screen size with progressive breakpoints
-      const screenWidth = window.innerWidth;
-      let swapWidth;
-      
-      if (screenWidth <= 1366) {
-        swapWidth = 320; // HD laptops
-      } else if (screenWidth <= 1440) {
-        swapWidth = 340; // Standard laptops
-      } else if (screenWidth <= 1600) {
-        swapWidth = 360; // Large laptops/small monitors
-      } else {
-        swapWidth = 380; // Large monitors
-      }
-      
-      const availableWidth = screenWidth - swapWidth - 50; // 50px for margins/borders
-      const iframeWidth = Math.max(1200, availableWidth); // Ensure minimum 1200px for full interface
-      
-      iframe.width = iframeWidth.toString();
+      iframe.width = '1200';
       iframe.height = '100%';
       iframe.style.border = 'none';
       iframe.style.borderRadius = '0px';
@@ -286,8 +268,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       if (dexScreenerRef.current) {
         dexScreenerRef.current.innerHTML = '';
         dexScreenerRef.current.appendChild(iframe);
-        
-
       }
       
     } else if (chartProvider === 'dexscreener' && dexScreenerRef.current && !tokenSearch.trim()) {
