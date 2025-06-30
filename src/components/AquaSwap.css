@@ -162,10 +162,22 @@
   min-height: 600px;
 }
 
-/* Responsive swap section for smaller screens */
-@media (max-width: 1500px) {
+/* Responsive swap section - Progressive sizing */
+@media (max-width: 1600px) {
   .swap-section {
-    flex: 0 0 350px; /* Balanced reduction - keeps swap usable while giving chart more space */
+    flex: 0 0 360px; /* Slight reduction for mid-range screens */
+  }
+}
+
+@media (max-width: 1440px) {
+  .swap-section {
+    flex: 0 0 340px; /* More reduction for smaller laptops */
+  }
+}
+
+@media (max-width: 1366px) {
+  .swap-section {
+    flex: 0 0 320px; /* Compact for HD laptops */
   }
 }
 
@@ -494,37 +506,63 @@
   transform-origin: 0 0;
 }
 
-/* Scale iframe content for smaller screens to ensure full interface */
-@media (max-width: 1500px) {
+/* Progressive Chart Scaling for All Screen Sizes */
+
+/* Large laptops/small monitors (1600px and below) */
+@media (max-width: 1600px) and (min-width: 1441px) {
   .chart-container {
-    overflow: hidden; /* Hide any overflow from scaling */
+    overflow: hidden;
   }
   
   .chart-container iframe {
-    /* Allow iframe to be wider than container and scale down */
     min-width: 1200px;
     transform-origin: top left;
+    /* No scaling needed - should fit naturally */
   }
 }
 
-/* Conservative scaling for smaller screens */
-@media (max-width: 1366px) {
+/* Standard laptops (1440px and below) */
+@media (max-width: 1440px) and (min-width: 1367px) {
+  .chart-container {
+    overflow: hidden;
+  }
+  
   .chart-container iframe {
-    /* More conservative scale to prevent cut-offs */
-    transform: scale(0.9);
+    transform: scale(0.95);
     transform-origin: top left;
-    width: 111% !important; /* Compensate for scale (1/0.9 = 1.11) */
-    height: 111% !important; /* Compensate for scale */
+    width: 105% !important; /* Compensate for scale */
+    height: 105% !important;
+    min-width: 1200px;
   }
 }
 
-/* Very small screens - even more conservative */
-@media (max-width: 1280px) {
+/* HD Laptops (1366x768 and similar) */
+@media (max-width: 1366px) and (min-width: 1281px) {
+  .chart-container {
+    overflow: hidden;
+  }
+  
   .chart-container iframe {
-    transform: scale(0.85);
+    transform: scale(0.8);
     transform-origin: top left;
-    width: 118% !important; /* Compensate for scale (1/0.85 = 1.18) */
-    height: 118% !important; /* Compensate for scale */
+    width: 125% !important; /* Compensate for scale (1/0.8 = 1.25) */
+    height: 125% !important;
+    min-width: 1200px;
+  }
+}
+
+/* Small laptops (1280px and below) */
+@media (max-width: 1280px) and (min-width: 1025px) {
+  .chart-container {
+    overflow: hidden;
+  }
+  
+  .chart-container iframe {
+    transform: scale(0.75);
+    transform-origin: top left;
+    width: 133% !important; /* Compensate for scale (1/0.75 = 1.33) */
+    height: 133% !important;
+    min-width: 1200px;
   }
 }
 
@@ -639,8 +677,8 @@
 
   .chart-container iframe {
     min-height: 350px;
-    min-width: 0; /* Reset min-width on mobile to prevent horizontal scroll */
-    transform: scale(1) !important; /* Reset scaling on mobile */
+    min-width: 0 !important; /* Reset min-width on mobile */
+    transform: scale(1) !important; /* Reset all scaling on mobile */
     width: 100% !important; /* Reset width on mobile */
     height: 100% !important; /* Reset height on mobile */
   }
