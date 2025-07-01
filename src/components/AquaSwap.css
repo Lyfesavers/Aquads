@@ -363,21 +363,10 @@
   gap: 6px;
   align-items: center;
   height: 100%;
-  animation: scrollPopularTokens 30s linear infinite;
   padding: 0 8px;
-}
-
-.popular-tokens-scroll:hover {
-  animation-play-state: paused;
-}
-
-@keyframes scrollPopularTokens {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
+  will-change: transform;
+  width: max-content;
+  /* JavaScript handles the smooth scrolling */
 }
 
 .popular-tokens-container::before,
