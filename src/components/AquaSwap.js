@@ -29,7 +29,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
   const tradingViewRef = useRef(null);
   const dexScreenerRef = useRef(null);
-  const scrollContainerRef = useRef(null);
 
   // Initialize on component mount
   useEffect(() => {
@@ -53,17 +52,21 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         
         const ads = await response.json();
         
-        // Filter to only include bumped ads with valid data
+        // Filter out pending and rejected ads, then sort by bumped status and bullish votes
         const validAds = ads.filter(ad => 
           ad.status !== 'pending' && 
           ad.status !== 'rejected' &&
           ad.pairAddress && 
-          ad.pairAddress.trim() !== '' &&
-          ad.isBumped === true  // Only include bumped tokens in trending
+          ad.pairAddress.trim() !== ''
         );
         
-        // Sort by bullish votes (highest first) since all are already bumped
+        // Sort using the same logic as main bubble display: bumped first, then by bullish votes
         const sortedAds = validAds.sort((a, b) => {
+          // First prioritize bumped bubbles - all bumped bubbles come before unbumped ones
+          if (a.isBumped && !b.isBumped) return -1;
+          if (!a.isBumped && b.isBumped) return 1;
+          
+          // Then sort by bullish votes (highest first)
           return (b.bullishVotes || 0) - (a.bullishVotes || 0);
         });
         
@@ -94,61 +97,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
     fetchBubbleTokens();
   }, []);
-
-  // Smooth infinite scrolling for trending tokens
-  useEffect(() => {
-    if (!scrollContainerRef.current || popularTokens.length === 0) return;
-
-    const container = scrollContainerRef.current;
-    let animationId;
-    let scrollPosition = 0;
-    const scrollSpeed = 0.5; // pixels per frame
-
-    const smoothScroll = () => {
-      if (!container) return;
-
-      scrollPosition += scrollSpeed;
-      
-      // Calculate the width of one set of tokens (first half)
-      const containerWidth = container.scrollWidth / 2;
-      
-      // Reset position when we've scrolled past the first set
-      if (scrollPosition >= containerWidth) {
-        scrollPosition = 0;
-      }
-      
-      container.style.transform = `translateX(-${scrollPosition}px)`;
-      animationId = requestAnimationFrame(smoothScroll);
-    };
-
-    // Start the animation
-    animationId = requestAnimationFrame(smoothScroll);
-
-    // Pause on hover
-    const handleMouseEnter = () => {
-      if (animationId) {
-        cancelAnimationFrame(animationId);
-      }
-    };
-
-    const handleMouseLeave = () => {
-      animationId = requestAnimationFrame(smoothScroll);
-    };
-
-    container.addEventListener('mouseenter', handleMouseEnter);
-    container.addEventListener('mouseleave', handleMouseLeave);
-
-    // Cleanup
-    return () => {
-      if (animationId) {
-        cancelAnimationFrame(animationId);
-      }
-      if (container) {
-        container.removeEventListener('mouseenter', handleMouseEnter);
-        container.removeEventListener('mouseleave', handleMouseLeave);
-      }
-    };
-  }, [popularTokens]);
 
   // Convert blockchain names to chain format
   const getChainForBlockchain = (blockchain) => {
@@ -783,7 +731,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                 <div className="popular-tokens">
                   <span className="popular-label">Trending:</span>
                   <div className="popular-tokens-container">
-                    <div className="popular-tokens-scroll" ref={scrollContainerRef}>
+                    <div className="popular-tokens-scroll">
                       {/* Duplicate tokens for seamless scrolling */}
                       {popularTokens.concat(popularTokens).map((token, index) => {
                         // Calculate the original rank (1-10) for display
