@@ -10,6 +10,20 @@ const SOLANA_FEE_WALLET = process.env.REACT_APP_SOLANA_FEE_WALLET;
 const SUI_FEE_WALLET = process.env.REACT_APP_SUI_FEE_WALLET;
 
 const AquaSwapEmbed = () => {
+  const [embedOptions, setEmbedOptions] = useState({
+    hideLogo: false
+  });
+
+  // Parse URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const hideLogo = urlParams.get('hideLogo') === 'true';
+    
+    setEmbedOptions({
+      hideLogo
+    });
+  }, []);
+
   // LiFi Widget configuration optimized for embedding
   const widgetConfig = {
     integrator: "aquaswap-embed",
@@ -82,18 +96,30 @@ const AquaSwapEmbed = () => {
 
   return (
     <div className="aquaswap-embed-container">
-      {/* Compact header */}
-      <div className="embed-header">
-        <div className="embed-title">
-          <img 
-            src="/AquaSwap.svg" 
-            alt="AquaSwap" 
-            className="embed-logo" 
-            width="20" 
-            height="20"
-          />
-          <span>AquaSwap</span>
+      {/* Compact header - only show if logo is not hidden */}
+      {!embedOptions.hideLogo && (
+        <div className="embed-header">
+          <div className="embed-title">
+            <img 
+              src="/AquaSwap.svg" 
+              alt="AquaSwap" 
+              className="embed-logo" 
+              width="20" 
+              height="20"
+            />
+            <span>AquaSwap</span>
+          </div>
         </div>
+      )}
+
+      {/* Swap Widget */}
+      <div className="embed-widget">
+        <LiFiWidget integrator="aquaswap-embed" config={widgetConfig} />
+      </div>
+
+      {/* Footer with Powered by Aquads and description */}
+      <div className="embed-footer">
+        <p>Cross-chain swaps across 38+ blockchains</p>
         <a 
           href="https://www.aquads.xyz/aquaswap" 
           target="_blank" 
@@ -102,16 +128,6 @@ const AquaSwapEmbed = () => {
         >
           Powered by Aquads
         </a>
-      </div>
-
-      {/* Swap Widget */}
-      <div className="embed-widget">
-        <LiFiWidget integrator="aquaswap-embed" config={widgetConfig} />
-      </div>
-
-      {/* Footer */}
-      <div className="embed-footer">
-        <p>Cross-chain swaps across 38+ blockchains</p>
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ const EmbedCodeGenerator = () => {
   const [showCopied, setShowCopied] = useState(false);
   const [customWidth, setCustomWidth] = useState('400');
   const [customHeight, setCustomHeight] = useState('600');
+  const [hideLogo, setHideLogo] = useState(false);
   const textareaRef = useRef(null);
 
   // Predefined sizes
@@ -24,7 +25,17 @@ const EmbedCodeGenerator = () => {
 
   // Generate embed code
   const generateEmbedCode = () => {
-    const embedUrl = `${window.location.origin}/embed/aquaswap`;
+    let embedUrl = `${window.location.origin}/embed/aquaswap`;
+    
+    // Add parameters if needed
+    const params = new URLSearchParams();
+    if (hideLogo) {
+      params.append('hideLogo', 'true');
+    }
+    
+    if (params.toString()) {
+      embedUrl += `?${params.toString()}`;
+    }
     
     return `<!-- AquaSwap Embed Code -->
 <iframe 
@@ -186,6 +197,23 @@ const EmbedCodeGenerator = () => {
             </div>
           </div>
         )}
+
+        {/* Branding Options */}
+        <div className="branding-options">
+          <label className="option-label">Branding Options:</label>
+          <div className="checkbox-option">
+            <input
+              type="checkbox"
+              id="hideLogo"
+              checked={hideLogo}
+              onChange={(e) => setHideLogo(e.target.checked)}
+              className="checkbox-input"
+            />
+            <label htmlFor="hideLogo" className="checkbox-label">
+              Hide AquaSwap logo (keep "Powered by Aquads" at bottom)
+            </label>
+          </div>
+        </div>
       </div>
 
       {/* Preview */}
@@ -193,7 +221,7 @@ const EmbedCodeGenerator = () => {
         <h4>Preview:</h4>
         <div className="preview-container" style={{ width: width === '100%' ? '100%' : `${width}px` }}>
           <iframe
-            src={`${window.location.origin}/embed/aquaswap`}
+            src={`${window.location.origin}/embed/aquaswap${hideLogo ? '?hideLogo=true' : ''}`}
             width={width}
             height={height}
             frameBorder="0"
