@@ -242,17 +242,19 @@
   background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: #ffffff;
-  padding: 6px 10px;
-  border-radius: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 500;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  gap: 4px;
-  flex-direction: column;
-  min-width: 70px;
+  gap: 2px;
+  flex-direction: row;
+  min-width: 50px;
+  height: 28px;
+  white-space: nowrap;
 }
 
 .provider-btn:hover {
@@ -267,9 +269,10 @@
 }
 
 .provider-desc {
-  font-size: 0.7rem;
-  opacity: 0.8;
-  margin-top: 2px;
+  font-size: 0.65rem;
+  opacity: 0.7;
+  margin-left: 4px;
+  display: none; /* Hide description in compact mode */
 }
 
 /* Chart search section - more compact */
@@ -601,6 +604,7 @@
     flex-direction: row;
     justify-content: center;
     min-width: auto;
+    height: 28px;
   }
 }
 
@@ -649,8 +653,10 @@
   }
   
   .provider-btn {
-    font-size: 0.75rem;
-    padding: 4px 8px;
+    font-size: 0.7rem;
+    padding: 3px 10px;
+    height: 26px;
+    border-radius: 18px;
   }
   
   .popular-tokens-container::before,
