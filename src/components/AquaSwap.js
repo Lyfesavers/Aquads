@@ -402,8 +402,10 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         ← Back to Main
       </button>
 
-      {/* Banner Display */}
-      <BannerDisplay />
+      {/* Banner Display - only show on mobile */}
+      <div className="banner-mobile-only">
+        <BannerDisplay />
+      </div>
 
         {/* Title */}
       <div className="page-title">
@@ -457,6 +459,11 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           </div>
           <div className="swap-footer">
             <p>✨ Cross-chain swaps • 38+ blockchains • Best rates</p>
+          </div>
+          
+          {/* Banner Display - smaller version below swap for desktop/tablet only */}
+          <div className="banner-below-swap">
+            <BannerDisplay />
           </div>
         </div>
 
