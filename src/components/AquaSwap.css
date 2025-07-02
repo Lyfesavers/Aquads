@@ -557,7 +557,8 @@
 }
 
 .banner-below-swap {
-  margin: 5px 0;
+  margin: 0;
+  padding: 0;
   width: 100%;
   max-width: 100%;
   transform: scale(1.05);
@@ -568,8 +569,14 @@
 
 .banner-below-swap > div {
   margin: 0 !important;
+  padding: 0 !important;
   border-radius: 6px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.banner-below-swap * {
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 /* LiFi Widget container optimization */
