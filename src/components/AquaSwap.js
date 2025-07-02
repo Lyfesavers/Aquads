@@ -171,27 +171,16 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         "hide_legend": false,
         "hide_side_toolbar": false,
         "save_image": true,
-        "container_id": "tradingview_widget",
+        "container_id": "aquaswap_tradingview_pro",
         "toolbar_bg": "#1f2937",
         "withdateranges": true,
         "allow_symbol_change": true,
         "details": true,
         "hotlist": true,
         "calendar": true,
-        // Professional Technical Indicators
+        // Clean chart - only essential volume indicator
         "studies": [
-          "Volume@tv-basicstudies",
-          "MACD@tv-basicstudies", 
-          "RSI@tv-basicstudies",
-          "BB@tv-basicstudies",
-          "StochasticRSI@tv-basicstudies",
-          "EMA@tv-basicstudies",
-          "SMA@tv-basicstudies",
-          "Ichimoku@tv-basicstudies",
-          "ATR@tv-basicstudies",
-          "CCI@tv-basicstudies",
-          "Williams %R@tv-basicstudies",
-          "Ultimate Oscillator@tv-basicstudies"
+          "Volume@tv-basicstudies"
         ],
         "show_popup_button": true,
         "popup_width": "1600",
@@ -231,35 +220,39 @@ const AquaSwap = ({ currentUser, showNotification }) => {
             { "name": "Arrow" }
           ]
         },
-        // Maximum Professional Features Enabled
+        // Maximum Professional Features + Enhanced Persistence
         "enabled_features": [
+          // User Settings Persistence - Core Features
           "study_templates",
-          "use_localstorage_for_settings",
+          "use_localstorage_for_settings", 
           "save_chart_properties_to_local_storage",
           "chart_property_page_style",
+          "header_saveload",
+          "create_volume_indicator_by_default_once",
+          
+          // Chart Customization Persistence
           "popup_hints",
-          "show_chart_property_page",
+          "show_chart_property_page", 
           "chart_crosshair_menu",
           "header_chart_type",
           "header_compare",
           "header_undo_redo",
           "header_screenshot",
           "header_widget_dom_node",
-          "header_saveload",
           "study_on_study",
           "side_toolbar_in_fullscreen_mode",
           "header_layouttoggle",
           "legend_context_menu",
           "show_logo_on_all_charts",
           "caption_buttons_text_if_possible",
-          "create_volume_indicator_by_default",
-          "create_volume_indicator_by_default_once",
           "volume_force_overlay",
           "right_bar_stays_on_scroll",
           "constraint_dialogs_movement",
           "show_dialog_on_snapshot_ready",
           "study_market_minimized",
           "study_dialog_search_control",
+          
+          // Enhanced User Experience
           "header_fullscreen_button",
           "header_symbol_search",
           "symbol_search_hot_key",
@@ -272,7 +265,10 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           "header_settings",
           "header_chart_type",
           "header_screenshot",
-          "header_widget_dom_node"
+          "header_widget_dom_node",
+          
+          // Additional Persistence Features
+          "items_favoriting"
         ],
         "disabled_features": [],
         // Professional Chart Styling and Overrides
@@ -616,7 +612,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                   className={`provider-btn ${chartProvider === 'dexscreener' ? 'active' : ''}`}
                   onClick={() => setChartProvider('dexscreener')}
                 >
-                  🔍 DEXScreener
+                  🔍 DEXtrader
                   <span className="provider-desc">Charts</span>
                 </button>
               </div>
@@ -908,7 +904,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
             {chartProvider === 'tradingview' && (
               <div 
                 ref={tradingViewRef}
-                id="tradingview_widget" 
+                id="aquaswap_tradingview_pro" 
                 style={{ height: '100%', width: '100%' }}
               />
             )}
