@@ -557,18 +557,19 @@
 }
 
 .banner-below-swap {
-  margin-top: 16px;
+  margin-top: 8px;
   width: 100%;
   max-width: 100%;
-  transform: scale(0.7);
+  transform: scale(0.95);
   transform-origin: top center;
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
 .banner-below-swap > div {
   margin: 0 !important;
-  border-radius: 8px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* LiFi Widget container optimization */
