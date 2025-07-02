@@ -537,6 +537,7 @@
 /* Swap footer - much smaller */
 .swap-footer {
   margin-top: 12px;
+  margin-bottom: 4px;
   padding: 8px;
   background: rgba(0, 0, 0, 0.1);
   border-radius: 6px;
@@ -557,14 +558,15 @@
 }
 
 .banner-below-swap {
-  margin: 0;
+  margin: 2px 0;
   padding: 0;
   width: 100%;
   max-width: 100%;
-  transform: scale(1.05);
-  transform-origin: top center;
+  transform: scale(1.0);
+  transform-origin: center center;
   overflow: hidden;
   border-radius: 6px;
+  line-height: 1;
 }
 
 .banner-below-swap > div {
@@ -572,11 +574,13 @@
   padding: 0 !important;
   border-radius: 6px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  line-height: 1 !important;
 }
 
 .banner-below-swap * {
   margin: 0 !important;
   padding: 0 !important;
+  line-height: 1 !important;
 }
 
 /* LiFi Widget container optimization */
