@@ -22,6 +22,7 @@ const FALLBACK_TOKEN_EXAMPLES = [];
 const AquaSwap = ({ currentUser, showNotification }) => {
   const navigate = useNavigate();
   const [chartProvider, setChartProvider] = useState('tradingview');
+  const terminalRef = useRef(null);
   const [tokenSearch, setTokenSearch] = useState('');
   const [selectedChain, setSelectedChain] = useState('ether');
   const [showEmbedCode, setShowEmbedCode] = useState(false);
@@ -145,13 +146,13 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     return mappedChain;
   };
 
-  // Load TradingView widget
+  // Load TradingView Advanced Chart Widget with full trading capabilities
   useEffect(() => {
     if (chartProvider === 'tradingview' && tradingViewRef.current) {
       // Clear previous widget
       tradingViewRef.current.innerHTML = '';
       
-      // Create TradingView widget
+      // Create TradingView Advanced Chart widget with trading capabilities
       const script = document.createElement('script');
       script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
       script.type = 'text/javascript';
@@ -159,24 +160,210 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       script.innerHTML = JSON.stringify({
         "autosize": true,
         "symbol": "BTCUSDT",
-        "interval": "D",
+        "interval": "15",
         "timezone": "Etc/UTC",
         "theme": "dark",
         "style": "1",
         "locale": "en",
-        "enable_publishing": false,
+        "enable_publishing": true,
         "backgroundColor": "rgba(17, 24, 39, 1)",
         "gridColor": "rgba(255, 255, 255, 0.1)",
         "hide_top_toolbar": false,
         "hide_legend": false,
-        "save_image": false,
+        "hide_side_toolbar": false,
+        "save_image": true,
         "container_id": "tradingview_widget",
         "toolbar_bg": "#1f2937",
         "withdateranges": true,
-        "allow_symbol_change": true
+        "allow_symbol_change": true,
+        "details": true,
+        "hotlist": true,
+        "calendar": true,
+        "studies": [
+          "Volume@tv-basicstudies",
+          "MACD@tv-basicstudies", 
+          "RSI@tv-basicstudies",
+          "BB@tv-basicstudies",
+          "StochasticRSI@tv-basicstudies"
+        ],
+        "show_popup_button": true,
+        "popup_width": "1400",
+        "popup_height": "900",
+        "no_referral_id": false,
+        "watchlist": [
+          "BTCUSDT", "ETHUSDT", "ADAUSDT", "SOLUSDT", "MATICUSDT",
+          "DOGEUSDT", "AVAXUSDT", "ATOMUSDT", "LINKUSDT", "UNIUSDT",
+          "LTCUSDT", "BCHUSDT", "XLMUSDT", "DOTUSDT", "FILUSDT"
+        ],
+        "news": ["stocktwits", "twitter"],
+        "customer": "tradingview",
+        "support_host": "https://www.tradingview.com",
+        "drawings_access": {
+          "type": "black",
+          "tools": [
+            {
+              "name": "Regression Trend"
+            }
+          ]
+        },
+        "enabled_features": [
+          "study_templates",
+          "use_localstorage_for_settings",
+          "save_chart_properties_to_local_storage",
+          "chart_property_page_style",
+          "popup_hints",
+          "show_chart_property_page",
+          "chart_crosshair_menu",
+          "header_chart_type",
+          "header_compare",
+          "header_undo_redo",
+          "header_screenshot",
+          "header_widget_dom_node",
+          "header_saveload",
+          "study_on_study",
+          "side_toolbar_in_fullscreen_mode",
+          "header_layouttoggle"
+        ],
+        "disabled_features": [],
+        "overrides": {
+          "mainSeriesProperties.style": 1,
+          "mainSeriesProperties.showCountdown": true,
+          "symbolWatermarkProperties.transparency": 90,
+          "volumePaneSize": "medium"
+        }
       });
       
       tradingViewRef.current.appendChild(script);
+    }
+  }, [chartProvider]);
+
+  // Load TradingView Trading Terminal with full trading capabilities
+  useEffect(() => {
+    if (chartProvider === 'terminal' && terminalRef.current) {
+      // Clear previous widget
+      terminalRef.current.innerHTML = '';
+      
+      // Create TradingView Trading Terminal widget - Full Professional Trading Interface
+      const script = document.createElement('script');
+      script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+      script.type = 'text/javascript';
+      script.async = true;
+      script.innerHTML = JSON.stringify({
+        "autosize": true,
+        "symbol": "BTCUSDT",
+        "interval": "5",
+        "timezone": "Etc/UTC",
+        "theme": "dark",
+        "style": "1",
+        "locale": "en",
+        "enable_publishing": true,
+        "backgroundColor": "rgba(17, 24, 39, 1)",
+        "gridColor": "rgba(255, 255, 255, 0.1)",
+        "hide_top_toolbar": false,
+        "hide_legend": false,
+        "hide_side_toolbar": false,
+        "save_image": true,
+        "container_id": "tradingview_terminal",
+        "toolbar_bg": "#1f2937",
+        "withdateranges": true,
+        "allow_symbol_change": true,
+        "details": true,
+        "hotlist": true,
+        "calendar": true,
+        "studies": [
+          "Volume@tv-basicstudies",
+          "MACD@tv-basicstudies", 
+          "RSI@tv-basicstudies",
+          "BB@tv-basicstudies",
+          "StochasticRSI@tv-basicstudies",
+          "EMA@tv-basicstudies",
+          "Ichimoku@tv-basicstudies"
+        ],
+        "show_popup_button": true,
+        "popup_width": "1600",
+        "popup_height": "1000",
+        "no_referral_id": false,
+        "watchlist": [
+          "BTCUSDT", "ETHUSDT", "ADAUSDT", "SOLUSDT", "MATICUSDT", 
+          "DOGEUSDT", "AVAXUSDT", "ATOMUSDT", "LINKUSDT", "UNIUSDT",
+          "LTCUSDT", "BCHUSDT", "XLMUSDT", "VETUSDT", "FILUSDT",
+          "BNBUSDT", "XRPUSDT", "TRXUSDT", "NEARUSDT", "APTUSDT"
+        ],
+        "news": ["stocktwits", "twitter"],
+        "support_host": "https://www.tradingview.com",
+        "customer": "tradingview",
+        "container_id": "tradingview_terminal",
+        "enabled_features": [
+          "study_templates",
+          "use_localstorage_for_settings",
+          "save_chart_properties_to_local_storage",
+          "chart_property_page_style",
+          "popup_hints",
+          "show_chart_property_page",
+          "chart_crosshair_menu",
+          "header_chart_type",
+          "header_compare",
+          "header_undo_redo",
+          "header_screenshot",
+          "header_widget_dom_node",
+          "header_saveload",
+          "study_on_study",
+          "side_toolbar_in_fullscreen_mode",
+          "header_layouttoggle",
+          "legend_context_menu",
+          "show_logo_on_all_charts",
+          "caption_buttons_text_if_possible",
+          "create_volume_indicator_by_default",
+          "create_volume_indicator_by_default_once",
+          "volume_force_overlay",
+          "right_bar_stays_on_scroll",
+          "constraint_dialogs_movement",
+          "charting_library_debug_mode",
+          "show_dialog_on_snapshot_ready",
+          "study_market_minimized",
+          "study_dialog_search_control",
+          "side_toolbar_in_fullscreen_mode"
+        ],
+        "disabled_features": [
+          "left_toolbar"
+        ],
+        "drawings_access": {
+          "type": "black",
+          "tools": [
+            {
+              "name": "Regression Trend"
+            },
+            {
+              "name": "Trend Line"
+            },
+            {
+              "name": "Horizontal Line"
+            },
+            {
+              "name": "Vertical Line"
+            },
+            {
+              "name": "Rectangle"
+            },
+            {
+              "name": "Ellipse"
+            }
+          ]
+        },
+        "overrides": {
+          "mainSeriesProperties.style": 1,
+          "mainSeriesProperties.showCountdown": true,
+          "symbolWatermarkProperties.transparency": 90,
+          "volumePaneSize": "medium",
+          "scalesProperties.showLeftScale": false,
+          "scalesProperties.showRightScale": true,
+          "scalesProperties.backgroundColor": "rgba(17, 24, 39, 0.8)",
+          "paneProperties.background": "rgba(17, 24, 39, 1)",
+          "paneProperties.backgroundType": "solid"
+        }
+      });
+      
+      terminalRef.current.appendChild(script);
     }
   }, [chartProvider]);
 
@@ -470,7 +657,11 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         {/* Right Side - Charts */}
         <div className="chart-section">
           <div className="chart-header">
-            <h3 className="chart-title">Professional Trading Charts</h3>
+            <h3 className="chart-title">
+              {chartProvider === 'terminal' ? 'Professional Trading Terminal' : 
+               chartProvider === 'tradingview' ? 'Advanced Trading Charts' : 
+               'Professional Trading Charts'}
+            </h3>
             
             {/* Compact controls row */}
             <div className="chart-controls-row">
@@ -480,14 +671,22 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                   onClick={() => setChartProvider('tradingview')}
                 >
                   📊 TradingView
-                  <span className="provider-desc">Major</span>
+                  <span className="provider-desc">Charts</span>
+                </button>
+                <button 
+                  className={`provider-btn ${chartProvider === 'terminal' ? 'active' : ''}`}
+                  onClick={() => setChartProvider('terminal')}
+                  title="Full Trading Terminal with advanced tools"
+                >
+                  🚀 Trading Terminal
+                  <span className="provider-desc">Pro</span>
                 </button>
                 <button 
                   className={`provider-btn ${chartProvider === 'dexscreener' ? 'active' : ''}`}
                   onClick={() => setChartProvider('dexscreener')}
                 >
                   🔍 DEXScreener
-                  <span className="provider-desc">Charts</span>
+                  <span className="provider-desc">DEX</span>
                 </button>
               </div>
               
@@ -779,6 +978,14 @@ const AquaSwap = ({ currentUser, showNotification }) => {
               <div 
                 ref={tradingViewRef}
                 id="tradingview_widget" 
+                style={{ height: '100%', width: '100%' }}
+              />
+            )}
+            
+            {chartProvider === 'terminal' && (
+              <div 
+                ref={terminalRef}
+                id="tradingview_terminal" 
                 style={{ height: '100%', width: '100%' }}
               />
             )}

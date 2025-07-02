@@ -515,6 +515,15 @@
   flex-direction: column;
 }
 
+/* Trading Terminal specific styles */
+#tradingview_terminal {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 700px !important;
+  border: none !important;
+  background: rgba(17, 24, 39, 1) !important;
+}
+
 .chart-container iframe {
   width: 100% !important;
   height: 100% !important;
