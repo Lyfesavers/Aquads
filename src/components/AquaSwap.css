@@ -558,7 +558,7 @@
 }
 
 .banner-below-swap {
-  margin: 2px 0;
+  margin: 0;
   padding: 0;
   width: 100%;
   max-width: 100%;
@@ -567,6 +567,7 @@
   overflow: hidden;
   border-radius: 6px;
   line-height: 1;
+  display: block;
 }
 
 .banner-below-swap > div {
@@ -581,6 +582,31 @@
   margin: 0 !important;
   padding: 0 !important;
   line-height: 1 !important;
+}
+
+/* Target the BannerDisplay component directly */
+.banner-below-swap .banner-container {
+  margin: 0 !important;
+  padding: 0 !important;
+  position: relative;
+  display: block;
+}
+
+.banner-below-swap .banner-container a {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: block;
+  line-height: 1;
+}
+
+.banner-below-swap .banner-container img {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: block;
+  width: 100% !important;
+  height: auto !important;
+  object-fit: cover !important;
+  border-radius: 6px;
 }
 
 /* LiFi Widget container optimization */
