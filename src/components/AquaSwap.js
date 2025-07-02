@@ -22,7 +22,7 @@ const FALLBACK_TOKEN_EXAMPLES = [];
 const AquaSwap = ({ currentUser, showNotification }) => {
   const navigate = useNavigate();
   const [chartProvider, setChartProvider] = useState('tradingview');
-  const coinbaseRef = useRef(null);
+  const cexRef = useRef(null);
   const [tokenSearch, setTokenSearch] = useState('');
   const [selectedChain, setSelectedChain] = useState('ether');
   const [showEmbedCode, setShowEmbedCode] = useState(false);
@@ -181,15 +181,15 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         }
   }, [chartProvider]);
 
-  // Load Coinbase Advanced Trade Interface - Full CEX trading capabilities  
+  // Load Binance Trading Interface - Full CEX trading capabilities  
   useEffect(() => {
-    if (chartProvider === 'coinbase' && coinbaseRef.current) {
+    if (chartProvider === 'coinbase' && cexRef.current) {
       // Clear previous content
-      coinbaseRef.current.innerHTML = '';
+      cexRef.current.innerHTML = '';
       
-      // Create Coinbase Advanced Trade iframe with full trading interface
+      // Create Binance trading iframe with full trading interface
       const iframe = document.createElement('iframe');
-      iframe.src = 'https://advanced.coinbase.com/trade/BTC-USD?theme=dark';
+      iframe.src = 'https://www.binance.com/en/trade/BTC_USDT?theme=dark&type=spot';
       iframe.style.width = '100%';
       iframe.style.height = '100%';
       iframe.style.border = 'none';
@@ -198,7 +198,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       iframe.setAttribute('frameborder', '0');
       iframe.setAttribute('scrolling', 'no');
       
-      coinbaseRef.current.appendChild(iframe);
+      cexRef.current.appendChild(iframe);
     }
   }, [chartProvider]);
 
@@ -506,7 +506,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                   className={`provider-btn ${chartProvider === 'coinbase' ? 'active' : ''}`}
                   onClick={() => setChartProvider('coinbase')}
                 >
-                  🏦 Coinbase CEX
+                  ⚡ Binance CEX
                   <span className="provider-desc">Trade</span>
                 </button>
                 <button 
@@ -812,8 +812,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
             
             {chartProvider === 'coinbase' && (
               <div 
-                ref={coinbaseRef}
-                id="coinbase_trading" 
+                ref={cexRef}
+                id="binance_trading" 
                 style={{ height: '100%', width: '100%' }}
               />
             )}
