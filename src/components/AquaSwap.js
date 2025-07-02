@@ -22,7 +22,6 @@ const FALLBACK_TOKEN_EXAMPLES = [];
 const AquaSwap = ({ currentUser, showNotification }) => {
   const navigate = useNavigate();
   const [chartProvider, setChartProvider] = useState('tradingview');
-  const cexRef = useRef(null);
   const [tokenSearch, setTokenSearch] = useState('');
   const [selectedChain, setSelectedChain] = useState('ether');
   const [showEmbedCode, setShowEmbedCode] = useState(false);
@@ -178,29 +177,10 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       });
       
       tradingViewRef.current.appendChild(script);
-        }
-  }, [chartProvider]);
-
-  // Load Binance Trading Interface - Full CEX trading capabilities  
-  useEffect(() => {
-    if (chartProvider === 'coinbase' && cexRef.current) {
-      // Clear previous content
-      cexRef.current.innerHTML = '';
-      
-      // Create Binance trading iframe with full trading interface
-      const iframe = document.createElement('iframe');
-      iframe.src = 'https://www.binance.com/en/trade/BTC_USDT?theme=dark&type=spot';
-      iframe.style.width = '100%';
-      iframe.style.height = '100%';
-      iframe.style.border = 'none';
-      iframe.style.borderRadius = '8px';
-      iframe.setAttribute('allowfullscreen', 'true');
-      iframe.setAttribute('frameborder', '0');
-      iframe.setAttribute('scrolling', 'no');
-      
-      cexRef.current.appendChild(iframe);
     }
   }, [chartProvider]);
+
+
 
   // Load DEXScreener widget with improved reliability
   useEffect(() => {
@@ -500,21 +480,14 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                   onClick={() => setChartProvider('tradingview')}
                 >
                   📊 TradingView
-                  <span className="provider-desc">Analysis</span>
-                </button>
-                <button 
-                  className={`provider-btn ${chartProvider === 'coinbase' ? 'active' : ''}`}
-                  onClick={() => setChartProvider('coinbase')}
-                >
-                  ⚡ Binance CEX
-                  <span className="provider-desc">Trade</span>
+                  <span className="provider-desc">Major</span>
                 </button>
                 <button 
                   className={`provider-btn ${chartProvider === 'dexscreener' ? 'active' : ''}`}
                   onClick={() => setChartProvider('dexscreener')}
                 >
                   🔍 DEXScreener
-                  <span className="provider-desc">DEX</span>
+                  <span className="provider-desc">Charts</span>
                 </button>
               </div>
               
@@ -806,14 +779,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
               <div 
                 ref={tradingViewRef}
                 id="tradingview_widget" 
-                style={{ height: '100%', width: '100%' }}
-              />
-            )}
-            
-            {chartProvider === 'coinbase' && (
-              <div 
-                ref={cexRef}
-                id="binance_trading" 
                 style={{ height: '100%', width: '100%' }}
               />
             )}
