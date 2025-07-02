@@ -601,8 +601,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         {/* Right Side - Charts */}
         <div className="chart-section">
           <div className="chart-header">
-            <h3 className="chart-title">Professional Trading Analysis Platform</h3>
-            
+                        
             {/* Compact controls row */}
             <div className="chart-controls-row">
               <div className="chart-provider-selector">
@@ -610,7 +609,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                   className={`provider-btn ${chartProvider === 'tradingview' ? 'active' : ''}`}
                   onClick={() => setChartProvider('tradingview')}
                 >
-                  📊 TradingView Pro
+                  📊 TradingView
                   <span className="provider-desc">Analysis</span>
                 </button>
                 <button 
