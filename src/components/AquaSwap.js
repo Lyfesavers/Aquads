@@ -57,7 +57,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           ad.status !== 'pending' && 
           ad.status !== 'rejected' &&
           ad.pairAddress && 
-          ad.pairAddress.trim() !== ''
+          ad.pairAddress.trim() !== '' &&
+          ad.isBumped === true  // Only include bumped tokens in trending
         );
         
         // Sort using the same logic as main bubble display: bumped first, then by bullish votes

@@ -363,8 +363,9 @@
   gap: 6px;
   align-items: center;
   height: 100%;
-  animation: scrollPopularTokens 30s linear infinite;
+  animation: scrollPopularTokens 60s linear infinite;
   padding: 0 8px;
+  will-change: transform;
 }
 
 .popular-tokens-scroll:hover {
@@ -376,7 +377,7 @@
     transform: translateX(0);
   }
   100% {
-    transform: translateX(-50%);
+    transform: translateX(calc(-50% - 3px));
   }
 }
 
