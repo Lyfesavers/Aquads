@@ -139,7 +139,7 @@ const ServiceMediaDisplay = ({ service, className = "w-full h-48" }) => {
         <ServiceImageComponent 
           src={service.image}
           alt={service.title}
-          className="w-full h-full object-contain"
+          className="w-full h-full object-cover"
         />
         
         {/* Video indicator overlay */}

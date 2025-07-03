@@ -169,12 +169,12 @@ const EditServiceModal = ({ service, onClose, onEditService, categories }) => {
                   {/* Service Image */}
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Service Image URL (H500px x W300px)
+                      Service Image URL (768px x 384px)
                     </label>
                     <input
                       type="url"
                       required
-                      placeholder="Enter image URL (JPEG, PNG, or GIF)"
+                      placeholder="Enter image URL (JPEG, PNG, or GIF) - Recommended: 768x384px"
                       className="w-full px-4 py-2 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
                       value={formData.image}
                       onChange={handleImageChange}
