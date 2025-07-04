@@ -7,7 +7,7 @@
   min-height: 100vh;
   background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
   color: #ffffff;
-  overflow-x: hidden;
+  overflow-x: auto;
   padding: 0;
   margin: 0;
 }
@@ -142,6 +142,14 @@
   gap: 0;
   margin: 0;
   padding: 0;
+  /* Hide scrollbar but keep scrolling functionality */
+  overflow: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.trading-interface::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Webkit */
 }
 
 /* Professional trading layout - always side by side on desktop */
@@ -156,6 +164,7 @@
   background: rgba(0, 0, 0, 0.2);
   border-right: 1px solid rgba(255, 255, 255, 0.1);
   padding: 12px 16px 20px 16px;
+  overflow-y: auto;
   height: 100%;
   min-height: 600px;
 }
