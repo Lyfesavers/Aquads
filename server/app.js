@@ -21,6 +21,7 @@ const reviewsRoutes = require('./routes/reviews');
 const blogsRoutes = require('./routes/blogs');
 const notificationsRoutes = require('./routes/notifications');
 const gamesRoutes = require('./routes/games');
+const adminRoutes = require('./routes/admin');
 
 // Middleware
 const app = express();
@@ -386,6 +387,7 @@ app.use('/api/blogs', blogsRoutes);
 // app.use('/api/sitemap', sitemapRoutes); // Disabled - using static sitemap
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/games', gamesRoutes);
+app.use('/api/admin', adminRoutes);
 
 
 // Test route to verify API is working

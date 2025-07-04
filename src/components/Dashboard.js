@@ -59,6 +59,13 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [activeAdminSection, setActiveAdminSection] = useState('bumps');
   const [showTokenPurchaseModal, setShowTokenPurchaseModal] = useState(false);
   const [pendingTokenPurchases, setPendingTokenPurchases] = useState([]);
+  // Affiliate management states
+  const [affiliateSearchQuery, setAffiliateSearchQuery] = useState('');
+  const [affiliateSearchResults, setAffiliateSearchResults] = useState([]);
+  const [selectedUserAffiliates, setSelectedUserAffiliates] = useState(null);
+  const [topAffiliates, setTopAffiliates] = useState([]);
+  const [suspiciousUsers, setSuspiciousUsers] = useState([]);
+  const [loadingAffiliateData, setLoadingAffiliateData] = useState(false);
 
   // Update activeTab when initialActiveTab changes
   useEffect(() => {
@@ -824,6 +831,97 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       console.error('Error approving token purchase:', error);
       showNotification('Error approving token purchase', 'error');
     }
+  };
+
+  // Affiliate management functions
+  const handleAffiliateSearch = async () => {
+    if (!affiliateSearchQuery.trim()) return;
+    
+    setLoadingAffiliateData(true);
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/admin/search-users?query=${encodeURIComponent(affiliateSearchQuery)}`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setAffiliateSearchResults(data.users);
+      } else {
+        showNotification('Failed to search users', 'error');
+      }
+    } catch (error) {
+      console.error('Error searching users:', error);
+      showNotification('Error searching users', 'error');
+    }
+    setLoadingAffiliateData(false);
+  };
+
+  const fetchUserAffiliates = async (userId) => {
+    setLoadingAffiliateData(true);
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/admin/user/${userId}/affiliates`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSelectedUserAffiliates(data);
+      } else {
+        showNotification('Failed to fetch affiliate details', 'error');
+      }
+    } catch (error) {
+      console.error('Error fetching affiliate details:', error);
+      showNotification('Error fetching affiliate details', 'error');
+    }
+    setLoadingAffiliateData(false);
+  };
+
+  const fetchTopAffiliates = async () => {
+    setLoadingAffiliateData(true);
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/admin/top-affiliates?limit=20`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setTopAffiliates(data.topAffiliates);
+      } else {
+        showNotification('Failed to fetch top affiliates', 'error');
+      }
+    } catch (error) {
+      console.error('Error fetching top affiliates:', error);
+      showNotification('Error fetching top affiliates', 'error');
+    }
+    setLoadingAffiliateData(false);
+  };
+
+  const fetchSuspiciousUsers = async () => {
+    setLoadingAffiliateData(true);
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/admin/suspicious-users?minAffiliates=10`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSuspiciousUsers(data.suspiciousUsers);
+      } else {
+        showNotification('Failed to fetch suspicious users', 'error');
+      }
+    } catch (error) {
+      console.error('Error fetching suspicious users:', error);
+      showNotification('Error fetching suspicious users', 'error');
+    }
+    setLoadingAffiliateData(false);
   };
 
   const handleRejectTokenPurchase = async (purchaseId) => {
@@ -1673,6 +1771,21 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       </span>
                     )}
                   </button>
+                  
+                  <button
+                    onClick={() => {
+                      setActiveAdminSection('affiliates');
+                      if (topAffiliates.length === 0) fetchTopAffiliates();
+                      if (suspiciousUsers.length === 0) fetchSuspiciousUsers();
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
+                      activeAdminSection === 'affiliates' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                    }`}
+                  >
+                    👥 Affiliate Management
+                  </button>
                 </nav>
               </div>
 
@@ -2045,6 +2158,197 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                         ))}
                       </div>
                     )}
+                  </div>
+                )}
+
+                {activeAdminSection === 'affiliates' && (
+                  <div>
+                    <h3 className="text-2xl font-semibold text-white mb-6">Affiliate Management</h3>
+                    
+                    {/* Search Users */}
+                    <div className="bg-gray-700 rounded-lg p-4 mb-6">
+                      <h4 className="text-lg font-semibold text-white mb-4">Search Users</h4>
+                      <div className="flex gap-2 mb-4">
+                        <input
+                          type="text"
+                          value={affiliateSearchQuery}
+                          onChange={(e) => setAffiliateSearchQuery(e.target.value)}
+                          placeholder="Search by username or email..."
+                          className="flex-1 bg-gray-600 text-white px-3 py-2 rounded border border-gray-500 focus:border-blue-400"
+                          onKeyPress={(e) => e.key === 'Enter' && handleAffiliateSearch()}
+                        />
+                        <button
+                          onClick={handleAffiliateSearch}
+                          disabled={loadingAffiliateData}
+                          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
+                        >
+                          {loadingAffiliateData ? 'Searching...' : 'Search'}
+                        </button>
+                      </div>
+                      
+                      {affiliateSearchResults.length > 0 && (
+                        <div className="space-y-2">
+                          <h5 className="text-white font-medium">Search Results:</h5>
+                          {affiliateSearchResults.map(user => (
+                            <div key={user.id} className="flex justify-between items-center bg-gray-600 p-3 rounded">
+                              <div>
+                                <span className="text-white font-medium">{user.username}</span>
+                                <span className="text-gray-300 ml-2">({user.email})</span>
+                                <span className="text-blue-400 ml-2">{user.affiliateCount} affiliates</span>
+                              </div>
+                              <button
+                                onClick={() => fetchUserAffiliates(user.id)}
+                                className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm"
+                              >
+                                View Affiliates
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Selected User Affiliates */}
+                    {selectedUserAffiliates && (
+                      <div className="bg-gray-700 rounded-lg p-4 mb-6">
+                        <div className="flex justify-between items-center mb-4">
+                          <h4 className="text-lg font-semibold text-white">
+                            Affiliates for {selectedUserAffiliates.user.username}
+                          </h4>
+                          <button
+                            onClick={() => setSelectedUserAffiliates(null)}
+                            className="text-gray-400 hover:text-white"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        
+                        {/* Summary */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-center">
+                          <div className="bg-gray-600 p-3 rounded">
+                            <div className="text-2xl font-bold text-white">{selectedUserAffiliates.summary.totalAffiliates}</div>
+                            <div className="text-gray-300 text-sm">Total Affiliates</div>
+                          </div>
+                          <div className="bg-gray-600 p-3 rounded">
+                            <div className="text-2xl font-bold text-green-400">{selectedUserAffiliates.summary.emailVerified}</div>
+                            <div className="text-gray-300 text-sm">Email Verified</div>
+                          </div>
+                          <div className="bg-gray-600 p-3 rounded">
+                            <div className="text-2xl font-bold text-red-400">{selectedUserAffiliates.summary.sameIP}</div>
+                            <div className="text-gray-300 text-sm">Same IP</div>
+                          </div>
+                          <div className="bg-gray-600 p-3 rounded">
+                            <div className="text-2xl font-bold text-orange-400">{selectedUserAffiliates.summary.recentSignups}</div>
+                            <div className="text-gray-300 text-sm">Last 24h</div>
+                          </div>
+                        </div>
+
+                        {/* Affiliates List */}
+                        <div className="max-h-96 overflow-y-auto">
+                          <table className="w-full text-sm">
+                            <thead className="bg-gray-600 sticky top-0">
+                              <tr>
+                                <th className="text-left p-2 text-white">Username</th>
+                                <th className="text-left p-2 text-white">Email</th>
+                                <th className="text-left p-2 text-white">Created</th>
+                                <th className="text-left p-2 text-white">Points</th>
+                                <th className="text-left p-2 text-white">Country</th>
+                                <th className="text-left p-2 text-white">Email Verified</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {selectedUserAffiliates.affiliates.map(affiliate => (
+                                <tr key={affiliate.id} className="border-b border-gray-600">
+                                  <td className="p-2 text-white">{affiliate.username}</td>
+                                  <td className="p-2 text-gray-300">{affiliate.email || 'N/A'}</td>
+                                  <td className="p-2 text-gray-300">{new Date(affiliate.createdAt).toLocaleDateString()}</td>
+                                  <td className="p-2 text-blue-400">{affiliate.points}</td>
+                                  <td className="p-2 text-gray-300">{affiliate.country || 'N/A'}</td>
+                                  <td className="p-2">
+                                    <span className={`px-2 py-1 rounded text-xs ${affiliate.emailVerified ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
+                                      {affiliate.emailVerified ? 'Yes' : 'No'}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Top Affiliates */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <div className="bg-gray-700 rounded-lg p-4">
+                        <div className="flex justify-between items-center mb-4">
+                          <h4 className="text-lg font-semibold text-white">Top Affiliates</h4>
+                          <button
+                            onClick={fetchTopAffiliates}
+                            disabled={loadingAffiliateData}
+                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm disabled:opacity-50"
+                          >
+                            {loadingAffiliateData ? 'Loading...' : 'Refresh'}
+                          </button>
+                        </div>
+                        <div className="space-y-2 max-h-96 overflow-y-auto">
+                          {topAffiliates.map(user => (
+                            <div key={user.id} className="flex justify-between items-center bg-gray-600 p-3 rounded">
+                              <div>
+                                <div className="text-white font-medium">{user.username}</div>
+                                <div className="text-gray-300 text-sm">{user.email}</div>
+                                <div className="text-blue-400 text-sm">{user.affiliateCount} affiliates • {user.points} points</div>
+                              </div>
+                              <button
+                                onClick={() => fetchUserAffiliates(user.id)}
+                                className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm"
+                              >
+                                View
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Suspicious Users */}
+                      <div className="bg-gray-700 rounded-lg p-4">
+                        <div className="flex justify-between items-center mb-4">
+                          <h4 className="text-lg font-semibold text-white">Suspicious Users</h4>
+                          <button
+                            onClick={fetchSuspiciousUsers}
+                            disabled={loadingAffiliateData}
+                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm disabled:opacity-50"
+                          >
+                            {loadingAffiliateData ? 'Loading...' : 'Refresh'}
+                          </button>
+                        </div>
+                        <div className="space-y-2 max-h-96 overflow-y-auto">
+                          {suspiciousUsers.map(user => (
+                            <div key={user.id} className="bg-gray-600 p-3 rounded border-l-4 border-red-500">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <div className="text-white font-medium">{user.username}</div>
+                                  <div className="text-gray-300 text-sm">{user.email}</div>
+                                  <div className="text-blue-400 text-sm">{user.affiliateCount} affiliates • Risk: {user.riskScore}%</div>
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {user.flags.map(flag => (
+                                      <span key={flag} className="bg-red-500 text-white text-xs px-2 py-1 rounded">
+                                        {flag.replace('_', ' ')}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => fetchUserAffiliates(user.id)}
+                                  className="bg-yellow-500 hover:bg-yellow-600 text-black px-3 py-1 rounded text-sm font-medium"
+                                >
+                                  Investigate
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
