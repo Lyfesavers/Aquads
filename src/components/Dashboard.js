@@ -2223,8 +2223,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                           </button>
                         </div>
                         
-                        {/* Summary */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-center">
+                        {/* Enhanced Summary with New Metrics */}
+                        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-4 text-center">
                           <div className="bg-gray-600 p-3 rounded">
                             <div className="text-2xl font-bold text-white">{selectedUserAffiliates.summary.totalAffiliates}</div>
                             <div className="text-gray-300 text-sm">Total Affiliates</div>
@@ -2241,9 +2241,56 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                             <div className="text-2xl font-bold text-orange-400">{selectedUserAffiliates.summary.recentSignups}</div>
                             <div className="text-gray-300 text-sm">Last 24h</div>
                           </div>
+                          <div className="bg-gray-600 p-3 rounded">
+                            <div className="text-2xl font-bold text-purple-400">{selectedUserAffiliates.summary.averageActivityScore || '0.00'}</div>
+                            <div className="text-gray-300 text-sm">Avg Activity</div>
+                          </div>
+                          <div className="bg-gray-600 p-3 rounded">
+                            <div className="text-2xl font-bold text-yellow-400">{selectedUserAffiliates.summary.dormantAffiliates || 0}</div>
+                            <div className="text-gray-300 text-sm">Dormant</div>
+                          </div>
                         </div>
 
-                        {/* Affiliates List */}
+                        {/* User Risk Analysis */}
+                        {selectedUserAffiliates.user.riskScore !== undefined && (
+                          <div className="bg-gray-600 p-4 rounded mb-4">
+                            <h5 className="text-white font-medium mb-2">User Risk Analysis</h5>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="text-center">
+                                <div className={`text-2xl font-bold ${selectedUserAffiliates.user.riskScore >= 75 ? 'text-red-400' : selectedUserAffiliates.user.riskScore >= 50 ? 'text-yellow-400' : 'text-green-400'}`}>
+                                  {selectedUserAffiliates.user.riskScore}%
+                                </div>
+                                <div className="text-gray-300 text-sm">Risk Score</div>
+                              </div>
+                              <div className="text-center">
+                                <div className={`text-2xl font-bold ${selectedUserAffiliates.user.activityScore < 0.2 ? 'text-red-400' : selectedUserAffiliates.user.activityScore < 0.5 ? 'text-yellow-400' : 'text-green-400'}`}>
+                                  {(selectedUserAffiliates.user.activityScore * 100).toFixed(0)}%
+                                </div>
+                                <div className="text-gray-300 text-sm">Activity Diversity</div>
+                              </div>
+                              <div className="text-center">
+                                <div className={`text-2xl font-bold ${selectedUserAffiliates.user.loginFrequency < 0.2 ? 'text-red-400' : selectedUserAffiliates.user.loginFrequency < 0.5 ? 'text-yellow-400' : 'text-green-400'}`}>
+                                  {(selectedUserAffiliates.user.loginFrequency * 100).toFixed(0)}%
+                                </div>
+                                <div className="text-gray-300 text-sm">Login Frequency</div>
+                              </div>
+                            </div>
+                            {selectedUserAffiliates.user.riskFactors && selectedUserAffiliates.user.riskFactors.length > 0 && (
+                              <div className="mt-3">
+                                <div className="text-gray-300 text-sm mb-2">Risk Factors:</div>
+                                <div className="flex flex-wrap gap-1">
+                                  {selectedUserAffiliates.user.riskFactors.map(factor => (
+                                    <span key={factor} className="bg-red-500 text-white text-xs px-2 py-1 rounded">
+                                      {factor.replace(/_/g, ' ')}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Enhanced Affiliates List */}
                         <div className="max-h-96 overflow-y-auto">
                           <table className="w-full text-sm">
                             <thead className="bg-gray-600 sticky top-0">
@@ -2252,17 +2299,57 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                                 <th className="text-left p-2 text-white">Email</th>
                                 <th className="text-left p-2 text-white">Created</th>
                                 <th className="text-left p-2 text-white">Points</th>
+                                <th className="text-left p-2 text-white">Activity</th>
+                                <th className="text-left p-2 text-white">Login Freq</th>
+                                <th className="text-left p-2 text-white">Status</th>
                                 <th className="text-left p-2 text-white">Country</th>
-                                <th className="text-left p-2 text-white">Email Verified</th>
+                                <th className="text-left p-2 text-white">Verified</th>
                               </tr>
                             </thead>
                             <tbody>
                               {selectedUserAffiliates.affiliates.map(affiliate => (
-                                <tr key={affiliate.id} className="border-b border-gray-600">
+                                <tr key={affiliate.id} className={`border-b border-gray-600 ${affiliate.isDormant ? 'bg-red-900 bg-opacity-20' : ''}`}>
                                   <td className="p-2 text-white">{affiliate.username}</td>
                                   <td className="p-2 text-gray-300">{affiliate.email || 'N/A'}</td>
                                   <td className="p-2 text-gray-300">{new Date(affiliate.createdAt).toLocaleDateString()}</td>
                                   <td className="p-2 text-blue-400">{affiliate.points}</td>
+                                  <td className="p-2">
+                                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                      affiliate.activityScore < 0.1 ? 'bg-red-500 text-white' : 
+                                      affiliate.activityScore < 0.3 ? 'bg-yellow-500 text-black' : 
+                                      'bg-green-500 text-white'
+                                    }`}>
+                                      {((affiliate.activityScore || 0) * 100).toFixed(0)}%
+                                    </span>
+                                  </td>
+                                  <td className="p-2">
+                                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                      affiliate.loginFrequency < 0.2 ? 'bg-red-500 text-white' : 
+                                      affiliate.loginFrequency < 0.5 ? 'bg-yellow-500 text-black' : 
+                                      'bg-green-500 text-white'
+                                    }`}>
+                                      {((affiliate.loginFrequency || 0) * 100).toFixed(0)}%
+                                    </span>
+                                  </td>
+                                  <td className="p-2">
+                                    <div className="flex flex-col gap-1">
+                                      <span className={`px-1 py-0.5 rounded text-xs ${
+                                        affiliate.isOnline ? 'bg-green-500 text-white' : 'bg-gray-500 text-white'
+                                      }`}>
+                                        {affiliate.isOnline ? 'Online' : 'Offline'}
+                                      </span>
+                                      {affiliate.isDormant && (
+                                        <span className="px-1 py-0.5 rounded text-xs bg-red-500 text-white">
+                                          Dormant
+                                        </span>
+                                      )}
+                                      {affiliate.daysSinceLastSeen !== undefined && (
+                                        <span className="text-xs text-gray-400">
+                                          {affiliate.daysSinceLastSeen}d ago
+                                        </span>
+                                      )}
+                                    </div>
+                                  </td>
                                   <td className="p-2 text-gray-300">{affiliate.country || 'N/A'}</td>
                                   <td className="p-2">
                                     <span className={`px-2 py-1 rounded text-xs ${affiliate.emailVerified ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
@@ -2323,23 +2410,90 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                         </div>
                         <div className="space-y-2 max-h-96 overflow-y-auto">
                           {suspiciousUsers.map(user => (
-                            <div key={user.id} className="bg-gray-600 p-3 rounded border-l-4 border-red-500">
+                            <div key={user.id} className={`bg-gray-600 p-3 rounded border-l-4 ${
+                              user.riskScore >= 75 ? 'border-red-500' : 
+                              user.riskScore >= 50 ? 'border-yellow-500' : 
+                              'border-orange-500'
+                            }`}>
                               <div className="flex justify-between items-start">
-                                <div>
-                                  <div className="text-white font-medium">{user.username}</div>
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <div className="text-white font-medium">{user.username}</div>
+                                    <span className={`px-2 py-1 rounded text-xs font-bold ${
+                                      user.riskScore >= 75 ? 'bg-red-500 text-white' : 
+                                      user.riskScore >= 50 ? 'bg-yellow-500 text-black' : 
+                                      'bg-orange-500 text-white'
+                                    }`}>
+                                      {user.riskScore}% RISK
+                                    </span>
+                                  </div>
                                   <div className="text-gray-300 text-sm">{user.email}</div>
-                                  <div className="text-blue-400 text-sm">{user.affiliateCount} affiliates • Risk: {user.riskScore}%</div>
-                                  <div className="flex flex-wrap gap-1 mt-1">
+                                  
+                                  {/* Enhanced Metrics Grid */}
+                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2 text-xs">
+                                    <div className="bg-gray-700 p-2 rounded">
+                                      <div className="text-blue-400 font-medium">{user.affiliateCount}</div>
+                                      <div className="text-gray-400">Affiliates</div>
+                                    </div>
+                                    <div className="bg-gray-700 p-2 rounded">
+                                      <div className={`font-medium ${
+                                        user.activityScore < 0.1 ? 'text-red-400' : 
+                                        user.activityScore < 0.3 ? 'text-yellow-400' : 
+                                        'text-green-400'
+                                      }`}>
+                                        {((user.activityScore || 0) * 100).toFixed(0)}%
+                                      </div>
+                                      <div className="text-gray-400">Activity</div>
+                                    </div>
+                                    <div className="bg-gray-700 p-2 rounded">
+                                      <div className={`font-medium ${
+                                        user.loginFrequency < 0.2 ? 'text-red-400' : 
+                                        user.loginFrequency < 0.5 ? 'text-yellow-400' : 
+                                        'text-green-400'
+                                      }`}>
+                                        {((user.loginFrequency || 0) * 100).toFixed(0)}%
+                                      </div>
+                                      <div className="text-gray-400">Login Freq</div>
+                                    </div>
+                                    <div className="bg-gray-700 p-2 rounded">
+                                      <div className="text-gray-400 font-medium">
+                                        {user.daysSinceLastSeen !== undefined ? `${user.daysSinceLastSeen}d` : 'N/A'}
+                                      </div>
+                                      <div className="text-gray-400">Last Seen</div>
+                                    </div>
+                                  </div>
+
+                                  {/* Additional Status Indicators */}
+                                  <div className="flex flex-wrap gap-1 mt-2">
+                                    {user.isDormant && (
+                                      <span className="bg-red-600 text-white text-xs px-2 py-1 rounded">
+                                        DORMANT
+                                      </span>
+                                    )}
+                                    {user.isHighlyDormant && (
+                                      <span className="bg-red-700 text-white text-xs px-2 py-1 rounded">
+                                        HIGHLY DORMANT
+                                      </span>
+                                    )}
+                                    {user.accountAgeDays < 7 && (
+                                      <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">
+                                        NEW ACCOUNT
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {/* Risk Factors */}
+                                  <div className="flex flex-wrap gap-1 mt-2">
                                     {user.flags.map(flag => (
                                       <span key={flag} className="bg-red-500 text-white text-xs px-2 py-1 rounded">
-                                        {flag.replace('_', ' ')}
+                                        {flag.replace(/_/g, ' ')}
                                       </span>
                                     ))}
                                   </div>
                                 </div>
                                 <button
                                   onClick={() => fetchUserAffiliates(user.id)}
-                                  className="bg-yellow-500 hover:bg-yellow-600 text-black px-3 py-1 rounded text-sm font-medium"
+                                  className="bg-yellow-500 hover:bg-yellow-600 text-black px-3 py-1 rounded text-sm font-medium ml-2"
                                 >
                                   Investigate
                                 </button>
