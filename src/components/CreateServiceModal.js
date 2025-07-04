@@ -15,6 +15,11 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
   });
   const [previewUrl, setPreviewUrl] = useState('');
   const [error, setError] = useState('');
+  
+  // Word count function
+  const getWordCount = (text) => {
+    return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+  };
 
   const validateImageUrl = async (url) => {
     try {
@@ -50,6 +55,13 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
     e.preventDefault();
     if (!previewUrl) {
       setError('Please enter a valid image URL');
+      return;
+    }
+    
+    // Validate description word count
+    const wordCount = getWordCount(formData.description);
+    if (wordCount < 500) {
+      setError(`Description must contain at least 500 words. Currently: ${wordCount} words`);
       return;
     }
     
@@ -113,16 +125,26 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
           {/* Description */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Description
+              Description (Minimum 500 words)
             </label>
             <textarea
               required
-              rows="4"
-              placeholder="Describe your service in detail..."
+              rows="6"
+              placeholder="Describe your service in detail... (minimum 500 words for professional presentation)"
               className="w-full px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
             />
+            <div className="flex justify-between items-center mt-1">
+              <p className={`text-sm ${getWordCount(formData.description) >= 500 ? 'text-green-400' : 'text-yellow-400'}`}>
+                Word count: {getWordCount(formData.description)} / 500 minimum
+              </p>
+              {getWordCount(formData.description) < 500 && (
+                <p className="text-xs text-gray-400">
+                  {500 - getWordCount(formData.description)} more words needed
+                </p>
+              )}
+            </div>
           </div>
 
 
