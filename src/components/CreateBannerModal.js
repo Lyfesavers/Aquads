@@ -12,7 +12,7 @@ const BLOCKCHAIN_OPTIONS = [
   {
     name: 'Solana',
     symbol: 'SOL',
-    address: 'F4HuQfUx5zsuQpxca4KQfX6uZPYtRp3Y7HYVGsuHdYVf',
+    address: 'F4HuQfUx5zsuQpxca4KQfU6uZPYtRp3Y7HYVGsuHdYVf',
     amount: 'USDC'
   },
   {
