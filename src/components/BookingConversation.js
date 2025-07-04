@@ -166,6 +166,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [invoices, setInvoices] = useState([]);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [showReplyTemplates, setShowReplyTemplates] = useState(false);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const pollingIntervalRef = useRef(null);
@@ -173,6 +174,40 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
   // Seller check
   const isSeller = booking?.sellerId?._id === currentUser?.userId;
   
+  // Reply templates for freelancers
+  const replyTemplates = [
+    {
+      title: "Project Clarification",
+      message: "Thanks for your booking! To get started, could you please provide:\n\n1. Your specific goals and expectations\n2. Your preferred timeline\n3. Any reference materials or examples\n4. Your budget range for any additional features\n\nThis will help me deliver exactly what you need!"
+    },
+    {
+      title: "Timeline & Availability",
+      message: "Hi! I'm excited to work on this project with you. \n\nI can start immediately and typically complete projects like this in [X] days. Are there any specific deadlines I should be aware of?\n\nI'll keep you updated throughout the process and deliver high-quality work that meets your expectations."
+    },
+    {
+      title: "Technical Requirements",
+      message: "Hello! To ensure I deliver the best results, I need to understand your technical requirements:\n\n1. What platforms/technologies are you using?\n2. Do you have any specific formats or standards to follow?\n3. Are there any integrations needed?\n4. What's your current setup/infrastructure?\n\nLooking forward to working together!"
+    },
+    {
+      title: "Content & Resources",
+      message: "Thanks for choosing my services! To get started, please share:\n\n1. Any existing content, files, or assets\n2. Brand guidelines or style preferences\n3. Access to relevant accounts/platforms (if needed)\n4. Contact information for stakeholders\n\nI'll review everything and create a detailed project plan for you."
+    },
+    {
+      title: "Budget & Scope",
+      message: "Hello! I'm ready to begin your project. Let's discuss:\n\n1. The exact scope of work you need\n2. Any additional features beyond the basic service\n3. Your budget for potential add-ons\n4. Payment schedule preferences\n\nThis ensures we're aligned on deliverables and there are no surprises later."
+    },
+    {
+      title: "Next Steps",
+      message: "Great! I'm excited to work with you. Here's what happens next:\n\n1. I'll review your requirements thoroughly\n2. Create a detailed project timeline\n3. Send you a comprehensive proposal\n4. Start work once everything is confirmed\n\nFeel free to ask any questions - I'm here to help make this project a success!"
+    }
+  ];
+
+  // Function to insert template into message input
+  const insertTemplate = (template) => {
+    setNewMessage(template.message);
+    setShowReplyTemplates(false);
+  };
+
   // Fetch messages on component mount and set up polling
   useEffect(() => {
     if (booking && booking._id) {
@@ -923,6 +958,42 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
             className="hidden"
             accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar"
           />
+          
+          {/* Reply Templates Section for Sellers */}
+          {isSeller && (
+            <div className="mb-4">
+              <button
+                onClick={() => setShowReplyTemplates(!showReplyTemplates)}
+                className="flex items-center px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm mb-2"
+              >
+                <span className="mr-2">📝</span>
+                {showReplyTemplates ? 'Hide' : 'Show'} Reply Templates
+              </button>
+              
+              {showReplyTemplates && (
+                <div className="bg-gray-700 rounded-lg p-4 mb-4 max-h-60 overflow-y-auto">
+                  <h4 className="text-white font-semibold mb-3">Quick Reply Templates</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {replyTemplates.map((template, index) => (
+                      <button
+                        key={index}
+                        onClick={() => insertTemplate(template)}
+                        className="text-left p-3 bg-gray-600 hover:bg-gray-500 rounded text-sm text-white border border-gray-500 hover:border-gray-400 transition-colors"
+                      >
+                        <div className="font-medium text-blue-400 mb-1">{template.title}</div>
+                        <div className="text-xs text-gray-300 overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                          {template.message.substring(0, 100)}...
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="mt-3 text-xs text-gray-400">
+                    💡 Click any template to insert it into your message box, then customize as needed.
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           
           <form onSubmit={handleSendMessage} className="space-y-3">
             {/* Show selected attachment if any */}
