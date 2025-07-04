@@ -16,9 +16,9 @@ const EditServiceModal = ({ service, onClose, onEditService, categories }) => {
   const [previewUrl, setPreviewUrl] = useState(service.image || '');
   const [error, setError] = useState('');
   
-  // Word count function
-  const getWordCount = (text) => {
-    return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+  // Character count function (including spaces)
+  const getCharacterCount = (text) => {
+    return text.length;
   };
 
   const validateImageUrl = async (url) => {
@@ -58,10 +58,10 @@ const EditServiceModal = ({ service, onClose, onEditService, categories }) => {
       return;
     }
     
-    // Validate description word count
-    const wordCount = getWordCount(formData.description);
-    if (wordCount < 500) {
-      setError(`Description must contain at least 500 words. Currently: ${wordCount} words`);
+    // Validate description character count
+    const characterCount = getCharacterCount(formData.description);
+    if (characterCount < 200) {
+      setError(`Description must contain at least 200 characters. Currently: ${characterCount} characters`);
       return;
     }
     
@@ -127,23 +127,23 @@ const EditServiceModal = ({ service, onClose, onEditService, categories }) => {
                   {/* Description */}
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Description (Minimum 500 words)
+                      Description (Minimum 200 characters)
                     </label>
                     <textarea
                       required
-                      rows="6"
-                      placeholder="Describe your service in detail... (minimum 500 words for professional presentation)"
+                      rows="4"
+                      placeholder="Describe your service in detail... (minimum 200 characters for professional presentation)"
                       className="w-full px-4 py-2 bg-gray-800/50 backdrop-blur-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"
                       value={formData.description}
                       onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                     />
                     <div className="flex justify-between items-center mt-1">
-                      <p className={`text-sm ${getWordCount(formData.description) >= 500 ? 'text-green-400' : 'text-yellow-400'}`}>
-                        Word count: {getWordCount(formData.description)} / 500 minimum
+                      <p className={`text-sm ${getCharacterCount(formData.description) >= 200 ? 'text-green-400' : 'text-yellow-400'}`}>
+                        Character count: {getCharacterCount(formData.description)} / 200 minimum
                       </p>
-                      {getWordCount(formData.description) < 500 && (
+                      {getCharacterCount(formData.description) < 200 && (
                         <p className="text-xs text-gray-400">
-                          {500 - getWordCount(formData.description)} more words needed
+                          {200 - getCharacterCount(formData.description)} more characters needed
                         </p>
                       )}
                     </div>
