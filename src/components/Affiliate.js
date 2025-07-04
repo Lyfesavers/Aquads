@@ -199,7 +199,7 @@ const Affiliate = () => {
                         </div>
                         <div className="flex justify-between items-center py-2 border-b border-gray-600">
                           <span className="text-gray-300">Each new affiliate referral</span>
-                          <span className="text-green-400 font-bold">100 pts</span>
+                          <span className="text-green-400 font-bold">5 pts</span>
                         </div>
                         <div className="flex justify-between items-center py-2 border-b border-gray-600">
                           <span className="text-gray-300">Game votes in GameHub</span>
@@ -209,7 +209,7 @@ const Affiliate = () => {
                       <div className="space-y-3">
                         <div className="flex justify-between items-center py-2 border-b border-gray-600">
                           <span className="text-gray-300">Affiliate lists service/ad</span>
-                          <span className="text-green-400 font-bold">100 pts</span>
+                          <span className="text-green-400 font-bold">5 pts</span>
                         </div>
                         <div className="flex justify-between items-center py-2 border-b border-gray-600">
                           <span className="text-gray-300">Leaving freelancer reviews</span>

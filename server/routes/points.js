@@ -313,10 +313,10 @@ function awardAffiliatePoints(referrerId, referredUserId) {
       return User.findByIdAndUpdate(
         referrerId,
         {
-          $inc: { points: 100 },
+          $inc: { points: 5 },
           $push: {
             pointsHistory: {
-              amount: 100,
+              amount: 5,
               reason: 'New affiliate referral',
               referredUser: referredUserId,
               createdAt: new Date()
@@ -345,10 +345,10 @@ function awardPendingAffiliatePoints(userId) {
       return User.findByIdAndUpdate(
         user.referredBy,
         {
-          $inc: { points: 100 },
+          $inc: { points: 5 },
           $push: {
             pointsHistory: {
-              amount: 100,
+              amount: 5,
               reason: 'New affiliate referral (email verified)',
               referredUser: userId,
               createdAt: new Date()
@@ -452,10 +452,10 @@ function awardListingPoints(userId) {
         return User.findByIdAndUpdate(
           user.referredBy,
           {
-            $inc: { points: 100 },
+            $inc: { points: 5 },
             $push: {
               pointsHistory: {
-                amount: 100,
+                amount: 5,
                 reason: 'Referred user listed service/ad',
                 referredUser: userId,
                 createdAt: new Date()
