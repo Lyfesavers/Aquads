@@ -610,40 +610,11 @@ function App() {
         setIsLoading(true);
         setLoadingMessage(isMobile ? 'Connecting to server...' : 'Loading ads...');
         
-        // Fetch both ads and tokens
-        const [adsData, tokensData] = await Promise.all([
-          fetchAds(),
-          fetchTokensFromDatabase()
-        ]);
-        
+        const data = await fetchAds();
         const currentMaxSize = getMaxSize(); // Get current max size for this screen
         
-        // Convert tokens to bubble format
-        const tokenBubbles = tokensData.slice(0, 50).map((token, index) => ({
-          id: `token-${token.id}`,
-          title: token.symbol,
-          description: token.name,
-          url: getTokenHomepage(token.id),
-          logo: token.image,
-          isTokenBubble: true,
-          blockchain: getTokenBlockchain(token.id),
-          size: getResponsiveSize(80), // Smaller size for token bubbles
-          x: 0, // Will be repositioned below
-          y: 0,
-          bullishVotes: 0,
-          bearishVotes: 0,
-          isBumped: false,
-          status: 'approved',
-          originalSize: getResponsiveSize(80),
-          originalMaxSize: currentMaxSize,
-          currentMaxSize: currentMaxSize
-        }));
-        
-        // Combine ads and token bubbles
-        const allBubbles = [...adsData, ...tokenBubbles];
-        
         // Reposition any bubbles that have x=0, y=0 coordinates (fix for DB-stored bubbles)
-        const repositionedAds = allBubbles.map((ad, index) => {
+        const repositionedAds = data.map((ad, index) => {
           // Calculate responsive size correctly based on the current screen size
           let adWithMetadata = {
             ...ad,
@@ -677,7 +648,7 @@ function App() {
                 ad.size, 
                 windowSize.width, 
                 windowSize.height, 
-                allBubbles.filter(otherAd => otherAd.id !== ad.id)
+                data.filter(otherAd => otherAd.id !== ad.id)
               );
             } else {
               // Calculate a safe position for this ad
@@ -685,7 +656,7 @@ function App() {
                 ad.size, 
                 windowSize.width, 
                 windowSize.height, 
-                allBubbles.filter(otherAd => otherAd.id !== ad.id)
+                data.filter(otherAd => otherAd.id !== ad.id)
               );
             }
             
@@ -704,9 +675,9 @@ function App() {
         setIsLoading(false);
         setLoadingMessage('');
         
-        // Update any repositioned ads on the server (optional, skip for token bubbles)
+        // Update any repositioned ads on the server (optional)
         for (const ad of repositionedAds) {
-          if (ad.x !== 0 && ad.y !== 0 && !ad.isTokenBubble) {
+          if (ad.x !== 0 && ad.y !== 0) {
             try {
               // Use position-only update to avoid auth issues
               await apiUpdateAdPosition(ad.id, ad.x, ad.y);
@@ -721,129 +692,6 @@ function App() {
         setLoadingMessage('');
         showNotification('Connection issue. Using cached data.', 'warning');
       }
-    };
-
-    // Function to fetch tokens from database
-    const fetchTokensFromDatabase = async () => {
-      try {
-        const response = await fetch(`${API_URL}/tokens`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const tokens = await response.json();
-        return tokens;
-      } catch (error) {
-        logger.error('Error fetching tokens:', error);
-        return [];
-      }
-    };
-
-    // Function to get token homepage URL
-    const getTokenHomepage = (tokenId) => {
-      const tokenHomepages = {
-        'bitcoin': 'https://bitcoin.org/',
-        'ethereum': 'https://ethereum.org/',
-        'binancecoin': 'https://www.binance.com/en/bnb',
-        'solana': 'https://solana.com/',
-        'cardano': 'https://cardano.org/',
-        'avalanche-2': 'https://www.avax.network/',
-        'polygon': 'https://polygon.technology/',
-        'chainlink': 'https://chain.link/',
-        'polkadot': 'https://polkadot.network/',
-        'uniswap': 'https://uniswap.org/',
-        'litecoin': 'https://litecoin.org/',
-        'dogecoin': 'https://dogecoin.com/',
-        'shiba-inu': 'https://shibatoken.com/',
-        'matic-network': 'https://polygon.technology/',
-        'wrapped-bitcoin': 'https://wbtc.network/',
-        'dai': 'https://makerdao.com/',
-        'tron': 'https://tron.network/',
-        'cosmos': 'https://cosmos.network/',
-        'near': 'https://near.org/',
-        'arbitrum': 'https://arbitrum.io/',
-        'optimism': 'https://optimism.io/',
-        'fantom': 'https://fantom.foundation/',
-        'aptos': 'https://aptoslabs.com/',
-        'internet-computer': 'https://internetcomputer.org/',
-        'stellar': 'https://stellar.org/',
-        'filecoin': 'https://filecoin.io/',
-        'hedera-hashgraph': 'https://hedera.com/',
-        'cronos': 'https://cronos.org/',
-        'vechain': 'https://www.vechain.org/',
-        'algorand': 'https://algorand.foundation/',
-        'flow': 'https://flow.com/',
-        'elrond-erd-2': 'https://multiversx.com/',
-        'tezos': 'https://tezos.com/',
-        'theta-token': 'https://thetatoken.org/',
-        'decentraland': 'https://decentraland.org/',
-        'the-sandbox': 'https://www.sandbox.game/',
-        'axie-infinity': 'https://axieinfinity.com/',
-        'chiliz': 'https://chiliz.com/',
-        'enjincoin': 'https://enjin.io/',
-        'basic-attention-token': 'https://basicattentiontoken.org/',
-        'compound': 'https://compound.finance/',
-        'aave': 'https://aave.com/',
-        'maker': 'https://makerdao.com/',
-        'yearn-finance': 'https://yearn.finance/',
-        'sushi': 'https://sushi.com/',
-        'curve-dao-token': 'https://curve.fi/',
-        'pancakeswap-token': 'https://pancakeswap.finance/'
-      };
-      return tokenHomepages[tokenId] || `https://www.coingecko.com/en/coins/${tokenId}`;
-    };
-
-    // Function to map token to blockchain for color coding
-    const getTokenBlockchain = (tokenId) => {
-      const tokenBlockchains = {
-        'bitcoin': 'bitcoin',
-        'ethereum': 'ethereum',
-        'binancecoin': 'bsc',
-        'solana': 'solana',
-        'cardano': 'cardano',
-        'avalanche-2': 'avalanche',
-        'polygon': 'polygon',
-        'matic-network': 'polygon',
-        'chainlink': 'ethereum',
-        'polkadot': 'polkadot',
-        'uniswap': 'ethereum',
-        'litecoin': 'litecoin',
-        'dogecoin': 'dogecoin',
-        'shiba-inu': 'ethereum',
-        'wrapped-bitcoin': 'ethereum',
-        'dai': 'ethereum',
-        'tron': 'tron',
-        'cosmos': 'cosmos',
-        'near': 'near',
-        'arbitrum': 'arbitrum',
-        'optimism': 'optimism',
-        'fantom': 'fantom',
-        'aptos': 'aptos',
-        'internet-computer': 'internet-computer',
-        'stellar': 'stellar',
-        'filecoin': 'filecoin',
-        'hedera-hashgraph': 'hedera',
-        'cronos': 'cronos',
-        'vechain': 'vechain',
-        'algorand': 'algorand',
-        'flow': 'flow',
-        'elrond-erd-2': 'multiversx',
-        'tezos': 'tezos',
-        'theta-token': 'theta',
-        'decentraland': 'ethereum',
-        'the-sandbox': 'polygon',
-        'axie-infinity': 'ethereum',
-        'chiliz': 'ethereum',
-        'enjincoin': 'ethereum',
-        'basic-attention-token': 'ethereum',
-        'compound': 'ethereum',
-        'aave': 'ethereum',
-        'maker': 'ethereum',
-        'yearn-finance': 'ethereum',
-        'sushi': 'ethereum',
-        'curve-dao-token': 'ethereum',
-        'pancakeswap-token': 'bsc'
-      };
-      return tokenBlockchains[tokenId] || 'ethereum';
     };
 
     loadAdsFromApi();
@@ -3088,7 +2936,7 @@ function App() {
                             }}
                           >
                             <motion.div
-                              className={`absolute bubble ${ad.isBumped ? 'bumped-ad' : ''} ${ad.blockchain ? `bubble-${ad.blockchain.toLowerCase()}` : 'bubble-ethereum'} ${ad.isTokenBubble ? 'token-bubble' : ''}`}
+                              className={`absolute bubble ${ad.isBumped ? 'bumped-ad' : ''} ${ad.blockchain ? `bubble-${ad.blockchain.toLowerCase()}` : 'bubble-ethereum'}`}
                               style={{
                                 width: '100%',
                                 height: '100%',
@@ -3099,38 +2947,35 @@ function App() {
                               }}
                               onClick={(e) => {
                                 if (!e.defaultPrevented) {
-                                  // Token bubbles can be clicked without auth
-                                  if (ad.isTokenBubble || requireAuth()) {
+                                  if (requireAuth()) {
                                     window.open(ad.url, '_blank');
                                   }
                                 }
                               }}
                             >
-                              {/* Voting popup that appears on hover - hidden for token bubbles */}
-                              {!ad.isTokenBubble && (
-                                <div className="vote-popup">
-                                  <button 
-                                    className={`vote-button bearish-vote ${ad.userVote === 'bearish' ? 'active-vote' : ''}`}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleSentimentVote(ad.id, 'bearish');
-                                    }}
-                                    aria-label="Vote bearish"
-                                  >
-                                    🐻
-                                  </button>
-                                  <button 
-                                    className={`vote-button bullish-vote ${ad.userVote === 'bullish' ? 'active-vote' : ''}`}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleSentimentVote(ad.id, 'bullish');
-                                    }}
-                                    aria-label="Vote bullish"
-                                  >
-                                    🐂
-                                  </button>
-                                </div>
-                              )}
+                              {/* Voting popup that appears on hover */}
+                              <div className="vote-popup">
+                                <button 
+                                  className={`vote-button bearish-vote ${ad.userVote === 'bearish' ? 'active-vote' : ''}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSentimentVote(ad.id, 'bearish');
+                                  }}
+                                  aria-label="Vote bearish"
+                                >
+                                  🐻
+                                </button>
+                                <button 
+                                  className={`vote-button bullish-vote ${ad.userVote === 'bullish' ? 'active-vote' : ''}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSentimentVote(ad.id, 'bullish');
+                                  }}
+                                  aria-label="Vote bullish"
+                                >
+                                  🐂
+                                </button>
+                              </div>
                               
                               <div className="bubble-content">
                                 {/* Background of bubble */}
@@ -3141,8 +2986,7 @@ function App() {
                                   className="bubble-text-curved"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    // Token bubbles can't be bumped
-                                    if (!ad.isTokenBubble && requireAuth()) {
+                                    if (requireAuth()) {
                                       setSelectedAdId(ad.id);
                                       setShowBumpStore(true);
                                     }
@@ -3178,8 +3022,8 @@ function App() {
                                   />
                                 </div>
                                 
-                                {/* Simple percentage indicator - changed to BUY/SELL - hidden for token bubbles */}
-                                {!ad.isTokenBubble && (ad.bullishVotes > 0 || ad.bearishVotes > 0) && (
+                                {/* Simple percentage indicator - changed to BUY/SELL */}
+                                {(ad.bullishVotes > 0 || ad.bearishVotes > 0) && (
                                   <div 
                                     className={`vote-percentage ${
                                       ad.bullishVotes > ad.bearishVotes 
