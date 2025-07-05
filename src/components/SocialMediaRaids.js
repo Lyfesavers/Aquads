@@ -819,8 +819,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     await fetchUserPoints();
     const currentPoints = getUserPoints();
     
-    if (currentPoints < 200) {
-      setError(`Not enough points. You need 200 points but only have ${currentPoints}.`);
+    if (currentPoints < 2000) {
+      setError(`Not enough points. You need 2000 points but only have ${currentPoints}.`);
       return;
     }
     
@@ -971,7 +971,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                {showPointsCreateForm ? 'Cancel' : 'Create Raid (200 Points)'}
+                {showPointsCreateForm ? 'Cancel' : 'Create Raid (2000 Points)'}
               </button>
             )}
           </div>
@@ -1040,7 +1040,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         {/* Points-based Raid Create Form */}
         {showPointsCreateForm && currentUser && (
           <div className="mt-4 p-4 bg-gray-800/50 rounded-lg">
-            <h3 className="text-lg font-bold text-white mb-4">Create Twitter Raid with Points (200 Points)</h3>
+            <h3 className="text-lg font-bold text-white mb-4">Create Twitter Raid with Points (2000 Points)</h3>
             
             <form onSubmit={handlePointsRaidSubmit}>
               <div className="mb-4">
@@ -1068,7 +1068,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                       {loadingPoints ? (
                         <p className="text-sm mr-2">Loading points balance...</p>
                       ) : (
-                        <p className="text-sm mr-2">You currently have {getUserPoints()} points. Creating this raid will cost 200 points.</p>
+                        <p className="text-sm mr-2">You currently have {getUserPoints()} points. Creating this raid will cost 2000 points.</p>
                       )}
                       <button 
                         type="button"
@@ -1098,17 +1098,17 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
               
               <button
                 type="submit"
-                disabled={submitting || getUserPoints() < 200}
+                disabled={submitting || getUserPoints() < 2000}
                 className={`px-4 py-2 rounded font-medium ${
-                  submitting || getUserPoints() < 200
+                  submitting || getUserPoints() < 2000
                     ? 'bg-gray-600 cursor-not-allowed'
                     : 'bg-green-600 hover:bg-green-700'
                 } text-white`}
               >
                 {submitting 
                   ? 'Creating...' 
-                  : getUserPoints() < 200 
-                    ? 'Not Enough Points (Need 200)' 
+                  : getUserPoints() < 2000 
+                    ? 'Not Enough Points (Need 2000)' 
                     : 'Create Twitter Raid with Points'}
               </button>
             </form>

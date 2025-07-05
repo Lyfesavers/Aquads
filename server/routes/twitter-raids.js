@@ -140,7 +140,7 @@ router.post('/paid', auth, async (req, res) => {
 router.post('/points', auth, async (req, res) => {
   try {
     const { tweetUrl, title, description } = req.body;
-    const POINTS_REQUIRED = 200; // Points required to create a raid
+    const POINTS_REQUIRED = 2000; // Points required to create a raid
 
     if (!tweetUrl || !title || !description) {
       return res.status(400).json({ error: 'Missing required fields' });
