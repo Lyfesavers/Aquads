@@ -510,26 +510,22 @@ export const pingServer = async () => {
 }; 
 
 // Service endpoints
-export const fetchServices = async (page = 1, limit = 20, category = '', sort = 'rating', showPremiumOnly = false) => {
+export const fetchServices = async (params = {}) => {
   try {
-    const params = new URLSearchParams({
-      page: page.toString(),
-      limit: limit.toString()
-    });
+    const queryParams = new URLSearchParams();
     
-    if (category) {
-      params.append('category', category);
-    }
+    // Add pagination parameters
+    if (params.page) queryParams.append('page', params.page);
+    if (params.limit) queryParams.append('limit', params.limit);
     
-    if (sort) {
-      params.append('sort', sort);
-    }
+    // Add filter parameters
+    if (params.category) queryParams.append('category', params.category);
+    if (params.sort) queryParams.append('sort', params.sort);
+    if (params.showPremiumOnly) queryParams.append('showPremiumOnly', params.showPremiumOnly);
     
-    if (showPremiumOnly) {
-      params.append('showPremiumOnly', 'true');
-    }
+    const url = `${API_URL}/services${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     
-    const response = await fetch(`${API_URL}/services?${params}`);
+    const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Failed to fetch services: ${response.status} ${response.statusText}`);
     }
@@ -538,19 +534,19 @@ export const fetchServices = async (page = 1, limit = 20, category = '', sort = 
     
     // Check if data has the expected structure
     if (data && data.services) {
-      // Return the full response with pagination info
+      // Return the services array from the response
       return data;
     } else if (Array.isArray(data)) {
-      // If API returns just an array of services (backwards compatibility)
-      return { services: data, pagination: { total: data.length, pages: 1, currentPage: 1 } };
+      // If API returns just an array of services
+      return { services: data };
     } else {
       // Handle unexpected data structure
-      return { services: [], pagination: { total: 0, pages: 0, currentPage: 1 } };
+      return { services: [] };
     }
   } catch (error) {
     logger.error('Error fetching services:', error);
     // Return empty services array on error
-    return { services: [], pagination: { total: 0, pages: 0, currentPage: 1 } };
+    return { services: [] };
   }
 };
 

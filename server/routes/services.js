@@ -11,7 +11,12 @@ router.get('/', async (req, res) => {
   try {
     const { category, sort, limit = 20, page = 1, showPremiumOnly } = req.query;
     const query = {};
+    
+    // Build multi-field sort: Premium first, then by selected option
     const sortOptions = {};
+    
+    // Always prioritize premium services first (isPremium: -1 means true values first)
+    sortOptions.isPremium = -1;
 
     if (category) {
       query.category = category;
@@ -21,16 +26,17 @@ router.get('/', async (req, res) => {
       query.isPremium = true;
     }
 
+    // Then apply the selected sort option as secondary sort
     if (sort) {
       switch (sort) {
+        case 'highest-rated':
+          sortOptions.rating = -1;
+          break;
         case 'price-low':
           sortOptions.price = 1;
           break;
         case 'price-high':
           sortOptions.price = -1;
-          break;
-        case 'rating':
-          sortOptions.rating = -1;
           break;
         case 'newest':
           sortOptions.createdAt = -1;

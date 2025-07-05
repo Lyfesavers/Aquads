@@ -157,6 +157,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [jobs, setJobs] = useState([]);
   const [jobToEdit, setJobToEdit] = useState(null);
   const [isLoading, setIsLoading] = useState({ jobs: true });
+  
+  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalServices, setTotalServices] = useState(0);
@@ -211,17 +213,24 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     { id: 'other', name: 'Other', icon: '🔧' }
   ];
 
-  // Load services when component mounts or page changes
+  // Load services when component mounts
   useEffect(() => {
-    loadServices(currentPage);
-  }, [currentPage, itemsPerPage, selectedCategory, sortOption, showPremiumOnly]);
+    loadServices();
+  }, []);
 
-  // Reset page when category, sort, or premium filter changes
+  // Reload services when filters change
   useEffect(() => {
-    if (selectedCategory || sortOption || showPremiumOnly !== false) {
+    if (currentPage !== 1) {
       setCurrentPage(1);
+    } else {
+      loadServices(1);
     }
   }, [selectedCategory, sortOption, showPremiumOnly]);
+
+  // Reload services when page changes
+  useEffect(() => {
+    loadServices(currentPage);
+  }, [currentPage]);
 
   // Add effect to handle shared service links
   useEffect(() => {
@@ -267,29 +276,37 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     }
   }, [services]);
 
-  const loadServices = async (page = 1) => {
+  const loadServices = async (page = currentPage) => {
     try {
-      const data = await fetchServices(page, itemsPerPage, selectedCategory, sortOption, showPremiumOnly);
+      setLoading(true);
+      
+      const data = await fetchServices({
+        page,
+        limit: itemsPerPage,
+        category: selectedCategory,
+        sort: sortOption,
+        showPremiumOnly
+      });
       
       // Check data structure and extract services array properly
       let servicesArray = [];
-      let paginationInfo = { total: 0, pages: 1, currentPage: 1 };
+      let paginationData = {};
       
       if (Array.isArray(data)) {
-        // If data is already an array of services (backwards compatibility)
+        // If data is already an array of services (old format)
         servicesArray = data;
-        paginationInfo = { total: data.length, pages: 1, currentPage: 1 };
+        paginationData = { total: data.length, pages: 1, currentPage: 1 };
       } else if (data && Array.isArray(data.services)) {
-        // If data has a services property that is an array
+        // If data has a services property that is an array (new format)
         servicesArray = data.services;
-        paginationInfo = data.pagination || { total: data.services.length, pages: 1, currentPage: 1 };
+        paginationData = data.pagination || { total: data.services.length, pages: 1, currentPage: 1 };
       } else if (data && typeof data === 'object') {
         // If data is an object but not in expected format
         servicesArray = data.services || [];
-        paginationInfo = data.pagination || { total: 0, pages: 1, currentPage: 1 };
+        paginationData = data.pagination || { total: 0, pages: 1, currentPage: 1 };
       } else {
         servicesArray = [];
-        paginationInfo = { total: 0, pages: 1, currentPage: 1 };
+        paginationData = { total: 0, pages: 1, currentPage: 1 };
       }
       
       // Fetch initial review data for each service
@@ -315,9 +332,9 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       setOriginalServices(servicesWithReviews);
       
       // Update pagination state
-      setCurrentPage(paginationInfo.currentPage);
-      setTotalPages(paginationInfo.pages);
-      setTotalServices(paginationInfo.total);
+      setTotalPages(paginationData.pages);
+      setTotalServices(paginationData.total);
+      setCurrentPage(paginationData.currentPage);
       
       // Initialize user statuses for all service sellers
       const sellers = servicesWithReviews
@@ -360,8 +377,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       const newService = await createService(serviceData);
       logger.log('Service created successfully:', newService);
       
-      // Reload services to get updated data with proper pagination
-      await loadServices(1); // Load first page to see the new service
+      // Reload services to update pagination
+      await loadServices(1); // Go to first page to see the new service
       setCurrentPage(1);
       
       // Close modal
@@ -409,7 +426,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         throw new Error(errorData.message || 'Failed to delete service');
       }
 
-      // If delete was successful, reload the services
+      // If delete was successful, reload services to update pagination
       await loadServices(currentPage);
       alert('Service deleted successfully');
     } catch (error) {
@@ -454,30 +471,58 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     logger.log('Token available:', currentUser?.token ? 'yes' : 'no');
   }, [currentUser]);
 
-
-
-  // Apply only search filter on client-side (category and sort handled by backend)
-  const filteredServices = services.filter(service => {
-    // Only apply search term filter if there is one
-    if (searchTerm && searchTerm.trim() !== '') {
-      const searchQuery = searchTerm.toLowerCase();
-      const username = service.seller?.username?.toLowerCase() || '';
-      const title = service.title?.toLowerCase() || '';
-      const description = service.description?.toLowerCase() || '';
-      const category = service.category?.toLowerCase() || '';
-      
-      return username.includes(searchQuery) || 
-             title.includes(searchQuery) || 
-             description.includes(searchQuery) ||
-             category.includes(searchQuery);
-    }
+  // Modify the sortServices function
+  const sortServices = (services, option) => {
+    const servicesCopy = [...services];
     
-    // If no search term, show all services (backend handles other filtering)
-    return true;
-  });
+    // First sort by the selected option
+    const sortedServices = servicesCopy.sort((a, b) => {
+      // First prioritize premium status
+      if (a.isPremium && !b.isPremium) return -1;
+      if (!a.isPremium && b.isPremium) return 1;
+      
+      // Then apply the selected sort option within each group
+      switch (option) {
+        case 'highest-rated':
+          return (b.rating || 0) - (a.rating || 0);
+        case 'price-low':
+          return a.price - b.price;
+        case 'price-high':
+          return b.price - a.price;
+        case 'newest':
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        default:
+          return 0;
+      }
+    });
+
+    return sortedServices;
+  };
+
+  // Apply only search filtering since backend handles sorting and pagination
+  const filteredServices = services
+    .filter(service => {
+      // Only apply search term filter if there is one
+      if (searchTerm && searchTerm.trim() !== '') {
+        const searchQuery = searchTerm.toLowerCase();
+        const username = service.seller?.username?.toLowerCase() || '';
+        const title = service.title?.toLowerCase() || '';
+        const description = service.description?.toLowerCase() || '';
+        const category = service.category?.toLowerCase() || '';
+        
+        return username.includes(searchQuery) || 
+               title.includes(searchQuery) || 
+               description.includes(searchQuery) ||
+               category.includes(searchQuery);
+      }
+      
+      // If no search term, show all services (backend handles other filters)
+      return true;
+    });
 
   const handleSortChange = (e) => {
     setSortOption(e.target.value);
+    setCurrentPage(1); // Reset to first page when sort changes
   };
 
   const toggleDescription = (serviceId) => {
@@ -579,7 +624,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
       const updatedService = await response.json();
       
-      // Reload services to get updated data with proper pagination
+      // Reload services to update pagination
       await loadServices(currentPage);
 
       setShowEditModal(false);
@@ -741,10 +786,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     setSearchTerm('');
   };
 
-  const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage);
-    }
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
   return (
@@ -930,8 +973,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
               </div>
               <div className="flex flex-wrap items-center gap-3 mb-0">
                 <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  value={selectedCategory || ''}
+                  onChange={(e) => setSelectedCategory(e.target.value || null)}
                   className="bg-gray-700/80 text-white px-3 py-3 rounded-lg text-sm w-full sm:w-auto"
                 >
                   <option value="">All Categories</option>
@@ -1246,72 +1289,60 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                   )}
                 </>
               )}
-            </div>
-            
-            {/* Pagination Controls */}
-            {totalPages > 1 && !searchTerm && (
-              <div className="flex justify-center items-center mt-8 space-x-4">
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className={`px-4 py-2 rounded-lg transition-colors ${
-                    currentPage === 1
-                      ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                      : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                  }`}
-                >
-                  Previous
-                </button>
-                
-                <div className="flex space-x-2">
-                  {[...Array(Math.min(5, totalPages))].map((_, index) => {
-                    let pageNum;
-                    if (totalPages <= 5) {
-                      pageNum = index + 1;
-                    } else if (currentPage <= 3) {
-                      pageNum = index + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNum = totalPages - 4 + index;
-                    } else {
-                      pageNum = currentPage - 2 + index;
-                    }
+
+              {/* Pagination Controls */}
+              {!searchTerm && !showJobs && totalPages > 1 && (
+                <div className="flex justify-center mt-8">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className={`px-3 py-2 rounded-lg ${
+                        currentPage === 1
+                          ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                          : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                      } transition-colors`}
+                    >
+                      Previous
+                    </button>
                     
-                    return (
+                    {/* Page Numbers */}
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                       <button
-                        key={pageNum}
-                        onClick={() => handlePageChange(pageNum)}
-                        className={`px-3 py-2 rounded-lg transition-colors ${
-                          currentPage === pageNum
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`px-3 py-2 rounded-lg ${
+                          currentPage === page
                             ? 'bg-indigo-600 text-white'
-                            : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-                        }`}
+                            : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                        } transition-colors`}
                       >
-                        {pageNum}
+                        {page}
                       </button>
-                    );
-                  })}
+                    ))}
+                    
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className={`px-3 py-2 rounded-lg ${
+                        currentPage === totalPages
+                          ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                          : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                      } transition-colors`}
+                    >
+                      Next
+                    </button>
+                  </div>
                 </div>
-                
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className={`px-4 py-2 rounded-lg transition-colors ${
-                    currentPage === totalPages
-                      ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                      : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                  }`}
-                >
-                  Next
-                </button>
-              </div>
-            )}
-            
-            {/* Pagination Info */}
-            {totalServices > 0 && (
-              <div className="text-center mt-4 text-gray-400">
-                Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalServices)} of {totalServices} services
-              </div>
-            )}
+              )}
+
+              {/* Pagination Info */}
+              {!searchTerm && !showJobs && totalPages > 1 && (
+                <div className="text-center mt-4 text-gray-400 text-sm">
+                  Showing page {currentPage} of {totalPages} ({totalServices} total services)
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
