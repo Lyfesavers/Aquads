@@ -160,7 +160,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(20);
+  const [itemsPerPage] = useState(21);
 
   // Initialize user presence tracking
   useUserPresence(currentUser);
