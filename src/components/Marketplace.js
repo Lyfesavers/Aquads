@@ -218,19 +218,10 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     loadServices();
   }, []);
 
-  // Reload services when filters change
+  // Reset to page 1 when filters change (like App.js does)
   useEffect(() => {
-    if (currentPage !== 1) {
-      setCurrentPage(1);
-    } else {
-      loadServices(1);
-    }
+    setCurrentPage(1);
   }, [selectedCategory, sortOption, showPremiumOnly]);
-
-  // Reload services when page changes
-  useEffect(() => {
-    loadServices(currentPage);
-  }, [currentPage]);
 
   // Add effect to handle shared service links
   useEffect(() => {
@@ -276,38 +267,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     }
   }, [services]);
 
-  const loadServices = async (page = currentPage) => {
+  const loadServices = async () => {
     try {
       setLoading(true);
       
-      const data = await fetchServices({
-        page,
-        limit: itemsPerPage,
-        category: selectedCategory,
-        sort: sortOption,
-        showPremiumOnly
-      });
-      
-      // Check data structure and extract services array properly
-      let servicesArray = [];
-      let paginationData = {};
-      
-      if (Array.isArray(data)) {
-        // If data is already an array of services (old format)
-        servicesArray = data;
-        paginationData = { total: data.length, pages: 1, currentPage: 1 };
-      } else if (data && Array.isArray(data.services)) {
-        // If data has a services property that is an array (new format)
-        servicesArray = data.services;
-        paginationData = data.pagination || { total: data.services.length, pages: 1, currentPage: 1 };
-      } else if (data && typeof data === 'object') {
-        // If data is an object but not in expected format
-        servicesArray = data.services || [];
-        paginationData = data.pagination || { total: 0, pages: 1, currentPage: 1 };
-      } else {
-        servicesArray = [];
-        paginationData = { total: 0, pages: 1, currentPage: 1 };
-      }
+      // Fetch ALL services at once (like App.js does with ads)
+      const servicesArray = await fetchServices();
       
       // Fetch initial review data for each service
       const servicesWithReviews = await Promise.all(servicesArray.map(async (service) => {
@@ -330,11 +295,6 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
       setServices(servicesWithReviews);
       setOriginalServices(servicesWithReviews);
-      
-      // Update pagination state
-      setTotalPages(paginationData.pages);
-      setTotalServices(paginationData.total);
-      setCurrentPage(paginationData.currentPage);
       
       // Initialize user statuses for all service sellers
       const sellers = servicesWithReviews
@@ -377,9 +337,10 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       const newService = await createService(serviceData);
       logger.log('Service created successfully:', newService);
       
-      // Reload services to update pagination
-      await loadServices(1); // Go to first page to see the new service
-      setCurrentPage(1);
+      // Add new service to local state (like App.js does)
+      setServices(prevServices => [newService, ...prevServices]);
+      setOriginalServices(prevServices => [newService, ...prevServices]);
+      setCurrentPage(1); // Go to first page to see the new service
       
       // Close modal
       setShowCreateModal(false);
@@ -426,8 +387,9 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         throw new Error(errorData.message || 'Failed to delete service');
       }
 
-      // If delete was successful, reload services to update pagination
-      await loadServices(currentPage);
+      // If delete was successful, remove from local state
+      setServices(prevServices => prevServices.filter(service => service._id !== serviceId));
+      setOriginalServices(prevServices => prevServices.filter(service => service._id !== serviceId));
       alert('Service deleted successfully');
     } catch (error) {
       logger.error('Error deleting service:', error);
@@ -471,40 +433,27 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     logger.log('Token available:', currentUser?.token ? 'yes' : 'no');
   }, [currentUser]);
 
-  // Modify the sortServices function
-  const sortServices = (services, option) => {
-    const servicesCopy = [...services];
+
+
+  // Function to get currently visible services (like App.js getVisibleAds pattern)
+  const getVisibleServices = () => {
+    // Start with all services
+    let filteredServices = [...services];
     
-    // First sort by the selected option
-    const sortedServices = servicesCopy.sort((a, b) => {
-      // First prioritize premium status
-      if (a.isPremium && !b.isPremium) return -1;
-      if (!a.isPremium && b.isPremium) return 1;
-      
-      // Then apply the selected sort option within each group
-      switch (option) {
-        case 'highest-rated':
-          return (b.rating || 0) - (a.rating || 0);
-        case 'price-low':
-          return a.price - b.price;
-        case 'price-high':
-          return b.price - a.price;
-        case 'newest':
-          return new Date(b.createdAt) - new Date(a.createdAt);
-        default:
-          return 0;
-      }
-    });
-
-    return sortedServices;
-  };
-
-  // Apply only search filtering since backend handles sorting and pagination
-  const filteredServices = services
-    .filter(service => {
-      // Only apply search term filter if there is one
-      if (searchTerm && searchTerm.trim() !== '') {
-        const searchQuery = searchTerm.toLowerCase();
+    // Apply category filter
+    if (selectedCategory) {
+      filteredServices = filteredServices.filter(service => service.category === selectedCategory);
+    }
+    
+    // Apply premium filter
+    if (showPremiumOnly) {
+      filteredServices = filteredServices.filter(service => service.isPremium);
+    }
+    
+    // Apply search filter
+    if (searchTerm && searchTerm.trim() !== '') {
+      const searchQuery = searchTerm.toLowerCase();
+      filteredServices = filteredServices.filter(service => {
         const username = service.seller?.username?.toLowerCase() || '';
         const title = service.title?.toLowerCase() || '';
         const description = service.description?.toLowerCase() || '';
@@ -514,11 +463,47 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                title.includes(searchQuery) || 
                description.includes(searchQuery) ||
                category.includes(searchQuery);
-      }
+      });
+    }
+    
+    // Apply sorting (premium first, then by selected option)
+    const sortedServices = filteredServices.sort((a, b) => {
+      // First prioritize premium status
+      if (a.isPremium && !b.isPremium) return -1;
+      if (!a.isPremium && b.isPremium) return 1;
       
-      // If no search term, show all services (backend handles other filters)
-      return true;
+      // Then apply the selected sort option within each group
+      switch (sortOption) {
+        case 'highest-rated':
+          return (b.rating || 0) - (a.rating || 0);
+        case 'price-low':
+          return a.price - b.price;
+        case 'price-high':
+          return b.price - a.price;
+        case 'newest':
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        default:
+          return (b.rating || 0) - (a.rating || 0);
+      }
     });
+    
+    // Calculate pagination
+    const totalFiltered = sortedServices.length;
+    const totalPagesCalculated = Math.ceil(totalFiltered / itemsPerPage);
+    
+    // Update pagination state
+    setTotalServices(totalFiltered);
+    setTotalPages(totalPagesCalculated);
+    
+    // Return services for current page
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    
+    return sortedServices.slice(startIndex, endIndex);
+  };
+
+  // Get visible services for current page
+  const filteredServices = getVisibleServices();
 
   const handleSortChange = (e) => {
     setSortOption(e.target.value);
@@ -624,8 +609,17 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
       const updatedService = await response.json();
       
-      // Reload services to update pagination
-      await loadServices(currentPage);
+      // Update local state (like App.js does)
+      setServices(prevServices => 
+        prevServices.map(service => 
+          service._id === serviceId ? updatedService : service
+        )
+      );
+      setOriginalServices(prevServices => 
+        prevServices.map(service => 
+          service._id === serviceId ? updatedService : service
+        )
+      );
 
       setShowEditModal(false);
       setServiceToEdit(null);

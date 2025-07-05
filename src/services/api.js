@@ -510,22 +510,10 @@ export const pingServer = async () => {
 }; 
 
 // Service endpoints
-export const fetchServices = async (params = {}) => {
+export const fetchServices = async () => {
   try {
-    const queryParams = new URLSearchParams();
-    
-    // Add pagination parameters
-    if (params.page) queryParams.append('page', params.page);
-    if (params.limit) queryParams.append('limit', params.limit);
-    
-    // Add filter parameters
-    if (params.category) queryParams.append('category', params.category);
-    if (params.sort) queryParams.append('sort', params.sort);
-    if (params.showPremiumOnly) queryParams.append('showPremiumOnly', params.showPremiumOnly);
-    
-    const url = `${API_URL}/services${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    
-    const response = await fetch(url);
+    // Fetch ALL services at once (like how App.js fetches all ads)
+    const response = await fetch(`${API_URL}/services?limit=200`);
     if (!response.ok) {
       throw new Error(`Failed to fetch services: ${response.status} ${response.statusText}`);
     }
@@ -535,18 +523,18 @@ export const fetchServices = async (params = {}) => {
     // Check if data has the expected structure
     if (data && data.services) {
       // Return the services array from the response
-      return data;
+      return data.services;
     } else if (Array.isArray(data)) {
       // If API returns just an array of services
-      return { services: data };
+      return data;
     } else {
       // Handle unexpected data structure
-      return { services: [] };
+      return [];
     }
   } catch (error) {
     logger.error('Error fetching services:', error);
     // Return empty services array on error
-    return { services: [] };
+    return [];
   }
 };
 
