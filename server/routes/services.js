@@ -20,84 +20,36 @@ router.get('/', async (req, res) => {
       query.isPremium = true;
     }
 
-    // Build sort pipeline - Premium first, then by selected option
-    let sortPipeline = [];
-    
-    // First stage: Match the query
-    sortPipeline.push({ $match: query });
-    
-    // Second stage: Lookup seller information
-    sortPipeline.push({
-      $lookup: {
-        from: 'users',
-        localField: 'seller',
-        foreignField: '_id',
-        as: 'seller'
-      }
-    });
-    
-    // Third stage: Unwind seller array
-    sortPipeline.push({ $unwind: '$seller' });
-    
-    // Fourth stage: Sort with premium priority
-    let sortStage = {};
+    // Build sort options - Premium first, then by selected option
+    let sortOptions = {};
     
     // Always prioritize premium services first
-    sortStage.isPremium = -1;
+    sortOptions.isPremium = -1;
     
     // Then apply the selected sort option
     switch (sort) {
       case 'highest-rated':
-        sortStage.rating = -1;
+        sortOptions.rating = -1;
         break;
       case 'price-low':
-        sortStage.price = 1;
+        sortOptions.price = 1;
         break;
       case 'price-high':
-        sortStage.price = -1;
+        sortOptions.price = -1;
         break;
       case 'newest':
-        sortStage.createdAt = -1;
+        sortOptions.createdAt = -1;
         break;
       default:
-        sortStage.rating = -1;
+        sortOptions.rating = -1;
     }
-    
-    sortPipeline.push({ $sort: sortStage });
-    
-    // Fifth stage: Add pagination
-    sortPipeline.push({ $skip: (parseInt(page) - 1) * parseInt(limit) });
-    sortPipeline.push({ $limit: parseInt(limit) });
-    
-    // Sixth stage: Project seller fields
-    sortPipeline.push({
-      $project: {
-        title: 1,
-        description: 1,
-        category: 1,
-        price: 1,
-        deliveryTime: 1,
-        requirements: 1,
-        image: 1,
-        videoUrl: 1,
-        rating: 1,
-        reviews: 1,
-        isPremium: 1,
-        badge: 1,
-        createdAt: 1,
-        'seller._id': 1,
-        'seller.username': 1,
-        'seller.image': 1,
-        'seller.rating': 1,
-        'seller.reviews': 1,
-        'seller.country': 1,
-        'seller.isOnline': 1,
-        'seller.lastSeen': 1,
-        'seller.lastActivity': 1
-      }
-    });
 
-    const services = await Service.aggregate(sortPipeline);
+    const services = await Service.find(query)
+      .sort(sortOptions)
+      .limit(parseInt(limit))
+      .skip((parseInt(page) - 1) * parseInt(limit))
+      .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity');
+
     const total = await Service.countDocuments(query);
 
     res.json({
