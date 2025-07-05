@@ -157,6 +157,10 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [jobs, setJobs] = useState([]);
   const [jobToEdit, setJobToEdit] = useState(null);
   const [isLoading, setIsLoading] = useState({ jobs: true });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalServices, setTotalServices] = useState(0);
+  const [itemsPerPage] = useState(20);
 
   // Initialize user presence tracking
   useUserPresence(currentUser);
@@ -207,10 +211,17 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     { id: 'other', name: 'Other', icon: '🔧' }
   ];
 
-  // Load services when component mounts
+  // Load services when component mounts or page changes
   useEffect(() => {
-    loadServices();
-  }, []);
+    loadServices(currentPage);
+  }, [currentPage, itemsPerPage]);
+
+  // Reset page when search term or category changes
+  useEffect(() => {
+    if (searchTerm || selectedCategory) {
+      setCurrentPage(1);
+    }
+  }, [searchTerm, selectedCategory]);
 
   // Add effect to handle shared service links
   useEffect(() => {
@@ -256,23 +267,29 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     }
   }, [services]);
 
-  const loadServices = async () => {
+  const loadServices = async (page = 1) => {
     try {
-      const data = await fetchServices();
+      const data = await fetchServices(page, itemsPerPage);
       
       // Check data structure and extract services array properly
       let servicesArray = [];
+      let paginationInfo = { total: 0, pages: 1, currentPage: 1 };
+      
       if (Array.isArray(data)) {
-        // If data is already an array of services
+        // If data is already an array of services (backwards compatibility)
         servicesArray = data;
+        paginationInfo = { total: data.length, pages: 1, currentPage: 1 };
       } else if (data && Array.isArray(data.services)) {
         // If data has a services property that is an array
         servicesArray = data.services;
+        paginationInfo = data.pagination || { total: data.services.length, pages: 1, currentPage: 1 };
       } else if (data && typeof data === 'object') {
         // If data is an object but not in expected format
         servicesArray = data.services || [];
+        paginationInfo = data.pagination || { total: 0, pages: 1, currentPage: 1 };
       } else {
         servicesArray = [];
+        paginationInfo = { total: 0, pages: 1, currentPage: 1 };
       }
       
       // Fetch initial review data for each service
@@ -296,6 +313,11 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
       setServices(servicesWithReviews);
       setOriginalServices(servicesWithReviews);
+      
+      // Update pagination state
+      setCurrentPage(paginationInfo.currentPage);
+      setTotalPages(paginationInfo.pages);
+      setTotalServices(paginationInfo.total);
       
       // Initialize user statuses for all service sellers
       const sellers = servicesWithReviews
@@ -338,8 +360,9 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       const newService = await createService(serviceData);
       logger.log('Service created successfully:', newService);
       
-      // Update services list
-      setServices(prevServices => [newService, ...prevServices]);
+      // Reload services to get updated data with proper pagination
+      await loadServices(1); // Load first page to see the new service
+      setCurrentPage(1);
       
       // Close modal
       setShowCreateModal(false);
@@ -386,8 +409,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         throw new Error(errorData.message || 'Failed to delete service');
       }
 
-      // If delete was successful, update the services list
-      setServices(prevServices => prevServices.filter(service => service._id !== serviceId));
+      // If delete was successful, reload the services
+      await loadServices(currentPage);
       alert('Service deleted successfully');
     } catch (error) {
       logger.error('Error deleting service:', error);
@@ -596,12 +619,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
       const updatedService = await response.json();
       
-      // Update the services list with the edited service
-      setServices(prevServices => 
-        prevServices.map(service => 
-          service._id === serviceId ? updatedService : service
-        )
-      );
+      // Reload services to get updated data with proper pagination
+      await loadServices(currentPage);
 
       setShowEditModal(false);
       setServiceToEdit(null);
@@ -760,6 +779,13 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
   const handleClearSearch = () => {
     setSearchTerm('');
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
   };
 
   return (
@@ -1262,6 +1288,71 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                 </>
               )}
             </div>
+            
+            {/* Pagination Controls */}
+            {totalPages > 1 && !searchTerm && (
+              <div className="flex justify-center items-center mt-8 space-x-4">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`px-4 py-2 rounded-lg transition-colors ${
+                    currentPage === 1
+                      ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                      : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                  }`}
+                >
+                  Previous
+                </button>
+                
+                <div className="flex space-x-2">
+                  {[...Array(Math.min(5, totalPages))].map((_, index) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = index + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = index + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + index;
+                    } else {
+                      pageNum = currentPage - 2 + index;
+                    }
+                    
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`px-3 py-2 rounded-lg transition-colors ${
+                          currentPage === pageNum
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className={`px-4 py-2 rounded-lg transition-colors ${
+                    currentPage === totalPages
+                      ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                      : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                  }`}
+                >
+                  Next
+                </button>
+              </div>
+            )}
+            
+            {/* Pagination Info */}
+            {totalServices > 0 && (
+              <div className="text-center mt-4 text-gray-400">
+                Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalServices)} of {totalServices} services
+              </div>
+            )}
           </div>
         </div>
       </div>

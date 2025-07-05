@@ -510,9 +510,9 @@ export const pingServer = async () => {
 }; 
 
 // Service endpoints
-export const fetchServices = async () => {
+export const fetchServices = async (page = 1, limit = 20) => {
   try {
-    const response = await fetch(`${API_URL}/services?limit=100`);
+    const response = await fetch(`${API_URL}/services?page=${page}&limit=${limit}`);
     if (!response.ok) {
       throw new Error(`Failed to fetch services: ${response.status} ${response.statusText}`);
     }
@@ -521,19 +521,19 @@ export const fetchServices = async () => {
     
     // Check if data has the expected structure
     if (data && data.services) {
-      // Return the services array from the response
+      // Return the full response with pagination info
       return data;
     } else if (Array.isArray(data)) {
-      // If API returns just an array of services
-      return { services: data };
+      // If API returns just an array of services (backwards compatibility)
+      return { services: data, pagination: { total: data.length, pages: 1, currentPage: 1 } };
     } else {
       // Handle unexpected data structure
-      return { services: [] };
+      return { services: [], pagination: { total: 0, pages: 0, currentPage: 1 } };
     }
   } catch (error) {
     logger.error('Error fetching services:', error);
     // Return empty services array on error
-    return { services: [] };
+    return { services: [], pagination: { total: 0, pages: 0, currentPage: 1 } };
   }
 };
 
