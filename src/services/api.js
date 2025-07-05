@@ -510,9 +510,23 @@ export const pingServer = async () => {
 }; 
 
 // Service endpoints
-export const fetchServices = async (page = 1, limit = 20) => {
+export const fetchServices = async (page = 1, limit = 20, category = '', sort = 'highest-rated', showPremiumOnly = false) => {
   try {
-    const response = await fetch(`${API_URL}/services?page=${page}&limit=${limit}`);
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      sort: sort
+    });
+    
+    if (category) {
+      params.append('category', category);
+    }
+    
+    if (showPremiumOnly) {
+      params.append('showPremiumOnly', 'true');
+    }
+    
+    const response = await fetch(`${API_URL}/services?${params}`);
     if (!response.ok) {
       throw new Error(`Failed to fetch services: ${response.status} ${response.statusText}`);
     }

@@ -9,42 +9,95 @@ const { createNotification } = require('./notifications');
 // Get all services with optional filtering
 router.get('/', async (req, res) => {
   try {
-    const { category, sort, limit = 20, page = 1 } = req.query;
+    const { category, sort = 'highest-rated', limit = 20, page = 1, showPremiumOnly } = req.query;
     const query = {};
-    const sortOptions = {};
 
     if (category) {
       query.category = category;
     }
 
-    if (sort) {
-      switch (sort) {
-        case 'price-low':
-          sortOptions.price = 1;
-          break;
-        case 'price-high':
-          sortOptions.price = -1;
-          break;
-        case 'rating':
-          sortOptions.rating = -1;
-          break;
-        case 'newest':
-          sortOptions.createdAt = -1;
-          break;
-        default:
-          sortOptions.rating = -1;
-      }
-    } else {
-      // Default sort when no sort parameter is provided
-      sortOptions.rating = -1;
+    if (showPremiumOnly === 'true') {
+      query.isPremium = true;
     }
 
-    const services = await Service.find(query)
-      .sort(sortOptions)
-      .limit(parseInt(limit))
-      .skip((parseInt(page) - 1) * parseInt(limit))
-      .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity');
+    // Build sort pipeline - Premium first, then by selected option
+    let sortPipeline = [];
+    
+    // First stage: Match the query
+    sortPipeline.push({ $match: query });
+    
+    // Second stage: Lookup seller information
+    sortPipeline.push({
+      $lookup: {
+        from: 'users',
+        localField: 'seller',
+        foreignField: '_id',
+        as: 'seller'
+      }
+    });
+    
+    // Third stage: Unwind seller array
+    sortPipeline.push({ $unwind: '$seller' });
+    
+    // Fourth stage: Sort with premium priority
+    let sortStage = {};
+    
+    // Always prioritize premium services first
+    sortStage.isPremium = -1;
+    
+    // Then apply the selected sort option
+    switch (sort) {
+      case 'highest-rated':
+        sortStage.rating = -1;
+        break;
+      case 'price-low':
+        sortStage.price = 1;
+        break;
+      case 'price-high':
+        sortStage.price = -1;
+        break;
+      case 'newest':
+        sortStage.createdAt = -1;
+        break;
+      default:
+        sortStage.rating = -1;
+    }
+    
+    sortPipeline.push({ $sort: sortStage });
+    
+    // Fifth stage: Add pagination
+    sortPipeline.push({ $skip: (parseInt(page) - 1) * parseInt(limit) });
+    sortPipeline.push({ $limit: parseInt(limit) });
+    
+    // Sixth stage: Project seller fields
+    sortPipeline.push({
+      $project: {
+        title: 1,
+        description: 1,
+        category: 1,
+        price: 1,
+        deliveryTime: 1,
+        requirements: 1,
+        image: 1,
+        videoUrl: 1,
+        rating: 1,
+        reviews: 1,
+        isPremium: 1,
+        badge: 1,
+        createdAt: 1,
+        'seller._id': 1,
+        'seller.username': 1,
+        'seller.image': 1,
+        'seller.rating': 1,
+        'seller.reviews': 1,
+        'seller.country': 1,
+        'seller.isOnline': 1,
+        'seller.lastSeen': 1,
+        'seller.lastActivity': 1
+      }
+    });
 
+    const services = await Service.aggregate(sortPipeline);
     const total = await Service.countDocuments(query);
 
     res.json({

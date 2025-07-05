@@ -214,14 +214,14 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   // Load services when component mounts or page changes
   useEffect(() => {
     loadServices(currentPage);
-  }, [currentPage, itemsPerPage]);
+  }, [currentPage, itemsPerPage, selectedCategory, sortOption, showPremiumOnly]);
 
-  // Reset page when search term or category changes
+  // Reset page when category, sort, or premium filter changes (not search since it's client-side)
   useEffect(() => {
-    if (searchTerm || selectedCategory) {
+    if (selectedCategory || sortOption || showPremiumOnly !== false) {
       setCurrentPage(1);
     }
-  }, [searchTerm, selectedCategory]);
+  }, [selectedCategory, sortOption, showPremiumOnly]);
 
   // Add effect to handle shared service links
   useEffect(() => {
@@ -269,7 +269,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
   const loadServices = async (page = 1) => {
     try {
-      const data = await fetchServices(page, itemsPerPage);
+      const data = await fetchServices(page, itemsPerPage, selectedCategory, sortOption, showPremiumOnly);
       
       // Check data structure and extract services array properly
       let servicesArray = [];
@@ -454,67 +454,27 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     logger.log('Token available:', currentUser?.token ? 'yes' : 'no');
   }, [currentUser]);
 
-  // Modify the sortServices function
-  const sortServices = (services, option) => {
-    const servicesCopy = [...services];
-    
-    // First sort by the selected option
-    const sortedServices = servicesCopy.sort((a, b) => {
-      // First prioritize premium status
-      if (a.isPremium && !b.isPremium) return -1;
-      if (!a.isPremium && b.isPremium) return 1;
+
+
+  // Apply only search filter on client-side (category, premium, and sort handled by backend)
+  const filteredServices = services.filter(service => {
+    // Only apply search term filter if there is one
+    if (searchTerm && searchTerm.trim() !== '') {
+      const searchQuery = searchTerm.toLowerCase();
+      const username = service.seller?.username?.toLowerCase() || '';
+      const title = service.title?.toLowerCase() || '';
+      const description = service.description?.toLowerCase() || '';
+      const category = service.category?.toLowerCase() || '';
       
-      // Then apply the selected sort option within each group
-      switch (option) {
-        case 'highest-rated':
-          return (b.rating || 0) - (a.rating || 0);
-        case 'price-low':
-          return a.price - b.price;
-        case 'price-high':
-          return b.price - a.price;
-        case 'newest':
-          return new Date(b.createdAt) - new Date(a.createdAt);
-        default:
-          return 0;
-      }
-    });
-
-    return sortedServices;
-  };
-
-  // Update the filtered services to include sorting
-  const filteredServices = sortServices(
-    services
-      .filter(service => {
-        // First check premium filter
-        if (showPremiumOnly && !service.isPremium) {
-          return false;
-        }
-        
-        // Then check category filter
-        if (selectedCategory && service.category !== selectedCategory) {
-          return false;
-        }
-        
-        // Then apply search term filter if there is one
-        if (searchTerm && searchTerm.trim() !== '') {
-          const searchQuery = searchTerm.toLowerCase();
-          const username = service.seller?.username?.toLowerCase() || '';
-          const title = service.title?.toLowerCase() || '';
-          const description = service.description?.toLowerCase() || '';
-          const category = service.category?.toLowerCase() || '';
-          
-          return username.includes(searchQuery) || 
-                 title.includes(searchQuery) || 
-                 description.includes(searchQuery) ||
-                 category.includes(searchQuery);
-        }
-        
-        // If we get here, show the service (it passed all filters)
-        return true;
-      }),
-    sortOption
-  );
+      return username.includes(searchQuery) || 
+             title.includes(searchQuery) || 
+             description.includes(searchQuery) ||
+             category.includes(searchQuery);
+    }
+    
+    // If no search term, show all services (backend handles other filtering)
+    return true;
+  });
 
   const handleSortChange = (e) => {
     setSortOption(e.target.value);
