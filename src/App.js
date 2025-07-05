@@ -980,7 +980,16 @@ function App() {
       }, 1000); // Small delay to ensure ads are loaded
     } catch (error) {
       logger.error('Login error:', error);
-      showNotification(error.message || 'Login failed', 'error');
+      
+      // Handle email verification requirement
+      if (error.emailVerificationRequired && error.email) {
+        setShowLoginModal(false);
+        setPendingVerificationEmail(error.email);
+        setShowEmailVerificationModal(true);
+        showNotification('Please verify your email to continue', 'info');
+      } else {
+        showNotification(error.message || 'Login failed', 'error');
+      }
     }
   };
 
@@ -1175,6 +1184,18 @@ function App() {
       }
     } catch (error) {
       logger.error('Error creating ad:', error);
+      
+      // Handle email verification requirement
+      if (error.emailVerificationRequired) {
+        setShowCreateModal(false);
+        if (currentUser?.email) {
+          setPendingVerificationEmail(currentUser.email);
+          setShowEmailVerificationModal(true);
+          showNotification('Please verify your email to create listings', 'info');
+        }
+        return;
+      }
+      
       showNotification('Failed to List Project. Please try again.', 'error');
     }
   };

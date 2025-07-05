@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Job = require('../models/Job');
 const auth = require('../middleware/auth');
+const requireEmailVerification = require('../middleware/emailVerification');
 const User = require('../models/User');
 
 // Debug route
@@ -76,7 +77,7 @@ router.post('/:id/refresh', auth, async (req, res) => {
 });
 
 // Create job
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, requireEmailVerification, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId);
     const job = new Job({
@@ -94,7 +95,7 @@ router.post('/', auth, async (req, res) => {
 });
 
 // Update job
-router.patch('/:id', auth, async (req, res) => {
+router.patch('/:id', auth, requireEmailVerification, async (req, res) => {
   try {
     const job = await Job.findOne({ 
       _id: req.params.id,
@@ -114,7 +115,7 @@ router.patch('/:id', auth, async (req, res) => {
 });
 
 // Delete job
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
   try {
     const job = await Job.findOneAndDelete({
       _id: req.params.id,

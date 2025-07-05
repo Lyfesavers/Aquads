@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Service = require('../models/Service');
 const auth = require('../middleware/auth');
+const requireEmailVerification = require('../middleware/emailVerification');
 const upload = require('../middleware/upload');
 const { awardListingPoints } = require('./points');
 const { createNotification } = require('./notifications');
@@ -95,7 +96,7 @@ router.get('/category/:categoryId', async (req, res) => {
 });
 
 // Create a new service
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, requireEmailVerification, async (req, res) => {
   try {
     const { title, description, category, price, deliveryTime, requirements, image, videoUrl } = req.body;
 
@@ -149,7 +150,7 @@ router.post('/', auth, async (req, res) => {
 });
 
 // Update a service
-router.put('/:id', auth, upload.single('image'), async (req, res) => {
+router.put('/:id', auth, requireEmailVerification, upload.single('image'), async (req, res) => {
   try {
     const service = await Service.findById(req.params.id);
     if (!service) {
@@ -182,7 +183,7 @@ router.put('/:id', auth, upload.single('image'), async (req, res) => {
 });
 
 // Delete a service
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
   try {
     const service = await Service.findById(req.params.id);
     if (!service) {

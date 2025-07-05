@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Ad = require('../models/Ad');
 const auth = require('../middleware/auth');
+const requireEmailVerification = require('../middleware/emailVerification');
 const { awardListingPoints } = require('./points');
 const AffiliateEarning = require('../models/AffiliateEarning');
 const { v4: uuidv4 } = require('uuid');
@@ -203,7 +204,7 @@ const calculateBumpAmount = (type) => {
 };
 
 // POST route for creating new ad
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, requireEmailVerification, async (req, res) => {
   try {
     const { title, logo, url, pairAddress, blockchain, referredBy, x, y, preferredSize, txSignature, paymentChain, chainSymbol, chainAddress, selectedAddons, totalAmount } = req.body;
     
@@ -295,7 +296,7 @@ router.post('/', auth, async (req, res) => {
 });
 
 // PUT route for updating an ad
-router.put('/:id', auth, async (req, res) => {
+router.put('/:id', auth, requireEmailVerification, async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;

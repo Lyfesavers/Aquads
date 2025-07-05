@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+const requireEmailVerification = require('../middleware/emailVerification');
 
 // Test route to verify points router is working
 router.get('/test', (req, res) => {
@@ -30,7 +31,7 @@ router.get('/my-points', auth, async (req, res) => {
 });
 
 // Request gift card redemption
-router.post('/redeem', auth, async (req, res) => {
+router.post('/redeem', auth, requireEmailVerification, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId);
     
@@ -101,7 +102,7 @@ router.post('/redeem', auth, async (req, res) => {
 });
 
 // Request Xpx Gold Visa card claim
-router.post('/claim-xpx-card', auth, async (req, res) => {
+router.post('/claim-xpx-card', auth, requireEmailVerification, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId);
     
@@ -404,7 +405,7 @@ async function awardSocialMediaPoints(userId, platform, raidId) {
 }
 
 // Route to complete a social media raid
-router.post('/social-raids/complete', auth, async (req, res) => {
+router.post('/social-raids/complete', auth, requireEmailVerification, async (req, res) => {
   try {
     const { raidId, platform, proof } = req.body;
     

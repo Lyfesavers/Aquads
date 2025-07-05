@@ -22,7 +22,8 @@ const auth = (req, res, next) => {
       userId: userId,
       id: userId,  // Add this for compatibility
       username: decoded.username,
-      isAdmin: Boolean(decoded.isAdmin)  // Ensure boolean conversion
+      isAdmin: Boolean(decoded.isAdmin),  // Ensure boolean conversion
+      emailVerified: Boolean(decoded.emailVerified)  // Include email verification status
     };
 
     next();

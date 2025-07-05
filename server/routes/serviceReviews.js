@@ -4,6 +4,7 @@ const ServiceReview = require('../models/ServiceReview');
 const Service = require('../models/Service');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+const requireEmailVerification = require('../middleware/emailVerification');
 const { awardAffiliateReviewPoints } = require('./points');
 
 // Get reviews for a service
@@ -23,7 +24,7 @@ router.get('/:serviceId', async (req, res) => {
 });
 
 // Add a new review
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, requireEmailVerification, async (req, res) => {
   try {
     const { serviceId, rating, comment } = req.body;
     

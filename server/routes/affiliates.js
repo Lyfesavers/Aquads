@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const AffiliateEarning = require('../models/AffiliateEarning');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+const requireEmailVerification = require('../middleware/emailVerification');
 
 // Get affiliate earnings from ads
 router.get('/earnings', auth, async (req, res) => {

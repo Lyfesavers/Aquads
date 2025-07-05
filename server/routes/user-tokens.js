@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
+const requireEmailVerification = require('../middleware/emailVerification');
 const User = require('../models/User');
 const Booking = require('../models/Booking');
 const TokenPurchase = require('../models/TokenPurchase');
@@ -48,7 +49,7 @@ router.get('/balance', auth, async (req, res) => {
 });
 
 // Create token purchase order
-router.post('/purchase', auth, async (req, res) => {
+router.post('/purchase', auth, requireEmailVerification, async (req, res) => {
   try {
     const { amount, paymentMethod = 'crypto', txSignature, paymentChain, chainSymbol, chainAddress } = req.body;
 
@@ -264,7 +265,7 @@ router.get('/admin/pending', auth, async (req, res) => {
 });
 
 // Unlock booking with tokens
-router.post('/unlock-booking/:bookingId', auth, async (req, res) => {
+router.post('/unlock-booking/:bookingId', auth, requireEmailVerification, async (req, res) => {
   try {
     const { bookingId } = req.params;
     const tokensRequired = 2; // 2 tokens to unlock 1 lead

@@ -3,6 +3,7 @@ const router = express.Router();
 const Game = require('../models/Game');
 const GameVote = require('../models/GameVote');
 const auth = require('../middleware/auth');
+const requireEmailVerification = require('../middleware/emailVerification');
 const User = require('../models/User');
 const { awardGameVotePoints, revokeGameVotePoints } = require('./points');
 
@@ -72,7 +73,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create a new game listing
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, requireEmailVerification, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId);
     
@@ -90,7 +91,7 @@ router.post('/', auth, async (req, res) => {
 });
 
 // Update a game listing
-router.patch('/:id', auth, async (req, res) => {
+router.patch('/:id', auth, requireEmailVerification, async (req, res) => {
   try {
     // First find the game by ID
     const game = await Game.findById(req.params.id);
@@ -118,7 +119,7 @@ router.patch('/:id', auth, async (req, res) => {
 });
 
 // Delete a game listing
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
   try {
     // First find the game by ID
     const game = await Game.findById(req.params.id);

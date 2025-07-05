@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Blog = require('../models/Blog');
 const auth = require('../middleware/auth');
+const requireEmailVerification = require('../middleware/emailVerification');
 const User = require('../models/User');
 
 // Get all blogs
@@ -56,7 +57,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create blog (auth required)
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, requireEmailVerification, async (req, res) => {
   try {
     // Check if user is an admin
     if (!req.user.isAdmin) {
@@ -94,7 +95,7 @@ router.post('/', auth, async (req, res) => {
 });
 
 // Update blog (auth required)
-router.patch('/:id', auth, async (req, res) => {
+router.patch('/:id', auth, requireEmailVerification, async (req, res) => {
   try {
     // First, try to find the blog regardless of author
     const blog = await Blog.findById(req.params.id);
@@ -139,7 +140,7 @@ router.patch('/:id', auth, async (req, res) => {
 });
 
 // Delete blog (auth required)
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
   try {
     // First find the blog to check ownership
     const blog = await Blog.findById(req.params.id);

@@ -146,9 +146,9 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
     // Signup bonus points will be awarded after email verification
 
 
-    // Generate JWT token
+    // Generate JWT token (don't include emailVerified since user hasn't verified yet)
     const token = jwt.sign(
-      { userId: user._id, username: user.username, isAdmin: user.isAdmin },
+      { userId: user._id, username: user.username, isAdmin: user.isAdmin, emailVerified: false },
       process.env.JWT_SECRET || 'bubble-ads-jwt-secret-key-2024',
       { expiresIn: '24h' }
     );
@@ -232,9 +232,19 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid username/email or password' });
     }
 
+    // Check if email verification is required (ALL users must verify)
+    if (user.email && !user.emailVerified) {
+      return res.status(403).json({ 
+        error: 'Email verification required',
+        message: 'Please verify your email before logging in. Check your inbox for the verification code.',
+        emailVerificationRequired: true,
+        email: user.email
+      });
+    }
+
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user._id, username: user.username, isAdmin: user.isAdmin },
+      { userId: user._id, username: user.username, isAdmin: user.isAdmin, emailVerified: user.emailVerified },
       process.env.JWT_SECRET || 'bubble-ads-jwt-secret-key-2024',
       { expiresIn: '24h' }
     );
@@ -246,6 +256,7 @@ router.post('/login', async (req, res) => {
       email: user.email,
       image: user.image,
       isAdmin: user.isAdmin,
+      emailVerified: user.emailVerified,
       token
     });
 
@@ -760,9 +771,22 @@ router.post('/verify-email', async (req, res) => {
       );
     }
 
+    // Generate new JWT token with updated verification status
+    const newToken = jwt.sign(
+      { userId: user._id, username: user.username, isAdmin: user.isAdmin, emailVerified: true },
+      process.env.JWT_SECRET || 'bubble-ads-jwt-secret-key-2024',
+      { expiresIn: '24h' }
+    );
+
     res.json({ 
       message: 'Email verified successfully! Points have been awarded. You also received 5 bonus tokens on signup.',
-      emailVerified: true 
+      emailVerified: true,
+      token: newToken,
+      userId: user._id,
+      username: user.username,
+      email: user.email,
+      image: user.image,
+      isAdmin: user.isAdmin
     });
   } catch (error) {
     console.error('Email verification error:', error);

@@ -3,6 +3,7 @@ const router = express.Router();
 const Invoice = require('../models/Invoice');
 const Booking = require('../models/Booking');
 const auth = require('../middleware/auth');
+const requireEmailVerification = require('../middleware/emailVerification');
 const Notification = require('../models/Notification');
 const mongoose = require('mongoose');
 
@@ -32,7 +33,7 @@ const generateInvoiceNumber = async () => {
 };
 
 // Create a new invoice
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, requireEmailVerification, async (req, res) => {
   try {
   
     
@@ -279,7 +280,7 @@ router.get('/:id', auth, async (req, res) => {
 });
 
 // Update invoice status (mark as paid)
-router.put('/:id/status', auth, async (req, res) => {
+router.put('/:id/status', auth, requireEmailVerification, async (req, res) => {
   try {
     const { status } = req.body;
     const invoice = await Invoice.findById(req.params.id);

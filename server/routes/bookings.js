@@ -4,6 +4,7 @@ const Booking = require('../models/Booking');
 const BookingMessage = require('../models/BookingMessage');
 const Service = require('../models/Service');
 const auth = require('../middleware/auth');
+const requireEmailVerification = require('../middleware/emailVerification');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -52,7 +53,7 @@ const upload = multer({
 });
 
 // Create a booking
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, requireEmailVerification, async (req, res) => {
   try {
     const { serviceId, requirements } = req.body;
 
@@ -146,7 +147,7 @@ router.options('/:id/status', (req, res) => {
 });
 
 // Update booking status
-router.put('/:id/status', auth, async (req, res) => {
+router.put('/:id/status', auth, requireEmailVerification, async (req, res) => {
   try {
     const { status } = req.body;
     const booking = await Booking.findById(req.params.id).populate('serviceId');
@@ -399,7 +400,7 @@ async function addWatermark(inputPath, outputPath, watermarkText) {
 }
 
 // Send a new message with optional file attachment
-router.post('/:bookingId/messages', auth, upload.single('attachment'), async (req, res) => {
+router.post('/:bookingId/messages', auth, requireEmailVerification, upload.single('attachment'), async (req, res) => {
   try {
     const { bookingId } = req.params;
     const { message } = req.body;
@@ -905,7 +906,7 @@ router.get('/user-notifications', auth, async (req, res) => {
 });
 
 // Add mark-all-read endpoint
-router.patch('/user-notifications/mark-all-read', auth, async (req, res) => {
+router.patch('/user-notifications/mark-all-read', auth, requireEmailVerification, async (req, res) => {
   try {
     const userId = req.user.userId;
   
@@ -946,7 +947,7 @@ router.patch('/user-notifications/mark-all-read', auth, async (req, res) => {
 });
 
 // Add route to mark individual notification as read
-router.patch('/user-notifications/:id', auth, async (req, res) => {
+router.patch('/user-notifications/:id', auth, requireEmailVerification, async (req, res) => {
   try {
     const userId = req.user.userId;
     const notificationId = req.params.id;

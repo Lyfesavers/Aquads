@@ -44,7 +44,20 @@ const EmailVerificationModal = ({ email, onVerificationComplete, onClose }) => {
         throw new Error(data.error || 'Verification failed');
       }
 
-      // Success
+      // Success - update user data if new token is provided
+      if (data.token) {
+        const updatedUser = {
+          userId: data.userId,
+          username: data.username,
+          email: data.email,
+          image: data.image,
+          isAdmin: data.isAdmin,
+          emailVerified: data.emailVerified,
+          token: data.token
+        };
+        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+      }
+      
       onVerificationComplete(data.message);
       onClose();
     } catch (error) {

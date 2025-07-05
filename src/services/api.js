@@ -104,7 +104,20 @@ export const createAd = async (adData) => {
     },
     body: JSON.stringify(adData),
   });
-  if (!response.ok) throw new Error('Failed to create ad');
+  
+  if (!response.ok) {
+    const errorData = await response.json();
+    
+    // Handle email verification requirement
+    if (response.status === 403 && errorData.emailVerificationRequired) {
+      const verificationError = new Error(errorData.message || 'Email verification required');
+      verificationError.emailVerificationRequired = true;
+      throw verificationError;
+    }
+    
+    throw new Error(errorData.error || 'Failed to create ad');
+  }
+  
   const createdAd = await response.json();
   
   // Emit socket event for real-time updates
@@ -186,6 +199,15 @@ export const loginUser = async (credentials) => {
 
     if (!response.ok) {
       const error = await response.json();
+      
+      // Handle email verification requirement
+      if (response.status === 403 && error.emailVerificationRequired) {
+        const verificationError = new Error(error.message || 'Email verification required');
+        verificationError.emailVerificationRequired = true;
+        verificationError.email = error.email;
+        throw verificationError;
+      }
+      
       throw new Error(error.error || 'Login failed');
     }
 
@@ -552,6 +574,14 @@ export const createService = async (serviceData) => {
 
     if (!response.ok) {
       const errorData = await response.json();
+      
+      // Handle email verification requirement
+      if (response.status === 403 && errorData.emailVerificationRequired) {
+        const verificationError = new Error(errorData.message || 'Email verification required');
+        verificationError.emailVerificationRequired = true;
+        throw verificationError;
+      }
+      
       throw new Error(errorData.message || 'Failed to create service');
     }
 
@@ -789,6 +819,14 @@ export const createJob = async (jobData) => {
   logger.log('Create job response:', response);
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
+    
+    // Handle email verification requirement
+    if (response.status === 403 && error.emailVerificationRequired) {
+      const verificationError = new Error(error.message || 'Email verification required');
+      verificationError.emailVerificationRequired = true;
+      throw verificationError;
+    }
+    
     throw new Error(error.message || 'Failed to create job');
   }
   return response.json();
@@ -841,7 +879,20 @@ export const createBlog = async (blogData) => {
       },
       body: JSON.stringify(blogData)
     });
-    if (!response.ok) throw new Error('Failed to create blog');
+    
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      
+      // Handle email verification requirement
+      if (response.status === 403 && error.emailVerificationRequired) {
+        const verificationError = new Error(error.message || 'Email verification required');
+        verificationError.emailVerificationRequired = true;
+        throw verificationError;
+      }
+      
+      throw new Error(error.error || 'Failed to create blog');
+    }
+    
     return await response.json();
   } catch (error) {
     logger.error('Error creating blog:', error);
@@ -946,6 +997,14 @@ export const createGame = async (gameData) => {
     
     if (!response.ok) {
       const error = await response.json();
+      
+      // Handle email verification requirement
+      if (response.status === 403 && error.emailVerificationRequired) {
+        const verificationError = new Error(error.message || 'Email verification required');
+        verificationError.emailVerificationRequired = true;
+        throw verificationError;
+      }
+      
       throw new Error(error.error || 'Failed to create game listing');
     }
     

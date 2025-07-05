@@ -3,6 +3,7 @@ const router = express.Router();
 const TwitterRaid = require('../models/TwitterRaid');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+const requireEmailVerification = require('../middleware/emailVerification');
 const pointsModule = require('./points');
 const axios = require('axios');
 const { twitterRaidRateLimit } = require('../middleware/rateLimiter');
@@ -27,7 +28,7 @@ router.get('/', async (req, res) => {
 });
 
 // Create a new Twitter raid (admin only)
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, requireEmailVerification, async (req, res) => {
   try {
     if (!req.user.isAdmin) {
       return res.status(403).json({ error: 'Only admins can create Twitter raids' });
@@ -67,7 +68,7 @@ router.post('/', auth, async (req, res) => {
 });
 
 // Create a new paid Twitter raid (users)
-router.post('/paid', auth, async (req, res) => {
+router.post('/paid', auth, requireEmailVerification, async (req, res) => {
   try {
     const { tweetUrl, title, description, txSignature, paymentChain, chainSymbol, chainAddress } = req.body;
 
@@ -137,7 +138,7 @@ router.post('/paid', auth, async (req, res) => {
 });
 
 // Create a new Twitter raid using affiliate points (users)
-router.post('/points', auth, async (req, res) => {
+router.post('/points', auth, requireEmailVerification, async (req, res) => {
   try {
     const { tweetUrl, title, description } = req.body;
     const POINTS_REQUIRED = 2000; // Points required to create a raid
@@ -280,7 +281,7 @@ router.post('/:id/reject', auth, async (req, res) => {
 });
 
 // Delete a Twitter raid (admin only)
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
   try {
     if (!req.user.isAdmin) {
       return res.status(403).json({ error: 'Only admins can delete Twitter raids' });
@@ -345,7 +346,7 @@ const verifyTweetUrl = async (tweetUrl) => {
 };
 
 // Complete a Twitter raid with rate limiting
-router.post('/:id/complete', auth, twitterRaidRateLimit, async (req, res) => {
+router.post('/:id/complete', auth, requireEmailVerification, twitterRaidRateLimit, async (req, res) => {
   try {
     const { twitterUsername, verificationCode, tweetUrl, iframeVerified, iframeInteractions, tweetId } = req.body;
     const ipAddress = req.ip || req.connection.remoteAddress;

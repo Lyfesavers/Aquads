@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Notification = require('../models/Notification');
 const auth = require('../middleware/auth');
+const requireEmailVerification = require('../middleware/emailVerification');
 
 // Get all notifications for current user
 router.get('/', auth, async (req, res) => {
@@ -32,7 +33,7 @@ router.get('/unread-count', auth, async (req, res) => {
 });
 
 // Mark a notification as read
-router.patch('/:id/read', auth, async (req, res) => {
+router.patch('/:id/read', auth, requireEmailVerification, async (req, res) => {
   try {
     const notification = await Notification.findOne({
       _id: req.params.id,
@@ -54,7 +55,7 @@ router.patch('/:id/read', auth, async (req, res) => {
 });
 
 // Mark all notifications as read
-router.patch('/mark-all-read', auth, async (req, res) => {
+router.patch('/mark-all-read', auth, requireEmailVerification, async (req, res) => {
   try {
     await Notification.updateMany(
       { userId: req.user.userId, isRead: false },

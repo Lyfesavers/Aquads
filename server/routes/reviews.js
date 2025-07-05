@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Review = require('../models/Review');
 const auth = require('../middleware/auth');
+const requireEmailVerification = require('../middleware/emailVerification');
 
 // Get reviews for a token
 router.get('/:symbol', async (req, res) => {
@@ -20,7 +21,7 @@ router.get('/:symbol', async (req, res) => {
 });
 
 // Add a new review
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, requireEmailVerification, async (req, res) => {
   try {
     const { tokenSymbol, rating, comment } = req.body;
     

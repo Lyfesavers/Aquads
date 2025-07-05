@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const BannerAd = require('../models/BannerAd');
 const auth = require('../middleware/auth');
+const requireEmailVerification = require('../middleware/emailVerification');
 const AffiliateEarning = require('../models/AffiliateEarning');
 
 // Get active banner ads
@@ -49,7 +50,7 @@ const calculateBannerAmount = (duration) => {
 };
 
 // Create new banner ad request
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, requireEmailVerification, async (req, res) => {
   try {
     const { title, gif, url, txSignature, duration, paymentChain, chainSymbol, chainAddress } = req.body;
 
@@ -140,7 +141,7 @@ router.post('/:id/reject', auth, async (req, res) => {
 });
 
 // Delete banner ad (admin only)
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
   try {
     // Check if user is admin
     if (!req.user || !req.user.isAdmin) {
