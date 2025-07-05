@@ -510,16 +510,19 @@ export const pingServer = async () => {
 }; 
 
 // Service endpoints
-export const fetchServices = async (page = 1, limit = 20, category = '', sort = 'highest-rated', showPremiumOnly = false) => {
+export const fetchServices = async (page = 1, limit = 20, category = '', sort = 'rating', showPremiumOnly = false) => {
   try {
     const params = new URLSearchParams({
       page: page.toString(),
-      limit: limit.toString(),
-      sort: sort
+      limit: limit.toString()
     });
     
     if (category) {
       params.append('category', category);
+    }
+    
+    if (sort) {
+      params.append('sort', sort);
     }
     
     if (showPremiumOnly) {

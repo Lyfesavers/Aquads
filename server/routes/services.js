@@ -9,8 +9,9 @@ const { createNotification } = require('./notifications');
 // Get all services with optional filtering
 router.get('/', async (req, res) => {
   try {
-    const { category, sort = 'highest-rated', limit = 20, page = 1, showPremiumOnly } = req.query;
+    const { category, sort, limit = 20, page = 1, showPremiumOnly } = req.query;
     const query = {};
+    const sortOptions = {};
 
     if (category) {
       query.category = category;
@@ -20,28 +21,26 @@ router.get('/', async (req, res) => {
       query.isPremium = true;
     }
 
-    // Build sort options - Premium first, then by selected option
-    let sortOptions = {};
-    
-    // Always prioritize premium services first
-    sortOptions.isPremium = -1;
-    
-    // Then apply the selected sort option
-    switch (sort) {
-      case 'highest-rated':
-        sortOptions.rating = -1;
-        break;
-      case 'price-low':
-        sortOptions.price = 1;
-        break;
-      case 'price-high':
-        sortOptions.price = -1;
-        break;
-      case 'newest':
-        sortOptions.createdAt = -1;
-        break;
-      default:
-        sortOptions.rating = -1;
+    if (sort) {
+      switch (sort) {
+        case 'price-low':
+          sortOptions.price = 1;
+          break;
+        case 'price-high':
+          sortOptions.price = -1;
+          break;
+        case 'rating':
+          sortOptions.rating = -1;
+          break;
+        case 'newest':
+          sortOptions.createdAt = -1;
+          break;
+        default:
+          sortOptions.rating = -1;
+      }
+    } else {
+      // Default sort when no sort parameter is provided
+      sortOptions.rating = -1;
     }
 
     const services = await Service.find(query)

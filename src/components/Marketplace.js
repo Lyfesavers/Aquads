@@ -216,7 +216,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     loadServices(currentPage);
   }, [currentPage, itemsPerPage, selectedCategory, sortOption, showPremiumOnly]);
 
-  // Reset page when category, sort, or premium filter changes (not search since it's client-side)
+  // Reset page when category, sort, or premium filter changes
   useEffect(() => {
     if (selectedCategory || sortOption || showPremiumOnly !== false) {
       setCurrentPage(1);
@@ -456,7 +456,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
 
 
-  // Apply only search filter on client-side (category, premium, and sort handled by backend)
+  // Apply only search filter on client-side (category and sort handled by backend)
   const filteredServices = services.filter(service => {
     // Only apply search term filter if there is one
     if (searchTerm && searchTerm.trim() !== '') {
@@ -739,7 +739,6 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
   const handleClearSearch = () => {
     setSearchTerm('');
-    setCurrentPage(1);
   };
 
   const handlePageChange = (newPage) => {
