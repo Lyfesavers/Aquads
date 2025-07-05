@@ -512,8 +512,7 @@ export const pingServer = async () => {
 // Service endpoints
 export const fetchServices = async () => {
   try {
-    // Fetch ALL services at once (like how App.js fetches all ads)
-    const response = await fetch(`${API_URL}/services?limit=200`);
+    const response = await fetch(`${API_URL}/services?limit=100`);
     if (!response.ok) {
       throw new Error(`Failed to fetch services: ${response.status} ${response.statusText}`);
     }
@@ -523,18 +522,18 @@ export const fetchServices = async () => {
     // Check if data has the expected structure
     if (data && data.services) {
       // Return the services array from the response
-      return data.services;
+      return data;
     } else if (Array.isArray(data)) {
       // If API returns just an array of services
-      return data;
+      return { services: data };
     } else {
       // Handle unexpected data structure
-      return [];
+      return { services: [] };
     }
   } catch (error) {
     logger.error('Error fetching services:', error);
     // Return empty services array on error
-    return [];
+    return { services: [] };
   }
 };
 

@@ -9,20 +9,51 @@ const { createNotification } = require('./notifications');
 // Get all services with optional filtering
 router.get('/', async (req, res) => {
   try {
-    const { limit = 200 } = req.query;
+    const { category, sort, limit = 20, page = 1 } = req.query;
     const query = {};
-    
-    // Simple sort by creation date (newest first) for now
-    // Frontend will handle all filtering and sorting
-    const sortOptions = { createdAt: -1 };
+    const sortOptions = {};
+
+    if (category) {
+      query.category = category;
+    }
+
+    if (sort) {
+      switch (sort) {
+        case 'price-low':
+          sortOptions.price = 1;
+          break;
+        case 'price-high':
+          sortOptions.price = -1;
+          break;
+        case 'rating':
+          sortOptions.rating = -1;
+          break;
+        case 'newest':
+          sortOptions.createdAt = -1;
+          break;
+        default:
+          sortOptions.rating = -1;
+      }
+    } else {
+      // Default sort when no sort parameter is provided
+      sortOptions.rating = -1;
+    }
 
     const services = await Service.find(query)
       .sort(sortOptions)
       .limit(parseInt(limit))
+      .skip((parseInt(page) - 1) * parseInt(limit))
       .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity');
 
+    const total = await Service.countDocuments(query);
+
     res.json({
-      services
+      services,
+      pagination: {
+        total,
+        pages: Math.ceil(total / limit),
+        currentPage: parseInt(page)
+      }
     });
   } catch (error) {
     console.error('Error fetching services:', error);

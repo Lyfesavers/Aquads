@@ -157,12 +157,6 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [jobs, setJobs] = useState([]);
   const [jobToEdit, setJobToEdit] = useState(null);
   const [isLoading, setIsLoading] = useState({ jobs: true });
-  
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalServices, setTotalServices] = useState(0);
-  const [itemsPerPage] = useState(20);
 
   // Initialize user presence tracking
   useUserPresence(currentUser);
@@ -218,11 +212,6 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     loadServices();
   }, []);
 
-  // Reset to page 1 when filters change (like App.js does)
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedCategory, sortOption, showPremiumOnly]);
-
   // Add effect to handle shared service links
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -269,10 +258,22 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
   const loadServices = async () => {
     try {
-      setLoading(true);
+      const data = await fetchServices();
       
-      // Fetch ALL services at once (like App.js does with ads)
-      const servicesArray = await fetchServices();
+      // Check data structure and extract services array properly
+      let servicesArray = [];
+      if (Array.isArray(data)) {
+        // If data is already an array of services
+        servicesArray = data;
+      } else if (data && Array.isArray(data.services)) {
+        // If data has a services property that is an array
+        servicesArray = data.services;
+      } else if (data && typeof data === 'object') {
+        // If data is an object but not in expected format
+        servicesArray = data.services || [];
+      } else {
+        servicesArray = [];
+      }
       
       // Fetch initial review data for each service
       const servicesWithReviews = await Promise.all(servicesArray.map(async (service) => {
@@ -337,10 +338,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       const newService = await createService(serviceData);
       logger.log('Service created successfully:', newService);
       
-      // Add new service to local state (like App.js does)
+      // Update services list
       setServices(prevServices => [newService, ...prevServices]);
-      setOriginalServices(prevServices => [newService, ...prevServices]);
-      setCurrentPage(1); // Go to first page to see the new service
       
       // Close modal
       setShowCreateModal(false);
@@ -387,9 +386,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         throw new Error(errorData.message || 'Failed to delete service');
       }
 
-      // If delete was successful, remove from local state
+      // If delete was successful, update the services list
       setServices(prevServices => prevServices.filter(service => service._id !== serviceId));
-      setOriginalServices(prevServices => prevServices.filter(service => service._id !== serviceId));
       alert('Service deleted successfully');
     } catch (error) {
       logger.error('Error deleting service:', error);
@@ -433,47 +431,18 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     logger.log('Token available:', currentUser?.token ? 'yes' : 'no');
   }, [currentUser]);
 
-
-
-  // Function to get currently visible services (like App.js getVisibleAds pattern)
-  const getVisibleServices = () => {
-    // Start with all services
-    let filteredServices = [...services];
+  // Modify the sortServices function
+  const sortServices = (services, option) => {
+    const servicesCopy = [...services];
     
-    // Apply category filter
-    if (selectedCategory) {
-      filteredServices = filteredServices.filter(service => service.category === selectedCategory);
-    }
-    
-    // Apply premium filter
-    if (showPremiumOnly) {
-      filteredServices = filteredServices.filter(service => service.isPremium);
-    }
-    
-    // Apply search filter
-    if (searchTerm && searchTerm.trim() !== '') {
-      const searchQuery = searchTerm.toLowerCase();
-      filteredServices = filteredServices.filter(service => {
-        const username = service.seller?.username?.toLowerCase() || '';
-        const title = service.title?.toLowerCase() || '';
-        const description = service.description?.toLowerCase() || '';
-        const category = service.category?.toLowerCase() || '';
-        
-        return username.includes(searchQuery) || 
-               title.includes(searchQuery) || 
-               description.includes(searchQuery) ||
-               category.includes(searchQuery);
-      });
-    }
-    
-    // Apply sorting (premium first, then by selected option)
-    const sortedServices = filteredServices.sort((a, b) => {
+    // First sort by the selected option
+    const sortedServices = servicesCopy.sort((a, b) => {
       // First prioritize premium status
       if (a.isPremium && !b.isPremium) return -1;
       if (!a.isPremium && b.isPremium) return 1;
       
       // Then apply the selected sort option within each group
-      switch (sortOption) {
+      switch (option) {
         case 'highest-rated':
           return (b.rating || 0) - (a.rating || 0);
         case 'price-low':
@@ -483,31 +452,49 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         case 'newest':
           return new Date(b.createdAt) - new Date(a.createdAt);
         default:
-          return (b.rating || 0) - (a.rating || 0);
+          return 0;
       }
     });
-    
-    // Calculate pagination
-    const totalFiltered = sortedServices.length;
-    const totalPagesCalculated = Math.ceil(totalFiltered / itemsPerPage);
-    
-    // Update pagination state
-    setTotalServices(totalFiltered);
-    setTotalPages(totalPagesCalculated);
-    
-    // Return services for current page
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    
-    return sortedServices.slice(startIndex, endIndex);
+
+    return sortedServices;
   };
 
-  // Get visible services for current page
-  const filteredServices = getVisibleServices();
+  // Update the filtered services to include sorting
+  const filteredServices = sortServices(
+    services
+      .filter(service => {
+        // First check premium filter
+        if (showPremiumOnly && !service.isPremium) {
+          return false;
+        }
+        
+        // Then check category filter
+        if (selectedCategory && service.category !== selectedCategory) {
+          return false;
+        }
+        
+        // Then apply search term filter if there is one
+        if (searchTerm && searchTerm.trim() !== '') {
+          const searchQuery = searchTerm.toLowerCase();
+          const username = service.seller?.username?.toLowerCase() || '';
+          const title = service.title?.toLowerCase() || '';
+          const description = service.description?.toLowerCase() || '';
+          const category = service.category?.toLowerCase() || '';
+          
+          return username.includes(searchQuery) || 
+                 title.includes(searchQuery) || 
+                 description.includes(searchQuery) ||
+                 category.includes(searchQuery);
+        }
+        
+        // If we get here, show the service (it passed all filters)
+        return true;
+      }),
+    sortOption
+  );
 
   const handleSortChange = (e) => {
     setSortOption(e.target.value);
-    setCurrentPage(1); // Reset to first page when sort changes
   };
 
   const toggleDescription = (serviceId) => {
@@ -609,13 +596,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
       const updatedService = await response.json();
       
-      // Update local state (like App.js does)
+      // Update the services list with the edited service
       setServices(prevServices => 
-        prevServices.map(service => 
-          service._id === serviceId ? updatedService : service
-        )
-      );
-      setOriginalServices(prevServices => 
         prevServices.map(service => 
           service._id === serviceId ? updatedService : service
         )
@@ -778,10 +760,6 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
   const handleClearSearch = () => {
     setSearchTerm('');
-  };
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
   };
 
   return (
@@ -967,8 +945,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
               </div>
               <div className="flex flex-wrap items-center gap-3 mb-0">
                 <select
-                  value={selectedCategory || ''}
-                  onChange={(e) => setSelectedCategory(e.target.value || null)}
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
                   className="bg-gray-700/80 text-white px-3 py-3 rounded-lg text-sm w-full sm:w-auto"
                 >
                   <option value="">All Categories</option>
@@ -1282,59 +1260,6 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                     </div>
                   )}
                 </>
-              )}
-
-              {/* Pagination Controls */}
-              {!searchTerm && !showJobs && totalPages > 1 && (
-                <div className="flex justify-center mt-8">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className={`px-3 py-2 rounded-lg ${
-                        currentPage === 1
-                          ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                          : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                      } transition-colors`}
-                    >
-                      Previous
-                    </button>
-                    
-                    {/* Page Numbers */}
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <button
-                        key={page}
-                        onClick={() => handlePageChange(page)}
-                        className={`px-3 py-2 rounded-lg ${
-                          currentPage === page
-                            ? 'bg-indigo-600 text-white'
-                            : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
-                        } transition-colors`}
-                      >
-                        {page}
-                      </button>
-                    ))}
-                    
-                    <button
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      className={`px-3 py-2 rounded-lg ${
-                        currentPage === totalPages
-                          ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                          : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                      } transition-colors`}
-                    >
-                      Next
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Pagination Info */}
-              {!searchTerm && !showJobs && totalPages > 1 && (
-                <div className="text-center mt-4 text-gray-400 text-sm">
-                  Showing page {currentPage} of {totalPages} ({totalServices} total services)
-                </div>
               )}
             </div>
           </div>
