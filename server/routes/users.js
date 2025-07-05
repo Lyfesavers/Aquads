@@ -474,9 +474,33 @@ router.get('/affiliates', auth, async (req, res) => {
       .select('username createdAt')
       .sort({ createdAt: -1 });
 
+    // Also get the current user's stored affiliateCount for comparison
+    const currentUser = await User.findById(req.user.userId).select('affiliateCount');
+    
+    // Check if there's a discrepancy between the actual count and stored count
+    const actualCount = affiliates.length;
+    const storedCount = currentUser.affiliateCount || 0;
+    
+    // If there's a discrepancy, fix it
+    if (actualCount !== storedCount) {
+      console.warn(`Affiliate count mismatch for user ${req.user.userId}: actual=${actualCount}, stored=${storedCount}. Fixing...`);
+      
+      // Update the stored count to match the actual count
+      try {
+        await User.findByIdAndUpdate(req.user.userId, { 
+          affiliateCount: actualCount,
+          affiliates: affiliates.map(affiliate => affiliate._id)
+        });
+      } catch (updateError) {
+        console.error('Error updating affiliate count:', updateError);
+        // Don't fail the request if update fails, just log it
+      }
+    }
+
     res.json({
-      affiliateCount: affiliates.length,
-      affiliates: affiliates
+      affiliateCount: actualCount, // Always return the actual count
+      affiliates: affiliates,
+      syncStatus: actualCount === storedCount ? 'synced' : 'fixed'
     });
   } catch (error) {
     console.error('Error fetching affiliate info:', error);

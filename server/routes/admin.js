@@ -625,4 +625,54 @@ const generateLoginRecommendations = (analysis) => {
   return recommendations;
 };
 
+// Add endpoint to check and fix affiliate count discrepancies
+router.post('/sync-affiliate-counts', auth, isAdmin, async (req, res) => {
+  try {
+    const users = await User.find({}).select('_id username affiliateCount');
+    const discrepancies = [];
+    const fixes = [];
+
+    for (const user of users) {
+      // Count actual affiliates by referredBy field
+      const actualCount = await User.countDocuments({ referredBy: user._id });
+      const storedCount = user.affiliateCount || 0;
+
+      if (actualCount !== storedCount) {
+        discrepancies.push({
+          userId: user._id,
+          username: user.username,
+          actualCount,
+          storedCount,
+          difference: actualCount - storedCount
+        });
+
+        // Fix the discrepancy
+        const affiliates = await User.find({ referredBy: user._id }).select('_id');
+        await User.findByIdAndUpdate(user._id, {
+          affiliateCount: actualCount,
+          affiliates: affiliates.map(affiliate => affiliate._id)
+        });
+
+        fixes.push({
+          userId: user._id,
+          username: user.username,
+          oldCount: storedCount,
+          newCount: actualCount
+        });
+      }
+    }
+
+    res.json({
+      message: 'Affiliate count sync completed',
+      discrepanciesFound: discrepancies.length,
+      discrepancies: discrepancies,
+      fixes: fixes,
+      totalUsersChecked: users.length
+    });
+  } catch (error) {
+    console.error('Error syncing affiliate counts:', error);
+    res.status(500).json({ error: 'Failed to sync affiliate counts' });
+  }
+});
+
 module.exports = router; 

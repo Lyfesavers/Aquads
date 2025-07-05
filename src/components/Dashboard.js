@@ -834,6 +834,34 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   };
 
   // Affiliate management functions
+  const handleSyncAffiliateCounts = async () => {
+    setLoadingAffiliateData(true);
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/admin/sync-affiliate-counts`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.discrepanciesFound > 0) {
+          showNotification(`Fixed ${data.discrepanciesFound} affiliate count discrepancies`, 'success');
+          console.log('Affiliate count sync results:', data);
+        } else {
+          showNotification('All affiliate counts are already in sync', 'info');
+        }
+      } else {
+        showNotification('Failed to sync affiliate counts', 'error');
+      }
+    } catch (error) {
+      console.error('Error syncing affiliate counts:', error);
+      showNotification('Error syncing affiliate counts', 'error');
+    }
+    setLoadingAffiliateData(false);
+  };
+
   const handleAffiliateSearch = async () => {
     if (!affiliateSearchQuery.trim()) return;
     
@@ -1377,6 +1405,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                         <span className="text-blue-400 font-bold ml-2">
                           {isLoadingAffiliates ? '...' : affiliateInfo.affiliateCount}
                         </span>
+                        {affiliateInfo.syncStatus && affiliateInfo.syncStatus === 'fixed' && (
+                          <span className="text-yellow-400 text-sm ml-2 font-medium">
+                            (auto-fixed)
+                          </span>
+                        )}
                       </p>
                       <p className="text-sm text-gray-400 mt-2">
                         Share your referral code to earn more affiliates!
@@ -2163,7 +2196,16 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
                 {activeAdminSection === 'affiliates' && (
                   <div>
-                    <h3 className="text-2xl font-semibold text-white mb-6">Affiliate Management</h3>
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="text-2xl font-semibold text-white">Affiliate Management</h3>
+                      <button
+                        onClick={handleSyncAffiliateCounts}
+                        disabled={loadingAffiliateData}
+                        className="bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-2 rounded font-medium disabled:opacity-50"
+                      >
+                        {loadingAffiliateData ? 'Syncing...' : 'Sync Affiliate Counts'}
+                      </button>
+                    </div>
                     
                     {/* Search Users */}
                     <div className="bg-gray-700 rounded-lg p-4 mb-6">
