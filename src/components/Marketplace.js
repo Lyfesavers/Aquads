@@ -157,6 +157,10 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [jobs, setJobs] = useState([]);
   const [jobToEdit, setJobToEdit] = useState(null);
   const [isLoading, setIsLoading] = useState({ jobs: true });
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(20);
 
   // Initialize user presence tracking
   useUserPresence(currentUser);
@@ -211,6 +215,11 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   useEffect(() => {
     loadServices();
   }, []);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory, showPremiumOnly, searchTerm]);
 
   // Add effect to handle shared service links
   useEffect(() => {
@@ -460,7 +469,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   };
 
   // Update the filtered services to include sorting
-  const filteredServices = sortServices(
+  const allFilteredServices = sortServices(
     services
       .filter(service => {
         // First check premium filter
@@ -493,8 +502,21 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     sortOption
   );
 
+  // Calculate pagination
+  const totalPages = Math.ceil(allFilteredServices.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  
+  // Get services for current page
+  const filteredServices = allFilteredServices.slice(startIndex, endIndex);
+
   const handleSortChange = (e) => {
     setSortOption(e.target.value);
+    setCurrentPage(1); // Reset to first page when sort changes
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
   const toggleDescription = (serviceId) => {
@@ -1260,6 +1282,59 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                     </div>
                   )}
                 </>
+              )}
+
+              {/* Pagination Controls */}
+              {!searchTerm && !showJobs && totalPages > 1 && (
+                <div className="flex justify-center mt-8">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className={`px-3 py-2 rounded-lg ${
+                        currentPage === 1
+                          ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                          : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                      } transition-colors`}
+                    >
+                      Previous
+                    </button>
+                    
+                    {/* Page Numbers */}
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`px-3 py-2 rounded-lg ${
+                          currentPage === page
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                        } transition-colors`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className={`px-3 py-2 rounded-lg ${
+                        currentPage === totalPages
+                          ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                          : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                      } transition-colors`}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Pagination Info */}
+              {!searchTerm && !showJobs && totalPages > 1 && (
+                <div className="text-center mt-4 text-gray-400 text-sm">
+                  Showing page {currentPage} of {totalPages} ({allFilteredServices.length} total services)
+                </div>
               )}
             </div>
           </div>
