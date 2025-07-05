@@ -199,6 +199,10 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
     {
       title: "Next Steps",
       message: "Great! I'm excited to work with you. Here's what happens next:\n\n1. I'll review your requirements thoroughly\n2. Create a detailed project timeline\n3. Send you a comprehensive proposal\n4. Start work once everything is confirmed\n\nFeel free to ask any questions - I'm here to help make this project a success!"
+    },
+    {
+      title: "Booking Closure",
+      message: "Hello,\n\nI hope this message finds you well. Due to the lack of response or missing project details needed to move forward, I'll be closing this booking request.\n\nIf you're still interested in working together and have legitimate project requirements, please feel free to create a new booking with detailed information about your needs.\n\nI'm always happy to help with genuine projects and look forward to potential future collaborations.\n\nBest regards"
     }
   ];
 
