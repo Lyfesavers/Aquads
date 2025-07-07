@@ -6,7 +6,7 @@ import logger from '../utils/logger';
 const BUMP_OPTIONS = [
   { duration: '3 months', price: 99, durationMs: 90 * 24 * 60 * 60 * 1000 },
   { duration: '6 months', price: 150, durationMs: 180 * 24 * 60 * 60 * 1000 },
-  { duration: '1 year', price: 300, durationMs: 365 * 24 * 60 * 60 * 1000 }
+  { duration: 'Lifetime', price: 300, durationMs: -1 }
 ];
 
 const BLOCKCHAIN_OPTIONS = [

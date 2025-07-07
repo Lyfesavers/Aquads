@@ -1238,7 +1238,7 @@ function App() {
               status: 'approved',
               bumpedAt: new Date(),
               bumpDuration: duration,
-              bumpExpiresAt: new Date(Date.now() + duration)
+              bumpExpiresAt: duration === -1 ? null : new Date(Date.now() + duration)
             })
           ]);
 
@@ -1399,7 +1399,7 @@ function App() {
           status: 'approved',
           bumpedAt: new Date(),
           bumpDuration: bumpRequest.duration,
-          bumpExpiresAt: new Date(Date.now() + bumpRequest.duration)
+          bumpExpiresAt: bumpRequest.duration === -1 ? null : new Date(Date.now() + bumpRequest.duration)
         })
       ]);
 

@@ -71,7 +71,7 @@ router.post('/approve', async (req, res) => {
 
     // Validate and convert duration
     const duration = parseInt(bumpRequest.duration);
-    if (isNaN(duration) || duration <= 0) {
+    if (isNaN(duration) || (duration <= 0 && duration !== -1)) {
       return res.status(400).json({ error: 'Invalid duration value' });
     }
 
@@ -82,9 +82,8 @@ router.post('/approve', async (req, res) => {
     await bumpRequest.save();
 
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + duration);
-
-
+    // Handle lifetime bumps (duration = -1) by setting expiresAt to null
+    const expiresAt = duration === -1 ? null : new Date(now.getTime() + duration);
 
     // Update the ad
     const ad = await Ad.findOneAndUpdate(
@@ -122,11 +121,11 @@ router.post('/approve', async (req, res) => {
           adAmount = 99; // 99 USDC
         } else if (duration === 180 * 24 * 60 * 60 * 1000) { // 6 months
           adAmount = 150; // 150 USDC
-        } else if (duration === 365 * 24 * 60 * 60 * 1000) { // 1 year
+        } else if (duration === 365 * 24 * 60 * 60 * 1000) { // 1 year (legacy)
+          adAmount = 300; // 300 USDC
+        } else if (duration === -1) { // Lifetime
           adAmount = 300; // 300 USDC
         }
-
-  
 
         const commissionRate = await AffiliateEarning.calculateCommissionRate(adOwner.referredBy);
         const commissionEarned = AffiliateEarning.calculateCommission(adAmount, commissionRate);
@@ -142,7 +141,6 @@ router.post('/approve', async (req, res) => {
         });
         
         await earning.save();
-  
       }
     } catch (commissionError) {
       console.error('Error recording affiliate commission:', commissionError);
