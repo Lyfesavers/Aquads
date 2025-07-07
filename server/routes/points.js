@@ -311,10 +311,10 @@ function awardAffiliatePoints(referrerId, referredUserId) {
       return User.findByIdAndUpdate(
         referrerId,
         {
-          $inc: { points: 5 },
+          $inc: { points: 20 },
           $push: {
             pointsHistory: {
-              amount: 5,
+              amount: 20,
               reason: 'New affiliate referral',
               referredUser: referredUserId,
               createdAt: new Date()
@@ -343,10 +343,10 @@ function awardPendingAffiliatePoints(userId) {
       return User.findByIdAndUpdate(
         user.referredBy,
         {
-          $inc: { points: 5 },
+          $inc: { points: 20 },
           $push: {
             pointsHistory: {
-              amount: 5,
+              amount: 20,
               reason: 'New affiliate referral (email verified)',
               referredUser: userId,
               createdAt: new Date()
@@ -447,10 +447,10 @@ function awardListingPoints(userId) {
         return User.findByIdAndUpdate(
           user.referredBy,
           {
-            $inc: { points: 5 },
+            $inc: { points: 20 },
             $push: {
               pointsHistory: {
-                amount: 5,
+                amount: 20,
                 reason: 'Referred user listed service/ad',
                 referredUser: userId,
                 createdAt: new Date()
@@ -470,10 +470,10 @@ const awardAffiliateReviewPoints = async (userId) => {
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       {
-        $inc: { points: 500 },
+        $inc: { points: 200 },
         $push: {
           pointsHistory: {
-            amount: 500,
+            amount: 200,
             reason: 'Left a service review as affiliate',
             createdAt: new Date()
           }
