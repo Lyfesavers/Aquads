@@ -202,10 +202,9 @@ router.post('/points', auth, requireEmailVerification, async (req, res) => {
       raid,
       pointsRemaining: user.points
     });
-  } catch (error) {
-    console.error('Error creating Twitter raid with points:', error);
-    res.status(500).json({ error: 'Failed to create Twitter raid' });
-  }
+      } catch (error) {
+      res.status(500).json({ error: 'Failed to create Twitter raid' });
+    }
 });
 
 // Approve a paid Twitter raid (admin only)
@@ -561,7 +560,6 @@ router.post('/:raidId/completions/:completionId/approve', auth, async (req, res)
     });
 
   } catch (error) {
-    console.error('Approve error:', error);
     res.status(500).json({ error: error.message || 'Failed to approve' });
   }
 });
@@ -616,7 +614,6 @@ router.post('/:raidId/completions/:completionId/reject', auth, async (req, res) 
       await notification.save();
   
     } catch (notificationError) {
-      console.error('Error sending rejection notification:', notificationError);
       // Continue execution even if notification fails
     }
 
@@ -626,7 +623,6 @@ router.post('/:raidId/completions/:completionId/reject', auth, async (req, res) 
     });
 
   } catch (error) {
-    console.error('Reject error:', error);
     res.status(500).json({ error: error.message || 'Failed to reject' });
   }
 });
@@ -737,7 +733,6 @@ router.get('/completions/pending', auth, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error fetching pending completions:', error);
     res.status(500).json({ error: 'Failed to fetch pending completions' });
   }
 });

@@ -82,7 +82,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           setBumpRequests(data);
         })
         .catch(error => {
-          console.error('Error fetching bump requests:', error);
+          // Error fetching bump requests
         });
 
       // Fetch banner ads
@@ -117,7 +117,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           setPendingRedemptions(Array.isArray(data) ? data : []);
         })
         .catch(error => {
-          console.error('Error fetching pending redemptions:', error);
           setPendingRedemptions([]); // Set empty array on error
         });
 
@@ -140,7 +139,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           setPendingXpxClaims(Array.isArray(data) ? data : []);
         })
         .catch(error => {
-          console.error('Error fetching pending Xpx claims:', error);
           setPendingXpxClaims([]);
         });
     }
@@ -165,7 +163,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           setEarningsSummary(data);
         })
         .catch(error => {
-          console.error('Error fetching earnings summary:', error);
+          // Error fetching earnings summary
         });
 
       // Fetch detailed earnings
@@ -179,7 +177,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           setAffiliateEarnings(data);
         })
         .catch(error => {
-          console.error('Error fetching affiliate earnings:', error);
+          // Error fetching affiliate earnings
         });
     }
   }, [currentUser]);
@@ -202,7 +200,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           }
         }
       } catch (error) {
-        console.error('Error fetching dashboard data:', error);
+        // Error fetching dashboard data
       }
     };
 
@@ -222,7 +220,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           setUserJobs(jobs);
         }
       } catch (error) {
-        console.error('Error fetching user jobs:', error);
+        // Error fetching user jobs
       }
     };
 
@@ -269,7 +267,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         setPointsInfo(data);
       }
     } catch (error) {
-      console.error('Error fetching affiliate info:', error);
+      // Error fetching affiliate info
     } finally {
       setIsLoadingAffiliates(false);
     }
@@ -366,7 +364,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       const data = await response.json();
       setBannerAds(data);
     } catch (error) {
-      console.error('Error fetching banner ads:', error);
+      // Error fetching banner ads
     }
   };
 
@@ -382,7 +380,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       if (!response.ok) throw new Error('Failed to approve banner');
       fetchBannerAds();
     } catch (error) {
-      console.error('Error approving banner:', error);
+      // Error approving banner
     }
   };
 
@@ -399,7 +397,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       if (!response.ok) throw new Error('Failed to reject banner');
       fetchBannerAds();
     } catch (error) {
-      console.error('Error rejecting banner:', error);
+      // Error rejecting banner
     }
   };
 
@@ -436,7 +434,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       const updatedBanners = await bannersResponse.json();
       setBannerAds(updatedBanners);
     } catch (error) {
-      console.error('Error deleting banner:', error);
       alert(error.message || 'Failed to delete banner ad. Please try again.');
     }
   };
@@ -471,7 +468,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         prev.filter(user => user._id !== userId)
       );
     } catch (error) {
-      console.error('Error processing redemption:', error);
       alert('Failed to process redemption');
     }
   };
@@ -495,7 +491,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       setPendingXpxClaims(prev => prev.filter(user => user._id !== userId));
       alert(`Xpx card claim ${status} successfully`);
     } catch (error) {
-      console.error('Error processing Xpx claim:', error);
       alert('Failed to process Xpx claim');
     }
   };
@@ -511,7 +506,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       const data = await response.json();
       setBookings(data);
     } catch (error) {
-      console.error('Error fetching bookings:', error);
+      // Error fetching bookings
     }
   };
 
@@ -545,7 +540,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       
       return updatedBooking;
     } catch (error) {
-      console.error('Error updating booking status:', error);
       throw error;
     }
   };
@@ -646,7 +640,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       setPremiumRequests(prev => prev.filter(req => req._id !== serviceId));
       showNotification('Premium status approved successfully');
     } catch (error) {
-      console.error('Error approving premium status:', error);
       showNotification('Failed to approve premium status', 'error');
     }
   };
@@ -670,7 +663,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         showNotification('Job updated successfully', 'success');
       }
     } catch (error) {
-      console.error('Error updating job:', error);
       showNotification('Failed to update job', 'error');
     }
   };
@@ -697,7 +689,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         showNotification('Job refreshed successfully and moved to top of listing', 'success');
       }
     } catch (error) {
-      console.error('Error refreshing job:', error);
       showNotification('Failed to refresh job', 'error');
     }
   };
@@ -718,7 +709,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         showNotification('Job deleted successfully', 'success');
       }
     } catch (error) {
-      console.error('Error deleting job:', error);
       showNotification('Failed to delete job', 'error');
     }
   };
@@ -761,7 +751,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       alert(result.message);
       setVipUsername('');
     } catch (error) {
-      console.error('Error managing VIP affiliate:', error);
       alert('Failed to update VIP status: ' + error.message);
     }
   };
@@ -804,10 +793,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         const data = await response.json();
         setPendingTokenPurchases(data);
       } else {
-        console.error('Failed to fetch pending token purchases');
+        // Failed to fetch pending token purchases
       }
     } catch (error) {
-      console.error('Error fetching pending token purchases:', error);
+      // Error fetching pending token purchases
     }
   };
 
@@ -828,7 +817,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         showNotification(error.error || error.message || 'Failed to approve token purchase', 'error');
       }
     } catch (error) {
-      console.error('Error approving token purchase:', error);
       showNotification('Error approving token purchase', 'error');
     }
   };
@@ -848,7 +836,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         const data = await response.json();
         if (data.discrepanciesFound > 0) {
           showNotification(`Fixed ${data.discrepanciesFound} affiliate count discrepancies`, 'success');
-          console.log('Affiliate count sync results:', data);
         } else {
           showNotification('All affiliate counts are already in sync', 'info');
         }
@@ -856,7 +843,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         showNotification('Failed to sync affiliate counts', 'error');
       }
     } catch (error) {
-      console.error('Error syncing affiliate counts:', error);
       showNotification('Error syncing affiliate counts', 'error');
     }
     setLoadingAffiliateData(false);
@@ -880,7 +866,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         showNotification('Failed to search users', 'error');
       }
     } catch (error) {
-      console.error('Error searching users:', error);
       showNotification('Error searching users', 'error');
     }
     setLoadingAffiliateData(false);
@@ -902,7 +887,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         showNotification('Failed to fetch affiliate details', 'error');
       }
     } catch (error) {
-      console.error('Error fetching affiliate details:', error);
       showNotification('Error fetching affiliate details', 'error');
     }
     setLoadingAffiliateData(false);
@@ -924,7 +908,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         showNotification('Failed to fetch top affiliates', 'error');
       }
     } catch (error) {
-      console.error('Error fetching top affiliates:', error);
       showNotification('Error fetching top affiliates', 'error');
     }
     setLoadingAffiliateData(false);
@@ -946,7 +929,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         showNotification('Failed to fetch suspicious users', 'error');
       }
     } catch (error) {
-      console.error('Error fetching suspicious users:', error);
       showNotification('Error fetching suspicious users', 'error');
     }
     setLoadingAffiliateData(false);
@@ -974,7 +956,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         showNotification(error.error || error.message || 'Failed to reject token purchase', 'error');
       }
     } catch (error) {
-      console.error('Error rejecting token purchase:', error);
       showNotification('Error rejecting token purchase', 'error');
     }
   };
@@ -1007,10 +988,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
             setActiveBookingConversation(bookingData);
             setActiveTab('bookings');
           } else {
-            console.error('Failed to fetch specific booking:', response.status);
+            // Failed to fetch specific booking
           }
         } catch (error) {
-          console.error('Error fetching specific booking:', error);
+          // Error fetching specific booking
         }
       }
     };
@@ -1054,7 +1035,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       const data = await response.json();
       setPendingTwitterRaids(data.pendingCompletions || []);
     } catch (error) {
-      console.error('Error fetching pending completions:', error);
       setPendingTwitterRaids([]);
     } finally {
       setLoadingTwitterRaids(false);
@@ -1083,7 +1063,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       fetchPendingTwitterRaids();
       alert(result.message || 'Completion approved successfully!');
     } catch (error) {
-      console.error('Error approving completion:', error);
       alert('Error approving completion: ' + error.message);
     }
   };
@@ -1119,7 +1098,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       setShowTwitterRaidRejectModal(false);
       alert(result.message || 'Completion rejected successfully!');
     } catch (error) {
-      console.error('Error rejecting completion:', error);
       alert('Error rejecting completion: ' + error.message);
     }
   };
@@ -1326,7 +1304,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       const data = await fetchPendingAds();
       setPendingListings(data);
     } catch (error) {
-      console.error('Error fetching pending listings:', error);
       showNotification('Failed to fetch pending bubble listings', 'error');
     } finally {
       setIsLoadingListings(false);
@@ -1339,7 +1316,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       showNotification('Listing approved successfully', 'success');
       fetchPendingBubbleListings(); // Refresh the list
     } catch (error) {
-      console.error('Error approving listing:', error);
       showNotification('Failed to approve listing', 'error');
     }
   };
@@ -1360,7 +1336,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       setListingRejectionReason('');
       fetchPendingBubbleListings(); // Refresh the list
     } catch (error) {
-      console.error('Error rejecting listing:', error);
       showNotification('Failed to reject listing', 'error');
     }
   };
@@ -1460,7 +1435,6 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                           navigator.clipboard.writeText(referralUrl).then(() => {
                             showNotification('Referral link copied to clipboard!', 'success');
                           }).catch(err => {
-                            console.error('Failed to copy:', err);
                             showNotification('Failed to copy referral link', 'error');
                           });
                         }}

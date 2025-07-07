@@ -43,7 +43,6 @@ router.get('/balance', auth, async (req, res) => {
       pendingPurchases: pendingPurchases.length
     });
   } catch (error) {
-    console.error('Get token balance error:', error);
     res.status(500).json({ error: 'Failed to fetch token balance' });
   }
 });
@@ -109,7 +108,6 @@ router.post('/purchase', auth, requireEmailVerification, async (req, res) => {
       purchase: tokenPurchase
     });
   } catch (error) {
-    console.error('Create token purchase error:', error);
     res.status(500).json({ error: 'Failed to create token purchase' });
   }
 });
@@ -187,7 +185,6 @@ router.post('/purchase/:purchaseId/approve', auth, async (req, res) => {
       await notification.save();
 
     } catch (notificationError) {
-      console.error('Error creating approval notification:', notificationError);
       // Don't fail the entire request if notification fails
     }
 
@@ -197,7 +194,6 @@ router.post('/purchase/:purchaseId/approve', auth, async (req, res) => {
       purchase: tokenPurchase
     });
   } catch (error) {
-    console.error('Approve token purchase error:', error);
     res.status(500).json({ error: 'Failed to approve token purchase' });
   }
 });
@@ -238,7 +234,6 @@ router.post('/purchase/:purchaseId/reject', auth, async (req, res) => {
       });
       await notification.save();
     } catch (notificationError) {
-      console.error('Error creating rejection notification:', notificationError);
       // Don't fail the entire request if notification fails
     }
 
@@ -247,7 +242,6 @@ router.post('/purchase/:purchaseId/reject', auth, async (req, res) => {
       purchase: tokenPurchase
     });
   } catch (error) {
-    console.error('Reject token purchase error:', error);
     res.status(500).json({ error: 'Failed to reject token purchase' });
   }
 });
@@ -265,7 +259,6 @@ router.get('/admin/pending', auth, async (req, res) => {
 
     res.json(pendingPurchases);
   } catch (error) {
-    console.error('Get pending purchases error:', error);
     res.status(500).json({ error: 'Failed to fetch pending purchases' });
   }
 });
@@ -337,7 +330,6 @@ router.post('/unlock-booking/:bookingId', auth, requireEmailVerification, async 
       }
     });
   } catch (error) {
-    console.error('Unlock booking error:', error);
     res.status(500).json({ error: 'Failed to unlock booking' });
   }
 });

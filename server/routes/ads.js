@@ -30,18 +30,10 @@ const updateAdSize = async (ad) => {
       const currentDate = new Date();
       const expiryDate = new Date(ad.bumpExpiresAt);
       
-      
-      console.log('Expiry Time:', expiryDate.toISOString());
-      console.log('Current Timestamp:', currentDate.getTime());
-      console.log('Expiry Timestamp:', expiryDate.getTime());
-      console.log('Difference (ms):', currentDate.getTime() - expiryDate.getTime());
-      
       // Force comparison using timestamps
       const isExpired = currentDate.getTime() > expiryDate.getTime();
-      console.log('Is Expired:', isExpired);
       
       if (isExpired) {
-        console.log('\n=== UPDATING EXPIRED AD ===');
         try {
           // Calculate the correct size based on time since creation
           const timeSinceCreation = now - new Date(ad.createdAt).getTime();
@@ -67,11 +59,9 @@ const updateAdSize = async (ad) => {
             },
             { new: true }
           );
-          console.log('Update successful:', result !== null);
-          console.log('Updated document:', result);
           return;
         } catch (updateError) {
-          console.error('Update failed:', updateError);
+          // Update failed, continue
         }
       }
     }
@@ -82,7 +72,6 @@ const updateAdSize = async (ad) => {
         await Ad.findByIdAndUpdate(ad._id, {
           $set: { size: MAX_SIZE }
         });
-        console.log(`Reset bumped ad ${ad.id} to MAX_SIZE`);
       }
       return;
     }
@@ -100,23 +89,14 @@ const updateAdSize = async (ad) => {
     // Ensure size doesn't go below minimum and round to 1 decimal
     newSize = Math.max(MIN_SIZE, Math.round(newSize * 10) / 10);
 
-    // Debug logging
-    console.log(`Shrink calculation for ad ${ad.id}:`, {
-      currentSize: ad.size,
-      newSize: newSize,
-      timeSinceCreation: Math.floor(timeSinceCreation / 1000),
-      intervals: shrinkIntervals
-    });
-
     // Update if size changed
     if (newSize !== ad.size) {
       await Ad.findByIdAndUpdate(ad._id, {
         $set: { size: newSize }
       });
-      console.log(`Updated ad ${ad.id} size to ${newSize}`);
     }
   } catch (error) {
-    console.error(`Error updating ad ${ad.id}:`, error);
+    // Error updating ad
   }
 };
 
@@ -124,13 +104,12 @@ const updateAdSize = async (ad) => {
 setInterval(async () => {
   try {
     const ads = await Ad.find({});
-    console.log(`\nChecking ${ads.length} ads for size updates...`);
     
     for (const ad of ads) {
       await updateAdSize(ad);
     }
   } catch (error) {
-    console.error('Periodic check error:', error);
+    // Periodic check error
   }
 }, SHRINK_INTERVAL);
 
@@ -139,7 +118,6 @@ router.get('/', async (req, res) => {
   try {
     // Only show active or approved ads (not pending or rejected)
     const ads = await Ad.find({ status: { $in: ['active', 'approved'] } });
-    console.log(`Found ${ads.length} approved/active ads`);
     
     // Ensure all ad sizes are up-to-date before sending to clients
     // This prevents the "large then small" visual bug when loading the page
@@ -184,7 +162,6 @@ router.get('/', async (req, res) => {
     
     res.json(processedAds);
   } catch (error) {
-    console.error('Error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -213,8 +190,6 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
     
     // Validate size is within acceptable range
     const validatedSize = Math.min(MAX_SIZE, Math.max(MIN_SIZE, bubbleSize));
-    
-    console.log('Creating ad with data:', req.body);
   
     const ad = new Ad({
       id: `ad-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -254,28 +229,20 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
         await user.save();
         
         if (user.referredBy) {
-          console.log('User was referred - awarding 200 points to affiliate', user.referredBy);
           await awardListingPoints(req.user.userId);
-          console.log('Successfully awarded 200 points to affiliate for listing');
-        } else {
-          console.log('User was not referred by an affiliate - no points awarded');
         }
       }
     } catch (pointsError) {
-      console.error('Error awarding affiliate points:', pointsError);
       // Don't fail the ad creation if points award fails
     }
 
     // Check if there's a referral and handle affiliate earnings
     if (referredBy) {
       const adAmount = calculateBumpAmount(referredBy);
-      console.log('Bump amount calculated:', adAmount, 'USDC');
       
       const commissionRate = await AffiliateEarning.calculateCommissionRate(referredBy);
-      console.log('Commission rate calculated:', commissionRate);
       
       const commissionEarned = AffiliateEarning.calculateCommission(adAmount, commissionRate);
-      console.log('Commission earned calculated:', commissionEarned, 'USDC');
 
       const affiliateEarning = new AffiliateEarning({
         affiliateId: referredBy,
@@ -286,14 +253,11 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
         commissionEarned
       });
 
-      console.log('Saving affiliate earning:', affiliateEarning);
       await affiliateEarning.save();
-      console.log('Affiliate earning saved successfully');
     }
 
     res.status(201).json(savedAd);
   } catch (error) {
-    console.error('Server error creating ad:', error);
     res.status(500).json({ 
       error: 'Failed to create ad', 
       message: error.message 
@@ -306,9 +270,6 @@ router.put('/:id', auth, requireEmailVerification, async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
-    
-    console.log('Update request for ad:', id);
-    console.log('Update data:', JSON.stringify(updates));
     
     // If preferred size is provided, use it to validate the size
     if (updates.preferredSize) {
@@ -348,8 +309,6 @@ router.put('/:id', auth, requireEmailVerification, async (req, res) => {
       updateData.$unset = { contractAddress: "" };
     }
     
-    console.log('Filtered update data:', JSON.stringify(updateData));
-    
     // Prepare update operations
     const updateOperations = {};
     
@@ -373,11 +332,8 @@ router.put('/:id', auth, requireEmailVerification, async (req, res) => {
       return res.status(404).json({ message: 'Ad not found after update attempt' });
     }
     
-    console.log('Ad updated successfully');
     res.json(updatedAd);
   } catch (error) {
-    console.error('Error updating ad:', error);
-    console.error('Error stack:', error.stack);
     res.status(500).json({ 
       message: 'Error updating ad', 
       error: error.message,
@@ -393,7 +349,6 @@ router.post('/bump', auth, async (req, res) => {
 
     // Get the correct USDC amount based on bump duration
     const adAmount = calculateBumpAmount(req.body.duration);
-    console.log('Bump amount before affiliate earning:', adAmount); // Debug log
 
     if (req.body.referredBy) {
       const commissionRate = await AffiliateEarning.calculateCommissionRate(req.body.referredBy);
@@ -408,13 +363,11 @@ router.post('/bump', auth, async (req, res) => {
         commissionEarned
       });
 
-      console.log('Saving affiliate earning with amount:', adAmount, 'USDC'); // Debug log
       await affiliateEarning.save();
     }
 
     // ... rest of bump code ...
   } catch (error) {
-    console.error('Error processing bump:', error);
     res.status(500).json({ error: 'Failed to process bump' });
   }
 });
@@ -424,8 +377,6 @@ router.put('/:id/position', async (req, res) => {
   try {
     const { id } = req.params;
     const { x, y } = req.body;
-    
-    console.log('Position update for ad:', id, 'New position:', x, y);
     
     if (x === undefined || y === undefined) {
       return res.status(400).json({ message: 'Position update requires x and y coordinates' });
@@ -449,10 +400,8 @@ router.put('/:id/position', async (req, res) => {
       return res.status(404).json({ message: 'Ad not found after update attempt' });
     }
     
-    console.log('Ad position updated successfully');
     res.json(updatedAd);
   } catch (error) {
-    console.error('Error updating ad position:', error);
     res.status(500).json({ message: 'Error updating ad position', error: error.message });
   }
 });
@@ -623,7 +572,6 @@ router.post('/:id/vote', auth, async (req, res) => {
       });
     }
   } catch (error) {
-    console.error('Error processing vote:', error);
     res.status(500).json({ error: 'Failed to process vote' });
   }
 });
@@ -660,7 +608,6 @@ router.get('/:id/votes', async (req, res) => {
       userVote
     });
   } catch (error) {
-    console.error('Error getting ad votes:', error);
     res.status(500).json({ error: 'Failed to get vote data' });
   }
 });
@@ -675,7 +622,6 @@ router.get('/pending', auth, async (req, res) => {
     const pendingAds = await Ad.find({ status: 'pending' }).sort({ createdAt: -1 });
     res.json(pendingAds);
   } catch (error) {
-    console.error('Error fetching pending ads:', error);
     res.status(500).json({ error: 'Failed to fetch pending ads' });
   }
 });
@@ -706,7 +652,6 @@ router.post('/:id/approve', auth, async (req, res) => {
       ad
     });
   } catch (error) {
-    console.error('Error approving ad:', error);
     res.status(500).json({ error: 'Failed to approve ad' });
   }
 });
@@ -738,7 +683,6 @@ router.post('/:id/reject', auth, async (req, res) => {
       adId: adId
     });
   } catch (error) {
-    console.error('Error rejecting ad:', error);
     res.status(500).json({ error: 'Failed to reject ad' });
   }
 });

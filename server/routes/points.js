@@ -163,7 +163,6 @@ router.post('/claim-xpx-card', auth, requireEmailVerification, async (req, res) 
       user 
     });
   } catch (error) {
-    console.error('Error claiming Xpx card:', error);
     res.status(500).json({ error: 'Failed to process Xpx card claim' });
   }
 });
@@ -252,7 +251,6 @@ router.get('/xpx-claims/pending', auth, async (req, res) => {
 
     res.json(pendingUsers);
   } catch (error) {
-    console.error('Error fetching Xpx claims:', error);
     res.status(500).json({ error: 'Failed to fetch Xpx claims' });
   }
 });
@@ -296,7 +294,6 @@ router.post('/xpx-claims/:userId/process', auth, async (req, res) => {
     await user.save();
     res.json({ message: 'Xpx card claim processed successfully', user });
   } catch (error) {
-    console.error('Error processing Xpx claim:', error);
     res.status(500).json({ error: 'Failed to process Xpx card claim' });
   }
 });
@@ -360,7 +357,6 @@ function awardPendingAffiliatePoints(userId) {
       );
     })
     .catch(error => {
-      console.error('Error awarding pending affiliate points:', error);
       throw error;
     });
 }
@@ -398,7 +394,6 @@ async function awardSocialMediaPoints(userId, platform, raidId) {
     
     return updatedUser;
   } catch (error) {
-    console.error('Error in awardSocialMediaPoints:', error);
     // Instead of throwing, return a rejection
     return Promise.reject(error);
   }
@@ -441,7 +436,6 @@ router.post('/social-raids/complete', auth, requireEmailVerification, async (req
     });
     
   } catch (error) {
-    console.error('Error completing social media raid:', error);
     res.status(500).json({ error: 'Failed to process social media raid' });
   }
 });

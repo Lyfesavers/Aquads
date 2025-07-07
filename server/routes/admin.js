@@ -76,7 +76,6 @@ const calculateActivityDiversityScore = async (userId) => {
       maxPossibleTypes
     };
   } catch (error) {
-    console.error('Error calculating activity diversity:', error);
     return { score: 0, activities: {}, error: error.message };
   }
 };
@@ -140,7 +139,6 @@ const calculateLoginFrequencyAnalysis = (user) => {
       mostRecentActivity: lastActivityTime.toISOString()
     };
   } catch (error) {
-    console.error('Error calculating login frequency:', error);
     return {
       accountAgeDays: 0,
       daysSinceLastSeen: 999,
@@ -249,7 +247,6 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
       }
     };
   } catch (error) {
-    console.error('Error calculating advanced fraud score:', error);
     return {
       riskScore: 0,
       riskFactors: ['calculation_error'],
@@ -357,7 +354,6 @@ router.get('/user/:userId/affiliates', auth, isAdmin, async (req, res) => {
       fraudAnalysis: userFraudAnalysis
     });
   } catch (error) {
-    console.error('Error fetching affiliate details:', error);
     res.status(500).json({ error: 'Failed to fetch affiliate details' });
   }
 });
@@ -424,7 +420,6 @@ router.post('/bulk-affiliate-lookup', auth, isAdmin, async (req, res) => {
 
     res.json({ results });
   } catch (error) {
-    console.error('Error in bulk affiliate lookup:', error);
     res.status(500).json({ error: 'Failed to perform bulk lookup' });
   }
 });
@@ -455,7 +450,6 @@ router.get('/top-affiliates', auth, isAdmin, async (req, res) => {
       }))
     });
   } catch (error) {
-    console.error('Error fetching top affiliates:', error);
     res.status(500).json({ error: 'Failed to fetch top affiliates' });
   }
 });
@@ -492,7 +486,6 @@ router.get('/search-users', auth, isAdmin, async (req, res) => {
       }))
     });
   } catch (error) {
-    console.error('Error searching users:', error);
     res.status(500).json({ error: 'Failed to search users' });
   }
 });
@@ -559,7 +552,6 @@ router.get('/suspicious-users', auth, isAdmin, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching suspicious users:', error);
     res.status(500).json({ error: 'Failed to fetch suspicious users' });
   }
 });
@@ -590,7 +582,6 @@ router.get('/user/:userId/activity-analysis', auth, isAdmin, async (req, res) =>
       }
     });
   } catch (error) {
-    console.error('Error fetching activity analysis:', error);
     res.status(500).json({ error: 'Failed to fetch activity analysis' });
   }
 });
@@ -688,7 +679,6 @@ router.post('/sync-affiliate-counts', auth, isAdmin, async (req, res) => {
       totalUsersChecked: users.length
     });
   } catch (error) {
-    console.error('Error syncing affiliate counts:', error);
     res.status(500).json({ error: 'Failed to sync affiliate counts' });
   }
 });
