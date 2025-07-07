@@ -1846,6 +1846,137 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                     </div>
                   )}
 
+                  {/* Fraud Analysis */}
+                  {affiliateAnalytics.fraudAnalysis && (
+                    <div className="bg-gray-700 rounded-lg p-4 mb-6">
+                      <h3 className="text-lg font-semibold text-white mb-4">Network Trust Analysis</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Risk Score */}
+                        <div className="bg-gray-800 rounded-lg p-4">
+                          <h4 className="text-sm font-medium text-gray-400 mb-2">Network Trust Score</h4>
+                          <div className="flex items-center space-x-3">
+                            <div className="relative w-16 h-16">
+                              <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
+                                <path
+                                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeDasharray={`${100 - affiliateAnalytics.fraudAnalysis.riskScore}, 100`}
+                                  className={`${
+                                    affiliateAnalytics.fraudAnalysis.riskLevel === 'high' ? 'text-red-500' :
+                                    affiliateAnalytics.fraudAnalysis.riskLevel === 'medium' ? 'text-yellow-500' :
+                                    'text-green-500'
+                                  }`}
+                                />
+                                <path
+                                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeDasharray="100, 100"
+                                  className="text-gray-600"
+                                />
+                              </svg>
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-sm font-bold text-white">
+                                  {Math.round(100 - affiliateAnalytics.fraudAnalysis.riskScore)}%
+                                </span>
+                              </div>
+                            </div>
+                            <div>
+                              <p className={`text-lg font-bold ${
+                                affiliateAnalytics.fraudAnalysis.riskLevel === 'high' ? 'text-red-400' :
+                                affiliateAnalytics.fraudAnalysis.riskLevel === 'medium' ? 'text-yellow-400' :
+                                'text-green-400'
+                              }`}>
+                                {affiliateAnalytics.fraudAnalysis.riskLevel.toUpperCase()} TRUST
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                {affiliateAnalytics.fraudAnalysis.riskLevel === 'high' ? 'Review your network' :
+                                 affiliateAnalytics.fraudAnalysis.riskLevel === 'medium' ? 'Moderate confidence' :
+                                 'Excellent network quality'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Activity & Login Scores */}
+                        <div className="bg-gray-800 rounded-lg p-4">
+                          <h4 className="text-sm font-medium text-gray-400 mb-2">Your Activity Metrics</h4>
+                          <div className="space-y-2">
+                            <div className="flex justify-between">
+                              <span className="text-gray-300">Activity Diversity</span>
+                              <span className="text-blue-400 font-bold">
+                                {Math.round(affiliateAnalytics.fraudAnalysis.activityScore * 100)}%
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-300">Login Frequency</span>
+                              <span className="text-green-400 font-bold">
+                                {Math.round(affiliateAnalytics.fraudAnalysis.loginFrequency * 100)}%
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-300">Account Age</span>
+                              <span className="text-purple-400 font-bold">
+                                {affiliateAnalytics.fraudAnalysis.loginDetails.accountAgeDays || 0} days
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Network Analysis */}
+                      <div className="mt-4 bg-gray-800 rounded-lg p-4">
+                        <h4 className="text-sm font-medium text-gray-400 mb-2">Network Diversity</h4>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          <div className="text-center">
+                            <p className="text-lg font-bold text-blue-400">
+                              {affiliateAnalytics.fraudAnalysis.networkAnalysis.uniqueIPs}
+                            </p>
+                            <p className="text-xs text-gray-400">Unique IPs</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-lg font-bold text-green-400">
+                              {affiliateAnalytics.fraudAnalysis.networkAnalysis.uniqueCountries}
+                            </p>
+                            <p className="text-xs text-gray-400">Countries</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-lg font-bold text-purple-400">
+                              {affiliateAnalytics.fraudAnalysis.networkAnalysis.uniqueDevices}
+                            </p>
+                            <p className="text-xs text-gray-400">Devices</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="text-lg font-bold text-orange-400">
+                              {affiliateAnalytics.fraudAnalysis.networkAnalysis.rapidSignups}
+                            </p>
+                            <p className="text-xs text-gray-400">Recent (24h)</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Risk Factors */}
+                      {affiliateAnalytics.fraudAnalysis.riskFactors.length > 0 && (
+                        <div className="mt-4 bg-gray-800 rounded-lg p-4">
+                          <h4 className="text-sm font-medium text-gray-400 mb-2">Improvement Areas</h4>
+                          <div className="space-y-1">
+                            {affiliateAnalytics.fraudAnalysis.riskFactors.map((factor, index) => (
+                              <div key={index} className="flex items-center space-x-2 text-sm">
+                                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                                <span className="text-gray-300">
+                                  {factor.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Affiliate List */}
                   <div className="bg-gray-700 rounded-lg p-4">
                     <h3 className="text-lg font-semibold text-white mb-4">Your Affiliates</h3>
