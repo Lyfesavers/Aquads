@@ -248,12 +248,18 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
     try {
       // Find the current user to check if they were referred by an affiliate
       const user = await User.findById(req.user.userId);
-      if (user && user.referredBy) {
-        console.log('User was referred - awarding 200 points to affiliate', user.referredBy);
-        await awardListingPoints(req.user.userId);
-        console.log('Successfully awarded 200 points to affiliate for listing');
-      } else {
-        console.log('User was not referred by an affiliate - no points awarded');
+      if (user) {
+        // Update user's last activity for accurate fraud detection
+        user.lastActivity = new Date();
+        await user.save();
+        
+        if (user.referredBy) {
+          console.log('User was referred - awarding 200 points to affiliate', user.referredBy);
+          await awardListingPoints(req.user.userId);
+          console.log('Successfully awarded 200 points to affiliate for listing');
+        } else {
+          console.log('User was not referred by an affiliate - no points awarded');
+        }
       }
     } catch (pointsError) {
       console.error('Error awarding affiliate points:', pointsError);

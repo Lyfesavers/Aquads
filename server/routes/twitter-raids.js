@@ -476,6 +476,11 @@ router.post('/:id/complete', auth, requireEmailVerification, twitterRaidRateLimi
         completedAt: new Date()
       });
       
+      // Update user's last activity for accurate fraud detection
+      await User.findByIdAndUpdate(userId, {
+        lastActivity: new Date()
+      });
+      
       // Save the raid with the pending completion
       await raid.save();
       
@@ -538,6 +543,7 @@ router.post('/:raidId/completions/:completionId/approve', auth, async (req, res)
     if (user) {
       const points = raid.points || 50;
       user.points = (user.points || 0) + points;
+      user.lastActivity = new Date(); // Update activity when points are awarded
       user.pointsHistory.push({
         amount: points,
         reason: `Twitter raid approved: ${raid.title}`,

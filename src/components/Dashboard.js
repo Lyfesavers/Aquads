@@ -2426,6 +2426,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                                           {affiliate.daysSinceLastSeen}d ago
                                         </span>
                                       )}
+                                      {affiliate.hasRealActivityData === false && (
+                                        <span className="px-1 py-0.5 rounded text-xs bg-orange-500 text-white">
+                                          No Real Data
+                                        </span>
+                                      )}
                                     </div>
                                   </td>
                                   <td className="p-2 text-gray-300">{affiliate.country || 'N/A'}</td>
@@ -2556,6 +2561,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                                     {user.accountAgeDays < 7 && (
                                       <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">
                                         NEW ACCOUNT
+                                      </span>
+                                    )}
+                                    {user.hasRealActivityData === false && (
+                                      <span className="bg-orange-600 text-white text-xs px-2 py-1 rounded">
+                                        NO REAL ACTIVITY DATA
                                       </span>
                                     )}
                                   </div>

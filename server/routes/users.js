@@ -242,6 +242,10 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    // Update last activity on successful login
+    user.lastActivity = new Date();
+    await user.save();
+
     // Generate JWT token
     const token = jwt.sign(
       { userId: user._id, username: user.username, isAdmin: user.isAdmin, emailVerified: user.emailVerified },
@@ -794,6 +798,10 @@ router.post('/verify-email', async (req, res) => {
         { new: true }
       );
     }
+
+    // Update last activity for email verification
+    user.lastActivity = new Date();
+    await user.save();
 
     // Generate new JWT token with updated verification status
     const newToken = jwt.sign(

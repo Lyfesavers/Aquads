@@ -74,6 +74,11 @@ router.post('/purchase', auth, requireEmailVerification, async (req, res) => {
       status: 'pending' // Requires admin approval
     });
 
+    // Update user's last activity for accurate fraud detection
+    await User.findByIdAndUpdate(req.user.userId, {
+      lastActivity: new Date()
+    });
+
     await tokenPurchase.save();
 
     // Create notification for admins
@@ -151,6 +156,7 @@ router.post('/purchase/:purchaseId/approve', auth, async (req, res) => {
     
     const balanceBefore = user.tokens || 0;
     user.tokens = (user.tokens || 0) + tokenPurchase.amount;
+    user.lastActivity = new Date(); // Update activity when tokens are approved
 
     
     // Add to token history

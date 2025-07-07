@@ -86,29 +86,42 @@ const calculateLoginFrequencyAnalysis = (user) => {
   try {
     const now = new Date();
     const createdAt = new Date(user.createdAt);
-    const lastSeen = user.lastSeen ? new Date(user.lastSeen) : createdAt;
-    const lastActivity = user.lastActivity ? new Date(user.lastActivity) : createdAt;
+    
+    // Use the most recent activity timestamp available
+    const timestamps = [user.lastSeen, user.lastActivity].filter(Boolean).map(t => new Date(t));
+    const mostRecentActivity = timestamps.length > 0 ? new Date(Math.max(...timestamps)) : null;
+    
+    // If no activity timestamps are available, use creation date but flag it
+    const hasRealActivityData = mostRecentActivity !== null;
+    const lastActivityTime = mostRecentActivity || createdAt;
+    
+    // Separate lastSeen and lastActivity for more granular tracking
+    const lastSeen = user.lastSeen ? new Date(user.lastSeen) : null;
+    const lastActivity = user.lastActivity ? new Date(user.lastActivity) : null;
 
     // Calculate account age in days
     const accountAgeMs = now.getTime() - createdAt.getTime();
     const accountAgeDays = Math.floor(accountAgeMs / (1000 * 60 * 60 * 24));
 
-    // Calculate days since last seen/activity
-    const daysSinceLastSeen = Math.floor((now.getTime() - lastSeen.getTime()) / (1000 * 60 * 60 * 24));
-    const daysSinceLastActivity = Math.floor((now.getTime() - lastActivity.getTime()) / (1000 * 60 * 60 * 24));
+    // Calculate days since most recent activity
+    const daysSinceLastActivity = Math.floor((now.getTime() - lastActivityTime.getTime()) / (1000 * 60 * 60 * 24));
+    const daysSinceLastSeen = lastSeen ? Math.floor((now.getTime() - lastSeen.getTime()) / (1000 * 60 * 60 * 24)) : daysSinceLastActivity;
 
-    // Calculate engagement metrics
-    const isDormant = daysSinceLastSeen > 7; // No activity for a week
-    const isHighlyDormant = daysSinceLastSeen > 30; // No activity for a month
-    const isNewAndInactive = accountAgeDays < 7 && daysSinceLastSeen > 2; // New account but already inactive
-    const isOldAndSuddenlyActive = accountAgeDays > 30 && daysSinceLastActivity < 1; // Old account suddenly active
+    // More accurate dormant detection
+    const isDormant = hasRealActivityData ? daysSinceLastActivity > 7 : (accountAgeDays > 7 && daysSinceLastActivity >= accountAgeDays - 1);
+    const isHighlyDormant = hasRealActivityData ? daysSinceLastActivity > 30 : (accountAgeDays > 30 && daysSinceLastActivity >= accountAgeDays - 1);
+    const isNewAndInactive = accountAgeDays < 7 && daysSinceLastActivity > 2 && hasRealActivityData;
+    const isOldAndSuddenlyActive = accountAgeDays > 30 && daysSinceLastActivity < 1 && hasRealActivityData;
 
     // Calculate frequency score (0-1, higher = better engagement)
     let frequencyScore = 0;
-    if (accountAgeDays > 0) {
-      const expectedLogins = Math.min(accountAgeDays, 30); // Expect at least some activity
-      const actualEngagement = Math.max(0, 30 - daysSinceLastSeen); // Recent activity is good
+    if (accountAgeDays > 0 && hasRealActivityData) {
+      const expectedLogins = Math.min(accountAgeDays, 30);
+      const actualEngagement = Math.max(0, 30 - daysSinceLastActivity);
       frequencyScore = Math.min(actualEngagement / expectedLogins, 1);
+    } else if (!hasRealActivityData && accountAgeDays > 0) {
+      // Penalize accounts with no real activity data
+      frequencyScore = 0.1; // Very low but not zero
     }
 
     return {
@@ -121,16 +134,21 @@ const calculateLoginFrequencyAnalysis = (user) => {
       isNewAndInactive,
       isOldAndSuddenlyActive,
       frequencyScore: Math.round(frequencyScore * 100) / 100,
-      lastSeen: lastSeen.toISOString(),
-      lastActivity: lastActivity.toISOString()
+      hasRealActivityData,
+      lastSeen: lastSeen ? lastSeen.toISOString() : null,
+      lastActivity: lastActivity ? lastActivity.toISOString() : null,
+      mostRecentActivity: lastActivityTime.toISOString()
     };
   } catch (error) {
     console.error('Error calculating login frequency:', error);
     return {
       accountAgeDays: 0,
       daysSinceLastSeen: 999,
+      daysSinceLastActivity: 999,
       isDormant: true,
+      isHighlyDormant: true,
       frequencyScore: 0,
+      hasRealActivityData: false,
       error: error.message
     };
   }
