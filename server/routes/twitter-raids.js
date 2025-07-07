@@ -642,9 +642,56 @@ router.get('/completions/pending', auth, async (req, res) => {
     // Extract pending completions with raid info
     const pendingCompletions = [];
     
+    // Get all user IDs for trust score calculation
+    const userIds = new Set();
+    raids.forEach(raid => {
+      raid.completions.forEach(completion => {
+        if (completion.approvalStatus === 'pending' && completion.userId) {
+          userIds.add(completion.userId._id.toString());
+        }
+      });
+    });
+
+    // Calculate trust scores for all users
+    const userTrustScores = {};
+    if (userIds.size > 0) {
+      const allRaidsWithCompletions = await TwitterRaid.find({
+        'completions.userId': { $in: Array.from(userIds) }
+      });
+
+      userIds.forEach(userId => {
+        let totalCompletions = 0;
+        let approvedCompletions = 0;
+
+        allRaidsWithCompletions.forEach(raid => {
+          raid.completions.forEach(completion => {
+            if (completion.userId && completion.userId.toString() === userId && 
+                completion.approvalStatus !== 'pending') {
+              totalCompletions++;
+              if (completion.approvalStatus === 'approved') {
+                approvedCompletions++;
+              }
+            }
+          });
+        });
+
+        userTrustScores[userId] = {
+          totalCompletions,
+          approvedCompletions,
+          approvalRate: totalCompletions > 0 ? (approvedCompletions / totalCompletions) * 100 : 0,
+          trustLevel: totalCompletions === 0 ? 'new' : 
+                     (approvedCompletions / totalCompletions) >= 0.85 ? 'high' :
+                     (approvedCompletions / totalCompletions) >= 0.65 ? 'medium' : 'low'
+        };
+      });
+    }
+    
     raids.forEach(raid => {
       raid.completions.forEach(completion => {
         if (completion.approvalStatus === 'pending') {
+          const userId = completion.userId ? completion.userId._id.toString() : null;
+          const trustScore = userId ? userTrustScores[userId] : null;
+          
           pendingCompletions.push({
             completionId: completion._id,
             raidId: raid._id,
@@ -657,10 +704,24 @@ router.get('/completions/pending', auth, async (req, res) => {
             verificationNote: completion.verificationNote,
             iframeVerified: completion.iframeVerified,
             completedAt: completion.completedAt,
-            ipAddress: completion.ipAddress
+            ipAddress: completion.ipAddress,
+            trustScore: trustScore || {
+              totalCompletions: 0,
+              approvedCompletions: 0,
+              approvalRate: 0,
+              trustLevel: 'new'
+            }
           });
         }
       });
+    });
+
+    // Sort by trust level priority: high -> medium -> new -> low
+    const trustLevelPriority = { 'high': 0, 'medium': 1, 'new': 2, 'low': 3 };
+    pendingCompletions.sort((a, b) => {
+      const aPriority = trustLevelPriority[a.trustScore.trustLevel];
+      const bPriority = trustLevelPriority[b.trustScore.trustLevel];
+      return aPriority - bPriority;
     });
 
     res.json({

@@ -1139,11 +1139,46 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           <p className="text-gray-400 text-center py-4">No pending completions to approve.</p>
         ) : (
           <div className="space-y-4">
-            {pendingTwitterRaids.map(completion => (
+            {pendingTwitterRaids.map(completion => {
+              // Trust score display logic
+              const getTrustColor = (trustLevel) => {
+                switch(trustLevel) {
+                  case 'high': return 'text-green-400';
+                  case 'medium': return 'text-yellow-400';
+                  case 'low': return 'text-red-400';
+                  default: return 'text-gray-400';
+                }
+              };
+
+              const getTrustIcon = (trustLevel) => {
+                switch(trustLevel) {
+                  case 'high': return '🟢';
+                  case 'medium': return '🟡';
+                  case 'low': return '🔴';
+                  default: return '⚪';
+                }
+              };
+
+              const getTrustText = (trustScore) => {
+                if (trustScore.totalCompletions === 0) {
+                  return 'New User';
+                }
+                return `${Math.round(trustScore.approvalRate)}% Trust (${trustScore.approvedCompletions}/${trustScore.totalCompletions})`;
+              };
+
+              return (
               <div key={`${completion.raidId}-${completion.completionId}`} className="bg-gray-800 p-4 rounded-lg">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                   <div className="lg:col-span-2 space-y-2">
-                    <h4 className="font-medium text-white">{completion.raidTitle}</h4>
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium text-white">{completion.raidTitle}</h4>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-lg">{getTrustIcon(completion.trustScore.trustLevel)}</span>
+                        <span className={`text-sm font-medium ${getTrustColor(completion.trustScore.trustLevel)}`}>
+                          {getTrustText(completion.trustScore)}
+                        </span>
+                      </div>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <p className="text-sm">
@@ -1215,7 +1250,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
         
