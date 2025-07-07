@@ -66,6 +66,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [topAffiliates, setTopAffiliates] = useState([]);
   const [suspiciousUsers, setSuspiciousUsers] = useState([]);
   const [loadingAffiliateData, setLoadingAffiliateData] = useState(false);
+  // User affiliate analytics states
+  const [affiliateAnalytics, setAffiliateAnalytics] = useState(null);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
 
   // Update activeTab when initialActiveTab changes
   useEffect(() => {
@@ -270,6 +273,30 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       // Error fetching affiliate info
     } finally {
       setIsLoadingAffiliates(false);
+    }
+  };
+
+  const fetchAffiliateAnalytics = async () => {
+    setLoadingAnalytics(true);
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/affiliates/analytics`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setAffiliateAnalytics(data);
+      } else {
+        console.error('Failed to fetch affiliate analytics');
+        showNotification('Failed to fetch affiliate analytics', 'error');
+      }
+    } catch (error) {
+      console.error('Error fetching affiliate analytics:', error);
+      showNotification('Error fetching affiliate analytics', 'error');
+    } finally {
+      setLoadingAnalytics(false);
     }
   };
 
@@ -1370,6 +1397,17 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           >
             Bookings
           </button>
+          <button
+            className={`px-4 py-2 ${activeTab === 'affiliateAnalytics' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+            onClick={() => {
+              setActiveTab('affiliateAnalytics');
+              if (!affiliateAnalytics) {
+                fetchAffiliateAnalytics();
+              }
+            }}
+          >
+            Affiliate Analytics
+          </button>
           {currentUser.isAdmin && (
             <button
               className={`px-4 py-2 ${activeTab === 'admin' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
@@ -1692,6 +1730,164 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   onOpenConversation={handleOpenConversation}
                   refreshBookings={fetchBookings}
                 />
+              )}
+            </div>
+          )}
+
+          {activeTab === 'affiliateAnalytics' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-semibold text-white">Affiliate Analytics</h2>
+                <button
+                  onClick={fetchAffiliateAnalytics}
+                  disabled={loadingAnalytics}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
+                >
+                  {loadingAnalytics ? 'Loading...' : 'Refresh'}
+                </button>
+              </div>
+
+              {loadingAnalytics ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400"></div>
+                </div>
+              ) : affiliateAnalytics ? (
+                <div>
+                  {/* Summary Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div className="bg-gray-700 rounded-lg p-4">
+                      <h3 className="text-sm font-medium text-gray-400">Total Affiliates</h3>
+                      <p className="text-2xl font-bold text-blue-400">{affiliateAnalytics.summary.totalAffiliates}</p>
+                    </div>
+                    <div className="bg-gray-700 rounded-lg p-4">
+                      <h3 className="text-sm font-medium text-gray-400">This Week</h3>
+                      <p className="text-2xl font-bold text-green-400">+{affiliateAnalytics.summary.thisWeekSignups}</p>
+                    </div>
+                    <div className="bg-gray-700 rounded-lg p-4">
+                      <h3 className="text-sm font-medium text-gray-400">Active This Week</h3>
+                      <p className="text-2xl font-bold text-orange-400">{affiliateAnalytics.summary.activeThisWeek}</p>
+                    </div>
+                    <div className="bg-gray-700 rounded-lg p-4">
+                      <h3 className="text-sm font-medium text-gray-400">Verified</h3>
+                      <p className="text-2xl font-bold text-purple-400">{affiliateAnalytics.summary.verifiedAffiliates}</p>
+                    </div>
+                  </div>
+
+                  {/* Performance Metrics */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                    <div className="bg-gray-700 rounded-lg p-4">
+                      <h3 className="text-lg font-semibold text-white mb-2">Performance Tiers</h3>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">Top Performers (1000+ pts)</span>
+                          <span className="text-green-400 font-bold">{affiliateAnalytics.performance.topPerformers}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">Moderate (500-1000 pts)</span>
+                          <span className="text-yellow-400 font-bold">{affiliateAnalytics.performance.moderatePerformers}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">New Users (0-500 pts)</span>
+                          <span className="text-blue-400 font-bold">{affiliateAnalytics.performance.newAffiliates}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-gray-700 rounded-lg p-4">
+                      <h3 className="text-lg font-semibold text-white mb-2">Engagement</h3>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">Verification Rate</span>
+                          <span className="text-purple-400 font-bold">{affiliateAnalytics.summary.verificationRate}%</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">Activity Rate</span>
+                          <span className="text-orange-400 font-bold">{affiliateAnalytics.summary.activityRate}%</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">Network Builders</span>
+                          <span className="text-green-400 font-bold">{affiliateAnalytics.summary.networkBuilders}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-gray-700 rounded-lg p-4">
+                      <h3 className="text-lg font-semibold text-white mb-2">Rewards</h3>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">Avg Points</span>
+                          <span className="text-blue-400 font-bold">{affiliateAnalytics.summary.averagePoints}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">Total Tokens</span>
+                          <span className="text-yellow-400 font-bold">{affiliateAnalytics.summary.totalAffiliateTokens}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">This Month</span>
+                          <span className="text-green-400 font-bold">+{affiliateAnalytics.summary.thisMonthSignups}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Monthly Growth Chart */}
+                  {Object.keys(affiliateAnalytics.growth.monthlyData).length > 0 && (
+                    <div className="bg-gray-700 rounded-lg p-4 mb-6">
+                      <h3 className="text-lg font-semibold text-white mb-4">Monthly Growth</h3>
+                      <div className="flex items-end space-x-2 h-32">
+                        {Object.entries(affiliateAnalytics.growth.monthlyData).map(([month, count]) => (
+                          <div key={month} className="flex flex-col items-center">
+                            <div 
+                              className="bg-blue-500 rounded-t w-8 transition-all duration-300"
+                              style={{ height: `${(count / Math.max(...Object.values(affiliateAnalytics.growth.monthlyData))) * 100}%` }}
+                            ></div>
+                            <span className="text-xs text-gray-400 mt-1">{month.split('-')[1]}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Affiliate List */}
+                  <div className="bg-gray-700 rounded-lg p-4">
+                    <h3 className="text-lg font-semibold text-white mb-4">Your Affiliates</h3>
+                    {affiliateAnalytics.affiliates.length === 0 ? (
+                      <p className="text-gray-400 text-center py-8">No affiliates yet. Share your referral link to get started!</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {affiliateAnalytics.affiliates.map((affiliate, index) => (
+                          <div key={index} className="bg-gray-800 rounded-lg p-3 flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <div className="flex items-center space-x-2">
+                                <div className={`w-3 h-3 rounded-full ${affiliate.isOnline ? 'bg-green-500' : 'bg-gray-500'}`}></div>
+                                <span className="text-white font-medium">{affiliate.username}</span>
+                              </div>
+                              {affiliate.emailVerified && (
+                                <span className="bg-green-500 text-white text-xs px-2 py-1 rounded">✓</span>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <div className="text-sm text-gray-300">
+                                {affiliate.points} pts • {affiliate.tokens} tokens
+                              </div>
+                              <div className="text-xs text-gray-400">
+                                {affiliate.daysSinceJoin} days • {affiliate.affiliateCount} affiliates
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-gray-400 mb-4">No affiliate data available</p>
+                  <button
+                    onClick={fetchAffiliateAnalytics}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded"
+                  >
+                    Load Analytics
+                  </button>
+                </div>
               )}
             </div>
           )}

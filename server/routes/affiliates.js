@@ -181,4 +181,98 @@ router.post('/vip/:userId', auth, async (req, res) => {
   }
 });
 
+// Get detailed affiliate analytics for current user (user-facing)
+router.get('/analytics', auth, async (req, res) => {
+  try {
+    // Get user's affiliates with basic info (no personal data like emails)
+    const affiliates = await User.find({ referredBy: req.user.userId })
+      .select('username createdAt points tokens isOnline lastSeen affiliateCount emailVerified')
+      .sort({ createdAt: -1 });
+
+    // Get current user info
+    const currentUser = await User.findById(req.user.userId).select('username createdAt affiliateCount');
+
+    // Calculate analytics
+    const now = new Date();
+    const oneWeekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
+    const oneMonthAgo = new Date(now - 30 * 24 * 60 * 60 * 1000);
+
+    // Growth metrics
+    const thisWeekSignups = affiliates.filter(a => new Date(a.createdAt) >= oneWeekAgo).length;
+    const thisMonthSignups = affiliates.filter(a => new Date(a.createdAt) >= oneMonthAgo).length;
+
+    // Activity metrics
+    const activeThisWeek = affiliates.filter(a => 
+      a.lastSeen && new Date(a.lastSeen) >= oneWeekAgo
+    ).length;
+    const verifiedAffiliates = affiliates.filter(a => a.emailVerified).length;
+
+    // Engagement metrics
+    const averagePoints = affiliates.length > 0 ? 
+      Math.round(affiliates.reduce((sum, a) => sum + (a.points || 0), 0) / affiliates.length) : 0;
+    const totalAffiliateTokens = affiliates.reduce((sum, a) => sum + (a.tokens || 0), 0);
+
+    // Network growth (affiliates who have their own affiliates)
+    const networkBuilders = affiliates.filter(a => (a.affiliateCount || 0) > 0).length;
+
+    // Performance tiers
+    const topPerformers = affiliates.filter(a => (a.points || 0) > 1000).length;
+    const moderatePerformers = affiliates.filter(a => (a.points || 0) > 500 && (a.points || 0) <= 1000).length;
+    const newAffiliates = affiliates.filter(a => (a.points || 0) <= 500).length;
+
+    // Time-based analysis
+    const affiliatesByMonth = {};
+    affiliates.forEach(affiliate => {
+      const month = new Date(affiliate.createdAt).toISOString().substring(0, 7);
+      affiliatesByMonth[month] = (affiliatesByMonth[month] || 0) + 1;
+    });
+
+    // Prepare affiliate list for display (no personal info)
+    const affiliateList = affiliates.map(affiliate => ({
+      username: affiliate.username,
+      joinDate: affiliate.createdAt,
+      points: affiliate.points || 0,
+      tokens: affiliate.tokens || 0,
+      isOnline: affiliate.isOnline || false,
+      lastSeen: affiliate.lastSeen,
+      affiliateCount: affiliate.affiliateCount || 0,
+      emailVerified: affiliate.emailVerified || false,
+      daysSinceJoin: Math.floor((now - new Date(affiliate.createdAt)) / (1000 * 60 * 60 * 24))
+    }));
+
+    res.json({
+      summary: {
+        totalAffiliates: affiliates.length,
+        thisWeekSignups,
+        thisMonthSignups,
+        activeThisWeek,
+        verifiedAffiliates,
+        averagePoints,
+        totalAffiliateTokens,
+        networkBuilders,
+        verificationRate: affiliates.length > 0 ? Math.round((verifiedAffiliates / affiliates.length) * 100) : 0,
+        activityRate: affiliates.length > 0 ? Math.round((activeThisWeek / affiliates.length) * 100) : 0
+      },
+      performance: {
+        topPerformers,
+        moderatePerformers,
+        newAffiliates
+      },
+      growth: {
+        monthlyData: affiliatesByMonth,
+        growthTrend: thisMonthSignups > 0 ? 'growing' : 'stable'
+      },
+      affiliates: affiliateList,
+      user: {
+        username: currentUser.username,
+        joinDate: currentUser.createdAt,
+        totalAffiliates: currentUser.affiliateCount || 0
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching affiliate analytics:', error);
+    res.status(500).json({ error: 'Failed to fetch affiliate analytics' });
+  }
+});
+
 module.exports = router; 
