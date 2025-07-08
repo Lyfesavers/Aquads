@@ -807,20 +807,26 @@ router.post('/verify-email', async (req, res) => {
 
     // Generate new JWT token with updated verification status
     const newToken = jwt.sign(
-      { userId: user._id, username: user.username, isAdmin: user.isAdmin, emailVerified: true },
+      { userId: user._id, username: user.username, isAdmin: user.isAdmin, emailVerified: true, userType: user.userType },
       process.env.JWT_SECRET || 'bubble-ads-jwt-secret-key-2024',
       { expiresIn: '24h' }
     );
 
+    // Create message based on user type
+    const message = user.userType === 'freelancer' 
+      ? 'Email verified successfully! Points have been awarded. You also received 5 bonus tokens on signup.'
+      : 'Email verified successfully! Points have been awarded.';
+
     res.json({ 
-      message: 'Email verified successfully! Points have been awarded. You also received 5 bonus tokens on signup.',
+      message: message,
       emailVerified: true,
       token: newToken,
       userId: user._id,
       username: user.username,
       email: user.email,
       image: user.image,
-      isAdmin: user.isAdmin
+      isAdmin: user.isAdmin,
+      userType: user.userType
     });
   } catch (error) {
     console.error('Email verification error:', error);
