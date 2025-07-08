@@ -22,7 +22,7 @@ const bookingMessageSchema = new mongoose.Schema({
   },
   attachmentType: {
     type: String,
-    enum: ['image', 'file', null],
+    enum: ['image', 'file', 'audio', null],
     default: null
   },
   attachmentName: {

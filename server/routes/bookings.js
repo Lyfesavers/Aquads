@@ -567,10 +567,24 @@ router.post('/:bookingId/messages', auth, requireEmailVerification, upload.singl
     }
 
     // Create and save the new message
+
+    
+    // Create appropriate default message based on attachment type
+    let defaultMessage = '';
+    if (req.file && !message) {
+      if (attachmentType === 'audio') {
+        defaultMessage = 'Sent a voice message';
+      } else if (attachmentType === 'image') {
+        defaultMessage = 'Sent an image';
+      } else {
+        defaultMessage = 'Sent an attachment';
+      }
+    }
+    
     const newMessage = new BookingMessage({
       bookingId,
       senderId: req.user.userId,
-      message: message ? message.trim() : req.file ? 'Sent an attachment' : '',
+      message: message ? message.trim() : defaultMessage,
       attachment,
       attachmentType,
       attachmentName,
