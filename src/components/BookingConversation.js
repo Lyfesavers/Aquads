@@ -438,15 +438,12 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
         
         // Auto-stop at 5 minutes (300 seconds)
         if (recordingDurationRef.current >= 300) {
-          console.log('🔴 5-minute limit reached, auto-stopping recording...');
-          
           // Clear the timer immediately
           clearInterval(recordingTimerRef.current);
           recordingTimerRef.current = null;
           
           // Stop the MediaRecorder directly
           if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-            console.log('⏹️ Stopping MediaRecorder...');
             mediaRecorderRef.current.stop();
           }
           
