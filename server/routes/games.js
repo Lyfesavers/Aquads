@@ -168,7 +168,7 @@ router.post('/:id/vote', auth, async (req, res) => {
       game.votes = Math.max(0, game.votes - 1);
       await game.save();
       
-      // Revoke the 200 points since vote was removed
+      // Revoke the 20 points since vote was removed
       try {
         await revokeGameVotePoints(userId, gameId);
       } catch (pointsError) {
@@ -191,7 +191,7 @@ router.post('/:id/vote', auth, async (req, res) => {
       game.votes += 1;
       await game.save();
       
-      // Award 200 points to the user for voting (only once per game)
+      // Award 20 points to the user for voting (only once per game)
       try {
         await awardGameVotePoints(userId, gameId);
       } catch (pointsError) {
