@@ -148,7 +148,7 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
 
     // Generate JWT token (don't include emailVerified since user hasn't verified yet)
     const token = jwt.sign(
-      { userId: user._id, username: user.username, isAdmin: user.isAdmin, emailVerified: false },
+      { userId: user._id, username: user.username, isAdmin: user.isAdmin, emailVerified: false, userType: user.userType },
       process.env.JWT_SECRET || 'bubble-ads-jwt-secret-key-2024',
       { expiresIn: '24h' }
     );
@@ -160,6 +160,7 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
       email: user.email,
       image: user.image,
       referralCode: user.referralCode,
+      userType: user.userType,
       token,
       emailVerified: false,
       verificationRequired: true,
@@ -248,7 +249,7 @@ router.post('/login', async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user._id, username: user.username, isAdmin: user.isAdmin, emailVerified: user.emailVerified },
+      { userId: user._id, username: user.username, isAdmin: user.isAdmin, emailVerified: user.emailVerified, userType: user.userType },
       process.env.JWT_SECRET || 'bubble-ads-jwt-secret-key-2024',
       { expiresIn: '24h' }
     );
@@ -261,6 +262,7 @@ router.post('/login', async (req, res) => {
       image: user.image,
       isAdmin: user.isAdmin,
       emailVerified: user.emailVerified,
+      userType: user.userType,
       token
     });
 

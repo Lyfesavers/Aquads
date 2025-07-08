@@ -398,6 +398,7 @@ app.post('/api/users/register', ipLimiter(3), deviceLimiter(3), async (req, res)
       password,
       image: image || 'https://placehold.co/400x400?text=User',
       isAdmin: username === 'admin',
+      userType: req.body.userType || 'freelancer',
       ipAddress: req.clientIp, // Store client IP address
       deviceFingerprint: req.deviceFingerprint || deviceFingerprint || null // Store device fingerprint 
     });
@@ -407,7 +408,7 @@ app.post('/api/users/register', ipLimiter(3), deviceLimiter(3), async (req, res)
 
     // Generate token for auto-login
     const token = jwt.sign(
-      { userId: user._id, username: user.username },
+      { userId: user._id, username: user.username, isAdmin: user.isAdmin, userType: user.userType },
       process.env.JWT_SECRET || 'bubble-ads-jwt-secret-key-2024',
       { expiresIn: '24h' }
     );
@@ -416,6 +417,7 @@ app.post('/api/users/register', ipLimiter(3), deviceLimiter(3), async (req, res)
       username: user.username,
       isAdmin: user.isAdmin,
       image: user.image,
+      userType: user.userType,
       token
     });
   } catch (error) {
@@ -491,7 +493,7 @@ app.put('/api/users/profile', auth, async (req, res) => {
 
     // Generate new token with updated username if changed
     const token = jwt.sign(
-      { userId: user._id, username: user.username },
+      { userId: user._id, username: user.username, isAdmin: user.isAdmin, userType: user.userType },
       process.env.JWT_SECRET || 'bubble-ads-jwt-secret-key-2024',
       { expiresIn: '24h' }
     );
@@ -500,6 +502,7 @@ app.put('/api/users/profile', auth, async (req, res) => {
       username: user.username,
       image: user.image,
       isAdmin: user.isAdmin,
+      userType: user.userType,
       token
     });
   } catch (error) {
