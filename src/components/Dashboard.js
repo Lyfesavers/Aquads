@@ -1702,8 +1702,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
           {activeTab === 'bookings' && (
             <div>
-              {/* Token Balance Widget - Show to freelancers and admins, hide from project users */}
-              {(currentUser?.userType === 'freelancer' || currentUser?.isAdmin) && (
+              {/* Token Balance Widget - Show only to freelancers and admins */}
+              {(currentUser?.userType === 'freelancer' || currentUser?.isAdmin === true) && (
                 <div className="mb-6">
                   <TokenBalance 
                     onPurchaseClick={() => setShowTokenPurchaseModal(true)}
@@ -3015,8 +3015,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         </div>
       )}
 
-      {/* Token Purchase Modal - Show to freelancers and admins, hide from project users */}
-      {showTokenPurchaseModal && (currentUser?.userType === 'freelancer' || currentUser?.isAdmin) && (
+      {/* Token Purchase Modal - Show only to freelancers and admins */}
+      {showTokenPurchaseModal && (currentUser?.userType === 'freelancer' || currentUser?.isAdmin === true) && (
         <TokenPurchaseModal
           isOpen={showTokenPurchaseModal}
           onClose={() => setShowTokenPurchaseModal(false)}
