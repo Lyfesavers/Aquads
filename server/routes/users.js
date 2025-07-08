@@ -88,8 +88,8 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
       ipAddress: req.clientIp, // Store client IP address
       deviceFingerprint: req.deviceFingerprint || deviceFingerprint || null, // Store device fingerprint
       country: country || null, // Store country code
-      tokens: 5, // Give 5 tokens to new signups
-      tokenHistory: [{
+      tokens: (req.body.userType || 'freelancer') === 'freelancer' ? 5 : 0, // Only give tokens to freelancers
+      tokenHistory: (req.body.userType || 'freelancer') === 'freelancer' ? [{
         type: 'purchase',
         amount: 5,
         reason: 'Signup bonus tokens',
@@ -97,7 +97,7 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
         balanceBefore: 0,
         balanceAfter: 5,
         createdAt: new Date()
-      }]
+      }] : [] // Empty token history for non-freelancers
     };
 
     // If referral code provided, find referring user by username
