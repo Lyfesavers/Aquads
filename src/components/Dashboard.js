@@ -11,8 +11,6 @@ import TokenBalance from './TokenBalance';
 import TokenPurchaseModal from './TokenPurchaseModal';
 
 const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, onRejectBump, onApproveBump, initialBookingId, initialActiveTab }) => {
-  // Debug: Log currentUser to verify userType is present
-  console.log('Dashboard currentUser:', currentUser);
   const [bumpRequests, setBumpRequests] = useState([]);
   const [bannerAds, setBannerAds] = useState([]);
   const [rejectReason, setRejectReason] = useState('');
