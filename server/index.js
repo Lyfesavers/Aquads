@@ -376,8 +376,6 @@ app.get('/api/verify-token', auth, (req, res) => {
 app.post('/api/users/register', ipLimiter(3), deviceLimiter(3), async (req, res) => {
   try {
     const { username, password, image, deviceFingerprint } = req.body;
-    console.log('Registration attempt with username:', username);
-    console.log('Registration data:', { username, image });
     
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password are required' });
@@ -404,7 +402,6 @@ app.post('/api/users/register', ipLimiter(3), deviceLimiter(3), async (req, res)
     });
 
     await user.save();
-    console.log('User saved successfully:', { username: user.username, image: user.image });
 
     // Generate token for auto-login
     const token = jwt.sign(
@@ -444,7 +441,6 @@ app.get('/api/test', (req, res) => {
 app.put('/api/users/profile', auth, async (req, res) => {
   try {
     const { username, image, currentPassword, newPassword } = req.body;
-    console.log('Profile update request for user:', req.user.username);
 
     // Find the user
     const user = await User.findById(req.user.userId);
@@ -489,7 +485,6 @@ app.put('/api/users/profile', auth, async (req, res) => {
     }
 
     await user.save();
-    console.log('Profile updated successfully for user:', user.username);
 
     // Generate new token with updated username if changed
     const token = jwt.sign(
