@@ -34,14 +34,16 @@ const storage = multer.diskStorage({
 
 // File filter to only allow certain file types
 const fileFilter = (req, file, cb) => {
-  const allowedFileTypes = /jpeg|jpg|png|gif|pdf|doc|docx|xls|xlsx|txt|zip|rar/;
+  const allowedFileTypes = /jpeg|jpg|png|gif|pdf|doc|docx|xls|xlsx|txt|zip|rar|webm|mp3|wav|m4a|ogg/;
+  const allowedMimeTypes = /image\/|application\/|text\/|audio\//;
+  
   const extname = allowedFileTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = allowedFileTypes.test(file.mimetype);
+  const mimetype = allowedMimeTypes.test(file.mimetype);
   
   if (extname && mimetype) {
     return cb(null, true);
   } else {
-    cb(new Error('Only image, document, and archive files are allowed!'));
+    cb(new Error('Only image, document, archive, and audio files are allowed!'));
   }
 };
 
@@ -458,7 +460,16 @@ router.post('/:bookingId/messages', auth, requireEmailVerification, upload.singl
       const filename = req.file.filename;
       const ext = path.extname(req.file.originalname).toLowerCase();
       const isImage = /\.(jpg|jpeg|png|gif)$/i.test(ext);
-      attachmentType = isImage ? 'image' : 'file';
+      const isAudio = /\.(webm|mp3|wav|m4a|ogg)$/i.test(ext) || req.file.mimetype.startsWith('audio/');
+      
+      if (isImage) {
+        attachmentType = 'image';
+      } else if (isAudio) {
+        attachmentType = 'audio';
+      } else {
+        attachmentType = 'file';
+      }
+      
       attachmentName = req.file.originalname;
       
       // If it's an image and the sender is the seller, add a watermark
@@ -587,7 +598,13 @@ router.post('/:bookingId/messages', auth, requireEmailVerification, upload.singl
     // Create notification message
     let notificationMessage;
     if (req.file) {
-      notificationMessage = `${req.user.username} sent an attachment in booking #${bookingId.substring(0, 6)}`;
+      if (attachmentType === 'audio') {
+        notificationMessage = `${req.user.username} sent a voice message in booking #${bookingId.substring(0, 6)}`;
+      } else if (attachmentType === 'image') {
+        notificationMessage = `${req.user.username} sent an image in booking #${bookingId.substring(0, 6)}`;
+      } else {
+        notificationMessage = `${req.user.username} sent an attachment in booking #${bookingId.substring(0, 6)}`;
+      }
     } else {
       // Truncate the message if too long
       const messagePreview = message.length > 30 ? message.substring(0, 30) + '...' : message;

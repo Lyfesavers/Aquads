@@ -167,9 +167,22 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
   const [invoices, setInvoices] = useState([]);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [showReplyTemplates, setShowReplyTemplates] = useState(false);
+  
+  // Voice recording state
+  const [isRecording, setIsRecording] = useState(false);
+  const [voiceRecording, setVoiceRecording] = useState(null);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [audioPreview, setAudioPreview] = useState(null);
+  
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const pollingIntervalRef = useRef(null);
+  
+  // Voice recording refs
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const recordingTimerRef = useRef(null);
+  const audioStreamRef = useRef(null);
 
   // Seller check
   const isSeller = booking?.sellerId?._id === currentUser?.userId;
@@ -229,6 +242,19 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
     return () => {
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
+      }
+      
+      // Clean up voice recording resources
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+      }
+      
+      if (audioStreamRef.current) {
+        audioStreamRef.current.getTracks().forEach(track => track.stop());
+      }
+      
+      if (audioPreview) {
+        URL.revokeObjectURL(audioPreview);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -351,10 +377,118 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
     }
   };
 
+  // Voice recording functions
+  const startVoiceRecording = async () => {
+    try {
+      // Request microphone permission
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        } 
+      });
+      
+      audioStreamRef.current = stream;
+      audioChunksRef.current = [];
+      
+      // Create MediaRecorder
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus'
+      });
+      
+      mediaRecorderRef.current = mediaRecorder;
+      
+      // Handle data available
+      mediaRecorder.addEventListener('dataavailable', (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      });
+      
+      // Handle recording stop
+      mediaRecorder.addEventListener('stop', () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        setVoiceRecording(audioBlob);
+        
+        // Create preview URL
+        const audioUrl = URL.createObjectURL(audioBlob);
+        setAudioPreview(audioUrl);
+        
+        // Stop all tracks to release microphone
+        if (audioStreamRef.current) {
+          audioStreamRef.current.getTracks().forEach(track => track.stop());
+          audioStreamRef.current = null;
+        }
+      });
+      
+      // Start recording
+      mediaRecorder.start(1000); // Collect data every second
+      setIsRecording(true);
+      setRecordingDuration(0);
+      
+      // Start timer
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingDuration(prev => {
+          const newDuration = prev + 1;
+          // Auto-stop at 5 minutes (300 seconds)
+          if (newDuration >= 300) {
+            stopVoiceRecording();
+            return 300;
+          }
+          return newDuration;
+        });
+      }, 1000);
+      
+      showNotification('Recording started...', 'info');
+      
+    } catch (error) {
+      console.error('Error starting voice recording:', error);
+      showNotification('Could not access microphone. Please check permissions.', 'error');
+    }
+  };
+
+  const stopVoiceRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      
+      // Clear timer
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+      
+      showNotification('Recording stopped. You can now preview and send.', 'success');
+    }
+  };
+
+  const discardVoiceRecording = () => {
+    setVoiceRecording(null);
+    setAudioPreview(null);
+    setRecordingDuration(0);
+    
+    // Clean up preview URL to prevent memory leaks
+    if (audioPreview) {
+      URL.revokeObjectURL(audioPreview);
+    }
+    
+    // Stop recording if still active
+    if (isRecording) {
+      stopVoiceRecording();
+    }
+  };
+
+  const formatDuration = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
     
-    if (!newMessage.trim() && !attachment) return;
+    if (!newMessage.trim() && !attachment && !voiceRecording) return;
     
     try {
       // Create form data to send files
@@ -365,6 +499,14 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
       
       if (attachment) {
         formData.append('attachment', attachment);
+      }
+      
+      if (voiceRecording) {
+        // Create a file from the voice recording blob
+        const voiceFile = new File([voiceRecording], `voice_message_${Date.now()}.webm`, {
+          type: 'audio/webm'
+        });
+        formData.append('attachment', voiceFile);
       }
       
       const response = await fetch(`${API_URL}/bookings/${booking._id}/messages`, {
@@ -394,6 +536,11 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
       setMessages([...messages, sentMessage]);
       setNewMessage('');
       setAttachment(null);
+      
+      // Clean up voice recording
+      if (voiceRecording) {
+        discardVoiceRecording();
+      }
       
       // Reset file input
       if (fileInputRef.current) {
@@ -862,6 +1009,44 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
           </div>
         )}
         
+        {msg.attachment && msg.attachmentType === 'audio' && (
+          <div className="mt-2 bg-gray-800 p-3 rounded-lg border border-gray-700">
+            <div className="flex items-center mb-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+              </svg>
+              <span className="text-sm text-gray-300">🎙️ Voice Message</span>
+            </div>
+            <audio 
+              controls 
+              className="w-full"
+              style={{ height: '40px' }}
+            >
+              <source 
+                src={(() => {
+                  if (msg.attachment.startsWith('/')) {
+                    const baseUrl = API_URL.replace(/\/api$/, '');
+                    return `${baseUrl}${msg.attachment}`;
+                  }
+                  return msg.attachment;
+                })()}
+                type="audio/webm"
+              />
+              <source 
+                src={(() => {
+                  if (msg.attachment.startsWith('/')) {
+                    const baseUrl = API_URL.replace(/\/api$/, '');
+                    return `${baseUrl}${msg.attachment}`;
+                  }
+                  return msg.attachment;
+                })()}
+                type="audio/mp4"
+              />
+              Your browser does not support the audio element.
+            </audio>
+          </div>
+        )}
+
         {msg.attachment && msg.attachmentType === 'file' && (
           <div className="mt-2 bg-gray-800 p-2 rounded-lg border border-gray-700">
             <a 
@@ -1015,6 +1200,48 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
                 </button>
               </div>
             )}
+
+            {/* Voice recording controls */}
+            {isRecording && (
+              <div className="flex items-center bg-red-900 rounded-lg p-3 border border-red-600">
+                <div className="flex items-center flex-grow">
+                  <div className="w-3 h-3 bg-red-500 rounded-full mr-3 animate-pulse"></div>
+                  <span className="text-red-300 text-sm mr-3">Recording...</span>
+                  <span className="text-white font-mono text-sm">{formatDuration(recordingDuration)}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={stopVoiceRecording}
+                  className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-sm"
+                >
+                  Stop
+                </button>
+              </div>
+            )}
+
+            {/* Voice recording preview */}
+            {voiceRecording && audioPreview && !isRecording && (
+              <div className="bg-gray-700 rounded-lg p-3 border border-gray-600">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-300">🎙️ Voice Message ({formatDuration(recordingDuration)})</span>
+                  <button
+                    type="button"
+                    onClick={discardVoiceRecording}
+                    className="text-red-400 hover:text-red-300 text-sm"
+                  >
+                    ✕ Discard
+                  </button>
+                </div>
+                <audio 
+                  controls 
+                  src={audioPreview}
+                  className="w-full"
+                  style={{ height: '40px' }}
+                >
+                  Your browser does not support the audio element.
+                </audio>
+              </div>
+            )}
             
             <div className="flex gap-2">
               <textarea
@@ -1030,16 +1257,29 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
                   type="button"
                   onClick={handleAttachmentClick}
                   className="px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded"
-                  disabled={!booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'}
+                  disabled={!booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed' || isRecording || voiceRecording}
                 >
                   📎
                 </button>
                 
                 <button
+                  type="button"
+                  onClick={isRecording ? stopVoiceRecording : startVoiceRecording}
+                  className={`px-3 py-2 rounded text-white ${
+                    isRecording 
+                      ? 'bg-red-600 hover:bg-red-700' 
+                      : 'bg-green-600 hover:bg-green-700'
+                  }`}
+                  disabled={!booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed' || attachment}
+                >
+                  {isRecording ? '⏹️' : '🎙️'}
+                </button>
+                
+                <button
                   type="submit"
-                  disabled={(!newMessage.trim() && !attachment) || !booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'}
+                  disabled={(!newMessage.trim() && !attachment && !voiceRecording) || !booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed' || isRecording}
                   className={`px-4 py-2 rounded ${
-                    (!newMessage.trim() && !attachment) || !booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed'
+                    (!newMessage.trim() && !attachment && !voiceRecording) || !booking || booking.status === 'cancelled' || booking.status === 'declined' || booking.status === 'completed' || isRecording
                       ? 'bg-gray-600 cursor-not-allowed'
                       : 'bg-blue-600 hover:bg-blue-700'
                   } text-white`}
