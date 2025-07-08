@@ -438,7 +438,23 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
         
         // Auto-stop at 5 minutes (300 seconds)
         if (recordingDurationRef.current >= 300) {
-          stopVoiceRecording();
+          console.log('🔴 5-minute limit reached, auto-stopping recording...');
+          
+          // Clear the timer immediately
+          clearInterval(recordingTimerRef.current);
+          recordingTimerRef.current = null;
+          
+          // Stop the MediaRecorder directly
+          if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+            console.log('⏹️ Stopping MediaRecorder...');
+            mediaRecorderRef.current.stop();
+          }
+          
+          // Update recording state
+          setIsRecording(false);
+          
+          // Show notification
+          showNotification('Recording automatically stopped at 5 minute limit.', 'info');
         }
       }, 1000);
       
@@ -461,12 +477,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
         recordingTimerRef.current = null;
       }
       
-      // Show different message if auto-stopped at 5 minutes
-      if (recordingDurationRef.current >= 300) {
-        showNotification('Recording automatically stopped at 5 minute limit.', 'info');
-      } else {
-        showNotification('Recording stopped. You can now preview and send.', 'success');
-      }
+      showNotification('Recording stopped. You can now preview and send.', 'success');
     }
   };
 
