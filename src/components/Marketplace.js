@@ -1164,31 +1164,32 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                                     )}
                                   </h4>
                                   {service.seller?._id && (
-                                    <OnlineStatusIndicator 
-                                      user={(() => {
-                                        // Check if this is the current user's service
-                                        const isCurrentUser = currentUser && 
-                                          (service.seller._id === currentUser.userId || 
-                                           service.seller._id === currentUser._id ||
-                                           service.seller.username === currentUser.username);
-                                        
-                                        if (isCurrentUser) {
-                                          // Return current user as online
-                                          return {
-                                            ...service.seller,
-                                            isOnline: true,
-                                            lastSeen: new Date(),
-                                            lastActivity: new Date()
-                                          };
-                                        }
-                                        
-                                        // For other users, use real-time status
-                                        const realTimeStatus = getUserStatus(service.seller._id);
-                                        const userData = realTimeStatus || service.seller;
-                                        return userData;
-                                      })()} 
-                                      size="small"
-                                    />
+                                                                      <OnlineStatusIndicator 
+                                    user={(() => {
+                                      // Check if this is the current user's service
+                                      const isCurrentUser = currentUser && 
+                                        (service.seller._id === currentUser.userId || 
+                                         service.seller._id === currentUser._id ||
+                                         service.seller.username === currentUser.username);
+                                      
+                                      if (isCurrentUser) {
+                                        // Return current user as online
+                                        return {
+                                          ...service.seller,
+                                          isOnline: true,
+                                          lastSeen: new Date(),
+                                          lastActivity: new Date()
+                                        };
+                                      }
+                                      
+                                      // For other users, use real-time status
+                                      const realTimeStatus = getUserStatus(service.seller._id);
+                                      const userData = realTimeStatus || service.seller;
+                                      return userData;
+                                    })()} 
+                                    size="small"
+                                    showText={true}
+                                  />
                                   )}
                                 </div>
 
