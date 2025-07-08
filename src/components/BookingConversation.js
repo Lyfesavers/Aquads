@@ -183,6 +183,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
   const audioChunksRef = useRef([]);
   const recordingTimerRef = useRef(null);
   const audioStreamRef = useRef(null);
+  const recordingDurationRef = useRef(0);
 
   // Seller check
   const isSeller = booking?.sellerId?._id === currentUser?.userId;
@@ -256,6 +257,8 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
       if (audioPreview) {
         URL.revokeObjectURL(audioPreview);
       }
+      
+      recordingDurationRef.current = 0;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [booking?._id]);
@@ -426,18 +429,17 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
       mediaRecorder.start(1000); // Collect data every second
       setIsRecording(true);
       setRecordingDuration(0);
+      recordingDurationRef.current = 0;
       
       // Start timer
       recordingTimerRef.current = setInterval(() => {
-        setRecordingDuration(prev => {
-          const newDuration = prev + 1;
-          // Auto-stop at 5 minutes (300 seconds)
-          if (newDuration >= 300) {
-            stopVoiceRecording();
-            return 300;
-          }
-          return newDuration;
-        });
+        recordingDurationRef.current += 1;
+        setRecordingDuration(recordingDurationRef.current);
+        
+        // Auto-stop at 5 minutes (300 seconds)
+        if (recordingDurationRef.current >= 300) {
+          stopVoiceRecording();
+        }
       }, 1000);
       
       showNotification('Recording started...', 'info');
@@ -459,7 +461,12 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
         recordingTimerRef.current = null;
       }
       
-      showNotification('Recording stopped. You can now preview and send.', 'success');
+      // Show different message if auto-stopped at 5 minutes
+      if (recordingDurationRef.current >= 300) {
+        showNotification('Recording automatically stopped at 5 minute limit.', 'info');
+      } else {
+        showNotification('Recording stopped. You can now preview and send.', 'success');
+      }
     }
   };
 
@@ -467,6 +474,7 @@ const BookingConversation = ({ booking, currentUser, onClose, showNotification }
     setVoiceRecording(null);
     setAudioPreview(null);
     setRecordingDuration(0);
+    recordingDurationRef.current = 0;
     
     // Clean up preview URL to prevent memory leaks
     if (audioPreview) {
