@@ -470,10 +470,10 @@ const awardAffiliateReviewPoints = async (userId) => {
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       {
-        $inc: { points: 200 },
+        $inc: { points: 20 },
         $push: {
           pointsHistory: {
-            amount: 200,
+            amount: 20,
             reason: 'Left a service review as affiliate',
             createdAt: new Date()
           }
