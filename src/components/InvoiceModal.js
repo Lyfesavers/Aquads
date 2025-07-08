@@ -298,25 +298,25 @@ const InvoiceModal = ({
         
         {/* Payment Provider Helper Buttons */}
         <div className="mt-2">
-          <p className="text-xs text-gray-400 mb-2">Quick select payment provider:</p>
+          <p className="text-xs text-gray-400 mb-2">Create payment links:</p>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => setFormData({...formData, paymentLink: 'https://paypal.me/yourusername'})}
+              onClick={() => window.open('https://www.paypal.com/paypalme/', '_blank')}
               className="px-3 py-1 text-xs rounded-full border border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white transition-colors"
             >
-              💳 PayPal
+              💳 PayPal.me
             </button>
             <button
               type="button"
-              onClick={() => setFormData({...formData, paymentLink: 'https://buy.stripe.com/your-payment-link'})}
+              onClick={() => window.open('https://dashboard.stripe.com/payment-links', '_blank')}
               className="px-3 py-1 text-xs rounded-full border border-purple-500 text-purple-400 hover:bg-purple-500 hover:text-white transition-colors"
             >
-              💰 Stripe
+              💰 Stripe Links
             </button>
             <button
               type="button"
-              onClick={() => setFormData({...formData, paymentLink: 'https://nowpayments.io/payment/your-invoice-link'})}
+              onClick={() => window.open('https://nowpayments.io/', '_blank')}
               className="px-3 py-1 text-xs rounded-full border border-green-500 text-green-400 hover:bg-green-500 hover:text-white transition-colors"
             >
               ₿ NOWPayments
