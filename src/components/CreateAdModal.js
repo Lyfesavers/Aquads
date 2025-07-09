@@ -228,8 +228,23 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
       return;
     }
 
-    // Move to payment step
+    // Move to add-on packages step
     setStep(2);
+  };
+
+  const handleAddonStep = () => {
+    // Move to payment step
+    setStep(3);
+  };
+
+  const handleSkipAddons = () => {
+    // Clear selected add-ons and move to payment
+    setFormData(prev => ({
+      ...prev,
+      selectedAddons: [],
+      totalAmount: 199 // Reset to base price
+    }));
+    setStep(3);
   };
 
   const handleSubmit = (e) => {
@@ -292,15 +307,24 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
     });
   };
 
+  const getStepTitle = () => {
+    switch(step) {
+      case 1: return 'List New Project';
+      case 2: return 'Add-on Packages';
+      case 3: return 'Premium Listing Package';
+      default: return 'List New Project';
+    }
+  };
+
   return (
     <Modal onClose={onClose} fullScreen={true}>
       <div className="text-white max-w-6xl mx-auto">
         <h2 className="text-3xl font-bold mb-6 text-center">
-          {step === 1 ? 'List New Project' : 'Premium Listing Package'}
-          <span className="text-lg text-gray-400 ml-3 block sm:inline">Step {step} of 2</span>
+          {getStepTitle()}
+          <span className="text-lg text-gray-400 ml-3 block sm:inline">Step {step} of 3</span>
         </h2>
         
-        {step === 1 ? (
+        {step === 1 && (
           <form onSubmit={handleInfoSubmit} className="space-y-6 max-w-2xl mx-auto">
             <div>
               <label className="block mb-2 text-lg font-medium">Title</label>
@@ -418,7 +442,192 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
               </button>
             </div>
           </form>
-        ) : (
+        )}
+
+        {step === 2 && (
+          <div className="max-w-4xl mx-auto">
+            {/* Add-on Packages Header */}
+            <div className="text-center mb-8">
+              <h3 className="text-2xl font-bold text-white mb-4">
+                Enhance Your Listing with Premium Add-on Packages
+              </h3>
+              <p className="text-gray-300 text-lg">
+                Select optional marketing packages to maximize your project's reach and impact.
+              </p>
+              <div className="mt-4 p-4 bg-blue-900/30 border border-blue-500/50 rounded-lg">
+                <p className="text-blue-300 text-sm">
+                  💡 <strong>Pro Tip:</strong> Add-on packages are completely optional. You can skip this step and proceed directly to payment, or enhance your listing with our premium marketing services.
+                </p>
+              </div>
+            </div>
+
+            {/* Marketing Add-on Packages */}
+            <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 border border-gray-600/50 rounded-xl p-6 mb-6">
+              <h3 className="text-xl font-bold text-white mb-4 flex items-center">
+                <FaGift className="mr-3 text-purple-400" />
+                Marketing Add-on Packages
+              </h3>
+              
+              {/* 5% Discount Promotion Banner */}
+              <div className="mb-4 p-3 bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-500/50 rounded-lg">
+                <div className="flex items-center justify-center space-x-2">
+                  <span className="bg-red-500 text-white text-sm px-3 py-1 rounded-full font-bold animate-pulse">
+                    🎉 SPECIAL OFFER: 5% OFF ALL ADD-ON PACKAGES
+                  </span>
+                </div>
+                <p className="text-center text-red-200 text-xs mt-1">
+                  Save on premium marketing services - confirmed discount from our partners!
+                </p>
+              </div>
+              
+              <p className="text-gray-300 mb-4 text-sm">
+                Supercharge your listing with premium marketing packages designed to maximize your project's reach and impact.
+              </p>
+              
+              <div className="space-y-3">
+                {ADDON_PACKAGES.map((addon) => {
+                  const IconComponent = addon.icon;
+                  const isSelected = formData.selectedAddons.includes(addon.id);
+                  const isExpanded = expandedPackages.has(addon.id);
+                  const hasMoreFeatures = addon.features.length > 3;
+                  
+                  return (
+                    <div
+                      key={addon.id}
+                      className={`border rounded-lg p-4 transition-all ${
+                        isSelected
+                          ? 'border-blue-500 bg-blue-500/10 ring-1 ring-blue-500/50'
+                          : 'border-gray-600 hover:border-gray-500 hover:bg-gray-700/20'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start space-x-3 flex-1">
+                          <div className={`bg-gradient-to-r ${addon.color} p-2 rounded-lg`}>
+                            <IconComponent className="text-white text-sm" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-semibold text-white flex items-center">
+                                {addon.name}
+                                <div className="ml-2 flex items-center space-x-2">
+                                  {addon.originalPrice > addon.price && (
+                                    <span className="text-xs text-gray-400 line-through">
+                                      ${addon.originalPrice.toLocaleString()}
+                                    </span>
+                                  )}
+                                  <span className="text-sm font-bold text-green-400">
+                                    ${addon.price.toLocaleString()} USDC
+                                  </span>
+                                  {addon.originalPrice > addon.price && (
+                                    <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                                      5% OFF
+                                    </span>
+                                  )}
+                                </div>
+                              </h4>
+                              {hasMoreFeatures && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    togglePackageExpansion(addon.id);
+                                  }}
+                                  className="text-gray-400 hover:text-white transition-colors p-1"
+                                  title={isExpanded ? 'Show less' : 'Show more features'}
+                                >
+                                  {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
+                                </button>
+                              )}
+                            </div>
+                            <ul className="text-xs text-gray-400 mt-1 space-y-1">
+                              {(isExpanded ? addon.features : addon.features.slice(0, 3)).map((feature, idx) => (
+                                <li key={idx}>• {feature}</li>
+                              ))}
+                              {!isExpanded && hasMoreFeatures && (
+                                <li className="text-gray-500">
+                                  + {addon.features.length - 3} more features...
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      togglePackageExpansion(addon.id);
+                                    }}
+                                    className="ml-1 text-blue-400 hover:text-blue-300 underline"
+                                  >
+                                    Click to expand
+                                  </button>
+                                </li>
+                              )}
+                            </ul>
+                          </div>
+                        </div>
+                        <div 
+                          className={`w-5 h-5 rounded border-2 flex items-center justify-center cursor-pointer ${
+                            isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-400'
+                          }`}
+                          onClick={() => handleAddonToggle(addon.id)}
+                        >
+                          {isSelected && <FaCheck className="text-white text-xs" />}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Selected Add-ons Summary */}
+            {formData.selectedAddons.length > 0 && (
+              <div className="bg-gradient-to-r from-green-900/30 to-blue-900/30 border border-green-500/50 rounded-lg p-4 mb-6">
+                <h4 className="font-bold text-white mb-2">Selected Add-on Packages:</h4>
+                <div className="space-y-2">
+                  {formData.selectedAddons.map(addonId => {
+                    const addon = ADDON_PACKAGES.find(pkg => pkg.id === addonId);
+                    return addon ? (
+                      <div key={addonId} className="flex justify-between items-center">
+                        <span className="text-gray-300">{addon.name}</span>
+                        <span className="text-green-400 font-bold">${addon.price.toLocaleString()} USDC</span>
+                      </div>
+                    ) : null;
+                  })}
+                  <div className="border-t border-gray-600 pt-2 mt-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-white font-medium">Add-ons Total:</span>
+                      <span className="text-xl font-bold text-green-400">
+                        ${(formData.totalAmount - 199).toLocaleString()} USDC
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Navigation Buttons */}
+            <div className="flex justify-between items-center">
+              <button
+                onClick={() => setStep(1)}
+                className="flex items-center px-6 py-3 rounded-lg bg-gray-600 hover:bg-gray-700 text-lg"
+              >
+                <FaArrowLeft className="mr-2" /> Back
+              </button>
+              
+              <div className="flex space-x-4">
+                <button
+                  onClick={handleSkipAddons}
+                  className="px-6 py-3 rounded-lg bg-gray-500 hover:bg-gray-600 text-lg"
+                >
+                  Skip Add-ons
+                </button>
+                <button
+                  onClick={handleAddonStep}
+                  className="flex items-center px-6 py-3 rounded-lg bg-blue-500 hover:bg-blue-600 text-lg"
+                >
+                  Continue <FaArrowRight className="ml-2" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[85vh]">
             {/* Premium Package Benefits */}
             <div className="order-2 lg:order-1 h-full overflow-y-auto">
@@ -499,119 +708,6 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
                     ✓ Your listing will be reviewed and approved by our admins<br/>
                     ✓ Full refund if rejected for any reason
                   </p>
-                </div>
-              </div>
-
-              {/* Marketing Add-on Packages */}
-              <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/80 border border-gray-600/50 rounded-xl p-6">
-                <h3 className="text-xl font-bold text-white mb-4 flex items-center">
-                  <FaGift className="mr-3 text-purple-400" />
-                  Marketing Add-on Packages
-                </h3>
-                
-                {/* 5% Discount Promotion Banner */}
-                <div className="mb-4 p-3 bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-500/50 rounded-lg">
-                  <div className="flex items-center justify-center space-x-2">
-                    <span className="bg-red-500 text-white text-sm px-3 py-1 rounded-full font-bold animate-pulse">
-                      🎉 SPECIAL OFFER: 5% OFF ALL ADD-ON PACKAGES
-                    </span>
-                  </div>
-                  <p className="text-center text-red-200 text-xs mt-1">
-                    Save on premium marketing services - confirmed discount from our partners!
-                  </p>
-                </div>
-                
-                <p className="text-gray-300 mb-4 text-sm">
-                  Supercharge your listing with premium marketing packages designed to maximize your project's reach and impact.
-                </p>
-                
-                <div className="space-y-3">
-                  {ADDON_PACKAGES.map((addon) => {
-                    const IconComponent = addon.icon;
-                    const isSelected = formData.selectedAddons.includes(addon.id);
-                    const isExpanded = expandedPackages.has(addon.id);
-                    const hasMoreFeatures = addon.features.length > 3;
-                    
-                    return (
-                      <div
-                        key={addon.id}
-                        className={`border rounded-lg p-4 transition-all ${
-                          isSelected
-                            ? 'border-blue-500 bg-blue-500/10 ring-1 ring-blue-500/50'
-                            : 'border-gray-600 hover:border-gray-500 hover:bg-gray-700/20'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-start space-x-3 flex-1">
-                            <div className={`bg-gradient-to-r ${addon.color} p-2 rounded-lg`}>
-                              <IconComponent className="text-white text-sm" />
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between">
-                                <h4 className="font-semibold text-white flex items-center">
-                                  {addon.name}
-                                  <div className="ml-2 flex items-center space-x-2">
-                                    {addon.originalPrice > addon.price && (
-                                      <span className="text-xs text-gray-400 line-through">
-                                        ${addon.originalPrice.toLocaleString()}
-                                      </span>
-                                    )}
-                                    <span className="text-sm font-bold text-green-400">
-                                      ${addon.price.toLocaleString()} USDC
-                                    </span>
-                                    {addon.originalPrice > addon.price && (
-                                      <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
-                                        5% OFF
-                                      </span>
-                                    )}
-                                  </div>
-                                </h4>
-                                {hasMoreFeatures && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      togglePackageExpansion(addon.id);
-                                    }}
-                                    className="text-gray-400 hover:text-white transition-colors p-1"
-                                    title={isExpanded ? 'Show less' : 'Show more features'}
-                                  >
-                                    {isExpanded ? <FaChevronUp /> : <FaChevronDown />}
-                                  </button>
-                                )}
-                              </div>
-                              <ul className="text-xs text-gray-400 mt-1 space-y-1">
-                                {(isExpanded ? addon.features : addon.features.slice(0, 3)).map((feature, idx) => (
-                                  <li key={idx}>• {feature}</li>
-                                ))}
-                                {!isExpanded && hasMoreFeatures && (
-                                  <li className="text-gray-500">
-                                    + {addon.features.length - 3} more features...
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        togglePackageExpansion(addon.id);
-                                      }}
-                                      className="ml-1 text-blue-400 hover:text-blue-300 underline"
-                                    >
-                                      Click to expand
-                                    </button>
-                                  </li>
-                                )}
-                              </ul>
-                            </div>
-                          </div>
-                          <div 
-                            className={`w-5 h-5 rounded border-2 flex items-center justify-center cursor-pointer ${
-                              isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-400'
-                            }`}
-                            onClick={() => handleAddonToggle(addon.id)}
-                          >
-                            {isSelected && <FaCheck className="text-white text-xs" />}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
                 </div>
               </div>
             </div>
@@ -726,7 +822,7 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
                 <div className="flex justify-between pt-4">
                   <button
                     type="button"
-                    onClick={() => setStep(1)}
+                    onClick={() => setStep(2)}
                     className="flex items-center px-6 py-3 rounded-lg bg-gray-600 hover:bg-gray-700 text-lg"
                   >
                     <FaArrowLeft className="mr-2" /> Back
