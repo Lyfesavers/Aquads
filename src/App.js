@@ -3486,9 +3486,7 @@ function App() {
               </div>
 
               {/* Footer */}
-              <div className="relative z-10">
-                <Footer />
-              </div>
+              <Footer />
             </div>
           } />
                       <Route path="/whitepaper" element={<Whitepaper />} />
