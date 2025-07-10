@@ -763,11 +763,23 @@ function App() {
       });
     });
 
+    // Listen for buyer acceptance email triggers
+    socket.on('sendBuyerAcceptanceEmail', async (emailData) => {
+      try {
+        console.log('Received email trigger via Socket.IO:', emailData);
+        await emailService.sendBuyerAcceptanceEmail(emailData.buyerEmail, emailData.bookingDetails);
+        console.log('Buyer acceptance email sent successfully');
+      } catch (error) {
+        console.error('Error sending buyer acceptance email via Socket.IO:', error);
+      }
+    });
+
     return () => {
       socket.off('adsUpdated');
       socket.off('adUpdated');
       socket.off('adDeleted');
       socket.off('adCreated');
+      socket.off('sendBuyerAcceptanceEmail');
     };
   }, []);
 

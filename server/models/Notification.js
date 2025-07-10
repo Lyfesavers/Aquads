@@ -35,6 +35,22 @@ const notificationSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  emailTrigger: {
+    type: {
+      type: String,
+      enum: ['buyer_acceptance']
+    },
+    buyerEmail: String,
+    bookingDetails: {
+      buyerUsername: String,
+      serviceTitle: String,
+      bookingId: String,
+      price: Number,
+      currency: String,
+      sellerUsername: String,
+      requirements: String
+    }
+  },
   createdAt: {
     type: Date,
     default: Date.now,
