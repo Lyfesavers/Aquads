@@ -97,6 +97,7 @@ const Terms = () => {
               <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 space-y-4">
                 <p><span className="text-blue-400 font-semibold">5.1 Lead‑Only Service.</span> Aquads provides referrals; we do not mediate contracts or payments. You engage with Freelancers/Employers at your own risk.</p>
                 <p><span className="text-blue-400 font-semibold">5.2 User Responsibilities.</span> You must resolve any disputes directly; Aquads bears no liability for work quality, performance, or payment.</p>
+                <p><span className="text-blue-400 font-semibold">5.3 Platform Circumvention Prohibited.</span> Users are strictly prohibited from attempting to circumvent the platform by taking leads, bookings, or business communications outside of Aquads. This includes but is not limited to: soliciting direct contact information, encouraging communication through external channels (email, phone, social media, messaging apps), sharing personal contact details to bypass the platform, or attempting to conduct business transactions outside of the designated platform channels. Violation of this policy will result in immediate account suspension, with repeated violations leading to permanent account termination. Aquads reserves the right to monitor communications and enforce these rules to maintain platform integrity and user safety.</p>
               </div>
             </section>
 

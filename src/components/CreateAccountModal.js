@@ -697,6 +697,20 @@ const CreateAccountModal = ({ onCreateAccount, onClose }) => {
                 className="w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+            <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-4 mt-4">
+              <p className="text-gray-300 text-sm">
+                By creating an account, you accept our{' '}
+                <Link 
+                  to="/terms" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 underline"
+                >
+                  Terms & Conditions
+                </Link>
+                {' '}and understand that violation of platform rules, including taking leads or bookings outside of Aquads, will result in account suspension or termination.
+              </p>
+            </div>
             {error && (
               <p className="text-red-500 text-sm">{error}</p>
             )}
