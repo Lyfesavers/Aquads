@@ -1137,6 +1137,16 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                               </button>
                             </div>
                           )}
+                          {currentUser?.isAdmin && service.seller?.username !== currentUser.username && (
+                            <div className="absolute top-2 right-2 flex gap-2 z-[200000]">
+                              <button
+                                onClick={() => handleDeleteService(service._id)}
+                                className="bg-red-500/80 hover:bg-red-600/80 text-white px-3 py-1 rounded-lg shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm"
+                              >
+                                Admin Delete
+                              </button>
+                            </div>
+                          )}
                         </div>
                         <div className="p-6">
                           <div className="flex items-center gap-3 mb-3">
