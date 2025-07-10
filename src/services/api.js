@@ -592,6 +592,73 @@ export const createService = async (serviceData) => {
   }
 };
 
+// Fetch pending services (admin only)
+export const fetchPendingServices = async () => {
+  try {
+    const response = await fetch(`${API_URL}/services/pending`, {
+      headers: {
+        ...getAuthHeader()
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch pending services: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    logger.error('Error fetching pending services:', error);
+    throw error;
+  }
+};
+
+// Approve service (admin only)
+export const approveService = async (serviceId) => {
+  try {
+    const response = await fetch(`${API_URL}/services/${serviceId}/approve`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader()
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to approve service');
+    }
+
+    return response.json();
+  } catch (error) {
+    logger.error('Error approving service:', error);
+    throw error;
+  }
+};
+
+// Reject service (admin only)
+export const rejectService = async (serviceId, reason = '') => {
+  try {
+    const response = await fetch(`${API_URL}/services/${serviceId}/reject`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader()
+      },
+      body: JSON.stringify({ reason })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to reject service');
+    }
+
+    return response.json();
+  } catch (error) {
+    logger.error('Error rejecting service:', error);
+    throw error;
+  }
+};
+
 export const updateService = async (serviceId, serviceData) => {
   try {
     const formData = new FormData();

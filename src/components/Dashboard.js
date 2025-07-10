@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchBumpRequests, API_URL, fetchPendingAds, approveAd, rejectAd } from '../services/api';
+import { fetchBumpRequests, API_URL, fetchPendingAds, approveAd, rejectAd, fetchPendingServices, approveService, rejectService } from '../services/api';
 import BookingManagement from './BookingManagement';
 import ServiceReviews from './ServiceReviews';
 import JobList from './JobList';
@@ -59,6 +59,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [activeAdminSection, setActiveAdminSection] = useState('bumps');
   const [showTokenPurchaseModal, setShowTokenPurchaseModal] = useState(false);
   const [pendingTokenPurchases, setPendingTokenPurchases] = useState([]);
+  // Service approval states
+  const [pendingServices, setPendingServices] = useState([]);
+  const [isLoadingServices, setIsLoadingServices] = useState(false);
+  const [showRejectServiceModal, setShowRejectServiceModal] = useState(false);
+  const [selectedServiceForRejection, setSelectedServiceForRejection] = useState(null);
+  const [serviceRejectionReason, setServiceRejectionReason] = useState('');
   // Affiliate management states
   const [affiliateSearchQuery, setAffiliateSearchQuery] = useState('');
   const [affiliateSearchResults, setAffiliateSearchResults] = useState([]);
@@ -242,6 +248,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     if (currentUser?.isAdmin && activeTab === 'admin') {
       fetchPendingBubbleListings();
       fetchPendingTokenPurchases();
+      fetchPendingServicesData();
     }
   }, [currentUser, activeTab]);
 
@@ -1367,6 +1374,50 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   };
 
+  // Service approval functions
+  const fetchPendingServicesData = async () => {
+    if (!currentUser?.isAdmin) return;
+    try {
+      setIsLoadingServices(true);
+      const data = await fetchPendingServices();
+      setPendingServices(data);
+    } catch (error) {
+      showNotification('Failed to fetch pending services', 'error');
+    } finally {
+      setIsLoadingServices(false);
+    }
+  };
+
+  const handleApproveService = async (serviceId) => {
+    try {
+      await approveService(serviceId);
+      showNotification('Service approved successfully', 'success');
+      fetchPendingServicesData(); // Refresh the list
+    } catch (error) {
+      showNotification('Failed to approve service', 'error');
+    }
+  };
+
+  const openServiceRejectModal = (service) => {
+    setSelectedServiceForRejection(service);
+    setShowRejectServiceModal(true);
+  };
+
+  const handleRejectService = async () => {
+    if (!selectedServiceForRejection) return;
+    
+    try {
+      await rejectService(selectedServiceForRejection._id, serviceRejectionReason);
+      showNotification('Service rejected successfully', 'success');
+      setShowRejectServiceModal(false);
+      setSelectedServiceForRejection(null);
+      setServiceRejectionReason('');
+      fetchPendingServicesData(); // Refresh the list
+    } catch (error) {
+      showNotification('Failed to reject service', 'error');
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-gray-900 z-[999999] overflow-y-auto">
       {/* Header */}
@@ -2143,6 +2194,23 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       </span>
                     )}
                   </button>
+                  <button
+                    onClick={() => setActiveAdminSection('services')}
+                    className={`w-full text-left px-3 py-2 rounded-md transition-colors relative ${
+                      activeAdminSection === 'services' 
+                        ? 'bg-blue-600 text-white' 
+                        : pendingServices.length > 0
+                        ? 'text-gray-300 hover:bg-gray-700 hover:text-white bg-cyan-900/30 border-l-4 border-cyan-500'
+                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                    }`}
+                  >
+                    💼 Service Approvals
+                    {pendingServices.length > 0 && (
+                      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-cyan-500 text-white text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
+                        {pendingServices.length}
+                      </span>
+                    )}
+                  </button>
                   
                   <button
                     onClick={() => {
@@ -2522,6 +2590,82 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                                   onClick={() => handleRejectTokenPurchase(purchase._id)}
                                   className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
                                 >
+                                  Reject
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeAdminSection === 'services' && (
+                  <div>
+                    <h3 className="text-2xl font-semibold text-white mb-6">Service Approvals</h3>
+                    {isLoadingServices ? (
+                      <div className="text-center py-8">
+                        <div className="spinner"></div>
+                        <p className="mt-2 text-gray-400">Loading pending services...</p>
+                      </div>
+                    ) : pendingServices.length === 0 ? (
+                      <div className="text-center py-8 text-gray-400">
+                        No pending services to approve
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {pendingServices.map(service => (
+                          <div key={service._id} className="bg-gray-700 rounded-lg p-4">
+                            <div className="flex justify-between items-start">
+                              <div className="flex space-x-4">
+                                <img 
+                                  src={service.image} 
+                                  alt={service.title} 
+                                  className="w-16 h-16 object-cover rounded"
+                                  onError={(e) => {
+                                    e.target.src = '/api/placeholder/64/64';
+                                  }}
+                                />
+                                <div className="flex-1">
+                                  <h4 className="font-medium text-white text-lg">{service.title}</h4>
+                                  <p className="text-sm text-gray-400 mb-2">
+                                    Seller: <span className="text-white">{service.seller?.username}</span>
+                                  </p>
+                                  <p className="text-sm text-gray-400 mb-2">
+                                    Category: <span className="text-blue-400">{service.category}</span>
+                                  </p>
+                                  <p className="text-sm text-gray-400 mb-2">
+                                    Price: <span className="text-green-400 font-medium">${service.price} {service.currency}</span>
+                                  </p>
+                                  <p className="text-sm text-gray-400 mb-2">
+                                    Delivery: <span className="text-gray-300">{service.deliveryTime}</span>
+                                  </p>
+                                  <p className="text-sm text-gray-400 mb-2">
+                                    Created: <span className="text-gray-300">{new Date(service.createdAt).toLocaleString()}</span>
+                                  </p>
+                                  <div className="text-sm text-gray-300 mt-2">
+                                    <p className="truncate max-w-md">{service.description}</p>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex gap-2 ml-4">
+                                <button
+                                  onClick={() => handleApproveService(service._id)}
+                                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 flex items-center"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                  </svg>
+                                  Approve
+                                </button>
+                                <button
+                                  onClick={() => openServiceRejectModal(service)}
+                                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 flex items-center"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
                                   Reject
                                 </button>
                               </div>
@@ -3006,6 +3150,44 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
               </button>
               <button
                 onClick={handleRejectListing}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md"
+              >
+                Confirm Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Service Rejection Confirmation Modal */}
+      {showRejectServiceModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-60">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md shadow-lg">
+            <h3 className="text-xl font-bold mb-4">Reject Service</h3>
+            <p className="mb-4 text-gray-300">
+              You are about to reject the service "{selectedServiceForRejection?.title}" by {selectedServiceForRejection?.seller?.username}. 
+              Please provide a reason for rejection:
+            </p>
+            <textarea
+              value={serviceRejectionReason}
+              onChange={(e) => setServiceRejectionReason(e.target.value)}
+              placeholder="Enter rejection reason (optional)"
+              className="w-full p-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+              rows={4}
+            ></textarea>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowRejectServiceModal(false);
+                  setSelectedServiceForRejection(null);
+                  setServiceRejectionReason('');
+                }}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-md"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRejectService}
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md"
               >
                 Confirm Reject

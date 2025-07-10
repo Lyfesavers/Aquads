@@ -347,11 +347,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       const newService = await createService(serviceData);
       logger.log('Service created successfully:', newService);
       
-      // Update services list
-      setServices(prevServices => [newService, ...prevServices]);
+      // Note: Since services now require admin approval, don't add to services list immediately
+      // setServices(prevServices => [newService, ...prevServices]);
       
-      // Close modal
+      // Close modal and show success message
       setShowCreateModal(false);
+      alert('Service created successfully! Your service is now pending admin approval and will be visible in the marketplace once approved.');
     } catch (error) {
       logger.error('Error creating service:', error);
       alert(error.response?.data?.message || 'Failed to create service. Please try again.');

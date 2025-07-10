@@ -11,7 +11,7 @@ const { createNotification } = require('./notifications');
 router.get('/', async (req, res) => {
   try {
     const { category, sort, limit = 20, page = 1 } = req.query;
-    const query = {};
+    const query = { status: 'active' }; // Only show active services to regular users
     const sortOptions = {};
 
     if (category) {
@@ -71,7 +71,10 @@ router.get('/search', async (req, res) => {
     }
 
     const services = await Service.find(
-      { $text: { $search: q } },
+      { 
+        $text: { $search: q },
+        status: 'active' // Only show active services in search
+      },
       { score: { $meta: 'textScore' } }
     )
     .sort({ score: { $meta: 'textScore' } })
@@ -86,7 +89,10 @@ router.get('/search', async (req, res) => {
 // Get services by category
 router.get('/category/:categoryId', async (req, res) => {
   try {
-    const services = await Service.find({ category: req.params.categoryId })
+    const services = await Service.find({ 
+      category: req.params.categoryId,
+      status: 'active' // Only show active services in category view
+    })
       .sort({ rating: -1 })
       .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity');
     res.json(services);
@@ -279,6 +285,127 @@ router.get('/premium-requests', auth, async (req, res) => {
   } catch (error) {
     console.error('Error fetching premium requests:', error);
     res.status(500).json({ error: 'Failed to fetch premium requests' });
+  }
+});
+
+// Get pending services (admin only)
+router.get('/pending', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Only admins can view pending services' });
+    }
+
+    const services = await Service.find({ status: 'pending' })
+      .sort({ createdAt: -1 })
+      .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity');
+
+    res.json(services);
+  } catch (error) {
+    console.error('Error fetching pending services:', error);
+    res.status(500).json({ error: 'Failed to fetch pending services' });
+  }
+});
+
+// Approve a service (admin only)
+router.post('/:id/approve', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Only admins can approve services' });
+    }
+
+    const service = await Service.findById(req.params.id);
+    
+    if (!service) {
+      return res.status(404).json({ error: 'Service not found' });
+    }
+
+    if (service.status !== 'pending') {
+      return res.status(400).json({ error: `Service is already ${service.status}` });
+    }
+
+    service.status = 'active';
+    await service.save();
+    
+    await service.populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity');
+
+    // Create notification for the seller
+    try {
+      await createNotification(
+        service.seller._id,
+        'service_approved',
+        `Your service "${service.title}" has been approved and is now live!`,
+        '/marketplace',
+        {
+          relatedId: service._id,
+          relatedModel: 'Service'
+        }
+      );
+    } catch (notificationError) {
+      console.error('Error creating approval notification:', notificationError);
+      // Don't fail the approval if notification fails
+    }
+
+    res.json({ 
+      message: 'Service approved successfully',
+      service
+    });
+  } catch (error) {
+    console.error('Error approving service:', error);
+    res.status(500).json({ error: 'Failed to approve service' });
+  }
+});
+
+// Reject a service (admin only)
+router.post('/:id/reject', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Only admins can reject services' });
+    }
+
+    const { reason } = req.body;
+    const service = await Service.findById(req.params.id);
+    
+    if (!service) {
+      return res.status(404).json({ error: 'Service not found' });
+    }
+
+    if (service.status !== 'pending') {
+      return res.status(400).json({ error: `Service is already ${service.status}` });
+    }
+
+    service.status = 'inactive';
+    await service.save();
+    
+    await service.populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity');
+
+    // Create notification for the seller
+    try {
+      const rejectionMessage = reason 
+        ? `Your service "${service.title}" was rejected. Reason: ${reason}`
+        : `Your service "${service.title}" was rejected. Please contact support for more information.`;
+        
+      await createNotification(
+        service.seller._id,
+        'service_rejected',
+        rejectionMessage,
+        '/marketplace',
+        {
+          relatedId: service._id,
+          relatedModel: 'Service'
+        }
+      );
+    } catch (notificationError) {
+      console.error('Error creating rejection notification:', notificationError);
+      // Don't fail the rejection if notification fails
+    }
+
+    res.json({ 
+      message: 'Service rejected successfully',
+      service
+    });
+  } catch (error) {
+    console.error('Error rejecting service:', error);
+    res.status(500).json({ error: 'Failed to reject service' });
   }
 });
 
