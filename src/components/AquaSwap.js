@@ -518,16 +518,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   // Main AquaSwap interface
   return (
     <div className="aquaswap-page">
-      {/* Underwater Ancient City Background */}
-      <div className="underwater-scene">
-        <div className="ancient-ruins"></div>
-        <div className="seaweed-layer"></div>
-        <div className="bubble-layer"></div>
-        <div className="fish-layer"></div>
-        <div className="light-rays"></div>
-        <div className="particle-layer"></div>
-      </div>
-      
       {/* Header Section */}
       <div className="header-section">
         {/* Back button */}
