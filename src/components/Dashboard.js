@@ -2617,17 +2617,22 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       <div className="space-y-4">
                         {pendingServices.map(service => (
                           <div key={service._id} className="bg-gray-700 rounded-lg p-4">
-                            <div className="flex justify-between items-start">
-                              <div className="flex space-x-4">
-                                <img 
-                                  src={service.image} 
-                                  alt={service.title} 
-                                  className="w-16 h-16 object-cover rounded"
-                                  onError={(e) => {
-                                    e.target.src = '/api/placeholder/64/64';
-                                  }}
-                                />
-                                                                 <div className="flex-1">
+                                                         <div className="flex flex-col">
+                               {/* Full Banner Image */}
+                               <div className="mb-4">
+                                 <p className="font-medium text-gray-200 mb-2">Service Banner:</p>
+                                 <img 
+                                   src={service.image} 
+                                   alt={service.title} 
+                                   className="w-full max-w-md h-48 object-cover rounded-lg border border-gray-600"
+                                   onError={(e) => {
+                                     e.target.src = '/api/placeholder/400/200';
+                                   }}
+                                 />
+                               </div>
+                               
+                               <div className="flex justify-between items-start">
+                                 <div className="flex-1">
                                    <h4 className="font-medium text-white text-lg">{service.title}</h4>
                                    <p className="text-sm text-gray-400 mb-2">
                                      Seller: <span className="text-white">{service.seller?.username}</span>
@@ -2672,31 +2677,33 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                                          {service.videoUrl}
                                        </a>
                                      </div>
-                                   )}
+                                                                      )}
                                  </div>
-                              </div>
-                              <div className="flex gap-2 ml-4">
-                                <button
-                                  onClick={() => handleApproveService(service._id)}
-                                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 flex items-center"
-                                >
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                  </svg>
-                                  Approve
-                                </button>
-                                <button
-                                  onClick={() => openServiceRejectModal(service)}
-                                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 flex items-center"
-                                >
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                  </svg>
-                                  Reject
-                                </button>
-                              </div>
-                            </div>
-                          </div>
+                                 
+                                 {/* Action Buttons */}
+                                 <div className="flex gap-2 ml-4">
+                                   <button
+                                     onClick={() => handleApproveService(service._id)}
+                                     className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 flex items-center"
+                                   >
+                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                     </svg>
+                                     Approve
+                                   </button>
+                                   <button
+                                     onClick={() => openServiceRejectModal(service)}
+                                     className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 flex items-center"
+                                   >
+                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                     </svg>
+                                     Reject
+                                   </button>
+                                 </div>
+                               </div>
+                             </div>
+                           </div>
                         ))}
                       </div>
                     )}
