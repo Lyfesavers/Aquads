@@ -2627,27 +2627,53 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                                     e.target.src = '/api/placeholder/64/64';
                                   }}
                                 />
-                                <div className="flex-1">
-                                  <h4 className="font-medium text-white text-lg">{service.title}</h4>
-                                  <p className="text-sm text-gray-400 mb-2">
-                                    Seller: <span className="text-white">{service.seller?.username}</span>
-                                  </p>
-                                  <p className="text-sm text-gray-400 mb-2">
-                                    Category: <span className="text-blue-400">{service.category}</span>
-                                  </p>
-                                  <p className="text-sm text-gray-400 mb-2">
-                                    Price: <span className="text-green-400 font-medium">${service.price} {service.currency}</span>
-                                  </p>
-                                  <p className="text-sm text-gray-400 mb-2">
-                                    Delivery: <span className="text-gray-300">{service.deliveryTime}</span>
-                                  </p>
-                                  <p className="text-sm text-gray-400 mb-2">
-                                    Created: <span className="text-gray-300">{new Date(service.createdAt).toLocaleString()}</span>
-                                  </p>
-                                  <div className="text-sm text-gray-300 mt-2">
-                                    <p className="truncate max-w-md">{service.description}</p>
-                                  </div>
-                                </div>
+                                                                 <div className="flex-1">
+                                   <h4 className="font-medium text-white text-lg">{service.title}</h4>
+                                   <p className="text-sm text-gray-400 mb-2">
+                                     Seller: <span className="text-white">{service.seller?.username}</span>
+                                   </p>
+                                   <p className="text-sm text-gray-400 mb-2">
+                                     Category: <span className="text-blue-400">{service.category}</span>
+                                   </p>
+                                   <p className="text-sm text-gray-400 mb-2">
+                                     Price: <span className="text-green-400 font-medium">${service.price} {service.currency}</span>
+                                   </p>
+                                   <p className="text-sm text-gray-400 mb-2">
+                                     Delivery: <span className="text-gray-300">{service.deliveryTime}</span>
+                                   </p>
+                                   <p className="text-sm text-gray-400 mb-2">
+                                     Created: <span className="text-gray-300">{new Date(service.createdAt).toLocaleString()}</span>
+                                   </p>
+                                   
+                                   {/* Full Description */}
+                                   <div className="text-sm text-gray-300 mt-2 mb-2">
+                                     <p className="font-medium text-gray-200">Description:</p>
+                                     <p className="bg-gray-600 p-2 rounded mt-1 whitespace-pre-wrap">{service.description}</p>
+                                   </div>
+                                   
+                                   {/* Requirements */}
+                                   {service.requirements && (
+                                     <div className="text-sm text-gray-300 mb-2">
+                                       <p className="font-medium text-gray-200">Requirements:</p>
+                                       <p className="bg-gray-600 p-2 rounded mt-1 whitespace-pre-wrap">{service.requirements}</p>
+                                     </div>
+                                   )}
+                                   
+                                   {/* Video URL */}
+                                   {service.videoUrl && (
+                                     <div className="text-sm text-gray-300 mb-2">
+                                       <p className="font-medium text-gray-200">Video:</p>
+                                       <a 
+                                         href={service.videoUrl} 
+                                         target="_blank" 
+                                         rel="noopener noreferrer"
+                                         className="text-blue-400 hover:text-blue-300 underline"
+                                       >
+                                         {service.videoUrl}
+                                       </a>
+                                     </div>
+                                   )}
+                                 </div>
                               </div>
                               <div className="flex gap-2 ml-4">
                                 <button
