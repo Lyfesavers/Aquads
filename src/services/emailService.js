@@ -107,6 +107,46 @@ const emailService = {
       logger.error('EmailJS Error for verification:', error.text || error.message);
       return false;
     }
+  },
+
+  sendBuyerAcceptanceEmail: async (buyerEmail, bookingDetails) => {
+    try {
+      logger.log('EmailJS Config for buyer acceptance:', {
+        serviceId: process.env.REACT_APP_EMAILJS_SERVICE_ID,
+        templateId: process.env.REACT_APP_EMAILJS_BUYER_ACCEPTANCE_TEMPLATE,
+        publicKey: process.env.REACT_APP_EMAILJS_PUBLIC_KEY
+      });
+
+      const templateParams = {
+        to_email: buyerEmail,
+        buyerUsername: bookingDetails.buyerUsername,
+        serviceTitle: bookingDetails.serviceTitle,
+        bookingId: bookingDetails.bookingId,
+        price: bookingDetails.price,
+        currency: bookingDetails.currency,
+        sellerUsername: bookingDetails.sellerUsername,
+        requirements: bookingDetails.requirements,
+        dashboard_link: `${process.env.REACT_APP_FRONTEND_URL || 'https://aquads.xyz'}/dashboard?tab=bookings&booking=${bookingDetails.bookingId}`
+      };
+
+      logger.log('Sending buyer acceptance email with data:', templateParams);
+
+      const response = await emailjs.send(
+        process.env.REACT_APP_EMAILJS_SERVICE_ID,
+        process.env.REACT_APP_EMAILJS_BUYER_ACCEPTANCE_TEMPLATE,
+        templateParams,
+        process.env.REACT_APP_EMAILJS_PUBLIC_KEY
+      );
+
+      if (response.status === 200) {
+        logger.log('Buyer acceptance email sent successfully');
+        return true;
+      }
+      return false;
+    } catch (error) {
+      logger.error('EmailJS Error for buyer acceptance:', error.text || error.message);
+      return false;
+    }
   }
 };
 

@@ -283,6 +283,40 @@ router.put('/:id/status', auth, requireEmailVerification, async (req, res) => {
       }
     );
 
+    // Special handling for seller acceptance - trigger buyer email notification
+    if (status === 'accepted_by_seller') {
+      // Get populated booking data for email
+      const populatedBooking = await Booking.findById(booking._id)
+        .populate('serviceId')
+        .populate('sellerId', 'username email')
+        .populate('buyerId', 'username email');
+
+      // Create a special notification with email trigger data
+      await createNotification(
+        populatedBooking.buyerId._id,
+        'booking',
+        `Your booking request has been accepted! Please confirm to start the job.`,
+        `/dashboard?tab=bookings&booking=${booking._id}`,
+        {
+          relatedId: booking._id,
+          relatedModel: 'Booking',
+          emailTrigger: {
+            type: 'buyer_acceptance',
+            buyerEmail: populatedBooking.buyerId.email,
+            bookingDetails: {
+              buyerUsername: populatedBooking.buyerId.username,
+              serviceTitle: populatedBooking.serviceId.title,
+              bookingId: booking._id,
+              price: populatedBooking.price,
+              currency: populatedBooking.currency,
+              sellerUsername: populatedBooking.sellerId.username,
+              requirements: populatedBooking.requirements || 'No specific requirements'
+            }
+          }
+        }
+      );
+    }
+
     const updatedBooking = await Booking.findById(booking._id)
       .populate('serviceId')
       .populate('sellerId', 'username email')
