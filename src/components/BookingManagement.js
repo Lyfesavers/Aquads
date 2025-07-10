@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import Modal from './Modal';
+import emailService from '../services/emailService';
 
 const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotification, onShowReviews, onOpenConversation, refreshBookings }) => {
   const [unlockingBooking, setUnlockingBooking] = useState(null);
@@ -89,6 +90,29 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
     if (bookingToAccept) {
       try {
         await handleStatusUpdate(bookingToAccept._id, 'accepted_by_seller');
+        
+        // Send buyer acceptance email (same pattern as booking creation email)
+        if (bookingToAccept.buyerId.email) {
+          try {
+            await emailService.sendBuyerAcceptanceEmail(
+              bookingToAccept.buyerId.email,
+              {
+                buyerUsername: bookingToAccept.buyerId.username,
+                serviceTitle: bookingToAccept.serviceId.title,
+                bookingId: bookingToAccept._id,
+                price: bookingToAccept.price,
+                currency: bookingToAccept.currency,
+                sellerUsername: bookingToAccept.sellerId.username,
+                requirements: bookingToAccept.requirements || 'No specific requirements'
+              }
+            );
+            console.log('Buyer acceptance email sent successfully');
+          } catch (emailError) {
+            console.error('Failed to send buyer acceptance email:', emailError);
+            // Don't show error to user since booking was successful
+          }
+        }
+        
         setShowAcceptConfirmation(false);
         setBookingToAccept(null);
       } catch (error) {

@@ -3,7 +3,6 @@ import { FaBell } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { API_URL } from '../services/api';
 import logger from '../utils/logger';
-import emailService from '../services/emailService';
 
 // Debounce utility function - placed outside component to avoid recreation
 const debounce = (func, wait) => {
@@ -34,39 +33,7 @@ const NotificationBell = ({ currentUser }) => {
     }
   }, [currentUser]);
 
-  // Process email triggers from notifications
-  const processEmailTriggers = useCallback(async (notifications) => {
-    for (const notification of notifications) {
-      // Only process unread notifications with email triggers
-      if (!notification.isRead && notification.emailTrigger) {
-        const { type, buyerEmail, bookingDetails } = notification.emailTrigger;
-        
-        if (type === 'buyer_acceptance' && buyerEmail && bookingDetails) {
-          try {
-            await emailService.sendBuyerAcceptanceEmail(buyerEmail, bookingDetails);
-            
-            // Mark the notification as processed by removing the email trigger
-            // This prevents sending the same email multiple times
-            try {
-              const basePath = window.WORKING_NOTIFICATION_PATH || `${API_URL}/bookings/user-notifications`;
-              await fetch(`${basePath}/${notification._id}`, {
-                method: 'PATCH',
-                headers: {
-                  'Authorization': `Bearer ${currentUser.token}`,
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ emailTrigger: null })
-              });
-            } catch (error) {
-              // Continue even if this fails
-            }
-          } catch (error) {
-            console.error('Error sending buyer acceptance email:', error);
-          }
-        }
-      }
-    }
-  }, [currentUser]);
+
 
   // Use callback for tryFetchNotifications to prevent recreation
   const tryFetchNotifications = useCallback(async () => {
@@ -96,9 +63,6 @@ const NotificationBell = ({ currentUser }) => {
           setUnreadCount(unread);
           setApiAvailable(true);
           
-          // Process email triggers for new unread notifications
-          await processEmailTriggers(data);
-          
           // Store the working path for future use
           window.WORKING_NOTIFICATION_PATH = path;
           return;
@@ -109,7 +73,7 @@ const NotificationBell = ({ currentUser }) => {
     }
     
     setApiAvailable(false);
-  }, [currentUser, processEmailTriggers]);
+  }, [currentUser]);
   
   // Use memoized debounced version of fetch
   const debouncedFetchNotifications = useCallback(
@@ -365,9 +329,6 @@ const NotificationBell = ({ currentUser }) => {
           setNotifications(data);
           const unread = data.filter(note => !note.isRead).length;
           setUnreadCount(unread);
-          
-          // Process email triggers for new notifications
-          processEmailTriggers(data);
         })
         .catch(error => {});
       } else {
@@ -377,7 +338,7 @@ const NotificationBell = ({ currentUser }) => {
     }, 30000);
     
     return () => clearInterval(pollingInterval);
-  }, [currentUser, apiAvailable, processEmailTriggers, tryFetchNotifications]);
+  }, [currentUser, apiAvailable, tryFetchNotifications]);
 
 
 

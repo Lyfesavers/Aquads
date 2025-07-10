@@ -9,15 +9,10 @@ This setup adds email notifications for buyers when sellers accept their booking
 - Added `sendBuyerAcceptanceEmail` function to `src/services/emailService.js`
 - This function handles sending emails to buyers when their booking is accepted
 
-### 2. Server-Side Integration
-- Modified `server/routes/bookings.js` to trigger email notifications
-- When a seller accepts a booking (status: 'accepted_by_seller'), the system creates a notification with email trigger data
-- The notification includes all necessary booking details for the email
-
-### 3. Client-Side Email Processing
-- Updated `src/components/NotificationBell.js` to process email triggers
-- When notifications are fetched, the system automatically sends emails for unread notifications with email triggers
-- Prevents duplicate emails by marking notifications as processed
+### 2. Frontend Integration
+- Modified `src/components/BookingManagement.js` to send emails directly
+- When a seller accepts a booking, the email is sent immediately after successful status update
+- Uses the same simple pattern as existing booking creation and welcome emails
 
 ## Required Environment Variables
 
@@ -89,7 +84,7 @@ The Aquads Team</p>
 
 ## Notes
 
-- Emails are sent automatically when notifications are fetched
-- Duplicate emails are prevented by marking notifications as processed
-- The system works with your existing EmailJS configuration
-- No additional server-side email services required 
+- Emails are sent directly from the frontend after successful booking acceptance
+- Uses the same simple pattern as your existing booking and welcome emails
+- No complex server-side triggers or notification processing required
+- Works with your existing EmailJS configuration 
