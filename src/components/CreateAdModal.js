@@ -451,14 +451,9 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
               <h3 className="text-2xl font-bold text-white mb-4">
                 Enhance Your Listing with Premium Add-on Packages
               </h3>
-              <p className="text-gray-300 text-lg">
-                Select optional marketing packages to maximize your project's reach and impact.
-              </p>
-              <div className="mt-4 p-4 bg-blue-900/30 border border-blue-500/50 rounded-lg">
-                <p className="text-blue-300 text-sm">
-                  💡 <strong>Pro Tip:</strong> Add-on packages are completely optional. You can skip this step and proceed directly to payment, or enhance your listing with our premium marketing services.
-                </p>
-              </div>
+                             <p className="text-gray-300 text-lg">
+                 Select optional marketing packages to maximize your project's reach and impact.
+               </p>
             </div>
 
             {/* Marketing Add-on Packages */}
