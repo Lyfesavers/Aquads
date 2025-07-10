@@ -196,7 +196,7 @@ router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
       return res.status(404).json({ message: 'Service not found' });
     }
 
-    if (service.seller.toString() !== req.user.userId) {
+    if (service.seller.toString() !== req.user.userId && !req.user.isAdmin) {
       return res.status(403).json({ message: 'Not authorized to delete this service' });
     }
 
