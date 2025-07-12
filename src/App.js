@@ -446,21 +446,6 @@ function App() {
   const [votePopup, setVotePopup] = useState(null);
   const [partnershipPopup, setPartnershipPopup] = useState(null);
   
-  // Function to handle bubble clicks and navigate to AquaSwap with token data
-  const handleBubbleClick = (ad) => {
-    if (!ad.pairAddress || !ad.pairAddress.trim()) {
-      // Fallback to original URL if no pair address
-      window.open(ad.url, '_blank');
-      return;
-    }
-
-    // Get the blockchain name (default to ethereum if not found)
-    const blockchain = ad.blockchain ? ad.blockchain.toLowerCase() : 'ethereum';
-    
-    // Navigate to AquaSwap with token parameters using window.location
-    window.location.href = `/aquaswap?token=${encodeURIComponent(ad.pairAddress.trim())}&blockchain=${encodeURIComponent(blockchain)}`;
-  };
-  
   /**
    * Determine how many bubbles to show per page based on screen size.
    * User testing has determined optimal bubble counts for different screens:
@@ -2984,7 +2969,7 @@ function App() {
                               onClick={(e) => {
                                 if (!e.defaultPrevented) {
                                   if (requireAuth()) {
-                                    handleBubbleClick(ad);
+                                    window.open(ad.url, '_blank');
                                   }
                                 }
                               }}
