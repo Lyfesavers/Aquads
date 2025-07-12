@@ -35,6 +35,21 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     // Add class to body to enable scrolling
     document.body.classList.add('aquaswap-page');
 
+    // Check URL parameters for token data from bubble clicks
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenParam = urlParams.get('token');
+    const blockchainParam = urlParams.get('blockchain');
+    
+    if (tokenParam && blockchainParam) {
+      // Set token search and chain based on URL parameters
+      setTokenSearch(tokenParam);
+      setSelectedChain(getChainForBlockchain(blockchainParam));
+      setChartProvider('dexscreener');
+      
+      // Clean up URL by removing the parameters
+      window.history.replaceState({}, document.title, '/aquaswap');
+    }
+
     // Cleanup: remove class when component unmounts
     return () => {
       document.body.classList.remove('aquaswap-page');

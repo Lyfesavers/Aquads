@@ -2969,7 +2969,14 @@ function App() {
                               onClick={(e) => {
                                 if (!e.defaultPrevented) {
                                   if (requireAuth()) {
-                                    window.open(ad.url, '_blank');
+                                    // Check if ad has pairAddress for token chart
+                                    if (ad.pairAddress && ad.pairAddress.trim()) {
+                                      const blockchain = ad.blockchain || 'ethereum';
+                                      window.location.href = `/aquaswap?token=${encodeURIComponent(ad.pairAddress.trim())}&blockchain=${encodeURIComponent(blockchain)}`;
+                                    } else {
+                                      // Fallback to original URL
+                                      window.open(ad.url, '_blank');
+                                    }
                                   }
                                 }
                               }}
