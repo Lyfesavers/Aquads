@@ -29,7 +29,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
   const tradingViewRef = useRef(null);
   const dexScreenerRef = useRef(null);
-  const swapSectionRef = useRef(null);
 
   // Initialize on component mount
   useEffect(() => {
@@ -113,39 +112,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     };
 
     fetchBubbleTokens();
-  }, []);
-
-  // Handle scroll conflicts - prevent multiple areas from scrolling simultaneously
-  useEffect(() => {
-    const handleWheelEvent = (e) => {
-      // If scrolling within the swap section, prevent event from bubbling up
-      if (swapSectionRef.current && swapSectionRef.current.contains(e.target)) {
-        const swapSection = swapSectionRef.current;
-        const isScrollable = swapSection.scrollHeight > swapSection.clientHeight;
-        
-        if (isScrollable) {
-          // Check if we're at the scroll boundaries
-          const isAtTop = swapSection.scrollTop === 0;
-          const isAtBottom = swapSection.scrollTop + swapSection.clientHeight >= swapSection.scrollHeight;
-          
-          // Only allow scroll if we're not at the boundaries or scrolling in the right direction
-          if ((e.deltaY > 0 && isAtBottom) || (e.deltaY < 0 && isAtTop)) {
-            // At boundary, allow event to bubble up
-            return;
-          }
-          
-          // Stop propagation to prevent other scroll areas from reacting
-          e.stopPropagation();
-        }
-      }
-    };
-
-    // Add wheel event listener to prevent scroll conflicts
-    document.addEventListener('wheel', handleWheelEvent, { passive: false });
-
-    return () => {
-      document.removeEventListener('wheel', handleWheelEvent);
-    };
   }, []);
 
   // Convert blockchain names to chain format
@@ -629,7 +595,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       {/* Main Trading Interface - Original Setup */}
       <div className="trading-interface with-charts">
         {/* Left Side - Swap Widget */}
-        <div className="swap-section" ref={swapSectionRef}>
+        <div className="swap-section">
           <div className="lifi-widget">
             <LiFiWidget integrator="aquaswap" config={widgetConfig} />
           </div>
