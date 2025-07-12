@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { LiFiWidget } from '@lifi/widget';
 import logger from '../utils/logger';
 import BannerDisplay from './BannerDisplay';
@@ -20,7 +20,6 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const FALLBACK_TOKEN_EXAMPLES = [];
 
 const AquaSwap = ({ currentUser, showNotification }) => {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [chartProvider, setChartProvider] = useState('tradingview');
   const [tokenSearch, setTokenSearch] = useState('');
@@ -119,9 +118,9 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       // Only update URL if there are other parameters left, otherwise just go to /aquaswap
       const newSearch = newSearchParams.toString();
       const newUrl = newSearch ? `/aquaswap?${newSearch}` : '/aquaswap';
-      navigate(newUrl, { replace: true });
+      window.history.replaceState(null, '', newUrl);
     }
-  }, [searchParams, navigate]);
+  }, [searchParams]);
 
   // Convert blockchain names to chain format
   const getChainForBlockchain = (blockchain) => {

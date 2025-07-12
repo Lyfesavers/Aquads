@@ -46,7 +46,7 @@ import AquaSwapEmbed from './components/AquaSwapEmbed';
 import TransakPage from './components/TransakPage';
 import VerifyUser from './components/VerifyUser';
 import BannerDisplay from './components/BannerDisplay';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import emailService from './services/emailService';
 import emailjs from '@emailjs/browser';
@@ -445,7 +445,6 @@ function App() {
   const [totalPages, setTotalPages] = useState(1);
   const [votePopup, setVotePopup] = useState(null);
   const [partnershipPopup, setPartnershipPopup] = useState(null);
-  const navigate = useNavigate();
   
   // Function to handle bubble clicks and navigate to AquaSwap with token data
   const handleBubbleClick = (ad) => {
@@ -458,8 +457,8 @@ function App() {
     // Get the blockchain name (default to ethereum if not found)
     const blockchain = ad.blockchain ? ad.blockchain.toLowerCase() : 'ethereum';
     
-    // Navigate to AquaSwap with token parameters
-    navigate(`/aquaswap?token=${encodeURIComponent(ad.pairAddress.trim())}&blockchain=${encodeURIComponent(blockchain)}`);
+    // Navigate to AquaSwap with token parameters using window.location
+    window.location.href = `/aquaswap?token=${encodeURIComponent(ad.pairAddress.trim())}&blockchain=${encodeURIComponent(blockchain)}`;
   };
   
   /**
