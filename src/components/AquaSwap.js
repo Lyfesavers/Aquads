@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { LiFiWidget } from '@lifi/widget';
 import logger from '../utils/logger';
 import BannerDisplay from './BannerDisplay';
@@ -21,6 +21,7 @@ const FALLBACK_TOKEN_EXAMPLES = [];
 
 const AquaSwap = ({ currentUser, showNotification }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [chartProvider, setChartProvider] = useState('tradingview');
   const [tokenSearch, setTokenSearch] = useState('');
   const [selectedChain, setSelectedChain] = useState('ether');
@@ -98,6 +99,29 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
     fetchBubbleTokens();
   }, []);
+
+  // Handle URL parameters for direct token loading from bubble clicks
+  useEffect(() => {
+    const tokenParam = searchParams.get('token');
+    const blockchainParam = searchParams.get('blockchain');
+    
+    if (tokenParam && blockchainParam) {
+      // Set the token search and chain based on URL parameters
+      setTokenSearch(tokenParam);
+      setSelectedChain(getChainForBlockchain(blockchainParam));
+      setChartProvider('dexscreener'); // Automatically switch to DEXScreener
+      
+      // Clear URL parameters after loading (optional, for cleaner URLs)
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete('token');
+      newSearchParams.delete('blockchain');
+      
+      // Only update URL if there are other parameters left, otherwise just go to /aquaswap
+      const newSearch = newSearchParams.toString();
+      const newUrl = newSearch ? `/aquaswap?${newSearch}` : '/aquaswap';
+      navigate(newUrl, { replace: true });
+    }
+  }, [searchParams, navigate]);
 
   // Convert blockchain names to chain format
   const getChainForBlockchain = (blockchain) => {
