@@ -7,7 +7,7 @@
   min-height: 100vh;
   background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
   color: #ffffff;
-  overflow-x: auto;
+  overflow-x: hidden; /* Prevent horizontal scroll conflicts */
   padding: 0;
   margin: 0;
 }
@@ -142,10 +142,8 @@
   gap: 0;
   margin: 0;
   padding: 0;
-  /* Hide scrollbar but keep scrolling functionality */
-  overflow: auto;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
+  /* Remove scroll capability - this is a container, not a scrollable area */
+  overflow: hidden;
 }
 
 .trading-interface::-webkit-scrollbar {
@@ -167,6 +165,10 @@
   overflow-y: auto;
   height: 100%;
   min-height: 600px;
+  /* Improve scroll behavior */
+  scroll-behavior: smooth;
+  overscroll-behavior: contain; /* Prevent scroll chaining */
+  -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
 }
 
 /* Balanced swap width reduction - keeps swap usable while maximizing chart space */
@@ -213,6 +215,8 @@
   flex-direction: column;
   min-width: 800px; /* Reasonable minimum while maintaining side-by-side layout */
   width: 100%;
+  /* Prevent scroll conflicts */
+  overscroll-behavior: contain;
 }
 
 /* Chart Header - Much more compact */
