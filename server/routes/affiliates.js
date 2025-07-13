@@ -17,67 +17,156 @@ const requireEmailVerification = require('../middleware/emailVerification');
 // Helper function to calculate activity diversity score (0-1, higher = more diverse)
 const calculateActivityDiversityScore = async (userId) => {
   try {
-    const user = await User.findById(userId);
-    if (!user) return { score: 0, activities: {} };
+    // Input validation
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return { score: 0, activities: {}, error: 'Invalid user ID' };
+    }
 
-    // Check various activity types
+    const user = await User.findById(userId);
+    if (!user) return { score: 0, activities: {}, error: 'User not found' };
+
+    // Optimize with parallel queries using Promise.all
+    const [
+      servicesCreated,
+      jobsPosted,
+      bookingsMade,
+      servicesBooked,
+      tokenReviewsWritten,
+      serviceReviewsWritten,
+      gamesCreated,
+      socialRaidsParticipated,
+      tokenPurchasesMade
+    ] = await Promise.all([
+      Service.countDocuments({ seller: userId }),
+      Job.countDocuments({ owner: userId }),
+      Booking.countDocuments({ buyerId: userId }),
+      Booking.countDocuments({ sellerId: userId }),
+      Review.countDocuments({ userId: userId }),
+      ServiceReview.countDocuments({ userId: userId }),
+      Game.countDocuments({ owner: userId }),
+      TwitterRaid.countDocuments({ 'completions.userId': userId }),
+      TokenPurchase.countDocuments({ userId: userId })
+    ]);
+
+    // Safe calculations with null checks
+    const pointsEarned = user.pointsHistory ? user.pointsHistory.filter(p => p && p.amount > 0).length : 0;
+    const pointsSpent = user.pointsHistory ? user.pointsHistory.filter(p => p && p.amount < 0).length : 0;
+    const tokenTransactions = user.tokenHistory ? user.tokenHistory.length : 0;
+    const hasCustomImage = user.image && user.image !== 'https://i.imgur.com/6VBx3io.png';
+    const emailVerified = Boolean(user.emailVerified);
+
     const activities = {
-      servicesCreated: await Service.countDocuments({ seller: userId }),
-      jobsPosted: await Job.countDocuments({ owner: userId }),
-      bookingsMade: await Booking.countDocuments({ buyerId: userId }),
-      servicesBooked: await Booking.countDocuments({ sellerId: userId }),
-      tokenReviewsWritten: await Review.countDocuments({ userId: userId }),
-      serviceReviewsWritten: await ServiceReview.countDocuments({ userId: userId }),
-      gamesCreated: await Game.countDocuments({ owner: userId }),
-      socialRaidsParticipated: await TwitterRaid.countDocuments({ 'completions.userId': userId }),
-      tokenPurchasesMade: await TokenPurchase.countDocuments({ userId: userId }),
-      pointsEarned: user.pointsHistory ? user.pointsHistory.filter(p => p.amount > 0).length : 0,
-      pointsSpent: user.pointsHistory ? user.pointsHistory.filter(p => p.amount < 0).length : 0,
-      tokenTransactions: user.tokenHistory ? user.tokenHistory.length : 0,
-      hasCustomImage: user.image !== 'https://i.imgur.com/6VBx3io.png',
-      emailVerified: user.emailVerified
+      servicesCreated,
+      jobsPosted,
+      bookingsMade,
+      servicesBooked,
+      tokenReviewsWritten,
+      serviceReviewsWritten,
+      gamesCreated,
+      socialRaidsParticipated,
+      tokenPurchasesMade,
+      pointsEarned,
+      pointsSpent,
+      tokenTransactions,
+      hasCustomImage,
+      emailVerified
     };
 
-    // Calculate diversity score based on different activity types
-    const activityTypes = [
-      activities.servicesCreated > 0,
-      activities.jobsPosted > 0,
-      activities.bookingsMade > 0,
-      activities.servicesBooked > 0,
-      activities.tokenReviewsWritten > 0,
-      activities.serviceReviewsWritten > 0,
-      activities.gamesCreated > 0,
-      activities.socialRaidsParticipated > 0,
-      activities.tokenPurchasesMade > 0,
-      activities.pointsSpent > 0,
-      activities.tokenTransactions > 0,
-      activities.hasCustomImage,
-      activities.emailVerified
-    ];
+    // Weighted activity types for more accurate fraud detection
+    const activityWeights = {
+      servicesCreated: 2,        // High weight - requires real engagement
+      jobsPosted: 2,             // High weight - requires real engagement
+      bookingsMade: 3,           // Very high weight - financial commitment
+      servicesBooked: 3,         // Very high weight - financial commitment
+      tokenReviewsWritten: 1,    // Medium weight - easy to fake
+      serviceReviewsWritten: 1,  // Medium weight - easy to fake
+      gamesCreated: 1,           // Medium weight - moderate engagement
+      socialRaidsParticipated: 1, // Low weight - easy to fake
+      tokenPurchasesMade: 3,     // Very high weight - financial commitment
+      pointsSpent: 2,            // High weight - shows real platform usage
+      tokenTransactions: 2,      // High weight - shows real platform usage
+      hasCustomImage: 1,         // Low weight - easy to fake
+      emailVerified: 1           // Low weight - basic requirement
+    };
 
-    const activeTypes = activityTypes.filter(Boolean).length;
-    const maxPossibleTypes = activityTypes.length;
-    const diversityScore = activeTypes / maxPossibleTypes;
+    // Calculate weighted diversity score
+    let totalWeight = 0;
+    let activeWeight = 0;
+    
+    Object.keys(activityWeights).forEach(key => {
+      const weight = activityWeights[key];
+      totalWeight += weight;
+      
+      if (key === 'hasCustomImage' || key === 'emailVerified') {
+        if (activities[key]) activeWeight += weight;
+      } else {
+        if (activities[key] > 0) activeWeight += weight;
+      }
+    });
+
+    const diversityScore = totalWeight > 0 ? activeWeight / totalWeight : 0;
 
     return {
       score: Math.round(diversityScore * 100) / 100,
       activities,
-      activeTypes,
-      maxPossibleTypes
+      activeTypes: Object.keys(activities).filter(key => {
+        if (key === 'hasCustomImage' || key === 'emailVerified') {
+          return activities[key];
+        }
+        return activities[key] > 0;
+      }).length,
+      maxPossibleTypes: Object.keys(activities).length,
+      weightedScore: Math.round(diversityScore * 100) / 100
     };
   } catch (error) {
-    return { score: 0, activities: {}, error: error.message };
+    console.error('Error calculating activity diversity score:', error);
+    return { score: 0, activities: {}, error: 'Calculation failed' };
   }
 };
 
 // Helper function to calculate login frequency analysis
 const calculateLoginFrequencyAnalysis = (user) => {
   try {
+    // Input validation
+    if (!user || !user.createdAt) {
+      return {
+        accountAgeDays: 0,
+        daysSinceLastSeen: 999,
+        daysSinceLastActivity: 999,
+        isDormant: true,
+        isHighlyDormant: true,
+        frequencyScore: 0,
+        hasRealActivityData: false,
+        error: 'Invalid user data or missing creation date'
+      };
+    }
+
     const now = new Date();
     const createdAt = new Date(user.createdAt);
     
-    // Use the most recent activity timestamp available
-    const timestamps = [user.lastSeen, user.lastActivity].filter(Boolean).map(t => new Date(t));
+    // Validate creation date
+    if (isNaN(createdAt.getTime())) {
+      return {
+        accountAgeDays: 0,
+        daysSinceLastSeen: 999,
+        daysSinceLastActivity: 999,
+        isDormant: true,
+        isHighlyDormant: true,
+        frequencyScore: 0,
+        hasRealActivityData: false,
+        error: 'Invalid creation date'
+      };
+    }
+    
+    // Use the most recent activity timestamp available with validation
+    const timestamps = [user.lastSeen, user.lastActivity]
+      .filter(Boolean)
+      .map(t => {
+        const date = new Date(t);
+        return isNaN(date.getTime()) ? null : date;
+      })
+      .filter(Boolean);
+    
     const mostRecentActivity = timestamps.length > 0 ? new Date(Math.max(...timestamps)) : null;
     
     // If no activity timestamps are available, use creation date but flag it
@@ -88,47 +177,58 @@ const calculateLoginFrequencyAnalysis = (user) => {
     const lastSeen = user.lastSeen ? new Date(user.lastSeen) : null;
     const lastActivity = user.lastActivity ? new Date(user.lastActivity) : null;
 
-    // Calculate account age in days
+    // Calculate account age in days with validation
     const accountAgeMs = now.getTime() - createdAt.getTime();
-    const accountAgeDays = Math.floor(accountAgeMs / (1000 * 60 * 60 * 24));
+    const accountAgeDays = Math.max(0, Math.floor(accountAgeMs / (1000 * 60 * 60 * 24)));
 
     // Calculate days since most recent activity
-    const daysSinceLastActivity = Math.floor((now.getTime() - lastActivityTime.getTime()) / (1000 * 60 * 60 * 24));
-    const daysSinceLastSeen = lastSeen ? Math.floor((now.getTime() - lastSeen.getTime()) / (1000 * 60 * 60 * 24)) : daysSinceLastActivity;
+    const daysSinceLastActivity = Math.max(0, Math.floor((now.getTime() - lastActivityTime.getTime()) / (1000 * 60 * 60 * 24)));
+    const daysSinceLastSeen = lastSeen && !isNaN(lastSeen.getTime()) ? 
+      Math.max(0, Math.floor((now.getTime() - lastSeen.getTime()) / (1000 * 60 * 60 * 24))) : 
+      daysSinceLastActivity;
 
-    // More accurate dormant detection
+    // More accurate dormant detection with better thresholds
     const isDormant = hasRealActivityData ? daysSinceLastActivity > 7 : (accountAgeDays > 7 && daysSinceLastActivity >= accountAgeDays - 1);
     const isHighlyDormant = hasRealActivityData ? daysSinceLastActivity > 30 : (accountAgeDays > 30 && daysSinceLastActivity >= accountAgeDays - 1);
     const isNewAndInactive = accountAgeDays < 7 && daysSinceLastActivity > 2 && hasRealActivityData;
     const isOldAndSuddenlyActive = accountAgeDays > 30 && daysSinceLastActivity < 1 && hasRealActivityData;
 
-    // Calculate frequency score (0-1, higher = better engagement)
+    // Calculate frequency score (0-1, higher = better engagement) with better logic
     let frequencyScore = 0;
-    if (accountAgeDays > 0 && hasRealActivityData) {
-      const expectedLogins = Math.min(accountAgeDays, 30);
-      const actualEngagement = Math.max(0, 30 - daysSinceLastActivity);
-      frequencyScore = Math.min(actualEngagement / expectedLogins, 1);
-    } else if (!hasRealActivityData && accountAgeDays > 0) {
-      // Penalize accounts with no real activity data
-      frequencyScore = 0.1; // Very low but not zero
+    if (accountAgeDays > 0) {
+      if (hasRealActivityData) {
+        const expectedLogins = Math.min(accountAgeDays, 30);
+        const actualEngagement = Math.max(0, 30 - daysSinceLastActivity);
+        frequencyScore = expectedLogins > 0 ? Math.min(actualEngagement / expectedLogins, 1) : 0;
+      } else {
+        // Penalize accounts with no real activity data based on account age
+        if (accountAgeDays < 7) {
+          frequencyScore = 0.3; // Give new accounts some benefit of doubt
+        } else if (accountAgeDays < 30) {
+          frequencyScore = 0.2; // Moderate penalty for older accounts with no activity
+        } else {
+          frequencyScore = 0.1; // High penalty for very old accounts with no activity
+        }
+      }
     }
 
     return {
       accountAgeDays,
       daysSinceLastSeen,
       daysSinceLastActivity,
-      isOnline: user.isOnline || false,
+      isOnline: Boolean(user.isOnline),
       isDormant,
       isHighlyDormant,
       isNewAndInactive,
       isOldAndSuddenlyActive,
       frequencyScore: Math.round(frequencyScore * 100) / 100,
       hasRealActivityData,
-      lastSeen: lastSeen ? lastSeen.toISOString() : null,
-      lastActivity: lastActivity ? lastActivity.toISOString() : null,
+      lastSeen: lastSeen && !isNaN(lastSeen.getTime()) ? lastSeen.toISOString() : null,
+      lastActivity: lastActivity && !isNaN(lastActivity.getTime()) ? lastActivity.toISOString() : null,
       mostRecentActivity: lastActivityTime.toISOString()
     };
   } catch (error) {
+    console.error('Error calculating login frequency analysis:', error);
     return {
       accountAgeDays: 0,
       daysSinceLastSeen: 999,
@@ -137,7 +237,7 @@ const calculateLoginFrequencyAnalysis = (user) => {
       isHighlyDormant: true,
       frequencyScore: 0,
       hasRealActivityData: false,
-      error: error.message
+      error: 'Login frequency analysis failed'
     };
   }
 };
@@ -145,82 +245,159 @@ const calculateLoginFrequencyAnalysis = (user) => {
 // Enhanced fraud detection function
 const calculateAdvancedFraudScore = async (user, affiliates) => {
   try {
+    // Input validation
+    if (!user || !user._id) {
+      return {
+        riskScore: 0,
+        riskFactors: ['invalid_user_data'],
+        error: 'Invalid user data provided'
+      };
+    }
+
+    if (!Array.isArray(affiliates)) {
+      affiliates = [];
+    }
+
     let riskScore = 0;
     let riskFactors = [];
 
-    // Existing fraud checks
+    // Safe affiliate network analysis with null checks
     const uniqueIPs = new Set();
     const uniqueCountries = new Set();
     const uniqueDevices = new Set();
     let rapidSignups = 0;
+    let validAffiliates = 0;
 
     const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     
     affiliates.forEach(affiliate => {
-      if (affiliate.ipAddress) uniqueIPs.add(affiliate.ipAddress);
-      if (affiliate.country) uniqueCountries.add(affiliate.country);
-      if (affiliate.deviceFingerprint) uniqueDevices.add(affiliate.deviceFingerprint);
-      if (new Date(affiliate.createdAt) > dayAgo) rapidSignups++;
+      if (affiliate && affiliate.createdAt) {
+        validAffiliates++;
+        if (affiliate.ipAddress && typeof affiliate.ipAddress === 'string') {
+          uniqueIPs.add(affiliate.ipAddress.trim());
+        }
+        if (affiliate.country && typeof affiliate.country === 'string') {
+          uniqueCountries.add(affiliate.country.trim());
+        }
+        if (affiliate.deviceFingerprint && typeof affiliate.deviceFingerprint === 'string') {
+          uniqueDevices.add(affiliate.deviceFingerprint.trim());
+        }
+        if (new Date(affiliate.createdAt) > dayAgo) {
+          rapidSignups++;
+        }
+      }
     });
 
-    // Original risk factors
+    // Network-based risk factors with proper validation
     if (rapidSignups > 5) {
       riskScore += 25;
       riskFactors.push('rapid_growth');
     }
-    if (uniqueIPs.size < affiliates.length * 0.5) {
-      riskScore += 20;
-      riskFactors.push('same_ip_cluster');
+    
+    // Only apply IP clustering if we have sufficient data
+    if (validAffiliates >= 2 && uniqueIPs.size > 0) {
+      const ipRatio = uniqueIPs.size / validAffiliates;
+      if (ipRatio < 0.5 && validAffiliates >= 4) {
+        riskScore += 20;
+        riskFactors.push('same_ip_cluster');
+      }
     }
-    if (uniqueDevices.size < affiliates.length * 0.3) {
-      riskScore += 20;
-      riskFactors.push('same_device_cluster');
+    
+    // Device clustering analysis
+    if (validAffiliates >= 3 && uniqueDevices.size > 0) {
+      const deviceRatio = uniqueDevices.size / validAffiliates;
+      if (deviceRatio < 0.3 && validAffiliates >= 5) {
+        riskScore += 20;
+        riskFactors.push('same_device_cluster');
+      }
     }
-    if (uniqueCountries.size === 1 && affiliates.length > 10) {
+    
+    // Country diversity analysis
+    if (uniqueCountries.size === 1 && validAffiliates > 10) {
       riskScore += 15;
       riskFactors.push('single_country');
     }
 
-    // NEW: Activity diversity analysis
+    // Enhanced activity diversity analysis
     const activityAnalysis = await calculateActivityDiversityScore(user._id);
-    if (activityAnalysis.score < 0.1 && user.affiliateCount > 5) {
-      riskScore += 25;
-      riskFactors.push('very_low_activity_diversity');
-    } else if (activityAnalysis.score < 0.2 && user.affiliateCount > 3) {
-      riskScore += 15;
-      riskFactors.push('low_activity_diversity');
-    }
-
-    // NEW: Login frequency analysis
-    const loginAnalysis = calculateLoginFrequencyAnalysis(user);
-    if (loginAnalysis.isNewAndInactive && user.affiliateCount > 0) {
-      riskScore += 20;
-      riskFactors.push('new_inactive_with_affiliates');
-    }
-    if (loginAnalysis.isHighlyDormant && user.affiliateCount > 5) {
-      riskScore += 15;
-      riskFactors.push('dormant_with_many_affiliates');
-    }
-    if (loginAnalysis.frequencyScore < 0.1 && user.affiliateCount > 3) {
-      riskScore += 15;
-      riskFactors.push('poor_login_frequency');
-    }
-
-    // Check affiliate activity diversity (if they're all inactive, that's suspicious)
-    if (affiliates.length > 0) {
-      const affiliateActivityPromises = affiliates.map(affiliate => 
-        calculateActivityDiversityScore(affiliate._id || affiliate.id)
-      );
-      const affiliateActivities = await Promise.all(affiliateActivityPromises);
-      const lowActivityAffiliates = affiliateActivities.filter(a => a.score < 0.1).length;
-      const lowActivityRatio = lowActivityAffiliates / affiliates.length;
-      
-      if (lowActivityRatio > 0.8 && affiliates.length > 5) {
+    const userAffiliateCount = user.affiliateCount || 0;
+    
+    if (activityAnalysis && !activityAnalysis.error) {
+      if (activityAnalysis.score < 0.1 && userAffiliateCount > 5) {
+        riskScore += 30;
+        riskFactors.push('very_low_activity_diversity');
+      } else if (activityAnalysis.score < 0.2 && userAffiliateCount > 3) {
         riskScore += 20;
-        riskFactors.push('affiliates_all_inactive');
-      } else if (lowActivityRatio > 0.6 && affiliates.length > 3) {
+        riskFactors.push('low_activity_diversity');
+      } else if (activityAnalysis.score < 0.3 && userAffiliateCount > 10) {
+        riskScore += 15;
+        riskFactors.push('moderate_activity_diversity');
+      }
+    }
+
+    // Enhanced login frequency analysis
+    const loginAnalysis = calculateLoginFrequencyAnalysis(user);
+    if (loginAnalysis && !loginAnalysis.error) {
+      if (loginAnalysis.isNewAndInactive && userAffiliateCount > 0) {
+        riskScore += 25;
+        riskFactors.push('new_inactive_with_affiliates');
+      }
+      if (loginAnalysis.isHighlyDormant && userAffiliateCount > 5) {
+        riskScore += 20;
+        riskFactors.push('dormant_with_many_affiliates');
+      }
+      if (loginAnalysis.frequencyScore < 0.1 && userAffiliateCount > 3) {
+        riskScore += 15;
+        riskFactors.push('poor_login_frequency');
+      }
+      if (loginAnalysis.isOldAndSuddenlyActive && userAffiliateCount > 10) {
         riskScore += 10;
-        riskFactors.push('most_affiliates_inactive');
+        riskFactors.push('suspicious_reactivation');
+      }
+    }
+
+    // Affiliate activity diversity analysis with better error handling
+    if (validAffiliates > 0) {
+      try {
+        const affiliateActivityPromises = affiliates
+          .filter(affiliate => affiliate && affiliate._id)
+          .map(affiliate => calculateActivityDiversityScore(affiliate._id || affiliate.id));
+        
+        const affiliateActivities = await Promise.all(affiliateActivityPromises);
+        const validActivities = affiliateActivities.filter(a => a && !a.error);
+        
+        if (validActivities.length > 0) {
+          const lowActivityAffiliates = validActivities.filter(a => a.score < 0.1).length;
+          const lowActivityRatio = lowActivityAffiliates / validActivities.length;
+          
+          if (lowActivityRatio > 0.8 && validActivities.length > 5) {
+            riskScore += 25;
+            riskFactors.push('affiliates_all_inactive');
+          } else if (lowActivityRatio > 0.6 && validActivities.length > 3) {
+            riskScore += 15;
+            riskFactors.push('most_affiliates_inactive');
+          }
+        }
+      } catch (affiliateError) {
+        console.error('Error analyzing affiliate activities:', affiliateError);
+        riskFactors.push('affiliate_analysis_failed');
+      }
+    }
+
+    // Additional risk factors for better fraud detection
+    if (userAffiliateCount > 50) {
+      riskScore += 15;
+      riskFactors.push('excessive_affiliate_count');
+    }
+
+    // Cross-reference with user behavior patterns
+    if (user.createdAt) {
+      const accountAgeMs = Date.now() - new Date(user.createdAt).getTime();
+      const accountAgeDays = Math.floor(accountAgeMs / (1000 * 60 * 60 * 24));
+      
+      if (accountAgeDays < 30 && userAffiliateCount > 20) {
+        riskScore += 20;
+        riskFactors.push('rapid_affiliate_growth');
       }
     }
 
@@ -233,14 +410,17 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
         uniqueIPs: uniqueIPs.size,
         uniqueCountries: uniqueCountries.size,
         uniqueDevices: uniqueDevices.size,
-        rapidSignups
+        rapidSignups,
+        validAffiliates,
+        totalAffiliates: affiliates.length
       }
     };
   } catch (error) {
+    console.error('Error calculating advanced fraud score:', error);
     return {
       riskScore: 0,
       riskFactors: ['calculation_error'],
-      error: error.message
+      error: 'Fraud score calculation failed'
     };
   }
 };

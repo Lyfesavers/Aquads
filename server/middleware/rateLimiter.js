@@ -79,4 +79,53 @@ const twitterRaidRateLimit = (req, res, next) => {
   next();
 };
 
-module.exports = { twitterRaidRateLimit }; 
+// General rate limiter for admin endpoints (stricter limits)
+const adminRateLimit = (req, res, next) => {
+  const userId = req.user.id || req.user.userId || req.user._id;
+  
+  if (!userId) {
+    console.error('Could not determine user ID in admin rate limiter:', req.user);
+    return res.status(400).json({ 
+      error: 'User identification not found. Please try again or contact support.'
+    });
+  }
+  
+  const ip = req.ip || req.connection.remoteAddress;
+  const now = Date.now();
+  
+  // Get user attempts within the last 10 minutes (shorter window for admin endpoints)
+  const userAdminAttempts = userAttempts.get(`admin_${userId}`) || [];
+  const recentUserAttempts = userAdminAttempts.filter(time => time > now - 600000);
+  
+  // Get IP attempts within the last 10 minutes
+  const ipAdminAttempts = ipAttempts.get(`admin_${ip}`) || [];
+  const recentIpAttempts = ipAdminAttempts.filter(time => time > now - 600000);
+  
+  // Max 30 admin requests per user per 10 minutes
+  if (recentUserAttempts.length >= 30) {
+    console.log(`Admin rate limit exceeded for user ${userId}`);
+    return res.status(429).json({
+      error: 'Rate limit exceeded. Too many admin requests. Please wait before trying again.'
+    });
+  }
+  
+  // Max 60 admin requests per IP per 10 minutes
+  if (recentIpAttempts.length >= 60) {
+    console.log(`Admin rate limit exceeded for IP ${ip}`);
+    return res.status(429).json({
+      error: 'Rate limit exceeded. Too many admin requests from this IP. Please wait before trying again.'
+    });
+  }
+  
+  // Add current attempt
+  userAdminAttempts.push(now);
+  ipAdminAttempts.push(now);
+  
+  // Update maps
+  userAttempts.set(`admin_${userId}`, userAdminAttempts);
+  ipAttempts.set(`admin_${ip}`, ipAdminAttempts);
+  
+  next();
+};
+
+module.exports = { twitterRaidRateLimit, adminRateLimit }; 
