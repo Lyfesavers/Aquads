@@ -6,14 +6,14 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 // Add this delay utility function at the top of the component
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Add function to check if a raid is less than 1 day old
-const isWithinOneDay = (dateString) => {
+// Add function to check if a raid is less than 2 days old
+const isWithinTwoDays = (dateString) => {
   if (!dateString) return true; // If no date, show the raid
   const raidDate = new Date(dateString);
   const now = new Date();
   const diffTime = now - raidDate;
   const diffDays = diffTime / (1000 * 60 * 60 * 24);
-  return diffDays <= 1;
+  return diffDays <= 2;
 };
 
 // Add this utility function to format the time remaining
@@ -23,10 +23,10 @@ const getDaysRemaining = (dateString) => {
   const now = new Date();
   const diffTime = now - raidDate;
   const diffDays = diffTime / (1000 * 60 * 60 * 24);
-  const timeRemaining = Math.ceil(1 - diffDays);
+  const timeRemaining = Math.ceil(2 - diffDays);
   
   if (timeRemaining <= 0) return "Expiring today";
-  return "Less than 1 day left";
+  return "Less than 2 days left";
 };
 
 // Add this utility function to format the date in a readable format
@@ -369,8 +369,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       
       const data = await response.json();
       
-      // Filter out raids older than 1 day
-      const filteredRaids = data.filter(raid => isWithinOneDay(raid.createdAt));
+      // Filter out raids older than 2 days
+      const filteredRaids = data.filter(raid => isWithinTwoDays(raid.createdAt));
       
       setRaids(filteredRaids);
       
