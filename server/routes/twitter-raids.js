@@ -10,6 +10,7 @@ const { twitterRaidRateLimit } = require('../middleware/rateLimiter');
 const AffiliateEarning = require('../models/AffiliateEarning');
 const mongoose = require('mongoose');
 const Notification = require('../models/Notification');
+const telegramService = require('../utils/telegramService');
 
 // Use the imported module function
 const awardSocialMediaPoints = pointsModule.awardSocialMediaPoints;
@@ -60,6 +61,14 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
     });
 
     await raid.save();
+    
+    // Send Telegram notification
+    telegramService.sendRaidNotification({
+      tweetUrl: raid.tweetUrl,
+      points: raid.points,
+      title: raid.title,
+      description: raid.description
+    });
     
     res.status(201).json(raid);
   } catch (error) {
@@ -197,6 +206,14 @@ router.post('/points', auth, requireEmailVerification, async (req, res) => {
       user.save()
     ]);
     
+    // Send Telegram notification
+    telegramService.sendRaidNotification({
+      tweetUrl: raid.tweetUrl,
+      points: raid.points,
+      title: raid.title,
+      description: raid.description
+    });
+    
     res.status(201).json({ 
       message: `Twitter raid created successfully! ${POINTS_REQUIRED} points have been deducted from your account.`,
       raid,
@@ -232,6 +249,14 @@ router.post('/:id/approve', auth, async (req, res) => {
     raid.paymentStatus = 'approved';
     raid.active = true;
     await raid.save();
+    
+    // Send Telegram notification
+    telegramService.sendRaidNotification({
+      tweetUrl: raid.tweetUrl,
+      points: raid.points,
+      title: raid.title,
+      description: raid.description
+    });
     
     res.json({ 
       message: 'Twitter raid payment approved!',
