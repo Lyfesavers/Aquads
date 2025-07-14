@@ -294,18 +294,18 @@ app.get('/share-blog/:id', async (req, res) => {
   }
 });
 
-// Create new ad
-app.post('/api/ads', auth, async (req, res) => {
-  try {
-    const ad = new Ad(req.body);
-    const savedAd = await ad.save();
-    io.emit('adsUpdated', { type: 'create', ad: savedAd });
-    res.status(201).json(savedAd);
-  } catch (error) {
-    console.error('Error creating ad:', error);
-    res.status(500).json({ error: 'Failed to create ad' });
-  }
-});
+// Create new ad - REMOVED: Using /routes/ads.js instead for proper affiliate validation
+// app.post('/api/ads', auth, async (req, res) => {
+//   try {
+//     const ad = new Ad(req.body);
+//     const savedAd = await ad.save();
+//     io.emit('adsUpdated', { type: 'create', ad: savedAd });
+//     res.status(201).json(savedAd);
+//   } catch (error) {
+//     console.error('Error creating ad:', error);
+//     res.status(500).json({ error: 'Failed to create ad' });
+//   }
+// });
 
 // Update ad
 app.put('/api/ads/:id', auth, async (req, res) => {

@@ -183,13 +183,36 @@ const calculateBumpAmount = (type) => {
 // POST route for creating new ad
 router.post('/', auth, requireEmailVerification, async (req, res) => {
   try {
-    const { title, logo, url, pairAddress, blockchain, referredBy, x, y, preferredSize, txSignature, paymentChain, chainSymbol, chainAddress, selectedAddons, totalAmount } = req.body;
+    const { title, logo, url, pairAddress, blockchain, referredBy, x, y, preferredSize, txSignature, paymentChain, chainSymbol, chainAddress, selectedAddons, totalAmount, isAffiliate, affiliateDiscount } = req.body;
     
     // Use client's preferred size if provided, otherwise use MAX_SIZE
     const bubbleSize = preferredSize || MAX_SIZE;
     
     // Validate size is within acceptable range
     const validatedSize = Math.min(MAX_SIZE, Math.max(MIN_SIZE, bubbleSize));
+
+    // Get current user to verify affiliate status
+    const currentUser = await User.findById(req.user.userId);
+    if (!currentUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Verify affiliate status and calculate listing fee
+    const BASE_LISTING_FEE = 199;
+    const AFFILIATE_DISCOUNT_RATE = 0.05; // 5%
+    const userIsAffiliate = Boolean(currentUser.referredBy);
+    const calculatedAffiliateDiscount = userIsAffiliate ? BASE_LISTING_FEE * AFFILIATE_DISCOUNT_RATE : 0;
+    const calculatedListingFee = BASE_LISTING_FEE - calculatedAffiliateDiscount;
+
+    // Validate client-side affiliate status matches server-side (only if provided)
+    if (isAffiliate !== undefined && isAffiliate !== userIsAffiliate) {
+      return res.status(400).json({ error: 'Affiliate status mismatch' });
+    }
+
+    // Validate affiliate discount amount (only if affiliate status is provided and user is affiliate)
+    if (isAffiliate !== undefined && userIsAffiliate && Math.abs((affiliateDiscount || 0) - calculatedAffiliateDiscount) > 0.01) {
+      return res.status(400).json({ error: 'Invalid affiliate discount amount' });
+    }
   
     const ad = new Ad({
       id: `ad-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -207,8 +230,8 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       chainSymbol,
       chainAddress,
       selectedAddons: selectedAddons || [],
-      totalAmount: totalAmount || 299,
-      listingFee: 299, // Base listing fee remains the same
+      totalAmount: totalAmount || calculatedListingFee,
+      listingFee: calculatedListingFee, // Base listing fee with affiliate discount applied
       // Set status to 'pending' for non-admin users, 'active' for admins
       status: req.user.isAdmin ? 'active' : 'pending'
     });
@@ -218,6 +241,9 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
     if (!savedAd) {
       throw new Error('Failed to save ad');
     }
+
+    // Emit socket event for real-time updates
+    socket.getIO().emit('adsUpdated', { type: 'create', ad: savedAd });
 
     // Award points to affiliate if the user was referred by someone
     try {

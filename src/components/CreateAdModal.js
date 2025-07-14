@@ -140,7 +140,14 @@ const ADDON_PACKAGES = [
   }
 ];
 
-const CreateAdModal = ({ onCreateAd, onClose }) => {
+const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
+  // Check if user is an affiliate (referred by another user)
+  const isAffiliate = currentUser && currentUser.referredBy;
+  const BASE_LISTING_FEE = 199;
+  const AFFILIATE_DISCOUNT_RATE = 0.05; // 5%
+  const affiliateDiscount = isAffiliate ? BASE_LISTING_FEE * AFFILIATE_DISCOUNT_RATE : 0;
+  const discountedBaseFee = BASE_LISTING_FEE - affiliateDiscount;
+
   const [formData, setFormData] = useState({
     title: '',
     logo: '',
@@ -152,7 +159,9 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
     chainSymbol: BLOCKCHAIN_OPTIONS[0].symbol,
     chainAddress: BLOCKCHAIN_OPTIONS[0].address,
     selectedAddons: [], // Track selected add-on packages
-    totalAmount: 199 // Base listing fee
+    totalAmount: discountedBaseFee, // Base listing fee with affiliate discount applied
+    isAffiliate: isAffiliate,
+    affiliateDiscount: affiliateDiscount
   });
   const [previewUrl, setPreviewUrl] = useState('');
   const [error, setError] = useState('');
@@ -242,7 +251,7 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
     setFormData(prev => ({
       ...prev,
       selectedAddons: [],
-      totalAmount: 199 // Reset to base price
+      totalAmount: discountedBaseFee // Reset to discounted base price
     }));
     setStep(3);
   };
@@ -263,7 +272,9 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
       ...formData,
       paymentChain: selectedChain.name,
       chainSymbol: selectedChain.symbol,
-      chainAddress: selectedChain.address
+      chainAddress: selectedChain.address,
+      isAffiliate: isAffiliate,
+      affiliateDiscount: affiliateDiscount
     });
   };
 
@@ -290,7 +301,7 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
       return {
         ...prev,
         selectedAddons,
-        totalAmount: 199 + addonTotal // Base fee + add-ons
+        totalAmount: discountedBaseFee + addonTotal // Discounted base fee + add-ons
       };
     });
   };
@@ -587,7 +598,7 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
                     <div className="flex justify-between items-center">
                       <span className="text-white font-medium">Add-ons Total:</span>
                       <span className="text-xl font-bold text-green-400">
-                        ${(formData.totalAmount - 199).toLocaleString()} USDC
+                        ${(formData.totalAmount - discountedBaseFee).toLocaleString()} USDC
                       </span>
                     </div>
                   </div>
@@ -629,7 +640,15 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
               <div className="bg-gradient-to-br from-blue-900/50 to-purple-900/50 border border-blue-500/50 rounded-xl p-6 mb-6">
                 <h3 className="text-2xl font-bold text-white mb-4 flex items-center">
                   <FaRocket className="mr-3 text-blue-400" />
-                  Premium Listing Package - $199 USDC
+                  Premium Listing Package - {isAffiliate ? (
+                    <span>
+                      <span className="line-through text-gray-400 ml-2">${BASE_LISTING_FEE} USDC</span>
+                      <span className="text-green-400 ml-2">${discountedBaseFee.toFixed(2)} USDC</span>
+                      <span className="bg-green-500 text-white px-2 py-1 rounded text-sm ml-2">5% Affiliate Discount</span>
+                    </span>
+                  ) : (
+                    `$${BASE_LISTING_FEE} USDC`
+                  )}
                 </h3>
                 <p className="text-gray-300 mb-6">
                   Get maximum exposure and professional marketing support for your project with our comprehensive premium package.
@@ -723,8 +742,23 @@ const CreateAdModal = ({ onCreateAd, onClose }) => {
                       <div className="text-sm text-gray-300">
                         <div className="flex justify-between">
                           <span>Base Listing:</span>
-                          <span>$199 USDC</span>
+                          <span>
+                            {isAffiliate ? (
+                              <span>
+                                <span className="line-through text-gray-400">${BASE_LISTING_FEE}</span>
+                                <span className="text-green-400 ml-1">${discountedBaseFee.toFixed(2)} USDC</span>
+                              </span>
+                            ) : (
+                              `$${BASE_LISTING_FEE} USDC`
+                            )}
+                          </span>
                         </div>
+                        {isAffiliate && (
+                          <div className="flex justify-between text-green-400">
+                            <span>Affiliate Discount (5%):</span>
+                            <span>-${affiliateDiscount.toFixed(2)} USDC</span>
+                          </div>
+                        )}
                         {formData.selectedAddons.map(addonId => {
                           const addon = ADDON_PACKAGES.find(pkg => pkg.id === addonId);
                           return addon ? (

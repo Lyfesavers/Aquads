@@ -3297,6 +3297,7 @@ function App() {
                   <CreateAdModal
                     onCreateAd={handleCreateAd}
                     onClose={() => setShowCreateModal(false)}
+                    currentUser={currentUser}
                   />
                 )}
 
