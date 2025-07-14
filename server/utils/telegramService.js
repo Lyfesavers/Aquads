@@ -21,7 +21,7 @@ const telegramService = {
 🎯 **Task:** Like, Retweet & Comment
 
 🔗 **Tweet:** ${raidData.tweetUrl}
-▶️ **Complete:** ${process.env.FRONTEND_URL || 'https://aquads.xyz'}/raids
+▶️ **Complete:** ${process.env.FRONTEND_URL || 'https://aquads.xyz'}
 
 ⏰ Available for 48 hours!`;
 
