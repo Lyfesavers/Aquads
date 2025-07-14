@@ -1697,54 +1697,81 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   <p className="text-gray-400 text-center py-8">No ads found.</p>
                 ) : (
                   <div className="space-y-4">
-                    {userAds.map(ad => (
-                      <div
-                        key={ad.id}
-                        className="bg-gray-700 rounded-lg p-4 flex items-center justify-between"
-                      >
-                        <div className="flex items-center space-x-4">
-                          <img
-                            src={ad.logo}
-                            alt={ad.title}
-                            className="w-12 h-12 object-contain rounded"
-                          />
-                          <div>
-                            <h3 className="text-white font-semibold">{ad.title}</h3>
-                            <p className="text-gray-400 text-sm">{ad.url}</p>
-                            {ad.status === 'pending' && (
-                              <p className="text-yellow-500 text-sm">Bump Pending</p>
+                    {userAds.map(ad => {
+                      const totalVotes = (ad.bullishVotes || 0) + (ad.bearishVotes || 0);
+                      const bullishPercentage = totalVotes > 0 ? Math.round(((ad.bullishVotes || 0) / totalVotes) * 100) : 0;
+                      const bearishPercentage = totalVotes > 0 ? Math.round(((ad.bearishVotes || 0) / totalVotes) * 100) : 0;
+                      
+                      return (
+                        <div
+                          key={ad.id}
+                          className="bg-gray-700 rounded-lg p-4 flex items-center justify-between"
+                        >
+                          <div className="flex items-center space-x-4">
+                            <img
+                              src={ad.logo}
+                              alt={ad.title}
+                              className="w-12 h-12 object-contain rounded"
+                            />
+                            <div>
+                              <h3 className="text-white font-semibold">{ad.title}</h3>
+                              <p className="text-gray-400 text-sm">{ad.url}</p>
+                              {ad.status === 'pending' && (
+                                <p className="text-yellow-500 text-sm">Bump Pending</p>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* Vote Counts Display */}
+                          <div className="flex items-center space-x-6 mr-4">
+                            <div className="text-center">
+                              <div className="text-xs text-gray-400 mb-1">Community Votes</div>
+                              <div className="flex items-center space-x-3">
+                                <div className="flex items-center space-x-1">
+                                  <span className="text-green-400 font-bold">👍</span>
+                                  <span className="text-green-400 font-semibold">{ad.bullishVotes || 0}</span>
+                                  <span className="text-green-400 text-sm">({bullishPercentage}%)</span>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                  <span className="text-red-400 font-bold">👎</span>
+                                  <span className="text-red-400 font-semibold">{ad.bearishVotes || 0}</span>
+                                  <span className="text-red-400 text-sm">({bearishPercentage}%)</span>
+                                </div>
+                              </div>
+                              <div className="text-xs text-gray-500 mt-1">Total: {totalVotes}</div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex space-x-2">
+                            {!ad.status || ad.status !== 'pending' ? (
+                              <button
+                                onClick={() => handleBumpClick(ad.id)}
+                                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+                              >
+                                Bump
+                              </button>
+                            ) : (
+                              <span className="text-yellow-500 px-3 py-1">
+                                Bump Pending
+                              </span>
                             )}
+                            <button
+                              onClick={() => onEditAd(ad)}
+                              className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => { if (window.confirm('Are you sure you want to delete this ad?')) { onDeleteAd(ad.id); } }}
+                              className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                              title="Delete this ad"
+                            >
+                              Delete
+                            </button>
                           </div>
                         </div>
-                        <div className="flex space-x-2">
-                          {!ad.status || ad.status !== 'pending' ? (
-                            <button
-                              onClick={() => handleBumpClick(ad.id)}
-                              className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
-                            >
-                              Bump
-                            </button>
-                          ) : (
-                            <span className="text-yellow-500 px-3 py-1">
-                              Bump Pending
-                            </span>
-                          )}
-                          <button
-                            onClick={() => onEditAd(ad)}
-                            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => { if (window.confirm('Are you sure you want to delete this ad?')) { onDeleteAd(ad.id); } }}
-                            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
-                            title="Delete this ad"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -2472,38 +2499,65 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       <p className="text-gray-400 text-center py-8">No ads found.</p>
                     ) : (
                       <div className="space-y-4">
-                        {ads.map(ad => (
-                          <div key={ad.id} className="bg-gray-700 rounded-lg p-4 flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
-                              <img src={ad.logo} alt={ad.title} className="w-12 h-12 object-contain rounded" />
-                              <div>
-                                <h3 className="text-white font-semibold">{ad.title}</h3>
-                                <p className="text-gray-400 text-sm">{ad.url}</p>
-                                <p className="text-gray-400 text-sm">Owner: {ad.owner}</p>
-                                {ad.status === 'pending' && (
-                                  <p className="text-yellow-500 text-sm">Bump Pending</p>
+                        {ads.map(ad => {
+                          const totalVotes = (ad.bullishVotes || 0) + (ad.bearishVotes || 0);
+                          const bullishPercentage = totalVotes > 0 ? Math.round(((ad.bullishVotes || 0) / totalVotes) * 100) : 0;
+                          const bearishPercentage = totalVotes > 0 ? Math.round(((ad.bearishVotes || 0) / totalVotes) * 100) : 0;
+                          
+                          return (
+                            <div key={ad.id} className="bg-gray-700 rounded-lg p-4 flex items-center justify-between">
+                              <div className="flex items-center space-x-4">
+                                <img src={ad.logo} alt={ad.title} className="w-12 h-12 object-contain rounded" />
+                                <div>
+                                  <h3 className="text-white font-semibold">{ad.title}</h3>
+                                  <p className="text-gray-400 text-sm">{ad.url}</p>
+                                  <p className="text-gray-400 text-sm">Owner: {ad.owner}</p>
+                                  {ad.status === 'pending' && (
+                                    <p className="text-yellow-500 text-sm">Bump Pending</p>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {/* Vote Counts Display */}
+                              <div className="flex items-center space-x-6 mr-4">
+                                <div className="text-center">
+                                  <div className="text-xs text-gray-400 mb-1">Community Votes</div>
+                                  <div className="flex items-center space-x-3">
+                                    <div className="flex items-center space-x-1">
+                                      <span className="text-green-400 font-bold">👍</span>
+                                      <span className="text-green-400 font-semibold">{ad.bullishVotes || 0}</span>
+                                      <span className="text-green-400 text-sm">({bullishPercentage}%)</span>
+                                    </div>
+                                    <div className="flex items-center space-x-1">
+                                      <span className="text-red-400 font-bold">👎</span>
+                                      <span className="text-red-400 font-semibold">{ad.bearishVotes || 0}</span>
+                                      <span className="text-red-400 text-sm">({bearishPercentage}%)</span>
+                                    </div>
+                                  </div>
+                                  <div className="text-xs text-gray-500 mt-1">Total: {totalVotes}</div>
+                                </div>
+                              </div>
+                              
+                              <div className="flex space-x-2">
+                                {!ad.status || ad.status !== 'pending' ? (
+                                  <button onClick={() => handleBumpClick(ad.id)} className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded" title="Bump this ad">
+                                    Bump
+                                  </button>
+                                ) : (
+                                  <span className="text-yellow-500 px-3 py-1">
+                                    Bump Pending
+                                  </span>
                                 )}
+                                <button onClick={() => onEditAd(ad)} className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded" title="Edit this ad">
+                                  Edit
+                                </button>
+                                <button onClick={() => { if (window.confirm('Are you sure you want to delete this ad?')) { onDeleteAd(ad.id); } }} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded" title="Delete this ad">
+                                  Delete
+                                </button>
                               </div>
                             </div>
-                            <div className="flex space-x-2">
-                              {!ad.status || ad.status !== 'pending' ? (
-                                <button onClick={() => handleBumpClick(ad.id)} className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded" title="Bump this ad">
-                                  Bump
-                                </button>
-                              ) : (
-                                <span className="text-yellow-500 px-3 py-1">
-                                  Bump Pending
-                                </span>
-                              )}
-                              <button onClick={() => onEditAd(ad)} className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded" title="Edit this ad">
-                                Edit
-                              </button>
-                              <button onClick={() => { if (window.confirm('Are you sure you want to delete this ad?')) { onDeleteAd(ad.id); } }} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded" title="Delete this ad">
-                                Delete
-                              </button>
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
