@@ -23,7 +23,8 @@ const auth = (req, res, next) => {
       id: userId,  // Add this for compatibility
       username: decoded.username,
       isAdmin: Boolean(decoded.isAdmin),  // Ensure boolean conversion
-      emailVerified: Boolean(decoded.emailVerified)  // Include email verification status
+      emailVerified: Boolean(decoded.emailVerified),  // Include email verification status
+      referredBy: decoded.referredBy  // Include referredBy for affiliate detection
     };
 
     next();

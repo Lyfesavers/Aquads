@@ -405,7 +405,7 @@ app.post('/api/users/register', ipLimiter(3), deviceLimiter(3), async (req, res)
 
     // Generate token for auto-login
     const token = jwt.sign(
-      { userId: user._id, username: user.username, isAdmin: user.isAdmin, userType: user.userType },
+      { userId: user._id, username: user.username, isAdmin: user.isAdmin, userType: user.userType, referredBy: user.referredBy },
       process.env.JWT_SECRET || 'bubble-ads-jwt-secret-key-2024',
       { expiresIn: '24h' }
     );
@@ -488,7 +488,7 @@ app.put('/api/users/profile', auth, async (req, res) => {
 
     // Generate new token with updated username if changed
     const token = jwt.sign(
-      { userId: user._id, username: user.username, isAdmin: user.isAdmin, userType: user.userType },
+      { userId: user._id, username: user.username, isAdmin: user.isAdmin, userType: user.userType, referredBy: user.referredBy },
       process.env.JWT_SECRET || 'bubble-ads-jwt-secret-key-2024',
       { expiresIn: '24h' }
     );

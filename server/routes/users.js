@@ -148,7 +148,7 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
 
     // Generate JWT token (don't include emailVerified since user hasn't verified yet)
     const token = jwt.sign(
-      { userId: user._id, username: user.username, isAdmin: user.isAdmin, emailVerified: false, userType: user.userType },
+      { userId: user._id, username: user.username, isAdmin: user.isAdmin, emailVerified: false, userType: user.userType, referredBy: user.referredBy },
       process.env.JWT_SECRET || 'bubble-ads-jwt-secret-key-2024',
       { expiresIn: '24h' }
     );
@@ -160,6 +160,7 @@ router.post('/register', registrationLimiter, ipLimiter(3), deviceLimiter(2), as
       email: user.email,
       image: user.image,
       referralCode: user.referralCode,
+      referredBy: user.referredBy, // Include referredBy for affiliate detection
       userType: user.userType,
       token,
       emailVerified: false,
@@ -249,7 +250,7 @@ router.post('/login', async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user._id, username: user.username, isAdmin: user.isAdmin, emailVerified: user.emailVerified, userType: user.userType },
+      { userId: user._id, username: user.username, isAdmin: user.isAdmin, emailVerified: user.emailVerified, userType: user.userType, referredBy: user.referredBy },
       process.env.JWT_SECRET || 'bubble-ads-jwt-secret-key-2024',
       { expiresIn: '24h' }
     );
@@ -263,6 +264,7 @@ router.post('/login', async (req, res) => {
       isAdmin: user.isAdmin,
       emailVerified: user.emailVerified,
       userType: user.userType,
+      referredBy: user.referredBy, // Include referredBy for affiliate detection
       token
     });
 
@@ -807,7 +809,7 @@ router.post('/verify-email', async (req, res) => {
 
     // Generate new JWT token with updated verification status
     const newToken = jwt.sign(
-      { userId: user._id, username: user.username, isAdmin: user.isAdmin, emailVerified: true, userType: user.userType },
+      { userId: user._id, username: user.username, isAdmin: user.isAdmin, emailVerified: true, userType: user.userType, referredBy: user.referredBy },
       process.env.JWT_SECRET || 'bubble-ads-jwt-secret-key-2024',
       { expiresIn: '24h' }
     );
@@ -826,7 +828,8 @@ router.post('/verify-email', async (req, res) => {
       email: user.email,
       image: user.image,
       isAdmin: user.isAdmin,
-      userType: user.userType
+      userType: user.userType,
+      referredBy: user.referredBy // Include referredBy for affiliate detection
     });
   } catch (error) {
     console.error('Email verification error:', error);
