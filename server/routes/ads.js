@@ -204,17 +204,8 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
     const calculatedAffiliateDiscount = userIsAffiliate ? BASE_LISTING_FEE * AFFILIATE_DISCOUNT_RATE : 0;
     const calculatedListingFee = BASE_LISTING_FEE - calculatedAffiliateDiscount;
 
-    // Validate client-side affiliate status matches server-side (only if provided and user is affiliate)
-    // During transition period, be lenient about mismatches when user is not affiliate on server
-    if (isAffiliate !== undefined && userIsAffiliate && isAffiliate !== userIsAffiliate) {
-      return res.status(400).json({ error: 'Affiliate status mismatch' });
-    }
-
-    // Validate affiliate discount amount (only if user is actually affiliate on server)
-    // Use server-calculated values for pricing regardless of client values
-    if (userIsAffiliate && affiliateDiscount !== undefined && Math.abs(affiliateDiscount - calculatedAffiliateDiscount) > 0.01) {
-      return res.status(400).json({ error: 'Invalid affiliate discount amount' });
-    }
+    // Server always uses its own affiliate calculations for security
+    // No client-side validation needed since server values are authoritative
   
     const ad = new Ad({
       id: `ad-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
