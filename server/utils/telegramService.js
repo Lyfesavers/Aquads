@@ -5,10 +5,6 @@ const FormData = require('form-data');
 const User = require('../models/User');
 const TwitterRaid = require('../models/TwitterRaid');
 
-// Generate a unique instance ID
-const instanceId = Math.random().toString(36).substr(2, 9);
-console.log(`Bot instance ID: ${instanceId}`);
-
 const telegramService = {
   sendRaidNotification: async (raidData) => {
     try {
@@ -16,7 +12,6 @@ const telegramService = {
       const chatId = process.env.TELEGRAM_CHAT_ID;
       
       if (!botToken || !chatId) {
-        console.log('Telegram not configured, skipping notification');
         return false;
       }
 
@@ -36,7 +31,6 @@ const telegramService = {
       
       // Check if video exists
       if (!fs.existsSync(videoPath)) {
-        console.log('RAID.mp4 not found, sending text only');
         return await telegramService.sendTextMessage(botToken, chatId, message);
       }
 
@@ -59,7 +53,6 @@ const telegramService = {
       );
 
       if (response.data.ok) {
-        console.log('Telegram raid notification sent successfully');
         return true;
       } else {
         console.error('Telegram API error:', response.data);
@@ -85,7 +78,6 @@ const telegramService = {
       );
 
       if (response.data.ok) {
-        console.log('Telegram text notification sent successfully');
         return true;
       } else {
         console.error('Telegram API error:', response.data);
@@ -97,26 +89,18 @@ const telegramService = {
     }
   },
 
-  // Bot polling functionality
   startBot: async () => {
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const botDisabled = process.env.TELEGRAM_BOT_DISABLED === 'true';
     
-    console.log('=== TELEGRAM BOT DEBUG ===');
-    console.log('Bot token configured:', botToken ? 'YES' : 'NO');
-    console.log('Bot token length:', botToken ? botToken.length : 0);
-    
-    if (!botToken) {
-      console.log('Telegram bot token not configured, skipping bot startup');
+    if (!botToken || botDisabled) {
       return false;
     }
 
     // Test bot configuration
     try {
       const response = await axios.get(`https://api.telegram.org/bot${botToken}/getMe`);
-      if (response.data.ok) {
-        console.log('Bot info:', response.data.result);
-        console.log('Bot username:', response.data.result.username);
-      } else {
+      if (!response.data.ok) {
         console.error('Bot configuration error:', response.data);
         return false;
       }
@@ -125,135 +109,46 @@ const telegramService = {
       return false;
     }
 
-    // Check current webhook status and clear if needed
+    // Clear any existing webhook and set up new one
     try {
-      const webhookInfo = await axios.get(`https://api.telegram.org/bot${botToken}/getWebhookInfo`);
-      console.log('Current webhook info:', webhookInfo.data.result);
-      
-      if (webhookInfo.data.result.url) {
-        console.log('Webhook found, clearing it...');
-        const deleteResult = await axios.post(`https://api.telegram.org/bot${botToken}/deleteWebhook`);
-        console.log('Webhook delete result:', deleteResult.data);
-      } else {
-        console.log('No webhook configured, good for polling');
-      }
-      
-      // Clear any pending updates to avoid conflicts
-      console.log('Clearing pending updates...');
-      const clearUpdates = await axios.get(`https://api.telegram.org/bot${botToken}/getUpdates`, {
-        params: { offset: -1 }
+      await axios.post(`https://api.telegram.org/bot${botToken}/deleteWebhook`, {
+        drop_pending_updates: true
       });
-      console.log('Pending updates cleared:', clearUpdates.data.ok);
       
-    } catch (error) {
-      console.error('Failed to check/clear webhook:', error.message);
-    }
-
-    console.log('Using polling mode');
-    
-    // Wait a bit longer before starting to avoid conflicts with other instances
-    setTimeout(async () => {
-      telegramService.pollForUpdates();
+      // Set up webhook
+      const webhookUrl = `${process.env.FRONTEND_URL || 'https://aquads.onrender.com'}/api/twitter-raids/telegram-webhook`;
       
-      // Send a startup message to verify bot is working
-      setTimeout(async () => {
+      const setWebhookResult = await axios.post(`https://api.telegram.org/bot${botToken}/setWebhook`, {
+        url: webhookUrl,
+        drop_pending_updates: true,
+        allowed_updates: ['message']
+      });
+      
+      if (setWebhookResult.data.ok) {
+        console.log('Telegram bot webhook configured successfully');
+        
+        // Send startup message
         const chatId = process.env.TELEGRAM_CHAT_ID;
         if (chatId) {
           try {
             await telegramService.sendBotMessage(chatId, 
-              `🤖 **Bot Commands Active!** (${instanceId})\n\nTry these commands:\n• /help - Show commands\n• /start - Get started\n• /raids - View raids`);
-            console.log(`Startup message sent to chat (instance: ${instanceId})`);
+              `🤖 **Bot Commands Active!**\n\nTry these commands:\n• /help - Show commands\n• /start - Get started\n• /raids - View raids`);
           } catch (error) {
             console.error('Failed to send startup message:', error.message);
           }
         }
-      }, 5000);
-    }, 10000); // Wait 10 seconds before starting polling
+      } else {
+        console.error('Failed to set webhook:', setWebhookResult.data.description);
+      }
+      
+    } catch (error) {
+      console.error('Failed to configure webhook:', error.message);
+    }
     
     return true;
   },
 
-    // Poll for updates from Telegram
-  pollForUpdates: async () => {
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    
-    if (!botToken) return;
 
-    console.log(`Bot polling started successfully (instance: ${instanceId})`);
-    let offset = 0;
-    let pollCount = 0;
-    let consecutiveErrors = 0;
-    
-    const poll = async () => {
-      try {
-        pollCount++;
-        // Only log every 10th poll to reduce spam
-        if (pollCount % 10 === 0) {
-          console.log(`Polling attempt #${pollCount}, offset: ${offset} (instance: ${instanceId})`);
-        }
-        
-        const response = await axios.get(`https://api.telegram.org/bot${botToken}/getUpdates`, {
-          params: {
-            offset: offset,
-            timeout: 30, // Longer timeout for better efficiency
-            allowed_updates: ['message']
-          },
-          timeout: 35000 // 35 second axios timeout
-        });
-
-        if (response.data.ok) {
-          consecutiveErrors = 0; // Reset error count on success
-          
-          if (response.data.result.length > 0) {
-            console.log(`Received ${response.data.result.length} updates`);
-            for (const update of response.data.result) {
-              offset = update.update_id + 1;
-              
-              if (update.message && update.message.text) {
-                console.log(`Processing message: ${update.message.text}`);
-                try {
-                  await telegramService.handleCommand(update.message);
-                } catch (commandError) {
-                  console.error('Command handling error:', commandError.message);
-                }
-              }
-            }
-          } else {
-            // Only log "No new updates" occasionally to reduce spam
-            if (pollCount % 50 === 0) {
-              console.log(`No new updates (poll #${pollCount})`);
-            }
-          }
-        } else {
-          console.error('Telegram API error:', response.data);
-        }
-      } catch (error) {
-        consecutiveErrors++;
-        console.error(`Telegram polling error (${consecutiveErrors}) [${instanceId}]:`, error.message);
-        
-        // Handle 409 Conflict errors specifically
-        if (error.response && error.response.status === 409) {
-          console.log(`Conflict detected - another instance may be running. Backing off... (${instanceId})`);
-          setTimeout(poll, 30000); // Wait 30 seconds for 409 errors
-          return;
-        }
-        
-        // Exponential backoff for other errors
-        const backoffDelay = Math.min(10000 * Math.pow(2, consecutiveErrors - 1), 60000);
-        console.log(`Backing off for ${backoffDelay}ms after ${consecutiveErrors} consecutive errors`);
-        setTimeout(poll, backoffDelay);
-        return;
-      }
-      
-      // Continue polling with reasonable interval
-      setTimeout(poll, 2000); // Increased to 2 seconds to be safer
-    };
-
-    // Add a small random delay before starting to prevent multiple instances from starting simultaneously
-    const startDelay = Math.random() * 5000;
-    console.log(`Starting polling in ${Math.round(startDelay)}ms (instance: ${instanceId})...`);
-    setTimeout(poll, startDelay);
-  },
 
   // Handle incoming commands
   handleCommand: async (message) => {
@@ -262,13 +157,6 @@ const telegramService = {
     const userId = message.from.id;
     const username = message.from.username;
     const chatType = message.chat.type;
-
-    console.log(`=== COMMAND RECEIVED ===`);
-    console.log(`Chat ID: ${chatId}`);
-    console.log(`Chat Type: ${chatType}`);
-    console.log(`User ID: ${userId}`);
-    console.log(`Username: ${username}`);
-    console.log(`Message: ${text}`);
 
     // Handle commands in both private and group chats
     if (text.startsWith('/start')) {
@@ -579,36 +467,7 @@ Your submission has been recorded and will be reviewed by our team. Points will 
     }
   },
 
-  // Manual test function to check bot functionality
-  testBotManually: async () => {
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    
-    if (!botToken) {
-      console.log('No bot token configured');
-      return;
-    }
 
-    try {
-      // Test 1: Get bot info
-      const botInfo = await axios.get(`https://api.telegram.org/bot${botToken}/getMe`);
-      console.log('=== BOT TEST RESULTS ===');
-      console.log('Bot info:', botInfo.data.result);
-      
-      // Test 2: Check webhook status
-      const webhookInfo = await axios.get(`https://api.telegram.org/bot${botToken}/getWebhookInfo`);
-      console.log('Webhook info:', webhookInfo.data.result);
-      
-      // Test 3: Get recent updates
-      const updates = await axios.get(`https://api.telegram.org/bot${botToken}/getUpdates`, {
-        params: { limit: 5 }
-      });
-      console.log('Recent updates:', updates.data.result);
-      
-      console.log('=== END BOT TEST ===');
-    } catch (error) {
-      console.error('Bot test failed:', error.message);
-    }
-  }
 };
 
 module.exports = telegramService; 

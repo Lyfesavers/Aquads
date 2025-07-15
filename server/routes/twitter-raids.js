@@ -12,6 +12,23 @@ const mongoose = require('mongoose');
 const Notification = require('../models/Notification');
 const telegramService = require('../utils/telegramService');
 
+// Webhook endpoint for receiving Telegram bot updates
+router.post('/telegram-webhook', async (req, res) => {
+  try {
+    const update = req.body;
+    
+    if (update.message && update.message.text) {
+      await telegramService.handleCommand(update.message);
+    }
+    
+    res.json({ ok: true });
+    
+  } catch (error) {
+    console.error('Webhook processing error:', error);
+    res.status(500).json({ error: 'Failed to process webhook' });
+  }
+});
+
 // Use the imported module function
 const awardSocialMediaPoints = pointsModule.awardSocialMediaPoints;
 
