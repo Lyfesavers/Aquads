@@ -68,13 +68,13 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         
         const ads = await response.json();
         
-        // Filter out pending and rejected ads, then sort by bumped status and bullish votes
+        // Filter out pending and rejected ads to match main bubble display exactly
         const validAds = ads.filter(ad => 
           ad.status !== 'pending' && 
           ad.status !== 'rejected' &&
           ad.pairAddress && 
-          ad.pairAddress.trim() !== '' &&
-          ad.isBumped === true  // Only include bumped tokens in trending
+          ad.pairAddress.trim() !== ''
+          // Include both bumped and non-bumped tokens to match main bubble ranking
         );
         
         // Sort using the same logic as main bubble display: bumped first, then by bullish votes
