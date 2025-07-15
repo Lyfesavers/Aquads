@@ -190,7 +190,7 @@ Hi ${username ? `@${username}` : 'there'}! I can help you with Twitter raids.
 /complete RAID_ID @twitter_username TWEET_URL - Complete a raid
 /help - Show this help message
 
-First, link your account with: \`/link your_aquads_username\``;
+First, link your account with: /link your_aquads_username`;
 
     await telegramService.sendBotMessage(chatId, message);
   },
@@ -205,9 +205,9 @@ First, link your account with: \`/link your_aquads_username\``;
 ❓ **/help** - Show this help message
 
 **Example Usage:**
-\`/link myusername\`
-\`/raids\`
-\`/complete 123abc @mytwitter https://twitter.com/user/status/123\`
+/link myusername
+/raids
+/complete 123abc @mytwitter https://twitter.com/user/status/123
 
 **💡 Tips:**
 • Link your account first before using other commands
@@ -215,9 +215,9 @@ First, link your account with: \`/link your_aquads_username\``;
 • Bot will send you confirmations for successful actions
 
 **🚀 Getting Started:**
-1. Link your account: \`/link your_username\`
-2. View raids: \`/raids\`
-3. Complete raids: \`/complete [raid_id] [twitter] [tweet_url]\``;
+1. Link your account: /link your_username
+2. View raids: /raids
+3. Complete raids: /complete RAID_ID @twitter TWEET_URL`;
 
     await telegramService.sendBotMessage(chatId, message);
   },
@@ -228,7 +228,7 @@ First, link your account with: \`/link your_aquads_username\``;
     
     if (parts.length < 2) {
       await telegramService.sendBotMessage(chatId, 
-        "❌ Please provide your Aquads username: `/link your_username`");
+        "❌ Please provide your Aquads username: /link your_username");
       return;
     }
 
@@ -312,14 +312,14 @@ You can now use:
         message += `💰 Reward: ${raid.points} points\n`;
         message += `🎯 Task: ${raid.description}\n`;
         message += `🔗 Tweet: ${raid.tweetUrl}\n`;
-        message += `🆔 ID: \`${raid._id}\`\n`;
+        message += `🆔 ID: ${raid._id}\n`;
         message += `📊 Status: ${status}\n\n`;
       }
 
       message += "💡 **To complete a raid:**\n";
-      message += "`/complete RAID_ID @twitter_username TWEET_URL`\n\n";
+      message += "/complete RAID_ID @twitter_username TWEET_URL\n\n";
       message += "**Example:**\n";
-      message += "`/complete 123abc @mytwitter https://twitter.com/user/status/123`\n\n";
+      message += "/complete 123abc @mytwitter https://twitter.com/user/status/123\n\n";
       message += "⏰ Raids expire after 48 hours";
 
       await telegramService.sendBotMessage(chatId, message);
@@ -337,7 +337,7 @@ You can now use:
     
     if (parts.length < 4) {
       await telegramService.sendBotMessage(chatId, 
-        "❌ Usage: `/complete RAID_ID @twitter_username TWEET_URL`\n\nExample: `/complete 123abc @mytwitter https://twitter.com/user/status/123`");
+        "❌ Usage: /complete RAID_ID @twitter_username TWEET_URL\n\nExample: /complete 123abc @mytwitter https://twitter.com/user/status/123");
       return;
     }
 
@@ -348,7 +348,7 @@ You can now use:
     // Validate ObjectId format
     if (!raidId || !/^[0-9a-fA-F]{24}$/.test(raidId)) {
       await telegramService.sendBotMessage(chatId, 
-        "❌ Invalid raid ID format. Use `/raids` to get the correct raid ID.");
+        "❌ Invalid raid ID format. Use /raids to get the correct raid ID.");
       return;
     }
 

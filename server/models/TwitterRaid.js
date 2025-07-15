@@ -79,7 +79,7 @@ const twitterRaidSchema = new Schema({
     verificationCode: String,
     verificationMethod: {
       type: String,
-      enum: ['automatic', 'manual', 'tweet_embed', 'client_side', 'iframe_interaction'],
+      enum: ['automatic', 'manual', 'tweet_embed', 'client_side', 'iframe_interaction', 'telegram_bot'],
       default: 'automatic'
     },
     verified: {
