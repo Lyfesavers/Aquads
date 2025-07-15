@@ -16,13 +16,13 @@ const telegramService = {
       }
 
       // Construct the message text
-      const message = `🚀 **New Twitter Raid Available!**
+      const message = `🚀 New Twitter Raid Available!
 
-💰 **Reward:** ${raidData.points || 50} points
-🎯 **Task:** Like, Retweet & Comment
+💰 Reward: ${raidData.points || 50} points
+🎯 Task: Like, Retweet & Comment
 
-🔗 **Tweet:** ${raidData.tweetUrl}
-▶️ **Complete:** ${process.env.FRONTEND_URL || 'https://aquads.xyz'}
+🔗 Tweet: ${raidData.tweetUrl}
+▶️ Complete: ${process.env.FRONTEND_URL || 'https://aquads.xyz'}
 
 ⏰ Available for 48 hours!`;
 
@@ -39,7 +39,6 @@ const telegramService = {
       formData.append('chat_id', chatId);
       formData.append('video', fs.createReadStream(videoPath));
       formData.append('caption', message);
-      formData.append('parse_mode', 'Markdown');
 
       const response = await axios.post(
         `https://api.telegram.org/bot${botToken}/sendVideo`,
@@ -73,7 +72,6 @@ const telegramService = {
         {
           chat_id: chatId,
           text: message,
-          parse_mode: 'Markdown',
         }
       );
 
@@ -465,7 +463,6 @@ Your submission has been recorded and will be reviewed by our team. Points will 
         {
           chat_id: chatId,
           text: message,
-          parse_mode: 'Markdown',
         }
       );
 
