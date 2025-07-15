@@ -26,6 +26,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   const [selectedChain, setSelectedChain] = useState('ether');
   const [showEmbedCode, setShowEmbedCode] = useState(false);
   const [popularTokens, setPopularTokens] = useState(FALLBACK_TOKEN_EXAMPLES);
+  const [isSwapCollapsed, setIsSwapCollapsed] = useState(false);
 
   const tradingViewRef = useRef(null);
   const dexScreenerRef = useRef(null);
@@ -595,18 +596,54 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       {/* Main Trading Interface - Original Setup */}
       <div className="trading-interface with-charts">
         {/* Left Side - Swap Widget */}
-        <div className="swap-section">
-          <div className="lifi-widget">
-            <LiFiWidget integrator="aquaswap" config={widgetConfig} />
-          </div>
-          <div className="swap-footer">
-            <p>✨ Cross-chain swaps • 38+ blockchains • Best rates</p>
-          </div>
-          
-          {/* Banner Display - smaller version below swap for desktop/tablet only */}
-          <div className="banner-below-swap">
-            <BannerDisplay />
-          </div>
+        <div className={`swap-section ${isSwapCollapsed ? 'collapsed' : ''}`}>
+          {/* Collapse Toggle Button */}
+          <button 
+            className="swap-collapse-toggle"
+            onClick={() => setIsSwapCollapsed(!isSwapCollapsed)}
+            title={isSwapCollapsed ? 'Expand Swap Widget' : 'Collapse Swap Widget'}
+          >
+            {isSwapCollapsed ? '→' : '←'}
+            <span className="collapse-label">
+              {isSwapCollapsed ? 'Expand Swap' : 'Collapse'}
+            </span>
+          </button>
+
+          {/* Collapsed View - Minimal Interface */}
+          {isSwapCollapsed && (
+            <div className="swap-collapsed-content">
+              <div className="collapsed-title">
+                <img 
+                  src="/AquaSwap.svg" 
+                  alt="AquaSwap" 
+                  className="collapsed-logo" 
+                  width="16" 
+                  height="16"
+                />
+                <span>Swap</span>
+              </div>
+              <p className="collapsed-description">
+                Click expand to trade across 38+ blockchains
+              </p>
+            </div>
+          )}
+
+          {/* Expanded View - Full Interface */}
+          {!isSwapCollapsed && (
+            <>
+              <div className="lifi-widget">
+                <LiFiWidget integrator="aquaswap" config={widgetConfig} />
+              </div>
+              <div className="swap-footer">
+                <p>✨ Cross-chain swaps • 38+ blockchains • Best rates</p>
+              </div>
+              
+              {/* Banner Display - smaller version below swap for desktop/tablet only */}
+              <div className="banner-below-swap">
+                <BannerDisplay />
+              </div>
+            </>
+          )}
         </div>
 
         {/* Right Side - Charts */}

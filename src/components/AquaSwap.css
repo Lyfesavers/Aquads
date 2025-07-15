@@ -167,6 +167,130 @@
   overflow-y: auto;
   height: 100%;
   min-height: 600px;
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Collapsed state for swap section */
+.swap-section.collapsed {
+  flex: 0 0 60px;
+  padding: 12px 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-right: 2px solid rgba(0, 212, 255, 0.3);
+}
+
+/* Collapse toggle button */
+.swap-collapse-toggle {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  color: #00d4ff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.8rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 10;
+  backdrop-filter: blur(10px);
+  min-width: 50px;
+  justify-content: center;
+}
+
+.swap-section.collapsed .swap-collapse-toggle {
+  position: relative;
+  top: 0;
+  right: 0;
+  width: 100%;
+  margin-bottom: 12px;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 1.2rem;
+  padding: 8px;
+  min-height: 50px;
+}
+
+.swap-collapse-toggle:hover {
+  background: rgba(0, 212, 255, 0.2);
+  border-color: #00d4ff;
+  transform: scale(1.05);
+}
+
+.collapse-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.swap-section.collapsed .collapse-label {
+  font-size: 0.7rem;
+  text-align: center;
+}
+
+/* Collapsed content styles */
+.swap-collapsed-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: 12px 4px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.collapsed-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.collapsed-logo {
+  filter: drop-shadow(0 0 4px rgba(0, 212, 255, 0.3));
+  opacity: 0.8;
+}
+
+.collapsed-description {
+  font-size: 0.65rem;
+  color: #a0a0a0;
+  line-height: 1.3;
+  margin: 0;
+  text-align: center;
+  max-width: 100%;
+  word-wrap: break-word;
+}
+
+/* Animate widget content */
+.lifi-widget {
+  margin: 0;
+  padding: 0;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.swap-section.collapsed .lifi-widget {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Make sure expanded content is visible */
+.swap-section:not(.collapsed) .swap-collapsed-content {
+  display: none;
+}
+
+.swap-section.collapsed .banner-below-swap,
+.swap-section.collapsed .swap-footer {
+  display: none;
 }
 
 /* Balanced swap width reduction - keeps swap usable while maximizing chart space */
@@ -174,17 +298,29 @@
   .swap-section {
     flex: 0 0 320px; /* Reduce for Full HD - gives chart ~1550px */
   }
+  
+  .swap-section.collapsed {
+    flex: 0 0 60px; /* Maintain collapsed size */
+  }
 }
 
 @media (max-width: 1600px) {
   .swap-section {
     flex: 0 0 300px; /* Reduce for large laptops - gives chart ~1250px */
   }
+  
+  .swap-section.collapsed {
+    flex: 0 0 60px; /* Maintain collapsed size */
+  }
 }
 
 @media (max-width: 1440px) {
   .swap-section {
     flex: 0 0 290px; /* Reduce for standard laptops - gives chart ~1100px */
+  }
+  
+  .swap-section.collapsed {
+    flex: 0 0 60px; /* Maintain collapsed size */
   }
 }
 
@@ -193,6 +329,10 @@
     flex: 0 0 320px; /* More room for HD laptops - gives chart ~996px */
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE/Edge */
+  }
+  
+  .swap-section.collapsed {
+    flex: 0 0 60px; /* Maintain collapsed size */
   }
   
   .swap-section::-webkit-scrollbar {
@@ -637,6 +777,13 @@
     min-height: auto;
   }
   
+  .swap-section.collapsed {
+    flex: none;
+    height: auto;
+    min-height: 80px;
+    padding: 8px 12px;
+  }
+  
   .chart-section {
     min-height: 500px;
     min-width: 0; /* Reset min-width on smaller screens to prevent horizontal scroll */
@@ -671,6 +818,21 @@
     min-width: auto;
     height: 28px;
   }
+  
+  /* Mobile collapse button adjustments */
+  .swap-collapse-toggle {
+    position: relative;
+    top: 0;
+    right: 0;
+    width: 100%;
+    margin-bottom: 8px;
+    justify-content: center;
+  }
+  
+  .swap-section.collapsed .swap-collapse-toggle {
+    margin-bottom: 8px;
+    min-height: 40px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -702,6 +864,11 @@
   
   .swap-section {
     padding: 8px 10px 12px 10px;
+  }
+  
+  .swap-section.collapsed {
+    padding: 6px 8px;
+    min-height: 70px;
   }
   
   .chart-header {
@@ -745,6 +912,22 @@
   
   .popular-tokens-scroll {
     gap: 4px;
+  }
+  
+  /* Mobile-specific collapse styles */
+  .swap-collapse-toggle {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    min-height: 36px;
+  }
+  
+  .swap-section.collapsed .swap-collapse-toggle {
+    min-height: 36px;
+    font-size: 1rem;
+  }
+  
+  .collapsed-description {
+    font-size: 0.6rem;
   }
 }
 
