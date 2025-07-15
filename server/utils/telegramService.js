@@ -185,12 +185,12 @@ const telegramService = {
 Hi ${username ? `@${username}` : 'there'}! I can help you with Twitter raids.
 
 **Available Commands:**
-/link [aquads_username] - Link your Telegram to Aquads account
+/link USERNAME - Link your Telegram to Aquads account
 /raids - View available raids
-/complete [raid_id] [twitter_username] [tweet_url] - Complete a raid
+/complete RAID_ID @twitter_username TWEET_URL - Complete a raid
 /help - Show this help message
 
-First, link your account with: /link your_aquads_username`;
+First, link your account with: \`/link your_aquads_username\``;
 
     await telegramService.sendBotMessage(chatId, message);
   },
@@ -199,9 +199,9 @@ First, link your account with: /link your_aquads_username`;
   handleHelpCommand: async (chatId) => {
     const message = `📋 **Aquads Bot Commands:**
 
-🔗 **/link [aquads_username]** - Link your Telegram to Aquads account
+🔗 **/link USERNAME** - Link your Telegram to Aquads account
 📋 **/raids** - View available Twitter raids
-✅ **/complete [raid_id] [twitter_username] [tweet_url]** - Complete a raid
+✅ **/complete RAID_ID @twitter_username TWEET_URL** - Complete a raid
 ❓ **/help** - Show this help message
 
 **Example Usage:**
@@ -228,7 +228,7 @@ First, link your account with: /link your_aquads_username`;
     
     if (parts.length < 2) {
       await telegramService.sendBotMessage(chatId, 
-        "❌ Please provide your Aquads username: /link your_username");
+        "❌ Please provide your Aquads username: `/link your_username`");
       return;
     }
 
@@ -317,7 +317,9 @@ You can now use:
       }
 
       message += "💡 **To complete a raid:**\n";
-      message += "`/complete [raid_id] [twitter_username] [tweet_url]`\n\n";
+      message += "`/complete RAID_ID @twitter_username TWEET_URL`\n\n";
+      message += "**Example:**\n";
+      message += "`/complete 123abc @mytwitter https://twitter.com/user/status/123`\n\n";
       message += "⏰ Raids expire after 48 hours";
 
       await telegramService.sendBotMessage(chatId, message);
@@ -335,13 +337,20 @@ You can now use:
     
     if (parts.length < 4) {
       await telegramService.sendBotMessage(chatId, 
-        "❌ Usage: /complete [raid_id] [twitter_username] [tweet_url]");
+        "❌ Usage: `/complete RAID_ID @twitter_username TWEET_URL`\n\nExample: `/complete 123abc @mytwitter https://twitter.com/user/status/123`");
       return;
     }
 
-    const raidId = parts[1];
+    const raidId = parts[1].replace(/[\[\]]/g, ''); // Remove square brackets if present
     const twitterUsername = parts[2].replace('@', ''); // Remove @ if present
     const tweetUrl = parts[3];
+
+    // Validate ObjectId format
+    if (!raidId || !/^[0-9a-fA-F]{24}$/.test(raidId)) {
+      await telegramService.sendBotMessage(chatId, 
+        "❌ Invalid raid ID format. Use `/raids` to get the correct raid ID.");
+      return;
+    }
 
     try {
       // Check if user is linked
