@@ -119,7 +119,7 @@ const telegramService = {
       const setWebhookResult = await axios.post(`https://api.telegram.org/bot${botToken}/setWebhook`, {
         url: webhookUrl,
         drop_pending_updates: true,
-        allowed_updates: ['message']
+        allowed_updates: ['message', 'callback_query']
       });
       
       if (setWebhookResult.data.ok) {
@@ -156,6 +156,15 @@ const telegramService = {
     const username = message.from.username;
     const chatType = message.chat.type;
 
+    // Check if user is in conversation state
+    const conversationState = telegramService.getConversationState(userId);
+    
+    if (conversationState && conversationState.action === 'waiting_username' && !text.startsWith('/')) {
+      // User is providing Twitter username
+      await telegramService.handleUsernameInput(chatId, userId, text, conversationState);
+      return;
+    }
+
     // Handle commands in both private and group chats
     if (text.startsWith('/start')) {
       await telegramService.handleStartCommand(chatId, userId, username);
@@ -167,11 +176,24 @@ const telegramService = {
       await telegramService.handleLinkCommand(chatId, userId, text);
     } else if (text.startsWith('/help')) {
       await telegramService.handleHelpCommand(chatId);
+    } else if (text.startsWith('/cancel')) {
+      // Cancel any ongoing conversation
+      if (conversationState) {
+        telegramService.clearConversationState(userId);
+        await telegramService.sendBotMessage(chatId, "❌ Operation cancelled.");
+      } else {
+        await telegramService.sendBotMessage(chatId, "No active operation to cancel.");
+      }
     } else {
       // Only respond to unknown commands in private chats or if mentioned in groups
       if (chatType === 'private' || text.includes('@')) {
-        await telegramService.sendBotMessage(chatId, 
-          "❓ Unknown command. Use /help to see available commands.");
+        if (conversationState) {
+          await telegramService.sendBotMessage(chatId, 
+            "📝 Please provide your Twitter username, or type /cancel to abort.");
+        } else {
+          await telegramService.sendBotMessage(chatId, 
+            "❓ Unknown command. Use /help to see available commands.");
+        }
       }
     }
   },
@@ -296,8 +318,7 @@ You can now use:
         return;
       }
 
-      let message = "🚀 Available Twitter Raids:\n\n";
-      
+      // Send each raid as separate message with button
       for (const raid of activeRaids) {
         // Check if user already completed this raid
         const userCompleted = raid.completions.some(
@@ -306,21 +327,34 @@ You can now use:
 
         const status = userCompleted ? "✅ Completed" : "⏳ Available";
         
-        message += `${raid.title}\n`;
+        let message = `🚀 ${raid.title}\n\n`;
         message += `💰 Reward: ${raid.points} points\n`;
         message += `🎯 Task: ${raid.description}\n`;
         message += `🔗 Tweet: ${raid.tweetUrl}\n`;
-        message += `🆔 ID: ${raid._id}\n`;
-        message += `📊 Status: ${status}\n\n`;
+        message += `📊 Status: ${status}`;
+
+        // Add button if not completed
+        let keyboard = null;
+        if (!userCompleted) {
+          keyboard = {
+            inline_keyboard: [[
+              {
+                text: "🚀 Complete Raid",
+                callback_data: JSON.stringify({
+                  action: "complete",
+                  raidId: raid._id.toString()
+                })
+              }
+            ]]
+          };
+        }
+
+        await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
       }
 
-      message += "💡 To complete a raid:\n";
-      message += "/complete RAID_ID @twitter_username TWEET_URL\n\n";
-      message += "Example:\n";
-      message += "/complete 123abc @mytwitter https://twitter.com/user/status/123\n\n";
-      message += "⏰ Raids expire after 48 hours";
-
-      await telegramService.sendBotMessage(chatId, message);
+      // Send summary
+      await telegramService.sendBotMessage(chatId, 
+        `📊 ${activeRaids.length} raids shown above\n💡 Click "🚀 Complete Raid" or use:\n/complete RAID_ID @twitter_username TWEET_URL\n⏰ Raids expire after 48 hours`);
 
     } catch (error) {
       console.error('Raids command error:', error);
@@ -472,6 +506,218 @@ Your submission has been recorded and will be reviewed by our team. Points will 
       return false;
     }
   },
+
+  // Send message with inline keyboard
+  sendBotMessageWithKeyboard: async (chatId, message, keyboard) => {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    
+    if (!botToken) return false;
+
+    try {
+      const payload = {
+        chat_id: chatId,
+        text: message,
+      };
+
+      if (keyboard) {
+        payload.reply_markup = keyboard;
+      }
+
+      const response = await axios.post(
+        `https://api.telegram.org/bot${botToken}/sendMessage`,
+        payload
+      );
+
+      return response.data.ok;
+    } catch (error) {
+      console.error('Bot keyboard message error:', error.message);
+      return false;
+    }
+  },
+
+  // Simple conversation state
+  conversationStates: new Map(),
+
+  setConversationState: (userId, state) => {
+    telegramService.conversationStates.set(userId.toString(), state);
+  },
+
+  getConversationState: (userId) => {
+    return telegramService.conversationStates.get(userId.toString());
+  },
+
+  clearConversationState: (userId) => {
+    telegramService.conversationStates.delete(userId.toString());
+  },
+
+  // Handle callback queries from buttons
+  handleCallbackQuery: async (callbackQuery) => {
+    const chatId = callbackQuery.message.chat.id;
+    const userId = callbackQuery.from.id;
+    const queryId = callbackQuery.id;
+
+    try {
+      // Parse callback data
+      const callbackData = JSON.parse(callbackQuery.data);
+      
+      // Answer the callback query
+      await telegramService.answerCallbackQuery(queryId);
+
+      if (callbackData.action === 'complete') {
+        await telegramService.startRaidCompletion(chatId, userId, callbackData.raidId);
+      }
+
+    } catch (error) {
+      console.error('Callback query error:', error);
+      await telegramService.answerCallbackQuery(queryId, "❌ Error processing request");
+    }
+  },
+
+  // Answer callback query
+  answerCallbackQuery: async (queryId, text = '') => {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    
+    if (!botToken) return false;
+
+    try {
+      await axios.post(
+        `https://api.telegram.org/bot${botToken}/answerCallbackQuery`,
+        {
+          callback_query_id: queryId,
+          text: text,
+        }
+      );
+      return true;
+    } catch (error) {
+      console.error('Answer callback query error:', error.message);
+      return false;
+    }
+  },
+
+  // Start raid completion flow
+  startRaidCompletion: async (chatId, telegramUserId, raidId) => {
+    try {
+      // Check if user is linked
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      
+      if (!user) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Please link your account first: /link your_username");
+        return;
+      }
+
+      // Find the raid
+      const raid = await TwitterRaid.findById(raidId);
+      
+      if (!raid || !raid.active) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Raid not found or no longer active.");
+        return;
+      }
+
+      // Check if already completed
+      const userCompleted = raid.completions.some(
+        completion => completion.userId && completion.userId.toString() === user._id.toString()
+      );
+
+      if (userCompleted) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ You have already completed this raid!");
+        return;
+      }
+
+      // Set conversation state
+      telegramService.setConversationState(telegramUserId, {
+        action: 'waiting_username',
+        raidId: raidId,
+        tweetUrl: raid.tweetUrl,
+        raidTitle: raid.title,
+        raidPoints: raid.points
+      });
+
+      // Ask for username
+      await telegramService.sendBotMessage(chatId, 
+        `🚀 Completing: ${raid.title}\n\n📝 Please enter your Twitter username (without @):\n\nExample: myusername`);
+
+    } catch (error) {
+      console.error('Start completion error:', error);
+      await telegramService.sendBotMessage(chatId, 
+        "❌ Error starting completion. Please try again later.");
+    }
+  },
+
+  // Handle username input
+  handleUsernameInput: async (chatId, telegramUserId, username, state) => {
+    try {
+      // Clear state
+      telegramService.clearConversationState(telegramUserId);
+
+      // Clean username
+      const twitterUsername = username.trim().replace('@', '');
+      const usernameRegex = /^[a-zA-Z0-9_]{1,15}$/;
+      
+      if (!usernameRegex.test(twitterUsername)) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Invalid Twitter username. Use /raids to try again.");
+        return;
+      }
+
+      // Get user and raid
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      const raid = await TwitterRaid.findById(state.raidId);
+      
+      if (!user || !raid) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Error finding user or raid. Please try again.");
+        return;
+      }
+
+      // Extract tweet ID
+      const tweetIdMatch = state.tweetUrl.match(/\/status\/(\d+)/);
+      if (!tweetIdMatch) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Invalid tweet URL. Please contact support.");
+        return;
+      }
+
+      // Create completion record
+      const completion = {
+        userId: user._id,
+        twitterUsername: twitterUsername,
+        tweetUrl: state.tweetUrl,
+        tweetId: tweetIdMatch[1],
+        verificationCode: 'aquads.xyz',
+        verificationMethod: 'manual',
+        verified: true,
+        approvalStatus: 'pending',
+        approvedBy: null,
+        approvedAt: null,
+        rejectionReason: null,
+        pointsAwarded: false,
+        ipAddress: 'telegram_button',
+        verificationNote: 'Submitted via Telegram bot',
+        iframeVerified: false,
+        iframeInteractions: 0,
+        completedAt: new Date()
+      };
+
+      // Save completion
+      raid.completions.push(completion);
+      await raid.save();
+
+      // Update user activity
+      await User.findByIdAndUpdate(user._id, { lastActivity: new Date() });
+
+      // Success message
+      await telegramService.sendBotMessage(chatId, 
+        `✅ Raid submitted successfully!\n\n📝 Twitter: @${twitterUsername}\n💰 Reward: ${state.raidPoints} points\n⏳ Status: Pending admin approval\n\nUse /raids to see more!`);
+
+    } catch (error) {
+      console.error('Username input error:', error);
+      await telegramService.sendBotMessage(chatId, 
+        "❌ Error processing submission. Please try again.");
+    }
+  }
 
 
 };
