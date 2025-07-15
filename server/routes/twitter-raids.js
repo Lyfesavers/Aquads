@@ -653,6 +653,20 @@ router.post('/:raidId/completions/:completionId/reject', auth, async (req, res) 
 });
 
 // Admin endpoint to get all pending completions
+// Test bot functionality (admin only)
+router.get('/test-bot', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
+    await telegramService.testBotManually();
+    res.json({ success: true, message: 'Bot test completed, check logs for results' });
+  } catch (error) {
+    res.status(500).json({ error: 'Bot test failed' });
+  }
+});
+
 router.get('/completions/pending', auth, async (req, res) => {
   try {
     if (!req.user.isAdmin) {

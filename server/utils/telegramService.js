@@ -121,16 +121,39 @@ const telegramService = {
       return false;
     }
 
-    // Clear any existing webhook (webhooks interfere with polling)
+    // Check current webhook status and clear if needed
     try {
-      await axios.get(`https://api.telegram.org/bot${botToken}/deleteWebhook`);
-      console.log('Webhook cleared for polling');
+      const webhookInfo = await axios.get(`https://api.telegram.org/bot${botToken}/getWebhookInfo`);
+      console.log('Current webhook info:', webhookInfo.data.result);
+      
+      if (webhookInfo.data.result.url) {
+        console.log('Webhook found, clearing it...');
+        const deleteResult = await axios.post(`https://api.telegram.org/bot${botToken}/deleteWebhook`);
+        console.log('Webhook delete result:', deleteResult.data);
+      } else {
+        console.log('No webhook configured, good for polling');
+      }
     } catch (error) {
-      console.error('Failed to clear webhook:', error.message);
+      console.error('Failed to check/clear webhook:', error.message);
     }
 
     console.log('Starting Telegram bot polling...');
     telegramService.pollForUpdates();
+    
+    // Send a startup message to verify bot is working
+    setTimeout(async () => {
+      const chatId = process.env.TELEGRAM_CHAT_ID;
+      if (chatId) {
+        try {
+          await telegramService.sendBotMessage(chatId, 
+            '🤖 **Bot Commands Active!**\n\nTry these commands:\n• /help - Show commands\n• /start - Get started\n• /raids - View raids');
+          console.log('Startup message sent to chat');
+        } catch (error) {
+          console.error('Failed to send startup message:', error.message);
+        }
+      }
+    }, 3000);
+    
     return true;
   },
 
@@ -147,15 +170,18 @@ const telegramService = {
     const poll = async () => {
       try {
         pollCount++;
-        console.log(`Polling attempt #${pollCount}, offset: ${offset}`);
+        // Only log every 10th poll to reduce spam
+        if (pollCount % 10 === 0) {
+          console.log(`Polling attempt #${pollCount}, offset: ${offset}`);
+        }
         
         const response = await axios.get(`https://api.telegram.org/bot${botToken}/getUpdates`, {
           params: {
             offset: offset,
-            timeout: 10, // Reduced timeout for better reliability
+            timeout: 30, // Longer timeout for better efficiency
             allowed_updates: ['message']
           },
-          timeout: 15000 // 15 second axios timeout
+          timeout: 35000 // 35 second axios timeout
         });
 
         if (response.data.ok) {
@@ -174,20 +200,23 @@ const telegramService = {
               }
             }
           } else {
-            console.log('No new updates');
+            // Only log "No new updates" occasionally to reduce spam
+            if (pollCount % 50 === 0) {
+              console.log(`No new updates (poll #${pollCount})`);
+            }
           }
         } else {
           console.error('Telegram API error:', response.data);
         }
-      } catch (error) {
-        console.error('Telegram polling error:', error.message);
-        // Wait longer before retrying on error
-        setTimeout(poll, 5000);
-        return;
-      }
-      
-      // Continue polling with shorter interval
-      setTimeout(poll, 100);
+              } catch (error) {
+          console.error('Telegram polling error:', error.message);
+          // Wait longer before retrying on error
+          setTimeout(poll, 10000);
+          return;
+        }
+        
+        // Continue polling with reasonable interval (1 second)
+        setTimeout(poll, 1000);
     };
 
     poll();
@@ -514,6 +543,37 @@ Your submission has been recorded and will be reviewed by our team. Points will 
     } catch (error) {
       console.error('Bot message error:', error.message);
       return false;
+    }
+  },
+
+  // Manual test function to check bot functionality
+  testBotManually: async () => {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    
+    if (!botToken) {
+      console.log('No bot token configured');
+      return;
+    }
+
+    try {
+      // Test 1: Get bot info
+      const botInfo = await axios.get(`https://api.telegram.org/bot${botToken}/getMe`);
+      console.log('=== BOT TEST RESULTS ===');
+      console.log('Bot info:', botInfo.data.result);
+      
+      // Test 2: Check webhook status
+      const webhookInfo = await axios.get(`https://api.telegram.org/bot${botToken}/getWebhookInfo`);
+      console.log('Webhook info:', webhookInfo.data.result);
+      
+      // Test 3: Get recent updates
+      const updates = await axios.get(`https://api.telegram.org/bot${botToken}/getUpdates`, {
+        params: { limit: 5 }
+      });
+      console.log('Recent updates:', updates.data.result);
+      
+      console.log('=== END BOT TEST ===');
+    } catch (error) {
+      console.error('Bot test failed:', error.message);
     }
   }
 };
