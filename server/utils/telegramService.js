@@ -97,9 +97,36 @@ const telegramService = {
   startBot: async () => {
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     
+    console.log('=== TELEGRAM BOT DEBUG ===');
+    console.log('Bot token configured:', botToken ? 'YES' : 'NO');
+    console.log('Bot token length:', botToken ? botToken.length : 0);
+    
     if (!botToken) {
       console.log('Telegram bot token not configured, skipping bot startup');
       return false;
+    }
+
+    // Test bot configuration
+    try {
+      const response = await axios.get(`https://api.telegram.org/bot${botToken}/getMe`);
+      if (response.data.ok) {
+        console.log('Bot info:', response.data.result);
+        console.log('Bot username:', response.data.result.username);
+      } else {
+        console.error('Bot configuration error:', response.data);
+        return false;
+      }
+    } catch (error) {
+      console.error('Bot test failed:', error.message);
+      return false;
+    }
+
+    // Clear any existing webhook (webhooks interfere with polling)
+    try {
+      await axios.get(`https://api.telegram.org/bot${botToken}/deleteWebhook`);
+      console.log('Webhook cleared for polling');
+    } catch (error) {
+      console.error('Failed to clear webhook:', error.message);
     }
 
     console.log('Starting Telegram bot polling...');
@@ -113,34 +140,54 @@ const telegramService = {
     
     if (!botToken) return;
 
+    console.log('Bot polling started successfully');
     let offset = 0;
+    let pollCount = 0;
     
     const poll = async () => {
       try {
+        pollCount++;
+        console.log(`Polling attempt #${pollCount}, offset: ${offset}`);
+        
         const response = await axios.get(`https://api.telegram.org/bot${botToken}/getUpdates`, {
           params: {
             offset: offset,
-            timeout: 30,
+            timeout: 10, // Reduced timeout for better reliability
             allowed_updates: ['message']
-          }
+          },
+          timeout: 15000 // 15 second axios timeout
         });
 
-        if (response.data.ok && response.data.result.length > 0) {
-          for (const update of response.data.result) {
-            offset = update.update_id + 1;
-            
-            if (update.message && update.message.text) {
-              await telegramService.handleCommand(update.message);
+        if (response.data.ok) {
+          if (response.data.result.length > 0) {
+            console.log(`Received ${response.data.result.length} updates`);
+            for (const update of response.data.result) {
+              offset = update.update_id + 1;
+              
+              if (update.message && update.message.text) {
+                console.log(`Processing message: ${update.message.text}`);
+                try {
+                  await telegramService.handleCommand(update.message);
+                } catch (commandError) {
+                  console.error('Command handling error:', commandError.message);
+                }
+              }
             }
+          } else {
+            console.log('No new updates');
           }
+        } else {
+          console.error('Telegram API error:', response.data);
         }
       } catch (error) {
         console.error('Telegram polling error:', error.message);
-        // Continue polling even if there's an error
+        // Wait longer before retrying on error
+        setTimeout(poll, 5000);
+        return;
       }
       
-      // Continue polling
-      setTimeout(poll, 1000);
+      // Continue polling with shorter interval
+      setTimeout(poll, 100);
     };
 
     poll();
@@ -152,9 +199,16 @@ const telegramService = {
     const text = message.text.trim();
     const userId = message.from.id;
     const username = message.from.username;
+    const chatType = message.chat.type;
 
-    console.log(`Received command: ${text} from ${username} (${userId})`);
+    console.log(`=== COMMAND RECEIVED ===`);
+    console.log(`Chat ID: ${chatId}`);
+    console.log(`Chat Type: ${chatType}`);
+    console.log(`User ID: ${userId}`);
+    console.log(`Username: ${username}`);
+    console.log(`Message: ${text}`);
 
+    // Handle commands in both private and group chats
     if (text.startsWith('/start')) {
       await telegramService.handleStartCommand(chatId, userId, username);
     } else if (text.startsWith('/raids')) {
@@ -166,9 +220,11 @@ const telegramService = {
     } else if (text.startsWith('/help')) {
       await telegramService.handleHelpCommand(chatId);
     } else {
-      // Unknown command
-      await telegramService.sendBotMessage(chatId, 
-        "❓ Unknown command. Use /help to see available commands.");
+      // Only respond to unknown commands in private chats or if mentioned in groups
+      if (chatType === 'private' || text.includes('@')) {
+        await telegramService.sendBotMessage(chatId, 
+          "❓ Unknown command. Use /help to see available commands.");
+      }
     }
   },
 
@@ -203,7 +259,15 @@ First, link your account with: /link your_aquads_username`;
 \`/raids\`
 \`/complete 123abc @mytwitter https://twitter.com/user/status/123\`
 
-💡 **Tip:** Link your account first, then you can complete raids directly in Telegram!`;
+**💡 Tips:**
+• Link your account first before using other commands
+• Commands work in both private chat and groups
+• Bot will send you confirmations for successful actions
+
+**🚀 Getting Started:**
+1. Link your account: \`/link your_username\`
+2. View raids: \`/raids\`
+3. Complete raids: \`/complete [raid_id] [twitter] [tweet_url]\``;
 
     await telegramService.sendBotMessage(chatId, message);
   },
