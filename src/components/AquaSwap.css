@@ -240,11 +240,42 @@
   /* Prevent any movement or scaling */
   box-shadow: none !important;
   outline: none !important;
-  /* Keep exact same dimensions */
+  /* Keep exact same dimensions for expanded state */
   padding: 4px 8px !important;
   margin: 0 !important;
-  width: auto !important;
+  width: 45px !important;
   height: auto !important;
+  min-width: 45px !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+}
+
+/* Specific hover styles for expanded state button */
+.swap-section:not(.collapsed) .swap-collapse-toggle:hover,
+.swap-section:not(.collapsed) .swap-collapse-toggle:focus,
+.swap-section:not(.collapsed) .swap-collapse-toggle:active {
+  background: rgba(0, 212, 255, 0.1) !important;
+  border-color: rgba(0, 212, 255, 0.3) !important;
+  color: #00d4ff !important;
+  transition: none !important;
+  transform: none !important;
+  animation: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  /* Lock expanded button dimensions */
+  position: absolute !important;
+  top: 8px !important;
+  left: -12px !important;
+  padding: 4px 8px !important;
+  margin: 0 !important;
+  width: 45px !important;
+  height: auto !important;
+  min-width: 45px !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  border-radius: 4px !important;
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
 }
 
 /* Also disable animations for collapsed state hover */
@@ -282,43 +313,46 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: 16px;
-  padding: 24px 8px;
+  gap: 20px;
+  padding: 16px 8px;
   background: rgba(0, 0, 0, 0.3);
   border-radius: 12px;
   border: 1px solid rgba(0, 212, 255, 0.2);
   height: 100%;
-  min-height: 200px;
+  min-height: 400px;
 }
 
 .collapsed-title {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   color: #ffffff;
-  font-weight: 700;
-  font-size: 1.2rem;
-  letter-spacing: 0.5px;
+  font-weight: 800;
+  font-size: 2.5rem;
+}
+
+.vertical-letter {
+  display: block;
+  line-height: 0.8;
+  text-align: center;
+  background: linear-gradient(45deg, #00d4ff, #0099cc);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
 }
 
 .collapsed-logo {
   filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.5));
   opacity: 1;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
+  transform: rotate(0deg);
 }
 
 .collapsed-description {
-  font-size: 0.9rem;
-  color: #b0b0b0;
-  line-height: 1.5;
-  margin: 0;
-  text-align: center;
-  max-width: 100%;
-  word-wrap: break-word;
-  font-weight: 400;
-  letter-spacing: 0.3px;
+  display: none;
 }
 
 /* Widget content visibility */
@@ -884,6 +918,20 @@
     animation: none !important;
   }
   
+  /* Mobile expanded button hover - no animations */
+  .swap-section:not(.collapsed) .swap-collapse-toggle:hover,
+  .swap-section:not(.collapsed) .swap-collapse-toggle:focus,
+  .swap-section:not(.collapsed) .swap-collapse-toggle:active {
+    background: rgba(0, 212, 255, 0.1) !important;
+    border-color: rgba(0, 212, 255, 0.3) !important;
+    color: #00d4ff !important;
+    transition: none !important;
+    transform: none !important;
+    animation: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+  
   .swap-section.collapsed .swap-collapse-toggle {
     margin-bottom: 8px;
     min-height: 60px;
@@ -929,28 +977,24 @@
   
   .swap-section.collapsed {
     padding: 6px 8px;
-    min-height: 120px;
+    min-height: 350px;
   }
   
   /* Mobile collapsed content adjustments */
   .swap-collapsed-content {
-    padding: 16px 6px;
-    gap: 12px;
-    min-height: 150px;
+    padding: 12px 6px;
+    gap: 16px;
+    min-height: 300px;
   }
   
   .collapsed-title {
-    font-size: 1rem;
-    gap: 8px;
+    font-size: 2rem;
+    gap: 6px;
   }
   
   .collapsed-logo {
-    width: 28px;
-    height: 28px;
-  }
-  
-  .collapsed-description {
-    font-size: 0.8rem;
+    width: 32px;
+    height: 32px;
   }
   
   .chart-header {
@@ -1008,6 +1052,23 @@
     animation: none !important;
   }
   
+  /* Small mobile expanded button hover - no animations */
+  .swap-section:not(.collapsed) .swap-collapse-toggle:hover,
+  .swap-section:not(.collapsed) .swap-collapse-toggle:focus,
+  .swap-section:not(.collapsed) .swap-collapse-toggle:active {
+    background: rgba(0, 212, 255, 0.1) !important;
+    border-color: rgba(0, 212, 255, 0.3) !important;
+    color: #00d4ff !important;
+    transition: none !important;
+    transform: none !important;
+    animation: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    font-size: 0.75rem !important;
+    padding: 4px 8px !important;
+    min-height: 36px !important;
+  }
+  
   .swap-section.collapsed .swap-collapse-toggle {
     min-height: 56px;
     font-size: 1.3rem;
@@ -1018,29 +1079,21 @@
     animation: none !important;
   }
   
-  .collapsed-description {
-    font-size: 0.6rem;
-  }
-  
   /* Small mobile collapsed content */
   .swap-collapsed-content {
-    padding: 12px 4px;
-    gap: 10px;
-    min-height: 130px;
+    padding: 10px 4px;
+    gap: 12px;
+    min-height: 250px;
   }
   
   .collapsed-title {
-    font-size: 0.9rem;
-    gap: 6px;
+    font-size: 1.6rem;
+    gap: 4px;
   }
   
   .collapsed-logo {
-    width: 24px;
-    height: 24px;
-  }
-  
-  .collapsed-description {
-    font-size: 0.75rem !important;
+    width: 28px;
+    height: 28px;
   }
 }
 

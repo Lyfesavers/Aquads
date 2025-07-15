@@ -612,19 +612,19 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           {/* Collapsed View - Minimal Interface */}
           {isSwapCollapsed && (
             <div className="swap-collapsed-content">
+              <img 
+                src="/AquaSwap.svg" 
+                alt="AquaSwap" 
+                className="collapsed-logo" 
+                width="36" 
+                height="36"
+              />
               <div className="collapsed-title">
-                <img 
-                  src="/AquaSwap.svg" 
-                  alt="AquaSwap" 
-                  className="collapsed-logo" 
-                  width="16" 
-                  height="16"
-                />
-                <span>Swap</span>
+                <span className="vertical-letter">S</span>
+                <span className="vertical-letter">W</span>
+                <span className="vertical-letter">A</span>
+                <span className="vertical-letter">P</span>
               </div>
-              <p className="collapsed-description">
-                Click expand to trade across 38+ blockchains
-              </p>
             </div>
           )}
 
