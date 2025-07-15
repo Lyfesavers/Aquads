@@ -185,9 +185,9 @@
   position: absolute;
   top: 8px;
   left: -12px;
-  background: rgba(0, 212, 255, 0.1);
-  border: 1px solid rgba(0, 212, 255, 0.3);
-  color: #00d4ff;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
   padding: 4px 8px;
   border-radius: 4px;
   cursor: pointer;
@@ -202,10 +202,8 @@
   justify-content: center;
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
-  /* Disable all animations and transitions */
-  transition: none !important;
-  transform: none !important;
-  animation: none !important;
+  height: 28px;
+  white-space: nowrap;
 }
 
 .swap-section.collapsed .swap-collapse-toggle {
@@ -220,80 +218,17 @@
   padding: 16px 8px;
   min-height: 80px;
   border-radius: 4px;
-  /* Disable all animations and transitions */
-  transition: none !important;
-  transform: none !important;
-  animation: none !important;
 }
 
-.swap-collapse-toggle:hover,
-.swap-collapse-toggle:focus,
-.swap-collapse-toggle:active,
-.swap-collapse-toggle:visited {
-  background: rgba(0, 212, 255, 0.1) !important;
-  border-color: rgba(0, 212, 255, 0.3) !important;
-  color: #00d4ff !important;
-  /* Force no animations on all states */
-  transition: none !important;
-  transform: none !important;
-  animation: none !important;
-  /* Prevent any movement or scaling */
-  box-shadow: none !important;
-  outline: none !important;
-  /* Keep exact same dimensions for expanded state */
-  padding: 4px 8px !important;
-  margin: 0 !important;
-  width: 45px !important;
-  height: auto !important;
-  min-width: 45px !important;
-  font-size: 0.75rem !important;
-  font-weight: 500 !important;
+.swap-collapse-toggle:hover {
+  background: rgba(0, 212, 255, 0.1);
+  border-color: rgba(0, 212, 255, 0.3);
 }
 
-/* Specific hover styles for expanded state button */
-.swap-section:not(.collapsed) .swap-collapse-toggle:hover,
-.swap-section:not(.collapsed) .swap-collapse-toggle:focus,
-.swap-section:not(.collapsed) .swap-collapse-toggle:active {
-  background: rgba(0, 212, 255, 0.1) !important;
-  border-color: rgba(0, 212, 255, 0.3) !important;
-  color: #00d4ff !important;
-  transition: none !important;
-  transform: none !important;
-  animation: none !important;
-  box-shadow: none !important;
-  outline: none !important;
-  /* Lock expanded button dimensions */
-  position: absolute !important;
-  top: 8px !important;
-  left: -12px !important;
-  padding: 4px 8px !important;
-  margin: 0 !important;
-  width: 45px !important;
-  height: auto !important;
-  min-width: 45px !important;
-  font-size: 0.75rem !important;
-  font-weight: 500 !important;
-  border-radius: 4px !important;
-  border-top-right-radius: 0 !important;
-  border-bottom-right-radius: 0 !important;
-}
-
-/* Also disable animations for collapsed state hover */
-.swap-section.collapsed .swap-collapse-toggle:hover,
-.swap-section.collapsed .swap-collapse-toggle:focus,
-.swap-section.collapsed .swap-collapse-toggle:active {
-  background: rgba(0, 212, 255, 0.1) !important;
-  border-color: rgba(0, 212, 255, 0.3) !important;
-  color: #00d4ff !important;
-  transition: none !important;
-  transform: none !important;
-  animation: none !important;
-  box-shadow: none !important;
-  outline: none !important;
-  /* Maintain collapsed button dimensions on hover */
-  padding: 16px 8px !important;
-  min-height: 80px !important;
-  font-size: 1.6rem !important;
+/* Collapsed state hover - simple color change */
+.swap-section.collapsed .swap-collapse-toggle:hover {
+  background: rgba(0, 212, 255, 0.1);
+  border-color: rgba(0, 212, 255, 0.3);
 }
 
 .collapse-label {
@@ -912,24 +847,6 @@
     margin-bottom: 8px;
     justify-content: center;
     border-radius: 4px;
-    /* Disable all animations on mobile */
-    transition: none !important;
-    transform: none !important;
-    animation: none !important;
-  }
-  
-  /* Mobile expanded button hover - no animations */
-  .swap-section:not(.collapsed) .swap-collapse-toggle:hover,
-  .swap-section:not(.collapsed) .swap-collapse-toggle:focus,
-  .swap-section:not(.collapsed) .swap-collapse-toggle:active {
-    background: rgba(0, 212, 255, 0.1) !important;
-    border-color: rgba(0, 212, 255, 0.3) !important;
-    color: #00d4ff !important;
-    transition: none !important;
-    transform: none !important;
-    animation: none !important;
-    box-shadow: none !important;
-    outline: none !important;
   }
   
   .swap-section.collapsed .swap-collapse-toggle {
@@ -937,10 +854,6 @@
     min-height: 60px;
     font-size: 1.4rem;
     padding: 12px 8px;
-    /* Disable all animations on mobile */
-    transition: none !important;
-    transform: none !important;
-    animation: none !important;
   }
 }
 
@@ -1046,37 +959,12 @@
     padding: 4px 8px;
     min-height: 36px;
     border-radius: 4px;
-    /* Force no animations on small screens */
-    transition: none !important;
-    transform: none !important;
-    animation: none !important;
-  }
-  
-  /* Small mobile expanded button hover - no animations */
-  .swap-section:not(.collapsed) .swap-collapse-toggle:hover,
-  .swap-section:not(.collapsed) .swap-collapse-toggle:focus,
-  .swap-section:not(.collapsed) .swap-collapse-toggle:active {
-    background: rgba(0, 212, 255, 0.1) !important;
-    border-color: rgba(0, 212, 255, 0.3) !important;
-    color: #00d4ff !important;
-    transition: none !important;
-    transform: none !important;
-    animation: none !important;
-    box-shadow: none !important;
-    outline: none !important;
-    font-size: 0.75rem !important;
-    padding: 4px 8px !important;
-    min-height: 36px !important;
   }
   
   .swap-section.collapsed .swap-collapse-toggle {
     min-height: 56px;
     font-size: 1.3rem;
     padding: 12px 8px;
-    /* Force no animations on small screens */
-    transition: none !important;
-    transform: none !important;
-    animation: none !important;
   }
   
   /* Small mobile collapsed content */
