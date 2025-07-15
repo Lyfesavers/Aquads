@@ -61,6 +61,11 @@ const userSchema = new Schema({
     default: null,
     index: true
   },
+  telegramId: {
+    type: String,
+    default: null,
+    index: true
+  },
   isAdmin: {
     type: Boolean,
     default: false

@@ -26,6 +26,7 @@ const blogsRoutes = require('./routes/blogs');
 const socketModule = require('./socket');
 const ipLimiter = require('./middleware/ipLimiter');
 const deviceLimiter = require('./middleware/deviceLimiter');
+const telegramService = require('./utils/telegramService');
 
 const app = express();
 const server = http.createServer(app);
@@ -534,6 +535,9 @@ app.use('/api', apiLimiter);
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  
+  // Start Telegram bot
+  telegramService.startBot();
 });
 
 if (process.env.NODE_ENV === 'production') {
