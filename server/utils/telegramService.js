@@ -331,7 +331,8 @@ You can now use:
         message += `💰 Reward: ${raid.points} points\n`;
         message += `🎯 Task: ${raid.description}\n`;
         message += `🔗 Tweet: ${raid.tweetUrl}\n`;
-        message += `📊 Status: ${status}`;
+        message += `📊 Status: ${status}\n\n`;
+        message += `⚠️ IMPORTANT: You must manually LIKE, RETWEET, COMMENT & BOOKMARK the tweet before completing!`;
 
         // Add button if not completed
         let keyboard = null;
@@ -637,7 +638,7 @@ Your submission has been recorded and will be reviewed by our team. Points will 
 
       // Ask for username
       await telegramService.sendBotMessage(chatId, 
-        `🚀 Completing: ${raid.title}\n\n📝 Please enter your Twitter username (without @):\n\nExample: myusername`);
+        `🚀 Completing: ${raid.title}\n\n⚠️ BEFORE CONTINUING: Make sure you have already:\n✅ LIKED the tweet\n✅ RETWEETED the tweet\n✅ COMMENTED on the tweet\n✅ BOOKMARKED the tweet\n\n📝 Now enter your Twitter username (without @):\n\nExample: myusername`);
 
     } catch (error) {
       console.error('Start completion error:', error);
