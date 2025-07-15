@@ -2301,7 +2301,6 @@ html {
 a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textarea:hover, [onclick]:hover {
   cursor: pointer; /* Normal cursor behavior */
   transition: box-shadow 0.3s;
-  position: relative;
 }
 
 /* Add colors for the remaining blockchains */
@@ -3337,8 +3336,6 @@ html {
 a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textarea:hover, [onclick]:hover {
   cursor: pointer; /* Normal cursor behavior */
   transition: box-shadow 0.3s;
-  position: relative;
-  z-index: 1;
 }
 
 /* Add colors for the remaining blockchains */
