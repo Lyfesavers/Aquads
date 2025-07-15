@@ -149,7 +149,7 @@ const telegramService = {
       console.error('Failed to check/clear webhook:', error.message);
     }
 
-    console.log('Starting Telegram bot polling...');
+    console.log('Using polling mode');
     
     // Wait a bit longer before starting to avoid conflicts with other instances
     setTimeout(async () => {
