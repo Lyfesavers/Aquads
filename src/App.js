@@ -2969,14 +2969,13 @@ function App() {
                               onClick={(e) => {
                                 if (!e.defaultPrevented) {
                                   if (requireAuth()) {
-                                    // Check if ad has pairAddress for token chart
-                                    if (ad.pairAddress && ad.pairAddress.trim()) {
+                                    // Check if ad has pairAddress or contractAddress for token chart
+                                    const tokenAddress = ad.pairAddress || ad.contractAddress;
+                                    if (tokenAddress && tokenAddress.trim()) {
                                       const blockchain = ad.blockchain || 'ethereum';
-                                      window.location.href = `/aquaswap?token=${encodeURIComponent(ad.pairAddress.trim())}&blockchain=${encodeURIComponent(blockchain)}`;
-                                    } else {
-                                      // Fallback to original URL
-                                      window.open(ad.url, '_blank');
+                                      window.location.href = `/aquaswap?token=${encodeURIComponent(tokenAddress.trim())}&blockchain=${encodeURIComponent(blockchain)}`;
                                     }
+                                    // If no pair/contract address, do nothing (no redirect)
                                   }
                                 }
                               }}
