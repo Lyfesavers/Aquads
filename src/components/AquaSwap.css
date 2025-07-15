@@ -183,23 +183,24 @@
 .swap-collapse-toggle {
   position: absolute;
   top: 8px;
-  right: 8px;
+  right: -12px;
   background: rgba(0, 212, 255, 0.1);
   border: 1px solid rgba(0, 212, 255, 0.3);
   color: #00d4ff;
-  padding: 6px 10px;
-  border-radius: 6px;
+  padding: 4px 8px;
+  border-radius: 4px;
   cursor: pointer;
-  font-weight: 600;
-  font-size: 0.8rem;
-  transition: all 0.3s ease;
+  font-weight: 500;
+  font-size: 0.75rem;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   z-index: 10;
   backdrop-filter: blur(10px);
-  min-width: 50px;
+  min-width: 45px;
   justify-content: center;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
 }
 
 .swap-section.collapsed .swap-collapse-toggle {
@@ -210,15 +211,15 @@
   margin-bottom: 12px;
   flex-direction: column;
   gap: 2px;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   padding: 8px;
   min-height: 50px;
+  border-radius: 4px;
 }
 
 .swap-collapse-toggle:hover {
-  background: rgba(0, 212, 255, 0.2);
-  border-color: #00d4ff;
-  transform: scale(1.05);
+  background: rgba(0, 212, 255, 0.15);
+  border-color: rgba(0, 212, 255, 0.5);
 }
 
 .collapse-label {
