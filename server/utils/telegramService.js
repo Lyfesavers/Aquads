@@ -5,6 +5,10 @@ const FormData = require('form-data');
 const User = require('../models/User');
 const TwitterRaid = require('../models/TwitterRaid');
 
+// Generate a unique instance ID
+const instanceId = Math.random().toString(36).substr(2, 9);
+console.log(`Bot instance ID: ${instanceId}`);
+
 const telegramService = {
   sendRaidNotification: async (raidData) => {
     try {
@@ -133,46 +137,59 @@ const telegramService = {
       } else {
         console.log('No webhook configured, good for polling');
       }
+      
+      // Clear any pending updates to avoid conflicts
+      console.log('Clearing pending updates...');
+      const clearUpdates = await axios.get(`https://api.telegram.org/bot${botToken}/getUpdates`, {
+        params: { offset: -1 }
+      });
+      console.log('Pending updates cleared:', clearUpdates.data.ok);
+      
     } catch (error) {
       console.error('Failed to check/clear webhook:', error.message);
     }
 
     console.log('Starting Telegram bot polling...');
-    telegramService.pollForUpdates();
     
-    // Send a startup message to verify bot is working
+    // Wait a bit longer before starting to avoid conflicts with other instances
     setTimeout(async () => {
-      const chatId = process.env.TELEGRAM_CHAT_ID;
-      if (chatId) {
-        try {
-          await telegramService.sendBotMessage(chatId, 
-            '🤖 **Bot Commands Active!**\n\nTry these commands:\n• /help - Show commands\n• /start - Get started\n• /raids - View raids');
-          console.log('Startup message sent to chat');
-        } catch (error) {
-          console.error('Failed to send startup message:', error.message);
+      telegramService.pollForUpdates();
+      
+      // Send a startup message to verify bot is working
+      setTimeout(async () => {
+        const chatId = process.env.TELEGRAM_CHAT_ID;
+        if (chatId) {
+          try {
+            await telegramService.sendBotMessage(chatId, 
+              `🤖 **Bot Commands Active!** (${instanceId})\n\nTry these commands:\n• /help - Show commands\n• /start - Get started\n• /raids - View raids`);
+            console.log(`Startup message sent to chat (instance: ${instanceId})`);
+          } catch (error) {
+            console.error('Failed to send startup message:', error.message);
+          }
         }
-      }
-    }, 3000);
+      }, 5000);
+    }, 10000); // Wait 10 seconds before starting polling
     
     return true;
   },
 
-  // Poll for updates from Telegram
+    // Poll for updates from Telegram
   pollForUpdates: async () => {
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     
     if (!botToken) return;
 
-    console.log('Bot polling started successfully');
+    console.log(`Bot polling started successfully (instance: ${instanceId})`);
     let offset = 0;
     let pollCount = 0;
+    let consecutiveErrors = 0;
     
     const poll = async () => {
       try {
         pollCount++;
         // Only log every 10th poll to reduce spam
         if (pollCount % 10 === 0) {
-          console.log(`Polling attempt #${pollCount}, offset: ${offset}`);
+          console.log(`Polling attempt #${pollCount}, offset: ${offset} (instance: ${instanceId})`);
         }
         
         const response = await axios.get(`https://api.telegram.org/bot${botToken}/getUpdates`, {
@@ -185,6 +202,8 @@ const telegramService = {
         });
 
         if (response.data.ok) {
+          consecutiveErrors = 0; // Reset error count on success
+          
           if (response.data.result.length > 0) {
             console.log(`Received ${response.data.result.length} updates`);
             for (const update of response.data.result) {
@@ -208,18 +227,32 @@ const telegramService = {
         } else {
           console.error('Telegram API error:', response.data);
         }
-              } catch (error) {
-          console.error('Telegram polling error:', error.message);
-          // Wait longer before retrying on error
-          setTimeout(poll, 10000);
+      } catch (error) {
+        consecutiveErrors++;
+        console.error(`Telegram polling error (${consecutiveErrors}) [${instanceId}]:`, error.message);
+        
+        // Handle 409 Conflict errors specifically
+        if (error.response && error.response.status === 409) {
+          console.log(`Conflict detected - another instance may be running. Backing off... (${instanceId})`);
+          setTimeout(poll, 30000); // Wait 30 seconds for 409 errors
           return;
         }
         
-        // Continue polling with reasonable interval (1 second)
-        setTimeout(poll, 1000);
+        // Exponential backoff for other errors
+        const backoffDelay = Math.min(10000 * Math.pow(2, consecutiveErrors - 1), 60000);
+        console.log(`Backing off for ${backoffDelay}ms after ${consecutiveErrors} consecutive errors`);
+        setTimeout(poll, backoffDelay);
+        return;
+      }
+      
+      // Continue polling with reasonable interval
+      setTimeout(poll, 2000); // Increased to 2 seconds to be safer
     };
 
-    poll();
+    // Add a small random delay before starting to prevent multiple instances from starting simultaneously
+    const startDelay = Math.random() * 5000;
+    console.log(`Starting polling in ${Math.round(startDelay)}ms (instance: ${instanceId})...`);
+    setTimeout(poll, startDelay);
   },
 
   // Handle incoming commands
