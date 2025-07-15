@@ -77,13 +77,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           ad.isBumped === true  // Only include bumped tokens in trending
         );
         
-        // Sort using the same logic as main bubble display: bumped first, then by bullish votes
+        // Sort bumped tokens by bullish votes (highest first)
         const sortedAds = validAds.sort((a, b) => {
-          // First prioritize bumped bubbles - all bumped bubbles come before unbumped ones
-          if (a.isBumped && !b.isBumped) return -1;
-          if (!a.isBumped && b.isBumped) return 1;
-          
-          // Then sort by bullish votes (highest first)
           return (b.bullishVotes || 0) - (a.bullishVotes || 0);
         });
         
