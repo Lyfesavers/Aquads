@@ -17,8 +17,14 @@ router.post('/telegram-webhook', async (req, res) => {
   try {
     const update = req.body;
     
+    // Handle text messages and commands
     if (update.message && update.message.text) {
       await telegramService.handleCommand(update.message);
+    }
+    
+    // Handle callback queries from inline buttons
+    if (update.callback_query) {
+      await telegramService.handleCallbackQuery(update.callback_query);
     }
     
     res.json({ ok: true });
