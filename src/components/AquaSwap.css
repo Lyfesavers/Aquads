@@ -30,7 +30,7 @@
   cursor: pointer;
   font-weight: 500;
   font-size: 0.8rem;
-  transition: all 0.3s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
   margin-bottom: 2px;
   display: inline-block;
 }
@@ -90,7 +90,7 @@
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
-  transition: all 0.3s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
   font-size: 0.8rem;
 }
 
@@ -109,7 +109,7 @@
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
-  transition: all 0.3s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
   font-size: 0.8rem;
   text-decoration: none;
   display: inline-block;
@@ -204,6 +204,7 @@
   border-bottom-right-radius: 0;
   height: 28px;
   white-space: nowrap;
+  transition: none;
 }
 
 .swap-section.collapsed .swap-collapse-toggle {
@@ -413,7 +414,7 @@
   cursor: pointer;
   font-size: 0.75rem;
   font-weight: 500;
-  transition: all 0.3s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
   display: flex;
   align-items: center;
   gap: 2px;
@@ -592,7 +593,7 @@
   cursor: pointer;
   font-size: 0.75rem;
   font-weight: 500;
-  transition: all 0.3s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
   display: flex;
   align-items: center;
   gap: 4px;
