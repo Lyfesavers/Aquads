@@ -373,7 +373,7 @@ You can now use:
             inline_keyboard: [[
               {
                 text: "💬 Complete in Private Chat",
-                url: `https://t.me/AquadsBot?start=raid_${raid._id}`
+                url: `https://t.me/aquadsbumpbot?start=raid_${raid._id}`
               }
             ]]
           };
