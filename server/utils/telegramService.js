@@ -185,16 +185,12 @@ const telegramService = {
         await telegramService.sendBotMessage(chatId, "No active operation to cancel.");
       }
     } else {
-      // Only respond to unknown commands in private chats or if mentioned in groups
-      if (chatType === 'private' || text.includes('@')) {
-        if (conversationState) {
-          await telegramService.sendBotMessage(chatId, 
-            "📝 Please provide your Twitter username, or type /cancel to abort.");
-        } else {
-          await telegramService.sendBotMessage(chatId, 
-            "❓ Unknown command. Use /help to see available commands.");
-        }
+      // Only respond if user is in conversation state (waiting for username input)
+      if (conversationState) {
+        await telegramService.sendBotMessage(chatId, 
+          "📝 Please provide your Twitter username, or type /cancel to abort.");
       }
+      // No response for unknown commands to avoid interfering with group interactions
     }
   },
 
