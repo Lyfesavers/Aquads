@@ -308,12 +308,25 @@ Example Usage:
     const aquadsUsername = parts[1];
 
     try {
-      // Find the user by username
+      // Check if this Telegram account is already linked to another user
+      const existingLinkedUser = await User.findOne({ telegramId: telegramUserId.toString() });
+      if (existingLinkedUser) {
+        await telegramService.sendBotMessage(chatId, 
+          `❌ Your Telegram is already linked to account: ${existingLinkedUser.username}\n\nTo link a different account, please contact support.`);
+        return;
+      }
+
+      // Check if the username is already linked to another Telegram account
       const user = await User.findOne({ username: aquadsUsername });
-      
       if (!user) {
         await telegramService.sendBotMessage(chatId, 
           `❌ User '${aquadsUsername}' not found. Please check your username.`);
+        return;
+      }
+
+      if (user.telegramId) {
+        await telegramService.sendBotMessage(chatId, 
+          `❌ Account '${aquadsUsername}' is already linked to another Telegram account.\n\nIf this is your account, please contact support to unlink it.`);
         return;
       }
 
