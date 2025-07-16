@@ -31,7 +31,7 @@ const telegramService = {
 🎯 Task: Like, Retweet & Comment
 
 🔗 Tweet: ${raidData.tweetUrl}
-▶️ Complete: ${process.env.FRONTEND_URL || 'https://aquads.xyz'}
+💬 Complete in Private Chat: Start a chat with the bot
 
 ⏰ Available for 48 hours!`;
 
@@ -194,11 +194,11 @@ const telegramService = {
 
     // Handle commands in both private and group chats
     if (text.startsWith('/start')) {
-      await telegramService.handleStartCommand(chatId, userId, username);
+      await telegramService.handleStartCommand(chatId, userId, username, text);
     } else if (text.startsWith('/raids')) {
-      await telegramService.handleRaidsCommand(chatId, userId);
+      await telegramService.handleRaidsCommand(chatId, userId, chatType);
     } else if (text.startsWith('/complete')) {
-      await telegramService.handleCompleteCommand(chatId, userId, text);
+      await telegramService.handleCompleteCommand(chatId, userId, text, chatType);
     } else if (text.startsWith('/link')) {
       await telegramService.handleLinkCommand(chatId, userId, text);
     } else if (text.startsWith('/help')) {
@@ -222,7 +222,16 @@ const telegramService = {
   },
 
   // Handle /start command
-  handleStartCommand: async (chatId, userId, username) => {
+  handleStartCommand: async (chatId, userId, username, text) => {
+    // Check if this is a raid start command (from group chat redirect)
+    const startMatch = text.match(/\/start raid_([a-f0-9]{24})/);
+    
+    if (startMatch) {
+      const raidId = startMatch[1];
+      await telegramService.handleRaidStartRedirect(chatId, userId, username, raidId);
+      return;
+    }
+
     const message = `🚀 Welcome to Aquads Bot!
 
 Hi ${username ? `@${username}` : 'there'}! I can help you with Twitter raids.
@@ -236,6 +245,48 @@ Available Commands:
 First, link your account with: /link your_aquads_username`;
 
     await telegramService.sendBotMessage(chatId, message);
+  },
+
+  // Handle raid start redirect from group chat
+  handleRaidStartRedirect: async (chatId, userId, username, raidId) => {
+    try {
+      // Check if user is linked
+      const user = await User.findOne({ telegramId: userId.toString() });
+      
+      if (!user) {
+        await telegramService.sendBotMessage(chatId, 
+          `🚀 Welcome to Aquads Bot!\n\nHi ${username ? `@${username}` : 'there'}! To complete raids, you need to link your account first.\n\nUse: /link your_aquads_username`);
+        return;
+      }
+
+      // Find the raid
+      const raid = await TwitterRaid.findById(raidId);
+      
+      if (!raid || !raid.active) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Raid not found or no longer active. Use /raids to see available raids.");
+        return;
+      }
+
+      // Check if user already completed this raid
+      const userCompleted = raid.completions.some(
+        completion => completion.userId && completion.userId.toString() === user._id.toString()
+      );
+
+      if (userCompleted) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ You have already completed this raid!");
+        return;
+      }
+
+      // Start the completion process
+      await telegramService.startRaidCompletion(chatId, userId, raidId);
+
+    } catch (error) {
+      console.error('Raid start redirect error:', error);
+      await telegramService.sendBotMessage(chatId, 
+        "❌ Error processing raid. Please try again later.");
+    }
   },
 
   // Handle /help command
@@ -308,7 +359,7 @@ You can now use:
   },
 
   // Handle /raids command
-  handleRaidsCommand: async (chatId, telegramUserId) => {
+  handleRaidsCommand: async (chatId, telegramUserId, chatType = 'private') => {
     try {
       // Check if user is linked
       const user = await User.findOne({ telegramId: telegramUserId.toString() });
@@ -357,28 +408,49 @@ You can now use:
         message += `📊 Status: ${status}\n\n`;
         message += `⚠️ IMPORTANT: You must manually LIKE, RETWEET, COMMENT & BOOKMARK the tweet before completing!`;
 
-        // Add button if not completed
+        // Add button if not completed - different behavior for group vs private
         let keyboard = null;
         if (!userCompleted) {
-          keyboard = {
-            inline_keyboard: [[
-              {
-                text: "🚀 Complete Raid",
-                callback_data: JSON.stringify({
-                  action: "complete",
-                  raidId: raid._id.toString()
-                })
-              }
-            ]]
-          };
+          if (chatType === 'private') {
+            // In private chat - direct completion button
+            keyboard = {
+              inline_keyboard: [[
+                {
+                  text: "🚀 Complete Raid",
+                  callback_data: JSON.stringify({
+                    action: "complete",
+                    raidId: raid._id.toString()
+                  })
+                }
+              ]]
+            };
+          } else {
+            // In group chat - redirect to private chat button
+            keyboard = {
+              inline_keyboard: [[
+                {
+                  text: "💬 Complete in Private Chat",
+                  callback_data: JSON.stringify({
+                    action: "redirect_to_private",
+                    raidId: raid._id.toString()
+                  })
+                }
+              ]]
+            };
+          }
         }
 
         await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
       }
 
-      // Send summary
-      await telegramService.sendBotMessage(chatId, 
-        `📊 ${activeRaids.length} raids shown above\n💡 Click "🚀 Complete Raid" or use:\n/complete RAID_ID @twitter_username TWEET_URL\n⏰ Raids expire after 48 hours`);
+      // Send different summary based on chat type
+      if (chatType === 'private') {
+        await telegramService.sendBotMessage(chatId, 
+          `📊 ${activeRaids.length} raids shown above\n💡 Click "🚀 Complete Raid" or use:\n/complete RAID_ID @twitter_username TWEET_URL\n⏰ Raids expire after 48 hours`);
+      } else {
+        await telegramService.sendBotMessage(chatId, 
+          `📊 ${activeRaids.length} raids shown above\n💬 Click "💬 Complete in Private Chat" to complete raids privately\n⏰ Raids expire after 48 hours`);
+      }
 
     } catch (error) {
       console.error('Raids command error:', error);
@@ -388,7 +460,14 @@ You can now use:
   },
 
   // Handle /complete command
-  handleCompleteCommand: async (chatId, telegramUserId, text) => {
+  handleCompleteCommand: async (chatId, telegramUserId, text, chatType = 'private') => {
+    // Only allow completion in private chats
+    if (chatType !== 'private') {
+      await telegramService.sendBotMessage(chatId, 
+        "💬 Please complete raids in private chat with the bot to keep group chats clean.\n\nClick '💬 Complete in Private Chat' or start a private chat with the bot.");
+      return;
+    }
+
     const parts = text.split(' ');
     
     if (parts.length < 4) {
@@ -579,6 +658,7 @@ Your submission has been recorded and will be reviewed by our team. Points will 
     const chatId = callbackQuery.message.chat.id;
     const userId = callbackQuery.from.id;
     const queryId = callbackQuery.id;
+    const chatType = callbackQuery.message.chat.type;
 
     try {
       // Parse callback data
@@ -588,7 +668,20 @@ Your submission has been recorded and will be reviewed by our team. Points will 
       await telegramService.answerCallbackQuery(queryId);
 
       if (callbackData.action === 'complete') {
+        // Only allow completion in private chats
+        if (chatType !== 'private') {
+          await telegramService.answerCallbackQuery(queryId, "❌ Please complete raids in private chat");
+          await telegramService.sendBotMessage(chatId, 
+            "💬 Please click '💬 Complete in Private Chat' to complete this raid privately.");
+          return;
+        }
+        
         await telegramService.startRaidCompletion(chatId, userId, callbackData.raidId);
+      } else if (callbackData.action === 'redirect_to_private') {
+        // Handle redirect to private chat
+        await telegramService.answerCallbackQuery(queryId, "💬 Opening private chat...");
+        await telegramService.sendBotMessage(chatId, 
+          `💬 To complete this raid, please start a private chat with the bot and use:\n\n/start raid_${callbackData.raidId}\n\nOr simply click the "💬 Complete in Private Chat" button above.`);
       }
 
     } catch (error) {
