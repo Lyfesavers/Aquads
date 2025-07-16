@@ -1097,8 +1097,8 @@
   }
 
   .header-center .aquaswap-logo {
-    width: 18px;
-    height: 18px;
+    width: 24px;
+    height: 24px;
     filter: drop-shadow(0 0 6px rgba(0, 212, 255, 0.4));
   }
 
@@ -1109,7 +1109,7 @@
   }
 
   .header-title h1 {
-    font-size: 1.1rem;
+    font-size: 0.90rem;
     margin: 0;
     background: linear-gradient(45deg, #00d4ff, #0099cc);
     background-clip: text;
