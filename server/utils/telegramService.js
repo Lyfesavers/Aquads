@@ -8,6 +8,8 @@ const TwitterRaid = require('../models/TwitterRaid');
 const telegramService = {
   // Store group IDs where bot is active
   activeGroups: new Set(),
+  // Store raid message IDs for cleanup
+  raidMessageIds: new Map(), // groupId -> [messageIds]
 
   sendRaidNotification: async (raidData) => {
     try {
@@ -16,6 +18,9 @@ const telegramService = {
       if (!botToken) {
         return false;
       }
+
+      // Delete old raid messages first
+      await telegramService.deleteOldRaidMessages();
 
       // Get all active groups (including the default chat ID)
       const groupsToNotify = new Set(telegramService.activeGroups);
@@ -63,12 +68,16 @@ const telegramService = {
 
             if (response.data.ok) {
               successCount++;
+              // Store message ID for cleanup
+              telegramService.storeRaidMessageId(chatId, response.data.result.message_id);
             }
           } else {
             // Send text message
-            const success = await telegramService.sendTextMessage(botToken, chatId, message);
-            if (success) {
+            const result = await telegramService.sendTextMessage(botToken, chatId, message);
+            if (result.success) {
               successCount++;
+              // Store message ID for cleanup
+              telegramService.storeRaidMessageId(chatId, result.messageId);
             }
           }
         } catch (error) {
@@ -98,14 +107,14 @@ const telegramService = {
       );
 
       if (response.data.ok) {
-        return true;
+        return { success: true, messageId: response.data.result.message_id };
       } else {
         console.error('Telegram API error:', response.data);
-        return false;
+        return { success: false };
       }
     } catch (error) {
       console.error('Telegram text notification failed:', error.message);
-      return false;
+      return { success: false };
     }
   },
 
@@ -192,7 +201,19 @@ const telegramService = {
       return;
     }
 
-    // Handle commands in both private and group chats
+    // Handle commands - redirect group commands to private chat
+    if (chatType === 'group' || chatType === 'supergroup') {
+      // In group chats, redirect all commands to private chat
+      if (text.startsWith('/start') || text.startsWith('/raids') || text.startsWith('/complete') || 
+          text.startsWith('/link') || text.startsWith('/help') || text.startsWith('/cancel')) {
+        
+        await telegramService.sendBotMessage(chatId, 
+          `💬 Please use bot commands in private chat to keep group conversations clean.\n\nStart a chat with @aquadsbumpbot and use: ${text}`);
+        return;
+      }
+    }
+
+    // Handle commands in private chats (or if somehow we get here)
     if (text.startsWith('/start')) {
       await telegramService.handleStartCommand(chatId, userId, username, text);
     } else if (text.startsWith('/raids')) {
@@ -534,6 +555,42 @@ Your submission has been recorded and will be reviewed by our team. Points will 
     } catch (error) {
       console.error('Bot message error:', error.message);
       return false;
+    }
+  },
+
+  // Store raid message ID for cleanup
+  storeRaidMessageId: (chatId, messageId) => {
+    const chatIdStr = chatId.toString();
+    if (!telegramService.raidMessageIds.has(chatIdStr)) {
+      telegramService.raidMessageIds.set(chatIdStr, []);
+    }
+    telegramService.raidMessageIds.get(chatIdStr).push(messageId);
+  },
+
+  // Delete old raid messages
+  deleteOldRaidMessages: async () => {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (!botToken) return;
+
+    try {
+      for (const [chatId, messageIds] of telegramService.raidMessageIds.entries()) {
+        for (const messageId of messageIds) {
+          try {
+            await axios.post(`https://api.telegram.org/bot${botToken}/deleteMessage`, {
+              chat_id: chatId,
+              message_id: messageId
+            });
+            console.log(`Deleted old raid message ${messageId} from chat ${chatId}`);
+          } catch (error) {
+            // Message might already be deleted or bot doesn't have permission
+            console.log(`Could not delete message ${messageId} from chat ${chatId}: ${error.message}`);
+          }
+        }
+      }
+      // Clear the stored message IDs after deletion
+      telegramService.raidMessageIds.clear();
+    } catch (error) {
+      console.error('Error deleting old raid messages:', error.message);
     }
   },
 
