@@ -12,107 +12,164 @@
   margin: 0;
 }
 
-/* Header Section - Made more compact */
+/* Modern Header Section - Sleek horizontal design */
 .header-section {
-  padding: 1px 12px 8px 12px;
-  background: rgba(0, 0, 0, 0.3);
+  padding: 0;
+  background: rgba(0, 0, 0, 0.4);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(15px);
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
 }
 
-/* Back button styling - smaller */
+/* Modern Header Navigation Bar */
+.header-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 20px;
+  height: 100%;
+}
+
+/* Left section with back button */
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Center section with logo and title */
+.header-center {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Right section with action buttons */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Modern back button */
 .back-to-main-button {
   background: rgba(0, 212, 255, 0.1);
-  border: 1px solid rgba(0, 212, 255, 0.3);
+  border: 1px solid rgba(0, 212, 255, 0.2);
   color: #00d4ff;
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: 6px 12px;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
   font-size: 0.8rem;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
-  margin-bottom: 2px;
-  display: inline-block;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  backdrop-filter: blur(10px);
 }
 
 .back-to-main-button:hover {
   background: rgba(0, 212, 255, 0.2);
   border-color: #00d4ff;
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);
 }
 
-/* Page title - Much more compact */
-.page-title {
-  text-align: center;
-  margin: 0 0 3px 0;
+/* Modern logo and title styling */
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.page-title h1 {
-  font-size: 1.8rem;
-  margin: 0 0 4px 0;
+.aquaswap-logo {
+  filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4));
+  width: 28px;
+  height: 28px;
+  transition: all 0.3s ease;
+}
+
+.header-brand:hover .aquaswap-logo {
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 12px rgba(0, 212, 255, 0.6));
+}
+
+.header-title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.header-title h1 {
+  font-size: 1.2rem;
+  margin: 0;
   background: linear-gradient(45deg, #00d4ff, #0099cc);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.header-subtitle {
+  color: #a0a0a0;
+  font-size: 0.65rem;
+  margin: 0;
+  line-height: 1;
+  margin-top: 1px;
+}
+
+/* Modern action buttons */
+.header-actions {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  gap: 6px;
 }
 
-.page-title p {
-  color: #a0a0a0;
-  margin: 0 0 6px 0;
-  font-size: 0.9rem;
-}
-
-.aquaswap-logo {
-  filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.3));
-  width: 24px;
-  height: 24px;
-}
-
-/* Header Buttons Container - More compact */
-.header-buttons {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  margin-top: 6px;
-  flex-wrap: wrap;
-}
-
-/* Embed Toggle Button - Smaller */
 .embed-toggle-button {
   background: rgba(0, 212, 255, 0.1);
-  border: 1px solid rgba(0, 212, 255, 0.3);
+  border: 1px solid rgba(0, 212, 255, 0.2);
   color: #00d4ff;
-  padding: 6px 12px;
-  border-radius: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
-  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  white-space: nowrap;
 }
 
 .embed-toggle-button:hover {
   background: rgba(0, 212, 255, 0.2);
   border-color: #00d4ff;
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);
 }
 
-/* Fiat Purchase Button - Smaller */
 .fiat-purchase-button {
   background: rgba(255, 165, 0, 0.1);
-  border: 1px solid rgba(255, 165, 0, 0.3);
+  border: 1px solid rgba(255, 165, 0, 0.2);
   color: #ffa500;
-  padding: 6px 12px;
-  border-radius: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: 500;
-  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   text-decoration: none;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  white-space: nowrap;
 }
 
 .fiat-purchase-button:hover {
@@ -121,6 +178,7 @@
   transform: translateY(-1px);
   color: #ffa500;
   text-decoration: none;
+  box-shadow: 0 4px 12px rgba(255, 165, 0, 0.2);
 }
 
 /* Banner Container - Reduced spacing */
@@ -135,10 +193,10 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Main Trading Interface - Professional Layout */
+/* Main Trading Interface - Professional Layout with optimized height */
 .trading-interface {
   display: flex;
-  min-height: calc(100vh - 120px);
+  min-height: calc(100vh - 50px);
   gap: 0;
   margin: 0;
   padding: 0;
@@ -155,7 +213,7 @@
 /* Professional trading layout - always side by side on desktop */
 .trading-interface.with-charts {
   flex-direction: row;
-  height: calc(100vh - 100px);
+  height: calc(100vh - 50px);
 }
 
 /* Left Side - Swap Widget - Responsive sizing for chart space */
@@ -678,7 +736,7 @@
   overflow: hidden;
   position: relative;
   min-height: 700px;
-  height: calc(100vh - 80px); /* Reduced header space for much taller charts */
+  height: calc(100vh - 50px); /* Maximum space for charts with minimal header */
   display: flex;
   flex-direction: column;
 }
@@ -786,6 +844,27 @@
 
 /* Responsive Design - Optimized */
 @media (max-width: 1024px) {
+  /* Header responsive adjustments */
+  .header-nav {
+    padding: 0 12px;
+  }
+  
+  .header-center {
+    position: static;
+    transform: none;
+    order: 2;
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .header-left {
+    order: 1;
+  }
+  
+  .header-right {
+    order: 3;
+  }
+  
   .trading-interface.with-charts {
     flex-direction: column;
     height: auto;
@@ -859,13 +938,41 @@
 }
 
 @media (max-width: 768px) {
+  /* Mobile header adjustments */
   .header-section {
-    padding: 6px 10px;
+    height: 45px;
+  }
+  
+  .header-nav {
+    padding: 0 8px;
+  }
+  
+  .header-center {
+    gap: 6px;
+  }
+  
+  .header-title h1 {
+    font-size: 1rem;
+  }
+  
+  .header-subtitle {
+    font-size: 0.6rem;
+  }
+  
+  .aquaswap-logo {
+    width: 24px;
+    height: 24px;
   }
   
   .back-to-main-button {
-    font-size: 0.75rem;
-    padding: 3px 6px;
+    font-size: 0.7rem;
+    padding: 4px 8px;
+  }
+  
+  .embed-toggle-button,
+  .fiat-purchase-button {
+    font-size: 0.7rem;
+    padding: 4px 6px;
   }
   
   .banner-container {
@@ -879,10 +986,6 @@
   
   .banner-below-swap {
     display: none;
-  }
-  
-  .page-title h1 {
-    font-size: 1.5rem;
   }
   
   .swap-section {
@@ -917,11 +1020,16 @@
   
   .chart-container {
     min-height: 500px;
+    height: calc(100vh - 45px); /* Account for smaller mobile header */
   }
 
   .chart-container iframe {
     min-height: 500px;
     min-width: 0; /* Reset min-width on mobile to prevent horizontal scroll */
+  }
+  
+  .trading-interface {
+    min-height: calc(100vh - 45px);
   }
   
   .chart-controls-row {
@@ -987,14 +1095,40 @@
 }
 
 @media (max-width: 480px) {
-  .page-title h1 {
-    font-size: 1.3rem;
-    gap: 6px;
+  .header-section {
+    height: 40px;
+  }
+  
+  .header-title h1 {
+    font-size: 0.9rem;
+  }
+  
+  .header-subtitle {
+    font-size: 0.55rem;
   }
   
   .aquaswap-logo {
     width: 20px;
     height: 20px;
+  }
+  
+  .back-to-main-button {
+    font-size: 0.65rem;
+    padding: 3px 6px;
+  }
+  
+  .embed-toggle-button,
+  .fiat-purchase-button {
+    font-size: 0.65rem;
+    padding: 3px 5px;
+  }
+  
+  .trading-interface {
+    min-height: calc(100vh - 40px);
+  }
+  
+  .chart-container {
+    height: calc(100vh - 40px);
   }
   
   .token-search-input {
