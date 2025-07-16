@@ -529,8 +529,9 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   // Main AquaSwap interface
   return (
     <div className="aquaswap-page">
-      {/* Modern Header Section */}
+      {/* Header Section - Desktop horizontal, Mobile centered */}
       <div className="header-section">
+        {/* Desktop Navigation (hidden on mobile) */}
         <div className="header-nav">
           {/* Left Section */}
           <div className="header-left">
@@ -581,9 +582,48 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           </div>
         </div>
 
-        {/* Banner Display - only show on mobile */}
+        {/* Mobile Layout (hidden on desktop) */}
+        <button 
+          className="back-to-main-button"
+          onClick={() => navigate('/')}
+          title="Back to Main Page"
+        >
+          ← Back to Main
+        </button>
+
         <div className="banner-mobile-only">
           <BannerDisplay />
+        </div>
+
+        <div className="page-title">
+          <h1>
+            <img 
+              src="/AquaSwap.svg" 
+              alt="AquaSwap" 
+              className="aquaswap-logo" 
+              width="32" 
+              height="32"
+            />
+            AquaSwap
+          </h1>
+          <p>The Ultimate Cross-Chain BEX</p>
+          
+          <div className="header-buttons">
+            <button 
+              className="embed-toggle-button"
+              onClick={() => setShowEmbedCode(!showEmbedCode)}
+              title="Get embed code to add AquaSwap to your website"
+            >
+              {showEmbedCode ? '❌ Close Embed Code' : '🔗 Embed on Your Site'}
+            </button>
+            <Link 
+              to="/buy-crypto"
+              className="fiat-purchase-button"
+              title="Buy crypto with credit/debit card"
+            >
+              💳 Buy with Card
+            </Link>
+          </div>
         </div>
       </div>
       
