@@ -529,9 +529,9 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   // Main AquaSwap interface
   return (
     <div className="aquaswap-page">
-      {/* Header Section - Desktop horizontal, Mobile centered */}
+      {/* Header Section */}
       <div className="header-section">
-        {/* Desktop Navigation (hidden on mobile) */}
+        {/* Desktop Navigation (hidden on mobile via CSS) */}
         <div className="header-nav">
           {/* Left Section */}
           <div className="header-left">
@@ -582,7 +582,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           </div>
         </div>
 
-        {/* Mobile Layout (hidden on desktop) */}
+        {/* Mobile Layout (unchanged for mobile compatibility) */}
         <button 
           className="back-to-main-button"
           onClick={() => navigate('/')}
@@ -591,10 +591,12 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           ← Back to Main
         </button>
 
+        {/* Banner Display - only show on mobile */}
         <div className="banner-mobile-only">
           <BannerDisplay />
         </div>
 
+        {/* Mobile Title */}
         <div className="page-title">
           <h1>
             <img 
@@ -608,6 +610,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           </h1>
           <p>The Ultimate Cross-Chain BEX</p>
           
+          {/* Mobile Action Buttons */}
           <div className="header-buttons">
             <button 
               className="embed-toggle-button"
