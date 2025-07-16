@@ -1016,6 +1016,11 @@
   }
 }
 
+/* Hide desktop nav on mobile */
+.header-nav {
+  display: none;
+}
+
 /* Desktop-Only Header Improvements */
 @media (min-width: 1024px) {
   /* Modern horizontal header for desktop only */
@@ -1043,7 +1048,8 @@
 
   /* Hide mobile elements on desktop */
   .header-section > .back-to-main-button,
-  .header-section > .page-title {
+  .header-section > .page-title,
+  .header-section > .banner-mobile-only {
     display: none;
   }
 
