@@ -6,13 +6,22 @@ const User = require('../models/User');
 const TwitterRaid = require('../models/TwitterRaid');
 
 const telegramService = {
+  // Store group IDs where bot is active
+  activeGroups: new Set(),
+
   sendRaidNotification: async (raidData) => {
     try {
       const botToken = process.env.TELEGRAM_BOT_TOKEN;
-      const chatId = process.env.TELEGRAM_CHAT_ID;
       
-      if (!botToken || !chatId) {
+      if (!botToken) {
         return false;
+      }
+
+      // Get all active groups (including the default chat ID)
+      const groupsToNotify = new Set(telegramService.activeGroups);
+      const defaultChatId = process.env.TELEGRAM_CHAT_ID;
+      if (defaultChatId) {
+        groupsToNotify.add(defaultChatId);
       }
 
       // Construct the message text
@@ -28,35 +37,48 @@ const telegramService = {
 
       // Get the video file path
       const videoPath = path.join(__dirname, '../../public/RAID.mp4');
+      const videoExists = fs.existsSync(videoPath);
       
-      // Check if video exists
-      if (!fs.existsSync(videoPath)) {
-        return await telegramService.sendTextMessage(botToken, chatId, message);
-      }
+      // Send to all groups
+      let successCount = 0;
+      for (const chatId of groupsToNotify) {
+        try {
+          if (videoExists) {
+            // Send video with caption
+            const formData = new FormData();
+            formData.append('chat_id', chatId);
+            formData.append('video', fs.createReadStream(videoPath));
+            formData.append('caption', message);
 
-      // Send video with caption
-      const formData = new FormData();
-      formData.append('chat_id', chatId);
-      formData.append('video', fs.createReadStream(videoPath));
-      formData.append('caption', message);
+            const response = await axios.post(
+              `https://api.telegram.org/bot${botToken}/sendVideo`,
+              formData,
+              {
+                headers: {
+                  ...formData.getHeaders(),
+                },
+                timeout: 30000, // 30 second timeout for video upload
+              }
+            );
 
-      const response = await axios.post(
-        `https://api.telegram.org/bot${botToken}/sendVideo`,
-        formData,
-        {
-          headers: {
-            ...formData.getHeaders(),
-          },
-          timeout: 30000, // 30 second timeout for video upload
+            if (response.data.ok) {
+              successCount++;
+            }
+          } else {
+            // Send text message
+            const success = await telegramService.sendTextMessage(botToken, chatId, message);
+            if (success) {
+              successCount++;
+            }
+          }
+        } catch (error) {
+          console.error(`Failed to send to group ${chatId}:`, error.message);
+          // Remove failed group from active groups
+          telegramService.activeGroups.delete(chatId);
         }
-      );
-
-      if (response.data.ok) {
-        return true;
-      } else {
-        console.error('Telegram API error:', response.data);
-        return false;
       }
+
+      return successCount > 0;
 
     } catch (error) {
       console.error('Telegram notification failed:', error.message);
@@ -155,6 +177,11 @@ const telegramService = {
     const userId = message.from.id;
     const username = message.from.username;
     const chatType = message.chat.type;
+
+    // Track group chats for notifications
+    if (chatType === 'group' || chatType === 'supergroup') {
+      telegramService.activeGroups.add(chatId.toString());
+    }
 
     // Check if user is in conversation state
     const conversationState = telegramService.getConversationState(userId);
