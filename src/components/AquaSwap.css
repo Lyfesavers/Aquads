@@ -1093,23 +1093,23 @@
   .header-brand {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
   }
 
   .header-center .aquaswap-logo {
-    width: 20px;
-    height: 20px;
-    filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4));
+    width: 18px;
+    height: 18px;
+    filter: drop-shadow(0 0 6px rgba(0, 212, 255, 0.4));
   }
 
   .header-title {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
+    gap: 8px;
   }
 
   .header-title h1 {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     margin: 0;
     background: linear-gradient(45deg, #00d4ff, #0099cc);
     background-clip: text;
@@ -1117,14 +1117,17 @@
     -webkit-text-fill-color: transparent;
     font-weight: 700;
     line-height: 1;
+    white-space: nowrap;
   }
 
   .header-subtitle {
-    color: #a0a0a0;
-    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.7rem;
     margin: 0;
     line-height: 1;
     font-weight: 500;
+    white-space: nowrap;
+    opacity: 0.9;
   }
 
   /* Desktop right actions */
