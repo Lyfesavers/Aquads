@@ -505,26 +505,6 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                     onDelete={handleDeleteGame}
                   />
                 ))}
-                {/* Static Horse Racing Game Card */}
-                <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg border border-gray-700 hover:border-yellow-400 transition-all duration-300 flex flex-col h-full">
-                  <div className="relative w-full h-48 bg-gradient-to-r from-yellow-400/30 to-blue-900 flex items-center justify-center">
-                    <span style={{fontSize: '3rem'}}>🐎🏁</span>
-                  </div>
-                  <div className="p-6 flex-1 flex flex-col justify-between">
-                    <div>
-                      <h2 className="text-xl font-bold mb-2 text-yellow-400">Horse Racing</h2>
-                      <p className="text-gray-300 mb-4">Bet your affiliate points and race against the house! Pick 1 of 10 horses. Win big if your horse wins! <span className='text-yellow-300 font-semibold'>Login required for betting.</span></p>
-                    </div>
-                    <a
-                      href="/horse-racing-game.html"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-4 bg-gradient-to-r from-yellow-400 to-green-500 hover:from-yellow-500 hover:to-green-600 text-gray-900 font-bold py-2 px-4 rounded shadow text-center block"
-                    >
-                      Play Horse Racing
-                    </a>
-                  </div>
-                </div>
               </div>
             )}
           </>
