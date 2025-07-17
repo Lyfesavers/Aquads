@@ -1,158 +1,217 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Horse Racing - Aquads Game Hub</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Press+Start+2P|Roboto:400,700&display=swap">
-    <style>
-        body {
-            font-family: 'Press Start 2P', 'Roboto', monospace, sans-serif;
-            background: linear-gradient(to bottom, #b3e0ff 0%, #e6ccb3 100%);
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-        .container {
-            max-width: 700px;
-            margin: 0 auto;
-            padding: 32px 16px 16px 16px;
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 24px;
-            font-size: 2.2rem;
-        }
-        .bet-section {
-            background: #fff8e1;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 24px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-        }
-        .bet-section label {
-            font-size: 1rem;
-            margin-right: 8px;
-        }
-        .horses-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-        .horse-btn {
-            flex: 1 1 18%;
-            min-width: 60px;
-            background: #e0e0e0;
-            border: 2px solid #bdbdbd;
-            border-radius: 8px;
-            padding: 10px 0;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background 0.2s, border 0.2s;
-        }
-        .horse-btn.selected {
-            background: #ffd54f;
-            border-color: #ffb300;
-        }
-        .bet-input {
-            width: 80px;
-            padding: 6px;
-            font-size: 1rem;
-            border-radius: 6px;
-            border: 1px solid #bdbdbd;
-            margin-right: 8px;
-        }
-        .race-track {
-            background: #388e3c;
-            border-radius: 16px;
-            padding: 24px 8px 24px 8px;
-            margin-bottom: 24px;
-            min-height: 320px;
-            position: relative;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-        .horse-row {
-            display: flex;
-            align-items: center;
-            margin-bottom: 18px;
-            height: 28px;
-            position: relative;
-        }
-        .horse {
-            width: 48px;
-            height: 28px;
-            background: #fff;
-            border-radius: 12px 12px 8px 8px;
-            border: 2px solid #333;
-            position: absolute;
-            left: 0;
-            top: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: #333;
-            z-index: 2;
-            transition: left 0.2s linear;
-        }
-        .finish-line {
-            position: absolute;
-            right: 0;
-            top: 0;
-            bottom: 0;
-            width: 8px;
-            background: repeating-linear-gradient(
-                180deg,
-                #fff 0 6px,
-                #333 6px 12px
-            );
-            border-radius: 4px;
-            z-index: 1;
-        }
-        .result-section {
-            text-align: center;
-            font-size: 1.2rem;
-            margin-top: 16px;
-            min-height: 32px;
-        }
-        .btn {
-            background: #1976d2;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            padding: 10px 24px;
-            font-size: 1rem;
-            cursor: pointer;
-            margin-top: 8px;
-            transition: background 0.2s;
-        }
-        .btn:disabled {
-            background: #bdbdbd;
-            cursor: not-allowed;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Horse Racing Game</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat:700,400&display=swap">
+  <style>
+    body {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      font-family: 'Montserrat', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      color: #fff;
+    }
+    .container {
+      max-width: 700px;
+      margin: 40px auto;
+      background: rgba(30, 44, 80, 0.97);
+      border-radius: 18px;
+      box-shadow: 0 8px 32px rgba(30,44,80,0.25);
+      padding: 32px 24px 24px 24px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      letter-spacing: 2px;
+      color: #ffd700;
+      text-shadow: 0 2px 8px #0008;
+    }
+    .points-bar {
+      text-align: right;
+      font-size: 1.1rem;
+      margin-bottom: 18px;
+      color: #ffd700;
+      font-weight: bold;
+    }
+    .bet-section {
+      background: #22345a;
+      border-radius: 12px;
+      padding: 18px 16px 10px 16px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 8px #0002;
+    }
+    .bet-section label {
+      font-size: 1rem;
+      margin-right: 8px;
+      color: #ffd700;
+    }
+    .horses-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+      justify-content: center;
+    }
+    .horse-btn {
+      flex: 1 1 18%;
+      min-width: 60px;
+      background: #2a3d5c;
+      border: 2px solid #3e5a99;
+      border-radius: 8px;
+      padding: 10px 0 6px 0;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #ffd700;
+      cursor: pointer;
+      transition: background 0.2s, border 0.2s, color 0.2s;
+      position: relative;
+      outline: none;
+    }
+    .horse-btn.selected {
+      background: #ffd700;
+      color: #2a3d5c;
+      border-color: #ffd700;
+      box-shadow: 0 0 0 2px #fff5 inset;
+    }
+    .horse-odds {
+      display: block;
+      font-size: 0.95rem;
+      color: #fff;
+      margin-top: 2px;
+      font-weight: 400;
+    }
+    .bet-input {
+      width: 90px;
+      padding: 7px;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: 1px solid #3e5a99;
+      margin-right: 8px;
+      background: #1e2c50;
+      color: #ffd700;
+    }
+    .bet-input:focus {
+      outline: 2px solid #ffd700;
+    }
+    .potential-payout {
+      font-size: 1.1rem;
+      color: #ffd700;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    .btn {
+      background: linear-gradient(90deg, #ffd700 0%, #ffb300 100%);
+      color: #1e2c50;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 32px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 8px;
+      margin-bottom: 8px;
+      transition: background 0.2s, color 0.2s;
+      box-shadow: 0 2px 8px #0002;
+    }
+    .btn:disabled {
+      background: #888;
+      color: #fff;
+      cursor: not-allowed;
+    }
+    .race-track {
+      background: #2a3d5c;
+      border-radius: 16px;
+      padding: 24px 8px 24px 8px;
+      margin-bottom: 24px;
+      min-height: 340px;
+      position: relative;
+      box-shadow: 0 2px 8px #0003;
+      overflow: hidden;
+    }
+    .horse-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 18px;
+      height: 32px;
+      position: relative;
+    }
+    .horse {
+      width: 56px;
+      height: 32px;
+      background: #ffd700;
+      border-radius: 16px 16px 12px 12px;
+      border: 2px solid #fff;
+      position: absolute;
+      left: 0;
+      top: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #2a3d5c;
+      z-index: 2;
+      transition: left 0.18s linear;
+      box-shadow: 0 2px 8px #0002;
+    }
+    .finish-line {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 10px;
+      background: repeating-linear-gradient(
+        180deg,
+        #fff 0 8px,
+        #ffd700 8px 16px
+      );
+      border-radius: 4px;
+      z-index: 1;
+    }
+    .result-section {
+      text-align: center;
+      font-size: 1.3rem;
+      margin-top: 16px;
+      min-height: 36px;
+      font-weight: bold;
+      color: #ffd700;
+      text-shadow: 0 2px 8px #0008;
+    }
+    .odds-bar {
+      text-align: center;
+      margin-bottom: 10px;
+      color: #fff;
+      font-size: 1.05rem;
+    }
+    @media (max-width: 600px) {
+      .container { padding: 10px 2px; }
+      .race-track { min-height: 220px; }
+      .horse-row { height: 22px; }
+      .horse { width: 36px; height: 22px; font-size: 1rem; }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Horse Racing</h1>
-        <div class="bet-section">
-            <div style="margin-bottom: 10px;">
-                <label>Select your horse:</label>
-                <div class="horses-list" id="horses-list"></div>
-            </div>
-            <div style="margin-bottom: 10px;">
-                <label>Bet amount (affiliate points):</label>
-                <input type="number" id="bet-amount" class="bet-input" min="1" value="10">
-            </div>
-            <button class="btn" id="start-race-btn">Start Race</button>
-        </div>
-        <div class="race-track" id="race-track"></div>
-        <div class="result-section" id="result-section"></div>
+  <div class="container">
+    <h1>Horse Racing</h1>
+    <div class="points-bar" id="points-bar">Affiliate Points: ...</div>
+    <div class="bet-section">
+      <div class="odds-bar">Select your horse and bet amount. Odds and potential payout shown below.</div>
+      <div class="horses-list" id="horses-list"></div>
+      <div style="margin-bottom: 10px; text-align:center;">
+        <label>Bet amount:</label>
+        <input type="number" id="bet-amount" class="bet-input" min="1" value="10">
+      </div>
+      <div class="potential-payout" id="potential-payout"></div>
+      <button class="btn" id="start-race-btn">Start Race</button>
     </div>
-    <script src="horse-racing.js"></script>
+    <div class="race-track" id="race-track"></div>
+    <div class="result-section" id="result-section"></div>
+  </div>
+  <script src="horse-racing.js"></script>
 </body>
 </html> 
