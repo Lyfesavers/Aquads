@@ -36,7 +36,13 @@ const telegramService = {
 🎯 Task: Like, Retweet & Comment
 
 🔗 Tweet: ${raidData.tweetUrl}
-▶️ Complete: ${process.env.FRONTEND_URL || 'https://aquads.xyz'}
+🤖 Complete: @aquadsbumpbot
+
+💡 How to complete:
+1. Like, Retweet & Comment on the tweet above
+2. Start a chat with @aquadsbumpbot
+3. Use /raids to see available raids
+4. Click "Complete" button or use /complete command
 
 ⏰ Available for 48 hours!`;
 
@@ -161,7 +167,7 @@ const telegramService = {
         if (chatId) {
           try {
             await telegramService.sendBotMessage(chatId, 
-              `🤖 Bot Commands Active!\n\nTry these commands:\n• /help - Show commands\n• /start - Get started\n• /raids - View raids`);
+              `🤖 Aquads Bot is now active!\n\n📋 Available Commands:\n• /start - Get started & see welcome message\n• /help - Show detailed command guide\n• /link USERNAME - Link your Aquads account\n• /raids - View available Twitter raids\n\n💡 Tip: Use commands in private chat for best experience!`);
           } catch (error) {
             console.error('Failed to send startup message:', error.message);
           }
@@ -208,7 +214,7 @@ const telegramService = {
           text.startsWith('/link') || text.startsWith('/help') || text.startsWith('/cancel')) {
         
         await telegramService.sendBotMessage(chatId, 
-          `💬 Please use bot commands in private chat to keep group conversations clean.\n\nStart a chat with @aquadsbumpbot and use: ${text}`);
+          `💬 Please use bot commands in private chat to keep group conversations clean.\n\n🤖 Start a chat with @aquadsbumpbot and use: ${text}\n\n💡 This keeps group chats focused and gives you a better bot experience!`);
         return;
       }
     }
@@ -255,42 +261,60 @@ const telegramService = {
 
     const message = `🚀 Welcome to Aquads Bot!
 
-Hi ${username ? `@${username}` : 'there'}! I can help you with Twitter raids.
+Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and earn points.
 
-Available Commands:
-/link USERNAME - Link your Telegram to Aquads account
-/raids - View available raids
-/complete RAID_ID @twitter_username TWEET_URL - Complete a raid
-/help - Show this help message
+📋 Quick Start:
+1. Link your account: /link your_aquads_username
+2. View raids: /raids
+3. Complete raids: Use buttons or /complete command
 
-First, link your account with: /link your_aquads_username`;
+🔗 Available Commands:
+• /link USERNAME - Link your Telegram to Aquads account
+• /raids - View available Twitter raids
+• /complete RAID_ID @twitter_username TWEET_URL - Complete a raid manually
+• /help - Show detailed command guide
+
+💡 First step: Link your account with /link your_aquads_username`;
 
     await telegramService.sendBotMessage(chatId, message);
   },
 
   // Handle /help command
   handleHelpCommand: async (chatId) => {
-    const message = `📋 Aquads Bot Commands:
+    const message = `📋 Aquads Bot - Complete Command Guide
 
-🔗 /link Aquads USERNAME - Link your Telegram to Aquads account (case sensitive)
-📋 /raids - View available Twitter raids
-✅ /complete RAID_ID @twitter_username TWEET_URL - Complete a raid
-❓ /help - Show this help message
+🔗 Account Commands:
+• /link USERNAME - Link your Telegram to Aquads account (case sensitive)
+• /help - Show this help message
 
-Example Usage:
+📋 Raid Commands:
+• /raids - View all available Twitter raids
+• /complete RAID_ID @twitter_username TWEET_URL - Complete a raid manually
+
+📝 Example Usage:
 /link myusername
 /raids
-/complete 123abc @mytwitter https://twitter.com/user/status/123
+/complete 507f1f77bcf86cd799439011 @mytwitter https://twitter.com/user/status/123456789
 
-💡 Tips:
-• Link your account first before using other commands
-• Commands work in both private chat and groups
-• Bot will send you confirmations for successful actions
+💡 How Raids Work:
+1. Like, Retweet & Comment on the target tweet
+2. Use /raids to see available raids
+3. Click "Complete in Private Chat" button OR use /complete command
+4. Provide your Twitter username when prompted
+5. Wait for admin approval to receive points
 
 🚀 Getting Started:
-1. Link your account: /link your_username
-2. View raids: /raids
-3. Complete raids: /complete RAID_ID @twitter TWEET_URL`;
+1. Link your account: /link your_aquads_username
+2. View available raids: /raids
+3. Complete raids using buttons or /complete command
+
+⚠️ Important Notes:
+• Username is case sensitive when linking
+• You must manually interact with tweets before completing
+• Raids expire after 48 hours
+• Points are awarded after admin approval
+
+💬 Need help? Contact support through the Aquads website.`;
 
     await telegramService.sendBotMessage(chatId, message);
   },
@@ -301,7 +325,7 @@ Example Usage:
     
     if (parts.length < 2) {
       await telegramService.sendBotMessage(chatId, 
-        "❌ Please provide your Aquads username: /link your_username");
+        "❌ Please provide your Aquads username.\n\n📝 Usage: /link your_aquads_username\n\n💡 Example: /link myusername");
       return;
     }
 
@@ -335,13 +359,16 @@ Example Usage:
       await user.save();
 
       await telegramService.sendBotMessage(chatId, 
-        `✅ Account Linked!
-        
-Your Telegram is now linked to Aquads account: ${aquadsUsername}
+        `✅ Account Successfully Linked!
 
-You can now use:
-• /raids - View available raids
-• /complete - Complete raids directly in Telegram`);
+🔗 Your Telegram is now linked to Aquads account: ${aquadsUsername}
+
+🚀 You can now:
+• /raids - View available Twitter raids
+• Complete raids using buttons or /complete command
+• Earn points for completing raids
+
+💡 Next step: Use /raids to see available raids!`);
 
     } catch (error) {
       console.error('Link command error:', error);
@@ -358,7 +385,7 @@ You can now use:
       
       if (!user) {
         await telegramService.sendBotMessage(chatId, 
-          "❌ Please link your account first: /link your_username");
+          "❌ Please link your account first.\n\n📝 Use: /link your_aquads_username\n\n💡 You need to link your Aquads account before viewing raids.");
         return;
       }
 
@@ -369,7 +396,7 @@ You can now use:
 
       if (raids.length === 0) {
         await telegramService.sendBotMessage(chatId, 
-          "📭 No active raids available right now. Check back later!");
+          "📭 No active raids available right now.\n\n⏰ Check back later for new Twitter raids!\n\n💡 Raids are posted regularly throughout the day.");
         return;
       }
 
@@ -418,7 +445,7 @@ You can now use:
 
       // Send summary
       await telegramService.sendBotMessage(chatId, 
-        `📊 ${activeRaids.length} raids shown above\n💡 Click "🚀 Complete Raid" or use:\n/complete RAID_ID @twitter_username TWEET_URL\n⏰ Raids expire after 48 hours`);
+        `📊 ${activeRaids.length} raids shown above\n\n💡 How to complete:\n• Click "Complete in Private Chat" button (easiest)\n• Or use: /complete RAID_ID @twitter_username TWEET_URL\n\n⏰ Raids expire after 48 hours\n💡 Make sure to interact with tweets before completing!`);
 
     } catch (error) {
       console.error('Raids command error:', error);
@@ -433,7 +460,7 @@ You can now use:
     
     if (parts.length < 4) {
       await telegramService.sendBotMessage(chatId, 
-        "❌ Usage: /complete RAID_ID @twitter_username TWEET_URL\n\nExample: /complete 123abc @mytwitter https://twitter.com/user/status/123");
+        "❌ Incorrect usage.\n\n📝 Usage: /complete RAID_ID @twitter_username TWEET_URL\n\n💡 Example: /complete 507f1f77bcf86cd799439011 @mytwitter https://twitter.com/user/status/123456789\n\n💡 Tip: Use /raids to get the correct raid ID and tweet URL.");
       return;
     }
 
@@ -540,7 +567,12 @@ You can now use:
 ⏳ Status: Pending admin approval
 💰 Reward: ${raid.points} points (after approval)
 
-Your submission has been recorded and will be reviewed by our team. Points will be awarded after verification.`);
+📋 What happens next:
+• Admin will review your submission
+• Points will be awarded after verification
+• You'll be notified when approved
+
+💡 Use /raids to see more available raids!`);
 
     } catch (error) {
       console.error('Complete command error:', error);
@@ -737,7 +769,7 @@ Your submission has been recorded and will be reviewed by our team. Points will 
 
       // Ask for username
       await telegramService.sendBotMessage(chatId, 
-        `🚀 Completing: ${raid.title}\n\n⚠️ BEFORE CONTINUING: Make sure you have already:\n✅ LIKED the tweet\n✅ RETWEETED the tweet\n✅ COMMENTED on the tweet\n✅ BOOKMARKED the tweet\n\n📝 Now enter your Twitter username (without @):\n\nExample: myusername`);
+        `🚀 Completing: ${raid.title}\n\n⚠️ BEFORE CONTINUING: Make sure you have already:\n✅ LIKED the tweet\n✅ RETWEETED the tweet\n✅ COMMENTED on the tweet\n✅ BOOKMARKED the tweet\n\n📝 Now enter your Twitter username (without @):\n\n💡 Example: myusername`);
 
     } catch (error) {
       console.error('Start completion error:', error);
@@ -810,7 +842,7 @@ Your submission has been recorded and will be reviewed by our team. Points will 
 
       // Success message
       await telegramService.sendBotMessage(chatId, 
-        `✅ Raid submitted successfully!\n\n📝 Twitter: @${twitterUsername}\n💰 Reward: ${state.raidPoints} points\n⏳ Status: Pending admin approval\n\nUse /raids to see more!`);
+        `✅ Raid submitted successfully!\n\n📝 Twitter: @${twitterUsername}\n💰 Reward: ${state.raidPoints} points\n⏳ Status: Pending admin approval\n\n📋 What happens next:\n• Admin will review your submission\n• Points will be awarded after verification\n\n💡 Use /raids to see more available raids!`);
 
     } catch (error) {
       console.error('Username input error:', error);
