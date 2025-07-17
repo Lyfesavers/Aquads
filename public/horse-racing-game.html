@@ -198,19 +198,34 @@
 <body>
   <div class="container">
     <h1>Horse Racing</h1>
-    <div class="points-bar" id="points-bar">Affiliate Points: ...</div>
-    <div class="bet-section">
-      <div class="odds-bar">Select your horse and bet amount. Odds and potential payout shown below.</div>
-      <div class="horses-list" id="horses-list"></div>
-      <div style="margin-bottom: 10px; text-align:center;">
-        <label>Bet amount:</label>
-        <input type="number" id="bet-amount" class="bet-input" min="1" value="10">
-      </div>
-      <div class="potential-payout" id="potential-payout"></div>
-      <button class="btn" id="start-race-btn">Start Race</button>
+    <div id="login-section" style="display:none;">
+      <form id="login-form" style="max-width:340px;margin:32px auto 0 auto;background:#22345a;padding:24px 18px 18px 18px;border-radius:12px;box-shadow:0 2px 8px #0002;">
+        <h2 style="color:#ffd700;text-align:center;font-size:1.3rem;margin-bottom:18px;">Login to Play</h2>
+        <div style="margin-bottom:14px;">
+          <input type="text" id="login-username" placeholder="Email or Username" style="width:100%;padding:10px 8px;font-size:1rem;border-radius:6px;border:1px solid #3e5a99;background:#1e2c50;color:#ffd700;" required>
+        </div>
+        <div style="margin-bottom:14px;">
+          <input type="password" id="login-password" placeholder="Password" style="width:100%;padding:10px 8px;font-size:1rem;border-radius:6px;border:1px solid #3e5a99;background:#1e2c50;color:#ffd700;" required>
+        </div>
+        <button type="submit" class="btn" style="width:100%;">Login</button>
+        <div id="login-error" style="color:#ff4d4d;text-align:center;margin-top:10px;font-size:1rem;"></div>
+      </form>
     </div>
-    <div class="race-track" id="race-track"></div>
-    <div class="result-section" id="result-section"></div>
+    <div id="game-section">
+      <div class="points-bar" id="points-bar">Affiliate Points: ...</div>
+      <div class="bet-section">
+        <div class="odds-bar">Select your horse and bet amount. Odds and potential payout shown below.</div>
+        <div class="horses-list" id="horses-list"></div>
+        <div style="margin-bottom: 10px; text-align:center;">
+          <label>Bet amount:</label>
+          <input type="number" id="bet-amount" class="bet-input" min="1" value="10">
+        </div>
+        <div class="potential-payout" id="potential-payout"></div>
+        <button class="btn" id="start-race-btn">Start Race</button>
+      </div>
+      <div class="race-track" id="race-track"></div>
+      <div class="result-section" id="result-section"></div>
+    </div>
   </div>
   <script src="horse-racing.js"></script>
 </body>

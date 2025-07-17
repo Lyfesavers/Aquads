@@ -17,6 +17,12 @@ const betAmountInput = document.getElementById('bet-amount');
 const pointsBar = document.getElementById('points-bar');
 const potentialPayoutDiv = document.getElementById('potential-payout');
 
+// Login logic
+const loginSection = document.getElementById('login-section');
+const gameSection = document.getElementById('game-section');
+const loginForm = document.getElementById('login-form');
+const loginError = document.getElementById('login-error');
+
 function getToken() {
   try {
     const user = JSON.parse(localStorage.getItem('currentUser'));
@@ -26,18 +32,64 @@ function getToken() {
   }
 }
 
-async function fetchUserPoints() {
-  const token = getToken();
-  if (!token) return;
+function isLoggedIn() {
   try {
-    const res = await fetch(`${API_URL}/points/my-points`, {
-      headers: { 'Authorization': `Bearer ${token}` }
+    const user = JSON.parse(localStorage.getItem('currentUser'));
+    return user && user.token;
+  } catch {
+    return false;
+  }
+}
+
+function showLogin() {
+  loginSection.style.display = '';
+  gameSection.style.display = 'none';
+}
+
+function showGame() {
+  loginSection.style.display = 'none';
+  gameSection.style.display = '';
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  loginError.textContent = '';
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!username || !password) {
+    loginError.textContent = 'Please enter both fields.';
+    return;
+  }
+  try {
+    const res = await fetch(`${API_URL}/users/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, email: username, password })
     });
-    if (!res.ok) return;
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      loginError.textContent = data.error || 'Login failed.';
+      return;
+    }
     const data = await res.json();
-    userPoints = data.points || 0;
-    updatePointsDisplay();
-  } catch {}
+    localStorage.setItem('currentUser', JSON.stringify(data));
+    showGame();
+    fetchUserPoints();
+  } catch (err) {
+    loginError.textContent = 'Login failed. Please try again.';
+  }
+}
+
+if (loginForm) {
+  loginForm.addEventListener('submit', handleLogin);
+}
+
+// On load, show login or game
+if (!isLoggedIn()) {
+  showLogin();
+} else {
+  showGame();
+  fetchUserPoints();
 }
 
 function updatePointsDisplay() {
@@ -159,6 +211,20 @@ async function awardPoints(amount) {
   updatePointsDisplay();
 }
 
+async function fetchUserPoints() {
+  const token = getToken();
+  if (!token) return;
+  try {
+    const res = await fetch(`${API_URL}/points/my-points`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    userPoints = data.points || 0;
+    updatePointsDisplay();
+  } catch {}
+}
+
 async function startRace() {
   if (isRacing) return;
   if (!selectedHorse) {
@@ -236,5 +302,4 @@ startRaceBtn.onclick = startRace;
 randomizeOdds();
 renderHorseButtons();
 renderRaceTrack();
-fetchUserPoints();
 updatePotentialPayout(); 
