@@ -590,6 +590,57 @@ const revokeGameVotePoints = async (userId, gameId) => {
   }
 };
 
+// Horse Racing Game: Deduct points for bet
+router.post('/horse-race/bet', auth, requireEmailVerification, async (req, res) => {
+  try {
+    const { betAmount } = req.body;
+    if (!betAmount || betAmount < 1) {
+      return res.status(400).json({ error: 'Invalid bet amount' });
+    }
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    if (user.points < betAmount) {
+      return res.status(400).json({ error: 'Not enough points to place bet' });
+    }
+    user.points -= betAmount;
+    user.pointsHistory.push({
+      amount: -betAmount,
+      reason: 'Horse Racing Bet',
+      createdAt: new Date()
+    });
+    await user.save();
+    res.json({ success: true, points: user.points });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to process bet' });
+  }
+});
+
+// Horse Racing Game: Award points for win
+router.post('/horse-race/payout', auth, requireEmailVerification, async (req, res) => {
+  try {
+    const { payoutAmount } = req.body;
+    if (!payoutAmount || payoutAmount < 1) {
+      return res.status(400).json({ error: 'Invalid payout amount' });
+    }
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    user.points += payoutAmount;
+    user.pointsHistory.push({
+      amount: payoutAmount,
+      reason: 'Horse Racing Win',
+      createdAt: new Date()
+    });
+    await user.save();
+    res.json({ success: true, points: user.points });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to process payout' });
+  }
+});
+
 // Export the router directly
 module.exports = router;
 
