@@ -901,15 +901,24 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
         return false;
       }
 
-      // Get top 10 bubbles that are bumped and have the most bullish votes
-      const topBubbles = await Ad.find({ 
-        isBumped: true, 
-        status: 'active',
-        bullishVotes: { $gt: 0 } // Only include bubbles with bullish votes
+      // Get all active bubbles (same logic as website)
+      const allBubbles = await Ad.find({ 
+        status: 'active' // Only active bubbles, same as website
       })
-      .sort({ bullishVotes: -1 }) // Sort by bullish votes descending
-      .limit(10)
-      .select('title logo url bullishVotes bearishVotes owner');
+      .select('title logo url bullishVotes bearishVotes owner isBumped status');
+
+      // Apply the same sorting logic as the website
+      const sortedBubbles = allBubbles.sort((a, b) => {
+        // First prioritize bumped bubbles - all bumped bubbles come before unbumped ones
+        if (a.isBumped && !b.isBumped) return -1;
+        if (!a.isBumped && b.isBumped) return 1;
+        
+        // Then sort by bullish votes (highest first)
+        return (b.bullishVotes || 0) - (a.bullishVotes || 0);
+      });
+
+      // Get top 10
+      const topBubbles = sortedBubbles.slice(0, 10);
 
       if (topBubbles.length === 0) {
         await telegramService.sendBotMessage(chatId, 
@@ -919,13 +928,14 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 
       // Construct the message
       let message = `🔥 Top 10 Bubbles - Most Bullish Votes\n\n`;
-      message += `📊 Ranking based on bullish votes (bumped bubbles only)\n\n`;
+      message += `📊 Ranking: Bumped bubbles first, then by bullish votes\n\n`;
 
       topBubbles.forEach((bubble, index) => {
         const rank = index + 1;
         const emoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '🔸';
+        const bumpedIndicator = bubble.isBumped ? '🚀 ' : '';
         
-        message += `${emoji} #${rank}: ${bubble.title}\n`;
+        message += `${emoji} #${rank}: ${bumpedIndicator}${bubble.title}\n`;
         message += `📈 Bullish: ${bubble.bullishVotes} | 📉 Bearish: ${bubble.bearishVotes}\n\n`;
       });
 
