@@ -3190,7 +3190,7 @@ function App() {
                           draggable="false"
                         />
                         <a 
-                          href="https://t.me/aquads_bot" 
+                          href="https://t.me/aquadsbumpbot" 
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{
