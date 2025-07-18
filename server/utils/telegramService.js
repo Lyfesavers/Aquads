@@ -168,17 +168,6 @@ const telegramService = {
       
       if (setWebhookResult.data.ok) {
         console.log('Telegram bot webhook configured successfully');
-        
-        // Send startup message
-        const chatId = process.env.TELEGRAM_CHAT_ID;
-        if (chatId) {
-          try {
-            await telegramService.sendBotMessage(chatId, 
-              `🤖 Aquads Bot is now active!\n\n📋 Available Commands:\n• /start - Get started & see welcome message\n• /help - Show detailed command guide\n• /link USERNAME - Link your Aquads account\n• /raids - View available Twitter raids\n\n💡 Tip: Use commands in private chat for best experience!\n\n🌐 Track points & claim rewards on: https://aquads.xyz`);
-          } catch (error) {
-            console.error('Failed to send startup message:', error.message);
-          }
-        }
       } else {
         console.error('Failed to set webhook:', setWebhookResult.data.description);
       }
