@@ -4,6 +4,7 @@ const path = require('path');
 const FormData = require('form-data');
 const User = require('../models/User');
 const TwitterRaid = require('../models/TwitterRaid');
+const Ad = require('../models/Ad');
 
 const telegramService = {
   // Store group IDs where bot is active
@@ -38,11 +39,17 @@ const telegramService = {
 🔗 Tweet: ${raidData.tweetUrl}
 🤖 Complete: @aquadsbumpbot
 
+📋 Requirements:
+• You MUST have an Aquads account to participate
+• Link your account: /link your_aquads_username
+
 💡 How to complete:
 1. Like, Retweet & Comment on the tweet above
 2. Start a chat with @aquadsbumpbot
 3. Use /raids to see available raids
 4. Click "Complete" button or use /complete command
+
+🌐 Track points & claim rewards on: https://aquads.xyz
 
 ⏰ Available for 48 hours!`;
 
@@ -167,7 +174,7 @@ const telegramService = {
         if (chatId) {
           try {
             await telegramService.sendBotMessage(chatId, 
-              `🤖 Aquads Bot is now active!\n\n📋 Available Commands:\n• /start - Get started & see welcome message\n• /help - Show detailed command guide\n• /link USERNAME - Link your Aquads account\n• /raids - View available Twitter raids\n\n💡 Tip: Use commands in private chat for best experience!`);
+              `🤖 Aquads Bot is now active!\n\n📋 Available Commands:\n• /start - Get started & see welcome message\n• /help - Show detailed command guide\n• /link USERNAME - Link your Aquads account\n• /raids - View available Twitter raids\n\n💡 Tip: Use commands in private chat for best experience!\n\n🌐 Track points & claim rewards on: https://aquads.xyz`);
           } catch (error) {
             console.error('Failed to send startup message:', error.message);
           }
@@ -207,14 +214,14 @@ const telegramService = {
       return;
     }
 
-    // Handle commands - redirect group commands to private chat
+    // Handle commands - redirect group commands to private chat (except /bubbles)
     if (chatType === 'group' || chatType === 'supergroup') {
-      // In group chats, redirect all commands to private chat
+      // In group chats, redirect most commands to private chat, but allow /bubbles
       if (text.startsWith('/start') || text.startsWith('/raids') || text.startsWith('/complete') || 
           text.startsWith('/link') || text.startsWith('/help') || text.startsWith('/cancel')) {
         
         await telegramService.sendBotMessage(chatId, 
-          `💬 Please use bot commands in private chat to keep group conversations clean.\n\n🤖 Start a chat with @aquadsbumpbot and use: ${text}\n\n💡 This keeps group chats focused and gives you a better bot experience!`);
+          `💬 Please use bot commands in private chat to keep group conversations clean.\n\n🤖 Start a chat with @aquadsbumpbot and use: ${text}\n\n💡 This keeps group chats focused and gives you a better bot experience!\n\n🌐 Track points & claim rewards on: https://aquads.xyz`);
         return;
       }
     }
@@ -230,6 +237,8 @@ const telegramService = {
       await telegramService.handleLinkCommand(chatId, userId, text);
     } else if (text.startsWith('/help')) {
       await telegramService.handleHelpCommand(chatId);
+    } else if (text.startsWith('/bubbles')) {
+      await telegramService.handleBubblesCommand(chatId);
     } else if (text.startsWith('/cancel')) {
       // Cancel any ongoing conversation
       if (conversationState) {
@@ -263,6 +272,10 @@ const telegramService = {
 
 Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and earn points.
 
+📋 Requirements:
+• You MUST have an Aquads account to participate
+• Create account at: https://aquads.xyz
+
 📋 Quick Start:
 1. Link your account: /link your_aquads_username
 2. View raids: /raids
@@ -274,6 +287,8 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 • /complete RAID_ID @twitter_username TWEET_URL - Complete a raid manually
 • /help - Show detailed command guide
 
+🌐 Track points & claim rewards on: https://aquads.xyz
+
 💡 First step: Link your account with /link your_aquads_username`;
 
     await telegramService.sendBotMessage(chatId, message);
@@ -283,6 +298,10 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
   handleHelpCommand: async (chatId) => {
     const message = `📋 Aquads Bot - Complete Command Guide
 
+📋 Requirements:
+• You MUST have an Aquads account to participate
+• Create account at: https://aquads.xyz
+
 🔗 Account Commands:
 • /link USERNAME - Link your Telegram to Aquads account (case sensitive)
 • /help - Show this help message
@@ -291,9 +310,13 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 • /raids - View all available Twitter raids
 • /complete RAID_ID @twitter_username TWEET_URL - Complete a raid manually
 
+📋 Bubble Commands:
+• /bubbles - View top 10 bubbles with most bullish votes
+
 📝 Example Usage:
 /link myusername
 /raids
+/bubbles
 /complete 507f1f77bcf86cd799439011 @mytwitter https://twitter.com/user/status/123456789
 
 💡 How Raids Work:
@@ -308,15 +331,29 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 2. View available raids: /raids
 3. Complete raids using buttons or /complete command
 
+🌐 Track points & claim rewards on: https://aquads.xyz
+
 ⚠️ Important Notes:
 • Username is case sensitive when linking
 • You must manually interact with tweets before completing
 • Raids expire after 48 hours
 • Points are awarded after admin approval
+• You can redeem points for gift cards and rewards on the website
 
 💬 Need help? Contact support through the Aquads website.`;
 
     await telegramService.sendBotMessage(chatId, message);
+  },
+
+  // Handle /bubbles command
+  handleBubblesCommand: async (chatId) => {
+    try {
+      await telegramService.sendTopBubblesNotification(chatId);
+    } catch (error) {
+      console.error('Bubbles command error:', error);
+      await telegramService.sendBotMessage(chatId, 
+        "❌ Error fetching top bubbles. Please try again later.");
+    }
   },
 
   // Handle /link command
@@ -368,6 +405,8 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 • Complete raids using buttons or /complete command
 • Earn points for completing raids
 
+🌐 Track points & claim rewards on: https://aquads.xyz
+
 💡 Next step: Use /raids to see available raids!`);
 
     } catch (error) {
@@ -385,7 +424,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
       
       if (!user) {
         await telegramService.sendBotMessage(chatId, 
-          "❌ Please link your account first.\n\n📝 Use: /link your_aquads_username\n\n💡 You need to link your Aquads account before viewing raids.");
+          "❌ Please link your account first.\n\n📝 Use: /link your_aquads_username\n\n💡 You need to link your Aquads account before viewing raids.\n\n🌐 Create account at: https://aquads.xyz");
         return;
       }
 
@@ -396,7 +435,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 
       if (raids.length === 0) {
         await telegramService.sendBotMessage(chatId, 
-          "📭 No active raids available right now.\n\n⏰ Check back later for new Twitter raids!\n\n💡 Raids are posted regularly throughout the day.");
+          "📭 No active raids available right now.\n\n⏰ Check back later for new Twitter raids!\n\n💡 Raids are posted regularly throughout the day.\n\n🌐 Track your points on: https://aquads.xyz");
         return;
       }
 
@@ -407,7 +446,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 
       if (activeRaids.length === 0) {
         await telegramService.sendBotMessage(chatId, 
-          "📭 No active raids available right now. Check back later!");
+          "📭 No active raids available right now. Check back later!\n\n🌐 Track your points on: https://aquads.xyz");
         return;
       }
 
@@ -445,7 +484,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 
       // Send summary
       await telegramService.sendBotMessage(chatId, 
-        `📊 ${activeRaids.length} raids shown above\n\n💡 How to complete:\n• Click "Complete in Private Chat" button (easiest)\n• Or use: /complete RAID_ID @twitter_username TWEET_URL\n\n⏰ Raids expire after 48 hours\n💡 Make sure to interact with tweets before completing!`);
+        `📊 ${activeRaids.length} raids shown above\n\n💡 How to complete:\n• Click "Complete in Private Chat" button (easiest)\n• Or use: /complete RAID_ID @twitter_username TWEET_URL\n\n⏰ Raids expire after 48 hours\n💡 Make sure to interact with tweets before completing!\n\n🌐 Track points & claim rewards on: https://aquads.xyz`);
 
     } catch (error) {
       console.error('Raids command error:', error);
@@ -481,7 +520,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
       
       if (!user) {
         await telegramService.sendBotMessage(chatId, 
-          "❌ Please link your account first: /link your_username");
+          "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
         return;
       }
 
@@ -571,6 +610,8 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 • Admin will review your submission
 • Points will be awarded after verification
 • You'll be notified when approved
+
+🌐 Track points & claim rewards on: https://aquads.xyz
 
 💡 Use /raids to see more available raids!`);
 
@@ -734,7 +775,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
       
       if (!user) {
         await telegramService.sendBotMessage(chatId, 
-          "❌ Please link your account first: /link your_username");
+          "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
         return;
       }
 
@@ -842,12 +883,69 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 
       // Success message
       await telegramService.sendBotMessage(chatId, 
-        `✅ Raid submitted successfully!\n\n📝 Twitter: @${twitterUsername}\n💰 Reward: ${state.raidPoints} points\n⏳ Status: Pending admin approval\n\n📋 What happens next:\n• Admin will review your submission\n• Points will be awarded after verification\n\n💡 Use /raids to see more available raids!`);
+        `✅ Raid submitted successfully!\n\n📝 Twitter: @${twitterUsername}\n💰 Reward: ${state.raidPoints} points\n⏳ Status: Pending admin approval\n\n📋 What happens next:\n• Admin will review your submission\n• Points will be awarded after verification\n\n🌐 Track points & claim rewards on: https://aquads.xyz\n\n💡 Use /raids to see more available raids!`);
 
     } catch (error) {
       console.error('Username input error:', error);
       await telegramService.sendBotMessage(chatId, 
         "❌ Error processing submission. Please try again.");
+    }
+  },
+
+  // Send top 10 bubbles with most bullish votes to specific group
+  sendTopBubblesNotification: async (chatId) => {
+    try {
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      
+      if (!botToken) {
+        return false;
+      }
+
+      // Get top 10 bubbles that are bumped and have the most bullish votes
+      const topBubbles = await Ad.find({ 
+        isBumped: true, 
+        status: 'active',
+        bullishVotes: { $gt: 0 } // Only include bubbles with bullish votes
+      })
+      .sort({ bullishVotes: -1 }) // Sort by bullish votes descending
+      .limit(10)
+      .select('title logo url bullishVotes bearishVotes owner');
+
+      if (topBubbles.length === 0) {
+        await telegramService.sendBotMessage(chatId, 
+          "📭 No bumped bubbles with bullish votes found right now.\n\n🌐 Check back later at: https://aquads.xyz");
+        return true;
+      }
+
+      // Construct the message
+      let message = `🔥 Top 10 Bubbles - Most Bullish Votes\n\n`;
+      message += `📊 Ranking based on bullish votes (bumped bubbles only)\n\n`;
+
+      topBubbles.forEach((bubble, index) => {
+        const rank = index + 1;
+        const emoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '🔸';
+        
+        message += `${emoji} #${rank}: ${bubble.title}\n`;
+        message += `📈 Bullish: ${bubble.bullishVotes} | 📉 Bearish: ${bubble.bearishVotes}\n\n`;
+      });
+
+      message += `🌐 View all bubbles at: https://aquads.xyz\n`;
+      message += `💡 Vote on bubbles to earn points!`;
+
+      // Send to the specific group
+      const result = await telegramService.sendBotMessage(chatId, message);
+      
+      if (result) {
+        console.log(`Top bubbles notification sent to chat ${chatId}`);
+        return true;
+      } else {
+        console.error(`Failed to send top bubbles to chat ${chatId}`);
+        return false;
+      }
+
+    } catch (error) {
+      console.error('Top bubbles notification failed:', error.message);
+      return false;
     }
   }
 

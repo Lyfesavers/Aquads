@@ -12,6 +12,7 @@ const TokenPurchase = require('../models/TokenPurchase');
 const auth = require('../middleware/auth');
 const mongoose = require('mongoose');
 const { adminRateLimit } = require('../middleware/rateLimiter');
+const telegramService = require('../utils/telegramService');
 
 // Middleware to check if user is admin
 const isAdmin = async (req, res, next) => {
@@ -874,6 +875,40 @@ router.post('/sync-affiliate-counts', auth, isAdmin, async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to sync affiliate counts' });
+  }
+});
+
+// Send top 10 bubbles notification to specific Telegram group
+router.post('/send-top-bubbles', auth, isAdmin, async (req, res) => {
+  try {
+    const { chatId } = req.body;
+    
+    if (!chatId) {
+      return res.status(400).json({ 
+        error: 'chatId is required in request body',
+        success: false
+      });
+    }
+
+    const success = await telegramService.sendTopBubblesNotification(chatId);
+    
+    if (success) {
+      res.json({ 
+        message: 'Top bubbles notification sent successfully to the specified group',
+        success: true
+      });
+    } else {
+      res.status(500).json({ 
+        error: 'Failed to send top bubbles notification',
+        success: false
+      });
+    }
+  } catch (error) {
+    console.error('Error sending top bubbles notification:', error);
+    res.status(500).json({ 
+      error: 'Failed to send top bubbles notification',
+      success: false
+    });
   }
 });
 
