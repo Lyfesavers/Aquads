@@ -691,8 +691,9 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
     if (!botToken) return;
 
     try {
-      const messageIds = telegramService.bubbleMessageIds.get(chatId);
-      console.log(`Attempting to delete old bubble messages for chat ${chatId}, found ${messageIds ? messageIds.length : 0} messages`);
+      const chatIdStr = chatId.toString();
+      const messageIds = telegramService.bubbleMessageIds.get(chatIdStr);
+      console.log(`Attempting to delete old bubble messages for chat ${chatIdStr}, found ${messageIds ? messageIds.length : 0} messages`);
       
       if (messageIds && messageIds.length > 0) {
         for (const messageId of messageIds) {
@@ -701,17 +702,17 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
               chat_id: chatId,
               message_id: messageId
             });
-            console.log(`✅ Deleted old bubble message ${messageId} from chat ${chatId}`);
+            console.log(`✅ Deleted old bubble message ${messageId} from chat ${chatIdStr}`);
           } catch (error) {
             // Message might already be deleted or bot doesn't have permission
-            console.log(`❌ Could not delete message ${messageId} from chat ${chatId}: ${error.message}`);
+            console.log(`❌ Could not delete message ${messageId} from chat ${chatIdStr}: ${error.message}`);
           }
         }
         // Clear only the message IDs for this specific chat
-        telegramService.bubbleMessageIds.delete(chatId);
-        console.log(`🧹 Cleared stored message IDs for chat ${chatId}`);
+        telegramService.bubbleMessageIds.delete(chatIdStr);
+        console.log(`🧹 Cleared stored message IDs for chat ${chatIdStr}`);
       } else {
-        console.log(`ℹ️ No stored bubble messages found for chat ${chatId}`);
+        console.log(`ℹ️ No stored bubble messages found for chat ${chatIdStr}`);
       }
     } catch (error) {
       console.error('Error deleting old bubble messages:', error.message);
