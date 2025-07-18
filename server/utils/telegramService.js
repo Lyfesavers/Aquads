@@ -931,8 +931,42 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
       message += `🌐 View all bubbles at: https://aquads.xyz\n`;
       message += `💡 Vote on bubbles to earn points!`;
 
+      // Get the video file path
+      const videoPath = path.join(__dirname, '../../public/trend.mp4');
+      const videoExists = fs.existsSync(videoPath);
+
       // Send to the specific group
-      const result = await telegramService.sendBotMessage(chatId, message);
+      let result = false;
+      
+      if (videoExists) {
+        // Send video with caption
+        const formData = new FormData();
+        formData.append('chat_id', chatId);
+        formData.append('video', fs.createReadStream(videoPath));
+        formData.append('caption', message);
+
+        try {
+          const response = await axios.post(
+            `https://api.telegram.org/bot${botToken}/sendVideo`,
+            formData,
+            {
+              headers: {
+                ...formData.getHeaders(),
+              },
+              timeout: 30000, // 30 second timeout for video upload
+            }
+          );
+
+          result = response.data.ok;
+        } catch (error) {
+          console.error('Failed to send video, falling back to text message:', error.message);
+          // Fallback to text message if video fails
+          result = await telegramService.sendBotMessage(chatId, message);
+        }
+      } else {
+        // Send text message if video doesn't exist
+        result = await telegramService.sendBotMessage(chatId, message);
+      }
       
       if (result) {
         console.log(`Top bubbles notification sent to chat ${chatId}`);
