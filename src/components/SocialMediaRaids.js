@@ -1003,7 +1003,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                 </div>
                 <div className="flex items-start">
                   <span className="text-yellow-400 mr-2">•</span>
-                  <span>Comments must be at least <strong>1 full sentence</strong> and include <strong>"The Projects Name"</strong></span>
+                  <span>Comments must be at least <strong>1 full sentence</strong> and include <strong>The Projects Name</strong></span>
                 </div>
                 <div className="flex items-start">
                   <span className="text-yellow-400 mr-2">•</span>
