@@ -271,18 +271,20 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 
 📋 Quick Start:
 1. Link your account: /link your_aquads_username
-2. View raids: /raids
-3. Complete raids: Use buttons or /complete command
+2. Set your Twitter username: /twitter your_twitter_username
+3. View raids: /raids
+4. Complete raids: Use buttons or /complete command
 
 🔗 Available Commands:
 • /link USERNAME - Link your Telegram to Aquads account
+• /twitter [USERNAME] - Set or view your Twitter username for raids
 • /raids - View available Twitter raids
 • /complete RAID_ID @twitter_username TWEET_URL - Complete a raid manually
 • /help - Show detailed command guide
 
 🌐 Track points & claim rewards on: https://aquads.xyz
 
-💡 First step: Link your account with /link your_aquads_username`;
+💡 First step: Link your account with /link your_aquads_username, then set your Twitter username with /twitter your_twitter_username`;
 
     await telegramService.sendBotMessage(chatId, message);
   },
@@ -348,32 +350,36 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 
 🔗 Account Commands:
 • /link USERNAME - Link your Telegram to Aquads account (case sensitive)
+• /twitter [USERNAME] - Set or view your Twitter username for raids
 • /help - Show this help message
 
 📋 Raid Commands:
 • /raids - View all available Twitter raids
-• /complete RAID_ID @twitter_username TWEET_URL - Complete a raid manually
+• /complete RAID_ID [@twitter_username] TWEET_URL - Complete a raid manually (Twitter username optional if set)
 
 📋 Bubble Commands:
 • /bubbles - View top 10 bubbles with most bullish votes
 
 📝 Example Usage:
 /link myusername
+/twitter mytwitter
 /raids
 /bubbles
+/complete 507f1f77bcf86cd799439011 https://twitter.com/user/status/123456789
 /complete 507f1f77bcf86cd799439011 @mytwitter https://twitter.com/user/status/123456789
 
 💡 How Raids Work:
 1. Like, Retweet & Comment on the target tweet
 2. Use /raids to see available raids
 3. Click "Complete in Private Chat" button OR use /complete command
-4. Provide your Twitter username when prompted
+4. Provide your Twitter username when prompted (or set it once with /twitter)
 5. Wait for admin approval to receive points
 
 🚀 Getting Started:
 1. Link your account: /link your_aquads_username
-2. View available raids: /raids
-3. Complete raids using buttons or /complete command
+2. Set your Twitter username: /twitter your_twitter_username
+3. View available raids: /raids
+4. Complete raids using buttons or /complete command
 
 🌐 Track points & claim rewards on: https://aquads.xyz
 
@@ -445,13 +451,14 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 🔗 Your Telegram is now linked to Aquads account: ${aquadsUsername}
 
 🚀 You can now:
+• /twitter your_username - Set your Twitter username for raids
 • /raids - View available Twitter raids
 • Complete raids using buttons or /complete command
 • Earn points for completing raids
 
 🌐 Track points & claim rewards on: https://aquads.xyz
 
-💡 Next step: Use /raids to see available raids!`);
+💡 Next step: Set your Twitter username with /twitter your_twitter_username, then use /raids to see available raids!`);
 
     } catch (error) {
       console.error('Link command error:', error);
