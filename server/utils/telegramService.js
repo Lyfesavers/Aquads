@@ -993,15 +993,21 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
         return;
       }
 
+      // Get user and raid
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      const raid = await TwitterRaid.findById(state.raidId);
+      
+      if (!user || !raid) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Error finding user or raid. Please try again.");
+        return;
+      }
+
       // Store Twitter username if not already set
       if (!user.twitterUsername) {
         user.twitterUsername = twitterUsername;
         await user.save();
       }
-
-      // Get user and raid
-      const user = await User.findOne({ telegramId: telegramUserId.toString() });
-      const raid = await TwitterRaid.findById(state.raidId);
       
       if (!user || !raid) {
         await telegramService.sendBotMessage(chatId, 
