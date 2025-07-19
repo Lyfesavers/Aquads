@@ -991,7 +991,19 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                 </div>
                 <div className="flex items-start">
                   <span className="text-yellow-400 mr-2">•</span>
-                  <span>Comments must be at least <strong>1 full sentence</strong> and include <strong>"Aquads"</strong></span>
+                  <span>Account must have at least <strong>100 followers</strong></span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-yellow-400 mr-2">•</span>
+                  <span>Account must be <strong>public</strong> (not private)</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-yellow-400 mr-2">•</span>
+                  <span>No <strong>bot/spam accounts</strong> (reasonable posting frequency)</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-yellow-400 mr-2">•</span>
+                  <span>Comments must be at least <strong>1 full sentence</strong> and include <strong>"The Projects Name"</strong></span>
                 </div>
                 <div className="flex items-start">
                   <span className="text-yellow-400 mr-2">•</span>
