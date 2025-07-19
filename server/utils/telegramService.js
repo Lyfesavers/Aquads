@@ -226,6 +226,8 @@ const telegramService = {
       await telegramService.handleCompleteCommand(chatId, userId, text);
     } else if (text.startsWith('/link')) {
       await telegramService.handleLinkCommand(chatId, userId, text);
+    } else if (text.startsWith('/twitter')) {
+      await telegramService.handleTwitterCommand(chatId, userId, text);
     } else if (text.startsWith('/help')) {
       await telegramService.handleHelpCommand(chatId);
     } else if (text.startsWith('/bubbles')) {
@@ -283,6 +285,57 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 💡 First step: Link your account with /link your_aquads_username`;
 
     await telegramService.sendBotMessage(chatId, message);
+  },
+
+  // Handle /twitter command
+  handleTwitterCommand: async (chatId, telegramUserId, text) => {
+    try {
+      // Check if user is linked
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      
+      if (!user) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
+        return;
+      }
+
+      const parts = text.split(' ');
+      
+      if (parts.length === 1) {
+        // Show current Twitter username
+        if (user.twitterUsername) {
+          await telegramService.sendBotMessage(chatId, 
+            `📱 Your Twitter username: @${user.twitterUsername}\n\n💡 To change it: /twitter new_username`);
+        } else {
+          await telegramService.sendBotMessage(chatId, 
+            `📱 No Twitter username set.\n\n💡 Set it: /twitter your_username\n\n💡 This will be used for all future raids!`);
+        }
+        return;
+      }
+
+      // Set new Twitter username
+      const newUsername = parts[1].replace('@', '').trim();
+      
+      // Validate Twitter username format
+      const usernameRegex = /^[a-zA-Z0-9_]{1,15}$/;
+      if (!usernameRegex.test(newUsername)) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Invalid Twitter username. Use letters, numbers, underscores only (max 15 characters).");
+        return;
+      }
+
+      // Update user's Twitter username
+      user.twitterUsername = newUsername;
+      await user.save();
+
+      await telegramService.sendBotMessage(chatId, 
+        `✅ Twitter username set: @${newUsername}\n\n💡 This will be used automatically for all future raids!`);
+
+    } catch (error) {
+      console.error('Twitter command error:', error);
+      await telegramService.sendBotMessage(chatId, 
+        "❌ Error setting Twitter username. Please try again.");
+    }
   },
 
   // Handle /help command
@@ -838,23 +891,89 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
         return;
       }
 
-      // Set conversation state
-      telegramService.setConversationState(telegramUserId, {
-        action: 'waiting_username',
-        raidId: raidId,
-        tweetUrl: raid.tweetUrl,
-        raidTitle: raid.title,
-        raidPoints: raid.points
-      });
+      // Check if user has Twitter username set
+      if (user.twitterUsername) {
+        // Use stored Twitter username automatically
+        await telegramService.completeRaidWithStoredUsername(chatId, telegramUserId, raidId, user.twitterUsername);
+      } else {
+        // Set conversation state to ask for username
+        telegramService.setConversationState(telegramUserId, {
+          action: 'waiting_username',
+          raidId: raidId,
+          tweetUrl: raid.tweetUrl,
+          raidTitle: raid.title,
+          raidPoints: raid.points
+        });
 
-      // Ask for username
-      await telegramService.sendBotMessage(chatId, 
-        `🚀 Completing: ${raid.title}\n\n⚠️ BEFORE CONTINUING: Make sure you have already:\n✅ LIKED the tweet\n✅ RETWEETED the tweet\n✅ COMMENTED on the tweet\n✅ BOOKMARKED the tweet\n\n📝 Now enter your Twitter username (without @):\n\n💡 Example: myusername`);
+        // Ask for username
+        await telegramService.sendBotMessage(chatId, 
+          `🚀 Completing: ${raid.title}\n\n⚠️ BEFORE CONTINUING: Make sure you have already:\n✅ LIKED the tweet\n✅ RETWEETED the tweet\n✅ COMMENTED on the tweet\n✅ BOOKMARKED the tweet\n\n📝 Now enter your Twitter username (without @):\n\n💡 Example: myusername\n\n💡 Tip: Set your Twitter username with /twitter your_username to avoid entering it every time!`);
+      }
 
     } catch (error) {
       console.error('Start completion error:', error);
       await telegramService.sendBotMessage(chatId, 
         "❌ Error starting completion. Please try again later.");
+    }
+  },
+
+  // Complete raid with stored Twitter username
+  completeRaidWithStoredUsername: async (chatId, telegramUserId, raidId, twitterUsername) => {
+    try {
+      // Get user and raid
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      const raid = await TwitterRaid.findById(raidId);
+      
+      if (!user || !raid) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Error finding user or raid. Please try again.");
+        return;
+      }
+
+      // Extract tweet ID
+      const tweetIdMatch = raid.tweetUrl.match(/\/status\/(\d+)/);
+      if (!tweetIdMatch) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Invalid tweet URL. Please contact support.");
+        return;
+      }
+
+      // Create completion record
+      const completion = {
+        userId: user._id,
+        twitterUsername: twitterUsername,
+        tweetUrl: raid.tweetUrl,
+        tweetId: tweetIdMatch[1],
+        verificationCode: 'aquads.xyz',
+        verificationMethod: 'manual',
+        verified: true,
+        approvalStatus: 'pending',
+        approvedBy: null,
+        approvedAt: null,
+        rejectionReason: null,
+        pointsAwarded: false,
+        ipAddress: 'telegram_auto',
+        verificationNote: 'Submitted via Telegram bot with stored username',
+        iframeVerified: false,
+        iframeInteractions: 0,
+        completedAt: new Date()
+      };
+
+      // Save completion
+      raid.completions.push(completion);
+      await raid.save();
+
+      // Update user activity
+      await User.findByIdAndUpdate(user._id, { lastActivity: new Date() });
+
+      // Success message
+      await telegramService.sendBotMessage(chatId, 
+        `✅ Raid submitted successfully!\n\n📝 Twitter: @${twitterUsername}\n💰 Reward: ${raid.points} points\n⏳ Status: Pending admin approval\n\n📋 What happens next:\n• Admin will review your submission\n• Points will be awarded after verification\n\n🌐 Track points & claim rewards on: https://aquads.xyz\n\n💡 Use /raids to see more available raids!`);
+
+    } catch (error) {
+      console.error('Complete raid with stored username error:', error);
+      await telegramService.sendBotMessage(chatId, 
+        "❌ Error processing submission. Please try again.");
     }
   },
 
@@ -872,6 +991,12 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
         await telegramService.sendBotMessage(chatId, 
           "❌ Invalid Twitter username. Use /raids to try again.");
         return;
+      }
+
+      // Store Twitter username if not already set
+      if (!user.twitterUsername) {
+        user.twitterUsername = twitterUsername;
+        await user.save();
       }
 
       // Get user and raid

@@ -66,6 +66,11 @@ const userSchema = new Schema({
     default: null,
     index: true
   },
+  twitterUsername: {
+    type: String,
+    default: null,
+    trim: true
+  },
   isAdmin: {
     type: Boolean,
     default: false
