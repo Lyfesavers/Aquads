@@ -1,6 +1,22 @@
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
-const auth = (req, res, next) => {
+// In-memory cache to track last update times per user (prevents excessive DB writes)
+const lastUpdateCache = new Map();
+
+// Clean up cache every hour to prevent memory leaks
+setInterval(() => {
+  const now = Date.now();
+  const oneHourAgo = now - 60 * 60 * 1000;
+  
+  for (const [userId, lastUpdate] of lastUpdateCache.entries()) {
+    if (lastUpdate < oneHourAgo) {
+      lastUpdateCache.delete(userId);
+    }
+  }
+}, 60 * 60 * 1000); // Clean up every hour
+
+const auth = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
     
@@ -26,6 +42,24 @@ const auth = (req, res, next) => {
       emailVerified: Boolean(decoded.emailVerified),  // Include email verification status
       referredBy: decoded.referredBy  // Include referredBy for affiliate detection
     };
+
+    // Update user's lastActivity (rate limited to prevent excessive DB writes)
+    const now = Date.now();
+    const twoMinutesAgo = now - 2 * 60 * 1000; // 2 minutes in milliseconds
+    
+    const lastUpdate = lastUpdateCache.get(userId) || 0;
+    
+    if (lastUpdate < twoMinutesAgo) {
+      // Update the cache first to prevent race conditions
+      lastUpdateCache.set(userId, now);
+      
+      // Update user's lastActivity in database (non-blocking)
+      User.findByIdAndUpdate(userId, { lastActivity: new Date() })
+        .catch(error => {
+          // Silent error handling - don't break the request if update fails
+          console.error('Activity update failed for user:', userId, error.message);
+        });
+    }
 
     next();
   } catch (error) {
