@@ -592,13 +592,13 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         });
         
         // Step 2: Update user data with saved Twitter username
-        const cleanUsername = twitterUsername.trim().replace(/^@/, '');
+        const savedUsername = twitterUsername.trim().replace(/^@/, '');
         
         // Update localStorage with the new Twitter username
         try {
           const storedUser = JSON.parse(localStorage.getItem('currentUser'));
           if (storedUser) {
-            storedUser.twitterUsername = cleanUsername;
+            storedUser.twitterUsername = savedUsername;
             localStorage.setItem('currentUser', JSON.stringify(storedUser));
           }
         } catch (e) {
