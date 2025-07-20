@@ -5,6 +5,7 @@ const FormData = require('form-data');
 const User = require('../models/User');
 const TwitterRaid = require('../models/TwitterRaid');
 const Ad = require('../models/Ad');
+const BotSettings = require('../models/BotSettings');
 
 const telegramService = {
   // Store group IDs where bot is active
@@ -13,6 +14,33 @@ const telegramService = {
   raidMessageIds: new Map(), // groupId -> [messageIds]
   // Store bubble rank message IDs for cleanup
   bubbleMessageIds: new Map(), // groupId -> [messageIds]
+
+  // Load active groups from database
+  loadActiveGroups: async () => {
+    try {
+      const settings = await BotSettings.findOne({ key: 'activeGroups' });
+      if (settings && settings.value) {
+        telegramService.activeGroups = new Set(settings.value);
+        console.log(`Loaded ${telegramService.activeGroups.size} active groups from database`);
+      }
+    } catch (error) {
+      console.error('Error loading active groups:', error);
+    }
+  },
+
+  // Save active groups to database
+  saveActiveGroups: async () => {
+    try {
+      const groupsArray = Array.from(telegramService.activeGroups);
+      await BotSettings.findOneAndUpdate(
+        { key: 'activeGroups' },
+        { value: groupsArray, updatedAt: new Date() },
+        { upsert: true }
+      );
+    } catch (error) {
+      console.error('Error saving active groups:', error);
+    }
+  },
 
   sendRaidNotification: async (raidData) => {
     try {
@@ -99,6 +127,8 @@ const telegramService = {
           console.error(`Failed to send to group ${chatId}:`, error.message);
           // Remove failed group from active groups
           telegramService.activeGroups.delete(chatId);
+          // Save to database when removing group
+          telegramService.saveActiveGroups();
         }
       }
 
@@ -140,6 +170,9 @@ const telegramService = {
     if (!botToken || botDisabled) {
       return false;
     }
+
+    // Load active groups from database
+    await telegramService.loadActiveGroups();
 
     // Test bot configuration
     try {
@@ -194,6 +227,8 @@ const telegramService = {
     // Track group chats for notifications
     if (chatType === 'group' || chatType === 'supergroup') {
       telegramService.activeGroups.add(chatId.toString());
+      // Save to database when adding new group
+      telegramService.saveActiveGroups();
     }
 
     // Check if user is in conversation state
