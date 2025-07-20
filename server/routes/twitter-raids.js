@@ -521,10 +521,9 @@ router.post('/:id/complete', auth, requireEmailVerification, twitterRaidRateLimi
         completedAt: new Date()
       });
       
-      // Update user's last activity and save Twitter username for future raids
+      // Update user's last activity for accurate fraud detection
       await User.findByIdAndUpdate(userId, {
-        lastActivity: new Date(),
-        twitterUsername: cleanUsername // Save the Twitter username for future raids
+        lastActivity: new Date()
       });
       
       // Save the raid with the pending completion
@@ -534,7 +533,7 @@ router.post('/:id/complete', auth, requireEmailVerification, twitterRaidRateLimi
       const successResponse = {
         success: true,
         message: `Twitter raid submitted successfully! Your submission is pending admin approval.`,
-        note: `An admin will review your Twitter username (@${cleanUsername}) and actions before awarding points. Your Twitter username has been saved for future raids.`,
+        note: 'An admin will review your Twitter username and actions before awarding points.',
         pointsAmount: pointsAmount,
         status: 'pending_approval'
       };

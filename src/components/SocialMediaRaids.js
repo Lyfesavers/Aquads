@@ -423,8 +423,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     setTweetUrl(raid.tweetUrl);
     setIsValidUrl(true);
     
-    // Reset Twitter username for new raid
-    setTwitterUsername('');
+    // Don't reset Twitter username - keep the saved one for convenience
+    // setTwitterUsername('');
     
     // Reset iframe-related states
     handleShowIframe(false);
@@ -591,11 +591,23 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
           tweetId: null
         });
         
-        // Step 2: Show success message
-        const successMessage = data.message || 'Task submitted for admin approval! Points will be awarded after verification.';
-        const notificationMessage = data.note ? `${successMessage} ${data.note}` : successMessage;
-        setSuccess(successMessage);
-        showNotification(notificationMessage, 'success');
+        // Step 2: Update user data with saved Twitter username
+        const cleanUsername = twitterUsername.trim().replace(/^@/, '');
+        
+        // Update localStorage with the new Twitter username
+        try {
+          const storedUser = JSON.parse(localStorage.getItem('currentUser'));
+          if (storedUser) {
+            storedUser.twitterUsername = cleanUsername;
+            localStorage.setItem('currentUser', JSON.stringify(storedUser));
+          }
+        } catch (e) {
+          // Silently handle localStorage errors
+        }
+        
+        // Show success message
+        setSuccess(data.message || 'Task submitted for admin approval! Points will be awarded after verification.');
+        showNotification(data.message || 'Twitter raid submitted successfully! Pending admin approval.', 'success');
         
         // Step 3: After a brief delay, reset selected raid and fetch new data
         setTimeout(() => {
@@ -1661,14 +1673,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                       <div className="mb-4">
                         <label htmlFor="twitterUsername" className="block text-sm font-medium text-gray-300 mb-2">
                           Your Twitter Username <span className="text-red-400">*</span>
-                          {currentUser?.twitterUsername && twitterUsername === currentUser.twitterUsername && (
-                            <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-500/20 text-green-400">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                              </svg>
-                              Saved
-                            </span>
-                          )}
                         </label>
                         <div className="relative">
                           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -1686,10 +1690,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                           />
                         </div>
                         <p className="text-xs text-gray-400 mt-1">
-                          {currentUser?.twitterUsername && twitterUsername === currentUser.twitterUsername ? 
-                            'Your saved Twitter username is pre-filled. You can change it if needed.' :
-                            'Enter your Twitter username so we can verify your completion'
-                          }
+                          Enter your Twitter username so we can verify your completion
                         </p>
                       </div>
                       
