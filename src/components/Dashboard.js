@@ -75,6 +75,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   // User affiliate analytics states
   const [affiliateAnalytics, setAffiliateAnalytics] = useState(null);
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+  // Add refresh timestamps
+  const [lastRefreshTime, setLastRefreshTime] = useState(null);
 
   // Update activeTab when initialActiveTab changes
   useEffect(() => {
@@ -251,6 +253,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       fetchPendingServicesData();
     }
   }, [currentUser, activeTab]);
+
+
 
   const fetchAffiliateInfo = async () => {
     try {
@@ -917,6 +921,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       if (response.ok) {
         const data = await response.json();
         setSelectedUserAffiliates(data);
+        setLastRefreshTime(new Date());
       } else {
         showNotification('Failed to fetch affiliate details', 'error');
       }
@@ -938,6 +943,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       if (response.ok) {
         const data = await response.json();
         setTopAffiliates(data.topAffiliates);
+        setLastRefreshTime(new Date());
       } else {
         showNotification('Failed to fetch top affiliates', 'error');
       }
@@ -959,6 +965,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       if (response.ok) {
         const data = await response.json();
         setSuspiciousUsers(data.suspiciousUsers);
+        setLastRefreshTime(new Date());
       } else {
         showNotification('Failed to fetch suspicious users', 'error');
       }
@@ -2767,7 +2774,14 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                 {activeAdminSection === 'affiliates' && (
                   <div>
                     <div className="flex justify-between items-center mb-6">
-                      <h3 className="text-2xl font-semibold text-white">Affiliate Management</h3>
+                                            <div>
+                        <h3 className="text-2xl font-semibold text-white">Affiliate Management</h3>
+                        {lastRefreshTime && (
+                          <div className="text-xs text-gray-400 mt-2">
+                            Last refreshed: {lastRefreshTime.toLocaleTimeString()}
+                          </div>
+                        )}
+                      </div>
                       <button
                         onClick={handleSyncAffiliateCounts}
                         disabled={loadingAffiliateData}
@@ -2983,7 +2997,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
                     {/* Top Affiliates */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <div className="bg-gray-700 rounded-lg p-4">
+                                              <div className="bg-gray-700 rounded-lg p-4">
                         <div className="flex justify-between items-center mb-4">
                           <h4 className="text-lg font-semibold text-white">Top Affiliates</h4>
                           <button
