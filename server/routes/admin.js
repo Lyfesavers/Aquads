@@ -493,7 +493,7 @@ router.get('/user/:userId/affiliates', auth, isAdmin, adminRateLimit, async (req
           activityDetails: activityAnalysis.activities,
           loginFrequency: loginAnalysis.frequencyScore,
           isDormant: loginAnalysis.isDormant,
-          daysSinceLastSeen: loginAnalysis.daysSinceLastSeen,
+          daysSinceLastSeen: loginAnalysis.daysSinceLastActivity,
           // Include their own affiliates for pattern detection
           subAffiliates: affiliateInfo?.affiliates || []
         };
@@ -594,7 +594,7 @@ router.post('/bulk-affiliate-lookup', auth, isAdmin, adminRateLimit, async (req,
             activityScore: fraudAnalysis.activityAnalysis?.score || 0,
             loginFrequency: fraudAnalysis.loginAnalysis?.frequencyScore || 0,
             isDormant: fraudAnalysis.loginAnalysis?.isDormant || false,
-            daysSinceLastSeen: fraudAnalysis.loginAnalysis?.daysSinceLastSeen || 999,
+            daysSinceLastSeen: fraudAnalysis.loginAnalysis?.daysSinceLastActivity || 999,
             networkAnalysis: fraudAnalysis.networkAnalysis,
             affiliates: user.affiliates.map(a => ({
               id: a._id,
@@ -724,7 +724,7 @@ router.get('/suspicious-users', auth, isAdmin, adminRateLimit, async (req, res) 
         loginFrequency: fraudAnalysis.loginAnalysis?.frequencyScore || 0,
         isDormant: fraudAnalysis.loginAnalysis?.isDormant || false,
         isHighlyDormant: fraudAnalysis.loginAnalysis?.isHighlyDormant || false,
-        daysSinceLastSeen: fraudAnalysis.loginAnalysis?.daysSinceLastSeen || 999,
+        daysSinceLastSeen: fraudAnalysis.loginAnalysis?.daysSinceLastActivity || 999,
         accountAgeDays: fraudAnalysis.loginAnalysis?.accountAgeDays || 0,
         // Network analysis
         uniqueIPs: fraudAnalysis.networkAnalysis?.uniqueIPs || 0,
