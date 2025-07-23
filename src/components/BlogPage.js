@@ -99,24 +99,35 @@ const BlogPage = ({ currentUser }) => {
 
   // Load Coinscribble ad widget script
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.coinscribble.sapient.tools/js/widget2.js';
-    script.async = true;
-    script.id = 'coinscribble-widget-script';
-    
-    // Only add script if it doesn't already exist
-    if (!document.getElementById('coinscribble-widget-script')) {
-      document.head.appendChild(script);
-    }
-
-    return () => {
-      // Cleanup script when component unmounts
-      const existingScript = document.getElementById('coinscribble-widget-script');
-      if (existingScript) {
-        existingScript.remove();
+    const loadCoinscribbleScript = () => {
+      // Check if script already exists
+      if (document.getElementById('coinscribble-widget-script')) {
+        console.log('Coinscribble script already loaded');
+        return;
       }
+
+      console.log('Loading Coinscribble ad script...');
+      const script = document.createElement('script');
+      script.src = 'https://cdn.coinscribble.sapient.tools/js/widget2.js';
+      script.async = true;
+      script.id = 'coinscribble-widget-script';
+      
+      script.onload = () => {
+        console.log('Coinscribble script loaded successfully');
+      };
+      
+      script.onerror = () => {
+        console.error('Failed to load Coinscribble script');
+      };
+      
+      document.head.appendChild(script);
     };
-  }, []);
+
+    // Load script after blog content is loaded
+    if (blog) {
+      loadCoinscribbleScript();
+    }
+  }, [blog]);
 
   const fetchBlog = async () => {
     try {
@@ -457,9 +468,12 @@ const BlogPage = ({ currentUser }) => {
         </article>
 
         {/* Native Ad Widget */}
-        <div className="mb-12 flex justify-center">
-          <coinscribble-ad widget="ab1b9248-ce2b-4de0-abc8-b3fdde9f3a8b"></coinscribble-ad>
-        </div>
+        <div 
+          className="mb-12 flex justify-center"
+          dangerouslySetInnerHTML={{
+            __html: '<coinscribble-ad widget="ab1b9248-ce2b-4de0-abc8-b3fdde9f3a8b"></coinscribble-ad>'
+          }}
+        />
 
         {/* Related Blogs */}
         {relatedBlogs.length > 0 && (
