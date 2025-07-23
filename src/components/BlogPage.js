@@ -102,23 +102,13 @@ const BlogPage = ({ currentUser }) => {
     const loadCoinscribbleScript = () => {
       // Check if script already exists
       if (document.getElementById('coinscribble-widget-script')) {
-        console.log('Coinscribble script already loaded');
         return;
       }
 
-      console.log('Loading Coinscribble ad script...');
       const script = document.createElement('script');
       script.src = 'https://cdn.coinscribble.sapient.tools/js/widget2.js';
       script.async = true;
       script.id = 'coinscribble-widget-script';
-      
-      script.onload = () => {
-        console.log('Coinscribble script loaded successfully');
-      };
-      
-      script.onerror = () => {
-        console.error('Failed to load Coinscribble script');
-      };
       
       document.head.appendChild(script);
     };
