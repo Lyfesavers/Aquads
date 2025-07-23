@@ -97,6 +97,27 @@ const BlogPage = ({ currentUser }) => {
     fetchRelatedBlogs();
   }, [blogId]);
 
+  // Load Coinscribble ad widget script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.coinscribble.sapient.tools/js/widget2.js';
+    script.async = true;
+    script.id = 'coinscribble-widget-script';
+    
+    // Only add script if it doesn't already exist
+    if (!document.getElementById('coinscribble-widget-script')) {
+      document.head.appendChild(script);
+    }
+
+    return () => {
+      // Cleanup script when component unmounts
+      const existingScript = document.getElementById('coinscribble-widget-script');
+      if (existingScript) {
+        existingScript.remove();
+      }
+    };
+  }, []);
+
   const fetchBlog = async () => {
     try {
       setLoading(true);
@@ -434,6 +455,11 @@ const BlogPage = ({ currentUser }) => {
             <MarkdownRenderer content={blog.content} />
           </div>
         </article>
+
+        {/* Native Ad Widget */}
+        <div className="mb-12 flex justify-center">
+          <coinscribble-ad widget="ab1b9248-ce2b-4de0-abc8-b3fdde9f3a8b"></coinscribble-ad>
+        </div>
 
         {/* Related Blogs */}
         {relatedBlogs.length > 0 && (
