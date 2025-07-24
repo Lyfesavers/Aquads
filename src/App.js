@@ -46,6 +46,7 @@ import AquaSwapEmbed from './components/AquaSwapEmbed';
 import TransakPage from './components/TransakPage';
 import VerifyUser from './components/VerifyUser';
 import BannerDisplay from './components/BannerDisplay';
+import CryptoAdNetwork from './components/CryptoAdNetwork';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import emailService from './services/emailService';
@@ -2668,6 +2669,12 @@ function App() {
                           GameHub
                         </Link>
                         <Link
+                          to="/crypto-ads"
+                          className="bg-gradient-to-r from-green-500/80 to-emerald-600/80 hover:from-green-600/80 hover:to-emerald-700/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
+                        >
+                          Ad Network
+                        </Link>
+                        <Link
                           to="/how-to"
                           className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
                         >
@@ -3509,6 +3516,7 @@ function App() {
             <Route path="/swap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} />} />
             <Route path="/aquaswap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} />} />
             <Route path="/buy-crypto" element={<TransakPage currentUser={currentUser} showNotification={showNotification} />} />
+            <Route path="/crypto-ads" element={<CryptoAdNetwork />} />
             <Route path="/embed/aquaswap" element={<AquaSwapEmbed />} />
         </Routes>
       </Router>
