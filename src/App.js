@@ -438,6 +438,7 @@ function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeBookingId, setActiveBookingId] = useState(null);
   const [dashboardActiveTab, setDashboardActiveTab] = useState('ads');
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
   
   // New state for blockchain filter and pagination
   const [blockchainFilter, setBlockchainFilter] = useState('all');
@@ -1980,6 +1981,20 @@ function App() {
     }
   }, []);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showUserDropdown && !event.target.closest('.user-dropdown')) {
+        setShowUserDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showUserDropdown]);
+
   // Set up event listeners for dashboard opening from notifications
   useEffect(() => {
     // Define handler for opening dashboard with booking
@@ -2687,47 +2702,62 @@ function App() {
                             <NotificationBell currentUser={currentUser} />
                             
                             {/* User Dropdown */}
-                            <div className="relative group">
-                              <button className="flex items-center bg-blue-500/80 hover:bg-blue-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm">
+                            <div className="relative user-dropdown">
+                              <button 
+                                onClick={() => setShowUserDropdown(!showUserDropdown)}
+                                className="flex items-center bg-blue-500/80 hover:bg-blue-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                              >
                                 <span className="mr-1">{currentUser.username}</span>
-                                <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                                <svg className={`w-4 h-4 ml-1 transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
                                   <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                                 </svg>
                               </button>
                               
                               {/* Dropdown Menu */}
-                              <div className="absolute right-0 mt-2 w-48 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                                <div className="py-2">
-                                  <button
-                                    onClick={() => {
-                                      setDashboardActiveTab('ads');
-                                      setShowDashboard(true);
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
-                                  >
-                                    📊 Dashboard
-                                  </button>
-                                  <button
-                                    onClick={() => setShowCreateModal(true)}
-                                    className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
-                                  >
-                                    ➕ List Project
-                                  </button>
-                                  <button
-                                    onClick={() => setShowProfileModal(true)}
-                                    className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
-                                  >
-                                    ⚙️ Edit Profile
-                                  </button>
-                                  <hr className="my-2 border-gray-700" />
-                                  <button
-                                    onClick={handleLogout}
-                                    className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-red-600/50 transition-colors"
-                                  >
-                                    🚪 Logout
-                                  </button>
+                              {showUserDropdown && (
+                                <div className="absolute right-0 mt-2 w-48 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 z-50">
+                                  <div className="py-2">
+                                    <button
+                                      onClick={() => {
+                                        setDashboardActiveTab('ads');
+                                        setShowDashboard(true);
+                                        setShowUserDropdown(false);
+                                      }}
+                                      className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
+                                    >
+                                      📊 Dashboard
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setShowCreateModal(true);
+                                        setShowUserDropdown(false);
+                                      }}
+                                      className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
+                                    >
+                                      ➕ List Project
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setShowProfileModal(true);
+                                        setShowUserDropdown(false);
+                                      }}
+                                      className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
+                                    >
+                                      ⚙️ Edit Profile
+                                    </button>
+                                    <hr className="my-2 border-gray-700" />
+                                    <button
+                                      onClick={() => {
+                                        handleLogout();
+                                        setShowUserDropdown(false);
+                                      }}
+                                      className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-red-600/50 transition-colors"
+                                    >
+                                      🚪 Logout
+                                    </button>
+                                  </div>
                                 </div>
-                              </div>
+                              )}
                             </div>
                           </>
                         ) : (
