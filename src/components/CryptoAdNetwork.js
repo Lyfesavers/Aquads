@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaArrowLeft } from 'react-icons/fa';
+import BannerDisplay from './BannerDisplay';
 
 const CryptoAdNetwork = () => {
   useEffect(() => {
@@ -43,6 +44,11 @@ const CryptoAdNetwork = () => {
           </div>
         </div>
       </nav>
+
+      {/* Banner Display */}
+      <div className="relative z-10">
+        <BannerDisplay />
+      </div>
 
       {/* Main Content */}
       <div className="relative z-10 min-h-screen">
