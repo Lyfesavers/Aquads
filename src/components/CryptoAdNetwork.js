@@ -50,30 +50,15 @@ const CryptoAdNetwork = () => {
         <BannerDisplay />
       </div>
 
-      {/* Main Content */}
-      <div className="relative z-10 min-h-screen">
-        {/* Header Section */}
-        <div className="bg-gradient-to-r from-purple-900/30 to-blue-900/30 backdrop-blur-sm border-b border-gray-700/50 py-12">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
-              Crypto Ad Network
-            </h1>
-            <p className="text-xl text-gray-300 mb-6 max-w-3xl mx-auto">
-              Premium advertising solutions for crypto projects. Connect with your target audience through our partner network.
-            </p>
-          </div>
-        </div>
-
-        {/* Embedded Content - Full Screen */}
-        <div className="fixed inset-0 top-32 z-20">
-          <iframe
-            src="https://mintfunnel.co/crypto-ad-network/?ref=Aquads"
-            className="w-full h-full border-0"
-            title="Crypto Ad Network"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
-            loading="lazy"
-          />
-        </div>
+      {/* Embedded Content - Full Screen */}
+      <div className="fixed inset-0 top-32 z-20">
+        <iframe
+          src="https://mintfunnel.co/crypto-ad-network/?ref=Aquads"
+          className="w-full h-full border-0"
+          title="Crypto Ad Network"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+          loading="lazy"
+        />
       </div>
     </div>
   );
