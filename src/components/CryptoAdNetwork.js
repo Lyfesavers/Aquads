@@ -65,7 +65,7 @@ const CryptoAdNetwork = () => {
         </div>
 
         {/* Embedded Content - Full Screen */}
-        <div className="fixed inset-0 top-16 z-20">
+        <div className="fixed inset-0 top-32 z-20">
           <iframe
             src="https://mintfunnel.co/crypto-ad-network/?ref=Aquads"
             className="w-full h-full border-0"
