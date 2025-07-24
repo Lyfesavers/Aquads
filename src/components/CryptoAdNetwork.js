@@ -24,7 +24,7 @@ const CryptoAdNetwork = () => {
       </div>
 
       {/* Fixed Navigation */}
-      <nav className="sticky top-0 bg-gray-800/80 backdrop-blur-sm shadow-lg shadow-blue-500/20 z-50">
+      <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm shadow-lg shadow-blue-500/20 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
@@ -46,12 +46,12 @@ const CryptoAdNetwork = () => {
       </nav>
 
       {/* Banner Display */}
-      <div className="relative z-10">
+      <div className="fixed top-16 left-0 right-0 z-40">
         <BannerDisplay />
       </div>
 
-              {/* Embedded Content - Full Screen */}
-        <div className="fixed inset-0 top-66 z-20">
+      {/* Embedded Content - Full Screen */}
+      <div className="fixed left-0 right-0 bottom-0 z-20" style={{ top: '264px' }}>
         <iframe
           src="https://mintfunnel.co/crypto-ad-network/?ref=Aquads"
           className="w-full h-full border-0"
