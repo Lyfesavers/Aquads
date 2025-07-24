@@ -2655,74 +2655,92 @@ function App() {
                       </div>
 
                       {/* Desktop menu */}
-                      <div className="hidden md:flex items-center space-x-4">
+                      <div className="hidden md:flex items-center space-x-3">
+                        {/* Main Navigation - Smaller buttons */}
                         <Link
                           to="/marketplace"
-                          className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
+                          className="bg-indigo-500/80 hover:bg-indigo-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
                         >
-                          Freelancer Hub
+                          Freelancer
                         </Link>
                         <Link
                           to="/games"
-                          className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
+                          className="bg-indigo-500/80 hover:bg-indigo-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
                         >
-                          GameHub
+                          Games
                         </Link>
                         <Link
                           to="/crypto-ads"
-                          className="bg-gradient-to-r from-green-500/80 to-emerald-600/80 hover:from-green-600/80 hover:to-emerald-700/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
+                          className="bg-gradient-to-r from-green-500/80 to-emerald-600/80 hover:from-green-600/80 hover:to-emerald-700/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
                         >
-                          Ad Network
+                          Ads
                         </Link>
                         <Link
                           to="/how-to"
-                          className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
+                          className="bg-indigo-500/80 hover:bg-indigo-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
                         >
                           Learn
                         </Link>
+
                         {currentUser ? (
                           <>
                             <NotificationBell currentUser={currentUser} />
-                            <span className="text-blue-300">Welcome, {currentUser.username}!</span>
-                            <button
-                              onClick={() => {
-                                setDashboardActiveTab('ads');
-                                setShowDashboard(true);
-                              }}
-                              className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
-                            >
-                              Dashboard
-                            </button>
-                            <button
-                              onClick={() => setShowProfileModal(true)}
-                              className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
-                            >
-                              Edit Profile
-                            </button>
-                            <button
-                              onClick={() => setShowCreateModal(true)}
-                              className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
-                            >
-                              List Project
-                            </button>
-                            <button
-                              onClick={handleLogout}
-                              className="bg-red-500/80 hover:bg-red-600/80 px-4 py-2 rounded shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm"
-                            >
-                              Logout
-                            </button>
+                            
+                            {/* User Dropdown */}
+                            <div className="relative group">
+                              <button className="flex items-center bg-blue-500/80 hover:bg-blue-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm">
+                                <span className="mr-1">{currentUser.username}</span>
+                                <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
+                              </button>
+                              
+                              {/* Dropdown Menu */}
+                              <div className="absolute right-0 mt-2 w-48 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                                <div className="py-2">
+                                  <button
+                                    onClick={() => {
+                                      setDashboardActiveTab('ads');
+                                      setShowDashboard(true);
+                                    }}
+                                    className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
+                                  >
+                                    📊 Dashboard
+                                  </button>
+                                  <button
+                                    onClick={() => setShowCreateModal(true)}
+                                    className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
+                                  >
+                                    ➕ List Project
+                                  </button>
+                                  <button
+                                    onClick={() => setShowProfileModal(true)}
+                                    className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
+                                  >
+                                    ⚙️ Edit Profile
+                                  </button>
+                                  <hr className="my-2 border-gray-700" />
+                                  <button
+                                    onClick={handleLogout}
+                                    className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-red-600/50 transition-colors"
+                                  >
+                                    🚪 Logout
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
                           </>
                         ) : (
                           <>
                             <button
                               onClick={() => setShowLoginModal(true)}
-                              className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                              className="bg-blue-500/80 hover:bg-blue-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
                             >
                               Login
                             </button>
                             <button
                               onClick={() => setShowCreateAccountModal(true)}
-                              className="bg-green-500/80 hover:bg-green-600/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
+                              className="bg-green-500/80 hover:bg-green-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
                             >
                               Create Account
                             </button>
