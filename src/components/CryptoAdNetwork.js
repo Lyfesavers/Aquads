@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaArrowLeft } from 'react-icons/fa';
-import BannerDisplay from './BannerDisplay';
 
 const CryptoAdNetwork = () => {
   useEffect(() => {
@@ -45,13 +44,8 @@ const CryptoAdNetwork = () => {
         </div>
       </nav>
 
-      {/* Banner Display */}
-      <div className="fixed top-16 left-0 right-0 z-40">
-        <BannerDisplay />
-      </div>
-
       {/* Embedded Content - Full Screen */}
-      <div className="fixed left-0 right-0 bottom-0 z-20" style={{ top: '264px' }}>
+      <div className="fixed inset-0 top-16 z-20">
         <iframe
           src="https://mintfunnel.co/crypto-ad-network/?ref=Aquads"
           className="w-full h-full border-0"
