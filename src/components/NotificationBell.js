@@ -402,23 +402,21 @@ const NotificationBell = ({ currentUser }) => {
 
       {/* Dropdown menu */}
       {isOpen && (
-        <div className="absolute right-0 sm:right-0 mt-2 w-72 sm:w-80 bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-700 max-h-96 overflow-y-auto transform -translate-x-2 sm:translate-x-0">
-          <div className="px-3 sm:px-4 py-2 border-b border-gray-700">
-            <div className="flex justify-between items-center mb-2 sm:mb-0">
-              <h3 className="text-base sm:text-lg font-medium text-white">Notifications</h3>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-2 sm:justify-end">
+        <div className="fixed sm:absolute left-1/2 sm:right-0 top-16 sm:top-auto mt-0 sm:mt-2 w-80 sm:w-80 bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-700 max-h-96 overflow-y-auto transform -translate-x-1/2 sm:translate-x-0">
+          <div className="px-4 py-2 border-b border-gray-700 flex justify-between items-center">
+            <h3 className="text-lg font-medium text-white">Notifications</h3>
+            <div className="flex space-x-2">
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
-                  className="text-xs sm:text-sm text-blue-400 hover:text-blue-300 focus:outline-none text-left sm:text-right"
+                  className="text-sm text-blue-400 hover:text-blue-300 focus:outline-none"
                 >
                   Mark all as read
                 </button>
               )}
               <button
                 onClick={() => setShowReadNotifications(!showReadNotifications)}
-                className="text-xs sm:text-sm text-blue-400 hover:text-blue-300 focus:outline-none text-left sm:text-right"
+                className="text-sm text-blue-400 hover:text-blue-300 focus:outline-none"
               >
                 {showReadNotifications ? 'Hide read' : 'Show all'}
               </button>
