@@ -108,15 +108,9 @@ body {
   padding: 0;
 }
 
-/* Ensure no extra spacing on main content areas */
-.relative.z-10 {
-  margin-top: 0 !important;
-}
 
-/* Token banner positioning fix */
-.fixed.top-16 {
-  top: 4rem !important; /* Align with h-16 header */
-}
+
+
 
 /* Mobile navigation height adjustment */
 @media (max-width: 768px) {
