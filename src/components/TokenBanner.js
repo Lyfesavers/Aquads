@@ -66,46 +66,61 @@ const TokenBanner = () => {
   // Memoize fetchTokens to prevent recreation
   const fetchTokens = useCallback(async () => {
     try {
-      // Fetch trending tokens from CoinGecko
-      const response = await fetch('https://api.coingecko.com/api/v3/search/trending');
+      // Fetch top 50 trending pools from GeckoTerminal (3 pages of 20 each)
+      const allTrendingPools = [];
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      for (let page = 1; page <= 3; page++) {
+        try {
+          const response = await fetch(`https://api.geckoterminal.com/api/v2/networks/trending_pools?page=${page}`);
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.data && data.data.length > 0) {
+              allTrendingPools.push(...data.data);
+            }
+          }
+          
+          // Small delay to respect rate limits
+          if (page < 3) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
+        } catch (error) {
+          logger.error(`Error fetching page ${page}:`, error);
+        }
       }
 
-      const trendingData = await response.json();
-      logger.info('Trending Response:', trendingData);
+      logger.info('GeckoTerminal Trending Pools:', allTrendingPools);
 
-      // Get the IDs of trending coins
-      const trendingIds = trendingData.coins.map(coin => coin.item.id).join(',');
+      // Take top 50 and format for display
+      const topTrending = allTrendingPools.slice(0, 50);
 
-      // Fetch detailed price data for trending coins
-      const priceResponse = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=${trendingIds}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true`
-      );
-
-      const priceData = await priceResponse.json();
-
-      // Format the data combining trending info with price data
-      const formattedTokens = trendingData.coins.map(coin => {
-        const priceInfo = priceData[coin.item.id] || {};
+      const formattedTokens = topTrending.map((pool, index) => {
+        const attrs = pool.attributes;
+        const baseToken = attrs.base_token || {};
+        
+        // Extract chain from pool ID (format: chain_address)
+        const chainId = pool.id.split('_')[0];
+        
         return {
-          id: coin.item.id,
-          symbol: coin.item.symbol.toUpperCase(),
-          name: coin.item.name,
-          price: priceInfo.usd || 0,
-          priceChange24h: priceInfo.usd_24h_change || 0,
-          marketCap: priceInfo.usd_market_cap || 0,
-          logo: coin.item.small, // Use the logo URL directly from trending data
-          url: `https://www.coingecko.com/en/coins/${coin.item.id}`,
-          rank: coin.item.market_cap_rank
+          id: baseToken.address || pool.id,
+          symbol: baseToken.symbol || 'UNKNOWN',
+          name: baseToken.name || attrs.name || 'Unknown Token',
+          price: parseFloat(attrs.base_token_price_usd) || 0,
+          priceChange24h: parseFloat(attrs.price_change_percentage?.h24) || 0,
+          marketCap: parseFloat(attrs.market_cap_usd) || parseFloat(attrs.fdv_usd) || 0,
+          logo: baseToken.image_url || `https://ui-avatars.com/api/?name=${baseToken.symbol}&background=0891b2&color=ffffff&size=32`,
+          url: `https://www.geckoterminal.com/pools/${pool.id}`,
+          rank: index + 1,
+          chainId: chainId,
+          volume24h: parseFloat(attrs.volume_usd?.h24) || 0,
+          poolAddress: attrs.address
         };
       });
 
-      logger.info('Formatted Trending Tokens:', formattedTokens);
+      logger.info('Formatted GeckoTerminal Trending Tokens:', formattedTokens);
       setTokens(formattedTokens);
     } catch (error) {
-      logger.error('Error fetching trending tokens:', error);
+      logger.error('Error fetching GeckoTerminal trending tokens:', error);
     } finally {
       setLoading(false);
     }
@@ -122,7 +137,7 @@ const TokenBanner = () => {
     return (
       <div className="h-12 bg-gray-800 border-y border-blue-500/20">
         <div className="flex items-center justify-center h-full">
-          <span className="text-blue-400">Loading tokens...</span>
+          <span className="text-blue-400">Loading trending DEX tokens...</span>
         </div>
       </div>
     );
@@ -157,7 +172,7 @@ const TokenBanner = () => {
                 height="27"
                 onError={(e) => {
                   e.target.onerror = null;
-                  e.target.src = `https://ui-avatars.com/api/?name=${token.symbol}&background=random&size=32`;
+                  e.target.src = `https://ui-avatars.com/api/?name=${token.symbol}&background=0891b2&color=ffffff&size=32`;
                 }}
               />
               <span className="font-medium text-white">{token.symbol}</span>
