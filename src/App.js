@@ -2654,7 +2654,7 @@ function App() {
                           src="/Aquadsnewlogo.svg" 
                           alt="AQUADS" 
                           className="w-auto filter drop-shadow-lg"
-                          style={{height: '2.5rem', filter: 'drop-shadow(0 0 12px rgba(59, 130, 246, 0.7))', padding: '0', margin: '0'}}
+                          style={{height: '2rem', filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))', padding: '0', margin: '0'}}
                         />
                       </div>
                       
@@ -2882,7 +2882,7 @@ function App() {
                   </div>
                 </nav>
 
-                <div className="fixed left-0 right-0 z-[3] token-banner-container" style={{top: '4rem', margin: '0', padding: '0'}}>
+                <div className="fixed top-16 left-0 right-0 z-[3] token-banner-container">
                   <TokenBanner />
                 </div>
 
