@@ -27,7 +27,7 @@ const PrivacyPolicy = () => {
                   src="/Aquadsnewlogo.svg" 
                   alt="AQUADS" 
                   className="w-auto filter drop-shadow-lg"
-                  style={{height: '4.5rem', filter: 'drop-shadow(0 0 15px rgba(59, 130, 246, 0.8))'}}
+                  style={{height: '5.5rem', filter: 'drop-shadow(0 0 18px rgba(59, 130, 246, 0.9))'}}
                 />
               </Link>
             </div>

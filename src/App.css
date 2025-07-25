@@ -41,8 +41,8 @@
 @media (max-width: 768px) {
   /* Logo mobile responsiveness */
   .flex img[alt="AQUADS"] {
-    height: 3.2rem !important; /* Larger for mobile visibility */
-    max-width: 190px;
+    height: 4rem !important; /* Large for mobile visibility */
+    max-width: 200px;
   }
   
   /* Optimize animations for mobile */
@@ -92,13 +92,30 @@ nav .h-16,
   min-height: 4rem !important;
 }
 
-/* Content spacing adjustments for standard navigation */
+/* Content spacing adjustments for navigation with large logos */
 .fixed.top-0 + * {
   padding-top: 4rem !important; /* Account for h-16 fixed nav */
+  margin-top: 0 !important; /* Remove any additional margin */
 }
 
 .sticky.top-0 {
   height: 4rem !important; /* Ensure sticky navs have proper height */
+}
+
+/* Fix gap between header and content */
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Ensure no extra spacing on main content areas */
+.relative.z-10 {
+  margin-top: 0 !important;
+}
+
+/* Token banner positioning fix */
+.fixed.top-16 {
+  top: 4rem !important; /* Align with h-16 header */
 }
 
 /* Mobile navigation height adjustment */
