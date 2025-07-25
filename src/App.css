@@ -41,8 +41,8 @@
 @media (max-width: 768px) {
   /* Logo mobile responsiveness */
   .flex img[alt="AQUADS"] {
-    height: 3rem !important; /* h-12 equivalent - large for mobile visibility */
-    max-width: 180px;
+    height: 3.2rem !important; /* Larger for mobile visibility */
+    max-width: 190px;
   }
   
   /* Optimize animations for mobile */
