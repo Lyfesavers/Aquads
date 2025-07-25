@@ -128,9 +128,33 @@ const TokenBanner = () => {
         }
       }
 
-      // Take top 50 tokens and ensure we have them
-      const finalTokens = allTokens.slice(0, 50);
-      logger.info(`Fetched ${finalTokens.length} trending tokens from GeckoTerminal`);
+      // Organize tokens by chain for cleaner display
+      const tokensByChain = {};
+      allTokens.forEach(token => {
+        if (!tokensByChain[token.chainId]) {
+          tokensByChain[token.chainId] = [];
+        }
+        tokensByChain[token.chainId].push(token);
+      });
+
+      // Sort chains by number of tokens (most popular first), then organize tokens
+      const sortedChains = Object.keys(tokensByChain).sort((a, b) => 
+        tokensByChain[b].length - tokensByChain[a].length
+      );
+
+      // Flatten back to array, grouped by chain
+      const organizedTokens = [];
+      sortedChains.forEach(chainId => {
+        // Sort tokens within each chain by their original rank
+        const chainTokens = tokensByChain[chainId].sort((a, b) => a.rank - b.rank);
+        organizedTokens.push(...chainTokens);
+      });
+
+      // Take top 50 organized tokens
+      const finalTokens = organizedTokens.slice(0, 50);
+      logger.info(`Organized ${finalTokens.length} trending tokens by chain:`, 
+        sortedChains.map(chain => `${chain}: ${tokensByChain[chain].length}`).join(', ')
+      );
       setTokens(finalTokens);
 
     } catch (error) {
@@ -187,6 +211,9 @@ const TokenBanner = () => {
               rel="noopener noreferrer"
               className="inline-flex items-center space-x-2 px-6 h-full hover:bg-blue-500/10 transition-colors"
             >
+              <span className="inline-flex items-center justify-center w-[30px] h-[27px] bg-green-600/20 border border-green-500/30 rounded text-xs font-bold text-green-300">
+                #{token.rank}
+              </span>
               <span className="inline-flex items-center justify-center w-[50px] h-[27px] bg-blue-600/20 border border-blue-500/30 rounded text-xs font-bold text-blue-300">
                 {token.chain}
               </span>
