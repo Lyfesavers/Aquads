@@ -41,8 +41,8 @@
 @media (max-width: 768px) {
   /* Logo mobile responsiveness */
   .flex img[alt="AQUADS"] {
-    height: 2.5rem !important; /* h-10 equivalent - good size for mobile */
-    max-width: 150px;
+    height: 3rem !important; /* h-12 equivalent - larger for mobile visibility */
+    max-width: 180px;
   }
   
   /* Optimize animations for mobile */
@@ -68,5 +68,27 @@
   .flex img[alt="AQUADS"]:hover {
     transform: scale(1.05);
     transition: transform 0.2s ease-in-out;
+  }
+  
+  /* Ensure navigation bar accommodates larger logo */
+  nav .h-16 {
+    min-height: 4.5rem !important; /* Increased height for h-16 logo */
+  }
+}
+
+/* Additional logo enhancements */
+.flex img[alt="AQUADS"] {
+  /* Ensure sharp rendering */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  
+  /* Better contrast */
+  filter: contrast(1.1) brightness(1.05) drop-shadow(0 0 10px rgba(59, 130, 246, 0.6)) !important;
+}
+
+/* Mobile navigation height adjustment */
+@media (max-width: 768px) {
+  nav .h-16 {
+    min-height: 4rem !important; /* Accommodate h-12 mobile logo */
   }
 }
