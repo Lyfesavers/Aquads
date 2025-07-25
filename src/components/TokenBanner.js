@@ -86,21 +86,41 @@ const TokenBanner = () => {
       const formattedTokens = data.data.slice(0, 20).map((pool, index) => {
         const attrs = pool.attributes || {};
         
-        // Extract pool name parts (usually "TOKEN1 / TOKEN2")
-        const poolName = attrs.name || '';
-        const baseTokenSymbol = poolName.split(' / ')[0] || poolName.split('/')[0] || 'TOKEN';
+        // Extract base token information
+        const baseToken = attrs.base_token || {};
+        const quoteToken = attrs.quote_token || {};
+        
+        // Use base token info if available, otherwise parse from pool name
+        const tokenSymbol = baseToken.symbol || attrs.name?.split(' / ')[0] || attrs.name?.split('/')[0] || 'TOKEN';
+        const tokenName = baseToken.name || attrs.name || 'Unknown Token';
         
         // Extract network from pool relationships or ID
         const networkId = pool.relationships?.network?.data?.id || 'unknown';
         
+        // Get token logo with multiple fallbacks
+        let tokenLogo = null;
+        
+        // Try base token image first
+        if (baseToken.image_url) {
+          tokenLogo = baseToken.image_url;
+        }
+        // Try CoinGecko image pattern
+        else if (tokenSymbol && tokenSymbol !== 'TOKEN') {
+          tokenLogo = `https://assets.coingecko.com/coins/images/${tokenSymbol.toLowerCase()}.png`;
+        }
+        // Fallback to generated avatar
+        if (!tokenLogo) {
+          tokenLogo = `https://ui-avatars.com/api/?name=${tokenSymbol}&background=0891b2&color=ffffff&size=32`;
+        }
+        
         return {
           id: pool.id,
-          symbol: baseTokenSymbol.trim(),
-          name: poolName,
+          symbol: tokenSymbol.trim(),
+          name: tokenName,
           price: parseFloat(attrs.base_token_price_usd) || 0,
           priceChange24h: parseFloat(attrs.price_change_percentage?.h24) || 0,
           marketCap: parseFloat(attrs.fdv_usd) || 0,
-          logo: `https://ui-avatars.com/api/?name=${baseTokenSymbol.trim()}&background=0891b2&color=ffffff&size=32`,
+          logo: tokenLogo,
           url: `https://www.geckoterminal.com/${networkId}/pools/${attrs.address}`,
           rank: index + 1,
           chainId: networkId,
@@ -166,7 +186,18 @@ const TokenBanner = () => {
                 height="27"
                 onError={(e) => {
                   e.target.onerror = null;
-                  e.target.src = `https://ui-avatars.com/api/?name=${token.symbol}&background=0891b2&color=ffffff&size=32`;
+                  // Try CoinMarketCap image first if not already tried
+                  if (!e.target.src.includes('coinmarketcap.com')) {
+                    e.target.src = `https://s2.coinmarketcap.com/static/img/coins/32x32/${token.symbol.toLowerCase()}.png`;
+                  } 
+                  // Try alternative CoinGecko pattern
+                  else if (!e.target.src.includes('coin_image')) {
+                    e.target.src = `https://coin-images.coingecko.com/coins/images/1/small/${token.symbol.toLowerCase()}.png`;
+                  }
+                  // Final fallback to placeholder
+                  else {
+                    e.target.src = `https://ui-avatars.com/api/?name=${token.symbol}&background=0891b2&color=ffffff&size=32`;
+                  }
                 }}
               />
               <span className="font-medium text-white">{token.symbol}</span>
