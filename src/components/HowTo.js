@@ -208,8 +208,8 @@ const HowTo = ({ currentUser }) => {
                 <img 
                   src="/Aquadsnewlogo.svg" 
                   alt="AQUADS" 
-                  className="h-14 w-auto filter drop-shadow-lg"
-                  style={{filter: 'drop-shadow(0 0 12px rgba(59, 130, 246, 0.7))'}}
+                  className="w-auto filter drop-shadow-lg"
+                  style={{height: '3.75rem', filter: 'drop-shadow(0 0 15px rgba(59, 130, 246, 0.8))'}}
                 />
               </Link>
             </div>
