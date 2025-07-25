@@ -21,7 +21,7 @@ const MintFunnelInstructionModal = ({ onClose }) => {
               <FaInfoCircle className="text-blue-400" size={20} />
             </div>
             <h2 className="text-xl font-bold text-white">
-              Welcome to MintFunnel!
+              Welcome to Aquads Crypto Ads Network!
             </h2>
           </div>
           
@@ -47,6 +47,7 @@ const MintFunnelInstructionModal = ({ onClose }) => {
                 as your role
               </li>
               <li>Complete your MintFunnel account registration</li>
+              <li>You will get $50 ad credit to start</li>
               <li>Start creating and running your crypto ad campaigns!</li>
             </ol>
           </div>
