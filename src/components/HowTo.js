@@ -204,8 +204,13 @@ const HowTo = ({ currentUser }) => {
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <Link to="/" className="text-2xl font-bold text-blue-400">
-                Aquads
+              <Link to="/" className="flex items-center">
+                <img 
+                  src="/Aquadsnewlogo.svg" 
+                  alt="AQUADS" 
+                  className="h-8 w-auto filter drop-shadow-lg"
+                  style={{filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))'}}
+                />
               </Link>
             </div>
             <div className="flex items-center space-x-4">

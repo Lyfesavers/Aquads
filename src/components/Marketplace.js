@@ -799,8 +799,13 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <Link to="/" className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 glow-text">
-                AQUADS
+              <Link to="/" className="flex items-center">
+                <img 
+                  src="/Aquadsnewlogo.svg" 
+                  alt="AQUADS" 
+                  className="h-8 w-auto filter drop-shadow-lg"
+                  style={{filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))'}}
+                />
               </Link>
             </div>
 

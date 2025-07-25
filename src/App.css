@@ -39,6 +39,12 @@
 
 /* Mobile optimization */
 @media (max-width: 768px) {
+  /* Logo mobile responsiveness */
+  .flex img[alt="AQUADS"] {
+    height: 1.75rem !important; /* h-7 equivalent - slightly smaller on mobile */
+    max-width: 120px;
+  }
+  
   /* Optimize animations for mobile */
   .bubble-container {
     transition: transform 0.1s ease-out !important; /* Faster transitions */
@@ -54,5 +60,13 @@
   .animated-element {
     transition-duration: 0.1s !important;
     transform: translateZ(0); /* Hardware acceleration hint */
+  }
+}
+
+/* Logo hover effects for desktop */
+@media (min-width: 769px) {
+  .flex img[alt="AQUADS"]:hover {
+    transform: scale(1.05);
+    transition: transform 0.2s ease-in-out;
   }
 }
