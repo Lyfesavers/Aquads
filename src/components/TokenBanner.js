@@ -128,33 +128,9 @@ const TokenBanner = () => {
         }
       }
 
-      // Organize tokens by chain for cleaner display
-      const tokensByChain = {};
-      allTokens.forEach(token => {
-        if (!tokensByChain[token.chainId]) {
-          tokensByChain[token.chainId] = [];
-        }
-        tokensByChain[token.chainId].push(token);
-      });
-
-      // Sort chains by number of tokens (most popular first), then organize tokens
-      const sortedChains = Object.keys(tokensByChain).sort((a, b) => 
-        tokensByChain[b].length - tokensByChain[a].length
-      );
-
-      // Flatten back to array, grouped by chain
-      const organizedTokens = [];
-      sortedChains.forEach(chainId => {
-        // Sort tokens within each chain by their original rank
-        const chainTokens = tokensByChain[chainId].sort((a, b) => a.rank - b.rank);
-        organizedTokens.push(...chainTokens);
-      });
-
-      // Take top 50 organized tokens
-      const finalTokens = organizedTokens.slice(0, 50);
-      logger.info(`Organized ${finalTokens.length} trending tokens by chain:`, 
-        sortedChains.map(chain => `${chain}: ${tokensByChain[chain].length}`).join(', ')
-      );
+      // Take top 50 tokens in original trending order
+      const finalTokens = allTokens.slice(0, 50);
+      logger.info(`Fetched ${finalTokens.length} trending tokens from GeckoTerminal`);
       setTokens(finalTokens);
 
     } catch (error) {
