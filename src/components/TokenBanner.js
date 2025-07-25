@@ -66,46 +66,78 @@ const TokenBanner = () => {
   // Memoize fetchTokens to prevent recreation
   const fetchTokens = useCallback(async () => {
     try {
-      // Fetch boosted tokens from DexScreener
-      const response = await fetch('https://api.dexscreener.com/token-boosts/top/v1');
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      // Define popular trading pairs across multiple chains to get volume data
+      const popularPairs = [
+        // Ethereum
+        'ethereum/0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640', // USDC/WETH
+        'ethereum/0xcbcdf9626bc03e24f779434178a73a0b4bad62ed', // WBTC/WETH
+        'ethereum/0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8', // USDC/WETH
+        // Solana  
+        'solana/8sLbNZoA1cfnvMJLPfp98ZLAnFSYCFApfJKMbiXNLwxj', // SOL/USDC
+        'solana/CXLBjMMcwkc17GfJtBos6rQCo1ypeH6eDbB82Kby4MRm', // wSOL/USDC
+        // BSC
+        'bsc/0x16b9a82891338f9ba80e2d6970fdda79d1eb0dae', // WBNB/BUSD
+        'bsc/0x58f876857a02d6762e0101bb5c46a8c1ed44dc16', // WBNB/USDT
+        // Base
+        'base/0x4c36d2919e407f0cc2ee3c993ccf8ac26d9ce64e', // WETH/USDC
+        // Polygon
+        'polygon/0x45dda9cb7c25131df268515131f647d726f50608', // WETH/USDC
+        // Arbitrum
+        'arbitrum/0xc31e54c7a869b9fcbecc14363cf510d1c41fa443', // WETH/USDC
+      ];
 
-      const boostedData = await response.json();
-      logger.info('DexScreener Boosted Response:', boostedData);
+      // Fetch data for multiple pairs
+      const pairPromises = popularPairs.map(async (pair) => {
+        try {
+          const response = await fetch(`https://api.dexscreener.com/latest/dex/pairs/${pair}`);
+          if (response.ok) {
+            const data = await response.json();
+            return data.pairs?.[0] || null;
+          }
+        } catch (error) {
+          logger.error(`Error fetching pair ${pair}:`, error);
+        }
+        return null;
+      });
+
+      const pairResults = await Promise.all(pairPromises);
+      const validPairs = pairResults.filter(pair => pair !== null);
+
+      logger.info('DexScreener Pairs Response:', validPairs);
+
+      // Sort by 24h volume and take top 10
+      const sortedByVolume = validPairs
+        .filter(pair => pair.volume?.h24 > 0)
+        .sort((a, b) => (b.volume?.h24 || 0) - (a.volume?.h24 || 0))
+        .slice(0, 10);
 
       // Format the data for display
-      const formattedTokens = boostedData.slice(0, 10).map((token, index) => {
-        // Extract token symbol from description or use address
-        const symbol = token.description ? 
-          token.description.split(' ')[0].toUpperCase() : 
-          token.tokenAddress.slice(0, 6).toUpperCase();
-        
-        // Extract token name from description
-        const name = token.description || `Token ${token.tokenAddress.slice(0, 8)}`;
+      const formattedTokens = sortedByVolume.map((pair, index) => {
+        const baseToken = pair.baseToken;
+        const volume24h = pair.volume?.h24 || 0;
+        const priceChange = pair.priceChange?.h24 || 0;
         
         return {
-          id: token.tokenAddress,
-          symbol: symbol,
-          name: name,
-          price: 0, // DexScreener boost API doesn't include price data
-          priceChange24h: 0,
-          marketCap: token.totalAmount || 0, // Use total boost amount as indicator
-          logo: token.icon || '', 
-          url: token.url || `https://dexscreener.com/${token.chainId}/${token.tokenAddress}`,
+          id: baseToken.address,
+          symbol: baseToken.symbol,
+          name: baseToken.name,
+          price: parseFloat(pair.priceUsd) || 0,
+          priceChange24h: priceChange,
+          marketCap: pair.fdv || 0,
+          logo: pair.info?.imageUrl || '', 
+          url: pair.url || `https://dexscreener.com/${pair.chainId}/${pair.pairAddress}`,
           rank: index + 1,
-          chainId: token.chainId,
-          tokenAddress: token.tokenAddress,
-          boostAmount: token.totalAmount || 0
+          chainId: pair.chainId,
+          tokenAddress: baseToken.address,
+          volume24h: volume24h,
+          pairAddress: pair.pairAddress
         };
       });
 
-      logger.info('Formatted Boosted Tokens:', formattedTokens);
+      logger.info('Formatted Volume Trending Tokens:', formattedTokens);
       setTokens(formattedTokens);
     } catch (error) {
-      logger.error('Error fetching boosted tokens:', error);
+      logger.error('Error fetching volume trending tokens:', error);
       // Fallback to empty array if DexScreener fails
       setTokens([]);
     } finally {
@@ -124,7 +156,7 @@ const TokenBanner = () => {
     return (
       <div className="h-12 bg-gray-800 border-y border-blue-500/20">
         <div className="flex items-center justify-center h-full">
-          <span className="text-blue-400">Loading boosted tokens...</span>
+          <span className="text-blue-400">Loading trending tokens...</span>
         </div>
       </div>
     );
@@ -134,7 +166,7 @@ const TokenBanner = () => {
     return (
       <div className="h-12 bg-gray-800 border-y border-blue-500/20">
         <div className="flex items-center justify-center h-full">
-          <span className="text-gray-400">No boosted tokens available</span>
+          <span className="text-gray-400">No trending tokens available</span>
         </div>
       </div>
     );
@@ -173,12 +205,19 @@ const TokenBanner = () => {
                 }}
               />
               <span className="font-medium text-white">{token.symbol}</span>
-              <span className="text-blue-400 font-semibold">🚀 BOOSTED</span>
-              <span className="text-gray-300 text-sm">
+              <span className="text-gray-300">{formatPrice(token.price)}</span>
+              <span className={`${
+                token.priceChange24h >= 0 
+                  ? 'text-green-400' 
+                  : 'text-red-400'
+              }`}>
+                {formatPercentage(token.priceChange24h)}
+              </span>
+              <span className="text-blue-400 text-sm">
                 {token.chainId && token.chainId.charAt(0).toUpperCase() + token.chainId.slice(1)}
               </span>
-              <span className="text-green-400 text-sm">
-                Boost: {formatVolume(token.boostAmount)}
+              <span className="text-gray-400 text-sm">
+                Vol: {formatVolume(token.volume24h)}
               </span>
             </a>
           ))}
