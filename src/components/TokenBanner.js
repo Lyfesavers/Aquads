@@ -75,6 +75,13 @@ const TokenBanner = () => {
 
       const data = await response.json();
       logger.info('GeckoTerminal API Response:', data);
+      
+      // Debug: Check what image data we're getting
+      if (data.data && data.data.length > 0) {
+        const samplePool = data.data[0];
+        logger.info('Sample pool base_token:', samplePool.attributes?.base_token);
+        logger.info('Sample pool base_token image_url:', samplePool.attributes?.base_token?.image_url);
+      }
 
       if (!data.data || data.data.length === 0) {
         logger.warn('No trending pools data received');
@@ -86,7 +93,7 @@ const TokenBanner = () => {
       const formattedTokens = data.data.slice(0, 20).map((pool, index) => {
         const attrs = pool.attributes || {};
         
-        // Extract base token information
+        // Extract base token information from GeckoTerminal API
         const baseToken = attrs.base_token || {};
         const quoteToken = attrs.quote_token || {};
         
@@ -97,20 +104,10 @@ const TokenBanner = () => {
         // Extract network from pool relationships or ID
         const networkId = pool.relationships?.network?.data?.id || 'unknown';
         
-        // Get token logo with multiple fallbacks
-        let tokenLogo = null;
-        
-        // Try base token image first
-        if (baseToken.image_url) {
-          tokenLogo = baseToken.image_url;
-        }
-        // Try CoinGecko image pattern
-        else if (tokenSymbol && tokenSymbol !== 'TOKEN') {
-          tokenLogo = `https://assets.coingecko.com/coins/images/${tokenSymbol.toLowerCase()}.png`;
-        }
-        // Fallback to generated avatar
+        // Use GeckoTerminal token image first, then fallback to CoinMarketCap
+        let tokenLogo = baseToken.image_url;
         if (!tokenLogo) {
-          tokenLogo = `https://ui-avatars.com/api/?name=${tokenSymbol}&background=0891b2&color=ffffff&size=32`;
+          tokenLogo = `https://s2.coinmarketcap.com/static/img/coins/64x64/${tokenSymbol.toLowerCase()}.png`;
         }
         
         return {
@@ -129,8 +126,17 @@ const TokenBanner = () => {
         };
       });
 
-      logger.info('Formatted GeckoTerminal Trending Tokens:', formattedTokens);
-      setTokens(formattedTokens);
+      // Filter out tokens with invalid symbols before setting
+      const validTokens = formattedTokens.filter(token => 
+        token.symbol && 
+        token.symbol !== 'TOKEN' && 
+        token.symbol.length > 0 && 
+        token.symbol.length < 10 && // Reasonable symbol length
+        /^[A-Za-z0-9]+$/.test(token.symbol) // Only alphanumeric symbols
+      );
+
+      logger.info('Valid GeckoTerminal Trending Tokens:', validTokens);
+      setTokens(validTokens);
     } catch (error) {
       logger.error('Error fetching GeckoTerminal trending tokens:', error);
       // Set empty array on error to prevent showing "unknown" data
@@ -186,17 +192,16 @@ const TokenBanner = () => {
                 height="27"
                 onError={(e) => {
                   e.target.onerror = null;
-                  // Try CoinMarketCap image first if not already tried
-                  if (!e.target.src.includes('coinmarketcap.com')) {
-                    e.target.src = `https://s2.coinmarketcap.com/static/img/coins/32x32/${token.symbol.toLowerCase()}.png`;
-                  } 
-                  // Try alternative CoinGecko pattern
-                  else if (!e.target.src.includes('coin_image')) {
-                    e.target.src = `https://coin-images.coingecko.com/coins/images/1/small/${token.symbol.toLowerCase()}.png`;
-                  }
-                  // Final fallback to placeholder
-                  else {
-                    e.target.src = `https://ui-avatars.com/api/?name=${token.symbol}&background=0891b2&color=ffffff&size=32`;
+                  // Try alternative sources before falling back to placeholder
+                  if (e.target.src.includes('geckoterminal')) {
+                    // If GeckoTerminal image failed, try CoinMarketCap
+                    e.target.src = `https://s2.coinmarketcap.com/static/img/coins/64x64/${token.symbol.toLowerCase()}.png`;
+                  } else if (e.target.src.includes('coinmarketcap')) {
+                    // If CMC failed, try CoinGecko
+                    e.target.src = `https://assets.coingecko.com/coins/images/1/small/${token.symbol.toLowerCase()}.png`;
+                  } else {
+                    // Final fallback to placeholder
+                    e.target.src = `https://ui-avatars.com/api/?name=${token.symbol}&background=1a202c&color=60a5fa&size=32&bold=true`;
                   }
                 }}
               />
