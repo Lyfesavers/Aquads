@@ -41,8 +41,8 @@
 @media (max-width: 768px) {
   /* Logo mobile responsiveness */
   .flex img[alt="AQUADS"] {
-    height: 3.5rem !important; /* Much larger for mobile visibility */
-    max-width: 220px;
+    height: 3rem !important; /* h-12 equivalent - large for mobile visibility */
+    max-width: 180px;
   }
   
   /* Optimize animations for mobile */
@@ -71,8 +71,8 @@
   }
   
   /* Ensure navigation bar accommodates larger logo */
-  nav .h-20 {
-    min-height: 5rem !important; /* Increased height for h-20 logo */
+  nav .h-16 {
+    min-height: 4rem !important; /* Standard height for h-14 logo */
   }
 }
 
@@ -87,27 +87,27 @@
 }
 
 /* Ensure all navigation containers accommodate larger logos */
-nav .h-20,
-.h-20 {
-  min-height: 5rem !important;
+nav .h-16,
+.h-16 {
+  min-height: 4rem !important;
 }
 
-/* Content spacing adjustments for larger navigation */
+/* Content spacing adjustments for standard navigation */
 .fixed.top-0 + * {
-  padding-top: 5rem !important; /* Account for h-20 fixed nav */
+  padding-top: 4rem !important; /* Account for h-16 fixed nav */
 }
 
 .sticky.top-0 {
-  height: 5rem !important; /* Ensure sticky navs have proper height */
+  height: 4rem !important; /* Ensure sticky navs have proper height */
 }
 
 /* Mobile navigation height adjustment */
 @media (max-width: 768px) {
-  nav .h-20 {
-    min-height: 4.5rem !important; /* Larger mobile height */
+  nav .h-16 {
+    min-height: 4rem !important; /* Standard mobile height */
   }
   
-  .h-20 {
-    min-height: 4.5rem !important;
+  .h-16 {
+    min-height: 4rem !important;
   }
 }
