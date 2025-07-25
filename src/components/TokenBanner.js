@@ -66,52 +66,44 @@ const TokenBanner = () => {
   // Memoize fetchTokens to prevent recreation
   const fetchTokens = useCallback(async () => {
     try {
-      // Fetch top 50 trending pools from GeckoTerminal (3 pages of 20 each)
-      const allTrendingPools = [];
+      // Fetch trending pools from GeckoTerminal API
+      const response = await fetch('https://api.geckoterminal.com/api/v2/networks/trending_pools?page=1');
       
-      for (let page = 1; page <= 3; page++) {
-        try {
-          const response = await fetch(`https://api.geckoterminal.com/api/v2/networks/trending_pools?page=${page}`);
-          
-          if (response.ok) {
-            const data = await response.json();
-            if (data.data && data.data.length > 0) {
-              allTrendingPools.push(...data.data);
-            }
-          }
-          
-          // Small delay to respect rate limits
-          if (page < 3) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-          }
-        } catch (error) {
-          logger.error(`Error fetching page ${page}:`, error);
-        }
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      logger.info('GeckoTerminal Trending Pools:', allTrendingPools);
+      const data = await response.json();
+      logger.info('GeckoTerminal API Response:', data);
 
-      // Take top 50 and format for display
-      const topTrending = allTrendingPools.slice(0, 50);
+      if (!data.data || data.data.length === 0) {
+        logger.warn('No trending pools data received');
+        setTokens([]);
+        return;
+      }
 
-      const formattedTokens = topTrending.map((pool, index) => {
-        const attrs = pool.attributes;
-        const baseToken = attrs.base_token || {};
+      // Format the trending pools data
+      const formattedTokens = data.data.slice(0, 20).map((pool, index) => {
+        const attrs = pool.attributes || {};
         
-        // Extract chain from pool ID (format: chain_address)
-        const chainId = pool.id.split('_')[0];
+        // Extract pool name parts (usually "TOKEN1 / TOKEN2")
+        const poolName = attrs.name || '';
+        const baseTokenSymbol = poolName.split(' / ')[0] || poolName.split('/')[0] || 'TOKEN';
+        
+        // Extract network from pool relationships or ID
+        const networkId = pool.relationships?.network?.data?.id || 'unknown';
         
         return {
-          id: baseToken.address || pool.id,
-          symbol: baseToken.symbol || 'UNKNOWN',
-          name: baseToken.name || attrs.name || 'Unknown Token',
+          id: pool.id,
+          symbol: baseTokenSymbol.trim(),
+          name: poolName,
           price: parseFloat(attrs.base_token_price_usd) || 0,
           priceChange24h: parseFloat(attrs.price_change_percentage?.h24) || 0,
-          marketCap: parseFloat(attrs.market_cap_usd) || parseFloat(attrs.fdv_usd) || 0,
-          logo: baseToken.image_url || `https://ui-avatars.com/api/?name=${baseToken.symbol}&background=0891b2&color=ffffff&size=32`,
-          url: `https://www.geckoterminal.com/pools/${pool.id}`,
+          marketCap: parseFloat(attrs.fdv_usd) || 0,
+          logo: `https://ui-avatars.com/api/?name=${baseTokenSymbol.trim()}&background=0891b2&color=ffffff&size=32`,
+          url: `https://www.geckoterminal.com/${networkId}/pools/${attrs.address}`,
           rank: index + 1,
-          chainId: chainId,
+          chainId: networkId,
           volume24h: parseFloat(attrs.volume_usd?.h24) || 0,
           poolAddress: attrs.address
         };
@@ -121,6 +113,8 @@ const TokenBanner = () => {
       setTokens(formattedTokens);
     } catch (error) {
       logger.error('Error fetching GeckoTerminal trending tokens:', error);
+      // Set empty array on error to prevent showing "unknown" data
+      setTokens([]);
     } finally {
       setLoading(false);
     }
