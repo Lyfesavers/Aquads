@@ -42,14 +42,14 @@ const CryptoAdNetwork = () => {
       {/* Fixed Navigation */}
       <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm shadow-lg shadow-blue-500/20 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-20">
             <div className="flex items-center">
               <Link to="/" className="flex items-center">
                 <img 
                   src="/Aquadsnewlogo.svg" 
                   alt="AQUADS" 
                   className="w-auto filter drop-shadow-lg"
-                  style={{height: '3.75rem', filter: 'drop-shadow(0 0 15px rgba(59, 130, 246, 0.8))'}}
+                  style={{height: '4.5rem', filter: 'drop-shadow(0 0 20px rgba(59, 130, 246, 0.9))'}}
                 />
               </Link>
             </div>
@@ -67,7 +67,7 @@ const CryptoAdNetwork = () => {
       </nav>
 
       {/* Embedded Content - Full Screen */}
-      <div className="fixed inset-0 top-16 z-20">
+      <div className="fixed inset-0 top-20 z-20">
         <iframe
           src="https://mintfunnel.co/crypto-ad-network/?ref=Aquads"
           className="w-full h-full border-0"

@@ -2648,13 +2648,13 @@ function App() {
                 {/* Navigation and banner stay fixed */}
                 <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm shadow-lg shadow-blue-500/20 z-[200000]">
                   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-16">
+                    <div className="flex items-center justify-between h-20">
                       <div className="flex items-center">
                         <img 
                           src="/Aquadsnewlogo.svg" 
                           alt="AQUADS" 
                           className="w-auto filter drop-shadow-lg"
-                          style={{height: '3.75rem', filter: 'drop-shadow(0 0 15px rgba(59, 130, 246, 0.8))'}}
+                          style={{height: '4.5rem', filter: 'drop-shadow(0 0 20px rgba(59, 130, 246, 0.9))'}}
                         />
                       </div>
                       
