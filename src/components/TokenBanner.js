@@ -88,23 +88,23 @@ const TokenBanner = () => {
         // Process tokens from this page
         const pageTokens = data.data.map((pool, index) => {
           const attrs = pool.attributes || {};
-          const baseToken = attrs.base_token || {};
           
-          // Extract token symbol and name
-          const tokenSymbol = baseToken.symbol || attrs.name?.split(' / ')[0] || 'TOKEN';
-          const tokenName = baseToken.name || attrs.name || 'Unknown Token';
+          // Extract token symbol from pool name (e.g., "PENGU / SOL" -> "PENGU")
+          const poolName = attrs.name || '';
+          const tokenSymbol = poolName.split(' / ')[0] || poolName.split('/')[0] || 'TOKEN';
+          const tokenName = tokenSymbol; // Use symbol as name since we don't have full token data
           const networkId = pool.relationships?.network?.data?.id || 'unknown';
           
-          // Use the image from base_token, with multiple fallbacks
-          let tokenLogo = baseToken.image_url;
-          if (!tokenLogo && attrs.image_url) {
-            tokenLogo = attrs.image_url;
-          }
-          if (!tokenLogo) {
-            // Fallback to constructing logo URL
-            tokenLogo = `https://coin-images.coingecko.com/coins/images/1/small/${tokenSymbol.toLowerCase()}.png`;
-          }
-
+          // Create multiple logo URLs to try - use a comprehensive strategy
+          const symbolLower = tokenSymbol.toLowerCase();
+          const logoSources = [
+            `https://s2.coinmarketcap.com/static/img/coins/64x64/${symbolLower}.png`,
+            `https://assets.coingecko.com/coins/images/1/small/${symbolLower}.png`,
+            `https://coin-images.coingecko.com/coins/images/1/small/${symbolLower}.png`,
+            `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x${tokenSymbol}/logo.png`,
+            `https://ui-avatars.com/api/?name=${tokenSymbol}&background=4f46e5&color=ffffff&size=32&bold=true&format=png`
+          ];
+          
           return {
             id: pool.id,
             symbol: tokenSymbol.trim().toUpperCase(),
@@ -112,7 +112,8 @@ const TokenBanner = () => {
             price: parseFloat(attrs.base_token_price_usd) || 0,
             priceChange24h: parseFloat(attrs.price_change_percentage?.h24) || 0,
             marketCap: parseFloat(attrs.fdv_usd) || parseFloat(attrs.market_cap_usd) || 0,
-            logo: tokenLogo,
+            logo: logoSources[0], // Start with CoinMarketCap
+            logoSources: logoSources, // Store all sources for fallback
             url: `https://www.geckoterminal.com/${networkId}/pools/${attrs.address}`,
             rank: (page - 1) * 20 + index + 1,
             chainId: networkId,
@@ -206,23 +207,15 @@ const TokenBanner = () => {
                 width="27" // Specify dimensions to avoid layout shifts
                 height="27"
                 onError={(e) => {
-                  const currentSrc = e.target.src;
-                  e.target.onerror = null;
+                  // Use the logoSources array for systematic fallback
+                  const currentIndex = parseInt(e.target.dataset.logoIndex || '0');
+                  const nextIndex = currentIndex + 1;
                   
-                  // Try different image sources in sequence
-                  if (currentSrc.includes('geckoterminal') || currentSrc.includes('coin-images.coingecko')) {
-                    // Try CoinMarketCap
-                    e.target.src = `https://s2.coinmarketcap.com/static/img/coins/64x64/${token.symbol.toLowerCase()}.png`;
-                  } else if (currentSrc.includes('coinmarketcap')) {
-                    // Try TrustWallet assets
-                    e.target.src = `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x${token.symbol}/logo.png`;
-                  } else if (currentSrc.includes('trustwallet') || currentSrc.includes('github')) {
-                    // Try alternative CoinGecko path
-                    e.target.src = `https://assets.coingecko.com/coins/images/1/small/${token.symbol.toLowerCase()}.png`;
-                  } else {
-                    // Final fallback to placeholder
-                    e.target.src = `https://ui-avatars.com/api/?name=${token.symbol}&background=1a202c&color=60a5fa&size=32&bold=true`;
+                  if (token.logoSources && nextIndex < token.logoSources.length) {
+                    e.target.dataset.logoIndex = nextIndex.toString();
+                    e.target.src = token.logoSources[nextIndex];
                   }
+                  // If we've exhausted all sources, the last one should be the placeholder
                 }}
               />
               <span className="font-medium text-white">{token.symbol}</span>
