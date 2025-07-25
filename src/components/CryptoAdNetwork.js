@@ -1,17 +1,34 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaArrowLeft } from 'react-icons/fa';
+import MintFunnelInstructionModal from './MintFunnelInstructionModal';
 
 const CryptoAdNetwork = () => {
+  const [showInstructionModal, setShowInstructionModal] = useState(false);
+
   useEffect(() => {
     // Add class to body for page-specific styling if needed
     document.body.classList.add('crypto-ad-network-page');
+    
+    // Check if user has seen the MintFunnel instruction before
+    const hasSeenMintFunnelInstruction = localStorage.getItem('hasSeenMintFunnelInstruction');
+    
+    // Show instruction modal for first-time visitors
+    if (!hasSeenMintFunnelInstruction) {
+      setShowInstructionModal(true);
+    }
     
     // Cleanup
     return () => {
       document.body.classList.remove('crypto-ad-network-page');
     };
   }, []);
+
+  const handleCloseInstructionModal = () => {
+    setShowInstructionModal(false);
+    // Mark that user has seen the instruction
+    localStorage.setItem('hasSeenMintFunnelInstruction', 'true');
+  };
 
   return (
     <div className="h-screen overflow-y-auto text-white">
@@ -54,6 +71,13 @@ const CryptoAdNetwork = () => {
           loading="lazy"
         />
       </div>
+
+      {/* Instruction Modal for first-time visitors */}
+      {showInstructionModal && (
+        <MintFunnelInstructionModal
+          onClose={handleCloseInstructionModal}
+        />
+      )}
     </div>
   );
 };
