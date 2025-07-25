@@ -66,46 +66,48 @@ const TokenBanner = () => {
   // Memoize fetchTokens to prevent recreation
   const fetchTokens = useCallback(async () => {
     try {
-      // Fetch trending tokens from CoinGecko
-      const response = await fetch('https://api.coingecko.com/api/v3/search/trending');
+      // Fetch boosted tokens from DexScreener
+      const response = await fetch('https://api.dexscreener.com/token-boosts/top/v1');
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const trendingData = await response.json();
-      logger.info('Trending Response:', trendingData);
+      const boostedData = await response.json();
+      logger.info('DexScreener Boosted Response:', boostedData);
 
-      // Get the IDs of trending coins
-      const trendingIds = trendingData.coins.map(coin => coin.item.id).join(',');
-
-      // Fetch detailed price data for trending coins
-      const priceResponse = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=${trendingIds}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true`
-      );
-
-      const priceData = await priceResponse.json();
-
-      // Format the data combining trending info with price data
-      const formattedTokens = trendingData.coins.map(coin => {
-        const priceInfo = priceData[coin.item.id] || {};
+      // Format the data for display
+      const formattedTokens = boostedData.slice(0, 10).map((token, index) => {
+        // Extract token symbol from description or use address
+        const symbol = token.description ? 
+          token.description.split(' ')[0].toUpperCase() : 
+          token.tokenAddress.slice(0, 6).toUpperCase();
+        
+        // Extract token name from description
+        const name = token.description || `Token ${token.tokenAddress.slice(0, 8)}`;
+        
         return {
-          id: coin.item.id,
-          symbol: coin.item.symbol.toUpperCase(),
-          name: coin.item.name,
-          price: priceInfo.usd || 0,
-          priceChange24h: priceInfo.usd_24h_change || 0,
-          marketCap: priceInfo.usd_market_cap || 0,
-          logo: coin.item.small, // Use the logo URL directly from trending data
-          url: `https://www.coingecko.com/en/coins/${coin.item.id}`,
-          rank: coin.item.market_cap_rank
+          id: token.tokenAddress,
+          symbol: symbol,
+          name: name,
+          price: 0, // DexScreener boost API doesn't include price data
+          priceChange24h: 0,
+          marketCap: token.totalAmount || 0, // Use total boost amount as indicator
+          logo: token.icon || '', 
+          url: token.url || `https://dexscreener.com/${token.chainId}/${token.tokenAddress}`,
+          rank: index + 1,
+          chainId: token.chainId,
+          tokenAddress: token.tokenAddress,
+          boostAmount: token.totalAmount || 0
         };
       });
 
-      logger.info('Formatted Trending Tokens:', formattedTokens);
+      logger.info('Formatted Boosted Tokens:', formattedTokens);
       setTokens(formattedTokens);
     } catch (error) {
-      logger.error('Error fetching trending tokens:', error);
+      logger.error('Error fetching boosted tokens:', error);
+      // Fallback to empty array if DexScreener fails
+      setTokens([]);
     } finally {
       setLoading(false);
     }
@@ -122,7 +124,17 @@ const TokenBanner = () => {
     return (
       <div className="h-12 bg-gray-800 border-y border-blue-500/20">
         <div className="flex items-center justify-center h-full">
-          <span className="text-blue-400">Loading tokens...</span>
+          <span className="text-blue-400">Loading boosted tokens...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (tokens.length === 0) {
+    return (
+      <div className="h-12 bg-gray-800 border-y border-blue-500/20">
+        <div className="flex items-center justify-center h-full">
+          <span className="text-gray-400">No boosted tokens available</span>
         </div>
       </div>
     );
@@ -161,16 +173,12 @@ const TokenBanner = () => {
                 }}
               />
               <span className="font-medium text-white">{token.symbol}</span>
-              <span className="text-gray-300">{formatPrice(token.price)}</span>
-              <span className={`${
-                token.priceChange24h >= 0 
-                  ? 'text-green-400' 
-                  : 'text-red-400'
-              }`}>
-                {formatPercentage(token.priceChange24h)}
+              <span className="text-blue-400 font-semibold">🚀 BOOSTED</span>
+              <span className="text-gray-300 text-sm">
+                {token.chainId && token.chainId.charAt(0).toUpperCase() + token.chainId.slice(1)}
               </span>
-              <span className="text-gray-400 text-sm">
-                MCap: {formatVolume(token.marketCap)}
+              <span className="text-green-400 text-sm">
+                Boost: {formatVolume(token.boostAmount)}
               </span>
             </a>
           ))}
