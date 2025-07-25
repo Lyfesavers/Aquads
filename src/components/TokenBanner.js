@@ -66,81 +66,46 @@ const TokenBanner = () => {
   // Memoize fetchTokens to prevent recreation
   const fetchTokens = useCallback(async () => {
     try {
-      // Fetch trending pools from GeckoTerminal API
-      const response = await fetch('https://api.geckoterminal.com/api/v2/networks/trending_pools?page=1');
+      // Fetch trending tokens from CoinGecko
+      const response = await fetch('https://api.coingecko.com/api/v3/search/trending');
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
-      logger.info('GeckoTerminal API Response:', data);
-      
-      // Debug: Check what image data we're getting
-      if (data.data && data.data.length > 0) {
-        const samplePool = data.data[0];
-        logger.info('Sample pool base_token:', samplePool.attributes?.base_token);
-        logger.info('Sample pool base_token image_url:', samplePool.attributes?.base_token?.image_url);
-      }
+      const trendingData = await response.json();
+      logger.info('Trending Response:', trendingData);
 
-      if (!data.data || data.data.length === 0) {
-        logger.warn('No trending pools data received');
-        setTokens([]);
-        return;
-      }
+      // Get the IDs of trending coins
+      const trendingIds = trendingData.coins.map(coin => coin.item.id).join(',');
 
-      // Format the trending pools data
-      const formattedTokens = data.data.slice(0, 20).map((pool, index) => {
-        const attrs = pool.attributes || {};
-        
-        // Extract base token information from GeckoTerminal API
-        const baseToken = attrs.base_token || {};
-        const quoteToken = attrs.quote_token || {};
-        
-        // Use base token info if available, otherwise parse from pool name
-        const tokenSymbol = baseToken.symbol || attrs.name?.split(' / ')[0] || attrs.name?.split('/')[0] || 'TOKEN';
-        const tokenName = baseToken.name || attrs.name || 'Unknown Token';
-        
-        // Extract network from pool relationships or ID
-        const networkId = pool.relationships?.network?.data?.id || 'unknown';
-        
-        // Use GeckoTerminal token image first, then fallback to CoinMarketCap
-        let tokenLogo = baseToken.image_url;
-        if (!tokenLogo) {
-          tokenLogo = `https://s2.coinmarketcap.com/static/img/coins/64x64/${tokenSymbol.toLowerCase()}.png`;
-        }
-        
+      // Fetch detailed price data for trending coins
+      const priceResponse = await fetch(
+        `https://api.coingecko.com/api/v3/simple/price?ids=${trendingIds}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true`
+      );
+
+      const priceData = await priceResponse.json();
+
+      // Format the data combining trending info with price data
+      const formattedTokens = trendingData.coins.map(coin => {
+        const priceInfo = priceData[coin.item.id] || {};
         return {
-          id: pool.id,
-          symbol: tokenSymbol.trim(),
-          name: tokenName,
-          price: parseFloat(attrs.base_token_price_usd) || 0,
-          priceChange24h: parseFloat(attrs.price_change_percentage?.h24) || 0,
-          marketCap: parseFloat(attrs.fdv_usd) || 0,
-          logo: tokenLogo,
-          url: `https://www.geckoterminal.com/${networkId}/pools/${attrs.address}`,
-          rank: index + 1,
-          chainId: networkId,
-          volume24h: parseFloat(attrs.volume_usd?.h24) || 0,
-          poolAddress: attrs.address
+          id: coin.item.id,
+          symbol: coin.item.symbol.toUpperCase(),
+          name: coin.item.name,
+          price: priceInfo.usd || 0,
+          priceChange24h: priceInfo.usd_24h_change || 0,
+          marketCap: priceInfo.usd_market_cap || 0,
+          logo: coin.item.small, // Use the logo URL directly from trending data
+          url: `https://www.coingecko.com/en/coins/${coin.item.id}`,
+          rank: coin.item.market_cap_rank
         };
       });
 
-      // Filter out tokens with invalid symbols before setting
-      const validTokens = formattedTokens.filter(token => 
-        token.symbol && 
-        token.symbol !== 'TOKEN' && 
-        token.symbol.length > 0 && 
-        token.symbol.length < 10 && // Reasonable symbol length
-        /^[A-Za-z0-9]+$/.test(token.symbol) // Only alphanumeric symbols
-      );
-
-      logger.info('Valid GeckoTerminal Trending Tokens:', validTokens);
-      setTokens(validTokens);
+      logger.info('Formatted Trending Tokens:', formattedTokens);
+      setTokens(formattedTokens);
     } catch (error) {
-      logger.error('Error fetching GeckoTerminal trending tokens:', error);
-      // Set empty array on error to prevent showing "unknown" data
-      setTokens([]);
+      logger.error('Error fetching trending tokens:', error);
     } finally {
       setLoading(false);
     }
@@ -157,7 +122,7 @@ const TokenBanner = () => {
     return (
       <div className="h-12 bg-gray-800 border-y border-blue-500/20">
         <div className="flex items-center justify-center h-full">
-          <span className="text-blue-400">Loading trending DEX tokens...</span>
+          <span className="text-blue-400">Loading tokens...</span>
         </div>
       </div>
     );
@@ -192,17 +157,7 @@ const TokenBanner = () => {
                 height="27"
                 onError={(e) => {
                   e.target.onerror = null;
-                  // Try alternative sources before falling back to placeholder
-                  if (e.target.src.includes('geckoterminal')) {
-                    // If GeckoTerminal image failed, try CoinMarketCap
-                    e.target.src = `https://s2.coinmarketcap.com/static/img/coins/64x64/${token.symbol.toLowerCase()}.png`;
-                  } else if (e.target.src.includes('coinmarketcap')) {
-                    // If CMC failed, try CoinGecko
-                    e.target.src = `https://assets.coingecko.com/coins/images/1/small/${token.symbol.toLowerCase()}.png`;
-                  } else {
-                    // Final fallback to placeholder
-                    e.target.src = `https://ui-avatars.com/api/?name=${token.symbol}&background=1a202c&color=60a5fa&size=32&bold=true`;
-                  }
+                  e.target.src = `https://ui-avatars.com/api/?name=${token.symbol}&background=random&size=32`;
                 }}
               />
               <span className="font-medium text-white">{token.symbol}</span>
