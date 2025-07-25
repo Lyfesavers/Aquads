@@ -209,7 +209,7 @@ const HowTo = ({ currentUser }) => {
                   src="/Aquadsnewlogo.svg" 
                   alt="AQUADS" 
                   className="w-auto filter drop-shadow-lg"
-                  style={{height: '3.5rem', filter: 'drop-shadow(0 0 15px rgba(59, 130, 246, 0.8))', padding: '0', margin: '0'}}
+                  style={{height: '2.5rem', filter: 'drop-shadow(0 0 12px rgba(59, 130, 246, 0.7))', padding: '0', margin: '0'}}
                 />
               </Link>
             </div>
