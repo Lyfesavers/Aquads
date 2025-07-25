@@ -66,80 +66,80 @@ const TokenBanner = () => {
   // Memoize fetchTokens to prevent recreation
   const fetchTokens = useCallback(async () => {
     try {
-      // Define popular trading pairs across multiple chains to get volume data
-      const popularPairs = [
-        // Ethereum
-        'ethereum/0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640', // USDC/WETH
-        'ethereum/0xcbcdf9626bc03e24f779434178a73a0b4bad62ed', // WBTC/WETH
-        'ethereum/0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8', // USDC/WETH
-        // Solana  
-        'solana/8sLbNZoA1cfnvMJLPfp98ZLAnFSYCFApfJKMbiXNLwxj', // SOL/USDC
-        'solana/CXLBjMMcwkc17GfJtBos6rQCo1ypeH6eDbB82Kby4MRm', // wSOL/USDC
-        // BSC
-        'bsc/0x16b9a82891338f9ba80e2d6970fdda79d1eb0dae', // WBNB/BUSD
-        'bsc/0x58f876857a02d6762e0101bb5c46a8c1ed44dc16', // WBNB/USDT
-        // Base
-        'base/0x4c36d2919e407f0cc2ee3c993ccf8ac26d9ce64e', // WETH/USDC
-        // Polygon
-        'polygon/0x45dda9cb7c25131df268515131f647d726f50608', // WETH/USDC
-        // Arbitrum
-        'arbitrum/0xc31e54c7a869b9fcbecc14363cf510d1c41fa443', // WETH/USDC
-      ];
+      // Search for trending tokens across multiple chains using popular search terms
+      const searchTerms = ['ETH', 'BTC', 'SOL', 'USDC', 'BNB', 'MATIC', 'AVAX', 'DOT', 'UNI', 'LINK'];
+      const chains = ['ethereum', 'solana', 'bsc', 'polygon', 'arbitrum', 'base', 'avalanche'];
+      
+      const allPairs = [];
 
-      // Fetch data for multiple pairs
-      const pairPromises = popularPairs.map(async (pair) => {
+      // Search for popular tokens across different chains
+      for (const term of searchTerms) {
         try {
-          const response = await fetch(`https://api.dexscreener.com/latest/dex/pairs/${pair}`);
+          const response = await fetch(`https://api.dexscreener.com/latest/dex/search?q=${term}`);
           if (response.ok) {
             const data = await response.json();
-            return data.pairs?.[0] || null;
+            if (data.pairs) {
+              // Filter for pairs from supported chains with good volume
+                             const validPairs = data.pairs
+                 .filter(pair => 
+                   chains.includes(pair.chainId) &&
+                   pair.volume?.h24 > 5000 && // Minimum $5k 24h volume
+                   pair.priceUsd && 
+                   parseFloat(pair.priceUsd) > 0 &&
+                   pair.baseToken?.symbol &&
+                   pair.baseToken?.name
+                 )
+                .slice(0, 3); // Take top 3 from each search
+              
+              allPairs.push(...validPairs);
+            }
           }
+          
+          // Small delay to avoid hitting rate limits
+          await new Promise(resolve => setTimeout(resolve, 100));
         } catch (error) {
-          logger.error(`Error fetching pair ${pair}:`, error);
+          logger.error(`Error searching for ${term}:`, error);
         }
-        return null;
-      });
+      }
 
-      const pairResults = await Promise.all(pairPromises);
-      const validPairs = pairResults.filter(pair => pair !== null);
+      logger.info('DexScreener Search Results:', allPairs);
 
-      logger.info('DexScreener Pairs Response:', validPairs);
+      // Remove duplicates and sort by 24h volume
+      const uniquePairs = allPairs.filter((pair, index, self) => 
+        index === self.findIndex(p => p.baseToken.address === pair.baseToken.address && p.chainId === pair.chainId)
+      );
 
-      // Sort by 24h volume and take top 10
-      const sortedByVolume = validPairs
-        .filter(pair => pair.volume?.h24 > 0)
-        .sort((a, b) => (b.volume?.h24 || 0) - (a.volume?.h24 || 0))
-        .slice(0, 10);
+      const sortedByTrending = uniquePairs
+        .sort((a, b) => {
+          // Sort by volume * price change for trending effect
+          const trendingScoreA = (a.volume?.h24 || 0) * Math.abs(a.priceChange?.h24 || 0);
+          const trendingScoreB = (b.volume?.h24 || 0) * Math.abs(b.priceChange?.h24 || 0);
+          return trendingScoreB - trendingScoreA;
+        })
+        .slice(0, 15); // Take top 15 trending
 
       // Format the data for display
-      const formattedTokens = sortedByVolume.map((pair, index) => {
-        const baseToken = pair.baseToken;
-        const volume24h = pair.volume?.h24 || 0;
-        const priceChange = pair.priceChange?.h24 || 0;
-        
+      const formattedTokens = sortedByTrending.map((pair, index) => {
         return {
-          id: baseToken.address,
-          symbol: baseToken.symbol,
-          name: baseToken.name,
+          id: pair.baseToken.address,
+          symbol: pair.baseToken.symbol,
+          name: pair.baseToken.name,
           price: parseFloat(pair.priceUsd) || 0,
-          priceChange24h: priceChange,
-          marketCap: pair.fdv || 0,
-          logo: pair.info?.imageUrl || '', 
+          priceChange24h: pair.priceChange?.h24 || 0,
+          marketCap: pair.fdv || pair.marketCap || 0,
+          logo: pair.info?.imageUrl || `https://ui-avatars.com/api/?name=${pair.baseToken.symbol}&background=random&size=32`,
           url: pair.url || `https://dexscreener.com/${pair.chainId}/${pair.pairAddress}`,
           rank: index + 1,
           chainId: pair.chainId,
-          tokenAddress: baseToken.address,
-          volume24h: volume24h,
-          pairAddress: pair.pairAddress
+          volume24h: pair.volume?.h24 || 0,
+          dexId: pair.dexId
         };
       });
 
-      logger.info('Formatted Volume Trending Tokens:', formattedTokens);
+      logger.info('Formatted Trending Tokens:', formattedTokens);
       setTokens(formattedTokens);
     } catch (error) {
-      logger.error('Error fetching volume trending tokens:', error);
-      // Fallback to empty array if DexScreener fails
-      setTokens([]);
+      logger.error('Error fetching trending tokens:', error);
     } finally {
       setLoading(false);
     }
