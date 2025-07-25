@@ -66,73 +66,39 @@ const TokenBanner = () => {
   // Memoize fetchTokens to prevent recreation
   const fetchTokens = useCallback(async () => {
     try {
-      // Search for trending tokens across multiple chains using popular search terms
-      const searchTerms = ['ETH', 'BTC', 'SOL', 'USDC', 'BNB', 'MATIC', 'AVAX', 'DOT', 'UNI', 'LINK'];
-      const chains = ['ethereum', 'solana', 'bsc', 'polygon', 'arbitrum', 'base', 'avalanche'];
+      // Fetch trending tokens from CoinGecko
+      const response = await fetch('https://api.coingecko.com/api/v3/search/trending');
       
-      const allPairs = [];
-
-      // Search for popular tokens across different chains
-      for (const term of searchTerms) {
-        try {
-          const response = await fetch(`https://api.dexscreener.com/latest/dex/search?q=${term}`);
-          if (response.ok) {
-            const data = await response.json();
-            if (data.pairs) {
-              // Filter for pairs from supported chains with good volume
-                             const validPairs = data.pairs
-                 .filter(pair => 
-                   chains.includes(pair.chainId) &&
-                   pair.volume?.h24 > 5000 && // Minimum $5k 24h volume
-                   pair.priceUsd && 
-                   parseFloat(pair.priceUsd) > 0 &&
-                   pair.baseToken?.symbol &&
-                   pair.baseToken?.name
-                 )
-                .slice(0, 3); // Take top 3 from each search
-              
-              allPairs.push(...validPairs);
-            }
-          }
-          
-          // Small delay to avoid hitting rate limits
-          await new Promise(resolve => setTimeout(resolve, 100));
-        } catch (error) {
-          logger.error(`Error searching for ${term}:`, error);
-        }
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      logger.info('DexScreener Search Results:', allPairs);
+      const trendingData = await response.json();
+      logger.info('Trending Response:', trendingData);
 
-      // Remove duplicates and sort by 24h volume
-      const uniquePairs = allPairs.filter((pair, index, self) => 
-        index === self.findIndex(p => p.baseToken.address === pair.baseToken.address && p.chainId === pair.chainId)
+      // Get the IDs of trending coins
+      const trendingIds = trendingData.coins.map(coin => coin.item.id).join(',');
+
+      // Fetch detailed price data for trending coins
+      const priceResponse = await fetch(
+        `https://api.coingecko.com/api/v3/simple/price?ids=${trendingIds}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true`
       );
 
-      const sortedByTrending = uniquePairs
-        .sort((a, b) => {
-          // Sort by volume * price change for trending effect
-          const trendingScoreA = (a.volume?.h24 || 0) * Math.abs(a.priceChange?.h24 || 0);
-          const trendingScoreB = (b.volume?.h24 || 0) * Math.abs(b.priceChange?.h24 || 0);
-          return trendingScoreB - trendingScoreA;
-        })
-        .slice(0, 15); // Take top 15 trending
+      const priceData = await priceResponse.json();
 
-      // Format the data for display
-      const formattedTokens = sortedByTrending.map((pair, index) => {
+      // Format the data combining trending info with price data
+      const formattedTokens = trendingData.coins.map(coin => {
+        const priceInfo = priceData[coin.item.id] || {};
         return {
-          id: pair.baseToken.address,
-          symbol: pair.baseToken.symbol,
-          name: pair.baseToken.name,
-          price: parseFloat(pair.priceUsd) || 0,
-          priceChange24h: pair.priceChange?.h24 || 0,
-          marketCap: pair.fdv || pair.marketCap || 0,
-          logo: pair.info?.imageUrl || `https://ui-avatars.com/api/?name=${pair.baseToken.symbol}&background=random&size=32`,
-          url: pair.url || `https://dexscreener.com/${pair.chainId}/${pair.pairAddress}`,
-          rank: index + 1,
-          chainId: pair.chainId,
-          volume24h: pair.volume?.h24 || 0,
-          dexId: pair.dexId
+          id: coin.item.id,
+          symbol: coin.item.symbol.toUpperCase(),
+          name: coin.item.name,
+          price: priceInfo.usd || 0,
+          priceChange24h: priceInfo.usd_24h_change || 0,
+          marketCap: priceInfo.usd_market_cap || 0,
+          logo: coin.item.small, // Use the logo URL directly from trending data
+          url: `https://www.coingecko.com/en/coins/${coin.item.id}`,
+          rank: coin.item.market_cap_rank
         };
       });
 
@@ -156,17 +122,7 @@ const TokenBanner = () => {
     return (
       <div className="h-12 bg-gray-800 border-y border-blue-500/20">
         <div className="flex items-center justify-center h-full">
-          <span className="text-blue-400">Loading trending tokens...</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (tokens.length === 0) {
-    return (
-      <div className="h-12 bg-gray-800 border-y border-blue-500/20">
-        <div className="flex items-center justify-center h-full">
-          <span className="text-gray-400">No trending tokens available</span>
+          <span className="text-blue-400">Loading tokens...</span>
         </div>
       </div>
     );
@@ -213,11 +169,8 @@ const TokenBanner = () => {
               }`}>
                 {formatPercentage(token.priceChange24h)}
               </span>
-              <span className="text-blue-400 text-sm">
-                {token.chainId && token.chainId.charAt(0).toUpperCase() + token.chainId.slice(1)}
-              </span>
               <span className="text-gray-400 text-sm">
-                Vol: {formatVolume(token.volume24h)}
+                MCap: {formatVolume(token.marketCap)}
               </span>
             </a>
           ))}
