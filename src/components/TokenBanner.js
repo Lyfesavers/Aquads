@@ -37,27 +37,7 @@ const formatPercentage = (percentage) => {
   return `${sign}${value.toFixed(2)}%`;
 };
 
-const getTokenImageId = (id) => {
-  // Map token IDs to their CoinGecko image IDs
-  const imageIds = {
-    'bitcoin': '1',
-    'ethereum': '279',
-    'binancecoin': '825',
-    'solana': '4128',
-    'ripple': '44',
-    'cardano': '975',
-    'polkadot': '6636',
-    'dogecoin': '5',
-    'avalanche-2': '12559',
-    'matic-network': '4713',
-    'chainlink': '877',
-    'uniswap': '12504',
-    'internet-computer': '14495',
-    'near': '10365',
-    'cosmos': '1481'
-  };
-  return imageIds[id] || '1';
-};
+
 
 const TokenBanner = () => {
   const [tokens, setTokens] = useState([]);
@@ -95,15 +75,24 @@ const TokenBanner = () => {
           const tokenName = tokenSymbol; // Use symbol as name since we don't have full token data
           const networkId = pool.relationships?.network?.data?.id || 'unknown';
           
-          // Create multiple logo URLs to try - use a comprehensive strategy
-          const symbolLower = tokenSymbol.toLowerCase();
-          const logoSources = [
-            `https://s2.coinmarketcap.com/static/img/coins/64x64/${symbolLower}.png`,
-            `https://assets.coingecko.com/coins/images/1/small/${symbolLower}.png`,
-            `https://coin-images.coingecko.com/coins/images/1/small/${symbolLower}.png`,
-            `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x${tokenSymbol}/logo.png`,
-            `https://ui-avatars.com/api/?name=${tokenSymbol}&background=4f46e5&color=ffffff&size=32&bold=true&format=png`
-          ];
+          // Format chain name for display
+          const formatChain = (chain) => {
+            const chainMap = {
+              'eth': 'ETH',
+              'ethereum': 'ETH',
+              'solana': 'SOL',
+              'bsc': 'BSC',
+              'polygon_pos': 'POLY',
+              'arbitrum': 'ARB',
+              'avalanche': 'AVAX',
+              'base': 'BASE',
+              'optimism': 'OP',
+              'fantom': 'FTM',
+              'sui': 'SUI',
+              'ton': 'TON'
+            };
+            return chainMap[chain] || chain.toUpperCase().slice(0, 4);
+          };
           
           return {
             id: pool.id,
@@ -112,8 +101,7 @@ const TokenBanner = () => {
             price: parseFloat(attrs.base_token_price_usd) || 0,
             priceChange24h: parseFloat(attrs.price_change_percentage?.h24) || 0,
             marketCap: parseFloat(attrs.fdv_usd) || parseFloat(attrs.market_cap_usd) || 0,
-            logo: logoSources[0], // Start with CoinMarketCap
-            logoSources: logoSources, // Store all sources for fallback
+            chain: formatChain(networkId), // Show chain instead of logo
             url: `https://www.geckoterminal.com/${networkId}/pools/${attrs.address}`,
             rank: (page - 1) * 20 + index + 1,
             chainId: networkId,
@@ -199,25 +187,9 @@ const TokenBanner = () => {
               rel="noopener noreferrer"
               className="inline-flex items-center space-x-2 px-6 h-full hover:bg-blue-500/10 transition-colors"
             >
-              <img
-                src={token.logo}
-                alt={token.symbol}
-                className="w-[27px] h-[27px] rounded-full"
-                loading="lazy" // Add lazy loading for images
-                width="27" // Specify dimensions to avoid layout shifts
-                height="27"
-                onError={(e) => {
-                  // Use the logoSources array for systematic fallback
-                  const currentIndex = parseInt(e.target.dataset.logoIndex || '0');
-                  const nextIndex = currentIndex + 1;
-                  
-                  if (token.logoSources && nextIndex < token.logoSources.length) {
-                    e.target.dataset.logoIndex = nextIndex.toString();
-                    e.target.src = token.logoSources[nextIndex];
-                  }
-                  // If we've exhausted all sources, the last one should be the placeholder
-                }}
-              />
+              <span className="inline-flex items-center justify-center w-[50px] h-[27px] bg-blue-600/20 border border-blue-500/30 rounded text-xs font-bold text-blue-300">
+                {token.chain}
+              </span>
               <span className="font-medium text-white">{token.symbol}</span>
               <span className="text-gray-300">{formatPrice(token.price)}</span>
               <span className={`${
