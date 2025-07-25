@@ -2882,7 +2882,7 @@ function App() {
                   </div>
                 </nav>
 
-                <div className="fixed top-16 left-0 right-0 z-[3] token-banner-container">
+                <div className="fixed left-0 right-0 z-[3] token-banner-container" style={{top: '4rem', margin: '0', padding: '0'}}>
                   <TokenBanner />
                 </div>
 

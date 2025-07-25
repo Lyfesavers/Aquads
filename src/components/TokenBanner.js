@@ -168,7 +168,7 @@ const TokenBanner = () => {
   }
 
   return (
-    <div className="relative h-12 bg-gray-800 border-y border-blue-500/20">
+    <div className="relative h-12 bg-gray-800 border-y border-blue-500/20" style={{margin: '0', padding: '0'}}>
       <div className="flex items-center h-full overflow-hidden relative z-0">
         <div className="flex animate-scroll whitespace-nowrap">
           {tokens.concat(tokens).map((token, index) => (

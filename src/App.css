@@ -118,6 +118,23 @@ body {
   top: 4rem !important; /* Align with h-16 header */
 }
 
+/* Eliminate any gaps between header and token banner */
+.token-banner-container {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Ensure header has no bottom spacing */
+nav {
+  margin-bottom: 0 !important;
+}
+
+/* TokenBanner component spacing fix */
+.relative.h-12 {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
 /* Mobile navigation height adjustment */
 @media (max-width: 768px) {
   nav .h-16 {
