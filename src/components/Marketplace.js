@@ -803,7 +803,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                 <img 
                   src="/Aquadsnewlogo.svg" 
                   alt="AQUADS" 
-                  className="h-8 w-auto filter drop-shadow-lg"
+                  className="h-12 w-auto filter drop-shadow-lg"
                   style={{filter: 'drop-shadow(0 0 8px rgba(59, 130, 246, 0.5))'}}
                 />
               </Link>
