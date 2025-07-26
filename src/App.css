@@ -41,8 +41,8 @@
 @media (max-width: 768px) {
   /* Logo mobile responsiveness */
   .flex img[alt="AQUADS"] {
-    height: 1.5rem !important; /* Very compact for mobile */
-    max-width: 140px;
+    height: 3rem !important; /* h-12 equivalent - large for mobile visibility */
+    max-width: 180px;
   }
   
   /* Optimize animations for mobile */
@@ -84,14 +84,6 @@
   
   /* Better contrast and enhanced glow */
   filter: contrast(1.2) brightness(1.1) drop-shadow(0 0 12px rgba(59, 130, 246, 0.7)) !important;
-  
-  /* Crop any SVG internal padding */
-  object-fit: none !important;
-  object-position: center !important;
-  
-  /* Remove any browser default spacing */
-  display: block !important;
-  vertical-align: top !important;
 }
 
 /* Ensure all navigation containers accommodate larger logos */
@@ -100,25 +92,14 @@ nav .h-16,
   min-height: 4rem !important;
 }
 
-/* Content spacing adjustments for navigation with large logos */
+/* Content spacing adjustments for standard navigation */
 .fixed.top-0 + * {
   padding-top: 4rem !important; /* Account for h-16 fixed nav */
-  margin-top: 0 !important; /* Remove any additional margin */
 }
 
 .sticky.top-0 {
   height: 4rem !important; /* Ensure sticky navs have proper height */
 }
-
-/* Fix gap between header and content */
-body {
-  margin: 0;
-  padding: 0;
-}
-
-
-
-
 
 /* Mobile navigation height adjustment */
 @media (max-width: 768px) {

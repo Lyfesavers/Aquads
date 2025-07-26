@@ -203,13 +203,13 @@ const HowTo = ({ currentUser }) => {
       <div className="bg-gray-800/50 backdrop-blur-sm border-b border-gray-700/50">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center" style={{padding: '0', margin: '0'}}>
-              <Link to="/" className="flex items-center" style={{padding: '0', margin: '0'}}>
+            <div className="flex items-center">
+              <Link to="/" className="flex items-center">
                 <img 
                   src="/Aquadsnewlogo.svg" 
                   alt="AQUADS" 
-                  className="w-auto filter drop-shadow-lg"
-                  style={{height: '2rem', filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))', padding: '0', margin: '0', objectFit: 'none', objectPosition: 'center'}}
+                  className="h-14 w-auto filter drop-shadow-lg"
+                  style={{filter: 'drop-shadow(0 0 12px rgba(59, 130, 246, 0.7))'}}
                 />
               </Link>
             </div>

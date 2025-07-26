@@ -21,13 +21,13 @@ const PrivacyPolicy = () => {
       <nav className="sticky top-0 bg-gray-800/80 backdrop-blur-sm shadow-lg shadow-blue-500/20 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center" style={{padding: '0', margin: '0'}}>
-              <Link to="/" className="flex items-center" style={{padding: '0', margin: '0'}}>
+            <div className="flex items-center">
+              <Link to="/" className="flex items-center">
                 <img 
                   src="/Aquadsnewlogo.svg" 
                   alt="AQUADS" 
-                  className="w-auto filter drop-shadow-lg"
-                  style={{height: '2rem', filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))', padding: '0', margin: '0', objectFit: 'none', objectPosition: 'center'}}
+                  className="h-14 w-auto filter drop-shadow-lg"
+                  style={{filter: 'drop-shadow(0 0 12px rgba(59, 130, 246, 0.7))'}}
                 />
               </Link>
             </div>
