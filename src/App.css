@@ -93,9 +93,7 @@ nav .h-16,
 }
 
 /* Content spacing adjustments for standard navigation */
-.fixed.top-0 + * {
-  padding-top: 4rem !important; /* Account for h-16 fixed nav */
-}
+/* Removed .fixed.top-0 + * rule that was causing gap between nav and TokenBanner */
 
 .sticky.top-0 {
   height: 4rem !important; /* Ensure sticky navs have proper height */
