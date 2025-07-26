@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, memo } from 'react';
+import { Link } from 'react-router-dom';
 import logger from '../utils/logger';
 
 // Move formatting functions outside component to prevent recreation on each render
@@ -37,7 +38,32 @@ const formatPercentage = (percentage) => {
   return `${sign}${value.toFixed(2)}%`;
 };
 
-
+// Map GeckoTerminal network IDs to blockchain names for AquaSwap
+const mapNetworkToBlockchain = (networkId) => {
+  const networkMap = {
+    'eth': 'ethereum',
+    'ethereum': 'ethereum',
+    'solana': 'solana',
+    'bsc': 'bsc',
+    'polygon_pos': 'polygon',
+    'arbitrum': 'arbitrum',
+    'avalanche': 'avalanche',
+    'base': 'base',
+    'optimism': 'optimism',
+    'fantom': 'fantom',
+    'sui': 'sui',
+    'ton': 'ton',
+    'cronos': 'cronos',
+    'moonbeam': 'moonbeam',
+    'celo': 'celo',
+    'kava': 'kava',
+    'aurora': 'aurora',
+    'harmony': 'harmony',
+    'near': 'near',
+    'cosmos': 'cosmos'
+  };
+  return networkMap[networkId] || networkId;
+};
 
 const TokenBanner = () => {
   const [tokens, setTokens] = useState([]);
@@ -102,7 +128,6 @@ const TokenBanner = () => {
             priceChange24h: parseFloat(attrs.price_change_percentage?.h24) || 0,
             marketCap: parseFloat(attrs.fdv_usd) || parseFloat(attrs.market_cap_usd) || 0,
             chain: formatChain(networkId), // Show chain instead of logo
-            url: `https://www.geckoterminal.com/${networkId}/pools/${attrs.address}`,
             rank: (page - 1) * 20 + index + 1,
             chainId: networkId,
             volume24h: parseFloat(attrs.volume_usd?.h24) || 0,
@@ -151,7 +176,7 @@ const TokenBanner = () => {
     return (
       <div className="h-12 bg-gray-800 border-y border-blue-500/20">
         <div className="flex items-center justify-center h-full">
-          <span className="text-blue-400">Loading trending DEX tokens from all chains...</span>
+          <span className="text-blue-400">Loading trending DEX tokens (click to view in AquaSwap)...</span>
         </div>
       </div>
     );
@@ -172,11 +197,9 @@ const TokenBanner = () => {
       <div className="flex items-center h-full overflow-hidden relative z-0">
         <div className="flex animate-scroll whitespace-nowrap">
           {tokens.concat(tokens).map((token, index) => (
-            <a
+            <Link
               key={`${token.symbol}-${index}`}
-              href={token.url}
-              target="_blank"
-              rel="noopener noreferrer"
+              to={`/aquaswap?token=${token.poolAddress}&blockchain=${mapNetworkToBlockchain(token.chainId)}`}
               className="inline-flex items-center space-x-2 px-6 h-full hover:bg-blue-500/10 transition-colors"
             >
               <span className="inline-flex items-center justify-center w-[30px] h-[27px] bg-green-600/20 border border-green-500/30 rounded text-xs font-bold text-green-300">
@@ -197,7 +220,7 @@ const TokenBanner = () => {
               <span className="text-gray-400 text-sm">
                 MCap: {formatVolume(token.marketCap)}
               </span>
-            </a>
+            </Link>
           ))}
         </div>
       </div>
