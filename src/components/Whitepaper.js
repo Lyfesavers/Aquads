@@ -18,7 +18,7 @@ const Whitepaper = () => {
             <div className="flex items-center">
               <Link to="/" className="flex items-center">
                 <img 
-                  src="/Aquadsnewlogo.svg" 
+                  src="/Aquadsnewlogo.png" 
                   alt="AQUADS" 
                   className="h-14 w-auto filter drop-shadow-lg"
                   style={{filter: 'drop-shadow(0 0 12px rgba(59, 130, 246, 0.7))'}}

@@ -2651,10 +2651,10 @@ function App() {
                     <div className="flex items-center justify-between h-16">
                       <div className="flex items-center">
                         <img 
-                          src="/Aquadsnewlogo.svg" 
+                          src="/Aquadsnewlogo.png" 
                           alt="AQUADS" 
                           className="w-auto filter drop-shadow-lg"
-                          style={{height: '4.5rem', filter: 'drop-shadow(0 0 15px rgba(59, 130, 246, 0.8))'}}
+                          style={{height: '2rem', filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))', padding: '0', margin: '0'}}
                         />
                       </div>
                       
