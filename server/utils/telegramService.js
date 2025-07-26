@@ -84,7 +84,7 @@ const telegramService = {
 ⏰ Available for 48 hours!`;
 
       // Get the video file path
-      const videoPath = path.join(__dirname, '../../public/RAID.mp4');
+      const videoPath = path.join(__dirname, '../../public/RAIDNEW.mp4');
       const videoExists = fs.existsSync(videoPath);
       
       // Send to all groups
@@ -1151,7 +1151,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
       message += `💡 Vote on bubbles to earn points!`;
 
       // Get the video file path
-      const videoPath = path.join(__dirname, '../../public/trendnew.mp4');
+      const videoPath = path.join(__dirname, '../../public/trend.mp4');
       const videoExists = fs.existsSync(videoPath);
 
       // Send to the specific group
