@@ -49,7 +49,7 @@ const CryptoAdNetwork = () => {
                   src="/Aquadsnewlogo.svg" 
                   alt="AQUADS" 
                   className="w-auto filter drop-shadow-lg"
-                  style={{height: '2rem', filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))', padding: '0', margin: '0'}}
+                  style={{height: '2rem', filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))', padding: '0', margin: '0', objectFit: 'none', objectPosition: 'center'}}
                 />
               </Link>
             </div>

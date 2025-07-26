@@ -84,6 +84,14 @@
   
   /* Better contrast and enhanced glow */
   filter: contrast(1.2) brightness(1.1) drop-shadow(0 0 12px rgba(59, 130, 246, 0.7)) !important;
+  
+  /* Crop any SVG internal padding */
+  object-fit: none !important;
+  object-position: center !important;
+  
+  /* Remove any browser default spacing */
+  display: block !important;
+  vertical-align: top !important;
 }
 
 /* Ensure all navigation containers accommodate larger logos */
