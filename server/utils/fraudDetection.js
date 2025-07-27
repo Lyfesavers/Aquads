@@ -274,6 +274,7 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
       const rapidSignups = [];
       const sharedIPs = new Set();
       const inactiveAffiliates = [];
+      const unverifiedAffiliates = [];
       const now = new Date();
       
       for (const affiliate of affiliates) {
@@ -310,13 +311,19 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
         if (isInactive) {
           inactiveAffiliates.push(affiliate._id);
         }
+        
+        // Track unverified affiliates
+        if (!affiliate.emailVerified) {
+          unverifiedAffiliates.push(affiliate._id);
+        }
       }
 
       analysis.details.affiliateNetwork = {
         totalAffiliates: affiliates.length,
         rapidSignups: rapidSignups.length,
         sharedIPs: sharedIPs.size,
-        inactiveAffiliates: inactiveAffiliates.length
+        inactiveAffiliates: inactiveAffiliates.length,
+        unverifiedAffiliates: unverifiedAffiliates.length
       };
       
       // Add to networkDiversity for calling code compatibility
@@ -330,14 +337,29 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
         analysis.riskScore += 0.25;
       }
 
-      // Flag: High percentage of inactive affiliates (KEY FRAUD INDICATOR)
+      // Flag: High percentage of inactive/unverified affiliates (KEY FRAUD INDICATOR)
       const inactiveRatio = inactiveAffiliates.length / affiliates.length;
-      if (affiliates.length >= 10 && inactiveRatio > 0.7) {
+      const unverifiedRatio = unverifiedAffiliates.length / affiliates.length;
+      
+      // More aggressive thresholds for dormant affiliates
+      if (affiliates.length >= 10 && inactiveRatio > 0.6) {
         analysis.flags.push('mostly_inactive_affiliates');
         analysis.riskScore += 0.5; // High penalty for fake affiliate networks
-      } else if (affiliates.length >= 5 && inactiveRatio > 0.8) {
+      } else if (affiliates.length >= 5 && inactiveRatio > 0.7) {
         analysis.flags.push('inactive_affiliates');
         analysis.riskScore += 0.3;
+      }
+      
+      // Flag high percentage of unverified affiliates
+      if (affiliates.length >= 5 && unverifiedRatio > 0.5) {
+        analysis.flags.push('mostly_unverified_affiliates');
+        analysis.riskScore += 0.3; // Penalty for unverified affiliate networks
+      }
+      
+      // Combined penalty for both inactive AND unverified patterns
+      if (affiliates.length >= 10 && (inactiveRatio + unverifiedRatio) > 1.0) {
+        analysis.flags.push('fake_affiliate_network');
+        analysis.riskScore += 0.2; // Additional penalty for combined pattern
       }
 
       // Flag: Suspiciously high affiliate count for referral fraud
@@ -370,6 +392,8 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
     // Give bonus for high activity ONLY if no suspicious affiliate patterns
     const hasSuspiciousAffiliates = analysis.flags.includes('mostly_inactive_affiliates') || 
                                    analysis.flags.includes('inactive_affiliates') ||
+                                   analysis.flags.includes('mostly_unverified_affiliates') ||
+                                   analysis.flags.includes('fake_affiliate_network') ||
                                    analysis.flags.includes('high_affiliate_count') ||
                                    analysis.flags.includes('rapid_affiliate_signups');
     

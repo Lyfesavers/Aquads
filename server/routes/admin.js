@@ -290,7 +290,7 @@ router.get('/suspicious-users', auth, isAdmin, adminRateLimit, async (req, res) 
     })
     .populate({
       path: 'affiliates',
-      select: 'username email createdAt ipAddress country deviceFingerprint',
+      select: 'username email createdAt ipAddress country deviceFingerprint lastActivity lastSeen emailVerified',
       options: { sort: { createdAt: -1 } }
     })
     .sort({ affiliateCount: -1 })
