@@ -283,12 +283,11 @@ router.get('/suspicious-users', auth, isAdmin, adminRateLimit, async (req, res) 
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - parseInt(daysBack));
 
-    // Find users with high affiliate counts
+    // Find users with high affiliate counts - Remove date restriction to catch all suspicious patterns
     const suspiciousUsers = await User.find({
-      affiliateCount: { $gte: parseInt(minAffiliates) },
-      createdAt: { $gte: cutoffDate }
+      affiliateCount: { $gte: parseInt(minAffiliates) }
     })
-    .select('username email createdAt ipAddress country deviceFingerprint lastActivity lastSeen emailVerified affiliateCount points affiliates')
+    .select('username email createdAt ipAddress country deviceFingerprint lastActivity lastSeen emailVerified affiliateCount points affiliates pointsHistory tokenHistory image')
     .populate({
       path: 'affiliates',
       select: 'username email createdAt ipAddress country deviceFingerprint lastActivity lastSeen emailVerified',

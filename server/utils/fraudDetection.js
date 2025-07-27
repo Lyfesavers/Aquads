@@ -10,17 +10,24 @@ const TokenPurchase = require('../models/TokenPurchase');
 const BumpRequest = require('../models/BumpRequest');
 const mongoose = require('mongoose');
 
-const calculateActivityDiversityScore = async (userId) => {
+const calculateActivityDiversityScore = async (userInput) => {
   try {
-    // Input validation
-    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-      return { score: 0, activities: {}, error: 'Invalid user ID' };
+    // Accept either userId or user object for flexibility
+    let user;
+    if (typeof userInput === 'string' || userInput instanceof mongoose.Types.ObjectId) {
+      // Input validation for userId
+      if (!userInput || !mongoose.Types.ObjectId.isValid(userInput)) {
+        return { score: 0, activities: {}, error: 'Invalid user ID' };
+      }
+      user = await User.findById(userInput);
+      if (!user) return { score: 0, activities: {}, error: 'User not found' };
+    } else {
+      // Use provided user object
+      user = userInput;
     }
 
-    const user = await User.findById(userId);
-    if (!user) return { score: 0, activities: {}, error: 'User not found' };
-
     // Optimize with parallel queries using Promise.all
+    const userId = user._id;
     const [
       servicesCreated,
       jobsPosted,
@@ -286,13 +293,15 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
       const now = new Date();
       
       for (const affiliate of affiliates) {
-        // Check for rapid signups
-        const signupTime = new Date(affiliate.createdAt);
-        const userSignupTime = new Date(user.createdAt);
-        const timeDiff = Math.abs(signupTime - userSignupTime) / (1000 * 60 * 60); // hours
+        // Check for rapid signups - with null checks
+        const signupTime = affiliate.createdAt ? new Date(affiliate.createdAt) : null;
+        const userSignupTime = user.createdAt ? new Date(user.createdAt) : null;
         
-        if (timeDiff < 24) {
-          rapidSignups.push(affiliate._id);
+        if (signupTime && userSignupTime && !isNaN(signupTime.getTime()) && !isNaN(userSignupTime.getTime())) {
+          const timeDiff = Math.abs(signupTime - userSignupTime) / (1000 * 60 * 60); // hours
+          if (timeDiff < 24) {
+            rapidSignups.push(affiliate._id);
+          }
         }
 
         // Check for shared IPs using actual affiliate ipAddress field
@@ -305,10 +314,16 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
           });
         }
 
-        // CRITICAL: Check if affiliate is actually active
-        const accountAge = (now - new Date(affiliate.createdAt)) / (1000 * 60 * 60 * 24); // days
-        const lastActivity = affiliate.lastActivity ? new Date(affiliate.lastActivity) : new Date(affiliate.createdAt);
-        const daysSinceLastActivity = (now - lastActivity) / (1000 * 60 * 60 * 24);
+        // CRITICAL: Check if affiliate is actually active - with null checks
+        const createdAt = affiliate.createdAt ? new Date(affiliate.createdAt) : null;
+        if (!createdAt || isNaN(createdAt.getTime())) {
+          // Skip invalid affiliate data
+          continue;
+        }
+        
+        const accountAge = (now - createdAt) / (1000 * 60 * 60 * 24); // days
+        const lastActivity = affiliate.lastActivity ? new Date(affiliate.lastActivity) : createdAt;
+        const daysSinceLastActivity = isNaN(lastActivity.getTime()) ? accountAge : (now - lastActivity) / (1000 * 60 * 60 * 24);
         
         // Flag as inactive if:
         // 1. Account is over 7 days old AND no activity in last 30 days, OR
@@ -321,8 +336,8 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
           inactiveAffiliates.push(affiliate._id);
         }
         
-        // Track unverified affiliates
-        if (!affiliate.emailVerified) {
+        // Track unverified affiliates - with null check
+        if (affiliate.emailVerified === false || affiliate.emailVerified === undefined || affiliate.emailVerified === null) {
           unverifiedAffiliates.push(affiliate._id);
         }
       }
@@ -332,7 +347,9 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
         rapidSignups: rapidSignups.length,
         sharedIPs: sharedIPs.size,
         inactiveAffiliates: inactiveAffiliates.length,
-        unverifiedAffiliates: unverifiedAffiliates.length
+        unverifiedAffiliates: unverifiedAffiliates.length,
+        inactiveRatio: affiliates.length > 0 ? Math.round((inactiveAffiliates.length / affiliates.length) * 100) / 100 : 0,
+        unverifiedRatio: affiliates.length > 0 ? Math.round((unverifiedAffiliates.length / affiliates.length) * 100) / 100 : 0
       };
       
       // Add to networkDiversity for calling code compatibility
@@ -389,7 +406,7 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
     }
 
     // 3. Activity Diversity Analysis
-    const activityAnalysis = await calculateActivityDiversityScore(user._id);
+    const activityAnalysis = await calculateActivityDiversityScore(user);
     analysis.details.activityDiversity = activityAnalysis;
 
     // Only flag if BOTH low diversity AND low total activity (avoid penalizing specialists)
