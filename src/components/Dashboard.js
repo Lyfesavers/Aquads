@@ -1574,7 +1574,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                                 : 'bg-green-500 hover:bg-green-600'
                             }`}
                           >
-                            {isRedeeming ? 'Processing...' : 'Redeem $100 Gift Card'}
+                            {isRedeeming ? 'Processing...' : 'Redeem $100 CAD'}
                           </button>
                         )}
                       </div>
@@ -1597,7 +1597,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       <p>• Earn 20 points when you leave a review in the freelancer hub</p>
                       <p>• Earn 1000 points when you sign up with a referral link</p>
                       <p>• Redeem 10,000 points for an Xpx Gold Visa card (one-time only)</p>
-                      <p>• Redeem 10,000 points for a $100 gift card(Canadian Dollars)</p>
+                      <p>• Redeem 10,000 points for $100 Canadian Dollars</p>
                     </div>
                     
                     {/* Redemption History */}
@@ -1607,7 +1607,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                         <div className="space-y-2">
                           {pointsInfo.giftCardRedemptions?.map((redemption, index) => (
                             <div key={`gift-${index}`} className="flex justify-between items-center bg-gray-700 p-2 rounded">
-                              <span className="text-gray-300">${redemption.amount} Gift Card</span>
+                              <span className="text-gray-300">${redemption.amount} Canadian Dollars</span>
                               <span className={`px-2 py-1 rounded text-sm ${
                                 redemption.status === 'approved' ? 'bg-green-500' :
                                 redemption.status === 'rejected' ? 'bg-red-500' :

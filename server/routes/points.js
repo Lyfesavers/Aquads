@@ -30,7 +30,7 @@ router.get('/my-points', auth, async (req, res) => {
   }
 });
 
-// Request gift card redemption
+// Request Canadian dollars redemption
 router.post('/redeem', auth, requireEmailVerification, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId);
@@ -62,7 +62,7 @@ router.post('/redeem', auth, requireEmailVerification, async (req, res) => {
 
     if (user.points < 10000) {
       return res.status(400).json({ 
-        error: 'Insufficient points. You need 10,000 points to redeem a gift card.' 
+        error: 'Insufficient points. You need 10,000 points to redeem $100 Canadian Dollars.' 
       });
     }
 
@@ -90,7 +90,7 @@ router.post('/redeem', auth, requireEmailVerification, async (req, res) => {
     user.points -= 10000;
     user.pointsHistory.push({
       amount: -10000,
-      reason: 'Gift card redemption request',
+      reason: '$100 Canadian Dollars redemption request',
       createdAt: new Date()
     });
 
@@ -221,7 +221,7 @@ router.post('/redemptions/:userId/process', auth, async (req, res) => {
       user.points += 10000;
       user.pointsHistory.push({
         amount: 10000,
-        reason: 'Gift card redemption rejected - points refunded'
+        reason: 'Canadian Dollars redemption rejected - points refunded'
       });
     }
 
