@@ -1,42 +1,121 @@
 const User = require('../models/User');
 const Service = require('../models/Service');
 const Job = require('../models/Job');
+const Booking = require('../models/Booking');
 const Review = require('../models/Review');
+const ServiceReview = require('../models/ServiceReview');
+const Game = require('../models/Game');
+const TwitterRaid = require('../models/TwitterRaid');
+const TokenPurchase = require('../models/TokenPurchase');
 const BumpRequest = require('../models/BumpRequest');
 const mongoose = require('mongoose');
 
 const calculateActivityDiversityScore = async (userId) => {
   try {
-    // Get all activities for this user
-    const [services, jobs, reviews, bumps] = await Promise.all([
-      Service.find({ user: userId }),
-      Job.find({ user: userId }),
-      Review.find({ user: userId }),
-      BumpRequest.find({ user: userId })
+    // Input validation
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return { score: 0, activities: {}, error: 'Invalid user ID' };
+    }
+
+    const user = await User.findById(userId);
+    if (!user) return { score: 0, activities: {}, error: 'User not found' };
+
+    // Optimize with parallel queries using Promise.all
+    const [
+      servicesCreated,
+      jobsPosted,
+      bookingsMade,
+      servicesBooked,
+      tokenReviewsWritten,
+      serviceReviewsWritten,
+      gamesCreated,
+      socialRaidsParticipated,
+      tokenPurchasesMade
+    ] = await Promise.all([
+      Service.countDocuments({ seller: userId }),
+      Job.countDocuments({ owner: userId }),
+      Booking.countDocuments({ buyerId: userId }),
+      Booking.countDocuments({ sellerId: userId }),
+      Review.countDocuments({ userId: userId }),
+      ServiceReview.countDocuments({ userId: userId }),
+      Game.countDocuments({ owner: userId }),
+      TwitterRaid.countDocuments({ 'completions.userId': userId }),
+      TokenPurchase.countDocuments({ userId: userId })
     ]);
 
+    // Safe calculations with null checks
+    const pointsEarned = user.pointsHistory ? user.pointsHistory.filter(p => p && p.amount > 0).length : 0;
+    const pointsSpent = user.pointsHistory ? user.pointsHistory.filter(p => p && p.amount < 0).length : 0;
+    const tokenTransactions = user.tokenHistory ? user.tokenHistory.length : 0;
+    const hasCustomImage = user.image && user.image !== 'https://i.imgur.com/6VBx3io.png';
+    const emailVerified = Boolean(user.emailVerified);
+
     const activities = {
-      services: services.length,
-      jobs: jobs.length,
-      reviews: reviews.length,
-      bumps: bumps.length
+      servicesCreated,
+      jobsPosted,
+      bookingsMade,
+      servicesBooked,
+      tokenReviewsWritten,
+      serviceReviewsWritten,
+      gamesCreated,
+      socialRaidsParticipated,
+      tokenPurchasesMade,
+      pointsEarned,
+      pointsSpent,
+      tokenTransactions,
+      hasCustomImage,
+      emailVerified
     };
 
-    // Calculate diversity score (0-1, higher is more diverse)
-    const totalActivities = Object.values(activities).reduce((sum, count) => sum + count, 0);
-    if (totalActivities === 0) return 0;
+    // Weighted activity types for more accurate fraud detection
+    const activityWeights = {
+      servicesCreated: 2,        // High weight - requires real engagement
+      jobsPosted: 2,             // High weight - requires real engagement
+      bookingsMade: 3,           // Very high weight - financial commitment
+      servicesBooked: 3,         // Very high weight - financial commitment
+      tokenReviewsWritten: 1,    // Medium weight - easy to fake
+      serviceReviewsWritten: 1,  // Medium weight - easy to fake
+      gamesCreated: 1,           // Medium weight - moderate engagement
+      socialRaidsParticipated: 1, // Low weight - easy to fake
+      tokenPurchasesMade: 3,     // Very high weight - financial commitment
+      pointsSpent: 2,            // High weight - shows real platform usage
+      tokenTransactions: 2,      // High weight - shows real platform usage
+      hasCustomImage: 1,         // Low weight - easy to fake
+      emailVerified: 1           // Low weight - basic requirement
+    };
 
-    const activityTypes = Object.values(activities).filter(count => count > 0).length;
-    const diversityScore = activityTypes / 4; // 4 total activity types
+    // Calculate weighted diversity score
+    let totalWeight = 0;
+    let activeWeight = 0;
+    
+    Object.keys(activityWeights).forEach(key => {
+      const weight = activityWeights[key];
+      totalWeight += weight;
+      
+      if (key === 'hasCustomImage' || key === 'emailVerified') {
+        if (activities[key]) activeWeight += weight;
+      } else {
+        if (activities[key] > 0) activeWeight += weight;
+      }
+    });
+
+    const diversityScore = totalWeight > 0 ? activeWeight / totalWeight : 0;
 
     return {
-      score: diversityScore,
-      breakdown: activities,
-      totalActivities
+      score: Math.round(diversityScore * 100) / 100,
+      activities,
+      activeTypes: Object.keys(activities).filter(key => {
+        if (key === 'hasCustomImage' || key === 'emailVerified') {
+          return activities[key];
+        }
+        return activities[key] > 0;
+      }).length,
+      maxPossibleTypes: Object.keys(activities).length,
+      weightedScore: Math.round(diversityScore * 100) / 100
     };
   } catch (error) {
-    console.error('Error calculating activity diversity:', error);
-    return { score: 0, breakdown: {}, totalActivities: 0 };
+    console.error('Error calculating activity diversity score:', error);
+    return { score: 0, activities: {}, error: 'Calculation failed' };
   }
 };
 
