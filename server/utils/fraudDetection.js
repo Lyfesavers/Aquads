@@ -238,8 +238,6 @@ const calculateLoginFrequencyAnalysis = (user) => {
 
 const calculateAdvancedFraudScore = async (user, affiliates) => {
   try {
-    console.log(`🔍 Analyzing user: ${user.username} (${user._id}) with ${affiliates?.length || 0} affiliates`);
-    
     const analysis = {
       riskLevel: 'low',
       riskScore: 0,
@@ -287,7 +285,6 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
     }
 
     // 2. Affiliate Network Analysis
-    console.log(`🔗 Starting affiliate analysis for ${user.username}: ${affiliates?.length || 0} affiliates provided`);
     if (affiliates && affiliates.length > 0) {
       const rapidSignups = [];
       const sharedIPs = new Set();
@@ -328,14 +325,27 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
         const lastActivity = affiliate.lastActivity ? new Date(affiliate.lastActivity) : createdAt;
         const daysSinceLastActivity = isNaN(lastActivity.getTime()) ? accountAge : (now - lastActivity) / (1000 * 60 * 60 * 24);
         
+        // More aggressive inactivity detection for fraud prevention
         // Flag as inactive if:
-        // 1. Account is over 7 days old AND no activity in last 30 days, OR
-        // 2. Account is over 30 days old AND no activity in last 90 days
-        const isInactive = (accountAge > 7 && daysSinceLastActivity > 30) || 
-                          (accountAge > 30 && daysSinceLastActivity > 90) ||
-                          (!affiliate.lastActivity && accountAge > 3); // No lastActivity and older than 3 days
+        // 1. Account is over 3 days old AND no activity in last 14 days, OR
+        // 2. Account is over 14 days old AND no activity in last 30 days, OR  
+        // 3. Account is over 30 days old AND no activity in last 60 days
+        const isInactive = (accountAge > 3 && daysSinceLastActivity > 14) || 
+                          (accountAge > 14 && daysSinceLastActivity > 30) ||
+                          (accountAge > 30 && daysSinceLastActivity > 60) ||
+                          (!affiliate.lastActivity && accountAge > 1); // No lastActivity and older than 1 day
         
-        if (isInactive) {
+        // Additional check: Low engagement patterns (common in fake accounts)
+        // Users get 1000 bonus points for signing up with affiliate, so threshold should be higher
+        const hasMinimalEngagement = (affiliate.points || 0) <= 1100 && accountAge > 7; // Only signup bonus + minimal activity after 1 week
+        const isLikelyFake = hasMinimalEngagement || isInactive;
+        
+        // Debug logging for Sethobra specifically
+        if (user.username === 'Sethobra') {
+          console.log(`  📋 Affiliate ${affiliate.username}: Age=${Math.round(accountAge)} days, LastActivity=${Math.round(daysSinceLastActivity)} days ago, Points=${affiliate.points || 0}, Verified=${affiliate.emailVerified}, Inactive=${isInactive}, MinimalEng=${hasMinimalEngagement}, IsFake=${isLikelyFake}`);
+        }
+        
+        if (isLikelyFake) {
           inactiveAffiliates.push(affiliate._id);
         }
         
@@ -483,10 +493,13 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
     // Convert risk score to 0-100 scale to match calling code expectations
     analysis.riskScore = Math.round(analysis.riskScore * 100);
     
-    console.log(`📊 Final analysis for ${user.username}: Risk Score = ${analysis.riskScore}%, Flags = [${analysis.flags.join(', ')}]`);
-    console.log(`📈 Activity Score: ${analysis.details.activityDiversity?.score || 0}, Login Score: ${analysis.details.loginPatterns?.frequencyScore || 0}`);
-    if (affiliates?.length > 0) {
-      console.log(`🔗 Affiliate Network: ${analysis.details.affiliateNetwork?.inactiveAffiliates || 0}/${affiliates.length} inactive (${Math.round((analysis.details.affiliateNetwork?.inactiveRatio || 0) * 100)}%), ${analysis.details.affiliateNetwork?.unverifiedAffiliates || 0} unverified (${Math.round((analysis.details.affiliateNetwork?.unverifiedRatio || 0) * 100)}%)`);
+    // Debug logging for specific users or when score is unexpectedly low
+    if (user.username === 'Sethobra' || user.username === 'DI_DAN101' || (affiliates?.length > 20 && analysis.riskScore < 50)) {
+      console.log(`📊 Final analysis for ${user.username}: Risk Score = ${analysis.riskScore}%, Flags = [${analysis.flags.join(', ')}]`);
+      console.log(`📈 Activity Score: ${analysis.details.activityDiversity?.score || 0}, Login Score: ${analysis.details.loginPatterns?.frequencyScore || 0}`);
+      if (affiliates?.length > 0) {
+        console.log(`🔗 Affiliate Network: ${analysis.details.affiliateNetwork?.inactiveAffiliates || 0}/${affiliates.length} inactive (${Math.round((analysis.details.affiliateNetwork?.inactiveRatio || 0) * 100)}%), ${analysis.details.affiliateNetwork?.unverifiedAffiliates || 0} unverified (${Math.round((analysis.details.affiliateNetwork?.unverifiedRatio || 0) * 100)}%)`);
+      }
     }
     
     // Add embedded analysis objects for compatibility
