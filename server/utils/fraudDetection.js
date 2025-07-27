@@ -238,6 +238,8 @@ const calculateLoginFrequencyAnalysis = (user) => {
 
 const calculateAdvancedFraudScore = async (user, affiliates) => {
   try {
+    console.log(`🔍 Analyzing user: ${user.username} (${user._id}) with ${affiliates?.length || 0} affiliates`);
+    
     const analysis = {
       riskLevel: 'low',
       riskScore: 0,
@@ -285,6 +287,7 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
     }
 
     // 2. Affiliate Network Analysis
+    console.log(`🔗 Starting affiliate analysis for ${user.username}: ${affiliates?.length || 0} affiliates provided`);
     if (affiliates && affiliates.length > 0) {
       const rapidSignups = [];
       const sharedIPs = new Set();
@@ -479,6 +482,12 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
 
     // Convert risk score to 0-100 scale to match calling code expectations
     analysis.riskScore = Math.round(analysis.riskScore * 100);
+    
+    console.log(`📊 Final analysis for ${user.username}: Risk Score = ${analysis.riskScore}%, Flags = [${analysis.flags.join(', ')}]`);
+    console.log(`📈 Activity Score: ${analysis.details.activityDiversity?.score || 0}, Login Score: ${analysis.details.loginPatterns?.frequencyScore || 0}`);
+    if (affiliates?.length > 0) {
+      console.log(`🔗 Affiliate Network: ${analysis.details.affiliateNetwork?.inactiveAffiliates || 0}/${affiliates.length} inactive (${Math.round((analysis.details.affiliateNetwork?.inactiveRatio || 0) * 100)}%), ${analysis.details.affiliateNetwork?.unverifiedAffiliates || 0} unverified (${Math.round((analysis.details.affiliateNetwork?.unverifiedRatio || 0) * 100)}%)`);
+    }
     
     // Add embedded analysis objects for compatibility
     analysis.activityAnalysis = analysis.details.activityDiversity;
