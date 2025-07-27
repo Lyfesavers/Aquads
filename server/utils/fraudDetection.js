@@ -238,17 +238,25 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
       details: {}
     };
 
-    // 1. Network Analysis
+    // 1. Network Analysis - Use actual User model fields
     const uniqueIPs = new Set();
     const uniqueCountries = new Set();
     const uniqueDevices = new Set();
     
-    if (user.loginHistory) {
-      user.loginHistory.forEach(login => {
-        if (login.ip) uniqueIPs.add(login.ip);
-        if (login.country) uniqueCountries.add(login.country);
-        if (login.device) uniqueDevices.add(login.device);
-      });
+    // Parse multiple IPs from user.ipAddress (comma-separated)
+    if (user.ipAddress) {
+      const ips = user.ipAddress.split(',').map(ip => ip.trim()).filter(ip => ip);
+      ips.forEach(ip => uniqueIPs.add(ip));
+    }
+    
+    // Add user's country
+    if (user.country) {
+      uniqueCountries.add(user.country);
+    }
+    
+    // Add user's device fingerprint
+    if (user.deviceFingerprint) {
+      uniqueDevices.add(user.deviceFingerprint);
     }
 
     analysis.details.networkDiversity = {
@@ -287,11 +295,12 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
           rapidSignups.push(affiliate._id);
         }
 
-        // Check for shared IPs
-        if (affiliate.loginHistory) {
-          affiliate.loginHistory.forEach(login => {
-            if (login.ip && uniqueIPs.has(login.ip)) {
-              sharedIPs.add(login.ip);
+        // Check for shared IPs using actual affiliate ipAddress field
+        if (affiliate.ipAddress) {
+          const affiliateIPs = affiliate.ipAddress.split(',').map(ip => ip.trim()).filter(ip => ip);
+          affiliateIPs.forEach(ip => {
+            if (uniqueIPs.has(ip)) {
+              sharedIPs.add(ip);
             }
           });
         }

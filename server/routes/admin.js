@@ -288,6 +288,7 @@ router.get('/suspicious-users', auth, isAdmin, adminRateLimit, async (req, res) 
       affiliateCount: { $gte: parseInt(minAffiliates) },
       createdAt: { $gte: cutoffDate }
     })
+    .select('username email createdAt ipAddress country deviceFingerprint lastActivity lastSeen emailVerified affiliateCount points affiliates')
     .populate({
       path: 'affiliates',
       select: 'username email createdAt ipAddress country deviceFingerprint lastActivity lastSeen emailVerified',
