@@ -67,43 +67,36 @@ const calculateActivityDiversityScore = async (userId) => {
       emailVerified
     };
 
-    // Weighted activity types for more accurate fraud detection
-    const activityWeights = {
-      servicesCreated: 2,        // High weight - requires real engagement
-      jobsPosted: 2,             // High weight - requires real engagement
-      bookingsMade: 3,           // Very high weight - financial commitment
-      servicesBooked: 3,         // Very high weight - financial commitment
-      tokenReviewsWritten: 1,    // Medium weight - easy to fake
-      serviceReviewsWritten: 1,  // Medium weight - easy to fake
-      gamesCreated: 1,           // Medium weight - moderate engagement
-      socialRaidsParticipated: 1, // Low weight - easy to fake
-      tokenPurchasesMade: 3,     // Very high weight - financial commitment
-      pointsSpent: 2,            // High weight - shows real platform usage
-      tokenTransactions: 2,      // High weight - shows real platform usage
-      hasCustomImage: 1,         // Low weight - easy to fake
-      emailVerified: 1           // Low weight - basic requirement
-    };
+    // Calculate total activity volume (more important than diversity for legitimate users)
+    const totalActivities = servicesCreated + jobsPosted + bookingsMade + servicesBooked + 
+                           tokenReviewsWritten + serviceReviewsWritten + gamesCreated + 
+                           socialRaidsParticipated + tokenPurchasesMade + pointsEarned + pointsSpent;
 
-    // Calculate weighted diversity score
-    let totalWeight = 0;
-    let activeWeight = 0;
-    
-    Object.keys(activityWeights).forEach(key => {
-      const weight = activityWeights[key];
-      totalWeight += weight;
-      
-      if (key === 'hasCustomImage' || key === 'emailVerified') {
-        if (activities[key]) activeWeight += weight;
-      } else {
-        if (activities[key] > 0) activeWeight += weight;
-      }
-    });
-
-    const diversityScore = totalWeight > 0 ? activeWeight / totalWeight : 0;
+    // If user has high activity volume, they're likely legitimate regardless of diversity
+    let diversityScore = 0;
+    if (totalActivities >= 20) {
+      // High activity users get good diversity score even if specialized
+      diversityScore = 0.8;
+    } else if (totalActivities >= 10) {
+      diversityScore = 0.6;
+    } else if (totalActivities >= 5) {
+      diversityScore = 0.4;
+    } else {
+      // Only penalize users with very low total activity
+      const activeTypes = Object.values(activities).filter((value, index) => {
+        const key = Object.keys(activities)[index];
+        if (key === 'hasCustomImage' || key === 'emailVerified') {
+          return activities[key];
+        }
+        return activities[key] > 0;
+      }).length;
+      diversityScore = Math.min(0.7, activeTypes / 14); // Max 0.7 for low-activity users
+    }
 
     return {
       score: Math.round(diversityScore * 100) / 100,
       activities,
+      totalActivities,
       activeTypes: Object.keys(activities).filter(key => {
         if (key === 'hasCustomImage' || key === 'emailVerified') {
           return activities[key];
@@ -280,6 +273,8 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
     if (affiliates && affiliates.length > 0) {
       const rapidSignups = [];
       const sharedIPs = new Set();
+      const inactiveAffiliates = [];
+      const now = new Date();
       
       for (const affiliate of affiliates) {
         // Check for rapid signups
@@ -299,12 +294,29 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
             }
           });
         }
+
+        // CRITICAL: Check if affiliate is actually active
+        const accountAge = (now - new Date(affiliate.createdAt)) / (1000 * 60 * 60 * 24); // days
+        const lastActivity = affiliate.lastActivity ? new Date(affiliate.lastActivity) : new Date(affiliate.createdAt);
+        const daysSinceLastActivity = (now - lastActivity) / (1000 * 60 * 60 * 24);
+        
+        // Flag as inactive if:
+        // 1. Account is over 7 days old AND no activity in last 30 days, OR
+        // 2. Account is over 30 days old AND no activity in last 90 days
+        const isInactive = (accountAge > 7 && daysSinceLastActivity > 30) || 
+                          (accountAge > 30 && daysSinceLastActivity > 90) ||
+                          (!affiliate.lastActivity && accountAge > 3); // No lastActivity and older than 3 days
+        
+        if (isInactive) {
+          inactiveAffiliates.push(affiliate._id);
+        }
       }
 
       analysis.details.affiliateNetwork = {
         totalAffiliates: affiliates.length,
         rapidSignups: rapidSignups.length,
-        sharedIPs: sharedIPs.size
+        sharedIPs: sharedIPs.size,
+        inactiveAffiliates: inactiveAffiliates.length
       };
       
       // Add to networkDiversity for calling code compatibility
@@ -312,20 +324,35 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
       analysis.details.networkDiversity.totalAffiliates = affiliates.length;
 
       // Flag: Too many rapid signups
-      if (rapidSignups.length > 5) {
+      const rapidSignupRatio = rapidSignups.length / affiliates.length;
+      if (rapidSignups.length > 5 && rapidSignupRatio > 0.3) {
         analysis.flags.push('rapid_affiliate_signups');
-        analysis.riskScore += 0.4;
+        analysis.riskScore += 0.25;
       }
 
-      // Flag: Shared IPs with affiliates
-      if (sharedIPs.size > 0) {
-        analysis.flags.push('shared_ips_with_affiliates');
+      // Flag: High percentage of inactive affiliates (KEY FRAUD INDICATOR)
+      const inactiveRatio = inactiveAffiliates.length / affiliates.length;
+      if (affiliates.length >= 10 && inactiveRatio > 0.7) {
+        analysis.flags.push('mostly_inactive_affiliates');
+        analysis.riskScore += 0.5; // High penalty for fake affiliate networks
+      } else if (affiliates.length >= 5 && inactiveRatio > 0.8) {
+        analysis.flags.push('inactive_affiliates');
         analysis.riskScore += 0.3;
       }
 
-      // Flag: Unusually high affiliate count
+      // Flag: Suspiciously high affiliate count for referral fraud
       if (affiliates.length > 50) {
         analysis.flags.push('high_affiliate_count');
+        analysis.riskScore += 0.2;
+      } else if (affiliates.length > 25) {
+        analysis.flags.push('elevated_affiliate_count');
+        analysis.riskScore += 0.1;
+      }
+
+      // Flag: Shared IPs with affiliates (only if significant)
+      const sharedIPRatio = sharedIPs.size / Math.max(1, affiliates.length);
+      if (sharedIPs.size > 1 && sharedIPRatio > 0.2) {
+        analysis.flags.push('shared_ips_with_affiliates');
         analysis.riskScore += 0.2;
       }
     }
@@ -334,9 +361,28 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
     const activityAnalysis = await calculateActivityDiversityScore(user._id);
     analysis.details.activityDiversity = activityAnalysis;
 
-    if (activityAnalysis.score < 0.2 && activityAnalysis.totalActivities > 0) {
+    // Only flag if BOTH low diversity AND low total activity (avoid penalizing specialists)
+    if (activityAnalysis.score < 0.3 && (activityAnalysis.totalActivities || 0) < 5) {
       analysis.flags.push('low_activity_diversity');
-      analysis.riskScore += 0.1;
+      analysis.riskScore += 0.15;
+    }
+    
+    // Give bonus for high activity ONLY if no suspicious affiliate patterns
+    const hasSuspiciousAffiliates = analysis.flags.includes('mostly_inactive_affiliates') || 
+                                   analysis.flags.includes('inactive_affiliates') ||
+                                   analysis.flags.includes('high_affiliate_count') ||
+                                   analysis.flags.includes('rapid_affiliate_signups');
+    
+    if (!hasSuspiciousAffiliates) {
+      // Only give activity bonuses to users without referral fraud patterns
+      if ((activityAnalysis.totalActivities || 0) >= 20) {
+        analysis.riskScore = Math.max(0, analysis.riskScore - 0.3); // Reduce risk for very active users
+      } else if ((activityAnalysis.totalActivities || 0) >= 10) {
+        analysis.riskScore = Math.max(0, analysis.riskScore - 0.2); // Reduce risk for active users
+      }
+    } else {
+      // Users with suspicious affiliate patterns get additional penalty even if personally active
+      analysis.riskScore += 0.1; // Small additional penalty for trying to hide fraud with activity
     }
 
     // 4. Login Pattern Analysis
@@ -348,11 +394,26 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
       analysis.riskScore += 0.2;
     }
 
-    // 5. Account Age vs Activity
+    // 5. Account Age vs Activity Analysis
     const accountAge = (new Date() - new Date(user.createdAt)) / (1000 * 60 * 60 * 24); // days
-    if (accountAge < 7 && (analysis.details.affiliateNetwork?.totalAffiliates || 0) > 10) {
-      analysis.flags.push('new_account_high_activity');
+    const affiliateCount = analysis.details.affiliateNetwork?.totalAffiliates || 0;
+    
+    // Flag new accounts with too many affiliates too quickly
+    if (accountAge < 7 && affiliateCount > 10) {
+      analysis.flags.push('new_account_high_affiliates');
       analysis.riskScore += 0.3;
+    } else if (accountAge < 30 && affiliateCount > 50) {
+      analysis.flags.push('rapid_affiliate_farming');
+      analysis.riskScore += 0.4;
+    }
+    
+    // Flag accounts with affiliate-to-age ratio that suggests farming
+    if (accountAge > 7) {
+      const affiliatesPerDay = affiliateCount / accountAge;
+      if (affiliatesPerDay > 2) { // More than 2 affiliates per day on average
+        analysis.flags.push('high_affiliate_velocity');
+        analysis.riskScore += 0.25;
+      }
     }
 
     // Determine risk level
