@@ -338,12 +338,7 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
         // Additional check: Low engagement patterns (common in fake accounts)
         // Users get 1000 bonus points for signing up with affiliate, so threshold should be higher
         const hasMinimalEngagement = (affiliate.points || 0) <= 1100 && accountAge > 7; // Only signup bonus + minimal activity after 1 week
-        const isLikelyFake = hasMinimalEngagement || isInactive;
-        
-        // Debug logging for Sethobra specifically
-        if (user.username === 'Sethobra') {
-          console.log(`  📋 Affiliate ${affiliate.username}: Age=${Math.round(accountAge)} days, LastActivity=${Math.round(daysSinceLastActivity)} days ago, Points=${affiliate.points || 0}, Verified=${affiliate.emailVerified}, Inactive=${isInactive}, MinimalEng=${hasMinimalEngagement}, IsFake=${isLikelyFake}`);
-        }
+                const isLikelyFake = hasMinimalEngagement || isInactive;
         
         if (isLikelyFake) {
           inactiveAffiliates.push(affiliate._id);
@@ -490,17 +485,8 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
       analysis.riskLevel = 'low';
     }
 
-    // Convert risk score to 0-100 scale to match calling code expectations
+        // Convert risk score to 0-100 scale to match calling code expectations
     analysis.riskScore = Math.round(analysis.riskScore * 100);
-    
-    // Debug logging for specific users or when score is unexpectedly low
-    if (user.username === 'Sethobra' || user.username === 'DI_DAN101' || (affiliates?.length > 20 && analysis.riskScore < 50)) {
-      console.log(`📊 Final analysis for ${user.username}: Risk Score = ${analysis.riskScore}%, Flags = [${analysis.flags.join(', ')}]`);
-      console.log(`📈 Activity Score: ${analysis.details.activityDiversity?.score || 0}, Login Score: ${analysis.details.loginPatterns?.frequencyScore || 0}`);
-      if (affiliates?.length > 0) {
-        console.log(`🔗 Affiliate Network: ${analysis.details.affiliateNetwork?.inactiveAffiliates || 0}/${affiliates.length} inactive (${Math.round((analysis.details.affiliateNetwork?.inactiveRatio || 0) * 100)}%), ${analysis.details.affiliateNetwork?.unverifiedAffiliates || 0} unverified (${Math.round((analysis.details.affiliateNetwork?.unverifiedRatio || 0) * 100)}%)`);
-      }
-    }
     
     // Add embedded analysis objects for compatibility
     analysis.activityAnalysis = analysis.details.activityDiversity;
