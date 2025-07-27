@@ -121,49 +121,118 @@ const calculateActivityDiversityScore = async (userId) => {
 
 const calculateLoginFrequencyAnalysis = (user) => {
   try {
-    if (!user.loginHistory || user.loginHistory.length === 0) {
-      return { score: 0, pattern: 'insufficient_data' };
+    // Input validation
+    if (!user || !user.createdAt) {
+      return {
+        accountAgeDays: 0,
+        daysSinceLastSeen: 999,
+        daysSinceLastActivity: 999,
+        isDormant: true,
+        isHighlyDormant: true,
+        frequencyScore: 0,
+        hasRealActivityData: false,
+        error: 'Invalid user data or missing creation date'
+      };
     }
 
-    const logins = user.loginHistory.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
     const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+    const createdAt = new Date(user.createdAt);
     
-    const recentLogins = logins.filter(login => new Date(login.timestamp) > thirtyDaysAgo);
-    
-    if (recentLogins.length < 2) {
-      return { score: 0, pattern: 'insufficient_recent_data' };
+    // Validate creation date
+    if (isNaN(createdAt.getTime())) {
+      return {
+        accountAgeDays: 0,
+        daysSinceLastSeen: 999,
+        daysSinceLastActivity: 999,
+        isDormant: true,
+        isHighlyDormant: true,
+        frequencyScore: 0,
+        hasRealActivityData: false,
+        error: 'Invalid creation date'
+      };
     }
+    
+    // Use the most recent activity timestamp available with validation
+    const timestamps = [user.lastSeen, user.lastActivity]
+      .filter(Boolean)
+      .map(t => {
+        const date = new Date(t);
+        return isNaN(date.getTime()) ? null : date;
+      })
+      .filter(Boolean);
+    
+    const mostRecentActivity = timestamps.length > 0 ? new Date(Math.max(...timestamps)) : null;
+    
+    // If no activity timestamps are available, use creation date but flag it
+    const hasRealActivityData = mostRecentActivity !== null;
+    const lastActivityTime = mostRecentActivity || createdAt;
+    
+    // Separate lastSeen and lastActivity for more granular tracking
+    const lastSeen = user.lastSeen ? new Date(user.lastSeen) : null;
+    const lastActivity = user.lastActivity ? new Date(user.lastActivity) : null;
 
-    // Calculate intervals between logins
-    const intervals = [];
-    for (let i = 0; i < recentLogins.length - 1; i++) {
-      const interval = new Date(recentLogins[i].timestamp) - new Date(recentLogins[i + 1].timestamp);
-      intervals.push(interval / (1000 * 60 * 60)); // Convert to hours
+    // Calculate account age in days with validation
+    const accountAgeMs = now.getTime() - createdAt.getTime();
+    const accountAgeDays = Math.max(0, Math.floor(accountAgeMs / (1000 * 60 * 60 * 24)));
+
+    // Calculate days since most recent activity
+    const daysSinceLastActivity = Math.max(0, Math.floor((now.getTime() - lastActivityTime.getTime()) / (1000 * 60 * 60 * 24)));
+    const daysSinceLastSeen = lastSeen && !isNaN(lastSeen.getTime()) ? 
+      Math.max(0, Math.floor((now.getTime() - lastSeen.getTime()) / (1000 * 60 * 60 * 24))) : 
+      daysSinceLastActivity;
+
+    // More accurate dormant detection with better thresholds
+    const isDormant = hasRealActivityData ? daysSinceLastActivity > 7 : (accountAgeDays > 7 && daysSinceLastActivity >= accountAgeDays - 1);
+    const isHighlyDormant = hasRealActivityData ? daysSinceLastActivity > 30 : (accountAgeDays > 30 && daysSinceLastActivity >= accountAgeDays - 1);
+    const isNewAndInactive = accountAgeDays < 7 && daysSinceLastActivity > 2 && hasRealActivityData;
+    const isOldAndSuddenlyActive = accountAgeDays > 30 && daysSinceLastActivity < 1 && hasRealActivityData;
+
+    // Calculate frequency score (0-1, higher = better engagement) with better logic
+    let frequencyScore = 0;
+    if (accountAgeDays > 0) {
+      if (hasRealActivityData) {
+        const expectedLogins = Math.min(accountAgeDays, 30);
+        const actualEngagement = Math.max(0, 30 - daysSinceLastActivity);
+        frequencyScore = expectedLogins > 0 ? Math.min(actualEngagement / expectedLogins, 1) : 0;
+      } else {
+        // Penalize accounts with no real activity data based on account age
+        if (accountAgeDays < 7) {
+          frequencyScore = 0.3; // Give new accounts some benefit of doubt
+        } else if (accountAgeDays < 30) {
+          frequencyScore = 0.2; // Moderate penalty for older accounts with no activity
+        } else {
+          frequencyScore = 0.1; // High penalty for very old accounts with no activity
+        }
+      }
     }
-
-    // Calculate patterns
-    const avgInterval = intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
-    const variance = intervals.reduce((sum, interval) => sum + Math.pow(interval - avgInterval, 2), 0) / intervals.length;
-    const stdDev = Math.sqrt(variance);
-    
-    // Score based on regularity (lower variance = higher score)
-    const regularityScore = Math.min(1, 1 / (1 + stdDev / avgInterval));
-    
-    let pattern = 'normal';
-    if (avgInterval < 1) pattern = 'very_frequent';
-    else if (avgInterval < 6) pattern = 'frequent';
-    else if (avgInterval > 168) pattern = 'infrequent';
 
     return {
-      score: regularityScore,
-      pattern,
-      avgIntervalHours: avgInterval,
-      recentLoginCount: recentLogins.length
+      accountAgeDays,
+      daysSinceLastSeen,
+      daysSinceLastActivity,
+      isOnline: Boolean(user.isOnline),
+      isDormant,
+      isHighlyDormant,
+      isNewAndInactive,
+      isOldAndSuddenlyActive,
+      frequencyScore: Math.round(frequencyScore * 100) / 100,
+      hasRealActivityData,
+      lastSeen: lastSeen && !isNaN(lastSeen.getTime()) ? lastSeen.toISOString() : null,
+      lastActivity: lastActivity && !isNaN(lastActivity.getTime()) ? lastActivity.toISOString() : null,
+      mostRecentActivity: lastActivityTime.toISOString()
     };
   } catch (error) {
-    console.error('Error calculating login frequency:', error);
-    return { score: 0, pattern: 'error' };
+    console.error('Error calculating login frequency analysis:', error);
+    return {
+      accountAgeDays: 0,
+      daysSinceLastSeen: 999,
+      daysSinceLastActivity: 999,
+      isDormant: true,
+      isHighlyDormant: true,
+      frequencyScore: 0,
+      hasRealActivityData: false,
+      error: 'Login frequency analysis failed'
+    };
   }
 };
 
@@ -237,6 +306,10 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
         rapidSignups: rapidSignups.length,
         sharedIPs: sharedIPs.size
       };
+      
+      // Add to networkDiversity for calling code compatibility
+      analysis.details.networkDiversity.rapidSignups = rapidSignups.length;
+      analysis.details.networkDiversity.totalAffiliates = affiliates.length;
 
       // Flag: Too many rapid signups
       if (rapidSignups.length > 5) {
@@ -293,14 +366,29 @@ const calculateAdvancedFraudScore = async (user, affiliates) => {
       analysis.riskLevel = 'low';
     }
 
+    // Convert risk score to 0-100 scale to match calling code expectations
+    analysis.riskScore = Math.round(analysis.riskScore * 100);
+    
+    // Add embedded analysis objects for compatibility
+    analysis.activityAnalysis = analysis.details.activityDiversity;
+    analysis.loginAnalysis = analysis.details.loginPatterns;
+    analysis.networkAnalysis = analysis.details.networkDiversity;
+    
+    // Rename flags to riskFactors for compatibility
+    analysis.riskFactors = analysis.flags;
+    delete analysis.flags;
+
     return analysis;
   } catch (error) {
     console.error('Error calculating advanced fraud score:', error);
     return {
       riskLevel: 'unknown',
       riskScore: 0,
-      flags: ['analysis_error'],
-      details: { error: error.message }
+      riskFactors: ['analysis_error'],
+      details: { error: error.message },
+      activityAnalysis: { score: 0, activities: {} },
+      loginAnalysis: { frequencyScore: 0, isDormant: true, isHighlyDormant: true, daysSinceLastActivity: 999, accountAgeDays: 0 },
+      networkAnalysis: { uniqueIPs: 0, uniqueCountries: 0, uniqueDevices: 0, rapidSignups: 0, totalAffiliates: 0 }
     };
   }
 };
