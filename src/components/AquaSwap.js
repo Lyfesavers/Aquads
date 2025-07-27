@@ -68,13 +68,11 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         
         const ads = await response.json();
         
-        // Filter out pending and rejected ads, then sort by bumped status and bullish votes
+        // Filter bumped ads (API already filters for active/approved status)
         const validAds = ads.filter(ad => 
-          ad.status !== 'pending' && 
-          ad.status !== 'rejected' &&
+          ad.isBumped === true &&  // Only include bumped tokens in trending
           ad.pairAddress && 
-          ad.pairAddress.trim() !== '' &&
-          ad.isBumped === true  // Only include bumped tokens in trending
+          ad.pairAddress.trim() !== ''  // Ensure valid pair address for DexScreener charts
         );
         
         // Sort bumped tokens by bullish votes (highest first)
