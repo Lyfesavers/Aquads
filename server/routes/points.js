@@ -101,71 +101,7 @@ router.post('/redeem', auth, requireEmailVerification, async (req, res) => {
   }
 });
 
-// Request Xpx Gold Visa card claim
-router.post('/claim-xpx-card', auth, requireEmailVerification, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.userId);
-    
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
 
-    // Check if user has already claimed the Xpx card (old system) or has a pending/approved claim (new system)
-    const hasOldClaim = user.xpxCardClaimed;
-    const hasApprovedClaim = user.xpxCardClaims.some(claim => claim.status === 'approved');
-    const hasPendingClaim = user.xpxCardClaims.some(claim => claim.status === 'pending');
-    
-    if (hasOldClaim || hasApprovedClaim) {
-      return res.status(400).json({ 
-        error: 'You have already claimed your Xpx Gold Visa card' 
-      });
-    }
-    
-    if (hasPendingClaim) {
-      return res.status(400).json({ 
-        error: 'You already have a pending Xpx card claim request' 
-      });
-    }
-
-    // Check account age
-    const accountAge = Date.now() - user.createdAt.getTime();
-    const minimumAge = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
-    
-    if (accountAge < minimumAge) {
-      return res.status(400).json({ 
-        error: 'Account must be at least 7 days old to claim Xpx card' 
-      });
-    }
-
-    if (user.points < 10000) {
-      return res.status(400).json({ 
-        error: 'Insufficient points. You need 10,000 points to claim an Xpx Gold Visa card.' 
-      });
-    }
-
-    // Create claim request
-    user.xpxCardClaims.push({
-      status: 'pending',
-      requestedAt: new Date()
-    });
-
-    // Deduct points
-    user.points -= 10000;
-    user.pointsHistory.push({
-      amount: -10000,
-      reason: 'Xpx Gold Visa card claim request',
-      createdAt: new Date()
-    });
-
-    await user.save();
-    res.json({ 
-      message: 'Xpx card claim request submitted successfully! Our team will process your request soon.',
-      user 
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to process Xpx card claim' });
-  }
-});
 
 // Admin: Get all pending redemptions
 router.get('/redemptions/pending', auth, async (req, res) => {
@@ -232,71 +168,8 @@ router.post('/redemptions/:userId/process', auth, async (req, res) => {
   }
 });
 
-// Admin: Get all pending Xpx card claims
-router.get('/xpx-claims/pending', auth, async (req, res) => {
-  try {
-    if (!req.user.isAdmin) {
-      return res.status(403).json({ error: 'Not authorized' });
-    }
 
-    const users = await User.find({
-      'xpxCardClaims': {
-        $elemMatch: { status: 'pending' }
-      }
-    }).select('username xpxCardClaims');
 
-    const pendingUsers = users.filter(user => 
-      user.xpxCardClaims.some(claim => claim.status === 'pending')
-    );
-
-    res.json(pendingUsers);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch Xpx claims' });
-  }
-});
-
-// Admin: Process Xpx card claim
-router.post('/xpx-claims/:userId/process', auth, async (req, res) => {
-  try {
-    if (!req.user.isAdmin) {
-      return res.status(403).json({ error: 'Not authorized' });
-    }
-
-    const { status } = req.body;
-    if (!['approved', 'rejected'].includes(status)) {
-      return res.status(400).json({ error: 'Invalid status' });
-    }
-
-    const user = await User.findById(req.params.userId);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    const claim = user.xpxCardClaims.find(c => c.status === 'pending');
-    if (!claim) {
-      return res.status(404).json({ error: 'No pending Xpx card claim found' });
-    }
-
-    claim.status = status;
-    claim.processedAt = new Date();
-    claim.processedBy = req.user.username;
-
-    // If rejected, refund points
-    if (status === 'rejected') {
-      user.points += 10000;
-      user.pointsHistory.push({
-        amount: 10000,
-        reason: 'Xpx card claim rejected - points refunded',
-        createdAt: new Date()
-      });
-    }
-
-    await user.save();
-    res.json({ message: 'Xpx card claim processed successfully', user });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to process Xpx card claim' });
-  }
-});
 
 // Helper functions for awarding points
 function awardAffiliatePoints(referrerId, referredUserId) {

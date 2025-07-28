@@ -228,13 +228,7 @@ const Affiliate = () => {
                   <h3 className="text-xl font-semibold mb-3 text-indigo-400">Point Redemption Options:</h3>
                   <div className="bg-gradient-to-r from-yellow-900/30 to-yellow-800/30 border border-yellow-600/50 rounded-lg p-6">
                     <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-yellow-400">🏆</span>
-                          <span className="text-gray-300">Xpx Gold Visa Card (one-time only)</span>
-                        </div>
-                        <span className="text-yellow-400 font-bold">10,000 pts</span>
-                      </div>
+
                       <div className="flex justify-between items-center">
                         <div className="flex items-center space-x-2">
                           <span className="text-green-400">💳</span>

@@ -23,11 +23,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [pointsInfo, setPointsInfo] = useState(null);
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [redeemError, setRedeemError] = useState('');
-  const [isClaimingXpx, setIsClaimingXpx] = useState(false);
-  const [xpxClaimError, setXpxClaimError] = useState('');
+
   const [isLoadingAffiliates, setIsLoadingAffiliates] = useState(true);
   const [pendingRedemptions, setPendingRedemptions] = useState([]);
-  const [pendingXpxClaims, setPendingXpxClaims] = useState([]);
+
   const [bookings, setBookings] = useState([]);
   const [activeTab, setActiveTab] = useState(initialActiveTab || 'ads');
   const [showReviews, setShowReviews] = useState(false);
@@ -131,27 +130,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
           setPendingRedemptions([]); // Set empty array on error
         });
 
-      // Fetch pending Xpx claims
-      fetch(`${process.env.REACT_APP_API_URL}/api/points/xpx-claims/pending`, {
-        headers: {
-          'Authorization': `Bearer ${currentUser.token}`
-        }
-      })
-        .then(response => {
-          if (!response.ok) {
-            if (response.status === 403) {
-              throw new Error('Not authorized to view Xpx claims');
-            }
-            throw new Error('Failed to fetch Xpx claims');
-          }
-          return response.json();
-        })
-        .then(data => {
-          setPendingXpxClaims(Array.isArray(data) ? data : []);
-        })
-        .catch(error => {
-          setPendingXpxClaims([]);
-        });
+
     }
   }, [currentUser]);
 
@@ -340,34 +319,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   };
 
-  const handleClaimXpxCard = async () => {
-    try {
-      setIsClaimingXpx(true);
-      setXpxClaimError('');
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/points/claim-xpx-card`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${currentUser.token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to claim Xpx card');
-      }
-
-      // Refresh points info after claiming
-      fetchAffiliateInfo();
-      alert('Xpx Gold Visa card claimed successfully! You can now register at https://dash.xpxpay.com/register?ref=38053024');
-    } catch (error) {
-      setXpxClaimError(error.message);
-    } finally {
-      setIsClaimingXpx(false);
-    }
-  };
 
   const handleReject = (ad) => {
     setSelectedBumpRequest(ad);
@@ -510,28 +462,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   };
 
-  const handleProcessXpxClaim = async (userId, status) => {
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/points/xpx-claims/${userId}/process`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${currentUser.token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status })
-      });
 
-      if (!response.ok) {
-        throw new Error('Failed to process Xpx claim');
-      }
-
-      // Remove the processed claim from the list
-      setPendingXpxClaims(prev => prev.filter(user => user._id !== userId));
-      alert(`Xpx card claim ${status} successfully`);
-    } catch (error) {
-      alert('Failed to process Xpx claim');
-    }
-  };
 
   const fetchBookings = async () => {
     try {
@@ -1551,19 +1482,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                         <p className="text-3xl font-bold text-blue-400">{pointsInfo.points}</p>
                       </div>
                       <div className="flex space-x-2">
-                        {pointsInfo.points >= 10000 && !pointsInfo.xpxCardClaimed && !pointsInfo.xpxCardClaims?.some(claim => claim.status === 'approved' || claim.status === 'pending') && (
-                          <button
-                            onClick={handleClaimXpxCard}
-                            disabled={isClaimingXpx}
-                            className={`px-4 py-2 rounded ${
-                              isClaimingXpx 
-                                ? 'bg-gray-500 cursor-not-allowed' 
-                                : 'bg-purple-500 hover:bg-purple-600'
-                            }`}
-                          >
-                            {isClaimingXpx ? 'Processing...' : 'Claim Xpx Gold Visa'}
-                          </button>
-                        )}
+
                         {pointsInfo.points >= 10000 && (
                           <button
                             onClick={handleRedeemPoints}
@@ -1582,9 +1501,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                     {redeemError && (
                       <p className="text-red-500 text-sm mt-2">{redeemError}</p>
                     )}
-                    {xpxClaimError && (
-                      <p className="text-red-500 text-sm mt-2">{xpxClaimError}</p>
-                    )}
+
                     
                     {/* Points Rules */}
                     <div className="text-sm text-gray-400 mt-4">
@@ -1596,12 +1513,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       <p>• Earn 20 points when your affiliates list a freelancer service or bubble ad</p>
                       <p>• Earn 20 points when you leave a review in the freelancer hub</p>
                       <p>• Earn 1000 points when you sign up with a referral link</p>
-                      <p>• Redeem 10,000 points for an Xpx Gold Visa card (one-time only)</p>
+
                       <p>• Redeem 10,000 points for $100 Canadian Dollars</p>
                     </div>
                     
                     {/* Redemption History */}
-                    {(pointsInfo.giftCardRedemptions?.length > 0 || pointsInfo.xpxCardClaims?.length > 0) && (
+                    {(pointsInfo.giftCardRedemptions?.length > 0) && (
                       <div className="mt-4">
                         <h4 className="text-lg font-medium text-white mb-2">Redemption History</h4>
                         <div className="space-y-2">
@@ -1617,44 +1534,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                               </span>
                             </div>
                           ))}
-                          {pointsInfo.xpxCardClaims?.map((claim, index) => (
-                            <div key={`xpx-${index}`} className="flex justify-between items-center bg-gray-700 p-2 rounded border-l-4 border-purple-500">
-                              <span className="text-gray-300">Xpx Gold Visa Card</span>
-                              <span className={`px-2 py-1 rounded text-sm ${
-                                claim.status === 'approved' ? 'bg-green-500' :
-                                claim.status === 'rejected' ? 'bg-red-500' :
-                                'bg-yellow-500'
-                              }`}>
-                                {claim.status}
-                              </span>
-                            </div>
-                          ))}
+
                         </div>
                       </div>
                     )}
                     
-                    {/* XPX Card Button */}
-                    <div className="mt-6">
-                      <a 
-                        href="https://dash.xpxpay.com/register?ref=38053024" 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="block rounded-lg overflow-hidden shadow-lg transform transition-transform hover:scale-105"
-                      >
-                        <div className="relative">
-                          <div className="bg-gradient-to-r from-green-500 to-purple-600 text-white px-6 py-4 rounded-t-lg font-bold text-center text-xl">
-                            GET YOUR XPX CARD
-                          </div>
-                          <div className="bg-gray-800 p-4 flex justify-center">
-                            <img 
-                              src="/xpx-card.png" 
-                              alt="XPX Card" 
-                              className="h-48 object-contain"
-                            />
-                          </div>
-                        </div>
-                      </a>
-                    </div>
+
                   </div>
                 )}
               </div>
@@ -2155,15 +2040,15 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                     className={`w-full text-left px-3 py-2 rounded-md transition-colors relative ${
                       activeAdminSection === 'giftcards' 
                         ? 'bg-blue-600 text-white' 
-                        : (pendingRedemptions.length > 0 || pendingXpxClaims.length > 0)
+                        : (pendingRedemptions.length > 0)
                         ? 'text-gray-300 hover:bg-gray-700 hover:text-white bg-yellow-900/30 border-l-4 border-yellow-500'
                         : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                     }`}
                   >
                     🎁 Redemptions & Claims
-                    {(pendingRedemptions.length > 0 || pendingXpxClaims.length > 0) && (
+                    {(pendingRedemptions.length > 0) && (
                       <span className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded-full min-w-[20px] text-center">
-                        {pendingRedemptions.length + pendingXpxClaims.length}
+                        {pendingRedemptions.length}
                       </span>
                     )}
                   </button>
@@ -2388,43 +2273,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       )}
                     </div>
 
-                    {/* Xpx Card Claims */}
-                    <div>
-                      <h4 className="text-xl font-semibold text-purple-400 mb-4">Xpx Gold Visa Card Claims</h4>
-                      {!Array.isArray(pendingXpxClaims) ? (
-                        <p className="text-gray-400 text-center py-8">Error loading Xpx claims. Please try again.</p>
-                      ) : pendingXpxClaims.length === 0 ? (
-                        <p className="text-gray-400 text-center py-8">No pending Xpx card claims.</p>
-                      ) : (
-                        <div className="space-y-4">
-                          {pendingXpxClaims.map(user => (
-                            <div key={user._id} className="bg-gray-700 rounded-lg p-4 border-l-4 border-purple-500">
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <h5 className="text-white font-semibold">{user.username}</h5>
-                                  {Array.isArray(user.xpxCardClaims) && user.xpxCardClaims.map((claim, index) => (
-                                    claim.status === 'pending' && (
-                                      <div key={index} className="text-gray-400 text-sm">
-                                        <p>Xpx Gold Visa Card Claim</p>
-                                        <p>Requested: {new Date(claim.requestedAt).toLocaleString()}</p>
-                                      </div>
-                                    )
-                                  ))}
-                                </div>
-                                <div className="flex space-x-2">
-                                  <button onClick={() => handleProcessXpxClaim(user._id, 'approved')} className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded">
-                                    Approve
-                                  </button>
-                                  <button onClick={() => handleProcessXpxClaim(user._id, 'rejected')} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">
-                                    Reject
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+
                   </div>
                 )}
 
