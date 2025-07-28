@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Modal from './Modal';
-import { FaCopy, FaCheck, FaCreditCard, FaWallet } from 'react-icons/fa';
+import { FaCopy, FaCheck } from 'react-icons/fa';
 import logger from '../utils/logger';
-import { createNowPaymentsBump, getNowPaymentsCurrencies } from '../services/api';
 
 const BUMP_OPTIONS = [
   { duration: '3 months', price: 99, durationMs: 90 * 24 * 60 * 60 * 1000 },
@@ -37,48 +36,11 @@ const BLOCKCHAIN_OPTIONS = [
   }
 ];
 
-const PAYMENT_METHODS = [
-  {
-    id: 'crypto',
-    name: 'Manual Crypto Payment',
-    icon: FaWallet,
-    description: 'Send USDC manually to our wallet addresses'
-  },
-  {
-    id: 'nowpayments',
-    name: 'NOWPayments',
-    icon: FaCreditCard,
-    description: 'Pay with 100+ cryptocurrencies automatically'
-  }
-];
-
 const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
   const [txSignature, setTxSignature] = useState('');
   const [selectedOption, setSelectedOption] = useState(BUMP_OPTIONS[0]);
   const [selectedChain, setSelectedChain] = useState(BLOCKCHAIN_OPTIONS[0]);
   const [copiedAddress, setCopiedAddress] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('crypto');
-  const [nowPaymentsCurrencies, setNowPaymentsCurrencies] = useState([]);
-  const [selectedCurrency, setSelectedCurrency] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchCurrencies = async () => {
-      try {
-        const currencies = await getNowPaymentsCurrencies();
-        setNowPaymentsCurrencies(currencies);
-        if (currencies.length > 0) {
-          setSelectedCurrency(currencies[0]);
-        }
-      } catch (error) {
-        logger.error('Failed to fetch NOWPayments currencies:', error);
-      }
-    };
-
-    if (paymentMethod === 'nowpayments') {
-      fetchCurrencies();
-    }
-  }, [paymentMethod]);
 
   const handleCopyAddress = async () => {
     await navigator.clipboard.writeText(selectedChain.address);
@@ -86,61 +48,22 @@ const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
     setTimeout(() => setCopiedAddress(false), 2000);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setLoading(true);
-
-    try {
-      if (paymentMethod === 'crypto') {
-        logger.log("Form submitted with signature:", txSignature);
-        
-        if (!txSignature || txSignature.trim() === '') {
-          alert('Please enter the transaction signature');
-          setLoading(false);
-          return;
-        }
-        
-        if (!ad?.id) {
-          alert('Invalid ad data');
-          setLoading(false);
-          return;
-        }
-        
-        // Call the parent component's callback with the transaction data
-        onSubmitPayment(ad.id, txSignature, selectedOption.durationMs);
-      } else if (paymentMethod === 'nowpayments') {
-        if (!selectedCurrency) {
-          alert('Please select a cryptocurrency');
-          setLoading(false);
-          return;
-        }
-
-        const bumpData = {
-          adId: ad.id,
-          owner: ad.owner, // Assuming ad has owner field, adjust if needed
-          duration: selectedOption.durationMs,
-          payCurrency: selectedCurrency
-        };
-
-        const response = await createNowPaymentsBump(bumpData);
-        
-        // Open payment URL in new tab
-        if (response.paymentUrl) {
-          window.open(response.paymentUrl, '_blank');
-          onClose(); // Close the modal
-          alert('NOWPayments checkout opened in a new tab. Complete your payment there. Your bump will be automatically processed once payment is confirmed.');
-        }
-      }
-    } catch (error) {
-      logger.error('Error processing payment:', error);
-      alert(error.message || 'Failed to process payment');
-    } finally {
-      setLoading(false);
+    logger.log("Form submitted with signature:", txSignature);
+    
+    if (!txSignature || txSignature.trim() === '') {
+      alert('Please enter the transaction signature');
+      return;
     }
-  };
-
-  const formatCurrencyName = (currency) => {
-    return currency.toUpperCase();
+    
+    if (!ad?.id) {
+      alert('Invalid ad data');
+      return;
+    }
+    
+    // Call the parent component's callback with the transaction data
+    onSubmitPayment(ad.id, txSignature, selectedOption.durationMs);
   };
 
   return (
@@ -152,7 +75,6 @@ const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
         </div>
 
         <div className="space-y-6 pb-4">
-          {/* Duration Selection */}
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-white mb-4">Select Duration</h3>
             <div className="grid gap-4">
@@ -169,145 +91,75 @@ const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
                 >
                   <div className="flex justify-between items-center">
                     <span>{option.duration}</span>
-                    <span>${option.price} USD</span>
+                    <span>{option.price} USDC</span>
                   </div>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Payment Method Selection */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-white mb-4">Payment Method</h3>
+            <h3 className="text-lg font-semibold text-white mb-4">Select Network</h3>
             <div className="grid gap-4">
-              {PAYMENT_METHODS.map((method) => {
-                const IconComponent = method.icon;
-                return (
-                  <button
-                    key={method.id}
-                    type="button"
-                    onClick={() => setPaymentMethod(method.id)}
-                    className={`p-4 rounded-lg border ${
-                      paymentMethod === method.id
-                        ? 'border-blue-500 bg-blue-500/20'
-                        : 'border-gray-600 hover:border-blue-400'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <IconComponent className="text-blue-400" />
-                      <div className="text-left">
-                        <div className="font-medium">{method.name}</div>
-                        <div className="text-sm text-gray-400">{method.description}</div>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
+              {BLOCKCHAIN_OPTIONS.map((chain) => (
+                <button
+                  key={chain.symbol}
+                  type="button"
+                  onClick={() => setSelectedChain(chain)}
+                  className={`p-4 rounded-lg border ${
+                    selectedChain === chain
+                      ? 'border-blue-500 bg-blue-500/20'
+                      : 'border-gray-600 hover:border-blue-400'
+                  }`}
+                >
+                  <div className="flex justify-between items-center">
+                    <span>{chain.name}</span>
+                    <span>{chain.amount}</span>
+                  </div>
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Crypto Payment Method */}
-          {paymentMethod === 'crypto' && (
-            <>
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Select Network</h3>
-                <div className="grid gap-4">
-                  {BLOCKCHAIN_OPTIONS.map((chain) => (
-                    <button
-                      key={chain.symbol}
-                      type="button"
-                      onClick={() => setSelectedChain(chain)}
-                      className={`p-4 rounded-lg border ${
-                        selectedChain === chain
-                          ? 'border-blue-500 bg-blue-500/20'
-                          : 'border-gray-600 hover:border-blue-400'
-                      }`}
-                    >
-                      <div className="flex justify-between items-center">
-                        <span>{chain.name}</span>
-                        <span>{chain.amount}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-white mb-4">Payment Address</h3>
-                <div className="flex items-center gap-2 p-4 bg-gray-700 rounded-lg">
-                  <input
-                    type="text"
-                    value={selectedChain.address}
-                    readOnly
-                    className="bg-transparent flex-1 outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleCopyAddress}
-                    className="text-blue-400 hover:text-blue-300"
-                  >
-                    {copiedAddress ? <FaCheck /> : <FaCopy />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Transaction Signature
-                </label>
-                <input
-                  type="text"
-                  value={txSignature}
-                  onChange={(e) => setTxSignature(e.target.value)}
-                  placeholder="Enter transaction signature"
-                  className="w-full p-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
-            </>
-          )}
-
-          {/* NOWPayments Method */}
-          {paymentMethod === 'nowpayments' && (
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Select Cryptocurrency</h3>
-              {nowPaymentsCurrencies.length > 0 ? (
-                <select
-                  value={selectedCurrency}
-                  onChange={(e) => setSelectedCurrency(e.target.value)}
-                  className="w-full p-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                >
-                  {nowPaymentsCurrencies.map((currency) => (
-                    <option key={currency} value={currency}>
-                      {formatCurrencyName(currency)}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <div className="p-4 bg-gray-700 rounded-lg text-center text-gray-400">
-                  Loading available cryptocurrencies...
-                </div>
-              )}
-              <div className="mt-2 text-sm text-gray-400">
-                You'll be redirected to NOWPayments to complete your payment securely.
-              </div>
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-white mb-4">Payment Address</h3>
+            <div className="flex items-center gap-2 p-4 bg-gray-700 rounded-lg">
+              <input
+                type="text"
+                value={selectedChain.address}
+                readOnly
+                className="bg-transparent flex-1 outline-none"
+              />
+              <button
+                type="button"
+                onClick={handleCopyAddress}
+                className="text-blue-400 hover:text-blue-300"
+              >
+                {copiedAddress ? <FaCheck /> : <FaCopy />}
+              </button>
             </div>
-          )}
+          </div>
 
           <form onSubmit={handleSubmit}>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Transaction Signature
+              </label>
+              <input
+                type="text"
+                value={txSignature}
+                onChange={(e) => setTxSignature(e.target.value)}
+                placeholder="Enter transaction signature"
+                className="w-full p-3 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
             <button
               type="submit"
-              disabled={loading}
-              className={`w-full py-3 rounded-lg transition-colors ${
-                loading
-                  ? 'bg-gray-600 cursor-not-allowed'
-                  : 'bg-blue-500 hover:bg-blue-600'
-              } text-white`}
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg transition-colors"
             >
-              {loading ? 'Processing...' : 
-                paymentMethod === 'crypto' ? 'Submit Payment' : 'Pay with NOWPayments'
-              }
+              Submit Payment
             </button>
           </form>
         </div>

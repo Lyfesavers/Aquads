@@ -379,59 +379,6 @@ export const approveBumpRequest = async (adId, processedBy) => {
   return response.json();
 };
 
-// NOWPayments bump functions
-export const createNowPaymentsBump = async (bumpData) => {
-  logger.log("Creating NOWPayments bump request with data:", bumpData);
-  
-  try {
-    const response = await fetch(`${API_URL}/bumps/nowpayments/create`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...getAuthHeader()
-      },
-      body: JSON.stringify(bumpData),
-    });
-    
-    logger.log("NOWPayments bump response status:", response.status);
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      logger.error("NOWPayments bump API error:", errorData);
-      throw new Error(errorData.error || 'Failed to create NOWPayments bump request');
-    }
-    
-    const data = await response.json();
-    logger.log("NOWPayments bump created successfully:", data);
-    return data;
-  } catch (error) {
-    logger.error("Error in createNowPaymentsBump:", error);
-    throw error;
-  }
-};
-
-export const getNowPaymentsCurrencies = async () => {
-  try {
-    const response = await fetch(`${API_URL}/bumps/nowpayments/currencies`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        ...getAuthHeader()
-      }
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || 'Failed to fetch currencies');
-    }
-    
-    return response.json();
-  } catch (error) {
-    logger.error("Error fetching NOWPayments currencies:", error);
-    throw error;
-  }
-};
-
 // Reject bump request
 export const rejectBumpRequest = async (adId, processedBy, reason) => {
   const response = await fetch(`${API_URL}/bumps/reject`, {

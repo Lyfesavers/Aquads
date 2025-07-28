@@ -11,9 +11,7 @@ const bumpRequestSchema = new mongoose.Schema({
   },
   txSignature: {
     type: String,
-    required: function() {
-      return this.paymentMethod === 'crypto';
-    }
+    required: true
   },
   status: {
     type: String,
@@ -24,51 +22,6 @@ const bumpRequestSchema = new mongoose.Schema({
     type: Number,
     required: true,
     default: 24 * 60 * 60 * 1000 // Default to 24 hours in milliseconds
-  },
-  // Payment method field
-  paymentMethod: {
-    type: String,
-    enum: ['crypto', 'nowpayments'],
-    default: 'crypto'
-  },
-  // NOWPayments specific fields
-  nowPaymentsData: {
-    paymentId: {
-      type: String,
-      default: null
-    },
-    paymentStatus: {
-      type: String,
-      default: null
-    },
-    payUrl: {
-      type: String,
-      default: null
-    },
-    priceAmount: {
-      type: Number,
-      default: null
-    },
-    priceCurrency: {
-      type: String,
-      default: null
-    },
-    payCurrency: {
-      type: String,
-      default: null
-    },
-    payAmount: {
-      type: Number,
-      default: null
-    },
-    orderId: {
-      type: String,
-      default: null
-    },
-    paymentHash: {
-      type: String,
-      default: null
-    }
   },
   createdAt: {
     type: Date,
