@@ -1265,19 +1265,15 @@ function App() {
           duration
         });
         
-        const [bumpResponse, adResponse] = await Promise.all([
-          createBumpRequest({
-            adId,
-            owner: currentUser.username,
-            txSignature,
-            duration,
-            status: 'pending'
-          }),
-          apiUpdateAd(adId, { ...ad, status: 'pending' })
-        ]);
+        const bumpResponse = await createBumpRequest({
+          adId,
+          owner: currentUser.username,
+          txSignature,
+          duration,
+          status: 'pending'
+        });
 
         logger.log("Bump request submitted successfully:", bumpResponse);
-        setAds(prevAds => prevAds.map(a => a.id === adId ? adResponse : a));
         setShowBumpStore(false);
         showNotification('Bump request submitted for approval!', 'success');
       } catch (error) {
