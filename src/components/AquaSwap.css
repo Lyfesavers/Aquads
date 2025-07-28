@@ -533,7 +533,7 @@
   gap: 6px;
   align-items: center;
   height: 100%;
-  animation: scrollPopularTokens 60s linear infinite;
+  animation: scrollPopularTokens 30s linear infinite;
   padding: 0 8px;
   will-change: transform;
 }
