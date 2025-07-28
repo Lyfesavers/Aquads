@@ -326,21 +326,29 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     setShowRejectModal(true);
   };
 
-  const confirmReject = () => {
+  const confirmReject = async () => {
     if (selectedBumpRequest) {
-      onRejectBump(selectedBumpRequest.id, rejectReason);
-      // Remove the bump request from local state
-      setBumpRequests(prev => prev.filter(req => req.adId !== selectedBumpRequest.id));
-      setShowRejectModal(false);
-      setRejectReason('');
-      setSelectedBumpRequest(null);
+      try {
+        await onRejectBump(selectedBumpRequest.id, rejectReason);
+        // Remove the bump request from local state
+        setBumpRequests(prev => prev.filter(req => req.adId !== selectedBumpRequest.id));
+        setShowRejectModal(false);
+        setRejectReason('');
+        setSelectedBumpRequest(null);
+      } catch (error) {
+        console.error('Error rejecting bump:', error);
+      }
     }
   };
 
-  const handleApprove = (ad) => {
-    onApproveBump(ad.id);
-    // Remove the bump request from local state
-    setBumpRequests(prev => prev.filter(req => req.adId !== ad.id));
+  const handleApprove = async (ad) => {
+    try {
+      await onApproveBump(ad.id);
+      // Remove the bump request from local state
+      setBumpRequests(prev => prev.filter(req => req.adId !== ad.id));
+    } catch (error) {
+      console.error('Error approving bump:', error);
+    }
   };
 
   const fetchBannerAds = async () => {
