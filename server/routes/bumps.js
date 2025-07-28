@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const auth = require('../middleware/auth');
 const BumpRequest = require('../models/BumpRequest');
 const Ad = require('../models/Ad');
 const User = require('../models/User');
@@ -54,8 +55,12 @@ router.post('/', async (req, res) => {
 });
 
 // Approve a bump request
-router.post('/approve', async (req, res) => {
+router.post('/approve', auth, async (req, res) => {
   try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
     const { adId, processedBy } = req.body;
 
     if (!adId || !processedBy) {
@@ -154,8 +159,12 @@ router.post('/approve', async (req, res) => {
 });
 
 // Reject a bump request
-router.post('/reject', async (req, res) => {
+router.post('/reject', auth, async (req, res) => {
   try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+
     const { adId, processedBy, reason } = req.body;
 
     if (!adId || !processedBy) {

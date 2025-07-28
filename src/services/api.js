@@ -367,6 +367,7 @@ export const approveBumpRequest = async (adId, processedBy) => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      ...getAuthHeader()
     },
     body: JSON.stringify({ adId, processedBy }),
   });
@@ -385,6 +386,7 @@ export const rejectBumpRequest = async (adId, processedBy, reason) => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      ...getAuthHeader()
     },
     body: JSON.stringify({ adId, processedBy, reason }),
   });
