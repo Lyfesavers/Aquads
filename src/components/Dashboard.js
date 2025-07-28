@@ -329,25 +329,66 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const confirmReject = async () => {
     if (selectedBumpRequest) {
       try {
-        await onRejectBump(selectedBumpRequest.id, rejectReason);
+        const response = await fetch(`${API_URL}/bumps/reject`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentUser.token}`
+          },
+          body: JSON.stringify({ 
+            adId: selectedBumpRequest.id, 
+            processedBy: currentUser.userId,
+            reason: rejectReason 
+          })
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to reject bump request');
+        }
+        
+        const result = await response.json();
+        
         // Remove the bump request from local state
         setBumpRequests(prev => prev.filter(req => req.adId !== selectedBumpRequest.id));
         setShowRejectModal(false);
         setRejectReason('');
         setSelectedBumpRequest(null);
+        
+        alert(result.message || 'Bump request rejected successfully!');
       } catch (error) {
-        console.error('Error rejecting bump:', error);
+        alert('Error rejecting bump request: ' + error.message);
       }
     }
   };
 
   const handleApprove = async (ad) => {
     try {
-      await onApproveBump(ad.id);
+      const response = await fetch(`${API_URL}/bumps/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({ 
+          adId: ad.id, 
+          processedBy: currentUser.userId
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to approve bump request');
+      }
+      
+      const result = await response.json();
+      
       // Remove the bump request from local state
       setBumpRequests(prev => prev.filter(req => req.adId !== ad.id));
+      
+      alert(result.message || 'Bump request approved successfully!');
     } catch (error) {
-      console.error('Error approving bump:', error);
+      alert('Error approving bump request: ' + error.message);
     }
   };
 
@@ -1556,7 +1597,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
               {/* Reject Modal */}
               {showRejectModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999999]">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                   <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
                     <h3 className="text-xl font-semibold text-white mb-4">Reject Bump Request</h3>
                     <textarea
