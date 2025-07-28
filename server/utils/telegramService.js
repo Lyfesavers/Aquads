@@ -10,10 +10,6 @@ const BotSettings = require('../models/BotSettings');
 const telegramService = {
   // Store group IDs where bot is active
   activeGroups: new Set(),
-  // Store raid message IDs for cleanup
-  raidMessageIds: new Map(), // groupId -> [messageIds]
-  // Store bubble rank message IDs for cleanup
-  bubbleMessageIds: new Map(), // groupId -> [messageIds]
 
   // Load active groups from database
   loadActiveGroups: async () => {
@@ -112,7 +108,7 @@ const telegramService = {
             if (response.data.ok) {
               successCount++;
               // Store message ID for cleanup
-              telegramService.storeRaidMessageId(chatId, response.data.result.message_id);
+              await telegramService.storeRaidMessageId(chatId, response.data.result.message_id);
             }
           } else {
             // Send text message
@@ -120,7 +116,7 @@ const telegramService = {
             if (result.success) {
               successCount++;
               // Store message ID for cleanup
-              telegramService.storeRaidMessageId(chatId, result.messageId);
+              await telegramService.storeRaidMessageId(chatId, result.messageId);
             }
           }
         } catch (error) {
@@ -735,22 +731,56 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
   },
 
   // Store raid message ID for cleanup
-  storeRaidMessageId: (chatId, messageId) => {
-    const chatIdStr = chatId.toString();
-    if (!telegramService.raidMessageIds.has(chatIdStr)) {
-      telegramService.raidMessageIds.set(chatIdStr, []);
+  storeRaidMessageId: async (chatId, messageId) => {
+    try {
+      const chatIdStr = chatId.toString();
+      
+      // Get existing message IDs from database
+      const settings = await BotSettings.findOne({ key: 'raidMessageIds' });
+      const existingData = settings?.value || {};
+      
+      // Add new message ID
+      if (!existingData[chatIdStr]) {
+        existingData[chatIdStr] = [];
+      }
+      existingData[chatIdStr].push(messageId);
+      
+      // Save back to database
+      await BotSettings.findOneAndUpdate(
+        { key: 'raidMessageIds' },
+        { value: existingData, updatedAt: new Date() },
+        { upsert: true }
+      );
+    } catch (error) {
+      console.error('Error storing raid message ID:', error);
     }
-    telegramService.raidMessageIds.get(chatIdStr).push(messageId);
   },
 
   // Store bubble message ID for cleanup
-  storeBubbleMessageId: (chatId, messageId) => {
-    const chatIdStr = chatId.toString();
-    if (!telegramService.bubbleMessageIds.has(chatIdStr)) {
-      telegramService.bubbleMessageIds.set(chatIdStr, []);
+  storeBubbleMessageId: async (chatId, messageId) => {
+    try {
+      const chatIdStr = chatId.toString();
+      console.log(`💾 Storing bubble message ID ${messageId} for chat ${chatIdStr}`);
+      
+      // Get existing message IDs from database
+      const settings = await BotSettings.findOne({ key: 'bubbleMessageIds' });
+      const existingData = settings?.value || {};
+      
+      // Add new message ID
+      if (!existingData[chatIdStr]) {
+        existingData[chatIdStr] = [];
+      }
+      existingData[chatIdStr].push(messageId);
+      
+      // Save back to database
+      await BotSettings.findOneAndUpdate(
+        { key: 'bubbleMessageIds' },
+        { value: existingData, updatedAt: new Date() },
+        { upsert: true }
+      );
+    } catch (error) {
+      console.error('Error storing bubble message ID:', error);
     }
-    telegramService.bubbleMessageIds.get(chatIdStr).push(messageId);
-    console.log(`💾 Stored bubble message ID ${messageId} for chat ${chatIdStr}`);
   },
 
   // Delete old raid messages
@@ -759,22 +789,42 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
     if (!botToken) return;
 
     try {
-      for (const [chatId, messageIds] of telegramService.raidMessageIds.entries()) {
+      // Load message IDs from database
+      const settings = await BotSettings.findOne({ key: 'raidMessageIds' });
+      const raidMessageIds = settings?.value || {};
+      
+      const chatCount = Object.keys(raidMessageIds).length;
+      const totalMessages = Object.values(raidMessageIds).flat().length;
+      
+      console.log(`🗑️ Deleting old raid messages from ${chatCount} chats (${totalMessages} total messages)`);
+      
+      if (chatCount === 0) {
+        console.log(`ℹ️ No stored raid messages found to delete`);
+        return;
+      }
+
+      for (const [chatId, messageIds] of Object.entries(raidMessageIds)) {
         for (const messageId of messageIds) {
           try {
             await axios.post(`https://api.telegram.org/bot${botToken}/deleteMessage`, {
               chat_id: chatId,
               message_id: messageId
             });
-            console.log(`Deleted old raid message ${messageId} from chat ${chatId}`);
+            console.log(`✅ Deleted old raid message ${messageId} from chat ${chatId}`);
           } catch (error) {
             // Message might already be deleted or bot doesn't have permission
-            console.log(`Could not delete message ${messageId} from chat ${chatId}: ${error.message}`);
+            console.log(`❌ Could not delete message ${messageId} from chat ${chatId}: ${error.message}`);
           }
         }
       }
-      // Clear the stored message IDs after deletion
-      telegramService.raidMessageIds.clear();
+      
+      // Clear the stored message IDs from database
+      await BotSettings.findOneAndUpdate(
+        { key: 'raidMessageIds' },
+        { value: {}, updatedAt: new Date() },
+        { upsert: true }
+      );
+      console.log(`🧹 Cleared all stored raid message IDs from database`);
     } catch (error) {
       console.error('Error deleting old raid messages:', error.message);
     }
@@ -787,10 +837,15 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 
     try {
       const chatIdStr = chatId.toString();
-      const messageIds = telegramService.bubbleMessageIds.get(chatIdStr);
-      console.log(`Attempting to delete old bubble messages for chat ${chatIdStr}, found ${messageIds ? messageIds.length : 0} messages`);
       
-      if (messageIds && messageIds.length > 0) {
+      // Load message IDs from database
+      const settings = await BotSettings.findOne({ key: 'bubbleMessageIds' });
+      const bubbleMessageIds = settings?.value || {};
+      const messageIds = bubbleMessageIds[chatIdStr] || [];
+      
+      console.log(`Attempting to delete old bubble messages for chat ${chatIdStr}, found ${messageIds.length} messages`);
+      
+      if (messageIds.length > 0) {
         for (const messageId of messageIds) {
           try {
             await axios.post(`https://api.telegram.org/bot${botToken}/deleteMessage`, {
@@ -803,9 +858,15 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
             console.log(`❌ Could not delete message ${messageId} from chat ${chatIdStr}: ${error.message}`);
           }
         }
-        // Clear only the message IDs for this specific chat
-        telegramService.bubbleMessageIds.delete(chatIdStr);
-        console.log(`🧹 Cleared stored message IDs for chat ${chatIdStr}`);
+        
+        // Clear only the message IDs for this specific chat from database
+        delete bubbleMessageIds[chatIdStr];
+        await BotSettings.findOneAndUpdate(
+          { key: 'bubbleMessageIds' },
+          { value: bubbleMessageIds, updatedAt: new Date() },
+          { upsert: true }
+        );
+        console.log(`🧹 Cleared stored message IDs for chat ${chatIdStr} from database`);
       } else {
         console.log(`ℹ️ No stored bubble messages found for chat ${chatIdStr}`);
       }
@@ -1130,7 +1191,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
           "📭 No bumped bubbles found right now.\n\n🌐 Check back later at: https://aquads.xyz");
         if (noBubblesResult.success) {
           // Store message ID for cleanup
-          telegramService.storeBubbleMessageId(chatId, noBubblesResult.messageId);
+          await telegramService.storeBubbleMessageId(chatId, noBubblesResult.messageId);
         }
         return true;
       }
@@ -1179,7 +1240,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
           if (response.data.ok) {
             result = true;
             // Store message ID for cleanup
-            telegramService.storeBubbleMessageId(chatId, response.data.result.message_id);
+            await telegramService.storeBubbleMessageId(chatId, response.data.result.message_id);
           }
         } catch (error) {
           console.error('Failed to send video, falling back to text message:', error.message);
@@ -1188,7 +1249,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
           if (textResult.success) {
             result = true;
             // Store message ID for cleanup
-            telegramService.storeBubbleMessageId(chatId, textResult.messageId);
+            await telegramService.storeBubbleMessageId(chatId, textResult.messageId);
           }
         }
       } else {
@@ -1197,7 +1258,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
         if (textResult.success) {
           result = true;
           // Store message ID for cleanup
-          telegramService.storeBubbleMessageId(chatId, textResult.messageId);
+          await telegramService.storeBubbleMessageId(chatId, textResult.messageId);
         }
       }
       
