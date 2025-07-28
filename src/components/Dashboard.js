@@ -1598,39 +1598,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
 
 
-              {/* Reject Modal */}
-              {showRejectModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                  <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
-                    <h3 className="text-xl font-semibold text-white mb-4">Reject Bump Request</h3>
-                    <textarea
-                      value={rejectReason}
-                      onChange={(e) => setRejectReason(e.target.value)}
-                      placeholder="Enter reason for rejection (optional)"
-                      className="w-full px-3 py-2 bg-gray-700 text-white rounded mb-4 focus:outline-none focus:ring-2 focus:ring-red-500"
-                      rows="3"
-                    />
-                    <div className="flex justify-end space-x-2">
-                      <button
-                        onClick={() => {
-                          setShowRejectModal(false);
-                          setRejectReason('');
-                          setSelectedBumpRequest(null);
-                        }}
-                        className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={confirmReject}
-                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-                      >
-                        Confirm Reject
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
+
 
               {/* User's Ads */}
               <div>
@@ -2236,6 +2204,40 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                             </div>
                           </div>
                         ))}
+                      </div>
+                    )}
+                    
+                    {/* Reject Modal */}
+                    {showRejectModal && (
+                      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
+                          <h3 className="text-xl font-semibold text-white mb-4">Reject Bump Request</h3>
+                          <textarea
+                            value={rejectReason}
+                            onChange={(e) => setRejectReason(e.target.value)}
+                            placeholder="Enter reason for rejection (optional)"
+                            className="w-full px-3 py-2 bg-gray-700 text-white rounded mb-4 focus:outline-none focus:ring-2 focus:ring-red-500"
+                            rows="3"
+                          />
+                          <div className="flex justify-end space-x-2">
+                            <button
+                              onClick={() => {
+                                setShowRejectModal(false);
+                                setRejectReason('');
+                                setSelectedBumpRequest(null);
+                              }}
+                              className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={confirmReject}
+                              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
+                            >
+                              Confirm Reject
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
