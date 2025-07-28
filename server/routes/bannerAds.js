@@ -140,6 +140,33 @@ router.post('/:id/reject', auth, async (req, res) => {
   }
 });
 
+// Update banner ad (admin only)
+router.put('/:id', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Only admins can update banner ads' });
+    }
+
+    const { title, url, gif } = req.body;
+    const banner = await BannerAd.findById(req.params.id);
+    
+    if (!banner) {
+      return res.status(404).json({ error: 'Banner not found' });
+    }
+
+    // Update the banner fields
+    if (title) banner.title = title;
+    if (url) banner.url = url;
+    if (gif) banner.gif = gif;
+
+    await banner.save();
+    res.json(banner);
+  } catch (error) {
+    console.error('Error updating banner:', error);
+    res.status(500).json({ error: 'Failed to update banner' });
+  }
+});
+
 // Delete banner ad (admin only)
 router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
   try {

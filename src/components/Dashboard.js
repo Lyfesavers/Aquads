@@ -64,6 +64,14 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [showRejectServiceModal, setShowRejectServiceModal] = useState(false);
   const [selectedServiceForRejection, setSelectedServiceForRejection] = useState(null);
   const [serviceRejectionReason, setServiceRejectionReason] = useState('');
+  // Banner edit states
+  const [showBannerEditModal, setShowBannerEditModal] = useState(false);
+  const [selectedBannerForEdit, setSelectedBannerForEdit] = useState(null);
+  const [bannerEditData, setBannerEditData] = useState({
+    title: '',
+    url: '',
+    gif: ''
+  });
   // Affiliate management states
   const [affiliateSearchQuery, setAffiliateSearchQuery] = useState('');
   const [affiliateSearchResults, setAffiliateSearchResults] = useState([]);
@@ -450,7 +458,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         return;
       }
 
-      const response = await fetch(`${API_URL}/api/bannerAds/${bannerId}`, {
+      const response = await fetch(`${API_URL}/bannerAds/${bannerId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -477,6 +485,52 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       setBannerAds(updatedBanners);
     } catch (error) {
       alert(error.message || 'Failed to delete banner ad. Please try again.');
+    }
+  };
+
+  const handleEditBanner = (banner) => {
+    setSelectedBannerForEdit(banner);
+    setBannerEditData({
+      title: banner.title,
+      url: banner.url,
+      gif: banner.gif
+    });
+    setShowBannerEditModal(true);
+  };
+
+  const handleSaveBannerEdit = async () => {
+    if (!selectedBannerForEdit) return;
+
+    try {
+      const response = await fetch(`${API_URL}/bannerAds/${selectedBannerForEdit._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify(bannerEditData)
+      });
+
+      if (!response.ok) {
+        const responseData = await response.json();
+        throw new Error(responseData.error || 'Failed to update banner');
+      }
+
+      const updatedBanner = await response.json();
+      
+      // Update the local state
+      setBannerAds(prevBanners => 
+        prevBanners.map(banner => 
+          banner._id === selectedBannerForEdit._id ? updatedBanner : banner
+        )
+      );
+
+      setShowBannerEditModal(false);
+      setSelectedBannerForEdit(null);
+      setBannerEditData({ title: '', url: '', gif: '' });
+      alert('Banner updated successfully');
+    } catch (error) {
+      alert(error.message || 'Failed to update banner ad. Please try again.');
     }
   };
 
@@ -2273,7 +2327,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                             <img src={banner.gif} alt={banner.title} className="max-h-32 rounded object-contain bg-gray-800" />
                           </div>
                           {currentUser?.isAdmin && banner.status === 'active' && (
-                            <div className="mt-2">
+                            <div className="mt-2 flex space-x-2">
+                              <button onClick={() => handleEditBanner(banner)} className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded">
+                                Edit Banner
+                              </button>
                               <button onClick={() => handleDeleteBanner(banner._id)} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">
                                 Delete Banner
                               </button>
@@ -2281,6 +2338,76 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                           )}
                         </div>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Banner Edit Modal */}
+                {showBannerEditModal && (
+                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
+                      <h3 className="text-xl font-semibold text-white mb-4">Edit Banner Ad</h3>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-400 mb-2">
+                            Title:
+                          </label>
+                          <input
+                            type="text"
+                            value={bannerEditData.title}
+                            onChange={(e) => setBannerEditData(prev => ({ ...prev, title: e.target.value }))}
+                            className="w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-400 mb-2">
+                            URL:
+                          </label>
+                          <input
+                            type="url"
+                            value={bannerEditData.url}
+                            onChange={(e) => setBannerEditData(prev => ({ ...prev, url: e.target.value }))}
+                            className="w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-400 mb-2">
+                            GIF URL:
+                          </label>
+                          <input
+                            type="url"
+                            value={bannerEditData.gif}
+                            onChange={(e) => setBannerEditData(prev => ({ ...prev, gif: e.target.value }))}
+                            className="w-full px-3 py-2 bg-gray-700 text-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        {bannerEditData.gif && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-400 mb-2">
+                              Preview:
+                            </label>
+                            <img src={bannerEditData.gif} alt="Banner preview" className="max-h-32 rounded object-contain bg-gray-800" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex justify-end space-x-2 mt-6">
+                        <button
+                          onClick={() => {
+                            setShowBannerEditModal(false);
+                            setSelectedBannerForEdit(null);
+                            setBannerEditData({ title: '', url: '', gif: '' });
+                          }}
+                          className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSaveBannerEdit}
+                          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                        >
+                          Save Changes
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
