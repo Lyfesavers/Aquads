@@ -349,8 +349,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         
         const result = await response.json();
         
-        // Remove the bump request from local state
-        setBumpRequests(prev => prev.filter(req => req.adId !== selectedBumpRequest.id));
+        // Refresh the bump requests data
+        const updatedBumpRequests = await fetchBumpRequests();
+        setBumpRequests(updatedBumpRequests);
+        
         setShowRejectModal(false);
         setRejectReason('');
         setSelectedBumpRequest(null);
@@ -383,8 +385,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       
       const result = await response.json();
       
-      // Remove the bump request from local state
-      setBumpRequests(prev => prev.filter(req => req.adId !== ad.id));
+      // Refresh the bump requests data
+      const updatedBumpRequests = await fetchBumpRequests();
+      setBumpRequests(updatedBumpRequests);
       
       alert(result.message || 'Bump request approved successfully!');
     } catch (error) {
