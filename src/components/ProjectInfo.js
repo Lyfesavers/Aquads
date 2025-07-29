@@ -1,13 +1,36 @@
-import React from 'react';
-import { FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCog, FaCheckCircle, FaArrowRight, FaBullhorn, FaGamepad, FaHandshake, FaTrophy } from 'react-icons/fa';
+import React, { useState } from 'react';
+import { FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCog, FaCheckCircle, FaArrowRight, FaBullhorn, FaGamepad, FaHandshake, FaTrophy, FaArrowLeft } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
+import CreateAdModal from './CreateAdModal';
 
-const ProjectInfo = ({ onListProject }) => {
+const ProjectInfo = ({ currentUser }) => {
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  const handleCreateAd = async (adData) => {
+    try {
+      // This will be handled by the CreateAdModal component
+      setShowCreateModal(false);
+    } catch (error) {
+      console.error('Error creating ad:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
+      {/* Back Button */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+        <Link
+          to="/"
+          className="inline-flex items-center text-gray-300 hover:text-white transition-colors duration-300"
+        >
+          <FaArrowLeft className="mr-2" />
+          Back to Home
+        </Link>
+      </div>
+
       {/* Hero Section */}
       <div className="relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
               Why List Your Project on
@@ -18,7 +41,7 @@ const ProjectInfo = ({ onListProject }) => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
-                onClick={onListProject}
+                onClick={() => setShowCreateModal(true)}
                 className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
               >
                 <FaRocket className="mr-2" />
@@ -291,14 +314,14 @@ const ProjectInfo = ({ onListProject }) => {
             Join hundreds of successful projects that have already discovered the Aquads advantage. Start building your community today.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/create-ad"
+            <button
+              onClick={() => setShowCreateModal(true)}
               className="inline-flex items-center px-8 py-4 bg-white text-blue-600 font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
             >
               <FaRocket className="mr-2" />
               List Your Project Now
               <FaArrowRight className="ml-2" />
-            </Link>
+            </button>
             <Link
               to="/contact"
               className="inline-flex items-center px-8 py-4 bg-transparent border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-blue-600 transition-all duration-300"
@@ -308,6 +331,15 @@ const ProjectInfo = ({ onListProject }) => {
           </div>
         </div>
       </div>
+
+      {/* Create Ad Modal */}
+      {showCreateModal && (
+        <CreateAdModal
+          onCreateAd={handleCreateAd}
+          onClose={() => setShowCreateModal(false)}
+          currentUser={currentUser}
+        />
+      )}
     </div>
   );
 };
