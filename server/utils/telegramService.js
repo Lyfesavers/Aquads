@@ -730,6 +730,52 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
     }
   },
 
+  // Convert blockchain names to chain format (same as website)
+  getChainForBlockchain: (blockchain) => {
+    const chainMap = {
+      // Main blockchains from your BLOCKCHAIN_OPTIONS
+      'ethereum': 'ether',
+      'bsc': 'bnb',
+      'polygon': 'polygon',
+      'solana': 'solana',
+      'avalanche': 'avalanche',
+      'arbitrum': 'arbitrum',
+      'optimism': 'optimism',
+      'base': 'base',
+      'sui': 'sui',
+      'near': 'near',
+      'fantom': 'fantom',
+      'tron': 'tron',
+      'cronos': 'cronos',
+      'celo': 'celo',
+      'harmony': 'harmony',
+      'polkadot': 'polkadot',
+      'cosmos': 'cosmos',
+      'aptos': 'aptos',
+      'flow': 'flow',
+      'cardano': 'cardano',
+      'kaspa': 'kaspa',
+      
+      // Alternative naming variations
+      'binance smart chain': 'bnb',
+      'bnb chain': 'bnb',
+      'binance': 'bnb',
+      'eth': 'ether',
+      'ethereum mainnet': 'ether',
+      'matic': 'polygon',
+      'polygon matic': 'polygon',
+      'avax': 'avalanche',
+      'ftm': 'fantom',
+      'arb': 'arbitrum',
+      'op': 'optimism'
+    };
+    
+    const normalizedBlockchain = blockchain.toLowerCase().trim();
+    const mappedChain = chainMap[normalizedBlockchain] || 'ether';
+    
+    return mappedChain;
+  },
+
   // Send message with markdown support
   sendBotMessageWithMarkdown: async (chatId, message) => {
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -1236,6 +1282,8 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
         const blockchain = bubble.blockchain || 'ethereum';
         
         if (tokenAddress && tokenAddress.trim()) {
+          // Use the same blockchain mapping as the website
+          const mappedChain = telegramService.getChainForBlockchain(blockchain);
           // Create clickable link to AquaSwap chart
           const chartUrl = `https://aquads.xyz/aquaswap?token=${encodeURIComponent(tokenAddress.trim())}&blockchain=${encodeURIComponent(blockchain)}`;
           message += `${emoji} #${rank}: 🚀 [${bubble.title}](${chartUrl})\n`;
