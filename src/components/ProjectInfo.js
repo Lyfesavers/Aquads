@@ -360,12 +360,12 @@ const ProjectInfo = ({ currentUser }) => {
               List Your Project Now
               <FaArrowRight className="ml-2" />
             </button>
-            <Link
-              to="/contact"
+            <a
+              href="mailto:aquads.info@gmail.com"
               className="inline-flex items-center px-8 py-4 bg-transparent border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-blue-600 transition-all duration-300"
             >
               Contact Our Team
-            </Link>
+            </a>
           </div>
         </div>
       </div>
