@@ -47,6 +47,7 @@ import TransakPage from './components/TransakPage';
 import VerifyUser from './components/VerifyUser';
 import BannerDisplay from './components/BannerDisplay';
 import CryptoAdNetwork from './components/CryptoAdNetwork';
+import ProjectInfo from './components/ProjectInfo';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import emailService from './services/emailService';
@@ -2697,6 +2698,12 @@ function App() {
                         >
                           Learn
                         </Link>
+                        <Link
+                          to="/project-info"
+                          className="bg-gradient-to-r from-purple-500/80 to-pink-600/80 hover:from-purple-600/80 hover:to-pink-700/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
+                        >
+                          Why List?
+                        </Link>
 
                         {currentUser ? (
                           <>
@@ -2806,6 +2813,12 @@ function App() {
                           className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
                         >
                           Learn
+                        </Link>
+                        <Link
+                          to="/project-info"
+                          className="bg-gradient-to-r from-purple-500/80 to-pink-600/80 hover:from-purple-600/80 hover:to-pink-700/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+                        >
+                          Why List?
                         </Link>
                         {currentUser ? (
                           <>
@@ -3573,6 +3586,7 @@ function App() {
             <Route path="/buy-crypto" element={<TransakPage currentUser={currentUser} showNotification={showNotification} />} />
             <Route path="/crypto-ads" element={<CryptoAdNetwork />} />
             <Route path="/embed/aquaswap" element={<AquaSwapEmbed />} />
+            <Route path="/project-info" element={<ProjectInfo />} />
         </Routes>
       </Router>
     </AuthContext.Provider>
