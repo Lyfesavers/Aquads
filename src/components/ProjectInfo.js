@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCog, FaCheckCircle, FaArrowRight, FaBullhorn, FaGamepad, FaHandshake, FaTrophy, FaArrowLeft } from 'react-icons/fa';
+import { FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCog, FaCheckCircle, FaArrowRight, FaBullhorn, FaGamepad, FaHandshake, FaTrophy, FaArrowLeft, FaCreditCard, FaExchangeAlt, FaUsersCog } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import CreateAdModal from './CreateAdModal';
 
@@ -77,11 +77,10 @@ const ProjectInfo = ({ currentUser }) => {
               <div className="bg-blue-500 p-3 rounded-lg">
                 <FaChartLine className="text-white text-xl" />
               </div>
-              <h3 className="text-xl font-semibold text-white ml-4">Immediate Trading Integration</h3>
+              <h3 className="text-xl font-semibold text-white ml-4">Immediate Trading Integration on our BEX</h3>
             </div>
             <p className="text-gray-300">
-              Users click your bubble and instantly trade your token. Direct integration with AquaSwap eliminates barriers and drives immediate conversions.
-            </p>
+              Users click your bubble and instantly trade your token with live charts. Direct integration with AquaSwap Bex eliminates barriers and drives immediate conversions.</p>
           </div>
 
           {/* Advantage 2 */}
@@ -146,6 +145,45 @@ const ProjectInfo = ({ currentUser }) => {
             </div>
             <p className="text-gray-300">
               Freelancers, gaming, content marketing, and more. Access to our complete Web3 ecosystem for comprehensive growth.
+            </p>
+          </div>
+
+          {/* Advantage 7 */}
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 hover:border-blue-500 transition-all duration-300">
+            <div className="flex items-center mb-4">
+              <div className="bg-green-500 p-3 rounded-lg">
+                <FaCreditCard className="text-white text-xl" />
+              </div>
+              <h3 className="text-xl font-semibold text-white ml-4">Paid Ad Campaigns</h3>
+            </div>
+            <p className="text-gray-300">
+              Targeted banner ads and premium placement options. Reach specific audiences with customizable campaigns that drive traffic and conversions to your project.
+            </p>
+          </div>
+
+          {/* Advantage 8 */}
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 hover:border-blue-500 transition-all duration-300">
+            <div className="flex items-center mb-4">
+              <div className="bg-orange-500 p-3 rounded-lg">
+                <FaExchangeAlt className="text-white text-xl" />
+              </div>
+              <h3 className="text-xl font-semibold text-white ml-4">On-Ramp & Off-Ramp</h3>
+            </div>
+            <p className="text-gray-300">
+              Seamless fiat-to-crypto and crypto-to-fiat conversion services. Users can easily buy and sell your tokens with multiple payment methods and instant processing.
+            </p>
+          </div>
+
+          {/* Advantage 9 */}
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 hover:border-blue-500 transition-all duration-300">
+            <div className="flex items-center mb-4">
+              <div className="bg-purple-500 p-3 rounded-lg">
+                <FaUsersCog className="text-white text-xl" />
+              </div>
+              <h3 className="text-xl font-semibold text-white ml-4">Community Raids</h3>
+            </div>
+            <p className="text-gray-300">
+              Organized community engagement campaigns and social media raids. Build momentum and create viral moments that boost your project's visibility and community growth.
             </p>
           </div>
         </div>
