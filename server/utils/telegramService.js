@@ -730,6 +730,33 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
     }
   },
 
+  // Send message with markdown support
+  sendBotMessageWithMarkdown: async (chatId, message) => {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    
+    if (!botToken) return { success: false };
+
+    try {
+      const response = await axios.post(
+        `https://api.telegram.org/bot${botToken}/sendMessage`,
+        {
+          chat_id: chatId,
+          text: message,
+          parse_mode: 'Markdown',
+        }
+      );
+
+      if (response.data.ok) {
+        return { success: true, messageId: response.data.result.message_id };
+      } else {
+        return { success: false };
+      }
+    } catch (error) {
+      console.error('Bot markdown message error:', error.message);
+      return { success: false };
+    }
+  },
+
   // Store raid message ID for cleanup
   storeRaidMessageId: async (chatId, messageId) => {
     try {
@@ -1182,7 +1209,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
         isBumped: true,
         status: { $in: ['active', 'approved'] }
       })
-      .select('title logo url bullishVotes bearishVotes owner isBumped status')
+      .select('title logo url bullishVotes bearishVotes owner isBumped status pairAddress contractAddress blockchain')
       .sort({ bullishVotes: -1 }) // Sort by bullish votes descending
       .limit(10); // Get top 10
 
@@ -1196,7 +1223,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
         return true;
       }
 
-      // Construct the message
+      // Construct the message with clickable links
       let message = `🔥 Top 10 Bubbles - Most Bullish Votes\n\n`;
       message += `📊 Ranking based on bullish votes (bumped bubbles only)\n\n`;
 
@@ -1204,7 +1231,19 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
         const rank = index + 1;
         const emoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '🔸';
         
-        message += `${emoji} #${rank}: 🚀 ${bubble.title}\n`;
+        // Check if bubble has token address for chart link
+        const tokenAddress = bubble.pairAddress || bubble.contractAddress;
+        const blockchain = bubble.blockchain || 'ethereum';
+        
+        if (tokenAddress && tokenAddress.trim()) {
+          // Create clickable link to AquaSwap chart
+          const chartUrl = `https://aquads.xyz/aquaswap?token=${encodeURIComponent(tokenAddress.trim())}&blockchain=${encodeURIComponent(blockchain)}`;
+          message += `${emoji} #${rank}: 🚀 [${bubble.title}](${chartUrl})\n`;
+        } else {
+          // No token address available, just show title
+          message += `${emoji} #${rank}: 🚀 ${bubble.title}\n`;
+        }
+        
         message += `📈 Bullish: ${bubble.bullishVotes} | 📉 Bearish: ${bubble.bearishVotes}\n\n`;
       });
 
@@ -1224,6 +1263,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
         formData.append('chat_id', chatId);
         formData.append('video', fs.createReadStream(videoPath));
         formData.append('caption', message);
+        formData.append('parse_mode', 'Markdown'); // Enable markdown parsing for links
 
         try {
           const response = await axios.post(
@@ -1245,7 +1285,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
         } catch (error) {
           console.error('Failed to send video, falling back to text message:', error.message);
           // Fallback to text message if video fails
-          const textResult = await telegramService.sendBotMessage(chatId, message);
+          const textResult = await telegramService.sendBotMessageWithMarkdown(chatId, message);
           if (textResult.success) {
             result = true;
             // Store message ID for cleanup
@@ -1254,7 +1294,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
         }
       } else {
         // Send text message if video doesn't exist
-        const textResult = await telegramService.sendBotMessage(chatId, message);
+        const textResult = await telegramService.sendBotMessageWithMarkdown(chatId, message);
         if (textResult.success) {
           result = true;
           // Store message ID for cleanup
