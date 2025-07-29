@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCog, FaCheckCircle, FaArrowRight, FaBullhorn, FaGamepad, FaHandshake, FaTrophy, FaArrowLeft, FaCreditCard, FaExchangeAlt, FaUsersCog } from 'react-icons/fa';
+import { FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCog, FaCheckCircle, FaArrowRight, FaBullhorn, FaGamepad, FaHandshake, FaTrophy, FaArrowLeft, FaCreditCard, FaExchangeAlt, FaUsersCog, FaVideo, FaMicrophone } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import CreateAdModal from './CreateAdModal';
 
@@ -184,6 +184,32 @@ const ProjectInfo = ({ currentUser }) => {
             </div>
             <p className="text-gray-300">
               Organized community engagement campaigns and social media raids. Build momentum and create viral moments that boost your project's visibility and community growth.
+            </p>
+          </div>
+
+          {/* Advantage 10 */}
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 hover:border-blue-500 transition-all duration-300">
+            <div className="flex items-center mb-4">
+              <div className="bg-red-500 p-3 rounded-lg">
+                <FaVideo className="text-white text-xl" />
+              </div>
+              <h3 className="text-xl font-semibold text-white ml-4">24/7 Live Streams</h3>
+            </div>
+            <p className="text-gray-300">
+              Continuous live streaming of bubble ads and trending tokens across X, Kick, YouTube, and more platforms. Maximum exposure and engagement for your project.
+            </p>
+          </div>
+
+          {/* Advantage 11 */}
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 hover:border-blue-500 transition-all duration-300">
+            <div className="flex items-center mb-4">
+              <div className="bg-yellow-500 p-3 rounded-lg">
+                <FaMicrophone className="text-white text-xl" />
+              </div>
+              <h3 className="text-xl font-semibold text-white ml-4">Free AMA Services</h3>
+            </div>
+            <p className="text-gray-300">
+              Access to our network of providers for free AMA (Ask Me Anything) sessions. Connect directly with your community and build trust through transparent communication.
             </p>
           </div>
         </div>
