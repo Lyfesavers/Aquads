@@ -3586,7 +3586,7 @@ function App() {
             <Route path="/buy-crypto" element={<TransakPage currentUser={currentUser} showNotification={showNotification} />} />
             <Route path="/crypto-ads" element={<CryptoAdNetwork />} />
             <Route path="/embed/aquaswap" element={<AquaSwapEmbed />} />
-            <Route path="/project-info" element={<ProjectInfo />} />
+            <Route path="/project-info" element={<ProjectInfo onListProject={() => setShowCreateModal(true)} />} />
         </Routes>
       </Router>
     </AuthContext.Provider>

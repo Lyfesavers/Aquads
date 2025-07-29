@@ -2,7 +2,7 @@ import React from 'react';
 import { FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCog, FaCheckCircle, FaArrowRight, FaBullhorn, FaGamepad, FaHandshake, FaTrophy } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 
-const ProjectInfo = () => {
+const ProjectInfo = ({ onListProject }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
       {/* Hero Section */}
@@ -17,14 +17,14 @@ const ProjectInfo = () => {
               Join the world's first BEX (Bicentralized Exchange) and tap into a thriving Web3 ecosystem designed specifically for crypto projects.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                to="/create-ad"
+              <button
+                onClick={onListProject}
                 className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
               >
                 <FaRocket className="mr-2" />
                 List Your Project Now
                 <FaArrowRight className="ml-2" />
-              </Link>
+              </button>
               <Link
                 to="/whitepaper"
                 className="inline-flex items-center px-8 py-4 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-lg transition-all duration-300 border border-gray-600"
