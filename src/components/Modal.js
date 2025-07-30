@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 const Modal = ({ children, onClose, fullScreen = false }) => {
   // Prevent body scroll when modal is open
@@ -32,11 +33,11 @@ const Modal = ({ children, onClose, fullScreen = false }) => {
     }
   `;
 
-  if (fullScreen) {
-    return (
-      <>
-        {/* Style tag for modal */}
-        <style>{modalStyles}</style>
+  const modalContent = (
+    <>
+      {/* Style tag for modal */}
+      <style>{modalStyles}</style>
+      {fullScreen ? (
         <div 
           className="fixed inset-0 bg-gradient-to-br from-gray-900 to-black z-[2147483647] modal-backdrop"
           onClick={handleBackdropClick}
@@ -62,38 +63,35 @@ const Modal = ({ children, onClose, fullScreen = false }) => {
             </div>
           </div>
         </div>
-      </>
-    );
-  }
-
-  return (
-    <>
-      {/* Style tag for modal */}
-      <style>{modalStyles}</style>
-      <div 
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[2147483647] p-2 sm:p-4 overflow-y-auto modal-backdrop"
-        onClick={handleBackdropClick}
-      >
+      ) : (
         <div 
-          className="bg-gray-800 rounded-lg p-3 sm:p-6 w-full max-w-md mx-auto my-4 sm:my-8 relative modal-content"
-          onClick={handleModalContentClick}
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[2147483647] p-2 sm:p-4 overflow-y-auto modal-backdrop"
+          onClick={handleBackdropClick}
         >
-          <div className="flex justify-end mb-2 sm:mb-4">
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-white text-2xl focus:outline-none p-2"
-              aria-label="Close"
-            >
-              ×
-            </button>
-          </div>
-          <div className="max-h-[calc(100vh-8rem)] overflow-y-auto pb-2">
-            {children}
+          <div 
+            className="bg-gray-800 rounded-lg p-3 sm:p-6 w-full max-w-md mx-auto my-4 sm:my-8 relative modal-content"
+            onClick={handleModalContentClick}
+          >
+            <div className="flex justify-end mb-2 sm:mb-4">
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-white text-2xl focus:outline-none p-2"
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+            <div className="max-h-[calc(100vh-8rem)] overflow-y-auto pb-2">
+              {children}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </>
   );
+
+  // Use createPortal to render the modal at the document body level
+  return createPortal(modalContent, document.body);
 };
 
 export default Modal; 
