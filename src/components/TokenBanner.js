@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, memo } from 'react';
+import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import logger from '../utils/logger';
 import Modal from './Modal';
@@ -70,6 +70,7 @@ const TokenBanner = () => {
   const [tokens, setTokens] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showTokenModal, setShowTokenModal] = useState(false);
+  const [selectedChain, setSelectedChain] = useState('all');
 
   // Memoize fetchTokens to prevent recreation
   const fetchTokens = useCallback(async () => {
@@ -174,6 +175,20 @@ const TokenBanner = () => {
     return () => clearInterval(interval);
   }, [fetchTokens]);
 
+  // Get unique chains for filter dropdown
+  const uniqueChains = useMemo(() => {
+    const chains = [...new Set(tokens.map(token => token.chain))];
+    return chains.sort();
+  }, [tokens]);
+
+  // Filter tokens based on selected chain
+  const filteredTokens = useMemo(() => {
+    if (selectedChain === 'all') {
+      return tokens;
+    }
+    return tokens.filter(token => token.chain === selectedChain);
+  }, [tokens, selectedChain]);
+
   if (loading) {
     return (
       <div className="h-12 bg-gray-800 border-y border-blue-500/20">
@@ -254,8 +269,33 @@ const TokenBanner = () => {
                 </p>
               </div>
 
+              {/* Chain Filter */}
+              <div className="mb-6 flex justify-center">
+                <div className="relative">
+                  <select
+                    value={selectedChain}
+                    onChange={(e) => setSelectedChain(e.target.value)}
+                    className="bg-gray-800/50 border border-gray-600/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200"
+                  >
+                    <option value="all" className="bg-gray-800 text-white">
+                      All Chains ({tokens.length})
+                    </option>
+                    {uniqueChains.map(chain => (
+                      <option key={chain} value={chain} className="bg-gray-800 text-white">
+                        {chain} ({tokens.filter(token => token.chain === chain).length})
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {tokens.map((token, index) => (
+                {filteredTokens.map((token, index) => (
                   <Link
                     key={`modal-${token.symbol}-${index}`}
                     to={`/aquaswap?token=${token.poolAddress}&blockchain=${mapNetworkToBlockchain(token.chainId)}`}
@@ -299,8 +339,22 @@ const TokenBanner = () => {
                 ))}
               </div>
 
+              {filteredTokens.length === 0 && (
+                <div className="text-center mt-8 text-gray-400">
+                  <p>No tokens found for the selected chain.</p>
+                </div>
+              )}
+
               <div className="text-center mt-8 text-gray-400">
                 <p>Click any token to view it in AquaSwap</p>
+                {selectedChain !== 'all' && (
+                  <button
+                    onClick={() => setSelectedChain('all')}
+                    className="mt-2 text-blue-400 hover:text-blue-300 underline"
+                  >
+                    Show all chains
+                  </button>
+                )}
               </div>
             </div>
           </div>
