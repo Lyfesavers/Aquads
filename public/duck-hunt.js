@@ -50,6 +50,14 @@
       if (scoreDisplay) {
         scoreDisplay.remove();
       }
+      const highScoresBtn = document.getElementById('high-scores-btn');
+      if (highScoresBtn) {
+        highScoresBtn.remove();
+      }
+      const endGameBtn = document.getElementById('end-game-btn');
+      if (endGameBtn) {
+        endGameBtn.remove();
+      }
       clearInterval(routeCheckInterval);
     }
   }, 1000);
@@ -69,6 +77,10 @@
   let duckSpawningInterval = null; // Track interval for spawning ducks
   let isGameRunning = false; // Track if game animation is running
   
+  // High score system
+  const HIGH_SCORES_KEY = 'duck_hunt_high_scores';
+  const MAX_HIGH_SCORES = 10; // Keep top 10 scores
+  
   // Create a silent logger that only logs in development
   const isDev = window.location.hostname === 'localhost' || 
                 window.location.hostname === '127.0.0.1' || 
@@ -80,6 +92,271 @@
     error: isDev ? console.error.bind(console) : function(){},
     warn: isDev ? console.warn.bind(console) : function(){}
   };
+
+  // High score functions
+  function loadHighScores() {
+    try {
+      const saved = localStorage.getItem(HIGH_SCORES_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      logger.error('Error loading high scores:', e);
+      return [];
+    }
+  }
+
+  function saveHighScores(scores) {
+    try {
+      localStorage.setItem(HIGH_SCORES_KEY, JSON.stringify(scores));
+    } catch (e) {
+      logger.error('Error saving high scores:', e);
+    }
+  }
+
+  function addHighScore(username, score) {
+    const highScores = loadHighScores();
+    
+    // Add new score
+    highScores.push({
+      username: username,
+      score: score,
+      date: new Date().toISOString()
+    });
+    
+    // Sort by score (highest first)
+    highScores.sort((a, b) => b.score - a.score);
+    
+    // Keep only top scores
+    const topScores = highScores.slice(0, MAX_HIGH_SCORES);
+    
+    saveHighScores(topScores);
+    return topScores;
+  }
+
+  function isHighScore(score) {
+    const highScores = loadHighScores();
+    return highScores.length < MAX_HIGH_SCORES || score > highScores[highScores.length - 1].score;
+  }
+
+  function showHighScorePrompt() {
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.id = 'high-score-modal';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    modal.style.zIndex = '20000';
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    modal.style.fontFamily = 'Courier New, monospace';
+
+    // Create modal content
+    const content = document.createElement('div');
+    content.style.backgroundColor = '#000';
+    content.style.border = '3px solid #fff';
+    content.style.padding = '30px';
+    content.style.borderRadius = '10px';
+    content.style.textAlign = 'center';
+    content.style.maxWidth = '400px';
+    content.style.width = '90%';
+
+    // Title
+    const title = document.createElement('h2');
+    title.textContent = 'NEW HIGH SCORE!';
+    title.style.color = '#FFD700';
+    title.style.marginBottom = '20px';
+    title.style.fontSize = '24px';
+    content.appendChild(title);
+
+    // Score display
+    const scoreText = document.createElement('p');
+    scoreText.textContent = `Score: ${score}`;
+    scoreText.style.color = '#fff';
+    scoreText.style.fontSize = '18px';
+    scoreText.style.marginBottom = '20px';
+    content.appendChild(scoreText);
+
+    // Username input
+    const inputLabel = document.createElement('label');
+    inputLabel.textContent = 'Enter your name:';
+    inputLabel.style.color = '#fff';
+    inputLabel.style.display = 'block';
+    inputLabel.style.marginBottom = '10px';
+    inputLabel.style.fontSize = '16px';
+    content.appendChild(inputLabel);
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.maxLength = '15';
+    input.style.width = '100%';
+    input.style.padding = '10px';
+    input.style.fontSize = '16px';
+    input.style.fontFamily = 'Courier New, monospace';
+    input.style.border = '2px solid #fff';
+    input.style.backgroundColor = '#000';
+    input.style.color = '#fff';
+    input.style.marginBottom = '20px';
+    input.style.textAlign = 'center';
+    input.placeholder = 'Enter name...';
+    content.appendChild(input);
+
+    // Submit button
+    const submitBtn = document.createElement('button');
+    submitBtn.textContent = 'SAVE SCORE';
+    submitBtn.style.backgroundColor = '#FFD700';
+    submitBtn.style.color = '#000';
+    submitBtn.style.border = 'none';
+    submitBtn.style.padding = '12px 24px';
+    submitBtn.style.fontSize = '16px';
+    submitBtn.style.fontFamily = 'Courier New, monospace';
+    submitBtn.style.fontWeight = 'bold';
+    submitBtn.style.cursor = 'pointer';
+    submitBtn.style.marginRight = '10px';
+    content.appendChild(submitBtn);
+
+    // Cancel button
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'CANCEL';
+    cancelBtn.style.backgroundColor = '#666';
+    cancelBtn.style.color = '#fff';
+    cancelBtn.style.border = 'none';
+    cancelBtn.style.padding = '12px 24px';
+    cancelBtn.style.fontSize = '16px';
+    cancelBtn.style.fontFamily = 'Courier New, monospace';
+    cancelBtn.style.cursor = 'pointer';
+    content.appendChild(cancelBtn);
+
+    // Event handlers
+    const handleSubmit = () => {
+      const username = input.value.trim();
+      if (username) {
+        addHighScore(username, score);
+        modal.remove();
+        showHighScores();
+      }
+    };
+
+    const handleCancel = () => {
+      modal.remove();
+    };
+
+    submitBtn.addEventListener('click', handleSubmit);
+    cancelBtn.addEventListener('click', handleCancel);
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        handleSubmit();
+      }
+    });
+
+    // Focus input
+    input.focus();
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+  }
+
+  function showHighScores() {
+    const highScores = loadHighScores();
+    
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.id = 'high-scores-modal';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    modal.style.zIndex = '20000';
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    modal.style.fontFamily = 'Courier New, monospace';
+
+    // Create modal content
+    const content = document.createElement('div');
+    content.style.backgroundColor = '#000';
+    content.style.border = '3px solid #fff';
+    content.style.padding = '30px';
+    content.style.borderRadius = '10px';
+    content.style.textAlign = 'center';
+    content.style.maxWidth = '500px';
+    content.style.width = '90%';
+
+    // Title
+    const title = document.createElement('h2');
+    title.textContent = 'HIGH SCORES';
+    title.style.color = '#FFD700';
+    title.style.marginBottom = '20px';
+    title.style.fontSize = '24px';
+    content.appendChild(title);
+
+    if (highScores.length === 0) {
+      const noScores = document.createElement('p');
+      noScores.textContent = 'No high scores yet!';
+      noScores.style.color = '#fff';
+      noScores.style.fontSize = '16px';
+      content.appendChild(noScores);
+    } else {
+      // Create scores list
+      const scoresList = document.createElement('div');
+      scoresList.style.textAlign = 'left';
+      scoresList.style.marginBottom = '20px';
+
+      highScores.forEach((score, index) => {
+        const scoreRow = document.createElement('div');
+        scoreRow.style.display = 'flex';
+        scoreRow.style.justifyContent = 'space-between';
+        scoreRow.style.padding = '8px 0';
+        scoreRow.style.borderBottom = '1px solid #333';
+        scoreRow.style.color = '#fff';
+        scoreRow.style.fontSize = '14px';
+
+        const rank = document.createElement('span');
+        rank.textContent = `${index + 1}.`;
+        rank.style.width = '30px';
+        rank.style.color = index === 0 ? '#FFD700' : '#fff';
+        scoreRow.appendChild(rank);
+
+        const name = document.createElement('span');
+        name.textContent = score.username;
+        name.style.flex = '1';
+        name.style.textAlign = 'left';
+        name.style.paddingLeft = '10px';
+        scoreRow.appendChild(name);
+
+        const scoreValue = document.createElement('span');
+        scoreValue.textContent = score.score;
+        scoreValue.style.textAlign = 'right';
+        scoreValue.style.fontWeight = 'bold';
+        scoreRow.appendChild(scoreValue);
+
+        scoresList.appendChild(scoreRow);
+      });
+
+      content.appendChild(scoresList);
+    }
+
+    // Close button
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = 'CLOSE';
+    closeBtn.style.backgroundColor = '#FFD700';
+    closeBtn.style.color = '#000';
+    closeBtn.style.border = 'none';
+    closeBtn.style.padding = '12px 24px';
+    closeBtn.style.fontSize = '16px';
+    closeBtn.style.fontFamily = 'Courier New, monospace';
+    closeBtn.style.fontWeight = 'bold';
+    closeBtn.style.cursor = 'pointer';
+    closeBtn.addEventListener('click', () => modal.remove());
+    content.appendChild(closeBtn);
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+  }
   
   // Duck species (classic Duck Hunt color palettes)
   const duckSpecies = [
@@ -560,8 +837,90 @@
     mediaQuery.addListener(handleMobileLayout);
     handleMobileLayout(mediaQuery); // Initial check
 
-    scoreDisplay.textContent = 'Ducks: 0';
+    scoreDisplay.textContent = 'Score: 0';
     document.body.appendChild(scoreDisplay);
+
+    // Add high scores button
+    const highScoresBtn = document.createElement('button');
+    highScoresBtn.id = 'high-scores-btn';
+    highScoresBtn.textContent = '🏆 High Scores';
+    highScoresBtn.style.position = 'fixed';
+    highScoresBtn.style.top = '60px';
+    highScoresBtn.style.right = '80px';
+    highScoresBtn.style.background = 'rgba(0, 0, 0, 0.7)';
+    highScoresBtn.style.color = '#FFD700';
+    highScoresBtn.style.border = '2px solid #FFD700';
+    highScoresBtn.style.padding = '8px 12px';
+    highScoresBtn.style.borderRadius = '20px';
+    highScoresBtn.style.fontSize = '14px';
+    highScoresBtn.style.fontFamily = 'Arial, sans-serif';
+    highScoresBtn.style.fontWeight = 'bold';
+    highScoresBtn.style.zIndex = '10000';
+    highScoresBtn.style.cursor = 'pointer';
+    highScoresBtn.style.display = 'none'; // Initially hidden
+
+    // Add responsive positioning for high scores button
+    function handleHighScoresMobileLayout(e) {
+        if (e.matches) {
+            // Mobile layout
+            highScoresBtn.style.top = '110px'; // Move below the score display
+            highScoresBtn.style.right = '10px';
+        } else {
+            // Desktop layout
+            highScoresBtn.style.top = '60px';
+            highScoresBtn.style.right = '80px';
+        }
+    }
+    mediaQuery.addListener(handleHighScoresMobileLayout);
+    handleHighScoresMobileLayout(mediaQuery); // Initial check
+
+    highScoresBtn.addEventListener('click', showHighScores);
+    document.body.appendChild(highScoresBtn);
+
+    // Add end game button
+    const endGameBtn = document.createElement('button');
+    endGameBtn.id = 'end-game-btn';
+    endGameBtn.textContent = '🏁 End Game';
+    endGameBtn.style.position = 'fixed';
+    endGameBtn.style.top = '100px';
+    endGameBtn.style.right = '80px';
+    endGameBtn.style.background = 'rgba(0, 0, 0, 0.7)';
+    endGameBtn.style.color = '#FF6B6B';
+    endGameBtn.style.border = '2px solid #FF6B6B';
+    endGameBtn.style.padding = '8px 12px';
+    endGameBtn.style.borderRadius = '20px';
+    endGameBtn.style.fontSize = '14px';
+    endGameBtn.style.fontFamily = 'Arial, sans-serif';
+    endGameBtn.style.fontWeight = 'bold';
+    endGameBtn.style.zIndex = '10000';
+    endGameBtn.style.cursor = 'pointer';
+    endGameBtn.style.display = 'none'; // Initially hidden
+
+    // Add responsive positioning for end game button
+    function handleEndGameMobileLayout(e) {
+        if (e.matches) {
+            // Mobile layout
+            endGameBtn.style.top = '150px'; // Move below the high scores button
+            endGameBtn.style.right = '10px';
+        } else {
+            // Desktop layout
+            endGameBtn.style.top = '100px';
+            endGameBtn.style.right = '80px';
+        }
+    }
+    mediaQuery.addListener(handleEndGameMobileLayout);
+    handleEndGameMobileLayout(mediaQuery); // Initial check
+
+    endGameBtn.addEventListener('click', () => {
+        endGameSession();
+        // Reset score for new game
+        score = 0;
+        updateScore();
+        // Hide buttons
+        endGameBtn.style.display = 'none';
+        highScoresBtn.style.display = 'none';
+    });
+    document.body.appendChild(endGameBtn);
     
     // Add to document
     document.body.appendChild(gameContainer);
@@ -1023,8 +1382,38 @@
   // Update score display
   function updateScore() {
     const scoreDisplay = document.getElementById('duck-score');
+    const highScoresBtn = document.getElementById('high-scores-btn');
+    const endGameBtn = document.getElementById('end-game-btn');
+    
     if (scoreDisplay) {
       scoreDisplay.textContent = `Score: ${score}`;
+      
+      // Show buttons when score is greater than 0
+      if (score > 0) {
+        if (highScoresBtn) {
+          highScoresBtn.style.display = 'block';
+        }
+        if (endGameBtn) {
+          endGameBtn.style.display = 'block';
+        }
+      }
+    }
+  }
+
+  // Check if current score is a high score
+  function checkForHighScore() {
+    if (score > 0 && isHighScore(score)) {
+      // Add a small delay to let the user see their final score
+      setTimeout(() => {
+        showHighScorePrompt();
+      }, 1000);
+    }
+  }
+
+  // End game session and check for high score
+  function endGameSession() {
+    if (score > 0) {
+      checkForHighScore();
     }
   }
   
@@ -1552,10 +1941,20 @@
     // Clear the ducks array
     ducks = [];
     
-    // Hide the score display
+    // Hide the score display and buttons
     const scoreDisplay = document.getElementById('duck-score');
     if (scoreDisplay) {
       scoreDisplay.style.display = 'none';
+    }
+    
+    const highScoresBtn = document.getElementById('high-scores-btn');
+    if (highScoresBtn) {
+      highScoresBtn.style.display = 'none';
+    }
+    
+    const endGameBtn = document.getElementById('end-game-btn');
+    if (endGameBtn) {
+      endGameBtn.style.display = 'none';
     }
     
     // Reset score
