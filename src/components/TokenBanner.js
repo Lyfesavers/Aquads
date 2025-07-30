@@ -77,8 +77,8 @@ const TokenBanner = () => {
     try {
       let allTokens = [];
       
-      // Fetch more pages from GeckoTerminal to get 100+ trending tokens for better chain distribution
-      for (let page = 1; page <= 5; page++) {
+      // Fetch multiple pages from GeckoTerminal to get 50+ trending tokens
+      for (let page = 1; page <= 3; page++) {
         const response = await fetch(`https://api.geckoterminal.com/api/v2/networks/trending_pools?page=${page}`);
         
         if (!response.ok) {
@@ -151,13 +151,13 @@ const TokenBanner = () => {
         allTokens = allTokens.concat(validTokens);
         
         // Add delay between pages to respect rate limits
-        if (page < 5) {
+        if (page < 3) {
           await new Promise(resolve => setTimeout(resolve, 100));
         }
       }
 
-      // Take top 100 tokens in original trending order for better chain distribution
-      const finalTokens = allTokens.slice(0, 100);
+      // Take top 50 tokens in original trending order
+      const finalTokens = allTokens.slice(0, 50);
       logger.info(`Fetched ${finalTokens.length} trending tokens from GeckoTerminal`);
       setTokens(finalTokens);
 
@@ -188,26 +188,6 @@ const TokenBanner = () => {
     }
     return tokens.filter(token => token.chain === selectedChain);
   }, [tokens, selectedChain]);
-
-  // Group tokens by chain and get top 10 for each
-  const tokensByChain = useMemo(() => {
-    const grouped = {};
-    tokens.forEach(token => {
-      if (!grouped[token.chain]) {
-        grouped[token.chain] = [];
-      }
-      grouped[token.chain].push(token);
-    });
-    
-    // Sort each chain's tokens by rank and take top 10
-    Object.keys(grouped).forEach(chain => {
-      grouped[chain] = grouped[chain]
-        .sort((a, b) => a.rank - b.rank)
-        .slice(0, 10);
-    });
-    
-    return grouped;
-  }, [tokens]);
 
   if (loading) {
     return (
@@ -298,11 +278,11 @@ const TokenBanner = () => {
                     className="bg-gray-800/50 border border-gray-600/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200"
                   >
                     <option value="all" className="bg-gray-800 text-white">
-                      All Chains - Top 10 Each
+                      All Chains ({tokens.length})
                     </option>
                     {uniqueChains.map(chain => (
                       <option key={chain} value={chain} className="bg-gray-800 text-white">
-                        {chain} - Top 10 ({tokensByChain[chain]?.length || 0})
+                        {chain} ({tokens.filter(token => token.chain === chain).length})
                       </option>
                     ))}
                   </select>
@@ -314,116 +294,50 @@ const TokenBanner = () => {
                 </div>
               </div>
 
-              {/* Show tokens by chain sections */}
-              {selectedChain === 'all' ? (
-                <div className="space-y-8">
-                  {Object.entries(tokensByChain).map(([chain, chainTokens]) => (
-                    <div key={chain} className="bg-gray-800/30 rounded-lg p-6 border border-gray-700/30">
-                      <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-xl font-bold text-blue-400 flex items-center gap-2">
-                          <span className="inline-flex items-center justify-center w-8 h-8 bg-blue-600/20 border border-blue-500/30 rounded text-sm font-bold text-blue-300">
-                            {chain}
-                          </span>
-                          {chain} - Top 10 Trending
-                        </h2>
-                        <span className="text-gray-400 text-sm">
-                          {chainTokens.length} tokens
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {filteredTokens.map((token, index) => (
+                  <Link
+                    key={`modal-${token.symbol}-${index}`}
+                    to={`/aquaswap?token=${token.poolAddress}&blockchain=${mapNetworkToBlockchain(token.chainId)}`}
+                    className="bg-gray-800/50 hover:bg-gray-700/50 border border-gray-600/30 rounded-lg p-4 transition-all duration-200 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/20"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-2">
+                        <span className="inline-flex items-center justify-center w-8 h-8 bg-green-600/20 border border-green-500/30 rounded text-sm font-bold text-green-300">
+                          #{token.rank}
+                        </span>
+                        <span className="inline-flex items-center justify-center w-12 h-8 bg-blue-600/20 border border-blue-500/30 rounded text-sm font-bold text-blue-300">
+                          {token.chain}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-lg text-white">{token.symbol}</span>
+                        <span className="text-gray-300 text-sm">{formatPrice(token.price)}</span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-sm">
+                        <span className={`${
+                          token.priceChange24h >= 0 
+                            ? 'text-green-400' 
+                            : 'text-red-400'
+                        } font-medium`}>
+                          {formatPercentage(token.priceChange24h)}
+                        </span>
+                        <span className="text-gray-400">
+                          MCap: {formatVolume(token.marketCap)}
                         </span>
                       </div>
                       
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                        {chainTokens.map((token, index) => (
-                          <Link
-                            key={`${chain}-${token.symbol}-${index}`}
-                            to={`/aquaswap?token=${token.poolAddress}&blockchain=${mapNetworkToBlockchain(token.chainId)}`}
-                            className="bg-gray-800/50 hover:bg-gray-700/50 border border-gray-600/30 rounded-lg p-4 transition-all duration-200 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/20"
-                          >
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center space-x-2">
-                                <span className="inline-flex items-center justify-center w-8 h-8 bg-green-600/20 border border-green-500/30 rounded text-sm font-bold text-green-300">
-                                  #{token.rank}
-                                </span>
-                                <span className="inline-flex items-center justify-center w-12 h-8 bg-blue-600/20 border border-blue-500/30 rounded text-sm font-bold text-blue-300">
-                                  {token.chain}
-                                </span>
-                              </div>
-                            </div>
-                            
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between">
-                                <span className="font-bold text-lg text-white">{token.symbol}</span>
-                                <span className="text-gray-300 text-sm">{formatPrice(token.price)}</span>
-                              </div>
-                              
-                              <div className="flex items-center justify-between text-sm">
-                                <span className={`${
-                                  token.priceChange24h >= 0 
-                                    ? 'text-green-400' 
-                                    : 'text-red-400'
-                                } font-medium`}>
-                                  {formatPercentage(token.priceChange24h)}
-                                </span>
-                                <span className="text-gray-400">
-                                  MCap: {formatVolume(token.marketCap)}
-                                </span>
-                              </div>
-                              
-                              <div className="text-xs text-gray-500">
-                                Volume: {formatVolume(token.volume24h)}
-                              </div>
-                            </div>
-                          </Link>
-                        ))}
+                      <div className="text-xs text-gray-500">
+                        Volume: {formatVolume(token.volume24h)}
                       </div>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {filteredTokens.map((token, index) => (
-                    <Link
-                      key={`modal-${token.symbol}-${index}`}
-                      to={`/aquaswap?token=${token.poolAddress}&blockchain=${mapNetworkToBlockchain(token.chainId)}`}
-                      className="bg-gray-800/50 hover:bg-gray-700/50 border border-gray-600/30 rounded-lg p-4 transition-all duration-200 hover:border-blue-500/50 hover:shadow-lg hover:shadow-blue-500/20"
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center space-x-2">
-                          <span className="inline-flex items-center justify-center w-8 h-8 bg-green-600/20 border border-green-500/30 rounded text-sm font-bold text-green-300">
-                            #{token.rank}
-                          </span>
-                          <span className="inline-flex items-center justify-center w-12 h-8 bg-blue-600/20 border border-blue-500/30 rounded text-sm font-bold text-blue-300">
-                            {token.chain}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-lg text-white">{token.symbol}</span>
-                          <span className="text-gray-300 text-sm">{formatPrice(token.price)}</span>
-                        </div>
-                        
-                        <div className="flex items-center justify-between text-sm">
-                          <span className={`${
-                            token.priceChange24h >= 0 
-                              ? 'text-green-400' 
-                              : 'text-red-400'
-                          } font-medium`}>
-                            {formatPercentage(token.priceChange24h)}
-                          </span>
-                          <span className="text-gray-400">
-                            MCap: {formatVolume(token.marketCap)}
-                          </span>
-                        </div>
-                        
-                        <div className="text-xs text-gray-500">
-                          Volume: {formatVolume(token.volume24h)}
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
+                  </Link>
+                ))}
+              </div>
 
               {filteredTokens.length === 0 && (
                 <div className="text-center mt-8 text-gray-400">
