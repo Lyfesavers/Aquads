@@ -15,7 +15,8 @@ const requireEmailVerification = async (req, res, next) => {
     }
 
     // Check if user has an email and if it's verified (ALL users must verify)
-    if (user.email && !user.emailVerified) {
+    // Also require email verification for users without email (old accounts)
+    if (!user.email || !user.emailVerified) {
       return res.status(403).json({ 
         error: 'Email verification required',
         message: 'Please verify your email before accessing this feature. Check your inbox for the verification code.',
@@ -23,7 +24,7 @@ const requireEmailVerification = async (req, res, next) => {
       });
     }
 
-    // If user has no email or email is verified, proceed
+    // If user has verified email, proceed
     next();
   } catch (error) {
     console.error('Email verification middleware error:', error);
