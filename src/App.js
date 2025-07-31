@@ -1087,11 +1087,7 @@ function App() {
         return;
       }
 
-      const existingAd = ads.find(ad => ad.owner === currentUser.username);
-      if (existingAd && !currentUser.isAdmin) {
-        showNotification('You can only create one ad at a time!', 'error');
-        return;
-      }
+      // Removed the one ad per user limit - users can now create multiple ads
 
       // Calculate a safe position for the new ad
       const position = calculateSafePosition(getMaxSize(), windowSize.width, windowSize.height, ads);
