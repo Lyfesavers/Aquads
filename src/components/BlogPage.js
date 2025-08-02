@@ -73,7 +73,7 @@ const MarkdownRenderer = ({ content }) => {
   );
 };
 
-const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
+const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, onOpenDashboard }) => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -472,7 +472,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                           </button>
                           <button
                             onClick={() => {
-                              navigate('/marketplace');
+                              onOpenDashboard && onOpenDashboard();
                               setShowUserDropdown(false);
                             }}
                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
@@ -557,6 +557,15 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                     className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
                   >
                     Back to Main
+                  </button>
+                  <button
+                    onClick={() => {
+                      onOpenDashboard && onOpenDashboard();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
+                  >
+                    📊 Dashboard
                   </button>
                   <button
                     onClick={() => {
