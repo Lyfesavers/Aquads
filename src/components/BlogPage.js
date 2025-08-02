@@ -73,7 +73,7 @@ const MarkdownRenderer = ({ content }) => {
   );
 };
 
-const BlogPage = ({ currentUser }) => {
+const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -82,6 +82,22 @@ const BlogPage = ({ currentUser }) => {
   const [error, setError] = useState(null);
   const [relatedBlogs, setRelatedBlogs] = useState([]);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showUserDropdown && !event.target.closest('.user-dropdown')) {
+        setShowUserDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showUserDropdown]);
 
   // Extract blog ID from slug or URL params
   const blogId = extractBlogIdFromSlug(slug) || new URLSearchParams(location.search).get('blogId');
@@ -362,7 +378,224 @@ const BlogPage = ({ currentUser }) => {
         </script>
       </Helmet>
 
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      {/* Header Navigation */}
+      <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm z-[200000]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center">
+              <Link to="/" className="flex items-center">
+                <img 
+                  src="/Aquadsnewlogo.png" 
+                  alt="AQUADS" 
+                  className="w-auto filter drop-shadow-lg"
+                  style={{height: '2rem', filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))'}}
+                />
+              </Link>
+            </div>
+            
+            {/* Mobile menu button */}
+            <div className="md:hidden">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="text-gray-300 hover:text-white p-2"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  {isMobileMenuOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
+              </button>
+            </div>
+
+            {/* Desktop menu */}
+            <div className="hidden md:flex items-center space-x-3">
+              {/* Main Navigation - Smaller buttons */}
+              <Link
+                to="/marketplace"
+                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
+              >
+                Freelancer
+              </Link>
+              <Link
+                to="/games"
+                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
+              >
+                Games
+              </Link>
+              <Link
+                to="/crypto-ads"
+                className="bg-gradient-to-r from-green-500/80 to-emerald-600/80 hover:from-green-600/80 hover:to-emerald-700/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
+              >
+                Paid Ads
+              </Link>
+              <Link
+                to="/how-to"
+                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
+              >
+                Learn
+              </Link>
+              <Link
+                to="/project-info"
+                className="bg-gradient-to-r from-purple-500/80 to-pink-600/80 hover:from-purple-600/80 hover:to-pink-700/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
+              >
+                Why List?
+              </Link>
+
+              {currentUser ? (
+                <>
+                  {/* User Dropdown */}
+                  <div className="relative user-dropdown">
+                    <button 
+                      onClick={() => setShowUserDropdown(!showUserDropdown)}
+                      className="flex items-center bg-blue-500/80 hover:bg-blue-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                    >
+                      <span className="mr-1">{currentUser.username}</span>
+                      <svg className={`w-4 h-4 ml-1 transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                    
+                    {/* Dropdown Menu */}
+                    {showUserDropdown && (
+                      <div className="absolute right-0 mt-2 w-48 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 z-50">
+                        <div className="py-2">
+                          <button
+                            onClick={() => {
+                              navigate('/');
+                              setShowUserDropdown(false);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
+                          >
+                            🏠 Back to Main
+                          </button>
+                          <button
+                            onClick={() => {
+                              navigate('/marketplace');
+                              setShowUserDropdown(false);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
+                          >
+                            📊 Dashboard
+                          </button>
+                          <hr className="my-2 border-gray-700" />
+                          <button
+                            onClick={() => {
+                              onLogout();
+                              setShowUserDropdown(false);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-red-600/50 transition-colors"
+                          >
+                            🚪 Logout
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => onLogin && onLogin()}
+                    className="bg-blue-500/80 hover:bg-blue-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                  >
+                    Login
+                  </button>
+                  <button
+                    onClick={() => onCreateAccount && onCreateAccount()}
+                    className="bg-green-500/80 hover:bg-green-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
+                  >
+                    Create Account
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Mobile menu */}
+          <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden py-2 z-[200000] relative`}>
+            <div className="flex flex-col space-y-2">
+              <Link
+                to="/marketplace"
+                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+              >
+                Freelancer Hub
+              </Link>
+              <Link
+                to="/games"
+                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+              >
+                GameHub
+              </Link>
+              <Link
+                to="/crypto-ads"
+                className="bg-gradient-to-r from-green-500/80 to-emerald-600/80 hover:from-green-600/80 hover:to-emerald-700/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+              >
+                Paid Ads
+              </Link>
+              <Link
+                to="/how-to"
+                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+              >
+                Learn
+              </Link>
+              <Link
+                to="/project-info"
+                className="bg-gradient-to-r from-purple-500/80 to-pink-600/80 hover:from-purple-600/80 hover:to-pink-700/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+              >
+                Why List?
+              </Link>
+              {currentUser ? (
+                <>
+                  <span className="text-blue-300 text-center">Welcome, {currentUser.username}!</span>
+                  <button
+                    onClick={() => {
+                      navigate('/');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                  >
+                    Back to Main
+                  </button>
+                  <button
+                    onClick={() => {
+                      onLogout();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="bg-red-500/80 hover:bg-red-600/80 px-4 py-2 rounded shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => {
+                      onLogin && onLogin();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                  >
+                    Login
+                  </button>
+                  <button
+                    onClick={() => {
+                      onCreateAccount && onCreateAccount();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="bg-green-500/80 hover:bg-green-600/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
+                  >
+                    Create Account
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <div className="container mx-auto px-4 py-8 max-w-4xl pt-20">
         {/* Navigation */}
         <nav className="mb-8">
           <Link
