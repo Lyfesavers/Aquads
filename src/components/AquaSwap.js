@@ -238,7 +238,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
             url: pair.url
           }));
 
-        console.log('Search results processed:', processedResults); // Debug log
         setSearchResults(processedResults);
       } else {
         setSearchResults([]);
@@ -271,10 +270,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
   // Handle search result selection
   const handleSearchResultSelect = (result) => {
-    console.log('Selected token full data:', result); // Debug log
-    console.log('Selected token pairAddress:', result.pairAddress); // Debug log
-    console.log('Selected token chainId:', result.chainId); // Debug log
-    
     // Map DEXScreener chainId to our internal chain format
     const chainMapping = {
       'ethereum': 'ether',
@@ -320,11 +315,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     };
     
     const mappedChain = chainMapping[result.chainId] || 'ether';
-    console.log('Chain mapping:', { original: result.chainId, mapped: mappedChain }); // Debug log
     
     // Set all required state for chart loading
-    console.log('Setting tokenSearch to:', result.pairAddress); // Debug log
-    console.log('Setting selectedChain to:', mappedChain); // Debug log
     setTokenSearch(result.pairAddress);
     setSearchInput(result.pairAddress); // Also update the search input to show the selected address
     setSelectedChain(mappedChain);
@@ -335,7 +327,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     // Force chart to load by ensuring the ref exists and triggering a re-render
     setTimeout(() => {
       if (dexScreenerRef.current && result.pairAddress) {
-        console.log('Loading chart for:', result.pairAddress); // Debug log
         // Force the useEffect to run by triggering a state change
         setTokenSearch(prev => {
           if (prev !== result.pairAddress) {
@@ -355,17 +346,13 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   // Handle click outside to close search results
   useEffect(() => {
     const handleClickOutside = (event) => {
-      console.log('Click outside detected:', event.target); // Debug log
-      
       // Check if the click is on a search result button
       const isSearchResultClick = event.target.closest('.search-result-item');
       if (isSearchResultClick) {
-        console.log('Click is on search result, not closing'); // Debug log
         return; // Don't close if clicking on search result
       }
       
       if (searchInputRef.current && !searchInputRef.current.contains(event.target)) {
-        console.log('Closing search results'); // Debug log
         // Add a small delay to ensure button clicks are processed first
         setTimeout(() => {
           setShowSearchResults(false);
@@ -545,21 +532,12 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
   // Load DEXScreener widget with improved reliability
   useEffect(() => {
-    console.log('DEXScreener useEffect triggered:', { chartProvider, tokenSearch, hasRef: !!dexScreenerRef.current }); // Debug log
-    
     if (chartProvider === 'dexscreener' && dexScreenerRef.current && tokenSearch.trim()) {
       // Validate that tokenSearch looks like a valid pair address
       const isValidPairAddress = /^0x[a-fA-F0-9]{40}$/.test(tokenSearch.trim()) || 
                                 /^[A-Za-z0-9]{32,44}$/.test(tokenSearch.trim());
       
-      console.log('DEXScreener validation:', {
-        tokenSearch: tokenSearch.trim(),
-        isValidPairAddress,
-        length: tokenSearch.trim().length
-      }); // Debug log
-      
       if (!isValidPairAddress) {
-        console.log('Invalid pair address, showing error'); // Debug log
         dexScreenerRef.current.innerHTML = `
           <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: rgba(0, 0, 0, 0.2); border-radius: 8px; color: #9ca3af;">
             <div style="font-size: 2rem; margin-bottom: 16px;">⚠️</div>
@@ -672,17 +650,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       // Build DEXScreener embed URL with dark theme and embed mode
       const widgetUrl = `https://dexscreener.com/${dexScreenerChain}/${tokenSearch.trim()}?theme=dark&embed=1`;
       
-      console.log('DEXScreener URL construction:', {
-        selectedChain,
-        dexScreenerChain,
-        tokenSearch: tokenSearch.trim(),
-        tokenSearchLength: tokenSearch.trim().length,
-        widgetUrl
-      }); // Debug log
-      
       // Add error handling for iframe loading
       iframe.onload = () => {
-        console.log('DEXScreener iframe loaded successfully'); // Debug log
         // Chart loaded successfully
         if (dexScreenerRef.current) {
           const loadingDiv = dexScreenerRef.current.querySelector('div');
@@ -693,7 +662,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       };
       
       iframe.onerror = () => {
-        console.log('DEXScreener iframe failed to load'); // Debug log
         // Handle iframe loading error
         if (dexScreenerRef.current) {
           dexScreenerRef.current.innerHTML = `
@@ -1247,15 +1215,11 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                             </div>
                           ) : searchResults.length > 0 ? (
                             <div className="search-results-list">
-                              {console.log('Rendering search results:', searchResults)} {/* Debug log */}
                               {searchResults.map((result) => (
                                 <button
                                   key={result.id}
                                   className="search-result-item"
-                                  onClick={() => {
-                                    console.log('Search result button clicked!'); // Debug log
-                                    handleSearchResultSelect(result);
-                                  }}
+                                  onClick={() => handleSearchResultSelect(result)}
                                 >
                                   <div className="result-token-info">
                                     {result.logo && (
