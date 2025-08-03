@@ -27,9 +27,16 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   const [showEmbedCode, setShowEmbedCode] = useState(false);
   const [popularTokens, setPopularTokens] = useState(FALLBACK_TOKEN_EXAMPLES);
   const [isSwapCollapsed, setIsSwapCollapsed] = useState(false);
+  
+  // New state for enhanced search functionality
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [searchTimeout, setSearchTimeout] = useState(null);
 
   const tradingViewRef = useRef(null);
   const dexScreenerRef = useRef(null);
+  const searchInputRef = useRef(null);
 
   // Initialize on component mount
   useEffect(() => {
@@ -175,6 +182,116 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     
     return mappedChain;
   };
+
+  // Enhanced search functionality
+  const searchTokens = async (searchTerm) => {
+    if (!searchTerm.trim() || searchTerm.length < 2) {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      return;
+    }
+
+    setIsSearching(true);
+    setShowSearchResults(true);
+
+    try {
+      // Check if it's a valid pair address (starts with 0x or is a valid format)
+      const isPairAddress = /^0x[a-fA-F0-9]{40}$/.test(searchTerm) || 
+                           /^[A-Za-z0-9]{32,44}$/.test(searchTerm);
+
+      if (isPairAddress) {
+        // If it's a pair address, just set it directly
+        setTokenSearch(searchTerm);
+        setShowSearchResults(false);
+        setIsSearching(false);
+        return;
+      }
+
+      // Search by token name using DEXScreener API
+      const response = await fetch(`https://api.dexscreener.com/latest/dex/search?q=${encodeURIComponent(searchTerm)}`);
+      
+      if (!response.ok) {
+        throw new Error('Search failed');
+      }
+
+      const data = await response.json();
+      
+      if (data.pairs && Array.isArray(data.pairs)) {
+        // Process and filter results
+        const processedResults = data.pairs
+          .filter(pair => pair.pairAddress && pair.baseToken && pair.quoteToken)
+          .slice(0, 10) // Limit to top 10 results
+          .map(pair => ({
+            id: `${pair.chainId}-${pair.pairAddress}`,
+            name: pair.baseToken.name,
+            symbol: pair.baseToken.symbol,
+            pairAddress: pair.pairAddress,
+            chainId: pair.chainId,
+            dexId: pair.dexId,
+            priceUsd: pair.priceUsd,
+            volume24h: pair.volume?.h24 || 0,
+            liquidityUsd: pair.liquidity?.usd || 0,
+            priceChange24h: pair.priceChange?.h24 || 0,
+            logo: pair.info?.imageUrl,
+            url: pair.url
+          }));
+
+        setSearchResults(processedResults);
+      } else {
+        setSearchResults([]);
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Handle search input changes with debouncing
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setTokenSearch(value);
+    
+    // Clear existing timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
+    // Set new timeout for debounced search
+    const timeout = setTimeout(() => {
+      searchTokens(value);
+    }, 300); // 300ms delay
+    
+    setSearchTimeout(timeout);
+  };
+
+  // Handle search result selection
+  const handleSearchResultSelect = (result) => {
+    setTokenSearch(result.pairAddress);
+    setSelectedChain(getChainForBlockchain(result.chainId));
+    setShowSearchResults(false);
+    setSearchResults([]);
+    
+    // Focus back to input
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  };
+
+  // Handle click outside to close search results
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchInputRef.current && !searchInputRef.current.contains(event.target)) {
+        setShowSearchResults(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Load TradingView Professional Trading Widget with Maximum Features
   useEffect(() => {
@@ -990,14 +1107,72 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                   </div>
                   
                   <div className="token-search">
-                    <label className="search-label">Pair Address:</label>
-                    <input
-                      type="text"
-                      value={tokenSearch}
-                      onChange={(e) => setTokenSearch(e.target.value)}
-                      placeholder="Pair address"
-                      className="token-search-input"
-                    />
+                    <label className="search-label">Search Tokens:</label>
+                    <div className="search-input-container">
+                      <input
+                        type="text"
+                        value={tokenSearch}
+                        onChange={handleSearchChange}
+                        placeholder="Search by token name (e.g., bitcoin, pepe) or pair address"
+                        className="token-search-input"
+                        ref={searchInputRef}
+                      />
+                      
+                      {/* Search Results Dropdown */}
+                      {showSearchResults && (
+                        <div className="search-results-dropdown">
+                          {isSearching ? (
+                            <div className="search-loading">
+                              <div className="loading-spinner"></div>
+                              <span>Searching...</span>
+                            </div>
+                          ) : searchResults.length > 0 ? (
+                            <div className="search-results-list">
+                              {searchResults.map((result) => (
+                                <button
+                                  key={result.id}
+                                  className="search-result-item"
+                                  onClick={() => handleSearchResultSelect(result)}
+                                >
+                                  <div className="result-token-info">
+                                    {result.logo && (
+                                      <img 
+                                        src={result.logo} 
+                                        alt={result.name}
+                                        className="result-token-logo"
+                                        onError={(e) => {
+                                          e.target.style.display = 'none';
+                                        }}
+                                      />
+                                    )}
+                                    <div className="result-token-details">
+                                      <div className="result-token-name">
+                                        {result.name} ({result.symbol})
+                                      </div>
+                                      <div className="result-token-chain">
+                                        {result.dexId} on {result.chainId}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="result-token-price">
+                                    <div className="price-usd">
+                                      ${parseFloat(result.priceUsd || 0).toFixed(6)}
+                                    </div>
+                                    <div className={`price-change ${parseFloat(result.priceChange24h || 0) >= 0 ? 'positive' : 'negative'}`}>
+                                      {parseFloat(result.priceChange24h || 0).toFixed(2)}%
+                                    </div>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          ) : tokenSearch.length >= 2 ? (
+                            <div className="search-no-results">
+                              <span>No tokens found for "{tokenSearch}"</span>
+                            </div>
+                          ) : null}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
