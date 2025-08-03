@@ -1408,7 +1408,11 @@ function App() {
 
   // Add sentiment voting function
   const handleSentimentVote = async (adId, voteType) => {
-    if (!requireAuth()) return;
+    if (!currentUser) {
+      showNotification('Please log in to vote', 'info');
+      setShowLoginModal(true);
+      return;
+    }
     
     try {
       const response = await fetch(`${API_URL}/ads/${adId}/vote`, {
@@ -3039,15 +3043,13 @@ function App() {
                               }}
                               onClick={(e) => {
                                 if (!e.defaultPrevented) {
-                                  if (requireAuth()) {
-                                    // Check if ad has pairAddress or contractAddress for token chart
-                                    const tokenAddress = ad.pairAddress || ad.contractAddress;
-                                    if (tokenAddress && tokenAddress.trim()) {
-                                      const blockchain = ad.blockchain || 'ethereum';
-                                      window.location.href = `/aquaswap?token=${encodeURIComponent(tokenAddress.trim())}&blockchain=${encodeURIComponent(blockchain)}`;
-                                    }
-                                    // If no pair/contract address, do nothing (no redirect)
+                                  // Check if ad has pairAddress or contractAddress for token chart
+                                  const tokenAddress = ad.pairAddress || ad.contractAddress;
+                                  if (tokenAddress && tokenAddress.trim()) {
+                                    const blockchain = ad.blockchain || 'ethereum';
+                                    window.location.href = `/aquaswap?token=${encodeURIComponent(tokenAddress.trim())}&blockchain=${encodeURIComponent(blockchain)}`;
                                   }
+                                  // If no pair/contract address, do nothing (no redirect)
                                 }
                               }}
                             >
@@ -3087,6 +3089,10 @@ function App() {
                                     if (requireAuth()) {
                                       setSelectedAdId(ad.id);
                                       setShowBumpStore(true);
+                                    } else {
+                                      // Show login prompt for bump store access
+                                      showNotification('Please log in to access the bump store', 'info');
+                                      setShowLoginModal(true);
                                     }
                                   }}
                                 >
