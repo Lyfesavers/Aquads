@@ -77,9 +77,10 @@ const TokenBanner = () => {
     try {
       let allTokens = [];
       
-      // Fetch multiple pages from GeckoTerminal to get 50+ trending tokens
+      // Use the correct GeckoTerminal API endpoint for trending tokens
+      // Fetch multiple pages to get 50+ trending tokens
       for (let page = 1; page <= 3; page++) {
-        const response = await fetch(`https://api.geckoterminal.com/api/v2/networks/trending_pools?page=${page}`);
+        const response = await fetch(`https://api.geckoterminal.com/api/v2/networks/trending_pools?page=${page}&include=base_token,quote_token`);
         
         if (!response.ok) {
           logger.warn(`Failed to fetch page ${page}: ${response.status}`);
@@ -94,15 +95,37 @@ const TokenBanner = () => {
           break;
         }
 
-        // Process tokens from this page
+        // Process tokens from this page with improved data extraction
         const pageTokens = data.data.map((pool, index) => {
           const attrs = pool.attributes || {};
           
-          // Extract token symbol from pool name (e.g., "PENGU / SOL" -> "PENGU")
-          const poolName = attrs.name || '';
-          const tokenSymbol = poolName.split(' / ')[0] || poolName.split('/')[0] || 'TOKEN';
-          const tokenName = tokenSymbol; // Use symbol as name since we don't have full token data
-          const networkId = pool.relationships?.network?.data?.id || 'unknown';
+          // Get base token information from included data if available
+          let tokenSymbol = '';
+          let tokenName = '';
+          let networkId = pool.relationships?.network?.data?.id || 'unknown';
+          
+          // Try to get token info from included base_token data
+          if (data.included) {
+            const baseToken = data.included.find(item => 
+              item.type === 'base_token' && 
+              item.id === pool.relationships?.base_token?.data?.id
+            );
+            
+            if (baseToken) {
+              const baseTokenAttrs = baseToken.attributes || {};
+              tokenSymbol = baseTokenAttrs.symbol || '';
+              tokenName = baseTokenAttrs.name || '';
+            }
+          }
+          
+          // Fallback to pool name extraction if no base token data
+          if (!tokenSymbol || !tokenName) {
+            const poolName = attrs.name || '';
+            // Improved token symbol extraction - look for the first token before any separator
+            const symbolMatch = poolName.match(/^([A-Za-z0-9$_-]+)/);
+            tokenSymbol = symbolMatch ? symbolMatch[1] : 'TOKEN';
+            tokenName = tokenSymbol;
+          }
           
           // Format chain name for display
           const formatChain = (chain) => {
@@ -118,7 +141,8 @@ const TokenBanner = () => {
               'optimism': 'OP',
               'fantom': 'FTM',
               'sui': 'SUI',
-              'ton': 'TON'
+              'ton': 'TON',
+              'ronin': 'RONIN'
             };
             return chainMap[chain] || chain.toUpperCase().slice(0, 4);
           };
@@ -130,7 +154,7 @@ const TokenBanner = () => {
             price: parseFloat(attrs.base_token_price_usd) || 0,
             priceChange24h: parseFloat(attrs.price_change_percentage?.h24) || 0,
             marketCap: parseFloat(attrs.fdv_usd) || parseFloat(attrs.market_cap_usd) || 0,
-            chain: formatChain(networkId), // Show chain instead of logo
+            chain: formatChain(networkId),
             rank: (page - 1) * 20 + index + 1,
             chainId: networkId,
             volume24h: parseFloat(attrs.volume_usd?.h24) || 0,
@@ -138,15 +162,23 @@ const TokenBanner = () => {
           };
         });
 
-        // Filter valid tokens and add to our collection
+        // Enhanced validation to filter out invalid tokens
         const validTokens = pageTokens.filter(token => 
           token.symbol && 
           token.symbol !== 'TOKEN' && 
           token.symbol.length > 0 && 
-          token.symbol.length <= 15 && // Allow longer symbols for some tokens
-          /^[A-Za-z0-9$_-]+$/.test(token.symbol) && // Allow common token symbol characters
-          token.price > 0 // Must have a valid price
+          token.symbol.length <= 15 &&
+          /^[A-Za-z0-9$_-]+$/.test(token.symbol) && // Only allow valid token symbol characters
+          token.price > 0 && // Must have a valid price
+          !token.symbol.toLowerCase().includes('coin') && // Filter out generic "coin" tokens
+          !token.symbol.toLowerCase().includes('token') && // Filter out generic "token" names
+          token.symbol.length >= 2 // Minimum symbol length
         );
+
+        // Log filtered tokens for debugging
+        if (validTokens.length > 0) {
+          logger.info(`Page ${page} valid tokens:`, validTokens.map(t => `${t.symbol} (${t.chain})`));
+        }
 
         allTokens = allTokens.concat(validTokens);
         
@@ -163,6 +195,38 @@ const TokenBanner = () => {
 
     } catch (error) {
       logger.error('Error fetching GeckoTerminal trending tokens:', error);
+      
+      // Fallback to CoinGecko trending API if GeckoTerminal fails
+      try {
+        logger.info('Attempting fallback to CoinGecko trending API...');
+        const coingeckoResponse = await fetch('https://api.coingecko.com/api/v3/search/trending');
+        
+        if (coingeckoResponse.ok) {
+          const coingeckoData = await coingeckoResponse.json();
+          
+          if (coingeckoData.coins && coingeckoData.coins.length > 0) {
+            const fallbackTokens = coingeckoData.coins.slice(0, 50).map((coin, index) => ({
+              id: `fallback_${index}`,
+              symbol: coin.item.symbol?.toUpperCase() || 'TOKEN',
+              name: coin.item.name || coin.item.symbol || 'Token',
+              price: coin.item.price_btc || 0,
+              priceChange24h: 0, // CoinGecko trending doesn't provide 24h change
+              marketCap: 0, // CoinGecko trending doesn't provide market cap
+              chain: 'TRENDING',
+              rank: index + 1,
+              chainId: 'trending',
+              volume24h: 0,
+              poolAddress: ''
+            }));
+            
+            logger.info(`Using ${fallbackTokens.length} fallback trending tokens from CoinGecko`);
+            setTokens(fallbackTokens);
+            return;
+          }
+        }
+      } catch (fallbackError) {
+        logger.error('Fallback API also failed:', fallbackError);
+      }
     } finally {
       setLoading(false);
     }
