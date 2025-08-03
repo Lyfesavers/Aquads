@@ -75,91 +75,91 @@ const TokenBanner = () => {
   // Memoize fetchTokens to prevent recreation
   const fetchTokens = useCallback(async () => {
     try {
-      // Fetch page 1 from GeckoTerminal - show exact tokens without filtering
-      const response = await fetch(`https://api.geckoterminal.com/api/v2/networks/trending_pools?page=1&include=base_token,quote_token`);
+      let allTokens = [];
       
-      if (!response.ok) {
-        logger.warn(`Failed to fetch GeckoTerminal trending: ${response.status}`);
-        return;
-      }
-
-      const data = await response.json();
-      logger.info(`GeckoTerminal Page 1 Response:`, data);
-
-      if (!data.data || data.data.length === 0) {
-        logger.warn(`No trending pools data`);
-        return;
-      }
-
-      // Process the first 50 tokens from page 1 without any filtering
-      const trendingTokens = data.data.slice(0, 50).map((pool, index) => {
-        const attrs = pool.attributes || {};
+      // Fetch multiple pages from GeckoTerminal to get 50+ trending tokens
+      for (let page = 1; page <= 3; page++) {
+        const response = await fetch(`https://api.geckoterminal.com/api/v2/networks/trending_pools?page=${page}`);
         
-        // Get base token information from included data if available
-        let tokenSymbol = '';
-        let tokenName = '';
-        let networkId = pool.relationships?.network?.data?.id || 'unknown';
-        
-        // Try to get token info from included base_token data
-        if (data.included) {
-          const baseToken = data.included.find(item => 
-            item.type === 'base_token' && 
-            item.id === pool.relationships?.base_token?.data?.id
-          );
+        if (!response.ok) {
+          logger.warn(`Failed to fetch page ${page}: ${response.status}`);
+          continue;
+        }
+
+        const data = await response.json();
+        logger.info(`GeckoTerminal Page ${page} Response:`, data);
+
+        if (!data.data || data.data.length === 0) {
+          logger.warn(`No data on page ${page}`);
+          break;
+        }
+
+        // Process tokens from this page
+        const pageTokens = data.data.map((pool, index) => {
+          const attrs = pool.attributes || {};
           
-          if (baseToken) {
-            const baseTokenAttrs = baseToken.attributes || {};
-            tokenSymbol = baseTokenAttrs.symbol || '';
-            tokenName = baseTokenAttrs.name || '';
-          }
-        }
-        
-        // Fallback to pool name extraction if no base token data
-        if (!tokenSymbol || !tokenName) {
-          const poolName = attrs.name || '';
           // Extract token symbol from pool name (e.g., "PENGU / SOL" -> "PENGU")
+          const poolName = attrs.name || '';
           const tokenSymbol = poolName.split(' / ')[0] || poolName.split('/')[0] || 'TOKEN';
-          tokenName = tokenSymbol;
-        }
-        
-        // Format chain name for display
-        const formatChain = (chain) => {
-          const chainMap = {
-            'eth': 'ETH',
-            'ethereum': 'ETH',
-            'solana': 'SOL',
-            'bsc': 'BSC',
-            'polygon_pos': 'POLY',
-            'arbitrum': 'ARB',
-            'avalanche': 'AVAX',
-            'base': 'BASE',
-            'optimism': 'OP',
-            'fantom': 'FTM',
-            'sui': 'SUI',
-            'ton': 'TON',
-            'ronin': 'RONIN'
+          const tokenName = tokenSymbol; // Use symbol as name since we don't have full token data
+          const networkId = pool.relationships?.network?.data?.id || 'unknown';
+          
+          // Format chain name for display
+          const formatChain = (chain) => {
+            const chainMap = {
+              'eth': 'ETH',
+              'ethereum': 'ETH',
+              'solana': 'SOL',
+              'bsc': 'BSC',
+              'polygon_pos': 'POLY',
+              'arbitrum': 'ARB',
+              'avalanche': 'AVAX',
+              'base': 'BASE',
+              'optimism': 'OP',
+              'fantom': 'FTM',
+              'sui': 'SUI',
+              'ton': 'TON'
+            };
+            return chainMap[chain] || chain.toUpperCase().slice(0, 4);
           };
-          return chainMap[chain] || chain.toUpperCase().slice(0, 4);
-        };
-        
-        return {
-          id: pool.id,
-          symbol: tokenSymbol.trim().toUpperCase(),
-          name: tokenName,
-          price: parseFloat(attrs.base_token_price_usd) || 0,
-          priceChange24h: parseFloat(attrs.price_change_percentage?.h24) || 0,
-          marketCap: parseFloat(attrs.fdv_usd) || parseFloat(attrs.market_cap_usd) || 0,
-          chain: formatChain(networkId),
-          rank: index + 1,
-          chainId: networkId,
-          volume24h: parseFloat(attrs.volume_usd?.h24) || 0,
-          poolAddress: attrs.address
-        };
-      });
+          
+          return {
+            id: pool.id,
+            symbol: tokenSymbol.trim().toUpperCase(),
+            name: tokenName,
+            price: parseFloat(attrs.base_token_price_usd) || 0,
+            priceChange24h: parseFloat(attrs.price_change_percentage?.h24) || 0,
+            marketCap: parseFloat(attrs.fdv_usd) || parseFloat(attrs.market_cap_usd) || 0,
+            chain: formatChain(networkId), // Show chain instead of logo
+            rank: (page - 1) * 20 + index + 1,
+            chainId: networkId,
+            volume24h: parseFloat(attrs.volume_usd?.h24) || 0,
+            poolAddress: attrs.address
+          };
+        });
 
-      // No filtering - show all tokens as they come from GeckoTerminal
-      logger.info(`Fetched ${trendingTokens.length} trending tokens from GeckoTerminal`);
-      setTokens(trendingTokens);
+        // Filter valid tokens and add to our collection
+        const validTokens = pageTokens.filter(token => 
+          token.symbol && 
+          token.symbol !== 'TOKEN' && 
+          token.symbol.length > 0 && 
+          token.symbol.length <= 15 && // Allow longer symbols for some tokens
+          /^[A-Za-z0-9$_-]+$/.test(token.symbol) && // Allow common token symbol characters
+          token.price > 0 // Must have a valid price
+        );
+
+        allTokens = allTokens.concat(validTokens);
+        
+        // Add delay between pages to respect rate limits
+        if (page < 3) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+
+      // Take top 50 tokens in original trending order
+      const finalTokens = allTokens.slice(0, 50);
+      logger.info(`Fetched ${finalTokens.length} trending tokens from GeckoTerminal`);
+      setTokens(finalTokens);
 
     } catch (error) {
       logger.error('Error fetching GeckoTerminal trending tokens:', error);
