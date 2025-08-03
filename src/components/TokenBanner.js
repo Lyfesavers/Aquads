@@ -61,7 +61,9 @@ const mapNetworkToBlockchain = (networkId) => {
     'aurora': 'aurora',
     'harmony': 'harmony',
     'near': 'near',
-    'cosmos': 'cosmos'
+    'cosmos': 'cosmos',
+    'roni': 'ronin',
+    'ronin': 'ronin'
   };
   return networkMap[networkId] || networkId;
 };
@@ -118,7 +120,9 @@ const TokenBanner = () => {
               'optimism': 'OP',
               'fantom': 'FTM',
               'sui': 'SUI',
-              'ton': 'TON'
+              'ton': 'TON',
+              'roni': 'RONI',
+              'ronin': 'RONI'
             };
             return chainMap[chain] || chain.toUpperCase().slice(0, 4);
           };
