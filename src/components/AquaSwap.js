@@ -238,6 +238,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
             url: pair.url
           }));
 
+        console.log('Search results processed:', processedResults); // Debug log
         setSearchResults(processedResults);
       } else {
         setSearchResults([]);
@@ -354,7 +355,9 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   // Handle click outside to close search results
   useEffect(() => {
     const handleClickOutside = (event) => {
+      console.log('Click outside detected:', event.target); // Debug log
       if (searchInputRef.current && !searchInputRef.current.contains(event.target)) {
+        console.log('Closing search results'); // Debug log
         setShowSearchResults(false);
       }
     };
@@ -1233,11 +1236,19 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                             </div>
                           ) : searchResults.length > 0 ? (
                             <div className="search-results-list">
+                              {console.log('Rendering search results:', searchResults)} {/* Debug log */}
                               {searchResults.map((result) => (
                                 <button
                                   key={result.id}
                                   className="search-result-item"
-                                  onClick={() => handleSearchResultSelect(result)}
+                                  onClick={() => {
+                                    console.log('Search result button clicked!'); // Debug log
+                                    handleSearchResultSelect(result);
+                                  }}
+                                  onMouseDown={(e) => {
+                                    console.log('Search result button mousedown!'); // Debug log
+                                    e.preventDefault();
+                                  }}
                                 >
                                   <div className="result-token-info">
                                     {result.logo && (
