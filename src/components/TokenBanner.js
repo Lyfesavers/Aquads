@@ -149,7 +149,9 @@ const TokenBanner = () => {
           token.symbol.length > 0 && 
           token.symbol.length <= 15 && // Allow longer symbols for some tokens
           /^[A-Za-z0-9$_-]+$/.test(token.symbol) && // Allow common token symbol characters
-          token.price > 0 // Must have a valid price
+          token.price > 0 && // Must have a valid price
+          token.chainId !== 'roni' && // Exclude Ronin tokens since DEXScreener doesn't support them
+          token.chainId !== 'ronin' // Exclude Ronin tokens since DEXScreener doesn't support them
         );
 
         allTokens = allTokens.concat(validTokens);
