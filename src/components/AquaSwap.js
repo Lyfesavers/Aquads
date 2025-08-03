@@ -356,9 +356,20 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   useEffect(() => {
     const handleClickOutside = (event) => {
       console.log('Click outside detected:', event.target); // Debug log
+      
+      // Check if the click is on a search result button
+      const isSearchResultClick = event.target.closest('.search-result-item');
+      if (isSearchResultClick) {
+        console.log('Click is on search result, not closing'); // Debug log
+        return; // Don't close if clicking on search result
+      }
+      
       if (searchInputRef.current && !searchInputRef.current.contains(event.target)) {
         console.log('Closing search results'); // Debug log
-        setShowSearchResults(false);
+        // Add a small delay to ensure button clicks are processed first
+        setTimeout(() => {
+          setShowSearchResults(false);
+        }, 10);
       }
     };
 
@@ -1244,10 +1255,6 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                                   onClick={() => {
                                     console.log('Search result button clicked!'); // Debug log
                                     handleSearchResultSelect(result);
-                                  }}
-                                  onMouseDown={(e) => {
-                                    console.log('Search result button mousedown!'); // Debug log
-                                    e.preventDefault();
                                   }}
                                 >
                                   <div className="result-token-info">
