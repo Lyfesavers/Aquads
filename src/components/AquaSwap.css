@@ -1240,6 +1240,9 @@
   max-height: 400px;
   overflow-y: auto;
   margin-top: 4px;
+  min-width: 300px; /* Ensure minimum width */
+  width: max-content; /* Allow it to grow based on content */
+  max-width: 100%; /* Don't exceed container width */
 }
 
 .search-loading {
@@ -1281,6 +1284,8 @@
   transition: background-color 0.2s ease;
   width: 100%;
   text-align: left;
+  min-height: 60px;
+  box-sizing: border-box;
 }
 
 .search-result-item:hover {
@@ -1296,6 +1301,8 @@
   align-items: center;
   gap: 12px;
   flex: 1;
+  min-width: 0; /* Allow flex item to shrink */
+  overflow: hidden;
 }
 
 .result-token-logo {
@@ -1310,18 +1317,26 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0; /* Allow flex item to shrink */
+  flex: 1;
 }
 
 .result-token-name {
   font-weight: 600;
   color: #ffffff;
   font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .result-token-chain {
   font-size: 0.75rem;
   color: #9ca3af;
   text-transform: capitalize;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .result-token-price {
@@ -1329,17 +1344,25 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 2px;
+  flex-shrink: 0; /* Prevent price from shrinking */
+  min-width: 80px; /* Ensure minimum width for price */
 }
 
 .price-usd {
   font-weight: 600;
   color: #ffffff;
   font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .price-change {
   font-size: 0.75rem;
   font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .price-change.positive {
@@ -1361,10 +1384,12 @@
 @media (max-width: 768px) {
   .search-results-dropdown {
     max-height: 300px;
+    min-width: 250px;
   }
   
   .search-result-item {
     padding: 10px 12px;
+    min-height: 50px;
   }
   
   .result-token-logo {
@@ -1386,6 +1411,10 @@
   
   .price-change {
     font-size: 0.7rem;
+  }
+  
+  .result-token-price {
+    min-width: 70px;
   }
 }
 

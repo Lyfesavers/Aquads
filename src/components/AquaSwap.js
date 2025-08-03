@@ -270,6 +270,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   const handleSearchResultSelect = (result) => {
     setTokenSearch(result.pairAddress);
     setSelectedChain(getChainForBlockchain(result.chainId));
+    setChartProvider('dexscreener'); // Ensure DEXScreener is selected
     setShowSearchResults(false);
     setSearchResults([]);
     
