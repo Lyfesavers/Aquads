@@ -268,7 +268,9 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
   // Handle search result selection
   const handleSearchResultSelect = (result) => {
-    console.log('Selected token:', result); // Debug log
+    console.log('Selected token full data:', result); // Debug log
+    console.log('Selected token pairAddress:', result.pairAddress); // Debug log
+    console.log('Selected token chainId:', result.chainId); // Debug log
     
     // Map DEXScreener chainId to our internal chain format
     const chainMapping = {
@@ -318,6 +320,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     console.log('Chain mapping:', { original: result.chainId, mapped: mappedChain }); // Debug log
     
     // Set all required state for chart loading
+    console.log('Setting tokenSearch to:', result.pairAddress); // Debug log
+    console.log('Setting selectedChain to:', mappedChain); // Debug log
     setTokenSearch(result.pairAddress);
     setSelectedChain(mappedChain);
     setChartProvider('dexscreener'); // Ensure DEXScreener is selected
@@ -527,6 +531,27 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     console.log('DEXScreener useEffect triggered:', { chartProvider, tokenSearch, hasRef: !!dexScreenerRef.current }); // Debug log
     
     if (chartProvider === 'dexscreener' && dexScreenerRef.current && tokenSearch.trim()) {
+      // Validate that tokenSearch looks like a valid pair address
+      const isValidPairAddress = /^0x[a-fA-F0-9]{40}$/.test(tokenSearch.trim()) || 
+                                /^[A-Za-z0-9]{32,44}$/.test(tokenSearch.trim());
+      
+      console.log('DEXScreener validation:', {
+        tokenSearch: tokenSearch.trim(),
+        isValidPairAddress,
+        length: tokenSearch.trim().length
+      }); // Debug log
+      
+      if (!isValidPairAddress) {
+        console.log('Invalid pair address, showing error'); // Debug log
+        dexScreenerRef.current.innerHTML = `
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: rgba(0, 0, 0, 0.2); border-radius: 8px; color: #9ca3af;">
+            <div style="font-size: 2rem; margin-bottom: 16px;">⚠️</div>
+            <h3 style="color: #ffffff; margin: 0 0 8px 0;">Invalid Pair Address</h3>
+            <p style="margin: 0; text-align: center; line-height: 1.5;">Please enter a valid pair address or search for a token by name.</p>
+          </div>
+        `;
+        return;
+      }
       // Clear previous widget
       dexScreenerRef.current.innerHTML = '';
       
@@ -634,11 +659,13 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         selectedChain,
         dexScreenerChain,
         tokenSearch: tokenSearch.trim(),
+        tokenSearchLength: tokenSearch.trim().length,
         widgetUrl
       }); // Debug log
       
       // Add error handling for iframe loading
       iframe.onload = () => {
+        console.log('DEXScreener iframe loaded successfully'); // Debug log
         // Chart loaded successfully
         if (dexScreenerRef.current) {
           const loadingDiv = dexScreenerRef.current.querySelector('div');
@@ -649,6 +676,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       };
       
       iframe.onerror = () => {
+        console.log('DEXScreener iframe failed to load'); // Debug log
         // Handle iframe loading error
         if (dexScreenerRef.current) {
           dexScreenerRef.current.innerHTML = `
