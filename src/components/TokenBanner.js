@@ -75,117 +75,104 @@ const TokenBanner = () => {
   // Memoize fetchTokens to prevent recreation
   const fetchTokens = useCallback(async () => {
     try {
-      let allTokens = [];
+      // Fetch page 1 from GeckoTerminal - it should contain 50 tokens
+      const response = await fetch(`https://api.geckoterminal.com/api/v2/networks/trending_pools?page=1&include=base_token,quote_token`);
       
-      // Fetch multiple pages from GeckoTerminal to get 50 tokens
-      for (let page = 1; page <= 3; page++) {
-        const response = await fetch(`https://api.geckoterminal.com/api/v2/networks/trending_pools?page=${page}&include=base_token,quote_token`);
-        
-        if (!response.ok) {
-          logger.warn(`Failed to fetch page ${page}: ${response.status}`);
-          continue;
-        }
-
-        const data = await response.json();
-        logger.info(`GeckoTerminal Page ${page} Response:`, data);
-
-        if (!data.data || data.data.length === 0) {
-          logger.warn(`No data on page ${page}`);
-          break;
-        }
-
-        // Process tokens from this page
-        const pageTokens = data.data.map((pool, index) => {
-          const attrs = pool.attributes || {};
-          
-          // Get base token information from included data if available
-          let tokenSymbol = '';
-          let tokenName = '';
-          let networkId = pool.relationships?.network?.data?.id || 'unknown';
-          
-          // Try to get token info from included base_token data
-          if (data.included) {
-            const baseToken = data.included.find(item => 
-              item.type === 'base_token' && 
-              item.id === pool.relationships?.base_token?.data?.id
-            );
-            
-            if (baseToken) {
-              const baseTokenAttrs = baseToken.attributes || {};
-              tokenSymbol = baseTokenAttrs.symbol || '';
-              tokenName = baseTokenAttrs.name || '';
-            }
-          }
-          
-          // Fallback to pool name extraction if no base token data
-          if (!tokenSymbol || !tokenName) {
-            const poolName = attrs.name || '';
-            // Improved token symbol extraction - look for the first token before any separator
-            const symbolMatch = poolName.match(/^([A-Za-z0-9$_-]+)/);
-            tokenSymbol = symbolMatch ? symbolMatch[1] : 'TOKEN';
-            tokenName = tokenSymbol;
-          }
-          
-          // Format chain name for display
-          const formatChain = (chain) => {
-            const chainMap = {
-              'eth': 'ETH',
-              'ethereum': 'ETH',
-              'solana': 'SOL',
-              'bsc': 'BSC',
-              'polygon_pos': 'POLY',
-              'arbitrum': 'ARB',
-              'avalanche': 'AVAX',
-              'base': 'BASE',
-              'optimism': 'OP',
-              'fantom': 'FTM',
-              'sui': 'SUI',
-              'ton': 'TON',
-              'ronin': 'RONIN'
-            };
-            return chainMap[chain] || chain.toUpperCase().slice(0, 4);
-          };
-          
-          return {
-            id: pool.id,
-            symbol: tokenSymbol.trim().toUpperCase(),
-            name: tokenName,
-            price: parseFloat(attrs.base_token_price_usd) || 0,
-            priceChange24h: parseFloat(attrs.price_change_percentage?.h24) || 0,
-            marketCap: parseFloat(attrs.fdv_usd) || parseFloat(attrs.market_cap_usd) || 0,
-            chain: formatChain(networkId),
-            rank: (page - 1) * 20 + index + 1,
-            chainId: networkId,
-            volume24h: parseFloat(attrs.volume_usd?.h24) || 0,
-            poolAddress: attrs.address
-          };
-        });
-
-        // Filter out invalid tokens
-        const validTokens = pageTokens.filter(token => 
-          token.symbol && 
-          token.symbol !== 'TOKEN' && 
-          token.symbol.length > 0 && 
-          token.symbol.length <= 15 &&
-          /^[A-Za-z0-9$_-]+$/.test(token.symbol) && // Only allow valid token symbol characters
-          token.price > 0 && // Must have a valid price
-          !token.symbol.toLowerCase().includes('coin') && // Filter out generic "coin" tokens
-          !token.symbol.toLowerCase().includes('token') && // Filter out generic "token" names
-          token.symbol.length >= 2 // Minimum symbol length
-        );
-
-        allTokens = allTokens.concat(validTokens);
-        
-        // Add delay between pages to respect rate limits
-        if (page < 3) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }
+      if (!response.ok) {
+        logger.warn(`Failed to fetch GeckoTerminal trending: ${response.status}`);
+        return;
       }
 
-      // Take top 50 tokens in original trending order
-      const finalTokens = allTokens.slice(0, 50);
-      logger.info(`Fetched ${finalTokens.length} trending tokens from GeckoTerminal`);
-      setTokens(finalTokens);
+      const data = await response.json();
+      logger.info(`GeckoTerminal Page 1 Response:`, data);
+
+      if (!data.data || data.data.length === 0) {
+        logger.warn(`No trending pools data`);
+        return;
+      }
+
+      // Process the first 50 tokens from page 1
+      const trendingTokens = data.data.slice(0, 50).map((pool, index) => {
+        const attrs = pool.attributes || {};
+        
+        // Get base token information from included data if available
+        let tokenSymbol = '';
+        let tokenName = '';
+        let networkId = pool.relationships?.network?.data?.id || 'unknown';
+        
+        // Try to get token info from included base_token data
+        if (data.included) {
+          const baseToken = data.included.find(item => 
+            item.type === 'base_token' && 
+            item.id === pool.relationships?.base_token?.data?.id
+          );
+          
+          if (baseToken) {
+            const baseTokenAttrs = baseToken.attributes || {};
+            tokenSymbol = baseTokenAttrs.symbol || '';
+            tokenName = baseTokenAttrs.name || '';
+          }
+        }
+        
+        // Fallback to pool name extraction if no base token data
+        if (!tokenSymbol || !tokenName) {
+          const poolName = attrs.name || '';
+          // Improved token symbol extraction - look for the first token before any separator
+          const symbolMatch = poolName.match(/^([A-Za-z0-9$_-]+)/);
+          tokenSymbol = symbolMatch ? symbolMatch[1] : 'TOKEN';
+          tokenName = tokenSymbol;
+        }
+        
+        // Format chain name for display
+        const formatChain = (chain) => {
+          const chainMap = {
+            'eth': 'ETH',
+            'ethereum': 'ETH',
+            'solana': 'SOL',
+            'bsc': 'BSC',
+            'polygon_pos': 'POLY',
+            'arbitrum': 'ARB',
+            'avalanche': 'AVAX',
+            'base': 'BASE',
+            'optimism': 'OP',
+            'fantom': 'FTM',
+            'sui': 'SUI',
+            'ton': 'TON',
+            'ronin': 'RONIN'
+          };
+          return chainMap[chain] || chain.toUpperCase().slice(0, 4);
+        };
+        
+        return {
+          id: pool.id,
+          symbol: tokenSymbol.trim().toUpperCase(),
+          name: tokenName,
+          price: parseFloat(attrs.base_token_price_usd) || 0,
+          priceChange24h: parseFloat(attrs.price_change_percentage?.h24) || 0,
+          marketCap: parseFloat(attrs.fdv_usd) || parseFloat(attrs.market_cap_usd) || 0,
+          chain: formatChain(networkId),
+          rank: index + 1,
+          chainId: networkId,
+          volume24h: parseFloat(attrs.volume_usd?.h24) || 0,
+          poolAddress: attrs.address
+        };
+      });
+
+      // Filter out invalid tokens
+      const validTokens = trendingTokens.filter(token => 
+        token.symbol && 
+        token.symbol !== 'TOKEN' && 
+        token.symbol.length > 0 && 
+        token.symbol.length <= 15 &&
+        /^[A-Za-z0-9$_-]+$/.test(token.symbol) && // Only allow valid token symbol characters
+        token.price > 0 && // Must have a valid price
+        !token.symbol.toLowerCase().includes('coin') && // Filter out generic "coin" tokens
+        !token.symbol.toLowerCase().includes('token') && // Filter out generic "token" names
+        token.symbol.length >= 2 // Minimum symbol length
+      );
+
+      logger.info(`Fetched ${validTokens.length} trending tokens from GeckoTerminal`);
+      setTokens(validTokens);
 
     } catch (error) {
       logger.error('Error fetching GeckoTerminal trending tokens:', error);
