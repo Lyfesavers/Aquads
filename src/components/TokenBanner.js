@@ -75,7 +75,7 @@ const TokenBanner = () => {
   // Memoize fetchTokens to prevent recreation
   const fetchTokens = useCallback(async () => {
     try {
-      // Fetch page 1 from GeckoTerminal - it should contain 50 tokens
+      // Fetch page 1 from GeckoTerminal - show exact tokens without filtering
       const response = await fetch(`https://api.geckoterminal.com/api/v2/networks/trending_pools?page=1&include=base_token,quote_token`);
       
       if (!response.ok) {
@@ -91,7 +91,7 @@ const TokenBanner = () => {
         return;
       }
 
-      // Process the first 50 tokens from page 1
+      // Process the first 50 tokens from page 1 without any filtering
       const trendingTokens = data.data.slice(0, 50).map((pool, index) => {
         const attrs = pool.attributes || {};
         
@@ -117,9 +117,8 @@ const TokenBanner = () => {
         // Fallback to pool name extraction if no base token data
         if (!tokenSymbol || !tokenName) {
           const poolName = attrs.name || '';
-          // Improved token symbol extraction - look for the first token before any separator
-          const symbolMatch = poolName.match(/^([A-Za-z0-9$_-]+)/);
-          tokenSymbol = symbolMatch ? symbolMatch[1] : 'TOKEN';
+          // Extract token symbol from pool name (e.g., "PENGU / SOL" -> "PENGU")
+          const tokenSymbol = poolName.split(' / ')[0] || poolName.split('/')[0] || 'TOKEN';
           tokenName = tokenSymbol;
         }
         
@@ -158,21 +157,9 @@ const TokenBanner = () => {
         };
       });
 
-      // Filter out invalid tokens
-      const validTokens = trendingTokens.filter(token => 
-        token.symbol && 
-        token.symbol !== 'TOKEN' && 
-        token.symbol.length > 0 && 
-        token.symbol.length <= 15 &&
-        /^[A-Za-z0-9$_-]+$/.test(token.symbol) && // Only allow valid token symbol characters
-        token.price > 0 && // Must have a valid price
-        !token.symbol.toLowerCase().includes('coin') && // Filter out generic "coin" tokens
-        !token.symbol.toLowerCase().includes('token') && // Filter out generic "token" names
-        token.symbol.length >= 2 // Minimum symbol length
-      );
-
-      logger.info(`Fetched ${validTokens.length} trending tokens from GeckoTerminal`);
-      setTokens(validTokens);
+      // No filtering - show all tokens as they come from GeckoTerminal
+      logger.info(`Fetched ${trendingTokens.length} trending tokens from GeckoTerminal`);
+      setTokens(trendingTokens);
 
     } catch (error) {
       logger.error('Error fetching GeckoTerminal trending tokens:', error);
