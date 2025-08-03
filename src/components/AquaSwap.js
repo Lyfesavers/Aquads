@@ -268,11 +268,75 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
   // Handle search result selection
   const handleSearchResultSelect = (result) => {
+    console.log('Selected token:', result); // Debug log
+    
+    // Map DEXScreener chainId to our internal chain format
+    const chainMapping = {
+      'ethereum': 'ether',
+      'bsc': 'bnb',
+      'polygon': 'polygon',
+      'solana': 'solana',
+      'avalanche': 'avalanche',
+      'arbitrum': 'arbitrum',
+      'optimism': 'optimism',
+      'base': 'base',
+      'fantom': 'fantom',
+      'cronos': 'cronos',
+      'celo': 'celo',
+      'harmony': 'harmony',
+      'near': 'near',
+      'sui': 'sui',
+      'aptos': 'aptos',
+      'ton': 'ton',
+      'stellar': 'stellar',
+      'algorand': 'algorand',
+      'hedera': 'hedera',
+      'icp': 'icp',
+      'elrond': 'elrond',
+      'terra': 'terra',
+      'xrp': 'xrp',
+      'litecoin': 'litecoin',
+      'bitcoin': 'bitcoin',
+      'tron': 'tron',
+      'tezos': 'tezos',
+      'zilliqa': 'zilliqa',
+      'oasis': 'oasis',
+      'stacks': 'stacks',
+      'kadena': 'kadena',
+      'injective': 'injective',
+      'kava': 'kava',
+      'moonriver': 'moonriver',
+      'moonbeam': 'moonbeam',
+      'flow': 'flow',
+      'cardano': 'cardano',
+      'polkadot': 'polkadot',
+      'cosmos': 'cosmos',
+      'kaspa': 'kaspa'
+    };
+    
+    const mappedChain = chainMapping[result.chainId] || 'ether';
+    console.log('Chain mapping:', { original: result.chainId, mapped: mappedChain }); // Debug log
+    
+    // Set all required state for chart loading
     setTokenSearch(result.pairAddress);
-    setSelectedChain(getChainForBlockchain(result.chainId));
+    setSelectedChain(mappedChain);
     setChartProvider('dexscreener'); // Ensure DEXScreener is selected
     setShowSearchResults(false);
     setSearchResults([]);
+    
+    // Force chart to load by ensuring the ref exists and triggering a re-render
+    setTimeout(() => {
+      if (dexScreenerRef.current && result.pairAddress) {
+        console.log('Loading chart for:', result.pairAddress); // Debug log
+        // Force the useEffect to run by triggering a state change
+        setTokenSearch(prev => {
+          if (prev !== result.pairAddress) {
+            return result.pairAddress;
+          }
+          return prev;
+        });
+      }
+    }, 100);
     
     // Focus back to input
     if (searchInputRef.current) {
@@ -460,6 +524,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
   // Load DEXScreener widget with improved reliability
   useEffect(() => {
+    console.log('DEXScreener useEffect triggered:', { chartProvider, tokenSearch, hasRef: !!dexScreenerRef.current }); // Debug log
+    
     if (chartProvider === 'dexscreener' && dexScreenerRef.current && tokenSearch.trim()) {
       // Clear previous widget
       dexScreenerRef.current.innerHTML = '';
@@ -563,6 +629,13 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       
       // Build DEXScreener embed URL with dark theme and embed mode
       const widgetUrl = `https://dexscreener.com/${dexScreenerChain}/${tokenSearch.trim()}?theme=dark&embed=1`;
+      
+      console.log('DEXScreener URL construction:', {
+        selectedChain,
+        dexScreenerChain,
+        tokenSearch: tokenSearch.trim(),
+        widgetUrl
+      }); // Debug log
       
       // Add error handling for iframe loading
       iframe.onload = () => {
