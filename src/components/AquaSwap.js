@@ -412,7 +412,33 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         'harmony': 'harmony',
         'near': 'near',
         'sui': 'sui',
-        'aptos': 'aptos'
+        'aptos': 'aptos',
+        'ton': 'ton', // DEXScreener supports TON
+        'stellar': 'stellar',
+        'algorand': 'algorand',
+        'hedera': 'hedera',
+        'icp': 'icp',
+        'elrond': 'elrond',
+        'terra': 'terra',
+        'xrp': 'xrp',
+        'litecoin': 'litecoin',
+        'bitcoin': 'bitcoin',
+        'tron': 'tron',
+        'tezos': 'tezos',
+        'zilliqa': 'zilliqa',
+        'oasis': 'oasis',
+        'stacks': 'stacks',
+        'kadena': 'kadena',
+        'injective': 'injective',
+        'kava': 'kava',
+        'moonriver': 'moonriver',
+        'moonbeam': 'moonbeam',
+        'flow': 'flow',
+        'cardano': 'cardano',
+        'polkadot': 'polkadot',
+        'cosmos': 'cosmos',
+        'kaspa': 'kaspa',
+        'multiversx': 'elrond'
       };
       
       const dexScreenerChain = dexScreenerChainMap[selectedChain] || 'ethereum';

@@ -42,7 +42,7 @@ const formatPercentage = (percentage) => {
 // Map GeckoTerminal network IDs to blockchain names for AquaSwap
 const mapNetworkToBlockchain = (networkId) => {
   const networkMap = {
-    // Main blockchains - map to DEXScreener expected values
+    // Main blockchains - map to what AquaSwap expects
     'eth': 'ethereum',
     'ethereum': 'ethereum',
     'solana': 'solana',
