@@ -132,15 +132,12 @@ const TokenBanner = () => {
         const response = await fetch(`https://api.geckoterminal.com/api/v2/networks/trending_pools?page=${page}`);
         
         if (!response.ok) {
-          logger.warn(`Failed to fetch page ${page}: ${response.status}`);
           continue;
         }
 
         const data = await response.json();
-        logger.info(`GeckoTerminal Page ${page} Response:`, data);
 
         if (!data.data || data.data.length === 0) {
-          logger.warn(`No data on page ${page}`);
           break;
         }
 
@@ -264,11 +261,10 @@ const TokenBanner = () => {
 
       // Take top 50 tokens in original trending order
       const finalTokens = allTokens.slice(0, 50);
-      logger.info(`Fetched ${finalTokens.length} trending tokens from GeckoTerminal`);
       setTokens(finalTokens);
 
     } catch (error) {
-      logger.error('Error fetching GeckoTerminal trending tokens:', error);
+      // Silent error handling for production
     } finally {
       setLoading(false);
     }
