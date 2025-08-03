@@ -33,6 +33,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchTimeout, setSearchTimeout] = useState(null);
+  const [searchInput, setSearchInput] = useState(''); // Separate state for search input
 
   const tradingViewRef = useRef(null);
   const dexScreenerRef = useRef(null);
@@ -202,6 +203,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       if (isPairAddress) {
         // If it's a pair address, just set it directly
         setTokenSearch(searchTerm);
+        setSearchInput(searchTerm);
         setShowSearchResults(false);
         setIsSearching(false);
         return;
@@ -251,7 +253,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   // Handle search input changes with debouncing
   const handleSearchChange = (e) => {
     const value = e.target.value;
-    setTokenSearch(value);
+    setSearchInput(value); // Use separate search input state
     
     // Clear existing timeout
     if (searchTimeout) {
@@ -323,6 +325,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     console.log('Setting tokenSearch to:', result.pairAddress); // Debug log
     console.log('Setting selectedChain to:', mappedChain); // Debug log
     setTokenSearch(result.pairAddress);
+    setSearchInput(result.pairAddress); // Also update the search input to show the selected address
     setSelectedChain(mappedChain);
     setChartProvider('dexscreener'); // Ensure DEXScreener is selected
     setShowSearchResults(false);
@@ -1213,7 +1216,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                     <div className="search-input-container">
                       <input
                         type="text"
-                        value={tokenSearch}
+                        value={searchInput}
                         onChange={handleSearchChange}
                         placeholder="Search by token name (e.g., bitcoin, pepe) or pair address"
                         className="token-search-input"
@@ -1267,9 +1270,9 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                                 </button>
                               ))}
                             </div>
-                          ) : tokenSearch.length >= 2 ? (
+                          ) : searchInput.length >= 2 ? (
                             <div className="search-no-results">
-                              <span>No tokens found for "{tokenSearch}"</span>
+                              <span>No tokens found for "{searchInput}"</span>
                             </div>
                           ) : null}
                         </div>
