@@ -8,6 +8,7 @@ import StarterKit from '@tiptap/starter-kit';
 import LinkExtension from '@tiptap/extension-link';
 import CreateBlogModal from './CreateBlogModal';
 import { API_URL } from '../services/api';
+import Dashboard from './Dashboard';
 
 // Helper function to create URL-friendly slugs
 const createSlug = (title) => {
@@ -73,7 +74,7 @@ const MarkdownRenderer = ({ content }) => {
   );
 };
 
-const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, onOpenDashboard }) => {
+const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -84,6 +85,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, onOpenDashb
   const [showEditModal, setShowEditModal] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
 
   // Handle click outside to close dropdown
   useEffect(() => {
@@ -470,15 +472,15 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, onOpenDashb
                           >
                             🏠 Back to Main
                           </button>
-                          <button
-                            onClick={() => {
-                              onOpenDashboard && onOpenDashboard();
-                              setShowUserDropdown(false);
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
-                          >
-                            📊 Dashboard
-                          </button>
+                                                          <button
+                                  onClick={() => {
+                                    setShowDashboard(true);
+                                    setShowUserDropdown(false);
+                                  }}
+                                  className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
+                                >
+                                  📊 Dashboard
+                                </button>
                           <hr className="my-2 border-gray-700" />
                           <button
                             onClick={() => {
@@ -558,15 +560,15 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, onOpenDashb
                   >
                     Back to Main
                   </button>
-                  <button
-                    onClick={() => {
-                      onOpenDashboard && onOpenDashboard();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
-                  >
-                    📊 Dashboard
-                  </button>
+                              <button
+              onClick={() => {
+                setShowDashboard(true);
+                setIsMobileMenuOpen(false);
+              }}
+              className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
+            >
+              📊 Dashboard
+            </button>
                   <button
                     onClick={() => {
                       onLogout();
@@ -899,6 +901,15 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, onOpenDashb
           font-weight: bold;
         }
       `}</style>
+
+      {/* Dashboard Modal */}
+      {showDashboard && (
+        <Dashboard
+          currentUser={currentUser}
+          onClose={() => setShowDashboard(false)}
+          ads={[]}  // Pass empty array since blog page doesn't handle ads
+        />
+      )}
     </div>
   );
 };

@@ -3571,7 +3571,7 @@ function App() {
           } />
                       <Route path="/whitepaper" element={<Whitepaper />} />
             <Route path="/how-to" element={<HowTo currentUser={currentUser} />} />
-            <Route path="/how-to/:slug" element={<BlogPage currentUser={currentUser} onLogin={handleLogin} onLogout={handleLogout} onCreateAccount={handleCreateAccount} onOpenDashboard={() => { setDashboardActiveTab('ads'); setShowDashboard(true); }} />} />
+                                 <Route path="/how-to/:slug" element={<BlogPage currentUser={currentUser} onLogin={handleLogin} onLogout={handleLogout} onCreateAccount={handleCreateAccount} />} />
             <Route path="/affiliate" element={<Affiliate />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
