@@ -7,7 +7,8 @@ const DiscountCodeInput = ({
   onDiscountRemoved, 
   originalAmount, 
   applicableTo = 'listing',
-  className = '' 
+  className = '',
+  currentUser = null
 }) => {
   const [discountCode, setDiscountCode] = useState('');
   const [isValidating, setIsValidating] = useState(false);

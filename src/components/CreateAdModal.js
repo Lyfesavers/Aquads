@@ -800,6 +800,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
                   onDiscountRemoved={handleDiscountRemoved}
                   originalAmount={formData.totalAmount}
                   applicableTo="listing"
+                  currentUser={currentUser}
                 />
 
                 {/* Add-on Package Disclaimer */}

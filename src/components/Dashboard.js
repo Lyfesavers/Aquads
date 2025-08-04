@@ -2703,9 +2703,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   </div>
                 )}
 
-                {activeAdminSection === 'discountcodes' && (
-                  <AdminDiscountCodes />
-                )}
+                               {activeAdminSection === 'discountcodes' && (
+                 <AdminDiscountCodes currentUser={currentUser} />
+               )}
 
                 {activeAdminSection === 'services' && (
                   <div>

@@ -3386,6 +3386,7 @@ function App() {
                       setSelectedAdId(null);
                     }}
                     onSubmitPayment={handleBumpPurchase}
+                    currentUser={currentUser}
                   />
                 )}
 

@@ -37,7 +37,7 @@ const BLOCKCHAIN_OPTIONS = [
   }
 ];
 
-const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
+const BumpStore = ({ ad, onClose, onSubmitPayment, currentUser }) => {
   const [txSignature, setTxSignature] = useState('');
   const [selectedOption, setSelectedOption] = useState(BUMP_OPTIONS[0]);
   const [selectedChain, setSelectedChain] = useState(BLOCKCHAIN_OPTIONS[0]);
@@ -157,6 +157,7 @@ const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
             originalAmount={selectedOption.price}
             applicableTo="bump"
             className="mb-6"
+            currentUser={currentUser}
           />
 
           <form onSubmit={handleSubmit}>

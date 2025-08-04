@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaPlus, FaEdit, FaTrash, FaCheck, FaTimes } from 'react-icons/fa';
 import { API_URL } from '../services/api';
 
-const AdminDiscountCodes = () => {
+const AdminDiscountCodes = ({ currentUser }) => {
   const [discountCodes, setDiscountCodes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -27,7 +27,7 @@ const AdminDiscountCodes = () => {
     try {
       const response = await fetch(`${API_URL}/discount-codes`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${currentUser?.token || localStorage.getItem('token')}`
         }
       });
       
@@ -72,7 +72,7 @@ const AdminDiscountCodes = () => {
         method,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${currentUser?.token || localStorage.getItem('token')}`
         },
         body: JSON.stringify(payload)
       });
@@ -104,7 +104,7 @@ const AdminDiscountCodes = () => {
       const response = await fetch(`${API_URL}/discount-codes/${id}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${currentUser?.token || localStorage.getItem('token')}`
         }
       });
 
