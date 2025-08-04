@@ -263,6 +263,10 @@ const telegramService = {
       await telegramService.handleHelpCommand(chatId);
     } else if (text.startsWith('/bubbles')) {
       await telegramService.handleBubblesCommand(chatId);
+    } else if (text.startsWith('/register')) {
+      await telegramService.handleRegisterCommand(chatId, userId, text);
+    } else if (text.startsWith('/mybubble')) {
+      await telegramService.handleMyBubbleCommand(chatId, userId);
     } else if (text.startsWith('/cancel')) {
       // Cancel any ongoing conversation
       if (conversationState) {
@@ -311,6 +315,8 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 • /twitter [USERNAME] - Set or view your Twitter username for raids
 • /raids - View available Twitter raids
 • /complete RAID_ID @twitter_username TWEET_URL - Complete a raid manually
+• /register PROJECT_NAME - Register an existing project as yours
+• /mybubble - View your registered projects
 • /help - Show detailed command guide
 
 🌐 Track points & claim rewards on: https://aquads.xyz
@@ -390,12 +396,16 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 
 📋 Bubble Commands:
 • /bubbles - View top 10 bubbles with most bullish votes
+• /mybubble - View your registered projects with voting buttons
+• /register PROJECT_NAME - Register an existing project as yours
 
 📝 Example Usage:
 /link myusername
 /twitter mytwitter
 /raids
 /bubbles
+/register MyProject
+/mybubble
 /complete 507f1f77bcf86cd799439011 https://twitter.com/user/status/123456789
 /complete 507f1f77bcf86cd799439011 @mytwitter https://twitter.com/user/status/123456789
 
@@ -411,6 +421,8 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 2. Set your Twitter username: /twitter your_twitter_username
 3. View available raids: /raids
 4. Complete raids using buttons or /complete command
+5. Register your project: /register PROJECT_NAME
+6. View your projects: /mybubble
 
 🌐 Track points & claim rewards on: https://aquads.xyz
 
@@ -1006,6 +1018,8 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 
       if (callbackData.action === 'complete') {
         await telegramService.startRaidCompletion(chatId, userId, callbackData.raidId);
+      } else if (callbackData.action === 'vote') {
+        await telegramService.processVote(chatId, userId, callbackData.projectId, callbackData.voteType);
       }
 
     } catch (error) {
@@ -1361,6 +1375,274 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
     } catch (error) {
       console.error('Top bubbles notification failed:', error.message);
       return false;
+    }
+  },
+
+  // Handle /register command for project registration
+  handleRegisterCommand: async (chatId, telegramUserId, text) => {
+    const parts = text.split(' ');
+    
+    if (parts.length < 2) {
+      await telegramService.sendBotMessage(chatId, 
+        "❌ Please provide your project name/title.\n\n📝 Usage: /register PROJECT_NAME\n\n💡 Example: /register MyAwesomeProject\n\n⚠️ Note: You must have an Aquads account and be logged in to register projects.");
+      return;
+    }
+
+    // Get project name (everything after /register)
+    const projectName = parts.slice(1).join(' ').trim();
+    
+    if (projectName.length < 3) {
+      await telegramService.sendBotMessage(chatId, 
+        "❌ Project name must be at least 3 characters long.");
+      return;
+    }
+
+    try {
+      // Check if user is linked
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      
+      if (!user) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
+        return;
+      }
+
+      // Find existing project by title (case-insensitive)
+      const existingProject = await Ad.findOne({ 
+        title: { $regex: new RegExp(`^${projectName}$`, 'i') }
+      });
+      
+      if (!existingProject) {
+        await telegramService.sendBotMessage(chatId, 
+          `❌ Project "${projectName}" not found in our database.\n\n💡 Make sure the project name matches exactly.\n\n💡 You can view available projects on: https://aquads.xyz`);
+        return;
+      }
+
+      // Check if user already owns this project
+      if (existingProject.owner === user.username) {
+        await telegramService.sendBotMessage(chatId, 
+          `✅ You already own project "${projectName}"!\n\n💡 Use /mybubble to view your projects.`);
+        return;
+      }
+
+      // Check if project is already owned by someone else
+      if (existingProject.owner && existingProject.owner !== user.username) {
+        await telegramService.sendBotMessage(chatId, 
+          `❌ Project "${projectName}" is already owned by another user.\n\n💡 Please contact support if this is your project.`);
+        return;
+      }
+
+      // Assign project to user
+      existingProject.owner = user.username;
+      await existingProject.save();
+
+      await telegramService.sendBotMessage(chatId, 
+        `✅ Project Registration Complete!\n\n🏷️ Project: ${existingProject.title}\n🔗 URL: ${existingProject.url}\n⛓️ Blockchain: ${existingProject.blockchain || 'Ethereum'}\n\n💡 Use /mybubble to view your projects!`);
+
+    } catch (error) {
+      console.error('Register command error:', error);
+      await telegramService.sendBotMessage(chatId, 
+        "❌ Error registering project. Please try again later.");
+    }
+  },
+
+  // Handle /mybubble command
+  handleMyBubbleCommand: async (chatId, telegramUserId) => {
+    try {
+      // Check if user is linked
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      
+      if (!user) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
+        return;
+      }
+
+      // Find user's projects (bubbles)
+      const userProjects = await Ad.find({ 
+        owner: user.username,
+        status: { $in: ['active', 'approved'] }
+      })
+      .sort({ createdAt: -1 })
+      .limit(5); // Show up to 5 most recent projects
+
+      if (userProjects.length === 0) {
+        await telegramService.sendBotMessage(chatId, 
+          `📭 No projects found for ${user.username}.\n\n💡 Register your project with: /register PROJECT_NAME\n\n🌐 Or create projects on: https://aquads.xyz`);
+        return;
+      }
+
+      // Send each project with voting buttons
+      for (const project of userProjects) {
+        const message = `🚀 Your Project: ${project.title}\n\n`;
+        message += `📊 Votes: 👍 ${project.bullishVotes || 0} | 👎 ${project.bearishVotes || 0}\n`;
+        message += `🔗 URL: ${project.url}\n`;
+        message += `⛓️ Blockchain: ${project.blockchain || 'Ethereum'}\n\n`;
+        message += `💡 Share this message to get votes on your project!`;
+
+        // Create voting keyboard
+        const keyboard = {
+          inline_keyboard: [
+            [
+              { text: "👍 Bullish", callback_data: JSON.stringify({ action: 'vote', projectId: project._id.toString(), voteType: 'bullish' }) },
+              { text: "👎 Bearish", callback_data: JSON.stringify({ action: 'vote', projectId: project._id.toString(), voteType: 'bearish' }) }
+            ],
+            [
+              { text: "🔗 View on Aquads", url: `https://aquads.xyz` }
+            ]
+          ]
+        };
+
+        // Send with logo if available
+        if (project.logo) {
+          try {
+            const formData = new FormData();
+            formData.append('chat_id', chatId);
+            formData.append('photo', project.logo);
+            formData.append('caption', message);
+
+            const response = await axios.post(
+              `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendPhoto`,
+              formData,
+              {
+                headers: {
+                  ...formData.getHeaders(),
+                },
+                timeout: 10000,
+              }
+            );
+
+            if (response.data.ok) {
+              // Add keyboard to the sent message
+              await axios.post(
+                `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/editMessageReplyMarkup`,
+                {
+                  chat_id: chatId,
+                  message_id: response.data.result.message_id,
+                  reply_markup: keyboard
+                }
+              );
+            }
+          } catch (error) {
+            console.error('Failed to send photo, falling back to text:', error.message);
+            // Fallback to text message
+            await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
+          }
+        } else {
+          // Send text message without photo
+          await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
+        }
+      }
+
+      // Send summary
+      await telegramService.sendBotMessage(chatId, 
+        `📊 Found ${userProjects.length} project(s) for ${user.username}\n\n💡 Share the messages above to get votes on your projects!\n\n🌐 Manage all projects at: https://aquads.xyz`);
+
+    } catch (error) {
+      console.error('MyBubble command error:', error);
+      await telegramService.sendBotMessage(chatId, 
+        "❌ Error fetching your projects. Please try again later.");
+    }
+  },
+
+  // Process vote on project
+  processVote: async (chatId, telegramUserId, projectId, voteType) => {
+    try {
+      // Check if user is linked
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      
+      if (!user) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
+        return;
+      }
+
+      // Find the project
+      const project = await Ad.findById(projectId);
+      
+      if (!project) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Project not found.");
+        return;
+      }
+
+      // Check if user already voted
+      const existingVote = project.voterData?.find(
+        vote => vote.userId && vote.userId.toString() === user._id.toString()
+      );
+
+      if (existingVote) {
+        if (existingVote.voteType === voteType) {
+          await telegramService.sendBotMessage(chatId, 
+            `❌ You already voted ${voteType} on this project.`);
+        } else {
+          // Update existing vote
+          existingVote.voteType = voteType;
+          
+          // Update vote counts
+          if (voteType === 'bullish') {
+            project.bullishVotes = (project.bullishVotes || 0) + 1;
+            project.bearishVotes = Math.max(0, (project.bearishVotes || 0) - 1);
+          } else {
+            project.bearishVotes = (project.bearishVotes || 0) + 1;
+            project.bullishVotes = Math.max(0, (project.bullishVotes || 0) - 1);
+          }
+          
+          await project.save();
+          
+          // Award points for voting
+          await User.findByIdAndUpdate(user._id, {
+            $inc: { points: 20 },
+            $push: {
+              pointsHistory: {
+                amount: 20,
+                reason: `Voted on project: ${project.title}`,
+                createdAt: new Date()
+              }
+            }
+          });
+
+          await telegramService.sendBotMessage(chatId, 
+            `✅ Vote updated to ${voteType}!\n\n💰 +20 points awarded\n\n📊 ${project.title}: 👍 ${project.bullishVotes} | 👎 ${project.bearishVotes}`);
+        }
+      } else {
+        // New vote
+        if (!project.voterData) project.voterData = [];
+        
+        project.voterData.push({
+          userId: user._id,
+          voteType: voteType
+        });
+
+        // Update vote counts
+        if (voteType === 'bullish') {
+          project.bullishVotes = (project.bullishVotes || 0) + 1;
+        } else {
+          project.bearishVotes = (project.bearishVotes || 0) + 1;
+        }
+        
+        await project.save();
+        
+        // Award points for voting
+        await User.findByIdAndUpdate(user._id, {
+          $inc: { points: 20 },
+          $push: {
+            pointsHistory: {
+              amount: 20,
+                reason: `Voted on project: ${project.title}`,
+                createdAt: new Date()
+              }
+            }
+          });
+
+        await telegramService.sendBotMessage(chatId, 
+          `✅ Voted ${voteType} on ${project.title}!\n\n💰 +20 points awarded\n\n📊 ${project.title}: 👍 ${project.bullishVotes} | 👎 ${project.bearishVotes}`);
+      }
+
+    } catch (error) {
+      console.error('Process vote error:', error);
+      await telegramService.sendBotMessage(chatId, 
+        "❌ Error processing vote. Please try again later.");
     }
   }
 
