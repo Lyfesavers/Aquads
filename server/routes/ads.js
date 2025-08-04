@@ -9,6 +9,76 @@ const { v4: uuidv4 } = require('uuid');
 const User = require('../models/User');
 const socket = require('../socket');
 
+// Aquads-branded marketing add-on packages (server-side)
+const ADDON_PACKAGES = [
+  {
+    id: 'aqua_splash',
+    name: 'AquaSplash',
+    originalPrice: 99,
+    price: 99,
+    features: [
+      'Newsroom Press Release',
+      'Leading Web3 Press Release Site',
+      'Approx. Monthly Visitors: 15000',
+      'Includes Social Media Posting',
+      'Domain Authority: 43'
+    ]
+  },
+  {
+    id: 'aqua_ripple',
+    name: 'AquaRipple',
+    originalPrice: 299,
+    price: 284,
+    features: [
+      '4+ Media Pickups Guaranteed',
+      'Estimated Reach: 5k-15k',
+      '<24 Hour Distribution',
+    ]
+  },
+  {
+    id: 'aqua_wave',
+    name: 'AquaWave',
+    originalPrice: 1399,
+    price: 1329,
+    features: [
+      '9+ Media Pickups Guaranteed',
+      'Estimated Reach: 75k-250k',
+      '24-72 Hour Distribution'
+    ]
+  },
+  {
+    id: 'aqua_flow',
+    name: 'AquaFlow',
+    originalPrice: 2899,
+    price: 2754,
+    features: [
+      'CoinMarketCap (Community Section)',
+      'CryptoPolitan',
+      'CoinCodex',
+      'BraveNewCoin',
+      'Bitcolumnist',
+      '24-72 Hour Distribution',
+      'SEO Optimizations'
+    ]
+  },
+  {
+    id: 'aqua_storm',
+    name: 'AquaStorm',
+    originalPrice: 6499,
+    price: 6174,
+    features: [
+      'Everything from AquaWave, plus:',
+      'CoinMarketCap (Community Section)',
+      'CryptoPolitan',
+      'CoinCodex',
+      'BraveNewCoin',
+      'Bitcolumnist',
+      '24-72 Hour Distribution',
+      'SEO Optimizations'
+    ]
+  }
+];
+
 // Skip auth for GET requests
 router.use((req, res, next) => {
   next(); // Allow all requests for now
