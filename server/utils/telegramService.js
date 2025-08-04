@@ -1018,8 +1018,12 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 
       if (callbackData.action === 'complete') {
         await telegramService.startRaidCompletion(chatId, userId, callbackData.raidId);
-      } else if (callbackData.action === 'vote') {
-        await telegramService.processVote(chatId, userId, callbackData.projectId, callbackData.voteType);
+      } else if (callbackQuery.data.startsWith('vote_')) {
+        // Handle simplified vote callbacks
+        const voteData = callbackQuery.data.split('_');
+        const voteType = voteData[1]; // 'bullish' or 'bearish'
+        const projectId = voteData[2];
+        await telegramService.processVote(chatId, userId, projectId, voteType);
       }
 
     } catch (error) {
@@ -1474,21 +1478,33 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 
       // Send each project with voting buttons
       for (const project of userProjects) {
+        // Get project rank based on bullish votes
+        const allBubbles = await Ad.find({ 
+          isBumped: true,
+          status: { $in: ['active', 'approved'] }
+        })
+        .sort({ bullishVotes: -1 })
+        .select('_id bullishVotes');
+        
+        const projectRank = allBubbles.findIndex(bubble => bubble._id.toString() === project._id.toString()) + 1;
+        const rankEmoji = projectRank === 1 ? '🥇' : projectRank === 2 ? '🥈' : projectRank === 3 ? '🥉' : '🔸';
+        
         let message = `🚀 Your Project: ${project.title}\n\n`;
+        message += `🏆 Rank: ${rankEmoji} #${projectRank}\n`;
         message += `📊 Votes: 👍 ${project.bullishVotes || 0} | 👎 ${project.bearishVotes || 0}\n`;
         message += `🔗 URL: ${project.url}\n`;
         message += `⛓️ Blockchain: ${project.blockchain || 'Ethereum'}\n\n`;
         message += `💡 Share this message to get votes on your project!`;
 
-        // Create voting keyboard
+        // Create voting keyboard (simplified)
         const keyboard = {
           inline_keyboard: [
             [
-              { text: "👍 Bullish", callback_data: JSON.stringify({ action: 'vote', projectId: project._id.toString(), voteType: 'bullish' }) },
-              { text: "👎 Bearish", callback_data: JSON.stringify({ action: 'vote', projectId: project._id.toString(), voteType: 'bearish' }) }
+              { text: "👍 Bullish", callback_data: "vote_bullish_" + project._id.toString() },
+              { text: "👎 Bearish", callback_data: "vote_bearish_" + project._id.toString() }
             ],
             [
-              { text: "🔗 View on Aquads", url: `https://aquads.xyz` }
+              { text: "🔗 View on Aquads", url: "https://aquads.xyz" }
             ]
           ]
         };
