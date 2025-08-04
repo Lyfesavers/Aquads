@@ -1496,33 +1496,18 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
         // Send with logo if available
         if (project.logo) {
           try {
-            const formData = new FormData();
-            formData.append('chat_id', chatId);
-            formData.append('photo', project.logo);
-            formData.append('caption', message);
-
+            // Send photo with caption and keyboard in one request
             const response = await axios.post(
               `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendPhoto`,
-              formData,
               {
-                headers: {
-                  ...formData.getHeaders(),
-                },
-                timeout: 10000,
+                chat_id: chatId,
+                photo: project.logo,
+                caption: message,
+                reply_markup: keyboard
               }
             );
 
-            if (response.data.ok) {
-              // Add keyboard to the sent message
-              await axios.post(
-                `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/editMessageReplyMarkup`,
-                {
-                  chat_id: chatId,
-                  message_id: response.data.result.message_id,
-                  reply_markup: keyboard
-                }
-              );
-            } else {
+            if (!response.data.ok) {
               // Fallback to text message if photo fails
               await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
             }
