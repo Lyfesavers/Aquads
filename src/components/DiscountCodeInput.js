@@ -41,6 +41,11 @@ const DiscountCodeInput = ({
         setAppliedDiscount(data);
         onDiscountApplied(data);
         setError('');
+      } else if (response.status === 401) {
+        localStorage.removeItem('token');
+        setError('Your session has expired. Please log in again.');
+        setAppliedDiscount(null);
+        onDiscountRemoved();
       } else {
         setError(data.error || 'Invalid discount code');
         setAppliedDiscount(null);

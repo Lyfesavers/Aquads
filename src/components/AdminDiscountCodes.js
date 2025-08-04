@@ -33,6 +33,11 @@ const AdminDiscountCodes = () => {
       if (response.ok) {
         const data = await response.json();
         setDiscountCodes(data);
+      } else if (response.status === 401) {
+        // Clear invalid token and show alert
+        localStorage.removeItem('token');
+        alert('Your session has expired. Please log in again.');
+        setDiscountCodes([]);
       } else {
         console.error('Failed to fetch discount codes');
       }
@@ -76,6 +81,9 @@ const AdminDiscountCodes = () => {
         setEditingCode(null);
         resetForm();
         fetchDiscountCodes();
+      } else if (response.status === 401) {
+        localStorage.removeItem('token');
+        alert('Your session has expired. Please log in again.');
       } else {
         const error = await response.json();
         alert(error.error || 'Failed to save discount code');
@@ -101,6 +109,9 @@ const AdminDiscountCodes = () => {
 
       if (response.ok) {
         fetchDiscountCodes();
+      } else if (response.status === 401) {
+        localStorage.removeItem('token');
+        alert('Your session has expired. Please log in again.');
       } else {
         const error = await response.json();
         alert(error.error || 'Failed to delete discount code');
