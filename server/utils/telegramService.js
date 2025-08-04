@@ -1515,8 +1515,43 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
         // Debug: Log the keyboard structure
         console.log('Keyboard structure:', JSON.stringify(keyboard, null, 2));
 
-        // Send text message with voting buttons (most reliable approach)
-        await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
+        // Send with video if available
+        const videoPath = path.join(__dirname, '../../public/vote now .mp4');
+        const videoExists = fs.existsSync(videoPath);
+        
+        if (videoExists) {
+          try {
+            // Send video with caption and keyboard
+            const formData = new FormData();
+            formData.append('chat_id', chatId);
+            formData.append('video', fs.createReadStream(videoPath));
+            formData.append('caption', message);
+            formData.append('reply_markup', JSON.stringify(keyboard));
+
+            const response = await axios.post(
+              `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendVideo`,
+              formData,
+              {
+                headers: {
+                  ...formData.getHeaders(),
+                },
+                timeout: 30000, // 30 second timeout for video upload
+              }
+            );
+
+            if (!response.data.ok) {
+              // Fallback to text message if video fails
+              await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
+            }
+          } catch (error) {
+            console.error('Failed to send video, falling back to text:', error.message);
+            // Fallback to text message
+            await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
+          }
+        } else {
+          // Send text message without video
+          await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
+        }
       }
 
 
