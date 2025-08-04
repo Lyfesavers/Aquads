@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FaTag, FaCheck, FaTimes } from 'react-icons/fa';
+import { API_URL } from '../services/api';
 
 const DiscountCodeInput = ({ 
   onDiscountApplied, 
@@ -23,7 +24,7 @@ const DiscountCodeInput = ({
     setError('');
 
     try {
-      const response = await fetch('/api/discount-codes/validate', {
+      const response = await fetch(`${API_URL}/discount-codes/validate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
