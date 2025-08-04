@@ -1572,24 +1572,12 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
           }
           
           await project.save();
-          
-          // Award points for voting
-          await User.findByIdAndUpdate(user._id, {
-            $inc: { points: 20 },
-            $push: {
-              pointsHistory: {
-                amount: 20,
-                reason: `Voted on project: ${project.title}`,
-                createdAt: new Date()
-              }
-            }
-          });
 
           await telegramService.sendBotMessage(chatId, 
-            `✅ Vote updated to ${voteType}!\n\n💰 +20 points awarded\n\n📊 ${project.title}: 👍 ${project.bullishVotes} | 👎 ${project.bearishVotes}`);
+            `✅ Vote updated to ${voteType}!\n\n📊 ${project.title}: 👍 ${project.bullishVotes} | 👎 ${project.bearishVotes}`);
         }
       } else {
-        // New vote
+        // New vote - only award points for first vote on this project
         if (!project.voterData) project.voterData = [];
         
         project.voterData.push({
@@ -1606,17 +1594,17 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
         
         await project.save();
         
-        // Award points for voting
+        // Award points only for first vote on this project
         await User.findByIdAndUpdate(user._id, {
           $inc: { points: 20 },
           $push: {
             pointsHistory: {
               amount: 20,
-                reason: `Voted on project: ${project.title}`,
-                createdAt: new Date()
-              }
+              reason: `Voted on project: ${project.title}`,
+              createdAt: new Date()
             }
-          });
+          }
+        });
 
         await telegramService.sendBotMessage(chatId, 
           `✅ Voted ${voteType} on ${project.title}!\n\n💰 +20 points awarded\n\n📊 ${project.title}: 👍 ${project.bullishVotes} | 👎 ${project.bearishVotes}`);
