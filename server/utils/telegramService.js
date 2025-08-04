@@ -1500,6 +1500,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
             formData.append('chat_id', chatId);
             formData.append('photo', project.logo);
             formData.append('caption', message);
+            formData.append('reply_markup', JSON.stringify(keyboard));
 
             const response = await axios.post(
               `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendPhoto`,
@@ -1512,16 +1513,9 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
               }
             );
 
-            if (response.data.ok) {
-              // Add keyboard to the sent message
-              await axios.post(
-                `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/editMessageReplyMarkup`,
-                {
-                  chat_id: chatId,
-                  message_id: response.data.result.message_id,
-                  reply_markup: keyboard
-                }
-              );
+            if (!response.data.ok) {
+              // Fallback to text message if photo fails
+              await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
             }
           } catch (error) {
             console.error('Failed to send photo, falling back to text:', error.message);
@@ -1534,9 +1528,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
         }
       }
 
-      // Send summary
-      await telegramService.sendBotMessage(chatId, 
-        `📊 Found ${userProjects.length} project(s) for ${user.username}\n\n💡 Share the messages above to get votes on your projects!\n\n🌐 Manage all projects at: https://aquads.xyz`);
+
 
     } catch (error) {
       console.error('MyBubble command error:', error);
