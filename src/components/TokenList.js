@@ -404,12 +404,12 @@ const TokenList = ({ currentUser, showNotification }) => {
 
             {/* Collapsible Token list table */}
             {isTableExpanded && filteredTokens.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-full">
+              <div className="w-full">
+                <table className="w-full table-fixed">
                   <thead>
                     <tr className="border-b border-gray-700/30">
                       <th 
-                        className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
+                        className="w-12 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
                         onClick={() => handleSort('marketCapRank')}
                       >
                         # {sortConfig.key === 'marketCapRank' && (
@@ -417,30 +417,30 @@ const TokenList = ({ currentUser, showNotification }) => {
                         )}
                       </th>
                       <th 
-                        className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
+                        className="w-1/4 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
                         onClick={() => handleSort('name')}
                       >
                         Token {sortConfig.key === 'name' && (
                           <span className="ml-1">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
                         )}
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
+                      <th className="w-1/6 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
                           onClick={() => handleSort('currentPrice')}>
                         Price
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
+                      <th className="w-1/6 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
                           onClick={() => handleSort('priceChangePercentage24h')}>
                         24h %
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
+                      <th className="w-1/6 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
                           onClick={() => handleSort('marketCap')}>
                         Market Cap
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
+                      <th className="w-1/6 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
                           onClick={() => handleSort('totalVolume')}>
-                        Volume(24h)
+                        Volume
                       </th>
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
+                      <th scope="col" className="w-1/6 px-2 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
                         Rating
                       </th>
                     </tr>
@@ -452,45 +452,45 @@ const TokenList = ({ currentUser, showNotification }) => {
                           className="hover:bg-gray-800/40 cursor-pointer"
                           onClick={() => handleTokenClick(token)}
                         >
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{token.marketCapRank || index + 1}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
+                          <td className="px-2 py-4 text-sm text-gray-300">{token.marketCapRank || index + 1}</td>
+                          <td className="px-2 py-4">
+                            <div className="flex items-center min-w-0">
                               <img
                                 src={token.image}
                                 alt={token.name}
-                                className="h-8 w-8 rounded-full"
+                                className="h-6 w-6 rounded-full flex-shrink-0"
                                 onError={(e) => {
                                   e.target.onerror = null;
                                   e.target.src = '/placeholder.png';
                                 }}
                               />
-                              <div className="ml-4">
-                                <div className="text-sm font-medium text-white">{token.name}</div>
-                                <div className="text-sm text-gray-400">{token.symbol}</div>
+                              <div className="ml-2 min-w-0 flex-1">
+                                <div className="text-sm font-medium text-white truncate">{token.name}</div>
+                                <div className="text-xs text-gray-400 truncate">{token.symbol}</div>
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                            ${token.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                          <td className="px-2 py-4 text-sm text-gray-300">
+                            ${token.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
                           </td>
-                          <td className={`px-6 py-4 whitespace-nowrap text-sm ${
+                          <td className={`px-2 py-4 text-sm ${
                             token.priceChangePercentage24h > 0 ? 'text-green-400' : 'text-red-400'
                           }`}>
                             {token.priceChangePercentage24h.toFixed(2)}%
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                            ${token.marketCap.toLocaleString()}
+                          <td className="px-2 py-4 text-sm text-gray-300">
+                            {formatCurrency(token.marketCap)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                            ${token.totalVolume.toLocaleString()}
+                          <td className="px-2 py-4 text-sm text-gray-300">
+                            {formatCurrency(token.totalVolume)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <span className="text-yellow-400">★</span>
+                          <td className="px-2 py-4 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <span className="text-yellow-400 text-xs">★</span>
                               <TokenRating symbol={token.symbol} />
                               <button
                                 onClick={(e) => handleReviewClick(e, token)}
-                                className="text-blue-400 hover:text-blue-300 text-sm"
+                                className="text-blue-400 hover:text-blue-300 text-xs"
                               >
                                 Reviews
                               </button>
