@@ -1010,20 +1010,23 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
     const queryId = callbackQuery.id;
 
     try {
-      // Parse callback data
-      const callbackData = JSON.parse(callbackQuery.data);
-      
       // Answer the callback query
       await telegramService.answerCallbackQuery(queryId);
 
-      if (callbackData.action === 'complete') {
-        await telegramService.startRaidCompletion(chatId, userId, callbackData.raidId);
-      } else if (callbackQuery.data.startsWith('vote_')) {
+      // Check if it's a vote callback first
+      if (callbackQuery.data.startsWith('vote_')) {
         // Handle simplified vote callbacks
         const voteData = callbackQuery.data.split('_');
         const voteType = voteData[1]; // 'bullish' or 'bearish'
         const projectId = voteData[2];
         await telegramService.processVote(chatId, userId, projectId, voteType);
+      } else {
+        // Parse callback data for other actions (like raids)
+        const callbackData = JSON.parse(callbackQuery.data);
+        
+        if (callbackData.action === 'complete') {
+          await telegramService.startRaidCompletion(chatId, userId, callbackData.raidId);
+        }
       }
 
     } catch (error) {
