@@ -1199,7 +1199,7 @@ function App() {
     }
   };
 
-  const handleBumpPurchase = async (adId, txSignature, duration) => {
+  const handleBumpPurchase = async (adId, txSignature, duration, discountCode = null) => {
     try {
       logger.log(`Bump purchase initiated - Ad ID: ${adId}, Signature: ${txSignature}, Duration: ${duration}`);
       const ad = ads.find(a => a.id === adId);
@@ -1267,7 +1267,8 @@ function App() {
           owner: currentUser.username,
           txSignature,
           duration,
-          status: 'pending'
+          status: 'pending',
+          discountCode
         });
 
         logger.log("Bump request submitted successfully:", bumpResponse);

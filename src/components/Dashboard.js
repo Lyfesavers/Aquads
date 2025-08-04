@@ -9,6 +9,7 @@ import EasterEggAnimation from './EasterEggAnimation';
 import CreateJobModal from './CreateJobModal';
 import TokenBalance from './TokenBalance';
 import TokenPurchaseModal from './TokenPurchaseModal';
+import AdminDiscountCodes from './AdminDiscountCodes';
 
 const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, onRejectBump, onApproveBump, initialBookingId, initialActiveTab }) => {
   const [bumpRequests, setBumpRequests] = useState([]);
@@ -2188,6 +2189,16 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                     )}
                   </button>
                   <button
+                    onClick={() => setActiveAdminSection('discountcodes')}
+                    className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
+                      activeAdminSection === 'discountcodes' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                    }`}
+                  >
+                    🏷️ Discount Codes
+                  </button>
+                  <button
                     onClick={() => setActiveAdminSection('services')}
                     className={`w-full text-left px-3 py-2 rounded-md transition-colors relative ${
                       activeAdminSection === 'services' 
@@ -2690,6 +2701,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                       </div>
                     )}
                   </div>
+                )}
+
+                {activeAdminSection === 'discountcodes' && (
+                  <AdminDiscountCodes />
                 )}
 
                 {activeAdminSection === 'services' && (

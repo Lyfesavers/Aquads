@@ -22,7 +22,7 @@ router.get('/', async (req, res) => {
 // Create a new bump request
 router.post('/', async (req, res) => {
   try {
-    const { adId, owner, txSignature, duration } = req.body;
+    const { adId, owner, txSignature, duration, discountCode } = req.body;
     
     if (!adId || !owner || !txSignature || !duration) {
       return res.status(400).json({ error: 'Missing required fields: adId, owner, txSignature, or duration' });
@@ -38,12 +38,37 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'There is already a pending bump request for this ad' });
     }
 
+    // Apply discount code if provided
+    let discountAmount = 0;
+    let appliedDiscountCode = null;
+    
+    if (discountCode) {
+      const DiscountCode = require('../models/DiscountCode');
+      const validDiscountCode = await DiscountCode.findValidCode(discountCode, 'bump');
+      
+      if (validDiscountCode) {
+        // Calculate bump price based on duration
+        let bumpPrice = 0;
+        if (duration === 90 * 24 * 60 * 60 * 1000) bumpPrice = 99; // 3 months
+        else if (duration === 180 * 24 * 60 * 60 * 1000) bumpPrice = 150; // 6 months
+        else if (duration === -1) bumpPrice = 300; // Lifetime
+        
+        discountAmount = validDiscountCode.calculateDiscount(bumpPrice);
+        appliedDiscountCode = validDiscountCode;
+        
+        // Increment usage count
+        await validDiscountCode.incrementUsage();
+      }
+    }
+
     const bumpRequest = new BumpRequest({
       adId,
       owner,
       txSignature,
       duration,
-      status: 'pending'
+      status: 'pending',
+      appliedDiscountCode: appliedDiscountCode ? appliedDiscountCode.code : null,
+      discountAmount: discountAmount
     });
 
     const savedRequest = await bumpRequest.save();

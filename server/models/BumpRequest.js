@@ -35,6 +35,15 @@ const bumpRequestSchema = new mongoose.Schema({
   },
   rejectionReason: {
     type: String
+  },
+  // Discount code fields
+  appliedDiscountCode: {
+    type: String,
+    default: null
+  },
+  discountAmount: {
+    type: Number,
+    default: 0
   }
 });
 

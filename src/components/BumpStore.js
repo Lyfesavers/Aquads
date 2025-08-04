@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Modal from './Modal';
 import { FaCopy, FaCheck } from 'react-icons/fa';
 import logger from '../utils/logger';
+import DiscountCodeInput from './DiscountCodeInput';
 
 const BUMP_OPTIONS = [
   { duration: '3 months', price: 99, durationMs: 90 * 24 * 60 * 60 * 1000 },
@@ -41,11 +42,20 @@ const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
   const [selectedOption, setSelectedOption] = useState(BUMP_OPTIONS[0]);
   const [selectedChain, setSelectedChain] = useState(BLOCKCHAIN_OPTIONS[0]);
   const [copiedAddress, setCopiedAddress] = useState(false);
+  const [appliedDiscount, setAppliedDiscount] = useState(null);
 
   const handleCopyAddress = async () => {
     await navigator.clipboard.writeText(selectedChain.address);
     setCopiedAddress(true);
     setTimeout(() => setCopiedAddress(false), 2000);
+  };
+
+  const handleDiscountApplied = (discountData) => {
+    setAppliedDiscount(discountData);
+  };
+
+  const handleDiscountRemoved = () => {
+    setAppliedDiscount(null);
   };
 
   const handleSubmit = (e) => {
@@ -63,7 +73,7 @@ const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
     }
     
     // Call the parent component's callback with the transaction data
-    onSubmitPayment(ad.id, txSignature, selectedOption.durationMs);
+    onSubmitPayment(ad.id, txSignature, selectedOption.durationMs, appliedDiscount ? appliedDiscount.discountCode.code : null);
   };
 
   return (
@@ -139,6 +149,15 @@ const BumpStore = ({ ad, onClose, onSubmitPayment }) => {
               </button>
             </div>
           </div>
+
+          {/* Discount Code Input */}
+          <DiscountCodeInput
+            onDiscountApplied={handleDiscountApplied}
+            onDiscountRemoved={handleDiscountRemoved}
+            originalAmount={selectedOption.price}
+            applicableTo="bump"
+            className="mb-6"
+          />
 
           <form onSubmit={handleSubmit}>
             <div className="mb-6">

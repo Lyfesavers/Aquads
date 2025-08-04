@@ -118,6 +118,15 @@ const adSchema = new mongoose.Schema({
     type: Number,
     default: 199 // Base listing fee + any add-ons
   },
+  // Discount code fields
+  appliedDiscountCode: {
+    type: String,
+    default: null
+  },
+  discountAmount: {
+    type: Number,
+    default: 0
+  },
   rejectionReason: {
     type: String,
     default: null

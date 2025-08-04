@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
 import { FaCopy, FaCheck, FaArrowLeft, FaArrowRight, FaBullhorn, FaUsers, FaTwitter, FaChartLine, FaGift, FaRocket, FaNewspaper, FaCrown, FaStar, FaFire, FaGem, FaLightbulb, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import DiscountCodeInput from './DiscountCodeInput';
 
 const BLOCKCHAIN_OPTIONS = [
   {
@@ -169,6 +170,7 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
   const [selectedChain, setSelectedChain] = useState(BLOCKCHAIN_OPTIONS[0]);
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [expandedPackages, setExpandedPackages] = useState(new Set()); // Track expanded packages
+  const [appliedDiscount, setAppliedDiscount] = useState(null);
 
   const validateImageUrl = async (url) => {
     try {
@@ -274,7 +276,8 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
       chainSymbol: selectedChain.symbol,
       chainAddress: selectedChain.address,
       isAffiliate: isAffiliate,
-      affiliateDiscount: affiliateDiscount
+      affiliateDiscount: affiliateDiscount,
+      discountCode: appliedDiscount ? appliedDiscount.discountCode.code : null
     });
   };
 
@@ -316,6 +319,24 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
       }
       return newSet;
     });
+  };
+
+  const handleDiscountApplied = (discountData) => {
+    setAppliedDiscount(discountData);
+    // Update total amount with discount
+    const newTotal = discountData.finalAmount;
+    setFormData(prev => ({ ...prev, totalAmount: newTotal }));
+  };
+
+  const handleDiscountRemoved = () => {
+    setAppliedDiscount(null);
+    // Recalculate total without discount
+    const addonCosts = formData.selectedAddons.reduce((total, addonId) => {
+      const addon = ADDON_PACKAGES.find(pkg => pkg.id === addonId);
+      return total + (addon ? addon.price : 0);
+    }, 0);
+    const newTotal = discountedBaseFee + addonCosts;
+    setFormData(prev => ({ ...prev, totalAmount: newTotal }));
   };
 
   const getStepTitle = () => {
@@ -772,6 +793,14 @@ const CreateAdModal = ({ onCreateAd, onClose, currentUser }) => {
                     </div>
                   )}
                 </div>
+
+                {/* Discount Code Input */}
+                <DiscountCodeInput
+                  onDiscountApplied={handleDiscountApplied}
+                  onDiscountRemoved={handleDiscountRemoved}
+                  originalAmount={formData.totalAmount}
+                  applicableTo="listing"
+                />
 
                 {/* Add-on Package Disclaimer */}
                 {formData.selectedAddons.length > 0 && (

@@ -183,7 +183,7 @@ const calculateBumpAmount = (type) => {
 // POST route for creating new ad
 router.post('/', auth, requireEmailVerification, async (req, res) => {
   try {
-    const { title, logo, url, pairAddress, blockchain, referredBy, x, y, preferredSize, txSignature, paymentChain, chainSymbol, chainAddress, selectedAddons, totalAmount, isAffiliate, affiliateDiscount } = req.body;
+    const { title, logo, url, pairAddress, blockchain, referredBy, x, y, preferredSize, txSignature, paymentChain, chainSymbol, chainAddress, selectedAddons, totalAmount, isAffiliate, affiliateDiscount, discountCode } = req.body;
     
     // Use client's preferred size if provided, otherwise use MAX_SIZE
     const bubbleSize = preferredSize || MAX_SIZE;
@@ -204,6 +204,34 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
     const calculatedAffiliateDiscount = userIsAffiliate ? BASE_LISTING_FEE * AFFILIATE_DISCOUNT_RATE : 0;
     const calculatedListingFee = BASE_LISTING_FEE - calculatedAffiliateDiscount;
 
+    // Calculate addon costs
+    const addonCosts = selectedAddons ? selectedAddons.reduce((total, addonId) => {
+      const addon = ADDON_PACKAGES.find(pkg => pkg.id === addonId);
+      return total + (addon ? addon.price : 0);
+    }, 0) : 0;
+
+    // Calculate total before discount codes
+    const totalBeforeDiscount = calculatedListingFee + addonCosts;
+
+    // Apply discount code if provided
+    let discountAmount = 0;
+    let appliedDiscountCode = null;
+    
+    if (discountCode) {
+      const DiscountCode = require('../models/DiscountCode');
+      const validDiscountCode = await DiscountCode.findValidCode(discountCode, 'listing');
+      
+      if (validDiscountCode) {
+        discountAmount = validDiscountCode.calculateDiscount(totalBeforeDiscount);
+        appliedDiscountCode = validDiscountCode;
+        
+        // Increment usage count
+        await validDiscountCode.incrementUsage();
+      }
+    }
+
+    const finalAmount = totalBeforeDiscount - discountAmount;
+
     // Server always uses its own affiliate calculations for security
     // No client-side validation needed since server values are authoritative
   
@@ -223,8 +251,10 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       chainSymbol,
       chainAddress,
       selectedAddons: selectedAddons || [],
-      totalAmount: totalAmount || calculatedListingFee,
+      totalAmount: finalAmount,
       listingFee: calculatedListingFee, // Base listing fee with affiliate discount applied
+      appliedDiscountCode: appliedDiscountCode ? appliedDiscountCode.code : null,
+      discountAmount: discountAmount,
       // Set status to 'pending' for non-admin users, 'active' for admins
       status: req.user.isAdmin ? 'active' : 'pending'
     });
