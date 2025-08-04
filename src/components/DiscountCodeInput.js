@@ -6,6 +6,8 @@ const DiscountCodeInput = ({
   onDiscountApplied, 
   onDiscountRemoved, 
   originalAmount, 
+  baseAmount = null,
+  addonAmount = null,
   applicableTo = 'listing',
   className = '',
   currentUser = null
@@ -33,7 +35,9 @@ const DiscountCodeInput = ({
         body: JSON.stringify({
           code: discountCode.trim(),
           applicableTo,
-          originalAmount
+          originalAmount,
+          baseAmount,
+          addonAmount
         }),
       });
 

@@ -164,7 +164,7 @@ router.delete('/:id', auth, async (req, res) => {
 // Validate a discount code (public endpoint)
 router.post('/validate', async (req, res) => {
   try {
-    const { code, applicableTo, originalAmount } = req.body;
+    const { code, applicableTo, originalAmount, baseAmount, addonAmount } = req.body;
 
     if (!code || !originalAmount) {
       return res.status(400).json({ error: 'Missing required fields: code and originalAmount' });
@@ -176,7 +176,20 @@ router.post('/validate', async (req, res) => {
       return res.status(404).json({ error: 'Invalid or expired discount code' });
     }
 
-    const discountAmount = discountCode.calculateDiscount(originalAmount);
+    // Check if discount code applies to add-ons
+    const appliesToAddons = discountCode.applicableTo.includes('addons');
+    
+    // Calculate the amount to apply discount to
+    let discountableAmount;
+    if (appliesToAddons || applicableTo === 'bump') {
+      // Apply discount to total amount (base + add-ons) or bump price
+      discountableAmount = originalAmount;
+    } else {
+      // Apply discount only to base amount
+      discountableAmount = baseAmount || originalAmount;
+    }
+    
+    const discountAmount = discountCode.calculateDiscount(discountableAmount);
     const finalAmount = originalAmount - discountAmount;
 
     res.json({
@@ -186,7 +199,8 @@ router.post('/validate', async (req, res) => {
         description: discountCode.description,
         discountType: discountCode.discountType,
         discountValue: discountCode.discountValue,
-        maxDiscount: discountCode.maxDiscount
+        maxDiscount: discountCode.maxDiscount,
+        applicableTo: discountCode.applicableTo
       },
       discountAmount,
       finalAmount

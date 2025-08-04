@@ -222,7 +222,20 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       const validDiscountCode = await DiscountCode.findValidCode(discountCode, 'listing');
       
       if (validDiscountCode) {
-        discountAmount = validDiscountCode.calculateDiscount(totalBeforeDiscount);
+        // Check if discount code applies to add-ons
+        const appliesToAddons = validDiscountCode.applicableTo.includes('addons');
+        
+        // Calculate the amount to apply discount to
+        let discountableAmount;
+        if (appliesToAddons) {
+          // Apply discount to total amount (base + add-ons)
+          discountableAmount = totalBeforeDiscount;
+        } else {
+          // Apply discount only to base listing fee
+          discountableAmount = calculatedListingFee;
+        }
+        
+        discountAmount = validDiscountCode.calculateDiscount(discountableAmount);
         appliedDiscountCode = validDiscountCode;
         
         // Increment usage count

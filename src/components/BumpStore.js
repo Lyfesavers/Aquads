@@ -155,6 +155,8 @@ const BumpStore = ({ ad, onClose, onSubmitPayment, currentUser }) => {
             onDiscountApplied={handleDiscountApplied}
             onDiscountRemoved={handleDiscountRemoved}
             originalAmount={selectedOption.price}
+            baseAmount={selectedOption.price}
+            addonAmount={0}
             applicableTo="bump"
             className="mb-6"
             currentUser={currentUser}
