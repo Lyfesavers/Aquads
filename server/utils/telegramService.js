@@ -1474,7 +1474,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 
       // Send each project with voting buttons
       for (const project of userProjects) {
-        const message = `🚀 Your Project: ${project.title}\n\n`;
+        let message = `🚀 Your Project: ${project.title}\n\n`;
         message += `📊 Votes: 👍 ${project.bullishVotes || 0} | 👎 ${project.bearishVotes || 0}\n`;
         message += `🔗 URL: ${project.url}\n`;
         message += `⛓️ Blockchain: ${project.blockchain || 'Ethereum'}\n\n`;
