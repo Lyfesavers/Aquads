@@ -1500,7 +1500,6 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
             formData.append('chat_id', chatId);
             formData.append('photo', project.logo);
             formData.append('caption', message);
-            formData.append('reply_markup', JSON.stringify(keyboard));
 
             const response = await axios.post(
               `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendPhoto`,
@@ -1513,7 +1512,17 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
               }
             );
 
-            if (!response.data.ok) {
+            if (response.data.ok) {
+              // Add keyboard to the sent message
+              await axios.post(
+                `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/editMessageReplyMarkup`,
+                {
+                  chat_id: chatId,
+                  message_id: response.data.result.message_id,
+                  reply_markup: keyboard
+                }
+              );
+            } else {
               // Fallback to text message if photo fails
               await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
             }
