@@ -265,6 +265,23 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     }
   }, [services]);
 
+  // Add effect to handle modal parameter for opening create service modal
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const modalParam = params.get('modal');
+    
+    if (modalParam === 'list-service') {
+      setShowCreateModal(true);
+      
+      // Clear the parameter from the URL to avoid reopening modal on refresh
+      const newUrl = window.location.pathname + 
+        (window.location.search ? 
+          window.location.search.replace('modal=list-service', '').replace(/(\?|&)$/, '') : 
+          '');
+      window.history.replaceState({}, document.title, newUrl);
+    }
+  }, []);
+
   const loadServices = async () => {
     try {
       const data = await fetchServices();
