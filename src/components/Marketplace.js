@@ -272,6 +272,18 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     const modalParam = params.get('modal');
     
     if (modalParam === 'list-service') {
+      // Check if user is logged in before opening the modal
+      if (!currentUser) {
+        alert('Please log in to create a service.');
+        // Clear the parameter from the URL to avoid reopening modal on refresh
+        const newUrl = window.location.pathname + 
+          (window.location.search ? 
+            window.location.search.replace('modal=list-service', '').replace(/(\?|&)$/, '') : 
+            '');
+        window.history.replaceState({}, document.title, newUrl);
+        return;
+      }
+      
       setShowCreateModal(true);
       
       // Clear the parameter from the URL to avoid reopening modal on refresh
@@ -281,7 +293,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
           '');
       window.history.replaceState({}, document.title, newUrl);
     }
-  }, []);
+  }, [currentUser]);
 
   const loadServices = async () => {
     try {
