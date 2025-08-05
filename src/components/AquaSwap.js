@@ -536,7 +536,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     if (chartProvider === 'dexscreener' && dexScreenerRef.current && tokenSearch.trim()) {
       // Validate that tokenSearch looks like a valid pair address
       const isValidPairAddress = /^0x[a-fA-F0-9]{40}$/.test(tokenSearch.trim()) || 
-                                /^[A-Za-z0-9]{32,44}$/.test(tokenSearch.trim());
+                                /^[A-Za-z0-9\-_]{15,70}$/.test(tokenSearch.trim());
       
       if (!isValidPairAddress) {
         dexScreenerRef.current.innerHTML = `
