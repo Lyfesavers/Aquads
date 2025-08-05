@@ -794,8 +794,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                 src="/Aquadsnewlogo.png" 
                 alt="Aquads" 
                 className="aquads-logo" 
-                width="32" 
-                height="32"
+                width="48" 
+                height="48"
               />
             </button>
           </div>
@@ -848,8 +848,8 @@ const AquaSwap = ({ currentUser, showNotification }) => {
             src="/Aquadsnewlogo.png" 
             alt="Aquads" 
             className="aquads-logo" 
-            width="28" 
-            height="28"
+            width="40" 
+            height="40"
           />
         </button>
 

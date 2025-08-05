@@ -24,8 +24,8 @@
 .aquads-logo-button {
   background: rgba(0, 212, 255, 0.1);
   border: 1px solid rgba(0, 212, 255, 0.3);
-  padding: 4px;
-  border-radius: 6px;
+  padding: 8px;
+  border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
   margin-bottom: 2px;
@@ -871,7 +871,7 @@
   
   .aquads-logo-button {
     font-size: 0.75rem;
-    padding: 3px;
+    padding: 6px;
   }
   
   .banner-container {
@@ -1069,7 +1069,7 @@
   .header-left .aquads-logo-button {
     background: rgba(0, 212, 255, 0.1);
     border: 1px solid rgba(0, 212, 255, 0.3);
-    padding: 6px;
+    padding: 8px;
     border-radius: 8px;
     font-size: 0.8rem;
     font-weight: 500;
