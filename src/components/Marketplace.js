@@ -157,6 +157,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [jobs, setJobs] = useState([]);
   const [jobToEdit, setJobToEdit] = useState(null);
   const [isLoading, setIsLoading] = useState({ jobs: true });
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -802,6 +803,20 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     setSearchTerm('');
   };
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showUserDropdown && !event.target.closest('.user-dropdown')) {
+        setShowUserDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showUserDropdown]);
+
   return (
     <div className="h-screen overflow-y-auto bg-gradient-to-br from-gray-900 to-black text-white">
       {/* Fixed Background */}
@@ -843,56 +858,121 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
             </div>
 
             {/* Desktop menu */}
-            <div className="hidden md:flex items-center space-x-4">
-              <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500">
-                Freelancer Hub
-              </span>
+            <div className="hidden md:flex items-center space-x-3">
+              {/* Main Navigation - Smaller buttons */}
+              <Link
+                to="/"
+                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
+              >
+                Home
+              </Link>
+              <Link
+                to="/games"
+                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
+              >
+                Games
+              </Link>
+              <Link
+                to="/crypto-ads"
+                className="bg-gradient-to-r from-green-500/80 to-emerald-600/80 hover:from-green-600/80 hover:to-emerald-700/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
+              >
+                Paid Ads
+              </Link>
+              <Link
+                to="/how-to"
+                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
+              >
+                Learn
+              </Link>
               <Link
                 to="/freelancer-benefits"
-                className="bg-gradient-to-r from-purple-500/80 to-pink-600/80 hover:from-purple-600/80 hover:to-pink-700/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
+                className="bg-gradient-to-r from-purple-500/80 to-pink-600/80 hover:from-purple-600/80 hover:to-pink-700/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
               >
                 Why List?
               </Link>
+
               {currentUser ? (
                 <>
                   <NotificationBell currentUser={currentUser} />
-                  <span className="text-blue-300">Welcome, {currentUser.username}!</span>
-                  <button
-                    onClick={() => setShowDashboard(true)}
-                    className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
-                  >
-                    Dashboard
-                  </button>
-                  <button
-                    onClick={() => setShowBannerModal(true)}
-                    className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
-                  >
-                    Create Banner Ad
-                  </button>
-                  <button
-                    onClick={() => setShowProfileModal(true)}
-                    className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
-                  >
-                    Edit Profile
-                  </button>
-                  <button
-                    onClick={onLogout}
-                    className="bg-red-500/80 hover:bg-red-600/80 px-4 py-2 rounded shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm"
-                  >
-                    Logout
-                  </button>
+                  
+                  {/* User Dropdown */}
+                  <div className="relative user-dropdown">
+                    <button 
+                      onClick={() => setShowUserDropdown(!showUserDropdown)}
+                      className="flex items-center bg-blue-500/80 hover:bg-blue-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                    >
+                      <span className="mr-1">{currentUser.username}</span>
+                      <svg className={`w-4 h-4 ml-1 transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                    
+                    {/* Dropdown Menu */}
+                    {showUserDropdown && (
+                      <div className="absolute right-0 mt-2 w-48 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 z-50">
+                        <div className="py-2">
+                          <button
+                            onClick={() => {
+                              setShowDashboard(true);
+                              setShowUserDropdown(false);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
+                          >
+                            📊 Dashboard
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowCreateModal(true);
+                              setShowUserDropdown(false);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
+                          >
+                            ➕ List Service
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowBannerModal(true);
+                              setShowUserDropdown(false);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
+                          >
+                            🎨 Create Banner Ad
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowProfileModal(true);
+                              setShowUserDropdown(false);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
+                          >
+                            ⚙️ Edit Profile
+                          </button>
+                          <hr className="my-2 border-gray-700" />
+                          <button
+                            onClick={() => {
+                              onLogout();
+                              setShowUserDropdown(false);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-red-600/50 transition-colors"
+                          >
+                            🚪 Logout
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </>
               ) : (
                 <>
                   <button
                     onClick={handleLoginClick}
-                    className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                    className="bg-blue-500/80 hover:bg-blue-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
                   >
                     Login
                   </button>
                   <button
                     onClick={handleCreateAccountClick}
-                    className="bg-green-500/80 hover:bg-green-600/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
+                    className="bg-green-500/80 hover:bg-green-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
                   >
                     Create Account
                   </button>
@@ -902,11 +982,32 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
           </div>
 
           {/* Mobile menu */}
-          <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden py-2`}>
+          <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden py-2 z-[200000] relative`}>
             <div className="flex flex-col space-y-2">
-              <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500 text-center">
-                Freelancer Hub
-              </span>
+              <Link
+                to="/"
+                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+              >
+                Home
+              </Link>
+              <Link
+                to="/games"
+                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+              >
+                GameHub
+              </Link>
+              <Link
+                to="/crypto-ads"
+                className="bg-gradient-to-r from-green-500/80 to-emerald-600/80 hover:from-green-600/80 hover:to-emerald-700/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+              >
+                Paid Ads
+              </Link>
+              <Link
+                to="/how-to"
+                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+              >
+                Learn
+              </Link>
               <Link
                 to="/freelancer-benefits"
                 className="bg-gradient-to-r from-purple-500/80 to-pink-600/80 hover:from-purple-600/80 hover:to-pink-700/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm text-center"
@@ -919,6 +1020,24 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                     <NotificationBell currentUser={currentUser} />
                   </div>
                   <span className="text-blue-300 text-center">Welcome, {currentUser.username}!</span>
+                  <button
+                    onClick={() => {
+                      setShowDashboard(true);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                  >
+                    Dashboard
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowCreateModal(true);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
+                  >
+                    List Service
+                  </button>
                   <button
                     onClick={() => {
                       setShowBannerModal(true);
