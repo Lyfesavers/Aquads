@@ -888,7 +888,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                 to="/freelancer-benefits"
                 className="bg-gradient-to-r from-purple-500/80 to-pink-600/80 hover:from-purple-600/80 hover:to-pink-700/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
               >
-                Why List?
+                Benefits
               </Link>
 
               {currentUser ? (
@@ -1012,7 +1012,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                 to="/freelancer-benefits"
                 className="bg-gradient-to-r from-purple-500/80 to-pink-600/80 hover:from-purple-600/80 hover:to-pink-700/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm text-center"
               >
-                Why List?
+                Benefits
               </Link>
               {currentUser ? (
                 <>
