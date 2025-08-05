@@ -830,6 +830,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
               <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500">
                 Freelancer Hub
               </span>
+              <Link
+                to="/freelancer-benefits"
+                className="bg-gradient-to-r from-purple-500/80 to-pink-600/80 hover:from-purple-600/80 hover:to-pink-700/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
+              >
+                Why List?
+              </Link>
               {currentUser ? (
                 <>
                   <NotificationBell currentUser={currentUser} />
@@ -884,6 +890,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
               <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500 text-center">
                 Freelancer Hub
               </span>
+              <Link
+                to="/freelancer-benefits"
+                className="bg-gradient-to-r from-purple-500/80 to-pink-600/80 hover:from-purple-600/80 hover:to-pink-700/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+              >
+                Why List?
+              </Link>
               {currentUser ? (
                 <>
                   <div className="flex justify-center">

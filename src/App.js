@@ -48,6 +48,7 @@ import VerifyUser from './components/VerifyUser';
 import BannerDisplay from './components/BannerDisplay';
 import CryptoAdNetwork from './components/CryptoAdNetwork';
 import ProjectInfo from './components/ProjectInfo';
+import FreelancerBenefits from './components/FreelancerBenefits';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import emailService from './services/emailService';
@@ -3591,6 +3592,7 @@ function App() {
             <Route path="/crypto-ads" element={<CryptoAdNetwork />} />
             <Route path="/embed/aquaswap" element={<AquaSwapEmbed />} />
             <Route path="/project-info" element={<ProjectInfo currentUser={currentUser} />} />
+            <Route path="/freelancer-benefits" element={<FreelancerBenefits currentUser={currentUser} />} />
         </Routes>
       </Router>
     </AuthContext.Provider>
