@@ -52,6 +52,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     if (tokenParam && blockchainParam) {
       // Set token search and chain based on URL parameters
       setTokenSearch(tokenParam);
+      setSearchInput(tokenParam); // Also update the search input to show the selected address
       setSelectedChain(getChainForBlockchain(blockchainParam));
       setChartProvider('dexscreener');
       
