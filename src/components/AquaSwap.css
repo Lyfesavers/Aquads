@@ -20,25 +20,31 @@
   backdrop-filter: blur(10px);
 }
 
-/* Back button styling - smaller */
-.back-to-main-button {
+/* Aquads logo button styling */
+.aquads-logo-button {
   background: rgba(0, 212, 255, 0.1);
   border: 1px solid rgba(0, 212, 255, 0.3);
-  color: #00d4ff;
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: 4px;
+  border-radius: 6px;
   cursor: pointer;
-  font-weight: 500;
-  font-size: 0.8rem;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
   margin-bottom: 2px;
   display: inline-block;
 }
 
-.back-to-main-button:hover {
+.aquads-logo-button:hover {
   background: rgba(0, 212, 255, 0.2);
   border-color: #00d4ff;
   transform: translateY(-1px);
+}
+
+.aquads-logo {
+  filter: drop-shadow(0 0 4px rgba(0, 212, 255, 0.3));
+  transition: filter 0.3s ease;
+}
+
+.aquads-logo-button:hover .aquads-logo {
+  filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.5));
 }
 
 /* Page title - Much more compact */
@@ -48,7 +54,7 @@
 }
 
 .page-title h1 {
-  font-size: 1.8rem;
+  font-size: 1.4rem;
   margin: 0 0 4px 0;
   background: linear-gradient(45deg, #00d4ff, #0099cc);
   background-clip: text;
@@ -863,9 +869,9 @@
     padding: 6px 10px;
   }
   
-  .back-to-main-button {
+  .aquads-logo-button {
     font-size: 0.75rem;
-    padding: 3px 6px;
+    padding: 3px;
   }
   
   .banner-container {
@@ -1047,7 +1053,7 @@
   }
 
   /* Hide mobile elements on desktop */
-  .header-section > .back-to-main-button,
+  .header-section > .aquads-logo-button,
   .header-section > .page-title,
   .header-section > .banner-mobile-only {
     display: none;
@@ -1060,11 +1066,10 @@
     gap: 12px;
   }
 
-  .header-left .back-to-main-button {
+  .header-left .aquads-logo-button {
     background: rgba(0, 212, 255, 0.1);
     border: 1px solid rgba(0, 212, 255, 0.3);
-    color: #00d4ff;
-    padding: 6px 12px;
+    padding: 6px;
     border-radius: 8px;
     font-size: 0.8rem;
     font-weight: 500;
@@ -1073,7 +1078,7 @@
     gap: 6px;
   }
 
-  .header-left .back-to-main-button:hover {
+  .header-left .aquads-logo-button:hover {
     background: rgba(0, 212, 255, 0.2);
     border-color: #00d4ff;
     transform: translateY(-1px);

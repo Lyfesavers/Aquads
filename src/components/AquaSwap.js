@@ -786,11 +786,17 @@ const AquaSwap = ({ currentUser, showNotification }) => {
           {/* Left Section */}
           <div className="header-left">
             <button 
-              className="back-to-main-button"
+              className="aquads-logo-button"
               onClick={() => navigate('/')}
               title="Back to Main Page"
             >
-              ← Back to Main
+              <img 
+                src="/Aquadsnewlogo.png" 
+                alt="Aquads" 
+                className="aquads-logo" 
+                width="32" 
+                height="32"
+              />
             </button>
           </div>
 
@@ -834,11 +840,17 @@ const AquaSwap = ({ currentUser, showNotification }) => {
 
         {/* Mobile Layout (unchanged for mobile compatibility) */}
         <button 
-          className="back-to-main-button"
+          className="aquads-logo-button"
           onClick={() => navigate('/')}
           title="Back to Main Page"
         >
-          ← Back to Main
+          <img 
+            src="/Aquadsnewlogo.png" 
+            alt="Aquads" 
+            className="aquads-logo" 
+            width="28" 
+            height="28"
+          />
         </button>
 
         {/* Banner Display - only show on mobile */}
