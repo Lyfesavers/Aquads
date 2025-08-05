@@ -785,19 +785,15 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         <div className="header-nav">
           {/* Left Section */}
           <div className="header-left">
-            <button 
-              className="aquads-logo-button"
+            <img 
+              src="/Aquadsnewlogo.png" 
+              alt="Aquads" 
+              className="aquads-logo-clickable"
+              width="72" 
+              height="72"
               onClick={() => navigate('/')}
               title="Back to Main Page"
-            >
-              <img 
-                src="/Aquadsnewlogo.png" 
-                alt="Aquads" 
-                className="aquads-logo" 
-                width="48" 
-                height="48"
-              />
-            </button>
+            />
           </div>
 
           {/* Center Section - Logo & Title */}
@@ -839,19 +835,15 @@ const AquaSwap = ({ currentUser, showNotification }) => {
         </div>
 
         {/* Mobile Layout (unchanged for mobile compatibility) */}
-        <button 
-          className="aquads-logo-button"
+        <img 
+          src="/Aquadsnewlogo.png" 
+          alt="Aquads" 
+          className="aquads-logo-clickable"
+          width="60" 
+          height="60"
           onClick={() => navigate('/')}
           title="Back to Main Page"
-        >
-          <img 
-            src="/Aquadsnewlogo.png" 
-            alt="Aquads" 
-            className="aquads-logo" 
-            width="40" 
-            height="40"
-          />
-        </button>
+        />
 
         {/* Banner Display - only show on mobile */}
         <div className="banner-mobile-only">

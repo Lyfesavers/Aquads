@@ -20,30 +20,17 @@
   backdrop-filter: blur(10px);
 }
 
-/* Aquads logo button styling */
-.aquads-logo-button {
-  background: rgba(0, 212, 255, 0.1);
-  border: 1px solid rgba(0, 212, 255, 0.3);
-  padding: 8px;
-  border-radius: 8px;
+/* Aquads logo styling - no button */
+.aquads-logo-clickable {
   cursor: pointer;
-  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+  transition: transform 0.3s ease, filter 0.3s ease;
   margin-bottom: 2px;
   display: inline-block;
-}
-
-.aquads-logo-button:hover {
-  background: rgba(0, 212, 255, 0.2);
-  border-color: #00d4ff;
-  transform: translateY(-1px);
-}
-
-.aquads-logo {
   filter: drop-shadow(0 0 4px rgba(0, 212, 255, 0.3));
-  transition: filter 0.3s ease;
 }
 
-.aquads-logo-button:hover .aquads-logo {
+.aquads-logo-clickable:hover {
+  transform: translateY(-2px);
   filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.5));
 }
 
@@ -869,9 +856,8 @@
     padding: 6px 10px;
   }
   
-  .aquads-logo-button {
-    font-size: 0.75rem;
-    padding: 6px;
+  .aquads-logo-clickable {
+    /* Mobile logo styling */
   }
   
   .banner-container {
@@ -1053,7 +1039,7 @@
   }
 
   /* Hide mobile elements on desktop */
-  .header-section > .aquads-logo-button,
+  .header-section > .aquads-logo-clickable,
   .header-section > .page-title,
   .header-section > .banner-mobile-only {
     display: none;
@@ -1066,23 +1052,9 @@
     gap: 12px;
   }
 
-  .header-left .aquads-logo-button {
-    background: rgba(0, 212, 255, 0.1);
-    border: 1px solid rgba(0, 212, 255, 0.3);
-    padding: 8px;
-    border-radius: 8px;
-    font-size: 0.8rem;
-    font-weight: 500;
+  .header-left .aquads-logo-clickable {
     display: flex;
     align-items: center;
-    gap: 6px;
-  }
-
-  .header-left .aquads-logo-button:hover {
-    background: rgba(0, 212, 255, 0.2);
-    border-color: #00d4ff;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);
   }
 
   /* Desktop center branding */
