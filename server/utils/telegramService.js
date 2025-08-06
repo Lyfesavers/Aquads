@@ -265,6 +265,8 @@ const telegramService = {
       await telegramService.handleBubblesCommand(chatId);
     } else if (text.startsWith('/mybubble')) {
       await telegramService.handleMyBubbleCommand(chatId, userId);
+    } else if (text.startsWith('/createraid')) {
+      await telegramService.handleCreateRaidCommand(chatId, userId, text);
     } else if (text.startsWith('/cancel')) {
       // Cancel any ongoing conversation
       if (conversationState) {
@@ -313,6 +315,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 • /twitter [USERNAME] - Set or view your Twitter username for raids
 • /raids - View available Twitter raids
 • /complete RAID_ID @twitter_username TWEET_URL - Complete a raid manually
+• /createraid TWEET_URL - Create a new raid (2000 points)
 • /mybubble - View your projects
 • /help - Show detailed command guide
 
@@ -390,6 +393,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 📋 Raid Commands:
 • /raids - View all available Twitter raids
 • /complete RAID_ID [@twitter_username] TWEET_URL - Complete a raid manually (Twitter username optional if set)
+• /createraid TWEET_URL - Create a new raid (2000 points)
 
 📋 Bubble Commands:
 • /bubbles - View top 10 bubbles with most bullish votes
@@ -401,6 +405,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 /raids
 /bubbles
 /mybubble
+/createraid https://twitter.com/user/status/123456789
 /complete 507f1f77bcf86cd799439011 https://twitter.com/user/status/123456789
 /complete 507f1f77bcf86cd799439011 @mytwitter https://twitter.com/user/status/123456789
 
@@ -416,7 +421,8 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 2. Set your Twitter username: /twitter your_twitter_username
 3. View available raids: /raids
 4. Complete raids using buttons or /complete command
-5. View your projects: /mybubble
+5. Create your own raids: /createraid (requires 2000 points)
+6. View your projects: /mybubble
 
 🌐 Track points & claim rewards on: https://aquads.xyz
 
@@ -1488,6 +1494,100 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
       console.error('MyBubble command error:', error);
       await telegramService.sendBotMessage(chatId, 
         "❌ Error fetching your projects. Please try again later.");
+    }
+  },
+
+  // Handle /createraid command
+  handleCreateRaidCommand: async (chatId, telegramUserId, text) => {
+    try {
+      // Check if user is linked
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      
+      if (!user) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
+        return;
+      }
+
+      // Parse command format: /createraid TWEET_URL
+      const tweetUrl = text.substring('/createraid'.length).trim();
+      
+      if (!tweetUrl) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Please provide a tweet URL.\n\n📝 Usage: /createraid TWEET_URL\n\n💡 Example: /createraid https://twitter.com/user/status/123456789\n\n💰 Cost: 2000 points");
+        return;
+      }
+
+      // Validate Twitter URL
+      const tweetIdMatch = tweetUrl.match(/\/status\/(\d+)/);
+      if (!tweetIdMatch || !tweetIdMatch[1]) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Invalid Twitter URL. Please provide a valid tweet URL.\n\n💡 Example: https://twitter.com/user/status/123456789");
+        return;
+      }
+
+      const tweetId = tweetIdMatch[1];
+      const POINTS_REQUIRED = 2000;
+
+      // Check if user has enough points
+      if (user.points < POINTS_REQUIRED) {
+        await telegramService.sendBotMessage(chatId, 
+          `❌ Not enough points. You have ${user.points} points but need ${POINTS_REQUIRED} points to create a raid.\n\n💡 Earn points by completing raids: /raids`);
+        return;
+      }
+
+      // Create the raid using the same logic as the website
+      const TwitterRaid = require('../models/TwitterRaid');
+      
+      // Generate default title and description
+      const title = `Twitter Raid by @${user.username}`;
+      const description = `Help boost this tweet! Like, retweet, and comment to earn 50 points.`;
+      
+      const raid = new TwitterRaid({
+        tweetId,
+        tweetUrl,
+        title,
+        description,
+        points: 50, // Fixed points for raids
+        createdBy: user._id,
+        isPaid: false, // Not a paid raid (it's a points raid)
+        paymentStatus: 'approved', // Automatically approved since we're deducting points
+        active: true,
+        paidWithPoints: true, // Track point-based raids
+        pointsSpent: POINTS_REQUIRED // Track how many points were spent
+      });
+
+      // Deduct points from user
+      user.points -= POINTS_REQUIRED;
+      user.pointsHistory.push({
+        amount: -POINTS_REQUIRED,
+        reason: 'Created Twitter raid via Telegram',
+        socialRaidId: raid._id.toString(),
+        createdAt: new Date()
+      });
+
+      // Save both the raid and updated user
+      await Promise.all([
+        raid.save(),
+        user.save()
+      ]);
+
+      // Send success message
+      await telegramService.sendBotMessage(chatId, 
+        `✅ Raid Created Successfully!\n\n🔗 Tweet: ${tweetUrl}\n💰 Points Deducted: ${POINTS_REQUIRED}\n💎 Points Remaining: ${user.points}\n\n🚀 Your raid is now live on https://aquads.xyz and will be sent to all users!\n\n💡 Users who complete your raid will earn 50 points.`);
+
+      // Send Telegram notification to all users about the new raid
+      await telegramService.sendRaidNotification({
+        tweetUrl: raid.tweetUrl,
+        points: raid.points,
+        title: raid.title,
+        description: raid.description
+      });
+
+    } catch (error) {
+      console.error('CreateRaid command error:', error);
+      await telegramService.sendBotMessage(chatId, 
+        "❌ Error creating raid. Please try again later.");
     }
   },
 
