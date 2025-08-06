@@ -263,8 +263,6 @@ const telegramService = {
       await telegramService.handleHelpCommand(chatId);
     } else if (text.startsWith('/bubbles')) {
       await telegramService.handleBubblesCommand(chatId);
-    } else if (text.startsWith('/register')) {
-      await telegramService.handleRegisterCommand(chatId, userId, text);
     } else if (text.startsWith('/mybubble')) {
       await telegramService.handleMyBubbleCommand(chatId, userId);
     } else if (text.startsWith('/cancel')) {
@@ -315,8 +313,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 • /twitter [USERNAME] - Set or view your Twitter username for raids
 • /raids - View available Twitter raids
 • /complete RAID_ID @twitter_username TWEET_URL - Complete a raid manually
-• /register PROJECT_NAME - Register an existing project as yours
-• /mybubble - View your registered projects
+• /mybubble - View your projects
 • /help - Show detailed command guide
 
 🌐 Track points & claim rewards on: https://aquads.xyz
@@ -396,15 +393,13 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 
 📋 Bubble Commands:
 • /bubbles - View top 10 bubbles with most bullish votes
-• /mybubble - View your registered projects with voting buttons
-• /register PROJECT_NAME - Register an existing project as yours
+• /mybubble - View your projects with voting buttons
 
 📝 Example Usage:
 /link myusername
 /twitter mytwitter
 /raids
 /bubbles
-/register MyProject
 /mybubble
 /complete 507f1f77bcf86cd799439011 https://twitter.com/user/status/123456789
 /complete 507f1f77bcf86cd799439011 @mytwitter https://twitter.com/user/status/123456789
@@ -421,8 +416,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 2. Set your Twitter username: /twitter your_twitter_username
 3. View available raids: /raids
 4. Complete raids using buttons or /complete command
-5. Register your project: /register PROJECT_NAME
-6. View your projects: /mybubble
+5. View your projects: /mybubble
 
 🌐 Track points & claim rewards on: https://aquads.xyz
 
@@ -1385,73 +1379,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
     }
   },
 
-  // Handle /register command for project registration
-  handleRegisterCommand: async (chatId, telegramUserId, text) => {
-    const parts = text.split(' ');
-    
-    if (parts.length < 2) {
-      await telegramService.sendBotMessage(chatId, 
-        "❌ Please provide your project name/title.\n\n📝 Usage: /register PROJECT_NAME\n\n💡 Example: /register MyAwesomeProject\n\n⚠️ Note: You must have an Aquads account and be logged in to register projects.");
-      return;
-    }
 
-    // Get project name (everything after /register)
-    const projectName = parts.slice(1).join(' ').trim();
-    
-    if (projectName.length < 3) {
-      await telegramService.sendBotMessage(chatId, 
-        "❌ Project name must be at least 3 characters long.");
-      return;
-    }
-
-    try {
-      // Check if user is linked
-      const user = await User.findOne({ telegramId: telegramUserId.toString() });
-      
-      if (!user) {
-        await telegramService.sendBotMessage(chatId, 
-          "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
-        return;
-      }
-
-      // Find existing project by title (case-insensitive)
-      const existingProject = await Ad.findOne({ 
-        title: { $regex: new RegExp(`^${projectName}$`, 'i') }
-      });
-      
-      if (!existingProject) {
-        await telegramService.sendBotMessage(chatId, 
-          `❌ Project "${projectName}" not found in our database.\n\n💡 Make sure the project name matches exactly.\n\n💡 You can view available projects on: https://aquads.xyz`);
-        return;
-      }
-
-      // Check if user already owns this project
-      if (existingProject.owner === user.username) {
-        await telegramService.sendBotMessage(chatId, 
-          `✅ You already own project "${projectName}"!\n\n💡 Use /mybubble to view your projects.`);
-        return;
-      }
-
-      // Check if project is already owned by someone else
-      if (existingProject.owner && existingProject.owner !== user.username) {
-        await telegramService.sendBotMessage(chatId, 
-          `❌ Project "${projectName}" is already owned by another user.\n\n💡 Please contact support if this is your project.`);
-        return;
-      }
-
-      // Assign project to user
-      existingProject.owner = user.username;
-      await existingProject.save();
-
-      await telegramService.sendBotMessage(chatId, 
-        `✅ Project Registration Complete!\n\n🏷️ Project: ${existingProject.title}\n🔗 URL: ${existingProject.url}\n⛓️ Blockchain: ${existingProject.blockchain || 'Ethereum'}\n\n💡 Use /mybubble to view your projects!`);
-
-    } catch (error) {
-      console.error('Register command error:', error);
-      await telegramService.sendBotMessage(chatId, 
-        "❌ Error registering project. Please try again later.");
-    }
-  },
 
   // Handle /mybubble command
   handleMyBubbleCommand: async (chatId, telegramUserId) => {
@@ -1475,7 +1403,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 
       if (userProjects.length === 0) {
         await telegramService.sendBotMessage(chatId, 
-          `📭 No projects found for ${user.username}.\n\n💡 Register your project with: /register PROJECT_NAME\n\n🌐 Or create projects on: https://aquads.xyz`);
+          `📭 No projects found for ${user.username}.\n\n🌐 Create projects on: https://aquads.xyz`);
         return;
       }
 
