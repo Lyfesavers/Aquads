@@ -117,10 +117,10 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
   return (
     <Modal onClose={handleClose}>
       <div className="w-full max-w-4xl mx-auto px-4 sm:px-6">
-        <h2 className="text-2xl font-bold mb-6 text-center">Create Banner Ad</h2>
+        <h2 className="text-2xl font-bold mb-6 text-center text-white">Create Banner Ad</h2>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-4">Duration Options</h3>
+            <h3 className="text-lg font-semibold mb-4 text-white">Duration Options</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {BANNER_OPTIONS.map((option) => (
                 <button
@@ -133,7 +133,7 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
                       : 'border-gray-600 hover:border-blue-400'
                   }`}
                 >
-                  <div className="font-medium">{option.duration}</div>
+                  <div className="font-medium text-white">{option.duration}</div>
                   <div className="text-sm text-gray-400">{option.price} USDC</div>
                 </button>
               ))}
@@ -141,19 +141,19 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Banner Title</label>
+            <label className="block text-sm font-medium mb-2 text-white">Banner Title</label>
             <input
               type="text"
               value={bannerData.title}
               onChange={(e) => setBannerData({...bannerData, title: e.target.value})}
               required
               placeholder="Enter your banner title"
-              className="w-full p-3 bg-gray-700 rounded"
+              className="w-full p-3 bg-gray-700 rounded text-white placeholder-gray-400"
             />
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-sm font-medium mb-2 text-white">
               Banner GIF URL (W1280xH200px)
             </label>
             <input
@@ -161,7 +161,7 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
               name="gif"
               value={bannerData.gif}
               onChange={handleGifChange}
-              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400"
               placeholder="Enter banner GIF URL"
               required
             />
@@ -184,19 +184,19 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Website URL</label>
+            <label className="block text-sm font-medium mb-2 text-white">Website URL</label>
             <input
               type="url"
               value={bannerData.url}
               onChange={(e) => setBannerData({...bannerData, url: e.target.value})}
               required
               placeholder="Enter your website URL"
-              className="w-full p-3 bg-gray-700 rounded"
+              className="w-full p-3 bg-gray-700 rounded text-white placeholder-gray-400"
             />
           </div>
 
           <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-4">Payment Options</h3>
+            <h3 className="text-lg font-semibold mb-4 text-white">Payment Options</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
               {BLOCKCHAIN_OPTIONS.map((chain) => (
                 <button
@@ -209,7 +209,7 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
                       : 'border-gray-600 hover:border-blue-400'
                   }`}
                 >
-                  <div className="font-medium text-center">{chain.name}</div>
+                  <div className="font-medium text-center text-white">{chain.name}</div>
                   <div className="text-sm text-gray-400 text-center mt-2">
                     {selectedOption.price} {chain.amount}
                   </div>
@@ -221,26 +221,26 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
           <div className="flex items-center gap-2 p-3 sm:p-4 bg-gray-700 rounded-lg overflow-x-auto">
             <div className="flex-1 min-w-0">
               <div className="text-sm text-gray-400">Send payment to:</div>
-              <div className="font-mono text-sm truncate">{selectedChain.address}</div>
+              <div className="font-mono text-sm truncate text-white">{selectedChain.address}</div>
             </div>
             <button
               type="button"
               onClick={handleCopyAddress}
-              className="p-2 hover:text-blue-400"
+              className="p-2 hover:text-blue-400 text-white"
             >
               {copiedAddress ? <FaCheck /> : <FaCopy />}
             </button>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Transaction Signature</label>
+            <label className="block text-sm font-medium mb-2 text-white">Transaction Signature</label>
             <input
               type="text"
               value={txSignature}
               onChange={(e) => setTxSignature(e.target.value)}
               required
               placeholder="Enter your transaction signature"
-              className="w-full p-3 bg-gray-700 rounded"
+              className="w-full p-3 bg-gray-700 rounded text-white placeholder-gray-400"
             />
           </div>
 
@@ -248,13 +248,13 @@ const CreateBannerModal = ({ onClose, onSubmit }) => {
             <button
               type="button"
               onClick={handleClose}
-              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded"
+              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded text-white"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded"
+              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded text-white"
             >
               Create Banner
             </button>
