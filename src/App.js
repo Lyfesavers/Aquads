@@ -3607,7 +3607,19 @@ function App() {
             <Route path="/swap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} />} />
             <Route path="/aquaswap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} />} />
             <Route path="/buy-crypto" element={<TransakPage currentUser={currentUser} showNotification={showNotification} />} />
-            <Route path="/crypto-ads" element={<CryptoAdNetwork />} />
+            <Route path="/crypto-ads" element={
+              <CryptoAdNetwork 
+                currentUser={currentUser}
+                setShowLoginModal={setShowLoginModal}
+                setShowCreateAccountModal={setShowCreateAccountModal}
+                setShowDashboard={setShowDashboard}
+                setShowCreateModal={setShowCreateModal}
+                setShowBannerModal={setShowBannerModal}
+                setShowProfileModal={setShowProfileModal}
+                setDashboardActiveTab={setDashboardActiveTab}
+                handleLogout={handleLogout}
+              />
+            } />
             <Route path="/embed/aquaswap" element={<AquaSwapEmbed />} />
             <Route path="/project-info" element={<ProjectInfo currentUser={currentUser} />} />
             <Route path="/freelancer-benefits" element={<FreelancerBenefits currentUser={currentUser} />} />
