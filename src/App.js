@@ -26,6 +26,7 @@ import CreateAccountModal from './components/CreateAccountModal';
 import EmailVerificationModal from './components/EmailVerificationModal';
 import Dashboard from './components/Dashboard';
 import EditAdModal from './components/EditAdModal';
+import CreateBannerModal from './components/CreateBannerModal';
 import TokenBanner from './components/TokenBanner';
 import TokenList from './components/TokenList';
 import TokenRating from './components/TokenRating';
@@ -416,6 +417,7 @@ function App() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
+  const [showBannerModal, setShowBannerModal] = useState(false);
   const [showEmailVerificationModal, setShowEmailVerificationModal] = useState(false);
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
   const [showBumpStore, setShowBumpStore] = useState(false);
@@ -2748,6 +2750,15 @@ function App() {
                                     </button>
                                     <button
                                       onClick={() => {
+                                        setShowBannerModal(true);
+                                        setShowUserDropdown(false);
+                                      }}
+                                      className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
+                                    >
+                                      🎨 Create Banner Ad
+                                    </button>
+                                    <button
+                                      onClick={() => {
                                         setShowProfileModal(true);
                                         setShowUserDropdown(false);
                                       }}
@@ -3376,6 +3387,13 @@ function App() {
                     onCreateAd={handleCreateAd}
                     onClose={() => setShowCreateModal(false)}
                     currentUser={currentUser}
+                  />
+                )}
+
+                {showBannerModal && currentUser && (
+                  <CreateBannerModal
+                    onSubmit={handleBannerSubmit}
+                    onClose={() => setShowBannerModal(false)}
                   />
                 )}
 
