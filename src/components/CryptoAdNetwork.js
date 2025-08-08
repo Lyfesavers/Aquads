@@ -81,12 +81,14 @@ const CryptoAdNetwork = ({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <img 
-                src="/Aquadsnewlogo.png" 
-                alt="AQUADS" 
-                className="w-auto filter drop-shadow-lg"
-                style={{height: '2rem', filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))'}}
-              />
+              <Link to="/" className="flex items-center">
+                <img 
+                  src="/Aquadsnewlogo.png" 
+                  alt="AQUADS" 
+                  className="w-auto filter drop-shadow-lg cursor-pointer hover:scale-105 transition-transform duration-200"
+                  style={{height: '2rem', filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))'}}
+                />
+              </Link>
             </div>
             
             {/* Mobile menu button */}
@@ -138,13 +140,7 @@ const CryptoAdNetwork = ({
               >
                 Why List?
               </Link>
-              <Link
-                to="/"
-                className="flex items-center bg-blue-500/80 hover:bg-blue-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
-              >
-                <FaArrowLeft className="mr-1" />
-                Main
-              </Link>
+
 
               {currentUser ? (
                 <>
@@ -275,14 +271,7 @@ const CryptoAdNetwork = ({
               >
                 Why List?
               </Link>
-              <Link
-                to="/"
-                className="flex items-center justify-center bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <FaArrowLeft className="mr-2" />
-                Back to Main
-              </Link>
+
               {currentUser ? (
                 <>
                   <div className="flex justify-center">
@@ -390,16 +379,21 @@ const CryptoAdNetwork = ({
         />
       )}
 
-      {/* Dashboard Modal */}
-      {showDashboard && (
-        <Dashboard
-          currentUser={currentUser}
-          onClose={() => setShowDashboard(false)}
-          activeTab={dashboardActiveTab}
-          setActiveTab={setDashboardActiveTab}
-          showNotification={showNotification}
-        />
-      )}
+              {/* Dashboard Modal */}
+        {showDashboard && (
+          <Dashboard
+            ads={[]} // Empty ads array since we're not managing ads in this context
+            currentUser={currentUser}
+            onClose={() => setShowDashboard(false)}
+            onDeleteAd={() => {}} // No-op function
+            onBumpAd={() => {}} // No-op function
+            onEditAd={() => {}} // No-op function
+            onRejectBump={() => {}} // No-op function
+            onApproveBump={() => {}} // No-op function
+            initialBookingId={null}
+            initialActiveTab={dashboardActiveTab}
+          />
+        )}
 
       {/* Create Ad Modal */}
       {showCreateModal && (
