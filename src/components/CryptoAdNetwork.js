@@ -2,23 +2,32 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaArrowLeft } from 'react-icons/fa';
 import NotificationBell from './NotificationBell';
-import TokenBanner from './TokenBanner';
 import MintFunnelInstructionModal from './MintFunnelInstructionModal';
+import LoginModal from './LoginModal';
+import CreateAccountModal from './CreateAccountModal';
+import Dashboard from './Dashboard';
+import CreateAdModal from './CreateAdModal';
+import CreateBannerModal from './CreateBannerModal';
+import ProfileModal from './ProfileModal';
 
 const CryptoAdNetwork = ({ 
   currentUser, 
-  setShowLoginModal, 
-  setShowCreateAccountModal, 
-  setShowDashboard, 
-  setShowCreateModal, 
-  setShowBannerModal, 
-  setShowProfileModal, 
-  setDashboardActiveTab, 
+  setCurrentUser,
+  showNotification,
   handleLogout 
 }) => {
   const [showInstructionModal, setShowInstructionModal] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  
+  // Local modal states
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showBannerModal, setShowBannerModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [dashboardActiveTab, setDashboardActiveTab] = useState('ads');
 
   useEffect(() => {
     // Add class to body for page-specific styling if needed
@@ -345,12 +354,8 @@ const CryptoAdNetwork = ({
         </div>
       </nav>
 
-      <div className="fixed top-16 left-0 right-0 z-[3] token-banner-container">
-        <TokenBanner />
-      </div>
-
       {/* Embedded Content - Full Screen */}
-      <div className="fixed inset-0 top-20 z-20">
+      <div className="fixed inset-0 top-16 z-20">
         <iframe
           src="https://mintfunnel.co/crypto-ad-network/?ref=Aquads"
           className="w-full h-full border-0"
@@ -364,6 +369,65 @@ const CryptoAdNetwork = ({
       {showInstructionModal && (
         <MintFunnelInstructionModal
           onClose={handleCloseInstructionModal}
+        />
+      )}
+
+      {/* Login Modal */}
+      {showLoginModal && (
+        <LoginModal
+          onLogin={setCurrentUser}
+          onClose={() => setShowLoginModal(false)}
+          showNotification={showNotification}
+        />
+      )}
+
+      {/* Create Account Modal */}
+      {showCreateAccountModal && (
+        <CreateAccountModal
+          onRegister={setCurrentUser}
+          onClose={() => setShowCreateAccountModal(false)}
+          showNotification={showNotification}
+        />
+      )}
+
+      {/* Dashboard Modal */}
+      {showDashboard && (
+        <Dashboard
+          currentUser={currentUser}
+          onClose={() => setShowDashboard(false)}
+          activeTab={dashboardActiveTab}
+          setActiveTab={setDashboardActiveTab}
+          showNotification={showNotification}
+        />
+      )}
+
+      {/* Create Ad Modal */}
+      {showCreateModal && (
+        <CreateAdModal
+          onCreateAd={() => {}}
+          onClose={() => setShowCreateModal(false)}
+          currentUser={currentUser}
+          showNotification={showNotification}
+        />
+      )}
+
+      {/* Create Banner Modal */}
+      {showBannerModal && (
+        <CreateBannerModal
+          onCreateBanner={() => {}}
+          onClose={() => setShowBannerModal(false)}
+          currentUser={currentUser}
+          showNotification={showNotification}
+        />
+      )}
+
+      {/* Profile Modal */}
+      {showProfileModal && (
+        <ProfileModal
+          currentUser={currentUser}
+          setCurrentUser={setCurrentUser}
+          onClose={() => setShowProfileModal(false)}
+          showNotification={showNotification}
         />
       )}
     </div>

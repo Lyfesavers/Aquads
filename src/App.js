@@ -3610,13 +3610,8 @@ function App() {
             <Route path="/crypto-ads" element={
               <CryptoAdNetwork 
                 currentUser={currentUser}
-                setShowLoginModal={setShowLoginModal}
-                setShowCreateAccountModal={setShowCreateAccountModal}
-                setShowDashboard={setShowDashboard}
-                setShowCreateModal={setShowCreateModal}
-                setShowBannerModal={setShowBannerModal}
-                setShowProfileModal={setShowProfileModal}
-                setDashboardActiveTab={setDashboardActiveTab}
+                setCurrentUser={setCurrentUser}
+                showNotification={showNotification}
                 handleLogout={handleLogout}
               />
             } />
