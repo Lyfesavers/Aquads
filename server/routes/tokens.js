@@ -14,20 +14,22 @@ const updateTokenCache = async (force = false) => {
   }
 
   try {
-    console.log('=== TOKEN CACHE UPDATE STARTING ===');
-    console.log('Using CoinCap API v2 for token data');
 
-    // Using CoinCap API v2 - free tier with reliable data
+    console.log('=== TOKEN CACHE UPDATE STARTING ===');
+    console.log('Using CoinCap API v2 with authentication');
+
+    // Using CoinCap API v2 with API key for reliable data
     const response = await axios.get(
       'https://api.coincap.io/v2/assets',
       {
         params: {
           limit: 250
         },
-        timeout: 10000,
+        timeout: 15000,
         headers: {
           'Accept': 'application/json',
-          'Accept-Encoding': 'gzip, deflate'
+          'Accept-Encoding': 'gzip, deflate',
+          'Authorization': `Bearer ${process.env.Coincap_api}`
         }
       }
     );
@@ -40,7 +42,7 @@ const updateTokenCache = async (force = false) => {
     }
 
     console.log(`Successfully fetched ${response.data.data.length} tokens from CoinCap`);
-    
+
     const tokens = response.data.data.map(token => ({
       id: token.id,
       symbol: token.symbol?.toUpperCase() || '',
@@ -50,15 +52,15 @@ const updateTokenCache = async (force = false) => {
       marketCap: parseFloat(token.marketCapUsd) || 0,
       marketCapRank: parseInt(token.rank) || 0,
       totalVolume: parseFloat(token.volumeUsd24Hr) || 0,
-      high24h: 0, // Not available in CoinCap basic endpoint
-      low24h: 0, // Not available in CoinCap basic endpoint
+      high24h: 0, // Not available in basic CoinCap endpoint
+      low24h: 0, // Not available in basic CoinCap endpoint
       priceChange24h: parseFloat(token.changePercent24Hr) || 0,
       priceChangePercentage24h: parseFloat(token.changePercent24Hr) || 0,
       circulatingSupply: parseFloat(token.supply) || 0,
       totalSupply: parseFloat(token.supply) || 0,
       maxSupply: parseFloat(token.maxSupply) || null,
-      ath: 0, // Not available in CoinCap basic endpoint
-      athChangePercentage: 0, // Not available in CoinCap basic endpoint
+      ath: 0, // Not available in basic CoinCap endpoint
+      athChangePercentage: 0, // Not available in basic CoinCap endpoint
       athDate: new Date(),
       fullyDilutedValuation: parseFloat(token.marketCapUsd) || 0,
       lastUpdated: new Date()
@@ -185,7 +187,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Chart data endpoint using CoinCap API v2
+// Chart data endpoint using authenticated CoinCap API
 router.get('/:id/chart/:days', async (req, res) => {
   try {
     const { id, days } = req.params;
@@ -231,7 +233,7 @@ router.get('/:id/chart/:days', async (req, res) => {
     
     endTime = now;
 
-    // Fetch chart data from CoinCap API
+    // Fetch chart data from authenticated CoinCap API
     const response = await axios.get(
       `https://api.coincap.io/v2/assets/${id}/history`,
       {
@@ -243,7 +245,8 @@ router.get('/:id/chart/:days', async (req, res) => {
         timeout: 15000,
         headers: {
           'Accept': 'application/json',
-          'Accept-Encoding': 'gzip, deflate'
+          'Accept-Encoding': 'gzip, deflate',
+          'Authorization': `Bearer ${process.env.Coincap_api}`
         }
       }
     );
@@ -274,6 +277,7 @@ router.get('/:id/chart/:days', async (req, res) => {
       total_volumes: [] // CoinCap doesn't provide historical volume in this endpoint
     };
 
+    console.log(`Generated ${validPrices.length} chart data points for ${id}`);
     res.json(chartData);
 
   } catch (error) {
@@ -287,6 +291,10 @@ router.get('/:id/chart/:days', async (req, res) => {
     
     if (error.response && error.response.status === 404) {
       return res.status(404).json({ error: 'Token not found for chart data' });
+    }
+    
+    if (error.response && error.response.status === 401) {
+      return res.status(500).json({ error: 'API authentication failed' });
     }
     
     if (error.response && error.response.status === 429) {
