@@ -194,6 +194,9 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   const handleTokenClick = async (token) => {
     try {
+      console.log(`[DEBUG] Token clicked: ${token.id} (${token.symbol})`);
+      console.log(`[DEBUG] Selected time range: ${selectedTimeRange}`);
+      
       if (chartInstance) {
         chartInstance.destroy();
         setChartInstance(null);
@@ -204,6 +207,7 @@ const TokenList = ({ currentUser, showNotification }) => {
 
       await fetchChartData(token.id, selectedTimeRange);
     } catch (error) {
+      console.error('[ERROR] Error handling token click:', error);
       logger.error('Error handling token click:', error);
       showNotification('Failed to load token details', 'error');
     }
@@ -217,6 +221,8 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   const fetchChartData = async (tokenId, days) => {
     try {
+      console.log(`[DEBUG] Fetching chart data for token: ${tokenId}, days: ${days}`);
+      
       // Use our backend API with CryptoCompare data
       const response = await fetch(
         `/api/tokens/${tokenId}/chart/${days}`,
@@ -228,6 +234,8 @@ const TokenList = ({ currentUser, showNotification }) => {
         }
       );
 
+      console.log(`[DEBUG] Chart API response status: ${response.status}`);
+
       if (response.status === 429) {
         throw new Error('Rate limit reached. Please try again later.');
       }
@@ -237,6 +245,12 @@ const TokenList = ({ currentUser, showNotification }) => {
       }
       
       const data = await response.json();
+      console.log(`[DEBUG] Chart data received:`, {
+        pricesLength: data.prices?.length || 0,
+        firstPrice: data.prices?.[0] || null,
+        lastPrice: data.prices?.[data.prices?.length - 1] || null
+      });
+      
       setChartData(data);
       
       if (chartRef.current) {
@@ -270,6 +284,12 @@ const TokenList = ({ currentUser, showNotification }) => {
         setChartInstance(newChart);
       }
     } catch (error) {
+      console.error('[ERROR] Chart data error:', error);
+      console.error('[ERROR] Error details:', {
+        message: error.message,
+        stack: error.stack
+      });
+      
       logger.error('Chart data error:', error);
       if (error.message.includes('Rate limit')) {
         showNotification('Chart data temporarily unavailable due to rate limit', 'warning');
