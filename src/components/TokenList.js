@@ -217,15 +217,12 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   const fetchChartData = async (tokenId, days) => {
     try {
-      const response = await fetch(
-        `https://api.coingecko.com/api/v3/coins/${tokenId}/market_chart?vs_currency=usd&days=${days}`,
-        {
-          headers: {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache'
-          }
+      // Use backend API with CoinCap data to avoid CORS and rate limiting
+      const response = await fetch(`/api/tokens/${tokenId}/chart/${days}`, {
+        headers: {
+          'Accept': 'application/json'
         }
-      );
+      });
 
       if (response.status === 429) {
         throw new Error('Rate limit reached. Please try again later.');

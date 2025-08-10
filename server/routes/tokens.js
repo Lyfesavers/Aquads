@@ -14,6 +14,8 @@ const updateTokenCache = async (force = false) => {
   }
 
   try {
+    console.log('=== TOKEN CACHE UPDATE STARTING ===');
+    console.log('Using CoinCap API v2 for token data');
 
     // Using CoinCap API v2 - free tier with reliable data
     const response = await axios.get(
@@ -37,6 +39,8 @@ const updateTokenCache = async (force = false) => {
       return null;
     }
 
+    console.log(`Successfully fetched ${response.data.data.length} tokens from CoinCap`);
+    
     const tokens = response.data.data.map(token => ({
       id: token.id,
       symbol: token.symbol?.toUpperCase() || '',
@@ -60,6 +64,8 @@ const updateTokenCache = async (force = false) => {
       lastUpdated: new Date()
     })).filter(token => token.id && token.symbol && token.name);
 
+    console.log(`Processed ${tokens.length} valid tokens`);
+
     if (tokens.length === 0) {
       console.error('No valid tokens in response');
       return null;
@@ -79,7 +85,11 @@ const updateTokenCache = async (force = false) => {
 
     return tokens;
   } catch (error) {
-    console.error('Token cache update failed:', error.message);
+    console.error('=== TOKEN CACHE UPDATE FAILED ===');
+    console.error('Error:', error.message);
+    console.error('URL:', error.config?.url);
+    console.error('Status:', error.response?.status);
+    console.error('Response data:', error.response?.data);
     return null;
   }
 };
@@ -179,6 +189,7 @@ router.get('/:id', async (req, res) => {
 router.get('/:id/chart/:days', async (req, res) => {
   try {
     const { id, days } = req.params;
+    console.log(`=== CHART REQUEST: ${id} for ${days} days ===`);
     
     // Validate days parameter
     const validDays = ['1', '7', '30', '90', '365', 'max'];
