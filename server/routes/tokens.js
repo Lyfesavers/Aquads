@@ -61,7 +61,7 @@ const updateTokenCache = async (force = false) => {
         return null;
       }
 
-      // Improved data extraction with better error handling
+      // Clean data extraction - only show what CryptoCompare actually provides
       const token = {
         id: coinInfo.Name?.toLowerCase() || `token-${index}`,
         symbol: coinInfo.Name?.toUpperCase() || '',
@@ -75,13 +75,12 @@ const updateTokenCache = async (force = false) => {
         low24h: parseFloat(rawData.LOW24HOUR) || 0,
         priceChange24h: parseFloat(rawData.CHANGE24HOUR) || 0,
         priceChangePercentage24h: parseFloat(rawData.CHANGEPCT24HOUR) || 0,
-        circulatingSupply: parseFloat(rawData.SUPPLY) || parseFloat(rawData.CIRCULATINGSUPPLY) || 0,
-        totalSupply: parseFloat(rawData.SUPPLY) || parseFloat(rawData.CIRCULATINGSUPPLY) || 0,
-        maxSupply: rawData.MAXSUPPLY ? parseFloat(rawData.MAXSUPPLY) : null,
-        ath: parseFloat(rawData.HIGHDAY) || 0, // Use daily high as approximation
-        athChangePercentage: rawData.HIGHDAY && rawData.PRICE ? 
-          ((parseFloat(rawData.PRICE) - parseFloat(rawData.HIGHDAY)) / parseFloat(rawData.HIGHDAY)) * 100 : 0,
-        athDate: new Date(),
+        circulatingSupply: parseFloat(rawData.SUPPLY) || 0,
+        totalSupply: null, // Not available in CryptoCompare
+        maxSupply: null, // Not available in CryptoCompare
+        ath: null, // Not available in CryptoCompare
+        athChangePercentage: null, // Not available in CryptoCompare
+        athDate: null, // Not available in CryptoCompare
         fullyDilutedValuation: parseFloat(rawData.MKTCAP) || 0,
         lastUpdated: new Date()
       };
@@ -95,7 +94,10 @@ const updateTokenCache = async (force = false) => {
           marketCap: token.marketCap,
           volume: token.totalVolume,
           high24h: token.high24h,
-          low24h: token.low24h
+          low24h: token.low24h,
+          circulatingSupply: token.circulatingSupply,
+          priceChange24h: token.priceChange24h,
+          priceChangePercentage24h: token.priceChangePercentage24h
         });
       }
 
