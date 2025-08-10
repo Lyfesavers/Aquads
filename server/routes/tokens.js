@@ -15,46 +15,45 @@ const updateTokenCache = async (force = false) => {
 
   try {
 
+    // Using CoinCap API - more reliable and no rate limiting issues
     const response = await axios.get(
-      'https://api.coingecko.com/api/v3/coins/markets',
+      'https://api.coincap.io/v2/assets',
       {
         params: {
-          vs_currency: 'usd',
-          order: 'market_cap_desc',
-          per_page: 250,
-          page: 1,
-          sparkline: false,
-          price_change_percentage: '24h'
+          limit: 250
         },
-        timeout: 10000
+        timeout: 10000,
+        headers: {
+          'Accept': 'application/json'
+        }
       }
     );
 
-    if (!response.data || !Array.isArray(response.data)) {
-      console.error('Invalid response format from CoinGecko');
+    if (!response.data || !response.data.data || !Array.isArray(response.data.data)) {
+      console.error('Invalid response format from CoinCap API');
       return null;
     }
 
-    const tokens = response.data.map(token => ({
+    const tokens = response.data.data.map(token => ({
       id: token.id,
       symbol: token.symbol?.toUpperCase() || '',
       name: token.name || '',
-      image: token.image || '',
-      currentPrice: token.current_price || 0,
-      marketCap: token.market_cap || 0,
-      marketCapRank: token.market_cap_rank || 0,
-      totalVolume: token.total_volume || 0,
-      high24h: token.high_24h || 0,
-      low24h: token.low_24h || 0,
-      priceChange24h: token.price_change_24h || 0,
-      priceChangePercentage24h: token.price_change_percentage_24h || 0,
-      circulatingSupply: token.circulating_supply || 0,
-      totalSupply: token.total_supply || 0,
-      maxSupply: token.max_supply || null,
-      ath: token.ath || 0,
-      athChangePercentage: token.ath_change_percentage || 0,
-      athDate: token.ath_date ? new Date(token.ath_date) : new Date(),
-      fullyDilutedValuation: token.fully_diluted_valuation || 0,
+      image: `https://assets.coincap.io/assets/icons/${token.symbol?.toLowerCase()}@2x.png`,
+      currentPrice: parseFloat(token.priceUsd) || 0,
+      marketCap: parseFloat(token.marketCapUsd) || 0,
+      marketCapRank: parseInt(token.rank) || 0,
+      totalVolume: parseFloat(token.volumeUsd24Hr) || 0,
+      high24h: 0, // CoinCap doesn't provide this directly
+      low24h: 0, // CoinCap doesn't provide this directly
+      priceChange24h: parseFloat(token.changePercent24Hr) || 0,
+      priceChangePercentage24h: parseFloat(token.changePercent24Hr) || 0,
+      circulatingSupply: parseFloat(token.supply) || 0,
+      totalSupply: parseFloat(token.supply) || 0,
+      maxSupply: parseFloat(token.maxSupply) || null,
+      ath: 0, // Not available in CoinCap basic endpoint
+      athChangePercentage: 0, // Not available in CoinCap basic endpoint
+      athDate: new Date(),
+      fullyDilutedValuation: parseFloat(token.marketCapUsd) || 0,
       lastUpdated: new Date()
     })).filter(token => token.id && token.symbol && token.name);
 
@@ -170,6 +169,80 @@ router.get('/:id', async (req, res) => {
   } catch (error) {
     console.error('Error fetching token:', error);
     res.status(500).json({ error: 'Failed to fetch token' });
+  }
+});
+
+// Chart data endpoint using CoinCap API
+router.get('/:id/chart/:days', async (req, res) => {
+  try {
+    const { id, days } = req.params;
+    
+    // Validate days parameter
+    const validDays = ['1', '7', '30', '90', '365', 'max'];
+    if (!validDays.includes(days)) {
+      return res.status(400).json({ error: 'Invalid days parameter. Use: 1, 7, 30, 90, 365, or max' });
+    }
+
+    // Map days to CoinCap interval format
+    let interval = 'd1'; // default daily
+    if (days === '1') interval = 'h1';
+    else if (days === '7') interval = 'h6';
+    else if (days === '30') interval = 'd1';
+    else if (days === '90') interval = 'd1';
+    else if (days === '365') interval = 'd1';
+    else if (days === 'max') interval = 'd1';
+
+    // Calculate start time
+    let start = Date.now();
+    if (days === '1') start -= 24 * 60 * 60 * 1000;
+    else if (days === '7') start -= 7 * 24 * 60 * 60 * 1000;
+    else if (days === '30') start -= 30 * 24 * 60 * 60 * 1000;
+    else if (days === '90') start -= 90 * 24 * 60 * 60 * 1000;
+    else if (days === '365') start -= 365 * 24 * 60 * 60 * 1000;
+    else if (days === 'max') start -= 5 * 365 * 24 * 60 * 60 * 1000; // 5 years max
+
+    // Fetch chart data from CoinCap API
+    const response = await axios.get(
+      `https://api.coincap.io/v2/assets/${id}/history`,
+      {
+        params: {
+          interval: interval,
+          start: start,
+          end: Date.now()
+        },
+        timeout: 10000,
+        headers: {
+          'Accept': 'application/json'
+        }
+      }
+    );
+
+    if (!response.data || !response.data.data) {
+      return res.status(404).json({ error: 'Chart data not found' });
+    }
+
+    // Convert CoinCap format to CoinGecko-compatible format
+    const prices = response.data.data.map(item => [
+      item.time,
+      parseFloat(item.priceUsd)
+    ]);
+
+    const chartData = {
+      prices: prices,
+      market_caps: [], // CoinCap doesn't provide historical market cap in this endpoint
+      total_volumes: [] // CoinCap doesn't provide historical volume in this endpoint
+    };
+
+    res.json(chartData);
+
+  } catch (error) {
+    console.error('Error fetching chart data:', error);
+    
+    if (error.response && error.response.status === 404) {
+      return res.status(404).json({ error: 'Token not found for chart data' });
+    }
+    
+    res.status(500).json({ error: 'Failed to fetch chart data' });
   }
 });
 
