@@ -17,6 +17,11 @@ const updateTokenCache = async (force = false) => {
 
     console.log('=== TOKEN CACHE UPDATE STARTING ===');
     console.log('Using CryptoCompare API - reliable free tier');
+    
+    // Clear old tokens from previous APIs (CoinGecko/CoinCap) to avoid conflicts
+    console.log('Clearing old token data from database...');
+    const deleteResult = await Token.deleteMany({});
+    console.log(`Deleted ${deleteResult.deletedCount} old tokens from database`);
 
     // Using CryptoCompare API - very reliable with excellent free tier
     const response = await axios.get(
