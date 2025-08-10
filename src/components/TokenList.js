@@ -404,121 +404,219 @@ const TokenList = ({ currentUser, showNotification }) => {
 
             {/* Collapsible Token list table */}
             {isTableExpanded && filteredTokens.length > 0 ? (
-              <div className="w-full">
-                <table className="w-full table-fixed">
-                  <thead>
-                    <tr className="border-b border-gray-700/30">
-                      <th 
-                        className="w-12 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
-                        onClick={() => handleSort('marketCapRank')}
-                      >
-                        # {sortConfig.key === 'marketCapRank' && (
-                          <span className="ml-1">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
-                        )}
-                      </th>
-                      <th 
-                        className="w-1/4 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
-                        onClick={() => handleSort('name')}
-                      >
-                        Token {sortConfig.key === 'name' && (
-                          <span className="ml-1">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
-                        )}
-                      </th>
-                      <th className="w-1/6 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
-                          onClick={() => handleSort('currentPrice')}>
-                        Price
-                      </th>
-                      <th className="w-1/6 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
-                          onClick={() => handleSort('priceChangePercentage24h')}>
-                        24h %
-                      </th>
-                      <th className="w-1/6 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
-                          onClick={() => handleSort('marketCap')}>
-                        Market Cap
-                      </th>
-                      <th className="w-1/6 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
-                          onClick={() => handleSort('totalVolume')}>
-                        Volume
-                      </th>
-                      <th scope="col" className="w-1/6 px-2 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
-                        Rating
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-700/30">
-                    {filteredTokens.map((token, index) => (
-                      <React.Fragment key={token.id}>
-                        <tr 
-                          className="hover:bg-gray-800/40 cursor-pointer"
-                          onClick={() => handleTokenClick(token)}
+              <>
+                {/* Desktop/Tablet Table View (hidden on mobile) */}
+                <div className="w-full hidden md:block">
+                  <table className="w-full table-fixed">
+                    <thead>
+                      <tr className="border-b border-gray-700/30">
+                        <th 
+                          className="w-12 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
+                          onClick={() => handleSort('marketCapRank')}
                         >
-                          <td className="px-2 py-4 text-sm text-gray-300">{token.marketCapRank || index + 1}</td>
-                          <td className="px-2 py-4">
-                            <div className="flex items-center min-w-0">
-                              <img
-                                src={token.image}
-                                alt={token.name}
-                                className="h-6 w-6 rounded-full flex-shrink-0"
-                                onError={(e) => {
-                                  e.target.onerror = null;
-                                  e.target.src = '/placeholder.png';
-                                }}
-                              />
-                              <div className="ml-2 min-w-0 flex-1">
-                                <div className="text-sm font-medium text-white truncate">{token.name}</div>
-                                <div className="text-xs text-gray-400 truncate">{token.symbol}</div>
+                          # {sortConfig.key === 'marketCapRank' && (
+                            <span className="ml-1">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </th>
+                        <th 
+                          className="w-1/4 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
+                          onClick={() => handleSort('name')}
+                        >
+                          Token {sortConfig.key === 'name' && (
+                            <span className="ml-1">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </th>
+                        <th className="w-1/6 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
+                            onClick={() => handleSort('currentPrice')}>
+                          Price
+                        </th>
+                        <th className="w-1/6 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
+                            onClick={() => handleSort('priceChangePercentage24h')}>
+                          24h %
+                        </th>
+                        <th className="w-1/6 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
+                            onClick={() => handleSort('marketCap')}>
+                          Market Cap
+                        </th>
+                        <th className="w-1/6 px-2 py-3 text-left text-xs font-medium text-white uppercase tracking-wider bg-gray-800/30 cursor-pointer hover:text-white"
+                            onClick={() => handleSort('totalVolume')}>
+                          Volume
+                        </th>
+                        <th scope="col" className="w-1/6 px-2 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
+                          Rating
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-700/30">
+                      {filteredTokens.map((token, index) => (
+                        <React.Fragment key={token.id}>
+                          <tr 
+                            className="hover:bg-gray-800/40 cursor-pointer"
+                            onClick={() => handleTokenClick(token)}
+                          >
+                            <td className="px-2 py-4 text-sm text-gray-300">{token.marketCapRank || index + 1}</td>
+                            <td className="px-2 py-4">
+                              <div className="flex items-center min-w-0">
+                                <img
+                                  src={token.image}
+                                  alt={token.name}
+                                  className="h-6 w-6 rounded-full flex-shrink-0"
+                                  onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = '/placeholder.png';
+                                  }}
+                                />
+                                <div className="ml-2 min-w-0 flex-1">
+                                  <div className="text-sm font-medium text-white truncate">{token.name}</div>
+                                  <div className="text-xs text-gray-400 truncate">{token.symbol}</div>
+                                </div>
                               </div>
+                            </td>
+                            <td className="px-2 py-4 text-sm text-gray-300">
+                              ${token.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                            </td>
+                            <td className={`px-2 py-4 text-sm ${
+                              token.priceChangePercentage24h > 0 ? 'text-green-400' : 'text-red-400'
+                            }`}>
+                              {token.priceChangePercentage24h.toFixed(2)}%
+                            </td>
+                            <td className="px-2 py-4 text-sm text-gray-300">
+                              {formatCurrency(token.marketCap)}
+                            </td>
+                            <td className="px-2 py-4 text-sm text-gray-300">
+                              {formatCurrency(token.totalVolume)}
+                            </td>
+                            <td className="px-2 py-4 text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <span className="text-yellow-400 text-xs">★</span>
+                                <TokenRating symbol={token.symbol} />
+                                <button
+                                  onClick={(e) => handleReviewClick(e, token)}
+                                  className="text-blue-400 hover:text-blue-300 text-xs"
+                                >
+                                  Reviews
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                          {selectedToken && showDetails && selectedToken.id === token.id && (
+                            <TokenDetails
+                              token={selectedToken}
+                              showReviews={showReviews}
+                              onClose={() => setShowDetails(false)}
+                              currentUser={currentUser}
+                              showNotification={showNotification}
+                              chartRef={chartRef}
+                              chartData={chartData}
+                              selectedTimeRange={selectedTimeRange}
+                              onTimeRangeChange={handleTimeRangeChange}
+                              showDexFrame={showDexFrame}
+                              selectedDex={selectedDex}
+                              onDexClick={handleDexClick}
+                              setShowDexFrame={setShowDexFrame}
+                            />
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Card View (visible only on mobile) */}
+                <div className="w-full md:hidden space-y-3 p-4">
+                  {filteredTokens.map((token, index) => (
+                    <React.Fragment key={token.id}>
+                      <div 
+                        className="bg-gray-800/40 rounded-lg p-4 border border-gray-700/30 hover:bg-gray-800/60 cursor-pointer transition-colors"
+                        onClick={() => handleTokenClick(token)}
+                      >
+                        {/* Token Header */}
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center space-x-3">
+                            <span className="inline-flex items-center justify-center w-8 h-8 bg-gray-700 rounded text-xs font-bold text-gray-300">
+                              #{token.marketCapRank || index + 1}
+                            </span>
+                            <img
+                              src={token.image}
+                              alt={token.name}
+                              className="h-8 w-8 rounded-full flex-shrink-0"
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = '/placeholder.png';
+                              }}
+                            />
+                            <div>
+                              <div className="text-sm font-medium text-white">{token.name}</div>
+                              <div className="text-xs text-gray-400">{token.symbol}</div>
                             </div>
-                          </td>
-                          <td className="px-2 py-4 text-sm text-gray-300">
-                            ${token.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
-                          </td>
-                          <td className={`px-2 py-4 text-sm ${
-                            token.priceChangePercentage24h > 0 ? 'text-green-400' : 'text-red-400'
-                          }`}>
-                            {token.priceChangePercentage24h.toFixed(2)}%
-                          </td>
-                          <td className="px-2 py-4 text-sm text-gray-300">
-                            {formatCurrency(token.marketCap)}
-                          </td>
-                          <td className="px-2 py-4 text-sm text-gray-300">
-                            {formatCurrency(token.totalVolume)}
-                          </td>
-                          <td className="px-2 py-4 text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              <span className="text-yellow-400 text-xs">★</span>
-                              <TokenRating symbol={token.symbol} />
-                              <button
-                                onClick={(e) => handleReviewClick(e, token)}
-                                className="text-blue-400 hover:text-blue-300 text-xs"
-                              >
-                                Reviews
-                              </button>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-yellow-400 text-xs">★</span>
+                            <TokenRating symbol={token.symbol} />
+                          </div>
+                        </div>
+
+                        {/* Token Data Grid */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <div className="text-xs text-gray-400 uppercase tracking-wider">Price</div>
+                            <div className="text-sm text-white font-medium">
+                              ${token.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
                             </div>
-                          </td>
-                        </tr>
-                        {selectedToken && showDetails && selectedToken.id === token.id && (
-                          <TokenDetails
-                            token={selectedToken}
-                            showReviews={showReviews}
-                            onClose={() => setShowDetails(false)}
-                            currentUser={currentUser}
-                            showNotification={showNotification}
-                            chartRef={chartRef}
-                            chartData={chartData}
-                            selectedTimeRange={selectedTimeRange}
-                            onTimeRangeChange={handleTimeRangeChange}
-                            showDexFrame={showDexFrame}
-                            selectedDex={selectedDex}
-                            onDexClick={handleDexClick}
-                            setShowDexFrame={setShowDexFrame}
-                          />
-                        )}
-                      </React.Fragment>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-400 uppercase tracking-wider">24h %</div>
+                            <div className={`text-sm font-medium ${
+                              token.priceChangePercentage24h > 0 ? 'text-green-400' : 'text-red-400'
+                            }`}>
+                              {token.priceChangePercentage24h.toFixed(2)}%
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-400 uppercase tracking-wider">Market Cap</div>
+                            <div className="text-sm text-white">
+                              {formatCurrency(token.marketCap)}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-400 uppercase tracking-wider">Volume</div>
+                            <div className="text-sm text-white">
+                              {formatCurrency(token.totalVolume)}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Reviews Button */}
+                        <div className="mt-3 pt-3 border-t border-gray-700/30">
+                          <button
+                            onClick={(e) => handleReviewClick(e, token)}
+                            className="text-blue-400 hover:text-blue-300 text-xs font-medium"
+                          >
+                            View Reviews
+                          </button>
+                        </div>
+                      </div>
+                      {selectedToken && showDetails && selectedToken.id === token.id && (
+                        <TokenDetails
+                          token={selectedToken}
+                          showReviews={showReviews}
+                          onClose={() => setShowDetails(false)}
+                          currentUser={currentUser}
+                          showNotification={showNotification}
+                          chartRef={chartRef}
+                          chartData={chartData}
+                          selectedTimeRange={selectedTimeRange}
+                          onTimeRangeChange={handleTimeRangeChange}
+                          showDexFrame={showDexFrame}
+                          selectedDex={selectedDex}
+                          onDexClick={handleDexClick}
+                          setShowDexFrame={setShowDexFrame}
+                        />
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </>
             ) : isTableExpanded && filteredTokens.length === 0 ? (
               <div className="text-center text-gray-400 py-8">
                 {isLoading ? 'Loading tokens...' : 'No tokens found'}
