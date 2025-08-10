@@ -965,7 +965,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
                   className={`provider-btn ${chartProvider === 'dexscreener' ? 'active' : ''}`}
                   onClick={() => setChartProvider('dexscreener')}
                 >
-                  🔍 DEXtrader
+                  🔍 DEX Charts
                   <span className="provider-desc">Charts</span>
                 </button>
               </div>
