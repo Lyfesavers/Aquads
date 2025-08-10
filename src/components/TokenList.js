@@ -49,7 +49,7 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'marketCap', direction: 'desc' });
-  const [selectedTimeRange, setSelectedTimeRange] = useState('24h');
+  const [selectedTimeRange, setSelectedTimeRange] = useState('1');
   const [chartInstance, setChartInstance] = useState(null);
   const chartRef = useRef(null);
   const [showDexFrame, setShowDexFrame] = useState(true);
@@ -217,8 +217,9 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   const fetchChartData = async (tokenId, days) => {
     try {
+      // Use our backend API with CryptoCompare data
       const response = await fetch(
-        `https://api.coingecko.com/api/v3/coins/${tokenId}/market_chart?vs_currency=usd&days=${days}`,
+        `/api/tokens/${tokenId}/chart/${days}`,
         {
           headers: {
             'Accept': 'application/json',
