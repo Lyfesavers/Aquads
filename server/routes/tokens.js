@@ -16,55 +16,62 @@ const updateTokenCache = async (force = false) => {
   try {
 
     console.log('=== TOKEN CACHE UPDATE STARTING ===');
-    console.log('Using CoinCap API v2 with authentication');
+    console.log('Using CryptoCompare API - reliable free tier');
 
-    // Using CoinCap API v2 with API key for reliable data
+    // Using CryptoCompare API - very reliable with excellent free tier
     const response = await axios.get(
-      'https://api.coincap.io/v2/assets',
+      'https://min-api.cryptocompare.com/data/top/mktcapfull',
       {
         params: {
-          limit: 250
+          limit: 250,
+          tsym: 'USD'
         },
         timeout: 15000,
         headers: {
-          'Accept': 'application/json',
-          'Accept-Encoding': 'gzip, deflate',
-          'Authorization': `Bearer ${process.env.Coincap_api}`
+          'Accept': 'application/json'
         }
       }
     );
 
-    // CoinCap API returns data in { data: [...] } format
-    if (!response.data || !response.data.data || !Array.isArray(response.data.data)) {
-      console.error('Invalid response format from CoinCap API');
+    // CryptoCompare API returns data in { Data: [...] } format
+    if (!response.data || !response.data.Data || !Array.isArray(response.data.Data)) {
+      console.error('Invalid response format from CryptoCompare API');
       console.error('Response structure:', JSON.stringify(response.data).substring(0, 200));
       return null;
     }
 
-    console.log(`Successfully fetched ${response.data.data.length} tokens from CoinCap`);
+    console.log(`Successfully fetched ${response.data.Data.length} tokens from CryptoCompare`);
 
-    const tokens = response.data.data.map(token => ({
-      id: token.id,
-      symbol: token.symbol?.toUpperCase() || '',
-      name: token.name || '',
-      image: `https://assets.coincap.io/assets/icons/${token.symbol?.toLowerCase()}@2x.png`,
-      currentPrice: parseFloat(token.priceUsd) || 0,
-      marketCap: parseFloat(token.marketCapUsd) || 0,
-      marketCapRank: parseInt(token.rank) || 0,
-      totalVolume: parseFloat(token.volumeUsd24Hr) || 0,
-      high24h: 0, // Not available in basic CoinCap endpoint
-      low24h: 0, // Not available in basic CoinCap endpoint
-      priceChange24h: parseFloat(token.changePercent24Hr) || 0,
-      priceChangePercentage24h: parseFloat(token.changePercent24Hr) || 0,
-      circulatingSupply: parseFloat(token.supply) || 0,
-      totalSupply: parseFloat(token.supply) || 0,
-      maxSupply: parseFloat(token.maxSupply) || null,
-      ath: 0, // Not available in basic CoinCap endpoint
-      athChangePercentage: 0, // Not available in basic CoinCap endpoint
-      athDate: new Date(),
-      fullyDilutedValuation: parseFloat(token.marketCapUsd) || 0,
-      lastUpdated: new Date()
-    })).filter(token => token.id && token.symbol && token.name);
+    const tokens = response.data.Data.map((item, index) => {
+      const coinInfo = item.CoinInfo;
+      const rawData = item.RAW?.USD;
+      const displayData = item.DISPLAY?.USD;
+      
+      if (!coinInfo || !rawData) return null;
+
+      return {
+        id: coinInfo.Name?.toLowerCase(), // Use symbol as ID since CryptoCompare doesn't have direct ID
+        symbol: coinInfo.Name?.toUpperCase() || '',
+        name: coinInfo.FullName || '',
+        image: `https://www.cryptocompare.com${coinInfo.ImageUrl}`,
+        currentPrice: parseFloat(rawData.PRICE) || 0,
+        marketCap: parseFloat(rawData.MKTCAP) || 0,
+        marketCapRank: index + 1, // Use position as rank
+        totalVolume: parseFloat(rawData.TOTALVOLUME24HTO) || 0,
+        high24h: parseFloat(rawData.HIGH24HOUR) || 0,
+        low24h: parseFloat(rawData.LOW24HOUR) || 0,
+        priceChange24h: parseFloat(rawData.CHANGE24HOUR) || 0,
+        priceChangePercentage24h: parseFloat(rawData.CHANGEPCT24HOUR) || 0,
+        circulatingSupply: parseFloat(rawData.SUPPLY) || 0,
+        totalSupply: parseFloat(rawData.SUPPLY) || 0,
+        maxSupply: null, // Not available in CryptoCompare
+        ath: 0, // Not available in basic endpoint
+        athChangePercentage: 0, // Not available in basic endpoint
+        athDate: new Date(),
+        fullyDilutedValuation: parseFloat(rawData.MKTCAP) || 0,
+        lastUpdated: new Date()
+      };
+    }).filter(token => token && token.id && token.symbol && token.name);
 
     console.log(`Processed ${tokens.length} valid tokens`);
 
@@ -187,7 +194,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Chart data endpoint using authenticated CoinCap API
+// Chart data endpoint using CryptoCompare API
 router.get('/:id/chart/:days', async (req, res) => {
   try {
     const { id, days } = req.params;
@@ -199,67 +206,65 @@ router.get('/:id/chart/:days', async (req, res) => {
       return res.status(400).json({ error: 'Invalid days parameter. Use: 1, 7, 30, 90, 365, or max' });
     }
 
-    // Map days to CoinCap interval format
-    let interval = 'd1'; // default daily
-    let startTime, endTime;
-    const now = Date.now();
+    // Map days to CryptoCompare API endpoints and parameters
+    let apiEndpoint;
+    let limit;
     
     switch (days) {
       case '1':
-        interval = 'h1'; // hourly for 1 day
-        startTime = now - (24 * 60 * 60 * 1000);
+        apiEndpoint = 'histohour';
+        limit = 24;
         break;
       case '7':
-        interval = 'h6'; // 6-hourly for 7 days
-        startTime = now - (7 * 24 * 60 * 60 * 1000);
+        apiEndpoint = 'histohour';
+        limit = 168; // 7 * 24 hours
         break;
       case '30':
-        interval = 'd1'; // daily for 30 days
-        startTime = now - (30 * 24 * 60 * 60 * 1000);
+        apiEndpoint = 'histoday';
+        limit = 30;
         break;
       case '90':
-        interval = 'd1'; // daily for 90 days
-        startTime = now - (90 * 24 * 60 * 60 * 1000);
+        apiEndpoint = 'histoday';
+        limit = 90;
         break;
       case '365':
-        interval = 'd1'; // daily for 1 year
-        startTime = now - (365 * 24 * 60 * 60 * 1000);
+        apiEndpoint = 'histoday';
+        limit = 365;
         break;
       case 'max':
-        interval = 'd1'; // daily for max (5 years)
-        startTime = now - (5 * 365 * 24 * 60 * 60 * 1000);
+        apiEndpoint = 'histoday';
+        limit = 2000; // CryptoCompare max
         break;
     }
-    
-    endTime = now;
 
-    // Fetch chart data from authenticated CoinCap API
+    // Convert token ID (lowercase) to symbol (uppercase) for CryptoCompare
+    const symbol = id.toUpperCase();
+
+    // Fetch chart data from CryptoCompare API
     const response = await axios.get(
-      `https://api.coincap.io/v2/assets/${id}/history`,
+      `https://min-api.cryptocompare.com/data/v2/${apiEndpoint}`,
       {
         params: {
-          interval: interval,
-          start: startTime,
-          end: endTime
+          fsym: symbol,
+          tsym: 'USD',
+          limit: limit
         },
         timeout: 15000,
         headers: {
-          'Accept': 'application/json',
-          'Accept-Encoding': 'gzip, deflate',
-          'Authorization': `Bearer ${process.env.Coincap_api}`
+          'Accept': 'application/json'
         }
       }
     );
 
-    if (!response.data || !response.data.data || !Array.isArray(response.data.data)) {
-      console.error('Invalid chart response format from CoinCap API');
+    if (!response.data || !response.data.Data || !response.data.Data.Data || !Array.isArray(response.data.Data.Data)) {
+      console.error('Invalid chart response format from CryptoCompare API');
       return res.status(404).json({ error: 'Chart data not found' });
     }
 
-    // Convert CoinCap format to match the expected format
-    const prices = response.data.data.map(item => [
-      parseInt(item.time),
-      parseFloat(item.priceUsd)
+    // Convert CryptoCompare format to match the expected format
+    const prices = response.data.Data.Data.map(item => [
+      item.time * 1000, // Convert seconds to milliseconds
+      parseFloat(item.close)
     ]);
 
     // Filter out any invalid data points
@@ -273,11 +278,11 @@ router.get('/:id/chart/:days', async (req, res) => {
 
     const chartData = {
       prices: validPrices,
-      market_caps: [], // CoinCap doesn't provide historical market cap in this endpoint
-      total_volumes: [] // CoinCap doesn't provide historical volume in this endpoint
+      market_caps: [], // Not available in this endpoint
+      total_volumes: [] // Not available in this endpoint
     };
 
-    console.log(`Generated ${validPrices.length} chart data points for ${id}`);
+    console.log(`Generated ${validPrices.length} chart data points for ${symbol}`);
     res.json(chartData);
 
   } catch (error) {
@@ -291,10 +296,6 @@ router.get('/:id/chart/:days', async (req, res) => {
     
     if (error.response && error.response.status === 404) {
       return res.status(404).json({ error: 'Token not found for chart data' });
-    }
-    
-    if (error.response && error.response.status === 401) {
-      return res.status(500).json({ error: 'API authentication failed' });
     }
     
     if (error.response && error.response.status === 429) {
