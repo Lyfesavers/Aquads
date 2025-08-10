@@ -173,4 +173,53 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Chart data endpoint to avoid CORS issues
+router.get('/:id/chart/:days', async (req, res) => {
+  try {
+    const { id, days } = req.params;
+    
+    // Validate days parameter
+    const validDays = ['1', '7', '30', '90', '365', 'max'];
+    if (!validDays.includes(days)) {
+      return res.status(400).json({ error: 'Invalid days parameter. Use: 1, 7, 30, 90, 365, or max' });
+    }
+
+    // Fetch chart data from CoinGecko API
+    const response = await axios.get(
+      `https://api.coingecko.com/api/v3/coins/${id}/market_chart`,
+      {
+        params: {
+          vs_currency: 'usd',
+          days: days
+        },
+        timeout: 10000
+      }
+    );
+
+    if (!response.data) {
+      return res.status(404).json({ error: 'Chart data not found' });
+    }
+
+    // Return the chart data in the same format CoinGecko provides
+    res.json({
+      prices: response.data.prices || [],
+      market_caps: response.data.market_caps || [],
+      total_volumes: response.data.total_volumes || []
+    });
+
+  } catch (error) {
+    console.error('Error fetching chart data:', error);
+    
+    if (error.response && error.response.status === 429) {
+      return res.status(429).json({ error: 'Rate limit reached. Please try again later.' });
+    }
+    
+    if (error.response && error.response.status === 404) {
+      return res.status(404).json({ error: 'Token not found for chart data' });
+    }
+    
+    res.status(500).json({ error: 'Failed to fetch chart data' });
+  }
+});
+
 module.exports = router; 

@@ -217,61 +217,65 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   const fetchChartData = async (tokenId, days) => {
     try {
-      const response = await fetch(
-        `https://api.coingecko.com/api/v3/coins/${tokenId}/market_chart?vs_currency=usd&days=${days}`,
-        {
-          headers: {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache'
-          }
+      // Use backend API to avoid CORS issues
+      const response = await fetch(`/api/tokens/${tokenId}/chart/${days}`, {
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
         }
-      );
+      });
 
       if (response.status === 429) {
         throw new Error('Rate limit reached. Please try again later.');
       }
 
       if (!response.ok) {
-        throw new Error('Failed to fetch chart data');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to fetch chart data');
       }
       
       const data = await response.json();
       setChartData(data);
       
-      if (chartRef.current) {
+      if (chartRef.current && data.prices && data.prices.length > 0) {
         const ctx = chartRef.current.getContext('2d');
-      if (chartInstance) {
-        chartInstance.destroy();
-      }
+        if (chartInstance) {
+          chartInstance.destroy();
+        }
+        
         const newChart = new Chart(ctx, {
-        type: 'line',
-        data: {
+          type: 'line',
+          data: {
             labels: data.prices.map(price => new Date(price[0]).toLocaleDateString()),
-          datasets: [{
+            datasets: [{
               label: 'Price (USD)',
               data: data.prices.map(price => price[1]),
-            borderColor: 'rgb(75, 192, 192)',
-            tension: 0.1
-          }]
-        },
-        options: {
-          responsive: true,
-            maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'top' },
-            title: { display: true, text: 'Price History' }
+              borderColor: 'rgb(75, 192, 192)',
+              backgroundColor: 'rgba(75, 192, 192, 0.1)',
+              tension: 0.1,
+              fill: true
+            }]
           },
-          scales: {
-            y: { beginAtZero: false }
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'top' },
+              title: { display: true, text: 'Price History' }
+            },
+            scales: {
+              y: { beginAtZero: false }
+            }
           }
-        }
-      });
+        });
         setChartInstance(newChart);
       }
     } catch (error) {
       logger.error('Chart data error:', error);
       if (error.message.includes('Rate limit')) {
         showNotification('Chart data temporarily unavailable due to rate limit', 'warning');
+      } else if (error.message.includes('Token not found')) {
+        showNotification('Chart data not available for this token', 'warning');
       } else {
         showNotification('Chart data temporarily unavailable', 'warning');
       }
