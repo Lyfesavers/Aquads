@@ -15,7 +15,7 @@ const updateTokenCache = async (force = false) => {
 
   try {
 
-    // Using CoinCap API - more reliable and no rate limiting issues
+    // Using CoinCap API v2 - free tier with reliable data
     const response = await axios.get(
       'https://api.coincap.io/v2/assets',
       {
@@ -24,13 +24,16 @@ const updateTokenCache = async (force = false) => {
         },
         timeout: 10000,
         headers: {
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'Accept-Encoding': 'gzip, deflate'
         }
       }
     );
 
+    // CoinCap API returns data in { data: [...] } format
     if (!response.data || !response.data.data || !Array.isArray(response.data.data)) {
       console.error('Invalid response format from CoinCap API');
+      console.error('Response structure:', JSON.stringify(response.data).substring(0, 200));
       return null;
     }
 
@@ -43,8 +46,8 @@ const updateTokenCache = async (force = false) => {
       marketCap: parseFloat(token.marketCapUsd) || 0,
       marketCapRank: parseInt(token.rank) || 0,
       totalVolume: parseFloat(token.volumeUsd24Hr) || 0,
-      high24h: 0, // CoinCap doesn't provide this directly
-      low24h: 0, // CoinCap doesn't provide this directly
+      high24h: 0, // Not available in CoinCap basic endpoint
+      low24h: 0, // Not available in CoinCap basic endpoint
       priceChange24h: parseFloat(token.changePercent24Hr) || 0,
       priceChangePercentage24h: parseFloat(token.changePercent24Hr) || 0,
       circulatingSupply: parseFloat(token.supply) || 0,
@@ -172,7 +175,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Chart data endpoint using CoinCap API
+// Chart data endpoint using CoinCap API v2
 router.get('/:id/chart/:days', async (req, res) => {
   try {
     const { id, days } = req.params;
@@ -185,21 +188,37 @@ router.get('/:id/chart/:days', async (req, res) => {
 
     // Map days to CoinCap interval format
     let interval = 'd1'; // default daily
-    if (days === '1') interval = 'h1';
-    else if (days === '7') interval = 'h6';
-    else if (days === '30') interval = 'd1';
-    else if (days === '90') interval = 'd1';
-    else if (days === '365') interval = 'd1';
-    else if (days === 'max') interval = 'd1';
-
-    // Calculate start time
-    let start = Date.now();
-    if (days === '1') start -= 24 * 60 * 60 * 1000;
-    else if (days === '7') start -= 7 * 24 * 60 * 60 * 1000;
-    else if (days === '30') start -= 30 * 24 * 60 * 60 * 1000;
-    else if (days === '90') start -= 90 * 24 * 60 * 60 * 1000;
-    else if (days === '365') start -= 365 * 24 * 60 * 60 * 1000;
-    else if (days === 'max') start -= 5 * 365 * 24 * 60 * 60 * 1000; // 5 years max
+    let startTime, endTime;
+    const now = Date.now();
+    
+    switch (days) {
+      case '1':
+        interval = 'h1'; // hourly for 1 day
+        startTime = now - (24 * 60 * 60 * 1000);
+        break;
+      case '7':
+        interval = 'h6'; // 6-hourly for 7 days
+        startTime = now - (7 * 24 * 60 * 60 * 1000);
+        break;
+      case '30':
+        interval = 'd1'; // daily for 30 days
+        startTime = now - (30 * 24 * 60 * 60 * 1000);
+        break;
+      case '90':
+        interval = 'd1'; // daily for 90 days
+        startTime = now - (90 * 24 * 60 * 60 * 1000);
+        break;
+      case '365':
+        interval = 'd1'; // daily for 1 year
+        startTime = now - (365 * 24 * 60 * 60 * 1000);
+        break;
+      case 'max':
+        interval = 'd1'; // daily for max (5 years)
+        startTime = now - (5 * 365 * 24 * 60 * 60 * 1000);
+        break;
+    }
+    
+    endTime = now;
 
     // Fetch chart data from CoinCap API
     const response = await axios.get(
@@ -207,28 +226,39 @@ router.get('/:id/chart/:days', async (req, res) => {
       {
         params: {
           interval: interval,
-          start: start,
-          end: Date.now()
+          start: startTime,
+          end: endTime
         },
-        timeout: 10000,
+        timeout: 15000,
         headers: {
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'Accept-Encoding': 'gzip, deflate'
         }
       }
     );
 
-    if (!response.data || !response.data.data) {
+    if (!response.data || !response.data.data || !Array.isArray(response.data.data)) {
+      console.error('Invalid chart response format from CoinCap API');
       return res.status(404).json({ error: 'Chart data not found' });
     }
 
-    // Convert CoinCap format to CoinGecko-compatible format
+    // Convert CoinCap format to match the expected format
     const prices = response.data.data.map(item => [
-      item.time,
+      parseInt(item.time),
       parseFloat(item.priceUsd)
     ]);
 
+    // Filter out any invalid data points
+    const validPrices = prices.filter(([timestamp, price]) => 
+      !isNaN(timestamp) && !isNaN(price) && price > 0
+    );
+
+    if (validPrices.length === 0) {
+      return res.status(404).json({ error: 'No valid chart data available' });
+    }
+
     const chartData = {
-      prices: prices,
+      prices: validPrices,
       market_caps: [], // CoinCap doesn't provide historical market cap in this endpoint
       total_volumes: [] // CoinCap doesn't provide historical volume in this endpoint
     };
@@ -237,9 +267,19 @@ router.get('/:id/chart/:days', async (req, res) => {
 
   } catch (error) {
     console.error('Error fetching chart data:', error);
+    console.error('Error details:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      url: error.config?.url,
+      params: error.config?.params
+    });
     
     if (error.response && error.response.status === 404) {
       return res.status(404).json({ error: 'Token not found for chart data' });
+    }
+    
+    if (error.response && error.response.status === 429) {
+      return res.status(429).json({ error: 'Rate limit reached. Please try again later.' });
     }
     
     res.status(500).json({ error: 'Failed to fetch chart data' });
