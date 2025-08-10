@@ -23,7 +23,7 @@ const updateTokenCache = async (force = false) => {
       'https://min-api.cryptocompare.com/data/top/mktcapfull',
       {
         params: {
-          limit: 250,
+          limit: 100, // CryptoCompare max limit is 100 for this endpoint
           tsym: 'USD'
         },
         timeout: 15000,
