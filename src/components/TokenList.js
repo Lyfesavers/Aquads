@@ -514,6 +514,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                               selectedDex={selectedDex}
                               onDexClick={handleDexClick}
                               setShowDexFrame={setShowDexFrame}
+                              isMobile={false}
                             />
                           )}
                         </React.Fragment>
@@ -611,6 +612,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                           selectedDex={selectedDex}
                           onDexClick={handleDexClick}
                           setShowDexFrame={setShowDexFrame}
+                          isMobile={true}
                         />
                       )}
                     </React.Fragment>
