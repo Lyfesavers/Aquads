@@ -52,30 +52,54 @@ const updateTokenCache = async (force = false) => {
       const rawData = item.RAW?.USD;
       const displayData = item.DISPLAY?.USD;
       
-      if (!coinInfo || !rawData) return null;
+      if (!coinInfo || !rawData) {
+        console.log(`Skipping token - missing data:`, {
+          hasCoinInfo: !!coinInfo,
+          hasRawData: !!rawData,
+          name: coinInfo?.Name
+        });
+        return null;
+      }
 
-      return {
-        id: coinInfo.Name?.toLowerCase(), // Use symbol as ID since CryptoCompare doesn't have direct ID
+      // Improved data extraction with better error handling
+      const token = {
+        id: coinInfo.Name?.toLowerCase() || `token-${index}`,
         symbol: coinInfo.Name?.toUpperCase() || '',
-        name: coinInfo.FullName || '',
-        image: `https://www.cryptocompare.com${coinInfo.ImageUrl}`,
+        name: coinInfo.FullName || coinInfo.Name || '',
+        image: coinInfo.ImageUrl ? `https://www.cryptocompare.com${coinInfo.ImageUrl}` : '',
         currentPrice: parseFloat(rawData.PRICE) || 0,
         marketCap: parseFloat(rawData.MKTCAP) || 0,
-        marketCapRank: index + 1, // Use position as rank
-        totalVolume: parseFloat(rawData.TOTALVOLUME24HTO) || 0,
+        marketCapRank: index + 1,
+        totalVolume: parseFloat(rawData.TOTALVOLUME24HTO) || parseFloat(rawData.VOLUME24HOURTO) || 0,
         high24h: parseFloat(rawData.HIGH24HOUR) || 0,
         low24h: parseFloat(rawData.LOW24HOUR) || 0,
         priceChange24h: parseFloat(rawData.CHANGE24HOUR) || 0,
         priceChangePercentage24h: parseFloat(rawData.CHANGEPCT24HOUR) || 0,
-        circulatingSupply: parseFloat(rawData.SUPPLY) || 0,
-        totalSupply: parseFloat(rawData.SUPPLY) || 0,
-        maxSupply: null, // Not available in CryptoCompare
-        ath: 0, // Not available in basic endpoint
-        athChangePercentage: 0, // Not available in basic endpoint
+        circulatingSupply: parseFloat(rawData.SUPPLY) || parseFloat(rawData.CIRCULATINGSUPPLY) || 0,
+        totalSupply: parseFloat(rawData.SUPPLY) || parseFloat(rawData.CIRCULATINGSUPPLY) || 0,
+        maxSupply: rawData.MAXSUPPLY ? parseFloat(rawData.MAXSUPPLY) : null,
+        ath: parseFloat(rawData.HIGHDAY) || 0, // Use daily high as approximation
+        athChangePercentage: rawData.HIGHDAY && rawData.PRICE ? 
+          ((parseFloat(rawData.PRICE) - parseFloat(rawData.HIGHDAY)) / parseFloat(rawData.HIGHDAY)) * 100 : 0,
         athDate: new Date(),
         fullyDilutedValuation: parseFloat(rawData.MKTCAP) || 0,
         lastUpdated: new Date()
       };
+
+      // Log token data for debugging
+      if (index < 3) { // Log first 3 tokens for debugging
+        console.log(`Token ${index + 1} data:`, {
+          id: token.id,
+          name: token.name,
+          price: token.currentPrice,
+          marketCap: token.marketCap,
+          volume: token.totalVolume,
+          high24h: token.high24h,
+          low24h: token.low24h
+        });
+      }
+
+      return token;
     }).filter(token => token && token.id && token.symbol && token.name);
 
     console.log(`Processed ${tokens.length} valid tokens`);
@@ -244,6 +268,7 @@ router.get('/:id/chart/:days', async (req, res) => {
 
     // Convert token ID (lowercase) to symbol (uppercase) for CryptoCompare
     const symbol = id.toUpperCase();
+    console.log(`Fetching chart data for symbol: ${symbol}, endpoint: ${apiEndpoint}, limit: ${limit}`);
 
     // Fetch chart data from CryptoCompare API
     const response = await axios.get(
@@ -261,23 +286,50 @@ router.get('/:id/chart/:days', async (req, res) => {
       }
     );
 
+    console.log(`Chart API response status: ${response.status}`);
+    console.log(`Chart response structure:`, {
+      hasData: !!response.data,
+      hasDataData: !!response.data?.Data,
+      hasDataDataData: !!response.data?.Data?.Data,
+      dataLength: response.data?.Data?.Data?.length || 0,
+      responseType: response.data?.Response || 'Success'
+    });
+
     if (!response.data || !response.data.Data || !response.data.Data.Data || !Array.isArray(response.data.Data.Data)) {
       console.error('Invalid chart response format from CryptoCompare API');
       return res.status(404).json({ error: 'Chart data not found' });
     }
 
     // Convert CryptoCompare format to match the expected format
-    const prices = response.data.Data.Data.map(item => [
-      item.time * 1000, // Convert seconds to milliseconds
-      parseFloat(item.close)
-    ]);
+    const chartDataArray = response.data.Data.Data;
+    console.log(`Processing ${chartDataArray.length} raw chart data points`);
+    
+    const prices = chartDataArray.map((item, index) => {
+      const timestamp = item.time * 1000; // Convert seconds to milliseconds
+      const price = parseFloat(item.close || item.price || 0);
+      
+      if (index < 3) { // Log first 3 points for debugging
+        console.log(`Chart point ${index + 1}:`, {
+          time: item.time,
+          timestamp: timestamp,
+          close: item.close,
+          price: price,
+          date: new Date(timestamp).toISOString()
+        });
+      }
+      
+      return [timestamp, price];
+    });
 
     // Filter out any invalid data points
     const validPrices = prices.filter(([timestamp, price]) => 
-      !isNaN(timestamp) && !isNaN(price) && price > 0
+      !isNaN(timestamp) && !isNaN(price) && price > 0 && timestamp > 0
     );
 
+    console.log(`Filtered to ${validPrices.length} valid chart data points`);
+
     if (validPrices.length === 0) {
+      console.error('No valid chart data points found');
       return res.status(404).json({ error: 'No valid chart data available' });
     }
 
@@ -288,6 +340,7 @@ router.get('/:id/chart/:days', async (req, res) => {
     };
 
     console.log(`Generated ${validPrices.length} chart data points for ${symbol}`);
+    console.log(`Price range: $${Math.min(...validPrices.map(p => p[1])).toFixed(2)} - $${Math.max(...validPrices.map(p => p[1])).toFixed(2)}`);
     res.json(chartData);
 
   } catch (error) {
