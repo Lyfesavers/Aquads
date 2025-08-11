@@ -268,11 +268,20 @@ const TokenList = ({ currentUser, showNotification }) => {
       
       setChartData(data);
       
+      console.log(`[DEBUG] About to create chart with ${data.prices.length} data points`);
+      console.log(`[DEBUG] chartRef.current exists:`, !!chartRef.current);
+      
       if (chartRef.current) {
+        console.log(`[DEBUG] Canvas element found, getting 2D context`);
         const ctx = chartRef.current.getContext('2d');
-      if (chartInstance) {
-        chartInstance.destroy();
-      }
+        console.log(`[DEBUG] Canvas context:`, !!ctx);
+        
+        if (chartInstance) {
+          console.log(`[DEBUG] Destroying previous chart instance`);
+          chartInstance.destroy();
+        }
+        
+        console.log(`[DEBUG] Creating new Chart.js instance`);
         const newChart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -286,17 +295,55 @@ const TokenList = ({ currentUser, showNotification }) => {
         },
         options: {
           responsive: true,
-            maintainAspectRatio: false,
+          maintainAspectRatio: false,
           plugins: {
-            legend: { position: 'top' },
-            title: { display: true, text: 'Price History' }
+            legend: { 
+              position: 'top',
+              labels: {
+                color: '#fff'
+              }
+            },
+            title: { 
+              display: true, 
+              text: 'Price History',
+              color: '#fff'
+            }
           },
           scales: {
-            y: { beginAtZero: false }
+            x: {
+              ticks: {
+                color: '#9ca3af'
+              },
+              grid: {
+                color: '#374151'
+              }
+            },
+            y: { 
+              beginAtZero: false,
+              ticks: {
+                color: '#9ca3af',
+                callback: function(value) {
+                  return '$' + value.toLocaleString();
+                }
+              },
+              grid: {
+                color: '#374151'
+              }
+            }
           }
         }
       });
+        console.log(`[DEBUG] Chart created successfully:`, !!newChart);
+        console.log(`[DEBUG] Chart canvas dimensions:`, {
+          width: chartRef.current.width,
+          height: chartRef.current.height,
+          clientWidth: chartRef.current.clientWidth,
+          clientHeight: chartRef.current.clientHeight
+        });
         setChartInstance(newChart);
+        console.log(`[DEBUG] Chart instance set in state`);
+      } else {
+        console.error(`[ERROR] chartRef.current is null - canvas element not found`);
       }
     } catch (error) {
       console.error('[ERROR] Chart data error:', error);

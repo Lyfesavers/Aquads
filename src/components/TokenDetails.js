@@ -112,7 +112,14 @@ const TokenDetails = ({
           </div>
         </div>
         <div className="bg-gray-700/50 p-3 md:p-4 rounded-lg" style={{ height: isMobile ? '250px' : '400px' }}>
-          <canvas ref={chartRef}></canvas>
+          <canvas 
+            ref={chartRef}
+            style={{ 
+              width: '100%', 
+              height: '100%',
+              display: 'block'
+            }}
+          ></canvas>
         </div>
       </div>
 
