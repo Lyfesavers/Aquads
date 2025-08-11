@@ -7,7 +7,8 @@ import { Helmet } from 'react-helmet';
 import TokenDetails from './TokenDetails';
 import SocialMediaRaids from './SocialMediaRaids';
 import logger from '../utils/logger';
-import { API_URL } from '../services/api';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 const DEX_OPTIONS = [
   {
@@ -57,79 +58,6 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [viewMode, setViewMode] = useState('tokens');
   const [isTableExpanded, setIsTableExpanded] = useState(false);
 
-  // Recreate chart when chartData changes
-  useEffect(() => {
-    if (chartData && selectedToken && chartRef.current) {
-      // Destroy existing chart
-      if (chartInstance) {
-        chartInstance.destroy();
-      }
-
-      const ctx = chartRef.current.getContext('2d');
-      const newChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: chartData.prices.map(price => new Date(price[0]).toLocaleDateString()),
-          datasets: [{
-            label: 'Price (USD)',
-            data: chartData.prices.map(price => price[1]),
-            borderColor: '#3b82f6',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            borderWidth: 2,
-            pointRadius: 0,
-            pointHoverRadius: 4,
-            tension: 0.1
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: {
-            intersect: false,
-            mode: 'index'
-          },
-          plugins: {
-            legend: {
-              display: false
-            },
-            title: {
-              display: true,
-              text: 'Price History',
-              color: '#ffffff',
-              font: { size: 14 }
-            }
-          },
-          scales: {
-            x: {
-              display: true,
-              ticks: {
-                color: '#9ca3af',
-                maxTicksLimit: 6
-              },
-              grid: {
-                color: 'rgba(156, 163, 175, 0.1)'
-              }
-            },
-            y: {
-              display: true,
-              ticks: {
-                color: '#9ca3af',
-                callback: function(value) {
-                  return '$' + value.toLocaleString();
-                }
-              },
-              grid: {
-                color: 'rgba(156, 163, 175, 0.1)'
-              }
-            }
-          }
-        }
-      });
-
-      setChartInstance(newChart);
-    }
-  }, [chartData, selectedToken]);
-
   // Sorting functionality
   const handleSort = (key) => {
     const direction = sortConfig.key === key && sortConfig.direction === 'desc' ? 'asc' : 'desc';
@@ -151,7 +79,7 @@ const TokenList = ({ currentUser, showNotification }) => {
         setIsLoading(true);
       }
 
-      const response = await fetch(`${API_URL}/tokens`);
+      const response = await fetch(`${API_URL}/api/tokens`);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch tokens: ${response.status}`);
@@ -191,7 +119,7 @@ const TokenList = ({ currentUser, showNotification }) => {
       return;
     }
 
-      const response = await fetch(`${API_URL}/tokens?search=${encodeURIComponent(searchTerm)}`);
+      const response = await fetch(`${API_URL}/api/tokens?search=${encodeURIComponent(searchTerm)}`);
       if (!response.ok) {
         throw new Error('Search failed');
       }
@@ -276,7 +204,6 @@ const TokenList = ({ currentUser, showNotification }) => {
 
       await fetchChartData(token.id, selectedTimeRange);
     } catch (error) {
-      console.error('[ERROR] Error handling token click:', error);
       logger.error('Error handling token click:', error);
       showNotification('Failed to load token details', 'error');
     }
@@ -290,9 +217,20 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   const fetchChartData = async (tokenId, days) => {
     try {
-      const response = await fetch(`${API_URL}/tokens/${tokenId}/chart/${days}`, {
-        headers: { 'Accept': 'application/json' }
-      });
+      // Use our backend API with CryptoCompare data
+      const response = await fetch(
+        `/api/tokens/${tokenId}/chart/${days}`,
+        {
+          headers: {
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
+          }
+        }
+      );
+
+      if (response.status === 429) {
+        throw new Error('Rate limit reached. Please try again later.');
+      }
 
       if (!response.ok) {
         throw new Error('Failed to fetch chart data');
@@ -300,13 +238,46 @@ const TokenList = ({ currentUser, showNotification }) => {
       
       const data = await response.json();
       setChartData(data);
+      
+      if (chartRef.current) {
+        const ctx = chartRef.current.getContext('2d');
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+        const newChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.prices.map(price => new Date(price[0]).toLocaleDateString()),
+          datasets: [{
+              label: 'Price (USD)',
+              data: data.prices.map(price => price[1]),
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+          }]
+        },
+        options: {
+          responsive: true,
+            maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: 'Price History' }
+          },
+          scales: {
+            y: { beginAtZero: false }
+          }
+        }
+      });
+        setChartInstance(newChart);
+      }
     } catch (error) {
       logger.error('Chart data error:', error);
-      showNotification('Chart data temporarily unavailable', 'warning');
+      if (error.message.includes('Rate limit')) {
+        showNotification('Chart data temporarily unavailable due to rate limit', 'warning');
+      } else {
+        showNotification('Chart data temporarily unavailable', 'warning');
+      }
     }
   };
-
-
 
   // Render loading state
   if (isLoading && tokens.length === 0) {
