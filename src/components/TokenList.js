@@ -221,30 +221,47 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   const fetchChartData = async (tokenId, days) => {
     try {
+      const chartUrl = `/api/tokens/${tokenId}/chart/${days}`;
       console.log(`[DEBUG] Fetching chart data for token: ${tokenId}, days: ${days}`);
+      console.log(`[DEBUG] Chart URL: ${chartUrl}`);
+      console.log(`[DEBUG] Full URL: ${window.location.origin}${chartUrl}`);
       
       // Use our backend API with CryptoCompare data
-      const response = await fetch(
-        `/api/tokens/${tokenId}/chart/${days}`,
-        {
-          headers: {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache'
-          }
+      const response = await fetch(chartUrl, {
+        headers: {
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
         }
-      );
+      });
 
       console.log(`[DEBUG] Chart API response status: ${response.status}`);
+      console.log(`[DEBUG] Response headers:`, Object.fromEntries(response.headers));
 
       if (response.status === 429) {
         throw new Error('Rate limit reached. Please try again later.');
       }
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[ERROR] Response not OK:`, {
+          status: response.status,
+          statusText: response.statusText,
+          responseText: errorText.substring(0, 500)
+        });
         throw new Error('Failed to fetch chart data');
       }
       
-      const data = await response.json();
+      const responseText = await response.text();
+      console.log(`[DEBUG] Response text preview:`, responseText.substring(0, 200));
+      
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error(`[ERROR] JSON parse error:`, parseError);
+        console.error(`[ERROR] Full response text:`, responseText);
+        throw new Error('Invalid JSON response from server');
+      }
       console.log(`[DEBUG] Chart data received:`, {
         pricesLength: data.prices?.length || 0,
         firstPrice: data.prices?.[0] || null,
