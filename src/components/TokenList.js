@@ -57,6 +57,79 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [viewMode, setViewMode] = useState('tokens');
   const [isTableExpanded, setIsTableExpanded] = useState(false);
 
+  // Recreate chart when chartData changes
+  useEffect(() => {
+    if (chartData && selectedToken && chartRef.current) {
+      // Destroy existing chart
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      const ctx = chartRef.current.getContext('2d');
+      const newChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: chartData.prices.map(price => new Date(price[0]).toLocaleDateString()),
+          datasets: [{
+            label: 'Price (USD)',
+            data: chartData.prices.map(price => price[1]),
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            borderWidth: 2,
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            tension: 0.1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            title: {
+              display: true,
+              text: 'Price History',
+              color: '#ffffff',
+              font: { size: 14 }
+            }
+          },
+          scales: {
+            x: {
+              display: true,
+              ticks: {
+                color: '#9ca3af',
+                maxTicksLimit: 6
+              },
+              grid: {
+                color: 'rgba(156, 163, 175, 0.1)'
+              }
+            },
+            y: {
+              display: true,
+              ticks: {
+                color: '#9ca3af',
+                callback: function(value) {
+                  return '$' + value.toLocaleString();
+                }
+              },
+              grid: {
+                color: 'rgba(156, 163, 175, 0.1)'
+              }
+            }
+          }
+        }
+      });
+
+      setChartInstance(newChart);
+    }
+  }, [chartData, selectedToken]);
+
   // Sorting functionality
   const handleSort = (key) => {
     const direction = sortConfig.key === key && sortConfig.direction === 'desc' ? 'asc' : 'desc';
@@ -220,146 +293,23 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   const fetchChartData = async (tokenId, days) => {
     try {
-      const chartUrl = `${API_URL}/tokens/${tokenId}/chart/${days}`;
-      console.log(`[DEBUG] Fetching chart data for token: ${tokenId}, days: ${days}`);
-      console.log(`[DEBUG] Chart URL: ${chartUrl}`);
-      console.log(`[DEBUG] API_URL: ${API_URL}`);
-      
-      // Use our backend API with CryptoCompare data
-      const response = await fetch(chartUrl, {
-        headers: {
-          'Accept': 'application/json'
-        }
+      const response = await fetch(`${API_URL}/tokens/${tokenId}/chart/${days}`, {
+        headers: { 'Accept': 'application/json' }
       });
 
-      console.log(`[DEBUG] Chart API response status: ${response.status}`);
-      console.log(`[DEBUG] Response headers:`, Object.fromEntries(response.headers));
-
-      if (response.status === 429) {
-        throw new Error('Rate limit reached. Please try again later.');
-      }
-
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`[ERROR] Response not OK:`, {
-          status: response.status,
-          statusText: response.statusText,
-          responseText: errorText.substring(0, 500)
-        });
         throw new Error('Failed to fetch chart data');
       }
       
-      const responseText = await response.text();
-      console.log(`[DEBUG] Response text preview:`, responseText.substring(0, 200));
-      
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error(`[ERROR] JSON parse error:`, parseError);
-        console.error(`[ERROR] Full response text:`, responseText);
-        throw new Error('Invalid JSON response from server');
-      }
-      console.log(`[DEBUG] Chart data received:`, {
-        pricesLength: data.prices?.length || 0,
-        firstPrice: data.prices?.[0] || null,
-        lastPrice: data.prices?.[data.prices?.length - 1] || null
-      });
-      
+      const data = await response.json();
       setChartData(data);
-      
-      console.log(`[DEBUG] About to create chart with ${data.prices.length} data points`);
-      console.log(`[DEBUG] chartRef.current exists:`, !!chartRef.current);
-      
-      if (chartRef.current) {
-        console.log(`[DEBUG] Canvas element found, getting 2D context`);
-        const ctx = chartRef.current.getContext('2d');
-        console.log(`[DEBUG] Canvas context:`, !!ctx);
-        
-        if (chartInstance) {
-          console.log(`[DEBUG] Destroying previous chart instance`);
-          chartInstance.destroy();
-        }
-        
-        console.log(`[DEBUG] Creating new Chart.js instance`);
-        const newChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: data.prices.map(price => new Date(price[0]).toLocaleDateString()),
-          datasets: [{
-              label: 'Price (USD)',
-              data: data.prices.map(price => price[1]),
-            borderColor: 'rgb(75, 192, 192)',
-            tension: 0.1
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { 
-              position: 'top',
-              labels: {
-                color: '#fff'
-              }
-            },
-            title: { 
-              display: true, 
-              text: 'Price History',
-              color: '#fff'
-            }
-          },
-          scales: {
-            x: {
-              ticks: {
-                color: '#9ca3af'
-              },
-              grid: {
-                color: '#374151'
-              }
-            },
-            y: { 
-              beginAtZero: false,
-              ticks: {
-                color: '#9ca3af',
-                callback: function(value) {
-                  return '$' + value.toLocaleString();
-                }
-              },
-              grid: {
-                color: '#374151'
-              }
-            }
-          }
-        }
-      });
-        console.log(`[DEBUG] Chart created successfully:`, !!newChart);
-        console.log(`[DEBUG] Chart canvas dimensions:`, {
-          width: chartRef.current.width,
-          height: chartRef.current.height,
-          clientWidth: chartRef.current.clientWidth,
-          clientHeight: chartRef.current.clientHeight
-        });
-        setChartInstance(newChart);
-        console.log(`[DEBUG] Chart instance set in state`);
-      } else {
-        console.error(`[ERROR] chartRef.current is null - canvas element not found`);
-      }
     } catch (error) {
-      console.error('[ERROR] Chart data error:', error);
-      console.error('[ERROR] Error details:', {
-        message: error.message,
-        stack: error.stack
-      });
-      
       logger.error('Chart data error:', error);
-      if (error.message.includes('Rate limit')) {
-        showNotification('Chart data temporarily unavailable due to rate limit', 'warning');
-      } else {
-        showNotification('Chart data temporarily unavailable', 'warning');
-      }
+      showNotification('Chart data temporarily unavailable', 'warning');
     }
   };
+
+
 
   // Render loading state
   if (isLoading && tokens.length === 0) {
