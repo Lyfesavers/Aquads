@@ -111,8 +111,15 @@ const TokenDetails = ({
             ))}
           </div>
         </div>
-        <div className="bg-gray-700/50 rounded-lg overflow-hidden" style={{ height: isMobile ? '250px' : '400px' }}>
+        <div className="bg-gray-700/50 rounded-lg overflow-hidden relative" style={{ height: isMobile ? '250px' : '400px' }}>
           <canvas ref={chartRef} style={{ width: '100%', height: '100%' }}></canvas>
+          {!chartData && (
+            <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+              <div className="text-center">
+                <div className="text-sm">Loading chart data...</div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

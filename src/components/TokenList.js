@@ -266,9 +266,6 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   const handleTokenClick = async (token) => {
     try {
-      console.log(`[DEBUG] Token clicked: ${token.id} (${token.symbol})`);
-      console.log(`[DEBUG] Selected time range: ${selectedTimeRange}`);
-      
       if (chartInstance) {
         chartInstance.destroy();
         setChartInstance(null);
