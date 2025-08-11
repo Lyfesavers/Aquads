@@ -228,8 +228,7 @@ const TokenList = ({ currentUser, showNotification }) => {
       // Use our backend API with CryptoCompare data
       const response = await fetch(chartUrl, {
         headers: {
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache'
+          'Accept': 'application/json'
         }
       });
 
