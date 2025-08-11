@@ -7,8 +7,7 @@ import { Helmet } from 'react-helmet';
 import TokenDetails from './TokenDetails';
 import SocialMediaRaids from './SocialMediaRaids';
 import logger from '../utils/logger';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+import { API_URL } from '../services/api';
 
 const DEX_OPTIONS = [
   {
@@ -79,7 +78,7 @@ const TokenList = ({ currentUser, showNotification }) => {
         setIsLoading(true);
       }
 
-      const response = await fetch(`${API_URL}/api/tokens`);
+      const response = await fetch(`${API_URL}/tokens`);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch tokens: ${response.status}`);
@@ -119,7 +118,7 @@ const TokenList = ({ currentUser, showNotification }) => {
       return;
     }
 
-      const response = await fetch(`${API_URL}/api/tokens?search=${encodeURIComponent(searchTerm)}`);
+      const response = await fetch(`${API_URL}/tokens?search=${encodeURIComponent(searchTerm)}`);
       if (!response.ok) {
         throw new Error('Search failed');
       }
@@ -221,10 +220,10 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   const fetchChartData = async (tokenId, days) => {
     try {
-      const chartUrl = `/api/tokens/${tokenId}/chart/${days}`;
+      const chartUrl = `${API_URL}/tokens/${tokenId}/chart/${days}`;
       console.log(`[DEBUG] Fetching chart data for token: ${tokenId}, days: ${days}`);
       console.log(`[DEBUG] Chart URL: ${chartUrl}`);
-      console.log(`[DEBUG] Full URL: ${window.location.origin}${chartUrl}`);
+      console.log(`[DEBUG] API_URL: ${API_URL}`);
       
       // Use our backend API with CryptoCompare data
       const response = await fetch(chartUrl, {
