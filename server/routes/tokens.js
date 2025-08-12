@@ -250,7 +250,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Chart data endpoint using CoinGecko API
+// Chart data endpoint using CryptoCompare API (separate from token API to avoid rate limits)
 router.get('/:id/chart/:days', async (req, res) => {
   try {
     const { id, days } = req.params;
@@ -262,33 +262,7 @@ router.get('/:id/chart/:days', async (req, res) => {
       return res.status(400).json({ error: 'Invalid days parameter. Use: 1, 7, 30, 90, 365, or max' });
     }
 
-    // Map days to CoinGecko API parameters
-    let daysParam;
-    
-    switch (days) {
-      case '1':
-        daysParam = 1;
-        break;
-      case '7':
-        daysParam = 7;
-        break;
-      case '30':
-        daysParam = 30;
-        break;
-      case '90':
-        daysParam = 90;
-        break;
-      case '365':
-        daysParam = 365;
-        break;
-      case 'max':
-        daysParam = 'max';
-        break;
-    }
-
-    console.log(`Fetching chart data for token: ${id}, days: ${daysParam}`);
-
-    // First, check if the token exists in our database
+    // First, check if the token exists in our database to get the symbol
     const token = await Token.findOne({ id: id }).lean();
     if (!token) {
       console.error(`Token not found in database: ${id}`);
@@ -297,13 +271,49 @@ router.get('/:id/chart/:days', async (req, res) => {
 
     console.log(`Found token in database: ${token.name} (${token.symbol})`);
 
-    // Fetch chart data from CoinGecko API
+    // Map days to CryptoCompare API endpoints and parameters
+    let apiEndpoint;
+    let limit;
+    
+    switch (days) {
+      case '1':
+        apiEndpoint = 'histohour';
+        limit = 24;
+        break;
+      case '7':
+        apiEndpoint = 'histohour';
+        limit = 168; // 7 * 24 hours
+        break;
+      case '30':
+        apiEndpoint = 'histoday';
+        limit = 30;
+        break;
+      case '90':
+        apiEndpoint = 'histoday';
+        limit = 90;
+        break;
+      case '365':
+        apiEndpoint = 'histoday';
+        limit = 365;
+        break;
+      case 'max':
+        apiEndpoint = 'histoday';
+        limit = 2000; // CryptoCompare max
+        break;
+    }
+
+    // Convert token ID to symbol for CryptoCompare (use symbol from database)
+    const symbol = token.symbol;
+    console.log(`Fetching chart data for symbol: ${symbol}, endpoint: ${apiEndpoint}, limit: ${limit}`);
+
+    // Fetch chart data from CryptoCompare API
     const response = await axios.get(
-      `https://api.coingecko.com/api/v3/coins/${id}/market_chart`,
+      `https://min-api.cryptocompare.com/data/v2/${apiEndpoint}`,
       {
         params: {
-          vs_currency: 'usd',
-          days: daysParam
+          fsym: symbol,
+          tsym: 'USD',
+          limit: limit
         },
         timeout: 15000,
         headers: {
@@ -315,35 +325,30 @@ router.get('/:id/chart/:days', async (req, res) => {
     console.log(`Chart API response status: ${response.status}`);
     console.log(`Chart response structure:`, {
       hasData: !!response.data,
-      hasPrices: !!response.data?.prices,
-      hasMarketCaps: !!response.data?.market_caps,
-      hasTotalVolumes: !!response.data?.total_volumes,
-      pricesLength: response.data?.prices?.length || 0
+      hasDataData: !!response.data?.Data,
+      hasDataDataData: !!response.data?.Data?.Data,
+      dataLength: response.data?.Data?.Data?.length || 0,
+      responseType: response.data?.Response || 'Success'
     });
 
-    // Check for CoinGecko API errors
-    if (response.data && response.data.error) {
-      console.error('CoinGecko API error:', response.data.error);
-      return res.status(500).json({ error: `CoinGecko API error: ${response.data.error}` });
-    }
-
-    if (!response.data || !response.data.prices || !Array.isArray(response.data.prices)) {
-      console.error('Invalid chart response format from CoinGecko API');
-      console.error('Response data:', JSON.stringify(response.data).substring(0, 500));
+    if (!response.data || !response.data.Data || !response.data.Data.Data || !Array.isArray(response.data.Data.Data)) {
+      console.error('Invalid chart response format from CryptoCompare API');
       return res.status(404).json({ error: 'Chart data not found' });
     }
 
-    // Convert CoinGecko format to match the expected format
-    const chartDataArray = response.data.prices;
+    // Convert CryptoCompare format to match the expected format
+    const chartDataArray = response.data.Data.Data;
     console.log(`Processing ${chartDataArray.length} raw chart data points`);
     
     const prices = chartDataArray.map((item, index) => {
-      const timestamp = item[0]; // CoinGecko uses milliseconds
-      const price = parseFloat(item[1]) || 0;
+      const timestamp = item.time * 1000; // Convert seconds to milliseconds
+      const price = parseFloat(item.close || item.price || 0);
       
       if (index < 3) { // Log first 3 points for debugging
         console.log(`Chart point ${index + 1}:`, {
+          time: item.time,
           timestamp: timestamp,
+          close: item.close,
           price: price,
           date: new Date(timestamp).toISOString()
         });
@@ -366,11 +371,11 @@ router.get('/:id/chart/:days', async (req, res) => {
 
     const chartData = {
       prices: validPrices,
-      market_caps: response.data.market_caps || [],
-      total_volumes: response.data.total_volumes || []
+      market_caps: [], // Not available in CryptoCompare historical data
+      total_volumes: [] // Not available in CryptoCompare historical data
     };
 
-    console.log(`Generated ${validPrices.length} chart data points for ${id}`);
+    console.log(`Generated ${validPrices.length} chart data points for ${symbol}`);
     console.log(`Price range: $${Math.min(...validPrices.map(p => p[1])).toFixed(2)} - $${Math.max(...validPrices.map(p => p[1])).toFixed(2)}`);
     res.json(chartData);
 
@@ -380,8 +385,7 @@ router.get('/:id/chart/:days', async (req, res) => {
       status: error.response?.status,
       statusText: error.response?.statusText,
       url: error.config?.url,
-      params: error.config?.params,
-      message: error.message
+      params: error.config?.params
     });
     
     if (error.response && error.response.status === 404) {
@@ -390,14 +394,6 @@ router.get('/:id/chart/:days', async (req, res) => {
     
     if (error.response && error.response.status === 429) {
       return res.status(429).json({ error: 'Rate limit reached. Please try again later.' });
-    }
-    
-    if (error.code === 'ECONNABORTED') {
-      return res.status(408).json({ error: 'Request timeout - please try again' });
-    }
-    
-    if (error.response && error.response.data && error.response.data.error) {
-      return res.status(error.response.status).json({ error: error.response.data.error });
     }
     
     res.status(500).json({ error: 'Failed to fetch chart data' });
