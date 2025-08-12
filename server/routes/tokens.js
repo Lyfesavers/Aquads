@@ -250,7 +250,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Chart data endpoint using CryptoCompare API (separate from token API to avoid rate limits)
+// Chart data endpoint using CoinGecko API
 router.get('/:id/chart/:days', async (req, res) => {
   try {
     const { id, days } = req.params;
@@ -262,58 +262,39 @@ router.get('/:id/chart/:days', async (req, res) => {
       return res.status(400).json({ error: 'Invalid days parameter. Use: 1, 7, 30, 90, 365, or max' });
     }
 
-    // First, check if the token exists in our database to get the symbol
-    const token = await Token.findOne({ id: id }).lean();
-    if (!token) {
-      console.error(`Token not found in database: ${id}`);
-      return res.status(404).json({ error: 'Token not found' });
-    }
-
-    console.log(`Found token in database: ${token.name} (${token.symbol})`);
-
-    // Map days to CryptoCompare API endpoints and parameters
-    let apiEndpoint;
-    let limit;
+    // Map days to CoinGecko API parameters
+    let daysParam;
     
     switch (days) {
       case '1':
-        apiEndpoint = 'histohour';
-        limit = 24;
+        daysParam = 1;
         break;
       case '7':
-        apiEndpoint = 'histohour';
-        limit = 168; // 7 * 24 hours
+        daysParam = 7;
         break;
       case '30':
-        apiEndpoint = 'histoday';
-        limit = 30;
+        daysParam = 30;
         break;
       case '90':
-        apiEndpoint = 'histoday';
-        limit = 90;
+        daysParam = 90;
         break;
       case '365':
-        apiEndpoint = 'histoday';
-        limit = 365;
+        daysParam = 365;
         break;
       case 'max':
-        apiEndpoint = 'histoday';
-        limit = 2000; // CryptoCompare max
+        daysParam = 'max';
         break;
     }
 
-    // Convert token ID to symbol for CryptoCompare (use symbol from database)
-    const symbol = token.symbol;
-    console.log(`Fetching chart data for symbol: ${symbol}, endpoint: ${apiEndpoint}, limit: ${limit}`);
+    console.log(`Fetching chart data for token: ${id}, days: ${daysParam}`);
 
-    // Fetch chart data from CryptoCompare API
+    // Fetch chart data from CoinGecko API
     const response = await axios.get(
-      `https://min-api.cryptocompare.com/data/v2/${apiEndpoint}`,
+      `https://api.coingecko.com/api/v3/coins/${id}/market_chart`,
       {
         params: {
-          fsym: symbol,
-          tsym: 'USD',
-          limit: limit
+          vs_currency: 'usd',
+          days: daysParam
         },
         timeout: 15000,
         headers: {
@@ -325,30 +306,28 @@ router.get('/:id/chart/:days', async (req, res) => {
     console.log(`Chart API response status: ${response.status}`);
     console.log(`Chart response structure:`, {
       hasData: !!response.data,
-      hasDataData: !!response.data?.Data,
-      hasDataDataData: !!response.data?.Data?.Data,
-      dataLength: response.data?.Data?.Data?.length || 0,
-      responseType: response.data?.Response || 'Success'
+      hasPrices: !!response.data?.prices,
+      hasMarketCaps: !!response.data?.market_caps,
+      hasTotalVolumes: !!response.data?.total_volumes,
+      pricesLength: response.data?.prices?.length || 0
     });
 
-    if (!response.data || !response.data.Data || !response.data.Data.Data || !Array.isArray(response.data.Data.Data)) {
-      console.error('Invalid chart response format from CryptoCompare API');
+    if (!response.data || !response.data.prices || !Array.isArray(response.data.prices)) {
+      console.error('Invalid chart response format from CoinGecko API');
       return res.status(404).json({ error: 'Chart data not found' });
     }
 
-    // Convert CryptoCompare format to match the expected format
-    const chartDataArray = response.data.Data.Data;
+    // Convert CoinGecko format to match the expected format
+    const chartDataArray = response.data.prices;
     console.log(`Processing ${chartDataArray.length} raw chart data points`);
     
     const prices = chartDataArray.map((item, index) => {
-      const timestamp = item.time * 1000; // Convert seconds to milliseconds
-      const price = parseFloat(item.close || item.price || 0);
+      const timestamp = item[0]; // CoinGecko uses milliseconds
+      const price = parseFloat(item[1]) || 0;
       
       if (index < 3) { // Log first 3 points for debugging
         console.log(`Chart point ${index + 1}:`, {
-          time: item.time,
           timestamp: timestamp,
-          close: item.close,
           price: price,
           date: new Date(timestamp).toISOString()
         });
@@ -371,11 +350,11 @@ router.get('/:id/chart/:days', async (req, res) => {
 
     const chartData = {
       prices: validPrices,
-      market_caps: [], // Not available in CryptoCompare historical data
-      total_volumes: [] // Not available in CryptoCompare historical data
+      market_caps: response.data.market_caps || [],
+      total_volumes: response.data.total_volumes || []
     };
 
-    console.log(`Generated ${validPrices.length} chart data points for ${symbol}`);
+    console.log(`Generated ${validPrices.length} chart data points for ${id}`);
     console.log(`Price range: $${Math.min(...validPrices.map(p => p[1])).toFixed(2)} - $${Math.max(...validPrices.map(p => p[1])).toFixed(2)}`);
     res.json(chartData);
 
