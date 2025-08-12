@@ -4,7 +4,7 @@ const Token = require('../models/Token');
 const axios = require('axios');
 
 let lastUpdateTime = 0;
-const UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutes - CoinGecko allows 10,000 calls/month, so we need to be conservative
+const UPDATE_INTERVAL = 4.5 * 60 * 1000; // 4.5 minutes - pushing to 9,999 calls/month limit (320 calls/day)
 
 const updateTokenCache = async (force = false) => {
   const now = Date.now();
@@ -16,7 +16,7 @@ const updateTokenCache = async (force = false) => {
   try {
 
     console.log('=== TOKEN CACHE UPDATE STARTING ===');
-    console.log('Using CoinGecko API - free tier with 10,000 calls/month (updating every 5 minutes)');
+    console.log('Using CoinGecko API - free tier with 10,000 calls/month (updating every 4.5 minutes - 9,600 calls/month)');
     
     // Using CoinGecko API - much more generous free tier
     const response = await axios.get(
