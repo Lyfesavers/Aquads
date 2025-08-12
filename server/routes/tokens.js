@@ -18,11 +18,6 @@ const updateTokenCache = async (force = false) => {
     console.log('=== TOKEN CACHE UPDATE STARTING ===');
     console.log('Using CryptoCompare API - reliable free tier');
     
-    // Clear old tokens from previous APIs (CoinGecko/CoinCap) to avoid conflicts
-    console.log('Clearing old token data from database...');
-    const deleteResult = await Token.deleteMany({});
-    console.log(`Deleted ${deleteResult.deletedCount} old tokens from database`);
-
     // Using CryptoCompare API - very reliable with excellent free tier
     const response = await axios.get(
       'https://min-api.cryptocompare.com/data/top/mktcapfull',
@@ -111,7 +106,8 @@ const updateTokenCache = async (force = false) => {
       return null;
     }
 
-    // Use bulkWrite for better performance
+    // Use bulkWrite for better performance - upsert will update existing tokens and add new ones
+    // This is safer than deleting all tokens first
     const bulkOps = tokens.map(token => ({
       updateOne: {
         filter: { id: token.id },
@@ -122,6 +118,8 @@ const updateTokenCache = async (force = false) => {
 
     await Token.bulkWrite(bulkOps, { ordered: false });
     lastUpdateTime = now;
+
+    console.log(`Successfully updated/inserted ${tokens.length} tokens in database`);
 
     return tokens;
   } catch (error) {
@@ -141,6 +139,33 @@ updateTokenCache(true).catch(console.error);
 setInterval(() => {
   updateTokenCache().catch(console.error);
 }, UPDATE_INTERVAL);
+
+// Manual refresh endpoint for debugging
+router.post('/refresh', async (req, res) => {
+  try {
+    console.log('Manual token refresh requested');
+    const tokens = await updateTokenCache(true);
+    if (tokens) {
+      res.json({ 
+        success: true, 
+        message: `Successfully refreshed ${tokens.length} tokens`,
+        count: tokens.length 
+      });
+    } else {
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to refresh tokens' 
+      });
+    }
+  } catch (error) {
+    console.error('Manual refresh error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to refresh tokens',
+      error: error.message 
+    });
+  }
+});
 
 router.get('/', async (req, res) => {
   try {
