@@ -288,6 +288,15 @@ router.get('/:id/chart/:days', async (req, res) => {
 
     console.log(`Fetching chart data for token: ${id}, days: ${daysParam}`);
 
+    // First, check if the token exists in our database
+    const token = await Token.findOne({ id: id }).lean();
+    if (!token) {
+      console.error(`Token not found in database: ${id}`);
+      return res.status(404).json({ error: 'Token not found' });
+    }
+
+    console.log(`Found token in database: ${token.name} (${token.symbol})`);
+
     // Fetch chart data from CoinGecko API
     const response = await axios.get(
       `https://api.coingecko.com/api/v3/coins/${id}/market_chart`,
@@ -312,8 +321,15 @@ router.get('/:id/chart/:days', async (req, res) => {
       pricesLength: response.data?.prices?.length || 0
     });
 
+    // Check for CoinGecko API errors
+    if (response.data && response.data.error) {
+      console.error('CoinGecko API error:', response.data.error);
+      return res.status(500).json({ error: `CoinGecko API error: ${response.data.error}` });
+    }
+
     if (!response.data || !response.data.prices || !Array.isArray(response.data.prices)) {
       console.error('Invalid chart response format from CoinGecko API');
+      console.error('Response data:', JSON.stringify(response.data).substring(0, 500));
       return res.status(404).json({ error: 'Chart data not found' });
     }
 
@@ -364,7 +380,8 @@ router.get('/:id/chart/:days', async (req, res) => {
       status: error.response?.status,
       statusText: error.response?.statusText,
       url: error.config?.url,
-      params: error.config?.params
+      params: error.config?.params,
+      message: error.message
     });
     
     if (error.response && error.response.status === 404) {
@@ -373,6 +390,14 @@ router.get('/:id/chart/:days', async (req, res) => {
     
     if (error.response && error.response.status === 429) {
       return res.status(429).json({ error: 'Rate limit reached. Please try again later.' });
+    }
+    
+    if (error.code === 'ECONNABORTED') {
+      return res.status(408).json({ error: 'Request timeout - please try again' });
+    }
+    
+    if (error.response && error.response.data && error.response.data.error) {
+      return res.status(error.response.status).json({ error: error.response.data.error });
     }
     
     res.status(500).json({ error: 'Failed to fetch chart data' });
