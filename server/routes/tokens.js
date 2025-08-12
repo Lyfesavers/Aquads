@@ -4,7 +4,7 @@ const Token = require('../models/Token');
 const axios = require('axios');
 
 let lastUpdateTime = 0;
-const UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const UPDATE_INTERVAL = 5 * 60 * 1000; // 5 minutes - CoinGecko allows 10,000 calls/month, so we need to be conservative
 
 const updateTokenCache = async (force = false) => {
   const now = Date.now();
@@ -16,15 +16,19 @@ const updateTokenCache = async (force = false) => {
   try {
 
     console.log('=== TOKEN CACHE UPDATE STARTING ===');
-    console.log('Using CryptoCompare API - reliable free tier');
+    console.log('Using CoinGecko API - free tier with 10,000 calls/month (updating every 5 minutes)');
     
-    // Using CryptoCompare API - very reliable with excellent free tier
+    // Using CoinGecko API - much more generous free tier
     const response = await axios.get(
-      'https://min-api.cryptocompare.com/data/top/mktcapfull',
+      'https://api.coingecko.com/api/v3/coins/markets',
       {
         params: {
-          limit: 100, // CryptoCompare max limit is 100 for this endpoint
-          tsym: 'USD'
+          vs_currency: 'usd',
+          order: 'market_cap_desc',
+          per_page: 100,
+          page: 1,
+          sparkline: false,
+          locale: 'en'
         },
         timeout: 15000,
         headers: {
@@ -33,50 +37,46 @@ const updateTokenCache = async (force = false) => {
       }
     );
 
-    // CryptoCompare API returns data in { Data: [...] } format
-    if (!response.data || !response.data.Data || !Array.isArray(response.data.Data)) {
-      console.error('Invalid response format from CryptoCompare API');
+    // CoinGecko API returns data as an array directly
+    if (!response.data || !Array.isArray(response.data)) {
+      console.error('Invalid response format from CoinGecko API');
       console.error('Response structure:', JSON.stringify(response.data).substring(0, 200));
       return null;
     }
 
-    console.log(`Successfully fetched ${response.data.Data.length} tokens from CryptoCompare`);
+    console.log(`Successfully fetched ${response.data.length} tokens from CoinGecko`);
 
-    const tokens = response.data.Data.map((item, index) => {
-      const coinInfo = item.CoinInfo;
-      const rawData = item.RAW?.USD;
-      const displayData = item.DISPLAY?.USD;
-      
-      if (!coinInfo || !rawData) {
+    const tokens = response.data.map((item, index) => {
+      if (!item || !item.id || !item.symbol) {
         console.log(`Skipping token - missing data:`, {
-          hasCoinInfo: !!coinInfo,
-          hasRawData: !!rawData,
-          name: coinInfo?.Name
+          hasId: !!item?.id,
+          hasSymbol: !!item?.symbol,
+          name: item?.name
         });
         return null;
       }
 
-      // Clean data extraction - only show what CryptoCompare actually provides
+      // Clean data extraction from CoinGecko format
       const token = {
-        id: coinInfo.Name?.toLowerCase() || `token-${index}`,
-        symbol: coinInfo.Name?.toUpperCase() || '',
-        name: coinInfo.FullName || coinInfo.Name || '',
-        image: coinInfo.ImageUrl ? `https://www.cryptocompare.com${coinInfo.ImageUrl}` : '',
-        currentPrice: parseFloat(rawData.PRICE) || 0,
-        marketCap: parseFloat(rawData.MKTCAP) || 0,
-        marketCapRank: index + 1,
-        totalVolume: parseFloat(rawData.TOTALVOLUME24HTO) || parseFloat(rawData.VOLUME24HOURTO) || 0,
-        high24h: parseFloat(rawData.HIGH24HOUR) || 0,
-        low24h: parseFloat(rawData.LOW24HOUR) || 0,
-        priceChange24h: parseFloat(rawData.CHANGE24HOUR) || 0,
-        priceChangePercentage24h: parseFloat(rawData.CHANGEPCT24HOUR) || 0,
-        circulatingSupply: parseFloat(rawData.SUPPLY) || 0,
-        totalSupply: null, // Not available in CryptoCompare
-        maxSupply: null, // Not available in CryptoCompare
-        ath: null, // Not available in CryptoCompare
-        athChangePercentage: null, // Not available in CryptoCompare
-        athDate: null, // Not available in CryptoCompare
-        fullyDilutedValuation: parseFloat(rawData.MKTCAP) || 0,
+        id: item.id,
+        symbol: item.symbol.toUpperCase(),
+        name: item.name,
+        image: item.image,
+        currentPrice: parseFloat(item.current_price) || 0,
+        marketCap: parseFloat(item.market_cap) || 0,
+        marketCapRank: item.market_cap_rank || index + 1,
+        totalVolume: parseFloat(item.total_volume) || 0,
+        high24h: parseFloat(item.high_24h) || 0,
+        low24h: parseFloat(item.low_24h) || 0,
+        priceChange24h: parseFloat(item.price_change_24h) || 0,
+        priceChangePercentage24h: parseFloat(item.price_change_percentage_24h) || 0,
+        circulatingSupply: parseFloat(item.circulating_supply) || 0,
+        totalSupply: parseFloat(item.total_supply) || null,
+        maxSupply: parseFloat(item.max_supply) || null,
+        ath: parseFloat(item.ath) || null,
+        athChangePercentage: parseFloat(item.ath_change_percentage) || null,
+        athDate: item.ath_date ? new Date(item.ath_date) : null,
+        fullyDilutedValuation: parseFloat(item.fully_diluted_valuation) || 0,
         lastUpdated: new Date()
       };
 
@@ -250,7 +250,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Chart data endpoint using CryptoCompare API
+// Chart data endpoint using CoinGecko API
 router.get('/:id/chart/:days', async (req, res) => {
   try {
     const { id, days } = req.params;
@@ -262,49 +262,39 @@ router.get('/:id/chart/:days', async (req, res) => {
       return res.status(400).json({ error: 'Invalid days parameter. Use: 1, 7, 30, 90, 365, or max' });
     }
 
-    // Map days to CryptoCompare API endpoints and parameters
-    let apiEndpoint;
-    let limit;
+    // Map days to CoinGecko API parameters
+    let daysParam;
     
     switch (days) {
       case '1':
-        apiEndpoint = 'histohour';
-        limit = 24;
+        daysParam = 1;
         break;
       case '7':
-        apiEndpoint = 'histohour';
-        limit = 168; // 7 * 24 hours
+        daysParam = 7;
         break;
       case '30':
-        apiEndpoint = 'histoday';
-        limit = 30;
+        daysParam = 30;
         break;
       case '90':
-        apiEndpoint = 'histoday';
-        limit = 90;
+        daysParam = 90;
         break;
       case '365':
-        apiEndpoint = 'histoday';
-        limit = 365;
+        daysParam = 365;
         break;
       case 'max':
-        apiEndpoint = 'histoday';
-        limit = 2000; // CryptoCompare max
+        daysParam = 'max';
         break;
     }
 
-    // Convert token ID (lowercase) to symbol (uppercase) for CryptoCompare
-    const symbol = id.toUpperCase();
-    console.log(`Fetching chart data for symbol: ${symbol}, endpoint: ${apiEndpoint}, limit: ${limit}`);
+    console.log(`Fetching chart data for token: ${id}, days: ${daysParam}`);
 
-    // Fetch chart data from CryptoCompare API
+    // Fetch chart data from CoinGecko API
     const response = await axios.get(
-      `https://min-api.cryptocompare.com/data/v2/${apiEndpoint}`,
+      `https://api.coingecko.com/api/v3/coins/${id}/market_chart`,
       {
         params: {
-          fsym: symbol,
-          tsym: 'USD',
-          limit: limit
+          vs_currency: 'usd',
+          days: daysParam
         },
         timeout: 15000,
         headers: {
@@ -316,30 +306,28 @@ router.get('/:id/chart/:days', async (req, res) => {
     console.log(`Chart API response status: ${response.status}`);
     console.log(`Chart response structure:`, {
       hasData: !!response.data,
-      hasDataData: !!response.data?.Data,
-      hasDataDataData: !!response.data?.Data?.Data,
-      dataLength: response.data?.Data?.Data?.length || 0,
-      responseType: response.data?.Response || 'Success'
+      hasPrices: !!response.data?.prices,
+      hasMarketCaps: !!response.data?.market_caps,
+      hasTotalVolumes: !!response.data?.total_volumes,
+      pricesLength: response.data?.prices?.length || 0
     });
 
-    if (!response.data || !response.data.Data || !response.data.Data.Data || !Array.isArray(response.data.Data.Data)) {
-      console.error('Invalid chart response format from CryptoCompare API');
+    if (!response.data || !response.data.prices || !Array.isArray(response.data.prices)) {
+      console.error('Invalid chart response format from CoinGecko API');
       return res.status(404).json({ error: 'Chart data not found' });
     }
 
-    // Convert CryptoCompare format to match the expected format
-    const chartDataArray = response.data.Data.Data;
+    // Convert CoinGecko format to match the expected format
+    const chartDataArray = response.data.prices;
     console.log(`Processing ${chartDataArray.length} raw chart data points`);
     
     const prices = chartDataArray.map((item, index) => {
-      const timestamp = item.time * 1000; // Convert seconds to milliseconds
-      const price = parseFloat(item.close || item.price || 0);
+      const timestamp = item[0]; // CoinGecko uses milliseconds
+      const price = parseFloat(item[1]) || 0;
       
       if (index < 3) { // Log first 3 points for debugging
         console.log(`Chart point ${index + 1}:`, {
-          time: item.time,
           timestamp: timestamp,
-          close: item.close,
           price: price,
           date: new Date(timestamp).toISOString()
         });
@@ -362,11 +350,11 @@ router.get('/:id/chart/:days', async (req, res) => {
 
     const chartData = {
       prices: validPrices,
-      market_caps: [], // Not available in this endpoint
-      total_volumes: [] // Not available in this endpoint
+      market_caps: response.data.market_caps || [],
+      total_volumes: response.data.total_volumes || []
     };
 
-    console.log(`Generated ${validPrices.length} chart data points for ${symbol}`);
+    console.log(`Generated ${validPrices.length} chart data points for ${id}`);
     console.log(`Price range: $${Math.min(...validPrices.map(p => p[1])).toFixed(2)} - $${Math.max(...validPrices.map(p => p[1])).toFixed(2)}`);
     res.json(chartData);
 
