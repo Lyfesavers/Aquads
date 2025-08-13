@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 
 // Load TradingView script once per session
 let tvScriptLoadingPromise;
@@ -32,54 +33,35 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
     }
   }, []);
 
+  // Create the widget once (never recreate on prop changes)
   useEffect(() => {
     let cancelled = false;
-
     const createWidget = async () => {
       try {
         if (tvScriptLoadingPromise) {
           await tvScriptLoadingPromise;
         }
-        if (cancelled || !containerRef.current || !window.TradingView) return;
-
-        // Remove any previous widget instance
-        if (widgetRef.current && typeof widgetRef.current.remove === 'function') {
-          try { widgetRef.current.remove(); } catch (e) { /* ignore */ }
-          widgetRef.current = null;
-        }
+        if (cancelled || !containerRef.current || !window.TradingView || widgetRef.current) return;
 
         widgetRef.current = new window.TradingView.widget({
-          autosize: true,
           symbol: `BINANCE:${symbol}USDT`,
           interval: 'D',
           timezone: 'Etc/UTC',
           theme: 'dark',
           style: '1',
           locale: 'en',
-          toolbar_bg: '#f1f3f6',
           enable_publishing: false,
           allow_symbol_change: false,
           container_id: widgetIdRef.current,
           width: '100%',
-          height: isMobile ? '400px' : '700px',
+          height: isMobile ? 400 : 700,
           hide_top_toolbar: false,
-          hide_legend: false,
-          save_image: false,
-          backgroundColor: 'rgba(19, 23, 34, 0.5)',
-          gridColor: 'rgba(255, 255, 255, 0.1)',
-          watermark: {
-            color: 'rgba(255, 255, 255, 0.1)',
-            visible: true,
-            text: 'Aquads',
-            fontSize: 12,
-            fontFamily: 'Arial'
-          }
+          hide_legend: false
         });
       } catch (e) {
-        // no-op; avoid crashing UI if script fails
+        // no-op
       }
     };
-
     createWidget();
     return () => {
       cancelled = true;
@@ -88,9 +70,28 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
         widgetRef.current = null;
       }
     };
-  }, [symbol, isMobile]);
+  }, []);
 
-  return (
+  // On symbol change, update the existing widget without remount
+  useEffect(() => {
+    if (!widgetRef.current || !symbol) return;
+    try {
+      const target = `BINANCE:${symbol}USDT`;
+      if (typeof widgetRef.current.onChartReady === 'function') {
+        widgetRef.current.onChartReady(() => {
+          const chart = (widgetRef.current.activeChart && widgetRef.current.activeChart()) ||
+                        (widgetRef.current.chart && widgetRef.current.chart());
+          if (chart && typeof chart.setSymbol === 'function') {
+            chart.setSymbol(target, 'D');
+          }
+        });
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, [symbol]);
+
+  const container = (
     <div
       ref={containerRef}
       id={widgetIdRef.current}
@@ -101,6 +102,9 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
       }}
     />
   );
+
+  const portalRoot = typeof document !== 'undefined' ? document.getElementById('tv-root') : null;
+  return portalRoot ? createPortal(container, portalRoot) : container;
 };
 
 export default TradingViewChart;

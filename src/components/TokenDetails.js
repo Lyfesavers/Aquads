@@ -249,4 +249,8 @@ const TokenDetails = ({
   );
 };
 
-export default TokenDetails; 
+export default React.memo(TokenDetails, (prev, next) => {
+  const prevSym = prev.token?.symbol;
+  const nextSym = next.token?.symbol;
+  return prevSym === nextSym && prev.isMobile === next.isMobile;
+});
