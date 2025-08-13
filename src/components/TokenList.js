@@ -5,6 +5,7 @@ import { FaGlobe, FaTwitter, FaTelegram, FaDiscord, FaGithub, FaReddit } from 'r
 import { Helmet } from 'react-helmet';
 import TokenDetails from './TokenDetails';
 import SocialMediaRaids from './SocialMediaRaids';
+import ChartDock from './ChartDock';
 import logger from '../utils/logger';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -425,18 +426,19 @@ const TokenList = ({ currentUser, showNotification }) => {
                             </td>
                           </tr>
                           {selectedToken && showDetails && selectedToken.id === token.id && (
-                                                    <TokenDetails
-                          token={selectedToken}
-                          showReviews={showReviews}
-                          onClose={() => setShowDetails(false)}
-                          currentUser={currentUser}
-                          showNotification={showNotification}
-                          showDexFrame={showDexFrame}
-                          selectedDex={selectedDex}
-                          onDexClick={handleDexClick}
-                          setShowDexFrame={setShowDexFrame}
-                          isMobile={false}
-                        />
+                            <TokenDetails
+                              token={selectedToken}
+                              showReviews={showReviews}
+                              onClose={() => setShowDetails(false)}
+                              currentUser={currentUser}
+                              showNotification={showNotification}
+                              showDexFrame={showDexFrame}
+                              selectedDex={selectedDex}
+                              onDexClick={handleDexClick}
+                              setShowDexFrame={setShowDexFrame}
+                              isMobile={false}
+                              hideChart={true}
+                            />
                           )}
                         </React.Fragment>
                       ))}
@@ -530,6 +532,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                           onDexClick={handleDexClick}
                           setShowDexFrame={setShowDexFrame}
                           isMobile={true}
+                          hideChart={true}
                         />
                       )}
                     </React.Fragment>
@@ -563,6 +566,9 @@ const TokenList = ({ currentUser, showNotification }) => {
             Loading tokens...
           </div>
         ) : null}
+        {showDetails && selectedToken && (
+          <ChartDock symbol={selectedToken.symbol} />
+        )}
       </div>
     </div>
   );
