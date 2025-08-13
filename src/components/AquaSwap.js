@@ -48,8 +48,15 @@ const AquaSwap = ({ currentUser, showNotification }) => {
     const urlParams = new URLSearchParams(window.location.search);
     const tokenParam = urlParams.get('token');
     const blockchainParam = urlParams.get('blockchain');
+    const symbolParam = urlParams.get('symbol');
     
-    if (tokenParam && blockchainParam) {
+    if (symbolParam) {
+      // If a trading symbol was provided, switch to TradingView and set the symbol directly
+      setChartProvider('tradingview');
+      setTokenSearch(symbolParam.toUpperCase());
+      // Clean URL
+      window.history.replaceState({}, document.title, '/aquaswap');
+    } else if (tokenParam && blockchainParam) {
       // Set token search and chain based on URL parameters
       setTokenSearch(tokenParam);
       setSearchInput(tokenParam); // Also update the search input to show the selected address
@@ -378,9 +385,14 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
       script.type = 'text/javascript';
       script.async = true;
+      // Build exchange symbol: use tokenSearch if available, otherwise default to BTC
+      const tvSymbol = tokenSearch && /^[A-Z0-9]{2,15}$/.test(tokenSearch.toUpperCase())
+        ? `BINANCE:${tokenSearch.toUpperCase()}USDT`
+        : 'BINANCE:BTCUSDT';
+
       script.innerHTML = JSON.stringify({
         "autosize": true,
-        "symbol": "BTCUSDT",
+        "symbol": tvSymbol,
         "interval": "15", // 15-minute for active trading
         "timezone": "Etc/UTC",
         "theme": "dark",
@@ -527,7 +539,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
       
       tradingViewRef.current.appendChild(script);
     }
-  }, [chartProvider]);
+  }, [chartProvider, tokenSearch]);
 
 
 

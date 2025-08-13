@@ -236,7 +236,7 @@ const TokenDetails = ({
         <TokenDetailsContent />
         <div className="flex items-center justify-end px-4 pb-4">
           <a
-            href="/aquaswap"
+            href={`/aquaswap?symbol=${encodeURIComponent(token.symbol)}`}
             className="inline-flex items-center px-3 py-1.5 md:px-4 md:py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs md:text-sm"
           >
             Buy / Trade on AquaSwap
