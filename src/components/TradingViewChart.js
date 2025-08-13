@@ -28,7 +28,7 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
            allow_symbol_change: false,
            container_id: containerRef.current.id,
            width: '100%',
-           height: isMobile ? '350px' : '600px',
+           height: isMobile ? '400px' : '700px',
            hide_top_toolbar: false,
            hide_legend: false,
            save_image: false,
@@ -64,8 +64,8 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
       id={`tradingview-chart-${symbol}`}
       className="w-full h-full"
              style={{ 
-         height: isMobile ? '350px' : '600px',
-         minHeight: isMobile ? '350px' : '600px'
+         height: isMobile ? '400px' : '700px',
+         minHeight: isMobile ? '400px' : '600px'
        }}
     />
   );

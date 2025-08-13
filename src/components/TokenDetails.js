@@ -89,9 +89,9 @@ const TokenDetails = ({
             Powered by TradingView
           </div>
         </div>
-        <div className="bg-gray-700/50 rounded-lg overflow-hidden" style={{ height: isMobile ? '250px' : '400px' }}>
-          <TradingViewChart symbol={token.symbol} isMobile={isMobile} />
-        </div>
+                 <div className="bg-gray-700/50 rounded-lg overflow-hidden" style={{ height: isMobile ? '400px' : '700px' }}>
+           <TradingViewChart symbol={token.symbol} isMobile={isMobile} />
+         </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-4 md:mb-6">
