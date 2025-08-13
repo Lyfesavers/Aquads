@@ -32,34 +32,15 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
     }
   }, []);
 
+  // Create the widget once
   useEffect(() => {
     let cancelled = false;
-
     const createWidget = async () => {
       try {
         if (tvScriptLoadingPromise) {
           await tvScriptLoadingPromise;
         }
-        if (cancelled || !containerRef.current || !window.TradingView) return;
-
-        // Only allow one widget per viewport variant (desktop vs mobile)
-        const isDesktopViewport = window.matchMedia('(min-width: 768px)').matches;
-        const shouldMountForViewport = (!isMobile && isDesktopViewport) || (isMobile && !isDesktopViewport);
-
-        // If this instance doesn't match current viewport, ensure no widget here
-        if (!shouldMountForViewport) {
-          if (widgetRef.current && typeof widgetRef.current.remove === 'function') {
-            try { widgetRef.current.remove(); } catch (_) {}
-            widgetRef.current = null;
-          }
-          return;
-        }
-
-        // Remove any previous widget instance
-        if (widgetRef.current && typeof widgetRef.current.remove === 'function') {
-          try { widgetRef.current.remove(); } catch (e) { /* ignore */ }
-          widgetRef.current = null;
-        }
+        if (cancelled || !containerRef.current || !window.TradingView || widgetRef.current) return;
 
         const config = {
           symbol: `BINANCE:${symbol}USDT`,
@@ -77,25 +58,40 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
           hide_legend: false
         };
         setTimeout(() => {
-          if (!cancelled && containerRef.current && window.TradingView) {
+          if (!cancelled && containerRef.current && window.TradingView && !widgetRef.current) {
             widgetRef.current = new window.TradingView.widget(config);
             try { console.log('[TV] widget created', { symbol, isMobile, id: widgetIdRef.current, ts: Date.now() }); } catch (_) {}
           }
         }, 0);
       } catch (e) {
-        // no-op; avoid crashing UI if script fails
+        // no-op
       }
     };
-
     createWidget();
     return () => {
       cancelled = true;
       if (widgetRef.current && typeof widgetRef.current.remove === 'function') {
-        try { widgetRef.current.remove(); } catch (e) { /* ignore */ }
+        try { widgetRef.current.remove(); } catch (e) {}
         widgetRef.current = null;
       }
     };
-  }, [symbol, isMobile]);
+  }, []);
+
+  // On symbol change, update the existing widget's symbol without recreating
+  useEffect(() => {
+    if (!widgetRef.current || !symbol) return;
+    try {
+      const target = `BINANCE:${symbol}USDT`;
+      if (typeof widgetRef.current.onChartReady === 'function') {
+        widgetRef.current.onChartReady(() => {
+          const chart = widgetRef.current.activeChart?.() || widgetRef.current.chart?.();
+          if (chart && typeof chart.setSymbol === 'function') {
+            chart.setSymbol(target, 'D');
+          }
+        });
+      }
+    } catch (_) {}
+  }, [symbol]);
 
   return (
     <div 
