@@ -148,14 +148,10 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   useEffect(() => {
     fetchInitialTokens();
-    const refreshInterval = setInterval(() => {
-      if (!document.hidden) {
-        fetchInitialTokens(true);
-      }
-    }, 60000);
+    // Removed automatic refresh since TradingView provides live data
+    // No need to reload tokens every minute
 
     return () => {
-      clearInterval(refreshInterval);
       if (chartInstance) {
         chartInstance.destroy();
       }
