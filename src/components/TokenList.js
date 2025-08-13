@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import TokenReviews from './TokenReviews';
-import { Chart } from 'chart.js/auto';
 import TokenRating from './TokenRating';
 import { FaGlobe, FaTwitter, FaTelegram, FaDiscord, FaGithub, FaReddit } from 'react-icons/fa';
 import { Helmet } from 'react-helmet';
@@ -45,28 +44,16 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [selectedToken, setSelectedToken] = useState(null);
   const [showReviews, setShowReviews] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
-  const [chartData, setChartData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'marketCap', direction: 'desc' });
-  const [selectedTimeRange, setSelectedTimeRange] = useState('1');
-  const [chartInstance, setChartInstance] = useState(null);
-  const chartRef = useRef(null);
   const [showDexFrame, setShowDexFrame] = useState(true);
   const [selectedDex, setSelectedDex] = useState(null);
   const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState('tokens');
   const [isTableExpanded, setIsTableExpanded] = useState(false);
-  const [isChartLoading, setIsChartLoading] = useState(false);
 
-  // Cleanup chart on unmount
-  useEffect(() => {
-    return () => {
-      if (chartInstance) {
-        chartInstance.destroy();
-      }
-    };
-  }, [chartInstance]);
+
 
   // Sorting functionality
   const handleSort = (key) => {
@@ -195,28 +182,15 @@ const TokenList = ({ currentUser, showNotification }) => {
     setSelectedToken(null);
   };
 
-  const handleTimeRangeChange = async (range) => {
-    setSelectedTimeRange(range);
-    if (selectedToken) {
-      // Small delay to make the transition feel more natural
-      setTimeout(async () => {
-        await fetchChartData(selectedToken.id, range);
-      }, 100);
-    }
-  };
+
 
   const handleTokenClick = async (token) => {
     try {
       setSelectedToken(token);
       setShowDetails(true);
-      setIsChartLoading(true);
-
-      await fetchChartData(token.id, selectedTimeRange);
     } catch (error) {
       logger.error('Error handling token click:', error);
       showNotification('Failed to load token details', 'error');
-    } finally {
-      setIsChartLoading(false);
     }
   };
 
@@ -226,106 +200,7 @@ const TokenList = ({ currentUser, showNotification }) => {
     setShowReviews(true);
   };
 
-  const fetchChartData = async (tokenId, days) => {
-    try {
-      setIsChartLoading(true);
-      
-      // Use our backend API with CryptoCompare data
-      const response = await fetch(
-        `/api/tokens/${tokenId}/chart/${days}`,
-        {
-          headers: {
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache'
-          }
-        }
-      );
 
-      if (response.status === 429) {
-        throw new Error('Rate limit reached. Please try again later.');
-      }
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch chart data');
-      }
-      
-      const data = await response.json();
-      setChartData(data);
-      
-      // Check if we have valid chart data
-      if (!data || !data.prices || data.prices.length === 0) {
-        console.warn('No valid chart data received');
-        return;
-      }
-      
-      if (chartRef.current) {
-        const ctx = chartRef.current.getContext('2d');
-        
-        // Prepare new chart data
-        const newChartData = {
-          labels: data.prices.map(price => new Date(price[0]).toLocaleDateString()),
-          datasets: [{
-            label: 'Price (USD)',
-            data: data.prices.map(price => price[1]),
-            borderColor: 'rgb(75, 192, 192)',
-            backgroundColor: 'rgba(75, 192, 192, 0.1)',
-            tension: 0.1,
-            pointRadius: 0,
-            pointHoverRadius: 4
-          }]
-        };
-
-        const chartOptions = {
-          responsive: true,
-          maintainAspectRatio: false,
-          animation: {
-            duration: 500,
-            easing: 'easeInOutQuart'
-          },
-          plugins: {
-            legend: { position: 'top' },
-            title: { display: true, text: 'Price History' }
-          },
-          scales: {
-            y: { 
-              beginAtZero: false,
-              grid: {
-                color: 'rgba(255, 255, 255, 0.1)'
-              }
-            },
-            x: {
-              grid: {
-                color: 'rgba(255, 255, 255, 0.1)'
-              }
-            }
-          }
-        };
-
-        // If chart exists, update it smoothly instead of destroying
-        if (chartInstance) {
-          chartInstance.data = newChartData;
-          chartInstance.update('active'); // Smooth update animation
-        } else {
-          // Only create new chart if one doesn't exist
-          const newChart = new Chart(ctx, {
-            type: 'line',
-            data: newChartData,
-            options: chartOptions
-          });
-          setChartInstance(newChart);
-        }
-      }
-    } catch (error) {
-      logger.error('Chart data error:', error);
-      if (error.message.includes('Rate limit')) {
-        showNotification('Chart data temporarily unavailable due to rate limit', 'warning');
-      } else {
-        showNotification('Chart data temporarily unavailable', 'warning');
-      }
-    } finally {
-      setIsChartLoading(false);
-    }
-  };
 
   // Render loading state
   if (isLoading && tokens.length === 0) {
@@ -555,16 +430,11 @@ const TokenList = ({ currentUser, showNotification }) => {
                           onClose={() => setShowDetails(false)}
                           currentUser={currentUser}
                           showNotification={showNotification}
-                          chartRef={chartRef}
-                          chartData={chartData}
-                          selectedTimeRange={selectedTimeRange}
-                          onTimeRangeChange={handleTimeRangeChange}
                           showDexFrame={showDexFrame}
                           selectedDex={selectedDex}
                           onDexClick={handleDexClick}
                           setShowDexFrame={setShowDexFrame}
                           isMobile={false}
-                          isChartLoading={isChartLoading}
                         />
                           )}
                         </React.Fragment>
@@ -654,16 +524,11 @@ const TokenList = ({ currentUser, showNotification }) => {
                           onClose={() => setShowDetails(false)}
                           currentUser={currentUser}
                           showNotification={showNotification}
-                          chartRef={chartRef}
-                          chartData={chartData}
-                          selectedTimeRange={selectedTimeRange}
-                          onTimeRangeChange={handleTimeRangeChange}
                           showDexFrame={showDexFrame}
                           selectedDex={selectedDex}
                           onDexClick={handleDexClick}
                           setShowDexFrame={setShowDexFrame}
                           isMobile={true}
-                          isChartLoading={isChartLoading}
                         />
                       )}
                     </React.Fragment>

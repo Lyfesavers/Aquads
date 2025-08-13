@@ -1,6 +1,7 @@
 import React from 'react';
 import { FaGlobe, FaTwitter, FaTelegram, FaDiscord, FaGithub, FaReddit } from 'react-icons/fa';
 import TokenSentiment from './TokenSentiment';
+import TradingViewChart from './TradingViewChart';
 
 const TokenDetails = ({
   token,
@@ -8,25 +9,13 @@ const TokenDetails = ({
   onClose,
   currentUser,
   showNotification,
-  chartRef,
-  chartData,
-  selectedTimeRange,
-  onTimeRangeChange,
   showDexFrame,
   selectedDex,
   onDexClick,
   setShowDexFrame,
-  isMobile = false,
-  isChartLoading = false
+  isMobile = false
 }) => {
-  const timeRanges = [
-    { label: '24h', value: '1' },
-    { label: '7d', value: '7' },
-    { label: '30d', value: '30' },
-    { label: '90d', value: '90' },
-    { label: '1y', value: '365' },
-    { label: 'Max', value: 'max' }
-  ];
+
 
   // Common content component
   const TokenDetailsContent = () => (
@@ -95,33 +84,13 @@ const TokenDetails = ({
 
       <div className="mb-4 md:mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h4 className="text-base md:text-lg font-medium text-white">Price Chart</h4>
-          <div className="flex flex-wrap gap-1 md:gap-2">
-            {timeRanges.map(range => (
-              <button
-                key={range.value}
-                onClick={() => onTimeRangeChange(range.value)}
-                className={`px-2 md:px-3 py-1 rounded text-xs md:text-sm ${
-                  selectedTimeRange === range.value
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                }`}
-              >
-                {range.label}
-              </button>
-            ))}
+          <h4 className="text-base md:text-lg font-medium text-white">Live Price Chart</h4>
+          <div className="text-xs text-gray-400">
+            Powered by TradingView
           </div>
         </div>
-        <div className="bg-gray-700/50 rounded-lg overflow-hidden relative" style={{ height: isMobile ? '250px' : '400px' }}>
-          <canvas ref={chartRef} style={{ width: '100%', height: '100%' }}></canvas>
-          {(isChartLoading || !chartData) && (
-            <div className="absolute inset-0 flex items-center justify-center text-gray-400 bg-gray-700/80 backdrop-blur-sm">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
-                <div className="text-sm">Loading chart data...</div>
-              </div>
-            </div>
-          )}
+        <div className="bg-gray-700/50 rounded-lg overflow-hidden" style={{ height: isMobile ? '250px' : '400px' }}>
+          <TradingViewChart symbol={token.symbol} isMobile={isMobile} />
         </div>
       </div>
 
