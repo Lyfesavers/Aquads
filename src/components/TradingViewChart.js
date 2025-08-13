@@ -75,6 +75,7 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
             fontFamily: 'Arial'
           }
         });
+        try { console.log('[TV] widget created', { symbol, isMobile, id: widgetIdRef.current, ts: Date.now() }); } catch (_) {}
       } catch (e) {
         // no-op; avoid crashing UI if script fails
       }
@@ -85,6 +86,7 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
       cancelled = true;
       if (widgetRef.current && typeof widgetRef.current.remove === 'function') {
         try { widgetRef.current.remove(); } catch (e) { /* ignore */ }
+        try { console.log('[TV] widget removed', { symbol, isMobile, id: widgetIdRef.current, ts: Date.now() }); } catch (_) {}
         widgetRef.current = null;
       }
     };
