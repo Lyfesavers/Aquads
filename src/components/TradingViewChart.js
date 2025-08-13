@@ -2,13 +2,12 @@ import React, { useEffect, useRef } from 'react';
 
 // Load TradingView script once per session
 let tvScriptLoadingPromise;
-let TV_CONTAINER_EL = null;
-let TV_CONTAINER_ID = null;
 const TV_SCRIPT_SRC = 'https://s3.tradingview.com/tv.js';
 
 const TradingViewChart = ({ symbol, isMobile = false }) => {
-  const anchorRef = useRef(null);
+  const containerRef = useRef(null);
   const widgetRef = useRef(null);
+  const widgetIdRef = useRef(`tradingview-chart-${Math.random().toString(36).slice(2)}`);
 
   useEffect(() => {
     if (!tvScriptLoadingPromise) {
@@ -33,94 +32,68 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
     }
   }, []);
 
-  // Ensure a single global container exists and is anchored visually
-  useEffect(() => {
-    if (!TV_CONTAINER_EL) {
-      TV_CONTAINER_EL = document.createElement('div');
-      TV_CONTAINER_ID = `tradingview-chart-${Math.random().toString(36).slice(2)}`;
-      TV_CONTAINER_EL.id = TV_CONTAINER_ID;
-      TV_CONTAINER_EL.style.width = '100%';
-      TV_CONTAINER_EL.style.height = isMobile ? '400px' : '700px';
-    }
-    if (anchorRef.current && TV_CONTAINER_EL.parentNode !== anchorRef.current) {
-      anchorRef.current.innerHTML = '';
-      anchorRef.current.appendChild(TV_CONTAINER_EL);
-    }
-  }, [isMobile]);
-
-  // Create the widget once (never recreate on prop changes)
   useEffect(() => {
     let cancelled = false;
+
     const createWidget = async () => {
       try {
         if (tvScriptLoadingPromise) {
           await tvScriptLoadingPromise;
         }
-        if (cancelled || !TV_CONTAINER_EL || !window.TradingView) return;
+        if (cancelled || !containerRef.current || !window.TradingView) return;
 
-        // Reuse a single global widget if it exists
-        if (window.__TV_WIDGET_SINGLETON) {
-          widgetRef.current = window.__TV_WIDGET_SINGLETON;
-          return;
+        // Remove any previous widget instance
+        if (widgetRef.current && typeof widgetRef.current.remove === 'function') {
+          try { widgetRef.current.remove(); } catch (e) { /* ignore */ }
+          widgetRef.current = null;
         }
 
-        const widget = new window.TradingView.widget({
+        widgetRef.current = new window.TradingView.widget({
+          autosize: true,
           symbol: `BINANCE:${symbol}USDT`,
           interval: 'D',
           timezone: 'Etc/UTC',
           theme: 'dark',
           style: '1',
           locale: 'en',
+          toolbar_bg: '#f1f3f6',
           enable_publishing: false,
           allow_symbol_change: false,
-          container_id: TV_CONTAINER_ID,
+          container_id: widgetIdRef.current,
           width: '100%',
-          height: isMobile ? 400 : 700,
+          height: isMobile ? '400px' : '700px',
           hide_top_toolbar: false,
-          hide_legend: false
+          hide_legend: false,
+          save_image: false,
+          backgroundColor: 'rgba(19, 23, 34, 0.5)',
+          gridColor: 'rgba(255, 255, 255, 0.1)',
+          watermark: {
+            color: 'rgba(255, 255, 255, 0.1)',
+            visible: true,
+            text: 'Aquads',
+            fontSize: 12,
+            fontFamily: 'Arial'
+          }
         });
-        widgetRef.current = widget;
-        window.__TV_WIDGET_SINGLETON = widget;
       } catch (e) {
-        // no-op
+        // no-op; avoid crashing UI if script fails
       }
     };
+
     createWidget();
     return () => {
       cancelled = true;
-      // Do not remove the singleton on unmount; keep it alive
-    };
-  }, []);
-
-  // On symbol change, update the existing widget without remount
-  useEffect(() => {
-    // Ensure container stays anchored
-    if (anchorRef.current && TV_CONTAINER_EL && TV_CONTAINER_EL.parentNode !== anchorRef.current) {
-      anchorRef.current.innerHTML = '';
-      anchorRef.current.appendChild(TV_CONTAINER_EL);
-    }
-
-    const widget = window.__TV_WIDGET_SINGLETON || widgetRef.current;
-    if (!widget || !symbol) return;
-    try {
-      const target = `BINANCE:${symbol}USDT`;
-      if (typeof widget.onChartReady === 'function') {
-        widget.onChartReady(() => {
-          const chart = (widget.activeChart && widget.activeChart()) ||
-                        (widget.chart && widget.chart());
-          if (chart && typeof chart.setSymbol === 'function') {
-            chart.setSymbol(target, 'D');
-          }
-        });
+      if (widgetRef.current && typeof widgetRef.current.remove === 'function') {
+        try { widgetRef.current.remove(); } catch (e) { /* ignore */ }
+        widgetRef.current = null;
       }
-    } catch (e) {
-      // ignore
-    }
-  }, [symbol]);
+    };
+  }, [symbol, isMobile]);
 
   return (
     <div
-      ref={anchorRef}
+      ref={containerRef}
+      id={widgetIdRef.current}
       className="w-full h-full"
       style={{
         height: isMobile ? '400px' : '700px',

@@ -1,7 +1,7 @@
 import React from 'react';
 import { FaGlobe, FaTwitter, FaTelegram, FaDiscord, FaGithub, FaReddit } from 'react-icons/fa';
 import TokenSentiment from './TokenSentiment';
-import TradingViewChart from './TradingViewChart';
+// TradingViewChart removed in token details as requested
 
 const TokenDetails = ({
   token,
@@ -82,17 +82,7 @@ const TokenDetails = ({
         />
       </div>
 
-      <div className="mb-4 md:mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="text-base md:text-lg font-medium text-white">Live Price Chart</h4>
-          <div className="text-xs text-gray-400">
-            Powered by TradingView
-          </div>
-        </div>
-                 <div className="bg-gray-700/50 rounded-lg overflow-hidden" style={{ height: isMobile ? '400px' : '700px' }}>
-           <TradingViewChart symbol={token.symbol} isMobile={isMobile} />
-         </div>
-      </div>
+      {/* Chart section removed per request */}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-4 md:mb-6">
         <div className="bg-gray-700/50 p-3 md:p-4 rounded-lg">
@@ -244,13 +234,17 @@ const TokenDetails = ({
     <tr className="bg-gray-800/90 backdrop-blur-sm border-t border-b border-gray-700/50">
       <td colSpan="7" className="p-0">
         <TokenDetailsContent />
+        <div className="flex items-center justify-end px-4 pb-4">
+          <a
+            href="/aquaswap"
+            className="inline-flex items-center px-3 py-1.5 md:px-4 md:py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs md:text-sm"
+          >
+            Buy / Trade on AquaSwap
+          </a>
+        </div>
       </td>
     </tr>
   );
 };
 
-export default React.memo(TokenDetails, (prev, next) => {
-  const prevSym = prev.token?.symbol;
-  const nextSym = next.token?.symbol;
-  return prevSym === nextSym && prev.isMobile === next.isMobile;
-});
+export default TokenDetails; 
