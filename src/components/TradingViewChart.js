@@ -1,43 +1,49 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 
-const TradingViewChart = ({ symbol, isMobile = false }) => {
+const TradingViewChart = React.memo(({ symbol, isMobile = false }) => {
   const containerRef = useRef(null);
+  const widgetRef = useRef(null);
+
+  // Memoize the widget configuration to prevent unnecessary re-renders
+  const widgetConfig = useMemo(() => ({
+    autosize: true,
+    symbol: `BINANCE:${symbol}USDT`,
+    interval: 'D',
+    timezone: 'Etc/UTC',
+    theme: 'dark',
+    style: '1',
+    locale: 'en',
+    toolbar_bg: '#f1f3f6',
+    enable_publishing: false,
+    allow_symbol_change: false,
+    width: '100%',
+    height: isMobile ? '400px' : '700px',
+    hide_top_toolbar: false,
+    hide_legend: false,
+    save_image: false,
+    backgroundColor: 'rgba(19, 23, 34, 0.5)',
+    gridColor: 'rgba(255, 255, 255, 0.1)',
+    watermark: {
+      color: 'rgba(255, 255, 255, 0.1)',
+      visible: true,
+      text: 'Aquads',
+      fontSize: 12,
+      fontFamily: 'Arial'
+    }
+  }), [symbol, isMobile]);
 
   useEffect(() => {
-    // Only create chart once on mount - no reloading since TradingView is live
-    if (containerRef.current && !containerRef.current.hasChildNodes()) {
+    // Only create chart if it doesn't exist and container is available
+    if (containerRef.current && !widgetRef.current) {
       // Create TradingView widget
       const script = document.createElement('script');
       script.src = 'https://s3.tradingview.com/tv.js';
       script.async = true;
       script.onload = () => {
-        if (window.TradingView && containerRef.current) {
-          new window.TradingView.widget({
-            autosize: true,
-            symbol: `BINANCE:${symbol}USDT`,
-            interval: 'D',
-            timezone: 'Etc/UTC',
-            theme: 'dark',
-            style: '1',
-            locale: 'en',
-            toolbar_bg: '#f1f3f6',
-            enable_publishing: false,
-            allow_symbol_change: false,
-            container_id: containerRef.current.id,
-            width: '100%',
-            height: isMobile ? '400px' : '700px',
-            hide_top_toolbar: false,
-            hide_legend: false,
-            save_image: false,
-            backgroundColor: 'rgba(19, 23, 34, 0.5)',
-            gridColor: 'rgba(255, 255, 255, 0.1)',
-            watermark: {
-              color: 'rgba(255, 255, 255, 0.1)',
-              visible: true,
-              text: 'Aquads',
-              fontSize: 12,
-              fontFamily: 'Arial'
-            }
+        if (window.TradingView && containerRef.current && !widgetRef.current) {
+          widgetRef.current = new window.TradingView.widget({
+            ...widgetConfig,
+            container_id: containerRef.current.id
           });
         }
       };
@@ -46,24 +52,24 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
     }
 
     return () => {
-      // Only cleanup on unmount, not on symbol changes
-      if (containerRef.current && containerRef.current.parentNode) {
-        // Cleanup will happen naturally when component unmounts
+      // Only cleanup on unmount
+      if (widgetRef.current) {
+        widgetRef.current = null;
       }
     };
-  }, []); // Empty dependency array - only run once
+  }, [widgetConfig]); // Only depend on the memoized config
 
   return (
     <div 
       ref={containerRef}
       id={`tradingview-chart-${symbol}`}
       className="w-full h-full"
-             style={{ 
-         height: isMobile ? '400px' : '700px',
-         minHeight: isMobile ? '400px' : '600px'
-       }}
+      style={{ 
+        height: isMobile ? '400px' : '700px',
+        minHeight: isMobile ? '400px' : '600px'
+      }}
     />
   );
-};
+});
 
 export default TradingViewChart;
