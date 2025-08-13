@@ -153,7 +153,7 @@ const TokenList = ({ currentUser, showNotification }) => {
   useEffect(() => {
     fetchInitialTokens();
     const refreshInterval = setInterval(() => {
-      if (!document.hidden) {
+      if (!document.hidden && !showDetails) {
         fetchInitialTokens(true);
       }
     }, 60000);
@@ -161,7 +161,7 @@ const TokenList = ({ currentUser, showNotification }) => {
     return () => {
       clearInterval(refreshInterval);
     };
-  }, []);
+  }, [showDetails]);
 
   // DEX integration
   const handleDexClick = (dex) => {
@@ -568,4 +568,4 @@ const TokenList = ({ currentUser, showNotification }) => {
   );
 };
 
-export default TokenList; 
+export default React.memo(TokenList); 

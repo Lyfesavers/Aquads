@@ -1518,7 +1518,7 @@ function App() {
     };
   }, []);
 
-  // Add this effect to periodically refresh ads
+  // Initial ads fetch - WebSocket handles real-time updates
   useEffect(() => {
     const fetchAds = async () => {
       try {
@@ -1562,9 +1562,7 @@ function App() {
       }
     };
 
-    fetchAds();
-    const interval = setInterval(fetchAds, 30000); // Refresh every 30 seconds
-    return () => clearInterval(interval);
+    fetchAds(); // Only fetch once on mount - WebSocket handles updates
   }, [currentUser]);
 
   // Then add a special hook to handle route changes inside the App component
