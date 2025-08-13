@@ -42,6 +42,19 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
         }
         if (cancelled || !containerRef.current || !window.TradingView) return;
 
+        // Only allow one widget per viewport variant (desktop vs mobile)
+        const isDesktopViewport = window.matchMedia('(min-width: 768px)').matches;
+        const shouldMountForViewport = (!isMobile && isDesktopViewport) || (isMobile && !isDesktopViewport);
+
+        // If this instance doesn't match current viewport, ensure no widget here
+        if (!shouldMountForViewport) {
+          if (widgetRef.current && typeof widgetRef.current.remove === 'function') {
+            try { widgetRef.current.remove(); } catch (_) {}
+            widgetRef.current = null;
+          }
+          return;
+        }
+
         // Remove any previous widget instance
         if (widgetRef.current && typeof widgetRef.current.remove === 'function') {
           try { widgetRef.current.remove(); } catch (e) { /* ignore */ }
