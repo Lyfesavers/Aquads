@@ -72,6 +72,10 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   const fetchInitialTokens = async (isBackgroundUpdate = false) => {
     try {
+      // If we're doing a background refresh while details are open, skip to avoid UI flicker
+      if (isBackgroundUpdate && showDetails) {
+        return;
+      }
       if (!isBackgroundUpdate) {
         setIsLoading(true);
       }
@@ -156,9 +160,6 @@ const TokenList = ({ currentUser, showNotification }) => {
 
     return () => {
       clearInterval(refreshInterval);
-      if (chartInstance) {
-        chartInstance.destroy();
-      }
     };
   }, []);
 
