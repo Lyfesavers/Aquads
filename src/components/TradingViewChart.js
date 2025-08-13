@@ -1,14 +1,14 @@
 import React, { useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
 
 // Load TradingView script once per session
 let tvScriptLoadingPromise;
+let TV_CONTAINER_EL = null;
+let TV_CONTAINER_ID = null;
 const TV_SCRIPT_SRC = 'https://s3.tradingview.com/tv.js';
 
 const TradingViewChart = ({ symbol, isMobile = false }) => {
-  const containerRef = useRef(null);
+  const anchorRef = useRef(null);
   const widgetRef = useRef(null);
-  const widgetIdRef = useRef(`tradingview-chart-${Math.random().toString(36).slice(2)}`);
 
   useEffect(() => {
     if (!tvScriptLoadingPromise) {
@@ -33,6 +33,21 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
     }
   }, []);
 
+  // Ensure a single global container exists and is anchored visually
+  useEffect(() => {
+    if (!TV_CONTAINER_EL) {
+      TV_CONTAINER_EL = document.createElement('div');
+      TV_CONTAINER_ID = `tradingview-chart-${Math.random().toString(36).slice(2)}`;
+      TV_CONTAINER_EL.id = TV_CONTAINER_ID;
+      TV_CONTAINER_EL.style.width = '100%';
+      TV_CONTAINER_EL.style.height = isMobile ? '400px' : '700px';
+    }
+    if (anchorRef.current && TV_CONTAINER_EL.parentNode !== anchorRef.current) {
+      anchorRef.current.innerHTML = '';
+      anchorRef.current.appendChild(TV_CONTAINER_EL);
+    }
+  }, [isMobile]);
+
   // Create the widget once (never recreate on prop changes)
   useEffect(() => {
     let cancelled = false;
@@ -41,7 +56,7 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
         if (tvScriptLoadingPromise) {
           await tvScriptLoadingPromise;
         }
-        if (cancelled || !containerRef.current || !window.TradingView) return;
+        if (cancelled || !TV_CONTAINER_EL || !window.TradingView) return;
 
         // Reuse a single global widget if it exists
         if (window.__TV_WIDGET_SINGLETON) {
@@ -58,7 +73,7 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
           locale: 'en',
           enable_publishing: false,
           allow_symbol_change: false,
-          container_id: widgetIdRef.current,
+          container_id: TV_CONTAINER_ID,
           width: '100%',
           height: isMobile ? 400 : 700,
           hide_top_toolbar: false,
@@ -79,6 +94,12 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
 
   // On symbol change, update the existing widget without remount
   useEffect(() => {
+    // Ensure container stays anchored
+    if (anchorRef.current && TV_CONTAINER_EL && TV_CONTAINER_EL.parentNode !== anchorRef.current) {
+      anchorRef.current.innerHTML = '';
+      anchorRef.current.appendChild(TV_CONTAINER_EL);
+    }
+
     const widget = window.__TV_WIDGET_SINGLETON || widgetRef.current;
     if (!widget || !symbol) return;
     try {
@@ -97,10 +118,9 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
     }
   }, [symbol]);
 
-  const container = (
+  return (
     <div
-      ref={containerRef}
-      id={widgetIdRef.current}
+      ref={anchorRef}
       className="w-full h-full"
       style={{
         height: isMobile ? '400px' : '700px',
@@ -108,9 +128,6 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
       }}
     />
   );
-
-  const portalRoot = typeof document !== 'undefined' ? document.getElementById('tv-root') : null;
-  return portalRoot ? createPortal(container, portalRoot) : container;
 };
 
 export default TradingViewChart;
