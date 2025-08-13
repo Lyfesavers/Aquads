@@ -567,4 +567,4 @@ const TokenList = ({ currentUser, showNotification }) => {
   );
 };
 
-export default TokenList; 
+export default React.memo(TokenList);

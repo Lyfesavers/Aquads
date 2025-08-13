@@ -1518,54 +1518,8 @@ function App() {
     };
   }, []);
 
-  // Add this effect to periodically refresh ads
-  useEffect(() => {
-    const fetchAds = async () => {
-      try {
-        const response = await fetch(`${API_URL}/ads`);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        // Ensure ads have bullishVotes and bearishVotes properties if not present
-        const processedAds = data.map(ad => ({
-          ...ad,
-          bullishVotes: ad.bullishVotes || 0,
-          bearishVotes: ad.bearishVotes || 0
-        }));
-        
-        // Filter out pending and rejected ads - only show active ads in the bubbles
-        const filteredAds = currentUser?.isAdmin 
-          ? processedAds 
-          : processedAds.filter(ad => ad.status !== 'pending' && ad.status !== 'rejected');
-        
-        // Cache the ads (store all ads but only display filtered ones)
-        localStorage.setItem('cachedAds', JSON.stringify(processedAds));
-        
-        // Update state with filtered ads
-        setAds(filteredAds);
-      } catch (error) {
-        logger.error('Error fetching ads:', error);
-        // Use cached ads if available and the API call fails
-        const cachedAds = localStorage.getItem('cachedAds');
-        if (cachedAds) {
-          const parsedAds = JSON.parse(cachedAds);
-          // Apply same filtering to cached ads
-          const filteredAds = currentUser?.isAdmin 
-            ? parsedAds 
-            : parsedAds.filter(ad => ad.status !== 'pending' && ad.status !== 'rejected');
-          setAds(filteredAds);
-        }
-      }
-    };
-
-    fetchAds();
-    const interval = setInterval(fetchAds, 30000); // Refresh every 30 seconds
-    return () => clearInterval(interval);
-  }, [currentUser]);
+  // Removed periodic ads refresh to prevent app-wide re-renders affecting unrelated components
+  // Ads are loaded on mount and updated via sockets elsewhere in this file
 
   // Then add a special hook to handle route changes inside the App component
   useEffect(() => {
