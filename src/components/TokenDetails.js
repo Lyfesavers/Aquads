@@ -13,7 +13,8 @@ const TokenDetails = ({
   selectedDex,
   onDexClick,
   setShowDexFrame,
-  isMobile = false
+  isMobile = false,
+  hideChart = false
 }) => {
 
 
@@ -82,17 +83,19 @@ const TokenDetails = ({
         />
       </div>
 
-      <div className="mb-4 md:mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="text-base md:text-lg font-medium text-white">Live Price Chart</h4>
-          <div className="text-xs text-gray-400">
-            Powered by TradingView
+      {!hideChart && (
+        <div className="mb-4 md:mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-base md:text-lg font-medium text-white">Live Price Chart</h4>
+            <div className="text-xs text-gray-400">
+              Powered by TradingView
+            </div>
+          </div>
+          <div className="bg-gray-700/50 rounded-lg overflow-hidden" style={{ height: isMobile ? '400px' : '700px' }}>
+            <TradingViewChart symbol={token.symbol} isMobile={isMobile} />
           </div>
         </div>
-                 <div className="bg-gray-700/50 rounded-lg overflow-hidden" style={{ height: isMobile ? '400px' : '700px' }}>
-           <TradingViewChart symbol={token.symbol} isMobile={isMobile} />
-         </div>
-      </div>
+      )}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-4 md:mb-6">
         <div className="bg-gray-700/50 p-3 md:p-4 rounded-lg">
@@ -249,4 +252,4 @@ const TokenDetails = ({
   );
 };
 
-export default React.memo(TokenDetails); 
+export default TokenDetails; 

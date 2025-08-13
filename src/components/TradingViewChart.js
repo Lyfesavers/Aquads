@@ -48,7 +48,7 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
           widgetRef.current = null;
         }
 
-        widgetRef.current = new window.TradingView.widget({
+        const config = {
           symbol: `BINANCE:${symbol}USDT`,
           interval: 'D',
           timezone: 'Etc/UTC',
@@ -62,8 +62,13 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
           height: isMobile ? 400 : 700,
           hide_top_toolbar: false,
           hide_legend: false
-        });
-        try { console.log('[TV] widget created', { symbol, isMobile, id: widgetIdRef.current, ts: Date.now() }); } catch (_) {}
+        };
+        setTimeout(() => {
+          if (!cancelled && containerRef.current && window.TradingView) {
+            widgetRef.current = new window.TradingView.widget(config);
+            try { console.log('[TV] widget created', { symbol, isMobile, id: widgetIdRef.current, ts: Date.now() }); } catch (_) {}
+          }
+        }, 0);
       } catch (e) {
         // no-op; avoid crashing UI if script fails
       }
@@ -74,21 +79,21 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
       cancelled = true;
       if (widgetRef.current && typeof widgetRef.current.remove === 'function') {
         try { widgetRef.current.remove(); } catch (e) { /* ignore */ }
-        try { console.log('[TV] widget removed', { symbol, isMobile, id: widgetIdRef.current, ts: Date.now() }); } catch (_) {}
         widgetRef.current = null;
       }
     };
   }, [symbol, isMobile]);
 
   return (
-    <div
+    <div 
       ref={containerRef}
       id={widgetIdRef.current}
       className="w-full h-full"
-      style={{
+      style={{ 
         height: isMobile ? '400px' : '700px',
         minHeight: isMobile ? '400px' : '600px'
       }}
+      data-tv-sticky
     />
   );
 };
