@@ -41,9 +41,15 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
         if (tvScriptLoadingPromise) {
           await tvScriptLoadingPromise;
         }
-        if (cancelled || !containerRef.current || !window.TradingView || widgetRef.current) return;
+        if (cancelled || !containerRef.current || !window.TradingView) return;
 
-        widgetRef.current = new window.TradingView.widget({
+        // Reuse a single global widget if it exists
+        if (window.__TV_WIDGET_SINGLETON) {
+          widgetRef.current = window.__TV_WIDGET_SINGLETON;
+          return;
+        }
+
+        const widget = new window.TradingView.widget({
           symbol: `BINANCE:${symbol}USDT`,
           interval: 'D',
           timezone: 'Etc/UTC',
@@ -58,6 +64,8 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
           hide_top_toolbar: false,
           hide_legend: false
         });
+        widgetRef.current = widget;
+        window.__TV_WIDGET_SINGLETON = widget;
       } catch (e) {
         // no-op
       }
@@ -65,22 +73,20 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
     createWidget();
     return () => {
       cancelled = true;
-      if (widgetRef.current && typeof widgetRef.current.remove === 'function') {
-        try { widgetRef.current.remove(); } catch (e) { /* ignore */ }
-        widgetRef.current = null;
-      }
+      // Do not remove the singleton on unmount; keep it alive
     };
   }, []);
 
   // On symbol change, update the existing widget without remount
   useEffect(() => {
-    if (!widgetRef.current || !symbol) return;
+    const widget = window.__TV_WIDGET_SINGLETON || widgetRef.current;
+    if (!widget || !symbol) return;
     try {
       const target = `BINANCE:${symbol}USDT`;
-      if (typeof widgetRef.current.onChartReady === 'function') {
-        widgetRef.current.onChartReady(() => {
-          const chart = (widgetRef.current.activeChart && widgetRef.current.activeChart()) ||
-                        (widgetRef.current.chart && widgetRef.current.chart());
+      if (typeof widget.onChartReady === 'function') {
+        widget.onChartReady(() => {
+          const chart = (widget.activeChart && widget.activeChart()) ||
+                        (widget.chart && widget.chart());
           if (chart && typeof chart.setSymbol === 'function') {
             chart.setSymbol(target, 'D');
           }
