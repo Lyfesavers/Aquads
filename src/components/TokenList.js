@@ -57,6 +57,7 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState('tokens');
   const [isTableExpanded, setIsTableExpanded] = useState(false);
+  const [isChartLoading, setIsChartLoading] = useState(false);
 
   // Sorting functionality
   const handleSort = (key) => {
@@ -194,18 +195,16 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   const handleTokenClick = async (token) => {
     try {
-      if (chartInstance) {
-        chartInstance.destroy();
-        setChartInstance(null);
-      }
-
       setSelectedToken(token);
       setShowDetails(true);
+      setIsChartLoading(true);
 
       await fetchChartData(token.id, selectedTimeRange);
     } catch (error) {
       logger.error('Error handling token click:', error);
       showNotification('Failed to load token details', 'error');
+    } finally {
+      setIsChartLoading(false);
     }
   };
 
@@ -217,6 +216,8 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   const fetchChartData = async (tokenId, days) => {
     try {
+      setIsChartLoading(true);
+      
       // Use our backend API with CryptoCompare data
       const response = await fetch(
         `/api/tokens/${tokenId}/chart/${days}`,
@@ -241,32 +242,53 @@ const TokenList = ({ currentUser, showNotification }) => {
       
       if (chartRef.current) {
         const ctx = chartRef.current.getContext('2d');
-      if (chartInstance) {
-        chartInstance.destroy();
-      }
+        
+        // Only destroy if we have an existing chart instance
+        if (chartInstance) {
+          chartInstance.destroy();
+        }
+        
+        // Create new chart with optimized options to prevent flicker
         const newChart = new Chart(ctx, {
-        type: 'line',
-        data: {
+          type: 'line',
+          data: {
             labels: data.prices.map(price => new Date(price[0]).toLocaleDateString()),
-          datasets: [{
+            datasets: [{
               label: 'Price (USD)',
               data: data.prices.map(price => price[1]),
-            borderColor: 'rgb(75, 192, 192)',
-            tension: 0.1
-          }]
-        },
-        options: {
-          responsive: true,
-            maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'top' },
-            title: { display: true, text: 'Price History' }
+              borderColor: 'rgb(75, 192, 192)',
+              backgroundColor: 'rgba(75, 192, 192, 0.1)',
+              tension: 0.1,
+              pointRadius: 0, // Hide points to reduce flicker
+              pointHoverRadius: 4
+            }]
           },
-          scales: {
-            y: { beginAtZero: false }
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+              duration: 300 // Faster animation to reduce perceived flicker
+            },
+            plugins: {
+              legend: { position: 'top' },
+              title: { display: true, text: 'Price History' }
+            },
+            scales: {
+              y: { 
+                beginAtZero: false,
+                grid: {
+                  color: 'rgba(255, 255, 255, 0.1)'
+                }
+              },
+              x: {
+                grid: {
+                  color: 'rgba(255, 255, 255, 0.1)'
+                }
+              }
+            }
           }
-        }
-      });
+        });
+        
         setChartInstance(newChart);
       }
     } catch (error) {
@@ -276,6 +298,8 @@ const TokenList = ({ currentUser, showNotification }) => {
       } else {
         showNotification('Chart data temporarily unavailable', 'warning');
       }
+    } finally {
+      setIsChartLoading(false);
     }
   };
 
@@ -501,22 +525,23 @@ const TokenList = ({ currentUser, showNotification }) => {
                             </td>
                           </tr>
                           {selectedToken && showDetails && selectedToken.id === token.id && (
-                            <TokenDetails
-                              token={selectedToken}
-                              showReviews={showReviews}
-                              onClose={() => setShowDetails(false)}
-                              currentUser={currentUser}
-                              showNotification={showNotification}
-                              chartRef={chartRef}
-                              chartData={chartData}
-                              selectedTimeRange={selectedTimeRange}
-                              onTimeRangeChange={handleTimeRangeChange}
-                              showDexFrame={showDexFrame}
-                              selectedDex={selectedDex}
-                              onDexClick={handleDexClick}
-                              setShowDexFrame={setShowDexFrame}
-                              isMobile={false}
-                            />
+                                                    <TokenDetails
+                          token={selectedToken}
+                          showReviews={showReviews}
+                          onClose={() => setShowDetails(false)}
+                          currentUser={currentUser}
+                          showNotification={showNotification}
+                          chartRef={chartRef}
+                          chartData={chartData}
+                          selectedTimeRange={selectedTimeRange}
+                          onTimeRangeChange={handleTimeRangeChange}
+                          showDexFrame={showDexFrame}
+                          selectedDex={selectedDex}
+                          onDexClick={handleDexClick}
+                          setShowDexFrame={setShowDexFrame}
+                          isMobile={false}
+                          isChartLoading={isChartLoading}
+                        />
                           )}
                         </React.Fragment>
                       ))}
@@ -614,6 +639,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                           onDexClick={handleDexClick}
                           setShowDexFrame={setShowDexFrame}
                           isMobile={true}
+                          isChartLoading={isChartLoading}
                         />
                       )}
                     </React.Fragment>

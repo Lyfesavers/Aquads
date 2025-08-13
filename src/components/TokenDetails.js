@@ -16,7 +16,8 @@ const TokenDetails = ({
   selectedDex,
   onDexClick,
   setShowDexFrame,
-  isMobile = false
+  isMobile = false,
+  isChartLoading = false
 }) => {
   const timeRanges = [
     { label: '24h', value: '1' },
@@ -113,9 +114,10 @@ const TokenDetails = ({
         </div>
         <div className="bg-gray-700/50 rounded-lg overflow-hidden relative" style={{ height: isMobile ? '250px' : '400px' }}>
           <canvas ref={chartRef} style={{ width: '100%', height: '100%' }}></canvas>
-          {!chartData && (
-            <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+          {(isChartLoading || !chartData) && (
+            <div className="absolute inset-0 flex items-center justify-center text-gray-400 bg-gray-700/80 backdrop-blur-sm">
               <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
                 <div className="text-sm">Loading chart data...</div>
               </div>
             </div>
