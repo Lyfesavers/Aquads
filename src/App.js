@@ -785,6 +785,11 @@ function App() {
   // Clean up expired ads and shrink unbumped ads
   useEffect(() => {
     const shrinkInterval = setInterval(async () => {
+      // Skip ad shrinking if token details are open to prevent flicker
+      if (window.location.pathname === '/' && window.tokenDetailsOpen) {
+        return;
+      }
+      
       const updatedAds = await Promise.all(ads.map(async (ad) => {
         if (!ad.isBumped && ad.size > MIN_SIZE) {
           const newSize = Math.max(MIN_SIZE, ad.size - SHRINK_RATE);

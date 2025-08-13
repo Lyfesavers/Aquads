@@ -183,12 +183,20 @@ const TokenList = ({ currentUser, showNotification }) => {
     setSelectedToken(null);
   };
 
+  const handleCloseDetails = () => {
+    setShowDetails(false);
+    // Reset global flag to allow ad shrinking when token details are closed
+    window.tokenDetailsOpen = false;
+  };
+
 
 
   const handleTokenClick = async (token) => {
     try {
       setSelectedToken(token);
       setShowDetails(true);
+      // Set global flag to prevent ad shrinking when token details are open
+      window.tokenDetailsOpen = true;
     } catch (error) {
       logger.error('Error handling token click:', error);
       showNotification('Failed to load token details', 'error');
@@ -428,7 +436,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                                                     <TokenDetails
                           token={selectedToken}
                           showReviews={showReviews}
-                          onClose={() => setShowDetails(false)}
+                          onClose={handleCloseDetails}
                           currentUser={currentUser}
                           showNotification={showNotification}
                           showDexFrame={showDexFrame}
@@ -522,7 +530,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                         <TokenDetails
                           token={selectedToken}
                           showReviews={showReviews}
-                          onClose={() => setShowDetails(false)}
+                          onClose={handleCloseDetails}
                           currentUser={currentUser}
                           showNotification={showNotification}
                           showDexFrame={showDexFrame}
