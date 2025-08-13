@@ -63,10 +63,10 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
       ref={containerRef}
       id={`tradingview-chart-${symbol}`}
       className="w-full h-full"
-      style={{ 
-        height: isMobile ? '250px' : '400px',
-        minHeight: isMobile ? '250px' : '400px'
-      }}
+             style={{ 
+         height: isMobile ? '350px' : '600px',
+         minHeight: isMobile ? '350px' : '600px'
+       }}
     />
   );
 };
