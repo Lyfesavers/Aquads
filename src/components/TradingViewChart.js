@@ -49,31 +49,19 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
         }
 
         widgetRef.current = new window.TradingView.widget({
-          autosize: true,
           symbol: `BINANCE:${symbol}USDT`,
           interval: 'D',
           timezone: 'Etc/UTC',
           theme: 'dark',
           style: '1',
           locale: 'en',
-          toolbar_bg: '#f1f3f6',
           enable_publishing: false,
           allow_symbol_change: false,
           container_id: widgetIdRef.current,
           width: '100%',
-          height: isMobile ? '400px' : '700px',
+          height: isMobile ? 400 : 700,
           hide_top_toolbar: false,
-          hide_legend: false,
-          save_image: false,
-          backgroundColor: 'rgba(19, 23, 34, 0.5)',
-          gridColor: 'rgba(255, 255, 255, 0.1)',
-          watermark: {
-            color: 'rgba(255, 255, 255, 0.1)',
-            visible: true,
-            text: 'Aquads',
-            fontSize: 12,
-            fontFamily: 'Arial'
-          }
+          hide_legend: false
         });
         try { console.log('[TV] widget created', { symbol, isMobile, id: widgetIdRef.current, ts: Date.now() }); } catch (_) {}
       } catch (e) {

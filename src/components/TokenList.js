@@ -52,6 +52,10 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState('tokens');
   const [isTableExpanded, setIsTableExpanded] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return window.matchMedia('(min-width: 768px)').matches;
+  });
 
 
 
@@ -149,6 +153,24 @@ const TokenList = ({ currentUser, showNotification }) => {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 768px)');
+    const handleChange = (e) => setIsDesktop(e.matches);
+    try {
+      media.addEventListener('change', handleChange);
+    } catch (_) {
+      // Safari fallback
+      media.addListener(handleChange);
+    }
+    return () => {
+      try {
+        media.removeEventListener('change', handleChange);
+      } catch (_) {
+        media.removeListener(handleChange);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     fetchInitialTokens();
@@ -330,7 +352,8 @@ const TokenList = ({ currentUser, showNotification }) => {
             {/* Collapsible Token list table */}
             {isTableExpanded && filteredTokens.length > 0 ? (
               <>
-                {/* Desktop/Tablet Table View (hidden on mobile) */}
+                {isDesktop ? (
+                // Desktop/Tablet Table View (not mounted on mobile)
                 <div className="w-full hidden md:block">
                   <table className="w-full table-fixed">
                     <thead>
@@ -426,6 +449,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                           </tr>
                           {selectedToken && showDetails && selectedToken.id === token.id && (
                                                     <TokenDetails
+                          key={`details-${selectedToken.id}`}
                           token={selectedToken}
                           showReviews={showReviews}
                           onClose={() => setShowDetails(false)}
@@ -443,8 +467,8 @@ const TokenList = ({ currentUser, showNotification }) => {
                     </tbody>
                   </table>
                 </div>
-
-                {/* Mobile Card View (visible only on mobile) */}
+                ) : (
+                // Mobile Card View (not mounted on desktop)
                 <div className="w-full md:hidden space-y-3 p-4">
                   {filteredTokens.map((token, index) => (
                     <React.Fragment key={token.id}>
@@ -520,6 +544,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                       </div>
                       {selectedToken && showDetails && selectedToken.id === token.id && (
                         <TokenDetails
+                          key={`details-${selectedToken.id}`}
                           token={selectedToken}
                           showReviews={showReviews}
                           onClose={() => setShowDetails(false)}
@@ -535,6 +560,7 @@ const TokenList = ({ currentUser, showNotification }) => {
                     </React.Fragment>
                   ))}
                 </div>
+                )}
               </>
             ) : isTableExpanded && filteredTokens.length === 0 ? (
               <div className="text-center text-gray-400 py-8">
