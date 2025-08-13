@@ -71,4 +71,4 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
   );
 };
 
-export default React.memo(TradingViewChart);
+export default TradingViewChart;

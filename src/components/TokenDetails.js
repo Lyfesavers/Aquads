@@ -249,4 +249,4 @@ const TokenDetails = ({
   );
 };
 
-export default React.memo(TokenDetails);
+export default TokenDetails; 
