@@ -32,77 +32,73 @@ const TradingViewChart = ({ symbol, isMobile = false }) => {
     }
   }, []);
 
-  // Create the widget once
   useEffect(() => {
     let cancelled = false;
+
     const createWidget = async () => {
       try {
         if (tvScriptLoadingPromise) {
           await tvScriptLoadingPromise;
         }
-        if (cancelled || !containerRef.current || !window.TradingView || widgetRef.current) return;
+        if (cancelled || !containerRef.current || !window.TradingView) return;
 
-        const config = {
+        // Remove any previous widget instance
+        if (widgetRef.current && typeof widgetRef.current.remove === 'function') {
+          try { widgetRef.current.remove(); } catch (e) { /* ignore */ }
+          widgetRef.current = null;
+        }
+
+        widgetRef.current = new window.TradingView.widget({
+          autosize: true,
           symbol: `BINANCE:${symbol}USDT`,
           interval: 'D',
           timezone: 'Etc/UTC',
           theme: 'dark',
           style: '1',
           locale: 'en',
+          toolbar_bg: '#f1f3f6',
           enable_publishing: false,
           allow_symbol_change: false,
           container_id: widgetIdRef.current,
           width: '100%',
-          height: isMobile ? 400 : 700,
+          height: isMobile ? '400px' : '700px',
           hide_top_toolbar: false,
-          hide_legend: false
-        };
-        setTimeout(() => {
-          if (!cancelled && containerRef.current && window.TradingView && !widgetRef.current) {
-            widgetRef.current = new window.TradingView.widget(config);
-            try { console.log('[TV] widget created', { symbol, isMobile, id: widgetIdRef.current, ts: Date.now() }); } catch (_) {}
+          hide_legend: false,
+          save_image: false,
+          backgroundColor: 'rgba(19, 23, 34, 0.5)',
+          gridColor: 'rgba(255, 255, 255, 0.1)',
+          watermark: {
+            color: 'rgba(255, 255, 255, 0.1)',
+            visible: true,
+            text: 'Aquads',
+            fontSize: 12,
+            fontFamily: 'Arial'
           }
-        }, 0);
+        });
       } catch (e) {
-        // no-op
+        // no-op; avoid crashing UI if script fails
       }
     };
+
     createWidget();
     return () => {
       cancelled = true;
       if (widgetRef.current && typeof widgetRef.current.remove === 'function') {
-        try { widgetRef.current.remove(); } catch (e) {}
+        try { widgetRef.current.remove(); } catch (e) { /* ignore */ }
         widgetRef.current = null;
       }
     };
-  }, []);
-
-  // On symbol change, update the existing widget's symbol without recreating
-  useEffect(() => {
-    if (!widgetRef.current || !symbol) return;
-    try {
-      const target = `BINANCE:${symbol}USDT`;
-      if (typeof widgetRef.current.onChartReady === 'function') {
-        widgetRef.current.onChartReady(() => {
-          const chart = widgetRef.current.activeChart?.() || widgetRef.current.chart?.();
-          if (chart && typeof chart.setSymbol === 'function') {
-            chart.setSymbol(target, 'D');
-          }
-        });
-      }
-    } catch (_) {}
-  }, [symbol]);
+  }, [symbol, isMobile]);
 
   return (
-    <div 
+    <div
       ref={containerRef}
       id={widgetIdRef.current}
       className="w-full h-full"
-      style={{ 
+      style={{
         height: isMobile ? '400px' : '700px',
         minHeight: isMobile ? '400px' : '600px'
       }}
-      data-tv-sticky
     />
   );
 };
