@@ -59,6 +59,15 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [isTableExpanded, setIsTableExpanded] = useState(false);
   const [isChartLoading, setIsChartLoading] = useState(false);
 
+  // Cleanup chart on unmount
+  useEffect(() => {
+    return () => {
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+    };
+  }, [chartInstance]);
+
   // Sorting functionality
   const handleSort = (key) => {
     const direction = sortConfig.key === key && sortConfig.direction === 'desc' ? 'asc' : 'desc';
@@ -189,7 +198,10 @@ const TokenList = ({ currentUser, showNotification }) => {
   const handleTimeRangeChange = async (range) => {
     setSelectedTimeRange(range);
     if (selectedToken) {
-      await fetchChartData(selectedToken.id, range);
+      // Small delay to make the transition feel more natural
+      setTimeout(async () => {
+        await fetchChartData(selectedToken.id, range);
+      }, 100);
     }
   };
 
@@ -240,56 +252,68 @@ const TokenList = ({ currentUser, showNotification }) => {
       const data = await response.json();
       setChartData(data);
       
+      // Check if we have valid chart data
+      if (!data || !data.prices || data.prices.length === 0) {
+        console.warn('No valid chart data received');
+        return;
+      }
+      
       if (chartRef.current) {
         const ctx = chartRef.current.getContext('2d');
         
-        // Only destroy if we have an existing chart instance
-        if (chartInstance) {
-          chartInstance.destroy();
-        }
-        
-        // Create new chart with optimized options to prevent flicker
-        const newChart = new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: data.prices.map(price => new Date(price[0]).toLocaleDateString()),
-            datasets: [{
-              label: 'Price (USD)',
-              data: data.prices.map(price => price[1]),
-              borderColor: 'rgb(75, 192, 192)',
-              backgroundColor: 'rgba(75, 192, 192, 0.1)',
-              tension: 0.1,
-              pointRadius: 0, // Hide points to reduce flicker
-              pointHoverRadius: 4
-            }]
+        // Prepare new chart data
+        const newChartData = {
+          labels: data.prices.map(price => new Date(price[0]).toLocaleDateString()),
+          datasets: [{
+            label: 'Price (USD)',
+            data: data.prices.map(price => price[1]),
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+            tension: 0.1,
+            pointRadius: 0,
+            pointHoverRadius: 4
+          }]
+        };
+
+        const chartOptions = {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: {
+            duration: 500,
+            easing: 'easeInOutQuart'
           },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: {
-              duration: 300 // Faster animation to reduce perceived flicker
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: 'Price History' }
+          },
+          scales: {
+            y: { 
+              beginAtZero: false,
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              }
             },
-            plugins: {
-              legend: { position: 'top' },
-              title: { display: true, text: 'Price History' }
-            },
-            scales: {
-              y: { 
-                beginAtZero: false,
-                grid: {
-                  color: 'rgba(255, 255, 255, 0.1)'
-                }
-              },
-              x: {
-                grid: {
-                  color: 'rgba(255, 255, 255, 0.1)'
-                }
+            x: {
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
               }
             }
           }
-        });
-        
-        setChartInstance(newChart);
+        };
+
+        // If chart exists, update it smoothly instead of destroying
+        if (chartInstance) {
+          chartInstance.data = newChartData;
+          chartInstance.update('active'); // Smooth update animation
+        } else {
+          // Only create new chart if one doesn't exist
+          const newChart = new Chart(ctx, {
+            type: 'line',
+            data: newChartData,
+            options: chartOptions
+          });
+          setChartInstance(newChart);
+        }
       }
     } catch (error) {
       logger.error('Chart data error:', error);
