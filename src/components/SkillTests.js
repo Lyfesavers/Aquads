@@ -35,7 +35,6 @@ const SkillTests = ({ currentUser }) => {
         setError('Failed to load skill tests. Please try again later.');
       }
     } catch (error) {
-      console.error('Error fetching tests:', error);
       setError('Unable to connect to the server. Please check your internet connection.');
     } finally {
       setLoading(false);
@@ -46,7 +45,6 @@ const SkillTests = ({ currentUser }) => {
     try {
       const token = currentUser.token;
       if (!token) {
-        console.log('No user token available');
         return;
       }
 
@@ -68,21 +66,15 @@ const SkillTests = ({ currentUser }) => {
 
       if (completionsResponse.ok) {
         const completions = await completionsResponse.json();
-        console.log('Fetched completions from database:', completions);
         setUserCompletions(completions);
-      } else {
-        console.error('Failed to fetch completions:', completionsResponse.status);
       }
 
       if (badgesResponse.ok) {
         const badges = await badgesResponse.json();
-        console.log('Fetched badges from database:', badges);
         setUserBadges(badges);
-      } else {
-        console.error('Failed to fetch badges:', badgesResponse.status);
       }
     } catch (error) {
-      console.error('Error fetching user data from database:', error);
+      // Silent error handling
     }
   };
 

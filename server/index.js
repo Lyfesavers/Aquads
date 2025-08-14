@@ -581,14 +581,9 @@ async function initializeSkillTests() {
     const existingTests = await SkillTest.countDocuments();
     
     if (existingTests === 0) {
-      console.log('No skill tests found. Initializing default tests...');
-      
       await SkillTest.insertMany(skillTests);
-      console.log(`✅ Successfully initialized ${skillTests.length} skill tests`);
-    } else {
-      console.log(`✅ Found ${existingTests} existing skill tests`);
     }
   } catch (error) {
-    console.error('Error initializing skill tests:', error);
+    // Silent error handling
   }
 } 

@@ -14,7 +14,6 @@ router.get('/', async (req, res) => {
     
     res.json(tests);
   } catch (error) {
-    console.error('Error fetching skill tests:', error);
     res.status(500).json({ error: 'Failed to fetch skill tests' });
   }
 });
@@ -45,7 +44,6 @@ router.get('/:testId', async (req, res) => {
     
     res.json(testForClient);
   } catch (error) {
-    console.error('Error fetching skill test:', error);
     res.status(500).json({ error: 'Failed to fetch skill test' });
   }
 });
@@ -137,7 +135,6 @@ router.post('/:testId/submit', auth, async (req, res) => {
 
     res.json(results);
   } catch (error) {
-    console.error('Error submitting skill test:', error);
     res.status(500).json({ error: 'Failed to submit test' });
   }
 });
@@ -151,7 +148,6 @@ router.get('/user/completions', auth, async (req, res) => {
     
     res.json(completions);
   } catch (error) {
-    console.error('Error fetching user completions:', error);
     res.status(500).json({ error: 'Failed to fetch completions' });
   }
 });
@@ -162,7 +158,6 @@ router.get('/user/badges', auth, async (req, res) => {
     const user = await User.findById(req.user.userId).select('skillBadges');
     res.json(user.skillBadges || []);
   } catch (error) {
-    console.error('Error fetching user badges:', error);
     res.status(500).json({ error: 'Failed to fetch badges' });
   }
 });
