@@ -25,7 +25,7 @@ router.get('/:game', async (req, res) => {
 
 // POST /api/leaderboard/:game
 // Body: { result, you, ai, grid, difficulty }
-router.post('/:game', async (req, res) => {
+router.post('/:game', auth, async (req, res) => {
   try {
     const { game } = req.params;
     const { result, you, ai, grid, difficulty } = req.body || {};

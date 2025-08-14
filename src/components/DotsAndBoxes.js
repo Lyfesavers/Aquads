@@ -384,7 +384,8 @@ export default function DotsAndBoxes({ currentUser }) {
     (async () => {
       try {
         hasSubmittedRef.current = true;
-        const saved = await submitLeaderboard('dots-and-boxes', entryPayload);
+        const token = (currentUser && currentUser.token) || null;
+        const saved = await submitLeaderboard('dots-and-boxes', entryPayload, token);
         setLeaderboard(prev => [saved, ...prev].slice(0, 50));
       } catch (e) {
         // If server fails, still show a transient entry in UI

@@ -1196,12 +1196,13 @@ export const getLeaderboard = async (game, { limit = 50, difficulty, grid } = {}
   return res.json();
 };
 
-export const submitLeaderboard = async (game, payload) => {
+export const submitLeaderboard = async (game, payload, tokenOverride = null) => {
+  const authHeader = tokenOverride ? { 'Authorization': `Bearer ${tokenOverride}` } : getAuthHeader();
   const res = await fetch(`${API_URL}/leaderboard/${encodeURIComponent(game)}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...getAuthHeader()
+      ...authHeader
     },
     body: JSON.stringify(payload)
   });
