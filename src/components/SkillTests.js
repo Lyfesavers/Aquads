@@ -110,11 +110,11 @@ const SkillTests = ({ currentUser }) => {
   };
 
   const isTestCompleted = (testId) => {
-    return userCompletions.some(completion => completion.testId._id === testId);
+    return userCompletions.some(completion => completion.testId && completion.testId._id === testId);
   };
 
   const getTestStatus = (test) => {
-    const completion = userCompletions.find(c => c.testId._id === test._id);
+    const completion = userCompletions.find(c => c.testId && c.testId._id === test._id);
     if (!completion) return { status: 'not-started', text: 'Not Started' };
     
     if (completion.passed) {
