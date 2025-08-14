@@ -253,6 +253,7 @@ export default function DotsAndBoxes({ currentUser }) {
   const [leaderboard, setLeaderboard] = useState([]);
   const [filterDifficulty, setFilterDifficulty] = useState('All');
   const [filterGrid, setFilterGrid] = useState('All');
+  const [showInstructions, setShowInstructions] = useState(false);
   const [tossing, setTossing] = useState(false);
   const [tossWinner, setTossWinner] = useState(null); // 'You' | 'Computer' | null
   const [powerUps, setPowerUps] = useState({ twoMoves: 0, fourMoves: 0 });
@@ -485,6 +486,12 @@ export default function DotsAndBoxes({ currentUser }) {
             <p className="text-gray-300 mt-1">Play against a strong AI with sleek animations.</p>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowInstructions(true)}
+              className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 transition-all px-4 py-2 rounded text-sm font-medium shadow-lg"
+            >
+              📖 How to Play
+            </button>
             <select
               value={difficulty}
               onChange={(e) => setDifficulty(e.target.value)}
@@ -804,6 +811,131 @@ export default function DotsAndBoxes({ currentUser }) {
           </div>
         </div>
       </div>
+
+      {/* Instructions Modal */}
+      {showInstructions && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl shadow-2xl border border-gray-700 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 text-transparent bg-clip-text">
+                  🎮 How to Play Dots & Boxes
+                </h2>
+                <button
+                  onClick={() => setShowInstructions(false)}
+                  className="text-gray-400 hover:text-white transition-colors text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="space-y-6 text-gray-300">
+                <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                  <h3 className="text-lg font-semibold text-amber-400 mb-3">🎯 Objective</h3>
+                  <p className="leading-relaxed">
+                    Capture more boxes than your opponent by connecting dots with lines. The player with the most boxes at the end wins!
+                  </p>
+                </div>
+
+                <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                  <h3 className="text-lg font-semibold text-emerald-400 mb-3">🎲 Game Rules</h3>
+                  <ul className="space-y-2 leading-relaxed">
+                    <li className="flex items-start">
+                      <span className="text-emerald-400 mr-2">•</span>
+                      <span>Click on any line between two dots to draw it</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-emerald-400 mr-2">•</span>
+                      <span>If you complete a box (all 4 sides), you capture it and get another turn</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-emerald-400 mr-2">•</span>
+                      <span>If you don't complete a box, your turn ends</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-emerald-400 mr-2">•</span>
+                      <span>The game ends when all boxes are captured</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                  <h3 className="text-lg font-semibold text-blue-400 mb-3">⚡ Power-ups</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-blue-300">2 Moves (2000 points)</div>
+                        <div className="text-sm text-gray-400">Get 1 extra move after your turn</div>
+                      </div>
+                      <div className="text-xs bg-blue-900/30 px-2 py-1 rounded">2000 pts</div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-purple-300">4 Moves (3500 points)</div>
+                        <div className="text-sm text-gray-400">Get 3 extra moves after your turn</div>
+                      </div>
+                      <div className="text-xs bg-purple-900/30 px-2 py-1 rounded">3500 pts</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                  <h3 className="text-lg font-semibold text-orange-400 mb-3">🏆 Strategy Tips</h3>
+                  <ul className="space-y-2 leading-relaxed">
+                    <li className="flex items-start">
+                      <span className="text-orange-400 mr-2">•</span>
+                      <span>Avoid creating a third side of a box unless you can complete it</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-orange-400 mr-2">•</span>
+                      <span>Try to force your opponent to give you long chains of boxes</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-orange-400 mr-2">•</span>
+                      <span>Use power-ups strategically when you're about to capture multiple boxes</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-orange-400 mr-2">•</span>
+                      <span>Larger grids (6x6, 7x7) offer more strategic depth</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                  <h3 className="text-lg font-semibold text-fuchsia-400 mb-3">🎲 Getting Started</h3>
+                  <ol className="space-y-2 leading-relaxed">
+                    <li className="flex items-start">
+                      <span className="text-fuchsia-400 mr-2">1.</span>
+                      <span>Click the coin to decide who goes first</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-fuchsia-400 mr-2">2.</span>
+                      <span>Choose your difficulty level (Easy, Medium, Hard)</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-fuchsia-400 mr-2">3.</span>
+                      <span>Select grid size (3x3 to 7x7)</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-fuchsia-400 mr-2">4.</span>
+                      <span>Start playing! Click on lines to draw them</span>
+                    </li>
+                  </ol>
+                </div>
+              </div>
+
+              <div className="mt-8 flex justify-center">
+                <button
+                  onClick={() => setShowInstructions(false)}
+                  className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 transition-all px-8 py-3 rounded-lg font-semibold shadow-lg"
+                >
+                  Let's Play! 🎮
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
