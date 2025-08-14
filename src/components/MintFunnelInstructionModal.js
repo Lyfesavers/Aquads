@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaInfoCircle, FaTimes, FaExternalLinkAlt, FaExclamationTriangle, FaRefresh } from 'react-icons/fa';
+import { FaInfoCircle, FaTimes, FaExternalLinkAlt, FaExclamationTriangle, FaRedo } from 'react-icons/fa';
 
 const MintFunnelInstructionModal = ({ onClose }) => {
   return (
@@ -65,7 +65,7 @@ const MintFunnelInstructionModal = ({ onClose }) => {
               <div>
                 <h4 className="font-semibold text-red-300 text-sm mb-1">Troubleshooting Tips:</h4>
                 <ul className="text-xs text-red-200 space-y-1">
-                  <li>• If you see a "419" or "Page Expired" error, click the <FaRefresh className="inline" size={10} /> Refresh button</li>
+                  <li>• If you see a "419" or "Page Expired" error, click the <FaRedo className="inline" size={10} /> Refresh button</li>
                   <li>• If issues persist, try opening MintFunnel in a new tab</li>
                   <li>• Clear your browser cache if problems continue</li>
                 </ul>

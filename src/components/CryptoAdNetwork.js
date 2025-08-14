@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { FaArrowLeft, FaRefresh, FaExclamationTriangle } from 'react-icons/fa';
+import { FaArrowLeft, FaRedo, FaExclamationTriangle } from 'react-icons/fa';
 import NotificationBell from './NotificationBell';
 import MintFunnelInstructionModal from './MintFunnelInstructionModal';
 import LoginModal from './LoginModal';
@@ -245,15 +245,15 @@ const CryptoAdNetwork = ({
                 Why List?
               </Link>
               
-              {/* Refresh button for iframe issues */}
-              <button
-                onClick={refreshIframe}
-                className="bg-yellow-500/80 hover:bg-yellow-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-yellow-500/50 transition-all duration-300 backdrop-blur-sm flex items-center"
-                title="Refresh MintFunnel if experiencing issues"
-              >
-                <FaRefresh className="mr-1" />
-                Refresh
-              </button>
+                             {/* Refresh button for iframe issues */}
+               <button
+                 onClick={refreshIframe}
+                 className="bg-yellow-500/80 hover:bg-yellow-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-yellow-500/50 transition-all duration-300 backdrop-blur-sm flex items-center"
+                 title="Refresh MintFunnel if experiencing issues"
+               >
+                 <FaRedo className="mr-1" />
+                 Refresh
+               </button>
 
 
               {currentUser ? (
@@ -386,18 +386,18 @@ const CryptoAdNetwork = ({
                 Why List?
               </Link>
               
-              {/* Mobile refresh button for iframe issues */}
-              <button
-                onClick={() => {
-                  refreshIframe();
-                  setIsMobileMenuOpen(false);
-                }}
-                className="bg-yellow-500/80 hover:bg-yellow-600/80 px-4 py-2 rounded shadow-lg hover:shadow-yellow-500/50 transition-all duration-300 backdrop-blur-sm text-center flex items-center justify-center"
-                title="Refresh MintFunnel if experiencing issues"
-              >
-                <FaRefresh className="mr-2" />
-                Refresh MintFunnel
-              </button>
+                             {/* Mobile refresh button for iframe issues */}
+               <button
+                 onClick={() => {
+                   refreshIframe();
+                   setIsMobileMenuOpen(false);
+                 }}
+                 className="bg-yellow-500/80 hover:bg-yellow-600/80 px-4 py-2 rounded shadow-lg hover:shadow-yellow-500/50 transition-all duration-300 backdrop-blur-sm text-center flex items-center justify-center"
+                 title="Refresh MintFunnel if experiencing issues"
+               >
+                 <FaRedo className="mr-2" />
+                 Refresh MintFunnel
+               </button>
 
               {currentUser ? (
                 <>
@@ -505,12 +505,12 @@ const CryptoAdNetwork = ({
                 We're experiencing issues connecting to MintFunnel. This might be due to a session timeout or temporary server issue.
               </p>
               <div className="space-y-3">
-                <button
-                  onClick={refreshIframe}
-                  className="w-full bg-blue-500 hover:bg-blue-600 px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center"
-                >
-                  <FaRefresh className="mr-2" /> Refresh Page
-                </button>
+                                 <button
+                   onClick={refreshIframe}
+                   className="w-full bg-blue-500 hover:bg-blue-600 px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center"
+                 >
+                   <FaRedo className="mr-2" /> Refresh Page
+                 </button>
                 <button
                   onClick={() => window.open('https://mintfunnel.co/crypto-ad-network/?ref=Aquads', '_blank')}
                   className="w-full bg-green-500 hover:bg-green-600 px-6 py-3 rounded-lg font-medium transition-colors"
