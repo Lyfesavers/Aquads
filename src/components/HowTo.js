@@ -303,54 +303,55 @@ const HowTo = ({ currentUser }) => {
 
         {activeTab === 'blogs' && (
           <div className="mt-16" ref={blogListRef}>
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-white">Community Blog Posts</h2>
-            {currentUser && currentUser.isAdmin ? (
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors"
-              >
-                Create Blog Post
-              </button>
-            ) : currentUser ? (
-              <div className="text-gray-400">
-                <span>Only administrators can create blog posts</span>
-              </div>
-            ) : (
-              <button
-                onClick={() => {
-                  // When clicked, get the ref parameter and pass it to the "Create Account" modal
-                  const params = new URLSearchParams(window.location.search);
-                  const refCode = params.get('ref');
-                  
-                  // Set the referral code in session storage so it can be accessed by the CreateAccountModal
-                  if (refCode) {
-                    sessionStorage.setItem('pendingReferralCode', refCode);
-                  }
-                  
-                  // Navigate to the main page with "showCreateAccount=true" parameter
-                  window.location.href = `/?showCreateAccount=true${refCode ? `&ref=${refCode}` : ''}`;
-                }}
-                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition-colors"
-              >
-                Create Account
-              </button>
-            )}
-          </div>
-          
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-2 rounded mb-4">
-              {error}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-white">Community Blog Posts</h2>
+              {currentUser && currentUser.isAdmin ? (
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors"
+                >
+                  Create Blog Post
+                </button>
+              ) : currentUser ? (
+                <div className="text-gray-400">
+                  <span>Only administrators can create blog posts</span>
+                </div>
+              ) : (
+                <button
+                  onClick={() => {
+                    // When clicked, get the ref parameter and pass it to the "Create Account" modal
+                    const params = new URLSearchParams(window.location.search);
+                    const refCode = params.get('ref');
+                    
+                    // Set the referral code in session storage so it can be accessed by the CreateAccountModal
+                    if (refCode) {
+                      sessionStorage.setItem('pendingReferralCode', refCode);
+                    }
+                    
+                    // Navigate to the main page with "showCreateAccount=true" parameter
+                    window.location.href = `/?showCreateAccount=true${refCode ? `&ref=${refCode}` : ''}`;
+                  }}
+                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition-colors"
+                >
+                  Create Account
+                </button>
+              )}
             </div>
-          )}
-          
-          <BlogList
-            blogs={blogs}
-            currentUser={currentUser}
-            onEditBlog={handleBlogEdit}
-            onDeleteBlog={handleDeleteBlog}
-          />
-        </div>
+            
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-2 rounded mb-4">
+                {error}
+              </div>
+            )}
+            
+            <BlogList
+              blogs={blogs}
+              currentUser={currentUser}
+              onEditBlog={handleBlogEdit}
+              onDeleteBlog={handleDeleteBlog}
+            />
+          </div>
+        )}
 
         {/* Create/Edit Blog Modal */}
         {showCreateModal && (
