@@ -218,7 +218,23 @@ const userSchema = new Schema({
   lastActivity: {
     type: Date,
     default: Date.now
-  }
+  },
+  // Skills and badges
+  skillBadges: [{
+    testId: {
+      type: Schema.Types.ObjectId,
+      ref: 'SkillTest'
+    },
+    badgeName: String,
+    badgeDescription: String,
+    badgeIcon: String,
+    badgeColor: String,
+    score: Number,
+    earnedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }]
 });
 
 // Generate referral code before saving

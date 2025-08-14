@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import BlogList from './BlogList';
 import CreateBlogModal from './CreateBlogModal';
+import SkillTests from './SkillTests';
 import { API_URL } from '../services/api';
 
 
@@ -14,6 +15,7 @@ const HowTo = ({ currentUser }) => {
   const [editingBlog, setEditingBlog] = useState(null);
   const [error, setError] = useState(null);
   const [videoError, setVideoError] = useState(false);
+  const [activeTab, setActiveTab] = useState('videos'); // 'videos', 'tests', 'blogs'
   const location = useLocation();
   const navigate = useNavigate();
   const blogListRef = useRef(null);
@@ -229,34 +231,78 @@ const HowTo = ({ currentUser }) => {
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-4 text-blue-400">How To Guide</h1>
           <p className="text-gray-400 text-lg">
-            Learn how to make the most of Aquads with our video tutorials and community blog posts
+            Learn how to make the most of Aquads with our video tutorials, skills tests, and community blog posts
           </p>
         </div>
 
-        {/* Video Section */}
-        <div className="mb-16">
-          <h2 className="text-2xl font-bold mb-6 text-white">Video Tutorials</h2>
-          <div className="aspect-w-16 aspect-h-9 bg-gray-800 rounded-lg overflow-hidden">
-            {videoError ? (
-              <div className="flex items-center justify-center h-full text-gray-400">
-                <p>Failed to load video playlist. Please try refreshing the page.</p>
-              </div>
-            ) : (
-              <iframe
-                src={`https://www.youtube.com/embed/videoseries?list=${PLAYLIST_ID}&enablejsapi=1`}
-                title="Aquads Tutorials"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="w-full h-full min-h-[600px]"
-                onError={() => setVideoError(true)}
-                loading="lazy"
-              />
-            )}
+        {/* Tab Navigation */}
+        <div className="flex justify-center mb-8">
+          <div className="bg-gray-800/50 rounded-lg p-1 flex space-x-1">
+            <button
+              onClick={() => setActiveTab('videos')}
+              className={`px-6 py-2 rounded-md transition-colors ${
+                activeTab === 'videos'
+                  ? 'bg-blue-500 text-white'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Video Tutorials
+            </button>
+            <button
+              onClick={() => setActiveTab('tests')}
+              className={`px-6 py-2 rounded-md transition-colors ${
+                activeTab === 'tests'
+                  ? 'bg-blue-500 text-white'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Skills Tests
+            </button>
+            <button
+              onClick={() => setActiveTab('blogs')}
+              className={`px-6 py-2 rounded-md transition-colors ${
+                activeTab === 'blogs'
+                  ? 'bg-blue-500 text-white'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Blog Posts
+            </button>
           </div>
         </div>
 
-        {/* Blog Section */}
-        <div className="mt-16" ref={blogListRef}>
+        {/* Content based on active tab */}
+        {activeTab === 'videos' && (
+          <div className="mb-16">
+            <h2 className="text-2xl font-bold mb-6 text-white">Video Tutorials</h2>
+            <div className="aspect-w-16 aspect-h-9 bg-gray-800 rounded-lg overflow-hidden">
+              {videoError ? (
+                <div className="flex items-center justify-center h-full text-gray-400">
+                  <p>Failed to load video playlist. Please try refreshing the page.</p>
+                </div>
+              ) : (
+                <iframe
+                  src={`https://www.youtube.com/embed/videoseries?list=${PLAYLIST_ID}&enablejsapi=1`}
+                  title="Aquads Tutorials"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="w-full h-full min-h-[600px]"
+                  onError={() => setVideoError(true)}
+                  loading="lazy"
+                />
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'tests' && (
+          <div className="mb-16">
+            <SkillTests currentUser={currentUser} />
+          </div>
+        )}
+
+        {activeTab === 'blogs' && (
+          <div className="mt-16" ref={blogListRef}>
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-white">Community Blog Posts</h2>
             {currentUser && currentUser.isAdmin ? (
