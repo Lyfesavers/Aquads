@@ -783,40 +783,9 @@ function App() {
     logger.log('Ads state updated:', ads);
   }, [ads]);
 
-  // Clean up expired ads and shrink unbumped ads
-  useEffect(() => {
-    const shrinkInterval = setInterval(async () => {
-      
-      const updatedAds = await Promise.all(ads.map(async (ad) => {
-        if (!ad.isBumped && ad.size > MIN_SIZE) {
-          const newSize = Math.max(MIN_SIZE, ad.size - SHRINK_RATE);
-          const updatedAd = { ...ad, size: newSize };
-          try {
-            // Update the size in the database
-            await apiUpdateAd(ad.id, updatedAd);
-            return updatedAd;
-          } catch (error) {
-            logger.error('Error updating ad size:', error);
-            return ad;
-          }
-        }
-        return ad;
-      }));
-
-      setAds(updatedAds);
-      
-      // Recalculate bubble layout after size changes
-      setTimeout(() => {
-        if (window.innerWidth <= 480) {
-          adjustBubblesForMobile();
-        } else {
-          arrangeDesktopGrid();
-        }
-      }, 100);
-    }, SHRINK_INTERVAL);
-
-    return () => clearInterval(shrinkInterval);
-  }, [ads]);
+  // Backend handles automatic ad shrinking every 30 seconds
+  // WebSocket events will update the frontend in real-time
+  // No need for frontend shrinking interval
 
   // Effect for updating window size
   useEffect(() => {

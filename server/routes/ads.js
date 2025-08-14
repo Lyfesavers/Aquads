@@ -130,6 +130,12 @@ const updateAdSize = async (ad) => {
             },
             { new: true }
           );
+          
+          // Emit WebSocket event for the updated ad
+          if (result) {
+            const socket = require('../socket');
+            socket.emitAdUpdate('update', result);
+          }
           return;
         } catch (updateError) {
           // Update failed, continue
@@ -140,9 +146,15 @@ const updateAdSize = async (ad) => {
     // Rest of the existing updateAdSize logic...
     if (ad.isBumped) {
       if (ad.size !== MAX_SIZE) {
-        await Ad.findByIdAndUpdate(ad._id, {
+        const result = await Ad.findByIdAndUpdate(ad._id, {
           $set: { size: MAX_SIZE }
-        });
+        }, { new: true });
+        
+        // Emit WebSocket event for the updated ad
+        if (result) {
+          const socket = require('../socket');
+          socket.emitAdUpdate('update', result);
+        }
       }
       return;
     }
@@ -162,9 +174,15 @@ const updateAdSize = async (ad) => {
 
     // Update if size changed
     if (newSize !== ad.size) {
-      await Ad.findByIdAndUpdate(ad._id, {
+      const result = await Ad.findByIdAndUpdate(ad._id, {
         $set: { size: newSize }
-      });
+      }, { new: true });
+      
+      // Emit WebSocket event for the updated ad
+      if (result) {
+        const socket = require('../socket');
+        socket.emitAdUpdate('update', result);
+      }
     }
   } catch (error) {
     // Error updating ad
