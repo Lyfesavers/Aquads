@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { FaArrowLeft } from 'react-icons/fa';
+import { FaArrowLeft, FaRefresh, FaExclamationTriangle } from 'react-icons/fa';
 import NotificationBell from './NotificationBell';
 import MintFunnelInstructionModal from './MintFunnelInstructionModal';
 import LoginModal from './LoginModal';
@@ -28,6 +28,12 @@ const CryptoAdNetwork = ({
   const [showBannerModal, setShowBannerModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [dashboardActiveTab, setDashboardActiveTab] = useState('ads');
+
+  // Iframe error handling states
+  const [iframeError, setIframeError] = useState(false);
+  const [iframeLoading, setIframeLoading] = useState(true);
+  const [iframeKey, setIframeKey] = useState(0); // For forcing iframe refresh
+  const iframeRef = useRef(null);
 
   useEffect(() => {
     // Add class to body for page-specific styling if needed
@@ -66,6 +72,104 @@ const CryptoAdNetwork = ({
     // Mark that user has seen the instruction
     localStorage.setItem('hasSeenMintFunnelInstruction', 'true');
   };
+
+  // Handle iframe load events
+  const handleIframeLoad = () => {
+    setIframeLoading(false);
+    setIframeError(false);
+    
+    // Check if the iframe loaded successfully
+    setTimeout(() => {
+      try {
+        if (iframeRef.current && iframeRef.current.contentWindow) {
+          // If we can access the contentWindow, the iframe loaded successfully
+          console.log('MintFunnel iframe loaded successfully');
+        }
+      } catch (error) {
+        // This is expected due to cross-origin restrictions
+        console.log('MintFunnel iframe loaded (cross-origin restrictions apply)');
+      }
+    }, 1000);
+  };
+
+  // Handle iframe error
+  const handleIframeError = () => {
+    setIframeLoading(false);
+    setIframeError(true);
+    console.error('MintFunnel iframe failed to load');
+  };
+
+  // Refresh iframe to fix 419 errors
+  const refreshIframe = () => {
+    setIframeLoading(true);
+    setIframeError(false);
+    setIframeKey(prev => prev + 1); // Force iframe to reload
+  };
+
+  // Handle iframe message events (for communication with MintFunnel)
+  useEffect(() => {
+    const handleMessage = (event) => {
+      // Only accept messages from MintFunnel
+      if (event.origin !== 'https://mintfunnel.co') {
+        return;
+      }
+
+      try {
+        const data = event.data;
+        
+        // Handle specific messages from MintFunnel
+        if (data && data.type === 'mintfunnel_error') {
+          if (data.error === '419' || data.error === 'csrf_mismatch') {
+            setIframeError(true);
+            showNotification('Session expired. Please refresh the page to continue.', 'warning');
+          }
+        }
+      } catch (error) {
+        console.log('Error parsing iframe message:', error);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [showNotification]);
+
+  // Auto-refresh iframe on 419 errors
+  useEffect(() => {
+    if (iframeError) {
+      const timer = setTimeout(() => {
+        refreshIframe();
+      }, 3000); // Auto-refresh after 3 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [iframeError]);
+
+  // Monitor iframe for 419 errors by checking URL changes
+  useEffect(() => {
+    const checkIframeForErrors = () => {
+      try {
+        if (iframeRef.current && iframeRef.current.contentWindow) {
+          const iframeUrl = iframeRef.current.contentWindow.location.href;
+          
+          // Check for common error patterns in the URL
+          if (iframeUrl.includes('419') || 
+              iframeUrl.includes('csrf') || 
+              iframeUrl.includes('expired') ||
+              iframeUrl.includes('error')) {
+            setIframeError(true);
+            showNotification('Detected session issue. Refreshing...', 'warning');
+          }
+        }
+      } catch (error) {
+        // Cross-origin restrictions will cause this to fail, which is expected
+        // We'll rely on the message event listener instead
+      }
+    };
+
+    // Check periodically for errors
+    const interval = setInterval(checkIframeForErrors, 5000);
+    return () => clearInterval(interval);
+  }, [showNotification]);
 
   return (
     <div className="h-screen overflow-y-auto text-white">
@@ -140,6 +244,16 @@ const CryptoAdNetwork = ({
               >
                 Why List?
               </Link>
+              
+              {/* Refresh button for iframe issues */}
+              <button
+                onClick={refreshIframe}
+                className="bg-yellow-500/80 hover:bg-yellow-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-yellow-500/50 transition-all duration-300 backdrop-blur-sm flex items-center"
+                title="Refresh MintFunnel if experiencing issues"
+              >
+                <FaRefresh className="mr-1" />
+                Refresh
+              </button>
 
 
               {currentUser ? (
@@ -271,6 +385,19 @@ const CryptoAdNetwork = ({
               >
                 Why List?
               </Link>
+              
+              {/* Mobile refresh button for iframe issues */}
+              <button
+                onClick={() => {
+                  refreshIframe();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="bg-yellow-500/80 hover:bg-yellow-600/80 px-4 py-2 rounded shadow-lg hover:shadow-yellow-500/50 transition-all duration-300 backdrop-blur-sm text-center flex items-center justify-center"
+                title="Refresh MintFunnel if experiencing issues"
+              >
+                <FaRefresh className="mr-2" />
+                Refresh MintFunnel
+              </button>
 
               {currentUser ? (
                 <>
@@ -346,12 +473,59 @@ const CryptoAdNetwork = ({
       {/* Embedded Content - Full Screen */}
       <div className="fixed inset-0 top-16 z-20">
         <iframe
+          ref={iframeRef}
+          key={iframeKey} // Add key to force refresh
           src="https://mintfunnel.co/crypto-ad-network/?ref=Aquads"
           className="w-full h-full border-0"
           title="Crypto Ad Network"
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation"
           loading="lazy"
+          onLoad={handleIframeLoad}
+          onError={handleIframeError}
         />
+        
+        {/* Loading overlay */}
+        {iframeLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-80 z-10">
+            <div className="text-white text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+              <p className="text-lg">Loading MintFunnel...</p>
+              <p className="text-sm text-gray-400 mt-2">Please wait while we connect to the ad network</p>
+            </div>
+          </div>
+        )}
+        
+        {/* Error overlay */}
+        {iframeError && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-90 z-10">
+            <div className="text-white text-center max-w-md mx-auto p-6">
+              <FaExclamationTriangle className="text-6xl text-yellow-500 mx-auto mb-4" />
+              <h3 className="text-xl font-bold mb-2">Connection Error</h3>
+              <p className="text-gray-300 mb-4">
+                We're experiencing issues connecting to MintFunnel. This might be due to a session timeout or temporary server issue.
+              </p>
+              <div className="space-y-3">
+                <button
+                  onClick={refreshIframe}
+                  className="w-full bg-blue-500 hover:bg-blue-600 px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center"
+                >
+                  <FaRefresh className="mr-2" /> Refresh Page
+                </button>
+                <button
+                  onClick={() => window.open('https://mintfunnel.co/crypto-ad-network/?ref=Aquads', '_blank')}
+                  className="w-full bg-green-500 hover:bg-green-600 px-6 py-3 rounded-lg font-medium transition-colors"
+                >
+                  Open in New Tab
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-4">
+                If the issue persists, try opening MintFunnel directly in a new tab.
+              </p>
+            </div>
+          </div>
+        )}
+
+
       </div>
 
       {/* Instruction Modal for first-time visitors */}
