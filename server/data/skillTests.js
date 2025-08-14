@@ -16,31 +16,31 @@ const skillTests = [
       {
         question: "In international business communication, which approach demonstrates cultural sensitivity?",
         options: [
-          "Using idioms and slang to appear friendly",
-          "Speaking louder to ensure understanding",
           "Adapting communication style to match the recipient's cultural background",
-          "Using only formal language regardless of context"
+          "Using formal language consistently across all cultures",
+          "Speaking slowly and clearly to ensure understanding",
+          "Avoiding cultural references entirely in communication"
         ],
-        correctAnswer: 2,
+        correctAnswer: 0,
         explanation: "Cultural sensitivity involves adapting communication style to respect different cultural norms and expectations."
       },
       {
         question: "Which sentence demonstrates proper use of the subjunctive mood in business writing?",
         options: [
-          "If I were you, I would accept the offer.",
           "If I was you, I would accept the offer.",
-          "If I will be you, I would accept the offer.",
-          "If I am you, I would accept the offer."
+          "If I am you, I would accept the offer.",
+          "If I were you, I would accept the offer.",
+          "If I will be you, I would accept the offer."
         ],
-        correctAnswer: 0,
+        correctAnswer: 2,
         explanation: "The subjunctive mood uses 'were' instead of 'was' for hypothetical situations, even with singular subjects."
       },
       {
         question: "What is the primary purpose of a memorandum in professional communication?",
         options: [
-          "To entertain colleagues",
-          "To record personal thoughts",
-          "To advertise products to clients",
+          "To record personal thoughts and observations",
+          "To entertain and engage colleagues",
+          "To advertise products and services to clients",
           "To convey information, decisions, or requests within an organization"
         ],
         correctAnswer: 3,
@@ -49,32 +49,32 @@ const skillTests = [
       {
         question: "Which rhetorical device is most effective in persuasive business writing?",
         options: [
-          "Hyperbole and exaggeration",
-          "Emotional manipulation",
-          "Complex technical jargon",
-          "Logical reasoning supported by evidence"
+          "Emotional appeals and personal anecdotes",
+          "Complex technical terminology and jargon",
+          "Logical reasoning supported by evidence",
+          "Hyperbole and dramatic language"
         ],
-        correctAnswer: 3,
+        correctAnswer: 2,
         explanation: "Logical reasoning with evidence is most effective in professional persuasive writing."
       },
       {
         question: "What distinguishes academic writing from business writing?",
         options: [
+          "Academic writing uses more complex vocabulary",
+          "Business writing is always more concise and direct",
           "Business writing prioritizes clarity and action, while academic writing emphasizes analysis and theory",
-          "Academic writing is always longer",
-          "Academic writing uses simpler language",
-          "Business writing is always formal"
+          "Academic writing focuses on practical applications"
         ],
-        correctAnswer: 0,
+        correctAnswer: 2,
         explanation: "Business writing focuses on practical outcomes and clear action items, while academic writing emphasizes theoretical analysis."
       },
       {
         question: "Which communication principle is most important in crisis management?",
         options: [
           "Delaying response to gather complete information",
-          "Avoiding media contact entirely",
+          "Providing minimal information to avoid panic",
           "Providing timely, accurate, and transparent information",
-          "Shifting blame to external factors"
+          "Delegating all communication to legal teams"
         ],
         correctAnswer: 2,
         explanation: "Timely, accurate, and transparent communication builds trust and manages stakeholder expectations during crises."
@@ -82,23 +82,23 @@ const skillTests = [
       {
         question: "What is the function of hedging language in professional communication?",
         options: [
-          "To confuse the reader",
-          "To make writing more formal",
-          "To avoid responsibility",
-          "To express uncertainty or qualify statements appropriately"
+          "To avoid taking responsibility for statements",
+          "To make writing appear more sophisticated",
+          "To express uncertainty or qualify statements appropriately",
+          "To confuse readers and obscure meaning"
         ],
-        correctAnswer: 3,
+        correctAnswer: 2,
         explanation: "Hedging language appropriately qualifies statements and acknowledges uncertainty in professional contexts."
       },
       {
         question: "Which approach best demonstrates intercultural communication competence?",
         options: [
-          "Assuming all cultures share the same values",
           "Using only your native communication style",
           "Learning about cultural differences and adapting communication accordingly",
-          "Avoiding communication with different cultures"
+          "Avoiding communication with different cultures entirely",
+          "Applying universal communication standards to all cultures"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Intercultural competence involves understanding cultural differences and adapting communication strategies accordingly."
       }
     ]
@@ -120,21 +120,21 @@ const skillTests = [
       {
         question: "What is the primary goal of service recovery in customer service management?",
         options: [
-          "To minimize refunds and costs",
-          "To avoid negative reviews",
+          "To minimize financial losses and refunds",
           "To restore customer satisfaction and loyalty after a service failure",
+          "To avoid negative reviews and complaints",
           "To transfer difficult customers to other departments"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Service recovery aims to restore customer satisfaction and rebuild loyalty after service failures."
       },
       {
         question: "Which customer service metric is most predictive of long-term business success?",
         options: [
-          "Average handling time",
-          "First call resolution rate",
+          "Average handling time and response speed",
+          "First call resolution rate and efficiency",
           "Customer lifetime value and retention rate",
-          "Customer satisfaction scores"
+          "Customer satisfaction scores and ratings"
         ],
         correctAnswer: 2,
         explanation: "Customer lifetime value and retention rate directly correlate with long-term business profitability and success."
@@ -142,67 +142,67 @@ const skillTests = [
       {
         question: "What is the 'service gap model' in customer service management?",
         options: [
-          "A model for measuring customer wait times",
-          "A method for calculating service costs",
+          "A model for measuring customer wait times and delays",
           "A framework for identifying and closing gaps between customer expectations and service delivery",
-          "A tool for scheduling customer service staff"
+          "A method for calculating service costs and profitability",
+          "A tool for scheduling customer service staff efficiently"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "The service gap model helps organizations identify and address gaps between expected and actual service quality."
       },
       {
         question: "How should a customer service manager handle a systemic service failure?",
         options: [
           "Address individual complaints as they arise",
-          "Blame frontline staff for the issues",
           "Implement root cause analysis and systemic solutions",
+          "Blame frontline staff for the issues",
           "Ignore the problem until it resolves itself"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Systemic failures require root cause analysis and organizational-level solutions rather than individual case management."
       },
       {
         question: "What is the role of emotional intelligence in customer service leadership?",
         options: [
-          "To manipulate customer emotions",
-          "To avoid emotional situations entirely",
+          "To manipulate customer emotions for business gain",
           "To understand and manage emotions in service interactions and team leadership",
+          "To avoid emotional situations entirely",
           "To suppress all emotions in the workplace"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Emotional intelligence enables service leaders to understand customer emotions and manage team dynamics effectively."
       },
       {
         question: "Which customer service strategy is most effective for high-value clients?",
         options: [
-          "Standardized service procedures",
-          "Automated responses and self-service options",
+          "Standardized service procedures and protocols",
           "Personalized service delivery based on individual preferences and history",
-          "Minimal interaction to reduce costs"
+          "Automated responses and self-service options",
+          "Minimal interaction to reduce operational costs"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "High-value clients require personalized service that recognizes their individual needs and relationship history."
       },
       {
         question: "What is the purpose of customer journey mapping in service design?",
         options: [
-          "To track customer complaints",
-          "To measure customer satisfaction scores",
+          "To track customer complaints and issues",
           "To visualize and optimize the complete customer experience across all touchpoints",
-          "To identify customer demographics"
+          "To measure customer satisfaction scores",
+          "To identify customer demographics and segments"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Customer journey mapping helps organizations understand and optimize the complete customer experience."
       },
       {
         question: "How should customer service teams handle cultural differences in service delivery?",
         options: [
           "Apply the same service standards to all customers",
-          "Avoid serving customers from different cultures",
           "Adapt service delivery to respect cultural norms and preferences",
+          "Avoid serving customers from different cultures",
           "Use translation services for all interactions"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Cultural adaptation in service delivery demonstrates respect and improves customer satisfaction across diverse populations."
       }
     ]
@@ -224,89 +224,89 @@ const skillTests = [
       {
         question: "What is the primary purpose of stakeholder analysis in communication planning?",
         options: [
-          "To identify potential critics",
-          "To avoid difficult stakeholders",
+          "To identify potential critics and opponents",
           "To understand audience needs, interests, and influence for targeted communication",
-          "To measure communication effectiveness"
+          "To avoid difficult stakeholders entirely",
+          "To measure communication effectiveness and impact"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Stakeholder analysis helps develop targeted communication strategies based on audience characteristics and needs."
       },
       {
         question: "Which communication model is most effective for organizational change management?",
         options: [
-          "One-way information transmission",
-          "Top-down directive communication",
+          "One-way information transmission and broadcasting",
           "Two-way dialogue with feedback mechanisms and engagement",
-          "Informal grapevine communication"
+          "Top-down directive communication",
+          "Informal grapevine communication networks"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Two-way dialogue with feedback mechanisms is essential for successful organizational change management."
       },
       {
         question: "What is the role of framing in strategic communication?",
         options: [
-          "To manipulate audience perceptions",
-          "To avoid difficult topics",
+          "To manipulate audience perceptions and beliefs",
           "To present information in a context that influences how it's interpreted",
-          "To simplify complex messages"
+          "To avoid difficult topics and controversies",
+          "To simplify complex messages and concepts"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Framing presents information in a context that influences audience interpretation while maintaining ethical standards."
       },
       {
         question: "How should communication leaders handle conflicting stakeholder interests?",
         options: [
           "Choose one stakeholder group to prioritize",
-          "Avoid addressing conflicts publicly",
           "Acknowledge conflicts and develop transparent communication strategies that address multiple perspectives",
+          "Avoid addressing conflicts publicly",
           "Delegate conflict resolution to other departments"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Transparent communication about conflicts and multiple perspectives builds trust and credibility."
       },
       {
         question: "What is the purpose of message architecture in organizational communication?",
         options: [
-          "To create catchy slogans",
-          "To standardize all communications",
+          "To create catchy slogans and taglines",
           "To develop consistent, coherent messaging that supports organizational goals",
-          "To reduce communication costs"
+          "To standardize all communications",
+          "To reduce communication costs and expenses"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Message architecture ensures consistent, coherent messaging that supports organizational objectives."
       },
       {
         question: "Which communication strategy is most effective during organizational crises?",
         options: [
-          "Minimal communication to avoid panic",
-          "Delayed communication until all facts are confirmed",
+          "Minimal communication to avoid panic and confusion",
           "Proactive, transparent communication with regular updates and clear action plans",
+          "Delayed communication until all facts are confirmed",
           "Delegating all communication to legal teams"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Proactive, transparent communication during crises maintains trust and provides necessary information to stakeholders."
       },
       {
         question: "What is the importance of communication channels in strategic messaging?",
         options: [
-          "To reduce communication costs",
-          "To standardize all communications",
+          "To reduce communication costs and expenses",
           "To ensure messages reach target audiences through appropriate and effective mediums",
+          "To standardize all communications",
           "To avoid face-to-face interactions"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Selecting appropriate communication channels ensures messages reach target audiences effectively."
       },
       {
         question: "How should communication professionals measure the effectiveness of strategic communication?",
         options: [
-          "By counting message deliveries",
-          "By measuring media coverage",
+          "By counting message deliveries and impressions",
           "Through systematic evaluation of audience understanding, behavior change, and goal achievement",
-          "By tracking social media mentions"
+          "By measuring media coverage and mentions",
+          "By tracking social media engagement metrics"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Effective measurement evaluates audience understanding, behavior change, and goal achievement."
       }
     ]
@@ -328,10 +328,10 @@ const skillTests = [
       {
         question: "What is the primary purpose of a project charter in strategic project management?",
         options: [
-          "To assign team roles",
-          "To create a detailed schedule",
+          "To assign team roles and responsibilities",
+          "To create a detailed project schedule and timeline",
           "To formally authorize the project and establish its strategic objectives and constraints",
-          "To estimate project costs"
+          "To estimate project costs and budget requirements"
         ],
         correctAnswer: 2,
         explanation: "A project charter formally authorizes the project and establishes its strategic foundation and boundaries."
@@ -340,77 +340,77 @@ const skillTests = [
         question: "Which project management methodology is most appropriate for highly uncertain, innovative projects?",
         options: [
           "Traditional waterfall methodology",
-          "Lean project management",
           "Agile or adaptive methodologies with iterative development",
-          "Six Sigma methodology"
+          "Lean project management principles",
+          "Six Sigma methodology and processes"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Agile methodologies are designed for projects with high uncertainty and changing requirements."
       },
       {
         question: "What is the purpose of stakeholder engagement planning in project management?",
         options: [
-          "To identify project critics",
-          "To avoid stakeholder conflicts",
+          "To identify project critics and opponents",
           "To develop strategies for managing stakeholder expectations and involvement throughout the project lifecycle",
-          "To reduce project costs"
+          "To avoid stakeholder conflicts and disagreements",
+          "To reduce project costs and expenses"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Stakeholder engagement planning ensures effective management of stakeholder relationships and expectations."
       },
       {
         question: "How should project managers handle scope creep in strategic projects?",
         options: [
           "Accept all changes to maintain stakeholder satisfaction",
-          "Ignore scope changes to maintain schedule",
           "Evaluate changes against project objectives and implement formal change control procedures",
+          "Ignore scope changes to maintain schedule",
           "Delegate scope management to team members"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Formal change control procedures ensure scope changes align with project objectives and are properly managed."
       },
       {
         question: "What is the role of risk management in strategic project planning?",
         options: [
-          "To eliminate all project risks",
-          "To avoid risky projects entirely",
+          "To eliminate all project risks and uncertainties",
           "To identify, assess, and develop response strategies for potential project threats and opportunities",
+          "To avoid risky projects entirely",
           "To transfer all risks to external parties"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Risk management proactively addresses potential threats and opportunities to improve project success."
       },
       {
         question: "Which project success metric is most important for strategic projects?",
         options: [
-          "On-time delivery",
-          "Budget compliance",
+          "On-time delivery and schedule adherence",
           "Achievement of strategic objectives and business value realization",
-          "Team satisfaction scores"
+          "Budget compliance and cost control",
+          "Team satisfaction scores and morale"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Strategic projects are ultimately measured by their contribution to organizational objectives and value creation."
       },
       {
         question: "What is the purpose of lessons learned in project management?",
         options: [
-          "To assign blame for project failures",
-          "To document project costs",
+          "To assign blame for project failures and issues",
           "To capture knowledge and improve future project performance",
-          "To satisfy audit requirements"
+          "To document project costs and expenses",
+          "To satisfy audit requirements and compliance"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Lessons learned capture valuable knowledge to improve future project planning and execution."
       },
       {
         question: "How should project managers balance competing project constraints?",
         options: [
           "Prioritize cost above all other factors",
-          "Always prioritize schedule to meet deadlines",
           "Analyze trade-offs and make informed decisions based on project priorities and stakeholder needs",
+          "Always prioritize schedule to meet deadlines",
           "Delegate constraint management to senior management"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Effective constraint management involves analyzing trade-offs and making informed decisions based on project priorities."
       }
     ]
@@ -432,10 +432,10 @@ const skillTests = [
       {
         question: "What is the primary purpose of software architecture in system design?",
         options: [
-          "To make systems more complex",
-          "To reduce development costs",
+          "To make systems more complex and sophisticated",
+          "To reduce development costs and expenses",
           "To establish the fundamental structure and organization of a software system",
-          "To satisfy technical requirements only"
+          "To satisfy technical requirements and specifications"
         ],
         correctAnswer: 2,
         explanation: "Software architecture establishes the fundamental structure that guides system development and evolution."
@@ -443,78 +443,78 @@ const skillTests = [
       {
         question: "Which architectural pattern is most appropriate for highly scalable web applications?",
         options: [
-          "Monolithic architecture",
-          "Client-server architecture",
+          "Monolithic architecture with single deployment",
           "Microservices architecture with distributed systems",
-          "Peer-to-peer architecture"
+          "Client-server architecture with centralized processing",
+          "Peer-to-peer architecture with decentralized nodes"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Microservices architecture enables independent scaling and deployment of system components."
       },
       {
         question: "What is the role of design patterns in software architecture?",
         options: [
-          "To make code more complex",
-          "To reduce development time only",
+          "To make code more complex and sophisticated",
           "To provide proven solutions to common design problems and improve code maintainability",
-          "To satisfy coding standards"
+          "To reduce development time and effort",
+          "To satisfy coding standards and conventions"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Design patterns provide proven solutions that improve code quality, maintainability, and reusability."
       },
       {
         question: "How should technical architects handle technical debt in system design?",
         options: [
-          "Ignore technical debt to meet deadlines",
-          "Eliminate all technical debt immediately",
+          "Ignore technical debt to meet deadlines and schedules",
           "Balance technical debt against business priorities and plan for systematic refactoring",
+          "Eliminate all technical debt immediately",
           "Delegate technical debt management to junior developers"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Effective technical debt management balances immediate needs with long-term system health."
       },
       {
         question: "What is the purpose of system integration testing in technical architecture?",
         options: [
-          "To test individual components",
-          "To reduce testing costs",
+          "To test individual components in isolation",
           "To verify that system components work together correctly and meet integration requirements",
+          "To reduce testing costs and expenses",
           "To satisfy quality assurance requirements"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Integration testing ensures system components work together and meet architectural requirements."
       },
       {
         question: "Which approach is most effective for managing technical team performance?",
         options: [
           "Focusing only on individual productivity metrics",
-          "Implementing strict deadlines and penalties",
           "Balancing technical excellence with team collaboration and continuous improvement",
+          "Implementing strict deadlines and penalties",
           "Avoiding performance measurement entirely"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Effective technical leadership balances technical excellence with team development and collaboration."
       },
       {
         question: "What is the importance of API design in modern software architecture?",
         options: [
-          "To reduce development costs",
-          "To satisfy security requirements",
+          "To reduce development costs and expenses",
           "To enable system interoperability, maintainability, and developer productivity",
-          "To meet performance benchmarks"
+          "To satisfy security requirements and compliance",
+          "To meet performance benchmarks and standards"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Well-designed APIs enable system integration, maintainability, and developer productivity."
       },
       {
         question: "How should technical leaders approach technology selection for projects?",
         options: [
           "Choose the latest technologies regardless of project needs",
-          "Always use familiar technologies to reduce risk",
           "Evaluate technologies based on project requirements, team capabilities, and long-term maintainability",
+          "Always use familiar technologies to reduce risk",
           "Delegate technology decisions to external consultants"
         ],
-        correctAnswer: 2,
+        correctAnswer: 1,
         explanation: "Technology selection should be based on project requirements, team capabilities, and long-term considerations."
       }
     ]
