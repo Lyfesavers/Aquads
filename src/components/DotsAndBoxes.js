@@ -163,12 +163,18 @@ function chooseAiMove(state, difficulty) {
   const moves = getAllMoves(state);
   if (moves.length === 0) return null;
 
-  // Prefer safe moves in early/mid game
-  const safeMoves = moves.filter(m => isSafeMove(state, m));
+  // Difficulty tuning
+  const config = {
+    Hard: { depth: 3, mistakeChance: 0.03, safeBias: 2.0, noise: 0.15, topK: 1, captureWeight: 3 },
+    Medium: { depth: 2, mistakeChance: 0.12, safeBias: 1.0, noise: 0.6, topK: 3, captureWeight: 2 },
+    Easy: { depth: 1, mistakeChance: 0.33, safeBias: 0.4, noise: 1.2, topK: 5, captureWeight: 1 },
+  }[difficulty] || { depth: 2, mistakeChance: 0.12, safeBias: 1.0, noise: 0.6, topK: 3, captureWeight: 2 };
+
+  const safeMovesSet = new Set(
+    moves.filter(m => isSafeMove(state, m)).map(m => `${m.type}-${m.r}-${m.c}`)
+  );
 
   const evaluate = (s) => evaluatePosition(s, AI);
-
-  const depth = difficulty === 'Hard' ? 3 : difficulty === 'Medium' ? 2 : 1;
 
   function minimaxPosition(s, turn, d) {
     if (d === 0 || getAllMoves(s).length === 0) return evaluate(s);
@@ -183,22 +189,29 @@ function chooseAiMove(state, difficulty) {
     return best;
   }
 
-  const candidateMoves = safeMoves.length > 0 ? safeMoves : moves;
-
-  let bestMove = candidateMoves[0];
-  let bestScore = -Infinity;
-  for (const mv of candidateMoves) {
+  // Score each move with difficulty-aware noise and safe bias
+  const scored = moves.map(mv => {
     const sim = simulateMoveWithGreedy(state, mv, AI);
-    const val = minimaxPosition(sim.state, sim.turn, depth - 1);
-    // Small bonus for immediate captures
+    const val = minimaxPosition(sim.state, sim.turn, config.depth - 1);
     const immediate = applyEdge(state, mv, AI).captured;
-    const score = val + immediate * 3;
-    if (score > bestScore) {
-      bestScore = score;
-      bestMove = mv;
-    }
+    const isSafe = safeMovesSet.has(`${mv.type}-${mv.r}-${mv.c}`);
+    const safeBonus = isSafe ? config.safeBias : -0.25 * (2 - config.safeBias);
+    const noise = (Math.random() * 2 - 1) * config.noise;
+    const score = val + immediate * config.captureWeight + safeBonus + noise;
+    return { mv, score };
+  });
+
+  // Sometimes intentionally blunder based on mistakeChance
+  if (Math.random() < config.mistakeChance) {
+    const randomIndex = Math.floor(Math.random() * scored.length);
+    return scored[randomIndex].mv;
   }
-  return bestMove;
+
+  // Otherwise pick among the top K
+  scored.sort((a, b) => b.score - a.score);
+  const topK = Math.max(1, Math.min(config.topK, scored.length));
+  const choiceIndex = Math.floor(Math.random() * topK);
+  return scored[choiceIndex].mv;
 }
 
 export default function DotsAndBoxes({ currentUser }) {
@@ -217,6 +230,7 @@ export default function DotsAndBoxes({ currentUser }) {
     };
   });
   const [difficulty, setDifficulty] = useState('Hard');
+  const [firstMove, setFirstMove] = useState('Random'); // 'You' | 'Computer' | 'Random'
   const [hover, setHover] = useState(null); // { type, r, c }
   const [animEdge, setAnimEdge] = useState(null); // for line draw animation key
   const [animBox, setAnimBox] = useState(null); // { r, c, owner }
@@ -227,13 +241,16 @@ export default function DotsAndBoxes({ currentUser }) {
   const [leaderboard, setLeaderboard] = useState([]);
   const [filterDifficulty, setFilterDifficulty] = useState('All');
   const [filterGrid, setFilterGrid] = useState('All');
+  const [tossing, setTossing] = useState(false);
+  const [tossWinner, setTossWinner] = useState(null); // 'You' | 'Computer' | null
 
   const svgRef = useRef(null);
 
   const size = useMemo(() => {
     // Responsive sizing leaning desktop; limited change for mobile
     const viewport = typeof window !== 'undefined' ? window.innerWidth : 1200;
-    const base = clamp(viewport * 0.5, 420, 800);
+    // Slightly increase max size to support larger grids comfortably
+    const base = clamp(viewport * 0.58, 480, 900);
     return base;
   }, []);
 
@@ -274,13 +291,14 @@ export default function DotsAndBoxes({ currentUser }) {
     const b = createEmptyBoard(newRows, newCols);
     setRows(newRows);
     setCols(newCols);
+    const initialTurn = firstMove === 'You' ? PLAYER : firstMove === 'Computer' ? AI : (Math.random() < 0.5 ? PLAYER : AI);
     setState({
       rows: newRows,
       cols: newCols,
       horizontalEdges: b.horizontalEdges,
       verticalEdges: b.verticalEdges,
       boxes: b.boxes,
-      turn: PLAYER,
+      turn: initialTurn,
       score: { [PLAYER]: 0, [AI]: 0 },
     });
     setGameOver(false);
@@ -431,6 +449,16 @@ export default function DotsAndBoxes({ currentUser }) {
               <option>Easy</option>
             </select>
             <select
+              value={firstMove}
+              onChange={(e) => setFirstMove(e.target.value)}
+              className="bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm"
+              title="Who moves first"
+            >
+              <option value="Random">First Move: Random</option>
+              <option value="You">First Move: You</option>
+              <option value="Computer">First Move: Computer</option>
+            </select>
+            <select
               value={`${rows}x${cols}`}
               onChange={(e) => {
                 const [r, c] = e.target.value.split('x').map(Number);
@@ -441,6 +469,8 @@ export default function DotsAndBoxes({ currentUser }) {
               <option value="3x3">3 x 3</option>
               <option value="4x4">4 x 4</option>
               <option value="5x5">5 x 5</option>
+              <option value="6x6">6 x 6</option>
+              <option value="7x7">7 x 7</option>
             </select>
             <button
               onClick={() => resetGame(rows, cols)}
@@ -547,6 +577,19 @@ export default function DotsAndBoxes({ currentUser }) {
                 {dots.map((d, i) => (
                   <circle key={`dot-${i}`} cx={d.x} cy={d.y} r={6} fill="#e2e8f0" />
                 ))}
+
+                {/* Coin toss overlay inside SVG area */}
+                {firstMove === 'Random' && (state.horizontalEdges.every(row => row.every(v => !v)) && state.verticalEdges.every(row => row.every(v => !v))) && (
+                  <g>
+                    <rect x={spacing*0.5} y={spacing*0.5} width={spacing*(cols+1)} height={spacing*(rows+1)} fill="#000" opacity="0.35" />
+                    <g transform={`translate(${(spacing*(cols+2))/2}, ${(spacing*(rows+2))/2})`}>
+                      <circle r={isDesktop ? 60 : 44} fill="#0ea5e9" stroke="#a78bfa" strokeWidth="4" filter="url(#glow)" />
+                      <text textAnchor="middle" dominantBaseline="middle" fill="#fff" fontSize={isDesktop ? 16 : 14} fontWeight="700">
+                        {tossWinner ? `${tossWinner} starts` : 'Coin toss...'}
+                      </text>
+                    </g>
+                  </g>
+                )}
               </svg>
             </div>
           </div>
