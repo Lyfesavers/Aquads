@@ -13,7 +13,7 @@ router.get('/test', (req, res) => {
 router.get('/my-points', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.userId)
-      .select('points pointsHistory giftCardRedemptions')
+      .select('points pointsHistory giftCardRedemptions powerUps')
       .populate('pointsHistory.referredUser', 'username');
     
     if (!user) {
@@ -23,10 +23,35 @@ router.get('/my-points', auth, async (req, res) => {
     res.json({
       points: user.points,
       pointsHistory: user.pointsHistory,
-      giftCardRedemptions: user.giftCardRedemptions
+      giftCardRedemptions: user.giftCardRedemptions,
+      powerUps: user.powerUps || { twoMoves: 0, fourMoves: 0 }
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch points' });
+  }
+});
+
+// Purchase power-ups with points
+router.post('/buy-powerup', auth, async (req, res) => {
+  try {
+    const { type } = req.body; // 'twoMoves' | 'fourMoves'
+    if (!['twoMoves', 'fourMoves'].includes(type)) {
+      return res.status(400).json({ error: 'Invalid power-up type' });
+    }
+    const cost = type === 'twoMoves' ? 2000 : 3500;
+    const user = await User.findById(req.user.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if ((user.points || 0) < cost) {
+      return res.status(400).json({ error: 'Insufficient points' });
+    }
+    user.points = (user.points || 0) - cost;
+    user.pointsHistory.push({ amount: -cost, reason: `Purchased ${type} power-up`, createdAt: new Date() });
+    if (!user.powerUps) user.powerUps = { twoMoves: 0, fourMoves: 0 };
+    user.powerUps[type] = (user.powerUps[type] || 0) + 1;
+    await user.save();
+    res.json({ points: user.points, powerUps: user.powerUps });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to purchase power-up' });
   }
 });
 

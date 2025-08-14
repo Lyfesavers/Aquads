@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { getLeaderboard, submitLeaderboard } from '../services/api';
+import { getLeaderboard, submitLeaderboard, buyPowerUp, fetchMyPoints } from '../services/api';
 
 // Dots & Boxes with a strong AI opponent, SVG animations, and modern styling
 // Board representation: rows x cols boxes (dots are rows+1 x cols+1)
@@ -8,6 +8,18 @@ const PLAYER = 'YOU';
 const AI = 'AI';
 
 const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+
+// Fair 50/50 coin flip using cryptographic randomness when available
+function fairCoinFlip() {
+  try {
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      const buf = new Uint32Array(1);
+      crypto.getRandomValues(buf);
+      return (buf[0] & 1) === 1;
+    }
+  } catch (_) {}
+  return Math.random() < 0.5;
+}
 
 function createEmptyBoard(rows, cols) {
   const horizontalEdges = Array.from({ length: rows + 1 }, () => Array(cols).fill(false));
@@ -230,7 +242,7 @@ export default function DotsAndBoxes({ currentUser }) {
     };
   });
   const [difficulty, setDifficulty] = useState('Hard');
-  const [firstMove, setFirstMove] = useState('Random'); // 'You' | 'Computer' | 'Random'
+  // First move is decided by coin toss overlay (no manual selection)
   const [hover, setHover] = useState(null); // { type, r, c }
   const [animEdge, setAnimEdge] = useState(null); // for line draw animation key
   const [animBox, setAnimBox] = useState(null); // { r, c, owner }
@@ -243,6 +255,9 @@ export default function DotsAndBoxes({ currentUser }) {
   const [filterGrid, setFilterGrid] = useState('All');
   const [tossing, setTossing] = useState(false);
   const [tossWinner, setTossWinner] = useState(null); // 'You' | 'Computer' | null
+  const [powerUps, setPowerUps] = useState({ twoMoves: 0, fourMoves: 0 });
+  const [points, setPoints] = useState(0);
+  const [usingMultiMove, setUsingMultiMove] = useState(0); // remaining extra moves in current activation
 
   const svgRef = useRef(null);
 
@@ -287,11 +302,24 @@ export default function DotsAndBoxes({ currentUser }) {
     })();
   }, []);
 
+  // Load user points & power-ups if logged in
+  useEffect(() => {
+    (async () => {
+      try {
+        if (currentUser && currentUser.token) {
+          const data = await fetchMyPoints();
+          setPoints(data.points || 0);
+          setPowerUps(data.powerUps || { twoMoves: 0, fourMoves: 0 });
+        }
+      } catch (_) {}
+    })();
+  }, [currentUser]);
+
   const resetGame = (newRows = rows, newCols = cols) => {
     const b = createEmptyBoard(newRows, newCols);
     setRows(newRows);
     setCols(newCols);
-    const initialTurn = firstMove === 'You' ? PLAYER : firstMove === 'Computer' ? AI : (Math.random() < 0.5 ? PLAYER : AI);
+    const initialTurn = null; // decided by coin toss click overlay
     setState({
       rows: newRows,
       cols: newCols,
@@ -327,7 +355,13 @@ export default function DotsAndBoxes({ currentUser }) {
       // Same player continues
       setState({ ...next, turn: who });
     } else {
-      setState({ ...next, turn: who === PLAYER ? AI : PLAYER });
+      // Multi-move power-up: allow extra sequential moves for the player
+      if (who === PLAYER && usingMultiMove > 0) {
+        setUsingMultiMove(usingMultiMove - 1);
+        setState({ ...next, turn: PLAYER });
+      } else {
+        setState({ ...next, turn: who === PLAYER ? AI : PLAYER });
+      }
     }
   }
 
@@ -448,16 +482,7 @@ export default function DotsAndBoxes({ currentUser }) {
               <option>Medium</option>
               <option>Easy</option>
             </select>
-            <select
-              value={firstMove}
-              onChange={(e) => setFirstMove(e.target.value)}
-              className="bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm"
-              title="Who moves first"
-            >
-              <option value="Random">First Move: Random</option>
-              <option value="You">First Move: You</option>
-              <option value="Computer">First Move: Computer</option>
-            </select>
+            {/* First move decided by coin toss click */}
             <select
               value={`${rows}x${cols}`}
               onChange={(e) => {
@@ -578,15 +603,17 @@ export default function DotsAndBoxes({ currentUser }) {
                   <circle key={`dot-${i}`} cx={d.x} cy={d.y} r={6} fill="#e2e8f0" />
                 ))}
 
-                {/* Coin toss overlay inside SVG area */}
-                {firstMove === 'Random' && (state.horizontalEdges.every(row => row.every(v => !v)) && state.verticalEdges.every(row => row.every(v => !v))) && (
+                {/* Coin toss overlay: click to decide who starts (shown until first edge is drawn) */}
+                {state.horizontalEdges.every(row => row.every(v => !v)) && state.verticalEdges.every(row => row.every(v => !v)) && state.turn == null && (
                   <g>
                     <rect x={spacing*0.5} y={spacing*0.5} width={spacing*(cols+1)} height={spacing*(rows+1)} fill="#000" opacity="0.35" />
                     <g transform={`translate(${(spacing*(cols+2))/2}, ${(spacing*(rows+2))/2})`}>
-                      <circle r={isDesktop ? 60 : 44} fill="#0ea5e9" stroke="#a78bfa" strokeWidth="4" filter="url(#glow)" />
-                      <text textAnchor="middle" dominantBaseline="middle" fill="#fff" fontSize={isDesktop ? 16 : 14} fontWeight="700">
-                        {tossWinner ? `${tossWinner} starts` : 'Coin toss...'}
-                      </text>
+                      <circle r={isDesktop ? 60 : 44} fill="#0ea5e9" stroke="#a78bfa" strokeWidth="4" filter="url(#glow)"
+                        onClick={() => {
+                          const winner = fairCoinFlip() ? PLAYER : AI;
+                          setState(prev => ({ ...prev, turn: winner }));
+                        }} cursor="pointer" />
+                      <text textAnchor="middle" dominantBaseline="middle" fill="#fff" fontSize={isDesktop ? 16 : 14} fontWeight="700">Click coin to toss</text>
                     </g>
                   </g>
                 )}
@@ -601,6 +628,73 @@ export default function DotsAndBoxes({ currentUser }) {
                 {state.turn === PLAYER ? 'Your move' : 'Computer thinking…'}
               </div>
             </div>
+            {currentUser && (
+              <div className="mb-4 rounded-lg bg-gray-800 p-3 border border-gray-700">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-sm text-gray-300">Affiliate Points</div>
+                  <div className="text-emerald-400 font-semibold">{points}</div>
+                </div>
+                <div className="grid grid-cols-1 gap-2">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm">2 moves (2000 pts)</div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-400">x{powerUps.twoMoves || 0}</span>
+                      <button
+                        className="px-2 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50"
+                        onClick={async () => {
+                          try {
+                            const res = await buyPowerUp('twoMoves');
+                            setPoints(res.points);
+                            setPowerUps(res.powerUps);
+                          } catch (e) {}
+                        }}
+                        disabled={points < 2000}
+                      >Buy</button>
+                      <button
+                        className="px-2 py-1 text-xs rounded bg-gray-700 hover:bg-gray-600 disabled:opacity-50"
+                        onClick={() => {
+                          if ((powerUps.twoMoves || 0) > 0 && usingMultiMove === 0 && state.turn === PLAYER) {
+                            setPowerUps({ ...powerUps, twoMoves: powerUps.twoMoves - 1 });
+                            setUsingMultiMove(1); // +1 extra move after current
+                          }
+                        }}
+                        disabled={(powerUps.twoMoves || 0) === 0 || usingMultiMove !== 0 || state.turn !== PLAYER}
+                      >Use</button>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm">4 moves (3500 pts)</div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-400">x{powerUps.fourMoves || 0}</span>
+                      <button
+                        className="px-2 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50"
+                        onClick={async () => {
+                          try {
+                            const res = await buyPowerUp('fourMoves');
+                            setPoints(res.points);
+                            setPowerUps(res.powerUps);
+                          } catch (e) {}
+                        }}
+                        disabled={points < 3500}
+                      >Buy</button>
+                      <button
+                        className="px-2 py-1 text-xs rounded bg-gray-700 hover:bg-gray-600 disabled:opacity-50"
+                        onClick={() => {
+                          if ((powerUps.fourMoves || 0) > 0 && usingMultiMove === 0 && state.turn === PLAYER) {
+                            setPowerUps({ ...powerUps, fourMoves: powerUps.fourMoves - 1 });
+                            setUsingMultiMove(3); // +3 extra moves after current
+                          }
+                        }}
+                        disabled={(powerUps.fourMoves || 0) === 0 || usingMultiMove !== 0 || state.turn !== PLAYER}
+                      >Use</button>
+                    </div>
+                  </div>
+                </div>
+                {usingMultiMove > 0 && (
+                  <div className="mt-2 text-xs text-amber-300">Power-up active: {usingMultiMove} extra move(s) remaining</div>
+                )}
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-lg bg-gray-800 p-3">
                 <div className="text-xs text-gray-400">You</div>

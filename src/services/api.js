@@ -1185,6 +1185,33 @@ export const fetchGameCategories = async () => {
   }
 };
 
+// Power-ups
+export const buyPowerUp = async (type) => {
+  const res = await fetch(`${API_URL}/points/buy-powerup`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader()
+    },
+    body: JSON.stringify({ type })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to buy power-up');
+  }
+  return res.json();
+};
+
+export const fetchMyPoints = async () => {
+  const res = await fetch(`${API_URL}/points/my-points`, {
+    headers: {
+      ...getAuthHeader()
+    }
+  });
+  if (!res.ok) throw new Error('Failed to fetch points');
+  return res.json();
+};
+
 // Leaderboard API for mini-games
 export const getLeaderboard = async (game, { limit = 50, difficulty, grid } = {}) => {
   const params = new URLSearchParams();

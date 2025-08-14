@@ -101,6 +101,10 @@ const userSchema = new Schema({
     type: Number,
     default: 0
   },
+  powerUps: {
+    twoMoves: { type: Number, default: 0 },
+    fourMoves: { type: Number, default: 0 }
+  },
   tokenHistory: [{
     type: {
       type: String,
