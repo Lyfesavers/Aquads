@@ -459,7 +459,19 @@ export default function DotsAndBoxes({ currentUser }) {
     return leaderboard
       .filter(r => (filterDifficulty === 'All' || r.difficulty === filterDifficulty))
       .filter(r => (filterGrid === 'All' || r.grid === filterGrid))
-      .sort((a, b) => (a.date < b.date ? 1 : -1));
+      .sort((a, b) => {
+        const aYou = Number(a.you || 0);
+        const aAi = Number(a.ai || 0);
+        const bYou = Number(b.you || 0);
+        const bAi = Number(b.ai || 0);
+        const aMargin = aYou - aAi;
+        const bMargin = bYou - bAi;
+        if (bMargin !== aMargin) return bMargin - aMargin; // higher margin first
+        if (bYou !== aYou) return bYou - aYou; // then higher player score
+        const aTime = new Date(a.createdAt || a.date || 0).getTime();
+        const bTime = new Date(b.createdAt || b.date || 0).getTime();
+        return bTime - aTime; // newest last tie-breaker
+      });
   }, [leaderboard, filterDifficulty, filterGrid]);
 
   return (
