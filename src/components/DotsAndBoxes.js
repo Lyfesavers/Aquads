@@ -263,15 +263,27 @@ export default function DotsAndBoxes({ currentUser }) {
   const svgRef = useRef(null);
 
   const size = useMemo(() => {
-    // Responsive sizing leaning desktop; limited change for mobile
+    // Fully responsive sizing for all screen sizes
     const viewport = typeof window !== 'undefined' ? window.innerWidth : 1200;
-    // Slightly increase max size to support larger grids comfortably
-    const base = clamp(viewport * 0.58, 480, 900);
-    return base;
+    const isMobile = viewport < 768;
+    const isTablet = viewport >= 768 && viewport < 1024;
+    
+    if (isMobile) {
+      // Mobile: use most of screen width, but ensure minimum size for playability
+      return clamp(viewport * 0.85, 320, 500);
+    } else if (isTablet) {
+      // Tablet: balanced sizing
+      return clamp(viewport * 0.65, 500, 700);
+    } else {
+      // Desktop: larger size for better experience
+      return clamp(viewport * 0.55, 600, 900);
+    }
   }, []);
 
   const spacing = useMemo(() => size / (Math.max(rows, cols) + 2), [size, rows, cols]);
   const isDesktop = useMemo(() => (typeof window !== 'undefined' ? window.innerWidth >= 1024 : true), []);
+  const isMobile = useMemo(() => (typeof window !== 'undefined' ? window.innerWidth < 768 : false), []);
+  const isTablet = useMemo(() => (typeof window !== 'undefined' ? window.innerWidth >= 768 && window.innerWidth < 1024 : false), []);
 
   useEffect(() => {
     // Check game over
@@ -478,62 +490,107 @@ export default function DotsAndBoxes({ currentUser }) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
       <div className="container mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight">
               <span className="bg-gradient-to-r from-sky-400 to-fuchsia-500 text-transparent bg-clip-text">Dots & Boxes</span>
             </h1>
-            <p className="text-gray-300 mt-1">Play against a strong AI with sleek animations.</p>
+            <p className="text-gray-300 mt-1 text-sm sm:text-base">Play against a strong AI with sleek animations.</p>
           </div>
-          <div className="flex items-center gap-2">
+          
+          {/* Mobile Controls - Stacked */}
+          <div className="flex flex-col sm:hidden gap-2">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowInstructions(true)}
+                className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 transition-all px-3 py-2 rounded text-xs font-medium shadow-lg"
+              >
+                📖 How to Play
+              </button>
+              <button
+                onClick={() => resetGame(rows, cols)}
+                className="flex-1 bg-indigo-600 hover:bg-indigo-500 transition-colors px-3 py-2 rounded text-xs"
+              >
+                Reset
+              </button>
+            </div>
+            <div className="flex gap-2">
+              <select
+                value={difficulty}
+                onChange={(e) => setDifficulty(e.target.value)}
+                className="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-2 text-xs"
+              >
+                <option>Hard</option>
+                <option>Medium</option>
+                <option>Easy</option>
+              </select>
+              <select
+                value={`${rows}x${cols}`}
+                onChange={(e) => {
+                  const [r, c] = e.target.value.split('x').map(Number);
+                  resetGame(r, c);
+                }}
+                className="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-2 text-xs"
+              >
+                <option value="3x3">3×3</option>
+                <option value="4x4">4×4</option>
+                <option value="5x5">5×5</option>
+                <option value="6x6">6×6</option>
+                <option value="7x7">7×7</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Desktop/Tablet Controls - Horizontal */}
+          <div className="hidden sm:flex items-center gap-2">
             <button
               onClick={() => setShowInstructions(true)}
-              className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 transition-all px-4 py-2 rounded text-sm font-medium shadow-lg"
+              className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 transition-all px-3 sm:px-4 py-2 rounded text-xs sm:text-sm font-medium shadow-lg"
             >
               📖 How to Play
             </button>
             <select
               value={difficulty}
               onChange={(e) => setDifficulty(e.target.value)}
-              className="bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm"
+              className="bg-gray-800 border border-gray-700 rounded px-2 sm:px-3 py-2 text-xs sm:text-sm"
             >
               <option>Hard</option>
               <option>Medium</option>
               <option>Easy</option>
             </select>
-            {/* First move decided by coin toss click */}
             <select
               value={`${rows}x${cols}`}
               onChange={(e) => {
                 const [r, c] = e.target.value.split('x').map(Number);
                 resetGame(r, c);
               }}
-              className="bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm"
+              className="bg-gray-800 border border-gray-700 rounded px-2 sm:px-3 py-2 text-xs sm:text-sm"
             >
-              <option value="3x3">3 x 3</option>
-              <option value="4x4">4 x 4</option>
-              <option value="5x5">5 x 5</option>
-              <option value="6x6">6 x 6</option>
-              <option value="7x7">7 x 7</option>
+              <option value="3x3">3×3</option>
+              <option value="4x4">4×4</option>
+              <option value="5x5">5×5</option>
+              <option value="6x6">6×6</option>
+              <option value="7x7">7×7</option>
             </select>
             <button
               onClick={() => resetGame(rows, cols)}
-              className="bg-indigo-600 hover:bg-indigo-500 transition-colors px-4 py-2 rounded text-sm"
+              className="bg-indigo-600 hover:bg-indigo-500 transition-colors px-3 sm:px-4 py-2 rounded text-xs sm:text-sm"
             >
               Reset
             </button>
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-6 items-start">
-          <div className="flex-1">
-            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-xl p-4 md:p-6">
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 items-start">
+          <div className="flex-1 w-full">
+            <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-xl p-3 sm:p-4 md:p-6">
               <svg
                 ref={svgRef}
-                width={size}
-                height={size}
+                width="100%"
+                height="auto"
                 viewBox={`0 0 ${spacing * (cols + 2)} ${spacing * (rows + 2)}`}
-                className="mx-auto block"
+                className="mx-auto block max-w-full"
+                style={{ maxHeight: `${size}px` }}
               >
                 <defs>
                   <linearGradient id="edgeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -577,9 +634,9 @@ export default function DotsAndBoxes({ currentUser }) {
                 {edges.map((e) => {
                   const isHover = hover && hover.type === e.type && hover.r === e.r && hover.c === e.c;
                   const visibleStroke = e.taken ? 'url(#edgeGradient)' : isHover ? '#7dd3fc' : '#64748b';
-                  const strokeWidth = e.taken ? (isDesktop ? 8 : 6) : isHover ? (isDesktop ? 8 : 6) : (isDesktop ? 6 : 4);
+                  const strokeWidth = e.taken ? (isMobile ? 6 : isTablet ? 7 : 8) : isHover ? (isMobile ? 6 : isTablet ? 7 : 8) : (isMobile ? 4 : isTablet ? 5 : 6);
                   const lineKey = `${e.type}-${e.r}-${e.c}`;
-                  const hitWidth = isDesktop ? 22 : 12;
+                  const hitWidth = isMobile ? 16 : isTablet ? 20 : 22;
                   return (
                     <g key={lineKey}>
                       {/* Invisible, thick hit area to make clicking easier */}
@@ -619,7 +676,7 @@ export default function DotsAndBoxes({ currentUser }) {
 
                 {/* Dots */}
                 {dots.map((d, i) => (
-                  <circle key={`dot-${i}`} cx={d.x} cy={d.y} r={6} fill="#e2e8f0" />
+                  <circle key={`dot-${i}`} cx={d.x} cy={d.y} r={isMobile ? 4 : isTablet ? 5 : 6} fill="#e2e8f0" />
                 ))}
 
                 {/* Coin toss overlay: click to decide who starts (shown until first edge is drawn) */}
@@ -627,12 +684,12 @@ export default function DotsAndBoxes({ currentUser }) {
                   <g>
                     <rect x={spacing*0.5} y={spacing*0.5} width={spacing*(cols+1)} height={spacing*(rows+1)} fill="#000" opacity="0.35" />
                     <g transform={`translate(${(spacing*(cols+2))/2}, ${(spacing*(rows+2))/2})`}>
-                      <circle r={isDesktop ? 60 : 44} fill="#0ea5e9" stroke="#a78bfa" strokeWidth="4" filter="url(#glow)"
+                      <circle r={isMobile ? 40 : isTablet ? 50 : 60} fill="#0ea5e9" stroke="#a78bfa" strokeWidth="4" filter="url(#glow)"
                         onClick={() => {
                           const winner = fairCoinFlip() ? PLAYER : AI;
                           setState(prev => ({ ...prev, turn: winner }));
                         }} cursor="pointer" />
-                      <text textAnchor="middle" dominantBaseline="middle" fill="#fff" fontSize={isDesktop ? 16 : 14} fontWeight="700">Click coin to toss</text>
+                      <text textAnchor="middle" dominantBaseline="middle" fill="#fff" fontSize={isMobile ? 12 : isTablet ? 14 : 16} fontWeight="700">Click coin to toss</text>
                     </g>
                   </g>
                 )}
@@ -640,7 +697,7 @@ export default function DotsAndBoxes({ currentUser }) {
             </div>
           </div>
 
-          <div className="w-full md:w-80 bg-gray-900/60 rounded-xl p-4 border border-gray-800">
+          <div className="w-full lg:w-80 bg-gray-900/60 rounded-xl p-3 sm:p-4 border border-gray-800">
             <div className="mb-4">
               <div className="text-sm text-gray-400">Turn</div>
               <div className="text-lg font-semibold">
@@ -654,9 +711,9 @@ export default function DotsAndBoxes({ currentUser }) {
                   <div className="text-emerald-400 font-semibold">{points}</div>
                 </div>
                 <div className="grid grid-cols-1 gap-2">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm">2 moves (2000 pts)</div>
-                    <div className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
+                    <div className="text-xs sm:text-sm">2 moves (2000 pts)</div>
+                    <div className="flex items-center gap-1 sm:gap-2">
                       <span className="text-xs text-gray-400">x{powerUps.twoMoves || 0}</span>
                       <button
                         className="px-2 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50"
@@ -681,9 +738,9 @@ export default function DotsAndBoxes({ currentUser }) {
                       >Use</button>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm">4 moves (3500 pts)</div>
-                    <div className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
+                    <div className="text-xs sm:text-sm">4 moves (3500 pts)</div>
+                    <div className="flex items-center gap-1 sm:gap-2">
                       <span className="text-xs text-gray-400">x{powerUps.fourMoves || 0}</span>
                       <button
                         className="px-2 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50"
@@ -714,17 +771,17 @@ export default function DotsAndBoxes({ currentUser }) {
                 )}
               </div>
             )}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-lg bg-gray-800 p-3">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              <div className="rounded-lg bg-gray-800 p-2 sm:p-3">
                 <div className="text-xs text-gray-400">You</div>
-                <div className="text-2xl font-bold text-emerald-400">{pScore}</div>
+                <div className="text-xl sm:text-2xl font-bold text-emerald-400">{pScore}</div>
               </div>
-              <div className="rounded-lg bg-gray-800 p-3">
+              <div className="rounded-lg bg-gray-800 p-2 sm:p-3">
                 <div className="text-xs text-gray-400">Computer</div>
-                <div className="text-2xl font-bold text-orange-400">{aiScore}</div>
+                <div className="text-xl sm:text-2xl font-bold text-orange-400">{aiScore}</div>
               </div>
             </div>
-            <div className="mt-4 text-sm text-gray-400">Boxes captured: {pScore + aiScore} / {totalBoxes}</div>
+            <div className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-400">Boxes captured: {pScore + aiScore} / {totalBoxes}</div>
 
             {gameOver && (
               <div className="mt-4 p-3 rounded-lg bg-gradient-to-br from-indigo-900/40 to-fuchsia-900/40 border border-indigo-700/40">
@@ -741,15 +798,15 @@ export default function DotsAndBoxes({ currentUser }) {
               </div>
             )}
 
-            <div className="mt-6 text-xs text-gray-500 leading-relaxed">
+            <div className="mt-4 sm:mt-6 text-xs text-gray-500 leading-relaxed">
               Tip: Avoid creating a third side of a box until you can take a long chain.
             </div>
-            <div className="mt-6">
+            <div className="mt-4 sm:mt-6">
               <div className="flex items-center justify-between mb-2">
-                <div className="font-semibold">Leaderboard (Local)</div>
+                <div className="font-semibold text-sm sm:text-base">Leaderboard</div>
                 {/* Clearing server leaderboard is privileged; no client clear */}
               </div>
-              <div className="flex gap-2 mb-3">
+              <div className="flex flex-col sm:flex-row gap-2 mb-3">
                 <select
                   className="flex-1 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs"
                   value={filterDifficulty}
@@ -771,16 +828,16 @@ export default function DotsAndBoxes({ currentUser }) {
                   <option>5x5</option>
                 </select>
               </div>
-              <div className="max-h-72 overflow-y-auto rounded border border-gray-800">
+              <div className="max-h-48 sm:max-h-72 overflow-y-auto rounded border border-gray-800">
                 <table className="w-full text-xs">
                   <thead className="bg-gray-800/70 text-gray-300 sticky top-0">
                     <tr>
-                      <th className="text-left px-2 py-1 font-medium">User</th>
-                      <th className="text-left px-2 py-1 font-medium">Result</th>
-                      <th className="text-left px-2 py-1 font-medium">Score</th>
-                      <th className="text-left px-2 py-1 font-medium">Grid</th>
-                      <th className="text-left px-2 py-1 font-medium">Diff</th>
-                      <th className="text-left px-2 py-1 font-medium">When</th>
+                      <th className="text-left px-1 sm:px-2 py-1 font-medium">User</th>
+                      <th className="text-left px-1 sm:px-2 py-1 font-medium">Result</th>
+                      <th className="text-left px-1 sm:px-2 py-1 font-medium">Score</th>
+                      <th className="hidden sm:table-cell text-left px-2 py-1 font-medium">Grid</th>
+                      <th className="hidden sm:table-cell text-left px-2 py-1 font-medium">Diff</th>
+                      <th className="hidden lg:table-cell text-left px-2 py-1 font-medium">When</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -791,16 +848,16 @@ export default function DotsAndBoxes({ currentUser }) {
                     ) : (
                       filteredLeaderboard.map(row => (
                         <tr key={row.id} className="odd:bg-gray-900/30">
-                          <td className="px-2 py-1">{row.username || 'Guest'}</td>
-                          <td className="px-2 py-1">
-                            <span className={row.result === 'Win' ? 'text-emerald-400' : row.result === 'Loss' ? 'text-red-400' : 'text-gray-300'}>
+                          <td className="px-1 sm:px-2 py-1 text-xs">{row.username || 'Guest'}</td>
+                          <td className="px-1 sm:px-2 py-1">
+                            <span className={`text-xs ${row.result === 'Win' ? 'text-emerald-400' : row.result === 'Loss' ? 'text-red-400' : 'text-gray-300'}`}>
                               {row.result}
                             </span>
                           </td>
-                          <td className="px-2 py-1">{row.you} - {row.ai}</td>
-                          <td className="px-2 py-1">{row.grid}</td>
-                          <td className="px-2 py-1">{row.difficulty}</td>
-                          <td className="px-2 py-1">{new Date(row.createdAt || row.date).toLocaleString()}</td>
+                          <td className="px-1 sm:px-2 py-1 text-xs">{row.you} - {row.ai}</td>
+                          <td className="hidden sm:table-cell px-2 py-1 text-xs">{row.grid}</td>
+                          <td className="hidden sm:table-cell px-2 py-1 text-xs">{row.difficulty}</td>
+                          <td className="hidden lg:table-cell px-2 py-1 text-xs">{new Date(row.createdAt || row.date).toLocaleString()}</td>
                         </tr>
                       ))
                     )}
@@ -814,25 +871,25 @@ export default function DotsAndBoxes({ currentUser }) {
 
       {/* Instructions Modal */}
       {showInstructions && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl shadow-2xl border border-gray-700 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 text-transparent bg-clip-text">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl sm:rounded-2xl shadow-2xl border border-gray-700 max-w-2xl w-full max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+            <div className="p-4 sm:p-6">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-amber-400 to-orange-500 text-transparent bg-clip-text">
                   🎮 How to Play Dots & Boxes
                 </h2>
                 <button
                   onClick={() => setShowInstructions(false)}
-                  className="text-gray-400 hover:text-white transition-colors text-2xl"
+                  className="text-gray-400 hover:text-white transition-colors text-xl sm:text-2xl"
                 >
                   ×
                 </button>
               </div>
 
-              <div className="space-y-6 text-gray-300">
-                <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-                  <h3 className="text-lg font-semibold text-amber-400 mb-3">🎯 Objective</h3>
-                  <p className="leading-relaxed">
+              <div className="space-y-4 sm:space-y-6 text-gray-300">
+                <div className="bg-gray-800/50 rounded-lg p-3 sm:p-4 border border-gray-700">
+                  <h3 className="text-base sm:text-lg font-semibold text-amber-400 mb-2 sm:mb-3">🎯 Objective</h3>
+                  <p className="leading-relaxed text-sm sm:text-base">
                     Capture more boxes than your opponent by connecting dots with lines. The player with the most boxes at the end wins!
                   </p>
                 </div>
@@ -924,10 +981,10 @@ export default function DotsAndBoxes({ currentUser }) {
                 </div>
               </div>
 
-              <div className="mt-8 flex justify-center">
+              <div className="mt-6 sm:mt-8 flex justify-center">
                 <button
                   onClick={() => setShowInstructions(false)}
-                  className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 transition-all px-8 py-3 rounded-lg font-semibold shadow-lg"
+                  className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 transition-all px-6 sm:px-8 py-2 sm:py-3 rounded-lg font-semibold shadow-lg text-sm sm:text-base"
                 >
                   Let's Play! 🎮
                 </button>
