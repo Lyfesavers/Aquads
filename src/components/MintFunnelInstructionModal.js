@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaInfoCircle, FaTimes, FaExternalLinkAlt, FaExclamationTriangle, FaRedo } from 'react-icons/fa';
+import { FaInfoCircle, FaTimes, FaExternalLinkAlt } from 'react-icons/fa';
 
 const MintFunnelInstructionModal = ({ onClose }) => {
   return (
@@ -32,7 +32,7 @@ const MintFunnelInstructionModal = ({ onClose }) => {
 
         {/* Instructions */}
         <div className="px-6 pb-6">
-          <div className="mb-4">
+          <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-4 mb-4">
             <h3 className="font-semibold text-blue-300 mb-2 flex items-center gap-2">
               <FaExternalLinkAlt size={14} />
               Quick Setup Guide:
@@ -56,21 +56,6 @@ const MintFunnelInstructionModal = ({ onClose }) => {
             <p className="text-yellow-200 text-sm">
               <strong>Why "Advertiser"?</strong> This role gives you access to create and manage ad campaigns on the MintFunnel platform.
             </p>
-          </div>
-
-          {/* Troubleshooting section */}
-          <div className="bg-red-900/20 border border-red-700 rounded-lg p-3 mb-4">
-            <div className="flex items-start gap-2">
-              <FaExclamationTriangle className="text-red-400 mt-0.5 flex-shrink-0" size={14} />
-              <div>
-                <h4 className="font-semibold text-red-300 text-sm mb-1">Troubleshooting Tips:</h4>
-                <ul className="text-xs text-red-200 space-y-1">
-                  <li>• If you see a "419" or "Page Expired" error, click the <FaRedo className="inline" size={10} /> Refresh button</li>
-                  <li>• If issues persist, try opening MintFunnel in a new tab</li>
-                  <li>• Clear your browser cache if problems continue</li>
-                </ul>
-              </div>
-            </div>
           </div>
 
           {/* Action button */}

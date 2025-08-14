@@ -7,7 +7,7 @@
     <meta name="theme-color" content="#000000" />
     <meta name="google-site-verification" content="UMC2vp6y4mZgNAXQYgv9nqe83JsEKOIg7Tv8tDT7_TA" />
     
-    <!-- Content Security Policy for Transak, TradingView, and MintFunnel integration -->
+    <!-- Content Security Policy for Transak and TradingView integration -->
     <meta http-equiv="Content-Security-Policy" content="
       default-src 'self' https:;
       script-src 'self' 'unsafe-inline' 'unsafe-eval' 
@@ -32,18 +32,16 @@
         https://charting-library.tradingview.com
         https://symbol-search.tradingview.com
         https://cdn.coinscribble.sapient.tools
-        https://*.mintfunnel.co
-        https://mintfunnel.co
         blob: data:;
       style-src 'self' 'unsafe-inline' https:;
       img-src 'self' https: data: blob:;
       font-src 'self' https: data:;
       connect-src 'self' https: wss: ws:;
-      frame-src 'self' https: https://*.mintfunnel.co https://mintfunnel.co;
+      frame-src 'self' https:;
       media-src 'self' https: data: blob:;
       object-src 'none';
       base-uri 'self';
-      form-action 'self' https: https://*.mintfunnel.co https://mintfunnel.co;
+      form-action 'self' https:;
     ">
     
     <!-- Permissions Policy for Transak functionality -->
