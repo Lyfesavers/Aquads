@@ -26,6 +26,8 @@ const leaderboardRoutes = require('./routes/leaderboard');
 
 // Middleware
 const app = express();
+// Behind Render/nginx, trust proxy to honor X-Forwarded-* headers
+app.set('trust proxy', 1);
 
 // CORS configuration
 app.use((req, res, next) => {

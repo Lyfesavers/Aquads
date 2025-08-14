@@ -7,6 +7,22 @@ const requireEmailVerification = require('../middleware/emailVerification');
 const User = require('../models/User');
 const { awardGameVotePoints, revokeGameVotePoints } = require('./points');
 
+// Get popular game categories (define BEFORE dynamic routes)
+router.get('/categories/popular', async (req, res) => {
+  try {
+    const categories = await Game.aggregate([
+      { $match: { status: 'active' } },
+      { $group: { _id: '$category', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 }
+    ]);
+    res.json(categories.map(cat => ({ name: cat._id, count: cat.count })));
+  } catch (error) {
+    console.error('Error fetching popular categories:', error);
+    res.status(500).json({ error: 'Failed to fetch categories' });
+  }
+});
+
 // Get all games
 router.get('/', async (req, res) => {
   try {
@@ -55,7 +71,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get game by ID
+// Get game by ID (place AFTER specific routes)
 router.get('/:id', async (req, res) => {
   try {
     const game = await Game.findById(req.params.id)
@@ -222,21 +238,6 @@ router.get('/:id/voted', auth, async (req, res) => {
   }
 });
 
-// Get popular game categories
-router.get('/categories/popular', async (req, res) => {
-  try {
-    const categories = await Game.aggregate([
-      { $match: { status: 'active' } },
-      { $group: { _id: '$category', count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 10 }
-    ]);
-    
-    res.json(categories.map(cat => ({ name: cat._id, count: cat.count })));
-  } catch (error) {
-    console.error('Error fetching popular categories:', error);
-    res.status(500).json({ error: 'Failed to fetch categories' });
-  }
-});
+// (moved categories route above)
 
 module.exports = router; 

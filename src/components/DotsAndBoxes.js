@@ -222,6 +222,7 @@ export default function DotsAndBoxes({ currentUser }) {
   const [animBox, setAnimBox] = useState(null); // { r, c, owner }
   const [gameOver, setGameOver] = useState(false);
   const [resultRecorded, setResultRecorded] = useState(false);
+  const hasSubmittedRef = useRef(false);
 
   const [leaderboard, setLeaderboard] = useState([]);
   const [filterDifficulty, setFilterDifficulty] = useState('All');
@@ -370,7 +371,7 @@ export default function DotsAndBoxes({ currentUser }) {
 
   // Record result once on game over
   useEffect(() => {
-    if (!gameOver || resultRecorded) return;
+    if (!gameOver || resultRecorded || hasSubmittedRef.current) return;
     const result = pScore === aiScore ? 'Draw' : pScore > aiScore ? 'Win' : 'Loss';
     const entryPayload = {
       result,
@@ -381,6 +382,7 @@ export default function DotsAndBoxes({ currentUser }) {
     };
     (async () => {
       try {
+        hasSubmittedRef.current = true;
         const saved = await submitLeaderboard('dots-and-boxes', entryPayload);
         setLeaderboard(prev => [saved, ...prev].slice(0, 50));
       } catch (e) {
@@ -397,7 +399,7 @@ export default function DotsAndBoxes({ currentUser }) {
         setResultRecorded(true);
       }
     })();
-  }, [gameOver, resultRecorded, pScore, aiScore, rows, cols, difficulty, currentUser, leaderboard]);
+  }, [gameOver, resultRecorded, pScore, aiScore, rows, cols, difficulty, currentUser]);
 
   const filteredLeaderboard = useMemo(() => {
     return leaderboard
