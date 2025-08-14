@@ -59,6 +59,7 @@ import BumpReminderModal from './components/BumpReminderModal';
 import logger from './utils/logger';
 import './App.css';
 import FilterControls from './components/FilterControls';
+import DotsAndBoxes from './components/DotsAndBoxes';
 
 // Simple debounce function implementation
 const debounce = (func, wait) => {
@@ -2628,6 +2629,7 @@ function App() {
               onBannerSubmit={handleBannerSubmit}
             />
           } />
+          <Route path="/games/dots-and-boxes" element={<DotsAndBoxes currentUser={currentUser} />} />
           <Route path="/games" element={
             <GameHub 
               currentUser={currentUser}

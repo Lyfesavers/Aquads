@@ -1185,6 +1185,30 @@ export const fetchGameCategories = async () => {
   }
 };
 
+// Leaderboard API for mini-games
+export const getLeaderboard = async (game, { limit = 50, difficulty, grid } = {}) => {
+  const params = new URLSearchParams();
+  if (limit) params.set('limit', String(limit));
+  if (difficulty) params.set('difficulty', difficulty);
+  if (grid) params.set('grid', grid);
+  const res = await fetch(`${API_URL}/leaderboard/${encodeURIComponent(game)}${params.toString() ? `?${params.toString()}` : ''}`);
+  if (!res.ok) throw new Error('Failed to fetch leaderboard');
+  return res.json();
+};
+
+export const submitLeaderboard = async (game, payload) => {
+  const res = await fetch(`${API_URL}/leaderboard/${encodeURIComponent(game)}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader()
+    },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) throw new Error('Failed to submit score');
+  return res.json();
+};
+
 // Add a function to reconnect to socket with current token
 export const reconnectSocket = () => {
   const savedUser = localStorage.getItem('currentUser');
