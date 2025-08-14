@@ -23,6 +23,7 @@ import OnlineStatusIndicator from './OnlineStatusIndicator';
 import useUserPresence from '../hooks/useUserPresence';
 import useUserStatusUpdates from '../hooks/useUserStatusUpdates';
 import ServiceMediaDisplay from './ServiceMediaDisplay';
+import SkillBadges from './SkillBadges';
 import logger from '../utils/logger';
 
 // Helper function for country flags - using images instead of emojis
@@ -1380,6 +1381,14 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                               </button>
                             </div>
                           </div>
+                          
+                          {/* Skill Badges Display */}
+                          {service.seller?.skillBadges && service.seller.skillBadges.length > 0 && (
+                            <div className="mb-3">
+                              <SkillBadges badges={service.seller.skillBadges} compact={true} />
+                            </div>
+                          )}
+                          
                           <h3 className="text-lg font-medium mb-2 line-clamp-2 group-hover:text-indigo-400 transition-colors">
                             {service.title}
                           </h3>
