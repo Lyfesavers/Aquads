@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Token = require('../models/Token');
 const axios = require('axios');
+const { emitTokenUpdate } = require('../socket');
 
 let lastUpdateTime = 0;
 const UPDATE_INTERVAL = 4.5 * 60 * 1000; // 4.5 minutes - pushing to 9,999 calls/month limit (320 calls/day)
@@ -120,6 +121,15 @@ const updateTokenCache = async (force = false) => {
     lastUpdateTime = now;
 
     console.log(`Successfully updated/inserted ${tokens.length} tokens in database`);
+
+    // Emit WebSocket event for real-time token updates
+    try {
+      emitTokenUpdate('update', tokens);
+      console.log('Emitted token update via WebSocket');
+    } catch (socketError) {
+      console.error('Failed to emit token update via WebSocket:', socketError);
+      // Don't fail the token update if WebSocket fails
+    }
 
     return tokens;
   } catch (error) {

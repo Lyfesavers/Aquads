@@ -140,6 +140,15 @@ function emitAdUpdate(type, ad) {
   io.emit('adsUpdated', { type, ad });
 }
 
+// Utility function to emit token updates
+function emitTokenUpdate(type, tokens) {
+  if (!io) {
+    return;
+  }
+  
+  io.emit('tokensUpdated', { type, tokens });
+}
+
 // Utility function to get online users count
 function getOnlineUsersCount() {
   return connectedUsers.size;
@@ -164,6 +173,7 @@ module.exports = {
   init,
   getIO: () => getIO(),
   emitAdUpdate,
+  emitTokenUpdate,
   getOnlineUsersCount,
   isUserOnline,
   getConnectedUsers,

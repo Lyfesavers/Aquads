@@ -6,6 +6,7 @@ import { Helmet } from 'react-helmet';
 import TokenDetails from './TokenDetails';
 import SocialMediaRaids from './SocialMediaRaids';
 import logger from '../utils/logger';
+import { socket } from '../services/api';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -52,6 +53,8 @@ const TokenList = ({ currentUser, showNotification }) => {
   const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState('tokens');
   const [isTableExpanded, setIsTableExpanded] = useState(false);
+  const [isSocketConnected, setIsSocketConnected] = useState(false);
+  const [fallbackInterval, setFallbackInterval] = useState(null);
 
 
 
@@ -150,18 +153,73 @@ const TokenList = ({ currentUser, showNotification }) => {
     }
   };
 
+  // WebSocket token updates with fallback
   useEffect(() => {
+    // Initial token fetch
     fetchInitialTokens();
-    const refreshInterval = setInterval(() => {
-      if (!document.hidden && !showDetails) {
-        fetchInitialTokens(true);
-      }
-    }, 60000);
 
-    return () => {
-      clearInterval(refreshInterval);
+    // WebSocket event handlers
+    const handleTokenUpdate = (data) => {
+      if (data.type === 'update' && Array.isArray(data.tokens)) {
+        logger.log('Received token update via WebSocket');
+        setTokens(data.tokens);
+        setFilteredTokens(data.tokens);
+        setError(null);
+      }
     };
-  }, [showDetails]);
+
+    const handleSocketConnect = () => {
+      logger.log('Socket connected - using real-time token updates');
+      setIsSocketConnected(true);
+      // Clear fallback interval when socket connects
+      if (fallbackInterval) {
+        clearInterval(fallbackInterval);
+        setFallbackInterval(null);
+      }
+    };
+
+    const handleSocketDisconnect = () => {
+      logger.log('Socket disconnected - switching to fallback mode');
+      setIsSocketConnected(false);
+      // Start fallback interval when socket disconnects
+      if (!fallbackInterval) {
+        const interval = setInterval(() => {
+          if (!document.hidden && !showDetails) {
+            fetchInitialTokens(true);
+          }
+        }, 60000); // 60-second fallback
+        setFallbackInterval(interval);
+      }
+    };
+
+    // Set up socket event listeners
+    socket.on('tokensUpdated', handleTokenUpdate);
+    socket.on('connect', handleSocketConnect);
+    socket.on('disconnect', handleSocketDisconnect);
+
+    // Check initial socket connection status
+    if (socket.connected) {
+      setIsSocketConnected(true);
+    } else {
+      // Start fallback immediately if socket is not connected
+      const interval = setInterval(() => {
+        if (!document.hidden && !showDetails) {
+          fetchInitialTokens(true);
+        }
+      }, 60000);
+      setFallbackInterval(interval);
+    }
+
+    // Cleanup function
+    return () => {
+      socket.off('tokensUpdated', handleTokenUpdate);
+      socket.off('connect', handleSocketConnect);
+      socket.off('disconnect', handleSocketDisconnect);
+      if (fallbackInterval) {
+        clearInterval(fallbackInterval);
+      }
+    };
+  }, [showDetails, fallbackInterval]);
 
   // DEX integration
   const handleDexClick = (dex) => {
@@ -246,13 +304,22 @@ const TokenList = ({ currentUser, showNotification }) => {
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             {viewMode === 'tokens' ? (
-              <input
-                type="text"
-                placeholder="Search tokens..."
-                value={searchTerm}
-                onChange={(e) => handleSearch(e.target.value)}
-                className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  placeholder="Search tokens..."
+                  value={searchTerm}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {/* Connection status indicator */}
+                <div className="flex items-center gap-2 text-xs">
+                  <div className={`w-2 h-2 rounded-full ${isSocketConnected ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                  <span className="text-gray-300">
+                    {isSocketConnected ? 'Live updates' : 'Fallback mode'}
+                  </span>
+                </div>
+              </div>
             ) : (
               <h2 className="text-xl font-semibold text-white">Social Media Raids</h2>
             )}
