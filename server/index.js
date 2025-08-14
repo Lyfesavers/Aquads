@@ -154,6 +154,8 @@ mongoose.connect(process.env.MONGODB_URI, {
   socketTimeoutMS: 45000, // Close sockets after 45s
 }).then(() => {
   console.log('Connected to MongoDB');
+  // Initialize skill tests if they don't exist
+  initializeSkillTests();
 }).catch(err => {
   console.error('MongoDB connection error:', err);
   // Don't exit the process, let it retry
@@ -570,3 +572,370 @@ if (process.env.NODE_ENV === 'production') {
 //     res.status(500).send('Error generating sitemap');
 //   }
 // }); 
+
+// Function to initialize skill tests
+async function initializeSkillTests() {
+  try {
+    const SkillTest = require('./models/SkillTest');
+    const existingTests = await SkillTest.countDocuments();
+    
+    if (existingTests === 0) {
+      console.log('No skill tests found. Initializing default tests...');
+      
+      const skillTests = [
+        {
+          title: "English Proficiency Test",
+          description: "Test your English grammar, vocabulary, and business communication skills. This test covers essential language skills needed for professional communication with clients.",
+          category: "english",
+          difficulty: "intermediate",
+          timeLimit: 25,
+          passingScore: 80,
+          badge: {
+            name: "English Proficient",
+            description: "Demonstrates strong English communication skills",
+            icon: "📚",
+            color: "#3B82F6"
+          },
+          questions: [
+            {
+              question: "Which sentence demonstrates correct business email etiquette?",
+              options: [
+                "Hey, I need this done ASAP!",
+                "Dear Mr. Johnson, I hope this email finds you well. I am writing to follow up on our previous discussion regarding the project timeline.",
+                "Hi there, just checking in about the thing we talked about.",
+                "Yo, what's up with that project?"
+              ],
+              correctAnswer: 1,
+              explanation: "Professional business emails should use formal greetings, proper grammar, and clear, respectful language."
+            },
+            {
+              question: "Choose the correct form: 'The team _____ working on the project for three weeks.'",
+              options: ["has been", "have been", "is been", "are been"],
+              correctAnswer: 0,
+              explanation: "Use 'has been' with singular subjects like 'team' when referring to a group as a single unit."
+            },
+            {
+              question: "What is the best way to handle a client complaint?",
+              options: [
+                "Ignore it and hope it goes away",
+                "Respond defensively to protect your reputation",
+                "Listen actively, acknowledge the issue, and propose a solution",
+                "Blame someone else for the problem"
+              ],
+              correctAnswer: 2,
+              explanation: "Active listening, acknowledgment, and problem-solving are key to effective complaint resolution."
+            },
+            {
+              question: "Which word is a synonym for 'efficient'?",
+              options: ["slow", "productive", "expensive", "difficult"],
+              correctAnswer: 1,
+              explanation: "Productive means achieving results effectively, similar to efficient."
+            },
+            {
+              question: "In professional writing, which is preferred?",
+              options: [
+                "I'm gonna finish this project soon.",
+                "I will complete this project by the deadline.",
+                "I'll get it done when I can.",
+                "This project is almost done."
+              ],
+              correctAnswer: 1,
+              explanation: "Professional writing should use complete sentences and formal language."
+            }
+          ]
+        },
+        {
+          title: "Customer Service Best Practices",
+          description: "Master the fundamentals of excellent customer service including complaint handling, communication skills, and problem-solving techniques.",
+          category: "customer-service",
+          difficulty: "beginner",
+          timeLimit: 20,
+          passingScore: 80,
+          badge: {
+            name: "Customer Service Expert",
+            description: "Demonstrates excellent customer service skills",
+            icon: "🎧",
+            color: "#10B981"
+          },
+          questions: [
+            {
+              question: "What is the first step when handling a customer complaint?",
+              options: [
+                "Immediately offer a refund",
+                "Listen actively and acknowledge the customer's feelings",
+                "Defend your company's position",
+                "Transfer the call to someone else"
+              ],
+              correctAnswer: 1,
+              explanation: "Active listening and acknowledgment show the customer you care about their concerns."
+            },
+            {
+              question: "Which response demonstrates empathy?",
+              options: [
+                "I understand how frustrating this must be for you.",
+                "That's not our policy.",
+                "You should have read the terms first.",
+                "I can't help you with that."
+              ],
+              correctAnswer: 0,
+              explanation: "Empathy involves understanding and acknowledging the customer's emotional state."
+            },
+            {
+              question: "What should you do if you don't know the answer to a customer's question?",
+              options: [
+                "Make up an answer",
+                "Tell them to figure it out themselves",
+                "Find someone who knows the answer or research it",
+                "Ignore the question"
+              ],
+              correctAnswer: 2,
+              explanation: "It's better to find the correct answer than to provide incorrect information."
+            },
+            {
+              question: "How should you handle an angry customer?",
+              options: [
+                "Match their anger level",
+                "Stay calm, listen, and work toward a solution",
+                "Hang up on them",
+                "Tell them to calm down"
+              ],
+              correctAnswer: 1,
+              explanation: "Staying calm helps de-escalate the situation and find a resolution."
+            },
+            {
+              question: "What is the 'golden rule' of customer service?",
+              options: [
+                "The customer is always right",
+                "Treat others as you would like to be treated",
+                "Always make the sale",
+                "Never admit mistakes"
+              ],
+              correctAnswer: 1,
+              explanation: "The golden rule applies to customer service - treat customers with the same respect you'd want."
+            }
+          ]
+        },
+        {
+          title: "Communication Skills Assessment",
+          description: "Test your professional communication skills including writing, active listening, and conflict resolution abilities.",
+          category: "communication",
+          difficulty: "intermediate",
+          timeLimit: 30,
+          passingScore: 80,
+          badge: {
+            name: "Communication Pro",
+            description: "Demonstrates strong professional communication skills",
+            icon: "💬",
+            color: "#8B5CF6"
+          },
+          questions: [
+            {
+              question: "What is the most important element of effective communication?",
+              options: [
+                "Speaking quickly",
+                "Using complex vocabulary",
+                "Ensuring the message is understood",
+                "Being brief"
+              ],
+              correctAnswer: 2,
+              explanation: "Effective communication is measured by whether the message is understood by the recipient."
+            },
+            {
+              question: "How should you handle a conflict with a client?",
+              options: [
+                "Avoid them completely",
+                "Address it directly, listen to their perspective, and find common ground",
+                "Blame them for the problem",
+                "Ignore the conflict"
+              ],
+              correctAnswer: 1,
+              explanation: "Direct, respectful conflict resolution leads to better relationships and solutions."
+            },
+            {
+              question: "What is the purpose of a project brief?",
+              options: [
+                "To waste time",
+                "To clearly define project goals, scope, and expectations",
+                "To make the client happy",
+                "To avoid doing work"
+              ],
+              correctAnswer: 1,
+              explanation: "A project brief ensures all parties understand the project requirements and expectations."
+            },
+            {
+              question: "When writing a professional email, what should you include in the subject line?",
+              options: [
+                "Your name only",
+                "A clear, specific description of the email's purpose",
+                "The word 'urgent'",
+                "Nothing"
+              ],
+              correctAnswer: 1,
+              explanation: "A clear subject line helps recipients understand the email's purpose and priority."
+            },
+            {
+              question: "What is the best way to give constructive feedback?",
+              options: [
+                "Be harsh and direct",
+                "Use the sandwich method: positive, improvement, positive",
+                "Only point out problems",
+                "Avoid giving feedback"
+              ],
+              correctAnswer: 1,
+              explanation: "The sandwich method helps maintain relationships while providing helpful feedback."
+            }
+          ]
+        },
+        {
+          title: "Project Management Basics",
+          description: "Test your understanding of fundamental project management concepts including planning, organization, and time management.",
+          category: "project-management",
+          difficulty: "beginner",
+          timeLimit: 25,
+          passingScore: 80,
+          badge: {
+            name: "Project Manager",
+            description: "Demonstrates basic project management skills",
+            icon: "📋",
+            color: "#F59E0B"
+          },
+          questions: [
+            {
+              question: "What is the first step in project management?",
+              options: [
+                "Start working immediately",
+                "Define the project scope and objectives",
+                "Set a deadline",
+                "Hire team members"
+              ],
+              correctAnswer: 1,
+              explanation: "Clear scope and objectives provide direction for the entire project."
+            },
+            {
+              question: "What is a project milestone?",
+              options: [
+                "A problem in the project",
+                "A significant point or event in the project timeline",
+                "The end of the project",
+                "A team meeting"
+              ],
+              correctAnswer: 1,
+              explanation: "Milestones help track progress and keep projects on schedule."
+            },
+            {
+              question: "Why is time management important in projects?",
+              options: [
+                "To avoid working",
+                "To meet deadlines and stay within budget",
+                "To impress clients",
+                "To make the project longer"
+              ],
+              correctAnswer: 1,
+              explanation: "Effective time management ensures projects are completed on time and within budget."
+            },
+            {
+              question: "What should you do if a project is behind schedule?",
+              options: [
+                "Ignore it",
+                "Communicate with stakeholders and adjust the plan",
+                "Blame the client",
+                "Give up"
+              ],
+              correctAnswer: 1,
+              explanation: "Proactive communication and plan adjustment help manage delays effectively."
+            },
+            {
+              question: "What is the purpose of a project timeline?",
+              options: [
+                "To waste time",
+                "To visualize project phases and deadlines",
+                "To make the project longer",
+                "To confuse team members"
+              ],
+              correctAnswer: 1,
+              explanation: "Timelines help everyone understand project phases and deadlines."
+            }
+          ]
+        },
+        {
+          title: "Technical Skills Assessment",
+          description: "Test your knowledge of web development, design principles, and technical concepts commonly used in freelancing.",
+          category: "technical",
+          difficulty: "intermediate",
+          timeLimit: 30,
+          passingScore: 80,
+          badge: {
+            name: "Technical Expert",
+            description: "Demonstrates strong technical skills and knowledge",
+            icon: "💻",
+            color: "#EF4444"
+          },
+          questions: [
+            {
+              question: "What is responsive design?",
+              options: [
+                "A design that responds to user clicks",
+                "A design that adapts to different screen sizes and devices",
+                "A design that changes colors",
+                "A design that moves around"
+              ],
+              correctAnswer: 1,
+              explanation: "Responsive design ensures websites work well on all devices and screen sizes."
+            },
+            {
+              question: "What is the purpose of version control?",
+              options: [
+                "To make code longer",
+                "To track changes and collaborate on code",
+                "To delete code",
+                "To slow down development"
+              ],
+              correctAnswer: 1,
+              explanation: "Version control helps track changes and enables team collaboration."
+            },
+            {
+              question: "What is the difference between frontend and backend development?",
+              options: [
+                "There is no difference",
+                "Frontend is what users see, backend is server-side logic",
+                "Frontend is harder than backend",
+                "Backend is more important"
+              ],
+              correctAnswer: 1,
+              explanation: "Frontend handles user interface, backend handles server-side processing and data."
+            },
+            {
+              question: "What is the purpose of testing in software development?",
+              options: [
+                "To waste time",
+                "To ensure code works correctly and catch bugs early",
+                "To make the project longer",
+                "To impress clients"
+              ],
+              correctAnswer: 1,
+              explanation: "Testing helps ensure quality and catch issues before they reach users."
+            },
+            {
+              question: "What is the importance of documentation in technical projects?",
+              options: [
+                "It's not important",
+                "It helps others understand and maintain the code",
+                "It makes the code longer",
+                "It's required by law"
+              ],
+              correctAnswer: 1,
+              explanation: "Good documentation makes code maintainable and helps team collaboration."
+            }
+          ]
+        }
+      ];
+      
+      await SkillTest.insertMany(skillTests);
+      console.log(`✅ Successfully initialized ${skillTests.length} skill tests`);
+    } else {
+      console.log(`✅ Found ${existingTests} existing skill tests`);
+    }
+  } catch (error) {
+    console.error('Error initializing skill tests:', error);
+  }
+} 

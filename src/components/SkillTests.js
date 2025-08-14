@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaGraduationCap, FaClock, FaTrophy, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import { FaGraduationCap, FaClock, FaTrophy, FaCheckCircle, FaTimesCircle, FaExclamationTriangle, FaInfoCircle } from 'react-icons/fa';
 import { API_URL } from '../services/api';
 import SkillTestModal from './SkillTestModal';
 import SkillTestResults from './SkillTestResults';
@@ -25,13 +25,18 @@ const SkillTests = ({ currentUser }) => {
 
   const fetchTests = async () => {
     try {
+      setLoading(true);
+      setError(null);
       const response = await fetch(`${API_URL}/skill-tests`);
       if (response.ok) {
         const data = await response.json();
         setTests(data);
+      } else {
+        setError('Failed to load skill tests. Please try again later.');
       }
     } catch (error) {
-      setError('Failed to load skill tests');
+      console.error('Error fetching tests:', error);
+      setError('Unable to connect to the server. Please check your internet connection.');
     } finally {
       setLoading(false);
     }
@@ -127,10 +132,140 @@ const SkillTests = ({ currentUser }) => {
     }
   };
 
+  // Loading state
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
+      <div className="space-y-8">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold text-white mb-4 flex items-center justify-center">
+            <FaGraduationCap className="mr-3 text-blue-400" />
+            Skills Tests
+          </h2>
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+            Take these challenging tests to earn badges and showcase your skills to potential clients. 
+            Each test covers essential skills that will help you stand out in the marketplace.
+          </p>
+        </div>
+        
+        <div className="flex justify-center items-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto mb-4"></div>
+            <p className="text-gray-400">Loading skill tests...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="space-y-8">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold text-white mb-4 flex items-center justify-center">
+            <FaGraduationCap className="mr-3 text-blue-400" />
+            Skills Tests
+          </h2>
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+            Take these challenging tests to earn badges and showcase your skills to potential clients. 
+            Each test covers essential skills that will help you stand out in the marketplace.
+          </p>
+        </div>
+        
+        <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-6">
+          <div className="flex items-center mb-4">
+            <FaExclamationTriangle className="text-red-400 mr-3 text-xl" />
+            <h3 className="text-xl font-semibold text-white">Unable to Load Tests</h3>
+          </div>
+          <p className="text-red-400 mb-4">{error}</p>
+          <button
+            onClick={fetchTests}
+            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Empty state - no tests available
+  if (tests.length === 0) {
+    return (
+      <div className="space-y-8">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold text-white mb-4 flex items-center justify-center">
+            <FaGraduationCap className="mr-3 text-blue-400" />
+            Skills Tests
+          </h2>
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+            Take these challenging tests to earn badges and showcase your skills to potential clients. 
+            Each test covers essential skills that will help you stand out in the marketplace.
+          </p>
+        </div>
+        
+        <div className="bg-blue-500/10 border border-blue-500/50 rounded-lg p-6">
+          <div className="flex items-center mb-4">
+            <FaInfoCircle className="text-blue-400 mr-3 text-xl" />
+            <h3 className="text-xl font-semibold text-white">Tests Coming Soon</h3>
+          </div>
+          <p className="text-blue-400 mb-4">
+            We're currently setting up our skills tests. Check back soon to take tests in:
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+            <div className="bg-gray-700/50 rounded-lg p-4 border border-gray-600">
+              <div className="flex items-center space-x-3">
+                <span className="text-2xl">📚</span>
+                <div>
+                  <h4 className="font-semibold text-white">English Proficiency</h4>
+                  <p className="text-sm text-gray-400">Grammar, vocabulary, business communication</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-700/50 rounded-lg p-4 border border-gray-600">
+              <div className="flex items-center space-x-3">
+                <span className="text-2xl">🎧</span>
+                <div>
+                  <h4 className="font-semibold text-white">Customer Service</h4>
+                  <p className="text-sm text-gray-400">Handling complaints, communication skills</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-700/50 rounded-lg p-4 border border-gray-600">
+              <div className="flex items-center space-x-3">
+                <span className="text-2xl">💬</span>
+                <div>
+                  <h4 className="font-semibold text-white">Communication Skills</h4>
+                  <p className="text-sm text-gray-400">Professional writing, active listening</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-700/50 rounded-lg p-4 border border-gray-600">
+              <div className="flex items-center space-x-3">
+                <span className="text-2xl">📋</span>
+                <div>
+                  <h4 className="font-semibold text-white">Project Management</h4>
+                  <p className="text-sm text-gray-400">Planning, organization, time management</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-700/50 rounded-lg p-4 border border-gray-600">
+              <div className="flex items-center space-x-3">
+                <span className="text-2xl">💻</span>
+                <div>
+                  <h4 className="font-semibold text-white">Technical Skills</h4>
+                  <p className="text-sm text-gray-400">Web development, design, programming</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={fetchTests}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors"
+          >
+            Check Again
+          </button>
+        </div>
       </div>
     );
   }
@@ -262,12 +397,6 @@ const SkillTests = ({ currentUser }) => {
           test={selectedTest}
           onClose={() => setShowResults(false)}
         />
-      )}
-
-      {error && (
-        <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-2 rounded">
-          {error}
-        </div>
       )}
     </div>
   );
