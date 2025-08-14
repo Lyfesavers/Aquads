@@ -125,7 +125,6 @@ const updateTokenCache = async (force = false) => {
     // Emit WebSocket event for real-time token updates
     try {
       emitTokenUpdate('update', tokens);
-      console.log('Emitted token update via WebSocket');
     } catch (socketError) {
       console.error('Failed to emit token update via WebSocket:', socketError);
       // Don't fail the token update if WebSocket fails

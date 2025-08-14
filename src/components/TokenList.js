@@ -161,7 +161,6 @@ const TokenList = ({ currentUser, showNotification }) => {
     // WebSocket event handlers
     const handleTokenUpdate = (data) => {
       if (data.type === 'update' && Array.isArray(data.tokens)) {
-        logger.log('Received token update via WebSocket');
         setTokens(data.tokens);
         setFilteredTokens(data.tokens);
         setError(null);
@@ -169,7 +168,6 @@ const TokenList = ({ currentUser, showNotification }) => {
     };
 
     const handleSocketConnect = () => {
-      logger.log('Socket connected - using real-time token updates');
       setIsSocketConnected(true);
       // Clear fallback interval when socket connects
       if (fallbackInterval) {
@@ -179,7 +177,6 @@ const TokenList = ({ currentUser, showNotification }) => {
     };
 
     const handleSocketDisconnect = () => {
-      logger.log('Socket disconnected - switching to fallback mode');
       setIsSocketConnected(false);
       // Start fallback interval when socket disconnects
       if (!fallbackInterval) {
