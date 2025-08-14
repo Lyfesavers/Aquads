@@ -32,6 +32,9 @@ const app = express();
 const server = http.createServer(app);
 const io = socketModule.init(server);
 
+// Trust proxy when running behind Render/NGINX so rate limit and IP work correctly
+app.set('trust proxy', 1);
+
 // Periodic cleanup task for offline users
 setInterval(async () => {
   try {
@@ -194,6 +197,7 @@ app.use('/api/jobs', jobsRoutes);
 app.use('/api/blogs', blogsRoutes);
 // app.use('/api/sitemap', sitemapRoutes); // Disabled - using static sitemap
 app.use('/api/games', require('./routes/games'));
+app.use('/api/leaderboard', require('./routes/leaderboard'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/twitter-raids', require('./routes/twitter-raids'));
 app.use('/api/invoices', require('./routes/invoices'));

@@ -238,6 +238,7 @@ export default function DotsAndBoxes({ currentUser }) {
   }, []);
 
   const spacing = useMemo(() => size / (Math.max(rows, cols) + 2), [size, rows, cols]);
+  const isDesktop = useMemo(() => (typeof window !== 'undefined' ? window.innerWidth >= 1024 : true), []);
 
   useEffect(() => {
     // Check game over
@@ -498,30 +499,46 @@ export default function DotsAndBoxes({ currentUser }) {
                 ))}
 
                 {/* Edges */}
-                {edges.map((e, idx) => {
+                {edges.map((e) => {
                   const isHover = hover && hover.type === e.type && hover.r === e.r && hover.c === e.c;
-                  const stroke = e.taken ? 'url(#edgeGradient)' : isHover ? '#64748b' : '#334155';
-                  const strokeWidth = e.taken ? 6 : isHover ? 6 : 4;
-                  const dash = e.taken ? 0 : isHover ? 0 : 6;
+                  const visibleStroke = e.taken ? 'url(#edgeGradient)' : isHover ? '#7dd3fc' : '#64748b';
+                  const strokeWidth = e.taken ? (isDesktop ? 8 : 6) : isHover ? (isDesktop ? 8 : 6) : (isDesktop ? 6 : 4);
                   const lineKey = `${e.type}-${e.r}-${e.c}`;
+                  const hitWidth = isDesktop ? 22 : 12;
                   return (
-                    <line
-                      key={lineKey}
-                      x1={e.x1}
-                      y1={e.y1}
-                      x2={e.x2}
-                      y2={e.y2}
-                      stroke={stroke}
-                      strokeWidth={strokeWidth}
-                      strokeLinecap="round"
-                      strokeDasharray={dash}
-                      filter={e.taken ? 'url(#glow)' : 'none'}
-                      style={e.taken && animEdge ? { strokeDasharray: 300, strokeDashoffset: 0, transition: 'stroke-dashoffset 280ms ease-out' } : undefined}
-                      onMouseEnter={() => !e.taken && setHover({ type: e.type, r: e.r, c: e.c })}
-                      onMouseLeave={() => setHover(null)}
-                      onClick={() => !e.taken && onEdgeClick({ type: e.type, r: e.r, c: e.c })}
-                      cursor={e.taken ? 'default' : 'pointer'}
-                    />
+                    <g key={lineKey}>
+                      {/* Invisible, thick hit area to make clicking easier */}
+                      {!e.taken && (
+                        <line
+                          x1={e.x1}
+                          y1={e.y1}
+                          x2={e.x2}
+                          y2={e.y2}
+                          stroke="#000"
+                          strokeOpacity="0.001"
+                          strokeWidth={hitWidth}
+                          strokeLinecap="round"
+                          pointerEvents="stroke"
+                          onMouseEnter={() => setHover({ type: e.type, r: e.r, c: e.c })}
+                          onMouseLeave={() => setHover(null)}
+                          onClick={() => onEdgeClick({ type: e.type, r: e.r, c: e.c })}
+                          cursor="pointer"
+                        />
+                      )}
+
+                      {/* Visible edge */}
+                      <line
+                        x1={e.x1}
+                        y1={e.y1}
+                        x2={e.x2}
+                        y2={e.y2}
+                        stroke={visibleStroke}
+                        strokeWidth={strokeWidth}
+                        strokeLinecap="round"
+                        filter={e.taken ? 'url(#glow)' : 'none'}
+                        style={e.taken && animEdge ? { strokeDasharray: 300, strokeDashoffset: 0, transition: 'stroke-dashoffset 280ms ease-out' } : undefined}
+                      />
+                    </g>
                   );
                 })}
 
