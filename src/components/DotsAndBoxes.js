@@ -230,7 +230,7 @@ export default function DotsAndBoxes({ currentUser }) {
     };
   });
   const [difficulty, setDifficulty] = useState('Hard');
-  const [firstMove, setFirstMove] = useState('Random'); // 'You' | 'Computer' | 'Random'
+  // First move decided by on-screen coin toss
   const [hover, setHover] = useState(null); // { type, r, c }
   const [animEdge, setAnimEdge] = useState(null); // for line draw animation key
   const [animBox, setAnimBox] = useState(null); // { r, c, owner }
@@ -291,7 +291,7 @@ export default function DotsAndBoxes({ currentUser }) {
     const b = createEmptyBoard(newRows, newCols);
     setRows(newRows);
     setCols(newCols);
-    const initialTurn = firstMove === 'You' ? PLAYER : firstMove === 'Computer' ? AI : (Math.random() < 0.5 ? PLAYER : AI);
+    const initialTurn = null; // will be decided by coin toss click overlay
     setState({
       rows: newRows,
       cols: newCols,
@@ -448,16 +448,7 @@ export default function DotsAndBoxes({ currentUser }) {
               <option>Medium</option>
               <option>Easy</option>
             </select>
-            <select
-              value={firstMove}
-              onChange={(e) => setFirstMove(e.target.value)}
-              className="bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm"
-              title="Who moves first"
-            >
-              <option value="Random">First Move: Random</option>
-              <option value="You">First Move: You</option>
-              <option value="Computer">First Move: Computer</option>
-            </select>
+            {/* First move is decided via on-screen coin toss */}
             <select
               value={`${rows}x${cols}`}
               onChange={(e) => {
@@ -578,14 +569,25 @@ export default function DotsAndBoxes({ currentUser }) {
                   <circle key={`dot-${i}`} cx={d.x} cy={d.y} r={6} fill="#e2e8f0" />
                 ))}
 
-                {/* Coin toss overlay inside SVG area */}
-                {firstMove === 'Random' && (state.horizontalEdges.every(row => row.every(v => !v)) && state.verticalEdges.every(row => row.every(v => !v))) && (
+                {/* Coin toss overlay: click to decide who starts */}
+                {state.turn === null && (
                   <g>
                     <rect x={spacing*0.5} y={spacing*0.5} width={spacing*(cols+1)} height={spacing*(rows+1)} fill="#000" opacity="0.35" />
                     <g transform={`translate(${(spacing*(cols+2))/2}, ${(spacing*(rows+2))/2})`}>
-                      <circle r={isDesktop ? 60 : 44} fill="#0ea5e9" stroke="#a78bfa" strokeWidth="4" filter="url(#glow)" />
+                      <circle
+                        r={isDesktop ? 60 : 44}
+                        fill="#0ea5e9"
+                        stroke="#a78bfa"
+                        strokeWidth="4"
+                        filter="url(#glow)"
+                        onClick={() => {
+                          const winner = Math.random() < 0.5 ? PLAYER : AI;
+                          setState(prev => ({ ...prev, turn: winner }));
+                        }}
+                        cursor="pointer"
+                      />
                       <text textAnchor="middle" dominantBaseline="middle" fill="#fff" fontSize={isDesktop ? 16 : 14} fontWeight="700">
-                        {tossWinner ? `${tossWinner} starts` : 'Coin toss...'}
+                        Click coin to toss
                       </text>
                     </g>
                   </g>
