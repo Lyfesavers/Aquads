@@ -3,6 +3,7 @@ const router = express.Router();
 const Ad = require('../models/Ad');
 const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
+const { emitAdEvent } = require('../middleware/socketEmitter');
 const { awardListingPoints } = require('./points');
 const AffiliateEarning = require('../models/AffiliateEarning');
 const { v4: uuidv4 } = require('uuid');
@@ -251,7 +252,7 @@ const calculateBumpAmount = (type) => {
 };
 
 // POST route for creating new ad
-router.post('/', auth, requireEmailVerification, async (req, res) => {
+router.post('/', auth, requireEmailVerification, emitAdEvent('create'), async (req, res) => {
   try {
     const { title, logo, url, pairAddress, blockchain, referredBy, x, y, preferredSize, txSignature, paymentChain, chainSymbol, chainAddress, selectedAddons, totalAmount, isAffiliate, affiliateDiscount, discountCode } = req.body;
     
@@ -398,7 +399,7 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
 });
 
 // PUT route for updating an ad
-router.put('/:id', auth, requireEmailVerification, async (req, res) => {
+router.put('/:id', auth, requireEmailVerification, emitAdEvent('update'), async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
@@ -505,7 +506,7 @@ router.post('/bump', auth, async (req, res) => {
 });
 
 // Special route for position updates only (no auth required)
-router.put('/:id/position', async (req, res) => {
+router.put('/:id/position', emitAdEvent('update'), async (req, res) => {
   try {
     const { id } = req.params;
     const { x, y } = req.body;
@@ -759,7 +760,7 @@ router.get('/pending', auth, async (req, res) => {
 });
 
 // Approve an ad (admin only)
-router.post('/:id/approve', auth, async (req, res) => {
+router.post('/:id/approve', auth, emitAdEvent('update'), async (req, res) => {
   try {
     if (!req.user.isAdmin) {
       return res.status(403).json({ error: 'Admin access required' });
@@ -789,7 +790,7 @@ router.post('/:id/approve', auth, async (req, res) => {
 });
 
 // Reject an ad (admin only)
-router.post('/:id/reject', auth, async (req, res) => {
+router.post('/:id/reject', auth, emitAdEvent('delete'), async (req, res) => {
   try {
     if (!req.user.isAdmin) {
       return res.status(403).json({ error: 'Admin access required' });

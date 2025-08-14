@@ -185,8 +185,6 @@ const TokenList = ({ currentUser, showNotification }) => {
 
   const handleCloseDetails = () => {
     setShowDetails(false);
-    // Reset global flag to allow ad shrinking when token details are closed
-    window.tokenDetailsOpen = false;
   };
 
 
@@ -195,8 +193,6 @@ const TokenList = ({ currentUser, showNotification }) => {
     try {
       setSelectedToken(token);
       setShowDetails(true);
-      // Set global flag to prevent ad shrinking when token details are open
-      window.tokenDetailsOpen = true;
     } catch (error) {
       logger.error('Error handling token click:', error);
       showNotification('Failed to load token details', 'error');
