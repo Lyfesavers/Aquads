@@ -18,7 +18,7 @@ const SkillTests = ({ currentUser }) => {
 
   useEffect(() => {
     fetchTests();
-    if (currentUser) {
+    if (currentUser && currentUser.token) {
       fetchUserData();
     }
   }, [currentUser]);
@@ -44,25 +44,48 @@ const SkillTests = ({ currentUser }) => {
 
   const fetchUserData = async () => {
     try {
-      const token = currentUser.token || localStorage.getItem('token');
-      const headers = { 'Authorization': `Bearer ${token}` };
+      const token = currentUser.token;
+      if (!token) {
+        console.log('No user token available');
+        return;
+      }
 
+      const headers = { 
+        'Authorization': `Bearer ${token}`,
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      };
+
+      // Always fetch fresh data from database
       const [completionsResponse, badgesResponse] = await Promise.all([
-        fetch(`${API_URL}/skill-tests/user/completions`, { headers }),
-        fetch(`${API_URL}/skill-tests/user/badges`, { headers })
+        fetch(`${API_URL}/skill-tests/user/completions`, { 
+          headers,
+          cache: 'no-store'
+        }),
+        fetch(`${API_URL}/skill-tests/user/badges`, { 
+          headers,
+          cache: 'no-store'
+        })
       ]);
 
       if (completionsResponse.ok) {
         const completions = await completionsResponse.json();
+        console.log('Fetched completions from database:', completions);
         setUserCompletions(completions);
+      } else {
+        console.error('Failed to fetch completions:', completionsResponse.status);
       }
 
       if (badgesResponse.ok) {
         const badges = await badgesResponse.json();
+        console.log('Fetched badges from database:', badges);
         setUserBadges(badges);
+      } else {
+        console.error('Failed to fetch badges:', badgesResponse.status);
       }
     } catch (error) {
-      console.error('Error fetching user data:', error);
+      console.error('Error fetching user data from database:', error);
     }
   };
 
@@ -285,12 +308,21 @@ const SkillTests = ({ currentUser }) => {
       </div>
 
       {/* User Badges Showcase */}
-      {userBadges.length > 0 && (
-        <div className="bg-gray-800/50 rounded-lg p-6">
-          <h3 className="text-xl font-semibold text-white mb-4 flex items-center">
+      <div className="bg-gray-800/50 rounded-lg p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-semibold text-white flex items-center">
             <FaTrophy className="mr-2 text-yellow-400" />
             Your Earned Badges
           </h3>
+          <button
+            onClick={fetchUserData}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm transition-colors"
+            title="Refresh badges data"
+          >
+            Refresh
+          </button>
+        </div>
+        {userBadges.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {userBadges.map((badge, index) => (
               <div key={index} className="bg-gray-700/50 rounded-lg p-4 border border-gray-600">
@@ -305,8 +337,10 @@ const SkillTests = ({ currentUser }) => {
               </div>
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <p className="text-gray-400 text-center py-4">No badges earned yet. Take some skill tests to earn badges!</p>
+        )}
+      </div>
 
       {/* Tests Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
