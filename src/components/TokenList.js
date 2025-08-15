@@ -216,7 +216,7 @@ const TokenList = ({ currentUser, showNotification }) => {
         clearInterval(fallbackInterval);
       }
     };
-  }, [showDetails, fallbackInterval]);
+  }, [showDetails]); // Removed fallbackInterval from dependencies to prevent infinite re-renders
 
   // DEX integration
   const handleDexClick = (dex) => {
