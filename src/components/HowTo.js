@@ -4,22 +4,41 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import BlogList from './BlogList';
 import CreateBlogModal from './CreateBlogModal';
 import SkillTests from './SkillTests';
+import LoginModal from './LoginModal';
+import CreateAccountModal from './CreateAccountModal';
+import Dashboard from './Dashboard';
 import { API_URL } from '../services/api';
 
-
-
-
-const HowTo = ({ currentUser }) => {
+const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [blogs, setBlogs] = useState([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingBlog, setEditingBlog] = useState(null);
   const [error, setError] = useState(null);
   const [videoError, setVideoError] = useState(false);
   const [activeTab, setActiveTab] = useState('videos'); // 'videos', 'tests', 'blogs'
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const blogListRef = useRef(null);
   const PLAYLIST_ID = 'PLKHtulN0_0h8hun9lEhYHPGm4Mqophidj';
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showUserDropdown && !event.target.closest('.user-dropdown')) {
+        setShowUserDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showUserDropdown]);
 
   useEffect(() => {
     // Check if we're coming from BlogPage with edit state
@@ -191,6 +210,23 @@ const HowTo = ({ currentUser }) => {
     setShowCreateModal(true);
   };
 
+  const handleLoginClick = () => {
+    setShowLoginModal(true);
+  };
+
+  const handleCreateAccountClick = () => {
+    setShowCreateAccountModal(true);
+  };
+
+  const handleLoginSubmit = async (credentials) => {
+    await onLogin(credentials);
+    setShowLoginModal(false);
+  };
+
+  const handleCreateAccountSubmit = async (formData) => {
+    await onCreateAccount(formData);
+    setShowCreateAccountModal(false);
+  };
 
 
   return (
@@ -201,10 +237,10 @@ const HowTo = ({ currentUser }) => {
         <link rel="canonical" href={`${window.location.origin}${location.pathname.split('?')[0]}`} />
       </Helmet>
 
-      {/* Header */}
-      <div className="bg-gray-800/50 backdrop-blur-sm border-b border-gray-700/50">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center h-16">
+      {/* Header Navigation */}
+      <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm z-[200000]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
               <Link to="/" className="flex items-center">
                 <img 
@@ -215,19 +251,219 @@ const HowTo = ({ currentUser }) => {
                 />
               </Link>
             </div>
-            <div className="flex items-center space-x-4">
+            
+            {/* Mobile menu button */}
+            <div className="md:hidden">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="text-gray-300 hover:text-white p-2"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  {isMobileMenuOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
+              </button>
+            </div>
+
+            {/* Desktop menu */}
+            <div className="hidden md:flex items-center space-x-3">
+              {/* Main Navigation - Smaller buttons */}
               <Link
                 to="/marketplace"
-                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
+                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
+              >
+                Freelancer
+              </Link>
+              <Link
+                to="/games"
+                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
+              >
+                Games
+              </Link>
+              <Link
+                to="/crypto-ads"
+                className="bg-gradient-to-r from-green-500/80 to-emerald-600/80 hover:from-green-600/80 hover:to-emerald-700/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
+              >
+                Paid Ads
+              </Link>
+              <Link
+                to="/how-to"
+                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
+              >
+                Learn
+              </Link>
+              <Link
+                to="/project-info"
+                className="bg-gradient-to-r from-purple-500/80 to-pink-600/80 hover:from-purple-600/80 hover:to-pink-700/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
+              >
+                Why List?
+              </Link>
+
+              {currentUser ? (
+                <>
+                  {/* User Dropdown */}
+                  <div className="relative user-dropdown">
+                    <button 
+                      onClick={() => setShowUserDropdown(!showUserDropdown)}
+                      className="flex items-center bg-blue-500/80 hover:bg-blue-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                    >
+                      <span className="mr-1">{currentUser.username}</span>
+                      <svg className={`w-4 h-4 ml-1 transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                    
+                    {/* Dropdown Menu */}
+                    {showUserDropdown && (
+                      <div className="absolute right-0 mt-2 w-48 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 z-50">
+                        <div className="py-2">
+                          <button
+                            onClick={() => {
+                              navigate('/');
+                              setShowUserDropdown(false);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
+                          >
+                            🏠 Back to Main
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowDashboard(true);
+                              setShowUserDropdown(false);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
+                          >
+                            📊 Dashboard
+                          </button>
+                          <hr className="my-2 border-gray-700" />
+                          <button
+                            onClick={() => {
+                              onLogout();
+                              setShowUserDropdown(false);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-red-600/50 transition-colors"
+                          >
+                            🚪 Logout
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={handleLoginClick}
+                    className="bg-blue-500/80 hover:bg-blue-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                  >
+                    Login
+                  </button>
+                  <button
+                    onClick={handleCreateAccountClick}
+                    className="bg-green-500/80 hover:bg-green-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
+                  >
+                    Create Account
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Mobile menu */}
+          <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden py-2 z-[200000] relative`}>
+            <div className="flex flex-col space-y-2">
+              <Link
+                to="/marketplace"
+                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
               >
                 Freelancer Hub
               </Link>
+              <Link
+                to="/games"
+                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+              >
+                GameHub
+              </Link>
+              <Link
+                to="/crypto-ads"
+                className="bg-gradient-to-r from-green-500/80 to-emerald-600/80 hover:from-green-600/80 hover:to-emerald-700/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+              >
+                Paid Ads
+              </Link>
+              <Link
+                to="/how-to"
+                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+              >
+                Learn
+              </Link>
+              <Link
+                to="/project-info"
+                className="bg-gradient-to-r from-purple-500/80 to-pink-600/80 hover:from-purple-600/80 hover:to-pink-700/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+              >
+                Why List?
+              </Link>
+              {currentUser ? (
+                <>
+                  <span className="text-blue-300 text-center">Welcome, {currentUser.username}!</span>
+                  <button
+                    onClick={() => {
+                      navigate('/');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                  >
+                    Back to Main
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowDashboard(true);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
+                  >
+                    📊 Dashboard
+                  </button>
+                  <button
+                    onClick={() => {
+                      onLogout();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="bg-red-500/80 hover:bg-red-600/80 px-4 py-2 rounded shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => {
+                      handleLoginClick();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                  >
+                    Login
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleCreateAccountClick();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="bg-green-500/80 hover:bg-green-600/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
+                  >
+                    Create Account
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
-      </div>
+      </nav>
 
-      <div className="container mx-auto px-4 py-8">
+              <div className="container mx-auto px-4 py-8 pt-20">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-4 text-blue-400">How To Guide</h1>
           <p className="text-gray-400 text-lg">
@@ -362,6 +598,35 @@ const HowTo = ({ currentUser }) => {
             }}
             onSubmit={editingBlog ? handleEditBlog : handleCreateBlog}
             initialData={editingBlog}
+          />
+        )}
+
+        {/* Dashboard Modal */}
+        {showDashboard && (
+          <Dashboard
+            currentUser={currentUser}
+            onClose={() => setShowDashboard(false)}
+            ads={[]}  // Pass empty array since how-to page doesn't handle ads
+          />
+        )}
+
+        {/* Login Modal */}
+        {showLoginModal && (
+          <LoginModal
+            onClose={() => setShowLoginModal(false)}
+            onSubmit={handleLoginSubmit}
+            onCreateAccount={() => {
+              setShowLoginModal(false);
+              setShowCreateAccountModal(true);
+            }}
+          />
+        )}
+
+        {/* Create Account Modal */}
+        {showCreateAccountModal && (
+          <CreateAccountModal
+            onClose={() => setShowCreateAccountModal(false)}
+            onSubmit={handleCreateAccountSubmit}
           />
         )}
       </div>

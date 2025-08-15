@@ -3567,7 +3567,7 @@ function App() {
             </div>
           } />
                       <Route path="/whitepaper" element={<Whitepaper />} />
-            <Route path="/how-to" element={<HowTo currentUser={currentUser} />} />
+            <Route path="/how-to" element={<HowTo currentUser={currentUser} onLogin={handleLogin} onLogout={handleLogout} onCreateAccount={handleCreateAccount} />} />
                                  <Route path="/how-to/:slug" element={<BlogPage currentUser={currentUser} onLogin={handleLogin} onLogout={handleLogout} onCreateAccount={handleCreateAccount} />} />
             <Route path="/affiliate" element={<Affiliate />} />
             <Route path="/terms" element={<Terms />} />

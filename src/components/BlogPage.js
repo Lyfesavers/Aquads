@@ -7,6 +7,8 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import LinkExtension from '@tiptap/extension-link';
 import CreateBlogModal from './CreateBlogModal';
+import LoginModal from './LoginModal';
+import CreateAccountModal from './CreateAccountModal';
 import { API_URL } from '../services/api';
 import Dashboard from './Dashboard';
 
@@ -86,6 +88,8 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
 
   // Handle click outside to close dropdown
   useEffect(() => {
@@ -278,6 +282,24 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
   const extractPlainText = (content) => {
     return content ? content.replace(/<[^>]*>/g, '').slice(0, 160) : '';
+  };
+
+  const handleLoginClick = () => {
+    setShowLoginModal(true);
+  };
+
+  const handleCreateAccountClick = () => {
+    setShowCreateAccountModal(true);
+  };
+
+  const handleLoginSubmit = async (credentials) => {
+    await onLogin(credentials);
+    setShowLoginModal(false);
+  };
+
+  const handleCreateAccountSubmit = async (formData) => {
+    await onCreateAccount(formData);
+    setShowCreateAccountModal(false);
   };
 
   if (loading) {
@@ -499,13 +521,13 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
               ) : (
                 <>
                   <button
-                    onClick={() => onLogin && onLogin()}
+                    onClick={handleLoginClick}
                     className="bg-blue-500/80 hover:bg-blue-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
                   >
                     Login
                   </button>
                   <button
-                    onClick={() => onCreateAccount && onCreateAccount()}
+                    onClick={handleCreateAccountClick}
                     className="bg-green-500/80 hover:bg-green-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
                   >
                     Create Account
@@ -583,7 +605,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                 <>
                   <button
                     onClick={() => {
-                      onLogin && onLogin();
+                      handleLoginClick();
                       setIsMobileMenuOpen(false);
                     }}
                     className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
@@ -592,7 +614,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                   </button>
                   <button
                     onClick={() => {
-                      onCreateAccount && onCreateAccount();
+                      handleCreateAccountClick();
                       setIsMobileMenuOpen(false);
                     }}
                     className="bg-green-500/80 hover:bg-green-600/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
@@ -753,6 +775,22 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
          />
        )}
 
+       {/* Login Modal */}
+       {showLoginModal && (
+         <LoginModal
+           onClose={() => setShowLoginModal(false)}
+           onSubmit={handleLoginSubmit}
+         />
+       )}
+
+       {/* Create Account Modal */}
+       {showCreateAccountModal && (
+         <CreateAccountModal
+           onClose={() => setShowCreateAccountModal(false)}
+           onSubmit={handleCreateAccountSubmit}
+         />
+       )}
+
        <style jsx global>{`
         .blog-content-wrapper .blog-content {
           font-size: 1.125rem;
@@ -908,6 +946,26 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
           currentUser={currentUser}
           onClose={() => setShowDashboard(false)}
           ads={[]}  // Pass empty array since blog page doesn't handle ads
+        />
+      )}
+
+      {/* Login Modal */}
+      {showLoginModal && (
+        <LoginModal
+          onClose={() => setShowLoginModal(false)}
+          onSubmit={handleLoginSubmit}
+          onCreateAccount={() => {
+            setShowLoginModal(false);
+            setShowCreateAccountModal(true);
+          }}
+        />
+      )}
+
+      {/* Create Account Modal */}
+      {showCreateAccountModal && (
+        <CreateAccountModal
+          onClose={() => setShowCreateAccountModal(false)}
+          onSubmit={handleCreateAccountSubmit}
         />
       )}
     </div>
