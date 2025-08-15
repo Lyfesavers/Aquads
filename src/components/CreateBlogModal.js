@@ -35,21 +35,21 @@ const MenuBar = ({ editor }) => {
     <div className="flex flex-wrap gap-1 p-2 bg-gray-700 rounded-t border-b border-gray-600">
       <button
         onClick={() => editor.chain().focus().toggleBold().run()}
-        className={`px-2 py-1 rounded ${editor.isActive('bold') ? 'bg-gray-600' : 'bg-gray-800'}`}
+        className={`px-2 py-1 rounded text-white ${editor.isActive('bold') ? 'bg-gray-600' : 'bg-gray-800'}`}
         type="button"
       >
         Bold
       </button>
       <button
         onClick={() => editor.chain().focus().toggleItalic().run()}
-        className={`px-2 py-1 rounded ${editor.isActive('italic') ? 'bg-gray-600' : 'bg-gray-800'}`}
+        className={`px-2 py-1 rounded text-white ${editor.isActive('italic') ? 'bg-gray-600' : 'bg-gray-800'}`}
         type="button"
       >
         Italic
       </button>
       <button
         onClick={() => editor.chain().focus().toggleStrike().run()}
-        className={`px-2 py-1 rounded ${editor.isActive('strike') ? 'bg-gray-600' : 'bg-gray-800'}`}
+        className={`px-2 py-1 rounded text-white ${editor.isActive('strike') ? 'bg-gray-600' : 'bg-gray-800'}`}
         type="button"
       >
         Strike
@@ -58,7 +58,7 @@ const MenuBar = ({ editor }) => {
       {/* Link button */}
       <button
         onClick={setLink}
-        className={`px-2 py-1 rounded ${editor.isActive('link') ? 'bg-gray-600' : 'bg-gray-800'}`}
+        className={`px-2 py-1 rounded text-white ${editor.isActive('link') ? 'bg-gray-600' : 'bg-gray-800'}`}
         type="button"
       >
         Link
@@ -66,7 +66,7 @@ const MenuBar = ({ editor }) => {
       {editor.isActive('link') && (
         <button
           onClick={() => editor.chain().focus().unsetLink().run()}
-          className="px-2 py-1 rounded bg-gray-800"
+          className="px-2 py-1 rounded bg-gray-800 text-white"
           type="button"
         >
           Unlink
@@ -77,21 +77,21 @@ const MenuBar = ({ editor }) => {
       <div className="flex gap-1">
         <button
           onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-          className={`px-2 py-1 rounded ${editor.isActive('heading', { level: 1 }) ? 'bg-gray-600' : 'bg-gray-800'}`}
+          className={`px-2 py-1 rounded text-white ${editor.isActive('heading', { level: 1 }) ? 'bg-gray-600' : 'bg-gray-800'}`}
           type="button"
         >
           H1
         </button>
         <button
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          className={`px-2 py-1 rounded ${editor.isActive('heading', { level: 2 }) ? 'bg-gray-600' : 'bg-gray-800'}`}
+          className={`px-2 py-1 rounded text-white ${editor.isActive('heading', { level: 2 }) ? 'bg-gray-600' : 'bg-gray-800'}`}
           type="button"
         >
           H2
         </button>
         <button
           onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          className={`px-2 py-1 rounded ${editor.isActive('heading', { level: 3 }) ? 'bg-gray-600' : 'bg-gray-800'}`}
+          className={`px-2 py-1 rounded text-white ${editor.isActive('heading', { level: 3 }) ? 'bg-gray-600' : 'bg-gray-800'}`}
           type="button"
         >
           H3
@@ -102,14 +102,14 @@ const MenuBar = ({ editor }) => {
       <div className="flex gap-1">
         <button
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={`px-2 py-1 rounded ${editor.isActive('bulletList') ? 'bg-gray-600' : 'bg-gray-800'}`}
+          className={`px-2 py-1 rounded text-white ${editor.isActive('bulletList') ? 'bg-gray-600' : 'bg-gray-800'}`}
           type="button"
         >
           Bullet List
         </button>
         <button
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={`px-2 py-1 rounded ${editor.isActive('orderedList') ? 'bg-gray-600' : 'bg-gray-800'}`}
+          className={`px-2 py-1 rounded text-white ${editor.isActive('orderedList') ? 'bg-gray-600' : 'bg-gray-800'}`}
           type="button"
         >
           Ordered List
@@ -120,21 +120,21 @@ const MenuBar = ({ editor }) => {
       <div className="flex gap-1">
         <button
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          className={`px-2 py-1 rounded ${editor.isActive('blockquote') ? 'bg-gray-600' : 'bg-gray-800'}`}
+          className={`px-2 py-1 rounded text-white ${editor.isActive('blockquote') ? 'bg-gray-600' : 'bg-gray-800'}`}
           type="button"
         >
           Quote
         </button>
         <button
           onClick={() => editor.chain().focus().setHardBreak().run()}
-          className="px-2 py-1 rounded bg-gray-800"
+          className="px-2 py-1 rounded bg-gray-800 text-white"
           type="button"
         >
           Line Break
         </button>
         <button
           onClick={() => editor.chain().focus().setParagraph().run()}
-          className={`px-2 py-1 rounded ${editor.isActive('paragraph') ? 'bg-gray-600' : 'bg-gray-800'}`}
+          className={`px-2 py-1 rounded text-white ${editor.isActive('paragraph') ? 'bg-gray-600' : 'bg-gray-800'}`}
           type="button"
         >
           Paragraph
@@ -144,7 +144,7 @@ const MenuBar = ({ editor }) => {
       {/* Clear formatting */}
       <button
         onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}
-        className="px-2 py-1 rounded bg-red-700 hover:bg-red-800"
+        className="px-2 py-1 rounded bg-red-700 hover:bg-red-800 text-white"
         type="button"
       >
         Clear Format
@@ -358,12 +358,13 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
   }, [formData, onSubmit]);
 
   return (
-    <Modal onClose={onClose}>
-      <h2 className="text-2xl font-bold mb-4">{initialData ? 'Edit Blog Post' : 'Create New Blog Post'}</h2>
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <Modal onClose={onClose} fullScreen={true}>
+      <div className="text-white max-w-4xl mx-auto">
+        <h2 className="text-2xl md:text-3xl font-bold mb-6 text-white text-center">{initialData ? 'Edit Blog Post' : 'Create New Blog Post'}</h2>
+        
+        <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label htmlFor="title" className="block text-sm font-medium mb-1">Title</label>
+          <label htmlFor="title" className="block text-sm font-medium mb-1 text-gray-200">Title</label>
           <input
             type="text"
             id="title"
@@ -376,7 +377,7 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
         </div>
         
         <div>
-          <label htmlFor="bannerImage" className="block text-sm font-medium mb-1">Banner Image URL</label>
+          <label htmlFor="bannerImage" className="block text-sm font-medium mb-1 text-gray-200">Banner Image URL</label>
           <input
             type="url"
             id="bannerImage"
@@ -404,13 +405,13 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
         
         <div>
           <div className="flex justify-between items-center mb-1">
-            <label className="block text-sm font-medium">Content (Max 10000 words)</label>
+            <label className="block text-sm font-medium text-gray-200">Content (Max 10000 words)</label>
             <div className="flex gap-2 items-center">
               <span className="text-xs text-gray-400">Format Preservation:</span>
               <button
                 type="button"
                 onClick={() => setPreserveMarkdown(!preserveMarkdown)}
-                className={`px-2 py-1 text-xs rounded ${
+                className={`px-2 py-1 text-xs rounded text-white ${
                   preserveMarkdown ? 'bg-green-600' : 'bg-gray-600'
                 }`}
               >
@@ -422,7 +423,7 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
             <MenuBar editor={editor} />
             <EditorContent 
               editor={editor} 
-              className="prose prose-invert max-w-none min-h-[300px] p-4 bg-gray-800 focus:outline-none"
+              className="prose prose-invert max-w-none min-h-[400px] md:min-h-[500px] p-4 bg-gray-800 focus:outline-none"
             />
             <div className="bg-gray-700 p-2 border-t border-gray-600 text-xs text-gray-400">
               <p>Tip: Markdown formatting is {preserveMarkdown ? 'enabled' : 'disabled'}. {
@@ -532,22 +533,23 @@ const CreateBlogModal = ({ onClose, onSubmit, initialData = null }) => {
           </div>
         </div>
         
-        <div className="flex justify-end gap-2">
+        <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
           <button 
             type="button" 
             onClick={onClose}
-            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded"
+            className="px-6 py-3 bg-gray-600 hover:bg-gray-700 rounded text-white font-medium transition-colors"
           >
             Cancel
           </button>
           <button 
             type="submit"
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded"
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded text-white font-medium transition-colors"
           >
             {initialData ? 'Update' : 'Create'}
           </button>
         </div>
       </form>
+      </div>
     </Modal>
   );
 };
