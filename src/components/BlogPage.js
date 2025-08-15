@@ -287,22 +287,26 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
 
   const handleLoginSubmit = async (credentials) => {
-    if (onLogin && typeof onLogin === 'function') {
+    try {
       await onLogin(credentials);
       setShowLoginModal(false);
-    } else {
-      console.error('onLogin prop is not available or not a function');
-      alert('Login functionality is not available. Please try refreshing the page.');
+      // No need to set currentUser or localStorage here as it's handled in App.js
+    } catch (error) {
+      console.error('Login error:', error);
+      // Show error in the LoginModal
+      // The error will be shown in the LoginModal component
     }
   };
 
   const handleCreateAccountSubmit = async (formData) => {
-    if (onCreateAccount && typeof onCreateAccount === 'function') {
+    try {
       await onCreateAccount(formData);
       setShowCreateAccountModal(false);
-    } else {
-      console.error('onCreateAccount prop is not available or not a function');
-      alert('Create account functionality is not available. Please try refreshing the page.');
+      // The welcome modal and other state updates are handled in App.js
+      // No need to duplicate that logic here
+    } catch (error) {
+      console.error('Create account error:', error);
+      // Error will be shown in the CreateAccountModal component
     }
   };
 
@@ -779,21 +783,25 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
          />
        )}
 
-       {/* Login Modal */}
-       {showLoginModal && (
-         <LoginModal
-           onClose={() => setShowLoginModal(false)}
-           onSubmit={handleLoginSubmit}
-         />
-       )}
+               {/* Login Modal */}
+        {showLoginModal && (
+          <LoginModal
+            onClose={() => setShowLoginModal(false)}
+            onLogin={handleLoginSubmit}
+            onCreateAccount={() => {
+              setShowLoginModal(false);
+              setShowCreateAccountModal(true);
+            }}
+          />
+        )}
 
-       {/* Create Account Modal */}
-       {showCreateAccountModal && (
-         <CreateAccountModal
-           onClose={() => setShowCreateAccountModal(false)}
-           onSubmit={handleCreateAccountSubmit}
-         />
-       )}
+        {/* Create Account Modal */}
+        {showCreateAccountModal && (
+          <CreateAccountModal
+            onClose={() => setShowCreateAccountModal(false)}
+            onSubmit={handleCreateAccountSubmit}
+          />
+        )}
 
        <style jsx global>{`
         .blog-content-wrapper .blog-content {
@@ -953,25 +961,25 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         />
       )}
 
-      {/* Login Modal */}
-      {showLoginModal && (
-        <LoginModal
-          onClose={() => setShowLoginModal(false)}
-          onSubmit={handleLoginSubmit}
-          onCreateAccount={() => {
-            setShowLoginModal(false);
-            setShowCreateAccountModal(true);
-          }}
-        />
-      )}
+              {/* Login Modal */}
+        {showLoginModal && (
+          <LoginModal
+            onClose={() => setShowLoginModal(false)}
+            onLogin={handleLoginSubmit}
+            onCreateAccount={() => {
+              setShowLoginModal(false);
+              setShowCreateAccountModal(true);
+            }}
+          />
+        )}
 
-      {/* Create Account Modal */}
-      {showCreateAccountModal && (
-        <CreateAccountModal
-          onClose={() => setShowCreateAccountModal(false)}
-          onSubmit={handleCreateAccountSubmit}
-        />
-      )}
+        {/* Create Account Modal */}
+        {showCreateAccountModal && (
+          <CreateAccountModal
+            onClose={() => setShowCreateAccountModal(false)}
+            onSubmit={handleCreateAccountSubmit}
+          />
+        )}
     </div>
   );
 };
