@@ -489,41 +489,68 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                       </svg>
                     </button>
                     
-                    {/* Dropdown Menu */}
-                    {showUserDropdown && (
-                      <div className="absolute right-0 mt-2 w-48 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 z-50">
-                        <div className="py-2">
-                          <button
-                            onClick={() => {
-                              navigate('/');
-                              setShowUserDropdown(false);
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
-                          >
-                            🏠 Back to Main
-                          </button>
-                                                          <button
-                                  onClick={() => {
-                                    setShowDashboard(true);
-                                    setShowUserDropdown(false);
-                                  }}
-                                  className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
-                                >
-                                  📊 Dashboard
-                                </button>
-                          <hr className="my-2 border-gray-700" />
-                          <button
-                            onClick={() => {
-                              onLogout();
-                              setShowUserDropdown(false);
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-red-600/50 transition-colors"
-                          >
-                            🚪 Logout
-                          </button>
-                        </div>
-                      </div>
-                    )}
+                                         {/* Dropdown Menu */}
+                     {showUserDropdown && (
+                       <div className="absolute right-0 mt-2 w-48 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 z-50">
+                         <div className="py-2">
+                           <button
+                             onClick={() => {
+                               navigate('/');
+                               setShowUserDropdown(false);
+                             }}
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
+                           >
+                             🏠 Back to Main
+                           </button>
+                           <button
+                             onClick={() => {
+                               setShowDashboard(true);
+                               setShowUserDropdown(false);
+                             }}
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
+                           >
+                             📊 Dashboard
+                           </button>
+                           <button
+                             onClick={() => {
+                               navigate('/marketplace');
+                               setShowUserDropdown(false);
+                             }}
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
+                           >
+                             ➕ List Project
+                           </button>
+                           <button
+                             onClick={() => {
+                               navigate('/crypto-ads');
+                               setShowUserDropdown(false);
+                             }}
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
+                           >
+                             🎨 Create Banner Ad
+                           </button>
+                           <button
+                             onClick={() => {
+                               navigate('/');
+                               setShowUserDropdown(false);
+                             }}
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
+                           >
+                             ⚙️ Edit Profile
+                           </button>
+                           <hr className="my-2 border-gray-700" />
+                           <button
+                             onClick={() => {
+                               onLogout();
+                               setShowUserDropdown(false);
+                             }}
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-red-600/50 transition-colors"
+                           >
+                             🚪 Logout
+                           </button>
+                         </div>
+                       </div>
+                     )}
                   </div>
                 </>
               ) : (
@@ -578,38 +605,65 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
               >
                 Why List?
               </Link>
-              {currentUser ? (
-                <>
-                  <span className="text-blue-300 text-center">Welcome, {currentUser.username}!</span>
-                  <button
-                    onClick={() => {
-                      navigate('/');
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
-                  >
-                    Back to Main
-                  </button>
-                              <button
-              onClick={() => {
-                setShowDashboard(true);
-                setIsMobileMenuOpen(false);
-              }}
-              className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
-            >
-              📊 Dashboard
-            </button>
-                  <button
-                    onClick={() => {
-                      onLogout();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="bg-red-500/80 hover:bg-red-600/80 px-4 py-2 rounded shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm"
-                  >
-                    Logout
-                  </button>
-                </>
-              ) : (
+                             {currentUser ? (
+                 <>
+                   <span className="text-blue-300 text-center">Welcome, {currentUser.username}!</span>
+                   <button
+                     onClick={() => {
+                       navigate('/');
+                       setIsMobileMenuOpen(false);
+                     }}
+                     className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                   >
+                     Back to Main
+                   </button>
+                   <button
+                     onClick={() => {
+                       setShowDashboard(true);
+                       setIsMobileMenuOpen(false);
+                     }}
+                     className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
+                   >
+                     📊 Dashboard
+                   </button>
+                   <button
+                     onClick={() => {
+                       navigate('/marketplace');
+                       setIsMobileMenuOpen(false);
+                     }}
+                     className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
+                   >
+                     ➕ List Project
+                   </button>
+                   <button
+                     onClick={() => {
+                       navigate('/crypto-ads');
+                       setIsMobileMenuOpen(false);
+                     }}
+                     className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                   >
+                     🎨 Create Banner Ad
+                   </button>
+                   <button
+                     onClick={() => {
+                       navigate('/');
+                       setIsMobileMenuOpen(false);
+                     }}
+                     className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
+                   >
+                     ⚙️ Edit Profile
+                   </button>
+                   <button
+                     onClick={() => {
+                       onLogout();
+                       setIsMobileMenuOpen(false);
+                     }}
+                     className="bg-red-500/80 hover:bg-red-600/80 px-4 py-2 rounded shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm"
+                   >
+                     Logout
+                   </button>
+                 </>
+               ) : (
                 <>
                   <button
                     onClick={() => {
