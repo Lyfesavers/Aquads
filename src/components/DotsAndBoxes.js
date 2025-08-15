@@ -319,14 +319,14 @@ export default function DotsAndBoxes({ currentUser }) {
 
     // Listen for real-time leaderboard updates
     const handleLeaderboardUpdate = (data) => {
-      if (data.game === 'dots-and-boxes') {
+      if (data.game === 'dots-and-boxes' && data.entry.result === 'Win') {
         setLeaderboard(prev => {
           // Check if this entry already exists (to prevent duplicates from local submission)
           const existingEntry = prev.find(entry => entry._id === data.entry._id);
           if (existingEntry) {
             return prev; // Don't add duplicate
           }
-          // Add new entry and keep only top 20
+          // Add new win entry and keep only top 20
           const newLeaderboard = [data.entry, ...prev];
           return newLeaderboard.slice(0, 20);
         });
@@ -478,17 +478,19 @@ export default function DotsAndBoxes({ currentUser }) {
         const token = (currentUser && currentUser.token) || null;
         await submitLeaderboard('dots-and-boxes', entryPayload, token);
         // Don't add to local state - let WebSocket handle it to prevent duplicates
-      } catch (e) {
-        // If server fails, still show a transient entry in UI
-        const fallback = {
-          _id: `${Date.now()}`,
-          username: (currentUser && (currentUser.username || currentUser.email)) || 'Guest',
-          createdAt: new Date().toISOString(),
-          ...entryPayload,
-          game: 'dots-and-boxes',
-        };
-        setLeaderboard(prev => [fallback, ...prev].slice(0, 20));
-      } finally {
+             } catch (e) {
+         // If server fails, still show a transient entry in UI (only for wins)
+         if (result === 'Win') {
+           const fallback = {
+             _id: `${Date.now()}`,
+             username: (currentUser && (currentUser.username || currentUser.email)) || 'Guest',
+             createdAt: new Date().toISOString(),
+             ...entryPayload,
+             game: 'dots-and-boxes',
+           };
+           setLeaderboard(prev => [fallback, ...prev].slice(0, 20));
+         }
+       } finally {
         setResultRecorded(true);
       }
     })();
@@ -866,39 +868,33 @@ export default function DotsAndBoxes({ currentUser }) {
                 </select>
               </div>
               <div className="max-h-48 sm:max-h-72 overflow-y-auto rounded border border-gray-800">
-                <table className="w-full text-xs">
-                  <thead className="bg-gray-800/70 text-gray-300 sticky top-0">
-                    <tr>
-                      <th className="text-left px-1 sm:px-2 py-1 font-medium">User</th>
-                      <th className="text-left px-1 sm:px-2 py-1 font-medium">Result</th>
-                      <th className="text-left px-1 sm:px-2 py-1 font-medium">Score</th>
-                      <th className="hidden sm:table-cell text-left px-2 py-1 font-medium">Grid</th>
-                      <th className="hidden sm:table-cell text-left px-2 py-1 font-medium">Diff</th>
-                      <th className="hidden lg:table-cell text-left px-2 py-1 font-medium">When</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredLeaderboard.length === 0 ? (
-                      <tr>
-                        <td className="px-2 py-2 text-gray-500" colSpan={6}>No games yet.</td>
-                      </tr>
-                    ) : (
-                      filteredLeaderboard.map(row => (
-                        <tr key={row.id} className="odd:bg-gray-900/30">
-                          <td className="px-1 sm:px-2 py-1 text-xs">{row.username || 'Guest'}</td>
-                          <td className="px-1 sm:px-2 py-1">
-                            <span className={`text-xs ${row.result === 'Win' ? 'text-emerald-400' : row.result === 'Loss' ? 'text-red-400' : 'text-gray-300'}`}>
-                              {row.result}
-                            </span>
-                          </td>
-                          <td className="px-1 sm:px-2 py-1 text-xs">{row.you} - {row.ai}</td>
-                          <td className="hidden sm:table-cell px-2 py-1 text-xs">{row.grid}</td>
-                          <td className="hidden sm:table-cell px-2 py-1 text-xs">{row.difficulty}</td>
-                          <td className="hidden lg:table-cell px-2 py-1 text-xs">{new Date(row.createdAt || row.date).toLocaleString()}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
+                                 <table className="w-full text-xs">
+                   <thead className="bg-gray-800/70 text-gray-300 sticky top-0">
+                     <tr>
+                       <th className="text-left px-1 sm:px-2 py-1 font-medium">User</th>
+                       <th className="text-left px-1 sm:px-2 py-1 font-medium">Score</th>
+                       <th className="hidden sm:table-cell text-left px-2 py-1 font-medium">Grid</th>
+                       <th className="hidden sm:table-cell text-left px-2 py-1 font-medium">Diff</th>
+                       <th className="hidden lg:table-cell text-left px-2 py-1 font-medium">When</th>
+                     </tr>
+                   </thead>
+                                     <tbody>
+                     {filteredLeaderboard.length === 0 ? (
+                       <tr>
+                         <td className="px-2 py-2 text-gray-500" colSpan={5}>No wins yet.</td>
+                       </tr>
+                     ) : (
+                       filteredLeaderboard.map(row => (
+                         <tr key={row.id} className="odd:bg-gray-900/30">
+                           <td className="px-1 sm:px-2 py-1 text-xs">{row.username || 'Guest'}</td>
+                           <td className="px-1 sm:px-2 py-1 text-xs text-emerald-400 font-medium">{row.you} - {row.ai}</td>
+                           <td className="hidden sm:table-cell px-2 py-1 text-xs">{row.grid}</td>
+                           <td className="hidden sm:table-cell px-2 py-1 text-xs">{row.difficulty}</td>
+                           <td className="hidden lg:table-cell px-2 py-1 text-xs">{new Date(row.createdAt || row.date).toLocaleString()}</td>
+                         </tr>
+                       ))
+                     )}
+                   </tbody>
                 </table>
               </div>
             </div>

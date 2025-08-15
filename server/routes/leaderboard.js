@@ -9,14 +9,14 @@ const { getIO } = require('../socket');
 router.get('/:game', async (req, res) => {
   try {
     const { game } = req.params;
-    const { limit = 50, difficulty, grid } = req.query;
-    const query = { game };
-    if (difficulty) query.difficulty = difficulty;
-    if (grid) query.grid = grid;
+    const { limit = 20, difficulty, grid } = req.query;
+    const query = { game, result: 'Win' }; // Only show wins
+    if (difficulty && difficulty !== 'All') query.difficulty = difficulty;
+    if (grid && grid !== 'All') query.grid = grid;
 
     const entries = await LeaderboardEntry.find(query)
-      .sort({ createdAt: -1 })
-      .limit(Math.min(Number(limit) || 50, 200));
+      .sort({ you: -1, createdAt: -1 }) // Sort by player score (highest first), then newest
+      .limit(Math.min(Number(limit) || 20, 200));
 
     res.json(entries);
   } catch (err) {
