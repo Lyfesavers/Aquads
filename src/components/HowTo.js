@@ -213,13 +213,23 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
 
 
   const handleLoginSubmit = async (credentials) => {
-    await onLogin(credentials);
-    setShowLoginModal(false);
+    if (onLogin && typeof onLogin === 'function') {
+      await onLogin(credentials);
+      setShowLoginModal(false);
+    } else {
+      console.error('onLogin prop is not available or not a function');
+      alert('Login functionality is not available. Please try refreshing the page.');
+    }
   };
 
   const handleCreateAccountSubmit = async (formData) => {
-    await onCreateAccount(formData);
-    setShowCreateAccountModal(false);
+    if (onCreateAccount && typeof onCreateAccount === 'function') {
+      await onCreateAccount(formData);
+      setShowCreateAccountModal(false);
+    } else {
+      console.error('onCreateAccount prop is not available or not a function');
+      alert('Create account functionality is not available. Please try refreshing the page.');
+    }
   };
 
 
