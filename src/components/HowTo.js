@@ -210,13 +210,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     setShowCreateModal(true);
   };
 
-  const handleLoginClick = () => {
-    setShowLoginModal(true);
-  };
 
-  const handleCreateAccountClick = () => {
-    setShowCreateAccountModal(true);
-  };
 
   const handleLoginSubmit = async (credentials) => {
     await onLogin(credentials);
@@ -356,13 +350,13 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
               ) : (
                 <>
                   <button
-                    onClick={handleLoginClick}
+                    onClick={() => setShowLoginModal(true)}
                     className="bg-blue-500/80 hover:bg-blue-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
                   >
                     Login
                   </button>
                   <button
-                    onClick={handleCreateAccountClick}
+                    onClick={() => setShowCreateAccountModal(true)}
                     className="bg-green-500/80 hover:bg-green-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
                   >
                     Create Account
@@ -440,7 +434,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                 <>
                   <button
                     onClick={() => {
-                      handleLoginClick();
+                      setShowLoginModal(true);
                       setIsMobileMenuOpen(false);
                     }}
                     className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
@@ -449,7 +443,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                   </button>
                   <button
                     onClick={() => {
-                      handleCreateAccountClick();
+                      setShowCreateAccountModal(true);
                       setIsMobileMenuOpen(false);
                     }}
                     className="bg-green-500/80 hover:bg-green-600/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
