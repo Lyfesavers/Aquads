@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { getLeaderboard, submitLeaderboard, buyPowerUp, fetchMyPoints, socket } from '../services/api';
+import { getLeaderboard, submitLeaderboard, buyPowerUp, fetchMyPoints, usePowerUp, socket } from '../services/api';
 
 // Dots & Boxes with a strong AI opponent, SVG animations, and modern styling
 // Board representation: rows x cols boxes (dots are rows+1 x cols+1)
@@ -260,7 +260,6 @@ export default function DotsAndBoxes({ currentUser }) {
   const [points, setPoints] = useState(0);
   const [usingMultiMove, setUsingMultiMove] = useState(0); // remaining extra moves in current activation
   const [buyingPowerUp, setBuyingPowerUp] = useState(null); // tracks which power-up is being purchased
-  const buyingRef = useRef(false); // additional ref to prevent race conditions
 
   const svgRef = useRef(null);
 
@@ -734,10 +733,9 @@ export default function DotsAndBoxes({ currentUser }) {
                                               <button
                           className="px-2 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50"
                           onClick={async () => {
-                            if (buyingPowerUp || buyingRef.current) return; // Prevent multiple simultaneous purchases
+                            if (buyingPowerUp) return; // Prevent multiple simultaneous purchases
                             try {
                               setBuyingPowerUp('twoMoves');
-                              buyingRef.current = true;
                               const res = await buyPowerUp('twoMoves');
                               setPoints(res.points);
                               setPowerUps(res.powerUps);
@@ -745,17 +743,21 @@ export default function DotsAndBoxes({ currentUser }) {
                               console.error('Failed to buy power-up:', e);
                             } finally {
                               setBuyingPowerUp(null);
-                              buyingRef.current = false;
                             }
                           }}
                           disabled={points < 500 || buyingPowerUp}
                         >{buyingPowerUp === 'twoMoves' ? 'Buying...' : 'Buy'}</button>
                       <button
                         className="px-2 py-1 text-xs rounded bg-gray-700 hover:bg-gray-600 disabled:opacity-50"
-                        onClick={() => {
+                        onClick={async () => {
                           if ((powerUps.twoMoves || 0) > 0 && usingMultiMove === 0 && state.turn === PLAYER) {
-                            setPowerUps({ ...powerUps, twoMoves: powerUps.twoMoves - 1 });
-                            setUsingMultiMove(1); // +1 extra move after current
+                            try {
+                              const res = await usePowerUp('twoMoves');
+                              setPowerUps(res.powerUps);
+                              setUsingMultiMove(1); // +1 extra move after current
+                            } catch (e) {
+                              console.error('Failed to use power-up:', e);
+                            }
                           }
                         }}
                         disabled={(powerUps.twoMoves || 0) === 0 || usingMultiMove !== 0 || state.turn !== PLAYER}
@@ -769,10 +771,9 @@ export default function DotsAndBoxes({ currentUser }) {
                                               <button
                           className="px-2 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50"
                           onClick={async () => {
-                            if (buyingPowerUp || buyingRef.current) return; // Prevent multiple simultaneous purchases
+                            if (buyingPowerUp) return; // Prevent multiple simultaneous purchases
                             try {
                               setBuyingPowerUp('fourMoves');
-                              buyingRef.current = true;
                               const res = await buyPowerUp('fourMoves');
                               setPoints(res.points);
                               setPowerUps(res.powerUps);
@@ -780,17 +781,21 @@ export default function DotsAndBoxes({ currentUser }) {
                               console.error('Failed to buy power-up:', e);
                             } finally {
                               setBuyingPowerUp(null);
-                              buyingRef.current = false;
                             }
                           }}
                           disabled={points < 900 || buyingPowerUp}
                         >{buyingPowerUp === 'fourMoves' ? 'Buying...' : 'Buy'}</button>
                       <button
                         className="px-2 py-1 text-xs rounded bg-gray-700 hover:bg-gray-600 disabled:opacity-50"
-                        onClick={() => {
+                        onClick={async () => {
                           if ((powerUps.fourMoves || 0) > 0 && usingMultiMove === 0 && state.turn === PLAYER) {
-                            setPowerUps({ ...powerUps, fourMoves: powerUps.fourMoves - 1 });
-                            setUsingMultiMove(3); // +3 extra moves after current
+                            try {
+                              const res = await usePowerUp('fourMoves');
+                              setPowerUps(res.powerUps);
+                              setUsingMultiMove(3); // +3 extra moves after current
+                            } catch (e) {
+                              console.error('Failed to use power-up:', e);
+                            }
                           }
                         }}
                         disabled={(powerUps.fourMoves || 0) === 0 || usingMultiMove !== 0 || state.turn !== PLAYER}
