@@ -118,6 +118,11 @@ function init(server) {
     socket.on('adDelete', (data) => {
       socket.broadcast.emit('adDeleted', data);
     });
+
+    // Simple leaderboard update broadcast
+    socket.on('leaderboardUpdate', (data) => {
+      socket.broadcast.emit('leaderboardUpdated', data);
+    });
   });
   
   return io;

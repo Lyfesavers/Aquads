@@ -303,16 +303,36 @@ export default function DotsAndBoxes({ currentUser }) {
     }
   }, [state, difficulty, gameOver]);
 
-  // Load leaderboard from server
+  // Load leaderboard from server and setup WebSocket
   useEffect(() => {
-    (async () => {
+    const loadLeaderboard = async () => {
       try {
-        const rows = await getLeaderboard('dots-and-boxes', { limit: 50 });
+        const rows = await getLeaderboard('dots-and-boxes', { limit: 20 });
         setLeaderboard(rows);
       } catch (e) {
-        // silent fail
+        console.error('Failed to load leaderboard:', e);
       }
-    })();
+    };
+
+    loadLeaderboard();
+
+    // Listen for real-time leaderboard updates
+    const handleLeaderboardUpdate = (data) => {
+      if (data.game === 'dots-and-boxes') {
+        setLeaderboard(prev => {
+          // Add new entry and keep only top 20
+          const newLeaderboard = [data.entry, ...prev.filter(entry => entry._id !== data.entry._id)];
+          return newLeaderboard.slice(0, 20);
+        });
+      }
+    };
+
+    socket.on('leaderboardUpdated', handleLeaderboardUpdate);
+
+    // Cleanup
+    return () => {
+      socket.off('leaderboardUpdated', handleLeaderboardUpdate);
+    };
   }, []);
 
   // Load user points & power-ups if logged in
@@ -451,7 +471,7 @@ export default function DotsAndBoxes({ currentUser }) {
         hasSubmittedRef.current = true;
         const token = (currentUser && currentUser.token) || null;
         const saved = await submitLeaderboard('dots-and-boxes', entryPayload, token);
-        setLeaderboard(prev => [saved, ...prev].slice(0, 50));
+        setLeaderboard(prev => [saved, ...prev].slice(0, 20));
       } catch (e) {
         // If server fails, still show a transient entry in UI
         const fallback = {
@@ -461,7 +481,7 @@ export default function DotsAndBoxes({ currentUser }) {
           ...entryPayload,
           game: 'dots-and-boxes',
         };
-        setLeaderboard(prev => [fallback, ...prev].slice(0, 50));
+        setLeaderboard(prev => [fallback, ...prev].slice(0, 20));
       } finally {
         setResultRecorded(true);
       }
@@ -471,20 +491,7 @@ export default function DotsAndBoxes({ currentUser }) {
   const filteredLeaderboard = useMemo(() => {
     return leaderboard
       .filter(r => (filterDifficulty === 'All' || r.difficulty === filterDifficulty))
-      .filter(r => (filterGrid === 'All' || r.grid === filterGrid))
-      .sort((a, b) => {
-        const aYou = Number(a.you || 0);
-        const aAi = Number(a.ai || 0);
-        const bYou = Number(b.you || 0);
-        const bAi = Number(b.ai || 0);
-        const aMargin = aYou - aAi;
-        const bMargin = bYou - bAi;
-        if (bMargin !== aMargin) return bMargin - aMargin; // higher margin first
-        if (bYou !== aYou) return bYou - aYou; // then higher player score
-        const aTime = new Date(a.createdAt || a.date || 0).getTime();
-        const bTime = new Date(b.createdAt || b.date || 0).getTime();
-        return bTime - aTime; // newest last tie-breaker
-      });
+      .filter(r => (filterGrid === 'All' || r.grid === filterGrid));
   }, [leaderboard, filterDifficulty, filterGrid]);
 
   return (
@@ -804,7 +811,19 @@ export default function DotsAndBoxes({ currentUser }) {
             <div className="mt-4 sm:mt-6">
               <div className="flex items-center justify-between mb-2">
                 <div className="font-semibold text-sm sm:text-base">Leaderboard</div>
-                {/* Clearing server leaderboard is privileged; no client clear */}
+                <button
+                  onClick={async () => {
+                    try {
+                      const freshLeaderboard = await getLeaderboard('dots-and-boxes', { limit: 20 });
+                      setLeaderboard(freshLeaderboard);
+                    } catch (e) {
+                      console.error('Failed to refresh leaderboard:', e);
+                    }
+                  }}
+                  className="text-xs bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded transition-colors"
+                >
+                  🔄 Refresh
+                </button>
               </div>
               <div className="flex flex-col sm:flex-row gap-2 mb-3">
                 <select

@@ -1213,7 +1213,7 @@ export const fetchMyPoints = async () => {
 };
 
 // Leaderboard API for mini-games
-export const getLeaderboard = async (game, { limit = 50, difficulty, grid } = {}) => {
+export const getLeaderboard = async (game, { limit = 20, difficulty, grid } = {}) => {
   const params = new URLSearchParams();
   if (limit) params.set('limit', String(limit));
   if (difficulty) params.set('difficulty', difficulty);

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const LeaderboardEntry = require('../models/LeaderboardEntry');
 const auth = require('../middleware/auth');
+const { getIO } = require('../socket');
 
 // GET /api/leaderboard/:game
 // Optional query: limit, difficulty, grid
@@ -43,6 +44,27 @@ router.post('/:game', auth, async (req, res) => {
       username: req.user?.username || 'Guest',
     });
     await entry.save();
+    
+    // Simple broadcast to all clients
+    try {
+      const io = getIO();
+      io.emit('leaderboardUpdated', {
+        game,
+        entry: {
+          _id: entry._id,
+          username: entry.username,
+          result: entry.result,
+          you: entry.you,
+          ai: entry.ai,
+          grid: entry.grid,
+          difficulty: entry.difficulty,
+          createdAt: entry.createdAt
+        }
+      });
+    } catch (socketError) {
+      console.error('Socket emit error:', socketError);
+    }
+    
     res.status(201).json(entry);
   } catch (err) {
     res.status(500).json({ error: 'Failed to submit score' });
