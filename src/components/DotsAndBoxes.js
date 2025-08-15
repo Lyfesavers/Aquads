@@ -260,6 +260,7 @@ export default function DotsAndBoxes({ currentUser }) {
   const [points, setPoints] = useState(0);
   const [usingMultiMove, setUsingMultiMove] = useState(0); // remaining extra moves in current activation
   const [buyingPowerUp, setBuyingPowerUp] = useState(null); // tracks which power-up is being purchased
+  const buyingRef = useRef(false); // additional ref to prevent race conditions
 
   const svgRef = useRef(null);
 
@@ -733,9 +734,10 @@ export default function DotsAndBoxes({ currentUser }) {
                                               <button
                           className="px-2 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50"
                           onClick={async () => {
-                            if (buyingPowerUp) return; // Prevent multiple simultaneous purchases
+                            if (buyingPowerUp || buyingRef.current) return; // Prevent multiple simultaneous purchases
                             try {
                               setBuyingPowerUp('twoMoves');
+                              buyingRef.current = true;
                               const res = await buyPowerUp('twoMoves');
                               setPoints(res.points);
                               setPowerUps(res.powerUps);
@@ -743,6 +745,7 @@ export default function DotsAndBoxes({ currentUser }) {
                               console.error('Failed to buy power-up:', e);
                             } finally {
                               setBuyingPowerUp(null);
+                              buyingRef.current = false;
                             }
                           }}
                           disabled={points < 500 || buyingPowerUp}
@@ -766,9 +769,10 @@ export default function DotsAndBoxes({ currentUser }) {
                                               <button
                           className="px-2 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50"
                           onClick={async () => {
-                            if (buyingPowerUp) return; // Prevent multiple simultaneous purchases
+                            if (buyingPowerUp || buyingRef.current) return; // Prevent multiple simultaneous purchases
                             try {
                               setBuyingPowerUp('fourMoves');
+                              buyingRef.current = true;
                               const res = await buyPowerUp('fourMoves');
                               setPoints(res.points);
                               setPowerUps(res.powerUps);
@@ -776,6 +780,7 @@ export default function DotsAndBoxes({ currentUser }) {
                               console.error('Failed to buy power-up:', e);
                             } finally {
                               setBuyingPowerUp(null);
+                              buyingRef.current = false;
                             }
                           }}
                           disabled={points < 900 || buyingPowerUp}
