@@ -1202,6 +1202,22 @@ export const buyPowerUp = async (type) => {
   return res.json();
 };
 
+export const usePowerUp = async (type) => {
+  const res = await fetch(`${API_URL}/points/use-powerup`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeader()
+    },
+    body: JSON.stringify({ type })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed to use power-up');
+  }
+  return res.json();
+};
+
 export const fetchMyPoints = async () => {
   const res = await fetch(`${API_URL}/points/my-points`, {
     headers: {
