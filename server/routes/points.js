@@ -38,7 +38,7 @@ router.post('/buy-powerup', auth, async (req, res) => {
     if (!['twoMoves', 'fourMoves'].includes(type)) {
       return res.status(400).json({ error: 'Invalid power-up type' });
     }
-    const cost = type === 'twoMoves' ? 2000 : 3500;
+    const cost = type === 'twoMoves' ? 500 : 900;
     const user = await User.findById(req.user.userId);
     if (!user) return res.status(404).json({ error: 'User not found' });
     if ((user.points || 0) < cost) {

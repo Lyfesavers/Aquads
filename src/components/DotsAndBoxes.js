@@ -726,27 +726,27 @@ export default function DotsAndBoxes({ currentUser }) {
                   <div className="text-emerald-400 font-semibold">{points}</div>
                 </div>
                 <div className="grid grid-cols-1 gap-2">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
-                    <div className="text-xs sm:text-sm">2 moves (2000 pts)</div>
-                    <div className="flex items-center gap-1 sm:gap-2">
-                      <span className="text-xs text-gray-400">x{powerUps.twoMoves || 0}</span>
-                                             <button
-                         className="px-2 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50"
-                         onClick={async () => {
-                           if (buyingPowerUp) return; // Prevent multiple simultaneous purchases
-                           try {
-                             setBuyingPowerUp('twoMoves');
-                             const res = await buyPowerUp('twoMoves');
-                             setPoints(res.points);
-                             setPowerUps(res.powerUps);
-                           } catch (e) {
-                             console.error('Failed to buy power-up:', e);
-                           } finally {
-                             setBuyingPowerUp(null);
-                           }
-                         }}
-                         disabled={points < 2000 || buyingPowerUp}
-                       >{buyingPowerUp === 'twoMoves' ? 'Buying...' : 'Buy'}</button>
+                                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
+                     <div className="text-xs sm:text-sm">2 moves (500 pts)</div>
+                     <div className="flex items-center gap-1 sm:gap-2">
+                       <span className="text-xs text-gray-400">x{powerUps.twoMoves || 0}</span>
+                                              <button
+                          className="px-2 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50"
+                          onClick={async () => {
+                            if (buyingPowerUp) return; // Prevent multiple simultaneous purchases
+                            try {
+                              setBuyingPowerUp('twoMoves');
+                              const res = await buyPowerUp('twoMoves');
+                              setPoints(res.points);
+                              setPowerUps(res.powerUps);
+                            } catch (e) {
+                              console.error('Failed to buy power-up:', e);
+                            } finally {
+                              setBuyingPowerUp(null);
+                            }
+                          }}
+                          disabled={points < 500 || buyingPowerUp}
+                        >{buyingPowerUp === 'twoMoves' ? 'Buying...' : 'Buy'}</button>
                       <button
                         className="px-2 py-1 text-xs rounded bg-gray-700 hover:bg-gray-600 disabled:opacity-50"
                         onClick={() => {
@@ -759,27 +759,27 @@ export default function DotsAndBoxes({ currentUser }) {
                       >Use</button>
                     </div>
                   </div>
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
-                    <div className="text-xs sm:text-sm">4 moves (3500 pts)</div>
-                    <div className="flex items-center gap-1 sm:gap-2">
-                      <span className="text-xs text-gray-400">x{powerUps.fourMoves || 0}</span>
-                                             <button
-                         className="px-2 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50"
-                         onClick={async () => {
-                           if (buyingPowerUp) return; // Prevent multiple simultaneous purchases
-                           try {
-                             setBuyingPowerUp('fourMoves');
-                             const res = await buyPowerUp('fourMoves');
-                             setPoints(res.points);
-                             setPowerUps(res.powerUps);
-                           } catch (e) {
-                             console.error('Failed to buy power-up:', e);
-                           } finally {
-                             setBuyingPowerUp(null);
-                           }
-                         }}
-                         disabled={points < 3500 || buyingPowerUp}
-                       >{buyingPowerUp === 'fourMoves' ? 'Buying...' : 'Buy'}</button>
+                                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
+                     <div className="text-xs sm:text-sm">4 moves (900 pts)</div>
+                     <div className="flex items-center gap-1 sm:gap-2">
+                       <span className="text-xs text-gray-400">x{powerUps.fourMoves || 0}</span>
+                                              <button
+                          className="px-2 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50"
+                          onClick={async () => {
+                            if (buyingPowerUp) return; // Prevent multiple simultaneous purchases
+                            try {
+                              setBuyingPowerUp('fourMoves');
+                              const res = await buyPowerUp('fourMoves');
+                              setPoints(res.points);
+                              setPowerUps(res.powerUps);
+                            } catch (e) {
+                              console.error('Failed to buy power-up:', e);
+                            } finally {
+                              setBuyingPowerUp(null);
+                            }
+                          }}
+                          disabled={points < 900 || buyingPowerUp}
+                        >{buyingPowerUp === 'fourMoves' ? 'Buying...' : 'Buy'}</button>
                       <button
                         className="px-2 py-1 text-xs rounded bg-gray-700 hover:bg-gray-600 disabled:opacity-50"
                         onClick={() => {
@@ -952,20 +952,20 @@ export default function DotsAndBoxes({ currentUser }) {
                 <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
                   <h3 className="text-lg font-semibold text-blue-400 mb-3">⚡ Power-ups</h3>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium text-blue-300">2 Moves (2000 points)</div>
-                        <div className="text-sm text-gray-400">Get 1 extra move after your turn</div>
-                      </div>
-                      <div className="text-xs bg-blue-900/30 px-2 py-1 rounded">2000 pts</div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium text-purple-300">4 Moves (3500 points)</div>
-                        <div className="text-sm text-gray-400">Get 3 extra moves after your turn</div>
-                      </div>
-                      <div className="text-xs bg-purple-900/30 px-2 py-1 rounded">3500 pts</div>
-                    </div>
+                                         <div className="flex items-center justify-between">
+                       <div>
+                         <div className="font-medium text-blue-300">2 Moves (500 points)</div>
+                         <div className="text-sm text-gray-400">Get 1 extra move after your turn</div>
+                       </div>
+                       <div className="text-xs bg-blue-900/30 px-2 py-1 rounded">500 pts</div>
+                     </div>
+                     <div className="flex items-center justify-between">
+                       <div>
+                         <div className="font-medium text-purple-300">4 Moves (900 points)</div>
+                         <div className="text-sm text-gray-400">Get 3 extra moves after your turn</div>
+                       </div>
+                       <div className="text-xs bg-purple-900/30 px-2 py-1 rounded">900 pts</div>
+                     </div>
                   </div>
                 </div>
 
