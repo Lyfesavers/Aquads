@@ -14,7 +14,7 @@ import { API_URL } from '../services/api';
 
 const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [blogs, setBlogs] = useState([]);
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showCreateBlogModal, setShowCreateBlogModal] = useState(false);
   const [editingBlog, setEditingBlog] = useState(null);
   const [error, setError] = useState(null);
   const [videoError, setVideoError] = useState(false);
@@ -50,7 +50,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
     // Check if we're coming from BlogPage with edit state
     if (location.state?.editBlog) {
       setEditingBlog(location.state.editBlog);
-      setShowCreateModal(true);
+      setShowCreateBlogModal(true);
       // Clear the state to prevent re-triggering
       navigate(location.pathname, { replace: true, state: {} });
     }
@@ -121,10 +121,10 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         return;
       }
 
-      const data = await response.json();
-      setShowCreateModal(false);
-      setError(null);
-      fetchBlogs();
+             const data = await response.json();
+       setShowCreateBlogModal(false);
+       setError(null);
+       fetchBlogs();
     } catch (error) {
       setError('Failed to create blog post. Please try again.');
     }
@@ -163,10 +163,10 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         throw new Error('Failed to update blog');
       }
 
-      await fetchBlogs();
-      setEditingBlog(null);
-      setShowCreateModal(false);
-      setError(null);
+             await fetchBlogs();
+       setEditingBlog(null);
+       setShowCreateBlogModal(false);
+       setError(null);
     } catch (error) {
       setError('Failed to update blog. Please try again.');
     }
@@ -213,7 +213,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   // Set up a blog for editing
   const handleBlogEdit = (blog) => {
     setEditingBlog(blog);
-    setShowCreateModal(true);
+    setShowCreateBlogModal(true);
   };
 
 
@@ -611,7 +611,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
               <h2 className="text-2xl font-bold text-white">Community Blog Posts</h2>
               {currentUser && currentUser.isAdmin ? (
                 <button
-                  onClick={() => setShowCreateModal(true)}
+                  onClick={() => setShowCreateBlogModal(true)}
                   className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors"
                 >
                   Create Blog Post
@@ -658,10 +658,10 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
         )}
 
         {/* Create/Edit Blog Modal */}
-        {showCreateModal && (
+        {showCreateBlogModal && (
           <CreateBlogModal
             onClose={() => {
-              setShowCreateModal(false);
+              setShowCreateBlogModal(false);
               setEditingBlog(null);
             }}
             onSubmit={editingBlog ? handleEditBlog : handleCreateBlog}
