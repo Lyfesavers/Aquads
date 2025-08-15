@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { getLeaderboard, submitLeaderboard, buyPowerUp, fetchMyPoints } from '../services/api';
+import { getLeaderboard, submitLeaderboard, buyPowerUp, fetchMyPoints, socket } from '../services/api';
 
 // Dots & Boxes with a strong AI opponent, SVG animations, and modern styling
 // Board representation: rows x cols boxes (dots are rows+1 x cols+1)
@@ -591,14 +591,14 @@ export default function DotsAndBoxes({ currentUser }) {
         <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 items-start">
           <div className="flex-1 w-full">
             <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-xl p-3 sm:p-4 md:p-6">
-              <svg
-                ref={svgRef}
-                width="100%"
-                height="auto"
-                viewBox={`0 0 ${spacing * (cols + 2)} ${spacing * (rows + 2)}`}
-                className="mx-auto block max-w-full"
-                style={{ maxHeight: `${size}px` }}
-              >
+                             <svg
+                 ref={svgRef}
+                 width="100%"
+                 height={size}
+                 viewBox={`0 0 ${spacing * (cols + 2)} ${spacing * (rows + 2)}`}
+                 className="mx-auto block max-w-full"
+                 style={{ maxHeight: `${size}px` }}
+               >
                 <defs>
                   <linearGradient id="edgeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" stopColor="#38bdf8" />
