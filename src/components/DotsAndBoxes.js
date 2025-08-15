@@ -259,6 +259,7 @@ export default function DotsAndBoxes({ currentUser }) {
   const [powerUps, setPowerUps] = useState({ twoMoves: 0, fourMoves: 0 });
   const [points, setPoints] = useState(0);
   const [usingMultiMove, setUsingMultiMove] = useState(0); // remaining extra moves in current activation
+  const [buyingPowerUp, setBuyingPowerUp] = useState(null); // tracks which power-up is being purchased
 
   const svgRef = useRef(null);
 
@@ -320,8 +321,13 @@ export default function DotsAndBoxes({ currentUser }) {
     const handleLeaderboardUpdate = (data) => {
       if (data.game === 'dots-and-boxes') {
         setLeaderboard(prev => {
+          // Check if this entry already exists (to prevent duplicates from local submission)
+          const existingEntry = prev.find(entry => entry._id === data.entry._id);
+          if (existingEntry) {
+            return prev; // Don't add duplicate
+          }
           // Add new entry and keep only top 20
-          const newLeaderboard = [data.entry, ...prev.filter(entry => entry._id !== data.entry._id)];
+          const newLeaderboard = [data.entry, ...prev];
           return newLeaderboard.slice(0, 20);
         });
       }
@@ -470,8 +476,8 @@ export default function DotsAndBoxes({ currentUser }) {
       try {
         hasSubmittedRef.current = true;
         const token = (currentUser && currentUser.token) || null;
-        const saved = await submitLeaderboard('dots-and-boxes', entryPayload, token);
-        setLeaderboard(prev => [saved, ...prev].slice(0, 20));
+        await submitLeaderboard('dots-and-boxes', entryPayload, token);
+        // Don't add to local state - let WebSocket handle it to prevent duplicates
       } catch (e) {
         // If server fails, still show a transient entry in UI
         const fallback = {
@@ -722,17 +728,23 @@ export default function DotsAndBoxes({ currentUser }) {
                     <div className="text-xs sm:text-sm">2 moves (2000 pts)</div>
                     <div className="flex items-center gap-1 sm:gap-2">
                       <span className="text-xs text-gray-400">x{powerUps.twoMoves || 0}</span>
-                      <button
-                        className="px-2 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50"
-                        onClick={async () => {
-                          try {
-                            const res = await buyPowerUp('twoMoves');
-                            setPoints(res.points);
-                            setPowerUps(res.powerUps);
-                          } catch (e) {}
-                        }}
-                        disabled={points < 2000}
-                      >Buy</button>
+                                             <button
+                         className="px-2 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50"
+                         onClick={async () => {
+                           if (buyingPowerUp) return; // Prevent multiple simultaneous purchases
+                           try {
+                             setBuyingPowerUp('twoMoves');
+                             const res = await buyPowerUp('twoMoves');
+                             setPoints(res.points);
+                             setPowerUps(res.powerUps);
+                           } catch (e) {
+                             console.error('Failed to buy power-up:', e);
+                           } finally {
+                             setBuyingPowerUp(null);
+                           }
+                         }}
+                         disabled={points < 2000 || buyingPowerUp}
+                       >{buyingPowerUp === 'twoMoves' ? 'Buying...' : 'Buy'}</button>
                       <button
                         className="px-2 py-1 text-xs rounded bg-gray-700 hover:bg-gray-600 disabled:opacity-50"
                         onClick={() => {
@@ -749,17 +761,23 @@ export default function DotsAndBoxes({ currentUser }) {
                     <div className="text-xs sm:text-sm">4 moves (3500 pts)</div>
                     <div className="flex items-center gap-1 sm:gap-2">
                       <span className="text-xs text-gray-400">x{powerUps.fourMoves || 0}</span>
-                      <button
-                        className="px-2 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50"
-                        onClick={async () => {
-                          try {
-                            const res = await buyPowerUp('fourMoves');
-                            setPoints(res.points);
-                            setPowerUps(res.powerUps);
-                          } catch (e) {}
-                        }}
-                        disabled={points < 3500}
-                      >Buy</button>
+                                             <button
+                         className="px-2 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50"
+                         onClick={async () => {
+                           if (buyingPowerUp) return; // Prevent multiple simultaneous purchases
+                           try {
+                             setBuyingPowerUp('fourMoves');
+                             const res = await buyPowerUp('fourMoves');
+                             setPoints(res.points);
+                             setPowerUps(res.powerUps);
+                           } catch (e) {
+                             console.error('Failed to buy power-up:', e);
+                           } finally {
+                             setBuyingPowerUp(null);
+                           }
+                         }}
+                         disabled={points < 3500 || buyingPowerUp}
+                       >{buyingPowerUp === 'fourMoves' ? 'Buying...' : 'Buy'}</button>
                       <button
                         className="px-2 py-1 text-xs rounded bg-gray-700 hover:bg-gray-600 disabled:opacity-50"
                         onClick={() => {
