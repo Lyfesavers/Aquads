@@ -55,6 +55,33 @@ router.post('/buy-powerup', auth, async (req, res) => {
   }
 });
 
+// Use power-ups (consume them)
+router.post('/use-powerup', auth, async (req, res) => {
+  try {
+    const { type } = req.body; // 'twoMoves' | 'fourMoves'
+    if (!['twoMoves', 'fourMoves'].includes(type)) {
+      return res.status(400).json({ error: 'Invalid power-up type' });
+    }
+    
+    const user = await User.findById(req.user.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    
+    if (!user.powerUps) user.powerUps = { twoMoves: 0, fourMoves: 0 };
+    
+    if ((user.powerUps[type] || 0) <= 0) {
+      return res.status(400).json({ error: 'No power-ups available' });
+    }
+    
+    // Decrement the power-up count
+    user.powerUps[type] = (user.powerUps[type] || 0) - 1;
+    await user.save();
+    
+    res.json({ powerUps: user.powerUps });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to use power-up' });
+  }
+});
+
 // Request Canadian dollars redemption
 router.post('/redeem', auth, requireEmailVerification, async (req, res) => {
   try {
