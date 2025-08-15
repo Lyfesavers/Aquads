@@ -6,6 +6,9 @@ import CreateBlogModal from './CreateBlogModal';
 import SkillTests from './SkillTests';
 import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
+import CreateAdModal from './CreateAdModal';
+import CreateBannerModal from './CreateBannerModal';
+import ProfileModal from './ProfileModal';
 import Dashboard from './Dashboard';
 import { API_URL } from '../services/api';
 
@@ -21,6 +24,9 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [showDashboard, setShowDashboard] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showCreateAccountModal, setShowCreateAccountModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showBannerModal, setShowBannerModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const blogListRef = useRef(null);
@@ -348,7 +354,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                            </button>
                            <button
                              onClick={() => {
-                               navigate('/marketplace');
+                               setShowCreateModal(true);
                                setShowUserDropdown(false);
                              }}
                              className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
@@ -357,7 +363,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                            </button>
                            <button
                              onClick={() => {
-                               navigate('/crypto-ads');
+                               setShowBannerModal(true);
                                setShowUserDropdown(false);
                              }}
                              className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
@@ -366,7 +372,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                            </button>
                            <button
                              onClick={() => {
-                               navigate('/');
+                               setShowProfileModal(true);
                                setShowUserDropdown(false);
                              }}
                              className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
@@ -463,7 +469,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                    </button>
                    <button
                      onClick={() => {
-                       navigate('/marketplace');
+                       setShowCreateModal(true);
                        setIsMobileMenuOpen(false);
                      }}
                      className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
@@ -472,7 +478,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                    </button>
                    <button
                      onClick={() => {
-                       navigate('/crypto-ads');
+                       setShowBannerModal(true);
                        setIsMobileMenuOpen(false);
                      }}
                      className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
@@ -481,7 +487,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                    </button>
                    <button
                      onClick={() => {
-                       navigate('/');
+                       setShowProfileModal(true);
                        setIsMobileMenuOpen(false);
                      }}
                      className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
@@ -689,6 +695,32 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
           <CreateAccountModal
             onClose={() => setShowCreateAccountModal(false)}
             onSubmit={handleCreateAccountSubmit}
+          />
+        )}
+
+        {/* Create Ad Modal */}
+        {showCreateModal && currentUser && (
+          <CreateAdModal
+            onCreateAd={() => {}}
+            onClose={() => setShowCreateModal(false)}
+            currentUser={currentUser}
+          />
+        )}
+
+        {/* Create Banner Modal */}
+        {showBannerModal && currentUser && (
+          <CreateBannerModal
+            onSubmit={() => {}}
+            onClose={() => setShowBannerModal(false)}
+          />
+        )}
+
+        {/* Profile Modal */}
+        {showProfileModal && currentUser && (
+          <ProfileModal
+            currentUser={currentUser}
+            onClose={() => setShowProfileModal(false)}
+            onProfileUpdate={() => {}}
           />
         )}
       </div>
