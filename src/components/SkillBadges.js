@@ -16,10 +16,17 @@ const SkillBadges = ({ badges, showTitle = true, compact = false }) => {
             title={`${badge.badgeName} - This user has taken the skill test and passed verified by Aquads.xyz`}
           >
             <div 
-              className="w-8 h-8 rounded-full flex items-center justify-center text-lg transition-transform group-hover:scale-110"
-              style={{ backgroundColor: `${badge.badgeColor}20` }}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-lg transition-transform group-hover:scale-110 relative"
+              style={{
+                backgroundImage: `url('/badge.svg')`,
+                backgroundSize: 'cover',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'center'
+              }}
             >
-              {badge.badgeIcon}
+              <div className="relative z-10">
+                {badge.badgeIcon}
+              </div>
             </div>
             
             {/* Tooltip */}
