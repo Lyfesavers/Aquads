@@ -1010,7 +1010,11 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                 </div>
                 <div className="flex items-start">
                   <span className="text-yellow-400 mr-2">•</span>
-                  <span>Account must have at least <strong>100 followers</strong></span>
+                  <span>Account must have at least <strong>50 followers</strong></span>
+                </div>
+                <div className="flex items-start">
+                  <span className="text-yellow-400 mr-2">•</span>
+                  <span>Must be following <strong>@_Aquads_</strong></span>
                 </div>
                 <div className="flex items-start">
                   <span className="text-yellow-400 mr-2">•</span>
