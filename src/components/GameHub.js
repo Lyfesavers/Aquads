@@ -73,6 +73,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
   const [showBannerModal, setShowBannerModal] = useState(false);
+  const [showProjectModal, setShowProjectModal] = useState(false);
   const [popularCategories, setPopularCategories] = useState([]);
   
   // Filter and sort states
@@ -327,7 +328,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                            </button>
                            <button
                              onClick={() => {
-                               setShowCreateModal(true);
+                               setShowProjectModal(true);
                                setShowUserDropdown(false);
                              }}
                              className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
@@ -433,7 +434,7 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                    </button>
                    <button
                      onClick={() => {
-                       setShowCreateModal(true);
+                       setShowProjectModal(true);
                        setFilterOpen(false);
                      }}
                      className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm text-center"
@@ -743,13 +744,22 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
          />
        )}
 
-       {/* Create Banner Modal */}
-       {showBannerModal && currentUser && (
-         <CreateBannerModal
-           onSubmit={() => {}}
-           onClose={() => setShowBannerModal(false)}
-         />
-       )}
+               {/* Create Banner Modal */}
+        {showBannerModal && currentUser && (
+          <CreateBannerModal
+            onSubmit={() => {}}
+            onClose={() => setShowBannerModal(false)}
+          />
+        )}
+
+        {/* Create Project Modal */}
+        {showProjectModal && currentUser && (
+          <CreateAdModal
+            onCreateAd={() => {}}
+            onClose={() => setShowProjectModal(false)}
+            currentUser={currentUser}
+          />
+        )}
       
       {/* Add a spacer div at the bottom to ensure content can be scrolled fully */}
       <div className="h-16"></div>
