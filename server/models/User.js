@@ -206,6 +206,19 @@ const userSchema = new Schema({
     type: Boolean,
     default: false
   },
+  // Free raid project status
+  isFreeRaidProject: {
+    type: Boolean,
+    default: false
+  },
+  freeRaidsUsedToday: {
+    type: Number,
+    default: 0
+  },
+  lastFreeRaidDate: {
+    type: Date,
+    default: null
+  },
   // Online status tracking fields
   isOnline: {
     type: Boolean,
@@ -274,6 +287,57 @@ userSchema.methods.addAffiliate = async function(affiliateId) {
     this.affiliates.push(affiliateId);
     await this.updateAffiliateCount();
   }
+};
+
+// Check if user is eligible for free raid
+userSchema.methods.checkFreeRaidEligibility = function() {
+  if (!this.isFreeRaidProject) {
+    return { eligible: false, reason: 'Not a free raid project' };
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Check if it's a new day
+  if (!this.lastFreeRaidDate || this.lastFreeRaidDate < today) {
+    return { eligible: true, raidsRemaining: 2, raidsUsedToday: 0 };
+  }
+
+  // Same day, check usage
+  if (this.freeRaidsUsedToday >= 2) {
+    return { eligible: false, reason: 'Daily limit reached', raidsRemaining: 0, raidsUsedToday: this.freeRaidsUsedToday };
+  }
+
+  return { 
+    eligible: true, 
+    raidsRemaining: 2 - this.freeRaidsUsedToday, 
+    raidsUsedToday: this.freeRaidsUsedToday 
+  };
+};
+
+// Use a free raid
+userSchema.methods.useFreeRaid = async function() {
+  const eligibility = this.checkFreeRaidEligibility();
+  if (!eligibility.eligible) {
+    throw new Error(eligibility.reason);
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Reset if it's a new day
+  if (!this.lastFreeRaidDate || this.lastFreeRaidDate < today) {
+    this.freeRaidsUsedToday = 0;
+  }
+
+  this.freeRaidsUsedToday += 1;
+  this.lastFreeRaidDate = new Date();
+  await this.save();
+
+  return { 
+    raidsRemaining: 2 - this.freeRaidsUsedToday, 
+    raidsUsedToday: this.freeRaidsUsedToday 
+  };
 };
 
 module.exports = mongoose.model('User', userSchema); 

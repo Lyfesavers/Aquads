@@ -39,6 +39,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [premiumRequests, setPremiumRequests] = useState([]);
   const [userJobs, setUserJobs] = useState([]);
   const [vipUsername, setVipUsername] = useState('');
+  const [freeRaidUsername, setFreeRaidUsername] = useState('');
   const [activeBookingConversation, setActiveBookingConversation] = useState(null);
   const [activeBooking, setActiveBooking] = useState(null);
   const [selectedAdForBump, setSelectedAdForBump] = useState(null);
@@ -828,6 +829,48 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       setVipUsername('');
     } catch (error) {
       alert('Failed to update VIP status: ' + error.message);
+    }
+  };
+
+  const handleFreeRaidProjectToggle = async (username) => {
+    try {
+      // Add authorization header to the first request
+      const response = await fetch(`${API_URL}/users/by-username/${username}`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        alert('User not found or unauthorized');
+        return;
+      }
+
+      const user = await response.json();
+      
+      if (!user._id) {
+        alert('User not found');
+        return;
+      }
+
+      const toggleResponse = await fetch(`${API_URL}/affiliates/free-raid-project/${user._id}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!toggleResponse.ok) {
+        throw new Error('Failed to update free raid project status');
+      }
+
+      const result = await toggleResponse.json();
+      alert(result.message);
+      setFreeRaidUsername('');
+    } catch (error) {
+      alert('Failed to update free raid project status: ' + error.message);
     }
   };
 
@@ -3222,6 +3265,27 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   className="bg-blue-500 px-4 py-2 rounded hover:bg-blue-600"
                 >
                   Toggle VIP Status
+                </button>
+              </div>
+            </div>
+          )}
+
+          {currentUser?.isAdmin && (
+            <div className="bg-gray-800 p-4 rounded-lg mb-4">
+              <h3 className="text-xl font-semibold mb-4">Manage Free Raid Projects</h3>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={freeRaidUsername}
+                  onChange={(e) => setFreeRaidUsername(e.target.value)}
+                  placeholder="Enter username"
+                  className="bg-gray-700 px-3 py-2 rounded"
+                />
+                <button
+                  onClick={() => handleFreeRaidProjectToggle(freeRaidUsername)}
+                  className="bg-green-500 px-4 py-2 rounded hover:bg-green-600"
+                >
+                  Toggle Free Raid Status
                 </button>
               </div>
             </div>

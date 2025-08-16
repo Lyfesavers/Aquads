@@ -878,4 +878,71 @@ router.get('/suspicious', auth, async (req, res) => {
   }
 });
 
+// Create a new free Twitter raid (for free raid projects)
+router.post('/free', auth, requireEmailVerification, async (req, res) => {
+  try {
+    const { tweetUrl, title, description } = req.body;
+
+    if (!tweetUrl || !title || !description) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Check if user is eligible for free raids
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const eligibility = user.checkFreeRaidEligibility();
+    if (!eligibility.eligible) {
+      return res.status(400).json({ error: eligibility.reason });
+    }
+
+    // Extract tweet ID from URL
+    const tweetIdMatch = tweetUrl.match(/\/status\/(\d+)/);
+    if (!tweetIdMatch || !tweetIdMatch[1]) {
+      return res.status(400).json({ error: 'Invalid Twitter URL' });
+    }
+
+    const tweetId = tweetIdMatch[1];
+
+    // Use a free raid
+    const usage = await user.useFreeRaid();
+
+    // Create the raid
+    const raid = new TwitterRaid({
+      tweetId,
+      tweetUrl,
+      title,
+      description,
+      points: 50, // Fixed points for free raids
+      createdBy: req.user.id,
+      isPaid: false,
+      paymentStatus: 'approved', // Free raids are automatically approved
+      paidWithPoints: false,
+      pointsSpent: 0,
+      active: true
+    });
+
+    await raid.save();
+    
+    // Send Telegram notification
+    telegramService.sendRaidNotification({
+      tweetUrl: raid.tweetUrl,
+      points: raid.points,
+      title: raid.title,
+      description: raid.description
+    });
+    
+    res.status(201).json({ 
+      message: 'Free Twitter raid created successfully!',
+      raid,
+      usage
+    });
+  } catch (error) {
+    console.error('Error creating free raid:', error);
+    res.status(500).json({ error: 'Failed to create free Twitter raid' });
+  }
+});
+
 module.exports = router; 

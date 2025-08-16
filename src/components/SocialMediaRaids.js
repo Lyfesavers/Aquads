@@ -93,6 +93,16 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     description: 'Retweet, Like & Comment to earn 50 points!'
   });
 
+  // For free raid creation
+  const [showFreeRaidForm, setShowFreeRaidForm] = useState(false);
+  const [freeRaidData, setFreeRaidData] = useState({
+    tweetUrl: '',
+    title: 'Twitter Raid',
+    description: 'Retweet, Like & Comment to earn 50 points!'
+  });
+  const [freeRaidSubmitting, setFreeRaidSubmitting] = useState(false);
+  const [freeRaidEligibility, setFreeRaidEligibility] = useState(null);
+
   // Use a state to track if preview is loading, rather than direct DOM manipulation
   const [previewState, setPreviewState] = useState({
     loading: false,
@@ -182,6 +192,13 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     // Initialize Twitter username from user data if available
     if (currentUser?.twitterUsername) {
       setTwitterUsername(currentUser.twitterUsername);
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    // Check free raid eligibility when component mounts
+    if (currentUser) {
+      checkFreeRaidEligibility();
     }
   }, [currentUser]);
 
@@ -691,6 +708,81 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       setSubmitting(false);
     }
   };
+
+  const checkFreeRaidEligibility = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/affiliates/free-raid-project/${currentUser.id}`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setFreeRaidEligibility(data.eligibility);
+      } else {
+        setFreeRaidEligibility({ eligible: false, reason: 'Not a free raid project' });
+      }
+    } catch (error) {
+      setFreeRaidEligibility({ eligible: false, reason: 'Error checking eligibility' });
+    }
+  };
+
+  const handleCreateFreeRaid = async (e) => {
+    e.preventDefault();
+    
+    if (!currentUser) {
+      showNotification('You must be logged in to create free raids', 'error');
+      return;
+    }
+    
+    if (!freeRaidData.tweetUrl) {
+      setError('Please enter the Tweet URL');
+      return;
+    }
+    
+    if (freeRaidSubmitting) {
+      return; // Prevent multiple submissions
+    }
+    
+    setFreeRaidSubmitting(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`${API_URL}/api/twitter-raids/free`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify(freeRaidData)
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create free Twitter raid');
+      }
+      
+      // Reset form and hide it
+      setFreeRaidData({
+        tweetUrl: '',
+        title: 'Twitter Raid',
+        description: 'Retweet, Like & Comment to earn 50 points!'
+      });
+      setShowFreeRaidForm(false);
+      
+      // Refresh raids list and eligibility
+      fetchRaids();
+      checkFreeRaidEligibility();
+      
+      showNotification('Free Twitter raid created successfully!', 'success');
+    } catch (err) {
+      setError(err.message || 'Failed to create free Twitter raid');
+    } finally {
+      setFreeRaidSubmitting(false);
+    }
+  };
   
   const handleDeleteRaid = async (raidId) => {
     if (!currentUser || !currentUser.isAdmin) {
@@ -983,6 +1075,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                 onClick={() => {
                   setShowPointsCreateForm(!showPointsCreateForm);
                   setShowCreateForm(false);
+                  setShowFreeRaidForm(false);
                 }}
                 className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded whitespace-nowrap text-sm sm:text-base flex items-center"
               >
@@ -990,6 +1083,25 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
                 {showPointsCreateForm ? 'Cancel' : 'Create Raid (2000 Points)'}
+              </button>
+            )}
+
+            {currentUser && (
+              <button
+                onClick={() => {
+                  setShowFreeRaidForm(!showFreeRaidForm);
+                  setShowCreateForm(false);
+                  setShowPointsCreateForm(false);
+                  if (!showFreeRaidForm) {
+                    checkFreeRaidEligibility();
+                  }
+                }}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded whitespace-nowrap text-sm sm:text-base flex items-center"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                </svg>
+                {showFreeRaidForm ? 'Cancel' : 'Create Free Raid'}
               </button>
             )}
           </div>
@@ -1170,6 +1282,76 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   : getUserPoints() < 2000 
                     ? 'Not Enough Points (Need 2000)' 
                     : 'Create Twitter Raid with Points'}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Free Raid Create Form */}
+        {showFreeRaidForm && currentUser && (
+          <div className="mt-4 p-4 bg-gray-800/50 rounded-lg">
+            <h3 className="text-lg font-bold text-white mb-4">Create Free Twitter Raid</h3>
+            
+            {freeRaidEligibility && (
+              <div className={`p-4 border rounded-lg mb-4 ${
+                freeRaidEligibility.eligible 
+                  ? 'bg-green-500/20 border-green-500/50 text-green-400' 
+                  : 'bg-red-500/20 border-red-500/50 text-red-400'
+              }`}>
+                <div className="flex items-start">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                  </svg>
+                  <div className="flex-1">
+                    <p className="font-medium">
+                      {freeRaidEligibility.eligible ? 'Free Raid Available' : 'Not Eligible'}
+                    </p>
+                    <p className="text-sm">
+                      {freeRaidEligibility.eligible 
+                        ? `You have ${freeRaidEligibility.raidsRemaining} free raids remaining today (${freeRaidEligibility.raidsUsedToday}/2 used)`
+                        : freeRaidEligibility.reason
+                      }
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <form onSubmit={handleCreateFreeRaid}>
+              <div className="mb-4">
+                <label className="block text-gray-300 mb-2">
+                  Tweet URL <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={freeRaidData.tweetUrl}
+                  onChange={(e) => setFreeRaidData({...freeRaidData, tweetUrl: e.target.value})}
+                  placeholder="https://twitter.com/username/status/1234567890"
+                  className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              
+              {error && (
+                <div className="bg-red-500/20 border border-red-500/50 text-red-400 p-3 rounded mb-4">
+                  {error}
+                </div>
+              )}
+              
+              <button
+                type="submit"
+                disabled={freeRaidSubmitting || !freeRaidEligibility?.eligible}
+                className={`px-4 py-2 rounded font-medium ${
+                  freeRaidSubmitting || !freeRaidEligibility?.eligible
+                    ? 'bg-gray-600 cursor-not-allowed'
+                    : 'bg-purple-600 hover:bg-purple-700'
+                } text-white`}
+              >
+                {freeRaidSubmitting 
+                  ? 'Creating...' 
+                  : !freeRaidEligibility?.eligible 
+                    ? 'Not Eligible for Free Raids' 
+                    : 'Create Free Twitter Raid'}
               </button>
             </form>
           </div>
