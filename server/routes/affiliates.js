@@ -219,8 +219,9 @@ router.post('/free-raid-project/:userId', auth, async (req, res) => {
 // Get free raid project status (admin only)
 router.get('/free-raid-project/:userId', auth, async (req, res) => {
   try {
-    if (!req.user.isAdmin) {
-      return res.status(403).json({ error: 'Only admins can check free raid project status' });
+    // Allow users to check their own eligibility or admins to check any user
+    if (!req.user.isAdmin && req.user.userId !== req.params.userId) {
+      return res.status(403).json({ error: 'You can only check your own free raid project status' });
     }
 
     const user = await User.findById(req.params.userId);

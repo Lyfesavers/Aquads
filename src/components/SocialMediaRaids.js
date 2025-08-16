@@ -711,7 +711,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
 
   const checkFreeRaidEligibility = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/affiliates/free-raid-project/${currentUser.id}`, {
+      const currentId = currentUser.id || currentUser._id;
+      const response = await fetch(`${API_URL}/api/affiliates/free-raid-project/${currentId}`, {
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
         }

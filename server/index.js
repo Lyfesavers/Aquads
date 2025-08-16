@@ -126,7 +126,8 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://*.transak.com", "https://*.google.com", "https://*.verygoodvault.com", "https://*.checkout.com", "https://*.cdn-apple.com", "https://*.onfido.com", "https://*.sardine.ai", "https://*.ckotech.co", "https://*.newrelic.com", "https://*.plaid.com", "https://*.googleapis.com", "https://*.gstatic.com", "https://*.logr-ingest.com", "https://cdn.lrkt-in.com", "https://static.ads-twitter.com", "https://cdn.jsdelivr.net", "https://*.tradingview.com", "https://s3.tradingview.com", "https://charting-library.tradingview.com", "https://symbol-search.tradingview.com", "https://cdn.coinscribble.sapient.tools", "https://platform.twitter.com"],
+      scriptSrcElem: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://*.transak.com", "https://*.google.com", "https://*.verygoodvault.com", "https://*.checkout.com", "https://*.cdn-apple.com", "https://*.onfido.com", "https://*.sardine.ai", "https://*.ckotech.co", "https://*.newrelic.com", "https://*.plaid.com", "https://*.googleapis.com", "https://*.gstatic.com", "https://*.logr-ingest.com", "https://cdn.lrkt-in.com", "https://static.ads-twitter.com", "https://cdn.jsdelivr.net", "https://*.tradingview.com", "https://s3.tradingview.com", "https://charting-library.tradingview.com", "https://symbol-search.tradingview.com", "https://cdn.coinscribble.sapient.tools", "https://platform.twitter.com"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:", "*"],
       connectSrc: ["'self'", "wss:", "https:", "*"],
