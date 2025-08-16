@@ -230,14 +230,16 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm z-[200000]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
-              <img 
-                src="/Aquadsnewlogo.png" 
-                alt="AQUADS" 
-                className="w-auto filter drop-shadow-lg"
-                style={{height: '2rem', filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))'}}
-              />
-            </div>
+                         <div className="flex items-center">
+               <Link to="/">
+                 <img 
+                   src="/Aquadsnewlogo.png" 
+                   alt="AQUADS" 
+                   className="w-auto filter drop-shadow-lg hover:opacity-80 transition-opacity"
+                   style={{height: '2rem', filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))'}}
+                 />
+               </Link>
+             </div>
             
             {/* Mobile menu button */}
             <div className="md:hidden">
@@ -305,41 +307,53 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                       </svg>
                     </button>
                     
-                    {/* Dropdown Menu */}
-                    {showUserDropdown && (
-                      <div className="absolute right-0 mt-2 w-48 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 z-50">
-                        <div className="py-2">
-                          <button
-                            onClick={() => {
-                              setShowUserDropdown(false);
-                              // Add dashboard functionality if needed
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
-                          >
-                            📊 Dashboard
-                          </button>
-                          <button
-                            onClick={() => {
-                              setShowCreateModal(true);
-                              setShowUserDropdown(false);
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
-                          >
-                            ➕ Create Game
-                          </button>
-                          <hr className="my-2 border-gray-700" />
-                          <button
-                            onClick={() => {
-                              onLogout();
-                              setShowUserDropdown(false);
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-red-600/50 transition-colors"
-                          >
-                            🚪 Logout
-                          </button>
-                        </div>
-                      </div>
-                    )}
+                                         {/* Dropdown Menu */}
+                     {showUserDropdown && (
+                       <div className="absolute right-0 mt-2 w-48 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 z-50">
+                         <div className="py-2">
+                           <Link
+                             to="/"
+                             onClick={() => setShowUserDropdown(false)}
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors block"
+                           >
+                             📊 Dashboard
+                           </Link>
+                           <Link
+                             to="/marketplace"
+                             onClick={() => setShowUserDropdown(false)}
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors block"
+                           >
+                             ➕ List Project
+                           </Link>
+                           <Link
+                             to="/crypto-ads"
+                             onClick={() => setShowUserDropdown(false)}
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors block"
+                           >
+                             🎨 Create Banner Ad
+                           </Link>
+                           <button
+                             onClick={() => {
+                               setShowCreateModal(true);
+                               setShowUserDropdown(false);
+                             }}
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
+                           >
+                             🎮 Create Game
+                           </button>
+                           <hr className="my-2 border-gray-700" />
+                           <button
+                             onClick={() => {
+                               onLogout();
+                               setShowUserDropdown(false);
+                             }}
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-red-600/50 transition-colors"
+                           >
+                             🚪 Logout
+                           </button>
+                         </div>
+                       </div>
+                     )}
                   </div>
                 </>
               ) : (
@@ -395,28 +409,49 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                 Why List?
               </Link>
               
-              {currentUser ? (
-                <div className="flex flex-col space-y-2">
-                  <button
-                    onClick={() => {
-                      setShowCreateModal(true);
-                      setFilterOpen(false);
-                    }}
-                    className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm text-center"
-                  >
-                    Create Game
-                  </button>
-                  <button
-                    onClick={() => {
-                      onLogout();
-                      setFilterOpen(false);
-                    }}
-                    className="bg-red-500/80 hover:bg-red-600/80 px-4 py-2 rounded shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm text-center"
-                  >
-                    Logout
-                  </button>
-                </div>
-              ) : (
+                             {currentUser ? (
+                 <div className="flex flex-col space-y-2">
+                   <Link
+                     to="/"
+                     onClick={() => setFilterOpen(false)}
+                     className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+                   >
+                     Dashboard
+                   </Link>
+                   <Link
+                     to="/marketplace"
+                     onClick={() => setFilterOpen(false)}
+                     className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+                   >
+                     List Project
+                   </Link>
+                   <Link
+                     to="/crypto-ads"
+                     onClick={() => setFilterOpen(false)}
+                     className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+                   >
+                     Create Banner Ad
+                   </Link>
+                   <button
+                     onClick={() => {
+                       setShowCreateModal(true);
+                       setFilterOpen(false);
+                     }}
+                     className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+                   >
+                     Create Game
+                   </button>
+                   <button
+                     onClick={() => {
+                       onLogout();
+                       setFilterOpen(false);
+                     }}
+                     className="bg-red-500/80 hover:bg-red-600/80 px-4 py-2 rounded shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+                   >
+                     Logout
+                   </button>
+                 </div>
+               ) : (
                 <div className="flex flex-col space-y-2">
                   <button
                     onClick={() => {
