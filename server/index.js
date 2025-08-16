@@ -581,9 +581,20 @@ async function initializeSkillTests() {
     const existingTests = await SkillTest.countDocuments();
     
     if (existingTests === 0) {
+      // If no tests exist, add all tests
       await SkillTest.insertMany(skillTests);
+      console.log('Initialized all skill tests');
+    } else {
+      // Check for new tests and add them
+      for (const test of skillTests) {
+        const existingTest = await SkillTest.findOne({ title: test.title });
+        if (!existingTest) {
+          await SkillTest.create(test);
+          console.log(`Added new skill test: "${test.title}"`);
+        }
+      }
     }
   } catch (error) {
-    // Silent error handling
+    console.error('Error initializing skill tests:', error);
   }
 } 
