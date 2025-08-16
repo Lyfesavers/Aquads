@@ -8,6 +8,9 @@ import { addNotificationBell } from './NavUtils';
 import Modal from './Modal';
 import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
+import CreateAdModal from './CreateAdModal';
+import CreateBannerModal from './CreateBannerModal';
+import Dashboard from './Dashboard';
 import BannerDisplay from './BannerDisplay';
 import { Link } from 'react-router-dom';
 import { showToast } from './Toast';
@@ -68,6 +71,8 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
   const [gameToEdit, setGameToEdit] = useState(null);
   const [filterOpen, setFilterOpen] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [showBannerModal, setShowBannerModal] = useState(false);
   const [popularCategories, setPopularCategories] = useState([]);
   
   // Filter and sort states
@@ -311,27 +316,33 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
                      {showUserDropdown && (
                        <div className="absolute right-0 mt-2 w-48 bg-gray-800/95 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 z-50">
                          <div className="py-2">
-                           <Link
-                             to="/"
-                             onClick={() => setShowUserDropdown(false)}
-                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors block"
+                           <button
+                             onClick={() => {
+                               setShowDashboard(true);
+                               setShowUserDropdown(false);
+                             }}
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
                            >
                              📊 Dashboard
-                           </Link>
-                           <Link
-                             to="/marketplace"
-                             onClick={() => setShowUserDropdown(false)}
-                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors block"
+                           </button>
+                           <button
+                             onClick={() => {
+                               setShowCreateModal(true);
+                               setShowUserDropdown(false);
+                             }}
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-purple-600/50 transition-colors"
                            >
                              ➕ List Project
-                           </Link>
-                           <Link
-                             to="/crypto-ads"
-                             onClick={() => setShowUserDropdown(false)}
-                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors block"
+                           </button>
+                           <button
+                             onClick={() => {
+                               setShowBannerModal(true);
+                               setShowUserDropdown(false);
+                             }}
+                             className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-blue-600/50 transition-colors"
                            >
                              🎨 Create Banner Ad
-                           </Link>
+                           </button>
                            <button
                              onClick={() => {
                                setShowCreateModal(true);
@@ -411,27 +422,33 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
               
                              {currentUser ? (
                  <div className="flex flex-col space-y-2">
-                   <Link
-                     to="/"
-                     onClick={() => setFilterOpen(false)}
+                   <button
+                     onClick={() => {
+                       setShowDashboard(true);
+                       setFilterOpen(false);
+                     }}
                      className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm text-center"
                    >
                      Dashboard
-                   </Link>
-                   <Link
-                     to="/marketplace"
-                     onClick={() => setFilterOpen(false)}
+                   </button>
+                   <button
+                     onClick={() => {
+                       setShowCreateModal(true);
+                       setFilterOpen(false);
+                     }}
                      className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm text-center"
                    >
                      List Project
-                   </Link>
-                   <Link
-                     to="/crypto-ads"
-                     onClick={() => setFilterOpen(false)}
+                   </button>
+                   <button
+                     onClick={() => {
+                       setShowBannerModal(true);
+                       setFilterOpen(false);
+                     }}
                      className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm text-center"
                    >
                      Create Banner Ad
-                   </Link>
+                   </button>
                    <button
                      onClick={() => {
                        setShowCreateModal(true);
@@ -680,42 +697,59 @@ const GameHub = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
       </div>
       </div> {/* Close the top margin wrapper */}
       
-      {/* Modals */}
-      {showCreateModal && (
-        <CreateGameModal 
-          onClose={() => setShowCreateModal(false)} 
-          onCreateGame={handleCreateGame}
-        />
-      )}
-      
-      {showEditModal && gameToEdit && (
-        <EditGameModal 
-          game={gameToEdit}
-          onClose={() => {
-            setShowEditModal(false);
-            setGameToEdit(null);
-          }} 
-          onUpdateGame={handleUpdateGame}
-        />
-      )}
-      
-      {showLoginModal && (
-        <LoginModal 
-          onClose={() => setShowLoginModal(false)} 
-          onLogin={handleLoginSubmit}
-          onCreateAccount={() => {
-            setShowLoginModal(false);
-            setShowCreateAccountModal(true);
-          }}
-        />
-      )}
-      
-      {showCreateAccountModal && (
-        <CreateAccountModal 
-          onClose={() => setShowCreateAccountModal(false)} 
-          onCreateAccount={handleCreateAccountSubmit}
-        />
-      )}
+             {/* Modals */}
+       {showCreateModal && (
+         <CreateGameModal 
+           onClose={() => setShowCreateModal(false)} 
+           onCreateGame={handleCreateGame}
+         />
+       )}
+       
+       {showEditModal && gameToEdit && (
+         <EditGameModal 
+           game={gameToEdit}
+           onClose={() => {
+             setShowEditModal(false);
+             setGameToEdit(null);
+           }} 
+           onUpdateGame={handleUpdateGame}
+         />
+       )}
+       
+       {showLoginModal && (
+         <LoginModal 
+           onClose={() => setShowLoginModal(false)} 
+           onLogin={handleLoginSubmit}
+           onCreateAccount={() => {
+             setShowLoginModal(false);
+             setShowCreateAccountModal(true);
+           }}
+         />
+       )}
+       
+       {showCreateAccountModal && (
+         <CreateAccountModal 
+           onClose={() => setShowCreateAccountModal(false)} 
+           onCreateAccount={handleCreateAccountSubmit}
+         />
+       )}
+
+       {/* Dashboard Modal */}
+       {showDashboard && (
+         <Dashboard
+           currentUser={currentUser}
+           onClose={() => setShowDashboard(false)}
+           ads={[]}  // Pass empty array since GameHub doesn't handle ads
+         />
+       )}
+
+       {/* Create Banner Modal */}
+       {showBannerModal && currentUser && (
+         <CreateBannerModal
+           onSubmit={() => {}}
+           onClose={() => setShowBannerModal(false)}
+         />
+       )}
       
       {/* Add a spacer div at the bottom to ensure content can be scrolled fully */}
       <div className="h-16"></div>
