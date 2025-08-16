@@ -122,9 +122,24 @@ const ServiceBadgeComponent = ({ badge }) => {
   };
 
   return (
-    <div className={`absolute top-2 left-2 px-2 py-1 rounded-full ${badgeColors[badge]} text-white text-sm font-medium shadow-lg flex items-center gap-1 backdrop-blur-sm`}>
-      <span>{badgeIcons[badge]}</span>
-      <span className="capitalize">{badge}</span>
+    <div className="absolute top-2 left-2 px-2 py-1 rounded-full text-white text-sm font-medium shadow-lg flex items-center gap-1 backdrop-blur-sm relative">
+      {/* Badge SVG Background */}
+      <div 
+        className="absolute inset-0 rounded-full"
+        style={{
+          backgroundImage: `url('/badge.svg')`,
+          backgroundSize: 'cover',
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'center',
+          opacity: 0.9
+        }}
+      />
+      
+      {/* Badge Content */}
+      <div className="relative z-10 flex items-center gap-1">
+        <span>{badgeIcons[badge]}</span>
+        <span className="capitalize">{badge}</span>
+      </div>
     </div>
   );
 };
