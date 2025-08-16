@@ -38,6 +38,36 @@ const telegramService = {
     }
   },
 
+  // Pin a message in a chat
+  pinMessage: async (chatId, messageId) => {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    
+    if (!botToken) return false;
+
+    try {
+      const response = await axios.post(
+        `https://api.telegram.org/bot${botToken}/pinChatMessage`,
+        {
+          chat_id: chatId,
+          message_id: messageId,
+          disable_notification: false // Show notification about pinning
+        }
+      );
+
+      if (response.data.ok) {
+        console.log(`✅ Pinned message ${messageId} in chat ${chatId}`);
+        return true;
+      } else {
+        console.log(`❌ Failed to pin message ${messageId} in chat ${chatId}: ${response.data.description}`);
+        return false;
+      }
+    } catch (error) {
+      // Don't log as error since pinning might fail due to permissions
+      console.log(`⚠️ Could not pin message ${messageId} in chat ${chatId}: ${error.message}`);
+      return false;
+    }
+  },
+
   sendRaidNotification: async (raidData) => {
     try {
       const botToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -107,8 +137,11 @@ const telegramService = {
 
             if (response.data.ok) {
               successCount++;
+              const messageId = response.data.result.message_id;
               // Store message ID for cleanup
-              await telegramService.storeRaidMessageId(chatId, response.data.result.message_id);
+              await telegramService.storeRaidMessageId(chatId, messageId);
+              // Pin the message
+              await telegramService.pinMessage(chatId, messageId);
             }
           } else {
             // Send text message
@@ -117,6 +150,8 @@ const telegramService = {
               successCount++;
               // Store message ID for cleanup
               await telegramService.storeRaidMessageId(chatId, result.messageId);
+              // Pin the message
+              await telegramService.pinMessage(chatId, result.messageId);
             }
           }
         } catch (error) {
@@ -1286,6 +1321,8 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
         if (noBubblesResult.success) {
           // Store message ID for cleanup
           await telegramService.storeBubbleMessageId(chatId, noBubblesResult.messageId);
+          // Pin the message
+          await telegramService.pinMessage(chatId, noBubblesResult.messageId);
         }
         return true;
       }
@@ -1348,8 +1385,11 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 
           if (response.data.ok) {
             result = true;
+            const messageId = response.data.result.message_id;
             // Store message ID for cleanup
-            await telegramService.storeBubbleMessageId(chatId, response.data.result.message_id);
+            await telegramService.storeBubbleMessageId(chatId, messageId);
+            // Pin the message
+            await telegramService.pinMessage(chatId, messageId);
           }
         } catch (error) {
           console.error('Failed to send video, falling back to text message:', error.message);
@@ -1357,8 +1397,11 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
           const textResult = await telegramService.sendBotMessageWithMarkdown(chatId, message);
           if (textResult.success) {
             result = true;
+            const messageId = textResult.messageId;
             // Store message ID for cleanup
-            await telegramService.storeBubbleMessageId(chatId, textResult.messageId);
+            await telegramService.storeBubbleMessageId(chatId, messageId);
+            // Pin the message
+            await telegramService.pinMessage(chatId, messageId);
           }
         }
       } else {
@@ -1366,8 +1409,11 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
         const textResult = await telegramService.sendBotMessageWithMarkdown(chatId, message);
         if (textResult.success) {
           result = true;
+          const messageId = textResult.messageId;
           // Store message ID for cleanup
-          await telegramService.storeBubbleMessageId(chatId, textResult.messageId);
+          await telegramService.storeBubbleMessageId(chatId, messageId);
+          // Pin the message
+          await telegramService.pinMessage(chatId, messageId);
         }
       }
       
