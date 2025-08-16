@@ -522,6 +522,216 @@ const skillTests = [
         explanation: "Selection requires balancing requirements, team skills, and ecosystem sustainability over time."
       }
     ]
+  },
+
+  {
+    title: "Web3 Fundamentals & Blockchain Essentials",
+    description: "Comprehensive assessment of blockchain technology, cryptocurrency fundamentals, DeFi protocols, and Web3 ecosystem understanding. Tests foundational knowledge essential for Web3 projects.",
+    category: "technical",
+    difficulty: "intermediate",
+    timeLimit: 30,
+    passingScore: 80,
+    badge: {
+      name: "Web3 Fundamentals Expert",
+      description: "Demonstrates solid understanding of blockchain technology and Web3 ecosystem",
+      icon: "🔗",
+      color: "#6366F1"
+    },
+    questions: [
+      {
+        question: "What is the primary innovation that blockchain technology introduced to digital transactions?",
+        options: [
+          "Decentralized, immutable record-keeping without requiring trust in a central authority",
+          "Distributed, tamper-resistant record-keeping that eliminates the need for trusted intermediaries",
+          "Centralized, secure record-keeping that improves upon traditional database systems",
+          "Peer-to-peer, encrypted record-keeping that enhances privacy and confidentiality"
+        ],
+        correctAnswer: 0,
+        explanation: "Blockchain's core innovation is creating trustless, decentralized systems where no single entity controls the data."
+      },
+      {
+        question: "What is the main purpose of consensus mechanisms in blockchain networks?",
+        options: [
+          "Accelerate transaction validation by optimizing computational efficiency across the network",
+          "Ensure all network participants agree on the current state of the blockchain without requiring trust",
+          "Minimize energy consumption by implementing eco-friendly validation protocols",
+          "Establish hierarchical decision-making structures within the blockchain ecosystem"
+        ],
+        correctAnswer: 1,
+        explanation: "Consensus mechanisms enable decentralized networks to maintain agreement on transaction validity and blockchain state."
+      },
+      {
+        question: "What is the key difference between Layer 1 and Layer 2 blockchain solutions?",
+        options: [
+          "Layer 1 focuses on smart contract execution while Layer 2 handles basic transaction processing",
+          "Layer 1 serves institutional clients while Layer 2 targets retail and consumer applications",
+          "Layer 1 is the base blockchain protocol, while Layer 2 builds on top to improve scalability and reduce costs",
+          "Layer 1 prioritizes security features while Layer 2 emphasizes speed and efficiency"
+        ],
+        correctAnswer: 2,
+        explanation: "Layer 2 solutions extend Layer 1 blockchains to address scalability limitations while maintaining security."
+      },
+      {
+        question: "What is the primary function of smart contracts in the Web3 ecosystem?",
+        options: [
+          "Provide comprehensive legal frameworks for blockchain-based business agreements",
+          "Optimize data storage and retrieval processes within distributed networks",
+          "Create intuitive user interfaces for blockchain application interactions",
+          "Execute predefined logic automatically when specific conditions are met, without human intervention"
+        ],
+        correctAnswer: 3,
+        explanation: "Smart contracts are self-executing programs that automatically enforce agreements when conditions are satisfied."
+      },
+      {
+        question: "What is the main purpose of tokenomics in a cryptocurrency project?",
+        options: [
+          "Establish initial token pricing strategies during public offering events",
+          "Define the economic model, token distribution, and incentives that drive the project's ecosystem",
+          "Determine maximum token supply limits and inflationary mechanisms",
+          "Create market liquidity through strategic exchange partnerships"
+        ],
+        correctAnswer: 1,
+        explanation: "Tokenomics creates the economic framework that incentivizes participation and sustains the project's ecosystem."
+      },
+      {
+        question: "What is the primary benefit of DeFi (Decentralized Finance) protocols?",
+        options: [
+          "Ensure guaranteed returns that exceed traditional financial market performance",
+          "Remove regulatory compliance requirements for financial service operations",
+          "Provide financial services without intermediaries, reducing costs and increasing accessibility",
+          "Enable completely anonymous financial transactions with enhanced privacy protection"
+        ],
+        correctAnswer: 2,
+        explanation: "DeFi removes intermediaries to create more accessible, transparent, and cost-effective financial services."
+      },
+      {
+        question: "What is the purpose of gas fees in blockchain networks like Ethereum?",
+        options: [
+          "Generate sustainable revenue streams for blockchain development and maintenance",
+          "Create economic incentives that drive token value appreciation over time",
+          "Support ecosystem growth through funding for community and marketing initiatives",
+          "Compensate network validators for processing transactions and preventing spam"
+        ],
+        correctAnswer: 3,
+        explanation: "Gas fees incentivize validators to process transactions and prevent network spam by making attacks costly."
+      },
+      {
+        question: "What is the key innovation of NFTs (Non-Fungible Tokens) in the digital economy?",
+        options: [
+          "Enhance data security through advanced cryptographic identity management systems",
+          "Enable true digital ownership and scarcity of unique digital assets on blockchain networks",
+          "Improve transaction processing speeds for digital content and media files",
+          "Eliminate intellectual property concerns through automated copyright enforcement"
+        ],
+        correctAnswer: 1,
+        explanation: "NFTs create verifiable ownership and scarcity for digital assets, enabling new forms of digital commerce."
+      }
+    ]
+  },
+
+  {
+    title: "Community Building & Management",
+    description: "Comprehensive assessment of community development strategies, engagement techniques, moderation best practices, and growth tactics for online communities. Tests essential skills for building and managing thriving communities.",
+    category: "communication",
+    difficulty: "intermediate",
+    timeLimit: 30,
+    passingScore: 80,
+    badge: {
+      name: "Community Builder",
+      description: "Demonstrates expertise in community development, engagement, and management",
+      icon: "👥",
+      color: "#10B981"
+    },
+    questions: [
+      {
+        question: "What is the most important first step when building a new online community?",
+        options: [
+          "Define clear community purpose, values, and target audience before launching",
+          "Establish comprehensive social media presence across multiple platforms for maximum visibility",
+          "Implement rapid member acquisition strategies to achieve critical mass quickly",
+          "Deploy automated content management systems to ensure consistent engagement"
+        ],
+        correctAnswer: 0,
+        explanation: "Clear purpose and values provide the foundation that guides all community decisions and attracts the right members."
+      },
+      {
+        question: "What is the primary goal of community moderation in online spaces?",
+        options: [
+          "Eliminate all potentially negative interactions to maintain a positive atmosphere",
+          "Maintain a safe, inclusive environment that aligns with community values and guidelines",
+          "Implement comprehensive rule enforcement to minimize administrative burden",
+          "Restrict controversial discussions to prevent potential legal complications"
+        ],
+        correctAnswer: 1,
+        explanation: "Effective moderation balances free expression with safety, ensuring the community remains welcoming and productive."
+      },
+      {
+        question: "What is the key principle of community engagement that drives long-term member retention?",
+        options: [
+          "Provide financial rewards and incentives for active community participation",
+          "Establish mandatory participation requirements for community events and discussions",
+          "Create value for members through meaningful interactions, content, and opportunities",
+          "Prioritize member acquisition over the quality of existing member interactions"
+        ],
+        correctAnswer: 2,
+        explanation: "Sustainable engagement comes from providing genuine value that members can't find elsewhere."
+      },
+      {
+        question: "What is the most effective approach to handling conflicts within a community?",
+        options: [
+          "Minimize attention to minor conflicts to prevent escalation and maintain harmony",
+          "Evaluate conflicts based on member contribution levels and community seniority",
+          "Implement immediate disciplinary actions against all parties involved in conflicts",
+          "Address issues promptly, fairly, and transparently while maintaining community guidelines"
+        ],
+        correctAnswer: 3,
+        explanation: "Fair, consistent conflict resolution builds trust and shows members that the community is well-managed."
+      },
+      {
+        question: "What is the purpose of community guidelines and how should they be developed?",
+        options: [
+          "Establish legal safeguards for community administrators against potential litigation",
+          "Establish clear expectations for behavior that reflect community values and goals",
+          "Implement comprehensive restrictions to minimize administrative overhead and moderation requirements",
+          "Adopt proven guidelines from successful communities to expedite implementation"
+        ],
+        correctAnswer: 1,
+        explanation: "Guidelines should be tailored to your community's specific purpose and values, not generic rules."
+      },
+      {
+        question: "What is the most effective strategy for growing a community organically?",
+        options: [
+          "Implement comprehensive marketing campaigns across all available social media channels",
+          "Focus on quality content and member experiences that encourage word-of-mouth referrals",
+          "Establish financial incentive programs for member referrals and new sign-ups",
+          "Acquire member databases and implement mass invitation campaigns"
+        ],
+        correctAnswer: 1,
+        explanation: "Organic growth comes from creating such value that existing members naturally invite others to join."
+      },
+      {
+        question: "What is the key to maintaining community engagement during periods of low activity?",
+        options: [
+          "Relax moderation standards to encourage more dynamic and controversial discussions",
+          "Shift focus toward member acquisition rather than engaging existing community members",
+          "Implement comprehensive automation to maintain consistent activity levels without human intervention",
+          "Provide consistent value through quality content, events, and member recognition"
+        ],
+        correctAnswer: 3,
+        explanation: "Consistent value delivery keeps members engaged even during natural activity fluctuations."
+      },
+      {
+        question: "What is the most important metric for measuring community health beyond member count?",
+        options: [
+          "Quantitative measurement of daily and weekly post and comment generation",
+          "Analytical tracking of new member acquisition and registration rates",
+          "Financial assessment of community monetization and revenue generation",
+          "Member engagement rates, retention, and quality of interactions within the community"
+        ],
+        correctAnswer: 3,
+        explanation: "Engagement and retention indicate whether members find value and want to stay active in the community."
+      }
+    ]
   }
 ];
 
