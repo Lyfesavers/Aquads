@@ -54,32 +54,6 @@ const BannerDisplay = () => {
     styleElement.textContent = `
       .banner-container {
         pointer-events: auto;
-        width: 100vw !important;
-        max-width: 100vw !important;
-        margin-left: calc(-50vw + 50%) !important;
-        margin-right: calc(-50vw + 50%) !important;
-        overflow: hidden;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background: rgba(0, 0, 0, 0.1);
-      }
-      .banner-container a {
-        width: 100vw !important;
-        display: flex !important;
-        justify-content: center !important;
-        align-items: center !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-      .banner-container img {
-        width: 100vw !important;
-        max-width: 100vw !important;
-        object-fit: contain !important;
-        object-position: center !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        border-radius: 0 !important;
       }
       body:has(.modal-backdrop) .banner-container {
         pointer-events: none !important;
@@ -99,7 +73,7 @@ const BannerDisplay = () => {
   const currentBanner = banners[currentIndex];
 
   return (
-    <div className="banner-container w-screen max-w-screen overflow-hidden relative z-0" style={{ marginLeft: 'calc(-50vw + 50%)', marginRight: 'calc(-50vw + 50%)' }}>
+    <div className="banner-container w-full relative z-0">
       <a 
         href={currentBanner.url} 
         target="_blank" 
@@ -109,7 +83,7 @@ const BannerDisplay = () => {
         <img
           src={currentBanner.gif}
           alt={currentBanner.title}
-          className="w-full h-[60px] sm:h-[80px] md:h-[120px] lg:h-[140px] xl:h-[160px] 2xl:h-[180px] object-contain"
+          className="w-full h-[60px] sm:h-[80px] md:h-[200px] object-contain"
           width="1280"
           height="200"
           loading="eager"
