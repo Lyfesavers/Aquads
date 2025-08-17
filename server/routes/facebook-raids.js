@@ -41,13 +41,74 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Extract post ID from URL
-    const postIdMatch = postUrl.match(/\/posts\/(\d+)/);
-    if (!postIdMatch || !postIdMatch[1]) {
-      return res.status(400).json({ error: 'Invalid Facebook URL' });
-    }
+    // Extract post ID from URL using robust parsing
+    const extractFacebookPostId = (url) => {
+      if (!url) return null;
+      
+      try {
+        // Handle cases where someone might paste "@URL" by mistake
+        const cleanUrl = url.startsWith('@') ? url.substring(1) : url;
+        
+        // Try multiple approaches to extract the post ID
+        
+        // Approach 1: Try to parse as a URL first
+        let parsedUrl;
+        try {
+          // Check if URL has protocol, add if missing
+          const urlWithProtocol = (!cleanUrl.startsWith('http') && !cleanUrl.startsWith('https'))
+            ? `https://${cleanUrl}` 
+            : cleanUrl;
+          
+          parsedUrl = new URL(urlWithProtocol);
+        } catch (e) {
+          // Continue to fallback regex approach
+        }
+        
+        // If we successfully parsed the URL, check the domain and extract ID
+        if (parsedUrl) {
+          // Check if it's a Facebook domain
+          if (parsedUrl.hostname.includes('facebook.com')) {
+            // Extract ID from pathname
+            const match = parsedUrl.pathname.match(/\/posts\/(\d+)/);
+            if (match && match[1]) {
+              return match[1];
+            }
+          }
+        }
+        
+        // Approach 2: Fallback to regex for all URL formats
+        const standardMatch = cleanUrl.match(/facebook\.com\/[^\/]+\/posts\/(\d+)/i);
+        if (standardMatch && standardMatch[1]) {
+          return standardMatch[1];
+        }
+        
+        // Approach 3: Handle groups and pages
+        const groupsMatch = cleanUrl.match(/facebook\.com\/groups\/[^\/]+\/posts\/(\d+)/i);
+        if (groupsMatch && groupsMatch[1]) {
+          return groupsMatch[1];
+        }
+        
+        const pagesMatch = cleanUrl.match(/facebook\.com\/[^\/]+\/posts\/(\d+)/i);
+        if (pagesMatch && pagesMatch[1]) {
+          return pagesMatch[1];
+        }
+        
+        // Approach 4: Try to handle direct posts URLs with just numbers
+        const directPostsMatch = cleanUrl.match(/\/posts\/(\d+)/i);
+        if (directPostsMatch && directPostsMatch[1]) {
+          return directPostsMatch[1];
+        }
+        
+        return null;
+      } catch (error) {
+        return null;
+      }
+    };
 
-    const postId = postIdMatch[1];
+    const postId = extractFacebookPostId(postUrl);
+    if (!postId) {
+      return res.status(400).json({ error: 'Invalid Facebook URL. Please provide a valid Facebook post URL.' });
+    }
 
     const raid = new FacebookRaid({
       postId,
@@ -86,13 +147,74 @@ router.post('/paid', auth, requireEmailVerification, async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Extract post ID from URL
-    const postIdMatch = postUrl.match(/\/posts\/(\d+)/);
-    if (!postIdMatch || !postIdMatch[1]) {
-      return res.status(400).json({ error: 'Invalid Facebook URL' });
-    }
+    // Extract post ID from URL using robust parsing
+    const extractFacebookPostId = (url) => {
+      if (!url) return null;
+      
+      try {
+        // Handle cases where someone might paste "@URL" by mistake
+        const cleanUrl = url.startsWith('@') ? url.substring(1) : url;
+        
+        // Try multiple approaches to extract the post ID
+        
+        // Approach 1: Try to parse as a URL first
+        let parsedUrl;
+        try {
+          // Check if URL has protocol, add if missing
+          const urlWithProtocol = (!cleanUrl.startsWith('http') && !cleanUrl.startsWith('https'))
+            ? `https://${cleanUrl}` 
+            : cleanUrl;
+          
+          parsedUrl = new URL(urlWithProtocol);
+        } catch (e) {
+          // Continue to fallback regex approach
+        }
+        
+        // If we successfully parsed the URL, check the domain and extract ID
+        if (parsedUrl) {
+          // Check if it's a Facebook domain
+          if (parsedUrl.hostname.includes('facebook.com')) {
+            // Extract ID from pathname
+            const match = parsedUrl.pathname.match(/\/posts\/(\d+)/);
+            if (match && match[1]) {
+              return match[1];
+            }
+          }
+        }
+        
+        // Approach 2: Fallback to regex for all URL formats
+        const standardMatch = cleanUrl.match(/facebook\.com\/[^\/]+\/posts\/(\d+)/i);
+        if (standardMatch && standardMatch[1]) {
+          return standardMatch[1];
+        }
+        
+        // Approach 3: Handle groups and pages
+        const groupsMatch = cleanUrl.match(/facebook\.com\/groups\/[^\/]+\/posts\/(\d+)/i);
+        if (groupsMatch && groupsMatch[1]) {
+          return groupsMatch[1];
+        }
+        
+        const pagesMatch = cleanUrl.match(/facebook\.com\/[^\/]+\/posts\/(\d+)/i);
+        if (pagesMatch && pagesMatch[1]) {
+          return pagesMatch[1];
+        }
+        
+        // Approach 4: Try to handle direct posts URLs with just numbers
+        const directPostsMatch = cleanUrl.match(/\/posts\/(\d+)/i);
+        if (directPostsMatch && directPostsMatch[1]) {
+          return directPostsMatch[1];
+        }
+        
+        return null;
+      } catch (error) {
+        return null;
+      }
+    };
 
-    const postId = postIdMatch[1];
+    const postId = extractFacebookPostId(postUrl);
+    if (!postId) {
+      return res.status(400).json({ error: 'Invalid Facebook URL. Please provide a valid Facebook post URL.' });
+    }
 
     // Create the raid with pending payment status
     const raid = new FacebookRaid({
@@ -169,13 +291,74 @@ router.post('/points', auth, requireEmailVerification, async (req, res) => {
       });
     }
 
-    // Extract post ID from URL
-    const postIdMatch = postUrl.match(/\/posts\/(\d+)/);
-    if (!postIdMatch || !postIdMatch[1]) {
-      return res.status(400).json({ error: 'Invalid Facebook URL' });
-    }
+    // Extract post ID from URL using robust parsing
+    const extractFacebookPostId = (url) => {
+      if (!url) return null;
+      
+      try {
+        // Handle cases where someone might paste "@URL" by mistake
+        const cleanUrl = url.startsWith('@') ? url.substring(1) : url;
+        
+        // Try multiple approaches to extract the post ID
+        
+        // Approach 1: Try to parse as a URL first
+        let parsedUrl;
+        try {
+          // Check if URL has protocol, add if missing
+          const urlWithProtocol = (!cleanUrl.startsWith('http') && !cleanUrl.startsWith('https'))
+            ? `https://${cleanUrl}` 
+            : cleanUrl;
+          
+          parsedUrl = new URL(urlWithProtocol);
+        } catch (e) {
+          // Continue to fallback regex approach
+        }
+        
+        // If we successfully parsed the URL, check the domain and extract ID
+        if (parsedUrl) {
+          // Check if it's a Facebook domain
+          if (parsedUrl.hostname.includes('facebook.com')) {
+            // Extract ID from pathname
+            const match = parsedUrl.pathname.match(/\/posts\/(\d+)/);
+            if (match && match[1]) {
+              return match[1];
+            }
+          }
+        }
+        
+        // Approach 2: Fallback to regex for all URL formats
+        const standardMatch = cleanUrl.match(/facebook\.com\/[^\/]+\/posts\/(\d+)/i);
+        if (standardMatch && standardMatch[1]) {
+          return standardMatch[1];
+        }
+        
+        // Approach 3: Handle groups and pages
+        const groupsMatch = cleanUrl.match(/facebook\.com\/groups\/[^\/]+\/posts\/(\d+)/i);
+        if (groupsMatch && groupsMatch[1]) {
+          return groupsMatch[1];
+        }
+        
+        const pagesMatch = cleanUrl.match(/facebook\.com\/[^\/]+\/posts\/(\d+)/i);
+        if (pagesMatch && pagesMatch[1]) {
+          return pagesMatch[1];
+        }
+        
+        // Approach 4: Try to handle direct posts URLs with just numbers
+        const directPostsMatch = cleanUrl.match(/\/posts\/(\d+)/i);
+        if (directPostsMatch && directPostsMatch[1]) {
+          return directPostsMatch[1];
+        }
+        
+        return null;
+      } catch (error) {
+        return null;
+      }
+    };
 
-    const postId = postIdMatch[1];
+    const postId = extractFacebookPostId(postUrl);
+    if (!postId) {
+      return res.status(400).json({ error: 'Invalid Facebook URL. Please provide a valid Facebook post URL.' });
+    }
 
     // Create the raid
     const raid = new FacebookRaid({
@@ -445,13 +628,74 @@ router.post('/free', auth, requireEmailVerification, async (req, res) => {
       return res.status(400).json({ error: eligibility.reason });
     }
 
-    // Extract post ID from URL
-    const postIdMatch = postUrl.match(/\/posts\/(\d+)/);
-    if (!postIdMatch || !postIdMatch[1]) {
-      return res.status(400).json({ error: 'Invalid Facebook URL' });
-    }
+    // Extract post ID from URL using robust parsing
+    const extractFacebookPostId = (url) => {
+      if (!url) return null;
+      
+      try {
+        // Handle cases where someone might paste "@URL" by mistake
+        const cleanUrl = url.startsWith('@') ? url.substring(1) : url;
+        
+        // Try multiple approaches to extract the post ID
+        
+        // Approach 1: Try to parse as a URL first
+        let parsedUrl;
+        try {
+          // Check if URL has protocol, add if missing
+          const urlWithProtocol = (!cleanUrl.startsWith('http') && !cleanUrl.startsWith('https'))
+            ? `https://${cleanUrl}` 
+            : cleanUrl;
+          
+          parsedUrl = new URL(urlWithProtocol);
+        } catch (e) {
+          // Continue to fallback regex approach
+        }
+        
+        // If we successfully parsed the URL, check the domain and extract ID
+        if (parsedUrl) {
+          // Check if it's a Facebook domain
+          if (parsedUrl.hostname.includes('facebook.com')) {
+            // Extract ID from pathname
+            const match = parsedUrl.pathname.match(/\/posts\/(\d+)/);
+            if (match && match[1]) {
+              return match[1];
+            }
+          }
+        }
+        
+        // Approach 2: Fallback to regex for all URL formats
+        const standardMatch = cleanUrl.match(/facebook\.com\/[^\/]+\/posts\/(\d+)/i);
+        if (standardMatch && standardMatch[1]) {
+          return standardMatch[1];
+        }
+        
+        // Approach 3: Handle groups and pages
+        const groupsMatch = cleanUrl.match(/facebook\.com\/groups\/[^\/]+\/posts\/(\d+)/i);
+        if (groupsMatch && groupsMatch[1]) {
+          return groupsMatch[1];
+        }
+        
+        const pagesMatch = cleanUrl.match(/facebook\.com\/[^\/]+\/posts\/(\d+)/i);
+        if (pagesMatch && pagesMatch[1]) {
+          return pagesMatch[1];
+        }
+        
+        // Approach 4: Try to handle direct posts URLs with just numbers
+        const directPostsMatch = cleanUrl.match(/\/posts\/(\d+)/i);
+        if (directPostsMatch && directPostsMatch[1]) {
+          return directPostsMatch[1];
+        }
+        
+        return null;
+      } catch (error) {
+        return null;
+      }
+    };
 
-    const postId = postIdMatch[1];
+    const postId = extractFacebookPostId(postUrl);
+    if (!postId) {
+      return res.status(400).json({ error: 'Invalid Facebook URL. Please provide a valid Facebook post URL.' });
+    }
 
     // Use a free raid
     const usage = await user.useFreeRaid();
