@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import './SocialMediaRaids.css'; // Add this to load the CSS file we'll create
+import './SocialMediaRaids.css';
+import FacebookRaids from './FacebookRaids';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -41,12 +42,8 @@ const formatDate = (dateString) => {
 };
 
 const SocialMediaRaids = ({ currentUser, showNotification }) => {
-  // Tab state
   const [activeTab, setActiveTab] = useState('twitter'); // 'twitter' or 'facebook'
-  
-  // Twitter raids state
-  const [twitterRaids, setTwitterRaids] = useState([]);
-  const [facebookRaids, setFacebookRaids] = useState([]);
+  const [raids, setRaids] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedRaid, setSelectedRaid] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -58,7 +55,6 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   const tweetEmbedRef = useRef(null);
   const [userData, setUserData] = useState(currentUser);
   const [twitterUsername, setTwitterUsername] = useState('');
-  const [facebookUsername, setFacebookUsername] = useState('');
   // Add a dedicated state for points
   const [pointsData, setPointsData] = useState({ points: 0 });
   const [loadingPoints, setLoadingPoints] = useState(true);
@@ -107,2450 +103,701 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     description: 'Retweet, Like & Comment to earn 50 points!'
   });
 
-  // Facebook raid creation states
-  const [showFacebookCreateForm, setShowFacebookCreateForm] = useState(false);
-  const [newFacebookRaid, setNewFacebookRaid] = useState({
-    postUrl: '',
-    title: 'Facebook Raid',
-    description: 'Like, Comment & Share to earn 50 points!',
-    points: 50
-  });
-  
-  const [showFacebookPointsCreateForm, setShowFacebookPointsCreateForm] = useState(false);
-  const [facebookPointsRaidData, setFacebookPointsRaidData] = useState({
-    postUrl: '',
-    title: 'Facebook Raid',
-    description: 'Like, Comment & Share to earn 50 points!'
-  });
-
-  const [showFacebookFreeRaidForm, setShowFacebookFreeRaidForm] = useState(false);
-  const [facebookFreeRaidData, setFacebookFreeRaidData] = useState({
-    postUrl: '',
-    title: 'Facebook Raid',
-    description: 'Like, Comment & Share to earn 50 points!'
-  });
-  const [freeRaidSubmitting, setFreeRaidSubmitting] = useState(false);
-  const [freeRaidEligibility, setFreeRaidEligibility] = useState(null);
-
-  // Use a state to track if preview is loading, rather than direct DOM manipulation
-  const [previewState, setPreviewState] = useState({
-    loading: false,
-    error: false,
-    message: '',
-    tweetId: null
-  });
-
-  // Fetch user points data from the backend API
-  const fetchUserPoints = async () => {
-    if (!currentUser?.token) {
-      setLoadingPoints(false);
-      return;
+  // Fetch raids on component mount
+  useEffect(() => {
+    if (activeTab === 'twitter') {
+      fetchRaids();
+      fetchUserPoints();
     }
+  }, [activeTab]);
 
+  // Fetch user points
+  const fetchUserPoints = async () => {
     try {
-      setLoadingPoints(true);
-      
-      const response = await fetch(`${API_URL}/api/points/my-points`, {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setLoadingPoints(false);
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/api/users/points`, {
         headers: {
-          'Authorization': `Bearer ${currentUser.token}`
+          'Authorization': `Bearer ${token}`
         }
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setPointsData(data);
-        
-        // Also update the localStorage to keep everything in sync
-        try {
-          const storedUser = JSON.parse(localStorage.getItem('currentUser'));
-          if (storedUser) {
-            storedUser.points = data.points;
-            localStorage.setItem('currentUser', JSON.stringify(storedUser));
-          }
-        } catch (e) {
-          // Silently handle localStorage errors
-        }
-      } else {
-        // Error handled silently to avoid console logs
       }
     } catch (error) {
-      // Silently handle fetch errors
+      console.error('Error fetching points:', error);
     } finally {
       setLoadingPoints(false);
     }
   };
 
-  // Get user points - now using our dedicated pointsData state
-  const getUserPoints = () => {
-    // First try from our dedicated pointsData state
-    if (pointsData && typeof pointsData.points === 'number') {
-      return pointsData.points;
-    }
-    
-    // Try from userData state
-    if (userData && typeof userData.points === 'number') {
-      return userData.points;
-    }
-    
-    // Try from currentUser prop
-    if (currentUser && typeof currentUser.points === 'number') {
-      return currentUser.points;
-    }
-    
-    // Try from localStorage
-    try {
-      const storedUser = JSON.parse(localStorage.getItem('currentUser'));
-      if (storedUser && typeof storedUser.points === 'number') {
-        return storedUser.points;
-      }
-    } catch (e) {
-      // Silently handle localStorage errors
-    }
-    
-    // Default to 0
-    return 0;
-  };
-
-  useEffect(() => {
-    fetchRaids();
-    // Load Twitter widget script
-    loadTwitterWidgetScript();
-    // Fetch user points from API
-    fetchUserPoints();
-    
-    // Initialize Twitter username from user data if available
-    if (currentUser?.twitterUsername) {
-      setTwitterUsername(currentUser.twitterUsername);
-    }
-    
-    // Initialize Facebook username from user data if available
-    if (currentUser?.facebookUsername) {
-      setFacebookUsername(currentUser.facebookUsername);
-    }
-  }, [currentUser]);
-
-  useEffect(() => {
-    // Check free raid eligibility when component mounts
-    if (currentUser && (currentUser.userId || currentUser.id || currentUser._id)) {
-      checkFreeRaidEligibility();
-    }
-  }, [currentUser]);
-
-
-
-  useEffect(() => {
-    // When tweet URL changes, try to embed it
-    if (tweetUrl) {
-      try {
-        embedTweet(tweetUrl);
-      } catch (error) {
-        // Don't let embed errors crash the component
-        setPreviewState({
-          loading: false,
-          error: true,
-          message: 'Error embedding tweet. Please check URL format.',
-          tweetId: null
-        });
-      }
-    } else {
-      // Reset preview state when URL is cleared
-      setPreviewState({
-        loading: false,
-        error: false,
-        message: '',
-        tweetId: null
-      });
-    }
-  }, [tweetUrl]);
-
-  const loadTwitterWidgetScript = () => {
-    // Skip if already loaded or if we've already tried loading it
-    if (window.twttrLoaded) return;
-    
-    try {
-      window.twttrLoaded = true;
-      const script = document.createElement('script');
-      script.src = 'https://platform.twitter.com/widgets.js';
-      script.async = true;
-      script.onload = () => {};
-      script.onerror = () => {};
-      document.body.appendChild(script);
-    } catch (error) {
-      // Error handling
-    }
-  };
-
-  const extractTweetId = (url) => {
-    if (!url) return null;
-    
-    try {
-      // Handle cases where someone might paste "@URL" by mistake
-      const cleanUrl = url.startsWith('@') ? url.substring(1) : url;
-      
-      // Try multiple approaches to extract the tweet ID
-      
-      // Approach 1: Try to parse as a URL first
-      let parsedUrl;
-      try {
-        // Check if URL has protocol, add if missing
-        const urlWithProtocol = (!cleanUrl.startsWith('http') && !cleanUrl.startsWith('https'))
-          ? `https://${cleanUrl}` 
-          : cleanUrl;
-        
-        parsedUrl = new URL(urlWithProtocol);
-      } catch (e) {
-        // Continue to fallback regex approach
-      }
-      
-      // If we successfully parsed the URL, check the domain and extract ID
-      if (parsedUrl) {
-        // Check if it's a Twitter or X domain
-        if (parsedUrl.hostname.includes('twitter.com') || parsedUrl.hostname.includes('x.com')) {
-          // Extract ID from pathname
-          const match = parsedUrl.pathname.match(/\/status\/(\d+)/);
-          if (match && match[1]) {
-            return match[1];
-          }
-        }
-      }
-      
-      // Approach 2: Fallback to regex for all URL formats
-      // This handles regular twitter.com and x.com URLs
-      const standardMatch = cleanUrl.match(/(?:twitter\.com|x\.com)\/[^\/]+\/status\/(\d+)/i);
-      if (standardMatch && standardMatch[1]) {
-        return standardMatch[1];
-      }
-      
-      // Approach 3: Handle mobile.twitter.com URLs
-      const mobileMatch = cleanUrl.match(/mobile\.twitter\.com\/[^\/]+\/status\/(\d+)/i);
-      if (mobileMatch && mobileMatch[1]) {
-        return mobileMatch[1];
-      }
-      
-      // Approach 4: Try to handle direct status URLs with just numbers
-      const directStatusMatch = cleanUrl.match(/\/status\/(\d+)/i);
-      if (directStatusMatch && directStatusMatch[1]) {
-        return directStatusMatch[1];
-      }
-      
-      // Approach 5: Last resort - just try to find any numeric sequence that could be a tweet ID
-      // This is a very loose match and should be used with caution
-      const looseMatch = cleanUrl.match(/(\d{10,20})/); // Tweet IDs are typically long numbers
-      if (looseMatch && looseMatch[1]) {
-        return looseMatch[1];
-      }
-      
-      return null;
-    } catch (error) {
-      return null;
-    }
-  };
-
-  const extractFacebookPostId = (url) => {
-    if (!url) return null;
-    
-    try {
-      // Handle cases where someone might paste "@URL" by mistake
-      const cleanUrl = url.startsWith('@') ? url.substring(1) : url;
-      
-      // Try multiple approaches to extract the post ID
-      
-      // Approach 1: Try to parse as a URL first
-      let parsedUrl;
-      try {
-        // Check if URL has protocol, add if missing
-        const urlWithProtocol = (!cleanUrl.startsWith('http') && !cleanUrl.startsWith('https'))
-          ? `https://${cleanUrl}` 
-          : cleanUrl;
-        
-        parsedUrl = new URL(urlWithProtocol);
-      } catch (e) {
-        // Continue to fallback regex approach
-      }
-      
-      // If we successfully parsed the URL, check the domain and extract ID
-      if (parsedUrl) {
-        // Check if it's a Facebook domain
-        if (parsedUrl.hostname.includes('facebook.com')) {
-          // Extract ID from pathname
-          const match = parsedUrl.pathname.match(/\/posts\/(\d+)/);
-          if (match && match[1]) {
-            return match[1];
-          }
-        }
-      }
-      
-      // Approach 2: Fallback to regex for all URL formats
-      const standardMatch = cleanUrl.match(/facebook\.com\/[^\/]+\/posts\/(\d+)/i);
-      if (standardMatch && standardMatch[1]) {
-        return standardMatch[1];
-      }
-      
-      // Approach 3: Handle groups and pages
-      const groupsMatch = cleanUrl.match(/facebook\.com\/groups\/[^\/]+\/posts\/(\d+)/i);
-      if (groupsMatch && groupsMatch[1]) {
-        return groupsMatch[1];
-      }
-      
-      const pagesMatch = cleanUrl.match(/facebook\.com\/[^\/]+\/posts\/(\d+)/i);
-      if (pagesMatch && pagesMatch[1]) {
-        return pagesMatch[1];
-      }
-      
-      // Approach 4: Try to handle direct posts URLs with just numbers
-      const directPostsMatch = cleanUrl.match(/\/posts\/(\d+)/i);
-      if (directPostsMatch && directPostsMatch[1]) {
-        return directPostsMatch[1];
-      }
-      
-      return null;
-    } catch (error) {
-      return null;
-    }
-  };
-
-  const generateVerificationCode = () => {
-    // Always use aquads.xyz as the verification code
-    return 'aquads.xyz';
-  };
-
-  const embedTweet = (url) => {
-    // Instead of manipulating DOM directly, we'll update state
-    try {
-      const tweetId = extractTweetId(url);
-      
-      if (!tweetId) {
-        setPreviewState({
-          loading: false,
-          error: true,
-          message: 'Invalid tweet URL format',
-          tweetId: null
-        });
-        setIframeLoading(false);
-        return;
-      }
-      
-      // Set loading state
-      setPreviewState({
-        loading: true,
-        error: false,
-        message: 'Loading tweet preview...',
-        tweetId
-      });
-      
-      // After a delay, update to "loaded" state
-      // This avoids any direct DOM manipulation
-      setTimeout(() => {
-        setPreviewState({
-          loading: false,
-          error: false,
-          message: 'Tweet URL verified',
-          tweetId
-        });
-        // Set iframeLoading to false since tweet ID is ready
-        setIframeLoading(false);
-      }, 500);
-    } catch (error) {
-      setPreviewState({
-        loading: false,
-        error: true,
-        message: 'Error verifying tweet URL',
-        tweetId: null
-      });
-      // Also set iframeLoading to false if there's an error
-      setIframeLoading(false);
-    }
-  };
-
-  const verifyUserCompletion = async () => {
-    try {
-      // Check if all interactions are verified
-      if (!iframeVerified) {
-        setError('Please complete all three Twitter interactions first (like, retweet, and comment)');
-        return false;
-      }
-      
-      return true;
-    } catch (error) {
-      setError(error.message || 'Verification failed. Please check your inputs.');
-      return false;
-    }
-  };
-
+  // Fetch Twitter raids
   const fetchRaids = async () => {
     try {
-      setLoading(true);
-      
-      // Fetch both Twitter and Facebook raids
-      const [twitterResponse, facebookResponse] = await Promise.all([
-        fetch(`${API_URL}/api/twitter-raids`),
-        fetch(`${API_URL}/api/facebook-raids`)
-      ]);
-      
-      if (!twitterResponse.ok) {
-        throw new Error('Failed to fetch Twitter raids');
+      const response = await fetch(`${API_URL}/api/twitter-raids`);
+      if (response.ok) {
+        const data = await response.json();
+        setRaids(data);
+      } else {
+        console.error('Failed to fetch Twitter raids');
       }
-      
-      if (!facebookResponse.ok) {
-        throw new Error('Failed to fetch Facebook raids');
-      }
-      
-      const twitterData = await twitterResponse.json();
-      const facebookData = await facebookResponse.json();
-      
-      // Filter out raids older than 2 days
-      const filteredTwitterRaids = twitterData.filter(raid => isWithinTwoDays(raid.createdAt));
-      const filteredFacebookRaids = facebookData.filter(raid => isWithinTwoDays(raid.createdAt));
-      
-      setTwitterRaids(filteredTwitterRaids);
-      setFacebookRaids(filteredFacebookRaids);
-      
-      // If a raid was selected, but it's now completed, we should deselect it
-      if (selectedRaid) {
-        const currentRaids = activeTab === 'twitter' ? filteredTwitterRaids : filteredFacebookRaids;
-        const raidStillAvailable = currentRaids.find(r => r._id === selectedRaid._id);
-        
-        // Check if the current user has completed this raid
-        const selectedRaidCompleted = raidStillAvailable?.completions?.some(
-          completion => completion.userId && completion.userId.toString() === (currentUser?.userId || currentUser?.id || currentUser?._id)
-        );
-        
-        if (selectedRaidCompleted) {
-          setSelectedRaid(null);
-        }
-      }
-    } catch (err) {
-      setError('Failed to load raids. Please try again later.');
+    } catch (error) {
+      console.error('Error fetching Twitter raids:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const validateTweetUrl = (url) => {
-    if (!url) {
-      setIsValidUrl(true); // Empty is not invalid yet
-      return true;
-    }
-    
-    const tweetId = extractTweetId(url);
-    setIsValidUrl(!!tweetId);
-    return !!tweetId;
-  };
-
+  // Handle raid selection
   const handleRaidClick = (raid) => {
-    // Don't allow interaction with pending raids
-    if (raid.isPaid && raid.paymentStatus === 'pending') {
-      showNotification('This raid is pending admin approval', 'warning');
-      return;
-    }
-    
     setSelectedRaid(raid);
-    
-    // Handle based on platform
-    if (activeTab === 'twitter') {
-      // Set the tweet URL from the raid automatically
-      setTweetUrl(raid.tweetUrl);
-      setIsValidUrl(true);
-      
-      // Reset iframe-related states
-      handleShowIframe(false);
-      setIframeInteractions({ 
-        liked: false, 
-        retweeted: false, 
-        commented: false,
-        likedLoading: false,
-        retweetedLoading: false,
-        commentedLoading: false
-      });
-      setIframeVerified(false);
-      setIframeLoading(true);
-      
-      // Reset anti-cheat states
-      setInteractionTimes({
-        liked: null,
-        retweeted: null,
-        commented: null
-      });
-      setSuspiciousActivity({
-        liked: false,
-        retweeted: false,
-        commented: false
-      });
-      
-      // Extract tweet ID and prepare for preview
-      const tweetId = extractTweetId(raid.tweetUrl);
-      if (tweetId) {
-        setPreviewState({
-          loading: false,
-          error: false,
-          message: 'Tweet ready to view',
-          tweetId
-        });
-        // Set iframeLoading to false since tweet ID is ready
-        setIframeLoading(false);
-      } else {
-        setPreviewState({
-          loading: false,
-          error: true,
-          message: 'Could not parse tweet URL for preview',
-          tweetId: null
-        });
-        // Also set iframeLoading to false if there's an error
-        setIframeLoading(false);
-      }
-    } else if (activeTab === 'facebook') {
-      // For Facebook raids, just set the post URL
-      setTweetUrl(raid.postUrl);
-      setIsValidUrl(true);
-      
-      // Reset iframe states for Facebook
-      handleShowIframe(false);
-      setIframeInteractions({ 
-        liked: false, 
-        retweeted: false, 
-        commented: false,
-        likedLoading: false,
-        retweetedLoading: false,
-        commentedLoading: false
-      });
-      setIframeVerified(false);
-      setIframeLoading(false);
-      
-      setPreviewState({
-        loading: false,
-        error: false,
-        message: 'Facebook post ready to view',
-        tweetId: null
-      });
-    }
-    
-    // Clear error message but keep success message if present
     setError(null);
-    
-    // Scroll to the form section for better UX
-    setTimeout(() => {
-      const formElement = document.getElementById('verification-form-section');
-      if (formElement) {
-        formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 100);
+    setSuccess(null);
+    setTweetUrl('');
+    setTwitterUsername('');
+    setShowIframe(false);
+    setIframeVerified(false);
+    setIframeInteractions({ liked: false, retweeted: false, commented: false });
   };
 
-  const safeHandleSubmit = (e) => {
-    if (e && e.preventDefault) {
-      e.preventDefault(); // Prevent the default form submission
-    }
-    
-    // Reset the preview state instead of manipulating DOM
-    setPreviewState({
-      loading: false,
-      error: false,
-      message: 'Processing your submission...',
-      tweetId: previewState.tweetId // Preserve the tweet ID
-    });
-    
-    // Call the actual submission function
-    handleSubmitTask(e);
+  // Handle Twitter URL validation
+  const validateTwitterUrl = (url) => {
+    const twitterRegex = /^https?:\/\/(www\.)?(twitter\.com|x\.com)\/.*\/status\/\d+/i;
+    return twitterRegex.test(url);
   };
 
-  const handleSubmitTask = async (e) => {
-    if (e && e.preventDefault) {
-      e.preventDefault();
+  // Handle URL input change
+  const handleUrlChange = (e) => {
+    const url = e.target.value;
+    setTweetUrl(url);
+    setIsValidUrl(url === '' || validateTwitterUrl(url));
+  };
+
+  // Handle iframe interaction
+  const handleIframeInteraction = (action) => {
+    const now = Date.now();
+    setInteractionTimes(prev => ({
+      ...prev,
+      [action]: now
+    }));
+
+    setIframeInteractions(prev => ({
+      ...prev,
+      [action]: true
+    }));
+
+    // Check for suspicious activity (too fast interactions)
+    const lastInteraction = interactionTimes[action];
+    if (lastInteraction && (now - lastInteraction) < 1000) {
+      setSuspiciousActivity(prev => ({
+        ...prev,
+        [action]: true
+      }));
     }
-    
-    try {
-      if (!currentUser) {
-        showNotification('Please log in to complete Twitter raids', 'error');
-        return;
-      }
 
-      // Check if Twitter username is provided
-      if (!twitterUsername.trim()) {
-        setError('Please enter your Twitter username');
-        return;
-      }
+    // Check if all required interactions are completed
+    const newInteractions = {
+      ...iframeInteractions,
+      [action]: true
+    };
 
-      // Validate Twitter username format (basic validation)
-      const cleanUsername = twitterUsername.trim().replace(/^@/, ''); // Remove @ if present
-      const usernameRegex = /^[a-zA-Z0-9_]{1,15}$/;
-      if (!usernameRegex.test(cleanUsername)) {
-        setError('Please enter a valid Twitter username (letters, numbers, underscore only, max 15 characters)');
-        return;
-      }
-
-      // Verify all interactions are completed
-      if (!iframeVerified) {
-        setError('Please complete all three Twitter interactions first (like, retweet, and comment)');
-        return;
-      }
-
-      // Run verification check
-      const verified = await verifyUserCompletion();
-      if (!verified) {
-        return;
-      }
-
-      // Set submitting state
-      setSubmitting(true);
-      setError(null);
-      
-      // Save the raid ID before sending the request
-      const raidId = selectedRaid._id;
-      
-      try {
-        // Use fetchWithDelay instead of fetch
-        const response = await fetchWithDelay(`${API_URL}/api/twitter-raids/${raidId}/complete`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${currentUser.token}`
-          },
-          body: JSON.stringify({
-            tweetUrl: selectedRaid?.tweetUrl || tweetUrl || null,
-            twitterUsername: cleanUsername,
-            iframeVerified: true, // Always set to true since we require this
-            directInteractions: iframeInteractions, // Include all interaction data
-            tweetId: previewState.tweetId // Include the tweet ID explicitly
-          })
-        });
-        
-        // Get the raw text first to see if there's an error in JSON parsing
-        const responseText = await response.text();
-        
-        let data;
-        
-        try {
-          data = JSON.parse(responseText);
-        } catch (jsonError) {
-          throw new Error('Server returned an invalid response. Please try again later.');
-        }
-        
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to complete raid');
-        }
-        
-        // Instead of updating React state while doing DOM manipulation,
-        // use a sequential approach to avoid React reconciliation issues
-        
-        // Step 1: First update submitting and reset UI
-        setSubmitting(false);
-        setTweetUrl('');
-        setPreviewState({
-          loading: false,
-          error: false,
-          message: '',
-          tweetId: null
-        });
-        
-        // Step 2: Update user data with saved Twitter username
-        const savedUsername = twitterUsername.trim().replace(/^@/, '');
-        
-        // Update localStorage with the new Twitter username
-        try {
-          const storedUser = JSON.parse(localStorage.getItem('currentUser'));
-          if (storedUser) {
-            storedUser.twitterUsername = savedUsername;
-            localStorage.setItem('currentUser', JSON.stringify(storedUser));
-          }
-        } catch (e) {
-          // Silently handle localStorage errors
-        }
-        
-        // Show success message
-        setSuccess(data.message || 'Task submitted for admin approval! Points will be awarded after verification.');
-        showNotification(data.message || 'Twitter raid submitted successfully! Pending admin approval.', 'success');
-        
-        // Step 3: After a brief delay, reset selected raid and fetch new data
-        setTimeout(() => {
-          setSelectedRaid(null);
-          // Don't reset Twitter username - keep it for next raid
-          fetchRaids();
-        }, 50);
-      } catch (networkError) {
-        setError(networkError.message || 'Network error. Please try again.');
-        setSubmitting(false);
-      }
-    } catch (err) {
-      // Display more helpful error message if the server gave us one
-      if (err.message && err.message.includes('TwitterRaid validation failed')) {
-        setError('There was a validation error with your submission. Please contact support.');
-      } else {
-        setError(err.message || 'Failed to submit task. Please try again.');
-      }
-      
-      // Notify with error
-      showNotification(err.message || 'Error completing raid', 'error');
-      setSubmitting(false);
+    if (newInteractions.liked && newInteractions.retweeted && newInteractions.commented) {
+      setIframeVerified(true);
     }
   };
 
-  const handleFacebookRaidSubmit = async (e) => {
-    if (e && e.preventDefault) {
-      e.preventDefault();
-    }
-    
-    if (!currentUser) {
-      showNotification('Please log in to complete Facebook raids', 'error');
+  // Handle raid completion
+  const handleCompleteRaid = async () => {
+    if (!twitterUsername.trim()) {
+      setError('Please enter your Twitter username');
       return;
     }
 
-    if (!selectedRaid) {
-      setError('Please select a Facebook raid first');
+    if (!tweetUrl.trim() && !iframeVerified) {
+      setError('Please provide a Twitter URL or complete the iframe verification');
       return;
     }
 
-    // Validate Facebook username is provided
-    if (!facebookUsername.trim()) {
-      setError('Please enter your Facebook username');
+    if (tweetUrl.trim() && !validateTwitterUrl(tweetUrl)) {
+      setError('Please enter a valid Twitter URL');
       return;
     }
 
-    // Validate Facebook username format (basic validation)
-    const cleanUsername = facebookUsername.trim().replace(/^@/, ''); // Remove @ if present
-    const usernameRegex = /^[a-zA-Z0-9._]{1,50}$/;
-    if (!usernameRegex.test(cleanUsername)) {
-      setError('Please enter a valid Facebook username (letters, numbers, dots, underscores only, max 50 characters)');
-      return;
-    }
-
-    // Set submitting state
     setSubmitting(true);
     setError(null);
-    
-    // Save the raid ID before sending the request
-    const raidId = selectedRaid._id;
-    
+
     try {
-      const response = await fetchWithDelay(`${API_URL}/api/facebook-raids/${raidId}/complete`, {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/api/twitter-raids/${selectedRaid._id}/complete`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          postUrl: selectedRaid?.postUrl || null,
-          facebookUsername: cleanUsername,
-          postId: selectedRaid?.postId || null
+          twitterUsername: twitterUsername.trim(),
+          tweetUrl: tweetUrl.trim() || null,
+          iframeVerified,
+          iframeInteractions: Object.values(iframeInteractions).filter(Boolean).length
         })
       });
-      
-      const responseText = await response.text();
-      
-      let data;
-      
-      try {
-        data = JSON.parse(responseText);
-      } catch (jsonError) {
-        throw new Error('Server returned an invalid response. Please try again later.');
-      }
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to complete Facebook raid');
-      }
-      
-      // Update submitting and reset UI
-      setSubmitting(false);
-      
-      // Update user data with saved Facebook username
-      const savedUsername = facebookUsername.trim().replace(/^@/, '');
-      
-      // Update localStorage with the new Facebook username
-      try {
-        const storedUser = JSON.parse(localStorage.getItem('currentUser'));
-        if (storedUser) {
-          storedUser.facebookUsername = savedUsername;
-          localStorage.setItem('currentUser', JSON.stringify(storedUser));
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccess(data.message || 'Twitter raid completed successfully!');
+        setTwitterUsername('');
+        setTweetUrl('');
+        setShowIframe(false);
+        setIframeVerified(false);
+        setIframeInteractions({ liked: false, retweeted: false, commented: false });
+        
+        // Refresh raids to update completion status
+        await fetchRaids();
+        
+        // Show notification
+        if (showNotification) {
+          showNotification(data.message || 'Twitter raid completed successfully!', 'success');
         }
-      } catch (e) {
-        // Silently handle localStorage errors
-      }
-      
-      // Show success message
-      setSuccess(data.message || 'Facebook raid submitted successfully! Pending admin approval.');
-      showNotification(data.message || 'Facebook raid submitted successfully! Pending admin approval.', 'success');
-      
-      // Reset selected raid and fetch new data
-      setTimeout(() => {
-        setSelectedRaid(null);
-        fetchRaids();
-      }, 50);
-    } catch (err) {
-      if (err.message && err.message.includes('FacebookRaid validation failed')) {
-        setError('Invalid Facebook raid data. Please check your inputs.');
-      } else if (err.message && err.message.includes('Network error')) {
-        setError(err.message || 'Network error. Please try again.');
       } else {
-        setError(err.message || 'Failed to complete Facebook raid');
+        setError(data.error || 'Failed to complete Twitter raid');
       }
+    } catch (error) {
+      setError('Network error. Please try again.');
+    } finally {
       setSubmitting(false);
     }
   };
-  
+
+  // Handle admin raid creation
   const handleCreateRaid = async (e) => {
     e.preventDefault();
     
-    if (!currentUser || !currentUser.isAdmin) {
-      showNotification(`Only admins can create ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raids`, 'error');
+    if (!newRaid.tweetUrl || !newRaid.title || !newRaid.description) {
+      setError('Please fill in all fields');
       return;
     }
-    
-    const isTwitter = activeTab === 'twitter';
-    const urlField = isTwitter ? newRaid.tweetUrl : newFacebookRaid.postUrl;
-    const urlType = isTwitter ? 'Tweet URL' : 'Facebook Post URL';
-    
-    if (!urlField) {
-      setError(`Please enter the ${urlType}`);
+
+    if (!validateTwitterUrl(newRaid.tweetUrl)) {
+      setError('Please enter a valid Twitter URL');
       return;
     }
-    
-    // Always set fixed values for these fields
-    const raidData = {
-      [isTwitter ? 'tweetUrl' : 'postUrl']: urlField,
-      title: isTwitter ? 'Twitter Raid' : 'Facebook Raid',
-      description: isTwitter ? 'Retweet, Like & Comment to earn 50 points!' : 'Like, Comment & Share to earn 50 points!',
-      points: 50
-    };
-    
+
     setSubmitting(true);
-    
+    setError(null);
+
     try {
-      const endpoint = isTwitter ? '/api/twitter-raids' : '/api/facebook-raids';
-      const response = await fetch(`${API_URL}${endpoint}`, {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/api/twitter-raids`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(raidData)
+        body: JSON.stringify(newRaid)
       });
-      
+
       const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || `Failed to create ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid`);
-      }
-      
-      // Reset form and hide it
-      if (isTwitter) {
+
+      if (response.ok) {
+        setSuccess('Twitter raid created successfully!');
         setNewRaid({
           tweetUrl: '',
           title: 'Twitter Raid',
           description: 'Retweet, Like & Comment to earn 50 points!',
           points: 50
         });
+        setShowCreateForm(false);
+        await fetchRaids();
+        
+        if (showNotification) {
+          showNotification('Twitter raid created successfully!', 'success');
+        }
       } else {
-        setNewFacebookRaid({
-          postUrl: '',
-          title: 'Facebook Raid',
-          description: 'Like, Comment & Share to earn 50 points!',
-          points: 50
-        });
+        setError(data.error || 'Failed to create Twitter raid');
       }
-      setShowCreateForm(false);
-      
-      // Refresh raids list
-      fetchRaids();
-      
-      showNotification(`${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid created successfully!`, 'success');
-    } catch (err) {
-      setError(err.message || `Failed to create ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid`);
+    } catch (error) {
+      setError('Network error. Please try again.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const checkFreeRaidEligibility = async () => {
-    try {
-      const currentId = currentUser?.userId || currentUser?.id || currentUser?._id;
-      
-      if (!currentId) {
-        setFreeRaidEligibility({ eligible: false, reason: 'User ID not available' });
-        return;
-      }
-      
-      const response = await fetch(`${API_URL}/api/affiliates/free-raid-project/${currentId}`, {
-        headers: {
-          'Authorization': `Bearer ${currentUser.token}`
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setFreeRaidEligibility(data.eligibility);
-      } else {
-        setFreeRaidEligibility({ eligible: false, reason: 'Not a free raid project' });
-      }
-    } catch (error) {
-      setFreeRaidEligibility({ eligible: false, reason: 'Error checking eligibility' });
-    }
-  };
-
-  const handleCreateFreeRaid = async (e) => {
+  // Handle points-based raid creation
+  const handleCreatePointsRaid = async (e) => {
     e.preventDefault();
     
-    if (!currentUser) {
-      showNotification('You must be logged in to create free raids', 'error');
+    if (!pointsRaidData.tweetUrl || !pointsRaidData.title || !pointsRaidData.description) {
+      setError('Please fill in all fields');
       return;
     }
-    
-    const isTwitter = activeTab === 'twitter';
-    const urlField = isTwitter ? freeRaidData.tweetUrl : facebookFreeRaidData.postUrl;
-    const urlType = isTwitter ? 'Tweet URL' : 'Facebook Post URL';
-    
-    if (!urlField) {
-      setError(`Please enter the ${urlType}`);
+
+    if (!validateTwitterUrl(pointsRaidData.tweetUrl)) {
+      setError('Please enter a valid Twitter URL');
       return;
     }
-    
-    if (freeRaidSubmitting) {
-      return; // Prevent multiple submissions
-    }
-    
-    setFreeRaidSubmitting(true);
+
+    setSubmitting(true);
     setError(null);
-    
+
     try {
-      const endpoint = isTwitter ? '/api/twitter-raids/free' : '/api/facebook-raids/free';
-      const raidData = {
-        [isTwitter ? 'tweetUrl' : 'postUrl']: urlField,
-        title: isTwitter ? 'Twitter Raid' : 'Facebook Raid',
-        description: isTwitter ? 'Retweet, Like & Comment to earn 50 points!' : 'Like, Comment & Share to earn 50 points!'
-      };
-      
-      const response = await fetch(`${API_URL}${endpoint}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
-        },
-        body: JSON.stringify(raidData)
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || `Failed to create free ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid`);
-      }
-      
-      // Reset form and hide it
-      if (isTwitter) {
-        setFreeRaidData({
-          tweetUrl: '',
-          title: 'Twitter Raid',
-          description: 'Retweet, Like & Comment to earn 50 points!'
-        });
-      } else {
-        setFacebookFreeRaidData({
-          postUrl: '',
-          title: 'Facebook Raid',
-          description: 'Like, Comment & Share to earn 50 points!'
-        });
-      }
-      setShowFreeRaidForm(false);
-      
-      // Refresh raids list and eligibility
-      fetchRaids();
-      checkFreeRaidEligibility();
-      
-      showNotification(`Free ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid created successfully!`, 'success');
-    } catch (err) {
-      setError(err.message || `Failed to create free ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid`);
-    } finally {
-      setFreeRaidSubmitting(false);
-    }
-  };
-  
-  const handleDeleteRaid = async (raidId) => {
-    if (!currentUser || !currentUser.isAdmin) {
-      showNotification(`Only admins can delete ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raids`, 'error');
-      return;
-    }
-    
-    if (!window.confirm(`Are you sure you want to delete this ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid?`)) {
-      return;
-    }
-    
-    try {
-      const endpoint = activeTab === 'twitter' ? '/api/twitter-raids' : '/api/facebook-raids';
-      const response = await fetch(`${API_URL}${endpoint}/${raidId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${currentUser.token}`
-        }
-      });
-      
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || `Failed to delete ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid`);
-      }
-      
-      // If the deleted raid was selected, deselect it
-      if (selectedRaid && selectedRaid._id === raidId) {
-        setSelectedRaid(null);
-      }
-      
-      // Refresh raids list
-      fetchRaids();
-      
-      showNotification(`${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid deleted successfully!`, 'success');
-    } catch (err) {
-      showNotification(err.message || `Failed to delete ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid`, 'error');
-    }
-  };
-  
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    const isTwitter = activeTab === 'twitter';
-    
-    if (isTwitter) {
-      setNewRaid(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    } else {
-      // For Facebook, the field name is already correct (postUrl)
-      setNewFacebookRaid(prev => ({
-        ...prev,
-        [name]: value
-      }));
-    }
-  };
-
-  // Add this safety function to check if raid object is valid
-  const isValidRaid = (raid) => {
-    return raid && raid._id && typeof raid._id === 'string';
-  };
-
-  // Use a better fetch function that ensures responses are handled properly
-  const fetchWithDelay = async (url, options) => {
-    try {
-      // No delay needed - just use normal fetch
-      const response = await fetch(url, options);
-      
-      return response;
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  // Utility function to handle address copying
-  const handleCopyAddress = async (address, setCopiedAddressCallback) => {
-    try {
-      await navigator.clipboard.writeText(address);
-      setCopiedAddressCallback(true);
-      setTimeout(() => setCopiedAddressCallback(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy address: ', err);
-    }
-  };
-
-  // Simple iframe interaction handler without time checking
-  const handleIframeInteraction = (type) => {
-    // Set this interaction to loading
-    setIframeInteractions(prev => ({
-      ...prev,
-      [`${type}Loading`]: true
-    }));
-    
-    // Simple 2-second delay then mark as completed
-    setTimeout(() => {
-      setIframeInteractions(prev => {
-        const newInteractions = { 
-          ...prev, 
-          [type]: true,
-          [`${type}Loading`]: false
-        };
-        
-        // Check if all three interactions are completed
-        if (newInteractions.liked && newInteractions.retweeted && newInteractions.commented) {
-          setIframeVerified(true);
-        }
-        
-        return newInteractions;
-      });
-    }, 2000);
-  };
-
-  // Add a handler function for showing/hiding iframe
-  const handleShowIframe = (show) => {
-    setShowIframe(show);
-    if (show) {
-      // Make sure we're not stuck in loading state
-      setIframeLoading(false);
-    }
-  };
-
-  // Add utility function to create a points-based Twitter raid
-  const createPointsTwitterRaid = async (data, token) => {
-    try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`${API_URL}/api/twitter-raids/points`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(pointsRaidData)
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create Twitter raid');
-      }
-      
-      return await response.json();
-    } catch (error) {
-      throw error;
-    }
-  };
 
-  // Function to handle submission of points-based raid form
-  const handlePointsRaidSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!currentUser) {
-      showNotification(`Please log in to create a ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid`, 'error');
-      return;
-    }
-    
-    // Get latest points directly from the API
-    await fetchUserPoints();
-    const currentPoints = getUserPoints();
-    
-    if (currentPoints < 2000) {
-      setError(`Not enough points. You need 2000 points but only have ${currentPoints}.`);
-      return;
-    }
-    
-    const isTwitter = activeTab === 'twitter';
-    const urlField = isTwitter ? pointsRaidData.tweetUrl : facebookPointsRaidData.postUrl;
-    
-    if (!urlField) {
-      setError('Please fill in all required fields');
-      return;
-    }
-    
-    try {
-      setSubmitting(true);
-      setError(null);
-      
-      // Create the points-based raid
-      const token = currentUser?.token || JSON.parse(localStorage.getItem('currentUser'))?.token;
-      const raidData = {
-        [isTwitter ? 'tweetUrl' : 'postUrl']: urlField,
-        title: isTwitter ? 'Twitter Raid' : 'Facebook Raid',
-        description: isTwitter ? 'Retweet, Like & Comment to earn 50 points!' : 'Like, Comment & Share to earn 50 points!'
-      };
-      
-      const endpoint = isTwitter ? '/api/twitter-raids/points' : '/api/facebook-raids/points';
-      const response = await fetch(`${API_URL}${endpoint}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(raidData)
-      });
-      
       const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || `Failed to create ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid`);
-      }
-      
-      // Reset form and hide it
-      if (isTwitter) {
+
+      if (response.ok) {
+        setSuccess(data.message || 'Twitter raid created successfully!');
         setPointsRaidData({
           tweetUrl: '',
           title: 'Twitter Raid',
           description: 'Retweet, Like & Comment to earn 50 points!'
         });
+        setShowPointsCreateForm(false);
+        await fetchRaids();
+        await fetchUserPoints();
+        
+        if (showNotification) {
+          showNotification(data.message || 'Twitter raid created successfully!', 'success');
+        }
       } else {
-        setFacebookPointsRaidData({
-          postUrl: '',
-          title: 'Facebook Raid',
-          description: 'Like, Comment & Share to earn 50 points!'
-        });
+        setError(data.error || 'Failed to create Twitter raid');
       }
-      setShowPointsCreateForm(false);
-      
-      // Show success message
-      showNotification(data.message || `${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid created using your affiliate points!`, 'success');
-      
-      // Fetch updated points from the API to get the new balance
-      await fetchUserPoints();
-      
-      // Refresh raids list
-      fetchRaids();
-    } catch (err) {
-      setError(err.message || `Failed to create ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid`);
-      showNotification(err.message || `Failed to create ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid`, 'error');
+    } catch (error) {
+      setError('Network error. Please try again.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  // Admin function to approve a pending paid raid
-  const handleApproveRaid = async (raidId) => {
-    if (!currentUser || !currentUser.isAdmin) {
-      showNotification('Only admins can approve raids', 'error');
+  // Handle free raid creation
+  const handleCreateFreeRaid = async (e) => {
+    e.preventDefault();
+    
+    if (!freeRaidData.tweetUrl || !freeRaidData.title || !freeRaidData.description) {
+      setError('Please fill in all fields');
       return;
     }
-    
+
+    if (!validateTwitterUrl(freeRaidData.tweetUrl)) {
+      setError('Please enter a valid Twitter URL');
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
+
     try {
-      const endpoint = activeTab === 'twitter' ? '/api/twitter-raids' : '/api/facebook-raids';
-      const response = await fetch(`${API_URL}${endpoint}/${raidId}/approve`, {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_URL}/api/twitter-raids/free`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
-        }
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to approve raid');
-      }
-      
-      const result = await response.json();
-      showNotification(result.message || 'Raid approved successfully!', 'success');
-      
-      // Refresh raids list
-      fetchRaids();
-    } catch (error) {
-      showNotification(error.message || 'Failed to approve raid', 'error');
-    }
-  };
-  
-  // Admin function to reject a pending paid raid
-  const handleRejectRaid = async (raidId) => {
-    if (!currentUser || !currentUser.isAdmin) {
-      showNotification('Only admins can reject raids', 'error');
-      return;
-    }
-    
-    // Prompt for rejection reason
-    const reason = prompt('Enter reason for rejection:');
-    if (reason === null) return; // User cancelled
-    
-    try {
-      const endpoint = activeTab === 'twitter' ? '/api/twitter-raids' : '/api/facebook-raids';
-      const response = await fetch(`${API_URL}${endpoint}/${raidId}/reject`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ rejectionReason: reason })
+        body: JSON.stringify(freeRaidData)
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to reject raid');
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccess(data.message || 'Free Twitter raid created successfully!');
+        setFreeRaidData({
+          tweetUrl: '',
+          title: 'Twitter Raid',
+          description: 'Retweet, Like & Comment to earn 50 points!'
+        });
+        setShowFreeRaidForm(false);
+        await fetchRaids();
+        
+        if (showNotification) {
+          showNotification(data.message || 'Free Twitter raid created successfully!', 'success');
+        }
+      } else {
+        setError(data.error || 'Failed to create free Twitter raid');
       }
-      
-      const result = await response.json();
-      showNotification(result.message || 'Raid rejected', 'success');
-      
-      // Refresh raids list
-      fetchRaids();
     } catch (error) {
-      showNotification(error.message || 'Failed to reject raid', 'error');
+      setError('Network error. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  if (loading && twitterRaids.length === 0 && facebookRaids.length === 0) {
-    return <div className="text-center p-4">Loading social raids...</div>;
+  // Open Twitter post in new tab
+  const openTwitterPost = () => {
+    if (selectedRaid && selectedRaid.tweetUrl) {
+      window.open(selectedRaid.tweetUrl, '_blank');
+    }
+  };
+
+  // Handle iframe loading
+  const handleIframeLoad = () => {
+    setIframeLoading(false);
+  };
+
+  // Show iframe for interaction
+  const showIframeForInteraction = () => {
+    setShowIframe(true);
+    setIframeLoading(true);
+  };
+
+  if (loading && raids.length === 0) {
+    return <div className="text-center p-4">Loading raids...</div>;
   }
-
-  // Get current raids based on active tab
-  const currentRaids = activeTab === 'twitter' ? twitterRaids : facebookRaids;
-
-  // Update the safeSelectedRaid check to also verify that raids are not pending
-  const safeSelectedRaid = selectedRaid && isValidRaid(selectedRaid) && 
-    !(selectedRaid.isPaid && selectedRaid.paymentStatus === 'pending') ? selectedRaid : null;
 
   return (
     <div className="bg-gray-900/50 backdrop-blur-sm rounded-lg overflow-hidden">
-      <div className="bg-blue-500/10 border-b border-blue-500/30 p-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h2 className="text-xl font-bold text-blue-400">Social Raids</h2>
-            <p className="text-gray-300 mt-2">
-              Complete social media tasks to earn points with automated verification!
-            </p>
-          </div>
-          
-          <div className="flex flex-wrap gap-2">
-            {currentUser?.isAdmin && (
-              <button
-                onClick={() => {
-                  setShowCreateForm(!showCreateForm);
-                  setShowPointsCreateForm(false);
-                }}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded whitespace-nowrap text-sm sm:text-base"
-              >
-                {showCreateForm ? 'Cancel' : `Create ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} Raid (Admin)`}
-              </button>
-            )}
-            
-            {currentUser && (
-              <button
-                onClick={() => {
-                  setShowPointsCreateForm(!showPointsCreateForm);
-                  setShowCreateForm(false);
-                  setShowFreeRaidForm(false);
-                }}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded whitespace-nowrap text-sm sm:text-base flex items-center"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                {showPointsCreateForm ? 'Cancel' : `Create ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} Raid (2000 Points)`}
-              </button>
-            )}
-
-            {currentUser && (
-              <button
-                onClick={() => {
-                  setShowFreeRaidForm(!showFreeRaidForm);
-                  setShowCreateForm(false);
-                  setShowPointsCreateForm(false);
-                  if (!showFreeRaidForm) {
-                    checkFreeRaidEligibility();
-                  }
-                }}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded whitespace-nowrap text-sm sm:text-base flex items-center"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                </svg>
-                {showFreeRaidForm ? 'Cancel' : `Create Free ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} Raid`}
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Tab System */}
-        <div className="mt-4 flex border-b border-gray-600">
+      {/* Tab Navigation */}
+      <div className="bg-gray-800/50 border-b border-gray-700">
+        <div className="flex">
           <button
             onClick={() => setActiveTab('twitter')}
-            className={`px-4 py-2 font-medium text-sm transition-colors ${
+            className={`flex-1 py-3 px-4 text-center font-medium transition-colors ${
               activeTab === 'twitter'
-                ? 'text-blue-400 border-b-2 border-blue-400'
-                : 'text-gray-400 hover:text-gray-300'
+                ? 'bg-blue-500/20 text-blue-400 border-b-2 border-blue-500'
+                : 'text-gray-400 hover:text-gray-300 hover:bg-gray-700/50'
             }`}
           >
-            <div className="flex items-center">
-              <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-              </svg>
-              Twitter Raids ({twitterRaids.length})
-            </div>
+            Twitter Raids
           </button>
           <button
             onClick={() => setActiveTab('facebook')}
-            className={`px-4 py-2 font-medium text-sm transition-colors ${
+            className={`flex-1 py-3 px-4 text-center font-medium transition-colors ${
               activeTab === 'facebook'
-                ? 'text-blue-400 border-b-2 border-blue-400'
-                : 'text-gray-400 hover:text-gray-300'
+                ? 'bg-blue-500/20 text-blue-400 border-b-2 border-blue-500'
+                : 'text-gray-400 hover:text-gray-300 hover:bg-gray-700/50'
             }`}
           >
-            <div className="flex items-center">
-              <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-              </svg>
-              Facebook Raids ({facebookRaids.length})
-            </div>
+            Facebook Raids
           </button>
         </div>
-        
-        {/* Social Raid Rules */}
-        <div className="mt-4 bg-yellow-500/10 border border-yellow-500/30 p-4 rounded-lg">
-          <div className="flex items-start">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-400 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <div className="flex-1">
-              <h4 className="text-yellow-400 font-semibold mb-2">
-                {activeTab === 'twitter' ? 'Twitter Raid Rules' : 'Facebook Raid Rules'}
-              </h4>
-              <div className="text-yellow-300 text-sm space-y-1">
-                {activeTab === 'twitter' ? (
-                  <>
-                    <div className="flex items-start">
-                      <span className="text-yellow-400 mr-2">•</span>
-                      <span>Twitter account must be at least <strong>6 months old</strong></span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-yellow-400 mr-2">•</span>
-                      <span>Account must have at least <strong>50 followers</strong></span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-yellow-400 mr-2">•</span>
-                      <span>Must be following <strong>@_Aquads_</strong></span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-yellow-400 mr-2">•</span>
-                      <span>Account must be <strong>public</strong> (not private)</span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-yellow-400 mr-2">•</span>
-                      <span>No <strong>bot/spam accounts</strong> (reasonable posting frequency)</span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-yellow-400 mr-2">•</span>
-                      <span>Comments must be at least <strong>1 full sentence</strong> and include <strong>The Projects Name. Must add value to Aquads and the account posting the tweet</strong></span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-yellow-400 mr-2">•</span>
-                      <span>Twitter account must not be <strong>shadow banned</strong> or <strong>suspended</strong></span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex items-start">
-                      <span className="text-yellow-400 mr-2">•</span>
-                      <span>Facebook account must be at least <strong>6 months old</strong></span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-yellow-400 mr-2">•</span>
-                      <span>Account must have at least <strong>50 friends</strong></span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-yellow-400 mr-2">•</span>
-                      <span>Must like our <strong>Facebook page</strong></span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-yellow-400 mr-2">•</span>
-                      <span>Account must be <strong>active</strong> (regular posting)</span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-yellow-400 mr-2">•</span>
-                      <span>No <strong>fake/bot accounts</strong> (real profile picture, reasonable activity)</span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-yellow-400 mr-2">•</span>
-                      <span>Comments must be at least <strong>1 full sentence</strong> and include <strong>The Projects Name. Must add value to Aquads and the account posting the post</strong></span>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-yellow-400 mr-2">•</span>
-                      <span>Facebook account must not be <strong>restricted</strong> or <strong>suspended</strong></span>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Global success message */}
-        {success && !selectedRaid && (
-          <div className="mt-4 bg-green-500/20 border border-green-500/50 text-green-400 p-4 rounded-lg flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <div>
-              <h4 className="font-semibold">Raid Completed Successfully!</h4>
-              <p>{success}</p>
-            </div>
-          </div>
-        )}
-        
-        {/* Admin Create Form */}
-        {showCreateForm && currentUser?.isAdmin && (
-          <div className="mt-4 p-4 bg-gray-800/50 rounded-lg">
-            <h3 className="text-lg font-bold text-white mb-4">
-              {activeTab === 'twitter' ? 'Create New Twitter Raid' : 'Create New Facebook Raid'}
-            </h3>
-            
-            <form onSubmit={handleCreateRaid}>
-              <div className="mb-4">
-                <label className="block text-gray-300 mb-2">
-                  {activeTab === 'twitter' ? 'Tweet URL' : 'Facebook Post URL'} <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name={activeTab === 'twitter' ? 'tweetUrl' : 'postUrl'}
-                  value={activeTab === 'twitter' ? newRaid.tweetUrl : newFacebookRaid.postUrl}
-                  onChange={handleInputChange}
-                  placeholder={activeTab === 'twitter' 
-                    ? "https://twitter.com/username/status/1234567890"
-                    : "https://facebook.com/username/posts/1234567890"
-                  }
-                  className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-                <p className="text-gray-500 text-sm mt-2">
-                  Enter the URL of the {activeTab === 'twitter' ? 'tweet' : 'Facebook post'} you want users to interact with.
-                  <br />
-                  A new raid will be created with standard values:
-                  <br />
-                  • Title: "{activeTab === 'twitter' ? 'Twitter Raid' : 'Facebook Raid'}"
-                  <br />
-                  • Description: "{activeTab === 'twitter' ? 'Retweet, Like & Comment to earn 50 points!' : 'Like, Comment & Share to earn 50 points!'}"
-                  <br />
-                  • Points: 50
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'twitter' ? (
+        <div>
+          <div className="bg-blue-500/10 border-b border-blue-500/30 p-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-blue-400">Twitter Raids</h2>
+                <p className="text-gray-300 mt-2">
+                  Complete Twitter tasks to earn points with automated verification!
                 </p>
               </div>
               
-              <button
-                type="submit"
-                disabled={submitting}
-                className={`px-4 py-2 rounded font-medium ${
-                  submitting
-                    ? 'bg-gray-600 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700'
-                } text-white`}
-              >
-                {submitting ? 'Creating...' : `Create ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} Raid`}
-              </button>
-            </form>
+              <div className="flex flex-wrap gap-2">
+                {currentUser?.isAdmin && (
+                  <button
+                    onClick={() => setShowCreateForm(!showCreateForm)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded whitespace-nowrap text-sm sm:text-base"
+                  >
+                    {showCreateForm ? 'Cancel' : 'Create Raid (Admin)'}
+                  </button>
+                )}
+                
+                {currentUser && (
+                  <button
+                    onClick={() => setShowPointsCreateForm(!showPointsCreateForm)}
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded whitespace-nowrap text-sm sm:text-base"
+                  >
+                    {showPointsCreateForm ? 'Cancel' : 'Create Raid (2000 Points)'}
+                  </button>
+                )}
+
+                {currentUser && (
+                  <button
+                    onClick={() => setShowFreeRaidForm(!showFreeRaidForm)}
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded whitespace-nowrap text-sm sm:text-base"
+                  >
+                    {showFreeRaidForm ? 'Cancel' : 'Create Free Raid'}
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
-        )}
-        
-        {/* Points-based Raid Create Form */}
-        {showPointsCreateForm && currentUser && (
-          <div className="mt-4 p-4 bg-gray-800/50 rounded-lg">
-            <h3 className="text-lg font-bold text-white mb-4">
-              {activeTab === 'twitter' ? 'Create Twitter Raid with Points (2000 Points)' : 'Create Facebook Raid with Points (2000 Points)'}
-            </h3>
-            
-            <form onSubmit={handlePointsRaidSubmit}>
-              <div className="mb-4">
-                <label className="block text-gray-300 mb-2">
-                  {activeTab === 'twitter' ? 'Tweet URL' : 'Facebook Post URL'} <span className="text-red-500">*</span>
-                </label>
+
+          {/* Admin Create Form */}
+          {showCreateForm && currentUser?.isAdmin && (
+            <div className="p-4 bg-gray-800/50 border-b border-gray-700">
+              <h3 className="text-lg font-semibold text-white mb-4">Create New Twitter Raid (Admin)</h3>
+              <form onSubmit={handleCreateRaid} className="space-y-4">
                 <input
-                  type="text"
-                  value={activeTab === 'twitter' ? pointsRaidData.tweetUrl : facebookPointsRaidData.postUrl}
-                  onChange={(e) => activeTab === 'twitter' 
-                    ? setPointsRaidData({...pointsRaidData, tweetUrl: e.target.value})
-                    : setFacebookPointsRaidData({...facebookPointsRaidData, postUrl: e.target.value})
-                  }
-                  placeholder={activeTab === 'twitter' 
-                    ? "https://twitter.com/username/status/1234567890"
-                    : "https://facebook.com/username/posts/1234567890"
-                  }
-                  className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  type="url"
+                  placeholder="Twitter Post URL"
+                  value={newRaid.tweetUrl}
+                  onChange={(e) => setNewRaid({...newRaid, tweetUrl: e.target.value})}
+                  className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
                   required
                 />
-              </div>
-              
-              <div className="p-4 bg-green-500/20 border border-green-500/50 text-green-400 rounded-lg mb-4">
-                <div className="flex items-start">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  <div className="flex-1">
-                    <p className="font-medium">Using Affiliate Points</p>
-                    <div className="flex items-center">
-                      {loadingPoints ? (
-                        <p className="text-sm mr-2">Loading points balance...</p>
-                      ) : (
-                        <p className="text-sm mr-2">You currently have {getUserPoints()} points. Creating this raid will cost 2000 points.</p>
+                <input
+                  type="text"
+                  placeholder="Title"
+                  value={newRaid.title}
+                  onChange={(e) => setNewRaid({...newRaid, title: e.target.value})}
+                  className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
+                  required
+                />
+                <textarea
+                  placeholder="Description"
+                  value={newRaid.description}
+                  onChange={(e) => setNewRaid({...newRaid, description: e.target.value})}
+                  className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
+                  required
+                />
+                <input
+                  type="number"
+                  placeholder="Points (default: 50)"
+                  value={newRaid.points}
+                  onChange={(e) => setNewRaid({...newRaid, points: parseInt(e.target.value) || 50})}
+                  className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
+                />
+                <button type="submit" disabled={submitting} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+                  {submitting ? 'Creating...' : 'Create Raid'}
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* Points Create Form */}
+          {showPointsCreateForm && (
+            <div className="p-4 bg-gray-800/50 border-b border-gray-700">
+              <h3 className="text-lg font-semibold text-white mb-4">Create Twitter Raid with Points (2000 points required)</h3>
+              <p className="text-gray-300 mb-4">Your points: {pointsData.points || 0}</p>
+              <form onSubmit={handleCreatePointsRaid} className="space-y-4">
+                <input
+                  type="url"
+                  placeholder="Twitter Post URL"
+                  value={pointsRaidData.tweetUrl}
+                  onChange={(e) => setPointsRaidData({...pointsRaidData, tweetUrl: e.target.value})}
+                  className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Title"
+                  value={pointsRaidData.title}
+                  onChange={(e) => setPointsRaidData({...pointsRaidData, title: e.target.value})}
+                  className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
+                  required
+                />
+                <textarea
+                  placeholder="Description"
+                  value={pointsRaidData.description}
+                  onChange={(e) => setPointsRaidData({...pointsRaidData, description: e.target.value})}
+                  className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
+                  required
+                />
+                <button type="submit" disabled={submitting || (pointsData.points || 0) < 2000} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
+                  {submitting ? 'Creating...' : `Create Raid (2000 points)`}
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* Free Raid Create Form */}
+          {showFreeRaidForm && (
+            <div className="p-4 bg-gray-800/50 border-b border-gray-700">
+              <h3 className="text-lg font-semibold text-white mb-4">Create Free Twitter Raid</h3>
+              <form onSubmit={handleCreateFreeRaid} className="space-y-4">
+                <input
+                  type="url"
+                  placeholder="Twitter Post URL"
+                  value={freeRaidData.tweetUrl}
+                  onChange={(e) => setFreeRaidData({...freeRaidData, tweetUrl: e.target.value})}
+                  className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Title"
+                  value={freeRaidData.title}
+                  onChange={(e) => setFreeRaidData({...freeRaidData, title: e.target.value})}
+                  className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
+                  required
+                />
+                <textarea
+                  placeholder="Description"
+                  value={freeRaidData.description}
+                  onChange={(e) => setFreeRaidData({...freeRaidData, description: e.target.value})}
+                  className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
+                  required
+                />
+                <button type="submit" disabled={submitting} className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded">
+                  {submitting ? 'Creating...' : 'Create Free Raid'}
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* Error and Success Messages */}
+          {error && <div className="bg-red-500/20 border border-red-500/50 text-red-400 p-3 m-4 rounded">{error}</div>}
+          {success && <div className="bg-green-500/20 border border-green-500/50 text-green-400 p-3 m-4 rounded">{success}</div>}
+
+          {/* Twitter Raids List */}
+          <div className="p-4">
+            {raids.length === 0 ? (
+              <div className="text-center text-gray-400 py-8">No Twitter raids available at the moment.</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {raids.map(raid => (
+                  <div 
+                    key={raid._id} 
+                    className={`bg-gray-800/50 rounded-lg p-4 border cursor-pointer transition-all ${
+                      selectedRaid?._id === raid._id ? 'border-blue-500 shadow-lg' : 'border-gray-700 hover:border-blue-500/50'
+                    }`}
+                    onClick={() => handleRaidClick(raid)}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-white font-semibold">{raid.title}</h3>
+                      <span className="text-blue-400 font-bold">{raid.points} points</span>
+                    </div>
+                    <p className="text-gray-300 text-sm mb-3">{raid.description}</p>
+                    <div className="text-xs text-gray-400">
+                      <span>Created: {formatDate(raid.createdAt)}</span>
+                      {!isWithinTwoDays(raid.createdAt) && (
+                        <span className="ml-2 text-yellow-400">{getDaysRemaining(raid.createdAt)}</span>
                       )}
-                      <button 
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          fetchUserPoints();
-                          showNotification('Points balance refreshed', 'info');
-                        }}
-                        className="text-blue-400 hover:text-blue-300 p-1 rounded"
-                        title="Refresh points balance"
-                        disabled={loadingPoints}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${loadingPoints ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                      </button>
                     </div>
                   </div>
-                </div>
-              </div>
-              
-              {error && (
-                <div className="bg-red-500/20 border border-red-500/50 text-red-400 p-3 rounded mb-4">
-                  {error}
-                </div>
-              )}
-              
-                                <button
-                    type="submit"
-                    disabled={submitting || getUserPoints() < 2000}
-                    className={`px-4 py-2 rounded font-medium ${
-                      submitting || getUserPoints() < 2000
-                        ? 'bg-gray-600 cursor-not-allowed'
-                        : 'bg-green-600 hover:bg-green-700'
-                    } text-white`}
-                  >
-                    {submitting 
-                      ? 'Creating...' 
-                      : getUserPoints() < 2000 
-                        ? 'Not Enough Points (Need 2000)' 
-                        : `Create ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} Raid with Points`}
-                  </button>
-            </form>
-          </div>
-        )}
-
-        {/* Free Raid Create Form */}
-        {showFreeRaidForm && currentUser && (
-          <div className="mt-4 p-4 bg-gray-800/50 rounded-lg">
-            <h3 className="text-lg font-bold text-white mb-4">
-              {activeTab === 'twitter' ? 'Create Free Twitter Raid' : 'Create Free Facebook Raid'}
-            </h3>
-            
-            {freeRaidEligibility && (
-              <div className={`p-4 border rounded-lg mb-4 ${
-                freeRaidEligibility.eligible 
-                  ? 'bg-green-500/20 border-green-500/50 text-green-400' 
-                  : 'bg-red-500/20 border-red-500/50 text-red-400'
-              }`}>
-                <div className="flex items-start">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                  </svg>
-                  <div className="flex-1">
-                    <p className="font-medium">
-                      {freeRaidEligibility.eligible ? 'Free Raid Available' : 'Not Eligible'}
-                    </p>
-                    <p className="text-sm">
-                      {freeRaidEligibility.eligible 
-                        ? `You have ${freeRaidEligibility.raidsRemaining} free raids remaining today (${freeRaidEligibility.raidsUsedToday}/2 used)`
-                        : freeRaidEligibility.reason
-                      }
-                    </p>
-                  </div>
-                </div>
+                ))}
               </div>
             )}
-            
-            <form onSubmit={handleCreateFreeRaid}>
-              <div className="mb-4">
-                <label className="block text-gray-300 mb-2">
-                  {activeTab === 'twitter' ? 'Tweet URL' : 'Facebook Post URL'} <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={activeTab === 'twitter' ? freeRaidData.tweetUrl : facebookFreeRaidData.postUrl}
-                  onChange={(e) => activeTab === 'twitter' 
-                    ? setFreeRaidData({...freeRaidData, tweetUrl: e.target.value})
-                    : setFacebookFreeRaidData({...facebookFreeRaidData, postUrl: e.target.value})
-                  }
-                  placeholder={activeTab === 'twitter' 
-                    ? "https://twitter.com/username/status/1234567890"
-                    : "https://facebook.com/username/posts/1234567890"
-                  }
-                  className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
-              
-              {error && (
-                <div className="bg-red-500/20 border border-red-500/50 text-red-400 p-3 rounded mb-4">
-                  {error}
-                </div>
-              )}
-              
-              <button
-                type="submit"
-                disabled={freeRaidSubmitting || !freeRaidEligibility?.eligible}
-                className={`px-4 py-2 rounded font-medium ${
-                  freeRaidSubmitting || !freeRaidEligibility?.eligible
-                    ? 'bg-gray-600 cursor-not-allowed'
-                    : 'bg-purple-600 hover:bg-purple-700'
-                } text-white`}
-              >
-                {freeRaidSubmitting 
-                  ? 'Creating...' 
-                  : !freeRaidEligibility?.eligible 
-                    ? 'Not Eligible for Free Raids' 
-                    : `Create Free ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} Raid`}
-              </button>
-            </form>
           </div>
-        )}
-      </div>
 
-      {/* Error Display */}
-      {error && !showCreateForm && (
-        <div className="bg-red-500/20 border border-red-500/50 text-red-400 p-3 m-4 rounded">
-          {error}
-        </div>
-      )}
+          {/* Selected Raid Details */}
+          {selectedRaid && (
+            <div className="p-4 bg-gray-800/50 border-t border-gray-700">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-white">{selectedRaid.title}</h3>
+                <button onClick={() => setSelectedRaid(null)} className="text-gray-400 hover:text-white text-2xl">×</button>
+              </div>
+              
+              <div className="space-y-4">
+                <p className="text-gray-300">{selectedRaid.description}</p>
+                <div className="text-blue-400 font-bold">Reward: {selectedRaid.points} points</div>
+                
+                <div className="flex gap-2">
+                  <button onClick={openTwitterPost} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+                    Open Twitter Post
+                  </button>
+                  <button onClick={showIframeForInteraction} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
+                    Complete Interactions
+                  </button>
+                </div>
 
-      {/* Verification Form - Shown at the top when a raid is selected */}
-      {safeSelectedRaid && false && (
-        // This form has been removed as it's now integrated in the expanded raid card
-        <div></div>
-      )}
+                {/* How to Complete Guide */}
+                <div className="bg-gray-700/50 rounded p-3">
+                  <h4 className="text-white font-medium mb-2">How to Complete:</h4>
+                  <ol className="list-decimal list-inside text-gray-300 text-sm space-y-1">
+                    <li>Click "Open Twitter Post" to view the tweet</li>
+                    <li>Like the Twitter post</li>
+                    <li>Retweet the Twitter post</li>
+                    <li>Comment on the Twitter post</li>
+                    <li>Enter your Twitter username below</li>
+                    <li>Submit for verification</li>
+                  </ol>
+                </div>
 
-      {/* Social Raids Listing */}
-      {currentRaids.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-          {currentRaids.map(raid => {
-            const isSelected = safeSelectedRaid?._id === raid._id;
-            const isPendingPaid = raid.isPaid && raid.paymentStatus === 'pending';
-            
-            // Check if user completed this raid (with multiple fallbacks)
-            let userCompleted = false;
-            
-            // Method 1: Check the completions array (if available)
-            if (currentUser && raid.completions && raid.completions.length > 0) {
-              const currentId = currentUser.userId || currentUser.id || currentUser._id;
-              if (currentId) {
-                // Check if any completion matches this user
-                for (const completion of raid.completions) {
-                  let completionUserId = null;
+                {/* Completion Form */}
+                <div className="space-y-4">
+                  <h4 className="text-white font-medium">Submit Completion</h4>
                   
-                  // Try to extract user ID in various formats
-                  if (completion.userId) {
-                    completionUserId = typeof completion.userId === 'object' ? completion.userId._id : completion.userId;
-                  } else if (completion.user) {
-                    completionUserId = typeof completion.user === 'object' ? completion.user._id : completion.user;
-                  }
-                  
-                  if (completionUserId && completionUserId.toString() === currentId.toString()) {
-                    userCompleted = true;
-                    break;
-                  }
-                }
-              }
-            }
-            
-            // Method 2: Check for match in selectedRaidCompleted logic from fetchRaids function
-            if (!userCompleted && currentUser && raid._id === selectedRaid?._id) {
-              const currentId = currentUser.userId || currentUser.id || currentUser._id;
-              const selectedRaidCompleted = raid.completions?.some(
-                completion => completion.userId && completion.userId.toString() === (currentId || '').toString()
-              );
-              userCompleted = selectedRaidCompleted;
-            }
-            
-            return (
-            <div 
-              key={raid._id}
-              className="raid-card-container flex flex-col"
-            >
-              <div 
-                className={`bg-gray-800/50 rounded-lg p-4 border relative ${
-                  isPendingPaid
-                    ? 'border-yellow-500/30 opacity-75 cursor-not-allowed'
-                    : isSelected
-                      ? 'border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)] cursor-pointer rounded-b-none' 
-                      : 'border-gray-700 hover:border-blue-500/50 hover:shadow-md cursor-pointer'
-                }`}
-                style={{ transition: 'border-color 0.2s ease, box-shadow 0.2s ease' }}
-                onClick={() => isPendingPaid ? 
-                  showNotification('This raid is pending admin approval', 'warning') : 
-                  handleRaidClick(raid)}
-              >
-                {/* If raid is pending, add an overlay warning message */}
-                {isPendingPaid && (
-                  <div className="absolute inset-0 bg-gray-900/30 flex items-center justify-center rounded-lg z-10">
-                    <div className="bg-yellow-500/20 text-yellow-400 px-3 py-1.5 rounded-lg text-sm font-medium flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                      </svg>
-                      Awaiting Approval
-                    </div>
-                  </div>
-                )}
-
-                {/* Admin Delete Button */}
-                {currentUser?.isAdmin && (
-                  <div 
-                    className="absolute top-2 right-2 z-20 w-8 h-8" 
-                    onClick={(e) => e.stopPropagation()}
-                    style={{ pointerEvents: 'auto' }}
-                  >
-                    <button
-                      className="absolute inset-0 bg-red-500/20 hover:bg-red-500/40 text-red-400 rounded-full flex items-center justify-center transition-colors duration-200"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteRaid(raid._id);
-                      }}
-                      title="Delete Raid"
-                      style={{ transform: 'translateZ(0)' }}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 pointer-events-none" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                    </button>
-                  </div>
-                )}
-                  
-                <div className="flex items-start justify-between mb-3">
                   <div>
-                    <div className="flex items-center mb-1">
-                      <h3 className="text-white font-bold mr-2">{raid.title}</h3>
-                      {raid.isPaid && (
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          raid.paymentStatus === 'approved' 
-                            ? 'bg-green-500/20 text-green-400' 
-                            : raid.paymentStatus === 'pending' 
-                              ? 'bg-yellow-500/20 text-yellow-400'
-                              : 'bg-red-500/20 text-red-400'
-                        }`}>
-                          {raid.paymentStatus === 'approved' 
-                            ? 'Paid' 
-                            : raid.paymentStatus === 'pending' 
-                              ? 'Payment Pending' 
-                              : 'Payment Rejected'}
-                        </span>
-                      )}
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Twitter Username:</label>
+                    <input
+                      type="text"
+                      placeholder="Enter your Twitter username"
+                      value={twitterUsername}
+                      onChange={(e) => setTwitterUsername(e.target.value)}
+                      className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Twitter Post URL (optional if using iframe):</label>
+                    <input
+                      type="url"
+                      placeholder="Paste the Twitter post URL here"
+                      value={tweetUrl}
+                      onChange={handleUrlChange}
+                      className={`w-full p-2 bg-gray-700 border rounded text-white ${!isValidUrl ? 'border-red-500' : 'border-gray-600'}`}
+                    />
+                    {!isValidUrl && <span className="text-red-400 text-sm">Please enter a valid Twitter URL</span>}
+                  </div>
+
+                  <button 
+                    onClick={handleCompleteRaid}
+                    disabled={submitting || !twitterUsername.trim() || (tweetUrl.trim() && !isValidUrl)}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {submitting ? 'Submitting...' : 'Submit Completion'}
+                  </button>
+                </div>
+
+                {/* Iframe for Interaction */}
+                {showIframe && (
+                  <div className="space-y-4">
+                    <h4 className="text-white font-medium">Complete Interactions</h4>
+                    <div className="bg-gray-700 rounded p-4">
+                      {iframeLoading && <div className="text-gray-300">Loading Twitter post...</div>}
+                      <iframe
+                        src={selectedRaid.tweetUrl}
+                        title="Twitter Post"
+                        onLoad={handleIframeLoad}
+                        className="w-full h-96 border-0"
+                        style={{ display: iframeLoading ? 'none' : 'block' }}
+                      />
                     </div>
-                    <p className="text-gray-400 text-sm">
-                      Created by: {raid.createdBy?.username || 'Admin'}
-                    </p>
-                    {raid.createdAt && (
-                      <div className="mt-1 flex items-center">
-                        <span className="text-xs text-gray-500 mr-2">
-                          {formatDate(raid.createdAt)}
-                        </span>
-                        <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                          raid.createdAt && getDaysRemaining(raid.createdAt).includes("today")
-                            ? "bg-red-500/20 text-red-400"
-                            : "bg-blue-500/20 text-blue-400"
-                        }`}>
-                          {getDaysRemaining(raid.createdAt)}
-                        </span>
+                    
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => handleIframeInteraction('liked')}
+                        className={`px-4 py-2 rounded ${iframeInteractions.liked ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300'}`}
+                      >
+                        {iframeInteractions.liked ? '✓ Liked' : 'Mark as Liked'}
+                      </button>
+                      <button 
+                        onClick={() => handleIframeInteraction('retweeted')}
+                        className={`px-4 py-2 rounded ${iframeInteractions.retweeted ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300'}`}
+                      >
+                        {iframeInteractions.retweeted ? '✓ Retweeted' : 'Mark as Retweeted'}
+                      </button>
+                      <button 
+                        onClick={() => handleIframeInteraction('commented')}
+                        className={`px-4 py-2 rounded ${iframeInteractions.commented ? 'bg-green-600 text-white' : 'bg-gray-600 text-gray-300'}`}
+                      >
+                        {iframeInteractions.commented ? '✓ Commented' : 'Mark as Commented'}
+                      </button>
+                    </div>
+                    
+                    {iframeVerified && (
+                      <div className="bg-green-500/20 border border-green-500 text-green-400 p-3 rounded">
+                        ✓ All interactions completed! You can now submit your completion.
                       </div>
                     )}
-                  </div>
-                  <div className={`w-10 h-10 rounded-full ${userCompleted ? 'bg-green-500/20 text-green-400' : 'bg-blue-500/20 text-blue-400'} flex items-center justify-center`} title={userCompleted ? "You've completed this raid" : ""}>
-                    {/* Twitter bird logo - green for completed raids */}
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085a4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                    </svg>
-                  </div>
-                </div>
-                <p className="text-gray-300 mb-3">{raid.description}</p>
-                <div className="flex justify-between items-center">
-                  <a 
-                    href={raid.tweetUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="text-blue-400 hover:underline text-sm inline-flex items-center"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <span>View Tweet</span>
-                    <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                    </svg>
-                  </a>
-                  <span className="bg-blue-500/20 text-blue-400 px-2 py-1 rounded text-sm">+{raid.points} points</span>
-                </div>
-                
-                {/* Admin Approval Buttons for Pending Paid Raids */}
-                {currentUser?.isAdmin && raid.isPaid && raid.paymentStatus === 'pending' && (
-                  <div className="mt-3 pt-3 border-t border-gray-700 flex space-x-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleApproveRaid(raid._id);
-                      }}
-                      className="bg-green-600/20 hover:bg-green-600/40 text-green-400 px-2 py-1 rounded text-sm flex items-center"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                      Approve
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRejectRaid(raid._id);
-                      }}
-                      className="bg-red-600/20 hover:bg-red-600/40 text-red-400 px-2 py-1 rounded text-sm flex items-center"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                      Reject
-                    </button>
-                  </div>
-                )}
-                
-                {/* Completions */}
-                {raid.completions && raid.completions.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-gray-700">
-                    <p className="text-gray-400 text-sm">{raid.completions.length} completions</p>
-                  </div>
-                )}
-                
-                {/* Expand/Collapse indicator */}
-                {isSelected && (
-                  <div className="text-center pt-2">
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      className="h-5 w-5 mx-auto text-blue-400" 
-                      fill="none" 
-                      viewBox="0 0 24 24" 
-                      stroke="currentColor"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
                   </div>
                 )}
               </div>
-              
-                             {/* Expanded raid content (verification form and social media interactions) */}
-               {isSelected && (
-                 <div id="verification-form-section" className="bg-gray-800/80 p-4 rounded-b-lg border-l border-r border-b border-blue-500 transition-all duration-200">
-                   <div className="mb-4">
-                     <div className="flex items-center gap-3 mb-4">
-                       <a 
-                         href={activeTab === 'twitter' ? safeSelectedRaid.tweetUrl : safeSelectedRaid.postUrl} 
-                         target="_blank" 
-                         rel="noopener noreferrer" 
-                         className="bg-blue-600/30 hover:bg-blue-600/50 text-blue-400 px-3 py-1.5 rounded text-sm inline-flex items-center"
-                       >
-                         <span>Open Original {activeTab === 'twitter' ? 'Tweet' : 'Post'}</span>
-                         <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                         </svg>
-                       </a>
-                       
-                       {safeSelectedRaid.isPaid && (
-                         <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded text-xs inline-block">
-                           Paid Raid
-                         </span>
-                       )}
-                     </div>
-                    
-                                         {/* Interactive section with tabs for better organization */}
-                     <div className="mb-4 border border-gray-700 rounded-lg overflow-hidden">
-                       <div className="flex">
-                         <button
-                           onClick={() => {
-                             const newShowIframe = !showIframe;
-                             handleShowIframe(newShowIframe);
-                           }}
-                           className={`flex-1 py-2 px-4 text-center text-sm font-medium ${
-                             showIframe 
-                               ? 'bg-blue-600/30 text-blue-400 border-b-2 border-blue-500' 
-                               : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                           }`}
-                         >
-                           {showIframe ? 'Hide Interaction Buttons' : 'Show Interaction Buttons'}
-                         </button>
-                       </div>
-                       
-                       <div className="p-4 bg-gray-800/50">
-                         {/* Social media preview and interaction UI */}
-                         {activeTab === 'twitter' ? (
-                           // Twitter interactions
-                           previewState.tweetId ? (
-                          <>
-                            {/* Show iframe if enabled */}
-                            {showIframe ? (
-                              <div className="w-full bg-gray-800/50 rounded-lg overflow-hidden border border-gray-700">
-                                <div className="text-gray-400 text-sm p-2 bg-gray-800">
-                                  <span className="font-semibold">Instructions:</span> Click the buttons below to interact with the tweet on Twitter. Complete all 3 interactions to verify.
-                                </div>
-                                
-                                {/* Tweet interaction buttons */}
-                                <div 
-                                  ref={iframeContainerRef}
-                                  className="relative bg-gray-900 p-4 sm:p-6 overflow-x-hidden"
-                                >
-                                  {iframeLoading ? (
-                                    <div className="p-10 text-center">
-                                      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                                      <p className="text-gray-400">Loading tweet preview...</p>
-                                    </div>
-                                  ) : (
-                                    <>
-                                      <div className="bg-gray-800 rounded-lg p-3 sm:p-4 mb-4 text-center">
-                                        <h3 className="font-bold text-base sm:text-lg text-white mb-2 whitespace-normal">Tweet Interaction</h3>
-                                        <p className="text-gray-400 mb-3 text-xs sm:text-sm">Click each button to interact with the tweet.</p>
-                                        <div className="flex justify-center text-blue-400">
-                                          <a 
-                                            href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(selectedRaid?.tweetUrl || tweetUrl)}`} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer" 
-                                            className="mx-1 text-xs sm:text-sm"
-                                          >
-                                            @{selectedRaid?.tweetUrl?.split('/')[3] || 'Twitter'}
-                                          </a>
-                                        </div>
-                                      </div>
-                                      
-                                      <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-3">
-                                        {/* Like button */}
-                                        <div className={`${iframeInteractions.liked ? 'bg-green-500/20 border-green-500' : iframeInteractions.likedLoading ? 'bg-yellow-500/20 border-yellow-500' : suspiciousActivity.liked ? 'bg-red-500/20 border-red-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-2 sm:p-3 text-center transition-colors w-full sm:max-w-[80px]`}>
-                                          <button 
-                                            onClick={() => {
-                                              if (!iframeInteractions.liked && !iframeInteractions.likedLoading) {
-                                                window.open(`https://twitter.com/intent/like?tweet_id=${previewState.tweetId}`, '_blank');
-                                                handleIframeInteraction('liked');
-                                              }
-                                            }}
-                                            disabled={iframeInteractions.liked || iframeInteractions.likedLoading}
-                                            className={`${(iframeInteractions.liked || iframeInteractions.likedLoading) ? 'opacity-70 cursor-default' : 'hover:text-pink-500'} w-full flex flex-row sm:flex-col items-center justify-center`}
-                                          >
-                                            <svg className={`w-5 h-5 sm:w-6 sm:h-6 sm:mb-1 mr-2 sm:mr-0 ${iframeInteractions.liked ? 'text-pink-500' : iframeInteractions.likedLoading ? 'text-yellow-500' : suspiciousActivity.liked ? 'text-red-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
-                                              <path d="M12 21.638h-.014C9.403 21.59 1.95 14.856 1.95 8.478c0-3.064 2.525-5.754 5.403-5.754 2.29 0 3.83 1.58 4.646 2.73.814-1.148 2.354-2.73 4.645-2.73 2.88 0 5.404 2.69 5.404 5.755 0 6.376-7.454 13.11-10.037 13.157H12z"/>
-                                            </svg>
-                                            <span className={`${iframeInteractions.liked ? 'text-green-400' : iframeInteractions.likedLoading ? 'text-yellow-400' : suspiciousActivity.liked ? 'text-red-400' : 'text-gray-300'} font-medium text-xs`}>
-                                              {iframeInteractions.liked ? 'Liked ✓' : iframeInteractions.likedLoading ? 'Verifying...' : suspiciousActivity.liked ? 'Try Again' : 'Like'}
-                                            </span>
-                                          </button>
-                                        </div>
-                                        
-                                        {/* Retweet button */}
-                                        <div className={`${iframeInteractions.retweeted ? 'bg-green-500/20 border-green-500' : iframeInteractions.retweetedLoading ? 'bg-yellow-500/20 border-yellow-500' : suspiciousActivity.retweeted ? 'bg-red-500/20 border-red-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-2 sm:p-3 text-center transition-colors w-full sm:max-w-[80px]`}>
-                                          <button 
-                                            onClick={() => {
-                                              if (!iframeInteractions.retweeted && !iframeInteractions.retweetedLoading) {
-                                                window.open(`https://twitter.com/intent/retweet?tweet_id=${previewState.tweetId}`, '_blank');
-                                                handleIframeInteraction('retweeted');
-                                              }
-                                            }}
-                                            disabled={iframeInteractions.retweeted || iframeInteractions.retweetedLoading}
-                                            className={`${(iframeInteractions.retweeted || iframeInteractions.retweetedLoading) ? 'opacity-70 cursor-default' : 'hover:text-green-500'} w-full flex flex-row sm:flex-col items-center justify-center`}
-                                          >
-                                            <svg className={`w-5 h-5 sm:w-6 sm:h-6 sm:mb-1 mr-2 sm:mr-0 ${iframeInteractions.retweeted ? 'text-green-500' : iframeInteractions.retweetedLoading ? 'text-yellow-500' : suspiciousActivity.retweeted ? 'text-red-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
-                                              <path d="M23.77 15.67c-.292-.293-.767-.293-1.06 0l-2.22 2.22V7.65c0-2.068-1.683-3.75-3.75-3.75h-5.85c-.414 0-.75.336-.75.75s.336.75.75.75h5.85c1.24 0 2.25 1.01 2.25 2.25v10.24l-2.22-2.22c-.293-.293-.768-.293-1.06 0s-.294.768 0 1.06l3.5 3.5c.145.147.337.22.53.22s.383-.072.53-.22l3.5-3.5c.294-.292.294-.767 0-1.06zm-10.66 3.28H7.26c-1.24 0-2.25-1.01-2.25-2.25V6.46l2.22 2.22c.148.147.34.22.532.22s.384-.073.53-.22c.293-.293.293-.768 0-1.06l-3.5-3.5c-.293-.294-.768-.294-1.06 0l-3.5 3.5c-.294.292-.294.767 0 1.06s.767.293 1.06 0l2.22-2.22V16.7c0 2.068 1.683 3.75 3.75 3.75h5.85c.414 0 .75-.336.75-.75s-.337-.75-.75-.75z"></path>
-                                            </svg>
-                                            <span className={`${iframeInteractions.retweeted ? 'text-green-400' : iframeInteractions.retweetedLoading ? 'text-yellow-400' : suspiciousActivity.retweeted ? 'text-red-400' : 'text-gray-300'} font-medium text-xs`}>
-                                              {iframeInteractions.retweeted ? 'Retweeted ✓' : iframeInteractions.retweetedLoading ? 'Verifying...' : suspiciousActivity.retweeted ? 'Try Again' : 'Retweet'}
-                                            </span>
-                                          </button>
-                                        </div>
-                                        
-                                        {/* Reply button */}
-                                        <div className={`${iframeInteractions.commented ? 'bg-green-500/20 border-green-500' : iframeInteractions.commentedLoading ? 'bg-yellow-500/20 border-yellow-500' : suspiciousActivity.commented ? 'bg-red-500/20 border-red-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-2 sm:p-3 text-center transition-colors w-full sm:max-w-[80px]`}>
-                                          <button 
-                                            onClick={() => {
-                                              if (!iframeInteractions.commented && !iframeInteractions.commentedLoading) {
-                                                window.open(`https://twitter.com/intent/tweet?in_reply_to=${previewState.tweetId}`, '_blank');
-                                                handleIframeInteraction('commented');
-                                              }
-                                            }}
-                                            disabled={iframeInteractions.commented || iframeInteractions.commentedLoading}
-                                            className={`${(iframeInteractions.commented || iframeInteractions.commentedLoading) ? 'opacity-70 cursor-default' : 'hover:text-blue-500'} w-full flex flex-row sm:flex-col items-center justify-center`}
-                                          >
-                                            <svg className={`w-5 h-5 sm:w-6 sm:h-6 sm:mb-1 mr-2 sm:mr-0 ${iframeInteractions.commented ? 'text-blue-500' : iframeInteractions.commentedLoading ? 'text-yellow-500' : suspiciousActivity.commented ? 'text-red-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
-                                              <path d="M14.046 2.242l-4.148-.01h-.002c-4.374 0-7.8 3.427-7.8 7.802 0 4.098 3.186 7.206 7.465 7.37v3.828c0 .108.044.286.12.403.142.225.384.347.632.347.138 0 .277-.038.402-.118.264-.168 6.473-4.14 8.088-5.506 1.902-1.61 3.04-3.97 3.043-6.312v-.017c-.006-4.367-3.43-7.787-7.8-7.788zm3.787 12.972c-1.134.96-4.862 3.405-6.772 4.643V16.67c0-.414-.335-.75-.75-.75h-.396c-3.66 0-6.318-2.476-6.318-5.886 0-3.534 2.768-6.302 6.3-6.302l4.147.01h.002c3.532 0 6.3 2.766 6.302 6.296-.003 1.91-.942 3.844-2.514 5.176z"></path>
-                                            </svg>
-                                            <span className={`${iframeInteractions.commented ? 'text-green-400' : iframeInteractions.commentedLoading ? 'text-yellow-400' : suspiciousActivity.commented ? 'text-red-400' : 'text-gray-300'} font-medium text-xs`}>
-                                              {iframeInteractions.commented ? 'Replied ✓' : iframeInteractions.commentedLoading ? 'Verifying...' : suspiciousActivity.commented ? 'Try Again' : 'Reply'}
-                                            </span>
-                                          </button>
-                                        </div>
-                                      </div>
-                                      
-                                      {/* Verification status */}
-                                      <div className="mt-4 text-center">
-                                        <div className="flex justify-center space-x-2 mb-2">
-                                          <div className={`w-3 h-3 rounded-full ${iframeInteractions.liked ? 'bg-green-500' : iframeInteractions.likedLoading ? 'bg-yellow-500 animate-pulse' : 'bg-gray-600'}`}></div>
-                                          <div className={`w-3 h-3 rounded-full ${iframeInteractions.retweeted ? 'bg-green-500' : iframeInteractions.retweetedLoading ? 'bg-yellow-500 animate-pulse' : 'bg-gray-600'}`}></div>
-                                          <div className={`w-3 h-3 rounded-full ${iframeInteractions.commented ? 'bg-green-500' : iframeInteractions.commentedLoading ? 'bg-yellow-500 animate-pulse' : 'bg-gray-600'}`}></div>
-                                        </div>
-                                        
-                                        {iframeVerified ? (
-                                          <div className="bg-green-500/20 text-green-400 py-1 px-3 rounded-full inline-flex items-center text-sm">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                            </svg>
-                                            All interactions verified!
-                                          </div>
-                                        ) : (
-                                          <div>
-                                            <p className="text-gray-400 text-sm">
-                                              {(iframeInteractions.liked ? 1 : 0) + 
-                                              (iframeInteractions.retweeted ? 1 : 0) + 
-                                              (iframeInteractions.commented ? 1 : 0)}/3 interactions completed
-                                            </p>
-                                            {(iframeInteractions.likedLoading || iframeInteractions.retweetedLoading || iframeInteractions.commentedLoading) && (
-                                              <p className="text-yellow-400 text-xs mt-1">
-                                                Verifying actions... Please wait...
-                                              </p>
-                                            )}
-                                          </div>
-                                        )}
-                                        
-                                        {/* Anti-cheat warning removed */}
-                                        
-                                        {/* Anti-cheat info */}
-                                        <div className="mt-3 p-2 bg-blue-500/10 border border-blue-500/30 rounded-lg text-left">
-                                          <div className="flex items-start">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-400 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                            <div className="text-blue-400 text-xs">
-                                              <p className="font-medium mb-1">Anti-Cheat System Active</p>
-                                              <p>Please actually complete each action before returning to avoid being flagged.</p>
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="w-full bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-                                <div className="flex items-center mb-2">
-                                  <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 mr-3">
-                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                      <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085a4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                                    </svg>
-                                  </div>
-                                  <h3 className="text-white font-medium text-sm">Click "Show Interaction Buttons" to get started</h3>
-                                </div>
-                                <div className="flex gap-2 mt-3">
-                                  <button
-                                    onClick={() => {
-                                      handleShowIframe(true);
-                                    }}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-sm inline-flex items-center"
-                                  >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                    </svg>
-                                    Show Interaction Buttons
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          <div className="bg-gray-800 p-4 rounded-lg text-center">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-3"></div>
-                            <p className="text-gray-400">Loading tweet information...</p>
-                          </div>
-                        )
-                       ) : (
-                         // Facebook interactions
-                         showIframe ? (
-                           <div className="w-full bg-gray-800/50 rounded-lg overflow-hidden border border-gray-700">
-                             <div className="text-gray-400 text-sm p-2 bg-gray-800">
-                               <span className="font-semibold">Instructions:</span> Click the buttons below to interact with the Facebook post. Complete all 3 interactions to verify.
-                             </div>
-                             
-                             {/* Facebook interaction buttons */}
-                             <div className="relative bg-gray-900 p-4 sm:p-6 overflow-x-hidden">
-                               <div className="bg-gray-800 rounded-lg p-3 sm:p-4 mb-4 text-center">
-                                 <h3 className="font-bold text-base sm:text-lg text-white mb-2 whitespace-normal">Facebook Post Interaction</h3>
-                                 <p className="text-gray-400 mb-3 text-xs sm:text-sm">Click each button to interact with the Facebook post.</p>
-                                 <div className="flex justify-center text-blue-400">
-                                   <a 
-                                     href={safeSelectedRaid?.postUrl || ''} 
-                                     target="_blank" 
-                                     rel="noopener noreferrer" 
-                                     className="mx-1 text-xs sm:text-sm"
-                                   >
-                                     View Post
-                                   </a>
-                                 </div>
-                               </div>
-                               
-                               <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-3">
-                                 {/* Like button */}
-                                 <div className={`${iframeInteractions.liked ? 'bg-green-500/20 border-green-500' : iframeInteractions.likedLoading ? 'bg-yellow-500/20 border-yellow-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-2 sm:p-3 text-center transition-colors w-full sm:max-w-[80px]`}>
-                                   <button 
-                                     onClick={() => {
-                                       if (!iframeInteractions.liked && !iframeInteractions.likedLoading) {
-                                         window.open(safeSelectedRaid?.postUrl || '', '_blank');
-                                         handleIframeInteraction('liked');
-                                       }
-                                     }}
-                                     disabled={iframeInteractions.liked || iframeInteractions.likedLoading}
-                                     className={`${(iframeInteractions.liked || iframeInteractions.likedLoading) ? 'opacity-70 cursor-default' : 'hover:text-blue-500'} w-full flex flex-row sm:flex-col items-center justify-center`}
-                                   >
-                                     <svg className={`w-5 h-5 sm:w-6 sm:h-6 sm:mb-1 mr-2 sm:mr-0 ${iframeInteractions.liked ? 'text-blue-500' : iframeInteractions.likedLoading ? 'text-yellow-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
-                                       <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                                     </svg>
-                                     <span className={`${iframeInteractions.liked ? 'text-green-400' : iframeInteractions.likedLoading ? 'text-yellow-400' : 'text-gray-300'} font-medium text-xs`}>
-                                       {iframeInteractions.liked ? 'Liked ✓' : iframeInteractions.likedLoading ? 'Verifying...' : 'Like'}
-                                     </span>
-                                   </button>
-                                 </div>
-                                 
-                                 {/* Comment button */}
-                                 <div className={`${iframeInteractions.commented ? 'bg-green-500/20 border-green-500' : iframeInteractions.commentedLoading ? 'bg-yellow-500/20 border-yellow-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-2 sm:p-3 text-center transition-colors w-full sm:max-w-[80px]`}>
-                                   <button 
-                                     onClick={() => {
-                                       if (!iframeInteractions.commented && !iframeInteractions.commentedLoading) {
-                                         window.open(safeSelectedRaid?.postUrl || '', '_blank');
-                                         handleIframeInteraction('commented');
-                                       }
-                                     }}
-                                     disabled={iframeInteractions.commented || iframeInteractions.commentedLoading}
-                                     className={`${(iframeInteractions.commented || iframeInteractions.commentedLoading) ? 'opacity-70 cursor-default' : 'hover:text-green-500'} w-full flex flex-row sm:flex-col items-center justify-center`}
-                                   >
-                                     <svg className={`w-5 h-5 sm:w-6 sm:h-6 sm:mb-1 mr-2 sm:mr-0 ${iframeInteractions.commented ? 'text-green-500' : iframeInteractions.commentedLoading ? 'text-yellow-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
-                                       <path d="M21.99 4c0-1.1-.89-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18zM18 14H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
-                                     </svg>
-                                     <span className={`${iframeInteractions.commented ? 'text-green-400' : iframeInteractions.commentedLoading ? 'text-yellow-400' : 'text-gray-300'} font-medium text-xs`}>
-                                       {iframeInteractions.commented ? 'Commented ✓' : iframeInteractions.commentedLoading ? 'Verifying...' : 'Comment'}
-                                     </span>
-                                   </button>
-                                 </div>
-                                 
-                                 {/* Share button */}
-                                 <div className={`${iframeInteractions.retweeted ? 'bg-green-500/20 border-green-500' : iframeInteractions.retweetedLoading ? 'bg-yellow-500/20 border-yellow-500' : 'bg-gray-800 border-gray-700'} border rounded-lg p-2 sm:p-3 text-center transition-colors w-full sm:max-w-[80px]`}>
-                                   <button 
-                                     onClick={() => {
-                                       if (!iframeInteractions.retweeted && !iframeInteractions.retweetedLoading) {
-                                         window.open(safeSelectedRaid?.postUrl || '', '_blank');
-                                         handleIframeInteraction('retweeted');
-                                       }
-                                     }}
-                                     disabled={iframeInteractions.retweeted || iframeInteractions.retweetedLoading}
-                                     className={`${(iframeInteractions.retweeted || iframeInteractions.retweetedLoading) ? 'opacity-70 cursor-default' : 'hover:text-purple-500'} w-full flex flex-row sm:flex-col items-center justify-center`}
-                                   >
-                                     <svg className={`w-5 h-5 sm:w-6 sm:h-6 sm:mb-1 mr-2 sm:mr-0 ${iframeInteractions.retweeted ? 'text-purple-500' : iframeInteractions.retweetedLoading ? 'text-yellow-500' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 24 24">
-                                       <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
-                                     </svg>
-                                     <span className={`${iframeInteractions.retweeted ? 'text-green-400' : iframeInteractions.retweetedLoading ? 'text-yellow-400' : 'text-gray-300'} font-medium text-xs`}>
-                                       {iframeInteractions.retweeted ? 'Shared ✓' : iframeInteractions.retweetedLoading ? 'Verifying...' : 'Share'}
-                                     </span>
-                                   </button>
-                                 </div>
-                               </div>
-                               
-                               {/* Verification status */}
-                               <div className="mt-4 text-center">
-                                 <div className="flex justify-center space-x-2 mb-2">
-                                   <div className={`w-3 h-3 rounded-full ${iframeInteractions.liked ? 'bg-green-500' : iframeInteractions.likedLoading ? 'bg-yellow-500 animate-pulse' : 'bg-gray-600'}`}></div>
-                                   <div className={`w-3 h-3 rounded-full ${iframeInteractions.commented ? 'bg-green-500' : iframeInteractions.commentedLoading ? 'bg-yellow-500 animate-pulse' : 'bg-gray-600'}`}></div>
-                                   <div className={`w-3 h-3 rounded-full ${iframeInteractions.retweeted ? 'bg-green-500' : iframeInteractions.retweetedLoading ? 'bg-yellow-500 animate-pulse' : 'bg-gray-600'}`}></div>
-                                 </div>
-                                 
-                                 {iframeVerified ? (
-                                   <div className="bg-green-500/20 text-green-400 py-1 px-3 rounded-full inline-flex items-center text-sm">
-                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                     </svg>
-                                     All interactions verified!
-                                   </div>
-                                 ) : (
-                                   <div>
-                                     <p className="text-gray-400 text-sm">
-                                       {(iframeInteractions.liked ? 1 : 0) + 
-                                       (iframeInteractions.commented ? 1 : 0) + 
-                                       (iframeInteractions.retweeted ? 1 : 0)}/3 interactions completed
-                                     </p>
-                                     {(iframeInteractions.likedLoading || iframeInteractions.commentedLoading || iframeInteractions.retweetedLoading) && (
-                                       <p className="text-yellow-400 text-xs mt-1">
-                                         Verifying actions... Please wait...
-                                       </p>
-                                     )}
-                                   </div>
-                                 )}
-                                 
-                                 {/* Anti-cheat info */}
-                                 <div className="mt-3 p-2 bg-blue-500/10 border border-blue-500/30 rounded-lg text-left">
-                                   <div className="flex items-start">
-                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-400 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                     </svg>
-                                     <div className="text-blue-400 text-xs">
-                                       <p className="font-medium mb-1">Anti-Cheat System Active</p>
-                                       <p>Please actually complete each action before returning to avoid being flagged.</p>
-                                     </div>
-                                   </div>
-                                 </div>
-                               </div>
-                             </div>
-                           </div>
-                         ) : (
-                           <div className="w-full bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-                             <div className="flex items-center mb-2">
-                               <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 mr-3">
-                                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                   <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                                 </svg>
-                               </div>
-                               <h3 className="text-white font-medium text-sm">Click "Show Interaction Buttons" to get started</h3>
-                             </div>
-                             <div className="flex gap-2 mt-3">
-                               <button
-                                 onClick={() => {
-                                   handleShowIframe(true);
-                                 }}
-                                 className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-sm inline-flex items-center"
-                               >
-                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                 </svg>
-                                 Show Interaction Buttons
-                               </button>
-                             </div>
-                           </div>
-                         )
-                       )}
-                      </div>
-                    </div>
-                    
-                    {/* Error/Success messages */}
-                    {error && (
-                      <div className="text-red-400 mb-4 p-3 bg-red-400/10 rounded-lg">
-                        <div className="flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                          </svg>
-                          {error}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {success && (
-                      <div className="text-green-400 mb-4 p-3 bg-green-400/10 rounded-lg">
-                        <div className="flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
-                          {success}
-                        </div>
-                      </div>
-                    )}
-                    
-                                        {/* How to complete guide */}
-                    <div className="bg-gray-800/70 rounded p-3 border border-gray-700 mb-4">
-                      <h4 className="text-white font-medium mb-2 text-sm">How to Complete:</h4>
-                      <ol className="list-decimal list-inside text-gray-400 text-xs space-y-1 ml-2">
-                        <li>Click the "Show Interaction Buttons" button above</li>
-                        <li>Use the buttons to like, comment, and share the {activeTab === 'twitter' ? 'tweet' : 'post'}</li>
-                        <li>Each button will open {activeTab === 'twitter' ? 'Twitter' : 'Facebook'} in a new tab</li>
-                        <li>Complete all three actions on {activeTab === 'twitter' ? 'Twitter' : 'Facebook'}</li>
-                        <li>After all three actions are verified, click "Complete Task" to earn points</li>
-                      </ol>
-                    </div>
-                    
-                    {/* Form submission */}
-                    {activeTab === 'twitter' ? (
-                      <form onSubmit={safeHandleSubmit} id="verification-form">
-                        {/* Hidden tweet URL input - keeping for backend compatibility */}
-                        <input
-                          type="hidden"
-                          id="tweetUrl"
-                          value={tweetUrl}
-                        />
-                        
-                        {/* Twitter Username Input */}
-                        <div className="mb-4">
-                          <label htmlFor="twitterUsername" className="block text-sm font-medium text-gray-300 mb-2">
-                            Your Twitter Username <span className="text-red-400">*</span>
-                          </label>
-                          <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                              <span className="text-gray-400">@</span>
-                            </div>
-                            <input
-                              type="text"
-                              id="twitterUsername"
-                              value={twitterUsername}
-                              onChange={(e) => setTwitterUsername(e.target.value)}
-                              className="w-full pl-8 pr-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              placeholder="username"
-                              maxLength="15"
-                              required
-                            />
-                          </div>
-                          <p className="text-xs text-gray-400 mt-1">
-                            Enter your Twitter username so we can verify your completion
-                          </p>
-                        </div>
-                        
-                        {iframeVerified && (
-                          <div className="mb-4 p-3 bg-green-500/20 border border-green-500 rounded-lg">
-                            <div className="flex items-center text-green-400 font-medium">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                              </svg>
-                              All Tweet Interactions Verified!
-                            </div>
-                            <p className="text-gray-300 mt-1 text-sm">You can now complete the task to earn your points.</p>
-                          </div>
-                        )}
-                        
-                        <button
-                          type="submit"
-                          className={`w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors ${
-                            verifyingTweet || submitting ? 'opacity-70 cursor-wait' : 
-                            (!iframeVerified || !twitterUsername.trim().replace(/^@/, '')) ? 'opacity-50 cursor-not-allowed bg-gray-600 hover:bg-gray-600' : ''
-                          }`}
-                          disabled={verifyingTweet || submitting || !iframeVerified || !twitterUsername.trim().replace(/^@/, '')}
-                        >
-                          {verifyingTweet ? 'Verifying Tweet...' : 
-                          submitting ? 'Submitting for Approval...' : 
-                          iframeVerified && twitterUsername.trim().replace(/^@/, '') ? 'Submit for Admin Approval' : 
-                          !twitterUsername.trim().replace(/^@/, '') ? 'Enter Your Twitter Username' :
-                          'Complete All Three Actions to Continue'}
-                        </button>
-                      </form>
-                    ) : (
-                      <form onSubmit={handleFacebookRaidSubmit} id="verification-form">
-                        {/* Facebook Username Input */}
-                        <div className="mb-4">
-                          <label htmlFor="facebookUsername" className="block text-sm font-medium text-gray-300 mb-2">
-                            Your Facebook Username <span className="text-red-400">*</span>
-                          </label>
-                          <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                              <span className="text-gray-400">@</span>
-                            </div>
-                            <input
-                              type="text"
-                              id="facebookUsername"
-                              value={facebookUsername}
-                              onChange={(e) => setFacebookUsername(e.target.value)}
-                              className="w-full pl-8 pr-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              placeholder="username"
-                              maxLength="50"
-                              required
-                            />
-                          </div>
-                          <p className="text-xs text-gray-400 mt-1">
-                            Enter your Facebook username so we can verify your completion
-                          </p>
-                        </div>
-                        
-                        {iframeVerified && (
-                          <div className="mb-4 p-3 bg-green-500/20 border border-green-500 rounded-lg">
-                            <div className="flex items-center text-green-400 font-medium">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                              </svg>
-                              All Facebook Interactions Verified!
-                            </div>
-                            <p className="text-gray-300 mt-1 text-sm">You can now complete the task to earn your points.</p>
-                          </div>
-                        )}
-                        
-                        <button
-                          type="submit"
-                          className={`w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors ${
-                            submitting ? 'opacity-70 cursor-wait' : 
-                            (!iframeVerified || !facebookUsername.trim().replace(/^@/, '')) ? 'opacity-50 cursor-not-allowed bg-gray-600 hover:bg-gray-600' : ''
-                          }`}
-                          disabled={submitting || !iframeVerified || !facebookUsername.trim().replace(/^@/, '')}
-                        >
-                          {submitting ? 'Submitting for Approval...' : 
-                          iframeVerified && facebookUsername.trim().replace(/^@/, '') ? 'Submit for Admin Approval' : 
-                          !facebookUsername.trim().replace(/^@/, '') ? 'Enter Your Facebook Username' :
-                          'Complete All Three Actions to Continue'}
-                        </button>
-                      </form>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
-          )})}
+          )}
         </div>
       ) : (
-        <div className="text-center text-gray-400 py-8">
-          {loading ? 'Loading social raids...' : `No ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raids found`}
-        </div>
+        /* Facebook Tab Content */
+        <FacebookRaids currentUser={currentUser} showNotification={showNotification} />
       )}
     </div>
   );

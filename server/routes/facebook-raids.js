@@ -41,73 +41,20 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Extract post ID from URL using robust parsing
-    const extractFacebookPostId = (url) => {
-      if (!url) return null;
-      
-      try {
-        // Handle cases where someone might paste "@URL" by mistake
-        const cleanUrl = url.startsWith('@') ? url.substring(1) : url;
-        
-        // Try multiple approaches to extract the post ID
-        
-        // Approach 1: Try to parse as a URL first
-        let parsedUrl;
-        try {
-          // Check if URL has protocol, add if missing
-          const urlWithProtocol = (!cleanUrl.startsWith('http') && !cleanUrl.startsWith('https'))
-            ? `https://${cleanUrl}` 
-            : cleanUrl;
-          
-          parsedUrl = new URL(urlWithProtocol);
-        } catch (e) {
-          // Continue to fallback regex approach
-        }
-        
-        // If we successfully parsed the URL, check the domain and extract ID
-        if (parsedUrl) {
-          // Check if it's a Facebook domain
-          if (parsedUrl.hostname.includes('facebook.com')) {
-            // Extract ID from pathname
-            const match = parsedUrl.pathname.match(/\/posts\/(\d+)/);
-            if (match && match[1]) {
-              return match[1];
-            }
-          }
-        }
-        
-        // Approach 2: Fallback to regex for all URL formats
-        const standardMatch = cleanUrl.match(/facebook\.com\/[^\/]+\/posts\/(\d+)/i);
-        if (standardMatch && standardMatch[1]) {
-          return standardMatch[1];
-        }
-        
-        // Approach 3: Handle groups and pages
-        const groupsMatch = cleanUrl.match(/facebook\.com\/groups\/[^\/]+\/posts\/(\d+)/i);
-        if (groupsMatch && groupsMatch[1]) {
-          return groupsMatch[1];
-        }
-        
-        const pagesMatch = cleanUrl.match(/facebook\.com\/[^\/]+\/posts\/(\d+)/i);
-        if (pagesMatch && pagesMatch[1]) {
-          return pagesMatch[1];
-        }
-        
-        // Approach 4: Try to handle direct posts URLs with just numbers
-        const directPostsMatch = cleanUrl.match(/\/posts\/(\d+)/i);
-        if (directPostsMatch && directPostsMatch[1]) {
-          return directPostsMatch[1];
-        }
-        
-        return null;
-      } catch (error) {
-        return null;
+    // Extract post ID from URL
+    let postId = null;
+    const shareMatch = postUrl.match(/\/share\/p\/([^\/]+)/);
+    if (shareMatch && shareMatch[1]) {
+      postId = shareMatch[1];
+    } else {
+      const postsMatch = postUrl.match(/\/posts\/(\d+)/);
+      if (postsMatch && postsMatch[1]) {
+        postId = postsMatch[1];
       }
-    };
+    }
 
-    const postId = extractFacebookPostId(postUrl);
     if (!postId) {
-      return res.status(400).json({ error: 'Invalid Facebook URL. Please provide a valid Facebook post URL.' });
+      return res.status(400).json({ error: 'Invalid Facebook URL' });
     }
 
     const raid = new FacebookRaid({
@@ -128,8 +75,7 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       postUrl: raid.postUrl,
       points: raid.points,
       title: raid.title,
-      description: raid.description,
-      platform: 'Facebook'
+      description: raid.description
     });
     
     res.status(201).json(raid);
@@ -147,73 +93,20 @@ router.post('/paid', auth, requireEmailVerification, async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Extract post ID from URL using robust parsing
-    const extractFacebookPostId = (url) => {
-      if (!url) return null;
-      
-      try {
-        // Handle cases where someone might paste "@URL" by mistake
-        const cleanUrl = url.startsWith('@') ? url.substring(1) : url;
-        
-        // Try multiple approaches to extract the post ID
-        
-        // Approach 1: Try to parse as a URL first
-        let parsedUrl;
-        try {
-          // Check if URL has protocol, add if missing
-          const urlWithProtocol = (!cleanUrl.startsWith('http') && !cleanUrl.startsWith('https'))
-            ? `https://${cleanUrl}` 
-            : cleanUrl;
-          
-          parsedUrl = new URL(urlWithProtocol);
-        } catch (e) {
-          // Continue to fallback regex approach
-        }
-        
-        // If we successfully parsed the URL, check the domain and extract ID
-        if (parsedUrl) {
-          // Check if it's a Facebook domain
-          if (parsedUrl.hostname.includes('facebook.com')) {
-            // Extract ID from pathname
-            const match = parsedUrl.pathname.match(/\/posts\/(\d+)/);
-            if (match && match[1]) {
-              return match[1];
-            }
-          }
-        }
-        
-        // Approach 2: Fallback to regex for all URL formats
-        const standardMatch = cleanUrl.match(/facebook\.com\/[^\/]+\/posts\/(\d+)/i);
-        if (standardMatch && standardMatch[1]) {
-          return standardMatch[1];
-        }
-        
-        // Approach 3: Handle groups and pages
-        const groupsMatch = cleanUrl.match(/facebook\.com\/groups\/[^\/]+\/posts\/(\d+)/i);
-        if (groupsMatch && groupsMatch[1]) {
-          return groupsMatch[1];
-        }
-        
-        const pagesMatch = cleanUrl.match(/facebook\.com\/[^\/]+\/posts\/(\d+)/i);
-        if (pagesMatch && pagesMatch[1]) {
-          return pagesMatch[1];
-        }
-        
-        // Approach 4: Try to handle direct posts URLs with just numbers
-        const directPostsMatch = cleanUrl.match(/\/posts\/(\d+)/i);
-        if (directPostsMatch && directPostsMatch[1]) {
-          return directPostsMatch[1];
-        }
-        
-        return null;
-      } catch (error) {
-        return null;
+    // Extract post ID from URL
+    let postId = null;
+    const shareMatch = postUrl.match(/\/share\/p\/([^\/]+)/);
+    if (shareMatch && shareMatch[1]) {
+      postId = shareMatch[1];
+    } else {
+      const postsMatch = postUrl.match(/\/posts\/(\d+)/);
+      if (postsMatch && postsMatch[1]) {
+        postId = postsMatch[1];
       }
-    };
+    }
 
-    const postId = extractFacebookPostId(postUrl);
     if (!postId) {
-      return res.status(400).json({ error: 'Invalid Facebook URL. Please provide a valid Facebook post URL.' });
+      return res.status(400).json({ error: 'Invalid Facebook URL' });
     }
 
     // Create the raid with pending payment status
@@ -291,73 +184,20 @@ router.post('/points', auth, requireEmailVerification, async (req, res) => {
       });
     }
 
-    // Extract post ID from URL using robust parsing
-    const extractFacebookPostId = (url) => {
-      if (!url) return null;
-      
-      try {
-        // Handle cases where someone might paste "@URL" by mistake
-        const cleanUrl = url.startsWith('@') ? url.substring(1) : url;
-        
-        // Try multiple approaches to extract the post ID
-        
-        // Approach 1: Try to parse as a URL first
-        let parsedUrl;
-        try {
-          // Check if URL has protocol, add if missing
-          const urlWithProtocol = (!cleanUrl.startsWith('http') && !cleanUrl.startsWith('https'))
-            ? `https://${cleanUrl}` 
-            : cleanUrl;
-          
-          parsedUrl = new URL(urlWithProtocol);
-        } catch (e) {
-          // Continue to fallback regex approach
-        }
-        
-        // If we successfully parsed the URL, check the domain and extract ID
-        if (parsedUrl) {
-          // Check if it's a Facebook domain
-          if (parsedUrl.hostname.includes('facebook.com')) {
-            // Extract ID from pathname
-            const match = parsedUrl.pathname.match(/\/posts\/(\d+)/);
-            if (match && match[1]) {
-              return match[1];
-            }
-          }
-        }
-        
-        // Approach 2: Fallback to regex for all URL formats
-        const standardMatch = cleanUrl.match(/facebook\.com\/[^\/]+\/posts\/(\d+)/i);
-        if (standardMatch && standardMatch[1]) {
-          return standardMatch[1];
-        }
-        
-        // Approach 3: Handle groups and pages
-        const groupsMatch = cleanUrl.match(/facebook\.com\/groups\/[^\/]+\/posts\/(\d+)/i);
-        if (groupsMatch && groupsMatch[1]) {
-          return groupsMatch[1];
-        }
-        
-        const pagesMatch = cleanUrl.match(/facebook\.com\/[^\/]+\/posts\/(\d+)/i);
-        if (pagesMatch && pagesMatch[1]) {
-          return pagesMatch[1];
-        }
-        
-        // Approach 4: Try to handle direct posts URLs with just numbers
-        const directPostsMatch = cleanUrl.match(/\/posts\/(\d+)/i);
-        if (directPostsMatch && directPostsMatch[1]) {
-          return directPostsMatch[1];
-        }
-        
-        return null;
-      } catch (error) {
-        return null;
+    // Extract post ID from URL
+    let postId = null;
+    const shareMatch = postUrl.match(/\/share\/p\/([^\/]+)/);
+    if (shareMatch && shareMatch[1]) {
+      postId = shareMatch[1];
+    } else {
+      const postsMatch = postUrl.match(/\/posts\/(\d+)/);
+      if (postsMatch && postsMatch[1]) {
+        postId = postsMatch[1];
       }
-    };
+    }
 
-    const postId = extractFacebookPostId(postUrl);
     if (!postId) {
-      return res.status(400).json({ error: 'Invalid Facebook URL. Please provide a valid Facebook post URL.' });
+      return res.status(400).json({ error: 'Invalid Facebook URL' });
     }
 
     // Create the raid
@@ -395,8 +235,7 @@ router.post('/points', auth, requireEmailVerification, async (req, res) => {
       postUrl: raid.postUrl,
       points: raid.points,
       title: raid.title,
-      description: raid.description,
-      platform: 'Facebook'
+      description: raid.description
     });
     
     res.status(201).json({ 
@@ -405,8 +244,110 @@ router.post('/points', auth, requireEmailVerification, async (req, res) => {
       pointsRemaining: user.points
     });
   } catch (error) {
-    console.error('Error creating points-based Facebook raid:', error);
     res.status(500).json({ error: 'Failed to create Facebook raid' });
+  }
+});
+
+// Approve a paid Facebook raid (admin only)
+router.post('/:id/approve', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Only admins can approve raids' });
+    }
+
+    const raid = await FacebookRaid.findById(req.params.id);
+    
+    if (!raid) {
+      return res.status(404).json({ error: 'Facebook raid not found' });
+    }
+
+    if (!raid.isPaid) {
+      return res.status(400).json({ error: 'This is not a paid raid' });
+    }
+
+    if (raid.paymentStatus === 'approved') {
+      return res.status(400).json({ error: 'This raid is already approved' });
+    }
+
+    // Update raid status
+    raid.paymentStatus = 'approved';
+    raid.active = true;
+    await raid.save();
+    
+    // Send Telegram notification
+    telegramService.sendRaidNotification({
+      postUrl: raid.postUrl,
+      points: raid.points,
+      title: raid.title,
+      description: raid.description
+    });
+    
+    res.json({ 
+      message: 'Facebook raid payment approved!',
+      raid 
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to approve Facebook raid' });
+  }
+});
+
+// Reject a paid Facebook raid (admin only)
+router.post('/:id/reject', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Only admins can reject raids' });
+    }
+
+    const { rejectionReason } = req.body;
+    const raid = await FacebookRaid.findById(req.params.id);
+    
+    if (!raid) {
+      return res.status(404).json({ error: 'Facebook raid not found' });
+    }
+
+    if (!raid.isPaid) {
+      return res.status(400).json({ error: 'This is not a paid raid' });
+    }
+
+    if (raid.paymentStatus === 'rejected') {
+      return res.status(400).json({ error: 'This raid is already rejected' });
+    }
+
+    // Update raid status
+    raid.paymentStatus = 'rejected';
+    raid.active = false;
+    raid.rejectionReason = rejectionReason || 'Payment verification failed';
+    await raid.save();
+    
+    res.json({ 
+      message: 'Facebook raid payment rejected!',
+      raid 
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to reject Facebook raid' });
+  }
+});
+
+// Delete a Facebook raid (admin only)
+router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Only admins can delete Facebook raids' });
+    }
+
+    const raid = await FacebookRaid.findById(req.params.id);
+    
+    if (!raid) {
+      return res.status(404).json({ error: 'Facebook raid not found' });
+    }
+
+    // Instead of deleting, mark as inactive
+    raid.active = false;
+    await raid.save();
+    
+    res.json({ message: 'Facebook raid deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete Facebook raid' });
   }
 });
 
@@ -457,154 +398,437 @@ router.post('/:id/complete', auth, requireEmailVerification, twitterRaidRateLimi
     // Check verification method - either iframe or post URL
     let verificationMethod = 'manual';
     let verificationNote = 'User verification was not validated';
+    let verified = false;
+    let detectedPostId = null;
     
-    if (iframeVerified && iframeInteractions >= 3) {
+    // If iframe verification was used
+    if (iframeVerified === true && iframeInteractions >= 3) {
       verificationMethod = 'iframe_interaction';
-      verificationNote = 'User completed all required Facebook interactions through iframe';
+      verificationNote = `Verified through iframe interaction (${iframeInteractions} interactions)`;
+      verified = true;
+      detectedPostId = postId || null; // Use the provided post ID if available
     }
-
-    // Create completion record
-    const completion = {
-      userId: userId,
-      facebookUsername: cleanUsername,
-      postUrl: postUrl || raid.postUrl,
-      postId: postId || raid.postId,
-      verificationCode: verificationCode || null,
-      verificationMethod: verificationMethod,
-      verified: true,
-      approvalStatus: 'pending',
-      ipAddress: ipAddress,
-      iframeVerified: iframeVerified || false,
-      iframeInteractions: iframeInteractions || 0,
-      verificationNote: verificationNote,
-      completedAt: new Date()
-    };
-
-    raid.completions.push(completion);
-    await raid.save();
-
-    // Create notification for admin
-    const notification = new Notification({
-      userId: req.user.id,
-      type: 'facebook_raid_completion',
-      title: 'Facebook Raid Completed',
-      message: `User ${cleanUsername} completed Facebook raid: ${raid.title}`,
-      data: {
-        raidId: raid._id,
-        completionId: completion._id,
-        platform: 'Facebook'
+    // If post URL was provided
+    else if (postUrl) {
+      // Just check basic URL format - be more flexible with validation
+      const isValidFormat = !!postUrl.match(/facebook\.com/i);
+      
+      if (!isValidFormat) {
+        return res.status(400).json({ 
+          error: 'Invalid Facebook post URL format. URL should be a valid Facebook post URL.',
+          success: false
+        });
       }
-    });
-    await notification.save();
-
-    res.json({
-      success: true,
-      message: 'Facebook raid submitted successfully! Pending admin approval.',
-      completion: completion
-    });
-
-  } catch (error) {
-    console.error('Error completing Facebook raid:', error);
-    
-    if (error.message && error.message.includes('FacebookRaid validation failed')) {
-      return res.status(400).json({ error: 'Invalid Facebook raid data. Please check your inputs.' });
+      
+      // Extract post ID from URL
+      try {
+        const shareMatch = postUrl.match(/\/share\/p\/([^\/]+)/);
+        if (shareMatch && shareMatch[1]) {
+          detectedPostId = shareMatch[1];
+        } else {
+          const postsMatch = postUrl.match(/\/posts\/(\d+)/);
+          if (postsMatch && postsMatch[1]) {
+            detectedPostId = postsMatch[1];
+          }
+        }
+        
+        if (!detectedPostId && postId) {
+          // Use provided post ID if URL parsing fails
+          detectedPostId = postId;
+        }
+      } catch (error) {
+        // Fall back to provided ID if extraction fails
+        detectedPostId = postId || null;
+      }
+      
+      // Check if URL contains "aquads.xyz" (case insensitive) - only as a note, not a requirement
+      const containsVerificationTag = postUrl.toLowerCase().includes('aquads.xyz');
+      if (!containsVerificationTag) {
+        verificationMethod = 'post_embed';
+        verificationNote = 'URL does not contain verification tag, but accepted';
+        verified = true;
+      } else {
+        verificationMethod = 'post_embed';
+        verificationNote = 'Facebook post URL format verified with verification tag';
+        verified = true;
+      }
+    } else {
+      return res.status(400).json({ 
+        error: 'Verification failed. Please provide a valid Facebook post URL or complete iframe verification.',
+        success: false
+      });
     }
-    
-    res.status(500).json({ error: 'Failed to complete Facebook raid' });
+
+    // Create a pending completion that requires admin approval
+    try {
+      const pointsAmount = raid.points || 50;
+      const user = await User.findById(userId);
+      
+      if (!user) {
+        throw new Error(`User not found with ID: ${userId}`);
+      }
+      
+      // Record the completion as pending approval - DO NOT award points yet
+      raid.completions.push({
+        userId: userId,
+        facebookUsername: cleanUsername,
+        verificationCode,
+        verificationMethod,
+        postUrl: postUrl || null,
+        postId: detectedPostId,
+        verified: verified,
+        approvalStatus: 'pending', // This is the key change
+        approvedBy: null,
+        approvedAt: null,
+        rejectionReason: null,
+        pointsAwarded: false,
+        ipAddress,
+        verificationNote,
+        iframeVerified: iframeVerified || false,
+        iframeInteractions: iframeInteractions || 0,
+        completedAt: new Date()
+      });
+      
+      // Update user's last activity for accurate fraud detection
+      await User.findByIdAndUpdate(userId, {
+        lastActivity: new Date()
+      });
+      
+      // Save the raid with the pending completion
+      await raid.save();
+      
+      // Success response - indicate pending approval
+      const successResponse = {
+        success: true,
+        message: `Facebook raid submitted successfully! Your submission is pending admin approval.`,
+        note: 'An admin will review your Facebook username and actions before awarding points.',
+        pointsAmount: pointsAmount,
+        status: 'pending_approval'
+      };
+      
+      res.json(successResponse);
+    } catch (error) {
+      let errorMessage = 'Failed to complete Facebook raid: ' + (error.message || 'Unknown error');
+      res.status(500).json({ 
+        error: errorMessage,
+        success: false
+      });
+    }
+  } catch (error) {
+    let errorMessage = 'Failed to complete Facebook raid: ' + (error.message || 'Unknown error');
+    res.status(500).json({ 
+      error: errorMessage,
+      success: false 
+    });
   }
 });
 
-// Approve a Facebook raid completion (admin only)
-router.post('/:raidId/approve/:completionId', auth, requireEmailVerification, async (req, res) => {
+// Admin endpoint to approve a completion
+router.post('/:raidId/completions/:completionId/approve', auth, async (req, res) => {
   try {
-    if (!req.user.isAdmin) {
-      return res.status(403).json({ error: 'Only admins can approve Facebook raid completions' });
+    // Basic validation
+    if (!req.user?.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
     }
 
     const { raidId, completionId } = req.params;
-
+    
+    // Find the raid
     const raid = await FacebookRaid.findById(raidId);
     if (!raid) {
-      return res.status(404).json({ error: 'Facebook raid not found' });
+      return res.status(404).json({ error: 'Raid not found' });
     }
 
-    const completion = raid.completions.id(completionId);
+    // Find the completion
+    const completion = raid.completions.find(c => c._id.toString() === completionId);
     if (!completion) {
       return res.status(404).json({ error: 'Completion not found' });
     }
 
-    if (completion.approvalStatus === 'approved') {
-      return res.status(400).json({ error: 'Completion already approved' });
-    }
+    // Update completion
+    completion.approvalStatus = 'approved';
+    completion.approvedBy = req.user.id;
+    completion.approvedAt = new Date();
+    completion.pointsAwarded = true;
 
     // Award points to user
-    try {
-      const updatedUser = await awardSocialMediaPoints(completion.userId, 'Facebook', raidId);
-      
-      // Update completion status
-      completion.approvalStatus = 'approved';
-      completion.approvedBy = req.user.id;
-      completion.approvedAt = new Date();
-      completion.pointsAwarded = true;
-      
-      await raid.save();
-
-      res.json({
-        success: true,
-        message: 'Facebook raid completion approved and points awarded!',
-        userPoints: updatedUser.points
+    const user = await User.findById(completion.userId);
+    if (user) {
+      const points = raid.points || 50;
+      user.points = (user.points || 0) + points;
+      user.lastActivity = new Date(); // Update activity when points are awarded
+      user.pointsHistory.push({
+        amount: points,
+        reason: `Facebook raid approved: ${raid.title}`,
+        socialRaidId: raid._id,
+        createdAt: new Date()
       });
-    } catch (pointsError) {
-      console.error('Error awarding points:', pointsError);
-      res.status(500).json({ error: 'Failed to award points' });
+      await user.save();
     }
 
+    await raid.save({ validateBeforeSave: false });
+
+    res.json({
+      success: true,
+      message: 'Completion approved successfully'
+    });
+
   } catch (error) {
-    console.error('Error approving Facebook raid completion:', error);
-    res.status(500).json({ error: 'Failed to approve Facebook raid completion' });
+    res.status(500).json({ error: error.message || 'Failed to approve' });
   }
 });
 
-// Reject a Facebook raid completion (admin only)
-router.post('/:raidId/reject/:completionId', auth, requireEmailVerification, async (req, res) => {
+// Admin endpoint to reject a completion
+router.post('/:raidId/completions/:completionId/reject', auth, async (req, res) => {
   try {
-    if (!req.user.isAdmin) {
-      return res.status(403).json({ error: 'Only admins can reject Facebook raid completions' });
+    // Basic validation
+    if (!req.user?.isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
     }
 
     const { raidId, completionId } = req.params;
     const { rejectionReason } = req.body;
-
+    
+    // Find the raid
     const raid = await FacebookRaid.findById(raidId);
     if (!raid) {
-      return res.status(404).json({ error: 'Facebook raid not found' });
+      return res.status(404).json({ error: 'Raid not found' });
     }
 
-    const completion = raid.completions.id(completionId);
+    // Find the completion
+    const completion = raid.completions.find(c => c._id.toString() === completionId);
     if (!completion) {
       return res.status(404).json({ error: 'Completion not found' });
     }
 
-    if (completion.approvalStatus === 'rejected') {
-      return res.status(400).json({ error: 'Completion already rejected' });
-    }
-
-    // Update completion status
+    // Update completion
     completion.approvalStatus = 'rejected';
-    completion.rejectionReason = rejectionReason || 'No reason provided';
     completion.approvedBy = req.user.id;
     completion.approvedAt = new Date();
-    
-    await raid.save();
+    completion.rejectionReason = rejectionReason || 'No reason provided';
+    completion.pointsAwarded = false;
+
+    await raid.save({ validateBeforeSave: false });
+
+    // Send notification to the user about the rejection
+    try {
+      const userId = completion.userId;
+      const reason = rejectionReason || 'No reason provided';
+      const notificationMessage = `Your Facebook raid submission for "${raid.title}" was rejected. Reason: ${reason}`;
+      
+      const notification = new Notification({
+        userId: userId,
+        type: 'status',
+        message: notificationMessage,
+        link: '/dashboard',
+        relatedId: raidId,
+        relatedModel: 'FacebookRaid'
+      });
+      
+      await notification.save();
+  
+    } catch (notificationError) {
+      // Continue execution even if notification fails
+    }
 
     res.json({
       success: true,
-      message: 'Facebook raid completion rejected'
+      message: 'Completion rejected successfully'
     });
 
   } catch (error) {
-    console.error('Error rejecting Facebook raid completion:', error);
-    res.status(500).json({ error: 'Failed to reject Facebook raid completion' });
+    res.status(500).json({ error: error.message || 'Failed to reject' });
+  }
+});
+
+// Admin endpoint to get all pending completions
+router.get('/completions/pending', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Only admins can view pending completions' });
+    }
+
+    const raids = await FacebookRaid.find({
+      'completions.approvalStatus': 'pending'
+    })
+    .populate('completions.userId', 'username email')
+    .populate('createdBy', 'username')
+    .sort({ 'completions.completedAt': -1 });
+
+    // Extract pending completions with raid info
+    const pendingCompletions = [];
+    
+    // Get all user IDs for trust score calculation
+    const userIds = new Set();
+    raids.forEach(raid => {
+      raid.completions.forEach(completion => {
+        if (completion.approvalStatus === 'pending' && completion.userId) {
+          userIds.add(completion.userId._id.toString());
+        }
+      });
+    });
+
+    // Calculate trust scores for all users
+    const userTrustScores = {};
+    if (userIds.size > 0) {
+      const allRaidsWithCompletions = await FacebookRaid.find({
+        'completions.userId': { $in: Array.from(userIds) }
+      });
+
+      userIds.forEach(userId => {
+        let totalCompletions = 0;
+        let approvedCompletions = 0;
+
+        allRaidsWithCompletions.forEach(raid => {
+          raid.completions.forEach(completion => {
+            if (completion.userId && completion.userId.toString() === userId && 
+                completion.approvalStatus !== 'pending') {
+              totalCompletions++;
+              if (completion.approvalStatus === 'approved') {
+                approvedCompletions++;
+              }
+            }
+          });
+        });
+
+        userTrustScores[userId] = {
+          totalCompletions,
+          approvedCompletions,
+          approvalRate: totalCompletions > 0 ? (approvedCompletions / totalCompletions) * 100 : 0,
+          trustLevel: totalCompletions === 0 ? 'new' : 
+                     (approvedCompletions / totalCompletions) >= 0.85 ? 'high' :
+                     (approvedCompletions / totalCompletions) >= 0.65 ? 'medium' : 'low'
+        };
+      });
+    }
+    
+    raids.forEach(raid => {
+      raid.completions.forEach(completion => {
+        if (completion.approvalStatus === 'pending') {
+          const userId = completion.userId ? completion.userId._id.toString() : null;
+          const trustScore = userId ? userTrustScores[userId] : null;
+          
+          pendingCompletions.push({
+            completionId: completion._id,
+            raidId: raid._id,
+            raidTitle: raid.title,
+            raidPostUrl: raid.postUrl,
+            pointsAmount: raid.points || 50,
+            user: completion.userId,
+            facebookUsername: completion.facebookUsername,
+            verificationMethod: completion.verificationMethod,
+            verificationNote: completion.verificationNote,
+            iframeVerified: completion.iframeVerified,
+            completedAt: completion.completedAt,
+            ipAddress: completion.ipAddress,
+            trustScore: trustScore || {
+              totalCompletions: 0,
+              approvedCompletions: 0,
+              approvalRate: 0,
+              trustLevel: 'new'
+            }
+          });
+        }
+      });
+    });
+
+    // Sort by trust level priority: high -> medium -> new -> low
+    const trustLevelPriority = { 'high': 0, 'medium': 1, 'new': 2, 'low': 3 };
+    pendingCompletions.sort((a, b) => {
+      const aPriority = trustLevelPriority[a.trustScore.trustLevel];
+      const bPriority = trustLevelPriority[b.trustScore.trustLevel];
+      return aPriority - bPriority;
+    });
+
+    res.json({
+      success: true,
+      pendingCompletions,
+      total: pendingCompletions.length
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch pending completions' });
+  }
+});
+
+// Get user's completed Facebook raids
+router.get('/user/completed', auth, async (req, res) => {
+  try {
+    // Get the user ID safely - checking both possible locations
+    const userId = req.user.id || req.user.userId || req.user._id;
+    
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID not found in request' });
+    }
+    
+    const raids = await FacebookRaid.find({
+      'completions.userId': userId
+    }).sort({ createdAt: -1 });
+    
+    res.json(raids);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch completed Facebook raids' });
+  }
+});
+
+// Admin endpoint to check for suspicious activity
+router.get('/suspicious', auth, async (req, res) => {
+  try {
+    // Only admins can access this endpoint
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Unauthorized: Admin access required' });
+    }
+    
+    // Get all raids with completions
+    const raids = await FacebookRaid.find({
+      'completions.0': { $exists: true }
+    }).populate('completions.userId', 'username email');
+    
+    // Map to store completions by IP address
+    const ipMap = {};
+    
+    // Process each raid to find IP patterns
+    raids.forEach(raid => {
+      if (!raid.completions || raid.completions.length === 0) return;
+      
+      raid.completions.forEach(completion => {
+        if (!completion.ipAddress) return;
+        
+        if (!ipMap[completion.ipAddress]) {
+          ipMap[completion.ipAddress] = [];
+        }
+        
+        ipMap[completion.ipAddress].push({
+          userId: completion.userId._id || completion.userId,
+          username: completion.userId.username || 'Unknown',
+          raidId: raid._id,
+          title: raid.title,
+          timestamp: completion.completedAt
+        });
+      });
+    });
+    
+    // Find multiple accounts using the same IP
+    const suspiciousIPs = {};
+    
+    Object.keys(ipMap).forEach(ip => {
+      const completions = ipMap[ip];
+      
+      // Extract unique user IDs for this IP
+      const userIds = new Set(completions.map(c => c.userId.toString()));
+      
+      // If more than one user has completed raids from this IP
+      if (userIds.size > 1) {
+        suspiciousIPs[ip] = completions;
+      }
+    });
+    
+    res.json({
+      success: true,
+      suspiciousIPs
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to check for suspicious activity' });
   }
 });
 
@@ -628,73 +852,20 @@ router.post('/free', auth, requireEmailVerification, async (req, res) => {
       return res.status(400).json({ error: eligibility.reason });
     }
 
-    // Extract post ID from URL using robust parsing
-    const extractFacebookPostId = (url) => {
-      if (!url) return null;
-      
-      try {
-        // Handle cases where someone might paste "@URL" by mistake
-        const cleanUrl = url.startsWith('@') ? url.substring(1) : url;
-        
-        // Try multiple approaches to extract the post ID
-        
-        // Approach 1: Try to parse as a URL first
-        let parsedUrl;
-        try {
-          // Check if URL has protocol, add if missing
-          const urlWithProtocol = (!cleanUrl.startsWith('http') && !cleanUrl.startsWith('https'))
-            ? `https://${cleanUrl}` 
-            : cleanUrl;
-          
-          parsedUrl = new URL(urlWithProtocol);
-        } catch (e) {
-          // Continue to fallback regex approach
-        }
-        
-        // If we successfully parsed the URL, check the domain and extract ID
-        if (parsedUrl) {
-          // Check if it's a Facebook domain
-          if (parsedUrl.hostname.includes('facebook.com')) {
-            // Extract ID from pathname
-            const match = parsedUrl.pathname.match(/\/posts\/(\d+)/);
-            if (match && match[1]) {
-              return match[1];
-            }
-          }
-        }
-        
-        // Approach 2: Fallback to regex for all URL formats
-        const standardMatch = cleanUrl.match(/facebook\.com\/[^\/]+\/posts\/(\d+)/i);
-        if (standardMatch && standardMatch[1]) {
-          return standardMatch[1];
-        }
-        
-        // Approach 3: Handle groups and pages
-        const groupsMatch = cleanUrl.match(/facebook\.com\/groups\/[^\/]+\/posts\/(\d+)/i);
-        if (groupsMatch && groupsMatch[1]) {
-          return groupsMatch[1];
-        }
-        
-        const pagesMatch = cleanUrl.match(/facebook\.com\/[^\/]+\/posts\/(\d+)/i);
-        if (pagesMatch && pagesMatch[1]) {
-          return pagesMatch[1];
-        }
-        
-        // Approach 4: Try to handle direct posts URLs with just numbers
-        const directPostsMatch = cleanUrl.match(/\/posts\/(\d+)/i);
-        if (directPostsMatch && directPostsMatch[1]) {
-          return directPostsMatch[1];
-        }
-        
-        return null;
-      } catch (error) {
-        return null;
+    // Extract post ID from URL
+    let postId = null;
+    const shareMatch = postUrl.match(/\/share\/p\/([^\/]+)/);
+    if (shareMatch && shareMatch[1]) {
+      postId = shareMatch[1];
+    } else {
+      const postsMatch = postUrl.match(/\/posts\/(\d+)/);
+      if (postsMatch && postsMatch[1]) {
+        postId = postsMatch[1];
       }
-    };
+    }
 
-    const postId = extractFacebookPostId(postUrl);
     if (!postId) {
-      return res.status(400).json({ error: 'Invalid Facebook URL. Please provide a valid Facebook post URL.' });
+      return res.status(400).json({ error: 'Invalid Facebook URL' });
     }
 
     // Use a free raid
@@ -722,8 +893,7 @@ router.post('/free', auth, requireEmailVerification, async (req, res) => {
       postUrl: raid.postUrl,
       points: raid.points,
       title: raid.title,
-      description: raid.description,
-      platform: 'Facebook'
+      description: raid.description
     });
     
     res.status(201).json({ 
@@ -732,31 +902,8 @@ router.post('/free', auth, requireEmailVerification, async (req, res) => {
       usage
     });
   } catch (error) {
-    console.error('Error creating free Facebook raid:', error);
+    console.error('Error creating free raid:', error);
     res.status(500).json({ error: 'Failed to create free Facebook raid' });
-  }
-});
-
-// Delete a Facebook raid (admin only)
-router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
-  try {
-    if (!req.user.isAdmin) {
-      return res.status(403).json({ error: 'Only admins can delete Facebook raids' });
-    }
-
-    const raid = await FacebookRaid.findById(req.params.id);
-    
-    if (!raid) {
-      return res.status(404).json({ error: 'Facebook raid not found' });
-    }
-
-    // Instead of deleting, mark as inactive
-    raid.active = false;
-    await raid.save();
-    
-    res.json({ message: 'Facebook raid deleted successfully' });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to delete Facebook raid' });
   }
 });
 
