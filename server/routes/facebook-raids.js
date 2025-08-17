@@ -113,80 +113,12 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
   }
 });
 
-// Create a new Facebook raid using points
-router.post('/points', auth, requireEmailVerification, async (req, res) => {
-  try {
-    const { postUrl, title, description } = req.body;
-
-    if (!postUrl || !title || !description) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    // Extract post ID from URL
-    const postId = extractFacebookPostId(postUrl);
-    if (!postId) {
-      return res.status(400).json({ error: 'Invalid Facebook URL. Please provide a valid Facebook post URL.' });
-    }
-
-    // Check if user has enough points
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    if (user.points < 2000) {
-      return res.status(400).json({ error: 'Insufficient points. You need 2000 points to create a Facebook raid.' });
-    }
-
-    // Deduct points from user
-    user.points -= 2000;
-    await user.save();
-
-    // Create affiliate earning record
-    const affiliateEarning = new AffiliateEarning({
-      userId: req.user.id,
-      amount: 2000,
-      type: 'facebook_raid_creation',
-      description: `Facebook raid creation: ${title}`,
-      status: 'completed'
-    });
-    await affiliateEarning.save();
-
-    const raid = new FacebookRaid({
-      postId,
-      postUrl,
-      title,
-      description,
-      points: 50,
-      createdBy: req.user.id,
-      isPaid: true,
-      paymentStatus: 'approved'
-    });
-
-    await raid.save();
-    
-    // Send Telegram notification
-    telegramService.sendRaidNotification({
-      postUrl: raid.postUrl,
-      points: raid.points,
-      title: raid.title,
-      description: raid.description,
-      platform: 'Facebook'
-    });
-    
-    res.status(201).json(raid);
-  } catch (error) {
-    console.error('Error creating Facebook raid with points:', error);
-    res.status(500).json({ error: 'Failed to create Facebook raid' });
-  }
-});
-
-// Create a new paid Facebook raid
+// Create a new paid Facebook raid (users)
 router.post('/paid', auth, requireEmailVerification, async (req, res) => {
   try {
-    const { postUrl, title, description, points, paymentChain, txSignature } = req.body;
+    const { postUrl, title, description, txSignature, paymentChain, chainSymbol, chainAddress } = req.body;
 
-    if (!postUrl || !title || !description || !points || !paymentChain || !txSignature) {
+    if (!postUrl || !title || !description || !txSignature) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -196,17 +128,21 @@ router.post('/paid', auth, requireEmailVerification, async (req, res) => {
       return res.status(400).json({ error: 'Invalid Facebook URL. Please provide a valid Facebook post URL.' });
     }
 
+    // Create the raid with pending payment status
     const raid = new FacebookRaid({
       postId,
       postUrl,
       title,
       description,
-      points,
+      points: 50, // Fixed points for paid raids
       createdBy: req.user.id,
       isPaid: true,
       paymentStatus: 'pending',
+      txSignature,
       paymentChain,
-      txSignature
+      chainSymbol,
+      chainAddress,
+      active: true // Ensure the raid is active even if payment is pending
     });
 
     await raid.save();
@@ -223,6 +159,84 @@ router.post('/paid', auth, requireEmailVerification, async (req, res) => {
     res.status(201).json(raid);
   } catch (error) {
     console.error('Error creating paid Facebook raid:', error);
+    res.status(500).json({ error: 'Failed to create Facebook raid' });
+  }
+});
+
+// Create a new Facebook raid using affiliate points (users)
+router.post('/points', auth, requireEmailVerification, async (req, res) => {
+  try {
+    const { postUrl, title, description } = req.body;
+    const POINTS_REQUIRED = 2000; // Points required to create a raid
+
+    if (!postUrl || !title || !description) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Check if user has enough points
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (user.points < POINTS_REQUIRED) {
+      return res.status(400).json({ 
+        error: `Not enough points. You have ${user.points} points but need ${POINTS_REQUIRED} points to create a raid.`
+      });
+    }
+
+    // Extract post ID from URL
+    const postId = extractFacebookPostId(postUrl);
+    if (!postId) {
+      return res.status(400).json({ error: 'Invalid Facebook URL. Please provide a valid Facebook post URL.' });
+    }
+
+    // Create the raid
+    const raid = new FacebookRaid({
+      postId,
+      postUrl,
+      title,
+      description,
+      points: 50, // Fixed points for raids
+      createdBy: req.user.id,
+      isPaid: false, // Not a paid raid (it's a points raid)
+      paymentStatus: 'approved', // Automatically approved since we're deducting points
+      active: true,
+      paidWithPoints: true, // New field to track point-based raids
+      pointsSpent: POINTS_REQUIRED // Track how many points were spent
+    });
+
+    // Deduct points from user
+    user.points -= POINTS_REQUIRED;
+    user.pointsHistory.push({
+      amount: -POINTS_REQUIRED,
+      reason: 'Created Facebook raid with points',
+      socialRaidId: raid._id,
+      createdAt: new Date()
+    });
+
+    // Save both the raid and updated user
+    await Promise.all([
+      raid.save(),
+      user.save()
+    ]);
+    
+    // Send Telegram notification
+    telegramService.sendRaidNotification({
+      postUrl: raid.postUrl,
+      points: raid.points,
+      title: raid.title,
+      description: raid.description,
+      platform: 'Facebook'
+    });
+    
+    res.status(201).json({ 
+      message: `Facebook raid created successfully! ${POINTS_REQUIRED} points have been deducted from your account.`,
+      raid,
+      pointsRemaining: user.points
+    });
+  } catch (error) {
+    console.error('Error creating Facebook raid with points:', error);
     res.status(500).json({ error: 'Failed to create Facebook raid' });
   }
 });
@@ -289,156 +303,6 @@ router.post('/free', auth, requireEmailVerification, async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating free Facebook raid:', error);
-    res.status(500).json({ error: 'Failed to create free Facebook raid' });
-  }
-});
-
-// Create a new paid Facebook raid (users)
-router.post('/paid', auth, requireEmailVerification, async (req, res) => {
-  try {
-    const { postUrl, title, description, points, txSignature, paymentChain, chainSymbol, chainAddress } = req.body;
-
-    if (!postUrl || !title || !description) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    // Extract post ID from URL
-    const postId = extractFacebookPostId(postUrl);
-    if (!postId) {
-      return res.status(400).json({ error: 'Invalid Facebook URL. Please provide a valid Facebook post URL.' });
-    }
-
-    const raid = new FacebookRaid({
-      postId,
-      postUrl,
-      title,
-      description,
-      points: points || 50,
-      createdBy: req.user.id,
-      isPaid: true,
-      paymentStatus: 'pending',
-      txSignature,
-      paymentChain,
-      chainSymbol,
-      chainAddress
-    });
-
-    await raid.save();
-    
-    res.status(201).json(raid);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to create paid Facebook raid' });
-  }
-});
-
-// Create a points-based Facebook raid
-router.post('/points', auth, requireEmailVerification, async (req, res) => {
-  try {
-    const { postUrl, title, description } = req.body;
-
-    if (!postUrl || !title || !description) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    // Check if user has enough points
-    const user = await User.findById(req.user.id);
-    if (!user || user.points < 2000) {
-      return res.status(400).json({ error: 'Not enough points. You need 2000 points to create a Facebook raid.' });
-    }
-
-    // Extract post ID from URL
-    const postId = extractFacebookPostId(postUrl);
-    if (!postId) {
-      return res.status(400).json({ error: 'Invalid Facebook URL. Please provide a valid Facebook post URL.' });
-    }
-
-    const raid = new FacebookRaid({
-      postId,
-      postUrl,
-      title,
-      description,
-      points: 50,
-      createdBy: req.user.id,
-      isPaid: false,
-      paymentStatus: 'approved',
-      paidWithPoints: true,
-      pointsSpent: 2000
-    });
-
-    await raid.save();
-
-    // Deduct points from user
-    user.points -= 2000;
-    await user.save();
-
-    // Create affiliate earning record
-    const affiliateEarning = new AffiliateEarning({
-      userId: req.user.id,
-      type: 'facebook_raid_creation',
-      amount: 2000,
-      description: `Facebook raid creation: ${title}`,
-      status: 'completed'
-    });
-    await affiliateEarning.save();
-
-    res.status(201).json({
-      raid,
-      message: 'Facebook raid created successfully using your affiliate points!'
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to create points-based Facebook raid' });
-  }
-});
-
-// Create a free Facebook raid (for eligible users)
-router.post('/free', auth, requireEmailVerification, async (req, res) => {
-  try {
-    const { postUrl, title, description } = req.body;
-
-    if (!postUrl || !title || !description) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    // Check if user is eligible for free raids
-    const currentDate = new Date();
-    const startOfDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
-    const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
-
-    const raidsUsedToday = await FacebookRaid.countDocuments({
-      createdBy: req.user.id,
-      paidWithPoints: false,
-      isPaid: false,
-      createdAt: { $gte: startOfDay, $lt: endOfDay }
-    });
-
-    if (raidsUsedToday >= 2) {
-      return res.status(400).json({ error: 'You have already used your 2 free Facebook raids for today.' });
-    }
-
-    // Extract post ID from URL
-    const postId = extractFacebookPostId(postUrl);
-    if (!postId) {
-      return res.status(400).json({ error: 'Invalid Facebook URL. Please provide a valid Facebook post URL.' });
-    }
-
-    const raid = new FacebookRaid({
-      postId,
-      postUrl,
-      title,
-      description,
-      points: 50,
-      createdBy: req.user.id,
-      isPaid: false,
-      paymentStatus: 'approved'
-    });
-
-    await raid.save();
-
-    res.status(201).json({
-      raid,
-      message: 'Free Facebook raid created successfully!'
-    });
-  } catch (error) {
     res.status(500).json({ error: 'Failed to create free Facebook raid' });
   }
 });
