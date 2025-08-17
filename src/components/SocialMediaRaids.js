@@ -197,7 +197,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
 
   useEffect(() => {
     // Check free raid eligibility when component mounts
-    if (currentUser) {
+    if (currentUser && (currentUser.userId || currentUser.id || currentUser._id)) {
       checkFreeRaidEligibility();
     }
   }, [currentUser]);
@@ -402,7 +402,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         
         // Check if the current user has completed this raid
         const selectedRaidCompleted = raidStillAvailable?.completions?.some(
-          completion => completion.userId && completion.userId.toString() === (currentUser?.id || currentUser?._id)
+          completion => completion.userId && completion.userId.toString() === (currentUser?.userId || currentUser?.id || currentUser?._id)
         );
         
         if (selectedRaidCompleted) {
@@ -711,7 +711,13 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
 
   const checkFreeRaidEligibility = async () => {
     try {
-      const currentId = currentUser.id || currentUser._id;
+      const currentId = currentUser?.userId || currentUser?.id || currentUser?._id;
+      
+      if (!currentId) {
+        setFreeRaidEligibility({ eligible: false, reason: 'User ID not available' });
+        return;
+      }
+      
       const response = await fetch(`${API_URL}/api/affiliates/free-raid-project/${currentId}`, {
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
@@ -1384,7 +1390,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
             
             // Method 1: Check the completions array (if available)
             if (currentUser && raid.completions && raid.completions.length > 0) {
-              const currentId = currentUser.id || currentUser._id;
+              const currentId = currentUser.userId || currentUser.id || currentUser._id;
               if (currentId) {
                 // Check if any completion matches this user
                 for (const completion of raid.completions) {
@@ -1407,7 +1413,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
             
             // Method 2: Check for match in selectedRaidCompleted logic from fetchRaids function
             if (!userCompleted && currentUser && raid._id === selectedRaid?._id) {
-              const currentId = currentUser.id || currentUser._id;
+              const currentId = currentUser.userId || currentUser.id || currentUser._id;
               const selectedRaidCompleted = raid.completions?.some(
                 completion => completion.userId && completion.userId.toString() === (currentId || '').toString()
               );
