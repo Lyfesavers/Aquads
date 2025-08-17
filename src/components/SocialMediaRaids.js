@@ -890,27 +890,32 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     e.preventDefault();
     
     if (!currentUser || !currentUser.isAdmin) {
-      showNotification('Only admins can create Twitter raids', 'error');
+      showNotification(`Only admins can create ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raids`, 'error');
       return;
     }
     
-    if (!newRaid.tweetUrl) {
-      setError('Please enter the Tweet URL');
+    const isTwitter = activeTab === 'twitter';
+    const urlField = isTwitter ? newRaid.tweetUrl : newFacebookRaid.postUrl;
+    const urlType = isTwitter ? 'Tweet URL' : 'Facebook Post URL';
+    
+    if (!urlField) {
+      setError(`Please enter the ${urlType}`);
       return;
     }
     
     // Always set fixed values for these fields
     const raidData = {
-      ...newRaid,
-      title: 'Twitter Raid',
-      description: 'Retweet, Like & Comment to earn 50 points!',
+      [isTwitter ? 'tweetUrl' : 'postUrl']: urlField,
+      title: isTwitter ? 'Twitter Raid' : 'Facebook Raid',
+      description: isTwitter ? 'Retweet, Like & Comment to earn 50 points!' : 'Like, Comment & Share to earn 50 points!',
       points: 50
     };
     
     setSubmitting(true);
     
     try {
-      const response = await fetch(`${API_URL}/api/twitter-raids`, {
+      const endpoint = isTwitter ? '/api/twitter-raids' : '/api/facebook-raids';
+      const response = await fetch(`${API_URL}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -922,24 +927,33 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create Twitter raid');
+        throw new Error(data.error || `Failed to create ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid`);
       }
       
       // Reset form and hide it
-      setNewRaid({
-        tweetUrl: '',
-        title: 'Twitter Raid',
-        description: 'Retweet, Like & Comment to earn 50 points!',
-        points: 50
-      });
+      if (isTwitter) {
+        setNewRaid({
+          tweetUrl: '',
+          title: 'Twitter Raid',
+          description: 'Retweet, Like & Comment to earn 50 points!',
+          points: 50
+        });
+      } else {
+        setNewFacebookRaid({
+          postUrl: '',
+          title: 'Facebook Raid',
+          description: 'Like, Comment & Share to earn 50 points!',
+          points: 50
+        });
+      }
       setShowCreateForm(false);
       
       // Refresh raids list
       fetchRaids();
       
-      showNotification('Twitter raid created successfully!', 'success');
+      showNotification(`${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid created successfully!`, 'success');
     } catch (err) {
-      setError(err.message || 'Failed to create Twitter raid');
+      setError(err.message || `Failed to create ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid`);
     } finally {
       setSubmitting(false);
     }
@@ -979,8 +993,12 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       return;
     }
     
-    if (!freeRaidData.tweetUrl) {
-      setError('Please enter the Tweet URL');
+    const isTwitter = activeTab === 'twitter';
+    const urlField = isTwitter ? freeRaidData.tweetUrl : facebookFreeRaidData.postUrl;
+    const urlType = isTwitter ? 'Tweet URL' : 'Facebook Post URL';
+    
+    if (!urlField) {
+      setError(`Please enter the ${urlType}`);
       return;
     }
     
@@ -992,36 +1010,51 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     setError(null);
     
     try {
-      const response = await fetch(`${API_URL}/api/twitter-raids/free`, {
+      const endpoint = isTwitter ? '/api/twitter-raids/free' : '/api/facebook-raids/free';
+      const raidData = {
+        [isTwitter ? 'tweetUrl' : 'postUrl']: urlField,
+        title: isTwitter ? 'Twitter Raid' : 'Facebook Raid',
+        description: isTwitter ? 'Retweet, Like & Comment to earn 50 points!' : 'Like, Comment & Share to earn 50 points!'
+      };
+      
+      const response = await fetch(`${API_URL}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
         },
-        body: JSON.stringify(freeRaidData)
+        body: JSON.stringify(raidData)
       });
       
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create free Twitter raid');
+        throw new Error(data.error || `Failed to create free ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid`);
       }
       
       // Reset form and hide it
-      setFreeRaidData({
-        tweetUrl: '',
-        title: 'Twitter Raid',
-        description: 'Retweet, Like & Comment to earn 50 points!'
-      });
+      if (isTwitter) {
+        setFreeRaidData({
+          tweetUrl: '',
+          title: 'Twitter Raid',
+          description: 'Retweet, Like & Comment to earn 50 points!'
+        });
+      } else {
+        setFacebookFreeRaidData({
+          postUrl: '',
+          title: 'Facebook Raid',
+          description: 'Like, Comment & Share to earn 50 points!'
+        });
+      }
       setShowFreeRaidForm(false);
       
       // Refresh raids list and eligibility
       fetchRaids();
       checkFreeRaidEligibility();
       
-      showNotification('Free Twitter raid created successfully!', 'success');
+      showNotification(`Free ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid created successfully!`, 'success');
     } catch (err) {
-      setError(err.message || 'Failed to create free Twitter raid');
+      setError(err.message || `Failed to create free ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid`);
     } finally {
       setFreeRaidSubmitting(false);
     }
@@ -1029,16 +1062,17 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
   
   const handleDeleteRaid = async (raidId) => {
     if (!currentUser || !currentUser.isAdmin) {
-      showNotification('Only admins can delete Twitter raids', 'error');
+      showNotification(`Only admins can delete ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raids`, 'error');
       return;
     }
     
-    if (!window.confirm('Are you sure you want to delete this Twitter raid?')) {
+    if (!window.confirm(`Are you sure you want to delete this ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid?`)) {
       return;
     }
     
     try {
-      const response = await fetch(`${API_URL}/api/twitter-raids/${raidId}`, {
+      const endpoint = activeTab === 'twitter' ? '/api/twitter-raids' : '/api/facebook-raids';
+      const response = await fetch(`${API_URL}${endpoint}/${raidId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
@@ -1047,7 +1081,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to delete Twitter raid');
+        throw new Error(data.error || `Failed to delete ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid`);
       }
       
       // If the deleted raid was selected, deselect it
@@ -1058,18 +1092,28 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       // Refresh raids list
       fetchRaids();
       
-      showNotification('Twitter raid deleted successfully!', 'success');
+      showNotification(`${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid deleted successfully!`, 'success');
     } catch (err) {
-      showNotification(err.message || 'Failed to delete Twitter raid', 'error');
+      showNotification(err.message || `Failed to delete ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid`, 'error');
     }
   };
   
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewRaid(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    const isTwitter = activeTab === 'twitter';
+    
+    if (isTwitter) {
+      setNewRaid(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    } else {
+      // For Facebook, the field name is already correct (postUrl)
+      setNewFacebookRaid(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   // Add this safety function to check if raid object is valid
@@ -1164,7 +1208,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     e.preventDefault();
     
     if (!currentUser) {
-      showNotification('Please log in to create a Twitter raid', 'error');
+      showNotification(`Please log in to create a ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid`, 'error');
       return;
     }
     
@@ -1177,7 +1221,10 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       return;
     }
     
-    if (!pointsRaidData.tweetUrl) {
+    const isTwitter = activeTab === 'twitter';
+    const urlField = isTwitter ? pointsRaidData.tweetUrl : facebookPointsRaidData.postUrl;
+    
+    if (!urlField) {
       setError('Please fill in all required fields');
       return;
     }
@@ -1186,20 +1233,48 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       setSubmitting(true);
       setError(null);
       
-      // Create the points-based Twitter raid
+      // Create the points-based raid
       const token = currentUser?.token || JSON.parse(localStorage.getItem('currentUser'))?.token;
-      const result = await createPointsTwitterRaid(pointsRaidData, token);
+      const raidData = {
+        [isTwitter ? 'tweetUrl' : 'postUrl']: urlField,
+        title: isTwitter ? 'Twitter Raid' : 'Facebook Raid',
+        description: isTwitter ? 'Retweet, Like & Comment to earn 50 points!' : 'Like, Comment & Share to earn 50 points!'
+      };
+      
+      const endpoint = isTwitter ? '/api/twitter-raids/points' : '/api/facebook-raids/points';
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(raidData)
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || `Failed to create ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid`);
+      }
       
       // Reset form and hide it
-      setPointsRaidData({
-        tweetUrl: '',
-        title: 'Twitter Raid',
-        description: 'Retweet, Like & Comment to earn 50 points!'
-      });
+      if (isTwitter) {
+        setPointsRaidData({
+          tweetUrl: '',
+          title: 'Twitter Raid',
+          description: 'Retweet, Like & Comment to earn 50 points!'
+        });
+      } else {
+        setFacebookPointsRaidData({
+          postUrl: '',
+          title: 'Facebook Raid',
+          description: 'Like, Comment & Share to earn 50 points!'
+        });
+      }
       setShowPointsCreateForm(false);
       
       // Show success message
-      showNotification(result.message || 'Twitter raid created using your affiliate points!', 'success');
+      showNotification(data.message || `${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid created using your affiliate points!`, 'success');
       
       // Fetch updated points from the API to get the new balance
       await fetchUserPoints();
@@ -1207,8 +1282,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
       // Refresh raids list
       fetchRaids();
     } catch (err) {
-      setError(err.message || 'Failed to create Twitter raid');
-      showNotification(err.message || 'Failed to create Twitter raid', 'error');
+      setError(err.message || `Failed to create ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid`);
+      showNotification(err.message || `Failed to create ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} raid`, 'error');
     } finally {
       setSubmitting(false);
     }
@@ -1222,7 +1297,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     }
     
     try {
-      const response = await fetch(`${API_URL}/api/twitter-raids/${raidId}/approve`, {
+      const endpoint = activeTab === 'twitter' ? '/api/twitter-raids' : '/api/facebook-raids';
+      const response = await fetch(`${API_URL}${endpoint}/${raidId}/approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1257,7 +1333,8 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
     if (reason === null) return; // User cancelled
     
     try {
-      const response = await fetch(`${API_URL}/api/twitter-raids/${raidId}/reject`, {
+      const endpoint = activeTab === 'twitter' ? '/api/twitter-raids' : '/api/facebook-raids';
+      const response = await fetch(`${API_URL}${endpoint}/${raidId}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1312,7 +1389,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                 }}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded whitespace-nowrap text-sm sm:text-base"
               >
-                {showCreateForm ? 'Cancel' : 'Create Raid (Admin)'}
+                {showCreateForm ? 'Cancel' : `Create ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} Raid (Admin)`}
               </button>
             )}
             
@@ -1328,7 +1405,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                {showPointsCreateForm ? 'Cancel' : 'Create Raid (2000 Points)'}
+                {showPointsCreateForm ? 'Cancel' : `Create ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} Raid (2000 Points)`}
               </button>
             )}
 
@@ -1347,7 +1424,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                 </svg>
-                {showFreeRaidForm ? 'Cancel' : 'Create Free Raid'}
+                {showFreeRaidForm ? 'Cancel' : `Create Free ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} Raid`}
               </button>
             )}
           </div>
@@ -1482,30 +1559,35 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         {/* Admin Create Form */}
         {showCreateForm && currentUser?.isAdmin && (
           <div className="mt-4 p-4 bg-gray-800/50 rounded-lg">
-            <h3 className="text-lg font-bold text-white mb-4">Create New Twitter Raid</h3>
+            <h3 className="text-lg font-bold text-white mb-4">
+              {activeTab === 'twitter' ? 'Create New Twitter Raid' : 'Create New Facebook Raid'}
+            </h3>
             
             <form onSubmit={handleCreateRaid}>
               <div className="mb-4">
                 <label className="block text-gray-300 mb-2">
-                  Tweet URL <span className="text-red-500">*</span>
+                  {activeTab === 'twitter' ? 'Tweet URL' : 'Facebook Post URL'} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
-                  name="tweetUrl"
-                  value={newRaid.tweetUrl}
+                  name={activeTab === 'twitter' ? 'tweetUrl' : 'postUrl'}
+                  value={activeTab === 'twitter' ? newRaid.tweetUrl : newFacebookRaid.postUrl}
                   onChange={handleInputChange}
-                  placeholder="https://twitter.com/username/status/1234567890"
+                  placeholder={activeTab === 'twitter' 
+                    ? "https://twitter.com/username/status/1234567890"
+                    : "https://facebook.com/username/posts/1234567890"
+                  }
                   className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
                 <p className="text-gray-500 text-sm mt-2">
-                  Enter the URL of the tweet you want users to interact with.
+                  Enter the URL of the {activeTab === 'twitter' ? 'tweet' : 'Facebook post'} you want users to interact with.
                   <br />
                   A new raid will be created with standard values:
                   <br />
-                  • Title: "Twitter Raid"
+                  • Title: "{activeTab === 'twitter' ? 'Twitter Raid' : 'Facebook Raid'}"
                   <br />
-                  • Description: "Retweet, Like & Comment to earn 50 points!"
+                  • Description: "{activeTab === 'twitter' ? 'Retweet, Like & Comment to earn 50 points!' : 'Like, Comment & Share to earn 50 points!'}"
                   <br />
                   • Points: 50
                 </p>
@@ -1520,7 +1602,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                     : 'bg-blue-600 hover:bg-blue-700'
                 } text-white`}
               >
-                {submitting ? 'Creating...' : 'Create Twitter Raid'}
+                {submitting ? 'Creating...' : `Create ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} Raid`}
               </button>
             </form>
           </div>
@@ -1529,18 +1611,26 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         {/* Points-based Raid Create Form */}
         {showPointsCreateForm && currentUser && (
           <div className="mt-4 p-4 bg-gray-800/50 rounded-lg">
-            <h3 className="text-lg font-bold text-white mb-4">Create Twitter Raid with Points (2000 Points)</h3>
+            <h3 className="text-lg font-bold text-white mb-4">
+              {activeTab === 'twitter' ? 'Create Twitter Raid with Points (2000 Points)' : 'Create Facebook Raid with Points (2000 Points)'}
+            </h3>
             
             <form onSubmit={handlePointsRaidSubmit}>
               <div className="mb-4">
                 <label className="block text-gray-300 mb-2">
-                  Tweet URL <span className="text-red-500">*</span>
+                  {activeTab === 'twitter' ? 'Tweet URL' : 'Facebook Post URL'} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
-                  value={pointsRaidData.tweetUrl}
-                  onChange={(e) => setPointsRaidData({...pointsRaidData, tweetUrl: e.target.value})}
-                  placeholder="https://twitter.com/username/status/1234567890"
+                  value={activeTab === 'twitter' ? pointsRaidData.tweetUrl : facebookPointsRaidData.postUrl}
+                  onChange={(e) => activeTab === 'twitter' 
+                    ? setPointsRaidData({...pointsRaidData, tweetUrl: e.target.value})
+                    : setFacebookPointsRaidData({...facebookPointsRaidData, postUrl: e.target.value})
+                  }
+                  placeholder={activeTab === 'twitter' 
+                    ? "https://twitter.com/username/status/1234567890"
+                    : "https://facebook.com/username/posts/1234567890"
+                  }
                   className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
@@ -1585,21 +1675,21 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                 </div>
               )}
               
-              <button
-                type="submit"
-                disabled={submitting || getUserPoints() < 2000}
-                className={`px-4 py-2 rounded font-medium ${
-                  submitting || getUserPoints() < 2000
-                    ? 'bg-gray-600 cursor-not-allowed'
-                    : 'bg-green-600 hover:bg-green-700'
-                } text-white`}
-              >
-                {submitting 
-                  ? 'Creating...' 
-                  : getUserPoints() < 2000 
-                    ? 'Not Enough Points (Need 2000)' 
-                    : 'Create Twitter Raid with Points'}
-              </button>
+                                <button
+                    type="submit"
+                    disabled={submitting || getUserPoints() < 2000}
+                    className={`px-4 py-2 rounded font-medium ${
+                      submitting || getUserPoints() < 2000
+                        ? 'bg-gray-600 cursor-not-allowed'
+                        : 'bg-green-600 hover:bg-green-700'
+                    } text-white`}
+                  >
+                    {submitting 
+                      ? 'Creating...' 
+                      : getUserPoints() < 2000 
+                        ? 'Not Enough Points (Need 2000)' 
+                        : `Create ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} Raid with Points`}
+                  </button>
             </form>
           </div>
         )}
@@ -1607,7 +1697,9 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
         {/* Free Raid Create Form */}
         {showFreeRaidForm && currentUser && (
           <div className="mt-4 p-4 bg-gray-800/50 rounded-lg">
-            <h3 className="text-lg font-bold text-white mb-4">Create Free Twitter Raid</h3>
+            <h3 className="text-lg font-bold text-white mb-4">
+              {activeTab === 'twitter' ? 'Create Free Twitter Raid' : 'Create Free Facebook Raid'}
+            </h3>
             
             {freeRaidEligibility && (
               <div className={`p-4 border rounded-lg mb-4 ${
@@ -1637,13 +1729,19 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
             <form onSubmit={handleCreateFreeRaid}>
               <div className="mb-4">
                 <label className="block text-gray-300 mb-2">
-                  Tweet URL <span className="text-red-500">*</span>
+                  {activeTab === 'twitter' ? 'Tweet URL' : 'Facebook Post URL'} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
-                  value={freeRaidData.tweetUrl}
-                  onChange={(e) => setFreeRaidData({...freeRaidData, tweetUrl: e.target.value})}
-                  placeholder="https://twitter.com/username/status/1234567890"
+                  value={activeTab === 'twitter' ? freeRaidData.tweetUrl : facebookFreeRaidData.postUrl}
+                  onChange={(e) => activeTab === 'twitter' 
+                    ? setFreeRaidData({...freeRaidData, tweetUrl: e.target.value})
+                    : setFacebookFreeRaidData({...facebookFreeRaidData, postUrl: e.target.value})
+                  }
+                  placeholder={activeTab === 'twitter' 
+                    ? "https://twitter.com/username/status/1234567890"
+                    : "https://facebook.com/username/posts/1234567890"
+                  }
                   className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
@@ -1668,7 +1766,7 @@ const SocialMediaRaids = ({ currentUser, showNotification }) => {
                   ? 'Creating...' 
                   : !freeRaidEligibility?.eligible 
                     ? 'Not Eligible for Free Raids' 
-                    : 'Create Free Twitter Raid'}
+                    : `Create Free ${activeTab === 'twitter' ? 'Twitter' : 'Facebook'} Raid`}
               </button>
             </form>
           </div>

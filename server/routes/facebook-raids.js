@@ -80,9 +80,9 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
 // Create a new paid Facebook raid (users)
 router.post('/paid', auth, requireEmailVerification, async (req, res) => {
   try {
-    const { postUrl, title, description, paymentData } = req.body;
+    const { postUrl, title, description, txSignature, paymentChain, chainSymbol, chainAddress } = req.body;
 
-    if (!postUrl || !title || !description || !paymentData) {
+    if (!postUrl || !title || !description || !txSignature) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -94,24 +94,54 @@ router.post('/paid', auth, requireEmailVerification, async (req, res) => {
 
     const postId = postIdMatch[1];
 
+    // Create the raid with pending payment status
     const raid = new FacebookRaid({
       postId,
       postUrl,
       title,
       description,
-      points: 50,
+      points: 50, // Fixed points for paid raids
       createdBy: req.user.id,
       isPaid: true,
       paymentStatus: 'pending',
-      txSignature: paymentData.txSignature,
-      paymentChain: paymentData.chain,
-      chainSymbol: paymentData.symbol,
-      chainAddress: paymentData.address
+      txSignature,
+      paymentChain,
+      chainSymbol,
+      chainAddress,
+      active: true // Ensure the raid is active even if payment is pending
     });
 
     await raid.save();
     
-    res.status(201).json(raid);
+    // Process affiliate commission if applicable
+    try {
+      const raidCreator = await User.findById(req.user.id);
+      if (raidCreator && raidCreator.referredBy) {
+        const raidAmount = 1.50; // 1.50 USDC per raid
+        
+        const commissionRate = await AffiliateEarning.calculateCommissionRate(raidCreator.referredBy);
+        const commissionEarned = AffiliateEarning.calculateCommission(raidAmount, commissionRate);
+        
+        const earning = new AffiliateEarning({
+          affiliateId: raidCreator.referredBy,
+          referredUserId: raidCreator._id,
+          adId: raid._id,
+          adAmount: raidAmount,
+          currency: 'USDC',
+          commissionRate,
+          commissionEarned
+        });
+        
+        await earning.save();
+      }
+    } catch (commissionError) {
+      // Continue despite commission error
+    }
+    
+    res.status(201).json({ 
+      message: 'Facebook raid created successfully! It will be active once payment is approved.',
+      raid 
+    });
   } catch (error) {
     res.status(500).json({ error: 'Failed to create Facebook raid' });
   }
@@ -187,10 +217,9 @@ router.post('/points', auth, requireEmailVerification, async (req, res) => {
     });
     
     res.status(201).json({ 
-      message: 'Facebook raid created using your affiliate points!',
+      message: `Facebook raid created successfully! ${POINTS_REQUIRED} points have been deducted from your account.`,
       raid,
-      pointsSpent: POINTS_REQUIRED,
-      remainingPoints: user.points
+      pointsRemaining: user.points
     });
   } catch (error) {
     console.error('Error creating points-based Facebook raid:', error);
@@ -270,20 +299,6 @@ router.post('/:id/complete', auth, requireEmailVerification, twitterRaidRateLimi
 
     raid.completions.push(completion);
     await raid.save();
-
-    // Step 1: Update user data with saved Facebook username
-    const savedUsername = facebookUsername.trim().replace(/^@/, '');
-    
-    // Update localStorage with the new Facebook username
-    try {
-      const storedUser = JSON.parse(localStorage.getItem('currentUser'));
-      if (storedUser) {
-        storedUser.facebookUsername = savedUsername;
-        localStorage.setItem('currentUser', JSON.stringify(storedUser));
-      }
-    } catch (e) {
-      // Silently handle localStorage errors
-    }
 
     // Create notification for admin
     const notification = new Notification({
@@ -485,27 +500,19 @@ router.delete('/:id', auth, requireEmailVerification, async (req, res) => {
       return res.status(403).json({ error: 'Only admins can delete Facebook raids' });
     }
 
-    if (!window.confirm('Are you sure you want to delete this Facebook raid?')) {
-      return res.status(400).json({ error: 'Deletion cancelled' });
+    const raid = await FacebookRaid.findById(req.params.id);
+    
+    if (!raid) {
+      return res.status(404).json({ error: 'Facebook raid not found' });
     }
 
-    const response = await fetch(`${API_URL}/api/facebook-raids/${req.params.id}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${currentUser.token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.error || 'Failed to delete Facebook raid');
-    }
-
-    showNotification('Facebook raid deleted successfully!', 'success');
-    fetchRaids(); // Refresh the raids list
-  } catch (err) {
-    showNotification(err.message || 'Failed to delete Facebook raid', 'error');
+    // Instead of deleting, mark as inactive
+    raid.active = false;
+    await raid.save();
+    
+    res.json({ message: 'Facebook raid deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete Facebook raid' });
   }
 });
 
