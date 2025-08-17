@@ -86,6 +86,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
   // Add refresh timestamps
   const [lastRefreshTime, setLastRefreshTime] = useState(null);
+  
+  // Free raid eligibility state
+  const [freeRaidEligibility, setFreeRaidEligibility] = useState(null);
 
   // Update activeTab when initialActiveTab changes
   useEffect(() => {
@@ -247,13 +250,20 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
   const fetchAffiliateInfo = async () => {
     try {
-      const [affiliateResponse, pointsResponse] = await Promise.all([
+      const currentId = currentUser?.userId || currentUser?.id || currentUser?._id;
+      
+      const [affiliateResponse, pointsResponse, freeRaidResponse] = await Promise.all([
         fetch(`${process.env.REACT_APP_API_URL}/api/users/affiliates`, {
           headers: {
             'Authorization': `Bearer ${currentUser.token}`
           }
         }),
         fetch(`${process.env.REACT_APP_API_URL}/api/points/my-points`, {
+          headers: {
+            'Authorization': `Bearer ${currentUser.token}`
+          }
+        }),
+        fetch(`${process.env.REACT_APP_API_URL}/api/affiliates/free-raid-project/${currentId}`, {
           headers: {
             'Authorization': `Bearer ${currentUser.token}`
           }
@@ -268,6 +278,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       if (pointsResponse.ok) {
         const data = await pointsResponse.json();
         setPointsInfo(data);
+      }
+
+      if (freeRaidResponse.ok) {
+        const data = await freeRaidResponse.json();
+        setFreeRaidEligibility(data.eligibility);
       }
     } catch (error) {
       // Error fetching affiliate info
@@ -1690,6 +1705,28 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                     )}
                     
 
+                  </div>
+                )}
+
+                {/* Free Raid Display */}
+                {freeRaidEligibility && freeRaidEligibility.eligible && (
+                  <div className="bg-purple-800/20 border border-purple-500/30 rounded-lg p-4 mt-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-lg font-medium text-white">Free Raid Posts</h4>
+                        <p className="text-3xl font-bold text-purple-400">
+                          {freeRaidEligibility.raidsRemaining}/2
+                        </p>
+                        <p className="text-sm text-purple-300">
+                          Daily free raids remaining
+                        </p>
+                      </div>
+                      <div className="text-purple-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                        </svg>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
