@@ -434,6 +434,116 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
     }
   };
 
+  // Handle admin raid creation
+  const handleCreateRaid = async (e) => {
+    e.preventDefault();
+    
+    if (!currentUser?.token) {
+      showNotification('Please log in to create a raid', 'error');
+      return;
+    }
+
+    if (!newRaid.postUrl) {
+      showNotification('Please enter a Facebook post URL', 'error');
+      return;
+    }
+
+    setSubmitting(true);
+    
+    try {
+      const response = await fetch(`${API_URL}/api/facebook-raids`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify(newRaid)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        showNotification('Facebook raid created successfully!', 'success');
+        setNewRaid({
+          postUrl: '',
+          title: 'Facebook Raid',
+          description: 'Like, Share & Comment to earn 50 points!',
+          points: 50
+        });
+        setShowCreateForm(false);
+        fetchRaids(); // Refresh the raids list
+      } else {
+        showNotification(data.error || 'Failed to create raid', 'error');
+      }
+    } catch (error) {
+      showNotification('Error creating raid', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handle points-based raid creation
+  const handlePointsRaidSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!currentUser?.token) {
+      showNotification('Please log in to create a raid', 'error');
+      return;
+    }
+
+    if (!pointsRaidData.postUrl) {
+      showNotification('Please enter a Facebook post URL', 'error');
+      return;
+    }
+
+    if (getUserPoints() < 2000) {
+      showNotification('You need 2000 points to create a Facebook raid', 'error');
+      return;
+    }
+
+    setSubmitting(true);
+    
+    try {
+      const response = await fetch(`${API_URL}/api/facebook-raids/points`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify(pointsRaidData)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        showNotification('Facebook raid created successfully using your affiliate points!', 'success');
+        setPointsRaidData({
+          postUrl: '',
+          title: 'Facebook Raid',
+          description: 'Like, Share & Comment to earn 50 points!'
+        });
+        setShowPointsCreateForm(false);
+        fetchRaids(); // Refresh the raids list
+        fetchUserPoints(); // Refresh points balance
+      } else {
+        showNotification(data.error || 'Failed to create raid', 'error');
+      }
+    } catch (error) {
+      showNotification('Error creating raid', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handle input changes for admin form
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewRaid(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   return (
     <div className="bg-gray-900/50 backdrop-blur-sm rounded-lg overflow-hidden">
       <div className="bg-blue-500/10 border-b border-blue-500/30 p-4">
@@ -650,9 +760,124 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
              </div>
            </form>
          </div>
+               )}
+
+       {/* Admin Create Form */}
+       {showCreateForm && currentUser?.isAdmin && (
+         <div className="mt-4 p-4 bg-gray-800/50 rounded-lg m-4">
+           <h3 className="text-lg font-bold text-white mb-4">Create New Facebook Raid</h3>
+           
+           <form onSubmit={handleCreateRaid}>
+             <div className="mb-4">
+               <label className="block text-gray-300 mb-2">
+                 Facebook Post URL <span className="text-red-500">*</span>
+               </label>
+               <input
+                 type="text"
+                 name="postUrl"
+                 value={newRaid.postUrl}
+                 onChange={handleInputChange}
+                 placeholder="https://www.facebook.com/username/posts/123456789"
+                 className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                 required
+               />
+               <p className="text-gray-500 text-sm mt-2">
+                 Enter the URL of the Facebook post you want users to interact with.
+                 <br />
+                 A new raid will be created with standard values:
+                 <br />
+                 • Title: "Facebook Raid"
+                 <br />
+                 • Description: "Like, Share & Comment to earn 50 points!"
+                 <br />
+                 • Points: 50
+               </p>
+             </div>
+             
+             <button
+               type="submit"
+               disabled={submitting}
+               className={`px-4 py-2 rounded font-medium ${
+                 submitting
+                   ? 'bg-gray-600 cursor-not-allowed'
+                   : 'bg-blue-600 hover:bg-blue-700'
+               } text-white`}
+             >
+               {submitting ? 'Creating...' : 'Create Facebook Raid'}
+             </button>
+           </form>
+         </div>
        )}
 
-      {/* Facebook Raids Listing */}
+       {/* Points-based Raid Create Form */}
+       {showPointsCreateForm && currentUser && (
+         <div className="mt-4 p-4 bg-gray-800/50 rounded-lg m-4">
+           <h3 className="text-lg font-bold text-white mb-4">Create Facebook Raid with Points (2000 Points)</h3>
+           
+           <form onSubmit={handlePointsRaidSubmit}>
+             <div className="mb-4">
+               <label className="block text-gray-300 mb-2">
+                 Facebook Post URL <span className="text-red-500">*</span>
+               </label>
+               <input
+                 type="text"
+                 value={pointsRaidData.postUrl}
+                 onChange={(e) => setPointsRaidData({...pointsRaidData, postUrl: e.target.value})}
+                 placeholder="https://www.facebook.com/username/posts/123456789"
+                 className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                 required
+               />
+             </div>
+             
+             <div className="p-4 bg-green-500/20 border border-green-500/50 text-green-400 rounded-lg mb-4">
+               <div className="flex items-start">
+                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                 </svg>
+                 <div className="flex-1">
+                   <p className="font-medium">Using Affiliate Points</p>
+                   <div className="flex items-center">
+                     {loadingPoints ? (
+                       <p className="text-sm mr-2">Loading points balance...</p>
+                     ) : (
+                       <p className="text-sm mr-2">You currently have {getUserPoints()} points. Creating this raid will cost 2000 points.</p>
+                     )}
+                     <button 
+                       type="button"
+                       onClick={(e) => {
+                         e.preventDefault();
+                         fetchUserPoints();
+                         showNotification('Points balance refreshed', 'info');
+                       }}
+                       className="text-blue-400 hover:text-blue-300 p-1 rounded"
+                       title="Refresh points balance"
+                       disabled={loadingPoints}
+                     >
+                       <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${loadingPoints ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                       </svg>
+                     </button>
+                   </div>
+                 </div>
+               </div>
+             </div>
+             
+             <button
+               type="submit"
+               disabled={submitting || getUserPoints() < 2000}
+               className={`px-4 py-2 rounded font-medium ${
+                 submitting || getUserPoints() < 2000
+                   ? 'bg-gray-600 cursor-not-allowed'
+                   : 'bg-green-600 hover:bg-green-700'
+               } text-white`}
+             >
+               {submitting ? 'Creating...' : 'Create Facebook Raid (2000 Points)'}
+             </button>
+           </form>
+         </div>
+       )}
+ 
+       {/* Facebook Raids Listing */}
       {raids.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
           {raids.map(raid => {
