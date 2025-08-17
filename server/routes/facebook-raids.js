@@ -15,6 +15,28 @@ const telegramService = require('../utils/telegramService');
 // Use the imported module function
 const awardSocialMediaPoints = pointsModule.awardSocialMediaPoints;
 
+// Helper function to extract Facebook post ID from URL
+const extractFacebookPostId = (url) => {
+  if (!url) return null;
+  
+  // Try multiple patterns for Facebook URLs
+  const patterns = [
+    /facebook\.com\/[^\/]+\/posts\/(\d+)/i,
+    /mobile\.facebook\.com\/[^\/]+\/posts\/(\d+)/i,
+    /\/posts\/(\d+)/i,
+    /(\d{10,20})/ // Fallback for just numbers
+  ];
+  
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match && match[1]) {
+      return match[1];
+    }
+  }
+  
+  return null;
+};
+
 // Get all active Facebook raids
 router.get('/', async (req, res) => {
   try {
@@ -58,12 +80,10 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
     }
 
     // Extract post ID from URL
-    const postIdMatch = postUrl.match(/\/posts\/(\d+)/);
-    if (!postIdMatch || !postIdMatch[1]) {
-      return res.status(400).json({ error: 'Invalid Facebook URL' });
+    const postId = extractFacebookPostId(postUrl);
+    if (!postId) {
+      return res.status(400).json({ error: 'Invalid Facebook URL. Please provide a valid Facebook post URL.' });
     }
-
-    const postId = postIdMatch[1];
 
     const raid = new FacebookRaid({
       postId,
@@ -93,6 +113,120 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
   }
 });
 
+// Create a new Facebook raid using points
+router.post('/points', auth, requireEmailVerification, async (req, res) => {
+  try {
+    const { postUrl, title, description } = req.body;
+
+    if (!postUrl || !title || !description) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Extract post ID from URL
+    const postId = extractFacebookPostId(postUrl);
+    if (!postId) {
+      return res.status(400).json({ error: 'Invalid Facebook URL. Please provide a valid Facebook post URL.' });
+    }
+
+    // Check if user has enough points
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (user.points < 2000) {
+      return res.status(400).json({ error: 'Insufficient points. You need 2000 points to create a Facebook raid.' });
+    }
+
+    // Deduct points from user
+    user.points -= 2000;
+    await user.save();
+
+    // Create affiliate earning record
+    const affiliateEarning = new AffiliateEarning({
+      userId: req.user.id,
+      amount: 2000,
+      type: 'facebook_raid_creation',
+      description: `Facebook raid creation: ${title}`,
+      status: 'completed'
+    });
+    await affiliateEarning.save();
+
+    const raid = new FacebookRaid({
+      postId,
+      postUrl,
+      title,
+      description,
+      points: 50,
+      createdBy: req.user.id,
+      isPaid: true,
+      paymentStatus: 'approved'
+    });
+
+    await raid.save();
+    
+    // Send Telegram notification
+    telegramService.sendRaidNotification({
+      postUrl: raid.postUrl,
+      points: raid.points,
+      title: raid.title,
+      description: raid.description,
+      platform: 'Facebook'
+    });
+    
+    res.status(201).json(raid);
+  } catch (error) {
+    console.error('Error creating Facebook raid with points:', error);
+    res.status(500).json({ error: 'Failed to create Facebook raid' });
+  }
+});
+
+// Create a new paid Facebook raid
+router.post('/paid', auth, requireEmailVerification, async (req, res) => {
+  try {
+    const { postUrl, title, description, points, paymentChain, txSignature } = req.body;
+
+    if (!postUrl || !title || !description || !points || !paymentChain || !txSignature) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Extract post ID from URL
+    const postId = extractFacebookPostId(postUrl);
+    if (!postId) {
+      return res.status(400).json({ error: 'Invalid Facebook URL. Please provide a valid Facebook post URL.' });
+    }
+
+    const raid = new FacebookRaid({
+      postId,
+      postUrl,
+      title,
+      description,
+      points,
+      createdBy: req.user.id,
+      isPaid: true,
+      paymentStatus: 'pending',
+      paymentChain,
+      txSignature
+    });
+
+    await raid.save();
+    
+    // Send Telegram notification
+    telegramService.sendRaidNotification({
+      postUrl: raid.postUrl,
+      points: raid.points,
+      title: raid.title,
+      description: raid.description,
+      platform: 'Facebook'
+    });
+    
+    res.status(201).json(raid);
+  } catch (error) {
+    console.error('Error creating paid Facebook raid:', error);
+    res.status(500).json({ error: 'Failed to create Facebook raid' });
+  }
+});
+
 // Create a new free Facebook raid (for free raid projects)
 router.post('/free', auth, requireEmailVerification, async (req, res) => {
   try {
@@ -114,12 +248,10 @@ router.post('/free', auth, requireEmailVerification, async (req, res) => {
     }
 
     // Extract post ID from URL
-    const postIdMatch = postUrl.match(/\/posts\/(\d+)/);
-    if (!postIdMatch || !postIdMatch[1]) {
-      return res.status(400).json({ error: 'Invalid Facebook URL' });
+    const postId = extractFacebookPostId(postUrl);
+    if (!postId) {
+      return res.status(400).json({ error: 'Invalid Facebook URL. Please provide a valid Facebook post URL.' });
     }
-
-    const postId = postIdMatch[1];
 
     // Use a free raid
     const usage = await user.useFreeRaid();
@@ -171,12 +303,10 @@ router.post('/paid', auth, requireEmailVerification, async (req, res) => {
     }
 
     // Extract post ID from URL
-    const postIdMatch = postUrl.match(/\/posts\/(\d+)/);
-    if (!postIdMatch || !postIdMatch[1]) {
-      return res.status(400).json({ error: 'Invalid Facebook URL' });
+    const postId = extractFacebookPostId(postUrl);
+    if (!postId) {
+      return res.status(400).json({ error: 'Invalid Facebook URL. Please provide a valid Facebook post URL.' });
     }
-
-    const postId = postIdMatch[1];
 
     const raid = new FacebookRaid({
       postId,
@@ -217,12 +347,10 @@ router.post('/points', auth, requireEmailVerification, async (req, res) => {
     }
 
     // Extract post ID from URL
-    const postIdMatch = postUrl.match(/\/posts\/(\d+)/);
-    if (!postIdMatch || !postIdMatch[1]) {
-      return res.status(400).json({ error: 'Invalid Facebook URL' });
+    const postId = extractFacebookPostId(postUrl);
+    if (!postId) {
+      return res.status(400).json({ error: 'Invalid Facebook URL. Please provide a valid Facebook post URL.' });
     }
-
-    const postId = postIdMatch[1];
 
     const raid = new FacebookRaid({
       postId,
@@ -288,12 +416,10 @@ router.post('/free', auth, requireEmailVerification, async (req, res) => {
     }
 
     // Extract post ID from URL
-    const postIdMatch = postUrl.match(/\/posts\/(\d+)/);
-    if (!postIdMatch || !postIdMatch[1]) {
-      return res.status(400).json({ error: 'Invalid Facebook URL' });
+    const postId = extractFacebookPostId(postUrl);
+    if (!postId) {
+      return res.status(400).json({ error: 'Invalid Facebook URL. Please provide a valid Facebook post URL.' });
     }
-
-    const postId = postIdMatch[1];
 
     const raid = new FacebookRaid({
       postId,
