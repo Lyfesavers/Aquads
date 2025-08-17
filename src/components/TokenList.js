@@ -5,7 +5,6 @@ import { FaGlobe, FaTwitter, FaTelegram, FaDiscord, FaGithub, FaReddit } from 'r
 import { Helmet } from 'react-helmet';
 import TokenDetails from './TokenDetails';
 import SocialMediaRaids from './SocialMediaRaids';
-import FacebookRaids from './FacebookRaids';
 import logger from '../utils/logger';
 import { socket } from '../services/api';
 
@@ -318,8 +317,6 @@ const TokenList = ({ currentUser, showNotification }) => {
                   </span>
                 </div>
               </div>
-            ) : viewMode === 'facebook-raids' ? (
-              <h2 className="text-xl font-semibold text-white">Facebook Raids</h2>
             ) : (
               <h2 className="text-xl font-semibold text-white">Social Media Raids</h2>
             )}
@@ -347,16 +344,6 @@ const TokenList = ({ currentUser, showNotification }) => {
                 }`}
               >
                 Twitter Raids
-              </button>
-              <button
-                onClick={() => setViewMode('facebook-raids')}
-                className={`px-3 py-2 text-xs sm:text-sm font-medium ${
-                  viewMode === 'facebook-raids' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-transparent text-gray-300 hover:bg-gray-600'
-                }`}
-              >
-                Facebook Raids
               </button>
             </div>
 
@@ -623,11 +610,6 @@ const TokenList = ({ currentUser, showNotification }) => {
               </div>
             ) : null}
           </>
-        ) : viewMode === 'facebook-raids' ? (
-          <FacebookRaids 
-            currentUser={currentUser}
-            showNotification={showNotification}
-          />
         ) : (
           <SocialMediaRaids 
             currentUser={currentUser}
