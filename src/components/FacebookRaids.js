@@ -214,6 +214,8 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
       /facebook\.com\/[^\/]+\/posts\/(\d+)/i,
       /mobile\.facebook\.com\/[^\/]+\/posts\/(\d+)/i,
       /\/posts\/(\d+)/i,
+      /facebook\.com\/share\/p\/([^\/]+)/i, // Facebook share URLs
+      /\/share\/p\/([^\/]+)/i, // Facebook share URLs (shorter pattern)
       /(\d{10,20})/ // Fallback for just numbers
     ];
     
@@ -518,14 +520,14 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
           <form onSubmit={handleFreeRaidSubmit}>
             <div className="mb-4">
               <label className="block text-gray-300 mb-2">Facebook Post URL *</label>
-              <input 
-                type="text" 
-                value={freeRaidData.postUrl} 
-                onChange={(e) => setFreeRaidData({...freeRaidData, postUrl: e.target.value})} 
-                placeholder="https://www.facebook.com/username/posts/123456789" 
-                className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-purple-500" 
-                required 
-              />
+                             <input 
+                 type="text" 
+                 value={freeRaidData.postUrl} 
+                 onChange={(e) => setFreeRaidData({...freeRaidData, postUrl: e.target.value})} 
+                 placeholder="https://www.facebook.com/username/posts/123456789 or https://www.facebook.com/share/p/1CmC12Rtxp/" 
+                 className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-purple-500" 
+                 required 
+               />
             </div>
             <div className="flex gap-2">
               <button 
@@ -554,15 +556,15 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
           <form onSubmit={handleCreateRaid}>
             <div className="mb-4">
               <label className="block text-gray-300 mb-2">Facebook Post URL *</label>
-              <input 
-                type="text" 
-                name="postUrl" 
-                value={newRaid.postUrl} 
-                onChange={handleInputChange} 
-                placeholder="https://www.facebook.com/username/posts/123456789" 
-                className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                required 
-              />
+                             <input 
+                 type="text" 
+                 name="postUrl" 
+                 value={newRaid.postUrl} 
+                 onChange={handleInputChange} 
+                 placeholder="https://www.facebook.com/username/posts/123456789 or https://www.facebook.com/share/p/1CmC12Rtxp/" 
+                 className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                 required 
+               />
               <p className="text-gray-500 text-sm mt-2">
                 Enter the URL of the Facebook post you want users to interact with.
                 <br />A new raid will be created with standard values:
@@ -589,14 +591,14 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
           <form onSubmit={handlePointsRaidSubmit}>
             <div className="mb-4">
               <label className="block text-gray-300 mb-2">Facebook Post URL *</label>
-              <input 
-                type="text" 
-                value={pointsRaidData.postUrl} 
-                onChange={(e) => setPointsRaidData({...pointsRaidData, postUrl: e.target.value})} 
-                placeholder="https://www.facebook.com/username/posts/123456789" 
-                className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-green-500" 
-                required 
-              />
+                             <input 
+                 type="text" 
+                 value={pointsRaidData.postUrl} 
+                 onChange={(e) => setPointsRaidData({...pointsRaidData, postUrl: e.target.value})} 
+                 placeholder="https://www.facebook.com/username/posts/123456789 or https://www.facebook.com/share/p/1CmC12Rtxp/" 
+                 className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-green-500" 
+                 required 
+               />
             </div>
             <div className="p-4 bg-green-500/20 border border-green-500/50 text-green-400 rounded-lg mb-4">
               <div className="flex items-start">
