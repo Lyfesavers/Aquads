@@ -203,6 +203,7 @@ app.use('/api/games', require('./routes/games'));
 app.use('/api/leaderboard', require('./routes/leaderboard'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/twitter-raids', require('./routes/twitter-raids'));
+app.use('/api/facebook-raids', require('./routes/facebook-raids'));
 app.use('/api/invoices', require('./routes/invoices'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/discount-codes', require('./routes/discountCodes'));
