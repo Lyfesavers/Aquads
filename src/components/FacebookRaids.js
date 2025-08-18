@@ -104,32 +104,73 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
 
   // Fetch user points data from the backend API
   const fetchUserPoints = async () => {
+    if (!currentUser?.token) {
+      setLoadingPoints(false);
+      return;
+    }
+
     try {
       setLoadingPoints(true);
-      const response = await fetch(`${API_URL}/api/points/balance`, {
-        method: 'GET',
+      
+      const response = await fetch(`${API_URL}/api/points/my-points`, {
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${currentUser.token}`
         }
       });
-
+      
       if (response.ok) {
         const data = await response.json();
         setPointsData(data);
+        
+        // Also update the localStorage to keep everything in sync
+        try {
+          const storedUser = JSON.parse(localStorage.getItem('currentUser'));
+          if (storedUser) {
+            storedUser.points = data.points;
+            localStorage.setItem('currentUser', JSON.stringify(storedUser));
+          }
+        } catch (e) {
+          // Silently handle localStorage errors
+        }
       } else {
-        console.error('Failed to fetch points data');
+        // Error handled silently to avoid console logs
       }
     } catch (error) {
-      console.error('Error fetching points data:', error);
+      // Silently handle fetch errors
     } finally {
       setLoadingPoints(false);
     }
   };
 
-  // Get user points
+  // Get user points - now using our dedicated pointsData state
   const getUserPoints = () => {
-    return pointsData.points || 0;
+    // First try from our dedicated pointsData state
+    if (pointsData && typeof pointsData.points === 'number') {
+      return pointsData.points;
+    }
+    
+    // Try from userData state
+    if (userData && typeof userData.points === 'number') {
+      return userData.points;
+    }
+    
+    // Try from currentUser prop
+    if (currentUser && typeof currentUser.points === 'number') {
+      return currentUser.points;
+    }
+    
+    // Try from localStorage
+    try {
+      const storedUser = JSON.parse(localStorage.getItem('currentUser'));
+      if (storedUser && typeof storedUser.points === 'number') {
+        return storedUser.points;
+      }
+    } catch (e) {
+      // Silently handle localStorage errors
+    }
+    
+    // Default to 0
+    return 0;
   };
 
   useEffect(() => {
@@ -211,6 +252,11 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
   // Handle free raid form submission
   const handleFreeRaidSubmit = async (e) => {
     e.preventDefault();
+    if (!currentUser?.token) {
+      setError('You must be logged in to create raids');
+      setSubmitting(false);
+      return;
+    }
     setSubmitting(true);
     setError(null);
 
@@ -219,7 +265,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${currentUser.token}`
         },
         body: JSON.stringify(freeRaidData)
       });
@@ -250,6 +296,11 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
   // Handle admin raid creation
   const handleCreateRaid = async (e) => {
     e.preventDefault();
+    if (!currentUser?.token) {
+      setError('You must be logged in to create raids');
+      setSubmitting(false);
+      return;
+    }
     setSubmitting(true);
     setError(null);
 
@@ -258,7 +309,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${currentUser.token}`
         },
         body: JSON.stringify(newRaid)
       });
@@ -289,6 +340,11 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
   // Handle points-based raid creation
   const handlePointsRaidSubmit = async (e) => {
     e.preventDefault();
+    if (!currentUser?.token) {
+      setError('You must be logged in to create raids');
+      setSubmitting(false);
+      return;
+    }
     setSubmitting(true);
     setError(null);
 
@@ -297,7 +353,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${currentUser.token}`
         },
         body: JSON.stringify(pointsRaidData)
       });
@@ -336,11 +392,15 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
 
   // Check free raid eligibility
   const checkFreeRaidEligibility = async () => {
+    if (!currentUser?.token) {
+      return;
+    }
+
     try {
       const response = await fetch(`${API_URL}/api/facebook-raids/free-eligibility`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${currentUser.token}`
         }
       });
 
