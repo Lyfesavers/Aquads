@@ -563,4 +563,51 @@ router.delete('/:raidId', auth, requireEmailVerification, async (req, res) => {
   }
 });
 
+// Admin endpoint to get all pending Facebook raid completions
+router.get('/completions/pending', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Only admins can view pending completions' });
+    }
+
+    const raids = await FacebookRaid.find({
+      'completions.approvalStatus': 'pending'
+    })
+    .populate('completions.userId', 'username email')
+    .populate('createdBy', 'username')
+    .sort({ 'completions.completedAt': -1 });
+
+    // Extract pending completions with raid info
+    const pendingCompletions = [];
+    
+    raids.forEach(raid => {
+      raid.completions.forEach(completion => {
+        if (completion.approvalStatus === 'pending' && completion.userId) {
+          pendingCompletions.push({
+            completionId: completion._id,
+            raidId: raid._id,
+            raidTitle: raid.title,
+            raidDescription: raid.description,
+            raidPoints: raid.points,
+            raidPostUrl: raid.postUrl,
+            userId: completion.userId._id,
+            username: completion.userId.username,
+            email: completion.userId.email,
+            facebookUsername: completion.facebookUsername,
+            postUrl: completion.postUrl,
+            postId: completion.postId,
+            completedAt: completion.completedAt,
+            ipAddress: completion.ipAddress
+          });
+        }
+      });
+    });
+
+    res.json({ pendingCompletions });
+  } catch (error) {
+    console.error('Error fetching pending Facebook raid completions:', error);
+    res.status(500).json({ error: 'Failed to fetch pending completions' });
+  }
+});
+
 module.exports = router;

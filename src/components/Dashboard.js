@@ -46,9 +46,14 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   const [showBumpStoreModal, setShowBumpStoreModal] = useState(false);
   const [pendingTwitterRaids, setPendingTwitterRaids] = useState([]);
   const [loadingTwitterRaids, setLoadingTwitterRaids] = useState(false);
+  const [pendingFacebookRaids, setPendingFacebookRaids] = useState([]);
+  const [loadingFacebookRaids, setLoadingFacebookRaids] = useState(false);
   const [twitterRaidRejectionReason, setTwitterRaidRejectionReason] = useState('');
   const [showTwitterRaidRejectModal, setShowTwitterRaidRejectModal] = useState(false);
   const [selectedTwitterRaid, setSelectedTwitterRaid] = useState(null);
+  const [selectedFacebookRaid, setSelectedFacebookRaid] = useState(null);
+  const [facebookRaidRejectionReason, setFacebookRaidRejectionReason] = useState('');
+  const [showFacebookRaidRejectModal, setShowFacebookRaidRejectModal] = useState(false);
   const [showEasterEgg, setShowEasterEgg] = useState(false);
   const [hasShownEasterEgg, setHasShownEasterEgg] = useState(false);
   const [pendingListings, setPendingListings] = useState([]);
@@ -235,6 +240,7 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   useEffect(() => {
     if (currentUser?.isAdmin) {
       fetchPendingTwitterRaids();
+      fetchPendingFacebookRaids();
     }
   }, [currentUser]);
 
@@ -243,6 +249,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       fetchPendingBubbleListings();
       fetchPendingTokenPurchases();
       fetchPendingServicesData();
+    }
+  }, [currentUser, activeTab]);
+
+  useEffect(() => {
+    if (currentUser?.isAdmin && activeTab === 'facebookRaids') {
+      fetchPendingFacebookRaids();
     }
   }, [currentUser, activeTab]);
 
@@ -1239,6 +1251,89 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   };
 
+  // Add Facebook raid functions
+  const fetchPendingFacebookRaids = async () => {
+    setLoadingFacebookRaids(true);
+    try {
+      const response = await fetch(`${API_URL}/facebook-raids/completions/pending`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch pending Facebook raid completions');
+      }
+      
+      const data = await response.json();
+      setPendingFacebookRaids(data.pendingCompletions || []);
+    } catch (error) {
+      setPendingFacebookRaids([]);
+    } finally {
+      setLoadingFacebookRaids(false);
+    }
+  };
+
+  const handleApproveFacebookRaid = async (completion) => {
+    try {
+      const response = await fetch(`${API_URL}/facebook-raids/${completion.raidId}/approve/${completion.completionId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to approve Facebook raid completion');
+      }
+      
+      const result = await response.json();
+      
+      // Refresh the list of pending completions
+      fetchPendingFacebookRaids();
+      alert(result.message || 'Facebook raid completion approved successfully!');
+    } catch (error) {
+      alert('Error approving Facebook raid completion: ' + error.message);
+    }
+  };
+
+  const handleRejectFacebookRaidClick = (completion) => {
+    setSelectedFacebookRaid(completion);
+    setFacebookRaidRejectionReason('');
+    setShowFacebookRaidRejectModal(true);
+  };
+
+  const handleRejectFacebookRaid = async () => {
+    try {
+      if (!selectedFacebookRaid) return;
+      
+      const response = await fetch(`${API_URL}/facebook-raids/${selectedFacebookRaid.raidId}/reject/${selectedFacebookRaid.completionId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({ rejectionReason: facebookRaidRejectionReason })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to reject Facebook raid completion');
+      }
+      
+      const result = await response.json();
+      
+      // Refresh the list of pending completions
+      fetchPendingFacebookRaids();
+      setShowFacebookRaidRejectModal(false);
+      alert(result.message || 'Facebook raid completion rejected successfully!');
+    } catch (error) {
+      alert('Error rejecting Facebook raid completion: ' + error.message);
+    }
+  };
+
   // Add a new function to render the Twitter Raids tab content
   const renderTwitterRaidsTab = () => {
     return (
@@ -1399,6 +1494,138 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                 </button>
                 <button
                   onClick={handleRejectTwitterRaid}
+                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                >
+                  Reject Completion
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Add a new function to render the Facebook Raids tab content
+  const renderFacebookRaidsTab = () => {
+    return (
+      <div className="space-y-4">
+        <h3 className="text-xl font-semibold mb-4">Facebook Raid Completions Pending Approval</h3>
+        
+        {loadingFacebookRaids ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+            <p className="text-gray-400 mt-2">Loading pending Facebook raid completions...</p>
+          </div>
+        ) : pendingFacebookRaids.length === 0 ? (
+          <div className="text-center py-8 text-gray-400">
+            No pending Facebook raid completions to review.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {pendingFacebookRaids.map(completion => {
+              return (
+              <div key={`${completion.raidId}-${completion.completionId}`} className="bg-gray-800 p-4 rounded-lg">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  <div className="lg:col-span-2 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium text-white">{completion.raidTitle}</h4>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <p className="text-sm">
+                          <span className="text-gray-400">User: </span>
+                          <span className="text-white font-medium">{completion.username || "Unknown"}</span>
+                        </p>
+                        <p className="text-sm">
+                          <span className="text-gray-400">Facebook Username: </span>
+                          <span className="text-blue-400 font-medium">@{completion.facebookUsername}</span>
+                        </p>
+                        <p className="text-sm">
+                          <span className="text-gray-400">Points: </span>
+                          <span className="text-green-400 font-medium">{completion.raidPoints}</span>
+                        </p>
+                        <p className="text-sm">
+                          <span className="text-gray-400">Completed: </span>
+                          <span className="text-gray-300">{new Date(completion.completedAt).toLocaleString()}</span>
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-sm">
+                          <span className="text-gray-400">IP: </span>
+                          <span className="text-gray-300 font-mono text-xs">{completion.ipAddress}</span>
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <p className="text-sm text-gray-400">
+                        Facebook Post URL: <a href={completion.raidPostUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+                          {completion.raidPostUrl}
+                        </a>
+                      </p>
+                      <p className="text-sm text-gray-400 mt-1">
+                        Check if <span className="text-blue-400 font-medium">@{completion.facebookUsername}</span> actually liked, shared, and commented on this Facebook post.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => handleApproveFacebookRaid(completion)}
+                      className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 font-medium"
+                    >
+                      ✓ Approve ({completion.raidPoints} pts)
+                    </button>
+                    <button
+                      onClick={() => handleRejectFacebookRaidClick(completion)}
+                      className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 font-medium"
+                    >
+                      ✗ Reject
+                    </button>
+                    <a
+                      href={completion.raidPostUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 font-medium text-center"
+                    >
+                      🔗 View Facebook Post
+                    </a>
+                  </div>
+                </div>
+              </div>
+              );
+            })}
+          </div>
+        )}
+        
+        {/* Modal for rejecting Facebook raids */}
+        {showFacebookRaidRejectModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
+              <h3 className="text-lg font-semibold mb-4">Reject Facebook Raid Completion</h3>
+              <p className="mb-4 text-gray-300">
+                Are you sure you want to reject this Facebook raid completion? The user will not receive points and this action cannot be undone.
+              </p>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  Rejection Reason:
+                </label>
+                <textarea
+                  value={facebookRaidRejectionReason}
+                  onChange={(e) => setFacebookRaidRejectionReason(e.target.value)}
+                  className="w-full p-2 rounded bg-gray-700 text-white"
+                  rows="3"
+                  placeholder="Enter reason for rejection (e.g., 'Facebook username did not interact with the post')"
+                ></textarea>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <button
+                  onClick={() => setShowFacebookRaidRejectModal(false)}
+                  className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleRejectFacebookRaid}
                   className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
                 >
                   Reject Completion
@@ -1577,6 +1804,15 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
               onClick={() => setActiveTab('twitterRaids')}
             >
               Twitter Raids
+            </button>
+          )}
+
+          {currentUser.isAdmin && (
+            <button
+              className={`px-4 py-2 ${activeTab === 'facebookRaids' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+              onClick={() => setActiveTab('facebookRaids')}
+            >
+              Facebook Raids
             </button>
           )}
         </div>
@@ -3274,6 +3510,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
 
           {/* Add the Twitter Raids tab content */}
           {activeTab === 'twitterRaids' && currentUser?.isAdmin && renderTwitterRaidsTab()}
+
+          {/* Add the Facebook Raids tab content */}
+          {activeTab === 'facebookRaids' && currentUser?.isAdmin && renderFacebookRaidsTab()}
 
           <div className="mb-6">
             <h3 className="text-xl font-semibold mb-4">My Job Postings</h3>
