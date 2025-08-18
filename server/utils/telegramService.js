@@ -86,13 +86,20 @@ const telegramService = {
         groupsToNotify.add(defaultChatId);
       }
 
+      // Determine platform and construct appropriate message
+      const isFacebook = raidData.platform === 'Facebook';
+      const platformName = isFacebook ? 'Facebook Raid' : 'Twitter Raid';
+      const postUrl = isFacebook ? raidData.postUrl : raidData.tweetUrl;
+      const taskDescription = isFacebook ? 'Like, Share & Comment' : 'Like, Retweet & Comment';
+      const actionDescription = isFacebook ? 'Like, Share & Comment on the Facebook raid above' : 'Like, Retweet & Comment on the tweet above';
+
       // Construct the message text
-      const message = `🚀 New Twitter Raid Available!
+      const message = `🚀 New ${platformName} Available!
 
 💰 Reward: ${raidData.points || 50} points
-🎯 Task: Like, Retweet & Comment
+🎯 Task: ${taskDescription}
 
-🔗 Tweet: ${raidData.tweetUrl}
+🔗 ${isFacebook ? 'Facebook Raid' : 'Tweet'}: ${postUrl}
 🤖 Complete: @aquadsbumpbot
 
 📋 Requirements:
@@ -100,7 +107,7 @@ const telegramService = {
 • Link your account: /link your_aquads_username
 
 💡 How to complete:
-1. Like, Retweet & Comment on the tweet above
+1. ${actionDescription}
 2. Start a chat with @aquadsbumpbot
 3. Use /raids to see available raids
 4. Click "Complete" button or use /complete command
