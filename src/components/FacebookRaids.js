@@ -104,7 +104,9 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
 
   // Fetch user points data from the backend API
   const fetchUserPoints = async () => {
-    if (!currentUser?.token) {
+    // Get token from multiple possible sources
+    const token = currentUser?.token || localStorage.getItem('token');
+    if (!token) {
       setLoadingPoints(false);
       return;
     }
@@ -114,7 +116,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
       
       const response = await fetch(`${API_URL}/api/points/my-points`, {
         headers: {
-          'Authorization': `Bearer ${currentUser.token}`
+          'Authorization': `Bearer ${token}`
         }
       });
       
@@ -252,7 +254,9 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
   // Handle free raid form submission
   const handleFreeRaidSubmit = async (e) => {
     e.preventDefault();
-    if (!currentUser?.token) {
+    // Get token from multiple possible sources
+    const token = currentUser?.token || localStorage.getItem('token');
+    if (!token) {
       setError('You must be logged in to create raids');
       setSubmitting(false);
       return;
@@ -260,12 +264,16 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
     setSubmitting(true);
     setError(null);
 
+    // Debug: Log token info (remove in production)
+    console.log('Token available:', !!token);
+    console.log('Token length:', token ? token.length : 0);
+
     try {
       const response = await fetch(`${API_URL}/api/facebook-raids/free`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(freeRaidData)
       });
@@ -296,7 +304,9 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
   // Handle admin raid creation
   const handleCreateRaid = async (e) => {
     e.preventDefault();
-    if (!currentUser?.token) {
+    // Get token from multiple possible sources
+    const token = currentUser?.token || localStorage.getItem('token');
+    if (!token) {
       setError('You must be logged in to create raids');
       setSubmitting(false);
       return;
@@ -309,7 +319,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(newRaid)
       });
@@ -340,7 +350,9 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
   // Handle points-based raid creation
   const handlePointsRaidSubmit = async (e) => {
     e.preventDefault();
-    if (!currentUser?.token) {
+    // Get token from multiple possible sources
+    const token = currentUser?.token || localStorage.getItem('token');
+    if (!token) {
       setError('You must be logged in to create raids');
       setSubmitting(false);
       return;
@@ -353,7 +365,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.token}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(pointsRaidData)
       });
@@ -392,7 +404,9 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
 
   // Check free raid eligibility
   const checkFreeRaidEligibility = async () => {
-    if (!currentUser?.token) {
+    // Get token from multiple possible sources
+    const token = currentUser?.token || localStorage.getItem('token');
+    if (!token) {
       return;
     }
 
@@ -400,7 +414,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
       const response = await fetch(`${API_URL}/api/facebook-raids/free-eligibility`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${currentUser.token}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
