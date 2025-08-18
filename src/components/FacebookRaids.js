@@ -639,48 +639,238 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
         </div>
       )}
 
-      {/* Facebook Raids Listing */}
-      <div className="p-6">
-        {loading ? (
-          <div className="text-center text-gray-400 py-8">Loading Facebook raids...</div>
-        ) : raids.length === 0 ? (
-          <div className="text-center text-gray-400 py-8">No Facebook raids available at the moment.</div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {raids.map((raid) => (
-              <div key={raid._id} className="bg-gray-800/50 rounded-lg p-6 border border-gray-700/30 hover:border-gray-600/50 transition-colors">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-white">{raid.title}</h3>
-                    <p className="text-gray-400 text-sm">{raid.description}</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-green-400">{raid.points}</div>
-                    <div className="text-xs text-gray-500">points</div>
-                  </div>
-                </div>
-                
-                <div className="mb-4">
-                  <div className="text-sm text-gray-400 mb-2">Created by: {raid.createdBy?.username || 'Unknown'}</div>
-                  <div className="text-sm text-gray-400 mb-2">Created: {formatDate(raid.createdAt)}</div>
-                  {isWithinTwoDays(raid.createdAt) && (
-                    <div className="text-sm text-yellow-400">{getDaysRemaining(raid.createdAt)}</div>
-                  )}
-                </div>
+             {/* Facebook Raids Listing */}
+       <div className="p-6">
+         {loading ? (
+           <div className="text-center text-gray-400 py-8">Loading Facebook raids...</div>
+         ) : raids.length === 0 ? (
+           <div className="text-center text-gray-400 py-8">No Facebook raids available at the moment.</div>
+         ) : (
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+             {raids.map((raid) => (
+               <div key={raid._id} className="bg-gray-800/50 rounded-lg p-6 border border-gray-700/30 hover:border-gray-600/50 transition-colors">
+                 <div className="flex justify-between items-start mb-4">
+                   <div>
+                     <h3 className="text-lg font-semibold text-white">{raid.title}</h3>
+                     <p className="text-gray-400 text-sm">{raid.description}</p>
+                   </div>
+                   <div className="text-right">
+                     <div className="text-2xl font-bold text-green-400">{raid.points}</div>
+                     <div className="text-xs text-gray-500">points</div>
+                   </div>
+                 </div>
+                 
+                 <div className="mb-4">
+                   <div className="text-sm text-gray-400 mb-2">Created by: {raid.createdBy?.username || 'Unknown'}</div>
+                   <div className="text-sm text-gray-400 mb-2">Created: {formatDate(raid.createdAt)}</div>
+                   {isWithinTwoDays(raid.createdAt) && (
+                     <div className="text-sm text-yellow-400">{getDaysRemaining(raid.createdAt)}</div>
+                   )}
+                 </div>
 
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleRaidClick(raid)}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded font-medium transition-colors"
-                  >
-                    Complete Raid
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+                 <div className="flex gap-2">
+                   <button
+                     onClick={() => handleRaidClick(raid)}
+                     className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded font-medium transition-colors"
+                   >
+                     Complete Raid
+                   </button>
+                 </div>
+               </div>
+             ))}
+           </div>
+         )}
+       </div>
+
+       {/* Completion Modal */}
+       {showIframe && selectedRaid && (
+         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+           <div className="bg-gray-900 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+             <div className="p-6">
+               <div className="flex justify-between items-center mb-6">
+                 <h2 className="text-2xl font-bold text-white">Complete Facebook Raid</h2>
+                 <button
+                   onClick={() => {
+                     setShowIframe(false);
+                     setSelectedRaid(null);
+                     setIframeLoading(false);
+                     setIframeInteractions({ liked: false, shared: false, commented: false });
+                     setIframeVerified(false);
+                     setFacebookUsername('');
+                     setError(null);
+                     setSuccess(null);
+                   }}
+                   className="text-gray-400 hover:text-white"
+                 >
+                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                   </svg>
+                 </button>
+               </div>
+
+               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                 {/* Facebook Post Display */}
+                 <div className="space-y-4">
+                   <div className="bg-gray-800 rounded-lg p-4">
+                     <h3 className="text-lg font-semibold text-white mb-2">{selectedRaid.title}</h3>
+                     <p className="text-gray-400 mb-4">{selectedRaid.description}</p>
+                     
+                     <div className="bg-gray-700 rounded-lg p-4">
+                       <div className="flex items-center justify-between mb-3">
+                         <span className="text-white font-medium">Facebook Post</span>
+                         <span className="text-green-400 font-bold">{selectedRaid.points} points</span>
+                       </div>
+                       
+                       <div className="bg-gray-600 rounded p-3 mb-3">
+                         <p className="text-gray-300 text-sm break-all">{selectedRaid.postUrl}</p>
+                       </div>
+                       
+                       <div className="flex gap-2">
+                         <button
+                           onClick={() => window.open(selectedRaid.postUrl, '_blank')}
+                           className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-sm inline-flex items-center"
+                         >
+                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                           </svg>
+                           Open Facebook Post
+                         </button>
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+
+                 {/* Completion Form */}
+                 <div className="space-y-4">
+                   {/* Error/Success messages */}
+                   {error && (
+                     <div className="text-red-400 mb-4 p-3 bg-red-400/10 rounded-lg">
+                       <div className="flex items-center">
+                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                           <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                         </svg>
+                         {error}
+                       </div>
+                     </div>
+                   )}
+                   
+                   {success && (
+                     <div className="text-green-400 mb-4 p-3 bg-green-400/10 rounded-lg">
+                       <div className="flex items-center">
+                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                         </svg>
+                         {success}
+                       </div>
+                     </div>
+                   )}
+                   
+                   {/* How to complete guide */}
+                   <div className="bg-gray-800/70 rounded p-3 border border-gray-700 mb-4">
+                     <h4 className="text-white font-medium mb-2 text-sm">How to Complete:</h4>
+                     <ol className="list-decimal list-inside text-gray-400 text-xs space-y-1 ml-2">
+                       <li>Click "Open Facebook Post" to view the post</li>
+                       <li>Like, share, and comment on the Facebook post</li>
+                       <li>Complete all three actions on Facebook</li>
+                       <li>Enter your Facebook username below</li>
+                       <li>Click "Submit for Admin Approval" to earn points</li>
+                     </ol>
+                   </div>
+                   
+                   {/* Form submission */}
+                   <form onSubmit={async (e) => {
+                     e.preventDefault();
+                     if (!currentUser?.token) {
+                       setError('You must be logged in to complete raids');
+                       return;
+                     }
+                     if (!facebookUsername.trim()) {
+                       setError('Please enter your Facebook username');
+                       return;
+                     }
+                     
+                     setSubmitting(true);
+                     setError(null);
+                     
+                     try {
+                       const response = await fetch(`${API_URL}/api/facebook-raids/${selectedRaid._id}/complete`, {
+                         method: 'POST',
+                         headers: {
+                           'Content-Type': 'application/json',
+                           'Authorization': `Bearer ${currentUser.token}`
+                         },
+                         body: JSON.stringify({
+                           postUrl: selectedRaid.postUrl,
+                           facebookUsername: facebookUsername.trim().replace(/^@/, ''),
+                           postId: extractPostId(selectedRaid.postUrl)
+                         })
+                       });
+                       
+                       const data = await response.json();
+                       
+                       if (response.ok) {
+                         setSuccess(data.message || 'Facebook raid completed successfully! Your submission is pending admin approval.');
+                         showNotification(data.message || 'Facebook raid completed successfully!', 'success');
+                         // Close modal after 3 seconds
+                         setTimeout(() => {
+                           setShowIframe(false);
+                           setSelectedRaid(null);
+                           setFacebookUsername('');
+                           setSuccess(null);
+                         }, 3000);
+                       } else {
+                         setError(data.error || 'Failed to complete Facebook raid');
+                       }
+                     } catch (error) {
+                       setError('Error completing Facebook raid');
+                     } finally {
+                       setSubmitting(false);
+                     }
+                   }}>
+                     {/* Facebook Username Input */}
+                     <div className="mb-4">
+                       <label htmlFor="facebookUsername" className="block text-sm font-medium text-gray-300 mb-2">
+                         Your Facebook Username <span className="text-red-400">*</span>
+                       </label>
+                       <div className="relative">
+                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                           <span className="text-gray-400">@</span>
+                         </div>
+                         <input
+                           type="text"
+                           id="facebookUsername"
+                           value={facebookUsername}
+                           onChange={(e) => setFacebookUsername(e.target.value)}
+                           className="w-full pl-8 pr-4 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder="username"
+                           maxLength="50"
+                           required
+                         />
+                       </div>
+                       <p className="text-xs text-gray-400 mt-1">
+                         Enter your Facebook username so we can verify your completion
+                       </p>
+                     </div>
+                     
+                     <button
+                       type="submit"
+                       className={`w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors ${
+                         submitting ? 'opacity-70 cursor-wait' : 
+                         (!facebookUsername.trim().replace(/^@/, '')) ? 'opacity-50 cursor-not-allowed bg-gray-600 hover:bg-gray-600' : ''
+                       }`}
+                       disabled={submitting || !facebookUsername.trim().replace(/^@/, '')}
+                     >
+                       {submitting ? 'Submitting for Approval...' : 
+                        facebookUsername.trim().replace(/^@/, '') ? 'Submit for Admin Approval' : 
+                        'Enter Your Facebook Username'}
+                     </button>
+                   </form>
+                 </div>
+               </div>
+             </div>
+           </div>
+         </div>
+       )}
     </div>
   );
 };
