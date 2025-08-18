@@ -19,6 +19,8 @@ const CryptoAdNetwork = ({
   const [showInstructionModal, setShowInstructionModal] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [iframeError, setIframeError] = useState(false);
+  const [showAuthPopup, setShowAuthPopup] = useState(false);
   
   // Local modal states
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -40,10 +42,25 @@ const CryptoAdNetwork = ({
     if (!hasSeenMintFunnelInstruction) {
       setShowInstructionModal(true);
     }
+
+    // Listen for iframe messages to detect authentication issues
+    const handleMessage = (event) => {
+      if (event.origin === 'https://mintfunnel.co' || event.origin === 'https://app.mintfunnel.co') {
+        // Check if the message indicates authentication issues
+        if (event.data && typeof event.data === 'object') {
+          if (event.data.type === 'auth-error' || event.data.error === 419) {
+            setIframeError(true);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
     
     // Cleanup
     return () => {
       document.body.classList.remove('crypto-ad-network-page');
+      window.removeEventListener('message', handleMessage);
     };
   }, []);
 
@@ -66,6 +83,70 @@ const CryptoAdNetwork = ({
     // Mark that user has seen the instruction
     localStorage.setItem('hasSeenMintFunnelInstruction', 'true');
   };
+
+  // Handle iframe errors and authentication issues
+  const handleIframeError = () => {
+    setIframeError(true);
+    showNotification('MintFunnel is experiencing authentication issues in iframe. Please use the popup option.', 'warning');
+  };
+
+  // Open MintFunnel authentication in popup
+  const openMintFunnelAuth = () => {
+    const popup = window.open(
+      'https://app.mintfunnel.co/auth/login',
+      'mintfunnel-auth',
+      'width=500,height=600,scrollbars=yes,resizable=yes,status=yes,location=yes'
+    );
+    
+    if (popup) {
+      setShowAuthPopup(true);
+      
+      // Listen for popup closure
+      const checkClosed = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(checkClosed);
+          setShowAuthPopup(false);
+          // Refresh iframe after authentication
+          setTimeout(() => {
+            setIframeError(false);
+            const iframe = document.querySelector('iframe[title="Crypto Ad Network"]');
+            if (iframe) {
+              iframe.src = iframe.src;
+            }
+          }, 1000);
+        }
+      }, 1000);
+    } else {
+      showNotification('Popup blocked! Please allow popups for this site and try again.', 'error');
+    }
+  };
+
+  // Handle iframe load success
+  const handleIframeLoad = () => {
+    setIframeError(false);
+  };
+
+  // Monitor for 419 errors and other authentication issues
+  useEffect(() => {
+    const checkForAuthErrors = () => {
+      // Check if there are any 419 errors in the console
+      const originalError = console.error;
+      console.error = (...args) => {
+        const errorMessage = args.join(' ');
+        if (errorMessage.includes('419') || errorMessage.includes('CSRF') || errorMessage.includes('No CSRF Cookie')) {
+          setIframeError(true);
+        }
+        originalError.apply(console, args);
+      };
+
+      return () => {
+        console.error = originalError;
+      };
+    };
+
+    const cleanup = checkForAuthErrors();
+    return cleanup;
+  }, []);
 
   return (
     <div className="h-screen overflow-y-auto text-white">
@@ -345,16 +426,50 @@ const CryptoAdNetwork = ({
 
       {/* Embedded Content - Full Screen */}
       <div className="fixed inset-0 top-16 z-20">
-        <iframe
-          src="https://mintfunnel.co/crypto-ad-network/?ref=Aquads"
-          className="w-full h-full border-0"
-          title="Crypto Ad Network"
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation allow-top-navigation-by-user-activation allow-presentation"
-          loading="lazy"
-          allow="camera; microphone; geolocation; payment; usb"
-          referrerPolicy="origin-when-cross-origin"
-          crossOrigin="anonymous"
-        />
+        {iframeError ? (
+          <div className="flex flex-col items-center justify-center h-full bg-gray-900/50 backdrop-blur-sm">
+            <div className="bg-gray-800 rounded-lg p-8 max-w-md mx-4 text-center border border-gray-700">
+              <div className="text-6xl mb-4">🔐</div>
+              <h3 className="text-xl font-bold text-white mb-4">Authentication Required</h3>
+              <p className="text-gray-300 mb-6">
+                MintFunnel requires authentication that cannot be completed in an iframe due to security restrictions.
+              </p>
+              <div className="space-y-3">
+                <button
+                  onClick={openMintFunnelAuth}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+                >
+                  {showAuthPopup ? '🔄 Authentication in Progress...' : '🔓 Login with Popup'}
+                </button>
+                <button
+                  onClick={() => window.open('https://mintfunnel.co/crypto-ad-network/?ref=Aquads', '_blank')}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+                >
+                  🌐 Open in New Tab
+                </button>
+                <button
+                  onClick={() => setIframeError(false)}
+                  className="w-full bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+                >
+                  🔄 Try Again
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <iframe
+            src="https://mintfunnel.co/crypto-ad-network/?ref=Aquads"
+            className="w-full h-full border-0"
+            title="Crypto Ad Network"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation allow-top-navigation-by-user-activation allow-presentation"
+            loading="lazy"
+            allow="camera; microphone; geolocation; payment; usb"
+            referrerPolicy="origin-when-cross-origin"
+            crossOrigin="anonymous"
+            onError={handleIframeError}
+            onLoad={handleIframeLoad}
+          />
+        )}
       </div>
 
       {/* Instruction Modal for first-time visitors */}
