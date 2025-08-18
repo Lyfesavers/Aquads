@@ -24,8 +24,13 @@ const extractFacebookPostId = (url) => {
     /facebook\.com\/[^\/]+\/posts\/(\d+)/i,
     /mobile\.facebook\.com\/[^\/]+\/posts\/(\d+)/i,
     /\/posts\/(\d+)/i,
-    /facebook\.com\/share\/p\/([^\/]+)/i, // Facebook share URLs
-    /\/share\/p\/([^\/]+)/i, // Facebook share URLs (shorter pattern)
+    /facebook\.com\/share\/p\/([^\/]+)/i, // Facebook share post URLs
+    /\/share\/p\/([^\/]+)/i, // Facebook share post URLs (shorter pattern)
+    /facebook\.com\/share\/v\/([^\/]+)/i, // Facebook share video URLs
+    /\/share\/v\/([^\/]+)/i, // Facebook share video URLs (shorter pattern)
+    /facebook\.com\/[^\/]+\/videos\/(\d+)/i, // Facebook video URLs
+    /mobile\.facebook\.com\/[^\/]+\/videos\/(\d+)/i, // Mobile Facebook video URLs
+    /\/videos\/(\d+)/i, // Video URLs (shorter pattern)
     /(\d{10,20})/ // Fallback for just numbers
   ];
   

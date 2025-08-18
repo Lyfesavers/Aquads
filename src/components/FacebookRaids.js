@@ -214,8 +214,13 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
       /facebook\.com\/[^\/]+\/posts\/(\d+)/i,
       /mobile\.facebook\.com\/[^\/]+\/posts\/(\d+)/i,
       /\/posts\/(\d+)/i,
-      /facebook\.com\/share\/p\/([^\/]+)/i, // Facebook share URLs
-      /\/share\/p\/([^\/]+)/i, // Facebook share URLs (shorter pattern)
+      /facebook\.com\/share\/p\/([^\/]+)/i, // Facebook share post URLs
+      /\/share\/p\/([^\/]+)/i, // Facebook share post URLs (shorter pattern)
+      /facebook\.com\/share\/v\/([^\/]+)/i, // Facebook share video URLs
+      /\/share\/v\/([^\/]+)/i, // Facebook share video URLs (shorter pattern)
+      /facebook\.com\/[^\/]+\/videos\/(\d+)/i, // Facebook video URLs
+      /mobile\.facebook\.com\/[^\/]+\/videos\/(\d+)/i, // Mobile Facebook video URLs
+      /\/videos\/(\d+)/i, // Video URLs (shorter pattern)
       /(\d{10,20})/ // Fallback for just numbers
     ];
     
@@ -516,18 +521,18 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
       {/* Free Raid Form */}
       {showFreeRaidForm && (
         <div className="bg-purple-500/10 border border-purple-500/30 p-4 m-4 rounded-lg">
-          <h3 className="text-lg font-bold text-white mb-4">Create Free Facebook Raid</h3>
+                    <h3 className="text-lg font-bold text-white mb-4">Create Free Facebook Raid</h3>
           <form onSubmit={handleFreeRaidSubmit}>
             <div className="mb-4">
-              <label className="block text-gray-300 mb-2">Facebook Post URL *</label>
-                             <input 
-                 type="text" 
-                 value={freeRaidData.postUrl} 
-                 onChange={(e) => setFreeRaidData({...freeRaidData, postUrl: e.target.value})} 
-                 placeholder="https://www.facebook.com/username/posts/123456789 or https://www.facebook.com/share/p/1CmC12Rtxp/" 
-                 className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-purple-500" 
-                 required 
-               />
+              <label className="block text-gray-300 mb-2">Facebook Post/Video URL *</label>
+              <input 
+                type="text" 
+                value={freeRaidData.postUrl} 
+                onChange={(e) => setFreeRaidData({...freeRaidData, postUrl: e.target.value})} 
+                placeholder="https://www.facebook.com/username/posts/123456789 or https://www.facebook.com/share/p/1CmC12Rtxp/ or https://www.facebook.com/share/v/1AzuJXxci7/" 
+                className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-purple-500" 
+                required 
+              />
             </div>
             <div className="flex gap-2">
               <button 
@@ -555,13 +560,13 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
           <h3 className="text-lg font-bold text-white mb-4">Create New Facebook Raid</h3>
           <form onSubmit={handleCreateRaid}>
             <div className="mb-4">
-              <label className="block text-gray-300 mb-2">Facebook Post URL *</label>
+              <label className="block text-gray-300 mb-2">Facebook Post/Video URL *</label>
                              <input 
                  type="text" 
                  name="postUrl" 
                  value={newRaid.postUrl} 
                  onChange={handleInputChange} 
-                 placeholder="https://www.facebook.com/username/posts/123456789 or https://www.facebook.com/share/p/1CmC12Rtxp/" 
+                 placeholder="https://www.facebook.com/username/posts/123456789 or https://www.facebook.com/share/p/1CmC12Rtxp/ or https://www.facebook.com/share/v/1AzuJXxci7/" 
                  className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-blue-500" 
                  required 
                />
@@ -590,12 +595,12 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
           <h3 className="text-lg font-bold text-white mb-4">Create Facebook Raid with Points (2000 Points)</h3>
           <form onSubmit={handlePointsRaidSubmit}>
             <div className="mb-4">
-              <label className="block text-gray-300 mb-2">Facebook Post URL *</label>
+              <label className="block text-gray-300 mb-2">Facebook Post/Video URL *</label>
                              <input 
                  type="text" 
                  value={pointsRaidData.postUrl} 
                  onChange={(e) => setPointsRaidData({...pointsRaidData, postUrl: e.target.value})} 
-                 placeholder="https://www.facebook.com/username/posts/123456789 or https://www.facebook.com/share/p/1CmC12Rtxp/" 
+                 placeholder="https://www.facebook.com/username/posts/123456789 or https://www.facebook.com/share/p/1CmC12Rtxp/ or https://www.facebook.com/share/v/1AzuJXxci7/" 
                  className="w-full px-4 py-2 bg-gray-700 rounded text-white focus:outline-none focus:ring-2 focus:ring-green-500" 
                  required 
                />
