@@ -13,6 +13,12 @@
       script-src 'self' 'unsafe-inline' 'unsafe-eval' 
         https://*.transak.com 
         https://*.google.com 
+        https://*.mintfunnel.co
+        https://*.app.mintfunnel.co
+        https://*.meetings.hubspot.com
+        https://*.googletagmanager.com
+        https://*.hs-analytics.net
+        https://*.hs-banner.com
         https://*.verygoodvault.com 
         https://*.checkout.com 
         https://*.cdn-apple.com 
@@ -37,11 +43,11 @@
       img-src 'self' https: data: blob:;
       font-src 'self' https: data:;
       connect-src 'self' https: wss: ws:;
-      frame-src 'self' https:;
+      frame-src 'self' https: https://*.mintfunnel.co https://*.app.mintfunnel.co;
       media-src 'self' https: data: blob:;
       object-src 'none';
       base-uri 'self';
-      form-action 'self' https:;
+      form-action 'self' https: https://*.mintfunnel.co https://*.app.mintfunnel.co;
     ">
     
     <!-- Permissions Policy for Transak functionality -->
@@ -53,7 +59,8 @@
       gyroscope=*, 
       magnetometer=*, 
       payment=*,
-      usb=*
+      usb=*,
+      interest-cohort=()
     ">
     <meta
       name="description"

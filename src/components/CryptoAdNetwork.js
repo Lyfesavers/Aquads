@@ -349,8 +349,11 @@ const CryptoAdNetwork = ({
           src="https://mintfunnel.co/crypto-ad-network/?ref=Aquads"
           className="w-full h-full border-0"
           title="Crypto Ad Network"
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation allow-top-navigation-by-user-activation allow-presentation"
           loading="lazy"
+          allow="camera; microphone; geolocation; payment; usb"
+          referrerPolicy="origin-when-cross-origin"
+          crossOrigin="anonymous"
         />
       </div>
 
