@@ -309,6 +309,10 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
     setSubmitting(true);
     setError(null);
 
+    // Debug: Log what we're sending
+    console.log('Sending admin raid data:', newRaid);
+    console.log('URL being tested:', newRaid.postUrl);
+
     try {
       const response = await fetch(`${API_URL}/api/facebook-raids`, {
         method: 'POST',
@@ -333,6 +337,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
         fetchRaids();
         showNotification('Facebook raid created successfully!', 'success');
       } else {
+        console.log('Admin raid creation failed:', data);
         setError(data.error || 'Failed to create Facebook raid');
       }
     } catch (error) {
@@ -352,6 +357,9 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
     }
     setSubmitting(true);
     setError(null);
+
+    // Debug: Log what we're sending
+    console.log('Sending points raid data:', pointsRaidData);
 
     try {
       const response = await fetch(`${API_URL}/api/facebook-raids/points`, {
@@ -377,6 +385,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
         fetchUserPoints(); // Refresh points balance
         showNotification(data.message || 'Facebook raid created successfully with points!', 'success');
       } else {
+        console.log('Points raid creation failed:', data);
         setError(data.error || 'Failed to create Facebook raid with points');
       }
     } catch (error) {
