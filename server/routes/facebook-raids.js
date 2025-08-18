@@ -355,14 +355,10 @@ router.post('/:raidId/complete', auth, requireEmailVerification, facebookRaidRat
     // Create notification for admin
     const notification = new Notification({
       userId: req.user.id,
-      type: 'facebook_raid_completion',
-      title: 'Facebook Raid Completed',
+      type: 'status',
       message: `User ${req.user.username} completed Facebook raid: ${raid.title}`,
-      data: {
-        raidId: raid._id,
-        raidTitle: raid.title,
-        facebookUsername: completion.facebookUsername
-      }
+      relatedId: raid._id,
+      relatedModel: 'FacebookRaid'
     });
     await notification.save();
 
@@ -414,14 +410,10 @@ router.post('/:raidId/approve/:completionId', auth, requireEmailVerification, as
         // Create notification for user
         const notification = new Notification({
           userId: completion.userId,
-          type: 'facebook_raid_approved',
-          title: 'Facebook Raid Approved!',
+          type: 'status',
           message: `Your Facebook raid completion for "${raid.title}" has been approved! You earned ${raid.points} points.`,
-          data: {
-            raidId: raid._id,
-            raidTitle: raid.title,
-            pointsEarned: raid.points
-          }
+          relatedId: raid._id,
+          relatedModel: 'FacebookRaid'
         });
         await notification.save();
       }
@@ -469,14 +461,10 @@ router.post('/:raidId/reject/:completionId', auth, requireEmailVerification, asy
     // Create notification for user
     const notification = new Notification({
       userId: completion.userId,
-      type: 'facebook_raid_rejected',
-      title: 'Facebook Raid Rejected',
+      type: 'status',
       message: `Your Facebook raid completion for "${raid.title}" was rejected. Reason: ${completion.rejectionReason}`,
-      data: {
-        raidId: raid._id,
-        raidTitle: raid.title,
-        rejectionReason: completion.rejectionReason
-      }
+      relatedId: raid._id,
+      relatedModel: 'FacebookRaid'
     });
     await notification.save();
 
