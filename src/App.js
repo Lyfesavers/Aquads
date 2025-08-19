@@ -60,6 +60,7 @@ import logger from './utils/logger';
 import './App.css';
 import FilterControls from './components/FilterControls';
 import DotsAndBoxes from './components/DotsAndBoxes';
+import ServicePage from './components/ServicePage';
 
 // Simple debounce function implementation
 const debounce = (func, wait) => {
@@ -2606,6 +2607,14 @@ function App() {
               onCreateAccount={handleCreateAccount}
               onBannerSubmit={handleBannerSubmit}
               openMintFunnelPlatform={openMintFunnelPlatform}
+            />
+          } />
+          <Route path="/service/:slug" element={
+            <ServicePage 
+              currentUser={currentUser}
+              onLogin={handleLogin}
+              onLogout={handleLogout}
+              onCreateAccount={handleCreateAccount}
             />
           } />
           <Route path="/games/dots-and-boxes" element={<DotsAndBoxes currentUser={currentUser} />} />

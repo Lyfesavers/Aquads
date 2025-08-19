@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Service = require('../models/Service');
+const Booking = require('../models/Booking');
 const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
 const upload = require('../middleware/upload');
@@ -406,6 +407,42 @@ router.post('/:id/reject', auth, async (req, res) => {
   } catch (error) {
     console.error('Error rejecting service:', error);
     res.status(500).json({ error: 'Failed to reject service' });
+  }
+});
+
+// Get service details with analytics
+router.get('/:id/details', async (req, res) => {
+  try {
+    const service = await Service.findById(req.params.id)
+      .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges createdAt');
+    
+    if (!service) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+
+    // Calculate analytics
+    const contactCount = await Booking.countDocuments({ service: req.params.id });
+    const bookingCount = await Booking.countDocuments({ 
+      service: req.params.id, 
+      status: { $in: ['accepted', 'completed'] } 
+    });
+    const completionRate = contactCount > 0 ? Math.round((bookingCount / contactCount) * 100) : 0;
+
+    // Add analytics to service object
+    const serviceWithAnalytics = {
+      ...service.toObject(),
+      analytics: {
+        views: Math.floor(Math.random() * 100) + 50, // Placeholder for now
+        contacts: contactCount,
+        bookings: bookingCount,
+        completionRate: completionRate
+      }
+    };
+
+    res.json(serviceWithAnalytics);
+  } catch (error) {
+    console.error('Error fetching service details:', error);
+    res.status(500).json({ message: 'Error fetching service details', error: error.message });
   }
 });
 
