@@ -424,10 +424,10 @@ router.get('/:id/details', async (req, res) => {
     await Service.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } });
 
     // Calculate real analytics from database
-    const contactCount = await Booking.countDocuments({ service: req.params.id });
+    const contactCount = await Booking.countDocuments({ serviceId: req.params.id });
     const bookingCount = await Booking.countDocuments({ 
-      service: req.params.id, 
-      status: { $in: ['accepted', 'completed'] } 
+      serviceId: req.params.id, 
+      status: { $in: ['completed', 'confirmed'] } 
     });
     const completionRate = contactCount > 0 ? Math.round((bookingCount / contactCount) * 100) : 0;
 
