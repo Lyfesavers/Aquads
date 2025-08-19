@@ -1223,13 +1223,15 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
       
       if (!raid) {
         raid = await FacebookRaid.findById(raidId);
-        platform = 'Facebook';
-        usernameField = 'facebookUsername';
-        postUrlField = 'postUrl';
-        storedUsername = user.facebookUsername;
-        interactionInstructions = '✅ LIKED the Facebook post\n✅ SHARED the Facebook post\n✅ COMMENTED on the Facebook post';
-        usernamePrompt = 'Facebook username';
-        usernameCommand = '/facebook';
+        if (raid) {
+          platform = 'Facebook';
+          usernameField = 'facebookUsername';
+          postUrlField = 'postUrl';
+          storedUsername = user.facebookUsername;
+          interactionInstructions = '✅ LIKED the Facebook post\n✅ SHARED the Facebook post\n✅ COMMENTED on the Facebook post';
+          usernamePrompt = 'Facebook username';
+          usernameCommand = '/facebook';
+        }
       }
       
       if (!raid || !raid.active) {
@@ -1288,9 +1290,11 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
       
       if (!raid) {
         raid = await FacebookRaid.findById(raidId);
-        usernameField = 'facebookUsername';
-        postUrlField = 'postUrl';
-        postIdField = 'postId';
+        if (raid) {
+          usernameField = 'facebookUsername';
+          postUrlField = 'postUrl';
+          postIdField = 'postId';
+        }
       }
       
       if (!user || !raid) {
@@ -1310,7 +1314,25 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
         }
         postId = tweetIdMatch[1];
       } else if (platform === 'Facebook') {
-        const postIdMatch = raid[postUrlField].match(/\/posts\/(\d+)/);
+        // Try multiple Facebook URL patterns
+        let postIdMatch = raid[postUrlField].match(/\/posts\/(\d+)/);
+        if (!postIdMatch) {
+          // Try alternative Facebook URL patterns
+          postIdMatch = raid[postUrlField].match(/\/permalink\/(\d+)/);
+        }
+        if (!postIdMatch) {
+          // Try share pattern (like https://www.facebook.com/share/p/16kFXY8yMC/)
+          postIdMatch = raid[postUrlField].match(/\/share\/p\/([a-zA-Z0-9]+)/);
+        }
+        if (!postIdMatch) {
+          // Try another pattern
+          postIdMatch = raid[postUrlField].match(/\/story\.php\?story_fbid=(\d+)/);
+        }
+        if (!postIdMatch) {
+          // Try one more pattern
+          postIdMatch = raid[postUrlField].match(/\/photo\.php\?fbid=(\d+)/);
+        }
+        
         if (!postIdMatch) {
           await telegramService.sendBotMessage(chatId, 
             "❌ Invalid Facebook URL. Please contact support.");

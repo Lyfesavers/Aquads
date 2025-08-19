@@ -139,8 +139,20 @@ const facebookRaidSchema = new Schema({
 // Extract post ID from URL if only URL is provided
 facebookRaidSchema.pre('save', function(next) {
   if (!this.postId && this.postUrl) {
-    // Extract post ID from Facebook URL
-    const matches = this.postUrl.match(/\/posts\/(\d+)/);
+    // Extract post ID from Facebook URL - try multiple patterns
+    let matches = this.postUrl.match(/\/posts\/(\d+)/);
+    if (!matches) {
+      matches = this.postUrl.match(/\/permalink\/(\d+)/);
+    }
+    if (!matches) {
+      matches = this.postUrl.match(/\/share\/p\/([a-zA-Z0-9]+)/);
+    }
+    if (!matches) {
+      matches = this.postUrl.match(/\/story\.php\?story_fbid=(\d+)/);
+    }
+    if (!matches) {
+      matches = this.postUrl.match(/\/photo\.php\?fbid=(\d+)/);
+    }
     if (matches && matches[1]) {
       this.postId = matches[1];
     }
