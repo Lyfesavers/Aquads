@@ -354,14 +354,13 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
 1. Link your account: /link your_aquads_username
 2. Set your usernames: /twitter your_twitter_username and /facebook your_facebook_username
 3. View raids: /raids
-4. Complete raids: Use buttons or /complete command
+4. Complete raids: Use the "Complete in Private Chat" buttons
 
 🔗 Available Commands:
 • /link USERNAME - Link your Telegram to Aquads account
 • /twitter [USERNAME] - Set or view your Twitter username for raids
 • /facebook [USERNAME] - Set or view your Facebook username for raids
 • /raids - View available Twitter and Facebook raids
-• /complete RAID_ID @username POST_URL - Complete a raid manually
 • /createraid TWEET_URL - Create a new Twitter raid (2000 points)
 • /mybubble - View your projects
 • /help - Show detailed command guide
@@ -491,7 +490,6 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
 
 📋 Raid Commands:
 • /raids - View all available Twitter and Facebook raids
-• /complete RAID_ID [@username] POST_URL - Complete a raid manually (username optional if set)
 • /createraid TWEET_URL - Create a new Twitter raid (2000 points)
 
 📋 Bubble Commands:
@@ -506,13 +504,11 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
 /bubbles
 /mybubble
 /createraid https://twitter.com/user/status/123456789
-/complete 507f1f77bcf86cd799439011 @mytwitter https://twitter.com/user/status/123456789
-/complete 507f1f77bcf86cd799439011 @myfacebook https://facebook.com/user/posts/123456789
 
 💡 How Raids Work:
 1. Like, Retweet & Comment on Twitter posts OR Like, Share & Comment on Facebook posts
 2. Use /raids to see available raids
-3. Click "Complete in Private Chat" button OR use /complete command
+3. Click "Complete in Private Chat" button (easiest way!)
 4. Provide your username when prompted (or set it once with /twitter or /facebook)
 5. Wait for admin approval to receive points
 
@@ -520,7 +516,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
 1. Link your account: /link your_aquads_username
 2. Set your usernames: /twitter your_twitter_username and /facebook your_facebook_username
 3. View available raids: /raids
-4. Complete raids using buttons or /complete command
+4. Complete raids using the "Complete in Private Chat" buttons
 5. Create your own raids: /createraid (requires 2000 points)
 6. View your projects: /mybubble
 
@@ -702,7 +698,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
       const facebookCount = availableRaids.filter(raid => raid.platform === 'Facebook').length;
       
       await telegramService.sendBotMessage(chatId, 
-        `📊 ${availableRaids.length} raids available for you (${twitterCount} Twitter, ${facebookCount} Facebook)\n\n💡 How to complete:\n• Click "Complete in Private Chat" button (easiest)\n• Or use: /complete RAID_ID @username POST_URL\n\n⏰ Raids expire after 48 hours\n💡 Make sure to interact with posts before completing!\n\n🌐 Track points & claim rewards on: https://aquads.xyz`);
+        `📊 ${availableRaids.length} raids available for you (${twitterCount} Twitter, ${facebookCount} Facebook)\n\n💡 How to complete:\n• Click "Complete in Private Chat" button (easiest way!)\n\n⏰ Raids expire after 48 hours\n💡 Make sure to interact with posts before completing!\n\n🌐 Track points & claim rewards on: https://aquads.xyz`);
 
     } catch (error) {
       console.error('Raids command error:', error);
@@ -1271,7 +1267,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
 
         // Ask for username
         await telegramService.sendBotMessage(chatId, 
-          `🚀 Completing: ${raid.title}\n\n⚠️ BEFORE CONTINUING: Make sure you have already:\n${interactionInstructions}\n\n📝 Now enter your ${usernamePrompt} (without @):\n\n💡 Example: myusername\n\n💡 Tip: Set your ${usernamePrompt} with ${usernameCommand} your_username to avoid entering it every time!`);
+          `🚀 Completing: ${raid.title}\n\n⚠️ BEFORE CONTINUING: Make sure you have already:\n${interactionInstructions}\n\n📝 Now enter your ${usernamePrompt} (without @):\n\n💡 Example: myusername\n\n💡 Tip: Set your ${usernamePrompt} with ${usernameCommand} your_username to avoid entering it every time!\n\n💡 EASIEST WAY: Use the "Complete in Private Chat" button from /raids command!`);
       }
 
     } catch (error) {
@@ -1317,52 +1313,35 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
         }
         postId = tweetIdMatch[1];
       } else if (platform === 'Facebook') {
-        console.log('=== FACEBOOK RAID DEBUG ===');
-        console.log('Raid ID:', raidId);
-        console.log('Raid Title:', raid.title);
-        console.log('Facebook URL:', raid[postUrlField]);
-        console.log('URL Field Name:', postUrlField);
-        
         // Try multiple Facebook URL patterns
         let postIdMatch = raid[postUrlField].match(/\/posts\/(\d+)/);
-        console.log('Pattern 1 (/posts/):', postIdMatch ? 'MATCHED' : 'NO MATCH');
-        
         if (!postIdMatch) {
           // Try alternative Facebook URL patterns
           postIdMatch = raid[postUrlField].match(/\/permalink\/(\d+)/);
-          console.log('Pattern 2 (/permalink/):', postIdMatch ? 'MATCHED' : 'NO MATCH');
         }
         if (!postIdMatch) {
           // Try share pattern (like https://www.facebook.com/share/p/16kFXY8yMC/)
           postIdMatch = raid[postUrlField].match(/\/share\/p\/([a-zA-Z0-9]+)/);
-          console.log('Pattern 3 (/share/p/):', postIdMatch ? 'MATCHED' : 'NO MATCH');
         }
         if (!postIdMatch) {
           // Try video share pattern (like https://www.facebook.com/share/v/1EycYSjoew/)
           postIdMatch = raid[postUrlField].match(/\/share\/v\/([a-zA-Z0-9]+)/);
-          console.log('Pattern 3.5 (/share/v/):', postIdMatch ? 'MATCHED' : 'NO MATCH');
         }
         if (!postIdMatch) {
           // Try another pattern
           postIdMatch = raid[postUrlField].match(/\/story\.php\?story_fbid=(\d+)/);
-          console.log('Pattern 4 (/story.php):', postIdMatch ? 'MATCHED' : 'NO MATCH');
         }
         if (!postIdMatch) {
           // Try one more pattern
           postIdMatch = raid[postUrlField].match(/\/photo\.php\?fbid=(\d+)/);
-          console.log('Pattern 5 (/photo.php):', postIdMatch ? 'MATCHED' : 'NO MATCH');
         }
         
         if (!postIdMatch) {
-          console.log('❌ NO PATTERN MATCHED - Invalid Facebook URL format');
-          console.log('=== END FACEBOOK RAID DEBUG ===');
           await telegramService.sendBotMessage(chatId, 
             "❌ Invalid Facebook URL. Please contact support.");
           return;
         }
         postId = postIdMatch[1];
-        console.log('✅ Extracted Post ID:', postId);
-        console.log('=== END FACEBOOK RAID DEBUG ===');
       }
 
       // Create completion record
