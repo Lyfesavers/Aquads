@@ -38,7 +38,6 @@ import Footer from './components/Footer';
 import Whitepaper from './components/Whitepaper';
 import HowTo from './components/HowTo';
 import BlogPage from './components/BlogPage';
-import ServicePage from './components/ServicePage';
 import Affiliate from './components/Affiliate';
 import Terms from './components/Terms';
 import PrivacyPolicy from './components/PrivacyPolicy';
@@ -2606,15 +2605,6 @@ function App() {
               onLogout={handleLogout}
               onCreateAccount={handleCreateAccount}
               onBannerSubmit={handleBannerSubmit}
-              openMintFunnelPlatform={openMintFunnelPlatform}
-            />
-          } />
-          <Route path="/service/:slug" element={
-            <ServicePage 
-              currentUser={currentUser}
-              onLogin={handleLogin}
-              onLogout={handleLogout}
-              onCreateAccount={handleCreateAccount}
               openMintFunnelPlatform={openMintFunnelPlatform}
             />
           } />
