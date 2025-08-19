@@ -25,8 +25,26 @@ import useUserStatusUpdates from '../hooks/useUserStatusUpdates';
 import ServiceMediaDisplay from './ServiceMediaDisplay';
 import SkillBadges from './SkillBadges';
 import logger from '../utils/logger';
-import CountryFlag from './CountryFlag';
-import UserImage from './UserImage';
+
+// Helper function for country flags - using images instead of emojis
+const CountryFlag = ({ countryCode }) => {
+  if (!countryCode) return null;
+  
+  const code = countryCode.toUpperCase();
+  
+  // Return an actual flag image from a CDN
+  return (
+    <img 
+      src={`https://flagcdn.com/w20/${code.toLowerCase()}.png`}
+      srcSet={`https://flagcdn.com/w40/${code.toLowerCase()}.png 2x`}
+      width="20" 
+      height="15"
+      alt={code}
+      title={code}
+      className="inline-block align-middle"
+    />
+  );
+};
 
 // Helper function to check if URL is valid
 const isValidUrl = (string) => {
@@ -71,7 +89,22 @@ const ServiceImageComponent = ({ src, alt, className }) => {
   );
 };
 
+const UserImage = ({ src, alt, className }) => {
+  const [imgSrc, setImgSrc] = useState(getImageUrl(src));
 
+  return (
+    <img 
+      src={imgSrc}
+      alt={alt}
+      className={className}
+      onError={(e) => {
+        logger.warn(`User image failed to load: ${imgSrc}`);
+        e.target.onerror = null;
+        setImgSrc('https://placehold.co/40x40?text=User');
+      }}
+    />
+  );
+};
 
 const ServiceBadgeComponent = ({ badge }) => {
   if (!badge) return null;
@@ -1399,7 +1432,10 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                           </div>
                           <div className="mt-4 flex flex-wrap gap-2">
                             <button
-                              onClick={() => window.location.href = `/service/${service._id}`}
+                              onClick={() => {
+                                const slug = service.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                                window.location.href = `/service/${slug}-${service._id}`;
+                              }}
                               className="inline-flex items-center px-3 py-1.5 text-sm bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 rounded-full transition-all duration-300"
                             >
                               <svg className="w-4 h-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">

@@ -410,6 +410,48 @@ router.post('/:id/reject', auth, async (req, res) => {
   }
 });
 
+// Create a new booking
+router.post('/:id/book', auth, async (req, res) => {
+  try {
+    const service = await Service.findById(req.params.id);
+    if (!service) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+
+    if (service.seller.toString() !== req.user.userId) {
+      return res.status(403).json({ message: 'Not authorized to book this service' });
+    }
+
+    const booking = new Booking({
+      service: req.params.id,
+      buyer: req.user.userId,
+      // Add other booking fields here
+    });
+
+    await booking.save();
+
+    // Add notification for the seller about the new booking
+    const bookingLink = `/dashboard?tab=bookings&booking=${booking._id}`;
+    const notificationMessage = `New booking received: ${service.title}`;
+
+    await createNotification(
+      service.seller,
+      'booking',
+      notificationMessage,
+      bookingLink,
+      {
+        relatedId: booking._id,
+        relatedModel: 'Booking'
+      }
+    );
+
+    res.status(201).json(booking);
+  } catch (error) {
+    console.error('Error creating booking:', error);
+    res.status(500).json({ message: 'Error creating booking', error: error.message });
+  }
+});
+
 // Get service details with analytics
 router.get('/:id/details', async (req, res) => {
   try {
@@ -455,48 +497,6 @@ router.get('/:id/details', async (req, res) => {
   } catch (error) {
     console.error('Error fetching service details:', error);
     res.status(500).json({ message: 'Error fetching service details', error: error.message });
-  }
-});
-
-// Create a new booking
-router.post('/:id/book', auth, async (req, res) => {
-  try {
-    const service = await Service.findById(req.params.id);
-    if (!service) {
-      return res.status(404).json({ message: 'Service not found' });
-    }
-
-    if (service.seller.toString() !== req.user.userId) {
-      return res.status(403).json({ message: 'Not authorized to book this service' });
-    }
-
-    const booking = new Booking({
-      service: req.params.id,
-      buyer: req.user.userId,
-      // Add other booking fields here
-    });
-
-    await booking.save();
-
-    // Add notification for the seller about the new booking
-    const bookingLink = `/dashboard?tab=bookings&booking=${booking._id}`;
-    const notificationMessage = `New booking received: ${service.title}`;
-
-    await createNotification(
-      service.seller,
-      'booking',
-      notificationMessage,
-      bookingLink,
-      {
-        relatedId: booking._id,
-        relatedModel: 'Booking'
-      }
-    );
-
-    res.status(201).json(booking);
-  } catch (error) {
-    console.error('Error creating booking:', error);
-    res.status(500).json({ message: 'Error creating booking', error: error.message });
   }
 });
 
