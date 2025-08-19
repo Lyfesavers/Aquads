@@ -452,11 +452,11 @@ const awardGameVotePoints = async (userId, gameId) => {
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       {
-        $inc: { points: 20 },
+        $inc: { points: 50 },
         lastActivity: new Date(), // Update activity when points are awarded
         $push: {
           pointsHistory: {
-            amount: 20,
+            amount: 50,
             reason: reason,
             gameId: gameId,
             createdAt: new Date()
@@ -495,11 +495,11 @@ const revokeGameVotePoints = async (userId, gameId) => {
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       {
-        $inc: { points: -20 },
+        $inc: { points: -50 },
         lastActivity: new Date(), // Update activity when points are revoked
         $push: {
           pointsHistory: {
-            amount: -20,
+            amount: -50,
             reason: 'Removed vote for a game',
             gameId: gameId,
             createdAt: new Date()
