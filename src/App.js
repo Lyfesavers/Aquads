@@ -2615,6 +2615,7 @@ function App() {
               onLogin={handleLogin}
               onLogout={handleLogout}
               onCreateAccount={handleCreateAccount}
+              openMintFunnelPlatform={openMintFunnelPlatform}
             />
           } />
           <Route path="/games/dots-and-boxes" element={<DotsAndBoxes currentUser={currentUser} />} />
