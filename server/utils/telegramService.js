@@ -4,6 +4,7 @@ const path = require('path');
 const FormData = require('form-data');
 const User = require('../models/User');
 const TwitterRaid = require('../models/TwitterRaid');
+const FacebookRaid = require('../models/FacebookRaid');
 const Ad = require('../models/Ad');
 const BotSettings = require('../models/BotSettings');
 
@@ -301,6 +302,8 @@ const telegramService = {
       await telegramService.handleLinkCommand(chatId, userId, text);
     } else if (text.startsWith('/twitter')) {
       await telegramService.handleTwitterCommand(chatId, userId, text);
+    } else if (text.startsWith('/facebook')) {
+      await telegramService.handleFacebookCommand(chatId, userId, text);
     } else if (text.startsWith('/help')) {
       await telegramService.handleHelpCommand(chatId);
     } else if (text.startsWith('/bubbles')) {
@@ -320,8 +323,9 @@ const telegramService = {
     } else {
       // Only respond if user is in conversation state (waiting for username input)
       if (conversationState) {
+        const platform = conversationState.platform || 'Twitter';
         await telegramService.sendBotMessage(chatId, 
-          "📝 Please provide your Twitter username, or type /cancel to abort.");
+          `📝 Please provide your ${platform} username, or type /cancel to abort.`);
       }
       // No response for unknown commands to avoid interfering with group interactions
     }
@@ -340,7 +344,7 @@ const telegramService = {
 
     const message = `🚀 Welcome to Aquads Bot!
 
-Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and earn points.
+Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Facebook raids and earn points.
 
 📋 Requirements:
 • You MUST have an Aquads account to participate
@@ -348,22 +352,23 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 
 📋 Quick Start:
 1. Link your account: /link your_aquads_username
-2. Set your Twitter username: /twitter your_twitter_username
+2. Set your usernames: /twitter your_twitter_username and /facebook your_facebook_username
 3. View raids: /raids
 4. Complete raids: Use buttons or /complete command
 
 🔗 Available Commands:
 • /link USERNAME - Link your Telegram to Aquads account
 • /twitter [USERNAME] - Set or view your Twitter username for raids
-• /raids - View available Twitter raids
-• /complete RAID_ID @twitter_username TWEET_URL - Complete a raid manually
-• /createraid TWEET_URL - Create a new raid (2000 points)
+• /facebook [USERNAME] - Set or view your Facebook username for raids
+• /raids - View available Twitter and Facebook raids
+• /complete RAID_ID @username POST_URL - Complete a raid manually
+• /createraid TWEET_URL - Create a new Twitter raid (2000 points)
 • /mybubble - View your projects
 • /help - Show detailed command guide
 
 🌐 Track points & claim rewards on: https://aquads.xyz
 
-💡 First step: Link your account with /link your_aquads_username, then set your Twitter username with /twitter your_twitter_username`;
+💡 First step: Link your account with /link your_aquads_username, then set your usernames with /twitter your_twitter_username and /facebook your_facebook_username`;
 
     await telegramService.sendBotMessage(chatId, message);
   },
@@ -419,6 +424,57 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
     }
   },
 
+  // Handle /facebook command
+  handleFacebookCommand: async (chatId, telegramUserId, text) => {
+    try {
+      // Check if user is linked
+      const user = await User.findOne({ telegramId: telegramUserId.toString() });
+      
+      if (!user) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Please link your account first: /link your_username\n\n🌐 Create account at: https://aquads.xyz");
+        return;
+      }
+
+      const parts = text.split(' ');
+      
+      if (parts.length === 1) {
+        // Show current Facebook username
+        if (user.facebookUsername) {
+          await telegramService.sendBotMessage(chatId, 
+            `📱 Your Facebook username: @${user.facebookUsername}\n\n💡 To change it: /facebook new_username`);
+        } else {
+          await telegramService.sendBotMessage(chatId, 
+            `📱 No Facebook username set.\n\n💡 Set it: /facebook your_username\n\n💡 This will be used for all future Facebook raids!`);
+        }
+        return;
+      }
+
+      // Set new Facebook username
+      const newUsername = parts[1].replace('@', '').trim();
+      
+      // Validate Facebook username format
+      const usernameRegex = /^[a-zA-Z0-9_]{1,15}$/;
+      if (!usernameRegex.test(newUsername)) {
+        await telegramService.sendBotMessage(chatId, 
+          "❌ Invalid Facebook username. Use letters, numbers, underscores only (max 15 characters).");
+        return;
+      }
+
+      // Update user's Facebook username
+      user.facebookUsername = newUsername;
+      await user.save();
+
+      await telegramService.sendBotMessage(chatId, 
+        `✅ Facebook username set: @${newUsername}\n\n💡 This will be used automatically for all future Facebook raids!`);
+
+    } catch (error) {
+      console.error('Facebook command error:', error);
+      await telegramService.sendBotMessage(chatId, 
+        "❌ Error setting Facebook username. Please try again.");
+    }
+  },
+
   // Handle /help command
   handleHelpCommand: async (chatId) => {
     const message = `📋 Aquads Bot - Complete Command Guide
@@ -430,12 +486,13 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 🔗 Account Commands:
 • /link USERNAME - Link your Telegram to Aquads account (case sensitive)
 • /twitter [USERNAME] - Set or view your Twitter username for raids
+• /facebook [USERNAME] - Set or view your Facebook username for raids
 • /help - Show this help message
 
 📋 Raid Commands:
-• /raids - View all available Twitter raids
-• /complete RAID_ID [@twitter_username] TWEET_URL - Complete a raid manually (Twitter username optional if set)
-• /createraid TWEET_URL - Create a new raid (2000 points)
+• /raids - View all available Twitter and Facebook raids
+• /complete RAID_ID [@username] POST_URL - Complete a raid manually (username optional if set)
+• /createraid TWEET_URL - Create a new Twitter raid (2000 points)
 
 📋 Bubble Commands:
 • /bubbles - View top 10 bubbles with most bullish votes
@@ -444,23 +501,24 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 📝 Example Usage:
 /link myusername
 /twitter mytwitter
+/facebook myfacebook
 /raids
 /bubbles
 /mybubble
 /createraid https://twitter.com/user/status/123456789
-/complete 507f1f77bcf86cd799439011 https://twitter.com/user/status/123456789
 /complete 507f1f77bcf86cd799439011 @mytwitter https://twitter.com/user/status/123456789
+/complete 507f1f77bcf86cd799439011 @myfacebook https://facebook.com/user/posts/123456789
 
 💡 How Raids Work:
-1. Like, Retweet & Comment on the target tweet
+1. Like, Retweet & Comment on Twitter posts OR Like, Share & Comment on Facebook posts
 2. Use /raids to see available raids
 3. Click "Complete in Private Chat" button OR use /complete command
-4. Provide your Twitter username when prompted (or set it once with /twitter)
+4. Provide your username when prompted (or set it once with /twitter or /facebook)
 5. Wait for admin approval to receive points
 
 🚀 Getting Started:
 1. Link your account: /link your_aquads_username
-2. Set your Twitter username: /twitter your_twitter_username
+2. Set your usernames: /twitter your_twitter_username and /facebook your_facebook_username
 3. View available raids: /raids
 4. Complete raids using buttons or /complete command
 5. Create your own raids: /createraid (requires 2000 points)
@@ -564,21 +622,32 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
         return;
       }
 
-      // Get active raids
-      const raids = await TwitterRaid.find({ active: true })
+      // Get active Twitter raids
+      const twitterRaids = await TwitterRaid.find({ active: true })
         .sort({ createdAt: -1 })
         .limit(10);
 
-      if (raids.length === 0) {
+      // Get active Facebook raids
+      const facebookRaids = await FacebookRaid.find({ active: true })
+        .sort({ createdAt: -1 })
+        .limit(10);
+
+      // Combine and sort all raids by creation date
+      const allRaids = [
+        ...twitterRaids.map(raid => ({ ...raid.toObject(), platform: 'Twitter' })),
+        ...facebookRaids.map(raid => ({ ...raid.toObject(), platform: 'Facebook' }))
+      ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      if (allRaids.length === 0) {
         await telegramService.sendBotMessage(chatId, 
-          "📭 No active raids available right now.\n\n⏰ Check back later for new Twitter raids!\n\n💡 Raids are posted regularly throughout the day.\n\n🌐 Track your points on: https://aquads.xyz");
+          "📭 No active raids available right now.\n\n⏰ Check back later for new raids!\n\n💡 Raids are posted regularly throughout the day.\n\n🌐 Track your points on: https://aquads.xyz");
         return;
       }
 
       // Filter raids older than 2 days
       const now = new Date();
       const twoDaysAgo = new Date(now.getTime() - (2 * 24 * 60 * 60 * 1000));
-      const activeRaids = raids.filter(raid => new Date(raid.createdAt) > twoDaysAgo);
+      const activeRaids = allRaids.filter(raid => new Date(raid.createdAt) > twoDaysAgo);
 
       if (activeRaids.length === 0) {
         await telegramService.sendBotMessage(chatId, 
@@ -594,13 +663,20 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
         );
 
         const status = userCompleted ? "✅ Completed" : "⏳ Available";
+        const platform = raid.platform;
+        const postUrl = platform === 'Facebook' ? raid.postUrl : raid.tweetUrl;
+        const taskDescription = platform === 'Facebook' ? 'Like, Share & Comment' : 'Like, Retweet & Comment';
+        const interactionNote = platform === 'Facebook' 
+          ? '⚠️ IMPORTANT: You must manually LIKE, SHARE, COMMENT on the Facebook post before completing!'
+          : '⚠️ IMPORTANT: You must manually LIKE, RETWEET, COMMENT & BOOKMARK the tweet before completing!';
         
         let message = `🚀 ${raid.title}\n\n`;
+        message += `📱 Platform: ${platform}\n`;
         message += `💰 Reward: ${raid.points} points\n`;
         message += `🎯 Task: ${raid.description}\n`;
-        message += `🔗 Tweet: ${raid.tweetUrl}\n`;
+        message += `🔗 ${platform === 'Facebook' ? 'Facebook Post' : 'Tweet'}: ${postUrl}\n`;
         message += `📊 Status: ${status}\n\n`;
-        message += `⚠️ IMPORTANT: You must manually LIKE, RETWEET, COMMENT & BOOKMARK the tweet before completing!`;
+        message += `${interactionNote}`;
 
         // Add button if not completed
         let keyboard = null;
@@ -619,8 +695,11 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
       }
 
       // Send summary
+      const twitterCount = activeRaids.filter(raid => raid.platform === 'Twitter').length;
+      const facebookCount = activeRaids.filter(raid => raid.platform === 'Facebook').length;
+      
       await telegramService.sendBotMessage(chatId, 
-        `📊 ${activeRaids.length} raids shown above\n\n💡 How to complete:\n• Click "Complete in Private Chat" button (easiest)\n• Or use: /complete RAID_ID @twitter_username TWEET_URL\n\n⏰ Raids expire after 48 hours\n💡 Make sure to interact with tweets before completing!\n\n🌐 Track points & claim rewards on: https://aquads.xyz`);
+        `📊 ${activeRaids.length} raids shown above (${twitterCount} Twitter, ${facebookCount} Facebook)\n\n💡 How to complete:\n• Click "Complete in Private Chat" button (easiest)\n• Or use: /complete RAID_ID @username POST_URL\n\n⏰ Raids expire after 48 hours\n💡 Make sure to interact with posts before completing!\n\n🌐 Track points & claim rewards on: https://aquads.xyz`);
 
     } catch (error) {
       console.error('Raids command error:', error);
@@ -635,13 +714,13 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
     
     if (parts.length < 4) {
       await telegramService.sendBotMessage(chatId, 
-        "❌ Incorrect usage.\n\n📝 Usage: /complete RAID_ID @twitter_username TWEET_URL\n\n💡 Example: /complete 507f1f77bcf86cd799439011 @mytwitter https://twitter.com/user/status/123456789\n\n💡 Tip: Use /raids to get the correct raid ID and tweet URL.");
+        "❌ Incorrect usage.\n\n📝 Usage: /complete RAID_ID @username POST_URL\n\n💡 Example: /complete 507f1f77bcf86cd799439011 @mytwitter https://twitter.com/user/status/123456789\n💡 Example: /complete 507f1f77bcf86cd799439011 @myfacebook https://facebook.com/user/posts/123456789\n\n💡 Tip: Use /raids to get the correct raid ID and post URL.");
       return;
     }
 
     const raidId = parts[1].replace(/[\[\]]/g, ''); // Remove square brackets if present
-    const twitterUsername = parts[2].replace('@', ''); // Remove @ if present
-    const tweetUrl = parts[3];
+    const username = parts[2].replace('@', ''); // Remove @ if present
+    const postUrl = parts[3];
 
     // Validate ObjectId format
     if (!raidId || !/^[0-9a-fA-F]{24}$/.test(raidId)) {
@@ -660,8 +739,20 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
         return;
       }
 
-      // Find the raid
-      const raid = await TwitterRaid.findById(raidId);
+      // Try to find the raid in both Twitter and Facebook raids
+      let raid = await TwitterRaid.findById(raidId);
+      let platform = 'Twitter';
+      let usernameField = 'twitterUsername';
+      let postUrlField = 'tweetUrl';
+      let postIdField = 'tweetId';
+      
+      if (!raid) {
+        raid = await FacebookRaid.findById(raidId);
+        platform = 'Facebook';
+        usernameField = 'facebookUsername';
+        postUrlField = 'postUrl';
+        postIdField = 'postId';
+      }
       
       if (!raid) {
         await telegramService.sendBotMessage(chatId, 
@@ -686,30 +777,40 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
         return;
       }
 
-      // Validate Twitter username
+      // Validate username
       const usernameRegex = /^[a-zA-Z0-9_]{1,15}$/;
-      if (!usernameRegex.test(twitterUsername)) {
+      if (!usernameRegex.test(username)) {
         await telegramService.sendBotMessage(chatId, 
-          "❌ Invalid Twitter username. Please use letters, numbers, and underscores only (max 15 characters).");
+          `❌ Invalid ${platform} username. Please use letters, numbers, and underscores only (max 15 characters).`);
         return;
       }
 
-      // Extract tweet ID from URL
-      const tweetIdMatch = tweetUrl.match(/\/status\/(\d+)/);
-      if (!tweetIdMatch || !tweetIdMatch[1]) {
-        await telegramService.sendBotMessage(chatId, 
-          "❌ Invalid Twitter URL. Please provide a valid tweet URL.");
-        return;
+      // Extract post ID from URL based on platform
+      let postId = null;
+      if (platform === 'Twitter') {
+        const tweetIdMatch = postUrl.match(/\/status\/(\d+)/);
+        if (!tweetIdMatch || !tweetIdMatch[1]) {
+          await telegramService.sendBotMessage(chatId, 
+            "❌ Invalid Twitter URL. Please provide a valid tweet URL.");
+          return;
+        }
+        postId = tweetIdMatch[1];
+      } else if (platform === 'Facebook') {
+        const postIdMatch = postUrl.match(/\/posts\/(\d+)/);
+        if (!postIdMatch || !postIdMatch[1]) {
+          await telegramService.sendBotMessage(chatId, 
+            "❌ Invalid Facebook URL. Please provide a valid Facebook post URL.");
+          return;
+        }
+        postId = postIdMatch[1];
       }
-
-      const tweetId = tweetIdMatch[1];
 
       // Create completion record (similar to existing API)
       const completion = {
         userId: user._id,
-        twitterUsername: twitterUsername,
-        tweetUrl: tweetUrl,
-        tweetId: tweetId,
+        [usernameField]: username,
+        [postUrlField]: postUrl,
+        [postIdField]: postId,
         verificationCode: 'aquads.xyz',
         verificationMethod: 'manual',
         verified: true,
@@ -735,10 +836,10 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
       });
 
       await telegramService.sendBotMessage(chatId, 
-        `✅ Raid Submitted Successfully!
+        `✅ ${platform} Raid Submitted Successfully!
 
-📝 Twitter: @${twitterUsername}
-🔗 Tweet: ${tweetUrl}
+📝 ${platform}: @${username}
+🔗 ${platform === 'Facebook' ? 'Facebook Post' : 'Tweet'}: ${postUrl}
 ⏳ Status: Pending admin approval
 💰 Reward: ${raid.points} points (after approval)
 
@@ -1110,8 +1211,26 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
         return;
       }
 
-      // Find the raid
-      const raid = await TwitterRaid.findById(raidId);
+      // Try to find the raid in both Twitter and Facebook raids
+      let raid = await TwitterRaid.findById(raidId);
+      let platform = 'Twitter';
+      let usernameField = 'twitterUsername';
+      let postUrlField = 'tweetUrl';
+      let storedUsername = user.twitterUsername;
+      let interactionInstructions = '✅ LIKED the tweet\n✅ RETWEETED the tweet\n✅ COMMENTED on the tweet\n✅ BOOKMARKED the tweet';
+      let usernamePrompt = 'Twitter username';
+      let usernameCommand = '/twitter';
+      
+      if (!raid) {
+        raid = await FacebookRaid.findById(raidId);
+        platform = 'Facebook';
+        usernameField = 'facebookUsername';
+        postUrlField = 'postUrl';
+        storedUsername = user.facebookUsername;
+        interactionInstructions = '✅ LIKED the Facebook post\n✅ SHARED the Facebook post\n✅ COMMENTED on the Facebook post';
+        usernamePrompt = 'Facebook username';
+        usernameCommand = '/facebook';
+      }
       
       if (!raid || !raid.active) {
         await telegramService.sendBotMessage(chatId, 
@@ -1130,23 +1249,24 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
         return;
       }
 
-      // Check if user has Twitter username set
-      if (user.twitterUsername) {
-        // Use stored Twitter username automatically
-        await telegramService.completeRaidWithStoredUsername(chatId, telegramUserId, raidId, user.twitterUsername);
+      // Check if user has username set for the platform
+      if (storedUsername) {
+        // Use stored username automatically
+        await telegramService.completeRaidWithStoredUsername(chatId, telegramUserId, raidId, storedUsername, platform);
       } else {
         // Set conversation state to ask for username
         telegramService.setConversationState(telegramUserId, {
           action: 'waiting_username',
           raidId: raidId,
-          tweetUrl: raid.tweetUrl,
+          platform: platform,
+          postUrl: raid[postUrlField],
           raidTitle: raid.title,
           raidPoints: raid.points
         });
 
         // Ask for username
         await telegramService.sendBotMessage(chatId, 
-          `🚀 Completing: ${raid.title}\n\n⚠️ BEFORE CONTINUING: Make sure you have already:\n✅ LIKED the tweet\n✅ RETWEETED the tweet\n✅ COMMENTED on the tweet\n✅ BOOKMARKED the tweet\n\n📝 Now enter your Twitter username (without @):\n\n💡 Example: myusername\n\n💡 Tip: Set your Twitter username with /twitter your_username to avoid entering it every time!`);
+          `🚀 Completing: ${raid.title}\n\n⚠️ BEFORE CONTINUING: Make sure you have already:\n${interactionInstructions}\n\n📝 Now enter your ${usernamePrompt} (without @):\n\n💡 Example: myusername\n\n💡 Tip: Set your ${usernamePrompt} with ${usernameCommand} your_username to avoid entering it every time!`);
       }
 
     } catch (error) {
@@ -1156,12 +1276,22 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
     }
   },
 
-  // Complete raid with stored Twitter username
-  completeRaidWithStoredUsername: async (chatId, telegramUserId, raidId, twitterUsername) => {
+  // Complete raid with stored username
+  completeRaidWithStoredUsername: async (chatId, telegramUserId, raidId, username, platform = 'Twitter') => {
     try {
       // Get user and raid
       const user = await User.findOne({ telegramId: telegramUserId.toString() });
-      const raid = await TwitterRaid.findById(raidId);
+      let raid = await TwitterRaid.findById(raidId);
+      let usernameField = 'twitterUsername';
+      let postUrlField = 'tweetUrl';
+      let postIdField = 'tweetId';
+      
+      if (!raid) {
+        raid = await FacebookRaid.findById(raidId);
+        usernameField = 'facebookUsername';
+        postUrlField = 'postUrl';
+        postIdField = 'postId';
+      }
       
       if (!user || !raid) {
         await telegramService.sendBotMessage(chatId, 
@@ -1169,20 +1299,32 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
         return;
       }
 
-      // Extract tweet ID
-      const tweetIdMatch = raid.tweetUrl.match(/\/status\/(\d+)/);
-      if (!tweetIdMatch) {
-        await telegramService.sendBotMessage(chatId, 
-          "❌ Invalid tweet URL. Please contact support.");
-        return;
+      // Extract post ID based on platform
+      let postId = null;
+      if (platform === 'Twitter') {
+        const tweetIdMatch = raid.tweetUrl.match(/\/status\/(\d+)/);
+        if (!tweetIdMatch) {
+          await telegramService.sendBotMessage(chatId, 
+            "❌ Invalid tweet URL. Please contact support.");
+          return;
+        }
+        postId = tweetIdMatch[1];
+      } else if (platform === 'Facebook') {
+        const postIdMatch = raid.postUrl.match(/\/posts\/(\d+)/);
+        if (!postIdMatch) {
+          await telegramService.sendBotMessage(chatId, 
+            "❌ Invalid Facebook URL. Please contact support.");
+          return;
+        }
+        postId = postIdMatch[1];
       }
 
       // Create completion record
       const completion = {
         userId: user._id,
-        twitterUsername: twitterUsername,
-        tweetUrl: raid.tweetUrl,
-        tweetId: tweetIdMatch[1],
+        [usernameField]: username,
+        [postUrlField]: raid[postUrlField],
+        [postIdField]: postId,
         verificationCode: 'aquads.xyz',
         verificationMethod: 'manual',
         verified: true,
@@ -1207,7 +1349,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 
       // Success message
       await telegramService.sendBotMessage(chatId, 
-        `✅ Raid submitted successfully!\n\n📝 Twitter: @${twitterUsername}\n💰 Reward: ${raid.points} points\n⏳ Status: Pending admin approval\n\n📋 What happens next:\n• Admin will review your submission\n• Points will be awarded after verification\n\n🌐 Track points & claim rewards on: https://aquads.xyz\n\n💡 Use /raids to see more available raids!`);
+        `✅ ${platform} Raid submitted successfully!\n\n📝 ${platform}: @${username}\n💰 Reward: ${raid.points} points\n⏳ Status: Pending admin approval\n\n📋 What happens next:\n• Admin will review your submission\n• Points will be awarded after verification\n\n🌐 Track points & claim rewards on: https://aquads.xyz\n\n💡 Use /raids to see more available raids!`);
 
     } catch (error) {
       console.error('Complete raid with stored username error:', error);
@@ -1223,18 +1365,31 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
       telegramService.clearConversationState(telegramUserId);
 
       // Clean username
-      const twitterUsername = username.trim().replace('@', '');
+      const cleanUsername = username.trim().replace('@', '');
       const usernameRegex = /^[a-zA-Z0-9_]{1,15}$/;
       
-      if (!usernameRegex.test(twitterUsername)) {
+      if (!usernameRegex.test(cleanUsername)) {
+        const platform = state.platform || 'Twitter';
         await telegramService.sendBotMessage(chatId, 
-          "❌ Invalid Twitter username. Use /raids to try again.");
+          `❌ Invalid ${platform} username. Use /raids to try again.`);
         return;
       }
 
       // Get user and raid
       const user = await User.findOne({ telegramId: telegramUserId.toString() });
-      const raid = await TwitterRaid.findById(state.raidId);
+      let raid = await TwitterRaid.findById(state.raidId);
+      let platform = 'Twitter';
+      let usernameField = 'twitterUsername';
+      let postUrlField = 'tweetUrl';
+      let postIdField = 'tweetId';
+      
+      if (!raid) {
+        raid = await FacebookRaid.findById(state.raidId);
+        platform = 'Facebook';
+        usernameField = 'facebookUsername';
+        postUrlField = 'postUrl';
+        postIdField = 'postId';
+      }
       
       if (!user || !raid) {
         await telegramService.sendBotMessage(chatId, 
@@ -1242,32 +1397,38 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
         return;
       }
 
-      // Store Twitter username if not already set
-      if (!user.twitterUsername) {
-        user.twitterUsername = twitterUsername;
+      // Store username if not already set
+      if (!user[usernameField]) {
+        user[usernameField] = cleanUsername;
         await user.save();
       }
-      
-      if (!user || !raid) {
-        await telegramService.sendBotMessage(chatId, 
-          "❌ Error finding user or raid. Please try again.");
-        return;
-      }
 
-      // Extract tweet ID
-      const tweetIdMatch = state.tweetUrl.match(/\/status\/(\d+)/);
-      if (!tweetIdMatch) {
-        await telegramService.sendBotMessage(chatId, 
-          "❌ Invalid tweet URL. Please contact support.");
-        return;
+      // Extract post ID based on platform
+      let postId = null;
+      if (platform === 'Twitter') {
+        const tweetIdMatch = state.postUrl.match(/\/status\/(\d+)/);
+        if (!tweetIdMatch) {
+          await telegramService.sendBotMessage(chatId, 
+            "❌ Invalid tweet URL. Please contact support.");
+          return;
+        }
+        postId = tweetIdMatch[1];
+      } else if (platform === 'Facebook') {
+        const postIdMatch = state.postUrl.match(/\/posts\/(\d+)/);
+        if (!postIdMatch) {
+          await telegramService.sendBotMessage(chatId, 
+            "❌ Invalid Facebook URL. Please contact support.");
+          return;
+        }
+        postId = postIdMatch[1];
       }
 
       // Create completion record
       const completion = {
         userId: user._id,
-        twitterUsername: twitterUsername,
-        tweetUrl: state.tweetUrl,
-        tweetId: tweetIdMatch[1],
+        [usernameField]: cleanUsername,
+        [postUrlField]: state.postUrl,
+        [postIdField]: postId,
         verificationCode: 'aquads.xyz',
         verificationMethod: 'manual',
         verified: true,
@@ -1292,7 +1453,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter raids and
 
       // Success message
       await telegramService.sendBotMessage(chatId, 
-        `✅ Raid submitted successfully!\n\n📝 Twitter: @${twitterUsername}\n💰 Reward: ${state.raidPoints} points\n⏳ Status: Pending admin approval\n\n📋 What happens next:\n• Admin will review your submission\n• Points will be awarded after verification\n\n🌐 Track points & claim rewards on: https://aquads.xyz\n\n💡 Use /raids to see more available raids!`);
+        `✅ ${platform} Raid submitted successfully!\n\n📝 ${platform}: @${cleanUsername}\n💰 Reward: ${state.raidPoints} points\n⏳ Status: Pending admin approval\n\n📋 What happens next:\n• Admin will review your submission\n• Points will be awarded after verification\n\n🌐 Track points & claim rewards on: https://aquads.xyz\n\n💡 Use /raids to see more available raids!`);
 
     } catch (error) {
       console.error('Username input error:', error);

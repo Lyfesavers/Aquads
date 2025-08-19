@@ -71,6 +71,11 @@ const userSchema = new Schema({
     default: null,
     trim: true
   },
+  facebookUsername: {
+    type: String,
+    default: null,
+    trim: true
+  },
   isAdmin: {
     type: Boolean,
     default: false
