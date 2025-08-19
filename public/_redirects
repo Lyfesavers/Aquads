@@ -7,8 +7,7 @@
 # SEO-friendly URL redirect for blogs (for regular users)
 /how-to/*-:id /how-to?blogId=:id 301
 
-# Handle service pages
-/service/* /service.html 200
+# Handle service pages - removed to allow React Router to handle /service/:slug routes
 
 # Duck Hunt game clean URL
 /duck-hunt-game /duck-hunt-game.html 200

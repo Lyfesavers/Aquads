@@ -38,6 +38,7 @@ import Footer from './components/Footer';
 import Whitepaper from './components/Whitepaper';
 import HowTo from './components/HowTo';
 import BlogPage from './components/BlogPage';
+import ServicePage from './components/ServicePage';
 import Affiliate from './components/Affiliate';
 import Terms from './components/Terms';
 import PrivacyPolicy from './components/PrivacyPolicy';
@@ -3587,6 +3588,7 @@ function App() {
                       <Route path="/whitepaper" element={<Whitepaper />} />
             <Route path="/how-to" element={<HowTo currentUser={currentUser} onLogin={handleLogin} onLogout={handleLogout} onCreateAccount={handleCreateAccount} openMintFunnelPlatform={openMintFunnelPlatform} />} />
                                  <Route path="/how-to/:slug" element={<BlogPage currentUser={currentUser} onLogin={handleLogin} onLogout={handleLogout} onCreateAccount={handleCreateAccount} openMintFunnelPlatform={openMintFunnelPlatform} />} />
+            <Route path="/service/:slug" element={<ServicePage currentUser={currentUser} onLogin={handleLogin} onLogout={handleLogout} onCreateAccount={handleCreateAccount} openMintFunnelPlatform={openMintFunnelPlatform} />} />
             <Route path="/affiliate" element={<Affiliate />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
