@@ -25,26 +25,8 @@ import useUserStatusUpdates from '../hooks/useUserStatusUpdates';
 import ServiceMediaDisplay from './ServiceMediaDisplay';
 import SkillBadges from './SkillBadges';
 import logger from '../utils/logger';
-
-// Helper function for country flags - using images instead of emojis
-const CountryFlag = ({ countryCode }) => {
-  if (!countryCode) return null;
-  
-  const code = countryCode.toUpperCase();
-  
-  // Return an actual flag image from a CDN
-  return (
-    <img 
-      src={`https://flagcdn.com/w20/${code.toLowerCase()}.png`}
-      srcSet={`https://flagcdn.com/w40/${code.toLowerCase()}.png 2x`}
-      width="20" 
-      height="15"
-      alt={code}
-      title={code}
-      className="inline-block align-middle"
-    />
-  );
-};
+import CountryFlag from './CountryFlag';
+import UserImage from './UserImage';
 
 // Helper function to check if URL is valid
 const isValidUrl = (string) => {
@@ -89,22 +71,7 @@ const ServiceImageComponent = ({ src, alt, className }) => {
   );
 };
 
-const UserImage = ({ src, alt, className }) => {
-  const [imgSrc, setImgSrc] = useState(getImageUrl(src));
 
-  return (
-    <img 
-      src={imgSrc}
-      alt={alt}
-      className={className}
-      onError={(e) => {
-        logger.warn(`User image failed to load: ${imgSrc}`);
-        e.target.onerror = null;
-        setImgSrc('https://placehold.co/40x40?text=User');
-      }}
-    />
-  );
-};
 
 const ServiceBadgeComponent = ({ badge }) => {
   if (!badge) return null;
@@ -1431,6 +1398,16 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                             </div>
                           </div>
                           <div className="mt-4 flex flex-wrap gap-2">
+                            <button
+                              onClick={() => window.location.href = `/service/${service._id}`}
+                              className="inline-flex items-center px-3 py-1.5 text-sm bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 rounded-full transition-all duration-300"
+                            >
+                              <svg className="w-4 h-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                              </svg>
+                              View Full Details
+                            </button>
                             <button
                               onClick={() => {
                                 const referralCode = currentUser?.username || ''; // Get current user's username as referral code

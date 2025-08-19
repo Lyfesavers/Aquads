@@ -50,6 +50,7 @@ import BannerDisplay from './components/BannerDisplay';
 
 import ProjectInfo from './components/ProjectInfo';
 import FreelancerBenefits from './components/FreelancerBenefits';
+import ServiceDetails from './components/ServiceDetails';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import emailService from './services/emailService';
@@ -2606,6 +2607,12 @@ function App() {
               onCreateAccount={handleCreateAccount}
               onBannerSubmit={handleBannerSubmit}
               openMintFunnelPlatform={openMintFunnelPlatform}
+            />
+          } />
+          <Route path="/service/:serviceId" element={
+            <ServiceDetails 
+              currentUser={currentUser}
+              showNotification={showNotification}
             />
           } />
           <Route path="/games/dots-and-boxes" element={<DotsAndBoxes currentUser={currentUser} />} />
