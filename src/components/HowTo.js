@@ -12,7 +12,7 @@ import ProfileModal from './ProfileModal';
 import Dashboard from './Dashboard';
 import { API_URL } from '../services/api';
 
-const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
+const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnelPlatform }) => {
   const [blogs, setBlogs] = useState([]);
   const [showCreateBlogModal, setShowCreateBlogModal] = useState(false);
   const [editingBlog, setEditingBlog] = useState(null);
@@ -297,12 +297,12 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
               >
                 Games
               </Link>
-              <Link
-                to="/crypto-ads"
+              <button
+                onClick={openMintFunnelPlatform}
                 className="bg-gradient-to-r from-green-500/80 to-emerald-600/80 hover:from-green-600/80 hover:to-emerald-700/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
               >
                 Paid Ads
-              </Link>
+              </button>
               <Link
                 to="/how-to"
                 className="bg-indigo-500/80 hover:bg-indigo-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
@@ -428,12 +428,12 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
               >
                 GameHub
               </Link>
-              <Link
-                to="/crypto-ads"
+              <button
+                onClick={openMintFunnelPlatform}
                 className="bg-gradient-to-r from-green-500/80 to-emerald-600/80 hover:from-green-600/80 hover:to-emerald-700/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm text-center"
               >
                 Paid Ads
-              </Link>
+              </button>
               <Link
                 to="/how-to"
                 className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"

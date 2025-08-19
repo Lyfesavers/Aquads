@@ -47,7 +47,7 @@ import AquaSwapEmbed from './components/AquaSwapEmbed';
 import TransakPage from './components/TransakPage';
 import VerifyUser from './components/VerifyUser';
 import BannerDisplay from './components/BannerDisplay';
-import CryptoAdNetwork from './components/CryptoAdNetwork';
+
 import ProjectInfo from './components/ProjectInfo';
 import FreelancerBenefits from './components/FreelancerBenefits';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
@@ -2605,6 +2605,7 @@ function App() {
               onLogout={handleLogout}
               onCreateAccount={handleCreateAccount}
               onBannerSubmit={handleBannerSubmit}
+              openMintFunnelPlatform={openMintFunnelPlatform}
             />
           } />
           <Route path="/games/dots-and-boxes" element={<DotsAndBoxes currentUser={currentUser} />} />
@@ -2614,6 +2615,7 @@ function App() {
               onLogin={handleLogin}
               onLogout={handleLogout}
               onCreateAccount={handleCreateAccount}
+              openMintFunnelPlatform={openMintFunnelPlatform}
             />
           } />
           <Route path="/" element={
@@ -3583,8 +3585,8 @@ function App() {
             </div>
           } />
                       <Route path="/whitepaper" element={<Whitepaper />} />
-            <Route path="/how-to" element={<HowTo currentUser={currentUser} onLogin={handleLogin} onLogout={handleLogout} onCreateAccount={handleCreateAccount} />} />
-                                 <Route path="/how-to/:slug" element={<BlogPage currentUser={currentUser} onLogin={handleLogin} onLogout={handleLogout} onCreateAccount={handleCreateAccount} />} />
+            <Route path="/how-to" element={<HowTo currentUser={currentUser} onLogin={handleLogin} onLogout={handleLogout} onCreateAccount={handleCreateAccount} openMintFunnelPlatform={openMintFunnelPlatform} />} />
+                                 <Route path="/how-to/:slug" element={<BlogPage currentUser={currentUser} onLogin={handleLogin} onLogout={handleLogout} onCreateAccount={handleCreateAccount} openMintFunnelPlatform={openMintFunnelPlatform} />} />
             <Route path="/affiliate" element={<Affiliate />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
@@ -3593,14 +3595,7 @@ function App() {
             <Route path="/swap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} />} />
             <Route path="/aquaswap" element={<AquaSwap currentUser={currentUser} showNotification={showNotification} />} />
             <Route path="/buy-crypto" element={<TransakPage currentUser={currentUser} showNotification={showNotification} />} />
-            <Route path="/crypto-ads" element={
-              <CryptoAdNetwork 
-                currentUser={currentUser}
-                setCurrentUser={setCurrentUser}
-                showNotification={showNotification}
-                handleLogout={handleLogout}
-              />
-            } />
+
             <Route path="/embed/aquaswap" element={<AquaSwapEmbed />} />
             <Route path="/project-info" element={<ProjectInfo currentUser={currentUser} />} />
             <Route path="/freelancer-benefits" element={<FreelancerBenefits currentUser={currentUser} />} />

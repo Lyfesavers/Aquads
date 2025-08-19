@@ -129,7 +129,7 @@ const ServiceBadgeComponent = ({ badge }) => {
   );
 };
 
-const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
+const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBannerSubmit, openMintFunnelPlatform }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [services, setServices] = useState([]);
@@ -885,12 +885,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
               >
                 Games
               </Link>
-              <Link
-                to="/crypto-ads"
+              <button
+                onClick={openMintFunnelPlatform}
                 className="bg-gradient-to-r from-green-500/80 to-emerald-600/80 hover:from-green-600/80 hover:to-emerald-700/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
               >
                 Paid Ads
-              </Link>
+              </button>
               <Link
                 to="/how-to"
                 className="bg-indigo-500/80 hover:bg-indigo-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
@@ -1009,12 +1009,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount }) => {
               >
                 GameHub
               </Link>
-              <Link
-                to="/crypto-ads"
+              <button
+                onClick={openMintFunnelPlatform}
                 className="bg-gradient-to-r from-green-500/80 to-emerald-600/80 hover:from-green-600/80 hover:to-emerald-700/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm text-center"
               >
                 Paid Ads
-              </Link>
+              </button>
               <Link
                 to="/how-to"
                 className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
