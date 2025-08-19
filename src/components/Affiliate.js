@@ -203,7 +203,7 @@ const Affiliate = () => {
                         </div>
                         <div className="flex justify-between items-center py-2 border-b border-gray-600">
                           <span className="text-gray-300">Game votes in GameHub</span>
-                          <span className="text-green-400 font-bold">20 pts</span>
+                          <span className="text-green-400 font-bold">50 pts</span>
                         </div>
                       </div>
                       <div className="space-y-3">
@@ -243,6 +243,45 @@ const Affiliate = () => {
                   </div>
                 </div>
 
+                                 <div>
+                   <h3 className="text-xl font-semibold mb-3 text-indigo-400">Point Usage Options:</h3>
+                   <div className="bg-gray-700/50 rounded-lg p-6 mb-4">
+                     <h4 className="text-lg font-semibold mb-3 text-indigo-400">Create Social Media Raids:</h4>
+                     <p className="text-gray-300 mb-3">
+                       Use your points to create your own social media raids on Twitter and Facebook! This is a powerful way to promote projects and earn engagement.
+                     </p>
+                     <div className="flex justify-between items-center py-2 border-b border-gray-600">
+                       <span className="text-gray-300">Create Twitter Raid</span>
+                       <span className="text-red-400 font-bold">2000 pts</span>
+                     </div>
+                     <div className="flex justify-between items-center py-2 border-b border-gray-600">
+                       <span className="text-gray-300">Create Facebook Raid</span>
+                       <span className="text-red-400 font-bold">2000 pts</span>
+                     </div>
+                     <p className="text-sm text-gray-400 mt-3">
+                       * Creating raids allows you to promote projects and earn engagement from the community
+                     </p>
+                   </div>
+
+                   <div className="bg-gray-700/50 rounded-lg p-6 mb-4">
+                     <h4 className="text-lg font-semibold mb-3 text-indigo-400">Dots and Boxes Game Power-ups:</h4>
+                     <p className="text-gray-300 mb-3">
+                       Use your points to purchase power-ups in our Dots and Boxes game! These power-ups give you extra moves to help you win against the AI opponent.
+                     </p>
+                     <div className="flex justify-between items-center py-2 border-b border-gray-600">
+                       <span className="text-gray-300">2 Extra Moves Power-up</span>
+                       <span className="text-red-400 font-bold">500 pts</span>
+                     </div>
+                     <div className="flex justify-between items-center py-2 border-b border-gray-600">
+                       <span className="text-gray-300">4 Extra Moves Power-up</span>
+                       <span className="text-red-400 font-bold">900 pts</span>
+                     </div>
+                     <p className="text-sm text-gray-400 mt-3">
+                       * Power-ups give you additional moves in a single turn to capture more boxes and win the game
+                     </p>
+                   </div>
+                 </div>
+
                 <div>
                   <h3 className="text-xl font-semibold mb-3 text-indigo-400">Why Points Matter:</h3>
                   <ul className="list-disc list-inside text-gray-300 space-y-2">
@@ -251,13 +290,15 @@ const Affiliate = () => {
                     <li>Build credibility and trust with your referrals</li>
                     <li>Demonstrate your commitment to the Web3 freelancing ecosystem</li>
                     <li>Earn additional incentives on top of commission payments</li>
+                    <li>Create your own social media raids to promote projects and earn engagement</li>
+                    <li>Purchase power-ups in our Dots and Boxes game to enhance your gaming experience</li>
                   </ul>
                 </div>
 
                 <div className="bg-blue-900/30 border border-blue-600/50 rounded-lg p-4">
                   <p className="text-blue-300 text-sm">
                     <strong>💡 Pro Tip:</strong> Points are automatically awarded when you or your referrals complete qualifying actions. 
-                    Check your dashboard regularly to track your points balance and see your earning history!
+                    Check your dashboard regularly to track your points balance and see your earning history! You can also use points to create social media raids for project promotion.
                   </p>
                 </div>
               </div>
