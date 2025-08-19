@@ -148,6 +148,9 @@ facebookRaidSchema.pre('save', function(next) {
       matches = this.postUrl.match(/\/share\/p\/([a-zA-Z0-9]+)/);
     }
     if (!matches) {
+      matches = this.postUrl.match(/\/share\/v\/([a-zA-Z0-9]+)/);
+    }
+    if (!matches) {
       matches = this.postUrl.match(/\/story\.php\?story_fbid=(\d+)/);
     }
     if (!matches) {

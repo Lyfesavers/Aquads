@@ -1338,6 +1338,11 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
           console.log('Pattern 3 (/share/p/):', postIdMatch ? 'MATCHED' : 'NO MATCH');
         }
         if (!postIdMatch) {
+          // Try video share pattern (like https://www.facebook.com/share/v/1EycYSjoew/)
+          postIdMatch = raid[postUrlField].match(/\/share\/v\/([a-zA-Z0-9]+)/);
+          console.log('Pattern 3.5 (/share/v/):', postIdMatch ? 'MATCHED' : 'NO MATCH');
+        }
+        if (!postIdMatch) {
           // Try another pattern
           postIdMatch = raid[postUrlField].match(/\/story\.php\?story_fbid=(\d+)/);
           console.log('Pattern 4 (/story.php):', postIdMatch ? 'MATCHED' : 'NO MATCH');
