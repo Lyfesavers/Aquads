@@ -1302,7 +1302,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
       // Extract post ID based on platform
       let postId = null;
       if (platform === 'Twitter') {
-        const tweetIdMatch = raid.tweetUrl.match(/\/status\/(\d+)/);
+        const tweetIdMatch = raid[postUrlField].match(/\/status\/(\d+)/);
         if (!tweetIdMatch) {
           await telegramService.sendBotMessage(chatId, 
             "❌ Invalid tweet URL. Please contact support.");
@@ -1310,7 +1310,7 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
         }
         postId = tweetIdMatch[1];
       } else if (platform === 'Facebook') {
-        const postIdMatch = raid.postUrl.match(/\/posts\/(\d+)/);
+        const postIdMatch = raid[postUrlField].match(/\/posts\/(\d+)/);
         if (!postIdMatch) {
           await telegramService.sendBotMessage(chatId, 
             "❌ Invalid Facebook URL. Please contact support.");
