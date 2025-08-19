@@ -541,7 +541,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                 
                 <div className="flex items-center gap-4 mb-4">
                   <div className="text-4xl font-bold text-yellow-400">
-                    {service.rating || '0.0'}
+                    {service.rating ? service.rating.toFixed(1) : '0.0'}
                   </div>
                   <div>
                     <div className="flex items-center gap-1 mb-1">
@@ -619,12 +619,12 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                 {/* Seller Stats */}
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <div className="text-center p-3 bg-gray-700/50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-400">{service.seller?.rating || '0.0'}</div>
-                    <div className="text-xs text-gray-400">Rating</div>
+                    <div className="text-2xl font-bold text-blue-400">{service.rating || '0.0'}</div>
+                    <div className="text-xs text-gray-400">Service Rating</div>
                   </div>
                   <div className="text-center p-3 bg-gray-700/50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-400">{service.seller?.reviews || '0'}</div>
-                    <div className="text-xs text-gray-400">Reviews</div>
+                    <div className="text-2xl font-bold text-green-400">{service.reviews || '0'}</div>
+                    <div className="text-xs text-gray-400">Service Reviews</div>
                   </div>
                 </div>
               </motion.div>
@@ -743,8 +743,13 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
             showNotification={(message, type) => {
               alert(message);
             }}
-            onReviewsUpdate={() => {
-              // Refresh service data if needed
+            onReviewsUpdate={(updatedService) => {
+              // Update the service data with new rating and review count
+              setService(prevService => ({
+                ...prevService,
+                rating: updatedService.rating,
+                reviews: updatedService.reviews
+              }));
             }}
             viewOnly={true}
           />

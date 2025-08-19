@@ -414,13 +414,16 @@ router.post('/:id/reject', auth, async (req, res) => {
 router.get('/:id/details', async (req, res) => {
   try {
     const service = await Service.findById(req.params.id)
-      .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges createdAt');
+      .populate('seller', 'username image country isOnline lastSeen lastActivity skillBadges createdAt');
     
     if (!service) {
       return res.status(404).json({ message: 'Service not found' });
     }
 
-    // Calculate analytics
+    // Increment view count
+    await Service.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } });
+
+    // Calculate real analytics from database
     const contactCount = await Booking.countDocuments({ service: req.params.id });
     const bookingCount = await Booking.countDocuments({ 
       service: req.params.id, 
@@ -432,7 +435,7 @@ router.get('/:id/details', async (req, res) => {
     const serviceWithAnalytics = {
       ...service.toObject(),
       analytics: {
-        views: Math.floor(Math.random() * 100) + 50, // Placeholder for now
+        views: service.views + 1, // Include the current view
         contacts: contactCount,
         bookings: bookingCount,
         completionRate: completionRate
