@@ -113,7 +113,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
     try {
       setLoadingPoints(true);
       
-      const response = await fetch(`${API_URL}/api/points/my-points`, {
+      const response = await fetch(`${API_URL}/points/my-points`, {
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
         }
@@ -191,7 +191,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
   const fetchRaids = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/api/facebook-raids`);
+      const response = await fetch(`${API_URL}/facebook-raids`);
       if (response.ok) {
         const data = await response.json();
         setRaids(data);
@@ -273,7 +273,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
     setError(null);
 
     try {
-      const response = await fetch(`${API_URL}/api/facebook-raids/free`, {
+      const response = await fetch(`${API_URL}/facebook-raids/free`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -321,7 +321,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
     console.log('URL being tested:', newRaid.postUrl);
 
     try {
-      const response = await fetch(`${API_URL}/api/facebook-raids`, {
+      const response = await fetch(`${API_URL}/facebook-raids`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -369,7 +369,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
     console.log('Sending points raid data:', pointsRaidData);
 
     try {
-      const response = await fetch(`${API_URL}/api/facebook-raids/points`, {
+      const response = await fetch(`${API_URL}/facebook-raids/points`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -418,7 +418,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
     }
 
     try {
-      const response = await fetch(`${API_URL}/api/facebook-raids/free-eligibility`, {
+      const response = await fetch(`${API_URL}/facebook-raids/free-eligibility`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${currentUser.token}`
@@ -798,7 +798,7 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
                      setError(null);
                      
                      try {
-                       const response = await fetch(`${API_URL}/api/facebook-raids/${selectedRaid._id}/complete`, {
+                       const response = await fetch(`${API_URL}/facebook-raids/${selectedRaid._id}/complete`, {
                          method: 'POST',
                          headers: {
                            'Content-Type': 'application/json',

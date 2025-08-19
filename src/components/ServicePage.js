@@ -83,7 +83,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
         // Extract service ID from slug (format: title-id)
         const serviceId = slug.split('-').pop();
         
-        const response = await fetch(`${API_URL}/api/services/${serviceId}/details`);
+        const response = await fetch(`${API_URL}/services/${serviceId}/details`);
         
         if (!response.ok) {
           if (response.status === 404) {
