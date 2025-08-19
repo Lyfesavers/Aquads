@@ -84,7 +84,7 @@ const TokenList = ({ currentUser, showNotification }) => {
         setIsLoading(true);
       }
 
-      const response = await fetch(`${API_URL}/tokens`);
+      const response = await fetch(`${API_URL}/api/tokens`);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch tokens: ${response.status}`);
@@ -124,7 +124,7 @@ const TokenList = ({ currentUser, showNotification }) => {
       return;
     }
 
-      const response = await fetch(`${API_URL}/tokens?search=${encodeURIComponent(searchTerm)}`);
+      const response = await fetch(`${API_URL}/api/tokens?search=${encodeURIComponent(searchTerm)}`);
       if (!response.ok) {
         throw new Error('Search failed');
       }

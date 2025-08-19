@@ -44,7 +44,7 @@ const NotificationBell = ({ currentUser }) => {
     // Add the new alternate path
     const possiblePaths = [
       `${API_URL}/notifications`,
-              `${API_URL}/notifications`,
+      `${API_URL}/api/notifications`,
       `/api/notifications`,
       `${API_URL}/bookings/user-notifications`, // Add this new path
       `${window.location.origin}/api/notifications`

@@ -77,7 +77,7 @@ const AquaSwap = ({ currentUser, showNotification }) => {
   useEffect(() => {
     const fetchBubbleTokens = async () => {
       try {
-        const response = await fetch(`${API_URL}/ads`);
+        const response = await fetch(`${API_URL}/api/ads`);
         if (!response.ok) {
           throw new Error('Failed to fetch ads');
         }
