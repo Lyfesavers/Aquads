@@ -655,17 +655,24 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
         return;
       }
 
-      // Send each raid as separate message with button
-      for (const raid of activeRaids) {
-        // Check if user already completed this raid
+      // Filter out raids that the user has already completed
+      const availableRaids = activeRaids.filter(raid => {
         const userCompleted = raid.completions.some(
           completion => completion.userId && completion.userId.toString() === user._id.toString()
         );
+        return !userCompleted;
+      });
 
-        const status = userCompleted ? "✅ Completed" : "⏳ Available";
+      if (availableRaids.length === 0) {
+        await telegramService.sendBotMessage(chatId, 
+          "📭 No new raids available for you right now.\n\n⏰ Check back later for new raids!\n\n💡 You've completed all available raids.\n\n🌐 Track your points on: https://aquads.xyz");
+        return;
+      }
+
+      // Send each available raid as separate message with button
+      for (const raid of availableRaids) {
         const platform = raid.platform;
         const postUrl = platform === 'Facebook' ? raid.postUrl : raid.tweetUrl;
-        const taskDescription = platform === 'Facebook' ? 'Like, Share & Comment' : 'Like, Retweet & Comment';
         const interactionNote = platform === 'Facebook' 
           ? '⚠️ IMPORTANT: You must manually LIKE, SHARE, COMMENT on the Facebook post before completing!'
           : '⚠️ IMPORTANT: You must manually LIKE, RETWEET, COMMENT & BOOKMARK the tweet before completing!';
@@ -674,32 +681,28 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
         message += `📱 Platform: ${platform}\n`;
         message += `💰 Reward: ${raid.points} points\n`;
         message += `🎯 Task: ${raid.description}\n`;
-        message += `🔗 ${platform === 'Facebook' ? 'Facebook Post' : 'Tweet'}: ${postUrl}\n`;
-        message += `📊 Status: ${status}\n\n`;
+        message += `🔗 ${platform === 'Facebook' ? 'Facebook Post' : 'Tweet'}: ${postUrl}\n\n`;
         message += `${interactionNote}`;
 
-        // Add button if not completed
-        let keyboard = null;
-        if (!userCompleted) {
-          keyboard = {
-            inline_keyboard: [[
-              {
-                text: "💬 Complete in Private Chat",
-                url: `https://t.me/aquadsbumpbot?start=raid_${raid._id}`
-              }
-            ]]
-          };
-        }
+        // Add button for completion
+        const keyboard = {
+          inline_keyboard: [[
+            {
+              text: "💬 Complete in Private Chat",
+              url: `https://t.me/aquadsbumpbot?start=raid_${raid._id}`
+            }
+          ]]
+        };
 
         await telegramService.sendBotMessageWithKeyboard(chatId, message, keyboard);
       }
 
       // Send summary
-      const twitterCount = activeRaids.filter(raid => raid.platform === 'Twitter').length;
-      const facebookCount = activeRaids.filter(raid => raid.platform === 'Facebook').length;
+      const twitterCount = availableRaids.filter(raid => raid.platform === 'Twitter').length;
+      const facebookCount = availableRaids.filter(raid => raid.platform === 'Facebook').length;
       
       await telegramService.sendBotMessage(chatId, 
-        `📊 ${activeRaids.length} raids shown above (${twitterCount} Twitter, ${facebookCount} Facebook)\n\n💡 How to complete:\n• Click "Complete in Private Chat" button (easiest)\n• Or use: /complete RAID_ID @username POST_URL\n\n⏰ Raids expire after 48 hours\n💡 Make sure to interact with posts before completing!\n\n🌐 Track points & claim rewards on: https://aquads.xyz`);
+        `📊 ${availableRaids.length} raids available for you (${twitterCount} Twitter, ${facebookCount} Facebook)\n\n💡 How to complete:\n• Click "Complete in Private Chat" button (easiest)\n• Or use: /complete RAID_ID @username POST_URL\n\n⏰ Raids expire after 48 hours\n💡 Make sure to interact with posts before completing!\n\n🌐 Track points & claim rewards on: https://aquads.xyz`);
 
     } catch (error) {
       console.error('Raids command error:', error);
