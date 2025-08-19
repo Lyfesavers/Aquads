@@ -1317,31 +1317,47 @@ Hi ${username ? `@${username}` : 'there'}! I help you complete Twitter and Faceb
         }
         postId = tweetIdMatch[1];
       } else if (platform === 'Facebook') {
+        console.log('=== FACEBOOK RAID DEBUG ===');
+        console.log('Raid ID:', raidId);
+        console.log('Raid Title:', raid.title);
+        console.log('Facebook URL:', raid[postUrlField]);
+        console.log('URL Field Name:', postUrlField);
+        
         // Try multiple Facebook URL patterns
         let postIdMatch = raid[postUrlField].match(/\/posts\/(\d+)/);
+        console.log('Pattern 1 (/posts/):', postIdMatch ? 'MATCHED' : 'NO MATCH');
+        
         if (!postIdMatch) {
           // Try alternative Facebook URL patterns
           postIdMatch = raid[postUrlField].match(/\/permalink\/(\d+)/);
+          console.log('Pattern 2 (/permalink/):', postIdMatch ? 'MATCHED' : 'NO MATCH');
         }
         if (!postIdMatch) {
           // Try share pattern (like https://www.facebook.com/share/p/16kFXY8yMC/)
           postIdMatch = raid[postUrlField].match(/\/share\/p\/([a-zA-Z0-9]+)/);
+          console.log('Pattern 3 (/share/p/):', postIdMatch ? 'MATCHED' : 'NO MATCH');
         }
         if (!postIdMatch) {
           // Try another pattern
           postIdMatch = raid[postUrlField].match(/\/story\.php\?story_fbid=(\d+)/);
+          console.log('Pattern 4 (/story.php):', postIdMatch ? 'MATCHED' : 'NO MATCH');
         }
         if (!postIdMatch) {
           // Try one more pattern
           postIdMatch = raid[postUrlField].match(/\/photo\.php\?fbid=(\d+)/);
+          console.log('Pattern 5 (/photo.php):', postIdMatch ? 'MATCHED' : 'NO MATCH');
         }
         
         if (!postIdMatch) {
+          console.log('❌ NO PATTERN MATCHED - Invalid Facebook URL format');
+          console.log('=== END FACEBOOK RAID DEBUG ===');
           await telegramService.sendBotMessage(chatId, 
             "❌ Invalid Facebook URL. Please contact support.");
           return;
         }
         postId = postIdMatch[1];
+        console.log('✅ Extracted Post ID:', postId);
+        console.log('=== END FACEBOOK RAID DEBUG ===');
       }
 
       // Create completion record
