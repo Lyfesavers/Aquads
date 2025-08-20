@@ -534,12 +534,12 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
             </li>
           </ul>
         </div>
-          <div className="flex items-start gap-2">
-            <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold mt-0.5">3</div>
-            <div>
-              <strong>Earn Points</strong>
-              <p className="text-gray-400 mt-1">Get points after admin approval of your completion</p>
-            </div>
+        
+        <div className="flex items-start gap-2">
+          <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold mt-0.5">3</div>
+          <div>
+            <strong>Earn Points</strong>
+            <p className="text-gray-400 mt-1">Get points after admin approval of your completion</p>
           </div>
         </div>
       </div>
