@@ -21,6 +21,30 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
     return text.length;
   };
 
+  // Payment terms filter function
+  const checkForPaymentTerms = (text) => {
+    const paymentTerms = [
+      'payment', 'pay', 'paid', 'paying',
+      'partial payment', 'full payment', 'advance payment', 'upfront payment',
+      'deposit', 'down payment', 'initial payment',
+      'money', 'cash', 'funds', 'funding',
+      'budget', 'cost', 'price', 'pricing',
+      'fee', 'fees', 'charge', 'charges',
+      'billing', 'invoice', 'invoicing',
+      'escrow', 'milestone', 'milestones',
+      '50%', '100%', '25%', '75%',
+      'half payment', 'quarter payment',
+      'first payment', 'second payment', 'final payment'
+    ];
+    
+    const lowerText = text.toLowerCase();
+    const foundTerms = paymentTerms.filter(term => 
+      lowerText.includes(term.toLowerCase())
+    );
+    
+    return foundTerms;
+  };
+
   const validateImageUrl = async (url) => {
     try {
       const response = await fetch(url);
@@ -63,6 +87,15 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
     if (characterCount < 200) {
       setError(`Description must contain at least 200 characters. Currently: ${characterCount} characters`);
       return;
+    }
+    
+    // Validate requirements for payment terms
+    if (formData.requirements && formData.requirements.trim() !== '') {
+      const foundPaymentTerms = checkForPaymentTerms(formData.requirements);
+      if (foundPaymentTerms.length > 0) {
+        setError(`Requirements field cannot contain payment-related terms. Please remove: ${foundPaymentTerms.join(', ')}. Requirements should describe what you need from the buyer to complete the work, not payment terms.`);
+        return;
+      }
     }
     
     // Validate video URL if provided (same as games)
@@ -235,11 +268,29 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
             </label>
             <textarea
               rows="3"
-              placeholder="What do you need from buyers to get started?"
+              placeholder="What do you need from buyers to get started? (e.g., project details, specifications, files, etc.)"
               className="w-full px-4 py-2 bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
               value={formData.requirements}
-              onChange={(e) => setFormData(prev => ({ ...prev, requirements: e.target.value }))}
+              onChange={(e) => {
+                const newValue = e.target.value;
+                setFormData(prev => ({ ...prev, requirements: newValue }));
+                
+                // Real-time validation for payment terms
+                if (newValue && newValue.trim() !== '') {
+                  const foundPaymentTerms = checkForPaymentTerms(newValue);
+                  if (foundPaymentTerms.length > 0) {
+                    setError(`⚠️ Payment terms detected: ${foundPaymentTerms.join(', ')}. Requirements should describe what you need from the buyer, not payment terms.`);
+                  } else {
+                    setError(''); // Clear error if no payment terms found
+                  }
+                } else {
+                  setError(''); // Clear error if field is empty
+                }
+              }}
             />
+            <p className="text-gray-400 text-xs mt-1">
+              Describe what information, files, or specifications you need from buyers to start the work. Do not include payment terms here.
+            </p>
           </div>
 
           {/* Submit Button */}
