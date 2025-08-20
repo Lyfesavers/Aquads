@@ -194,7 +194,11 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
       const response = await fetch(`${API_URL}/api/facebook-raids`);
       if (response.ok) {
         const data = await response.json();
-        setRaids(data);
+        
+        // Filter out raids older than 2 days (same as Twitter raids)
+        const filteredRaids = data.filter(raid => isWithinTwoDays(raid.createdAt));
+        
+        setRaids(filteredRaids);
       } else {
         setError('Failed to fetch Facebook raids');
       }
