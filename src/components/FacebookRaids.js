@@ -675,6 +675,13 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
                    {isWithinTwoDays(raid.createdAt) && (
                      <div className="text-sm text-yellow-400">{getDaysRemaining(raid.createdAt)}</div>
                    )}
+                   
+                   {/* Completions count */}
+                   {raid.completions && raid.completions.length > 0 && (
+                     <div className="mt-3 pt-3 border-t border-gray-700">
+                       <p className="text-gray-400 text-sm">{raid.completions.length} completions</p>
+                     </div>
+                   )}
                  </div>
 
                  <div className="flex gap-2">

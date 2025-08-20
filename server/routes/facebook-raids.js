@@ -51,7 +51,18 @@ router.get('/', async (req, res) => {
       .sort({ createdAt: -1 })
       .populate('createdBy', 'username');
     
-    res.json(raids);
+    // Add Facebook raid rules to the response
+    const facebookRaidRules = [
+      'Facebook account must be at least 6 months old',
+      'Account must have at least 50 friends/followers',
+      'Must be following Aquads page',
+      'Account must be public (not private)',
+      'No bot/spam accounts (reasonable posting frequency)',
+      'Comments must be at least 1 full sentence and include The Projects Name. Must add value to Aquads and the account posting the post',
+      'Facebook account must not be shadow banned or suspended'
+    ];
+    
+    res.json({ raids, facebookRaidRules });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch Facebook raids' });
   }
