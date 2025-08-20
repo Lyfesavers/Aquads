@@ -217,12 +217,12 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
               {/* Desktop menu */}
               <div className="hidden md:flex items-center space-x-3">
                 {/* Main Navigation - Smaller buttons */}
-                <Link
-                  to="/"
-                  className="bg-indigo-500/80 hover:bg-indigo-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
-                >
-                  Home
-                </Link>
+                                 <Link
+                   to="/marketplace"
+                   className="bg-indigo-500/80 hover:bg-indigo-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
+                 >
+                   Freelancer Hub
+                 </Link>
                 <Link
                   to="/games"
                   className="bg-indigo-500/80 hover:bg-indigo-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
@@ -341,12 +341,12 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
             {/* Mobile menu */}
             <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden py-2 z-[200000] relative`}>
               <div className="flex flex-col space-y-2">
-                <Link
-                  to="/"
-                  className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
-                >
-                  Home
-                </Link>
+                                 <Link
+                   to="/marketplace"
+                   className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+                 >
+                   Freelancer Hub
+                 </Link>
                 <Link
                   to="/games"
                   className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"

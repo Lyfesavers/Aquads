@@ -1433,10 +1433,10 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                           <div className="mt-4 flex flex-wrap gap-2">
                             <button
                               onClick={() => {
-                                const referralCode = currentUser?.username || ''; // Get current user's username as referral code
-                                const url = `${window.location.origin}/marketplace?service=${service._id}&ref=${referralCode}#${service.title.replace(/\s+/g, '-')}`;
+                                const slug = `${service.title.replace(/\s+/g, '-').toLowerCase()}-${service._id}`;
+                                const url = `${window.location.origin}/service/${slug}`;
                                 navigator.clipboard.writeText(url);
-                                alert('Service link copied to clipboard! Share this link with others to help them find your service in the marketplace.');
+                                alert('Service link copied to clipboard! Share this link with others to view the full service details.');
                               }}
                               className="inline-flex items-center px-3 py-1.5 text-sm bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 rounded-full transition-all duration-300"
                             >
