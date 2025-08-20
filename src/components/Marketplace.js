@@ -1433,8 +1433,9 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                           <div className="mt-4 flex flex-wrap gap-2">
                             <button
                               onClick={() => {
+                                const referralCode = currentUser?.username || ''; // Get current user's username as referral code
                                 const slug = `${service.title.replace(/\s+/g, '-').toLowerCase()}-${service._id}`;
-                                const url = `${window.location.origin}/service/${slug}`;
+                                const url = `${window.location.origin}/service/${slug}${referralCode ? `?ref=${referralCode}` : ''}`;
                                 navigator.clipboard.writeText(url);
                                 alert('Service link copied to clipboard! Share this link with others to view the full service details.');
                               }}

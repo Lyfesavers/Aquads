@@ -758,65 +758,100 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
         {/* Login Modal */}
         {showLoginModal && (
           <LoginModal
-            show={showLoginModal}
-            onHide={() => setShowLoginModal(false)}
+            onClose={() => setShowLoginModal(false)}
             onLogin={handleLoginSubmit}
-            currentUser={currentUser}
+            onCreateAccount={() => {
+              setShowLoginModal(false);
+              setShowCreateAccountModal(true);
+            }}
           />
         )}
 
         {/* Create Account Modal */}
         {showCreateAccountModal && (
           <CreateAccountModal
-            show={showCreateAccountModal}
-            onHide={() => setShowCreateAccountModal(false)}
+            onClose={() => setShowCreateAccountModal(false)}
             onCreateAccount={handleCreateAccountSubmit}
-            currentUser={currentUser}
           />
         )}
 
         {/* Profile Modal */}
         {showProfileModal && (
           <ProfileModal
-            show={showProfileModal}
-            onHide={() => setShowProfileModal(false)}
             currentUser={currentUser}
-            onLogout={onLogout}
+            onClose={() => setShowProfileModal(false)}
+            onProfileUpdate={(updatedUser) => {
+              setShowProfileModal(false);
+              // Handle profile update if needed
+            }}
           />
         )}
 
         {/* Dashboard Modal */}
         {showDashboard && (
           <Dashboard
-            show={showDashboard}
-            onHide={() => setShowDashboard(false)}
             currentUser={currentUser}
-            onLogout={onLogout}
+            onClose={() => setShowDashboard(false)}
+            ads={[]}  // Pass empty array since service page doesn't handle ads
           />
         )}
 
         {/* Create Service Modal */}
         {showCreateModal && (
           <CreateServiceModal
-            show={showCreateModal}
-            onHide={() => setShowCreateModal(false)}
-            currentUser={currentUser}
-            onServiceCreated={(newService) => {
+            onClose={() => setShowCreateModal(false)}
+            onCreateService={(serviceData) => {
+              // Handle service creation - this would typically call an API
+              // For now, just close the modal
               setShowCreateModal(false);
-              // Optionally navigate to the new service page
-              const slug = `${newService.title.replace(/\s+/g, '-').toLowerCase()}-${newService._id}`;
-              navigate(`/service/${slug}`);
+              // You can add navigation logic here if needed
             }}
+            categories={[
+              { id: 'smart-contract', name: 'Smart Contract', icon: '📝' },
+              { id: 'audit', name: 'Audit', icon: '🔍' },
+              { id: 'tokenomics', name: 'Tokenomics', icon: '📊' },
+              { id: 'web3', name: 'Web3', icon: '🌐' },
+              { id: 'community', name: 'Community', icon: '👥' },
+              { id: 'web-developer', name: 'Web Developer', icon: '💻' },
+              { id: 'mobile-developer', name: 'Mobile Developer', icon: '📱' },
+              { id: 'software-developer', name: 'Software Developer', icon: '⚡' },
+              { id: 'database-admin', name: 'Database Admin', icon: '🗄️' },
+              { id: 'devops-engineer', name: 'DevOps Engineer', icon: '⚙️' },
+              { id: 'qa-tester', name: 'QA Tester', icon: '🔬' },
+              { id: 'ui-ux-designer', name: 'UI/UX Designer', icon: '🎨' },
+              { id: 'graphic-designer', name: 'Graphic Designer', icon: '🖌️' },
+              { id: 'web-designer', name: 'Web Designer', icon: '🖥️' },
+              { id: 'logo-designer', name: 'Logo Designer', icon: '🎯' },
+              { id: 'video-editor', name: 'Video Editor', icon: '🎬' },
+              { id: 'photographer', name: 'Photographer', icon: '📸' },
+              { id: 'marketing', name: 'Marketing', icon: '📈' },
+              { id: 'seo-specialist', name: 'SEO Specialist', icon: '🔍' },
+              { id: 'social-media-manager', name: 'Social Media Manager', icon: '📲' },
+              { id: 'content-creator', name: 'Content Creator', icon: '📹' },
+              { id: 'copywriter', name: 'Copywriter', icon: '✍️' },
+              { id: 'email-marketing', name: 'Email Marketing', icon: '📧' },
+              { id: 'ppc-specialist', name: 'PPC Specialist', icon: '💰' },
+              { id: 'virtual-assistant', name: 'Virtual Assistant', icon: '🤝' },
+              { id: 'project-manager', name: 'Project Manager', icon: '📋' },
+              { id: 'data-analyst', name: 'Data Analyst', icon: '📊' },
+              { id: 'business-analyst', name: 'Business Analyst', icon: '💼' },
+              { id: 'customer-support', name: 'Customer Support', icon: '🎧' },
+              { id: 'sales-specialist', name: 'Sales Specialist', icon: '💪' },
+              { id: 'writing', name: 'Writing', icon: '📝' },
+              { id: 'technical-writer', name: 'Technical Writer', icon: '📖' },
+              { id: 'translator', name: 'Translator', icon: '🌍' },
+              { id: 'voice-over', name: 'Voice Over', icon: '🎤' },
+              { id: 'consulting', name: 'Consulting', icon: '💡' },
+              { id: 'other', name: 'Other', icon: '🔧' }
+            ]}
           />
         )}
 
         {/* Create Banner Modal */}
         {showBannerModal && (
           <CreateBannerModal
-            show={showBannerModal}
-            onHide={() => setShowBannerModal(false)}
-            currentUser={currentUser}
-            onBannerSubmit={(bannerData) => {
+            onClose={() => setShowBannerModal(false)}
+            onSubmit={(bannerData) => {
               setShowBannerModal(false);
               // Handle banner creation success
             }}
@@ -826,12 +861,10 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
         {/* Premium Payment Modal */}
         {showPremiumPaymentModal && (
           <PremiumPaymentModal
-            show={showPremiumPaymentModal}
-            onHide={() => setShowPremiumPaymentModal(false)}
-            currentUser={currentUser}
-            serviceToUpgrade={service}
-            onUpgradeSuccess={() => {
+            onClose={() => setShowPremiumPaymentModal(false)}
+            onSubmit={(paymentData) => {
               setShowPremiumPaymentModal(false);
+              // Handle premium payment success
               // Refresh service data
               window.location.reload();
             }}
@@ -841,10 +874,8 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
         {/* Create Job Modal */}
         {showJobModal && (
           <CreateJobModal
-            show={showJobModal}
-            onHide={() => setShowJobModal(false)}
-            currentUser={currentUser}
-            onJobCreated={(newJob) => {
+            onClose={() => setShowJobModal(false)}
+            onCreateJob={(jobData) => {
               setShowJobModal(false);
               // Handle job creation success
             }}
