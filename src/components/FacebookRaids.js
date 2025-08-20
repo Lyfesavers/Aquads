@@ -704,13 +704,20 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
                    </div>
                  </div>
                  
-                 <div className="mb-4">
-                   <div className="text-sm text-gray-400 mb-2">Created by: {raid.createdBy?.username || 'Unknown'}</div>
-                   <div className="text-sm text-gray-400 mb-2">Created: {formatDate(raid.createdAt)}</div>
-                   {isWithinTwoDays(raid.createdAt) && (
-                     <div className="text-sm text-yellow-400">{getDaysRemaining(raid.createdAt)}</div>
-                   )}
-                 </div>
+                                   <div className="mb-4">
+                    <div className="text-sm text-gray-400 mb-2">Created by: {raid.createdBy?.username || 'Unknown'}</div>
+                    <div className="text-sm text-gray-400 mb-2">Created: {formatDate(raid.createdAt)}</div>
+                    {isWithinTwoDays(raid.createdAt) && (
+                      <div className="text-sm text-yellow-400">{getDaysRemaining(raid.createdAt)}</div>
+                    )}
+                    
+                    {/* Completions */}
+                    {raid.completions && raid.completions.length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-gray-700">
+                        <p className="text-gray-400 text-sm">{raid.completions.length} completions</p>
+                      </div>
+                    )}
+                  </div>
 
                  <div className="flex gap-2">
                    <button
