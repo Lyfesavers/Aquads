@@ -89,14 +89,14 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
       return;
     }
     
-    // Validate requirements for payment terms
-    if (formData.requirements && formData.requirements.trim() !== '') {
-      const foundPaymentTerms = checkForPaymentTerms(formData.requirements);
-      if (foundPaymentTerms.length > 0) {
-        setError(`Requirements field cannot contain payment-related terms. Please remove: ${foundPaymentTerms.join(', ')}. Requirements should describe what you need from the buyer to complete the work, not payment terms.`);
-        return;
-      }
-    }
+         // Validate requirements for payment terms
+     if (formData.requirements && formData.requirements.trim() !== '') {
+       const foundPaymentTerms = checkForPaymentTerms(formData.requirements);
+       if (foundPaymentTerms.length > 0) {
+         setError(`Requirements field cannot contain payment-related terms. Please remove: ${foundPaymentTerms.join(', ')}. Requirements should describe what you need from the buyer to complete the work, not payment terms. Including payment terms will get your listing rejected.`);
+         return;
+       }
+     }
     
     // Validate video URL if provided (same as games)
     if (formData.videoUrl && formData.videoUrl.trim() !== '') {
@@ -275,17 +275,17 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
                 const newValue = e.target.value;
                 setFormData(prev => ({ ...prev, requirements: newValue }));
                 
-                // Real-time validation for payment terms
-                if (newValue && newValue.trim() !== '') {
-                  const foundPaymentTerms = checkForPaymentTerms(newValue);
-                  if (foundPaymentTerms.length > 0) {
-                    setError(`⚠️ Payment terms detected: ${foundPaymentTerms.join(', ')}. Requirements should describe what you need from the buyer, not payment terms.`);
-                  } else {
-                    setError(''); // Clear error if no payment terms found
-                  }
-                } else {
-                  setError(''); // Clear error if field is empty
-                }
+                                 // Real-time validation for payment terms
+                 if (newValue && newValue.trim() !== '') {
+                   const foundPaymentTerms = checkForPaymentTerms(newValue);
+                   if (foundPaymentTerms.length > 0) {
+                     setError(`⚠️ Payment terms detected: ${foundPaymentTerms.join(', ')}. Requirements should describe what you need from the buyer, not payment terms. Including payment terms will get your listing rejected.`);
+                   } else {
+                     setError(''); // Clear error if no payment terms found
+                   }
+                 } else {
+                   setError(''); // Clear error if field is empty
+                 }
               }}
             />
             <p className="text-gray-400 text-xs mt-1">
