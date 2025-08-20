@@ -498,6 +498,42 @@ const FacebookRaids = ({ currentUser, showNotification }) => {
               <p className="text-gray-400 mt-1">Like, share, and comment on the Facebook post</p>
             </div>
           </div>
+        </div>
+        
+        {/* Facebook Raid Rules */}
+        <div className="mt-6 p-4 bg-gray-700/50 rounded-lg border border-gray-600/50">
+          <h3 className="text-md font-semibold text-white mb-3">Facebook Raid Rules</h3>
+          <ul className="text-sm text-gray-300 space-y-2">
+            <li className="flex items-start gap-2">
+              <span className="text-blue-400 mt-1">•</span>
+              <span>Facebook account must be at least 6 months old</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-400 mt-1">•</span>
+              <span>Account must have at least 50 friends/followers</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-400 mt-1">•</span>
+              <span>Must be following Aquads page</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-400 mt-1">•</span>
+              <span>Account must be public (not private)</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-400 mt-1">•</span>
+              <span>No bot/spam accounts (reasonable posting frequency)</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-400 mt-1">•</span>
+              <span>Comments must be at least 1 full sentence and include The Projects Name. Must add value to Aquads and the account posting the post</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-blue-400 mt-1">•</span>
+              <span>Facebook account must not be shadow banned or suspended</span>
+            </li>
+          </ul>
+        </div>
           <div className="flex items-start gap-2">
             <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold mt-0.5">3</div>
             <div>
