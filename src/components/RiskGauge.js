@@ -163,13 +163,23 @@ const RiskGauge = ({
 
   // Size configurations
   const sizes = {
-    small: {
-      container: 'w-24 h-12',
-      gauge: 120,
-      needle: 2,
+    compact: {
+      container: 'w-24 h-6',
+      gauge: 50,
+      needle: 1,
       text: 'text-xs',
       tooltip: 'text-xs',
-      labelOffset: 16
+      labelOffset: 8,
+      showZoneLabels: false
+    },
+    small: {
+      container: 'w-20 h-8',
+      gauge: 80,
+      needle: 1.5,
+      text: 'text-xs',
+      tooltip: 'text-xs',
+      labelOffset: 12,
+      showZoneLabels: false
     },
     normal: {
       container: 'w-32 h-16',
@@ -177,7 +187,8 @@ const RiskGauge = ({
       needle: 3,
       text: 'text-sm',
       tooltip: 'text-sm',
-      labelOffset: 20
+      labelOffset: 20,
+      showZoneLabels: true
     },
     large: {
       container: 'w-40 h-20',
@@ -185,7 +196,8 @@ const RiskGauge = ({
       needle: 4,
       text: 'text-base',
       tooltip: 'text-base',
-      labelOffset: 24
+      labelOffset: 24,
+      showZoneLabels: true
     }
   };
 
@@ -215,6 +227,9 @@ const RiskGauge = ({
       return `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}`;
     };
 
+    const strokeWidth = Math.max(2, sizeConfig.gauge / 20); // Proportional stroke width
+    const centerDotRadius = Math.max(1, sizeConfig.gauge / 40); // Proportional center dot
+
     return (
       <svg width={sizeConfig.gauge} height={sizeConfig.gauge / 2 + 10} className="overflow-visible">
         {/* Background arc */}
@@ -222,7 +237,7 @@ const RiskGauge = ({
           d={createArc(180, 360)}
           fill="none"
           stroke="#374151"
-          strokeWidth="8"
+          strokeWidth={strokeWidth}
           strokeLinecap="round"
         />
         
@@ -232,7 +247,7 @@ const RiskGauge = ({
           d={createArc(180, 180 + (40 * 180) / 100)}
           fill="none"
           stroke="#ef4444"
-          strokeWidth="8"
+          strokeWidth={strokeWidth}
           strokeLinecap="round"
         />
         
@@ -241,7 +256,7 @@ const RiskGauge = ({
           d={createArc(180 + (40 * 180) / 100, 180 + (60 * 180) / 100)}
           fill="none"
           stroke="#f97316"
-          strokeWidth="8"
+          strokeWidth={strokeWidth}
           strokeLinecap="round"
         />
         
@@ -250,7 +265,7 @@ const RiskGauge = ({
           d={createArc(180 + (60 * 180) / 100, 180 + (80 * 180) / 100)}
           fill="none"
           stroke="#eab308"
-          strokeWidth="8"
+          strokeWidth={strokeWidth}
           strokeLinecap="round"
         />
         
@@ -259,7 +274,7 @@ const RiskGauge = ({
           d={createArc(180 + (80 * 180) / 100, 360)}
           fill="none"
           stroke="#22c55e"
-          strokeWidth="8"
+          strokeWidth={strokeWidth}
           strokeLinecap="round"
         />
         
@@ -267,7 +282,7 @@ const RiskGauge = ({
         <circle
           cx={centerX}
           cy={centerY}
-          r="4"
+          r={centerDotRadius}
           fill="#6b7280"
         />
         
@@ -275,53 +290,71 @@ const RiskGauge = ({
         <line
           x1={centerX}
           y1={centerY}
-          x2={centerX + (radius - 10) * Math.cos((needleAngle * Math.PI) / 180)}
-          y2={centerY + (radius - 10) * Math.sin((needleAngle * Math.PI) / 180)}
+          x2={centerX + (radius - strokeWidth) * Math.cos((needleAngle * Math.PI) / 180)}
+          y2={centerY + (radius - strokeWidth) * Math.sin((needleAngle * Math.PI) / 180)}
           stroke={risk.color}
           strokeWidth={sizeConfig.needle}
           strokeLinecap="round"
           className="transition-all duration-1000 ease-out"
         />
         
-        {/* Zone labels */}
-        <text
-          x={centerX - radius + 15}
-          y={centerY + sizeConfig.labelOffset}
-          fill="#ef4444"
-          fontSize="10"
-          fontWeight="bold"
-          textAnchor="start"
-        >
-          Unproven
-        </text>
-        
-        <text
-          x={centerX + radius - 15}
-          y={centerY + sizeConfig.labelOffset}
-          fill="#22c55e"
-          fontSize="10"
-          fontWeight="bold"
-          textAnchor="end"
-        >
-          Safe
-        </text>
+        {/* Zone labels - only show for normal and large sizes */}
+        {sizeConfig.showZoneLabels && (
+          <>
+            <text
+              x={centerX - radius + 15}
+              y={centerY + sizeConfig.labelOffset}
+              fill="#ef4444"
+              fontSize="10"
+              fontWeight="bold"
+              textAnchor="start"
+            >
+              Unproven
+            </text>
+            
+            <text
+              x={centerX + radius - 15}
+              y={centerY + sizeConfig.labelOffset}
+              fill="#22c55e"
+              fontSize="10"
+              fontWeight="bold"
+              textAnchor="end"
+            >
+              Safe
+            </text>
+          </>
+        )}
       </svg>
     );
   };
 
   return (
-    <div className={`relative group flex flex-col items-center ${sizeConfig.container}`}>
+    <div className={`relative group ${size === 'compact' ? 'flex items-center space-x-2' : 'flex flex-col items-center'} ${sizeConfig.container}`}>
       {/* RPM-style Gauge */}
       {createGaugeSVG()}
       
       {/* Score and Label */}
       {showLabel && (
-        <div className="text-center mt-1">
+        <div className={size === 'compact' ? 'flex flex-col' : 'text-center mt-1'}>
           <div className={`${sizeConfig.text} font-bold`} style={{ color: risk.color }}>
             {score}%
           </div>
           <div className={`${sizeConfig.text} font-medium text-gray-400`}>
             {risk.label}
+          </div>
+        </div>
+      )}
+      
+      {/* Compact mode - show score next to gauge */}
+      {size === 'compact' && !showLabel && (
+        <div className="flex flex-col items-start">
+          <div className={`${sizeConfig.text} font-bold leading-tight`} style={{ color: risk.color }}>
+            {score}%
+          </div>
+          <div className={`${sizeConfig.text} font-medium text-gray-400 leading-tight`}>
+            {risk.level === 'safe' ? 'Safe' : 
+             risk.level === 'moderate' ? 'OK' : 
+             risk.level === 'risky' ? 'Risky' : 'New'}
           </div>
         </div>
       )}

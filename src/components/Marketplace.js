@@ -1420,15 +1420,20 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                           )}
 
                           {/* Risk Gauge - Show reliability assessment */}
-                          <div className="mb-3">
-                            <RiskGauge 
-                              seller={service.seller}
-                              service={service}
-                              completionRate={service.completionRate}
-                              size="small"
-                              showLabel={true}
-                              showTooltip={true}
-                            />
+                          <div className="mb-2">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs text-gray-500 font-medium">Reliability</span>
+                            </div>
+                            <div className="flex items-center justify-center">
+                              <RiskGauge 
+                                seller={service.seller}
+                                service={service}
+                                completionRate={service.completionRate}
+                                size="compact"
+                                showLabel={false}
+                                showTooltip={true}
+                              />
+                            </div>
                           </div>
                           
                           <h3 className="text-lg font-medium mb-2 line-clamp-2 group-hover:text-indigo-400 transition-colors">
