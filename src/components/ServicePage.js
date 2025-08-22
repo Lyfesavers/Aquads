@@ -18,6 +18,7 @@ import CreateBannerModal from './CreateBannerModal';
 import PremiumPaymentModal from './PremiumPaymentModal';
 import CreateJobModal from './CreateJobModal';
 import CVPreview from './CVPreview';
+import RiskGauge from './RiskGauge';
 import { FaCrown, FaCheck, FaArrowLeft, FaEye, FaUsers, FaHandshake, FaChartLine, FaStar, FaGlobe, FaClock, FaDollarSign, FaFileAlt } from 'react-icons/fa';
 import logger from '../utils/logger';
 
@@ -645,6 +646,21 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                     </div>
                   )
                 )}
+
+                {/* Risk Assessment */}
+                <div className="mb-6">
+                  <h4 className="text-sm font-semibold text-gray-400 mb-3">Reliability Assessment</h4>
+                  <div className="flex justify-center">
+                    <RiskGauge 
+                      seller={service.seller}
+                      service={service}
+                      completionRate={service.analytics?.completionRate}
+                      size="normal"
+                      showLabel={true}
+                      showTooltip={true}
+                    />
+                  </div>
+                </div>
 
                 {/* Seller Stats */}
                 <div className="grid grid-cols-2 gap-4 mb-6">
