@@ -25,6 +25,7 @@ import useUserStatusUpdates from '../hooks/useUserStatusUpdates';
 import ServiceMediaDisplay from './ServiceMediaDisplay';
 import SkillBadges from './SkillBadges';
 import CVPreview from './CVPreview';
+import RiskGauge from './RiskGauge';
 import logger from '../utils/logger';
 
 // Helper function for country flags - using images instead of emojis
@@ -1417,6 +1418,18 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                               </div>
                             )
                           )}
+
+                          {/* Risk Gauge - Show reliability assessment */}
+                          <div className="mb-3">
+                            <RiskGauge 
+                              seller={service.seller}
+                              service={service}
+                              completionRate={service.completionRate}
+                              size="small"
+                              showLabel={true}
+                              showTooltip={true}
+                            />
+                          </div>
                           
                           <h3 className="text-lg font-medium mb-2 line-clamp-2 group-hover:text-indigo-400 transition-colors">
                             {service.title}
