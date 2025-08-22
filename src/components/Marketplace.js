@@ -26,7 +26,6 @@ import ServiceMediaDisplay from './ServiceMediaDisplay';
 import SkillBadges from './SkillBadges';
 import CVPreview from './CVPreview';
 import RiskGauge from './RiskGauge';
-import RiskBadge from './RiskBadge';
 import logger from '../utils/logger';
 
 // Helper function for country flags - using images instead of emojis
@@ -1393,16 +1392,6 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                             </div>
                           </div>
                           
-                          {/* Risk Badge - Prominent placement */}
-                          <div className="mb-3 flex justify-center">
-                            <RiskBadge 
-                              seller={service.seller}
-                              service={service}
-                              completionRate={service.completionRate}
-                              showTooltip={true}
-                            />
-                          </div>
-                          
                           {/* Skill Badges Display */}
                           {service.seller?.skillBadges && service.seller.skillBadges.length > 0 && (
                             <div className="mb-3">
@@ -1430,7 +1419,18 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                             )
                           )}
 
-
+                          {/* Risk Gauge - Show reliability assessment */}
+                          <div className="mb-3">
+                            <RiskGauge 
+                              seller={service.seller}
+                              service={service}
+                              completionRate={service.completionRate}
+                              size="small"
+                              showLabel={true}
+                              showTooltip={true}
+                            />
+                          </div>
+                          
                           <h3 className="text-lg font-medium mb-2 line-clamp-2 group-hover:text-indigo-400 transition-colors">
                             {service.title}
                           </h3>

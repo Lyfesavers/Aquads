@@ -8,67 +8,67 @@ const RiskGauge = ({
   showLabel = true,
   showTooltip = true 
 }) => {
-  // Calculate overall risk score based on multiple factors
+  // Calculate overall risk score with stricter weighting
   const calculateRiskScore = () => {
     let totalScore = 0;
     let maxPossibleScore = 0;
     let factors = [];
 
-    // Factor 1: Service Rating (40% weight)
+    // Factor 1: Service Rating (50% weight - INCREASED from 40%)
     const rating = service?.rating || 0;
     const reviewCount = service?.reviews || 0;
-    const ratingWeight = 40;
+    const ratingWeight = 50;
     maxPossibleScore += ratingWeight;
     
     if (reviewCount === 0) {
       totalScore += 0;
       factors.push({ factor: 'No reviews yet', impact: 'negative', points: 0, maxPoints: ratingWeight });
-    } else if (rating >= 4.5) {
+    } else if (rating >= 4.8) { // STRICTER: was 4.5
       totalScore += ratingWeight;
       factors.push({ factor: `Excellent rating (${rating.toFixed(1)}/5)`, impact: 'positive', points: ratingWeight, maxPoints: ratingWeight });
-    } else if (rating >= 4.0) {
+    } else if (rating >= 4.5) { // STRICTER: was 4.0
       totalScore += ratingWeight * 0.8;
       factors.push({ factor: `Good rating (${rating.toFixed(1)}/5)`, impact: 'positive', points: ratingWeight * 0.8, maxPoints: ratingWeight });
-    } else if (rating >= 3.5) {
+    } else if (rating >= 4.0) { // STRICTER: was 3.5
       totalScore += ratingWeight * 0.6;
       factors.push({ factor: `Fair rating (${rating.toFixed(1)}/5)`, impact: 'neutral', points: ratingWeight * 0.6, maxPoints: ratingWeight });
-    } else if (rating >= 3.0) {
-      totalScore += ratingWeight * 0.4;
-      factors.push({ factor: `Below average rating (${rating.toFixed(1)}/5)`, impact: 'negative', points: ratingWeight * 0.4, maxPoints: ratingWeight });
+    } else if (rating >= 3.5) { // STRICTER: was 3.0
+      totalScore += ratingWeight * 0.3;
+      factors.push({ factor: `Below average rating (${rating.toFixed(1)}/5)`, impact: 'negative', points: ratingWeight * 0.3, maxPoints: ratingWeight });
     } else {
-      totalScore += ratingWeight * 0.2;
-      factors.push({ factor: `Low rating (${rating.toFixed(1)}/5)`, impact: 'negative', points: ratingWeight * 0.2, maxPoints: ratingWeight });
+      totalScore += ratingWeight * 0.1;
+      factors.push({ factor: `Low rating (${rating.toFixed(1)}/5)`, impact: 'negative', points: ratingWeight * 0.1, maxPoints: ratingWeight });
     }
 
-    // Factor 2: Completion Rate (25% weight)
-    const completionWeight = 25;
+    // Factor 2: Completion Rate (30% weight - INCREASED from 25%)
+    const completionWeight = 30;
     maxPossibleScore += completionWeight;
     
     if (completionRate !== null) {
-      if (completionRate >= 90) {
+      if (completionRate >= 95) { // STRICTER: was 90
         totalScore += completionWeight;
         factors.push({ factor: `Excellent completion rate (${completionRate}%)`, impact: 'positive', points: completionWeight, maxPoints: completionWeight });
-      } else if (completionRate >= 80) {
+      } else if (completionRate >= 85) { // STRICTER: was 80
         totalScore += completionWeight * 0.8;
         factors.push({ factor: `Good completion rate (${completionRate}%)`, impact: 'positive', points: completionWeight * 0.8, maxPoints: completionWeight });
-      } else if (completionRate >= 70) {
+      } else if (completionRate >= 75) { // STRICTER: was 70
         totalScore += completionWeight * 0.6;
         factors.push({ factor: `Fair completion rate (${completionRate}%)`, impact: 'neutral', points: completionWeight * 0.6, maxPoints: completionWeight });
-      } else if (completionRate >= 60) {
-        totalScore += completionWeight * 0.4;
-        factors.push({ factor: `Low completion rate (${completionRate}%)`, impact: 'negative', points: completionWeight * 0.4, maxPoints: completionWeight });
+      } else if (completionRate >= 65) { // STRICTER: was 60
+        totalScore += completionWeight * 0.3;
+        factors.push({ factor: `Low completion rate (${completionRate}%)`, impact: 'negative', points: completionWeight * 0.3, maxPoints: completionWeight });
       } else {
-        totalScore += completionWeight * 0.2;
-        factors.push({ factor: `Very low completion rate (${completionRate}%)`, impact: 'negative', points: completionWeight * 0.2, maxPoints: completionWeight });
+        totalScore += completionWeight * 0.1;
+        factors.push({ factor: `Very low completion rate (${completionRate}%)`, impact: 'negative', points: completionWeight * 0.1, maxPoints: completionWeight });
       }
     } else {
-      // No booking history - neutral impact
-      totalScore += completionWeight * 0.5;
-      factors.push({ factor: 'No booking history', impact: 'neutral', points: completionWeight * 0.5, maxPoints: completionWeight });
+      // No booking history - penalized more heavily
+      totalScore += completionWeight * 0.2; // REDUCED from 0.5
+      factors.push({ factor: 'No booking history', impact: 'negative', points: completionWeight * 0.2, maxPoints: completionWeight });
     }
 
-    // Factor 3: CV/Profile Completeness (15% weight)
-    const cvWeight = 15;
+    // Factor 3: CV/Profile Completeness (10% weight - REDUCED from 15%)
+    const cvWeight = 10;
     maxPossibleScore += cvWeight;
     
     const hasCV = seller?.cv && (
@@ -86,8 +86,8 @@ const RiskGauge = ({
       factors.push({ factor: 'No CV/incomplete profile', impact: 'negative', points: 0, maxPoints: cvWeight });
     }
 
-    // Factor 4: Account Verification (10% weight)
-    const verificationWeight = 10;
+    // Factor 4: Account Verification (5% weight - REDUCED from 10%)
+    const verificationWeight = 5;
     maxPossibleScore += verificationWeight;
     let verificationScore = 0;
     
@@ -108,8 +108,8 @@ const RiskGauge = ({
       factors.push({ factor: 'Unverified account', impact: 'negative', points: 0, maxPoints: verificationWeight });
     }
 
-    // Factor 5: Skill Badges (10% weight)
-    const skillWeight = 10;
+    // Factor 5: Skill Badges (5% weight - REDUCED from 10%)
+    const skillWeight = 5;
     maxPossibleScore += skillWeight;
     
     const skillBadges = seller?.skillBadges || [];
@@ -131,21 +131,21 @@ const RiskGauge = ({
 
   const { score, factors } = calculateRiskScore();
 
-  // Determine risk level and gauge zones
+  // Determine risk level and gauge zones - STRICTER THRESHOLDS
   const getRiskLevel = (score) => {
-    if (score >= 80) return { 
+    if (score >= 85) return { // INCREASED from 80
       level: 'safe', 
       color: '#22c55e', 
       label: 'Safe to Book',
       zone: 'safe'
     };
-    if (score >= 60) return { 
+    if (score >= 70) return { // INCREASED from 60
       level: 'moderate', 
       color: '#eab308', 
       label: 'Moderate Risk',
       zone: 'moderate'
     };
-    if (score >= 40) return { 
+    if (score >= 50) return { // INCREASED from 40
       level: 'risky', 
       color: '#f97316', 
       label: 'Risky',
@@ -163,26 +163,8 @@ const RiskGauge = ({
 
   // Size configurations
   const sizes = {
-    mini: {
-      container: 'w-12 h-3',
-      gauge: 40,
-      needle: 0.8,
-      text: 'text-xs',
-      tooltip: 'text-xs',
-      labelOffset: 6,
-      showZoneLabels: false
-    },
     compact: {
-      container: 'w-16 h-4',
-      gauge: 50,
-      needle: 1,
-      text: 'text-xs',
-      tooltip: 'text-xs',
-      labelOffset: 8,
-      showZoneLabels: false
-    },
-    small: {
-      container: 'w-20 h-8',
+      container: 'w-20 h-10',
       gauge: 80,
       needle: 1.5,
       text: 'text-xs',
@@ -190,22 +172,31 @@ const RiskGauge = ({
       labelOffset: 12,
       showZoneLabels: false
     },
+    small: {
+      container: 'w-24 h-12',
+      gauge: 96,
+      needle: 2,
+      text: 'text-xs',
+      tooltip: 'text-xs',
+      labelOffset: 14,
+      showZoneLabels: false
+    },
     normal: {
       container: 'w-32 h-16',
-      gauge: 160,
-      needle: 3,
+      gauge: 128,
+      needle: 2.5,
       text: 'text-sm',
       tooltip: 'text-sm',
-      labelOffset: 20,
+      labelOffset: 18,
       showZoneLabels: true
     },
     large: {
       container: 'w-40 h-20',
-      gauge: 200,
-      needle: 4,
+      gauge: 160,
+      needle: 3,
       text: 'text-base',
       tooltip: 'text-base',
-      labelOffset: 24,
+      labelOffset: 22,
       showZoneLabels: true
     }
   };
@@ -217,12 +208,12 @@ const RiskGauge = ({
 
   // Create the gauge SVG
   const createGaugeSVG = () => {
-    const radius = sizeConfig.gauge / 2 - 20;
+    const radius = sizeConfig.gauge / 2 - 10;
     const centerX = sizeConfig.gauge / 2;
     const centerY = sizeConfig.gauge / 2;
     
-    // Create arc paths for different zones
-    const createArc = (startAngle, endAngle, color) => {
+    // Create arc paths for different zones with STRICTER boundaries
+    const createArc = (startAngle, endAngle) => {
       const start = (startAngle * Math.PI) / 180;
       const end = (endAngle * Math.PI) / 180;
       
@@ -236,11 +227,11 @@ const RiskGauge = ({
       return `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}`;
     };
 
-    const strokeWidth = Math.max(2, sizeConfig.gauge / 20); // Proportional stroke width
-    const centerDotRadius = Math.max(1, sizeConfig.gauge / 40); // Proportional center dot
+    const strokeWidth = Math.max(3, sizeConfig.gauge / 32);
+    const centerDotRadius = Math.max(2, sizeConfig.gauge / 64);
 
     return (
-      <svg width={sizeConfig.gauge} height={sizeConfig.gauge / 2 + 10} className="overflow-visible">
+      <svg width={sizeConfig.gauge} height={sizeConfig.gauge / 2 + 15} className="overflow-visible">
         {/* Background arc */}
         <path
           d={createArc(180, 360)}
@@ -250,37 +241,37 @@ const RiskGauge = ({
           strokeLinecap="round"
         />
         
-        {/* Colored zones */}
-        {/* Unproven zone (0-40%) */}
+        {/* Colored zones with stricter boundaries */}
+        {/* Unproven zone (0-50%) */}
         <path
-          d={createArc(180, 180 + (40 * 180) / 100)}
+          d={createArc(180, 180 + (50 * 180) / 100)}
           fill="none"
           stroke="#ef4444"
           strokeWidth={strokeWidth}
           strokeLinecap="round"
         />
         
-        {/* Risky zone (40-60%) */}
+        {/* Risky zone (50-70%) */}
         <path
-          d={createArc(180 + (40 * 180) / 100, 180 + (60 * 180) / 100)}
+          d={createArc(180 + (50 * 180) / 100, 180 + (70 * 180) / 100)}
           fill="none"
           stroke="#f97316"
           strokeWidth={strokeWidth}
           strokeLinecap="round"
         />
         
-        {/* Moderate zone (60-80%) */}
+        {/* Moderate zone (70-85%) */}
         <path
-          d={createArc(180 + (60 * 180) / 100, 180 + (80 * 180) / 100)}
+          d={createArc(180 + (70 * 180) / 100, 180 + (85 * 180) / 100)}
           fill="none"
           stroke="#eab308"
           strokeWidth={strokeWidth}
           strokeLinecap="round"
         />
         
-        {/* Safe zone (80-100%) */}
+        {/* Safe zone (85-100%) */}
         <path
-          d={createArc(180 + (80 * 180) / 100, 360)}
+          d={createArc(180 + (85 * 180) / 100, 360)}
           fill="none"
           stroke="#22c55e"
           strokeWidth={strokeWidth}
@@ -311,10 +302,10 @@ const RiskGauge = ({
         {sizeConfig.showZoneLabels && (
           <>
             <text
-              x={centerX - radius + 15}
+              x={centerX - radius + 10}
               y={centerY + sizeConfig.labelOffset}
               fill="#ef4444"
-              fontSize="10"
+              fontSize="9"
               fontWeight="bold"
               textAnchor="start"
             >
@@ -322,10 +313,10 @@ const RiskGauge = ({
             </text>
             
             <text
-              x={centerX + radius - 15}
+              x={centerX + radius - 10}
               y={centerY + sizeConfig.labelOffset}
               fill="#22c55e"
-              fontSize="10"
+              fontSize="9"
               fontWeight="bold"
               textAnchor="end"
             >
@@ -338,35 +329,19 @@ const RiskGauge = ({
   };
 
   return (
-    <div className={`relative group ${(size === 'compact' || size === 'mini') ? 'flex items-center space-x-1' : 'flex flex-col items-center'} ${sizeConfig.container}`}>
+    <div className={`relative group flex flex-col items-center ${sizeConfig.container}`}>
       {/* RPM-style Gauge */}
       {createGaugeSVG()}
       
       {/* Score and Label */}
       {showLabel && (
-        <div className={(size === 'compact' || size === 'mini') ? 'flex flex-col' : 'text-center mt-1'}>
+        <div className="text-center mt-1">
           <div className={`${sizeConfig.text} font-bold`} style={{ color: risk.color }}>
             {score}%
           </div>
           <div className={`${sizeConfig.text} font-medium text-gray-400`}>
             {risk.label}
           </div>
-        </div>
-      )}
-      
-      {/* Compact/Mini mode - show score next to gauge */}
-      {(size === 'compact' || size === 'mini') && !showLabel && (
-        <div className="flex flex-col items-start">
-          <div className={`${sizeConfig.text} font-bold leading-tight`} style={{ color: risk.color }}>
-            {score}%
-          </div>
-          {size !== 'mini' && (
-            <div className={`${sizeConfig.text} font-medium text-gray-400 leading-tight`}>
-              {risk.level === 'safe' ? 'Safe' : 
-               risk.level === 'moderate' ? 'OK' : 
-               risk.level === 'risky' ? 'Risky' : 'New'}
-            </div>
-          )}
         </div>
       )}
 
@@ -397,7 +372,7 @@ const RiskGauge = ({
               ))}
             </div>
             <div className="mt-2 pt-2 border-t border-gray-700 text-xs text-gray-400">
-              Overall reliability score based on reviews, completion rate, profile completeness, and verification
+              Stricter scoring focuses on reviews & completion rates to encourage legitimate freelancers
             </div>
           </div>
           {/* Tooltip arrow */}

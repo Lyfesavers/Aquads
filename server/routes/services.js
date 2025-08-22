@@ -47,38 +47,10 @@ router.get('/', async (req, res) => {
       .skip((parseInt(page) - 1) * parseInt(limit))
       .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType');
 
-    // Calculate completion rates for each service
-    const servicesWithCompletionRates = await Promise.all(services.map(async (service) => {
-      try {
-        // Get total bookings for this service
-        const totalBookings = await Booking.countDocuments({ serviceId: service._id });
-        
-        // Get completed bookings for this service
-        const completedBookings = await Booking.countDocuments({ 
-          serviceId: service._id, 
-          status: 'completed' 
-        });
-        
-        // Calculate completion rate
-        const completionRate = totalBookings > 0 ? Math.round((completedBookings / totalBookings) * 100) : null;
-        
-        return {
-          ...service.toObject(),
-          completionRate
-        };
-      } catch (error) {
-        console.error(`Error calculating completion rate for service ${service._id}:`, error);
-        return {
-          ...service.toObject(),
-          completionRate: null
-        };
-      }
-    }));
-
     const total = await Service.countDocuments(query);
 
     res.json({
-      services: servicesWithCompletionRates,
+      services,
       pagination: {
         total,
         pages: Math.ceil(total / limit),
