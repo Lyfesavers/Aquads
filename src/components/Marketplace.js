@@ -11,7 +11,7 @@ import { Button } from 'react-bootstrap';
 import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
 import EditServiceModal from './EditServiceModal';
-import { FaCrown, FaCheck } from 'react-icons/fa';
+import { FaCrown, FaCheck, FaFileAlt } from 'react-icons/fa';
 import BookingButton from './BookingButton';
 import Dashboard from './Dashboard';
 import PremiumBadge from './PremiumBadge';
@@ -24,6 +24,7 @@ import useUserPresence from '../hooks/useUserPresence';
 import useUserStatusUpdates from '../hooks/useUserStatusUpdates';
 import ServiceMediaDisplay from './ServiceMediaDisplay';
 import SkillBadges from './SkillBadges';
+import CVPreview from './CVPreview';
 import logger from '../utils/logger';
 
 // Helper function for country flags - using images instead of emojis
@@ -159,6 +160,9 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
   const [jobToEdit, setJobToEdit] = useState(null);
   const [isLoading, setIsLoading] = useState({ jobs: true });
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [showCVPreview, setShowCVPreview] = useState(false);
+  const [cvUserId, setCvUserId] = useState(null);
+  const [cvUsername, setCvUsername] = useState(null);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -601,6 +605,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
 
   const handleCreateAccountClick = () => {
     setShowCreateAccountModal(true);
+  };
+
+  const handleShowCV = (userId, username) => {
+    setCvUserId(userId);
+    setCvUsername(username);
+    setShowCVPreview(true);
   };
 
   const handleLoginSubmit = async (credentials) => {
@@ -1389,6 +1399,20 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                             </div>
                           )}
                           
+                          {/* CV Icon - Show for freelancers who might have a CV */}
+                          {service.seller?.userType === 'freelancer' && (
+                            <div className="mb-3">
+                              <button
+                                onClick={() => handleShowCV(service.seller._id, service.seller.username)}
+                                className="inline-flex items-center px-3 py-1.5 text-sm bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 rounded-full transition-all duration-300 border border-purple-500/30 hover:border-purple-400"
+                                title="View CV"
+                              >
+                                <FaFileAlt className="w-3 h-3 mr-1" />
+                                CV
+                              </button>
+                            </div>
+                          )}
+                          
                           <h3 className="text-lg font-medium mb-2 line-clamp-2 group-hover:text-indigo-400 transition-colors">
                             {service.title}
                           </h3>
@@ -1649,6 +1673,19 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
           job={jobToEdit}
           onClose={() => setJobToEdit(null)}
           onCreateJob={handleEditJob}
+        />
+      )}
+
+      {/* CV Preview Modal */}
+      {showCVPreview && cvUserId && (
+        <CVPreview
+          userId={cvUserId}
+          username={cvUsername}
+          onClose={() => {
+            setShowCVPreview(false);
+            setCvUserId(null);
+            setCvUsername(null);
+          }}
         />
       )}
     </div>

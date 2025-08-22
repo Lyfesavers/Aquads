@@ -252,7 +252,104 @@ const userSchema = new Schema({
       type: Date,
       default: Date.now
     }
-  }]
+  }],
+  // CV Data
+  cv: {
+    summary: {
+      type: String,
+      default: ''
+    },
+    education: [{
+      institution: {
+        type: String,
+        required: true
+      },
+      degree: {
+        type: String,
+        required: true
+      },
+      field: {
+        type: String,
+        required: true
+      },
+      startDate: {
+        type: Date,
+        required: true
+      },
+      endDate: Date,
+      current: {
+        type: Boolean,
+        default: false
+      },
+      description: String,
+      // Verification contacts
+      contactName: {
+        type: String,
+        required: true
+      },
+      contactTitle: {
+        type: String,
+        required: true
+      },
+      contactEmail: {
+        type: String,
+        required: true
+      },
+      contactPhone: String,
+      contactDepartment: {
+        type: String,
+        required: true
+      }
+    }],
+    experience: [{
+      company: {
+        type: String,
+        required: true
+      },
+      position: {
+        type: String,
+        required: true
+      },
+      startDate: {
+        type: Date,
+        required: true
+      },
+      endDate: Date,
+      current: {
+        type: Boolean,
+        default: false
+      },
+      description: String,
+      // Verification contacts
+      contactName: {
+        type: String,
+        required: true
+      },
+      contactTitle: {
+        type: String,
+        required: true
+      },
+      contactEmail: {
+        type: String,
+        required: true
+      },
+      contactPhone: String,
+      contactDepartment: {
+        type: String,
+        required: true
+      }
+    }],
+    skills: [String],
+    lastUpdated: {
+      type: Date,
+      default: Date.now
+    },
+    isVerified: {
+      type: Boolean,
+      default: false
+    },
+    verificationNotes: String
+  }
 });
 
 // Generate referral code before saving

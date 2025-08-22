@@ -367,6 +367,77 @@ router.put('/profile', auth, async (req, res) => {
   }
 });
 
+// Get user CV
+router.get('/cv/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId).select('cv username');
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({ cv: user.cv || {}, username: user.username });
+  } catch (error) {
+    console.error('Get CV error:', error);
+    res.status(500).json({ error: 'Error fetching CV' });
+  }
+});
+
+// Update user CV
+router.put('/cv', auth, async (req, res) => {
+  try {
+    const { summary, education, experience, skills } = req.body;
+    const user = await User.findById(req.user.userId);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Initialize CV object if it doesn't exist
+    if (!user.cv) {
+      user.cv = {};
+    }
+
+    // Update CV fields
+    if (summary !== undefined) user.cv.summary = summary;
+    if (education) user.cv.education = education;
+    if (experience) user.cv.experience = experience;
+    if (skills) user.cv.skills = skills;
+    
+    user.cv.lastUpdated = new Date();
+
+    await user.save();
+
+    res.json({ 
+      message: 'CV updated successfully',
+      cv: user.cv 
+    });
+  } catch (error) {
+    console.error('CV update error:', error);
+    res.status(500).json({ error: 'Error updating CV' });
+  }
+});
+
+// Delete user CV
+router.delete('/cv', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    user.cv = undefined;
+    await user.save();
+
+    res.json({ message: 'CV deleted successfully' });
+  } catch (error) {
+    console.error('CV delete error:', error);
+    res.status(500).json({ error: 'Error deleting CV' });
+  }
+});
+
 // Request password reset
 router.post('/request-password-reset', async (req, res) => {
   try {

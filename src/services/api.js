@@ -1352,4 +1352,85 @@ export const verifyUserStatus = async (username) => {
     logger.error('User verification failed:', error);
     throw error;
   }
+};
+
+// CV API Functions
+
+// Get user CV by user ID (public)
+export const getUserCV = async (userId) => {
+  try {
+    const response = await fetch(`${API_URL}/users/cv/${userId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw data;
+    }
+
+    return await response.json();
+  } catch (error) {
+    logger.error('Get user CV failed:', error);
+    throw error;
+  }
+};
+
+// Update current user's CV
+export const updateCV = async (cvData) => {
+  try {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    if (!currentUser.token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_URL}/users/cv`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${currentUser.token}`
+      },
+      body: JSON.stringify(cvData)
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw data;
+    }
+
+    return await response.json();
+  } catch (error) {
+    logger.error('Update CV failed:', error);
+    throw error;
+  }
+};
+
+// Delete current user's CV
+export const deleteCV = async () => {
+  try {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    if (!currentUser.token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${API_URL}/users/cv`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${currentUser.token}`
+      }
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw data;
+    }
+
+    return await response.json();
+  } catch (error) {
+    logger.error('Delete CV failed:', error);
+    throw error;
+  }
 }; 
