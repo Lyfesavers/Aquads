@@ -203,8 +203,9 @@ const RiskGauge = ({
 
   const sizeConfig = sizes[size] || sizes.normal;
 
-  // Calculate needle angle (180 degrees total, from left to right)
-  const needleAngle = (score / 100) * 180 - 90; // -90 to 90 degrees
+  // Calculate needle angle (semicircle from 180° to 360°, or 180° to 0°)
+  // Score 0% = 180°, Score 100% = 360° (or 0°)
+  const needleAngle = 180 + (score / 100) * 180; // 180° to 360°
 
   // Create the gauge SVG
   const createGaugeSVG = () => {
@@ -372,7 +373,7 @@ const RiskGauge = ({
               ))}
             </div>
             <div className="mt-2 pt-2 border-t border-gray-700 text-xs text-gray-400">
-              Stricter scoring focuses on reviews & completion rates to encourage legitimate freelancers
+              Score: {score}% • Zone: {score >= 85 ? 'Safe (85-100%)' : score >= 70 ? 'Moderate (70-84%)' : score >= 50 ? 'Risky (50-69%)' : 'Unproven (0-49%)'} • Needle: {Math.round(needleAngle)}°
             </div>
           </div>
           {/* Tooltip arrow */}
