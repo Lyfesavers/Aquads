@@ -280,6 +280,13 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate }) => {
     }
   };
 
+  // Clear notifications when switching tabs
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setError('');
+    setSuccess('');
+  };
+
   const validateImageUrl = async (url) => {
     try {
       const response = await fetch(url);
@@ -496,7 +503,7 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate }) => {
         <div className="max-w-6xl mx-auto w-full mb-6">
           <div className="hidden lg:flex border-b border-gray-700/50">
             <button
-              onClick={() => setActiveTab('profile')}
+              onClick={() => handleTabChange('profile')}
               className={`px-6 py-3 font-medium transition-colors border-b-2 ${
                 activeTab === 'profile'
                   ? 'border-blue-500 text-blue-400'
@@ -507,7 +514,7 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate }) => {
               Profile
             </button>
             <button
-              onClick={() => setActiveTab('security')}
+              onClick={() => handleTabChange('security')}
               className={`px-6 py-3 font-medium transition-colors border-b-2 ${
                 activeTab === 'security'
                   ? 'border-yellow-500 text-yellow-400'
@@ -519,7 +526,7 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate }) => {
             </button>
             {currentUser?.userType === 'freelancer' && (
               <button
-                onClick={() => setActiveTab('cv')}
+                onClick={() => handleTabChange('cv')}
                 className={`px-6 py-3 font-medium transition-colors border-b-2 ${
                   activeTab === 'cv'
                     ? 'border-purple-500 text-purple-400'
@@ -535,53 +542,88 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate }) => {
 
         {/* Content */}
         <div className="flex-1 max-w-6xl mx-auto w-full">
-          <form onSubmit={handleSubmit} className="h-full">
-            {/* Mobile: Show all tabs as single form, Desktop: Show selected tab */}
-            <div className="lg:hidden space-y-6">
-              {renderProfileTab()}
-              {renderSecurityTab()}
-              {currentUser?.userType === 'freelancer' && renderCVTab()}
-            </div>
-            
-            <div className="hidden lg:block">
-              {activeTab === 'profile' && renderProfileTab()}
-              {activeTab === 'security' && renderSecurityTab()}
-              {activeTab === 'cv' && renderCVTab()}
-            </div>
+          {/* CV Tab - Outside of form to prevent form submission conflicts */}
+          {activeTab === 'cv' && currentUser?.userType === 'freelancer' && (
+            <>
+              {renderCVTab()}
+              {/* CV Status Messages - Show outside form */}
+              {error && (
+                <div className="mt-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-300">
+                  {error}
+                </div>
+              )}
+              {success && (
+                <div className="mt-6 p-4 bg-green-500/10 border border-green-500/30 rounded-lg text-green-300">
+                  {success}
+                </div>
+              )}
+            </>
+          )}
 
-            {/* Status Messages */}
-            {error && (
-              <div className="mt-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-300">
-                {error}
+          {/* Profile and Security tabs - Inside form */}
+          {activeTab !== 'cv' && (
+            <form onSubmit={handleSubmit} className="h-full">
+              {/* Mobile: Show all non-CV tabs as single form, Desktop: Show selected tab */}
+              <div className="lg:hidden space-y-6">
+                {renderProfileTab()}
+                {renderSecurityTab()}
+                {currentUser?.userType === 'freelancer' && (
+                  <div className="bg-gray-800/50 rounded-xl p-6 backdrop-blur-sm border border-gray-700/50">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <FaFileAlt className="text-purple-400" />
+                      CV Builder
+                    </h3>
+                    <p className="text-gray-400 mb-4">Build your professional CV with education, experience, and skills.</p>
+                    <button
+                      type="button"
+                      onClick={() => handleTabChange('cv')}
+                      className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+                    >
+                      Open CV Builder
+                    </button>
+                  </div>
+                )}
               </div>
-            )}
-            {success && (
-              <div className="mt-6 p-4 bg-green-500/10 border border-green-500/30 rounded-lg text-green-300">
-                {success}
+              
+              <div className="hidden lg:block">
+                {activeTab === 'profile' && renderProfileTab()}
+                {activeTab === 'security' && renderSecurityTab()}
               </div>
-            )}
 
-            {/* Footer Actions */}
-            <div className="mt-8 pt-6 border-t border-gray-700/50">
-              <div className="flex justify-end gap-4">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-6 py-3 bg-gray-600/50 hover:bg-gray-600 text-white rounded-lg transition-all duration-200 flex items-center gap-2 border border-gray-600"
-                >
-                  <FaTimes className="text-sm" />
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-blue-500/25"
-                >
-                  <FaSave className="text-sm" />
-                  Save Changes
-                </button>
+              {/* Status Messages */}
+              {error && (
+                <div className="mt-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-300">
+                  {error}
+                </div>
+              )}
+              {success && (
+                <div className="mt-6 p-4 bg-green-500/10 border border-green-500/30 rounded-lg text-green-300">
+                  {success}
+                </div>
+              )}
+
+              {/* Footer Actions - Only show for non-CV tabs */}
+              <div className="mt-8 pt-6 border-t border-gray-700/50">
+                <div className="flex justify-end gap-4">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="px-6 py-3 bg-gray-600/50 hover:bg-gray-600 text-white rounded-lg transition-all duration-200 flex items-center gap-2 border border-gray-600"
+                  >
+                    <FaTimes className="text-sm" />
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-blue-500/25"
+                  >
+                    <FaSave className="text-sm" />
+                    Save Changes
+                  </button>
+                </div>
               </div>
-            </div>
-          </form>
+            </form>
+          )}
         </div>
       </div>
     </Modal>

@@ -168,6 +168,7 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
               CV Preview
             </h3>
             <button
+              type="button"
               onClick={() => setShowPreview(false)}
               className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
             >
@@ -274,6 +275,7 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
         </h3>
         <div className="flex gap-3">
           <button
+            type="button"
             onClick={() => setShowPreview(true)}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
           >
@@ -281,6 +283,7 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
             Preview
           </button>
           <button
+            type="button"
             onClick={handleSave}
             disabled={saving}
             className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
@@ -313,6 +316,7 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
             Education
           </h4>
           <button
+            type="button"
             onClick={addEducation}
             className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
           >
@@ -326,6 +330,7 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
             <div className="flex justify-between items-start mb-4">
               <h5 className="font-medium">Education #{index + 1}</h5>
               <button
+                type="button"
                 onClick={() => removeEducation(index)}
                 className="text-red-400 hover:text-red-300 transition-colors"
               >
@@ -460,6 +465,7 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
             Professional Experience
           </h4>
           <button
+            type="button"
             onClick={addExperience}
             className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2"
           >
@@ -473,6 +479,7 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
             <div className="flex justify-between items-start mb-4">
               <h5 className="font-medium">Experience #{index + 1}</h5>
               <button
+                type="button"
                 onClick={() => removeExperience(index)}
                 className="text-red-400 hover:text-red-300 transition-colors"
               >
@@ -604,10 +611,16 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
             placeholder="Enter a skill and press Enter"
             value={newSkill}
             onChange={(e) => setNewSkill(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && addSkill()}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                addSkill();
+              }
+            }}
             className="flex-1 px-3 py-2 bg-gray-700/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
           />
           <button
+            type="button"
             onClick={addSkill}
             className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded transition-colors"
           >
@@ -623,6 +636,7 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
             >
               {skill}
               <button
+                type="button"
                 onClick={() => removeSkill(skill)}
                 className="text-purple-400 hover:text-purple-200 transition-colors"
               >
