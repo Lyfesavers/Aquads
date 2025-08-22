@@ -628,7 +628,8 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
 
                 {/* CV Button */}
                 {service.seller?.userType === 'freelancer' && service.seller?.cv && (
-                  (service.seller.cv.education?.length > 0 || 
+                  (service.seller.cv.fullName ||
+                   service.seller.cv.education?.length > 0 || 
                    service.seller.cv.experience?.length > 0 || 
                    service.seller.cv.skills?.length > 0 || 
                    service.seller.cv.summary) && (

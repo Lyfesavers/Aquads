@@ -255,6 +255,10 @@ const userSchema = new Schema({
   }],
   // CV Data
   cv: {
+    fullName: {
+      type: String,
+      default: ''
+    },
     summary: {
       type: String,
       default: ''

@@ -36,6 +36,7 @@ const CVPreview = ({ userId, username, onClose }) => {
   };
 
   const hasContent = cvData && (
+    cvData.fullName ||
     cvData.summary ||
     (cvData.education && cvData.education.length > 0) ||
     (cvData.experience && cvData.experience.length > 0) ||
@@ -99,7 +100,7 @@ const CVPreview = ({ userId, username, onClose }) => {
           <div className="bg-white text-black rounded-xl p-8 shadow-2xl">
             {/* Header */}
             <div className="text-center mb-8 border-b-2 border-gray-200 pb-6">
-              <h1 className="text-4xl font-bold mb-4 text-gray-800">{username}</h1>
+              <h1 className="text-4xl font-bold mb-4 text-gray-800">{cvData.fullName || username}</h1>
               {cvData.summary && (
                 <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
                   {cvData.summary}

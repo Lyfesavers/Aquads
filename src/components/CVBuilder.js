@@ -4,6 +4,7 @@ import { FaPlus, FaTrash, FaGraduationCap, FaBriefcase, FaTools, FaSave, FaEye, 
 
 const CVBuilder = ({ currentUser, onClose, showNotification }) => {
   const [cvData, setCvData] = useState({
+    fullName: '',
     summary: '',
     education: [],
     experience: [],
@@ -24,6 +25,7 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
       const response = await getUserCV(currentUser.userId || currentUser._id);
       if (response.cv) {
         setCvData({
+          fullName: response.cv.fullName || '',
           summary: response.cv.summary || '',
           education: response.cv.education || [],
           experience: response.cv.experience || [],
@@ -234,7 +236,7 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
           {/* CV Preview Content */}
           <div className="bg-white text-black p-8 rounded-lg">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold mb-2">{currentUser.username}</h1>
+              <h1 className="text-3xl font-bold mb-2">{cvData.fullName || currentUser.username}</h1>
               {cvData.summary && (
                 <p className="text-gray-600 max-w-2xl mx-auto">{cvData.summary}</p>
               )}
@@ -347,6 +349,23 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
             {saving ? 'Saving...' : 'Save CV'}
           </button>
         </div>
+      </div>
+
+      {/* Full Name Section */}
+      <div className="bg-gray-800/50 rounded-xl p-6 backdrop-blur-sm border border-gray-700/50">
+        <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          Full Name <span className="text-red-400 text-sm">(Your real professional name)</span>
+        </h4>
+        <input
+          type="text"
+          value={cvData.fullName}
+          onChange={(e) => setCvData(prev => ({ ...prev, fullName: e.target.value }))}
+          placeholder="Enter your full real name (e.g., John Smith)"
+          className="w-full px-4 py-3 bg-gray-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
+        />
+        <p className="text-gray-400 text-sm mt-2">
+          This will be displayed on your CV instead of your username. Use your real professional name.
+        </p>
       </div>
 
       {/* Summary Section */}

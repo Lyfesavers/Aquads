@@ -1401,7 +1401,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                           
                           {/* CV Icon - Show for freelancers who have CV data */}
                           {service.seller?.userType === 'freelancer' && service.seller?.cv && (
-                            (service.seller.cv.education?.length > 0 || 
+                            (service.seller.cv.fullName ||
+                             service.seller.cv.education?.length > 0 || 
                              service.seller.cv.experience?.length > 0 || 
                              service.seller.cv.skills?.length > 0 || 
                              service.seller.cv.summary) && (

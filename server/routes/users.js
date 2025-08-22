@@ -387,7 +387,7 @@ router.get('/cv/:userId', async (req, res) => {
 // Update user CV
 router.put('/cv', auth, async (req, res) => {
   try {
-    const { summary, education, experience, skills } = req.body;
+    const { fullName, summary, education, experience, skills } = req.body;
     const user = await User.findById(req.user.userId);
 
     if (!user) {
@@ -400,6 +400,7 @@ router.put('/cv', auth, async (req, res) => {
     }
 
     // Update CV fields
+    if (fullName !== undefined) user.cv.fullName = fullName;
     if (summary !== undefined) user.cv.summary = summary;
     if (education) user.cv.education = education;
     if (experience) user.cv.experience = experience;
