@@ -37,10 +37,65 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
     }
   };
 
+  const validateCV = () => {
+    const errors = [];
+
+    // Validate education entries
+    cvData.education.forEach((edu, index) => {
+      if (edu.institution || edu.degree || edu.field || edu.startDate || edu.contactName || edu.contactTitle || edu.contactEmail || edu.contactDepartment) {
+        if (!edu.institution) errors.push(`Education #${index + 1}: Institution is required`);
+        if (!edu.degree) errors.push(`Education #${index + 1}: Degree is required`);
+        if (!edu.field) errors.push(`Education #${index + 1}: Field of study is required`);
+        if (!edu.startDate) errors.push(`Education #${index + 1}: Start date is required`);
+        if (!edu.contactName) errors.push(`Education #${index + 1}: Contact name is required`);
+        if (!edu.contactTitle) errors.push(`Education #${index + 1}: Contact title is required`);
+        if (!edu.contactEmail) errors.push(`Education #${index + 1}: Contact email is required`);
+        if (!edu.contactDepartment) errors.push(`Education #${index + 1}: Contact department is required`);
+      }
+    });
+
+    // Validate experience entries
+    cvData.experience.forEach((exp, index) => {
+      if (exp.company || exp.position || exp.startDate || exp.contactName || exp.contactTitle || exp.contactEmail || exp.contactDepartment) {
+        if (!exp.company) errors.push(`Experience #${index + 1}: Company is required`);
+        if (!exp.position) errors.push(`Experience #${index + 1}: Position is required`);
+        if (!exp.startDate) errors.push(`Experience #${index + 1}: Start date is required`);
+        if (!exp.contactName) errors.push(`Experience #${index + 1}: Contact name is required`);
+        if (!exp.contactTitle) errors.push(`Experience #${index + 1}: Contact title is required`);
+        if (!exp.contactEmail) errors.push(`Experience #${index + 1}: Contact email is required`);
+        if (!exp.contactDepartment) errors.push(`Experience #${index + 1}: Contact department is required`);
+      }
+    });
+
+    return errors;
+  };
+
   const handleSave = async () => {
     try {
       setSaving(true);
-      await updateCV(cvData);
+      
+      // Validate before saving
+      const validationErrors = validateCV();
+      if (validationErrors.length > 0) {
+        const errorMessage = `Please fix the following errors:\n\n${validationErrors.join('\n\n')}`;
+        showNotification(errorMessage, 'error');
+        return;
+      }
+
+      // Filter out empty entries
+      const cleanedData = {
+        ...cvData,
+        education: cvData.education.filter(edu => 
+          edu.institution && edu.degree && edu.field && edu.startDate && 
+          edu.contactName && edu.contactTitle && edu.contactEmail && edu.contactDepartment
+        ),
+        experience: cvData.experience.filter(exp => 
+          exp.company && exp.position && exp.startDate && 
+          exp.contactName && exp.contactTitle && exp.contactEmail && exp.contactDepartment
+        )
+      };
+
+      await updateCV(cleanedData);
       showNotification('CV saved successfully!', 'success');
     } catch (error) {
       console.error('Error saving CV:', error);
@@ -406,7 +461,7 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
 
             {/* Verification Contact */}
             <div className="border-t border-gray-600 pt-4">
-              <h6 className="font-medium mb-3 text-yellow-400">Verification Contact</h6>
+              <h6 className="font-medium mb-3 text-yellow-400">Verification Contact <span className="text-red-400 text-sm">(All fields required except phone)</span></h6>
               <div className="grid md:grid-cols-2 gap-4">
                 <input
                   type="text"
@@ -547,7 +602,7 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
 
             {/* Verification Contact */}
             <div className="border-t border-gray-600 pt-4">
-              <h6 className="font-medium mb-3 text-yellow-400">Verification Contact</h6>
+              <h6 className="font-medium mb-3 text-yellow-400">Verification Contact <span className="text-red-400 text-sm">(All fields required except phone)</span></h6>
               <div className="grid md:grid-cols-2 gap-4">
                 <input
                   type="text"

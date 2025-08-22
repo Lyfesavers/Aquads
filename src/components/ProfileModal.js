@@ -549,7 +549,7 @@ const ProfileModal = ({ onClose, currentUser, onProfileUpdate }) => {
               {/* CV Status Messages - Show outside form */}
               {error && (
                 <div className="mt-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-300">
-                  {error}
+                  <pre className="whitespace-pre-wrap text-sm font-mono">{error}</pre>
                 </div>
               )}
               {success && (
