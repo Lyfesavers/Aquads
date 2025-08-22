@@ -45,7 +45,7 @@ router.get('/', async (req, res) => {
       .sort(sortOptions)
       .limit(parseInt(limit))
       .skip((parseInt(page) - 1) * parseInt(limit))
-      .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges');
+      .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType');
 
     const total = await Service.countDocuments(query);
 
@@ -95,7 +95,7 @@ router.get('/category/:categoryId', async (req, res) => {
       status: 'active' // Only show active services in category view
     })
       .sort({ rating: -1 })
-      .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges');
+      .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType');
     res.json(services);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching services by category', error: error.message });
@@ -147,7 +147,7 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       // Don't fail the service creation if points awarding fails
     }
     
-    await service.populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges');
+    await service.populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType');
 
     res.status(201).json(service);
   } catch (error) {
@@ -180,7 +180,7 @@ router.put('/:id', auth, requireEmailVerification, upload.single('image'), async
     });
 
     await service.save();
-    await service.populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges');
+    await service.populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType');
 
     res.json(service);
   } catch (error) {
@@ -298,7 +298,7 @@ router.get('/pending', auth, async (req, res) => {
 
     const services = await Service.find({ status: 'pending' })
       .sort({ createdAt: -1 })
-      .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges');
+      .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType');
 
     res.json(services);
   } catch (error) {
@@ -327,7 +327,7 @@ router.post('/:id/approve', auth, async (req, res) => {
     service.status = 'active';
     await service.save();
     
-    await service.populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges');
+    await service.populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType');
 
     // Create notification for the seller
     try {
@@ -377,7 +377,7 @@ router.post('/:id/reject', auth, async (req, res) => {
     service.status = 'inactive';
     await service.save();
     
-    await service.populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges');
+    await service.populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType');
 
     // Create notification for the seller
     try {
@@ -414,7 +414,7 @@ router.post('/:id/reject', auth, async (req, res) => {
 router.get('/:id/details', async (req, res) => {
   try {
     const service = await Service.findById(req.params.id)
-      .populate('seller', 'username image country isOnline lastSeen lastActivity skillBadges createdAt');
+      .populate('seller', 'username image country isOnline lastSeen lastActivity skillBadges createdAt cv userType');
     
     if (!service) {
       return res.status(404).json({ message: 'Service not found' });

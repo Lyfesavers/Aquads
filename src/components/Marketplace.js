@@ -1399,18 +1399,23 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                             </div>
                           )}
                           
-                          {/* CV Icon - Show for freelancers who might have a CV */}
-                          {service.seller?.userType === 'freelancer' && (
-                            <div className="mb-3">
-                              <button
-                                onClick={() => handleShowCV(service.seller._id, service.seller.username)}
-                                className="inline-flex items-center px-3 py-1.5 text-sm bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 rounded-full transition-all duration-300 border border-purple-500/30 hover:border-purple-400"
-                                title="View CV"
-                              >
-                                <FaFileAlt className="w-3 h-3 mr-1" />
-                                CV
-                              </button>
-                            </div>
+                          {/* CV Icon - Show for freelancers who have CV data */}
+                          {service.seller?.userType === 'freelancer' && service.seller?.cv && (
+                            (service.seller.cv.education?.length > 0 || 
+                             service.seller.cv.experience?.length > 0 || 
+                             service.seller.cv.skills?.length > 0 || 
+                             service.seller.cv.summary) && (
+                              <div className="mb-3">
+                                <button
+                                  onClick={() => handleShowCV(service.seller._id, service.seller.username)}
+                                  className="inline-flex items-center px-3 py-1.5 text-sm bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 rounded-full transition-all duration-300 border border-purple-500/30 hover:border-purple-400"
+                                  title="View CV"
+                                >
+                                  <FaFileAlt className="w-3 h-3 mr-1" />
+                                  CV
+                                </button>
+                              </div>
+                            )
                           )}
                           
                           <h3 className="text-lg font-medium mb-2 line-clamp-2 group-hover:text-indigo-400 transition-colors">

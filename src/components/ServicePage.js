@@ -17,7 +17,8 @@ import CreateServiceModal from './CreateServiceModal';
 import CreateBannerModal from './CreateBannerModal';
 import PremiumPaymentModal from './PremiumPaymentModal';
 import CreateJobModal from './CreateJobModal';
-import { FaCrown, FaCheck, FaArrowLeft, FaEye, FaUsers, FaHandshake, FaChartLine, FaStar, FaGlobe, FaClock, FaDollarSign } from 'react-icons/fa';
+import CVPreview from './CVPreview';
+import { FaCrown, FaCheck, FaArrowLeft, FaEye, FaUsers, FaHandshake, FaChartLine, FaStar, FaGlobe, FaClock, FaDollarSign, FaFileAlt } from 'react-icons/fa';
 import logger from '../utils/logger';
 
 // Helper function for country flags
@@ -58,6 +59,9 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
   const [showJobModal, setShowJobModal] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [showCVPreview, setShowCVPreview] = useState(false);
+  const [cvUserId, setCvUserId] = useState(null);
+  const [cvUsername, setCvUsername] = useState(null);
 
   useEffect(() => {
     const fetchServiceDetails = async () => {
@@ -92,6 +96,12 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
   const handleBookingCreate = (booking) => {
     // Handle booking creation success
     logger.log('Booking created:', booking);
+  };
+
+  const handleShowCV = (userId, username) => {
+    setCvUserId(userId);
+    setCvUsername(username);
+    setShowCVPreview(true);
   };
 
   const handleLoginClick = () => {
@@ -616,6 +626,25 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                   </div>
                 )}
 
+                {/* CV Button */}
+                {service.seller?.userType === 'freelancer' && service.seller?.cv && (
+                  (service.seller.cv.education?.length > 0 || 
+                   service.seller.cv.experience?.length > 0 || 
+                   service.seller.cv.skills?.length > 0 || 
+                   service.seller.cv.summary) && (
+                    <div className="mb-6">
+                      <h4 className="text-sm font-semibold text-gray-400 mb-3">Professional Background</h4>
+                      <button
+                        onClick={() => handleShowCV(service.seller._id, service.seller.username)}
+                        className="inline-flex items-center px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 rounded-lg transition-all duration-300 border border-purple-500/30 hover:border-purple-400"
+                      >
+                        <FaFileAlt className="w-4 h-4 mr-2" />
+                        View Professional CV
+                      </button>
+                    </div>
+                  )
+                )}
+
                 {/* Seller Stats */}
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <div className="text-center p-3 bg-gray-700/50 rounded-lg">
@@ -878,6 +907,19 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
             onCreateJob={(jobData) => {
               setShowJobModal(false);
               // Handle job creation success
+            }}
+          />
+        )}
+
+        {/* CV Preview Modal */}
+        {showCVPreview && cvUserId && (
+          <CVPreview
+            userId={cvUserId}
+            username={cvUsername}
+            onClose={() => {
+              setShowCVPreview(false);
+              setCvUserId(null);
+              setCvUsername(null);
             }}
           />
         )}
