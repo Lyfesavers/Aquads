@@ -47,6 +47,7 @@ import AquaSwapEmbed from './components/AquaSwapEmbed';
 import TransakPage from './components/TransakPage';
 import VerifyUser from './components/VerifyUser';
 import BannerDisplay from './components/BannerDisplay';
+import useUserPresence from './hooks/useUserPresence';
 
 import ProjectInfo from './components/ProjectInfo';
 import FreelancerBenefits from './components/FreelancerBenefits';
@@ -453,6 +454,9 @@ function App() {
   const [totalPages, setTotalPages] = useState(1);
   const [votePopup, setVotePopup] = useState(null);
   const [partnershipPopup, setPartnershipPopup] = useState(null);
+  
+  // Initialize user presence tracking across all pages
+  useUserPresence(currentUser);
   
   /**
    * Determine how many bubbles to show per page based on screen size.

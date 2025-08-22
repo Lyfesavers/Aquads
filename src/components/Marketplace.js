@@ -20,7 +20,7 @@ import CreateJobModal from './CreateJobModal';
 import JobList from './JobList';
 import NotificationBell from './NotificationBell';
 import OnlineStatusIndicator from './OnlineStatusIndicator';
-import useUserPresence from '../hooks/useUserPresence';
+
 import useUserStatusUpdates from '../hooks/useUserStatusUpdates';
 import ServiceMediaDisplay from './ServiceMediaDisplay';
 import SkillBadges from './SkillBadges';
@@ -168,8 +168,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(21);
 
-  // Initialize user presence tracking
-  useUserPresence(currentUser);
+
   const { getUserStatus, bulkUpdateUserStatuses } = useUserStatusUpdates(currentUser);
 
   const categories = [
