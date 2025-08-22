@@ -586,12 +586,28 @@ async function initializeSkillTests() {
       // If no tests exist, add all tests
       await SkillTest.insertMany(skillTests);
     } else {
-      // Check for new tests and add them
+      // Check for new tests and update existing ones
       for (const test of skillTests) {
-        const existingTest = await SkillTest.findOne({ title: test.title });
-        if (!existingTest) {
-          await SkillTest.create(test);
-        }
+        await SkillTest.findOneAndUpdate(
+          { title: test.title },
+          {
+            $set: {
+              description: test.description,
+              category: test.category,
+              difficulty: test.difficulty,
+              timeLimit: test.timeLimit,
+              passingScore: test.passingScore,
+              questions: test.questions,
+              badge: test.badge,
+              isActive: test.isActive !== undefined ? test.isActive : true,
+              updatedAt: new Date()
+            }
+          },
+          { 
+            new: true,
+            upsert: true // Create if doesn't exist
+          }
+        );
       }
     }
   } catch (error) {
