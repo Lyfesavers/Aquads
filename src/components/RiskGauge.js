@@ -131,31 +131,31 @@ const RiskGauge = ({
 
   const { score, factors } = calculateRiskScore();
 
-  // Determine risk level and gauge zones - STRICTER THRESHOLDS
+  // Determine risk level and gauge zones - UPDATED LABELS
   const getRiskLevel = (score) => {
-    if (score >= 85) return { // INCREASED from 80
+    if (score >= 85) return { 
       level: 'safe', 
       color: '#22c55e', 
       label: 'Safe to Book',
       zone: 'safe'
     };
-    if (score >= 70) return { // INCREASED from 60
+    if (score >= 70) return { 
       level: 'moderate', 
       color: '#eab308', 
-      label: 'Moderate Risk',
+      label: 'Almost Proven',
       zone: 'moderate'
     };
-    if (score >= 50) return { // INCREASED from 40
-      level: 'risky', 
-      color: '#f97316', 
-      label: 'Risky',
-      zone: 'risky'
-    };
-    return { 
+    if (score >= 50) return { 
       level: 'unproven', 
-      color: '#ef4444', 
+      color: '#f97316', 
       label: 'Unproven',
       zone: 'unproven'
+    };
+    return { 
+      level: 'risky', 
+      color: '#ef4444', 
+      label: 'Risky',
+      zone: 'risky'
     };
   };
 
@@ -310,7 +310,7 @@ const RiskGauge = ({
               fontWeight="bold"
               textAnchor="start"
             >
-              Unproven
+              Risky
             </text>
             
             <text
@@ -373,7 +373,7 @@ const RiskGauge = ({
               ))}
             </div>
             <div className="mt-2 pt-2 border-t border-gray-700 text-xs text-gray-400">
-              Score: {score}% • Zone: {score >= 85 ? 'Safe (85-100%)' : score >= 70 ? 'Moderate (70-84%)' : score >= 50 ? 'Risky (50-69%)' : 'Unproven (0-49%)'} • Needle: {Math.round(needleAngle)}°
+              Score: {score}% • Zone: {score >= 85 ? 'Safe to Book (85-100%)' : score >= 70 ? 'Almost Proven (70-84%)' : score >= 50 ? 'Unproven (50-69%)' : 'Risky (0-49%)'} • Needle: {Math.round(needleAngle)}°
             </div>
           </div>
           {/* Tooltip arrow */}
