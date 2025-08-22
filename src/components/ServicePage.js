@@ -648,9 +648,9 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                 )}
 
                 {/* Risk Assessment */}
-                <div className="mb-6">
+                <div className="mb-8">
                   <h4 className="text-sm font-semibold text-gray-400 mb-3">Reliability Assessment</h4>
-                  <div className="flex justify-center">
+                  <div className="flex justify-center pb-4">
                     <RiskGauge 
                       seller={service.seller}
                       service={service}

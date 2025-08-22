@@ -1420,9 +1420,9 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                           )}
 
                           {/* Risk Assessment Section */}
-                          <div className="mb-4">
+                          <div className="mb-5">
                             <h5 className="text-xs font-semibold text-gray-400 mb-2 border-b border-gray-600 pb-1">Reliability Assessment</h5>
-                            <div className="flex justify-center pt-2 pb-2">
+                            <div className="flex justify-center pt-2 pb-4">
                               <RiskGauge 
                                 seller={service.seller}
                                 service={service}
