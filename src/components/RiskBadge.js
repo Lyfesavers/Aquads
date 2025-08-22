@@ -1,11 +1,9 @@
 import React from 'react';
 
-const RiskGauge = ({ 
+const RiskBadge = ({ 
   seller, 
   service, 
-  completionRate = null, 
-  size = 'normal',
-  showLabel = true,
+  completionRate = null,
   showTooltip = true 
 }) => {
   // Calculate overall risk score based on multiple factors
@@ -131,254 +129,54 @@ const RiskGauge = ({
 
   const { score, factors } = calculateRiskScore();
 
-  // Determine risk level and gauge zones
+  // Determine risk level and badge appearance
   const getRiskLevel = (score) => {
     if (score >= 80) return { 
       level: 'safe', 
-      color: '#22c55e', 
-      label: 'Safe to Book',
-      zone: 'safe'
+      color: 'bg-green-500/20 text-green-400 border-green-500/30', 
+      label: 'Safe',
+      dot: 'bg-green-500'
     };
     if (score >= 60) return { 
       level: 'moderate', 
-      color: '#eab308', 
-      label: 'Moderate Risk',
-      zone: 'moderate'
+      color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', 
+      label: 'OK',
+      dot: 'bg-yellow-500'
     };
     if (score >= 40) return { 
       level: 'risky', 
-      color: '#f97316', 
+      color: 'bg-orange-500/20 text-orange-400 border-orange-500/30', 
       label: 'Risky',
-      zone: 'risky'
+      dot: 'bg-orange-500'
     };
     return { 
       level: 'unproven', 
-      color: '#ef4444', 
-      label: 'Unproven',
-      zone: 'unproven'
+      color: 'bg-red-500/20 text-red-400 border-red-500/30', 
+      label: 'New',
+      dot: 'bg-red-500'
     };
   };
 
   const risk = getRiskLevel(score);
 
-  // Size configurations
-  const sizes = {
-    mini: {
-      container: 'w-12 h-3',
-      gauge: 40,
-      needle: 0.8,
-      text: 'text-xs',
-      tooltip: 'text-xs',
-      labelOffset: 6,
-      showZoneLabels: false
-    },
-    compact: {
-      container: 'w-16 h-4',
-      gauge: 50,
-      needle: 1,
-      text: 'text-xs',
-      tooltip: 'text-xs',
-      labelOffset: 8,
-      showZoneLabels: false
-    },
-    small: {
-      container: 'w-20 h-8',
-      gauge: 80,
-      needle: 1.5,
-      text: 'text-xs',
-      tooltip: 'text-xs',
-      labelOffset: 12,
-      showZoneLabels: false
-    },
-    normal: {
-      container: 'w-32 h-16',
-      gauge: 160,
-      needle: 3,
-      text: 'text-sm',
-      tooltip: 'text-sm',
-      labelOffset: 20,
-      showZoneLabels: true
-    },
-    large: {
-      container: 'w-40 h-20',
-      gauge: 200,
-      needle: 4,
-      text: 'text-base',
-      tooltip: 'text-base',
-      labelOffset: 24,
-      showZoneLabels: true
-    }
-  };
-
-  const sizeConfig = sizes[size] || sizes.normal;
-
-  // Calculate needle angle (180 degrees total, from left to right)
-  const needleAngle = (score / 100) * 180 - 90; // -90 to 90 degrees
-
-  // Create the gauge SVG
-  const createGaugeSVG = () => {
-    const radius = sizeConfig.gauge / 2 - 20;
-    const centerX = sizeConfig.gauge / 2;
-    const centerY = sizeConfig.gauge / 2;
-    
-    // Create arc paths for different zones
-    const createArc = (startAngle, endAngle, color) => {
-      const start = (startAngle * Math.PI) / 180;
-      const end = (endAngle * Math.PI) / 180;
-      
-      const x1 = centerX + radius * Math.cos(start);
-      const y1 = centerY + radius * Math.sin(start);
-      const x2 = centerX + radius * Math.cos(end);
-      const y2 = centerY + radius * Math.sin(end);
-      
-      const largeArc = endAngle - startAngle > 180 ? 1 : 0;
-      
-      return `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}`;
-    };
-
-    const strokeWidth = Math.max(2, sizeConfig.gauge / 20); // Proportional stroke width
-    const centerDotRadius = Math.max(1, sizeConfig.gauge / 40); // Proportional center dot
-
-    return (
-      <svg width={sizeConfig.gauge} height={sizeConfig.gauge / 2 + 10} className="overflow-visible">
-        {/* Background arc */}
-        <path
-          d={createArc(180, 360)}
-          fill="none"
-          stroke="#374151"
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-        />
-        
-        {/* Colored zones */}
-        {/* Unproven zone (0-40%) */}
-        <path
-          d={createArc(180, 180 + (40 * 180) / 100)}
-          fill="none"
-          stroke="#ef4444"
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-        />
-        
-        {/* Risky zone (40-60%) */}
-        <path
-          d={createArc(180 + (40 * 180) / 100, 180 + (60 * 180) / 100)}
-          fill="none"
-          stroke="#f97316"
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-        />
-        
-        {/* Moderate zone (60-80%) */}
-        <path
-          d={createArc(180 + (60 * 180) / 100, 180 + (80 * 180) / 100)}
-          fill="none"
-          stroke="#eab308"
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-        />
-        
-        {/* Safe zone (80-100%) */}
-        <path
-          d={createArc(180 + (80 * 180) / 100, 360)}
-          fill="none"
-          stroke="#22c55e"
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-        />
-        
-        {/* Center dot */}
-        <circle
-          cx={centerX}
-          cy={centerY}
-          r={centerDotRadius}
-          fill="#6b7280"
-        />
-        
-        {/* Needle */}
-        <line
-          x1={centerX}
-          y1={centerY}
-          x2={centerX + (radius - strokeWidth) * Math.cos((needleAngle * Math.PI) / 180)}
-          y2={centerY + (radius - strokeWidth) * Math.sin((needleAngle * Math.PI) / 180)}
-          stroke={risk.color}
-          strokeWidth={sizeConfig.needle}
-          strokeLinecap="round"
-          className="transition-all duration-1000 ease-out"
-        />
-        
-        {/* Zone labels - only show for normal and large sizes */}
-        {sizeConfig.showZoneLabels && (
-          <>
-            <text
-              x={centerX - radius + 15}
-              y={centerY + sizeConfig.labelOffset}
-              fill="#ef4444"
-              fontSize="10"
-              fontWeight="bold"
-              textAnchor="start"
-            >
-              Unproven
-            </text>
-            
-            <text
-              x={centerX + radius - 15}
-              y={centerY + sizeConfig.labelOffset}
-              fill="#22c55e"
-              fontSize="10"
-              fontWeight="bold"
-              textAnchor="end"
-            >
-              Safe
-            </text>
-          </>
-        )}
-      </svg>
-    );
-  };
-
   return (
-    <div className={`relative group ${(size === 'compact' || size === 'mini') ? 'flex items-center space-x-1' : 'flex flex-col items-center'} ${sizeConfig.container}`}>
-      {/* RPM-style Gauge */}
-      {createGaugeSVG()}
-      
-      {/* Score and Label */}
-      {showLabel && (
-        <div className={(size === 'compact' || size === 'mini') ? 'flex flex-col' : 'text-center mt-1'}>
-          <div className={`${sizeConfig.text} font-bold`} style={{ color: risk.color }}>
-            {score}%
-          </div>
-          <div className={`${sizeConfig.text} font-medium text-gray-400`}>
-            {risk.label}
-          </div>
-        </div>
-      )}
-      
-      {/* Compact/Mini mode - show score next to gauge */}
-      {(size === 'compact' || size === 'mini') && !showLabel && (
-        <div className="flex flex-col items-start">
-          <div className={`${sizeConfig.text} font-bold leading-tight`} style={{ color: risk.color }}>
-            {score}%
-          </div>
-          {size !== 'mini' && (
-            <div className={`${sizeConfig.text} font-medium text-gray-400 leading-tight`}>
-              {risk.level === 'safe' ? 'Safe' : 
-               risk.level === 'moderate' ? 'OK' : 
-               risk.level === 'risky' ? 'Risky' : 'New'}
-            </div>
-          )}
-        </div>
-      )}
+    <div className="relative group">
+      {/* Badge */}
+      <div className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold border shadow-lg ${risk.color} transition-all duration-200 hover:scale-105 cursor-help`}>
+        <div className={`w-2.5 h-2.5 rounded-full ${risk.dot} mr-2 shadow-sm`}></div>
+        <span className="font-bold">{score}%</span>
+        <span className="ml-2 font-medium">{risk.label}</span>
+      </div>
 
       {/* Tooltip */}
       {showTooltip && (
         <div className="invisible group-hover:visible absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-50">
-          <div className={`bg-gray-900 text-white ${sizeConfig.tooltip} rounded-lg p-3 shadow-lg w-64`}>
+          <div className="bg-gray-900 text-white text-xs rounded-lg p-3 shadow-lg w-64">
             <div className="font-semibold mb-2 text-center">
               Risk Assessment: {score}%
             </div>
-            <div className="text-center mb-3" style={{ color: risk.color }}>
-              <strong>{risk.label}</strong>
+            <div className="text-center mb-3" style={{ color: risk.level === 'safe' ? '#22c55e' : risk.level === 'moderate' ? '#eab308' : risk.level === 'risky' ? '#f97316' : '#ef4444' }}>
+              <strong>{risk.level === 'safe' ? 'Safe to Book' : risk.level === 'moderate' ? 'Moderate Risk' : risk.level === 'risky' ? 'Risky' : 'Unproven'}</strong>
             </div>
             <div className="space-y-1">
               {factors.map((factor, index) => (
@@ -408,4 +206,4 @@ const RiskGauge = ({
   );
 };
 
-export default RiskGauge;
+export default RiskBadge;
