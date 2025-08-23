@@ -1431,7 +1431,6 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                                 showLabel={true}
                                 showTooltip={true}
                                 currentUser={currentUser}
-                                showImprovements={currentUser && service.seller?.username === currentUser.username}
                               />
                             </div>
                           </div>

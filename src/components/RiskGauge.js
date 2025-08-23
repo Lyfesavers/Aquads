@@ -1,5 +1,5 @@
-import React from 'react';
-import RiskGaugeImprovement from './RiskGaugeImprovement';
+import React, { useState } from 'react';
+import RiskImprovementModal from './RiskImprovementModal';
 
 const RiskGauge = ({ 
   seller, 
@@ -8,9 +8,9 @@ const RiskGauge = ({
   size = 'normal',
   showLabel = true,
   showTooltip = true,
-  currentUser = null, // Add current user to check if this is their service
-  showImprovements = false // Add option to show improvement suggestions
+  currentUser = null // Add current user to check if this is their service
 }) => {
+  const [showImprovementModal, setShowImprovementModal] = useState(false);
   // Calculate overall risk score with stricter weighting
   const calculateRiskScore = () => {
     let totalScore = 0;
@@ -133,6 +133,13 @@ const RiskGauge = ({
   };
 
   const { score, factors } = calculateRiskScore();
+
+  // Check if this is the current user's service to show improvement option
+  const isOwnerService = currentUser && seller && (
+    currentUser._id === seller._id || 
+    currentUser.userId === seller._id ||
+    currentUser.username === seller.username
+  );
 
   // Determine risk level and gauge zones - UPDATED LABELS
   const getRiskLevel = (score) => {
@@ -340,8 +347,20 @@ const RiskGauge = ({
       {/* Score and Label */}
       {showLabel && (
         <div className="text-center mt-1">
-          <div className={`${sizeConfig.text} font-bold`} style={{ color: risk.color }}>
-            {score}%
+          <div className="flex items-center justify-center gap-2">
+            <div className={`${sizeConfig.text} font-bold`} style={{ color: risk.color }}>
+              {score}%
+            </div>
+            {/* Improvement Question Mark - Only show for service owner and if score < 90 */}
+            {isOwnerService && score < 90 && (
+              <button
+                onClick={() => setShowImprovementModal(true)}
+                className="w-4 h-4 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
+                title="See improvement suggestions"
+              >
+                ?
+              </button>
+            )}
           </div>
           <div className={`${sizeConfig.text} font-medium text-gray-400`}>
             {risk.label}
@@ -384,18 +403,15 @@ const RiskGauge = ({
         </div>
       )}
 
-      {/* Improvement Suggestions */}
-      {showImprovements && (
-        <div className="w-full max-w-md">
-          <RiskGaugeImprovement
-            seller={seller}
-            service={service}
-            completionRate={completionRate}
-            currentUser={currentUser}
-            showForOwner={true}
-          />
-        </div>
-      )}
+      {/* Improvement Modal */}
+      <RiskImprovementModal
+        isOpen={showImprovementModal}
+        onClose={() => setShowImprovementModal(false)}
+        seller={seller}
+        service={service}
+        completionRate={completionRate}
+        currentUser={currentUser}
+      />
     </div>
   );
 };
