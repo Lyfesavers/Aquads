@@ -1430,6 +1430,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                                 size="small"
                                 showLabel={true}
                                 showTooltip={true}
+                                currentUser={currentUser}
+                                showImprovements={currentUser && service.seller?.username === currentUser.username}
                               />
                             </div>
                           </div>

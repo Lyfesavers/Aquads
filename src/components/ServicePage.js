@@ -658,6 +658,8 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                       size="normal"
                       showLabel={true}
                       showTooltip={true}
+                      currentUser={currentUser}
+                      showImprovements={true}
                     />
                   </div>
                 </div>

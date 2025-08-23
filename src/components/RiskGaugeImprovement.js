@@ -234,17 +234,17 @@ const RiskGaugeImprovement = ({
     }
 
     const currentPercentage = Math.round(currentScore);
-    const pointsNeeded = 85 - currentPercentage;
+    const pointsNeeded = 90 - currentPercentage;
 
     return {
       currentScore: currentPercentage,
-      targetScore: 85,
+      targetScore: 90,
       pointsNeeded: Math.max(0, pointsNeeded),
       improvements: improvements.sort((a, b) => {
         const priorityOrder = { 'critical': 4, 'high': 3, 'medium': 2, 'low': 1 };
         return priorityOrder[b.priority] - priorityOrder[a.priority];
       }),
-      isAlreadySafe: currentPercentage >= 85
+      isAlreadySafe: currentPercentage >= 90
     };
   };
 
@@ -261,7 +261,7 @@ const RiskGaugeImprovement = ({
           </div>
           <div className="ml-3">
             <h3 className="text-lg font-semibold text-green-800">Congratulations!</h3>
-            <p className="text-green-600">Your service has achieved "Safe to Book" status with {analysis.currentScore}% score.</p>
+            <p className="text-green-600">Your service has achieved a high trust score of {analysis.currentScore}%!</p>
           </div>
         </div>
       </div>
@@ -276,16 +276,16 @@ const RiskGaugeImprovement = ({
         </h3>
         <div className="flex items-center justify-between mb-2">
           <span className="text-blue-600">Current Score: <strong>{analysis.currentScore}%</strong></span>
-          <span className="text-blue-600">Target: <strong>85% (Safe to Book)</strong></span>
+          <span className="text-blue-600">Target: <strong>90% (High Trust)</strong></span>
         </div>
         <div className="w-full bg-blue-200 rounded-full h-3">
           <div 
             className="bg-blue-500 h-3 rounded-full transition-all duration-500"
-            style={{ width: `${(analysis.currentScore / 85) * 100}%` }}
+            style={{ width: `${(analysis.currentScore / 90) * 100}%` }}
           ></div>
         </div>
         <p className="text-blue-600 mt-2">
-          You need <strong>{analysis.pointsNeeded} more points</strong> to reach "Safe to Book" status.
+          You need <strong>{analysis.pointsNeeded} more points</strong> to reach 90% score.
         </p>
       </div>
 
