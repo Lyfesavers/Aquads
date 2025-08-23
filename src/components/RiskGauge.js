@@ -1,4 +1,5 @@
 import React from 'react';
+import RiskGaugeImprovement from './RiskGaugeImprovement';
 
 const RiskGauge = ({ 
   seller, 
@@ -6,7 +7,9 @@ const RiskGauge = ({
   completionRate = null, 
   size = 'normal',
   showLabel = true,
-  showTooltip = true 
+  showTooltip = true,
+  currentUser = null, // Add current user to check if this is their service
+  showImprovements = false // Add option to show improvement suggestions
 }) => {
   // Calculate overall risk score with stricter weighting
   const calculateRiskScore = () => {
@@ -378,6 +381,19 @@ const RiskGauge = ({
           </div>
           {/* Tooltip arrow */}
           <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900" />
+        </div>
+      )}
+
+      {/* Improvement Suggestions */}
+      {showImprovements && (
+        <div className="w-full max-w-md">
+          <RiskGaugeImprovement
+            seller={seller}
+            service={service}
+            completionRate={completionRate}
+            currentUser={currentUser}
+            showForOwner={true}
+          />
         </div>
       )}
     </div>
