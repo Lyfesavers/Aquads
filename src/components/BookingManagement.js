@@ -127,8 +127,14 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
   };
 
   const renderActions = (booking) => {
+    // Safety checks for null references
+    if (!booking.sellerId || !booking.buyerId) {
+      return null;
+    }
+    
     const isSeller = booking.sellerId._id === currentUser.userId;
     const isBuyer = booking.buyerId._id === currentUser.userId;
+    const hasValidService = booking.serviceId && booking.serviceId.title;
 
     // For completed bookings, show review button only to buyers
     if (booking.status === 'completed') {
@@ -136,10 +142,15 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
         return (
           <div className="flex gap-2 mt-2">
             <button
-              onClick={() => onShowReviews(booking.serviceId, booking, false)}
-              className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/30"
+              onClick={() => hasValidService && onShowReviews(booking.serviceId, booking, false)}
+              disabled={!hasValidService}
+              className={`px-3 py-1 rounded ${
+                hasValidService 
+                  ? 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30' 
+                  : 'bg-gray-500/20 text-gray-500 cursor-not-allowed'
+              }`}
             >
-              Leave Review
+              {hasValidService ? 'Leave Review' : 'Service Unavailable'}
             </button>
           </div>
         );
@@ -222,11 +233,34 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
     <>
       <div className="space-y-4">
         {bookings.map((booking) => {
+          // Check for missing data but still render with appropriate fallbacks
+          const hasValidService = booking.serviceId && booking.serviceId.title;
+          const hasValidSeller = booking.sellerId && booking.sellerId._id;
+          const hasValidBuyer = booking.buyerId && booking.buyerId._id;
+          
+          // Skip completely if we don't have basic booking data
+          if (!hasValidSeller || !hasValidBuyer) {
+            return null;
+          }
+          
           const isSeller = booking.sellerId._id === currentUser.userId;
           const isLocked = isSeller && !booking.isUnlocked;
           
           return (
-            <div key={booking._id} className={`bg-gray-800 rounded-lg p-4 ${isLocked ? 'border-2 border-yellow-500/50' : ''}`}>
+            <div key={booking._id} className={`bg-gray-800 rounded-lg p-4 ${isLocked ? 'border-2 border-yellow-500/50' : ''} ${!hasValidService ? 'border-2 border-red-500/50' : ''}`}>
+              {/* Service Deleted Banner */}
+              {!hasValidService && (
+                <div className="bg-red-500/20 border border-red-500/40 rounded-lg p-3 mb-4">
+                  <div className="flex items-center">
+                    <span className="text-red-400 text-xl mr-2">⚠️</span>
+                    <div>
+                      <h4 className="text-red-400 font-semibold">Service No Longer Available</h4>
+                      <p className="text-red-300 text-sm">The service for this booking has been deleted or is no longer available</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Locked Lead Banner */}
               {isLocked && (
                 <div className="bg-yellow-500/20 border border-yellow-500/40 rounded-lg p-3 mb-4">
@@ -251,8 +285,8 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
 
               <div className="flex justify-between items-start">
                 <div>
-                  <h3 className="text-lg font-semibold text-white">
-                    {booking.serviceId.title}
+                  <h3 className={`text-lg font-semibold ${hasValidService ? 'text-white' : 'text-red-400'}`}>
+                    {hasValidService ? booking.serviceId.title : 'Service Deleted'}
                   </h3>
                   
                   {/* Show limited info if locked, full info if unlocked */}
@@ -273,8 +307,8 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
                       <p className="text-sm text-gray-400">
                         {booking.sellerId._id === currentUser.userId ? 'Buyer' : 'Seller'}: {
                           booking.sellerId._id === currentUser.userId 
-                            ? booking.buyerName
-                            : booking.sellerId.username
+                            ? (booking.buyerName || 'Unknown Buyer')
+                            : (booking.sellerId?.username || 'Unknown Seller')
                         }
                       </p>
                       <p className="text-sm text-gray-400">

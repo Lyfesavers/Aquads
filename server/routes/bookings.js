@@ -136,7 +136,13 @@ router.get('/my-bookings', auth, async (req, res) => {
     .populate('buyerId', 'username email')
     .sort({ createdAt: -1 });
 
-    res.json(bookings);
+    // Filter out bookings where critical references are missing completely
+    // but keep bookings with null serviceId (deleted services) for user awareness
+    const validBookings = bookings.filter(booking => 
+      booking.sellerId && booking.buyerId
+    );
+
+    res.json(validBookings);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
