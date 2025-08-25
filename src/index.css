@@ -1144,23 +1144,25 @@ body {
   padding: 0 10%;
 }
 
-.bubble-text-curved span {
+.bubble-text-curved .curved-text {
+  position: relative;
   display: block;
+  text-align: center;
+  height: 20px;
+  overflow: visible;
+}
+
+.bubble-text-curved .curved-char {
+  position: absolute;
+  left: 50%;
+  top: 0;
   text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
   font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding: 4px 8px;
   background: rgba(0, 0, 0, 0.5);
-  border-radius: 12px;
+  padding: 2px 4px;
+  border-radius: 4px;
   backdrop-filter: blur(2px);
-  transform: perspective(200px) rotateX(10deg) !important;
-  transform-style: preserve-3d;
-  transform-origin: center center;
-  position: relative;
-  z-index: 100;
-  box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
 }
 
 /* Larger logo container for bubbles */
@@ -2149,23 +2151,25 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   padding: 0 10%;
 }
 
-.bubble-text-curved span {
+.bubble-text-curved .curved-text {
+  position: relative;
   display: block;
+  text-align: center;
+  height: 20px;
+  overflow: visible;
+}
+
+.bubble-text-curved .curved-char {
+  position: absolute;
+  left: 50%;
+  top: 0;
   text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
   font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding: 4px 8px;
   background: rgba(0, 0, 0, 0.5);
-  border-radius: 12px;
+  padding: 2px 4px;
+  border-radius: 4px;
   backdrop-filter: blur(2px);
-  transform: perspective(200px) rotateX(10deg) !important;
-  transform-style: preserve-3d;
-  transform-origin: center center;
-  position: relative;
-  z-index: 100;
-  box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
 }
 
 /* Larger logo container for bubbles */
@@ -3154,23 +3158,25 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   padding: 0 10%;
 }
 
-.bubble-text-curved span {
+.bubble-text-curved .curved-text {
+  position: relative;
   display: block;
+  text-align: center;
+  height: 20px;
+  overflow: visible;
+}
+
+.bubble-text-curved .curved-char {
+  position: absolute;
+  left: 50%;
+  top: 0;
   text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
   font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding: 4px 8px;
   background: rgba(0, 0, 0, 0.5);
-  border-radius: 12px;
+  padding: 2px 4px;
+  border-radius: 4px;
   backdrop-filter: blur(2px);
-  transform: perspective(200px) rotateX(10deg) !important;
-  transform-style: preserve-3d;
-  transform-origin: center center;
-  position: relative;
-  z-index: 100;
-  box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
 }
 
 /* Larger logo container for bubbles */
