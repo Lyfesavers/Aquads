@@ -71,7 +71,22 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
         setError(null);
         
         // Extract service ID from slug (format: title-id)
-        const serviceId = slug.split('-').pop();
+        // Handle cases where title might contain forward slashes that got converted to URL segments
+        let serviceId = slug.split('-').pop();
+        
+        // If the serviceId doesn't look like a MongoDB ObjectId (24 hex chars), 
+        // try to extract from current URL pathname
+        if (!serviceId || serviceId.length !== 24 || !/^[0-9a-fA-F]{24}$/.test(serviceId)) {
+          const urlPath = window.location.pathname;
+          const urlSegments = urlPath.split('/');
+          // Look for a 24-character hex string in any segment
+          for (const segment of urlSegments) {
+            if (segment.length === 24 && /^[0-9a-fA-F]{24}$/.test(segment)) {
+              serviceId = segment;
+              break;
+            }
+          }
+        }
         
         const response = await fetch(`${API_URL}/services/${serviceId}/details`);
         
@@ -81,6 +96,12 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
         
         const serviceData = await response.json();
         setService(serviceData);
+        
+        // If we found the service but the URL doesn't match the expected format, redirect
+        const expectedSlug = `${serviceData.title.replace(/\s+/g, '-').replace(/\//g, '-').toLowerCase()}-${serviceData._id}`;
+        if (slug !== expectedSlug) {
+          navigate(`/service/${expectedSlug}`, { replace: true });
+        }
       } catch (err) {
         logger.error('Error fetching service details:', err);
         setError(err.message);
@@ -92,7 +113,7 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
     if (slug) {
       fetchServiceDetails();
     }
-  }, [slug]);
+  }, [slug, navigate]);
 
   const handleBookingCreate = (booking) => {
     // Handle booking creation success

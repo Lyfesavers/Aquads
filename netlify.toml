@@ -33,7 +33,11 @@
   force = false
   conditions = {User-Agent = "*bot*,*crawler*,*spider*,facebookexternalhit*,twitterbot*"}
 
-# Service pages are handled by React Router through the default SPA redirect
+# Handle service pages
+[[redirects]]
+  from = "/service/*"
+  to = "/service.html"
+  status = 200
 
 # Default SPA redirect (keep this last)
 [[redirects]]

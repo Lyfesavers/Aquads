@@ -1480,7 +1480,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                             <button
                               onClick={() => {
                                 const referralCode = currentUser?.username || ''; // Get current user's username as referral code
-                                const slug = `${service.title.replace(/\s+/g, '-').toLowerCase()}-${service._id}`;
+                                const slug = `${service.title.replace(/\s+/g, '-').replace(/\//g, '-').toLowerCase()}-${service._id}`;
                                 const url = `${window.location.origin}/service/${slug}${referralCode ? `?ref=${referralCode}` : ''}`;
                                 navigator.clipboard.writeText(url);
                                 alert('Service link copied to clipboard! Share this link with others to view the full service details.');
@@ -1494,7 +1494,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                             </button>
                             <button
                               onClick={() => {
-                                const slug = `${service.title.replace(/\s+/g, '-').toLowerCase()}-${service._id}`;
+                                const slug = `${service.title.replace(/\s+/g, '-').replace(/\//g, '-').toLowerCase()}-${service._id}`;
                                 window.location.href = `/service/${slug}`;
                               }}
                               className="inline-flex items-center px-3 py-1.5 text-sm bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 rounded-full transition-all duration-300"
