@@ -3122,25 +3122,12 @@ function App() {
                                   }}
                                 >
                                   <span 
-                                    className="text-white hover:text-blue-300 transition-colors duration-300 curved-text"
+                                    className="text-white hover:text-blue-300 transition-colors duration-300"
                                     style={{
-                                      fontSize: `${Math.max(ad.size * 0.09, 10)}px`,
-                                      display: 'block'
+                                      fontSize: `${Math.max(ad.size * 0.09, 10)}px`
                                     }}
                                   >
-                                    {ad.title.split('').map((char, index) => (
-                                      <span 
-                                        key={index}
-                                        className="curved-char"
-                                        style={{
-                                          transform: `rotate(${(index - ad.title.length / 2) * 8}deg)`,
-                                          transformOrigin: `0 ${Math.max(ad.size * 0.4, 40)}px`,
-                                          display: 'inline-block'
-                                        }}
-                                      >
-                                        {char === ' ' ? '\u00A0' : char}
-                                      </span>
-                                    ))}
+                                    {ad.title}
                                   </span>
                                 </div>
                                 
