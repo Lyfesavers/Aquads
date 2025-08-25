@@ -1155,8 +1155,11 @@ body {
   background: rgba(0, 0, 0, 0.5);
   border-radius: 12px;
   backdrop-filter: blur(2px);
-  transform: perspective(100px) rotateX(5deg) !important;
+  transform: perspective(200px) rotateX(10deg) !important;
   transform-style: preserve-3d;
+  transform-origin: center center;
+  position: relative;
+  z-index: 100;
   box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.2);
 }
 
@@ -2157,8 +2160,11 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   background: rgba(0, 0, 0, 0.5);
   border-radius: 12px;
   backdrop-filter: blur(2px);
-  transform: perspective(100px) rotateX(5deg) !important;
+  transform: perspective(200px) rotateX(10deg) !important;
   transform-style: preserve-3d;
+  transform-origin: center center;
+  position: relative;
+  z-index: 100;
   box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.2);
 }
 
@@ -3159,8 +3165,11 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   background: rgba(0, 0, 0, 0.5);
   border-radius: 12px;
   backdrop-filter: blur(2px);
-  transform: perspective(100px) rotateX(5deg) !important;
+  transform: perspective(200px) rotateX(10deg) !important;
   transform-style: preserve-3d;
+  transform-origin: center center;
+  position: relative;
+  z-index: 100;
   box-shadow: 0 0 10px 1px rgba(0, 0, 0, 0.2);
 }
 
