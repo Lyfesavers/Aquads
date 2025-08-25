@@ -3121,14 +3121,41 @@ function App() {
                                     }
                                   }}
                                 >
-                                  <span 
-                                    className="text-white truncate block hover:text-blue-300 transition-colors duration-300"
+                                  <svg 
+                                    width="100%" 
+                                    height="30" 
+                                    viewBox="0 0 120 30"
+                                    className="hover:opacity-75 transition-opacity duration-300"
                                     style={{
-                                      fontSize: `${Math.max(ad.size * 0.09, 10)}px`
+                                      overflow: 'visible'
                                     }}
                                   >
-                                    {ad.title}
-                                  </span>
+                                    <defs>
+                                      <path 
+                                        id={`curve-${ad.id}`} 
+                                        d="M 10 20 Q 60 5 110 20" 
+                                        fill="transparent"
+                                      />
+                                    </defs>
+                                    <text 
+                                      fontSize={`${Math.max(ad.size * 0.09, 10)}px`}
+                                      fill="white"
+                                      textAnchor="middle"
+                                      dominantBaseline="middle"
+                                      className="hover:fill-blue-300 transition-colors duration-300"
+                                      style={{
+                                        textShadow: '0 0 3px rgba(0, 0, 0, 0.8)',
+                                        fontWeight: '500'
+                                      }}
+                                    >
+                                      <textPath 
+                                        href={`#curve-${ad.id}`} 
+                                        startOffset="50%"
+                                      >
+                                        {ad.title}
+                                      </textPath>
+                                    </text>
+                                  </svg>
                                 </div>
                                 
                                 {/* Logo Container */}
