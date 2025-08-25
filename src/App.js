@@ -3123,8 +3123,8 @@ function App() {
                                 >
                                   <svg 
                                     width="100%" 
-                                    height="30" 
-                                    viewBox="0 0 120 30"
+                                    height="40" 
+                                    viewBox="0 0 120 40"
                                     className="hover:opacity-75 transition-opacity duration-300"
                                     style={{
                                       overflow: 'visible'
@@ -3133,12 +3133,12 @@ function App() {
                                     <defs>
                                       <path 
                                         id={`curve-${ad.id}`} 
-                                        d="M 10 20 Q 60 5 110 20" 
+                                        d="M 10 30 Q 60 5 110 30" 
                                         fill="transparent"
                                       />
                                     </defs>
                                     <text 
-                                      fontSize={`${Math.max(ad.size * 0.09, 10)}px`}
+                                      fontSize={`${Math.max(ad.size * 0.15, 14)}px`}
                                       fill="white"
                                       textAnchor="middle"
                                       dominantBaseline="middle"
