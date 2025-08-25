@@ -127,8 +127,8 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
   };
 
   const renderActions = (booking) => {
-    const isSeller = booking.sellerId._id === currentUser.userId;
-    const isBuyer = booking.buyerId._id === currentUser.userId;
+    const isSeller = booking.sellerId?._id === currentUser.userId;
+    const isBuyer = booking.buyerId?._id === currentUser.userId;
 
     // For completed bookings, show review button only to buyers
     if (booking.status === 'completed') {
@@ -136,7 +136,7 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
         return (
           <div className="flex gap-2 mt-2">
             <button
-              onClick={() => onShowReviews(booking.serviceId, booking, false)}
+              onClick={() => booking.serviceId && onShowReviews(booking.serviceId, booking, false)}
               className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/30"
             >
               Leave Review
@@ -222,7 +222,7 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
     <>
       <div className="space-y-4">
         {bookings.map((booking) => {
-          const isSeller = booking.sellerId._id === currentUser.userId;
+          const isSeller = booking.sellerId?._id === currentUser.userId;
           const isLocked = isSeller && !booking.isUnlocked;
           
           return (
@@ -252,7 +252,7 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
               <div className="flex justify-between items-start">
                 <div>
                   <h3 className="text-lg font-semibold text-white">
-                    {booking.serviceId.title}
+                    {booking.serviceId?.title || 'Service Unavailable'}
                   </h3>
                   
                   {/* Show limited info if locked, full info if unlocked */}
@@ -271,10 +271,10 @@ const BookingManagement = ({ bookings, currentUser, onStatusUpdate, showNotifica
                   ) : (
                     <>
                       <p className="text-sm text-gray-400">
-                        {booking.sellerId._id === currentUser.userId ? 'Buyer' : 'Seller'}: {
-                          booking.sellerId._id === currentUser.userId 
+                        {booking.sellerId?._id === currentUser.userId ? 'Buyer' : 'Seller'}: {
+                          booking.sellerId?._id === currentUser.userId 
                             ? booking.buyerName
-                            : booking.sellerId.username
+                            : booking.sellerId?.username
                         }
                       </p>
                       <p className="text-sm text-gray-400">
