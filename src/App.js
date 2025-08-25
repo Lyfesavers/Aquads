@@ -3082,7 +3082,6 @@ function App() {
                                     src="/Bearish.svg" 
                                     alt="Bearish" 
                                     className="w-4 h-4"
-                                    style={{ filter: 'brightness(0) saturate(100%) invert(31%) sepia(75%) saturate(5086%) hue-rotate(354deg) brightness(102%) contrast(103%)' }}
                                   />
                                 </button>
                                 <button 
@@ -3097,7 +3096,6 @@ function App() {
                                     src="/Bullish.svg" 
                                     alt="Bullish" 
                                     className="w-4 h-4"
-                                    style={{ filter: 'brightness(0) saturate(100%) invert(63%) sepia(98%) saturate(370%) hue-rotate(85deg) brightness(92%) contrast(89%)' }}
                                   />
                                 </button>
                               </div>
