@@ -3078,7 +3078,12 @@ function App() {
                                   }}
                                   aria-label="Vote bearish"
                                 >
-                                  🐻
+                                  <img 
+                                    src="/Bearish.svg" 
+                                    alt="Bearish" 
+                                    className="w-4 h-4"
+                                    style={{ filter: 'brightness(0) saturate(100%) invert(31%) sepia(75%) saturate(5086%) hue-rotate(354deg) brightness(102%) contrast(103%)' }}
+                                  />
                                 </button>
                                 <button 
                                   className={`vote-button bullish-vote ${ad.userVote === 'bullish' ? 'active-vote' : ''}`}
@@ -3088,7 +3093,12 @@ function App() {
                                   }}
                                   aria-label="Vote bullish"
                                 >
-                                  🐂
+                                  <img 
+                                    src="/Bullish.svg" 
+                                    alt="Bullish" 
+                                    className="w-4 h-4"
+                                    style={{ filter: 'brightness(0) saturate(100%) invert(63%) sepia(98%) saturate(370%) hue-rotate(85deg) brightness(92%) contrast(89%)' }}
+                                  />
                                 </button>
                               </div>
                               
@@ -3487,9 +3497,21 @@ function App() {
                           </div>
                         )}
                         
-                        {/* Thumbs up icon for bullish, thumbs down for bearish */}
-                        <div className="text-6xl mb-4">
-                          {votePopup.message.includes('bullish') ? '👍' : '👎'}
+                        {/* Bullish/Bearish icon */}
+                        <div className="text-6xl mb-4 flex justify-center">
+                          {votePopup.message.includes('bullish') ? (
+                            <img 
+                              src="/Bullish.svg" 
+                              alt="Bullish" 
+                              className="w-16 h-16"
+                            />
+                          ) : (
+                            <img 
+                              src="/Bearish.svg" 
+                              alt="Bearish" 
+                              className="w-16 h-16"
+                            />
+                          )}
                         </div>
                         
                         {/* Message */}
