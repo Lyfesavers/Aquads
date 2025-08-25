@@ -3152,7 +3152,7 @@ function App() {
                                         href={`#curve-${ad.id}`} 
                                         startOffset="50%"
                                       >
-                                        {ad.title}
+                                        {ad.title.toUpperCase()}
                                       </textPath>
                                     </text>
                                   </svg>
