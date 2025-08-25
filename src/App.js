@@ -90,8 +90,8 @@ function getResponsiveSize(baseSize) {
   const viewportWidth = window.innerWidth;
   
   if (viewportWidth <= 480) {
-    // Mobile - smaller bubbles (reduced from 0.65 to 0.5)
-    return Math.floor(baseSize * 0.5);
+    // Mobile - bigger bubbles for better interaction
+    return Math.floor(baseSize * 0.65);
   } else if (viewportWidth <= 768) {
     // Tablet - medium bubbles (reduced from 0.8 to 0.7)
     return Math.floor(baseSize * 0.7);
@@ -3018,7 +3018,7 @@ function App() {
                   </div>
                   
                   {/* Bubbles section - keep it as is, remove fixed positioning */}
-                  <div className="relative min-h-screen overflow-hidden pt-8">
+                  <div className="relative min-h-screen overflow-hidden pt-7">
                     {/* Ads */}
                     {getVisibleAds().length > 0 ? (
                       getVisibleAds().map(ad => {
