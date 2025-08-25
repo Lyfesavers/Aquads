@@ -3018,7 +3018,7 @@ function App() {
                   </div>
                   
                   {/* Bubbles section - keep it as is, remove fixed positioning */}
-                  <div className="relative min-h-screen overflow-hidden pt-4">
+                  <div className="relative min-h-screen overflow-hidden pt-2">
                     {/* Ads */}
                     {getVisibleAds().length > 0 ? (
                       getVisibleAds().map(ad => {
