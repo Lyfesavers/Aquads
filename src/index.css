@@ -1205,7 +1205,7 @@ body {
   }
   
   .bubble-text-curved span {
-    font-size: 0.8em !important;
+    font-size: 1.0em !important;
   }
 }
 
@@ -2206,7 +2206,7 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   }
   
   .bubble-text-curved span {
-    font-size: 0.8em !important;
+    font-size: 1.0em !important;
   }
 }
 
@@ -3207,7 +3207,7 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
   }
   
   .bubble-text-curved span {
-    font-size: 0.8em !important;
+    font-size: 1.0em !important;
   }
 }
 
@@ -3897,6 +3897,11 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
     width: 26px;
     height: 26px;
   }
+  
+  /* Improve bubble title readability on tablets */
+  .bubble-text-curved span {
+    font-size: 1.15em !important;
+  }
 }
 
 @media (max-width: 480px) {
@@ -3905,6 +3910,11 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
     padding: 10px 20px;
     gap: 25px;
     border-radius: 30px;
+  }
+  
+  /* Make bubble titles more readable on mobile */
+  .bubble-text-curved span {
+    font-size: 1.2em !important;
   }
   
   .vote-button {
