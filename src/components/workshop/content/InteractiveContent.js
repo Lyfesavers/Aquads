@@ -556,55 +556,55 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
   };
 
   const renderPlatformTour = () => (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Instructions */}
-      <div className="bg-blue-600/20 rounded-xl p-4 border border-blue-500/30 text-center">
-        <p className="text-blue-400 font-medium">
+      <div className="bg-blue-600/20 rounded-xl p-3 sm:p-4 border border-blue-500/30 text-center">
+        <p className="text-blue-400 font-medium text-sm sm:text-base">
           🖱️ <strong>Click on each feature below</strong> to explore the Aquads platform and unlock the completion button!
         </p>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {config.steps.map((step, index) => {
           const StepIcon = step.icon;
           return (
-            <div
-              key={index}
-              className={`
-                bg-gradient-to-br ${step.color} p-6 rounded-xl text-white cursor-pointer
-                transform transition-all duration-300 hover:scale-105 hover:shadow-2xl
-                ${selectedOptions[index] ? 'ring-4 ring-yellow-400' : 'ring-2 ring-white/30 animate-pulse'}
-              `}
-              onClick={() => handleStepComplete(index)}
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <StepIcon className="text-2xl" />
-                <h3 className="text-xl font-bold">{step.title}</h3>
-              </div>
-              <p className="mb-4 opacity-90">{step.content}</p>
+                         <div
+               key={index}
+               className={`
+                 bg-gradient-to-br ${step.color} p-4 sm:p-6 rounded-xl text-white cursor-pointer
+                 transform transition-all duration-300 hover:scale-105 hover:shadow-2xl
+                 ${selectedOptions[index] ? 'ring-4 ring-yellow-400' : 'ring-2 ring-white/30 animate-pulse'}
+               `}
+               onClick={() => handleStepComplete(index)}
+             >
+               <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                 <StepIcon className="text-xl sm:text-2xl flex-shrink-0" />
+                 <h3 className="text-lg sm:text-xl font-bold">{step.title}</h3>
+               </div>
+               <p className="mb-3 sm:mb-4 opacity-90 text-sm sm:text-base">{step.content}</p>
+               
+               {/* Detailed Explanation - Show when selected */}
+               {selectedOptions[index] && step.detailedExplanation && (
+                 <div className="mb-3 sm:mb-4 p-3 sm:p-4 bg-white/10 rounded-lg border border-white/20">
+                   <div className="text-xs sm:text-sm leading-relaxed whitespace-pre-line">
+                     {step.detailedExplanation}
+                   </div>
+                 </div>
+               )}
               
-              {/* Detailed Explanation - Show when selected */}
-              {selectedOptions[index] && step.detailedExplanation && (
-                <div className="mb-4 p-4 bg-white/10 rounded-lg border border-white/20">
-                  <div className="text-sm leading-relaxed whitespace-pre-line">
-                    {step.detailedExplanation}
-                  </div>
-                </div>
-              )}
-              
-              <div className="space-y-2">
-                {step.features.map((feature, idx) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    <FaCheck className="text-sm" />
-                    <span className="text-sm">{feature}</span>
-                  </div>
-                ))}
-              </div>
-              {selectedOptions[index] && (
-                <div className="mt-4 flex items-center gap-2 text-yellow-300">
-                  <FaEye /> <span className="text-sm font-medium">Explored!</span>
-                </div>
-              )}
+                             <div className="space-y-1 sm:space-y-2">
+                 {step.features.map((feature, idx) => (
+                   <div key={idx} className="flex items-center gap-2">
+                     <FaCheck className="text-xs sm:text-sm flex-shrink-0" />
+                     <span className="text-xs sm:text-sm">{feature}</span>
+                   </div>
+                 ))}
+               </div>
+               {selectedOptions[index] && (
+                 <div className="mt-3 sm:mt-4 flex items-center gap-2 text-yellow-300">
+                   <FaEye className="text-sm" /> <span className="text-xs sm:text-sm font-medium">Explored!</span>
+                 </div>
+               )}
             </div>
           );
         })}
@@ -879,37 +879,37 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
   );
 
   const renderServiceStrategy = () => (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Instructions */}
-      <div className="bg-green-600/20 rounded-xl p-4 border border-green-500/30 text-center">
-        <p className="text-green-400 font-medium">
+      <div className="bg-green-600/20 rounded-xl p-3 sm:p-4 border border-green-500/30 text-center">
+        <p className="text-green-400 font-medium text-sm sm:text-base">
           💼 <strong>Click on each strategy step</strong> to build compelling service offerings!
         </p>
       </div>
       
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {config.steps.map((step, index) => (
           <div
             key={index}
             className={`
-              bg-gradient-to-r from-gray-700/50 to-gray-800/50 rounded-xl p-6 border border-gray-600
+              bg-gradient-to-r from-gray-700/50 to-gray-800/50 rounded-xl p-4 sm:p-6 border border-gray-600
               cursor-pointer transform transition-all duration-300 hover:scale-102
               ${selectedOptions[index] ? 'ring-2 ring-green-500 bg-green-500/10' : ''}
             `}
             onClick={() => handleStepComplete(index)}
           >
-            <div className="flex items-start gap-4">
-              <div className={`bg-gradient-to-r ${step.color} p-3 rounded-full flex-shrink-0`}>
-                <step.icon className="text-white text-lg" />
+            <div className="flex items-start gap-3 sm:gap-4">
+              <div className={`bg-gradient-to-r ${step.color} p-2 sm:p-3 rounded-full flex-shrink-0`}>
+                <step.icon className="text-white text-base sm:text-lg" />
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-lg mb-2">{step.title}</h3>
-                <p className="text-gray-300">{step.content}</p>
+                <h3 className="font-bold text-base sm:text-lg mb-2">{step.title}</h3>
+                <p className="text-gray-300 text-sm sm:text-base">{step.content}</p>
                 
                 {/* Detailed Explanation - Show when selected */}
                 {selectedOptions[index] && step.detailedExplanation && (
-                  <div className="mt-4 p-4 bg-green-500/10 rounded-lg border border-green-500/20">
-                    <div className="text-sm leading-relaxed whitespace-pre-line text-gray-200">
+                  <div className="mt-3 sm:mt-4 p-3 sm:p-4 bg-green-500/10 rounded-lg border border-green-500/20">
+                    <div className="text-xs sm:text-sm leading-relaxed whitespace-pre-line text-gray-200">
                       {step.detailedExplanation}
                     </div>
                   </div>

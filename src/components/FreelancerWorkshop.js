@@ -448,21 +448,21 @@ const FreelancerWorkshop = ({ currentUser }) => {
       {/* Header */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8">
+        <div className="relative max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-8 sm:pt-12 pb-6 sm:pb-8">
           <div className="text-center">
             <div className="flex justify-center mb-6">
               <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-full">
                 <FaGraduationCap className="text-4xl text-white" />
               </div>
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 sm:mb-6">
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                 Freelancer Mastery
               </span>
               <br />
               Workshop
             </h1>
-            <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
+            <p className="text-lg sm:text-xl text-gray-300 mb-6 sm:mb-8 max-w-3xl mx-auto">
               Your complete guide to becoming a successful Web3 freelancer on Aquads.xyz. 
               Interactive lessons, real-world practice, and guaranteed results.
             </p>
@@ -480,7 +480,7 @@ const FreelancerWorkshop = ({ currentUser }) => {
       </div>
 
       {/* Progress Overview */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
         <WorkshopProgress 
           modules={modules}
           currentModule={currentModule}
@@ -490,12 +490,12 @@ const FreelancerWorkshop = ({ currentUser }) => {
       </div>
 
       {/* Gamification Panel */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pb-6 sm:pb-8">
         <WorkshopGameification progress={workshopProgress} />
       </div>
 
       {/* Current Module Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pb-12 sm:pb-16">
         <WorkshopModule 
           module={modules[currentModule]}
           progress={workshopProgress}
@@ -505,12 +505,12 @@ const FreelancerWorkshop = ({ currentUser }) => {
       </div>
 
       {/* Navigation */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-        <div className="flex justify-between items-center">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pb-12 sm:pb-16">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
           <button
             onClick={() => setCurrentModule(Math.max(0, currentModule - 1))}
             disabled={currentModule === 0}
-            className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-all ${
+            className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-3 rounded-lg transition-all w-full sm:w-auto ${
               currentModule === 0 
                 ? 'bg-gray-700 text-gray-400 cursor-not-allowed' 
                 : 'bg-blue-600 hover:bg-blue-700 text-white'
@@ -519,7 +519,7 @@ const FreelancerWorkshop = ({ currentUser }) => {
             Previous Module
           </button>
           
-          <div className="text-center">
+          <div className="text-center order-first sm:order-none">
             <p className="text-gray-400">
               Module {currentModule + 1} of {modules.length}
             </p>
@@ -528,7 +528,7 @@ const FreelancerWorkshop = ({ currentUser }) => {
           <button
             onClick={() => setCurrentModule(Math.min(modules.length - 1, currentModule + 1))}
             disabled={currentModule === modules.length - 1}
-            className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-all ${
+            className={`flex items-center justify-center gap-2 px-4 sm:px-6 py-3 rounded-lg transition-all w-full sm:w-auto ${
               currentModule === modules.length - 1 
                 ? 'bg-gray-700 text-gray-400 cursor-not-allowed' 
                 : 'bg-purple-600 hover:bg-purple-700 text-white'

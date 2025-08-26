@@ -53,35 +53,35 @@ const WorkshopModule = ({ module, progress, onSectionComplete, currentUser }) =>
         </div>
         
         {/* Module Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white/20 rounded-lg p-3 text-center">
-            <FaGraduationCap className="text-white text-lg mx-auto mb-1" />
-            <p className="text-white text-sm font-medium">{module.duration}</p>
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">
+          <div className="bg-white/20 rounded-lg p-2 sm:p-3 text-center">
+            <FaGraduationCap className="text-white text-base sm:text-lg mx-auto mb-1" />
+            <p className="text-white text-xs sm:text-sm font-medium">{module.duration}</p>
             <p className="text-white/70 text-xs">Duration</p>
           </div>
 
-          <div className="bg-white/20 rounded-lg p-3 text-center">
-            <FaBolt className="text-white text-lg mx-auto mb-1" />
-            <p className="text-white text-sm font-medium">{getModuleProgress()}%</p>
+          <div className="bg-white/20 rounded-lg p-2 sm:p-3 text-center">
+            <FaBolt className="text-white text-base sm:text-lg mx-auto mb-1" />
+            <p className="text-white text-xs sm:text-sm font-medium">{getModuleProgress()}%</p>
             <p className="text-white/70 text-xs">Progress</p>
           </div>
-          <div className="bg-white/20 rounded-lg p-3 text-center">
-            <FaRocket className="text-white text-lg mx-auto mb-1" />
-            <p className="text-white text-sm font-medium">{module.sections.length}</p>
+          <div className="bg-white/20 rounded-lg p-2 sm:p-3 text-center">
+            <FaRocket className="text-white text-base sm:text-lg mx-auto mb-1" />
+            <p className="text-white text-xs sm:text-sm font-medium">{module.sections.length}</p>
             <p className="text-white/70 text-xs">Sections</p>
           </div>
         </div>
       </div>
 
       {/* Section Navigation */}
-      <div className="p-6 border-b border-gray-700">
-        <div className="flex flex-wrap gap-2">
+      <div className="p-4 sm:p-6 border-b border-gray-700">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           {module.sections.map((section, index) => (
             <button
               key={index}
               onClick={() => setActiveSection(index)}
               className={`
-                flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
+                flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-4 py-3 sm:py-2 rounded-lg text-sm font-medium transition-all
                 ${activeSection === index
                   ? 'bg-blue-600 text-white'
                   : isSectionCompleted(index)
@@ -91,13 +91,13 @@ const WorkshopModule = ({ module, progress, onSectionComplete, currentUser }) =>
               `}
             >
               {isSectionCompleted(index) ? (
-                <FaCheckCircle className="text-sm" />
+                <FaCheckCircle className="text-sm flex-shrink-0" />
               ) : activeSection === index ? (
-                <FaPlay className="text-sm" />
+                <FaPlay className="text-sm flex-shrink-0" />
               ) : (
-                <FaQuestionCircle className="text-sm opacity-50" />
+                <FaQuestionCircle className="text-sm opacity-50 flex-shrink-0" />
               )}
-              {section.title}
+              <span className="text-center sm:text-left">{section.title}</span>
 
             </button>
           ))}
@@ -105,7 +105,7 @@ const WorkshopModule = ({ module, progress, onSectionComplete, currentUser }) =>
       </div>
 
       {/* Active Section Content */}
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         {module.sections.map((section, index) => {
           if (index !== activeSection) return null;
 
@@ -122,11 +122,11 @@ const WorkshopModule = ({ module, progress, onSectionComplete, currentUser }) =>
             <div key={index} className="space-y-6">
               
               {/* Section Header */}
-              <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold mb-2">{section.title}</h3>
-                <div className="flex justify-center items-center gap-4 text-sm text-gray-400">
+              <div className="text-center mb-6 sm:mb-8">
+                <h3 className="text-xl sm:text-2xl font-bold mb-2">{section.title}</h3>
+                <div className="flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-4 text-sm text-gray-400">
                   <span>Section {index + 1} of {module.sections.length}</span>
-                  <span>•</span>
+                  <span className="hidden sm:inline">•</span>
                   <span>Interactive section</span>
                 </div>
               </div>
@@ -149,12 +149,12 @@ const WorkshopModule = ({ module, progress, onSectionComplete, currentUser }) =>
               )}
 
               {/* Section Navigation */}
-              <div className="flex justify-between items-center pt-6 border-t border-gray-700">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t border-gray-700">
                 <button
                   onClick={() => setActiveSection(Math.max(0, activeSection - 1))}
                   disabled={activeSection === 0}
                   className={`
-                    flex items-center gap-2 px-4 py-2 rounded-lg transition-all
+                    flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-lg transition-all w-full sm:w-auto
                     ${activeSection === 0 
                       ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
                       : 'bg-gray-700 hover:bg-gray-600 text-white'
@@ -164,7 +164,7 @@ const WorkshopModule = ({ module, progress, onSectionComplete, currentUser }) =>
                   Previous Section
                 </button>
                 
-                <div className="text-center">
+                <div className="text-center order-first sm:order-none">
                   <p className="text-sm text-gray-400">
                     {completedSections.length} of {module.sections.length} sections completed
                   </p>
@@ -180,7 +180,7 @@ const WorkshopModule = ({ module, progress, onSectionComplete, currentUser }) =>
                   onClick={() => setActiveSection(Math.min(module.sections.length - 1, activeSection + 1))}
                   disabled={activeSection === module.sections.length - 1}
                   className={`
-                    flex items-center gap-2 px-4 py-2 rounded-lg transition-all
+                    flex items-center justify-center gap-2 px-4 py-3 sm:py-2 rounded-lg transition-all w-full sm:w-auto
                     ${activeSection === module.sections.length - 1 
                       ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
                       : 'bg-blue-600 hover:bg-blue-700 text-white'

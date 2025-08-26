@@ -30,7 +30,7 @@ const WorkshopProgress = ({ modules, currentModule, progress, onModuleSelect }) 
         Workshop Progress
       </h2>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {modules.map((module, index) => {
           const status = getModuleStatus(index, module.id);
           const moduleProgress = getModuleProgress(module.id);
@@ -41,7 +41,7 @@ const WorkshopProgress = ({ modules, currentModule, progress, onModuleSelect }) 
               key={module.id}
               onClick={() => status !== 'locked' && onModuleSelect(index)}
               className={`
-                relative p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer transform hover:scale-105
+                relative p-3 sm:p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer transform hover:scale-105
                 ${status === 'completed' 
                   ? 'border-green-500 bg-green-500/20' 
                   : status === 'current'
@@ -67,18 +67,18 @@ const WorkshopProgress = ({ modules, currentModule, progress, onModuleSelect }) 
 
               {/* Module Icon */}
               <div className={`
-                w-12 h-12 rounded-lg flex items-center justify-center mb-3
+                w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center mb-2 sm:mb-3
                 bg-gradient-to-r ${module.color}
               `}>
-                <IconComponent className="text-xl text-white" />
+                <IconComponent className="text-lg sm:text-xl text-white" />
               </div>
 
               {/* Module Info */}
-              <h3 className="font-bold text-lg mb-2 leading-tight">
+              <h3 className="font-bold text-base sm:text-lg mb-2 leading-tight">
                 {module.title}
               </h3>
               
-              <p className="text-gray-400 text-sm mb-3 line-clamp-2">
+              <p className="text-gray-400 text-xs sm:text-sm mb-3 line-clamp-2">
                 {module.subtitle}
               </p>
 
