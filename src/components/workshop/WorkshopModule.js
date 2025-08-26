@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   FaPlay, FaCheckCircle, FaLightbulb, FaUsers, FaChartLine, 
-  FaDesktop, FaQuestionCircle, FaBolt, FaRocket,
+  FaDesktop, FaQuestionCircle, FaAward, FaBolt, FaRocket,
   FaEye, FaMousePointer, FaGraduationCap, FaComment
 } from 'react-icons/fa';
 import InteractiveContent from './content/InteractiveContent';
