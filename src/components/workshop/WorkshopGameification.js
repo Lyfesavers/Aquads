@@ -1,46 +1,36 @@
 import React, { useState } from 'react';
 import { 
-  FaCoins, FaTrophy, FaFire, FaCrown, FaStar, FaGem, 
-  FaChartLine, FaAward, FaMedal, FaShieldAlt
+  FaTrophy, FaFire, FaCrown, FaStar, FaGem, 
+  FaAward, FaMedal, FaShieldAlt
 } from 'react-icons/fa';
 
 const WorkshopGameification = ({ progress }) => {
   const [selectedBadge, setSelectedBadge] = useState(null);
 
-  // Calculate level based on workshop points
-  const getLevel = (workshopPoints) => {
-    if (workshopPoints >= 1000) return { level: 6, title: 'Freelance Master', icon: FaCrown, color: 'text-yellow-400' };
-    if (workshopPoints >= 800) return { level: 5, title: 'Expert Professional', icon: FaShieldAlt, color: 'text-purple-400' };
-    if (workshopPoints >= 600) return { level: 4, title: 'Advanced Freelancer', icon: FaMedal, color: 'text-blue-400' };
-    if (workshopPoints >= 400) return { level: 3, title: 'Skilled Practitioner', icon: FaAward, color: 'text-green-400' };
-    if (workshopPoints >= 200) return { level: 2, title: 'Learning Enthusiast', icon: FaStar, color: 'text-orange-400' };
-    return { level: 1, title: 'Workshop Beginner', icon: FaGem, color: 'text-gray-400' };
+  // Calculate level based on completed modules
+  const getLevel = (completedModules) => {
+    const moduleCount = completedModules.length;
+    if (moduleCount >= 6) return { level: 6, title: 'Freelance Master', icon: FaCrown, color: 'text-yellow-400' };
+    if (moduleCount >= 5) return { level: 5, title: 'Expert Professional', icon: FaShieldAlt, color: 'text-purple-400' };
+    if (moduleCount >= 4) return { level: 4, title: 'Advanced Freelancer', icon: FaMedal, color: 'text-blue-400' };
+    if (moduleCount >= 3) return { level: 3, title: 'Skilled Practitioner', icon: FaAward, color: 'text-green-400' };
+    if (moduleCount >= 2) return { level: 2, title: 'Learning Enthusiast', icon: FaStar, color: 'text-orange-400' };
+    if (moduleCount >= 1) return { level: 1, title: 'Workshop Participant', icon: FaGem, color: 'text-blue-300' };
+    return { level: 0, title: 'Workshop Beginner', icon: FaGem, color: 'text-gray-400' };
   };
 
-  // Calculate points needed for next level
-  const getNextLevelPoints = (currentPoints) => {
-    const levels = [0, 200, 400, 600, 800, 1000];
-    for (let i = 0; i < levels.length; i++) {
-      if (currentPoints < levels[i]) {
-        return levels[i] - currentPoints;
-      }
-    }
-    return 0; // Max level reached
-  };
-
-  const workshopPoints = progress.totalWorkshopPoints || 0;
-  const currentLevel = getLevel(workshopPoints);
-  const nextLevelPoints = getNextLevelPoints(workshopPoints);
+  const completedModules = progress.completedModules || [];
+  const currentLevel = getLevel(completedModules);
   const LevelIcon = currentLevel.icon;
 
   // Achievement badges that can be earned
   const achievementBadges = [
-    { id: 'speed_demon', name: 'Speed Demon', icon: '⚡', description: 'Complete a module in under 30 minutes', earned: workshopPoints >= 100 },
-    { id: 'perfectionist', name: 'Perfectionist', icon: '💯', description: 'Score 100% on all quizzes in a module', earned: workshopPoints >= 200 },
-    { id: 'social_butterfly', name: 'Social Butterfly', icon: '🦋', description: 'Join the community and introduce yourself', earned: workshopPoints >= 50 },
-    { id: 'early_bird', name: 'Early Bird', icon: '🐦', description: 'Start the workshop within first week', earned: true },
-    { id: 'streak_master', name: 'Streak Master', icon: '🔥', description: 'Complete activities 3 days in a row', earned: progress.currentStreak >= 3 },
-    { id: 'knowledge_seeker', name: 'Knowledge Seeker', icon: '📚', description: 'Complete all bonus content', earned: workshopPoints >= 500 },
+    { id: 'first_steps', name: 'First Steps', icon: '👶', description: 'Complete your first workshop section', earned: completedModules.length >= 1 },
+    { id: 'getting_serious', name: 'Getting Serious', icon: '💪', description: 'Complete 2 workshop modules', earned: completedModules.length >= 2 },
+    { id: 'halfway_hero', name: 'Halfway Hero', icon: '🏃', description: 'Complete 3 workshop modules', earned: completedModules.length >= 3 },
+    { id: 'almost_there', name: 'Almost There', icon: '🎯', description: 'Complete 4 workshop modules', earned: completedModules.length >= 4 },
+    { id: 'streak_master', name: 'Streak Master', icon: '🔥', description: 'Complete activities consistently', earned: progress.currentStreak >= 3 },
+    { id: 'workshop_graduate', name: 'Workshop Graduate', icon: '🎓', description: 'Complete all workshop modules', earned: completedModules.length >= 6 },
   ];
 
   return (
@@ -53,22 +43,23 @@ const WorkshopGameification = ({ progress }) => {
             <LevelIcon className={`text-4xl mx-auto ${currentLevel.color}`} />
           </div>
           <h3 className="text-xl font-bold mb-2">{currentLevel.title}</h3>
-          <p className="text-3xl font-bold text-yellow-400 mb-2">
-            <FaCoins className="inline mr-2" />
-            {workshopPoints.toLocaleString()}
+          <p className="text-3xl font-bold text-blue-400 mb-2">
+            Level {currentLevel.level}
           </p>
-          <p className="text-gray-400 text-sm">Workshop Points Earned</p>
+          <p className="text-gray-400 text-sm">
+            {completedModules.length} of 6 modules completed
+          </p>
           
-          {nextLevelPoints > 0 && (
+          {completedModules.length < 6 && (
             <div className="mt-4">
               <p className="text-sm text-gray-400 mb-2">
-                {nextLevelPoints} points to next level
+                Progress: {Math.round((completedModules.length / 6) * 100)}%
               </p>
               <div className="w-full bg-gray-700 rounded-full h-2">
                 <div 
                   className="h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500"
                   style={{ 
-                    width: `${Math.max(0, Math.min(100, ((workshopPoints % 200) / 200) * 100))}%` 
+                    width: `${(completedModules.length / 6) * 100}%` 
                   }}
                 />
               </div>

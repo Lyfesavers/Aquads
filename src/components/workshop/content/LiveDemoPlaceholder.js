@@ -320,7 +320,7 @@ const LiveDemoPlaceholder = ({ section, sectionIndex, onComplete, isCompleted })
   const handleDemoComplete = () => {
     setDemoWatched(true);
     if (!isCompleted) {
-      onComplete(sectionIndex, section.points);
+      onComplete(sectionIndex, sectionTitle);
     }
   };
 
@@ -464,12 +464,12 @@ const LiveDemoPlaceholder = ({ section, sectionIndex, onComplete, isCompleted })
             className="px-8 py-4 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold rounded-xl transform transition-all duration-300 hover:scale-105 shadow-lg"
           >
             <FaPlay className="inline mr-2" />
-            Mark Demo as Watched (+{section.points} points)
+            Mark Demo as Watched
           </button>
         ) : isCompleted ? (
           <div className="inline-flex items-center gap-2 px-6 py-3 bg-green-500/20 text-green-400 rounded-xl border border-green-500/50">
             <FaCheck />
-            Demo Completed! (+{section.points} points earned)
+            Demo Completed! ✅
           </div>
         ) : (
           <div className="text-gray-400">

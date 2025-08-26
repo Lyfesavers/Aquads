@@ -34,7 +34,7 @@ const FreelancerWorkshop = ({ currentUser }) => {
       title: 'Welcome to the Aquads Ecosystem',
       subtitle: 'Your Journey to Web3 Freelancing Success Starts Here',
       duration: '45 min',
-      points: 100,
+
       icon: FaRocket,
       color: 'from-blue-500 to-purple-600',
       badge: { name: 'Explorer', icon: '🗺️', description: 'Completed platform orientation' },
@@ -43,25 +43,25 @@ const FreelancerWorkshop = ({ currentUser }) => {
           title: 'Platform Overview', 
           type: 'interactive', 
           content: 'platform-tour',
-          points: 25 
+
         },
         { 
           title: 'Web3 vs Traditional Freelancing', 
           type: 'infographic', 
           content: 'comparison-chart',
-          points: 25 
+
         },
         { 
           title: 'Success Stories', 
           type: 'interactive', 
           content: 'testimonials',
-          points: 25 
+
         },
         { 
           title: 'Community Connection', 
           type: 'live-demo', 
           content: 'telegram-setup',
-          points: 25 
+
         }
       ]
     },
@@ -70,7 +70,7 @@ const FreelancerWorkshop = ({ currentUser }) => {
       title: 'Building Your Professional Foundation',
       subtitle: 'Create a Profile That Attracts High-Value Clients',
       duration: '90 min',
-      points: 150,
+
       icon: FaUsers,
       color: 'from-purple-500 to-pink-600',
       badge: { name: 'Foundation Builder', icon: '🏗️', description: 'Mastered profile optimization' },
@@ -79,25 +79,25 @@ const FreelancerWorkshop = ({ currentUser }) => {
           title: 'Profile Optimization Strategy', 
           type: 'interactive', 
           content: 'profile-builder',
-          points: 40 
+
         },
         { 
           title: 'Service Categories Deep Dive', 
           type: 'infographic', 
           content: 'categories-explorer',
-          points: 35 
+
         },
         { 
           title: 'CV Builder Workshop', 
           type: 'live-demo', 
           content: 'cv-creation',
-          points: 40 
+
         },
         { 
           title: 'Competitive Analysis', 
           type: 'interactive', 
           content: 'market-research',
-          points: 35 
+
         }
       ]
     },
@@ -106,7 +106,7 @@ const FreelancerWorkshop = ({ currentUser }) => {
       title: 'Skill Validation & Competitive Advantage',
       subtitle: 'Prove Your Expertise with Certified Skill Tests',
       duration: '60 min',
-      points: 200,
+
       icon: FaTrophy,
       color: 'from-yellow-400 to-orange-500',
       badge: { name: 'Skill Master', icon: '🎯', description: 'Completed skill validations' },
@@ -115,19 +115,19 @@ const FreelancerWorkshop = ({ currentUser }) => {
           title: 'Skill Test Strategy', 
           type: 'interactive', 
           content: 'test-strategy',
-          points: 50 
+
         },
         { 
           title: 'Trust Score Algorithm', 
           type: 'infographic', 
           content: 'trust-calculator',
-          points: 50 
+
         },
         { 
           title: 'Live Skill Testing', 
           type: 'live-demo', 
           content: 'skill-tests',
-          points: 100 
+
         }
       ]
     },
@@ -136,7 +136,7 @@ const FreelancerWorkshop = ({ currentUser }) => {
       title: 'Creating Your First Service Listing',
       subtitle: 'Turn Your Skills Into Profitable Service Offerings',
       duration: '75 min',
-      points: 175,
+
       icon: FaGem,
       color: 'from-green-400 to-blue-500',
       badge: { name: 'Service Creator', icon: '💼', description: 'Created first service listing' },
@@ -145,25 +145,25 @@ const FreelancerWorkshop = ({ currentUser }) => {
           title: 'Service Creation Strategy', 
           type: 'interactive', 
           content: 'service-strategy',
-          points: 45 
+
         },
         { 
           title: 'Pricing Psychology', 
           type: 'infographic', 
           content: 'pricing-guide',
-          points: 40 
+
         },
         { 
           title: 'Live Service Creation', 
           type: 'live-demo', 
           content: 'service-creation',
-          points: 50 
+
         },
         { 
           title: 'Optimization Tips', 
           type: 'interactive', 
           content: 'optimization',
-          points: 40 
+
         }
       ]
     },
@@ -172,7 +172,7 @@ const FreelancerWorkshop = ({ currentUser }) => {
       title: 'Client Acquisition & Lead Management',
       subtitle: 'Master the Art of Converting Leads to Paying Clients',
       duration: '90 min',
-      points: 225,
+
       icon: FaChartLine,
       color: 'from-indigo-500 to-purple-600',
       badge: { name: 'Client Magnet', icon: '🧲', description: 'Mastered client acquisition' },
@@ -181,25 +181,25 @@ const FreelancerWorkshop = ({ currentUser }) => {
           title: 'Booking System Mastery', 
           type: 'interactive', 
           content: 'booking-flow',
-          points: 60 
+
         },
         { 
           title: 'Token Economy Deep Dive', 
           type: 'infographic', 
           content: 'token-system',
-          points: 55 
+
         },
         { 
           title: 'Client Communication', 
           type: 'live-demo', 
           content: 'client-demo',
-          points: 60 
+
         },
         { 
           title: 'ROI Optimization', 
           type: 'interactive', 
           content: 'roi-calculator',
-          points: 50 
+
         }
       ]
     },
@@ -208,7 +208,7 @@ const FreelancerWorkshop = ({ currentUser }) => {
       title: 'Reputation Building & Scaling Success',
       subtitle: 'Transform From Freelancer to Successful Business Owner',
       duration: '75 min',
-      points: 250,
+
       icon: FaCrown,
       color: 'from-yellow-400 to-red-500',
       badge: { name: 'Scale Master', icon: '👑', description: 'Achieved freelancer mastery' },
@@ -217,25 +217,25 @@ const FreelancerWorkshop = ({ currentUser }) => {
           title: 'Review System Strategy', 
           type: 'interactive', 
           content: 'review-mastery',
-          points: 65 
+
         },
         { 
           title: 'Scaling Framework', 
           type: 'infographic', 
           content: 'scaling-guide',
-          points: 60 
+
         },
         { 
           title: 'Advanced Features', 
           type: 'live-demo', 
           content: 'advanced-demo',
-          points: 65 
+
         },
         { 
           title: 'Success Planning', 
           type: 'interactive', 
           content: 'success-plan',
-          points: 60 
+
         }
       ]
     }
@@ -257,13 +257,18 @@ const FreelancerWorkshop = ({ currentUser }) => {
       
       // Convert completed sections array to the format expected by components
       const completedSectionsMap = {};
-      progress.completedSections.forEach(sectionKey => {
-        const [moduleId, , sectionIndex] = sectionKey.split('-');
-        if (!completedSectionsMap[moduleId]) {
-          completedSectionsMap[moduleId] = [];
-        }
-        completedSectionsMap[moduleId].push(parseInt(sectionIndex));
-      });
+      if (Array.isArray(progress.completedSections)) {
+        progress.completedSections.forEach(sectionKey => {
+          const [moduleId, , sectionIndex] = sectionKey.split('-');
+          if (!completedSectionsMap[moduleId]) {
+            completedSectionsMap[moduleId] = [];
+          }
+          completedSectionsMap[moduleId].push(parseInt(sectionIndex));
+        });
+      } else if (progress.completedSections && typeof progress.completedSections === 'object') {
+        // Already in the right format from localStorage fallback
+        Object.assign(completedSectionsMap, progress.completedSections);
+      }
 
       // Calculate completed modules and badges
       const completedModules = [];
@@ -279,7 +284,6 @@ const FreelancerWorkshop = ({ currentUser }) => {
 
       setWorkshopProgress({
         totalPoints: progress.totalPoints,
-        totalWorkshopPoints: progress.totalWorkshopPoints,
         completedSections: completedSectionsMap,
         workshopHistory: progress.workshopHistory,
         completedModules,
@@ -300,7 +304,7 @@ const FreelancerWorkshop = ({ currentUser }) => {
         timeSpent: 0,
         completedSections: {}
       });
-      setError('Using offline mode - progress will not be saved');
+      // Don't show error - localStorage fallback will work
     } finally {
       setLoading(false);
     }
@@ -323,16 +327,14 @@ const FreelancerWorkshop = ({ currentUser }) => {
     return history.length * 10; // 10 minutes per section average
   };
 
-  const completeSection = async (moduleId, sectionIndex, points, sectionTitle) => {
+  const completeSection = async (moduleId, sectionIndex, sectionTitle) => {
     if (!currentUser || !currentUser.token) {
       setError('Please log in to save your progress');
       return;
     }
 
     try {
-      // Award points through the API
-      const result = await completeWorkshopSection(moduleId, sectionIndex, points, sectionTitle);
-      
+      const result = await completeWorkshopSection(moduleId, sectionIndex, sectionTitle);
       // Reload progress to get updated data
       await loadWorkshopProgress();
       

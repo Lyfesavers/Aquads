@@ -234,7 +234,7 @@ const InfographicContent = ({ section, sectionIndex, onComplete, isCompleted }) 
 
   const handleComplete = () => {
     if (!isCompleted && allSectionsViewed()) {
-      onComplete(sectionIndex, section.points);
+      onComplete(sectionIndex, sectionTitle);
     }
   };
 
@@ -476,12 +476,12 @@ const InfographicContent = ({ section, sectionIndex, onComplete, isCompleted }) 
             className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-xl transform transition-all duration-300 hover:scale-105 shadow-lg"
           >
             <FaCheck className="inline mr-2" />
-            Complete Section (+{section.points} points)
+            Complete Section
           </button>
         ) : isCompleted ? (
           <div className="inline-flex items-center gap-2 px-6 py-3 bg-green-500/20 text-green-400 rounded-xl border border-green-500/50">
             <FaCheck />
-            Section Completed! (+{section.points} points earned)
+            Section Completed! ✅
           </div>
         ) : (
           <div className="text-gray-400">

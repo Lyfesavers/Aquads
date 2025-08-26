@@ -165,7 +165,7 @@ const QuizComponent = ({ section, sectionIndex, onComplete, isCompleted }) => {
     setShowResults(true);
     
     if (finalScore >= config.passingScore && !isCompleted) {
-      onComplete(sectionIndex, section.points);
+      onComplete(sectionIndex, sectionTitle);
     }
   };
 
@@ -271,7 +271,7 @@ const QuizComponent = ({ section, sectionIndex, onComplete, isCompleted }) => {
           {score >= config.passingScore ? (
             <div className="inline-flex items-center gap-2 px-6 py-3 bg-green-500/20 text-green-400 rounded-xl border border-green-500/50">
               <FaTrophy />
-              Quiz Completed! (+{section.points} points earned)
+              Quiz Completed! ✅
             </div>
           ) : (
             <button

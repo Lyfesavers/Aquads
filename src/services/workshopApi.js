@@ -6,8 +6,8 @@ const getAuthHeader = () => {
   return currentUser.token ? { 'Authorization': `Bearer ${currentUser.token}` } : {};
 };
 
-// Complete a workshop section and earn points
-export const completeWorkshopSection = async (moduleId, sectionIndex, points, sectionTitle) => {
+// Complete a workshop section
+export const completeWorkshopSection = async (moduleId, sectionIndex, sectionTitle) => {
   try {
     const response = await fetch(`${API_URL}/workshop/complete-section`, {
       method: 'POST',
@@ -18,7 +18,6 @@ export const completeWorkshopSection = async (moduleId, sectionIndex, points, se
       body: JSON.stringify({
         moduleId,
         sectionIndex,
-        points,
         sectionTitle
       })
     });

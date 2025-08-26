@@ -15,11 +15,10 @@ const WorkshopModule = ({ module, progress, onSectionComplete, currentUser }) =>
     progress.completedSections?.[module.id] || []
   );
 
-  const handleSectionComplete = (sectionIndex, points) => {
+  const handleSectionComplete = (sectionIndex, sectionTitle) => {
     if (!completedSections.includes(sectionIndex)) {
       setCompletedSections([...completedSections, sectionIndex]);
-      const section = module.sections[sectionIndex];
-      onSectionComplete(module.id, sectionIndex, points, section.title);
+      onSectionComplete(module.id, sectionIndex, sectionTitle);
     }
   };
 
@@ -102,7 +101,7 @@ const WorkshopModule = ({ module, progress, onSectionComplete, currentUser }) =>
                 <FaQuestionCircle className="text-sm opacity-50" />
               )}
               {section.title}
-              <span className="text-xs opacity-70">({section.points}pts)</span>
+
             </button>
           ))}
         </div>
@@ -131,7 +130,7 @@ const WorkshopModule = ({ module, progress, onSectionComplete, currentUser }) =>
                 <div className="flex justify-center items-center gap-4 text-sm text-gray-400">
                   <span>Section {index + 1} of {module.sections.length}</span>
                   <span>•</span>
-                  <span>{section.points} points available</span>
+                  <span>Interactive section</span>
                 </div>
               </div>
 

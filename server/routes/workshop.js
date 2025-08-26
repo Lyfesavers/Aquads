@@ -33,9 +33,9 @@ const awardWorkshopPoints = async (userId, amount, reason, workshopSection = nul
 // Complete a workshop section
 router.post('/complete-section', auth, requireEmailVerification, async (req, res) => {
   try {
-    const { moduleId, sectionIndex, points, sectionTitle } = req.body;
+    const { moduleId, sectionIndex, sectionTitle } = req.body;
     
-    if (!moduleId || sectionIndex === undefined || !points) {
+    if (!moduleId || sectionIndex === undefined) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -43,29 +43,40 @@ router.post('/complete-section', auth, requireEmailVerification, async (req, res
     const workshopSection = `${moduleId}-section-${sectionIndex}`;
     const reason = `Workshop: ${sectionTitle || `${moduleId} Section ${sectionIndex + 1}`}`;
     
-    // Check if user already completed this section (prevent duplicate points)
+    // Check if user already completed this section
     const user = await User.findById(req.user.userId);
     const alreadyCompleted = user.pointsHistory.some(
       entry => entry.workshopSection === workshopSection
     );
     
     if (alreadyCompleted) {
-      return res.status(400).json({ error: 'Section already completed' });
+      return res.json({ 
+        success: true,
+        message: 'Section already completed',
+        user: user 
+      });
     }
     
-    // Award points using existing system
-    const updatedUser = await awardWorkshopPoints(
-      req.user.userId, 
-      points, 
-      reason, 
-      workshopSection
+    // Just record completion without awarding points
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.userId,
+      {
+        $push: {
+          pointsHistory: {
+            amount: 0, // No points awarded
+            reason: reason,
+            workshopSection: workshopSection,
+            createdAt: new Date()
+          }
+        }
+      },
+      { new: true }
     );
     
     res.json({
       success: true,
-      points: updatedUser.points,
-      pointsEarned: points,
-      message: `${points} points earned for completing ${sectionTitle || 'workshop section'}!`
+      message: `Completed ${sectionTitle || 'workshop section'}!`,
+      user: updatedUser
     });
     
   } catch (error) {
@@ -88,11 +99,6 @@ router.get('/progress', auth, async (req, res) => {
       entry => entry.reason && entry.reason.includes('Workshop')
     );
     
-    // Calculate total workshop points
-    const totalWorkshopPoints = workshopHistory.reduce(
-      (sum, entry) => sum + entry.amount, 0
-    );
-    
     // Get completed sections
     const completedSections = workshopHistory
       .filter(entry => entry.workshopSection)
@@ -100,7 +106,6 @@ router.get('/progress', auth, async (req, res) => {
     
     res.json({
       totalPoints: user.points, // Total user points
-      totalWorkshopPoints, // Points earned from workshop
       completedSections,
       workshopHistory: workshopHistory.map(entry => ({
         amount: entry.amount,

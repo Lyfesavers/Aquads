@@ -226,13 +226,20 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
 
   const handleSectionComplete = () => {
     if (!isCompleted) {
-      onComplete(sectionIndex, section.points);
+      onComplete(sectionIndex, sectionTitle);
       setShowResults(true);
     }
   };
 
   const renderPlatformTour = () => (
     <div className="space-y-6">
+      {/* Instructions */}
+      <div className="bg-blue-600/20 rounded-xl p-4 border border-blue-500/30 text-center">
+        <p className="text-blue-400 font-medium">
+          🖱️ <strong>Click on each feature below</strong> to explore the Aquads platform and unlock the completion button!
+        </p>
+      </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {config.steps.map((step, index) => {
           const StepIcon = step.icon;
@@ -242,7 +249,7 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
               className={`
                 bg-gradient-to-br ${step.color} p-6 rounded-xl text-white cursor-pointer
                 transform transition-all duration-300 hover:scale-105 hover:shadow-2xl
-                ${selectedOptions[index] ? 'ring-4 ring-yellow-400' : ''}
+                ${selectedOptions[index] ? 'ring-4 ring-yellow-400' : 'ring-2 ring-white/30 animate-pulse'}
               `}
               onClick={() => handleStepComplete(index)}
             >
@@ -272,9 +279,20 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
   );
 
   const renderComparisonChart = () => (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="space-y-6">
+      {/* Instructions */}
+      <div className="bg-green-600/20 rounded-xl p-4 border border-green-500/30 text-center">
+        <p className="text-green-400 font-medium">
+          📊 <strong>Click on both comparison sections</strong> to explore the differences and unlock completion!
+        </p>
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Traditional Freelancing */}
-      <div className="bg-gray-700/50 rounded-xl p-6 border border-gray-600">
+      <div 
+        className={`bg-gray-700/50 rounded-xl p-6 border border-gray-600 cursor-pointer transform transition-all duration-300 hover:scale-105 ${selectedOptions['traditional'] ? 'ring-4 ring-yellow-400' : 'ring-2 ring-white/30 animate-pulse'}`}
+        onClick={() => handleStepComplete('traditional')}
+      >
         <div className="text-center mb-6">
           <div className="text-4xl mb-2">{config.comparison.traditional.icon}</div>
           <h3 className="text-xl font-bold text-gray-300">{config.comparison.traditional.title}</h3>
@@ -292,7 +310,10 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
       </div>
 
       {/* Web3 Freelancing */}
-      <div className="bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-xl p-6 border border-blue-500/30">
+      <div 
+        className={`bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-xl p-6 border border-blue-500/30 cursor-pointer transform transition-all duration-300 hover:scale-105 ${selectedOptions['web3'] ? 'ring-4 ring-yellow-400' : 'ring-2 ring-white/30 animate-pulse'}`}
+        onClick={() => handleStepComplete('web3')}
+      >
         <div className="text-center mb-6">
           <div className="text-4xl mb-2">{config.comparison.web3.icon}</div>
           <h3 className="text-xl font-bold text-blue-400">{config.comparison.web3.title}</h3>
@@ -306,12 +327,21 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
           ))}
         </div>
       </div>
+      </div>
     </div>
   );
 
   const renderTestimonials = () => (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      {config.testimonials.map((testimonial, index) => (
+    <div className="space-y-6">
+      {/* Instructions */}
+      <div className="bg-purple-600/20 rounded-xl p-4 border border-purple-500/30 text-center">
+        <p className="text-purple-400 font-medium">
+          💬 <strong>Click on each testimonial</strong> to read success stories and unlock completion!
+        </p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {config.testimonials.map((testimonial, index) => (
         <div
           key={index}
           className={`
@@ -351,6 +381,7 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
           )}
         </div>
       ))}
+      </div>
     </div>
   );
 
@@ -379,12 +410,12 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
             className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-xl transform transition-all duration-300 hover:scale-105 shadow-lg"
           >
             <FaCheck className="inline mr-2" />
-            Complete Section (+{section.points} points)
+            Complete Section
           </button>
         ) : isCompleted ? (
           <div className="inline-flex items-center gap-2 px-6 py-3 bg-green-500/20 text-green-400 rounded-xl border border-green-500/50">
             <FaCheck />
-            Section Completed! (+{section.points} points earned)
+            Section Completed! ✅
           </div>
         ) : (
           <div className="text-gray-400">

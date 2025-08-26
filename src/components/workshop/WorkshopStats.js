@@ -135,10 +135,10 @@ const WorkshopStats = ({ progress, modules, totalProgress }) => {
               />
             </div>
             
-                      <div className="flex justify-between text-sm text-gray-400">
-            <span>{progress.completedModules.length} of {modules.length} modules completed</span>
-            <span>{progress.totalWorkshopPoints || 0} workshop points earned</span>
-          </div>
+            <div className="flex justify-between text-sm text-gray-400">
+              <span>Progress</span>
+              <span>{progress.completedModules.length} of {modules.length} modules completed</span>
+            </div>
           </div>
         </div>
       )}
