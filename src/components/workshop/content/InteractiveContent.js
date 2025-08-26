@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   FaCheck, FaRocket, FaUsers, FaChartLine, FaDollarSign, 
-  FaGlobe, FaShield, FaCode, FaMegaphone, FaPen, FaLightbulb,
+  FaGlobe, FaShieldAlt, FaCode, FaMegaphone, FaPen, FaLightbulb,
   FaArrowRight, FaStar, FaTrophy, FaEye, FaThumbsUp
 } from 'react-icons/fa';
 
@@ -162,7 +162,7 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
             },
             {
               name: 'Security Auditing',
-              icon: FaShield,
+              icon: FaShieldAlt,
               demand: 90,
               avgRate: '$200/hr',
               skills: ['Security analysis', 'Code review', 'Penetration testing'],

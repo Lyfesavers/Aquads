@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   FaCheck, FaChartLine, FaStar, FaUsers, FaBrain, FaCalculator,
-  FaArrowUp, FaArrowDown, FaTrophy, FaShield, FaCoins, FaEye
+  FaArrowUp, FaArrowDown, FaTrophy, FaShieldAlt, FaCoins, FaEye
 } from 'react-icons/fa';
 
 const InfographicContent = ({ section, sectionIndex, onComplete, isCompleted }) => {
@@ -55,7 +55,7 @@ const InfographicContent = ({ section, sectionIndex, onComplete, isCompleted }) 
             {
               name: 'Account Verification',
               weight: 5,
-              icon: FaShield,
+              icon: FaShieldAlt,
               color: 'text-purple-400',
               bgColor: 'bg-purple-400/20',
               description: 'Premium status, freelancer badge'

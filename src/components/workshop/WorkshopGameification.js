@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   FaCoins, FaTrophy, FaFire, FaCrown, FaStar, FaGem, 
-  FaChartLine, FaAward, FaMedal, FaShield
+  FaChartLine, FaAward, FaMedal, FaShieldAlt
 } from 'react-icons/fa';
 
 const WorkshopGameification = ({ progress }) => {
@@ -10,7 +10,7 @@ const WorkshopGameification = ({ progress }) => {
   // Calculate level based on workshop points
   const getLevel = (workshopPoints) => {
     if (workshopPoints >= 1000) return { level: 6, title: 'Freelance Master', icon: FaCrown, color: 'text-yellow-400' };
-    if (workshopPoints >= 800) return { level: 5, title: 'Expert Professional', icon: FaShield, color: 'text-purple-400' };
+    if (workshopPoints >= 800) return { level: 5, title: 'Expert Professional', icon: FaShieldAlt, color: 'text-purple-400' };
     if (workshopPoints >= 600) return { level: 4, title: 'Advanced Freelancer', icon: FaMedal, color: 'text-blue-400' };
     if (workshopPoints >= 400) return { level: 3, title: 'Skilled Practitioner', icon: FaAward, color: 'text-green-400' };
     if (workshopPoints >= 200) return { level: 2, title: 'Learning Enthusiast', icon: FaStar, color: 'text-orange-400' };

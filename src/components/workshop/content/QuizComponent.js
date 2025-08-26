@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   FaCheck, FaTimes, FaQuestionCircle, FaTrophy, FaRedo,
   FaLightbulb, FaClock, FaStar, FaBrain
@@ -136,7 +136,7 @@ const QuizComponent = ({ section, sectionIndex, onComplete, isCompleted }) => {
 
   const config = getQuizConfig(section.content || 'platform-knowledge');
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!showResults && timeLeft > 0) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
       return () => clearTimeout(timer);
