@@ -3238,6 +3238,12 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                             </div>
                             <div className="text-gray-300 text-sm">Dormant</div>
                           </div>
+                          <div className={`p-3 rounded ${(selectedUserAffiliates.summary.unverifiedAffiliates || 0) > 0 ? 'bg-purple-900 bg-opacity-30 border border-purple-500' : 'bg-gray-600'}`}>
+                            <div className={`text-2xl font-bold ${(selectedUserAffiliates.summary.unverifiedAffiliates || 0) > 0 ? 'text-purple-400' : 'text-gray-400'}`}>
+                              {selectedUserAffiliates.summary.unverifiedAffiliates || 0}
+                            </div>
+                            <div className="text-gray-300 text-sm">Unverified</div>
+                          </div>
                         </div>
 
                         {/* User Risk Analysis */}
@@ -3299,10 +3305,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                               {selectedUserAffiliates.affiliates.map(affiliate => {
                                 // Debug logging to help verify dormant detection
                                 if (affiliate.isDormant !== undefined) {
-                                  console.log(`Affiliate ${affiliate.username}: isDormant=${affiliate.isDormant}, daysSinceLastSeen=${affiliate.daysSinceLastSeen}, loginFrequency=${affiliate.loginFrequency}`);
+                                  console.log(`Affiliate ${affiliate.username}: isDormant=${affiliate.isDormant}, isUnverified=${affiliate.isUnverified}, daysSinceLastSeen=${affiliate.daysSinceLastSeen}, loginFrequency=${affiliate.loginFrequency}`);
                                 }
                                 return (
-                                <tr key={affiliate.id} className={`border-b border-gray-600 ${affiliate.isDormant ? 'bg-red-900 bg-opacity-20' : ''}`}>
+                                <tr key={affiliate.id} className={`border-b border-gray-600 ${affiliate.isDormant ? 'bg-red-900 bg-opacity-20' : ''} ${affiliate.isUnverified ? 'bg-purple-900 bg-opacity-20' : ''}`}>
                                   <td className="p-2 text-white">{affiliate.username}</td>
                                   <td className="p-2 text-gray-300">{affiliate.email || 'N/A'}</td>
                                   <td className="p-2 text-gray-300">{new Date(affiliate.createdAt).toLocaleDateString()}</td>
@@ -3332,12 +3338,17 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                                       }`}>
                                         {affiliate.isOnline ? 'Online' : 'Offline'}
                                       </span>
-                                      {affiliate.isDormant && (
+                                      {affiliate.isUnverified && (
+                                        <span className="px-1 py-0.5 rounded text-xs bg-purple-500 text-white font-bold">
+                                          UNVERIFIED
+                                        </span>
+                                      )}
+                                      {affiliate.isDormant && !affiliate.isUnverified && (
                                         <span className="px-1 py-0.5 rounded text-xs bg-red-500 text-white font-bold">
                                           DORMANT
                                         </span>
                                       )}
-                                      {affiliate.isDormant === false && affiliate.daysSinceLastSeen > 7 && (
+                                      {affiliate.isDormant === false && affiliate.daysSinceLastSeen > 7 && !affiliate.isUnverified && (
                                         <span className="px-1 py-0.5 rounded text-xs bg-yellow-500 text-black">
                                           Inactive
                                         </span>

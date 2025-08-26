@@ -83,6 +83,7 @@ router.get('/user/:userId/affiliates', auth, isAdmin, adminRateLimit, async (req
           activityDetails: activityAnalysis.activities,
           loginFrequency: loginAnalysis.frequencyScore,
           isDormant: loginAnalysis.isDormant,
+          isUnverified: loginAnalysis.isUnverified,
           daysSinceLastSeen: loginAnalysis.daysSinceLastActivity,
           // Include their own affiliates for pattern detection
           subAffiliates: affiliateInfo?.affiliates || []
@@ -133,6 +134,7 @@ router.get('/user/:userId/affiliates', auth, isAdmin, adminRateLimit, async (req
         averageLoginFrequency: affiliateDetails.length > 0 ? 
           Math.round((affiliateDetails.reduce((sum, a) => sum + a.loginFrequency, 0) / affiliateDetails.length) * 100) / 100 : 0,
         dormantAffiliates: affiliateDetails.filter(a => a.isDormant).length,
+        unverifiedAffiliates: affiliateDetails.filter(a => a.isUnverified).length,
         lowActivityAffiliates: affiliateDetails.filter(a => a.activityScore < 0.1).length
       },
       // NEW: Include detailed fraud analysis
@@ -600,6 +602,7 @@ router.post('/debug/bulk-dormant-analysis', auth, isAdmin, async (req, res) => {
             accountAgeDays: loginAnalysis.accountAgeDays,
             daysSinceLastActivity: loginAnalysis.daysSinceLastActivity,
             isDormant: loginAnalysis.isDormant,
+            isUnverified: loginAnalysis.isUnverified,
             isHighlyDormant: loginAnalysis.isHighlyDormant,
             hasRealActivityData: loginAnalysis.hasRealActivityData,
             frequencyScore: loginAnalysis.frequencyScore,

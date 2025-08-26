@@ -184,15 +184,24 @@ const calculateLoginFrequencyAnalysis = (user) => {
     // More accurate dormant detection with better thresholds
     // For accounts with real activity data: dormant after 14 days, highly dormant after 60 days
     // For accounts without real activity data: be more lenient and consider account age
+    // For unverified users: treat as inactive since they cannot access features
     let isDormant = false;
     let isHighlyDormant = false;
     
-    if (hasRealActivityData) {
-      // For accounts with real activity data, use straightforward time-based detection
-      isDormant = daysSinceLastActivity > 14;
-      isHighlyDormant = daysSinceLastActivity > 60;
+    // Check if user is unverified (cannot access features, so treat as inactive)
+    const isUnverified = user.email && !user.emailVerified;
+    
+    if (isUnverified) {
+      // Unverified users are considered dormant if account is older than 3 days
+      // This is because they cannot access any features and are essentially inactive
+      isDormant = accountAgeDays > 3;
+      isHighlyDormant = accountAgeDays > 14;
+                    } else if (hasRealActivityData) {
+                  // For verified accounts with real activity data, use straightforward time-based detection
+                  isDormant = daysSinceLastActivity > 7;
+                  isHighlyDormant = daysSinceLastActivity > 30;
     } else {
-      // For accounts without real activity data, be more sophisticated
+      // For verified accounts without real activity data, be more sophisticated
       if (accountAgeDays <= 7) {
         // New accounts (less than 7 days old) are not considered dormant
         isDormant = false;
@@ -250,6 +259,7 @@ const calculateLoginFrequencyAnalysis = (user) => {
       isOldAndSuddenlyActive,
       frequencyScore: Math.round(frequencyScore * 100) / 100,
       hasRealActivityData,
+      isUnverified: isUnverified,
       lastSeen: lastSeen && !isNaN(lastSeen.getTime()) ? lastSeen.toISOString() : null,
       lastActivity: lastActivity && !isNaN(lastActivity.getTime()) ? lastActivity.toISOString() : null,
       mostRecentActivity: lastActivityTime.toISOString()
