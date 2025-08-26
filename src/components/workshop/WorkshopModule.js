@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   FaPlay, FaCheckCircle, FaLightbulb, FaUsers, FaChartLine, 
-  FaDesktop, FaQuestionCircle, FaAward, FaBolt, FaRocket,
+  FaDesktop, FaQuestionCircle, FaBolt, FaRocket,
   FaEye, FaMousePointer, FaGraduationCap, FaComment
 } from 'react-icons/fa';
 import InteractiveContent from './content/InteractiveContent';
@@ -52,17 +52,13 @@ const WorkshopModule = ({ module, progress, onSectionComplete, currentUser }) =>
         </div>
         
         {/* Module Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white/20 rounded-lg p-3 text-center">
             <FaGraduationCap className="text-white text-lg mx-auto mb-1" />
             <p className="text-white text-sm font-medium">{module.duration}</p>
             <p className="text-white/70 text-xs">Duration</p>
           </div>
-          <div className="bg-white/20 rounded-lg p-3 text-center">
-            <FaAward className="text-white text-lg mx-auto mb-1" />
-            <p className="text-white text-sm font-medium">{module.points} pts</p>
-            <p className="text-white/70 text-xs">Max Points</p>
-          </div>
+
           <div className="bg-white/20 rounded-lg p-3 text-center">
             <FaBolt className="text-white text-lg mx-auto mb-1" />
             <p className="text-white text-sm font-medium">{getModuleProgress()}%</p>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { 
-  FaCheckCircle, FaLock, FaPlay, FaClock, FaStar, FaTrophy 
+  FaCheckCircle, FaLock, FaPlay, FaClock, FaTrophy 
 } from 'react-icons/fa';
 
 const WorkshopProgress = ({ modules, currentModule, progress, onModuleSelect }) => {
@@ -81,15 +81,11 @@ const WorkshopProgress = ({ modules, currentModule, progress, onModuleSelect }) 
                 {module.subtitle}
               </p>
 
-              {/* Duration and Points */}
-              <div className="flex justify-between items-center mb-3">
+              {/* Duration */}
+              <div className="flex justify-center items-center mb-3">
                 <div className="flex items-center gap-1 text-xs text-gray-400">
                   <FaClock />
                   {module.duration}
-                </div>
-                <div className="flex items-center gap-1 text-xs text-yellow-400">
-                  <FaStar />
-                  {module.points} pts
                 </div>
               </div>
 
