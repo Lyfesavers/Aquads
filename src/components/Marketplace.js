@@ -476,6 +476,73 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
     logger.log('Token available:', currentUser?.token ? 'yes' : 'no');
   }, [currentUser]);
 
+  // Helper function to calculate trust score (reusing RiskGauge logic)
+  const calculateTrustScore = (service, seller, completionRate = null) => {
+    let totalScore = 0;
+    let maxPossibleScore = 100;
+
+    // Factor 1: Service Rating (50% weight)
+    const rating = service?.rating || 0;
+    const reviewCount = service?.reviews || 0;
+    
+    if (reviewCount === 0) {
+      totalScore += 0;
+    } else if (rating >= 4.8) {
+      totalScore += 50;
+    } else if (rating >= 4.5) {
+      totalScore += 40;
+    } else if (rating >= 4.0) {
+      totalScore += 30;
+    } else if (rating >= 3.5) {
+      totalScore += 15;
+    } else {
+      totalScore += 5;
+    }
+
+    // Factor 2: Completion Rate (30% weight)
+    if (completionRate !== null) {
+      if (completionRate >= 95) {
+        totalScore += 30;
+      } else if (completionRate >= 85) {
+        totalScore += 24;
+      } else if (completionRate >= 75) {
+        totalScore += 18;
+      } else if (completionRate >= 65) {
+        totalScore += 9;
+      } else {
+        totalScore += 3;
+      }
+    } else {
+      totalScore += 6; // No booking history penalty
+    }
+
+    // Factor 3: CV/Profile Completeness (10% weight)
+    const hasCV = seller?.cv && (
+      seller.cv.fullName || 
+      seller.cv.summary || 
+      (seller.cv.experience && seller.cv.experience.length > 0) ||
+      (seller.cv.education && seller.cv.education.length > 0) ||
+      (seller.cv.skills && seller.cv.skills.length > 0)
+    );
+    if (hasCV) totalScore += 10;
+
+    // Factor 4: Account Verification (5% weight)
+    let verificationScore = 0;
+    if (seller?.userType === 'freelancer') verificationScore += 2.5;
+    if (service?.isPremium) verificationScore += 2.5;
+    totalScore += verificationScore;
+
+    // Factor 5: Skill Badges (5% weight)
+    const skillBadges = seller?.skillBadges || [];
+    if (skillBadges.length >= 3) {
+      totalScore += 5;
+    } else if (skillBadges.length >= 1) {
+      totalScore += 2.5;
+    }
+
+    return Math.round(totalScore);
+  };
+
   // Modify the sortServices function
   const sortServices = (services, option) => {
     const servicesCopy = [...services];
@@ -489,7 +556,17 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
       // Then apply the selected sort option within each group
       switch (option) {
         case 'highest-rated':
-          return (b.rating || 0) - (a.rating || 0);
+          // Primary: Sort by rating
+          const ratingDiff = (b.rating || 0) - (a.rating || 0);
+          
+          // Secondary: If ratings are close (within 0.2 points), use trust score as tiebreaker
+          if (Math.abs(ratingDiff) <= 0.2) {
+            const aTrustScore = calculateTrustScore(a, a.seller, a.completionRate);
+            const bTrustScore = calculateTrustScore(b, b.seller, b.completionRate);
+            return bTrustScore - aTrustScore;
+          }
+          
+          return ratingDiff;
         case 'price-low':
           return a.price - b.price;
         case 'price-high':
