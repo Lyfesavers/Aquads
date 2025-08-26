@@ -254,15 +254,15 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
 
       {/* Header Navigation */}
       <nav className="fixed top-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm z-[200000]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14 sm:h-16">
             <div className="flex items-center">
               <Link to="/" className="flex items-center">
                 <img 
                   src="/Aquadsnewlogo.png" 
                   alt="AQUADS" 
                   className="w-auto filter drop-shadow-lg"
-                  style={{height: '2rem', filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))'}}
+                  style={{height: '1.75rem', filter: 'drop-shadow(0 0 10px rgba(59, 130, 246, 0.6))'}}
                 />
               </Link>
             </div>
@@ -271,9 +271,9 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
             <div className="md:hidden">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="text-gray-300 hover:text-white p-2"
+                className="text-gray-300 hover:text-white p-2 rounded-lg hover:bg-gray-700/50 transition-colors"
               >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   {isMobileMenuOpen ? (
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   ) : (
@@ -284,35 +284,35 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
             </div>
 
             {/* Desktop menu */}
-            <div className="hidden md:flex items-center space-x-3">
+            <div className="hidden md:flex items-center space-x-2 lg:space-x-3">
               {/* Main Navigation - Smaller buttons */}
               <Link
                 to="/marketplace"
-                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
+                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
               >
                 Freelancer
               </Link>
               <Link
                 to="/games"
-                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
+                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
               >
                 Games
               </Link>
               <button
                 onClick={openMintFunnelPlatform}
-                className="bg-gradient-to-r from-green-500/80 to-emerald-600/80 hover:from-green-600/80 hover:to-emerald-700/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
+                className="bg-gradient-to-r from-green-500/80 to-emerald-600/80 hover:from-green-600/80 hover:to-emerald-700/80 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
               >
                 Paid Ads
               </button>
               <Link
                 to="/how-to"
-                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
+                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
               >
                 Learn
               </Link>
               <Link
                 to="/project-info"
-                className="bg-gradient-to-r from-purple-500/80 to-pink-600/80 hover:from-purple-600/80 hover:to-pink-700/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
+                className="bg-gradient-to-r from-purple-500/80 to-pink-600/80 hover:from-purple-600/80 hover:to-pink-700/80 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
               >
                 Why List?
               </Link>
@@ -323,10 +323,10 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                   <div className="relative user-dropdown">
                     <button 
                       onClick={() => setShowUserDropdown(!showUserDropdown)}
-                      className="flex items-center bg-blue-500/80 hover:bg-blue-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                      className="flex items-center bg-blue-500/80 hover:bg-blue-600/80 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
                     >
-                      <span className="mr-1">{currentUser.username}</span>
-                      <svg className={`w-4 h-4 ml-1 transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                      <span className="mr-1 truncate max-w-16 lg:max-w-none">{currentUser.username}</span>
+                      <svg className={`w-3 h-3 lg:w-4 lg:h-4 ml-1 transition-transform ${showUserDropdown ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                       </svg>
                     </button>
@@ -399,13 +399,13 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                 <>
                   <button
                     onClick={() => setShowLoginModal(true)}
-                    className="bg-blue-500/80 hover:bg-blue-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                    className="bg-blue-500/80 hover:bg-blue-600/80 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
                   >
                     Login
                   </button>
                   <button
                     onClick={() => setShowCreateAccountModal(true)}
-                    className="bg-green-500/80 hover:bg-green-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
+                    className="bg-green-500/80 hover:bg-green-600/80 px-2 lg:px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
                   >
                     Create Account
                   </button>
@@ -415,47 +415,47 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
           </div>
 
           {/* Mobile menu */}
-          <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden py-2 z-[200000] relative`}>
-            <div className="flex flex-col space-y-2">
+          <div className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:hidden py-3 z-[200000] relative`}>
+            <div className="flex flex-col space-y-3">
               <Link
                 to="/marketplace"
-                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-3 rounded-lg shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center text-sm font-medium"
               >
                 Freelancer Hub
               </Link>
               <Link
                 to="/games"
-                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-3 rounded-lg shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center text-sm font-medium"
               >
                 GameHub
               </Link>
               <button
                 onClick={openMintFunnelPlatform}
-                className="bg-gradient-to-r from-green-500/80 to-emerald-600/80 hover:from-green-600/80 hover:to-emerald-700/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+                className="bg-gradient-to-r from-green-500/80 to-emerald-600/80 hover:from-green-600/80 hover:to-emerald-700/80 px-4 py-3 rounded-lg shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm text-center text-sm font-medium"
               >
                 Paid Ads
               </button>
               <Link
                 to="/how-to"
-                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+                className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-3 rounded-lg shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center text-sm font-medium"
               >
                 Learn
               </Link>
               <Link
                 to="/project-info"
-                className="bg-gradient-to-r from-purple-500/80 to-pink-600/80 hover:from-purple-600/80 hover:to-pink-700/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+                className="bg-gradient-to-r from-purple-500/80 to-pink-600/80 hover:from-purple-600/80 hover:to-pink-700/80 px-4 py-3 rounded-lg shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm text-center text-sm font-medium"
               >
                 Why List?
               </Link>
                              {currentUser ? (
                  <>
-                   <span className="text-blue-300 text-center">Welcome, {currentUser.username}!</span>
+                   <span className="text-blue-300 text-center text-sm font-medium">Welcome, {currentUser.username}!</span>
                    <button
                      onClick={() => {
                        navigate('/');
                        setIsMobileMenuOpen(false);
                      }}
-                     className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                     className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-3 rounded-lg shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm text-sm font-medium"
                    >
                      Back to Main
                    </button>
@@ -464,7 +464,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                        setShowDashboard(true);
                        setIsMobileMenuOpen(false);
                      }}
-                     className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
+                     className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-3 rounded-lg shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm text-sm font-medium"
                    >
                      📊 Dashboard
                    </button>
@@ -473,7 +473,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                        setShowCreateModal(true);
                        setIsMobileMenuOpen(false);
                      }}
-                     className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
+                     className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-3 rounded-lg shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm text-sm font-medium"
                    >
                      ➕ List Project
                    </button>
@@ -482,7 +482,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                        setShowBannerModal(true);
                        setIsMobileMenuOpen(false);
                      }}
-                     className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                     className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-3 rounded-lg shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm text-sm font-medium"
                    >
                      🎨 Create Banner Ad
                    </button>
@@ -491,7 +491,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                        setShowProfileModal(true);
                        setIsMobileMenuOpen(false);
                      }}
-                     className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
+                     className="bg-purple-500/80 hover:bg-purple-600/80 px-4 py-3 rounded-lg shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm text-sm font-medium"
                    >
                      ⚙️ Edit Profile
                    </button>
@@ -500,7 +500,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                        onLogout();
                        setIsMobileMenuOpen(false);
                      }}
-                     className="bg-red-500/80 hover:bg-red-600/80 px-4 py-2 rounded shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm"
+                     className="bg-red-500/80 hover:bg-red-600/80 px-4 py-3 rounded-lg shadow-lg hover:shadow-red-500/50 transition-all duration-300 backdrop-blur-sm text-sm font-medium"
                    >
                      Logout
                    </button>
@@ -512,7 +512,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                       setShowLoginModal(true);
                       setIsMobileMenuOpen(false);
                     }}
-                    className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-2 rounded shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                    className="bg-blue-500/80 hover:bg-blue-600/80 px-4 py-3 rounded-lg shadow-lg hover:shadow-blue-500/50 transition-all duration-300 backdrop-blur-sm text-sm font-medium"
                   >
                     Login
                   </button>
@@ -521,7 +521,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                       setShowCreateAccountModal(true);
                       setIsMobileMenuOpen(false);
                     }}
-                    className="bg-green-500/80 hover:bg-green-600/80 px-4 py-2 rounded shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm"
+                    className="bg-green-500/80 hover:bg-green-600/80 px-4 py-3 rounded-lg shadow-lg hover:shadow-green-500/50 transition-all duration-300 backdrop-blur-sm text-sm font-medium"
                   >
                     Create Account
                   </button>
@@ -532,20 +532,20 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
         </div>
       </nav>
 
-              <div className="container mx-auto px-4 py-8 pt-20">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4 text-blue-400">How To Guide</h1>
-          <p className="text-gray-400 text-lg">
+              <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 pt-16 sm:pt-20">
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4 text-blue-400">How To Guide</h1>
+          <p className="text-gray-400 text-base sm:text-lg px-2">
             Learn how to make the most of Aquads with our video tutorials, skills tests, and community blog posts
           </p>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex justify-center mb-8">
-          <div className="bg-gray-800/50 rounded-lg p-1 flex space-x-1">
+        <div className="flex justify-center mb-6 sm:mb-8">
+          <div className="bg-gray-800/50 rounded-lg p-1 flex flex-wrap justify-center gap-1 max-w-full overflow-x-auto">
             <button
               onClick={() => setActiveTab('videos')}
-              className={`px-6 py-2 rounded-md transition-colors ${
+              className={`px-3 sm:px-6 py-2 rounded-md transition-colors text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === 'videos'
                   ? 'bg-blue-500 text-white'
                   : 'text-gray-400 hover:text-white'
@@ -555,7 +555,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
             </button>
             <button
               onClick={() => setActiveTab('tests')}
-              className={`px-6 py-2 rounded-md transition-colors ${
+              className={`px-3 sm:px-6 py-2 rounded-md transition-colors text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === 'tests'
                   ? 'bg-blue-500 text-white'
                   : 'text-gray-400 hover:text-white'
@@ -565,7 +565,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
             </button>
             <button
               onClick={() => setActiveTab('blogs')}
-              className={`px-6 py-2 rounded-md transition-colors ${
+              className={`px-3 sm:px-6 py-2 rounded-md transition-colors text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === 'blogs'
                   ? 'bg-blue-500 text-white'
                   : 'text-gray-400 hover:text-white'
@@ -575,7 +575,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
             </button>
             <button
               onClick={() => setActiveTab('workshop')}
-              className={`px-6 py-2 rounded-md transition-colors ${
+              className={`px-3 sm:px-6 py-2 rounded-md transition-colors text-xs sm:text-sm whitespace-nowrap ${
                 activeTab === 'workshop'
                   ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
                   : 'text-gray-400 hover:text-white'
@@ -588,12 +588,12 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
 
         {/* Content based on active tab */}
         {activeTab === 'videos' && (
-          <div className="mb-16">
-            <h2 className="text-2xl font-bold mb-6 text-white">Video Tutorials</h2>
+          <div className="mb-12 sm:mb-16">
+            <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-white">Video Tutorials</h2>
             <div className="aspect-w-16 aspect-h-9 bg-gray-800 rounded-lg overflow-hidden">
               {videoError ? (
-                <div className="flex items-center justify-center h-full text-gray-400">
-                  <p>Failed to load video playlist. Please try refreshing the page.</p>
+                <div className="flex items-center justify-center h-full text-gray-400 p-4 text-center">
+                  <p className="text-sm sm:text-base">Failed to load video playlist. Please try refreshing the page.</p>
                 </div>
               ) : (
                 <iframe
@@ -601,7 +601,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                   title="Aquads Tutorials"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
-                  className="w-full h-full min-h-[600px]"
+                  className="w-full h-full min-h-[300px] sm:min-h-[400px] lg:min-h-[600px]"
                   onError={() => setVideoError(true)}
                   loading="lazy"
                 />
@@ -611,24 +611,24 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
         )}
 
         {activeTab === 'tests' && (
-          <div className="mb-16">
+          <div className="mb-12 sm:mb-16">
             <SkillTests currentUser={currentUser} />
           </div>
         )}
 
         {activeTab === 'blogs' && (
-          <div className="mt-16" ref={blogListRef}>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-white">Community Blog Posts</h2>
+          <div className="mt-12 sm:mt-16" ref={blogListRef}>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-white">Community Blog Posts</h2>
               {currentUser && currentUser.isAdmin ? (
                 <button
                   onClick={() => setShowCreateBlogModal(true)}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors"
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors text-sm font-medium"
                 >
                   Create Blog Post
                 </button>
               ) : currentUser ? (
-                <div className="text-gray-400">
+                <div className="text-gray-400 text-sm">
                   <span>Only administrators can create blog posts</span>
                 </div>
               ) : (
@@ -646,7 +646,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                     // Navigate to the main page with "showCreateAccount=true" parameter
                     window.location.href = `/?showCreateAccount=true${refCode ? `&ref=${refCode}` : ''}`;
                   }}
-                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition-colors"
+                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition-colors text-sm font-medium"
                 >
                   Create Account
                 </button>
@@ -654,7 +654,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
             </div>
             
             {error && (
-              <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-4 py-2 rounded mb-4">
+              <div className="bg-red-500/10 border border-red-500/50 text-red-500 px-3 sm:px-4 py-2 rounded mb-4 text-sm">
                 {error}
               </div>
             )}
@@ -669,7 +669,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
         )}
 
         {activeTab === 'workshop' && (
-          <div className="mt-16">
+          <div className="mt-12 sm:mt-16">
             <FreelancerWorkshop currentUser={currentUser} />
           </div>
         )}
