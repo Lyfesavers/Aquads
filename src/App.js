@@ -2087,7 +2087,7 @@ function App() {
     
     // Calculate optimal positioning values with minimal gaps
     const horizontalGap = 5; // Fixed smaller gap between columns
-    const verticalGap = 5; // Negative vertical gap - bubbles will overlap slightly
+    const verticalGap = 7; // Increased vertical gap to prevent vote icon overlap with buy signals
     
     // Store original positions to restore if needed
     if (!window.originalBubblePositions) {
@@ -2416,7 +2416,7 @@ function App() {
         
         // Calculate margins and spacing
         const initialHorizontalMargin = screenWidth >= 1440 ? 10 : 10;
-        const initialVerticalMargin = 31;
+        const initialVerticalMargin = 30;
         
         // Calculate available width and cell size
         const initialAvailableWidth = screenWidth - (initialHorizontalMargin * 2);
