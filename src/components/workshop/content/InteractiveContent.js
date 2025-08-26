@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   FaCheck, FaRocket, FaUsers, FaChartLine, FaDollarSign, 
   FaGlobe, FaShieldAlt, FaCode, FaBullhorn, FaPen, FaLightbulb,
-  FaArrowRight, FaStar, FaTrophy, FaEye
+  FaArrowRight, FaStar, FaTrophy, FaEye, FaSearch
 } from 'react-icons/fa';
 
 const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) => {
@@ -164,18 +164,24 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
           steps: [
             {
               title: 'Identify Top Performers',
-              action: 'Browse the marketplace and find freelancers in your category with high ratings',
-              insights: ['What services do they offer?', 'How do they price their work?', 'What makes them stand out?']
+              description: 'Browse the marketplace and find freelancers in your category with high ratings',
+              actions: ['What services do they offer?', 'How do they price their work?', 'What makes them stand out?'],
+              icon: FaSearch,
+              color: 'from-blue-500 to-cyan-600'
             },
             {
               title: 'Analyze Their Profiles',
-              action: 'Study their headlines, descriptions, and portfolio presentations',
-              insights: ['What keywords do they use?', 'How do they structure their content?', 'What social proof do they showcase?']
+              description: 'Study their headlines, descriptions, and portfolio presentations',
+              actions: ['What keywords do they use?', 'How do they structure their content?', 'What social proof do they showcase?'],
+              icon: FaEye,
+              color: 'from-purple-500 to-pink-600'
             },
             {
               title: 'Find Your Unique Angle',
-              action: 'Identify gaps in the market or ways to differentiate yourself',
-              insights: ['What services are underserved?', 'What unique experience do you bring?', 'How can you provide more value?']
+              description: 'Identify gaps in the market or ways to differentiate yourself',
+              actions: ['What services are underserved?', 'What unique experience do you bring?', 'How can you provide more value?'],
+              icon: FaLightbulb,
+              color: 'from-yellow-500 to-orange-600'
             }
           ]
         };
@@ -480,7 +486,123 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
     </div>
   );
 
+  const renderCategoriesExplorer = () => (
+    <div className="space-y-6">
+      {/* Instructions */}
+      <div className="bg-blue-600/20 rounded-xl p-4 border border-blue-500/30 text-center">
+        <p className="text-blue-400 font-medium">
+          🎯 <strong>Click on each category</strong> to explore and learn about specialization opportunities!
+        </p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {config.categories.map((category, index) => (
+          <div
+            key={index}
+            className={`
+              bg-gradient-to-br ${category.color} p-6 rounded-xl border border-gray-600
+              cursor-pointer transform transition-all duration-300 hover:scale-105
+              ${selectedOptions[index] ? 'ring-2 ring-white/50' : ''}
+            `}
+            onClick={() => handleStepComplete(index)}
+          >
+            <div className="flex items-center gap-4 mb-4">
+              <div className="bg-white/20 p-3 rounded-full">
+                <category.icon className="text-white text-xl" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg text-white">{category.name}</h3>
+                <p className="text-white/80 text-sm">Demand: {category.demand}%</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-white">{category.avgRate}</p>
+                <p className="text-white/70 text-sm">Avg. Rate</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-green-300">{category.growth}</p>
+                <p className="text-white/70 text-sm">Growth</p>
+              </div>
+            </div>
 
+            <div className="space-y-2">
+              <p className="text-white/90 font-medium text-sm">Key Skills:</p>
+              <div className="flex flex-wrap gap-2">
+                {category.skills.map((skill, idx) => (
+                  <span key={idx} className="px-2 py-1 bg-white/20 text-white rounded-full text-xs">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {selectedOptions[index] && (
+              <div className="mt-4 text-center">
+                <div className="bg-white/20 rounded-full p-2 inline-block">
+                  <FaCheck className="text-white" />
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderMarketResearch = () => (
+    <div className="space-y-6">
+      {/* Instructions */}
+      <div className="bg-purple-600/20 rounded-xl p-4 border border-purple-500/30 text-center">
+        <p className="text-purple-400 font-medium">
+          🔍 <strong>Complete each research step</strong> to develop your competitive advantage!
+        </p>
+      </div>
+      
+      <div className="space-y-4">
+        {config.steps.map((step, index) => (
+          <div
+            key={index}
+            className={`
+              bg-gradient-to-r from-gray-700/50 to-gray-800/50 rounded-xl p-6 border border-gray-600
+              cursor-pointer transform transition-all duration-300 hover:scale-102
+              ${selectedOptions[index] ? 'ring-2 ring-purple-500 bg-purple-500/10' : ''}
+            `}
+            onClick={() => handleStepComplete(index)}
+          >
+            <div className="flex items-start gap-4">
+              <div className={`bg-gradient-to-r ${step.color} p-3 rounded-full flex-shrink-0`}>
+                <step.icon className="text-white text-lg" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-lg mb-2">{step.title}</h3>
+                <p className="text-gray-300 mb-3">{step.description}</p>
+                
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-400">Action Items:</p>
+                  <ul className="space-y-1">
+                    {step.actions.map((action, idx) => (
+                      <li key={idx} className="text-sm text-gray-300 flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
+                        {action}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+              
+              {selectedOptions[index] && (
+                <div className="flex-shrink-0">
+                  <FaCheck className="text-green-400 text-lg" />
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   const allStepsCompleted = () => {
     const expectedSteps = config.steps?.length || config.categories?.length || 2;
@@ -497,6 +619,8 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
       {/* Render Content Based on Type */}
       {section.content === 'platform-tour' && renderPlatformTour()}
       {section.content === 'comparison-chart' && renderComparisonChart()}
+      {section.content === 'categories-explorer' && renderCategoriesExplorer()}
+      {section.content === 'market-research' && renderMarketResearch()}
 
 
       {/* Completion Button */}

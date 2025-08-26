@@ -269,10 +269,18 @@ const FreelancerWorkshop = ({ currentUser }) => {
       
       modules.forEach(module => {
         const moduleCompletedSections = completedSectionsMap[module.id] || [];
-        if (moduleCompletedSections.length === module.sections.length) {
+        // Only mark as completed if we have exactly the right sections completed
+        // and no more than the total sections for this module
+        const validCompletedSections = moduleCompletedSections.filter(
+          sectionIndex => sectionIndex < module.sections.length
+        );
+        if (validCompletedSections.length === module.sections.length && 
+            validCompletedSections.length > 0) {
           completedModules.push(module.id);
           badges.push(module.badge);
         }
+        // Update the cleaned sections back to the map
+        completedSectionsMap[module.id] = validCompletedSections;
       });
 
       setWorkshopProgress({
