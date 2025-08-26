@@ -658,6 +658,293 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
     </div>
   );
 
+  const renderTestStrategy = () => (
+    <div className="space-y-6">
+      {/* Instructions */}
+      <div className="bg-yellow-600/20 rounded-xl p-4 border border-yellow-500/30 text-center">
+        <p className="text-yellow-400 font-medium">
+          🎯 <strong>Click on each strategy step</strong> to master the skill testing system!
+        </p>
+      </div>
+      
+      <div className="space-y-4">
+        {config.steps.map((step, index) => (
+          <div
+            key={index}
+            className={`
+              bg-gradient-to-r from-gray-700/50 to-gray-800/50 rounded-xl p-6 border border-gray-600
+              cursor-pointer transform transition-all duration-300 hover:scale-102
+              ${selectedOptions[index] ? 'ring-2 ring-yellow-500 bg-yellow-500/10' : ''}
+            `}
+            onClick={() => handleStepComplete(index)}
+          >
+            <div className="flex items-start gap-4">
+              <div className={`bg-gradient-to-r ${step.color} p-3 rounded-full flex-shrink-0`}>
+                <step.icon className="text-white text-lg" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-lg mb-2">{step.title}</h3>
+                <p className="text-gray-300">{step.content}</p>
+              </div>
+              
+              {selectedOptions[index] && (
+                <div className="flex-shrink-0">
+                  <FaCheck className="text-yellow-400 text-lg" />
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderServiceStrategy = () => (
+    <div className="space-y-6">
+      {/* Instructions */}
+      <div className="bg-green-600/20 rounded-xl p-4 border border-green-500/30 text-center">
+        <p className="text-green-400 font-medium">
+          💼 <strong>Click on each strategy step</strong> to build compelling service offerings!
+        </p>
+      </div>
+      
+      <div className="space-y-4">
+        {config.steps.map((step, index) => (
+          <div
+            key={index}
+            className={`
+              bg-gradient-to-r from-gray-700/50 to-gray-800/50 rounded-xl p-6 border border-gray-600
+              cursor-pointer transform transition-all duration-300 hover:scale-102
+              ${selectedOptions[index] ? 'ring-2 ring-green-500 bg-green-500/10' : ''}
+            `}
+            onClick={() => handleStepComplete(index)}
+          >
+            <div className="flex items-start gap-4">
+              <div className={`bg-gradient-to-r ${step.color} p-3 rounded-full flex-shrink-0`}>
+                <step.icon className="text-white text-lg" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-lg mb-2">{step.title}</h3>
+                <p className="text-gray-300">{step.content}</p>
+              </div>
+              
+              {selectedOptions[index] && (
+                <div className="flex-shrink-0">
+                  <FaCheck className="text-green-400 text-lg" />
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderOptimization = () => (
+    <div className="space-y-6">
+      {/* Instructions */}
+      <div className="bg-blue-600/20 rounded-xl p-4 border border-blue-500/30 text-center">
+        <p className="text-blue-400 font-medium">
+          ⚡ <strong>Click on each optimization step</strong> to maximize your visibility and conversions!
+        </p>
+      </div>
+      
+      <div className="space-y-4">
+        {config.steps.map((step, index) => (
+          <div
+            key={index}
+            className={`
+              bg-gradient-to-r from-gray-700/50 to-gray-800/50 rounded-xl p-6 border border-gray-600
+              cursor-pointer transform transition-all duration-300 hover:scale-102
+              ${selectedOptions[index] ? 'ring-2 ring-blue-500 bg-blue-500/10' : ''}
+            `}
+            onClick={() => handleStepComplete(index)}
+          >
+            <div className="flex items-start gap-4">
+              <div className={`bg-gradient-to-r ${step.color} p-3 rounded-full flex-shrink-0`}>
+                <step.icon className="text-white text-lg" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-lg mb-2">{step.title}</h3>
+                <p className="text-gray-300">{step.content}</p>
+              </div>
+              
+              {selectedOptions[index] && (
+                <div className="flex-shrink-0">
+                  <FaCheck className="text-blue-400 text-lg" />
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderBookingFlow = () => (
+    <div className="space-y-6">
+      {/* Instructions */}
+      <div className="bg-purple-600/20 rounded-xl p-4 border border-purple-500/30 text-center">
+        <p className="text-purple-400 font-medium">
+          📅 <strong>Click on each booking step</strong> to optimize your client acquisition process!
+        </p>
+      </div>
+      
+      <div className="space-y-4">
+        {config.steps.map((step, index) => (
+          <div
+            key={index}
+            className={`
+              bg-gradient-to-r from-gray-700/50 to-gray-800/50 rounded-xl p-6 border border-gray-600
+              cursor-pointer transform transition-all duration-300 hover:scale-102
+              ${selectedOptions[index] ? 'ring-2 ring-purple-500 bg-purple-500/10' : ''}
+            `}
+            onClick={() => handleStepComplete(index)}
+          >
+            <div className="flex items-start gap-4">
+              <div className={`bg-gradient-to-r ${step.color} p-3 rounded-full flex-shrink-0`}>
+                <step.icon className="text-white text-lg" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-lg mb-2">{step.title}</h3>
+                <p className="text-gray-300">{step.content}</p>
+              </div>
+              
+              {selectedOptions[index] && (
+                <div className="flex-shrink-0">
+                  <FaCheck className="text-purple-400 text-lg" />
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderRoiCalculator = () => (
+    <div className="space-y-6">
+      {/* Instructions */}
+      <div className="bg-orange-600/20 rounded-xl p-4 border border-orange-500/30 text-center">
+        <p className="text-orange-400 font-medium">
+          📊 <strong>Click on each ROI step</strong> to maximize your return on investment!
+        </p>
+      </div>
+      
+      <div className="space-y-4">
+        {config.steps.map((step, index) => (
+          <div
+            key={index}
+            className={`
+              bg-gradient-to-r from-gray-700/50 to-gray-800/50 rounded-xl p-6 border border-gray-600
+              cursor-pointer transform transition-all duration-300 hover:scale-102
+              ${selectedOptions[index] ? 'ring-2 ring-orange-500 bg-orange-500/10' : ''}
+            `}
+            onClick={() => handleStepComplete(index)}
+          >
+            <div className="flex items-start gap-4">
+              <div className={`bg-gradient-to-r ${step.color} p-3 rounded-full flex-shrink-0`}>
+                <step.icon className="text-white text-lg" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-lg mb-2">{step.title}</h3>
+                <p className="text-gray-300">{step.content}</p>
+              </div>
+              
+              {selectedOptions[index] && (
+                <div className="flex-shrink-0">
+                  <FaCheck className="text-orange-400 text-lg" />
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderReviewMastery = () => (
+    <div className="space-y-6">
+      {/* Instructions */}
+      <div className="bg-pink-600/20 rounded-xl p-4 border border-pink-500/30 text-center">
+        <p className="text-pink-400 font-medium">
+          ⭐ <strong>Click on each review strategy</strong> to build stellar reputation and trust!
+        </p>
+      </div>
+      
+      <div className="space-y-4">
+        {config.steps.map((step, index) => (
+          <div
+            key={index}
+            className={`
+              bg-gradient-to-r from-gray-700/50 to-gray-800/50 rounded-xl p-6 border border-gray-600
+              cursor-pointer transform transition-all duration-300 hover:scale-102
+              ${selectedOptions[index] ? 'ring-2 ring-pink-500 bg-pink-500/10' : ''}
+            `}
+            onClick={() => handleStepComplete(index)}
+          >
+            <div className="flex items-start gap-4">
+              <div className={`bg-gradient-to-r ${step.color} p-3 rounded-full flex-shrink-0`}>
+                <step.icon className="text-white text-lg" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-lg mb-2">{step.title}</h3>
+                <p className="text-gray-300">{step.content}</p>
+              </div>
+              
+              {selectedOptions[index] && (
+                <div className="flex-shrink-0">
+                  <FaCheck className="text-pink-400 text-lg" />
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderSuccessPlan = () => (
+    <div className="space-y-6">
+      {/* Instructions */}
+      <div className="bg-indigo-600/20 rounded-xl p-4 border border-indigo-500/30 text-center">
+        <p className="text-indigo-400 font-medium">
+          🎯 <strong>Click on each planning step</strong> to create your roadmap to success!
+        </p>
+      </div>
+      
+      <div className="space-y-4">
+        {config.steps.map((step, index) => (
+          <div
+            key={index}
+            className={`
+              bg-gradient-to-r from-gray-700/50 to-gray-800/50 rounded-xl p-6 border border-gray-600
+              cursor-pointer transform transition-all duration-300 hover:scale-102
+              ${selectedOptions[index] ? 'ring-2 ring-indigo-500 bg-indigo-500/10' : ''}
+            `}
+            onClick={() => handleStepComplete(index)}
+          >
+            <div className="flex items-start gap-4">
+              <div className={`bg-gradient-to-r ${step.color} p-3 rounded-full flex-shrink-0`}>
+                <step.icon className="text-white text-lg" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-lg mb-2">{step.title}</h3>
+                <p className="text-gray-300">{step.content}</p>
+              </div>
+              
+              {selectedOptions[index] && (
+                <div className="flex-shrink-0">
+                  <FaCheck className="text-indigo-400 text-lg" />
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   const allStepsCompleted = () => {
     const expectedSteps = config.steps?.length || config.categories?.length || config.sections?.length || 2;
     return Object.keys(selectedOptions).length >= expectedSteps;
@@ -676,6 +963,13 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
       {section.content === 'profile-builder' && renderProfileBuilder()}
       {section.content === 'categories-explorer' && renderCategoriesExplorer()}
       {section.content === 'market-research' && renderMarketResearch()}
+      {section.content === 'test-strategy' && renderTestStrategy()}
+      {section.content === 'service-strategy' && renderServiceStrategy()}
+      {section.content === 'optimization' && renderOptimization()}
+      {section.content === 'booking-flow' && renderBookingFlow()}
+      {section.content === 'roi-calculator' && renderRoiCalculator()}
+      {section.content === 'review-mastery' && renderReviewMastery()}
+      {section.content === 'success-plan' && renderSuccessPlan()}
 
 
       {/* Completion Button */}
