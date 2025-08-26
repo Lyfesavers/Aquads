@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   FaTrophy, FaFire, FaCrown, FaStar, FaGem, 
-  FaAward, FaMedal, FaShieldAlt
+  FaAward, FaMedal, FaShieldAlt, FaChartLine
 } from 'react-icons/fa';
 
 const WorkshopGameification = ({ progress }) => {
