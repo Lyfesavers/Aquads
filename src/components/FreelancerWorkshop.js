@@ -27,6 +27,8 @@ const FreelancerWorkshop = ({ currentUser }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+
+
   // Workshop modules configuration
   const modules = [
     {
@@ -283,14 +285,31 @@ const FreelancerWorkshop = ({ currentUser }) => {
         completedSectionsMap[module.id] = validCompletedSections;
       });
 
+      // Debug logging
+      console.log('Workshop Progress Debug:', {
+        completedModules,
+        completedSectionsMap,
+        currentModule: currentModule
+      });
+
+      // Set current module to the first uncompleted module
+      const firstUncompletedModuleIndex = modules.findIndex(module => 
+        !completedModules.includes(module.id)
+      );
+      const newCurrentModule = firstUncompletedModuleIndex >= 0 ? firstUncompletedModuleIndex : 0;
+      
+      if (newCurrentModule !== currentModule) {
+        setCurrentModule(newCurrentModule);
+      }
+
       setWorkshopProgress({
-        totalPoints: progress.totalPoints,
+        totalPoints: progress.totalPoints || 0,
         completedSections: completedSectionsMap,
-        workshopHistory: progress.workshopHistory,
+        workshopHistory: progress.workshopHistory || [],
         completedModules,
         badges,
-        currentStreak: calculateStreak(progress.workshopHistory),
-        timeSpent: calculateTimeSpent(progress.workshopHistory)
+        currentStreak: calculateStreak(progress.workshopHistory || []),
+        timeSpent: calculateTimeSpent(progress.workshopHistory || [])
       });
       
     } catch (err) {
@@ -454,6 +473,8 @@ const FreelancerWorkshop = ({ currentUser }) => {
               modules={modules}
               totalProgress={getTotalProgress()}
             />
+            
+
           </div>
         </div>
       </div>

@@ -604,8 +604,62 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
     </div>
   );
 
+  const renderProfileBuilder = () => (
+    <div className="space-y-6">
+      {/* Instructions */}
+      <div className="bg-green-600/20 rounded-xl p-4 border border-green-500/30 text-center">
+        <p className="text-green-400 font-medium">
+          📝 <strong>Click on each section</strong> to learn profile optimization strategies!
+        </p>
+      </div>
+      
+      <div className="space-y-4">
+        {config.sections.map((section, index) => (
+          <div
+            key={index}
+            className={`
+              bg-gradient-to-r from-gray-700/50 to-gray-800/50 rounded-xl p-6 border border-gray-600
+              cursor-pointer transform transition-all duration-300 hover:scale-102
+              ${selectedOptions[index] ? 'ring-2 ring-green-500 bg-green-500/10' : ''}
+            `}
+            onClick={() => handleStepComplete(index)}
+          >
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-lg text-white">{section.title}</h3>
+                {selectedOptions[index] && (
+                  <FaCheck className="text-green-400 text-lg" />
+                )}
+              </div>
+              
+              <div className="bg-blue-500/20 rounded-lg p-4 border border-blue-500/30">
+                <p className="text-blue-400 font-medium text-sm mb-2">💡 Pro Tip:</p>
+                <p className="text-gray-300 text-sm">{section.tip}</p>
+              </div>
+              
+              <div className="space-y-2">
+                <p className="text-gray-400 font-medium text-sm">Examples:</p>
+                <div className="space-y-2">
+                  {section.examples.map((example, idx) => (
+                    <div key={idx} className="text-sm">
+                      <span className={`
+                        ${example.startsWith('❌') ? 'text-red-400' : 'text-green-400'}
+                      `}>
+                        {example}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   const allStepsCompleted = () => {
-    const expectedSteps = config.steps?.length || config.categories?.length || 2;
+    const expectedSteps = config.steps?.length || config.categories?.length || config.sections?.length || 2;
     return Object.keys(selectedOptions).length >= expectedSteps;
   };
 
@@ -619,6 +673,7 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
       {/* Render Content Based on Type */}
       {section.content === 'platform-tour' && renderPlatformTour()}
       {section.content === 'comparison-chart' && renderComparisonChart()}
+      {section.content === 'profile-builder' && renderProfileBuilder()}
       {section.content === 'categories-explorer' && renderCategoriesExplorer()}
       {section.content === 'market-research' && renderMarketResearch()}
 

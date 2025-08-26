@@ -9,7 +9,7 @@ const WorkshopProgress = ({ modules, currentModule, progress, onModuleSelect }) 
       return 'completed';
     } else if (moduleIndex === currentModule) {
       return 'current';
-    } else if (moduleIndex < currentModule || moduleIndex === 0) {
+    } else if (moduleIndex <= currentModule) {
       return 'available';
     } else {
       return 'locked';
