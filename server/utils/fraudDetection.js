@@ -182,8 +182,31 @@ const calculateLoginFrequencyAnalysis = (user) => {
       daysSinceLastActivity;
 
     // More accurate dormant detection with better thresholds
-    const isDormant = hasRealActivityData ? daysSinceLastActivity > 7 : (accountAgeDays > 7 && daysSinceLastActivity >= accountAgeDays - 1);
-    const isHighlyDormant = hasRealActivityData ? daysSinceLastActivity > 30 : (accountAgeDays > 30 && daysSinceLastActivity >= accountAgeDays - 1);
+    // For accounts with real activity data: dormant after 14 days, highly dormant after 60 days
+    // For accounts without real activity data: be more lenient and consider account age
+    let isDormant = false;
+    let isHighlyDormant = false;
+    
+    if (hasRealActivityData) {
+      // For accounts with real activity data, use straightforward time-based detection
+      isDormant = daysSinceLastActivity > 14;
+      isHighlyDormant = daysSinceLastActivity > 60;
+    } else {
+      // For accounts without real activity data, be more sophisticated
+      if (accountAgeDays <= 7) {
+        // New accounts (less than 7 days old) are not considered dormant
+        isDormant = false;
+        isHighlyDormant = false;
+      } else if (accountAgeDays <= 30) {
+        // Accounts 7-30 days old: dormant if inactive for more than 80% of their lifetime
+        isDormant = daysSinceLastActivity > (accountAgeDays * 0.8);
+        isHighlyDormant = false; // Not highly dormant for accounts this new
+      } else {
+        // Older accounts: dormant if inactive for more than 70% of their lifetime
+        isDormant = daysSinceLastActivity > (accountAgeDays * 0.7);
+        isHighlyDormant = daysSinceLastActivity > (accountAgeDays * 0.9);
+      }
+    }
     const isNewAndInactive = accountAgeDays < 7 && daysSinceLastActivity > 2 && hasRealActivityData;
     const isOldAndSuddenlyActive = accountAgeDays > 30 && daysSinceLastActivity < 1 && hasRealActivityData;
 
@@ -191,15 +214,25 @@ const calculateLoginFrequencyAnalysis = (user) => {
     let frequencyScore = 0;
     if (accountAgeDays > 0) {
       if (hasRealActivityData) {
+        // More nuanced frequency calculation
         const expectedLogins = Math.min(accountAgeDays, 30);
         const actualEngagement = Math.max(0, 30 - daysSinceLastActivity);
         frequencyScore = expectedLogins > 0 ? Math.min(actualEngagement / expectedLogins, 1) : 0;
+        
+        // Boost score for very recent activity
+        if (daysSinceLastActivity <= 1) {
+          frequencyScore = Math.min(frequencyScore + 0.2, 1);
+        } else if (daysSinceLastActivity <= 3) {
+          frequencyScore = Math.min(frequencyScore + 0.1, 1);
+        }
       } else {
-        // Penalize accounts with no real activity data based on account age
+        // More lenient scoring for accounts without real activity data
         if (accountAgeDays < 7) {
-          frequencyScore = 0.3; // Give new accounts some benefit of doubt
+          frequencyScore = 0.4; // Give new accounts more benefit of doubt
         } else if (accountAgeDays < 30) {
-          frequencyScore = 0.2; // Moderate penalty for older accounts with no activity
+          frequencyScore = 0.3; // Moderate penalty for older accounts with no activity
+        } else if (accountAgeDays < 90) {
+          frequencyScore = 0.2; // Higher penalty for older accounts
         } else {
           frequencyScore = 0.1; // High penalty for very old accounts with no activity
         }

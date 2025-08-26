@@ -502,4 +502,136 @@ router.post('/send-top-bubbles', auth, isAdmin, async (req, res) => {
   }
 });
 
+// Debug endpoint for dormant detection analysis
+router.get('/debug/dormant-detection/:userId', auth, isAdmin, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const loginAnalysis = calculateLoginFrequencyAnalysis(user);
+    
+    // Get detailed breakdown of the calculation
+    const now = new Date();
+    const createdAt = new Date(user.createdAt);
+    const accountAgeMs = now.getTime() - createdAt.getTime();
+    const accountAgeDays = Math.max(0, Math.floor(accountAgeMs / (1000 * 60 * 60 * 24)));
+    
+    const timestamps = [user.lastSeen, user.lastActivity]
+      .filter(Boolean)
+      .map(t => {
+        const date = new Date(t);
+        return isNaN(date.getTime()) ? null : date;
+      })
+      .filter(Boolean);
+    
+    const mostRecentActivity = timestamps.length > 0 ? new Date(Math.max(...timestamps)) : null;
+    const hasRealActivityData = mostRecentActivity !== null;
+    const lastActivityTime = mostRecentActivity || createdAt;
+    
+    const daysSinceLastActivity = Math.max(0, Math.floor((now.getTime() - lastActivityTime.getTime()) / (1000 * 60 * 60 * 24)));
+
+    res.json({
+      userId: user._id,
+      username: user.username,
+      email: user.email,
+      createdAt: user.createdAt,
+      lastSeen: user.lastSeen,
+      lastActivity: user.lastActivity,
+      isOnline: user.isOnline,
+      
+      // Calculation breakdown
+      calculationDetails: {
+        now: now.toISOString(),
+        accountAgeDays,
+        hasRealActivityData,
+        mostRecentActivity: mostRecentActivity?.toISOString(),
+        lastActivityTime: lastActivityTime.toISOString(),
+        daysSinceLastActivity,
+        timestampsFound: timestamps.length,
+        validTimestamps: timestamps.map(t => t.toISOString())
+      },
+      
+      // Results
+      loginAnalysis,
+      
+      // Recommendations
+      recommendations: generateLoginRecommendations(loginAnalysis)
+    });
+  } catch (error) {
+    console.error('Error in dormant detection debug:', error);
+    res.status(500).json({ error: 'Failed to analyze dormant detection' });
+  }
+});
+
+// Bulk dormant detection analysis for multiple users
+router.post('/debug/bulk-dormant-analysis', auth, isAdmin, async (req, res) => {
+  try {
+    const { userIds, limit = 20 } = req.body;
+    
+    if (!userIds || !Array.isArray(userIds)) {
+      return res.status(400).json({ error: 'userIds array is required' });
+    }
+
+    // Limit to prevent overload
+    const limitedUserIds = userIds.slice(0, parseInt(limit));
+    
+    const results = await Promise.all(
+      limitedUserIds.map(async (userId) => {
+        try {
+          const user = await User.findById(userId);
+          if (!user) {
+            return { userId, error: 'User not found' };
+          }
+
+          const loginAnalysis = calculateLoginFrequencyAnalysis(user);
+          
+          return {
+            userId: user._id,
+            username: user.username,
+            email: user.email,
+            createdAt: user.createdAt,
+            lastSeen: user.lastSeen,
+            lastActivity: user.lastActivity,
+            isOnline: user.isOnline,
+            accountAgeDays: loginAnalysis.accountAgeDays,
+            daysSinceLastActivity: loginAnalysis.daysSinceLastActivity,
+            isDormant: loginAnalysis.isDormant,
+            isHighlyDormant: loginAnalysis.isHighlyDormant,
+            hasRealActivityData: loginAnalysis.hasRealActivityData,
+            frequencyScore: loginAnalysis.frequencyScore,
+            recommendations: generateLoginRecommendations(loginAnalysis)
+          };
+        } catch (error) {
+          return { userId, error: error.message };
+        }
+      })
+    );
+
+    // Summary statistics
+    const totalUsers = results.length;
+    const dormantUsers = results.filter(r => !r.error && r.isDormant).length;
+    const highlyDormantUsers = results.filter(r => !r.error && r.isHighlyDormant).length;
+    const usersWithRealActivity = results.filter(r => !r.error && r.hasRealActivityData).length;
+    const averageFrequencyScore = results.filter(r => !r.error).reduce((sum, r) => sum + (r.frequencyScore || 0), 0) / results.filter(r => !r.error).length;
+
+    res.json({
+      summary: {
+        totalUsers,
+        dormantUsers,
+        highlyDormantUsers,
+        usersWithRealActivity,
+        averageFrequencyScore: Math.round(averageFrequencyScore * 100) / 100
+      },
+      results
+    });
+  } catch (error) {
+    console.error('Error in bulk dormant analysis:', error);
+    res.status(500).json({ error: 'Failed to perform bulk dormant analysis' });
+  }
+});
+
 module.exports = router; 
