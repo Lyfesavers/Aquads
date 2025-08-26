@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   FaCheck, FaRocket, FaUsers, FaChartLine, FaDollarSign, 
-  FaGlobe, FaShieldAlt, FaCode, FaMegaphone, FaPen, FaLightbulb,
+  FaGlobe, FaShieldAlt, FaCode, FaBullhorn, FaPen, FaLightbulb,
   FaArrowRight, FaStar, FaTrophy, FaEye, FaThumbsUp
 } from 'react-icons/fa';
 
@@ -171,7 +171,7 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
             },
             {
               name: 'Marketing & PR',
-              icon: FaMegaphone,
+              icon: FaBullhorn,
               demand: 85,
               avgRate: '$75/hr',
               skills: ['Content marketing', 'Community management', 'Social media'],

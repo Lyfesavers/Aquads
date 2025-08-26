@@ -3,7 +3,7 @@ import {
   FaPlay, FaCheck, FaDesktop, FaEye, FaComments, FaHandPointer,
   FaUserGraduate, FaChalkboardTeacher, FaMicrophone, FaVideo,
   FaUsers, FaClock, FaQuestionCircle, FaNotes, FaLightbulb,
-  FaRocket, FaTools, FaClipboardList, FaBrain
+  FaRocket, FaTools, FaListAlt, FaSearch
 } from 'react-icons/fa';
 
 const LiveDemoPlaceholder = ({ section, sectionIndex, onComplete, isCompleted }) => {
@@ -87,7 +87,7 @@ const LiveDemoPlaceholder = ({ section, sectionIndex, onComplete, isCompleted })
               title: 'Work Experience',
               instruction: 'Format work history to highlight Web3-relevant projects',
               studentAction: 'Add their experience with quantified achievements',
-              icon: FaClipboardList
+              icon: FaListAlt
             },
             {
               title: 'Portfolio Links',
@@ -124,7 +124,7 @@ const LiveDemoPlaceholder = ({ section, sectionIndex, onComplete, isCompleted })
               title: 'Test Selection Strategy',
               instruction: 'Show how to choose the most impactful tests first',
               studentAction: 'Identify which tests align with their goals',
-              icon: FaBrain
+              icon: FaSearch
             },
             {
               title: 'Live Test Taking',
@@ -185,7 +185,7 @@ const LiveDemoPlaceholder = ({ section, sectionIndex, onComplete, isCompleted })
               title: 'Pricing Strategy',
               instruction: 'Set competitive pricing based on market research',
               studentAction: 'Research competitors and set their pricing',
-              icon: FaBrain
+              icon: FaSearch
             },
             {
               title: 'Image & Portfolio',

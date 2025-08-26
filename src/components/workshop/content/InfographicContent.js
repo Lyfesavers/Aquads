@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  FaCheck, FaChartLine, FaStar, FaUsers, FaBrain, FaCalculator,
+  FaCheck, FaChartLine, FaStar, FaUsers, FaLightbulb, FaChartBar,
   FaArrowUp, FaArrowDown, FaTrophy, FaShieldAlt, FaCoins, FaEye
 } from 'react-icons/fa';
 
@@ -136,7 +136,7 @@ const InfographicContent = ({ section, sectionIndex, onComplete, isCompleted }) 
               step: 3,
               title: 'Evaluate Opportunity',
               description: 'Review project details, budget, and timeline to assess fit',
-              icon: FaBrain,
+              icon: FaLightbulb,
               color: 'from-pink-500 to-red-600'
             },
             {

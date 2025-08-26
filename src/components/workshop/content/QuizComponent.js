@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   FaCheck, FaTimes, FaQuestionCircle, FaTrophy, FaRedo,
-  FaLightbulb, FaClock, FaStar, FaBrain
+  FaLightbulb, FaClock, FaStar, FaGamepad
 } from 'react-icons/fa';
 
 const QuizComponent = ({ section, sectionIndex, onComplete, isCompleted }) => {
@@ -300,7 +300,7 @@ const QuizComponent = ({ section, sectionIndex, onComplete, isCompleted }) => {
               <span className="font-bold">{formatTime(timeLeft)}</span>
             </div>
             <div className="flex items-center gap-2 text-gray-400">
-              <FaBrain />
+              <FaGamepad />
               <span>{currentQuestion + 1} / {config.questions.length}</span>
             </div>
           </div>

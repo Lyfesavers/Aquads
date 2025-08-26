@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   FaPlay, FaCheckCircle, FaLightbulb, FaUsers, FaChartBar, 
   FaDesktop, FaQuestionCircle, FaAward, FaBolt, FaRocket,
-  FaEye, FaHandPointer, FaGraduationCap, FaComments
+  FaEye, FaHandPointer, FaGraduationCap, FaComment
 } from 'react-icons/fa';
 import InteractiveContent from './content/InteractiveContent';
 import InfographicContent from './content/InfographicContent';
