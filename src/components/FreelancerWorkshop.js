@@ -50,12 +50,7 @@ const FreelancerWorkshop = ({ currentUser }) => {
           type: 'interactive', 
           content: 'comparison-chart'
         },
-        { 
-          title: 'Success Stories', 
-          type: 'interactive', 
-          content: 'testimonials',
 
-        },
         { 
           title: 'Community Connection', 
           type: 'live-demo', 
