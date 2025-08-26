@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  FaCheck, FaChartLine, FaStar, FaUsers, FaLightbulb, FaChartBar,
+  FaCheck, FaChartLine, FaStar, FaUsers, FaLightbulb,
   FaArrowUp, FaArrowDown, FaTrophy, FaShieldAlt, FaCoins, FaEye
 } from 'react-icons/fa';
 

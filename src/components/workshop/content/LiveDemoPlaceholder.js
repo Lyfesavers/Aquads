@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { 
-  FaPlay, FaCheck, FaDesktop, FaEye, FaComments, FaHandPointer,
-  FaUserGraduate, FaChalkboardTeacher, FaMicrophone, FaVideo,
-  FaUsers, FaClock, FaQuestionCircle, FaNotes, FaLightbulb,
+  FaPlay, FaCheck, FaDesktop, FaEye, FaComments, FaMousePointer,
+  FaUserGraduate, FaChalkboard, FaMicrophone, FaVideo,
+  FaUsers, FaClock, FaQuestionCircle, FaFileAlt, FaLightbulb,
   FaRocket, FaTools, FaListAlt, FaSearch
 } from 'react-icons/fa';
 
@@ -130,7 +130,7 @@ const LiveDemoPlaceholder = ({ section, sectionIndex, onComplete, isCompleted })
               title: 'Live Test Taking',
               instruction: 'Take an English or Communication test live',
               studentAction: 'Follow along and take notes on strategies',
-              icon: FaChalkboardTeacher
+              icon: FaChalkboard
             },
             {
               title: 'Results Analysis',
@@ -142,7 +142,7 @@ const LiveDemoPlaceholder = ({ section, sectionIndex, onComplete, isCompleted })
               title: 'Badge Integration',
               instruction: 'Demonstrate how badges improve trust scores',
               studentAction: 'Take their first skill test',
-              icon: FaNotes
+              icon: FaFileAlt
             }
           ],
           learningOutcomes: [
@@ -179,7 +179,7 @@ const LiveDemoPlaceholder = ({ section, sectionIndex, onComplete, isCompleted })
               title: 'Description Writing',
               instruction: 'Structure descriptions to address client pain points',
               studentAction: 'Write their service description following the template',
-              icon: FaNotes
+              icon: FaFileAlt
             },
             {
               title: 'Pricing Strategy',
@@ -345,11 +345,11 @@ const LiveDemoPlaceholder = ({ section, sectionIndex, onComplete, isCompleted })
             <span>{config.estimatedTime}</span>
           </div>
           <div className="flex items-center gap-2 text-gray-300">
-            <FaChalkboardTeacher className="text-orange-400" />
+            <FaChalkboard className="text-orange-400" />
             <span>Live Demo</span>
           </div>
           <div className="flex items-center gap-2 text-gray-300">
-            <FaHandPointer className="text-orange-400" />
+            <FaMousePointer className="text-orange-400" />
             <span>Interactive</span>
           </div>
         </div>
@@ -422,7 +422,7 @@ const LiveDemoPlaceholder = ({ section, sectionIndex, onComplete, isCompleted })
 
         <div className="bg-purple-600/20 rounded-xl p-6 border border-purple-500/30">
           <h4 className="text-lg font-bold text-purple-400 mb-4 flex items-center gap-2">
-            <FaNotes />
+            <FaFileAlt />
             Pro Tips
           </h4>
           <ul className="space-y-2">
