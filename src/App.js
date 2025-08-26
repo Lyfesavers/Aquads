@@ -2416,7 +2416,7 @@ function App() {
         
         // Calculate margins and spacing
         const initialHorizontalMargin = screenWidth >= 1440 ? 10 : 10;
-        const initialVerticalMargin = 30;
+        const initialVerticalMargin = 31;
         
         // Calculate available width and cell size
         const initialAvailableWidth = screenWidth - (initialHorizontalMargin * 2);
@@ -3018,7 +3018,7 @@ function App() {
                   </div>
                   
                   {/* Bubbles section - keep it as is, remove fixed positioning */}
-                  <div className="relative min-h-screen overflow-hidden pt-2">
+                  <div className="relative min-h-screen overflow-hidden pt-3">
                     {/* Ads */}
                     {getVisibleAds().length > 0 ? (
                       getVisibleAds().map(ad => {
