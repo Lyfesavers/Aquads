@@ -3872,19 +3872,19 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 }
 
 .bearish-vote {
-  background: rgba(255, 59, 48, 0.8);
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .bearish-vote:hover {
-  background: rgba(255, 59, 48, 0.9);
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .bullish-vote {
-  background: rgba(52, 199, 89, 0.8);
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .bullish-vote:hover {
-  background: rgba(52, 199, 89, 0.9);
+  background: rgba(255, 255, 255, 0.9);
 }
 
 @media (max-width: 768px) {
@@ -3931,6 +3931,8 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
     bottom: -15px;
     z-index: -1;
   }
+  
+
 }
 
 /* Highlight for user's current vote */
@@ -3941,11 +3943,11 @@ a:hover, button:hover, [role="button"]:hover, input:hover, select:hover, textare
 }
 
 .bearish-vote.active-vote {
-  background: rgba(255, 59, 48, 1.0);
+  background: rgba(255, 255, 255, 1.0);
 }
 
 .bullish-vote.active-vote {
-  background: rgba(52, 199, 89, 1.0);
+  background: rgba(255, 255, 255, 1.0);
 }
 
 /* Online Status Indicator Animations */
