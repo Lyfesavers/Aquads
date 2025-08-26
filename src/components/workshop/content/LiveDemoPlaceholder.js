@@ -320,7 +320,7 @@ const LiveDemoPlaceholder = ({ section, sectionIndex, onComplete, isCompleted })
   const handleDemoComplete = () => {
     setDemoWatched(true);
     if (!isCompleted) {
-      onComplete(sectionIndex, sectionTitle);
+      onComplete(sectionIndex, section.title);
     }
   };
 

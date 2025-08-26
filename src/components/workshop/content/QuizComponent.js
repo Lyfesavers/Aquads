@@ -165,7 +165,7 @@ const QuizComponent = ({ section, sectionIndex, onComplete, isCompleted }) => {
     setShowResults(true);
     
     if (finalScore >= config.passingScore && !isCompleted) {
-      onComplete(sectionIndex, sectionTitle);
+      onComplete(sectionIndex, section.title);
     }
   };
 

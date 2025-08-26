@@ -226,7 +226,7 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
 
   const handleSectionComplete = () => {
     if (!isCompleted) {
-      onComplete(sectionIndex, sectionTitle);
+      onComplete(sectionIndex, section.title);
       setShowResults(true);
     }
   };

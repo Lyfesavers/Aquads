@@ -234,7 +234,7 @@ const InfographicContent = ({ section, sectionIndex, onComplete, isCompleted }) 
 
   const handleComplete = () => {
     if (!isCompleted && allSectionsViewed()) {
-      onComplete(sectionIndex, sectionTitle);
+      onComplete(sectionIndex, section.title);
     }
   };
 
