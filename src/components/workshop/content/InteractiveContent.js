@@ -21,6 +21,19 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
               title: 'Freelancer Marketplace',
               icon: FaUsers,
               content: 'Connect with clients seeking Web3 expertise. Browse active projects and submit proposals.',
+              detailedExplanation: `
+                **How Aquads Marketplace Works:**
+                
+                The Aquads marketplace operates on a unique token-based lead system that ensures quality connections:
+                
+                • **Service Listings**: Create detailed service offerings with pricing, portfolio, and expertise areas
+                • **Client Discovery**: Clients browse freelancer profiles and submit booking requests
+                • **Lead Notifications**: You receive notifications when clients are interested in your services
+                • **Token Unlocking**: Spend 2 tokens (worth $0.02 SOL each) to unlock client contact information
+                • **Direct Communication**: Once unlocked, you can contact clients directly to discuss projects
+                
+                **Key Advantage**: Unlike traditional platforms where you pay monthly fees regardless of results, Aquads only charges when you access qualified leads that match your criteria.
+              `,
               features: ['Service listings', 'Client reviews', 'Secure payments', 'Skill verification'],
               color: 'from-blue-500 to-purple-600'
             },
@@ -28,6 +41,19 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
               title: 'Token Economy',
               icon: FaDollarSign,
               content: 'Unlock premium leads with tokens. Invest in high-value opportunities.',
+              detailedExplanation: `
+                **Aquads Token System Explained:**
+                
+                The token economy is designed to create a fair, pay-per-lead system:
+                
+                • **Token Cost**: Each token costs $0.01 SOL (approximately $1-2 depending on market)
+                • **Lead Unlocking**: Spend 2 tokens to unlock a client's contact information
+                • **ROI Focus**: Only pay for leads you want to pursue, not monthly subscriptions
+                • **Token Acquisition**: Purchase tokens directly on the platform or earn them through activities
+                • **Investment Strategy**: With average project values of $3,200 and 35% conversion rates, the ROI is typically 560%
+                
+                **Why This Works**: Traditional platforms charge $50-200/month regardless of results. Aquads lets you invest $2-4 only when you see a promising lead, making it much more cost-effective for serious freelancers.
+              `,
               features: ['Lead unlocking', 'Token rewards', 'Staking benefits', 'Premium access'],
               color: 'from-green-500 to-teal-600'
             },
@@ -35,6 +61,19 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
               title: 'Skill Testing',
               icon: FaTrophy,
               content: 'Validate your expertise with certified skill tests. Build credibility with badges.',
+              detailedExplanation: `
+                **Skill Validation System:**
+                
+                Aquads uses a comprehensive skill testing system to build trust between freelancers and clients:
+                
+                • **Test Categories**: 5 different skill categories including technical, communication, and domain expertise
+                • **Badge System**: Earn verified badges that appear on your profile and boost your trust score
+                • **Trust Score Impact**: Skill badges contribute 5% to your overall trust score calculation
+                • **Client Confidence**: Verified skills help clients feel confident in your abilities
+                • **Competitive Advantage**: Badges differentiate you from unverified competitors
+                
+                **Trust Score Breakdown**: Your trust score is calculated as: Service Rating (50%) + Completion Rate (30%) + Profile Completeness (10%) + Account Verification (5%) + Skill Badges (5%)
+              `,
               features: ['5 test categories', 'Skill badges', 'Trust scores', 'Client confidence'],
               color: 'from-yellow-500 to-orange-600'
             },
@@ -42,6 +81,19 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
               title: 'Community Hub',
               icon: FaGlobe,
               content: 'Join a thriving community of Web3 professionals. Network and collaborate.',
+              detailedExplanation: `
+                **Aquads Community Features:**
+                
+                The platform includes a comprehensive community system for networking and support:
+                
+                • **Telegram Integration**: Direct access to Aquads Telegram groups for real-time networking
+                • **Expert Networking**: Connect with other Web3 professionals in your field
+                • **Knowledge Sharing**: Access to exclusive content, tips, and industry insights
+                • **Support System**: Get help from community members and platform moderators
+                • **Job Opportunities**: Many clients post opportunities directly in community channels
+                
+                **Community Benefits**: Active community participation can lead to referrals, partnerships, and exclusive project opportunities that aren't posted on the main platform.
+              `,
               features: ['Telegram groups', 'Expert networking', 'Knowledge sharing', 'Support system'],
               color: 'from-purple-500 to-pink-600'
             }
@@ -220,18 +272,57 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
             {
               title: 'Market Research',
               content: 'Analyze demand, competition, and pricing in your niche to identify opportunities',
+              detailedExplanation: `
+                **Aquads Market Research Strategy:**
+                
+                Understanding the Aquads marketplace is crucial for service positioning:
+                
+                • **High-Demand Categories**: Smart contract development (95% demand), security auditing (90% demand), DeFi strategy (85% demand)
+                • **Pricing Analysis**: Smart contracts $150-250/hr, security auditing $200-300/hr, marketing $50-120/hr
+                • **Competition Level**: Security auditing has low competition, marketing has high competition
+                • **Project Sizes**: Focus on $5k-50k projects for optimal ROI
+                • **Client Preferences**: Web3 clients value security, expertise, and proven track records
+                
+                **Research Method**: Use the platform's search and filter features to analyze competitor profiles, pricing, and service descriptions.
+              `,
               icon: FaChartLine,
               color: 'from-blue-500 to-indigo-600'
             },
             {
               title: 'Value Proposition',
               content: 'Define what makes your service unique and valuable to potential clients',
+              detailedExplanation: `
+                **Creating Your Value Proposition on Aquads:**
+                
+                Your value proposition should address Web3 client pain points:
+                
+                • **Security Focus**: Emphasize security expertise, audit experience, and vulnerability prevention
+                • **Technical Excellence**: Highlight specific blockchain technologies, frameworks, and tools you master
+                • **Business Impact**: Quantify how your work improves client ROI, user experience, or market position
+                • **Proven Results**: Showcase successful projects, client testimonials, and measurable outcomes
+                • **Industry Knowledge**: Demonstrate deep understanding of DeFi, NFTs, DAOs, or other Web3 sectors
+                
+                **Differentiation Strategy**: Focus on what makes you unique - specialized skills, industry experience, or innovative approaches that competitors lack.
+              `,
               icon: FaStar,
               color: 'from-purple-500 to-pink-600'
             },
             {
               title: 'Service Packages',
               content: 'Structure different tiers (basic, standard, premium) to cater to various budgets',
+              detailedExplanation: `
+                **Service Package Strategy for Aquads:**
+                
+                Structure your services to appeal to different client segments:
+                
+                • **Basic Package**: Essential services for startups and small projects ($5k-15k range)
+                • **Standard Package**: Comprehensive solutions for established projects ($15k-35k range)
+                • **Premium Package**: Full-service offerings for enterprise clients ($35k+ range)
+                • **Add-on Services**: Security audits, optimization, maintenance, and support
+                • **Payment Terms**: Consider milestone-based payments or token-based pricing
+                
+                **Package Design**: Each tier should provide clear value progression and address different client needs and budgets.
+              `,
               icon: FaRocket,
               color: 'from-green-500 to-blue-600'
             }
@@ -272,18 +363,57 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
             {
               title: 'Calendar Integration',
               content: 'Set up availability windows and time zones for smooth scheduling',
+              detailedExplanation: `
+                **Aquads Booking System:**
+                
+                The booking system on Aquads works differently from traditional platforms:
+                
+                • **Lead Notification**: When a client submits a booking request, you receive a notification
+                • **Lead Preview**: You can see basic project information without unlocking
+                • **Token Unlocking**: Spend 2 tokens to unlock the client's full contact details
+                • **Direct Communication**: Once unlocked, you can contact the client directly
+                • **No Platform Scheduling**: Unlike traditional platforms, you handle scheduling directly with clients
+                
+                **Key Advantage**: This system eliminates platform fees on successful projects and gives you direct client relationships.
+              `,
               icon: FaUsers,
               color: 'from-blue-500 to-teal-600'
             },
             {
               title: 'Consultation Setup',
               content: 'Configure consultation types, durations, and preparation requirements',
+              detailedExplanation: `
+                **Consultation Strategy on Aquads:**
+                
+                Since you communicate directly with clients after unlocking leads:
+                
+                • **Initial Assessment**: Use the lead preview to evaluate project fit before unlocking
+                • **Consultation Types**: Offer free discovery calls, paid strategy sessions, or project consultations
+                • **Preparation Requirements**: Ask clients to prepare project briefs, requirements, or technical specifications
+                • **Time Management**: Set clear expectations for consultation duration and outcomes
+                • **Follow-up Process**: Establish clear next steps after each consultation
+                
+                **Best Practice**: Use consultations to qualify leads and build trust before committing to full projects.
+              `,
               icon: FaRocket,
               color: 'from-purple-500 to-pink-600'
             },
             {
               title: 'Client Communication',
               content: 'Automate booking confirmations, reminders, and follow-up sequences',
+              detailedExplanation: `
+                **Client Communication Best Practices:**
+                
+                Effective communication is crucial for converting leads to clients:
+                
+                • **Response Time**: Respond to unlocked leads within 24 hours to show professionalism
+                • **Clear Communication**: Ask specific questions about project scope, timeline, and budget
+                • **Professional Templates**: Create email templates for different types of inquiries
+                • **Follow-up Strategy**: Set up automated reminders for consultations and project milestones
+                • **Documentation**: Keep records of all client communications and agreements
+                
+                **Conversion Tip**: Professional, prompt communication significantly increases your chances of winning projects.
+              `,
               icon: FaCheck,
               color: 'from-green-500 to-blue-600'
             }
@@ -298,18 +428,57 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
             {
               title: 'Time Investment Analysis',
               content: 'Track time spent on different activities and identify high-value tasks',
+              detailedExplanation: `
+                **Aquads ROI Analysis:**
+                
+                Understanding your time investment on Aquads is crucial for maximizing returns:
+                
+                • **Lead Evaluation Time**: Spend 5-10 minutes evaluating each lead before unlocking
+                • **Token Investment**: Each lead costs 2 tokens ($0.02 SOL ≈ $2-4)
+                • **Client Communication**: Average 30-60 minutes for initial discussions
+                • **Project Scoping**: 1-2 hours for detailed project planning
+                • **Conversion Tracking**: Monitor which lead sources convert best
+                
+                **Time vs. Money Strategy**: Focus on leads that show clear project scope, realistic budgets, and responsive clients. Don't waste time on vague requests or unrealistic expectations.
+              `,
               icon: FaChartLine,
               color: 'from-yellow-500 to-orange-600'
             },
             {
               title: 'Revenue Optimization',
               content: 'Focus on services and clients that provide the best hourly returns',
+              detailedExplanation: `
+                **Revenue Optimization on Aquads:**
+                
+                Based on platform data, here's how to optimize your revenue:
+                
+                • **High-Value Services**: Smart contract development ($150-250/hr) and security auditing ($200-300/hr) command premium rates
+                • **Project Sizing**: Focus on projects $5k-50k for optimal time-to-revenue ratio
+                • **Client Quality**: Target clients with clear requirements and realistic budgets
+                • **Conversion Rates**: 35% average conversion rate means 3 out of 10 leads become clients
+                • **Average Project Value**: $3,200 per successful project
+                
+                **Revenue Strategy**: With 2 tokens ($4) unlocking a lead and 35% conversion to $3,200 projects, your ROI is 560%. Focus on high-converting service categories.
+              `,
               icon: FaDollarSign,
               color: 'from-green-500 to-emerald-600'
             },
             {
               title: 'Cost-Benefit Evaluation',
               content: 'Evaluate tools, subscriptions, and investments for maximum impact',
+              detailedExplanation: `
+                **Cost-Benefit Analysis for Aquads:**
+                
+                Compare Aquads costs with traditional platforms:
+                
+                • **Traditional Platforms**: $50-200/month regardless of results
+                • **Aquads Token System**: $2-4 per qualified lead only
+                • **Monthly Comparison**: 10 leads/month on Aquads = $20-40 vs $50-200 elsewhere
+                • **Success-Based Pricing**: Only pay when you access promising opportunities
+                • **Tool Investments**: Consider premium tools that increase your efficiency
+                
+                **Investment Strategy**: The token system is designed for serious freelancers who want to invest in quality leads rather than pay monthly fees for uncertain results.
+              `,
               icon: FaTrophy,
               color: 'from-purple-500 to-indigo-600'
             }
@@ -413,6 +582,16 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
                 <h3 className="text-xl font-bold">{step.title}</h3>
               </div>
               <p className="mb-4 opacity-90">{step.content}</p>
+              
+              {/* Detailed Explanation - Show when selected */}
+              {selectedOptions[index] && step.detailedExplanation && (
+                <div className="mb-4 p-4 bg-white/10 rounded-lg border border-white/20">
+                  <div className="text-sm leading-relaxed whitespace-pre-line">
+                    {step.detailedExplanation}
+                  </div>
+                </div>
+              )}
+              
               <div className="space-y-2">
                 {step.features.map((feature, idx) => (
                   <div key={idx} className="flex items-center gap-2">
@@ -726,6 +905,15 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
               <div className="flex-1">
                 <h3 className="font-bold text-lg mb-2">{step.title}</h3>
                 <p className="text-gray-300">{step.content}</p>
+                
+                {/* Detailed Explanation - Show when selected */}
+                {selectedOptions[index] && step.detailedExplanation && (
+                  <div className="mt-4 p-4 bg-green-500/10 rounded-lg border border-green-500/20">
+                    <div className="text-sm leading-relaxed whitespace-pre-line text-gray-200">
+                      {step.detailedExplanation}
+                    </div>
+                  </div>
+                )}
               </div>
               
               {selectedOptions[index] && (
@@ -808,6 +996,15 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
               <div className="flex-1">
                 <h3 className="font-bold text-lg mb-2">{step.title}</h3>
                 <p className="text-gray-300">{step.content}</p>
+                
+                {/* Detailed Explanation - Show when selected */}
+                {selectedOptions[index] && step.detailedExplanation && (
+                  <div className="mt-4 p-4 bg-purple-500/10 rounded-lg border border-purple-500/20">
+                    <div className="text-sm leading-relaxed whitespace-pre-line text-gray-200">
+                      {step.detailedExplanation}
+                    </div>
+                  </div>
+                )}
               </div>
               
               {selectedOptions[index] && (
@@ -849,6 +1046,15 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
               <div className="flex-1">
                 <h3 className="font-bold text-lg mb-2">{step.title}</h3>
                 <p className="text-gray-300">{step.content}</p>
+                
+                {/* Detailed Explanation - Show when selected */}
+                {selectedOptions[index] && step.detailedExplanation && (
+                  <div className="mt-4 p-4 bg-orange-500/10 rounded-lg border border-orange-500/20">
+                    <div className="text-sm leading-relaxed whitespace-pre-line text-gray-200">
+                      {step.detailedExplanation}
+                    </div>
+                  </div>
+                )}
               </div>
               
               {selectedOptions[index] && (
