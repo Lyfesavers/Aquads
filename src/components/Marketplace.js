@@ -1392,6 +1392,10 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                             </div>
                           </div>
                           
+                          <h3 className="text-lg font-medium mb-3 line-clamp-2 group-hover:text-indigo-400 transition-colors">
+                            {service.title}
+                          </h3>
+                          
                           {/* Skill Badges Display */}
                           {service.seller?.skillBadges && service.seller.skillBadges.length > 0 && (
                             <div className="mb-3">
@@ -1434,10 +1438,6 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                               />
                             </div>
                           </div>
-                          
-                          <h3 className="text-lg font-medium mb-2 line-clamp-2 group-hover:text-indigo-400 transition-colors">
-                            {service.title}
-                          </h3>
                           <div className="relative">
                             <p className={`text-gray-400 text-sm mb-4 whitespace-pre-wrap ${expandedDescriptions.has(service._id) ? '' : 'line-clamp-2'}`}>
                               {service.description?.slice(0, 1000)}
