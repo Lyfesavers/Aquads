@@ -19,7 +19,8 @@ const WorkshopProgress = ({ modules, currentModule, progress, onModuleSelect }) 
   const getModuleProgress = (moduleId) => {
     const completedSections = progress.completedSections?.[moduleId] || [];
     const module = modules.find(m => m.id === moduleId);
-    return Math.round((completedSections.length / module.sections.length) * 100);
+    const progressPercent = Math.round((completedSections.length / module.sections.length) * 100);
+    return Math.min(progressPercent, 100); // Cap at 100%
   };
 
   return (

@@ -27,7 +27,8 @@ const WorkshopModule = ({ module, progress, onSectionComplete, currentUser }) =>
   };
 
   const getModuleProgress = () => {
-    return Math.round((completedSections.length / module.sections.length) * 100);
+    const progressPercent = Math.round((completedSections.length / module.sections.length) * 100);
+    return Math.min(progressPercent, 100); // Cap at 100%
   };
 
   const ModuleIcon = module.icon;
