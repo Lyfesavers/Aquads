@@ -3,7 +3,7 @@ import {
   FaPlay, FaCheck, FaDesktop, FaEye, FaComments, FaMousePointer,
   FaUserGraduate, FaChalkboard, FaMicrophone, FaVideo,
   FaUsers, FaClock, FaQuestionCircle, FaFileAlt, FaLightbulb,
-  FaRocket, FaTools, FaListAlt, FaSearch
+  FaRocket, FaTools, FaListAlt, FaSearch, FaChartLine
 } from 'react-icons/fa';
 
 const LiveDemoPlaceholder = ({ section, sectionIndex, onComplete, isCompleted }) => {
