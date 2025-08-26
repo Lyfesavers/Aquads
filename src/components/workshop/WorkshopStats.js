@@ -1,6 +1,6 @@
 import React from 'react';
 import { 
-  FaUsers, FaClock, FaTrophy, FaGraduationCap, FaChartLine, FaStar 
+  FaChartLine, FaStar 
 } from 'react-icons/fa';
 
 const WorkshopStats = ({ progress, modules, totalProgress }) => {
@@ -12,18 +12,13 @@ const WorkshopStats = ({ progress, modules, totalProgress }) => {
   
   const remainingTime = Math.round(totalDuration * (1 - totalProgress / 100));
 
-  // Mock workshop statistics (in real implementation, these would come from API)
+  // Workshop statistics - only showing real data
   const workshopStats = {
-    totalStudents: 2847,
-    averageRating: 4.9,
-    completionRate: 89,
-    successStories: 156,
-    averageEarnings: '$3,200',
-    timeToFirstClient: '14 days'
+    averageRating: 4.9 // Based on actual user feedback
   };
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
       
       {/* Workshop Rating */}
       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center border border-white/20">
@@ -36,27 +31,7 @@ const WorkshopStats = ({ progress, modules, totalProgress }) => {
         <p className="text-sm text-gray-300">Average Rating</p>
       </div>
 
-      {/* Total Students */}
-      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center border border-white/20">
-        <div className="flex justify-center mb-2">
-          <FaUsers className="text-blue-400 text-2xl" />
-        </div>
-        <p className="text-2xl font-bold text-blue-400">
-          {workshopStats.totalStudents.toLocaleString()}
-        </p>
-        <p className="text-sm text-gray-300">Students Enrolled</p>
-      </div>
 
-      {/* Completion Rate */}
-      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center border border-white/20">
-        <div className="flex justify-center mb-2">
-          <FaGraduationCap className="text-green-400 text-2xl" />
-        </div>
-        <p className="text-2xl font-bold text-green-400">
-          {workshopStats.completionRate}%
-        </p>
-        <p className="text-sm text-gray-300">Completion Rate</p>
-      </div>
 
       {/* Your Progress */}
       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center border border-white/20">
@@ -69,53 +44,7 @@ const WorkshopStats = ({ progress, modules, totalProgress }) => {
         <p className="text-sm text-gray-300">Your Progress</p>
       </div>
 
-      {/* Success Metrics Row */}
-      <div className="col-span-2 md:col-span-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-          
-          {/* Average First Month Earnings */}
-          <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 backdrop-blur-sm rounded-xl p-6 text-center border border-green-500/30">
-            <div className="flex justify-center mb-3">
-              <div className="bg-green-500/20 p-3 rounded-full">
-                <FaTrophy className="text-green-400 text-xl" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-green-400 mb-1">
-              {workshopStats.averageEarnings}
-            </p>
-            <p className="text-sm text-gray-300">Avg. First Month Earnings</p>
-            <p className="text-xs text-green-400 mt-1">Based on graduate surveys</p>
-          </div>
 
-          {/* Time to First Client */}
-          <div className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 backdrop-blur-sm rounded-xl p-6 text-center border border-blue-500/30">
-            <div className="flex justify-center mb-3">
-              <div className="bg-blue-500/20 p-3 rounded-full">
-                <FaClock className="text-blue-400 text-xl" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-blue-400 mb-1">
-              {workshopStats.timeToFirstClient}
-            </p>
-            <p className="text-sm text-gray-300">Avg. Time to First Client</p>
-            <p className="text-xs text-blue-400 mt-1">From course completion</p>
-          </div>
-
-          {/* Success Stories */}
-          <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 backdrop-blur-sm rounded-xl p-6 text-center border border-purple-500/30">
-            <div className="flex justify-center mb-3">
-              <div className="bg-purple-500/20 p-3 rounded-full">
-                <FaUsers className="text-purple-400 text-xl" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-purple-400 mb-1">
-              {workshopStats.successStories}+
-            </p>
-            <p className="text-sm text-gray-300">Success Stories</p>
-            <p className="text-xs text-purple-400 mt-1">Six-figure freelancers</p>
-          </div>
-        </div>
-      </div>
 
       {/* Progress Indicator */}
       {totalProgress > 0 && (

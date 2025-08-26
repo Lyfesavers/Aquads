@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   FaCheck, FaRocket, FaUsers, FaChartLine, FaDollarSign, 
   FaGlobe, FaShieldAlt, FaCode, FaBullhorn, FaPen, FaLightbulb,
-  FaArrowRight, FaStar, FaTrophy, FaEye, FaThumbsUp
+  FaArrowRight, FaStar, FaTrophy, FaEye
 } from 'react-icons/fa';
 
 const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) => {
@@ -78,40 +78,7 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
           }
         };
 
-      case 'testimonials':
-        return {
-          title: 'Success Stories from Our Community',
-          description: 'Real freelancers sharing their journey to Web3 success',
-          testimonials: [
-            {
-              name: 'Sarah Chen',
-              role: 'Smart Contract Developer',
-              avatar: '👩‍💻',
-              earnings: '$45,000',
-              timeframe: '6 months',
-              quote: 'Aquads helped me transition from traditional web dev to Web3. The skill tests gave me credibility, and now I earn 3x more.',
-              badges: ['Solidity Expert', 'Security Specialist', 'Top Performer']
-            },
-            {
-              name: 'Marcus Rodriguez',
-              role: 'DeFi Marketing Specialist',
-              avatar: '👨‍🚀',
-              earnings: '$32,000',
-              timeframe: '4 months',
-              quote: 'The community support is incredible. I went from zero Web3 knowledge to running marketing campaigns for major DeFi protocols.',
-              badges: ['Marketing Pro', 'Community Builder', 'Growth Hacker']
-            },
-            {
-              name: 'Emily Thompson',
-              role: 'Tokenomics Consultant',
-              avatar: '👩‍🔬',
-              earnings: '$28,000',
-              timeframe: '3 months',
-              quote: 'The token unlock system is genius. I only pay for quality leads, which means every client interaction has high potential.',
-              badges: ['Token Designer', 'Economics Expert', 'Strategy Master']
-            }
-          ]
-        };
+
 
       case 'profile-builder':
         return {
@@ -513,62 +480,10 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
     </div>
   );
 
-  const renderTestimonials = () => (
-    <div className="space-y-6">
-      {/* Instructions */}
-      <div className="bg-purple-600/20 rounded-xl p-4 border border-purple-500/30 text-center">
-        <p className="text-purple-400 font-medium">
-          💬 <strong>Click on each testimonial</strong> to read success stories and unlock completion!
-        </p>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {config.testimonials.map((testimonial, index) => (
-        <div
-          key={index}
-          className={`
-            bg-gradient-to-br from-gray-700/50 to-gray-800/50 rounded-xl p-6 border border-gray-600
-            cursor-pointer transform transition-all duration-300 hover:scale-105 hover:border-blue-500/50
-            ${selectedOptions[index] ? 'ring-2 ring-blue-500' : ''}
-          `}
-          onClick={() => handleStepComplete(index)}
-        >
-          <div className="text-center mb-4">
-            <div className="text-4xl mb-2">{testimonial.avatar}</div>
-            <h3 className="font-bold text-lg">{testimonial.name}</h3>
-            <p className="text-blue-400 text-sm">{testimonial.role}</p>
-          </div>
-          
-          <div className="text-center mb-4">
-            <p className="text-2xl font-bold text-green-400">{testimonial.earnings}</p>
-            <p className="text-gray-400 text-sm">earned in {testimonial.timeframe}</p>
-          </div>
 
-          <blockquote className="text-gray-300 text-sm italic mb-4 text-center">
-            "{testimonial.quote}"
-          </blockquote>
-
-          <div className="flex flex-wrap gap-1 justify-center">
-            {testimonial.badges.map((badge, idx) => (
-              <span key={idx} className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs">
-                {badge}
-              </span>
-            ))}
-          </div>
-
-          {selectedOptions[index] && (
-            <div className="mt-4 text-center">
-              <FaThumbsUp className="text-blue-400 mx-auto" />
-            </div>
-          )}
-        </div>
-      ))}
-      </div>
-    </div>
-  );
 
   const allStepsCompleted = () => {
-    const expectedSteps = config.steps?.length || config.testimonials?.length || config.categories?.length || 2;
+    const expectedSteps = config.steps?.length || config.categories?.length || 2;
     return Object.keys(selectedOptions).length >= expectedSteps;
   };
 
@@ -582,7 +497,7 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
       {/* Render Content Based on Type */}
       {section.content === 'platform-tour' && renderPlatformTour()}
       {section.content === 'comparison-chart' && renderComparisonChart()}
-      {section.content === 'testimonials' && renderTestimonials()}
+
 
       {/* Completion Button */}
       <div className="text-center mt-8">
