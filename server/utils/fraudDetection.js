@@ -228,11 +228,11 @@ const calculateLoginFrequencyAnalysis = (user) => {
         const actualEngagement = Math.max(0, 30 - daysSinceLastActivity);
         frequencyScore = expectedLogins > 0 ? Math.min(actualEngagement / expectedLogins, 1) : 0;
         
-        // Boost score for very recent activity
+        // Boost score for very recent activity, but cap it more reasonably
         if (daysSinceLastActivity <= 1) {
-          frequencyScore = Math.min(frequencyScore + 0.2, 1);
+          frequencyScore = Math.min(frequencyScore + 0.1, 0.9); // Cap at 0.9 instead of 1
         } else if (daysSinceLastActivity <= 3) {
-          frequencyScore = Math.min(frequencyScore + 0.1, 1);
+          frequencyScore = Math.min(frequencyScore + 0.05, 0.8); // Cap at 0.8
         }
       } else {
         // More lenient scoring for accounts without real activity data

@@ -81,10 +81,12 @@ router.get('/user/:userId/affiliates', auth, isAdmin, adminRateLimit, async (req
           // NEW: Enhanced metrics
           activityScore: activityAnalysis.score,
           activityDetails: activityAnalysis.activities,
-          loginFrequency: loginAnalysis.frequencyScore,
-          isDormant: loginAnalysis.isDormant,
-          isUnverified: loginAnalysis.isUnverified,
-          daysSinceLastSeen: loginAnalysis.daysSinceLastActivity,
+                                loginFrequency: loginAnalysis.frequencyScore,
+                      isDormant: loginAnalysis.isDormant,
+                      isUnverified: loginAnalysis.isUnverified,
+                      daysSinceLastSeen: loginAnalysis.daysSinceLastActivity,
+                      hasRealActivityData: loginAnalysis.hasRealActivityData,
+                      accountAgeDays: loginAnalysis.accountAgeDays,
           // Include their own affiliates for pattern detection
           subAffiliates: affiliateInfo?.affiliates || []
         };

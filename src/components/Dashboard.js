@@ -3303,10 +3303,10 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                             </thead>
                             <tbody>
                               {selectedUserAffiliates.affiliates.map(affiliate => {
-                                // Debug logging to help verify dormant detection
-                                if (affiliate.isDormant !== undefined) {
-                                  console.log(`Affiliate ${affiliate.username}: isDormant=${affiliate.isDormant}, isUnverified=${affiliate.isUnverified}, daysSinceLastSeen=${affiliate.daysSinceLastSeen}, loginFrequency=${affiliate.loginFrequency}`);
-                                }
+                                                                    // Debug logging to help verify dormant detection
+                                    if (affiliate.isDormant !== undefined) {
+                                      console.log(`Affiliate ${affiliate.username}: isDormant=${affiliate.isDormant}, isUnverified=${affiliate.isUnverified}, daysSinceLastSeen=${affiliate.daysSinceLastSeen}, loginFrequency=${affiliate.loginFrequency}, hasRealActivityData=${affiliate.hasRealActivityData}, accountAgeDays=${affiliate.accountAgeDays}`);
+                                    }
                                 return (
                                 <tr key={affiliate.id} className={`border-b border-gray-600 ${affiliate.isDormant ? 'bg-red-900 bg-opacity-20' : ''} ${affiliate.isUnverified ? 'bg-purple-900 bg-opacity-20' : ''}`}>
                                   <td className="p-2 text-white">{affiliate.username}</td>
