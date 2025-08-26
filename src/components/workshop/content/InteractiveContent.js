@@ -213,6 +213,188 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
           ]
         };
 
+      case 'test-strategy':
+        return {
+          title: 'Skill Test Strategy Guide',
+          description: 'Master the skill testing system to build credibility',
+          steps: [
+            {
+              title: 'Choose Your Tests Wisely',
+              content: 'Focus on tests that showcase your core competencies and are relevant to your target services',
+              icon: FaCheck,
+              color: 'from-blue-500 to-purple-600'
+            },
+            {
+              title: 'Preparation Methodology',
+              content: 'Create a study plan, practice with sample questions, and review industry standards',
+              icon: FaLightbulb,
+              color: 'from-green-500 to-teal-600'
+            },
+            {
+              title: 'Test-Taking Tips',
+              content: 'Read questions carefully, manage your time effectively, and showcase practical knowledge',
+              icon: FaTrophy,
+              color: 'from-yellow-500 to-orange-600'
+            }
+          ]
+        };
+
+      case 'service-strategy':
+        return {
+          title: 'Service Creation Strategy',
+          description: 'Build compelling service offerings that attract high-value clients',
+          steps: [
+            {
+              title: 'Market Research',
+              content: 'Analyze demand, competition, and pricing in your niche to identify opportunities',
+              icon: FaChartLine,
+              color: 'from-blue-500 to-indigo-600'
+            },
+            {
+              title: 'Value Proposition',
+              content: 'Define what makes your service unique and valuable to potential clients',
+              icon: FaStar,
+              color: 'from-purple-500 to-pink-600'
+            },
+            {
+              title: 'Service Packages',
+              content: 'Structure different tiers (basic, standard, premium) to cater to various budgets',
+              icon: FaRocket,
+              color: 'from-green-500 to-blue-600'
+            }
+          ]
+        };
+
+      case 'optimization':
+        return {
+          title: 'Profile & Service Optimization',
+          description: 'Fine-tune your presence for maximum visibility and conversions',
+          steps: [
+            {
+              title: 'SEO Optimization',
+              content: 'Use relevant keywords in titles, descriptions, and tags to improve discoverability',
+              icon: FaEye,
+              color: 'from-green-500 to-emerald-600'
+            },
+            {
+              title: 'Performance Analytics',
+              content: 'Monitor views, clicks, and conversion rates to identify improvement opportunities',
+              icon: FaChartLine,
+              color: 'from-blue-500 to-cyan-600'
+            },
+            {
+              title: 'A/B Testing',
+              content: 'Test different headlines, pricing, and descriptions to optimize performance',
+              icon: FaCheck,
+              color: 'from-purple-500 to-indigo-600'
+            }
+          ]
+        };
+
+      case 'booking-flow':
+        return {
+          title: 'Booking System Mastery',
+          description: 'Optimize your booking process for seamless client experience',
+          steps: [
+            {
+              title: 'Calendar Integration',
+              content: 'Set up availability windows and time zones for smooth scheduling',
+              icon: FaUsers,
+              color: 'from-blue-500 to-teal-600'
+            },
+            {
+              title: 'Consultation Setup',
+              content: 'Configure consultation types, durations, and preparation requirements',
+              icon: FaRocket,
+              color: 'from-purple-500 to-pink-600'
+            },
+            {
+              title: 'Client Communication',
+              content: 'Automate booking confirmations, reminders, and follow-up sequences',
+              icon: FaCheck,
+              color: 'from-green-500 to-blue-600'
+            }
+          ]
+        };
+
+      case 'roi-calculator':
+        return {
+          title: 'ROI Optimization Workshop',
+          description: 'Calculate and maximize your return on investment strategies',
+          steps: [
+            {
+              title: 'Time Investment Analysis',
+              content: 'Track time spent on different activities and identify high-value tasks',
+              icon: FaChartLine,
+              color: 'from-yellow-500 to-orange-600'
+            },
+            {
+              title: 'Revenue Optimization',
+              content: 'Focus on services and clients that provide the best hourly returns',
+              icon: FaDollarSign,
+              color: 'from-green-500 to-emerald-600'
+            },
+            {
+              title: 'Cost-Benefit Evaluation',
+              content: 'Evaluate tools, subscriptions, and investments for maximum impact',
+              icon: FaTrophy,
+              color: 'from-purple-500 to-indigo-600'
+            }
+          ]
+        };
+
+      case 'review-mastery':
+        return {
+          title: 'Review System Strategy',
+          description: 'Master the art of building and maintaining stellar reviews',
+          steps: [
+            {
+              title: 'Client Satisfaction Framework',
+              content: 'Deliver exceptional results and exceed expectations consistently',
+              icon: FaStar,
+              color: 'from-yellow-500 to-amber-600'
+            },
+            {
+              title: 'Review Request Strategy',
+              content: 'Time and craft requests appropriately for maximum positive response',
+              icon: FaUsers,
+              color: 'from-blue-500 to-cyan-600'
+            },
+            {
+              title: 'Reputation Management',
+              content: 'Handle feedback professionally and turn challenges into opportunities',
+              icon: FaShieldAlt,
+              color: 'from-green-500 to-teal-600'
+            }
+          ]
+        };
+
+      case 'success-plan':
+        return {
+          title: 'Success Planning Workshop',
+          description: 'Create your personalized roadmap to freelancing success',
+          steps: [
+            {
+              title: 'Goal Setting & Milestones',
+              content: 'Define short-term and long-term objectives with measurable targets',
+              icon: FaTrophy,
+              color: 'from-purple-500 to-indigo-600'
+            },
+            {
+              title: 'Action Plan Development',
+              content: 'Break down goals into actionable steps with deadlines and accountability',
+              icon: FaRocket,
+              color: 'from-blue-500 to-purple-600'
+            },
+            {
+              title: 'Progress Tracking System',
+              content: 'Implement systems to monitor progress and adjust strategies as needed',
+              icon: FaChartLine,
+              color: 'from-green-500 to-blue-600'
+            }
+          ]
+        };
+
       default:
         return { title: 'Interactive Content', description: 'Engaging learning experience' };
     }

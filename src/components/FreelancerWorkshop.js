@@ -47,9 +47,8 @@ const FreelancerWorkshop = ({ currentUser }) => {
         },
         { 
           title: 'Web3 vs Traditional Freelancing', 
-          type: 'infographic', 
-          content: 'comparison-chart',
-
+          type: 'interactive', 
+          content: 'comparison-chart'
         },
         { 
           title: 'Success Stories', 
@@ -83,9 +82,8 @@ const FreelancerWorkshop = ({ currentUser }) => {
         },
         { 
           title: 'Service Categories Deep Dive', 
-          type: 'infographic', 
-          content: 'categories-explorer',
-
+          type: 'interactive', 
+          content: 'categories-explorer'
         },
         { 
           title: 'CV Builder Workshop', 
