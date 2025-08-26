@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import BlogList from './BlogList';
 import CreateBlogModal from './CreateBlogModal';
 import SkillTests from './SkillTests';
+import FreelancerWorkshop from './FreelancerWorkshop';
 import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
 import CreateAdModal from './CreateAdModal';
@@ -18,7 +19,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
   const [editingBlog, setEditingBlog] = useState(null);
   const [error, setError] = useState(null);
   const [videoError, setVideoError] = useState(false);
-  const [activeTab, setActiveTab] = useState('videos'); // 'videos', 'tests', 'blogs'
+  const [activeTab, setActiveTab] = useState('videos'); // 'videos', 'tests', 'blogs', 'workshop'
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
@@ -572,6 +573,16 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
             >
               Blog Posts
             </button>
+            <button
+              onClick={() => setActiveTab('workshop')}
+              className={`px-6 py-2 rounded-md transition-colors ${
+                activeTab === 'workshop'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              🎓 Freelancer Workshop
+            </button>
           </div>
         </div>
 
@@ -654,6 +665,12 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
               onEditBlog={handleBlogEdit}
               onDeleteBlog={handleDeleteBlog}
             />
+          </div>
+        )}
+
+        {activeTab === 'workshop' && (
+          <div className="mt-16">
+            <FreelancerWorkshop currentUser={currentUser} />
           </div>
         )}
 

@@ -155,6 +155,10 @@ const userSchema = new Schema({
     socialRaidId: {
       type: String
     },
+    workshopSection: {
+      type: String,
+      default: null
+    },
     createdAt: {
       type: Date,
       default: Date.now
