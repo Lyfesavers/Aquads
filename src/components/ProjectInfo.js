@@ -1,10 +1,122 @@
 import React, { useState } from 'react';
-import { FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCog, FaCheckCircle, FaArrowRight, FaBullhorn, FaGamepad, FaHandshake, FaTrophy, FaArrowLeft, FaCreditCard, FaExchangeAlt, FaUsersCog, FaVideo, FaMicrophone } from 'react-icons/fa';
+import { FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCog, FaCheckCircle, FaArrowRight, FaBullhorn, FaGamepad, FaHandshake, FaTrophy, FaArrowLeft, FaCreditCard, FaExchangeAlt, FaUsersCog, FaVideo, FaMicrophone, FaNewspaper, FaStar, FaFire, FaGem, FaCrown, FaGift, FaTwitter, FaLightbulb, FaTarget, FaNetworkWired } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import CreateAdModal from './CreateAdModal';
 
 const ProjectInfo = ({ currentUser }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // Marketing add-on packages from CreateAdModal
+  const ADDON_PACKAGES = [
+    {
+      id: 'aqua_splash',
+      name: 'AquaSplash',
+      originalPrice: 99,
+      price: 99,
+      icon: FaNewspaper,
+      color: 'from-green-500 to-emerald-500',
+      features: [
+        'Newsroom Press Release',
+        'Leading Web3 Press Release Site',
+        'Approx. Monthly Visitors: 15000',
+        'Includes Social Media Posting',
+        'Domain Authority: 43'
+      ]
+    },
+    {
+      id: 'aqua_ripple',
+      name: 'AquaRipple',
+      originalPrice: 299,
+      price: 284,
+      icon: FaStar,
+      color: 'from-blue-500 to-cyan-500',
+      features: [
+        '4+ Media Pickups Guaranteed',
+        'Estimated Reach: 5k-15k',
+        '<24 Hour Distribution',
+      ]
+    },
+    {
+      id: 'aqua_wave',
+      name: 'AquaWave',
+      originalPrice: 1399,
+      price: 1329,
+      icon: FaRocket,
+      color: 'from-green-500 to-teal-500',
+      features: [
+        '9+ Media Pickups Guaranteed',
+        'Estimated Reach: 75k-250k',
+        '24-72 Hour Distribution'
+      ]
+    },
+    {
+      id: 'aqua_flow',
+      name: 'AquaFlow',
+      originalPrice: 2899,
+      price: 2754,
+      icon: FaChartLine,
+      color: 'from-purple-500 to-indigo-500',
+      features: [
+        'CoinMarketCap (Community Section)',
+        'CryptoPolitan',
+        'CoinCodex',
+        'BraveNewCoin',
+        'Bitcolumnist',
+        '24-72 Hour Distribution',
+        'SEO Optimizations'
+      ]
+    },
+    {
+      id: 'aqua_storm',
+      name: 'AquaStorm',
+      originalPrice: 6499,
+      price: 6174,
+      icon: FaFire,
+      color: 'from-orange-500 to-red-500',
+      features: [
+        'Everything from AquaWave, plus:',
+        '75+ Media Pickups Guaranteed',
+        'Site Audience of 75M+',
+        'Guaranteed coverage from Yahoo Finance and MarketWatch',
+        'Requirements: 500-word maximum'
+      ]
+    },
+    {
+      id: 'aqua_tidal',
+      name: 'AquaTidal',
+      originalPrice: 12999,
+      price: 12349,
+      icon: FaGem,
+      color: 'from-indigo-500 to-purple-500',
+      features: [
+        'Everything from AquaStorm plus:',
+        '125+ Media Pickups Guaranteed',
+        'Site Audience of 300M+',
+        'Coverage from: Cointelegraph',
+        'CoinMarketCap (Community Section)',
+        'Requirements: 500-word maximum'
+      ]
+    },
+    {
+      id: 'aqua_legend',
+      name: 'AquaLegend',
+      originalPrice: 21999,
+      price: 20899,
+      icon: FaCrown,
+      color: 'from-pink-500 to-rose-500',
+      features: [
+        'Coverage from top crypto publications:',
+        'Cointelegraph • CoinMarketCap',
+        'Bitcoin.com • AMB Crypto',
+        'Coinspeaker • Coincodex',
+        'Cryptopolitan • Bitcolumnist',
+        'CoinGape • CryptoNews',
+        'Yahoo Finance',
+        '6-72 Hour Distribution',
+        'Requirements: 500-word maximum'
+      ]
+    }
+  ];
 
   const handleCreateAd = async (adData) => {
     try {
@@ -12,6 +124,18 @@ const ProjectInfo = ({ currentUser }) => {
       setShowCreateModal(false);
     } catch (error) {
       console.error('Error creating ad:', error);
+    }
+  };
+
+  const openMintFunnelPlatform = () => {
+    const popup = window.open(
+      'https://mintfunnel.co/crypto-ad-network/?ref=Aquads',
+      'mintfunnel-platform',
+      'width=' + window.screen.width + ',height=' + window.screen.height + ',scrollbars=yes,resizable=yes,status=yes,location=yes,toolbar=no,menubar=no,directories=no'
+    );
+
+    if (!popup) {
+      alert('Popup blocked! Please allow popups for this site and try again.');
     }
   };
 
@@ -212,6 +336,19 @@ const ProjectInfo = ({ currentUser }) => {
               Access to our network of providers for free AMA (Ask Me Anything) sessions. Connect directly with your community and build trust through transparent communication.
             </p>
           </div>
+
+          {/* Advantage 12 - NEW: CPC Ads Service */}
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 hover:border-blue-500 transition-all duration-300">
+            <div className="flex items-center mb-4">
+              <div className="bg-cyan-500 p-3 rounded-lg">
+                <FaTarget className="text-white text-xl" />
+              </div>
+              <h3 className="text-xl font-semibold text-white ml-4">CPC Ads Across 1500+ Platforms</h3>
+            </div>
+            <p className="text-gray-300">
+              Run targeted cost-per-click campaigns across premium platforms with advanced targeting and real-time analytics.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -254,6 +391,30 @@ const ProjectInfo = ({ currentUser }) => {
               <li className="flex items-center">
                 <FaCheckCircle className="text-green-400 mr-3" />
                 Trading integration
+              </li>
+              <li className="flex items-center">
+                <FaCheckCircle className="text-green-400 mr-3" />
+                3 months free bubble bumping
+              </li>
+              <li className="flex items-center">
+                <FaCheckCircle className="text-green-400 mr-3" />
+                PR press release publication
+              </li>
+              <li className="flex items-center">
+                <FaCheckCircle className="text-green-400 mr-3" />
+                Premium platform access
+              </li>
+              <li className="flex items-center">
+                <FaCheckCircle className="text-green-400 mr-3" />
+                Free AMA services
+              </li>
+              <li className="flex items-center">
+                <FaCheckCircle className="text-green-400 mr-3" />
+                Community Twitter raids
+              </li>
+              <li className="flex items-center">
+                <FaCheckCircle className="text-green-400 mr-3" />
+                Paid ad campaign exposure
               </li>
             </ul>
           </div>
@@ -318,6 +479,138 @@ const ProjectInfo = ({ currentUser }) => {
                 High visibility
               </li>
             </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Marketing Add-on Packages Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            Marketing Add-on Packages
+          </h2>
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+            Supercharge your listing with premium marketing packages designed to maximize your project's reach and impact.
+          </p>
+        </div>
+
+        {/* 5% Discount Promotion Banner */}
+        <div className="mb-8 p-4 bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-500/50 rounded-lg">
+          <div className="flex items-center justify-center space-x-2">
+            <span className="bg-red-500 text-white text-sm px-3 py-1 rounded-full font-bold animate-pulse">
+              🎉 SPECIAL OFFER: 5% OFF ALL ADD-ON PACKAGES
+            </span>
+          </div>
+          <p className="text-center text-red-200 text-sm mt-1">
+            Save on premium marketing services - confirmed discount from our partners!
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {ADDON_PACKAGES.map((addon) => {
+            const IconComponent = addon.icon;
+            return (
+              <div
+                key={addon.id}
+                className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 hover:border-blue-500 transition-all duration-300"
+              >
+                <div className="flex items-center mb-4">
+                  <div className={`bg-gradient-to-r ${addon.color} p-3 rounded-lg`}>
+                    <IconComponent className="text-white text-xl" />
+                  </div>
+                  <div className="ml-4">
+                    <h3 className="text-xl font-bold text-white">{addon.name}</h3>
+                    <div className="flex items-center space-x-2">
+                      {addon.originalPrice > addon.price && (
+                        <span className="text-sm text-gray-400 line-through">
+                          ${addon.originalPrice.toLocaleString()}
+                        </span>
+                      )}
+                      <span className="text-lg font-bold text-green-400">
+                        ${addon.price.toLocaleString()} USDC
+                      </span>
+                      {addon.originalPrice > addon.price && (
+                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+                          5% OFF
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <ul className="space-y-2 text-gray-300 text-sm">
+                  {addon.features.map((feature, idx) => (
+                    <li key={idx} className="flex items-start">
+                      <FaCheckCircle className="text-green-400 mr-2 mt-0.5 flex-shrink-0" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* CPC Ads Service Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="bg-gradient-to-r from-cyan-900/50 to-blue-900/50 border border-cyan-500/50 rounded-2xl p-12">
+          <div className="text-center mb-12">
+            <div className="flex justify-center mb-6">
+              <div className="bg-cyan-500 p-4 rounded-full">
+                <FaTarget className="text-white text-3xl" />
+              </div>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              CPC Ads Across 1500+ Platforms
+            </h2>
+            <p className="text-xl text-cyan-100 max-w-3xl mx-auto">
+              Run targeted cost-per-click campaigns across premium platforms with advanced targeting and real-time analytics.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="text-center">
+              <div className="bg-cyan-500/20 p-4 rounded-xl mb-4">
+                <FaNetworkWired className="text-cyan-400 text-2xl mx-auto" />
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">1500+ Platforms</h3>
+              <p className="text-cyan-200 text-sm">Access to premium advertising networks</p>
+            </div>
+
+            <div className="text-center">
+              <div className="bg-blue-500/20 p-4 rounded-xl mb-4">
+                <FaTarget className="text-blue-400 text-2xl mx-auto" />
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">Advanced Targeting</h3>
+              <p className="text-blue-200 text-sm">Precise audience targeting options</p>
+            </div>
+
+            <div className="text-center">
+              <div className="bg-green-500/20 p-4 rounded-xl mb-4">
+                <FaChartLine className="text-green-400 text-2xl mx-auto" />
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">Real-time Analytics</h3>
+              <p className="text-green-200 text-sm">Live performance tracking and optimization</p>
+            </div>
+
+            <div className="text-center">
+              <div className="bg-purple-500/20 p-4 rounded-xl mb-4">
+                <FaLightbulb className="text-purple-400 text-2xl mx-auto" />
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">ROI Optimization</h3>
+              <p className="text-purple-200 text-sm">Guaranteed return on investment</p>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <button
+              onClick={openMintFunnelPlatform}
+              className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+            >
+              <FaRocket className="mr-2" />
+              Launch CPC Campaign
+              <FaArrowRight className="ml-2" />
+            </button>
           </div>
         </div>
       </div>
