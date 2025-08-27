@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet';
 import { 
   FaPlay, FaCheckCircle, FaTrophy, FaStar, FaCoins, FaRocket, 
   FaUsers, FaChartLine, FaGraduationCap, FaCertificate, FaLightbulb,
-  FaArrowRight, FaClock, FaTarget, FaBolt, FaGem, FaCrown
+  FaArrowRight, FaClock, FaCrosshairs, FaBolt, FaGem, FaCrown
 } from 'react-icons/fa';
 import WorkshopProgress from './workshop/WorkshopProgress';
 import WorkshopModule from './workshop/WorkshopModule';

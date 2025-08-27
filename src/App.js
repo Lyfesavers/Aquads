@@ -2702,7 +2702,7 @@ function App() {
                           Learn
                         </Link>
                         <Link
-                          to="/project-info"
+                          to="/why-list"
                           className="bg-gradient-to-r from-purple-500/80 to-pink-600/80 hover:from-purple-600/80 hover:to-pink-700/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm"
                         >
                           Why List?
@@ -2830,7 +2830,7 @@ function App() {
                           Learn
                         </Link>
                         <Link
-                          to="/project-info"
+                          to="/why-list"
                           className="bg-gradient-to-r from-purple-500/80 to-pink-600/80 hover:from-purple-600/80 hover:to-pink-700/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm text-center"
                         >
                           Why List?
@@ -3658,7 +3658,7 @@ function App() {
             <Route path="/buy-crypto" element={<TransakPage currentUser={currentUser} showNotification={showNotification} />} />
 
             <Route path="/embed/aquaswap" element={<AquaSwapEmbed />} />
-            <Route path="/project-info" element={<ProjectInfo currentUser={currentUser} />} />
+            <Route path="/why-list" element={<ProjectInfo currentUser={currentUser} />} />
             <Route path="/freelancer-benefits" element={<FreelancerBenefits currentUser={currentUser} />} />
         </Routes>
       </Router>
