@@ -72,15 +72,15 @@ const FreelancerWorkshop = ({ currentUser }) => {
       badge: { name: 'Foundation Builder', icon: '🏗️', description: 'Mastered profile optimization' },
       sections: [
         { 
+          title: 'Service Categories Deep Dive', 
+          type: 'interactive', 
+          content: 'categories-explorer'
+        },
+        { 
           title: 'Profile Optimization Strategy', 
           type: 'interactive', 
           content: 'profile-builder',
 
-        },
-        { 
-          title: 'Service Categories Deep Dive', 
-          type: 'interactive', 
-          content: 'categories-explorer'
         },
         { 
           title: 'CV Builder Workshop', 
@@ -149,15 +149,15 @@ const FreelancerWorkshop = ({ currentUser }) => {
 
         },
         { 
-          title: 'Live Service Creation', 
-          type: 'live-demo', 
-          content: 'service-creation',
-
-        },
-        { 
           title: 'Optimization Tips', 
           type: 'interactive', 
           content: 'optimization',
+
+        },
+        { 
+          title: 'Live Service Creation', 
+          type: 'live-demo', 
+          content: 'service-creation',
 
         }
       ]
@@ -173,15 +173,15 @@ const FreelancerWorkshop = ({ currentUser }) => {
       badge: { name: 'Client Magnet', icon: '🧲', description: 'Mastered client acquisition' },
       sections: [
         { 
-          title: 'Booking System Mastery', 
-          type: 'interactive', 
-          content: 'booking-flow',
-
-        },
-        { 
           title: 'Token Economy Deep Dive', 
           type: 'infographic', 
           content: 'token-system',
+
+        },
+        { 
+          title: 'Booking System Mastery', 
+          type: 'interactive', 
+          content: 'booking-flow',
 
         },
         { 
