@@ -29,7 +29,7 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
                 • **Service Listings**: Create detailed service offerings with pricing, portfolio, and expertise areas
                 • **Client Discovery**: Clients browse freelancer profiles and submit booking requests
                 • **Lead Notifications**: You receive notifications when clients are interested in your services
-                • **Token Unlocking**: Spend 2 tokens (worth $0.02 SOL each) to unlock client contact information
+                                 • **Token Unlocking**: Spend 2 tokens (worth $1 USDC each) to unlock client contact information
                 • **Direct Communication**: Once unlocked, you can contact clients directly to discuss projects
                 
                 **Key Advantage**: Unlike traditional platforms where you pay monthly fees regardless of results, Aquads only charges when you access qualified leads that match your criteria.
@@ -46,13 +46,13 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
                 
                 The token economy is designed to create a fair, pay-per-lead system:
                 
-                • **Token Cost**: Each token costs $0.01 SOL (approximately $1-2 depending on market)
+                                 • **Token Cost**: Each token costs $1 USDC
                 • **Lead Unlocking**: Spend 2 tokens to unlock a client's contact information
                 • **ROI Focus**: Only pay for leads you want to pursue, not monthly subscriptions
                 • **Token Acquisition**: Purchase tokens directly on the platform or earn them through activities
                 • **Investment Strategy**: With average project values of $3,200 and 35% conversion rates, the ROI is typically 560%
                 
-                **Why This Works**: Traditional platforms charge $50-200/month regardless of results. Aquads lets you invest $2-4 only when you see a promising lead, making it much more cost-effective for serious freelancers.
+                                 **Why This Works**: Traditional platforms charge $50-200/month regardless of results. Aquads lets you invest $2 only when you see a promising lead, making it much more cost-effective for serious freelancers.
               `,
               features: ['Lead unlocking', 'Token rewards', 'Staking benefits', 'Premium access'],
               color: 'from-green-500 to-teal-600'
@@ -361,7 +361,7 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
           description: 'Optimize your booking process for seamless client experience',
           steps: [
             {
-              title: 'Calendar Integration',
+              title: 'Booking System Leads',
               content: 'Set up availability windows and time zones for smooth scheduling',
               detailedExplanation: `
                 **Aquads Booking System:**
@@ -434,7 +434,7 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
                 Understanding your time investment on Aquads is crucial for maximizing returns:
                 
                 • **Lead Evaluation Time**: Spend 5-10 minutes evaluating each lead before unlocking
-                • **Token Investment**: Each lead costs 2 tokens ($0.02 SOL ≈ $2-4)
+                                 • **Token Investment**: Each lead costs 2 tokens ($2 USDC)
                 • **Client Communication**: Average 30-60 minutes for initial discussions
                 • **Project Scoping**: 1-2 hours for detailed project planning
                 • **Conversion Tracking**: Monitor which lead sources convert best
@@ -458,7 +458,7 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
                 • **Conversion Rates**: 35% average conversion rate means 3 out of 10 leads become clients
                 • **Average Project Value**: $3,200 per successful project
                 
-                **Revenue Strategy**: With 2 tokens ($4) unlocking a lead and 35% conversion to $3,200 projects, your ROI is 560%. Focus on high-converting service categories.
+                                 **Revenue Strategy**: With 2 tokens ($2 USDC) unlocking a lead and 35% conversion to $3,200 projects, your ROI is 560%. Focus on high-converting service categories.
               `,
               icon: FaDollarSign,
               color: 'from-green-500 to-emerald-600'
@@ -472,8 +472,8 @@ const InteractiveContent = ({ section, sectionIndex, onComplete, isCompleted }) 
                 Compare Aquads costs with traditional platforms:
                 
                 • **Traditional Platforms**: $50-200/month regardless of results
-                • **Aquads Token System**: $2-4 per qualified lead only
-                • **Monthly Comparison**: 10 leads/month on Aquads = $20-40 vs $50-200 elsewhere
+                                 • **Aquads Token System**: $2 per qualified lead only
+                                 • **Monthly Comparison**: 10 leads/month on Aquads = $20 vs $50-200 elsewhere
                 • **Success-Based Pricing**: Only pay when you access promising opportunities
                 • **Tool Investments**: Consider premium tools that increase your efficiency
                 
