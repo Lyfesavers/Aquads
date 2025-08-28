@@ -15,7 +15,7 @@ exports.handler = async (event, context) => {
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.aquads.xyz/how-to</loc>
+            <loc>https://www.aquads.xyz/learn</loc>
     <lastmod>2025-06-12</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>

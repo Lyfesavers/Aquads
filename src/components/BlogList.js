@@ -115,7 +115,7 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
   const handleShare = (blog) => {
     // Create SEO-friendly URL with slug and ID for sharing on social media
     const slug = createSlug(blog.title);
-    const shareUrl = `${window.location.origin}/how-to/${slug}-${blog._id}`;
+    const shareUrl = `${window.location.origin}/learn/${slug}-${blog._id}`;
     
     // Add referral code if user is logged in (as a separate parameter)
     // The redirect rule will preserve this parameter
@@ -381,7 +381,7 @@ const BlogList = ({ blogs, currentUser, onEditBlog, onDeleteBlog }) => {
 
             {/* Read More Link */}
             <Link
-              to={`/how-to/${createSlug(blog.title)}-${blog._id}`}
+                              to={`/learn/${createSlug(blog.title)}-${blog._id}`}
               className="mt-2 text-blue-400 hover:text-blue-300 transition-colors inline-block"
             >
               Read More

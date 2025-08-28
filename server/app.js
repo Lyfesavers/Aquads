@@ -257,7 +257,7 @@ app.get('/marketplace', async (req, res, next) => {
 });
 
 // Dynamic meta tags middleware for blog posts - make it work with the existing API routes
-app.get('/how-to', async (req, res, next) => {
+app.get('/learn', async (req, res, next) => {
   try {
     const blogId = req.query.blogId;
     
@@ -296,7 +296,7 @@ app.get('/how-to', async (req, res, next) => {
           const imageUrl = blog.bannerImage || `${req.protocol}://${req.get('host')}/logo712.png`;
           
           // Create clean URL without referral parameters for meta tags
-          const cleanUrl = `${req.protocol}://${req.get('host')}/how-to?blogId=${blogId}`;
+          const cleanUrl = `${req.protocol}://${req.get('host')}/learn?blogId=${blogId}`;
           
           // Create injected content with meta tags
           const injectedMeta = `
@@ -476,7 +476,7 @@ app.get('/api/config', (req, res) => {
 
 // SEO-friendly URL handler for blog posts - with meta tag support
 // This needs to be before the React catch-all route
-app.get('/how-to/:slug', async (req, res, next) => {
+app.get('/learn/:slug', async (req, res, next) => {
   try {
     // Extract the ID from the slug (format: title-id)
     const slugParts = req.params.slug.split('-');
@@ -539,7 +539,7 @@ app.get('/how-to/:slug', async (req, res, next) => {
           
           // Create the canonical SEO-friendly URL
           const slug = createSlug(blog.title);
-          const canonicalUrl = `${req.protocol}://${req.get('host')}/how-to/${slug}-${blogId}`;
+          const canonicalUrl = `${req.protocol}://${req.get('host')}/learn/${slug}-${blogId}`;
           
           // Create injected content with meta tags for SEO-friendly URLs
           const injectedMeta = `

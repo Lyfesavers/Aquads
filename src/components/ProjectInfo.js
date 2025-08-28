@@ -417,6 +417,10 @@ const ProjectInfo = ({ currentUser }) => {
                 <FaCheckCircle className="text-green-400 mr-3" />
                 Paid ad campaign exposure
               </li>
+              <li className="flex items-center">
+                <FaCheckCircle className="text-green-400 mr-3" />
+                $50 ad credit to run paid ads
+              </li>
             </ul>
           </div>
 

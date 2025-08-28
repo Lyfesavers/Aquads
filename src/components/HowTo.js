@@ -305,7 +305,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                 Paid Ads
               </button>
               <Link
-                to="/how-to"
+                to="/learn"
                 className="bg-indigo-500/80 hover:bg-indigo-600/80 px-2 lg:px-3 py-1.5 rounded text-xs lg:text-sm shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
               >
                 Learn
@@ -436,7 +436,7 @@ const HowTo = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFunnel
                 Paid Ads
               </button>
               <Link
-                to="/how-to"
+                to="/learn"
                 className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-3 rounded-lg shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center text-sm font-medium"
               >
                 Learn

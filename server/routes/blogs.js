@@ -198,11 +198,11 @@ router.get('/share/:id', async (req, res) => {
   <meta property="og:title" content="${blog.title} - Aquads Blog">
   <meta property="og:description" content="${description}">
   <meta property="og:image" content="${blog.bannerImage || 'https://www.aquads.xyz/logo712.png'}">
-  <meta property="og:url" content="https://www.aquads.xyz/how-to?blogId=${blog._id}">
+          <meta property="og:url" content="https://www.aquads.xyz/learn?blogId=${blog._id}">
   <meta property="og:type" content="article">
   
   <!-- Redirect to the actual blog page -->
-  <meta http-equiv="refresh" content="0;url=https://www.aquads.xyz/how-to?blogId=${blog._id}">
+          <meta http-equiv="refresh" content="0;url=https://www.aquads.xyz/learn?blogId=${blog._id}">
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
@@ -231,7 +231,7 @@ router.get('/share/:id', async (req, res) => {
   <div class="container">
     <h1>${blog.title}</h1>
     <p>${description}</p>
-    <p>Redirecting to blog post... <a href="https://www.aquads.xyz/how-to?blogId=${blog._id}">Click here</a> if you're not redirected automatically.</p>
+            <p>Redirecting to blog post... <a href="https://www.aquads.xyz/learn?blogId=${blog._id}">Click here</a> if you're not redirected automatically.</p>
   </div>
 </body>
 </html>`;

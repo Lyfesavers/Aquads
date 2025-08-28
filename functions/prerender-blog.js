@@ -4,7 +4,7 @@ const fetch = require('node-fetch');
 exports.handler = async (event, context) => {
   // Extract the blog ID from the path
   const path = event.path;
-  const match = path.match(/\/how-to\/(.+)-([a-zA-Z0-9]+)$/);
+  const match = path.match(/\/learn\/(.+)-([a-zA-Z0-9]+)$/);
   
   if (!match) {
     // If no match found, just serve a standard page
@@ -36,7 +36,7 @@ exports.handler = async (event, context) => {
     
     // Create SEO-friendly URL
     const slug = createSlug(blog.title);
-    const seoUrl = `https://www.aquads.xyz/how-to/${slug}-${blogId}`;
+    const seoUrl = `https://www.aquads.xyz/learn/${slug}-${blogId}`;
     
     return {
       statusCode: 200,
@@ -106,7 +106,7 @@ function getBlogHtml(blog, description, seoUrl) {
     <title>${blog.title} - Aquads Blog</title>
     <script>
       // Redirect to the app URL
-      window.location.href = '/how-to?blogId=${blog._id}';
+      window.location.href = '/learn?blogId=${blog._id}';
     </script>
   </head>
   <body>
@@ -115,7 +115,7 @@ function getBlogHtml(blog, description, seoUrl) {
     <script>
       // Backup redirect
       setTimeout(function() {
-        window.location.href = '/how-to?blogId=${blog._id}';
+        window.location.href = '/learn?blogId=${blog._id}';
       }, 100);
     </script>
   </body>
@@ -149,7 +149,7 @@ function getDefaultHtml() {
     <title>Aquads - World's First BEX - Bicentralized Exchange Hub</title>
     <script>
       // Redirect to the app
-      window.location.href = '/how-to';
+      window.location.href = '/learn';
     </script>
   </head>
   <body>
@@ -158,7 +158,7 @@ function getDefaultHtml() {
     <script>
       // Backup redirect
       setTimeout(function() {
-        window.location.href = '/how-to';
+        window.location.href = '/learn';
       }, 100);
     </script>
   </body>

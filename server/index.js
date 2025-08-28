@@ -226,10 +226,10 @@ app.get('/share-blog/:id', async (req, res) => {
       : 'Read our latest blog post on Aquads!';
       
     // Get the URL with all query params
-    let redirectUrl = `${process.env.NODE_ENV === 'production' ? 'https://www.aquads.xyz' : 'http://localhost:3000'}/how-to?blogId=${blog._id}`;
+    let redirectUrl = `${process.env.NODE_ENV === 'production' ? 'https://www.aquads.xyz' : 'http://localhost:3000'}/learn?blogId=${blog._id}`;
     
     // Create clean URL for meta tags without referral parameters
-    const cleanMetaUrl = `${process.env.NODE_ENV === 'production' ? 'https://www.aquads.xyz' : 'http://localhost:3000'}/how-to?blogId=${blog._id}`;
+    const cleanMetaUrl = `${process.env.NODE_ENV === 'production' ? 'https://www.aquads.xyz' : 'http://localhost:3000'}/learn?blogId=${blog._id}`;
     
     // Add any query parameters from the original request (excluding referral parameters)
     const originalParams = new URLSearchParams(req.originalUrl.split('?')[1] || '');

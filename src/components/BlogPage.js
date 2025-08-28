@@ -344,7 +344,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
             <h1 className="text-4xl font-bold mb-4">Blog Not Found</h1>
             <p className="text-gray-400 mb-8">{error || 'The blog post you\'re looking for doesn\'t exist.'}</p>
             <Link
-              to="/how-to"
+              to="/learn"
               className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition-colors inline-flex items-center gap-2"
             >
               <FaArrowLeft />
@@ -356,7 +356,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
     );
   }
 
-  const canonicalUrl = `${window.location.origin}/how-to/${createSlug(blog.title)}-${blog._id}`;
+  const canonicalUrl = `${window.location.origin}/learn/${createSlug(blog.title)}-${blog._id}`;
   const plainTextContent = extractPlainText(blog.content);
 
   return (
@@ -469,7 +469,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                 Paid Ads
               </button>
               <Link
-                to="/how-to"
+                to="/learn"
                 className="bg-indigo-500/80 hover:bg-indigo-600/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm"
               >
                 Learn
@@ -600,7 +600,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
                 Paid Ads
               </button>
               <Link
-                to="/how-to"
+                to="/learn"
                 className="bg-indigo-500/80 hover:bg-indigo-600/80 px-4 py-2 rounded shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 backdrop-blur-sm text-center"
               >
                 Learn
@@ -807,7 +807,7 @@ const BlogPage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMintFun
               {relatedBlogs.map((relatedBlog) => (
                 <Link
                   key={relatedBlog._id}
-                  to={`/how-to/${createSlug(relatedBlog.title)}-${relatedBlog._id}`}
+                  to={`/learn/${createSlug(relatedBlog.title)}-${relatedBlog._id}`}
                   className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-750 transition-colors group"
                 >
                   <div className="aspect-video">
