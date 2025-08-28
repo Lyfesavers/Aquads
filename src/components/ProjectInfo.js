@@ -216,7 +216,6 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
                 Read Our Whitepaper
               </Link>
             </div>
-
           </div>
         </div>
       </div>
