@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { FaRocket, FaUsers, FaChartLine, FaGlobe, FaShieldAlt, FaCog, FaCheckCircle, FaArrowRight, FaBullhorn, FaGamepad, FaHandshake, FaTrophy, FaArrowLeft, FaCreditCard, FaExchangeAlt, FaUsersCog, FaVideo, FaMicrophone, FaNewspaper, FaStar, FaFire, FaGem, FaCrown, FaGift, FaTwitter, FaLightbulb, FaCrosshairs, FaNetworkWired } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import CreateAdModal from './CreateAdModal';
+import CreateBannerModal from './CreateBannerModal';
+import BumpStore from './BumpStore';
 
 // Aquads-branded marketing add-on packages
 const ADDON_PACKAGES = [
@@ -115,8 +117,14 @@ const ADDON_PACKAGES = [
   }
 ];
 
-const ProjectInfo = ({ currentUser }) => {
+const ProjectInfo = ({ currentUser, ads = [] }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showBannerModal, setShowBannerModal] = useState(false);
+  const [showBumpStore, setShowBumpStore] = useState(false);
+  const [selectedAdForBump, setSelectedAdForBump] = useState(null);
+
+  // Check if user has any projects listed
+  const userHasProjects = ads.some(ad => ad.owner === currentUser?.username);
 
   // Open MintFunnel platform in full-screen popup
   const openMintFunnelPlatform = () => {
@@ -137,6 +145,34 @@ const ProjectInfo = ({ currentUser }) => {
       setShowCreateModal(false);
     } catch (error) {
       console.error('Error creating ad:', error);
+    }
+  };
+
+  const handleBannerSubmit = async (bannerData) => {
+    try {
+      // This will be handled by the CreateBannerModal component
+      setShowBannerModal(false);
+    } catch (error) {
+      console.error('Error creating banner:', error);
+    }
+  };
+
+  const handleBumpPurchase = async (adId, txSignature, duration) => {
+    try {
+      // This will be handled by the BumpStore component
+      setShowBumpStore(false);
+      setSelectedAdForBump(null);
+    } catch (error) {
+      console.error('Error purchasing bump:', error);
+    }
+  };
+
+  const handleBumpClick = () => {
+    // Get the user's first project for bumping
+    const userAd = ads.find(ad => ad.owner === currentUser?.username);
+    if (userAd) {
+      setSelectedAdForBump(userAd);
+      setShowBumpStore(true);
     }
   };
 
@@ -422,6 +458,14 @@ const ProjectInfo = ({ currentUser }) => {
                 $50 ad credit to run paid ads
               </li>
             </ul>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="mt-6 w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+            >
+              <FaRocket className="mr-2" />
+              List Your Project
+              <FaArrowRight className="ml-2" />
+            </button>
           </div>
 
           {/* Bump Options */}
@@ -453,6 +497,16 @@ const ProjectInfo = ({ currentUser }) => {
                 Enhanced visibility
               </li>
             </ul>
+            {userHasProjects && (
+              <button
+                onClick={handleBumpClick}
+                className="mt-6 w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+              >
+                <FaRocket className="mr-2" />
+                Purchase Bump
+                <FaArrowRight className="ml-2" />
+              </button>
+            )}
           </div>
 
           {/* Banner Ads */}
@@ -484,6 +538,14 @@ const ProjectInfo = ({ currentUser }) => {
                 High visibility
               </li>
             </ul>
+            <button
+              onClick={() => setShowBannerModal(true)}
+              className="mt-6 w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+            >
+              <FaRocket className="mr-2" />
+              Create Banner Ad
+              <FaArrowRight className="ml-2" />
+            </button>
           </div>
         </div>
       </div>
@@ -656,6 +718,25 @@ const ProjectInfo = ({ currentUser }) => {
           currentUser={currentUser}
         />
       )}
+
+      {/* Create Banner Modal */}
+      {showBannerModal && (
+        <CreateBannerModal
+          onClose={() => setShowBannerModal(false)}
+          onSubmit={handleBannerSubmit}
+          currentUser={currentUser}
+        />
+      )}
+
+             {/* Bump Store Modal */}
+       {showBumpStore && selectedAdForBump && (
+         <BumpStore
+           ad={selectedAdForBump}
+           onClose={() => setShowBumpStore(false)}
+           onSubmitPayment={handleBumpPurchase}
+           currentUser={currentUser}
+         />
+       )}
     </div>
   );
 };

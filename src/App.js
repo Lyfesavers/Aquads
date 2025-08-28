@@ -3658,7 +3658,7 @@ function App() {
             <Route path="/buy-crypto" element={<TransakPage currentUser={currentUser} showNotification={showNotification} />} />
 
             <Route path="/embed/aquaswap" element={<AquaSwapEmbed />} />
-            <Route path="/why-list" element={<ProjectInfo currentUser={currentUser} />} />
+            <Route path="/why-list" element={<ProjectInfo currentUser={currentUser} ads={ads} />} />
             <Route path="/freelancer-benefits" element={<FreelancerBenefits currentUser={currentUser} />} />
         </Routes>
       </Router>
