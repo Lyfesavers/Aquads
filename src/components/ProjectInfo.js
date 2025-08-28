@@ -176,6 +176,33 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
     }
   };
 
+  // Authentication check functions
+  const checkAuthAndOpenModal = (modalType) => {
+    if (!currentUser) {
+      alert('Please log in to access this feature.');
+      return false;
+    }
+    return true;
+  };
+
+  const handleListProjectClick = () => {
+    if (checkAuthAndOpenModal('create')) {
+      setShowCreateModal(true);
+    }
+  };
+
+  const handleBannerAdClick = () => {
+    if (checkAuthAndOpenModal('banner')) {
+      setShowBannerModal(true);
+    }
+  };
+
+  const handleBumpOptionsClick = () => {
+    if (checkAuthAndOpenModal('bump')) {
+      handleBumpClick();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
       {/* Back Button */}
@@ -200,15 +227,15 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
             <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
               Join the world's first BEX (Bicentralized Exchange) and tap into a thriving Web3 ecosystem designed specifically for crypto projects.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
-              >
-                <FaRocket className="mr-2" />
-                List Your Project Now
-                <FaArrowRight className="ml-2" />
-              </button>
+                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
+               <button
+                 onClick={handleListProjectClick}
+                 className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+               >
+                 <FaRocket className="mr-2" />
+                 List Your Project Now
+                 <FaArrowRight className="ml-2" />
+               </button>
               <Link
                 to="/whitepaper"
                 className="inline-flex items-center px-8 py-4 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-lg transition-all duration-300 border border-gray-600"
@@ -459,14 +486,14 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
                 $50 ad credit to run paid ads
               </li>
             </ul>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="mt-6 w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
-            >
-              <FaRocket className="mr-2" />
-              List Your Project
-              <FaArrowRight className="ml-2" />
-            </button>
+                         <button
+               onClick={handleListProjectClick}
+               className="mt-6 w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+             >
+               <FaRocket className="mr-2" />
+               List Your Project
+               <FaArrowRight className="ml-2" />
+             </button>
           </div>
 
           {/* Bump Options */}
@@ -498,16 +525,16 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
                 Enhanced visibility
               </li>
             </ul>
-            {userHasProjects && (
-              <button
-                onClick={handleBumpClick}
-                className="mt-6 w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
-              >
-                <FaRocket className="mr-2" />
-                Purchase Bump
-                <FaArrowRight className="ml-2" />
-              </button>
-            )}
+                         {userHasProjects && (
+               <button
+                 onClick={handleBumpOptionsClick}
+                 className="mt-6 w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+               >
+                 <FaRocket className="mr-2" />
+                 Purchase Bump
+                 <FaArrowRight className="ml-2" />
+               </button>
+             )}
           </div>
 
           {/* Banner Ads */}
@@ -539,14 +566,14 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
                 High visibility
               </li>
             </ul>
-            <button
-              onClick={() => setShowBannerModal(true)}
-              className="mt-6 w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
-            >
-              <FaRocket className="mr-2" />
-              Create Banner Ad
-              <FaArrowRight className="ml-2" />
-            </button>
+                         <button
+               onClick={handleBannerAdClick}
+               className="mt-6 w-full inline-flex items-center justify-center px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+             >
+               <FaRocket className="mr-2" />
+               Create Banner Ad
+               <FaArrowRight className="ml-2" />
+             </button>
           </div>
         </div>
       </div>
@@ -626,14 +653,18 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
               <p className="text-purple-100 text-sm">Track performance and optimize campaigns live</p>
             </div>
           </div>
-          <button
-            onClick={openMintFunnelPlatform}
-            className="inline-flex items-center px-8 py-4 bg-white text-purple-600 hover:bg-gray-100 font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
-          >
-            <FaRocket className="mr-2" />
-            Launch CPC Campaign
-            <FaArrowRight className="ml-2" />
-          </button>
+                     <button
+             onClick={() => {
+               if (checkAuthAndOpenModal('cpc')) {
+                 openMintFunnelPlatform();
+               }
+             }}
+             className="inline-flex items-center px-8 py-4 bg-white text-purple-600 hover:bg-gray-100 font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+           >
+             <FaRocket className="mr-2" />
+             Launch CPC Campaign
+             <FaArrowRight className="ml-2" />
+           </button>
         </div>
       </div>
 
@@ -693,14 +724,14 @@ const ProjectInfo = ({ currentUser, ads = [] }) => {
             Join hundreds of successful projects that have already discovered the Aquads advantage. Start building your community today.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center px-8 py-4 bg-white text-blue-600 font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
-            >
-              <FaRocket className="mr-2" />
-              List Your Project Now
-              <FaArrowRight className="ml-2" />
-            </button>
+                         <button
+               onClick={handleListProjectClick}
+               className="inline-flex items-center px-8 py-4 bg-white text-blue-600 font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+             >
+               <FaRocket className="mr-2" />
+               List Your Project Now
+               <FaArrowRight className="ml-2" />
+             </button>
             <a
               href="mailto:aquads.info@gmail.com"
               className="inline-flex items-center px-8 py-4 bg-transparent border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-blue-600 transition-all duration-300"
