@@ -117,7 +117,7 @@ const ADDON_PACKAGES = [
   }
 ];
 
-const ProjectInfo = ({ currentUser, ads = [], onLogin, onCreateAccount }) => {
+const ProjectInfo = ({ currentUser, ads = [], setShowLoginModal, setShowCreateAccountModal }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showBannerModal, setShowBannerModal] = useState(false);
   const [showBumpStore, setShowBumpStore] = useState(false);
@@ -219,13 +219,13 @@ const ProjectInfo = ({ currentUser, ads = [], onLogin, onCreateAccount }) => {
             {!currentUser && (
               <div className="flex flex-col sm:flex-row gap-4 justify-center mt-4">
                 <button
-                  onClick={onLogin}
+                  onClick={() => setShowLoginModal(true)}
                   className="inline-flex items-center px-8 py-4 bg-blue-500/80 hover:bg-blue-600/80 text-white font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-blue-500/50 backdrop-blur-sm"
                 >
                   Login
                 </button>
                 <button
-                  onClick={onCreateAccount}
+                  onClick={() => setShowCreateAccountModal(true)}
                   className="inline-flex items-center px-8 py-4 bg-green-500/80 hover:bg-green-600/80 text-white font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-green-500/50 backdrop-blur-sm"
                 >
                   Create Account
