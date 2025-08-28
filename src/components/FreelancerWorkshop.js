@@ -459,6 +459,20 @@ const FreelancerWorkshop = ({ currentUser }) => {
               Interactive lessons, real-world practice, and guaranteed results.
             </p>
             
+            {/* Registration Button */}
+            <div className="mb-8 sm:mb-10">
+              <a
+                href="https://forms.gle/mpUSD9fVCEKaj5fp7"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold px-8 py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+              >
+                <FaGraduationCap className="text-xl" />
+                Register for Workshop
+                <FaArrowRight className="text-lg" />
+              </a>
+            </div>
+            
             {/* Workshop Stats */}
             <WorkshopStats 
               progress={workshopProgress} 
