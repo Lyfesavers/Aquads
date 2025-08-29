@@ -3615,15 +3615,15 @@ function App() {
                   </div>
                 )}
 
-                {/* Regular notifications - keep these for non-vote notifications */}
-                <div className="fixed bottom-4 right-4 space-y-2" style={{ zIndex: 999999999 }}>
+                {/* Regular notifications - positioned at top center for better visibility */}
+                <div className="fixed top-4 left-1/2 transform -translate-x-1/2 space-y-2" style={{ zIndex: 999999999 }}>
                   {notifications.map(({ id, message, type }) => (
                     <div
                       key={id}
-                      className={`p-4 rounded shadow-lg ${
-                        type === 'error' ? 'bg-red-500' :
-                        type === 'success' ? 'bg-green-500' :
-                        'bg-blue-500'
+                      className={`p-4 rounded-lg shadow-lg text-white font-medium max-w-md text-center ${
+                        type === 'error' ? 'bg-red-500 border border-red-400' :
+                        type === 'success' ? 'bg-green-500 border border-green-400' :
+                        'bg-blue-500 border border-blue-400'
                       }`}
                     >
                       {message}
