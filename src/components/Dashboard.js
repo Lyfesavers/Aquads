@@ -3062,24 +3062,26 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                                    <p className="text-sm text-gray-400 mb-2">
                                      Category: <span className="text-blue-400">{service.category}</span>
                                    </p>
-                                   <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 mb-3">
-                                     <div className="text-green-400 text-lg font-bold">
-                                       ${service.price} {service.currency}
+                                   <div className="flex justify-center gap-2 mb-3">
+                                     <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-2 flex-1 max-w-[120px]">
+                                       <div className="text-green-400 text-sm font-bold">
+                                         ${service.price} {service.currency}
+                                       </div>
+                                       <div className="text-green-300 text-xs">
+                                         Starting Price
+                                       </div>
                                      </div>
-                                     <div className="text-green-300 text-sm">
-                                       Starting Price
-                                     </div>
+                                     {service.hourlyRate && (
+                                       <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-2 flex-1 max-w-[120px]">
+                                         <div className="text-orange-400 text-sm font-bold">
+                                           ${service.hourlyRate} {service.currency}/hr
+                                         </div>
+                                         <div className="text-orange-300 text-xs">
+                                           Hourly Rate
+                                         </div>
+                                       </div>
+                                     )}
                                    </div>
-                                   {service.hourlyRate && (
-                                     <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3 mb-3">
-                                       <div className="text-orange-400 text-lg font-bold">
-                                         ${service.hourlyRate} {service.currency}/hr
-                                       </div>
-                                       <div className="text-orange-300 text-sm">
-                                         Hourly Rate
-                                       </div>
-                                     </div>
-                                   )}
                                    <p className="text-sm text-gray-400 mb-2">
                                      Delivery: <span className="text-gray-300">{service.deliveryTime}</span>
                                    </p>

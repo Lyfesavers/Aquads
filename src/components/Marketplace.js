@@ -1546,9 +1546,9 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                             <span className="text-gray-400 text-sm">
                               Delivered in {service.deliveryTime} Days
                             </span>
-                            <div className="text-right">
-                              <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 mb-2">
-                                <div className="text-green-400 text-lg font-bold">
+                            <div className="flex justify-center gap-2">
+                              <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-2 flex-1 max-w-[120px]">
+                                <div className="text-green-400 text-sm font-bold">
                                   {service.price} USDC
                                 </div>
                                 <div className="text-green-300 text-xs">
@@ -1556,8 +1556,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                                 </div>
                               </div>
                               {service.hourlyRate && (
-                                <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3">
-                                  <div className="text-orange-400 text-lg font-bold">
+                                <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-2 flex-1 max-w-[120px]">
+                                  <div className="text-orange-400 text-sm font-bold">
                                     {service.hourlyRate} USDC/hr
                                   </div>
                                   <div className="text-orange-300 text-xs">
