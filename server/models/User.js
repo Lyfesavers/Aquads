@@ -272,20 +272,20 @@ const userSchema = new Schema({
       // Verification contacts
       contactName: {
         type: String,
-        required: true
+        required: false
       },
       contactTitle: {
         type: String,
-        required: true
+        required: false
       },
       contactEmail: {
         type: String,
-        required: true
+        required: false
       },
       contactPhone: String,
       contactDepartment: {
         type: String,
-        required: true
+        required: false
       }
     }],
     experience: [{
@@ -310,20 +310,20 @@ const userSchema = new Schema({
       // Verification contacts
       contactName: {
         type: String,
-        required: true
+        required: false
       },
       contactTitle: {
         type: String,
-        required: true
+        required: false
       },
       contactEmail: {
         type: String,
-        required: true
+        required: false
       },
       contactPhone: String,
       contactDepartment: {
         type: String,
-        required: true
+        required: false
       }
     }],
     skills: [String],

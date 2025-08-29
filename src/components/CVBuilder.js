@@ -44,28 +44,36 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
 
     // Validate education entries
     cvData.education.forEach((edu, index) => {
-      if (edu.institution || edu.degree || edu.field || edu.startDate || edu.contactName || edu.contactTitle || edu.contactEmail || edu.contactDepartment) {
+      if (edu.institution || edu.degree || edu.field || edu.startDate) {
         if (!edu.institution) errors.push(`Education #${index + 1}: Institution is required`);
         if (!edu.degree) errors.push(`Education #${index + 1}: Degree is required`);
         if (!edu.field) errors.push(`Education #${index + 1}: Field of study is required`);
         if (!edu.startDate) errors.push(`Education #${index + 1}: Start date is required`);
-        if (!edu.contactName) errors.push(`Education #${index + 1}: Contact name is required`);
-        if (!edu.contactTitle) errors.push(`Education #${index + 1}: Contact title is required`);
-        if (!edu.contactEmail) errors.push(`Education #${index + 1}: Contact email is required`);
-        if (!edu.contactDepartment) errors.push(`Education #${index + 1}: Contact department is required`);
+        
+        // Only validate contact fields if any contact field is present
+        if (edu.contactName || edu.contactTitle || edu.contactEmail || edu.contactDepartment) {
+          if (!edu.contactName) errors.push(`Education #${index + 1}: Contact name is required if providing contact information`);
+          if (!edu.contactTitle) errors.push(`Education #${index + 1}: Contact title is required if providing contact information`);
+          if (!edu.contactEmail) errors.push(`Education #${index + 1}: Contact email is required if providing contact information`);
+          if (!edu.contactDepartment) errors.push(`Education #${index + 1}: Contact department is required if providing contact information`);
+        }
       }
     });
 
     // Validate experience entries
     cvData.experience.forEach((exp, index) => {
-      if (exp.company || exp.position || exp.startDate || exp.contactName || exp.contactTitle || exp.contactEmail || exp.contactDepartment) {
+      if (exp.company || exp.position || exp.startDate) {
         if (!exp.company) errors.push(`Experience #${index + 1}: Company is required`);
         if (!exp.position) errors.push(`Experience #${index + 1}: Position is required`);
         if (!exp.startDate) errors.push(`Experience #${index + 1}: Start date is required`);
-        if (!exp.contactName) errors.push(`Experience #${index + 1}: Contact name is required`);
-        if (!exp.contactTitle) errors.push(`Experience #${index + 1}: Contact title is required`);
-        if (!exp.contactEmail) errors.push(`Experience #${index + 1}: Contact email is required`);
-        if (!exp.contactDepartment) errors.push(`Experience #${index + 1}: Contact department is required`);
+        
+        // Only validate contact fields if any contact field is present
+        if (exp.contactName || exp.contactTitle || exp.contactEmail || exp.contactDepartment) {
+          if (!exp.contactName) errors.push(`Experience #${index + 1}: Contact name is required if providing contact information`);
+          if (!exp.contactTitle) errors.push(`Experience #${index + 1}: Contact title is required if providing contact information`);
+          if (!exp.contactEmail) errors.push(`Experience #${index + 1}: Contact email is required if providing contact information`);
+          if (!exp.contactDepartment) errors.push(`Experience #${index + 1}: Contact department is required if providing contact information`);
+        }
       }
     });
 
@@ -84,16 +92,14 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
         return;
       }
 
-      // Filter out empty entries
+      // Filter out empty entries - only require basic fields, contact fields are optional
       const cleanedData = {
         ...cvData,
         education: cvData.education.filter(edu => 
-          edu.institution && edu.degree && edu.field && edu.startDate && 
-          edu.contactName && edu.contactTitle && edu.contactEmail && edu.contactDepartment
+          edu.institution && edu.degree && edu.field && edu.startDate
         ),
         experience: cvData.experience.filter(exp => 
-          exp.company && exp.position && exp.startDate && 
-          exp.contactName && exp.contactTitle && exp.contactEmail && exp.contactDepartment
+          exp.company && exp.position && exp.startDate
         )
       };
 
