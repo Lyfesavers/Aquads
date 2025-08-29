@@ -336,25 +336,6 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
           <FaGraduationCap className="text-purple-400" />
           CV Builder
         </h3>
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={() => setShowPreview(true)}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
-          >
-            <FaEye />
-            Preview
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
-          >
-            <FaSave />
-            {saving ? 'Saving...' : 'Save CV'}
-          </button>
-        </div>
       </div>
 
       {/* Full Name Section */}
@@ -722,14 +703,37 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
           ))}
         </div>
         
-        {cvData.skills.length === 0 && (
-          <p className="text-gray-400 text-center py-4">No skills added yet. Add your professional skills above.</p>
-        )}
-      </div>
+                 {cvData.skills.length === 0 && (
+           <p className="text-gray-400 text-center py-4">No skills added yet. Add your professional skills above.</p>
+         )}
+       </div>
+
+       {/* Action Buttons - Fixed at bottom */}
+       <div className="sticky bottom-4 bg-gray-900/80 backdrop-blur-sm border border-gray-700/50 rounded-xl p-4 mt-8">
+         <div className="flex justify-center gap-4">
+           <button
+             type="button"
+             onClick={() => setShowPreview(true)}
+             className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2 font-medium"
+           >
+             <FaEye />
+             Preview CV
+           </button>
+           <button
+             type="button"
+             onClick={handleSave}
+             disabled={saving}
+             className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 font-medium"
+           >
+             <FaSave />
+             {saving ? 'Saving...' : 'Save CV'}
+           </button>
+         </div>
+       </div>
 
 
-    </div>
-  );
-};
+     </div>
+   );
+ };
 
 export default CVBuilder;
