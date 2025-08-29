@@ -754,21 +754,25 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                 <h3 className="text-xl font-bold mb-4">Service Details</h3>
                 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <FaDollarSign className="text-green-400" />
-                      <span className="text-gray-300">Starting Price</span>
+                  <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <FaDollarSign className="text-green-400 text-xl" />
+                        <span className="text-green-300 font-semibold">Starting Price</span>
+                      </div>
+                      <span className="text-green-400 text-2xl font-bold">{service.price} USDC</span>
                     </div>
-                    <span className="font-bold text-green-400">{service.price} USDC</span>
                   </div>
                   
                   {service.hourlyRate && (
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <FaClock className="text-orange-400" />
-                        <span className="text-gray-300">Hourly Rate</span>
+                    <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <FaClock className="text-orange-400 text-xl" />
+                          <span className="text-orange-300 font-semibold">Hourly Rate</span>
+                        </div>
+                        <span className="text-orange-400 text-2xl font-bold">{service.hourlyRate} USDC/hr</span>
                       </div>
-                      <span className="font-bold text-orange-400">{service.hourlyRate} USDC/hr</span>
                     </div>
                   )}
                   

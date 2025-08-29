@@ -77,11 +77,25 @@ const BookingButton = ({ service, currentUser, onBookingCreate, showNotification
             <h2 className="text-2xl font-bold mb-4">Book Service</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <h3 className="font-semibold mb-2">Service Details</h3>
-                <p className="text-gray-300">{service.title}</p>
-                <p className="text-gray-300">Price: {service.price} {service.currency}</p>
+                <h3 className="font-semibold mb-3">Service Details</h3>
+                <p className="text-gray-300 mb-3">{service.title}</p>
+                <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 mb-2">
+                  <div className="text-green-400 text-lg font-bold">
+                    {service.price} {service.currency}
+                  </div>
+                  <div className="text-green-300 text-sm">
+                    Starting Price
+                  </div>
+                </div>
                 {service.hourlyRate && (
-                  <p className="text-gray-300">Hourly Rate: {service.hourlyRate} {service.currency}/hr</p>
+                  <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3">
+                    <div className="text-orange-400 text-lg font-bold">
+                      {service.hourlyRate} {service.currency}/hr
+                    </div>
+                    <div className="text-orange-300 text-sm">
+                      Hourly Rate
+                    </div>
+                  </div>
                 )}
               </div>
               
