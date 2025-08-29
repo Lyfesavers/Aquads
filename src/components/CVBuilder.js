@@ -484,36 +484,33 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
               rows={2}
             />
 
-            {/* Verification Contact */}
-            <div className="border-t border-gray-600 pt-4">
-              <h6 className="font-medium mb-3 text-yellow-400">School Verification Contact</h6>
-              <p className="text-gray-400 text-sm mb-3">Provide contact details from your school (registrar, admissions office, etc.) so employers can verify your education.</p>
-              <span className="text-red-400 text-xs mb-3 block">(All fields required except phone)</span>
+                         {/* Verification Contact */}
+             <div className="border-t border-gray-600 pt-4">
+               <h6 className="font-medium mb-3 text-yellow-400">School Verification Contact (Optional)</h6>
+               <p className="text-gray-400 text-sm mb-3">Provide contact details from your school (registrar, admissions office, etc.) so employers can verify your education.</p>
+               <span className="text-blue-400 text-xs mb-3 block">(Contact fields are optional - only fill if you want verification contacts)</span>
               <div className="grid md:grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  placeholder="School Contact Name (e.g. Registrar) *"
-                  value={edu.contactName}
-                  onChange={(e) => updateEducation(index, 'contactName', e.target.value)}
-                  className="px-3 py-2 bg-gray-700/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
-                  required
-                />
-                <input
-                  type="text"
-                  placeholder="Contact Title/Department *"
-                  value={edu.contactTitle}
-                  onChange={(e) => updateEducation(index, 'contactTitle', e.target.value)}
-                  className="px-3 py-2 bg-gray-700/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
-                  required
-                />
-                <input
-                  type="email"
-                  placeholder="School Contact Email *"
-                  value={edu.contactEmail}
-                  onChange={(e) => updateEducation(index, 'contactEmail', e.target.value)}
-                  className="px-3 py-2 bg-gray-700/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
-                  required
-                />
+                                 <input
+                   type="text"
+                   placeholder="School Contact Name (e.g. Registrar)"
+                   value={edu.contactName}
+                   onChange={(e) => updateEducation(index, 'contactName', e.target.value)}
+                   className="px-3 py-2 bg-gray-700/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
+                 />
+                                 <input
+                   type="text"
+                   placeholder="Contact Title/Department"
+                   value={edu.contactTitle}
+                   onChange={(e) => updateEducation(index, 'contactTitle', e.target.value)}
+                   className="px-3 py-2 bg-gray-700/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
+                 />
+                                 <input
+                   type="email"
+                   placeholder="School Contact Email"
+                   value={edu.contactEmail}
+                   onChange={(e) => updateEducation(index, 'contactEmail', e.target.value)}
+                   className="px-3 py-2 bg-gray-700/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
+                 />
                 <input
                   type="tel"
                   placeholder="School Contact Phone (optional)"
@@ -521,14 +518,13 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
                   onChange={(e) => updateEducation(index, 'contactPhone', e.target.value)}
                   className="px-3 py-2 bg-gray-700/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
                 />
-                <input
-                  type="text"
-                  placeholder="Department *"
-                  value={edu.contactDepartment}
-                  onChange={(e) => updateEducation(index, 'contactDepartment', e.target.value)}
-                  className="px-3 py-2 bg-gray-700/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
-                  required
-                />
+                                 <input
+                   type="text"
+                   placeholder="Department"
+                   value={edu.contactDepartment}
+                   onChange={(e) => updateEducation(index, 'contactDepartment', e.target.value)}
+                   className="px-3 py-2 bg-gray-700/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
+                 />
               </div>
             </div>
           </div>
@@ -627,36 +623,33 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
               rows={3}
             />
 
-            {/* Verification Contact */}
-            <div className="border-t border-gray-600 pt-4">
-              <h6 className="font-medium mb-3 text-yellow-400">Workplace Verification Contact</h6>
-              <p className="text-gray-400 text-sm mb-3">Provide contact details from your workplace (HR department, supervisor, manager, etc.) so employers can verify your work experience.</p>
-              <span className="text-red-400 text-xs mb-3 block">(All fields required except phone)</span>
+                         {/* Verification Contact */}
+             <div className="border-t border-gray-600 pt-4">
+               <h6 className="font-medium mb-3 text-yellow-400">Workplace Verification Contact (Optional)</h6>
+               <p className="text-gray-400 text-sm mb-3">Provide contact details from your workplace (HR department, supervisor, manager, etc.) so employers can verify your work experience.</p>
+               <span className="text-blue-400 text-xs mb-3 block">(Contact fields are optional - only fill if you want verification contacts)</span>
               <div className="grid md:grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  placeholder="Workplace Contact Name (e.g. HR Manager) *"
-                  value={exp.contactName}
-                  onChange={(e) => updateExperience(index, 'contactName', e.target.value)}
-                  className="px-3 py-2 bg-gray-700/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
-                  required
-                />
-                <input
-                  type="text"
-                  placeholder="Contact Title/Department *"
-                  value={exp.contactTitle}
-                  onChange={(e) => updateExperience(index, 'contactTitle', e.target.value)}
-                  className="px-3 py-2 bg-gray-700/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
-                  required
-                />
-                <input
-                  type="email"
-                  placeholder="Workplace Contact Email *"
-                  value={exp.contactEmail}
-                  onChange={(e) => updateExperience(index, 'contactEmail', e.target.value)}
-                  className="px-3 py-2 bg-gray-700/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
-                  required
-                />
+                                 <input
+                   type="text"
+                   placeholder="Workplace Contact Name (e.g. HR Manager)"
+                   value={exp.contactName}
+                   onChange={(e) => updateExperience(index, 'contactName', e.target.value)}
+                   className="px-3 py-2 bg-gray-700/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
+                 />
+                                 <input
+                   type="text"
+                   placeholder="Contact Title/Department"
+                   value={exp.contactTitle}
+                   onChange={(e) => updateExperience(index, 'contactTitle', e.target.value)}
+                   className="px-3 py-2 bg-gray-700/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
+                 />
+                                 <input
+                   type="email"
+                   placeholder="Workplace Contact Email"
+                   value={exp.contactEmail}
+                   onChange={(e) => updateExperience(index, 'contactEmail', e.target.value)}
+                   className="px-3 py-2 bg-gray-700/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
+                 />
                 <input
                   type="tel"
                   placeholder="Workplace Contact Phone (optional)"
@@ -664,14 +657,13 @@ const CVBuilder = ({ currentUser, onClose, showNotification }) => {
                   onChange={(e) => updateExperience(index, 'contactPhone', e.target.value)}
                   className="px-3 py-2 bg-gray-700/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
                 />
-                <input
-                  type="text"
-                  placeholder="Department *"
-                  value={exp.contactDepartment}
-                  onChange={(e) => updateExperience(index, 'contactDepartment', e.target.value)}
-                  className="px-3 py-2 bg-gray-700/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
-                  required
-                />
+                                 <input
+                   type="text"
+                   placeholder="Department"
+                   value={exp.contactDepartment}
+                   onChange={(e) => updateExperience(index, 'contactDepartment', e.target.value)}
+                   className="px-3 py-2 bg-gray-700/50 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
+                 />
               </div>
             </div>
           </div>
