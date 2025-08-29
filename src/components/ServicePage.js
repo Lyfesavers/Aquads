@@ -762,6 +762,16 @@ const ServicePage = ({ currentUser, onLogin, onLogout, onCreateAccount, openMint
                     <span className="font-bold text-green-400">{service.price} USDC</span>
                   </div>
                   
+                  {service.hourlyRate && (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <FaClock className="text-orange-400" />
+                        <span className="text-gray-300">Hourly Rate</span>
+                      </div>
+                      <span className="font-bold text-orange-400">{service.hourlyRate} USDC/hr</span>
+                    </div>
+                  )}
+                  
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <FaClock className="text-blue-400" />

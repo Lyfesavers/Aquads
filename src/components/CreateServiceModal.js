@@ -6,6 +6,7 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
     description: '',
     category: '',
     price: '',
+    hourlyRate: '',
     currency: 'USDC',
     deliveryTime: '3',
     image: '',
@@ -203,7 +204,7 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
               {/* Price and Delivery Time */}
               <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700/50">
                 <h3 className="text-lg font-semibold text-white mb-4">Pricing & Delivery</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Starting Price (USDC)
@@ -222,6 +223,24 @@ const CreateServiceModal = ({ onClose, onCreateService, categories }) => {
                       />
                     </div>
                     <p className="text-gray-400 text-xs mt-2">Set your starting price in USDC</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Hourly Rate (USDC) - Optional
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0.00"
+                        className="w-full pl-8 pr-4 py-3 bg-gray-700/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-white placeholder-gray-400 transition-all duration-200"
+                        value={formData.hourlyRate}
+                        onChange={(e) => setFormData(prev => ({ ...prev, hourlyRate: e.target.value }))}
+                      />
+                    </div>
+                    <p className="text-gray-400 text-xs mt-2">Set your hourly rate for ongoing work</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">

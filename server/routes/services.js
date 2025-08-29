@@ -105,7 +105,7 @@ router.get('/category/:categoryId', async (req, res) => {
 // Create a new service
 router.post('/', auth, requireEmailVerification, async (req, res) => {
   try {
-    const { title, description, category, price, deliveryTime, requirements, image, videoUrl } = req.body;
+    const { title, description, category, price, hourlyRate, deliveryTime, requirements, image, videoUrl } = req.body;
 
     // Validate required fields
     if (!title || !description || !category || !price || !deliveryTime || !image) {
@@ -129,6 +129,7 @@ router.post('/', auth, requireEmailVerification, async (req, res) => {
       description,
       category,
       price: parseFloat(price),
+      hourlyRate: hourlyRate ? parseFloat(hourlyRate) : null,
       deliveryTime,
       requirements: requirements || '',
       image,

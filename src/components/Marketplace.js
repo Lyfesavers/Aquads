@@ -1551,6 +1551,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                                 <span className="font-semibold">Starting Price:</span>{' '}
                                 {service.price} USDC
                               </div>
+                              {service.hourlyRate && (
+                                <div className="text-gray-300 text-sm">
+                                  <span className="font-semibold">Hourly Rate:</span>{' '}
+                                  {service.hourlyRate} USDC/hr
+                                </div>
+                              )}
                             </div>
                           </div>
                           <div className="mt-4 flex flex-wrap gap-2">

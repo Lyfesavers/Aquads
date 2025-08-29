@@ -63,6 +63,11 @@ const serviceSchema = new mongoose.Schema({
     required: true,
     min: 0
   },
+  hourlyRate: {
+    type: Number,
+    min: 0,
+    default: null
+  },
   currency: {
     type: String,
     required: true,

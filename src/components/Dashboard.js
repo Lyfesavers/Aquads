@@ -3065,6 +3065,11 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                                    <p className="text-sm text-gray-400 mb-2">
                                      Price: <span className="text-green-400 font-medium">${service.price} {service.currency}</span>
                                    </p>
+                                   {service.hourlyRate && (
+                                     <p className="text-sm text-gray-400 mb-2">
+                                       Hourly Rate: <span className="text-orange-400 font-medium">${service.hourlyRate} {service.currency}/hr</span>
+                                     </p>
+                                   )}
                                    <p className="text-sm text-gray-400 mb-2">
                                      Delivery: <span className="text-gray-300">{service.deliveryTime}</span>
                                    </p>

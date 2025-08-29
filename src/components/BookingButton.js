@@ -80,6 +80,9 @@ const BookingButton = ({ service, currentUser, onBookingCreate, showNotification
                 <h3 className="font-semibold mb-2">Service Details</h3>
                 <p className="text-gray-300">{service.title}</p>
                 <p className="text-gray-300">Price: {service.price} {service.currency}</p>
+                {service.hourlyRate && (
+                  <p className="text-gray-300">Hourly Rate: {service.hourlyRate} {service.currency}/hr</p>
+                )}
               </div>
               
               <div>
