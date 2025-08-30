@@ -17,6 +17,7 @@ const HorseRacing = ({ currentUser }) => {
   const [gameHistory, setGameHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showResultModal, setShowResultModal] = useState(false);
   
 
 
@@ -114,7 +115,6 @@ const HorseRacing = ({ currentUser }) => {
       
       if (!response.ok) {
         // If horse racing history endpoint not available yet, just skip history loading
-        console.log('Horse racing history endpoint not available yet - this is normal during deployment');
         setGameHistory([]);
         return;
       }
@@ -122,7 +122,6 @@ const HorseRacing = ({ currentUser }) => {
       const data = await response.json();
       setGameHistory(data.history || []);
     } catch (error) {
-      console.log('History loading skipped - endpoint not deployed yet:', error.message);
       setGameHistory([]);
     }
   };
@@ -151,14 +150,11 @@ const HorseRacing = ({ currentUser }) => {
 
   // Place bet using backend API
   const placeBet = async () => {
-    console.log('placeBet called', { currentBet, currentUser });
-    
     if (!currentBet || !currentUser || currentBet.amount < 10) {
       alert('Invalid bet amount! Minimum bet is 10 points.');
       return;
     }
 
-    console.log('Bet is valid, calling backend API');
     setLoading(true);
     
     try {
@@ -182,7 +178,6 @@ const HorseRacing = ({ currentUser }) => {
       }
 
       const results = await response.json();
-      console.log('Backend response:', results);
 
       // Update user points from backend response
       setUserPoints(results.newBalance);
@@ -202,7 +197,6 @@ const HorseRacing = ({ currentUser }) => {
 
       // Show race animation
       setTimeout(() => {
-        console.log('Starting race animation with backend results');
         animateRaceWithResults(raceResults);
       }, 500);
 
@@ -217,20 +211,10 @@ const HorseRacing = ({ currentUser }) => {
   // Start race
   const startRace = (forcedCurrentBet = null) => {
     const bet = forcedCurrentBet || currentBet;
-    console.log('startRace called', { 
-      bet, 
-      raceInProgress, 
-      condition1: !bet,
-      condition2: !bet?.placed,
-      condition3: raceInProgress
-    });
     
     if (!bet || !bet.placed || raceInProgress) {
-      console.log('startRace blocked by conditions');
       return;
     }
-    
-    console.log('Starting race...');
     
     setRaceInProgress(true);
     setRaceFinished(false);
@@ -238,7 +222,6 @@ const HorseRacing = ({ currentUser }) => {
     
     // Race countdown
     setTimeout(() => {
-      console.log('Running race after countdown');
       runRace();
     }, 3000);
   };
@@ -294,8 +277,6 @@ const HorseRacing = ({ currentUser }) => {
 
   // Animate race with backend results (simpler version)
   const animateRaceWithResults = (results) => {
-    console.log('Starting race animation with results:', results);
-    
     setRaceInProgress(true);
     setRaceFinished(false);
     setRaceResults(results);
@@ -337,6 +318,11 @@ const HorseRacing = ({ currentUser }) => {
           setRaceInProgress(false);
           setRaceFinished(true);
           
+          // Show result modal after a brief delay
+          setTimeout(() => {
+            setShowResultModal(true);
+          }, 1000);
+          
           // Update after race
           updateAfterRace();
         }
@@ -358,7 +344,6 @@ const HorseRacing = ({ currentUser }) => {
 
   // Run the race with house edge algorithm
   const runRace = () => {
-    console.log('runRace started');
     const raceInterval = setInterval(() => {
       setHorses(prevHorses => {
         const updatedHorses = prevHorses.map(horse => {
@@ -448,6 +433,7 @@ const HorseRacing = ({ currentUser }) => {
     setRaceFinished(false);
     setRaceResults(null);
     setError(null);
+    setShowResultModal(false);
     hasSubmittedRef.current = false;
     initializeHorses();
   };
@@ -465,6 +451,95 @@ const HorseRacing = ({ currentUser }) => {
       '#4169E1': '#191970'
     };
     return colorMap[color] || color;
+  };
+
+  // Result Modal Component
+  const ResultModal = () => {
+    if (!showResultModal || !raceResults) return null;
+
+    const { won, payout, betAmount, winner, playerHorse } = raceResults;
+    const netGain = won ? payout - betAmount : -betAmount;
+
+    return (
+      <div 
+        className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 transition-opacity duration-300"
+        style={{ animation: 'fadeIn 0.3s ease-out' }}
+      >
+        <div 
+          className={`bg-gradient-to-br ${won ? 'from-green-800 to-green-900' : 'from-red-800 to-red-900'} p-8 rounded-2xl border-2 ${won ? 'border-green-400' : 'border-red-400'} max-w-md w-full mx-4 transform transition-all duration-400`}
+          style={{ 
+            animation: 'slideUp 0.4s ease-out',
+            animationFillMode: 'both'
+          }}
+        >
+          {/* Header */}
+          <div className="text-center mb-6">
+            <div className={`text-6xl mb-4 animate-bounce`}>
+              {won ? '🏆' : '😔'}
+            </div>
+            <h2 className={`text-3xl font-bold ${won ? 'text-green-100' : 'text-red-100'} mb-2`}>
+              {won ? 'WINNER!' : 'BETTER LUCK NEXT TIME!'}
+            </h2>
+            <div className={`text-lg ${won ? 'text-green-200' : 'text-red-200'}`}>
+              {won ? `${winner.name} won the race!` : `${winner.name} won, but you bet on ${playerHorse.name}`}
+            </div>
+          </div>
+
+          {/* Race Results */}
+          <div className="bg-black bg-opacity-30 rounded-lg p-4 mb-6">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <div className="text-gray-300">Your Horse:</div>
+                <div className="font-semibold text-white">{playerHorse.name}</div>
+              </div>
+              <div>
+                <div className="text-gray-300">Winner:</div>
+                <div className="font-semibold text-white">{winner.name}</div>
+              </div>
+              <div>
+                <div className="text-gray-300">Your Bet:</div>
+                <div className="font-semibold text-white">{betAmount} points</div>
+              </div>
+              <div>
+                <div className="text-gray-300">Odds:</div>
+                <div className="font-semibold text-white">{playerHorse.odds.toFixed(1)}:1</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Payout Information */}
+          <div className="text-center mb-6">
+            <div className={`text-2xl font-bold ${netGain >= 0 ? 'text-green-300' : 'text-red-300'} mb-2`}>
+              {netGain >= 0 ? '+' : ''}{netGain} points
+            </div>
+            {won && (
+              <div className="text-sm text-green-200">
+                Payout: {payout} points
+              </div>
+            )}
+            <div className="text-sm text-gray-300 mt-2">
+              New Balance: {userPoints} points
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowResultModal(false)}
+              className="flex-1 bg-gray-600 hover:bg-gray-500 text-white py-3 px-4 rounded-lg font-semibold transition-colors"
+            >
+              Continue
+            </button>
+            <button
+              onClick={newRace}
+              className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-3 px-4 rounded-lg font-semibold transition-colors"
+            >
+              New Race
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   if (!currentUser) {
@@ -516,6 +591,29 @@ const HorseRacing = ({ currentUser }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
+      {/* Animation styles */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+          @keyframes slideUp {
+            from { 
+              opacity: 0;
+              transform: translateY(50px) scale(0.9);
+            }
+            to { 
+              opacity: 1;
+              transform: translateY(0) scale(1);
+            }
+          }
+        `
+      }} />
+      
+      {/* Result Modal */}
+      <ResultModal />
+      
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
