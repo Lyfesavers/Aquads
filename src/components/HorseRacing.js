@@ -145,8 +145,7 @@ const HorseRacing = ({ currentUser }) => {
       return;
     }
 
-    // Deduct bet amount immediately
-    setUserPoints(prev => prev - currentBet.amount);
+    // Just mark bet as placed - server will handle points
     setCurrentBet(prev => ({ ...prev, placed: true }));
     
     // Start the race
@@ -289,7 +288,7 @@ const HorseRacing = ({ currentUser }) => {
     let payout = 0;
     if (won) {
       payout = Math.round(currentBet.amount * winner.odds);
-      setUserPoints(prev => prev + payout);
+      // Don't modify points locally - server controls this
     }
     
     const results = {
@@ -319,6 +318,9 @@ const HorseRacing = ({ currentUser }) => {
         
         // Reload game history to show the new result
         loadGameHistory();
+        
+        // Reload user points from server (like DotsAndBoxes does)
+        loadUserPoints();
       } catch (error) {
         console.error('Failed to submit race result:', error);
       }
