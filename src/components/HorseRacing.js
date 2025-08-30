@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { fetchMyPoints, socket, getLeaderboard, submitLeaderboard } from '../services/api';
+import { fetchMyPoints, socket } from '../services/api';
 
 // Horse data for local generation (until backend is deployed)
 const HORSE_DATA = [
@@ -94,27 +94,18 @@ const HorseRacing = ({ currentUser }) => {
     }
   };
 
-  // Submit game result to backend securely
-  const submitGameResult = async (results) => {
+  // No need to submit to leaderboard - horse racing API already handles all point management
+  const updateAfterRace = async () => {
     try {
-      // Use the same format as DotsAndBoxes
-      await submitLeaderboard('horse-racing', {
-        result: results.won ? 'Win' : 'Loss',
-        you: results.won ? results.payout : 0,
-        ai: 0,
-        difficulty: `${results.winner.name} (${results.winner.odds}:1)`,
-        grid: `Bet: ${results.betAmount} pts`
-      });
-      
-      // Reload points from server after game
+      // Just reload points and history from server
       loadUserPoints();
       loadGameHistory();
     } catch (error) {
-      console.error('Failed to submit game result:', error);
+      console.error('Failed to update after race:', error);
     }
   };
 
-  // Load game history from leaderboard
+  // Load game history from horse racing API
   const loadGameHistory = async () => {
     if (!currentUser) {
       setGameHistory([]);
@@ -122,12 +113,19 @@ const HorseRacing = ({ currentUser }) => {
     }
     
     try {
-      const leaderboard = await getLeaderboard('horse-racing', { limit: 10 });
-      // Filter to current user's games
-      const userGames = leaderboard.filter(entry => 
-        entry.username === currentUser.username
-      );
-      setGameHistory(userGames);
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/horse-racing/history?limit=10`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch history: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setGameHistory(data.history || []);
     } catch (error) {
       console.error('Failed to load game history:', error);
       setGameHistory([]);
@@ -348,10 +346,10 @@ const HorseRacing = ({ currentUser }) => {
     
     setRaceResults(results);
     
-    // Submit to leaderboard - backend handles points securely
+    // Update points and history after race - backend already handled all transactions
     if (!hasSubmittedRef.current && currentUser) {
       hasSubmittedRef.current = true;
-      submitGameResult(results);
+      updateAfterRace();
     }
   };
 
