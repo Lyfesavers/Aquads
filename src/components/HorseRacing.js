@@ -159,11 +159,15 @@ const HorseRacing = ({ currentUser }) => {
 
   // Place bet - just mark as placed, no point manipulation
   const placeBet = () => {
+    console.log('placeBet called', { currentBet, currentUser });
+    
     if (!currentBet || !currentUser || currentBet.amount < 10) {
       alert('Invalid bet amount! Minimum bet is 10 points.');
       return;
     }
 
+    console.log('Bet is valid, placing bet and starting race');
+    
     // Just mark bet as placed - no client-side point changes
     setCurrentBet(prev => ({ ...prev, placed: true }));
     
@@ -259,7 +263,7 @@ const HorseRacing = ({ currentUser }) => {
           }
           
           // Random speed variation with house edge applied
-          const randomSpeed = (Math.random() * 0.5 + 0.75) * horse.baseSpeed * speedMultiplier;
+          const randomSpeed = (Math.random() * 0.5 + 0.75) * horse.speed * speedMultiplier;
           const newPosition = horse.position + randomSpeed;
           
           // Check if horse finished
@@ -623,7 +627,7 @@ const HorseRacing = ({ currentUser }) => {
               {currentBet && !currentBet.placed && !raceResults && (
                 <button
                   onClick={placeBet}
-                  disabled={!currentBet.amount || currentBet.amount < 10 || currentBet.amount > userPoints || loading}
+                  disabled={!currentBet.amount || currentBet.amount < 10 || loading}
                   className="w-full py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-gray-600 disabled:cursor-not-allowed rounded font-semibold transition-colors"
                 >
                   {loading ? 'Placing Bet...' : `Place Bet & Run Race (${currentBet.amount || 0} points)`}
