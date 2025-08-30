@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { fetchMyPoints, socket, getLeaderboard } from '../services/api';
+import { fetchMyPoints, socket, getLeaderboard, submitLeaderboard } from '../services/api';
 
 // Horse data for local generation (until backend is deployed)
 const HORSE_DATA = [
@@ -94,10 +94,45 @@ const HorseRacing = ({ currentUser }) => {
     }
   };
 
-  // Load game history - simplified for now
+  // Submit game result to backend securely
+  const submitGameResult = async (results) => {
+    try {
+      await submitLeaderboard('horse-racing', {
+        result: results.won ? 'Win' : 'Loss',
+        you: results.won ? results.payout : 0,
+        ai: 0,
+        betAmount: results.betAmount,
+        horseName: results.winner.name,
+        odds: results.winner.odds,
+        horseId: results.winner.id
+      });
+      
+      // Reload points from server after game
+      loadUserPoints();
+      loadGameHistory();
+    } catch (error) {
+      console.error('Failed to submit game result:', error);
+    }
+  };
+
+  // Load game history from leaderboard
   const loadGameHistory = async () => {
-    // For now, just set empty history until backend is deployed
-    setGameHistory([]);
+    if (!currentUser) {
+      setGameHistory([]);
+      return;
+    }
+    
+    try {
+      const leaderboard = await getLeaderboard('horse-racing', { limit: 10 });
+      // Filter to current user's games
+      const userGames = leaderboard.filter(entry => 
+        entry.username === currentUser.username
+      );
+      setGameHistory(userGames);
+    } catch (error) {
+      console.error('Failed to load game history:', error);
+      setGameHistory([]);
+    }
   };
 
   // Select a horse for betting
@@ -122,16 +157,14 @@ const HorseRacing = ({ currentUser }) => {
     }));
   };
 
-  // Place bet (local for now until backend deployed)
+  // Place bet - just mark as placed, no point manipulation
   const placeBet = () => {
-    if (!currentBet || !currentUser || currentBet.amount < 10 || currentBet.amount > userPoints) {
+    if (!currentBet || !currentUser || currentBet.amount < 10) {
       alert('Invalid bet amount! Minimum bet is 10 points.');
       return;
     }
 
-    // For now: local validation and game logic
-    // TODO: Replace with backend API when deployed
-    setUserPoints(prev => prev - currentBet.amount);
+    // Just mark bet as placed - no client-side point changes
     setCurrentBet(prev => ({ ...prev, placed: true }));
     
     // Start the race
@@ -274,7 +307,7 @@ const HorseRacing = ({ currentUser }) => {
     let payout = 0;
     if (won) {
       payout = Math.round(currentBet.amount * winner.odds);
-      setUserPoints(prev => prev + payout);
+      // NO client-side point manipulation
     }
     
     const results = {
@@ -288,7 +321,11 @@ const HorseRacing = ({ currentUser }) => {
     
     setRaceResults(results);
     
-    // Results already handled by server in placeBet()
+    // Submit to leaderboard - backend handles points securely
+    if (!hasSubmittedRef.current && currentUser) {
+      hasSubmittedRef.current = true;
+      submitGameResult(results);
+    }
   };
 
   // Start new race
