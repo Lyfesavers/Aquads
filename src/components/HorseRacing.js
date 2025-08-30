@@ -1,56 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { fetchMyPoints, socket } from '../services/api';
+import { fetchMyPoints, socket, getLeaderboard } from '../services/api';
 
-// API functions for horse racing - using existing secure backend
-const horseRacingAPI = {
-  getRaceData: async (currentUser) => {
-    const token = currentUser?.token;
-    if (!token) throw new Error('Authentication required');
-    
-    const response = await fetch(`${process.env.REACT_APP_API_URL}/api/horse-racing/race-data`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Race data API error:', response.status, errorText);
-      throw new Error(`Failed to get race data: ${response.status}`);
-    }
-    
-    return response.json();
-  },
-  
-  placeBet: async (horseId, betAmount, horses, currentUser) => {
-    const token = currentUser?.token;
-    if (!token) throw new Error('Authentication required');
-    
-    const response = await fetch(`${process.env.REACT_APP_API_URL}/api/horse-racing/place-bet`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ horseId, betAmount, horses })
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Place bet API error:', response.status, errorText);
-      
-      // Try to parse as JSON first, fallback to text
-      try {
-        const errorData = JSON.parse(errorText);
-        throw new Error(errorData.error || `Failed to place bet: ${response.status}`);
-      } catch {
-        throw new Error(`Failed to place bet: ${response.status}`);
-      }
-    }
-    
-    return response.json();
-  }
+// Horse data for local generation (until backend is deployed)
+const HORSE_DATA = [
+  { id: 0, name: "Thunder Bolt", color: "#8B4513", baseOdds: 3.5, baseSpeed: 0.8 },
+  { id: 1, name: "Lightning Flash", color: "#000000", baseOdds: 4.2, baseSpeed: 0.75 },
+  { id: 2, name: "Midnight Runner", color: "#483D8B", baseOdds: 5.1, baseSpeed: 0.7 },
+  { id: 3, name: "Golden Arrow", color: "#FFD700", baseOdds: 2.8, baseSpeed: 0.85 },
+  { id: 4, name: "Fire Storm", color: "#DC143C", baseOdds: 6.2, baseSpeed: 0.65 },
+  { id: 5, name: "Silver Wind", color: "#C0C0C0", baseOdds: 4.8, baseSpeed: 0.72 },
+  { id: 6, name: "Emerald Star", color: "#50C878", baseOdds: 5.5, baseSpeed: 0.68 },
+  { id: 7, name: "Royal Blue", color: "#4169E1", baseOdds: 3.9, baseSpeed: 0.78 }
+];
+
+// Generate race data with slight variations and house edge
+const generateRaceData = () => {
+  return HORSE_DATA.map(horse => ({
+    ...horse,
+    odds: parseFloat((horse.baseOdds + (Math.random() - 0.5) * 0.8).toFixed(1)),
+    speed: horse.baseSpeed + (Math.random() - 0.5) * 0.1
+  }));
 };
 
 // Horse Racing Game - Aquads Game Hub
@@ -97,7 +66,7 @@ const HorseRacing = ({ currentUser }) => {
   };
 
   // Initialize horses for a new race
-  const initializeHorses = async () => {
+  const initializeHorses = () => {
     if (!currentUser) {
       setHorses([]);
       return;
@@ -107,8 +76,8 @@ const HorseRacing = ({ currentUser }) => {
     setError(null);
     
     try {
-      const raceData = await horseRacingAPI.getRaceData(currentUser);
-      const raceHorses = raceData.horses.map(horse => ({
+      const raceData = generateRaceData();
+      const raceHorses = raceData.map(horse => ({
         ...horse,
         position: 0,
         lane: horse.id,
@@ -118,33 +87,17 @@ const HorseRacing = ({ currentUser }) => {
       setHorses(raceHorses);
     } catch (error) {
       console.error('Failed to initialize horses:', error);
-      setError('Failed to load race data. Please check your connection and try again.');
+      setError('Failed to load race data. Please try again.');
       setHorses([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Load game history using existing leaderboard API
+  // Load game history - simplified for now
   const loadGameHistory = async () => {
-    if (!currentUser) {
-      setGameHistory([]);
-      return;
-    }
-    
-    try {
-      const leaderboard = await getLeaderboard('horse-racing', { limit: 10 });
-      // Filter to current user's games if possible
-      const userGames = leaderboard.filter(entry => 
-        entry.username === currentUser.username || 
-        entry.userId === currentUser.id || 
-        entry.userId === currentUser._id
-      );
-      setGameHistory(userGames);
-    } catch (error) {
-      console.error('Failed to load game history:', error);
-      setGameHistory([]);
-    }
+    // For now, just set empty history until backend is deployed
+    setGameHistory([]);
   };
 
   // Select a horse for betting
@@ -169,47 +122,20 @@ const HorseRacing = ({ currentUser }) => {
     }));
   };
 
-  // Place bet using secure backend
-  const placeBet = async () => {
-    if (!currentBet || !currentUser || currentBet.amount < 10) {
+  // Place bet (local for now until backend deployed)
+  const placeBet = () => {
+    if (!currentBet || !currentUser || currentBet.amount < 10 || currentBet.amount > userPoints) {
       alert('Invalid bet amount! Minimum bet is 10 points.');
       return;
     }
 
-    setLoading(true);
-    try {
-      const response = await horseRacingAPI.placeBet(currentBet.horseId, currentBet.amount, horses, currentUser);
-      
-      // Update game state with server response
-      setUserPoints(response.newBalance);
-      setCurrentBet(prev => ({ ...prev, placed: true }));
-      
-      // Store race results for immediate display
-      setRaceResults({
-        winner: response.winner,
-        playerHorse: response.playerHorse,
-        won: response.won,
-        betAmount: response.betAmount,
-        payout: response.payout,
-        sortedHorses: response.raceResults,
-        serverControlled: true
-      });
-      
-      // Update horses with final positions
-      const finalHorses = response.raceResults.map(horse => ({
-        ...horse,
-        position: 100,
-        finished: true
-      }));
-      setHorses(finalHorses);
-      setRaceFinished(true);
-      
-    } catch (error) {
-      console.error('Failed to place bet:', error);
-      alert(error.message || 'Failed to place bet. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+    // For now: local validation and game logic
+    // TODO: Replace with backend API when deployed
+    setUserPoints(prev => prev - currentBet.amount);
+    setCurrentBet(prev => ({ ...prev, placed: true }));
+    
+    // Start the race
+    startRace();
   };
 
   // Start race
@@ -348,7 +274,7 @@ const HorseRacing = ({ currentUser }) => {
     let payout = 0;
     if (won) {
       payout = Math.round(currentBet.amount * winner.odds);
-      // Don't modify points locally - server controls this
+      setUserPoints(prev => prev + payout);
     }
     
     const results = {
