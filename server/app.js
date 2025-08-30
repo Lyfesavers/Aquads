@@ -23,7 +23,7 @@ const notificationsRoutes = require('./routes/notifications');
 const gamesRoutes = require('./routes/games');
 const adminRoutes = require('./routes/admin');
 const leaderboardRoutes = require('./routes/leaderboard');
-const horseRacingRoutes = require('./routes/horse-racing');
+
 
 // Middleware
 const app = express();
@@ -397,7 +397,6 @@ app.use('/api/notifications', notificationsRoutes);
 app.use('/api/games', gamesRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
-app.use('/api/horse-racing', horseRacingRoutes);
 
 
 // Test route to verify API is working

@@ -1,26 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { fetchMyPoints, socket } from '../services/api';
 
-// Horse data for local generation (until backend is deployed)
-const HORSE_DATA = [
-  { id: 0, name: "Thunder Bolt", color: "#8B4513", baseOdds: 3.5, baseSpeed: 0.8 },
-  { id: 1, name: "Lightning Flash", color: "#000000", baseOdds: 4.2, baseSpeed: 0.75 },
-  { id: 2, name: "Midnight Runner", color: "#483D8B", baseOdds: 5.1, baseSpeed: 0.7 },
-  { id: 3, name: "Golden Arrow", color: "#FFD700", baseOdds: 2.8, baseSpeed: 0.85 },
-  { id: 4, name: "Fire Storm", color: "#DC143C", baseOdds: 6.2, baseSpeed: 0.65 },
-  { id: 5, name: "Silver Wind", color: "#C0C0C0", baseOdds: 4.8, baseSpeed: 0.72 },
-  { id: 6, name: "Emerald Star", color: "#50C878", baseOdds: 5.5, baseSpeed: 0.68 },
-  { id: 7, name: "Royal Blue", color: "#4169E1", baseOdds: 3.9, baseSpeed: 0.78 }
-];
 
-// Generate race data with slight variations and house edge
-const generateRaceData = () => {
-  return HORSE_DATA.map(horse => ({
-    ...horse,
-    odds: parseFloat((horse.baseOdds + (Math.random() - 0.5) * 0.8).toFixed(1)),
-    speed: horse.baseSpeed + (Math.random() - 0.5) * 0.1
-  }));
-};
 
 // Horse Racing Game - Aquads Game Hub
 // A betting game where users can bet affiliate points on horse races
@@ -65,8 +46,8 @@ const HorseRacing = ({ currentUser }) => {
     }
   };
 
-  // Initialize horses for a new race
-  const initializeHorses = () => {
+  // Initialize horses for a new race from backend
+  const initializeHorses = async () => {
     if (!currentUser) {
       setHorses([]);
       return;
@@ -76,8 +57,19 @@ const HorseRacing = ({ currentUser }) => {
     setError(null);
     
     try {
-      const raceData = generateRaceData();
-      const raceHorses = raceData.map(horse => ({
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/horse-racing/race-data`, {
+        headers: {
+          'Authorization': `Bearer ${currentUser.token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to load race data: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const raceHorses = data.horses.map(horse => ({
         ...horse,
         position: 0,
         lane: horse.id,
