@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { fetchMyPoints, socket } from '../services/api';
 
-// Get API URL - same pattern as other components
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+// Use the same pattern as Dashboard and other working components
 
 // API functions for horse racing
 const horseRacingAPI = {
@@ -10,7 +9,7 @@ const horseRacingAPI = {
     const token = currentUser?.token;
     if (!token) throw new Error('Authentication required');
     
-    const response = await fetch(`${API_URL}/horse-racing/race-data`, {
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/api/horse-racing/race-data`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -30,7 +29,7 @@ const horseRacingAPI = {
     const token = currentUser?.token;
     if (!token) throw new Error('Authentication required');
     
-    const response = await fetch(`${API_URL}/horse-racing/place-bet`, {
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/api/horse-racing/place-bet`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -59,7 +58,7 @@ const horseRacingAPI = {
     const token = currentUser?.token;
     if (!token) throw new Error('Authentication required');
     
-    const response = await fetch(`${API_URL}/horse-racing/history?page=${page}&limit=${limit}`, {
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/api/horse-racing/history?page=${page}&limit=${limit}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -70,7 +69,7 @@ const horseRacingAPI = {
   },
   
   getLeaderboard: async (timeframe = 'all', limit = 10) => {
-    const response = await fetch(`${API_URL}/horse-racing/leaderboard?timeframe=${timeframe}&limit=${limit}`);
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/api/horse-racing/leaderboard?timeframe=${timeframe}&limit=${limit}`);
     if (!response.ok) throw new Error('Failed to get leaderboard');
     return response.json();
   }
