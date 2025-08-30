@@ -3,8 +3,8 @@ import { fetchMyPoints, socket } from '../services/api';
 
 // API functions for horse racing
 const horseRacingAPI = {
-  getRaceData: async () => {
-    const token = localStorage.getItem('token');
+  getRaceData: async (currentUser) => {
+    const token = currentUser?.token;
     if (!token) throw new Error('Authentication required');
     
     const response = await fetch('/api/horse-racing/race-data', {
@@ -23,8 +23,8 @@ const horseRacingAPI = {
     return response.json();
   },
   
-  placeBet: async (horseId, betAmount, horses) => {
-    const token = localStorage.getItem('token');
+  placeBet: async (horseId, betAmount, horses, currentUser) => {
+    const token = currentUser?.token;
     if (!token) throw new Error('Authentication required');
     
     const response = await fetch('/api/horse-racing/place-bet', {
@@ -52,10 +52,13 @@ const horseRacingAPI = {
     return response.json();
   },
   
-  getHistory: async (page = 1, limit = 10) => {
+  getHistory: async (page = 1, limit = 10, currentUser) => {
+    const token = currentUser?.token;
+    if (!token) throw new Error('Authentication required');
+    
     const response = await fetch(`/api/horse-racing/history?page=${page}&limit=${limit}`, {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     });
@@ -124,7 +127,7 @@ const HorseRacing = ({ currentUser }) => {
     setError(null);
     
     try {
-      const raceData = await horseRacingAPI.getRaceData();
+      const raceData = await horseRacingAPI.getRaceData(currentUser);
       const raceHorses = raceData.horses.map(horse => ({
         ...horse,
         position: 0,
@@ -179,7 +182,7 @@ const HorseRacing = ({ currentUser }) => {
 
     setLoading(true);
     try {
-      const response = await horseRacingAPI.placeBet(currentBet.horseId, currentBet.amount, horses);
+      const response = await horseRacingAPI.placeBet(currentBet.horseId, currentBet.amount, horses, currentUser);
       
       // Update game state with server response
       setUserPoints(response.newBalance);
