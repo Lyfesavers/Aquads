@@ -860,26 +860,7 @@ const HorseRacing = ({ currentUser }) => {
               )}
             </div>
 
-            {/* Race Results */}
-            {raceResults && (
-              <div className="mt-4 p-4 bg-gray-800 rounded-lg">
-                <h4 className="font-bold mb-2">🏆 Race Results</h4>
-                <div className="mb-2">
-                  <div className="text-sm">Winner: #{raceResults.winner.id + 1} {raceResults.winner.name}</div>
-                  <div className="text-sm">Your Horse: #{raceResults.playerHorse.id + 1} {raceResults.playerHorse.name}</div>
-                </div>
-                
-                {raceResults.won ? (
-                  <div className="text-green-400 font-semibold">
-                    🎉 You Won! Payout: {raceResults.payout} affiliate points
-                  </div>
-                ) : (
-                  <div className="text-red-400">
-                    😞 Better luck next time! Lost: {raceResults.betAmount} affiliate points
-                  </div>
-                )}
-              </div>
-            )}
+
 
             {/* Game Instructions */}
             <div className="mt-4 p-3 bg-gray-800/50 rounded text-xs text-gray-400">
