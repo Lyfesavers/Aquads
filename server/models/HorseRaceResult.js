@@ -1,9 +1,10 @@
 const mongoose = require('mongoose');
+const { Schema } = mongoose;
 
-const horseRaceResultSchema = new mongoose.Schema({
+const horseRaceResultSchema = new Schema({
   // User information
   userId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: Schema.Types.ObjectId,
     ref: 'User',
     required: true,
     index: true
@@ -96,7 +97,7 @@ horseRaceResultSchema.virtual('netProfit').get(function() {
 // Static method to get user statistics
 horseRaceResultSchema.statics.getUserStats = async function(userId) {
   const stats = await this.aggregate([
-    { $match: { userId: mongoose.Types.ObjectId(userId) } },
+    { $match: { userId: new mongoose.Types.ObjectId(userId) } },
     {
       $group: {
         _id: null,

@@ -388,6 +388,10 @@ app.use('/api/bookings', bookingsRoutes);
 app.use('/api/affiliates', affiliateRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/blogs', blogsRoutes);
+app.use('/api/ads', adsRoutes);
+app.use('/api/bumps', bumpRoutes);
+app.use('/api/tokens', tokensRoutes);
+app.use('/api/reviews', reviewsRoutes);
 // app.use('/api/sitemap', sitemapRoutes); // Disabled - using static sitemap
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/games', gamesRoutes);

@@ -4,29 +4,51 @@ import { fetchMyPoints, socket } from '../services/api';
 // API functions for horse racing
 const horseRacingAPI = {
   getRaceData: async () => {
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('Authentication required');
+    
     const response = await fetch('/api/horse-racing/race-data', {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     });
-    if (!response.ok) throw new Error('Failed to get race data');
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Race data API error:', response.status, errorText);
+      throw new Error(`Failed to get race data: ${response.status}`);
+    }
+    
     return response.json();
   },
   
   placeBet: async (horseId, betAmount, horses) => {
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('Authentication required');
+    
     const response = await fetch('/api/horse-racing/place-bet', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ horseId, betAmount, horses })
     });
+    
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to place bet');
+      const errorText = await response.text();
+      console.error('Place bet API error:', response.status, errorText);
+      
+      // Try to parse as JSON first, fallback to text
+      try {
+        const errorData = JSON.parse(errorText);
+        throw new Error(errorData.error || `Failed to place bet: ${response.status}`);
+      } catch {
+        throw new Error(`Failed to place bet: ${response.status}`);
+      }
     }
+    
     return response.json();
   },
   
@@ -61,18 +83,9 @@ const HorseRacing = ({ currentUser }) => {
   const [raceResults, setRaceResults] = useState(null);
   const [gameHistory, setGameHistory] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   
-  // Horse data with names, colors, and odds
-  const horseData = [
-    { name: "Thunder Bolt", color: "#8B4513", baseOdds: 3.5, baseSpeed: 0.8 },
-    { name: "Lightning Flash", color: "#000000", baseOdds: 4.2, baseSpeed: 0.75 },
-    { name: "Midnight Runner", color: "#483D8B", baseOdds: 5.1, baseSpeed: 0.7 },
-    { name: "Golden Arrow", color: "#FFD700", baseOdds: 2.8, baseSpeed: 0.85 },
-    { name: "Fire Storm", color: "#DC143C", baseOdds: 6.2, baseSpeed: 0.65 },
-    { name: "Silver Wind", color: "#C0C0C0", baseOdds: 4.8, baseSpeed: 0.72 },
-    { name: "Emerald Star", color: "#50C878", baseOdds: 5.5, baseSpeed: 0.68 },
-    { name: "Royal Blue", color: "#4169E1", baseOdds: 3.9, baseSpeed: 0.78 }
-  ];
+
 
   const raceTrackRef = useRef(null);
   const hasSubmittedRef = useRef(false);
@@ -102,43 +115,30 @@ const HorseRacing = ({ currentUser }) => {
 
   // Initialize horses for a new race
   const initializeHorses = async () => {
+    if (!currentUser) {
+      setHorses([]);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    
     try {
-      if (currentUser) {
-        const raceData = await horseRacingAPI.getRaceData();
-        const raceHorses = raceData.horses.map(horse => ({
-          ...horse,
-          position: 0,
-          lane: horse.id,
-          finished: false,
-          finishTime: null
-        }));
-        setHorses(raceHorses);
-      } else {
-        // Fallback for non-logged users (display only)
-        const raceHorses = horseData.map((horse, index) => ({
-          id: index,
-          ...horse,
-          position: 0,
-          lane: index,
-          finished: false,
-          finishTime: null,
-          odds: horse.baseOdds + (Math.random() - 0.5) * 0.5
-        }));
-        setHorses(raceHorses);
-      }
-    } catch (error) {
-      console.error('Failed to initialize horses:', error);
-      // Fallback to local data
-      const raceHorses = horseData.map((horse, index) => ({
-        id: index,
+      const raceData = await horseRacingAPI.getRaceData();
+      const raceHorses = raceData.horses.map(horse => ({
         ...horse,
         position: 0,
-        lane: index,
+        lane: horse.id,
         finished: false,
-        finishTime: null,
-        odds: horse.baseOdds + (Math.random() - 0.5) * 0.5
+        finishTime: null
       }));
       setHorses(raceHorses);
+    } catch (error) {
+      console.error('Failed to initialize horses:', error);
+      setError('Failed to load race data. Please check your connection and try again.');
+      setHorses([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -170,7 +170,7 @@ const HorseRacing = ({ currentUser }) => {
     }));
   };
 
-  // Place bet using backend API
+  // Place bet using backend API (strict server-side only)
   const placeBet = async () => {
     if (!currentBet || !currentUser || currentBet.amount < 10 || currentBet.amount > userPoints) {
       alert('Invalid bet amount! Minimum bet is 10 points.');
@@ -385,6 +385,7 @@ const HorseRacing = ({ currentUser }) => {
     setRaceInProgress(false);
     setRaceFinished(false);
     setRaceResults(null);
+    setError(null);
     hasSubmittedRef.current = false;
     initializeHorses();
   };
@@ -413,6 +414,39 @@ const HorseRacing = ({ currentUser }) => {
           <div className="text-sm text-gray-400">
             You need an account to use affiliate points for betting.
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white flex items-center justify-center">
+        <div className="text-center p-8 bg-gray-800 rounded-xl border border-red-500">
+          <h2 className="text-2xl font-bold mb-4 text-red-400">🐎 Horse Racing</h2>
+          <p className="text-gray-300 mb-6">{error}</p>
+          <button
+            onClick={() => {
+              setError(null);
+              initializeHorses();
+            }}
+            disabled={loading}
+            className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 px-4 py-2 rounded font-semibold transition-colors"
+          >
+            {loading ? 'Loading...' : 'Try Again'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading && horses.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white flex items-center justify-center">
+        <div className="text-center p-8 bg-gray-800 rounded-xl border border-gray-700">
+          <h2 className="text-2xl font-bold mb-4">🐎 Horse Racing</h2>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-300">Loading race data...</p>
         </div>
       </div>
     );
@@ -553,33 +587,41 @@ const HorseRacing = ({ currentUser }) => {
             <div className="mb-4">
               <h4 className="text-sm font-semibold mb-2">Select Horse:</h4>
               <div className="space-y-2 max-h-40 overflow-y-auto">
-                {horses.map(horse => (
-                  <div
-                    key={horse.id}
-                    onClick={() => selectHorse(horse.id)}
-                    className={`p-2 rounded cursor-pointer transition-all ${
-                      currentBet?.horseId === horse.id
-                        ? 'bg-amber-500/20 border border-amber-500'
-                        : 'bg-gray-800 hover:bg-gray-700'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div 
-                          className="w-4 h-4 rounded-full mr-2"
-                          style={{ backgroundColor: horse.color }}
-                        />
-                        <div>
-                          <div className="text-sm font-medium">#{horse.id + 1} {horse.name}</div>
-                          <div className="text-xs text-gray-400">Odds: {horse.odds.toFixed(1)}:1</div>
+                {horses.map(horse => {
+                  const potentialWin = currentBet?.amount ? Math.round(currentBet.amount * horse.odds) : 0;
+                  return (
+                    <div
+                      key={horse.id}
+                      onClick={() => selectHorse(horse.id)}
+                      className={`p-2 rounded cursor-pointer transition-all ${
+                        currentBet?.horseId === horse.id
+                          ? 'bg-amber-500/20 border border-amber-500'
+                          : 'bg-gray-800 hover:bg-gray-700'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div 
+                            className="w-4 h-4 rounded-full mr-2"
+                            style={{ backgroundColor: horse.color }}
+                          />
+                          <div>
+                            <div className="text-sm font-medium">#{horse.id + 1} {horse.name}</div>
+                            <div className="text-xs text-gray-400">Odds: {horse.odds.toFixed(1)}:1</div>
+                          </div>
+                        </div>
+                        <div className="text-xs text-amber-400 text-right">
+                          <div>Payout: {horse.odds.toFixed(1)}:1</div>
+                          {currentBet?.amount && currentBet.horseId === horse.id && (
+                            <div className="text-green-400 font-semibold">
+                              Win: {potentialWin} pts
+                            </div>
+                          )}
                         </div>
                       </div>
-                      <div className="text-xs text-amber-400">
-                        Win: ${Math.round(horse.odds * 100)}
-                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -597,6 +639,19 @@ const HorseRacing = ({ currentUser }) => {
                   className="w-full p-2 bg-gray-800 border border-gray-700 rounded text-white text-center"
                   disabled={raceInProgress || currentBet.placed}
                 />
+                
+                {/* Potential winnings display */}
+                {currentBet.amount && currentBet.amount >= 10 && (
+                  <div className="mt-2 p-2 bg-green-900/20 border border-green-500/50 rounded text-center">
+                    <div className="text-xs text-gray-400">Potential Winnings:</div>
+                    <div className="text-sm font-semibold text-green-400">
+                      {Math.round(currentBet.amount * (horses.find(h => h.id === currentBet.horseId)?.odds || 1))} affiliate points
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      ({(horses.find(h => h.id === currentBet.horseId)?.odds || 1).toFixed(1)}x your bet)
+                    </div>
+                  </div>
+                )}
                 
                 {/* Quick bet buttons */}
                 <div className="grid grid-cols-3 gap-2 mt-2">
@@ -656,11 +711,11 @@ const HorseRacing = ({ currentUser }) => {
                 
                 {raceResults.won ? (
                   <div className="text-green-400 font-semibold">
-                    🎉 You Won! Payout: {raceResults.payout} points
+                    🎉 You Won! Payout: {raceResults.payout} affiliate points
                   </div>
                 ) : (
                   <div className="text-red-400">
-                    😞 Better luck next time! Lost: {raceResults.betAmount} points
+                    😞 Better luck next time! Lost: {raceResults.betAmount} affiliate points
                   </div>
                 )}
               </div>
@@ -671,9 +726,10 @@ const HorseRacing = ({ currentUser }) => {
               <div className="font-semibold mb-1">How to Play:</div>
               <ul className="space-y-1">
                 <li>• Select a horse to bet on</li>
-                <li>• Choose your bet amount (min: 10 points)</li>
+                <li>• Choose your bet amount (min: 10 affiliate points)</li>
                 <li>• Place your bet and start the race</li>
-                <li>• Win based on the horse's odds!</li>
+                <li>• Win affiliate points based on the horse's odds!</li>
+                <li>• Higher odds = higher payout multiplier</li>
               </ul>
             </div>
           </div>
