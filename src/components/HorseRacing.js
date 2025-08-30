@@ -175,24 +175,26 @@ const HorseRacing = ({ currentUser }) => {
       return newBet;
     });
     
-    // Start the race after a tiny delay to ensure state updates
+    // Start the race with the updated bet object directly
+    const newBet = { ...currentBet, placed: true };
     setTimeout(() => {
-      console.log('About to start race...');
-      startRace();
+      console.log('About to start race with bet:', newBet);
+      startRace(newBet);
     }, 100);
   };
 
   // Start race
-  const startRace = () => {
+  const startRace = (forcedCurrentBet = null) => {
+    const bet = forcedCurrentBet || currentBet;
     console.log('startRace called', { 
-      currentBet, 
+      bet, 
       raceInProgress, 
-      condition1: !currentBet,
-      condition2: !currentBet?.placed,
+      condition1: !bet,
+      condition2: !bet?.placed,
       condition3: raceInProgress
     });
     
-    if (!currentBet || !currentBet.placed || raceInProgress) {
+    if (!bet || !bet.placed || raceInProgress) {
       console.log('startRace blocked by conditions');
       return;
     }
