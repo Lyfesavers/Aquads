@@ -1,0 +1,328 @@
+const express = require('express');
+const router = express.Router();
+const User = require('../models/User');
+const HorseRaceResult = require('../models/HorseRaceResult');
+const auth = require('../middleware/auth');
+const requireEmailVerification = require('../middleware/emailVerification');
+const { getIO } = require('../socket');
+
+// Horse data with base odds and speeds
+const HORSE_DATA = [
+  { name: "Thunder Bolt", color: "#8B4513", baseOdds: 3.5, baseSpeed: 0.8 },
+  { name: "Lightning Flash", color: "#000000", baseOdds: 4.2, baseSpeed: 0.75 },
+  { name: "Midnight Runner", color: "#483D8B", baseOdds: 5.1, baseSpeed: 0.7 },
+  { name: "Golden Arrow", color: "#FFD700", baseOdds: 2.8, baseSpeed: 0.85 },
+  { name: "Fire Storm", color: "#DC143C", baseOdds: 6.2, baseSpeed: 0.65 },
+  { name: "Silver Wind", color: "#C0C0C0", baseOdds: 4.8, baseSpeed: 0.72 },
+  { name: "Emerald Star", color: "#50C878", baseOdds: 5.5, baseSpeed: 0.68 },
+  { name: "Royal Blue", color: "#4169E1", baseOdds: 3.9, baseSpeed: 0.78 }
+];
+
+// Constants for game balance
+const MIN_BET = 10;
+const MAX_BET = 1000;
+const HOUSE_EDGE = 0.12; // 12% house edge by reducing player horse speed
+
+// Generate race data with slight randomization
+const generateRaceData = () => {
+  return HORSE_DATA.map((horse, index) => ({
+    id: index,
+    ...horse,
+    // Add slight randomness to odds for each race (±0.3)
+    odds: Math.max(1.5, horse.baseOdds + (Math.random() - 0.5) * 0.6)
+  }));
+};
+
+// Calculate race outcome with house edge
+const simulateRace = (horses, playerBetHorseId) => {
+  const raceHorses = horses.map(horse => {
+    let speed = horse.baseSpeed;
+    
+    // Apply house edge - if player bet on this horse, reduce its speed
+    if (horse.id === playerBetHorseId) {
+      speed *= (1 - HOUSE_EDGE);
+    }
+    
+    // Add randomness to the race outcome
+    const randomFactor = Math.random() * 0.4 + 0.8; // 0.8 to 1.2 multiplier
+    const finalSpeed = speed * randomFactor;
+    
+    return {
+      ...horse,
+      finalSpeed,
+      finishTime: 1000 / finalSpeed + Math.random() * 200 // Base time + random variance
+    };
+  });
+  
+  // Sort by finish time to determine race order
+  const raceResults = raceHorses.sort((a, b) => a.finishTime - b.finishTime);
+  
+  return raceResults;
+};
+
+// GET /api/horse-racing/race-data
+// Get fresh race data for a new race
+router.get('/race-data', auth, async (req, res) => {
+  try {
+    const raceHorses = generateRaceData();
+    res.json({ horses: raceHorses });
+  } catch (error) {
+    console.error('Error generating race data:', error);
+    res.status(500).json({ error: 'Failed to generate race data' });
+  }
+});
+
+// POST /api/horse-racing/place-bet
+// Place a bet on a horse
+router.post('/place-bet', auth, requireEmailVerification, async (req, res) => {
+  try {
+    const { horseId, betAmount, horses } = req.body;
+    
+    // Validate input
+    if (horseId == null || !betAmount || !horses || !Array.isArray(horses)) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    if (betAmount < MIN_BET || betAmount > MAX_BET) {
+      return res.status(400).json({ error: `Bet amount must be between ${MIN_BET} and ${MAX_BET} points` });
+    }
+    
+    if (horseId < 0 || horseId >= horses.length) {
+      return res.status(400).json({ error: 'Invalid horse selection' });
+    }
+    
+    // Get user and check points
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    if (user.points < betAmount) {
+      return res.status(400).json({ error: 'Insufficient points' });
+    }
+    
+    // Deduct bet amount from user points
+    user.points -= betAmount;
+    user.pointsHistory.push({
+      amount: -betAmount,
+      reason: `Horse racing bet on ${horses[horseId]?.name || `Horse #${horseId + 1}`}`,
+      createdAt: new Date()
+    });
+    
+    await user.save();
+    
+    // Simulate the race
+    const raceResults = simulateRace(horses, horseId);
+    const winner = raceResults[0];
+    const playerHorse = raceResults.find(h => h.id === horseId);
+    const won = winner.id === horseId;
+    
+    let payout = 0;
+    if (won) {
+      payout = Math.round(betAmount * playerHorse.odds);
+      
+      // Award payout
+      user.points += payout;
+      user.pointsHistory.push({
+        amount: payout,
+        reason: `Horse racing win - ${playerHorse.name} (${playerHorse.odds.toFixed(1)}:1)`,
+        createdAt: new Date()
+      });
+      
+      await user.save();
+    }
+    
+    // Save race result to database
+    const raceResult = new HorseRaceResult({
+      userId: req.user.userId,
+      username: req.user.username,
+      horseId: horseId,
+      horseName: playerHorse.name,
+      betAmount: betAmount,
+      odds: playerHorse.odds,
+      won: won,
+      payout: payout,
+      winnerHorseId: winner.id,
+      winnerHorseName: winner.name,
+      raceData: raceResults
+    });
+    
+    await raceResult.save();
+    
+    // Broadcast big wins to all clients (wins over 500 points)
+    if (won && payout > 500) {
+      try {
+        const io = getIO();
+        io.emit('bigWin', {
+          game: 'horse-racing',
+          username: req.user.username,
+          amount: payout,
+          horseName: playerHorse.name,
+          odds: playerHorse.odds.toFixed(1)
+        });
+      } catch (socketError) {
+        console.error('Socket emit error:', socketError);
+      }
+    }
+    
+    res.json({
+      success: true,
+      won: won,
+      raceResults: raceResults,
+      winner: winner,
+      playerHorse: playerHorse,
+      betAmount: betAmount,
+      payout: payout,
+      newBalance: user.points
+    });
+    
+  } catch (error) {
+    console.error('Error processing horse racing bet:', error);
+    res.status(500).json({ error: 'Failed to process bet' });
+  }
+});
+
+// GET /api/horse-racing/history
+// Get user's betting history
+router.get('/history', auth, async (req, res) => {
+  try {
+    const { limit = 20, page = 1 } = req.query;
+    const skip = (page - 1) * limit;
+    
+    const history = await HorseRaceResult.find({ userId: req.user.userId })
+      .sort({ createdAt: -1 })
+      .limit(Math.min(Number(limit), 50))
+      .skip(skip);
+    
+    const totalCount = await HorseRaceResult.countDocuments({ userId: req.user.userId });
+    
+    res.json({
+      history: history,
+      totalCount: totalCount,
+      page: Number(page),
+      limit: Number(limit),
+      totalPages: Math.ceil(totalCount / limit)
+    });
+    
+  } catch (error) {
+    console.error('Error fetching horse racing history:', error);
+    res.status(500).json({ error: 'Failed to fetch betting history' });
+  }
+});
+
+// GET /api/horse-racing/leaderboard
+// Get leaderboard of biggest wins
+router.get('/leaderboard', async (req, res) => {
+  try {
+    const { limit = 20, timeframe = 'all' } = req.query;
+    
+    let dateFilter = {};
+    if (timeframe === 'daily') {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      dateFilter = { createdAt: { $gte: today } };
+    } else if (timeframe === 'weekly') {
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      dateFilter = { createdAt: { $gte: weekAgo } };
+    } else if (timeframe === 'monthly') {
+      const monthAgo = new Date();
+      monthAgo.setMonth(monthAgo.getMonth() - 1);
+      dateFilter = { createdAt: { $gte: monthAgo } };
+    }
+    
+    const leaderboard = await HorseRaceResult.find({
+      won: true,
+      ...dateFilter
+    })
+      .sort({ payout: -1 })
+      .limit(Math.min(Number(limit), 50))
+      .select('username horseName betAmount odds payout createdAt');
+    
+    res.json({ leaderboard });
+    
+  } catch (error) {
+    console.error('Error fetching horse racing leaderboard:', error);
+    res.status(500).json({ error: 'Failed to fetch leaderboard' });
+  }
+});
+
+// GET /api/horse-racing/stats
+// Get game statistics
+router.get('/stats', auth, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    
+    // Get user's stats
+    const userStats = await HorseRaceResult.aggregate([
+      { $match: { userId: userId } },
+      {
+        $group: {
+          _id: null,
+          totalBets: { $sum: 1 },
+          totalWins: { $sum: { $cond: ['$won', 1, 0] } },
+          totalBetAmount: { $sum: '$betAmount' },
+          totalPayout: { $sum: '$payout' },
+          biggestWin: { $max: '$payout' },
+          avgBetAmount: { $avg: '$betAmount' }
+        }
+      }
+    ]);
+    
+    // Get global stats
+    const globalStats = await HorseRaceResult.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalBets: { $sum: 1 },
+          totalPlayers: { $addToSet: '$userId' },
+          biggestGlobalWin: { $max: '$payout' },
+          totalVolume: { $sum: '$betAmount' }
+        }
+      },
+      {
+        $project: {
+          totalBets: 1,
+          totalPlayers: { $size: '$totalPlayers' },
+          biggestGlobalWin: 1,
+          totalVolume: 1
+        }
+      }
+    ]);
+    
+    const userStatsData = userStats[0] || {
+      totalBets: 0,
+      totalWins: 0,
+      totalBetAmount: 0,
+      totalPayout: 0,
+      biggestWin: 0,
+      avgBetAmount: 0
+    };
+    
+    const globalStatsData = globalStats[0] || {
+      totalBets: 0,
+      totalPlayers: 0,
+      biggestGlobalWin: 0,
+      totalVolume: 0
+    };
+    
+    // Calculate win rate and profit/loss
+    const winRate = userStatsData.totalBets > 0 ? (userStatsData.totalWins / userStatsData.totalBets) * 100 : 0;
+    const netProfit = userStatsData.totalPayout - userStatsData.totalBetAmount;
+    
+    res.json({
+      userStats: {
+        ...userStatsData,
+        winRate: Math.round(winRate * 100) / 100,
+        netProfit: netProfit
+      },
+      globalStats: globalStatsData
+    });
+    
+  } catch (error) {
+    console.error('Error fetching horse racing stats:', error);
+    res.status(500).json({ error: 'Failed to fetch statistics' });
+  }
+});
+
+module.exports = router;
