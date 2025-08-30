@@ -10,6 +10,7 @@ import WorkshopModule from './workshop/WorkshopModule';
 import WorkshopGameification from './workshop/WorkshopGameification';
 import WorkshopStats from './workshop/WorkshopStats';
 import { getWorkshopProgress, completeWorkshopSection, awardAchievement, getWorkshopProgressFallback } from '../services/workshopApi';
+import logger from '../utils/logger';
 
 const FreelancerWorkshop = ({ currentUser }) => {
   const [currentModule, setCurrentModule] = useState(0);
@@ -286,7 +287,7 @@ const FreelancerWorkshop = ({ currentUser }) => {
       });
 
       // Debug logging
-      console.log('Workshop Progress Debug:', {
+      logger.log('Workshop Progress Debug:', {
         completedModules,
         completedSectionsMap,
         currentModule: currentModule
@@ -313,7 +314,7 @@ const FreelancerWorkshop = ({ currentUser }) => {
       });
       
     } catch (err) {
-      console.error('Error loading workshop progress:', err);
+      logger.error('Error loading workshop progress:', err);
       // Use fallback data if API fails
       const fallbackProgress = getWorkshopProgressFallback();
       setWorkshopProgress({
