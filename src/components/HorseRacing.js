@@ -169,24 +169,45 @@ const HorseRacing = ({ currentUser }) => {
     console.log('Bet is valid, placing bet and starting race');
     
     // Just mark bet as placed - no client-side point changes
-    setCurrentBet(prev => ({ ...prev, placed: true }));
+    setCurrentBet(prev => {
+      const newBet = { ...prev, placed: true };
+      console.log('Updated currentBet:', newBet);
+      return newBet;
+    });
     
-    // Start the race
-    startRace();
+    // Start the race after a tiny delay to ensure state updates
+    setTimeout(() => {
+      console.log('About to start race...');
+      startRace();
+    }, 100);
   };
 
   // Start race
   const startRace = () => {
+    console.log('startRace called', { 
+      currentBet, 
+      raceInProgress, 
+      condition1: !currentBet,
+      condition2: !currentBet?.placed,
+      condition3: raceInProgress
+    });
+    
     if (!currentBet || !currentBet.placed || raceInProgress) {
+      console.log('startRace blocked by conditions');
       return;
     }
+    
+    console.log('Starting race...');
     
     setRaceInProgress(true);
     setRaceFinished(false);
     resetHorsePositions();
     
     // Race countdown
-    setTimeout(() => runRace(), 3000);
+    setTimeout(() => {
+      console.log('Running race after countdown');
+      runRace();
+    }, 3000);
   };
   
   // Animate race to match server results
@@ -250,6 +271,7 @@ const HorseRacing = ({ currentUser }) => {
 
   // Run the race with house edge algorithm
   const runRace = () => {
+    console.log('runRace started');
     const raceInterval = setInterval(() => {
       setHorses(prevHorses => {
         const updatedHorses = prevHorses.map(horse => {
