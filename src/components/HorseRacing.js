@@ -97,14 +97,13 @@ const HorseRacing = ({ currentUser }) => {
   // Submit game result to backend securely
   const submitGameResult = async (results) => {
     try {
+      // Use the same format as DotsAndBoxes
       await submitLeaderboard('horse-racing', {
         result: results.won ? 'Win' : 'Loss',
         you: results.won ? results.payout : 0,
         ai: 0,
-        betAmount: results.betAmount,
-        horseName: results.winner.name,
-        odds: results.winner.odds,
-        horseId: results.winner.id
+        difficulty: `${results.winner.name} (${results.winner.odds}:1)`,
+        grid: `Bet: ${results.betAmount} pts`
       });
       
       // Reload points from server after game
