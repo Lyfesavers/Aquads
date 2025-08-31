@@ -1016,6 +1016,29 @@ const HorseRacing = ({ currentUser }) => {
             cursor: pointer;
             border: 2px solid #065f46;
           }
+          
+          /* Crowd Animation Styles */
+          .crowd-cheer {
+            animation: cheer 1.5s ease-in-out infinite;
+          }
+          
+          .crowd-wave {
+            animation: wave 2s ease-in-out infinite;
+          }
+          
+          @keyframes cheer {
+            0%, 100% { transform: translateY(0) scale(1); }
+            25% { transform: translateY(-3px) scale(1.1); }
+            50% { transform: translateY(-1px) scale(1.05); }
+            75% { transform: translateY(-2px) scale(1.08); }
+          }
+          
+          @keyframes wave {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-2px) rotate(-5deg); }
+            50% { transform: translateY(-4px) rotate(0deg); }
+            75% { transform: translateY(-2px) rotate(5deg); }
+          }
         `
       }} />
       
@@ -1115,6 +1138,101 @@ const HorseRacing = ({ currentUser }) => {
                 className="relative bg-gradient-to-b from-sky-200 to-green-400 rounded-lg overflow-hidden"
                 style={{ height: '400px' }}
               >
+                {/* Animated Crowd - Left Side */}
+                <div className="absolute left-0 top-0 w-16 h-2/5 flex flex-col justify-end items-center space-y-1 pb-2">
+                  {[...Array(6)].map((_, i) => (
+                    <div
+                      key={`left-crowd-${i}`}
+                      className={`w-3 h-4 rounded-full ${
+                        raceInProgress 
+                          ? 'animate-bounce bg-red-400' 
+                          : 'bg-gray-400'
+                      }`}
+                      style={{
+                        animationDelay: `${i * 0.2}s`,
+                        animationDuration: raceInProgress ? '0.8s' : '2s'
+                      }}
+                    />
+                  ))}
+                  {/* Stadium seats effect */}
+                  <div className="w-14 h-6 bg-gray-600 rounded-t-lg opacity-80"></div>
+                </div>
+
+                {/* Animated Crowd - Right Side */}
+                <div className="absolute right-0 top-0 w-16 h-2/5 flex flex-col justify-end items-center space-y-1 pb-2">
+                  {[...Array(6)].map((_, i) => (
+                    <div
+                      key={`right-crowd-${i}`}
+                      className={`w-3 h-4 rounded-full ${
+                        raceInProgress 
+                          ? 'animate-bounce bg-blue-400' 
+                          : 'bg-gray-400'
+                      }`}
+                      style={{
+                        animationDelay: `${i * 0.15}s`,
+                        animationDuration: raceInProgress ? '0.9s' : '2s'
+                      }}
+                    />
+                  ))}
+                  {/* Stadium seats effect */}
+                  <div className="w-14 h-6 bg-gray-600 rounded-t-lg opacity-80"></div>
+                </div>
+
+                {/* Top Crowd - Finish Line Area */}
+                <div className="absolute top-2 right-20 flex space-x-1">
+                  {[...Array(8)].map((_, i) => (
+                    <div
+                      key={`top-crowd-${i}`}
+                      className={`w-2 h-3 rounded-full ${
+                        raceFinished 
+                          ? 'crowd-cheer bg-yellow-400' 
+                          : raceInProgress 
+                          ? 'animate-bounce bg-green-400'
+                          : 'bg-gray-500'
+                      }`}
+                      style={{
+                        animationDelay: `${i * 0.1}s`,
+                        animationDuration: raceFinished ? '0.5s' : '1s'
+                      }}
+                    />
+                  ))}
+                </div>
+
+                {/* Starting Line Crowd */}
+                <div className="absolute top-5 left-20 flex space-x-1">
+                  {[...Array(5)].map((_, i) => (
+                    <div
+                      key={`start-crowd-${i}`}
+                      className={`w-2 h-3 rounded-full ${
+                        raceInProgress 
+                          ? 'crowd-wave bg-purple-400' 
+                          : 'bg-gray-500'
+                      }`}
+                      style={{
+                        animationDelay: `${i * 0.3}s`,
+                      }}
+                    />
+                  ))}
+                </div>
+
+                {/* Middle Section Scattered Crowd */}
+                <div className="absolute top-1 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                  {[...Array(4)].map((_, i) => (
+                    <div
+                      key={`middle-crowd-${i}`}
+                      className={`w-2 h-2 rounded-full ${
+                        raceInProgress 
+                          ? 'animate-pulse bg-orange-400' 
+                          : 'bg-gray-400'
+                      }`}
+                      style={{
+                        animationDelay: `${i * 0.25}s`,
+                        animationDuration: '1.2s'
+                      }}
+                    />
+                  ))}
+                </div>
+
                 {/* Track background */}
                 <div className="absolute bottom-0 left-0 right-0 h-3/5 bg-gradient-to-b from-amber-600 to-amber-800">
                   {/* Track lanes */}
