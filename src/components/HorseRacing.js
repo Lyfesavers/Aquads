@@ -335,15 +335,28 @@ const HorseRacing = ({ currentUser }) => {
     "The crowd can't believe what they're seeing!"
   ];
 
-  // Check for random comeback opportunity - more generous for testing
+  // Balanced comeback system for player engagement
   const checkForComeback = (horses, maxPosition) => {
     // Only trigger comeback in final 30% of race and if not already triggered
     if (maxPosition < 70 || comebackTriggered) return null;
     
-    // Special boost if user bet on worst odds horse - 60% chance instead of 35%
+    // Balanced comeback chances - enough to keep players engaged but not too much
     const userHorse = horses.find(h => h.id === currentBet?.horseId);
     const isUserOnWorstOdds = userHorse && userHorse.odds >= Math.max(...horses.map(h => h.odds));
-    const comebackChance = isUserOnWorstOdds ? 0.60 : 0.35;
+    const isUserOnGoodOdds = userHorse && userHorse.odds <= Math.min(...horses.map(h => h.odds));
+    
+    // Balanced comeback chances:
+    // - Worst odds: 35% (enough for excitement, not too much)
+    // - Middle odds: 25% (fair chance)  
+    // - Best odds: 15% (they already have good win chance)
+    let comebackChance;
+    if (isUserOnWorstOdds) {
+      comebackChance = 0.35; // Reduced from 60% to 35%
+    } else if (isUserOnGoodOdds) {
+      comebackChance = 0.15; // Lower for favorites
+    } else {
+      comebackChance = 0.25; // Middle ground
+    }
     
     if (Math.random() > comebackChance) return null;
     
@@ -639,17 +652,17 @@ const HorseRacing = ({ currentUser }) => {
             if (comebackCandidate && comebackCandidate.id === horse.id) {
               setComebackTriggered(true);
               setComebackHorse(horse);
-              // MASSIVE speed boost that can overcome predetermined results
-              speed += 2.5; // Increased from 1.5 to 2.5
+              // Balanced speed boost for backend races
+              speed += 1.8; // Reduced from 2.5 for balance
               // Play comeback commentary
               const commentaryIndex = Math.floor(Math.random() * comebackCommentary.length);
               setTimeout(() => playCommentary(comebackCommentary[commentaryIndex]), 300);
             }
           }
 
-          // Continue massive speed boost for comeback horse in backend races
+          // Continue moderate speed boost for comeback horse in backend races
           if (comebackTriggered && comebackHorse && comebackHorse.id === horse.id) {
-            speed += 2.0; // Increased from 1.2 to 2.0 - sustained massive boost
+            speed += 1.4; // Reduced from 2.0 for balance
           }
           
           const newPosition = horse.position + speed;
@@ -748,11 +761,12 @@ const HorseRacing = ({ currentUser }) => {
         const updatedHorses = prevHorses.map(horse => {
           if (horse.finished) return horse;
           
-          // House edge algorithm - if user bet on this horse, slightly reduce its chances
+          // Balanced house edge - fair but sustainable
           let speedMultiplier = 1;
           if (currentBet && currentBet.horseId === horse.id) {
-            // House edge: reduce player's horse speed by 12%
-            speedMultiplier = 0.88;
+            // Reduced house edge: only 8% speed reduction (was 12%)
+            // This gives players better chances while maintaining house advantage
+            speedMultiplier = 0.92;
           }
           
           // More balanced random speed variation for closer races
@@ -773,17 +787,17 @@ const HorseRacing = ({ currentUser }) => {
             if (comebackCandidate && comebackCandidate.id === horse.id) {
               setComebackTriggered(true);
               setComebackHorse(horse);
-              // MASSIVE speed boost for the comeback horse
-              randomSpeed *= 3.5; // Increased from 2.5 to 3.5
+              // Balanced comeback speed boost
+              randomSpeed *= 2.2; // Reduced from 3.5 for balance
               // Play comeback commentary
               const commentaryIndex = Math.floor(Math.random() * comebackCommentary.length);
               setTimeout(() => playCommentary(comebackCommentary[commentaryIndex]), 500);
             }
           }
 
-          // Continue massive speed boost for comeback horse
+          // Continue moderate speed boost for comeback horse
           if (comebackTriggered && comebackHorse && comebackHorse.id === horse.id) {
-            randomSpeed *= 3.0; // Increased from 2.2 to 3.0 - sustained massive boost
+            randomSpeed *= 1.8; // Reduced from 3.0 for balance
           }
           const newPosition = horse.position + randomSpeed;
           
