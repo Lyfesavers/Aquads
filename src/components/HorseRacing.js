@@ -135,13 +135,20 @@ const HorseRacing = ({ currentUser }) => {
   };
 
   // Audio System Functions
-  const initializeAudio = () => {
+  const initializeAudio = async () => {
     if (!audioEnabled) return;
     
     try {
       // Initialize Web Audio Context for sound effects
       if (!audioContextRef.current) {
         audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+        console.log('🔊 Audio context created:', audioContextRef.current.state);
+      }
+      
+      // Resume audio context if it's suspended (required by modern browsers)
+      if (audioContextRef.current.state === 'suspended') {
+        await audioContextRef.current.resume();
+        console.log('🔊 Audio context resumed:', audioContextRef.current.state);
       }
     } catch (error) {
       console.warn('Web Audio API not supported:', error);
@@ -149,24 +156,48 @@ const HorseRacing = ({ currentUser }) => {
   };
 
   // Create synthetic sound effects using Web Audio API
-  const createTone = (frequency, duration, type = 'sine') => {
-    if (!audioEnabled || !audioContextRef.current) return;
+  const createTone = async (frequency, duration, type = 'sine') => {
+    if (!audioEnabled) {
+      console.log('🔇 Audio disabled');
+      return;
+    }
     
-    const oscillator = audioContextRef.current.createOscillator();
-    const gainNode = audioContextRef.current.createGain();
+    if (!audioContextRef.current) {
+      console.log('🔊 No audio context, initializing...');
+      await initializeAudio();
+    }
     
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContextRef.current.destination);
+    if (!audioContextRef.current) {
+      console.warn('🔇 Failed to create audio context');
+      return;
+    }
     
-    oscillator.frequency.setValueAtTime(frequency, audioContextRef.current.currentTime);
-    oscillator.type = type;
-    
-    gainNode.gain.setValueAtTime(0, audioContextRef.current.currentTime);
-    gainNode.gain.linearRampToValueAtTime(volume * 0.3, audioContextRef.current.currentTime + 0.01);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContextRef.current.currentTime + duration);
-    
-    oscillator.start(audioContextRef.current.currentTime);
-    oscillator.stop(audioContextRef.current.currentTime + duration);
+    try {
+      // Ensure audio context is running
+      if (audioContextRef.current.state === 'suspended') {
+        await audioContextRef.current.resume();
+      }
+      
+      console.log(`🔊 Playing tone: ${frequency}Hz for ${duration}s (${type})`);
+      
+      const oscillator = audioContextRef.current.createOscillator();
+      const gainNode = audioContextRef.current.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContextRef.current.destination);
+      
+      oscillator.frequency.setValueAtTime(frequency, audioContextRef.current.currentTime);
+      oscillator.type = type;
+      
+      gainNode.gain.setValueAtTime(0, audioContextRef.current.currentTime);
+      gainNode.gain.linearRampToValueAtTime(volume * 0.3, audioContextRef.current.currentTime + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContextRef.current.currentTime + duration);
+      
+      oscillator.start(audioContextRef.current.currentTime);
+      oscillator.stop(audioContextRef.current.currentTime + duration);
+    } catch (error) {
+      console.error('🔇 Error playing tone:', error);
+    }
   };
 
   // Play starting bell sound
@@ -849,7 +880,13 @@ const HorseRacing = ({ currentUser }) => {
             <div className="flex items-center gap-4">
               <span className="text-gray-300 font-medium">🔊 Race Audio:</span>
               <button
-                onClick={() => setAudioEnabled(!audioEnabled)}
+                onClick={async () => {
+                  const newState = !audioEnabled;
+                  setAudioEnabled(newState);
+                  if (newState) {
+                    await initializeAudio();
+                  }
+                }}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   audioEnabled 
                     ? 'bg-green-600 hover:bg-green-700 text-white' 
@@ -858,6 +895,18 @@ const HorseRacing = ({ currentUser }) => {
               >
                 {audioEnabled ? '🔊 ON' : '🔇 OFF'}
               </button>
+              
+              {audioEnabled && (
+                <button
+                  onClick={async () => {
+                    console.log('🔊 Testing audio...');
+                    await createTone(800, 0.5, 'triangle');
+                  }}
+                  className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                >
+                  🔔 Test
+                </button>
+              )}
             </div>
             
             {audioEnabled && (
