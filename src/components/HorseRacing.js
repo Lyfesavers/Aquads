@@ -201,22 +201,24 @@ const HorseRacing = ({ currentUser }) => {
   };
 
   // Play starting bell sound
-  const playStartingBell = () => {
+  const playStartingBell = async () => {
     if (!audioEnabled) return;
-    createTone(800, 0.3, 'triangle');
-    setTimeout(() => createTone(600, 0.3, 'triangle'), 100);
-    setTimeout(() => createTone(800, 0.5, 'triangle'), 200);
+    console.log('🔔 Playing starting bell');
+    await createTone(800, 0.3, 'triangle');
+    setTimeout(async () => await createTone(600, 0.3, 'triangle'), 100);
+    setTimeout(async () => await createTone(800, 0.5, 'triangle'), 200);
   };
 
   // Play horse hooves sound (rhythmic clicking)
   const playHoovesSound = () => {
     if (!audioEnabled) return;
+    console.log('🐎 Starting hooves sound');
     
-    const playHoofBeat = () => {
-      createTone(200, 0.05, 'square');
-      setTimeout(() => createTone(180, 0.05, 'square'), 50);
-      setTimeout(() => createTone(220, 0.05, 'square'), 100);
-      setTimeout(() => createTone(190, 0.05, 'square'), 150);
+    const playHoofBeat = async () => {
+      await createTone(200, 0.05, 'square');
+      setTimeout(async () => await createTone(180, 0.05, 'square'), 50);
+      setTimeout(async () => await createTone(220, 0.05, 'square'), 100);
+      setTimeout(async () => await createTone(190, 0.05, 'square'), 150);
     };
     
     // Play hooves sound repeatedly during race
@@ -232,29 +234,32 @@ const HorseRacing = ({ currentUser }) => {
     if (hoovesSoundRef.current) {
       clearInterval(hoovesSoundRef.current);
       hoovesSoundRef.current = null;
+      console.log('🐎 Stopped hooves sound');
     }
   };
 
   // Play crowd cheer sound
-  const playCrowdCheer = (intensity = 1) => {
+  const playCrowdCheer = async (intensity = 1) => {
     if (!audioEnabled) return;
+    console.log('👏 Playing crowd cheer');
     
     // Create crowd noise using white noise
     const duration = 2 + (intensity * 2);
     for (let i = 0; i < 5; i++) {
-      setTimeout(() => {
-        createTone(Math.random() * 200 + 100, 0.3, 'sawtooth');
+      setTimeout(async () => {
+        await createTone(Math.random() * 200 + 100, 0.3, 'sawtooth');
       }, i * 100);
     }
   };
 
   // Play finish line sound
-  const playFinishSound = () => {
+  const playFinishSound = async () => {
     if (!audioEnabled) return;
-    createTone(1000, 0.2, 'triangle');
-    setTimeout(() => createTone(1200, 0.3, 'triangle'), 100);
-    setTimeout(() => createTone(800, 0.4, 'triangle'), 200);
-    playCrowdCheer(2);
+    console.log('🏁 Playing finish sound');
+    await createTone(1000, 0.2, 'triangle');
+    setTimeout(async () => await createTone(1200, 0.3, 'triangle'), 100);
+    setTimeout(async () => await createTone(800, 0.4, 'triangle'), 200);
+    await playCrowdCheer(2);
   };
 
   // Dynamic race commentary
@@ -271,18 +276,20 @@ const HorseRacing = ({ currentUser }) => {
     "And the winner is horse number {winner}!"
   ];
 
-  const playCommentary = (message, delay = 0) => {
+  const playCommentary = async (message, delay = 0) => {
     if (!audioEnabled) return;
+    console.log('📢 Commentary:', message);
     
-    setTimeout(() => {
+    setTimeout(async () => {
       // Create a simple beep pattern to simulate speech
       const words = message.split(' ');
-      words.forEach((word, index) => {
-        setTimeout(() => {
+      for (let index = 0; index < words.length; index++) {
+        const word = words[index];
+        setTimeout(async () => {
           const pitch = 150 + (word.length * 10);
-          createTone(pitch, 0.1, 'triangle');
+          await createTone(pitch, 0.1, 'triangle');
         }, index * 200);
-      });
+      }
     }, delay);
   };
 
@@ -380,7 +387,7 @@ const HorseRacing = ({ currentUser }) => {
   };
 
   // Start race
-  const startRace = (forcedCurrentBet = null) => {
+  const startRace = async (forcedCurrentBet = null) => {
     const bet = forcedCurrentBet || currentBet;
     
     if (!bet || !bet.placed || raceInProgress) {
@@ -392,16 +399,16 @@ const HorseRacing = ({ currentUser }) => {
     resetHorsePositions();
     
     // Play pre-race commentary
-    playCommentary("Ladies and gentlemen, the horses are at the starting line!");
+    await playCommentary("Ladies and gentlemen, the horses are at the starting line!");
     
     // Race countdown with audio
-    setTimeout(() => {
-      playCommentary("Get ready...", 0);
+    setTimeout(async () => {
+      await playCommentary("Get ready...", 0);
     }, 1000);
     
-    setTimeout(() => {
-      playStartingBell();
-      playCommentary("And they're off!", 500);
+    setTimeout(async () => {
+      await playStartingBell();
+      await playCommentary("And they're off!", 500);
       playHoovesSound();
       runRace();
     }, 3000);
@@ -583,7 +590,7 @@ const HorseRacing = ({ currentUser }) => {
         if (finishedHorses.length === updatedHorses.length) {
           clearInterval(raceInterval);
           stopHoovesSound();
-          playFinishSound();
+          await playFinishSound();
           setTimeout(() => finishRace(updatedHorses), 1000);
         }
         
@@ -607,16 +614,16 @@ const HorseRacing = ({ currentUser }) => {
     const won = winner.id === currentBet.horseId;
     
     // Play winner commentary
-    setTimeout(() => {
-      playCommentary(`And the winner is horse number ${winner.id + 1}!`);
+    setTimeout(async () => {
+      await playCommentary(`And the winner is horse number ${winner.id + 1}!`);
       if (won) {
-        setTimeout(() => {
-          playCommentary("Congratulations! You won!");
-          playCrowdCheer(3);
+        setTimeout(async () => {
+          await playCommentary("Congratulations! You won!");
+          await playCrowdCheer(3);
         }, 2000);
       } else {
-        setTimeout(() => {
-          playCommentary("Better luck next time!");
+        setTimeout(async () => {
+          await playCommentary("Better luck next time!");
         }, 2000);
       }
     }, 500);
