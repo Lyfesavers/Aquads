@@ -1032,16 +1032,7 @@ const HorseRacing = ({ currentUser }) => {
                 {audioEnabled ? '🔊 ON' : '🔇 OFF'}
               </button>
               
-              {audioEnabled && (
-                <button
-                  onClick={() => {
-                    playRaceSound('startingBell');
-                  }}
-                  className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-                >
-                  🔔 Test
-                </button>
-              )}
+
             </div>
             
             {audioEnabled && (
