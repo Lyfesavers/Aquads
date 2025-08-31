@@ -37,6 +37,9 @@ const HorseRacing = ({ currentUser }) => {
   const [comebackTriggered, setComebackTriggered] = useState(false);
   const [comebackHorse, setComebackHorse] = useState(null);
 
+  // Race completion state management
+  const [raceCompleting, setRaceCompleting] = useState(false); // Prevents spam during race end sequence
+
   // Initialize component
   useEffect(() => {
     loadUserPoints();
@@ -741,7 +744,7 @@ const HorseRacing = ({ currentUser }) => {
           stopHoovesSound();
           playFinishSound();
           setRaceInProgress(false);
-          setRaceFinished(true);
+          setRaceCompleting(true); // Start completion sequence - block new race button
           
           // Play winner commentary with slower, better timing
           const winner = results.winner;
@@ -761,6 +764,8 @@ const HorseRacing = ({ currentUser }) => {
           // Show result modal after commentary finishes
           setTimeout(() => {
             setShowResultModal(true);
+            setRaceFinished(true); // Now safe to enable new race button
+            setRaceCompleting(false); // End completion sequence
           }, 9000); // Increased from 7000ms to 9000ms
           
           // Update after race
@@ -889,6 +894,7 @@ const HorseRacing = ({ currentUser }) => {
           clearInterval(raceInterval);
           stopHoovesSound();
           playFinishSound(); // Remove await since we can't make setInterval callback async
+          setRaceCompleting(true); // Start completion sequence - block new race button
           setTimeout(() => finishRace(updatedHorses), 1000);
         }
         
@@ -900,7 +906,7 @@ const HorseRacing = ({ currentUser }) => {
   // Finish race and calculate results
   const finishRace = (finalHorses) => {
     setRaceInProgress(false);
-    setRaceFinished(true);
+    // Don't set raceFinished here - wait until commentary is done
     
     // Sort horses by finish time
     const sortedHorses = finalHorses
@@ -971,6 +977,12 @@ const HorseRacing = ({ currentUser }) => {
       hasSubmittedRef.current = true;
       updateAfterRace();
     }
+    
+    // Enable new race button after commentary sequence completes
+    setTimeout(() => {
+      setRaceFinished(true);
+      setRaceCompleting(false);
+    }, 4500); // Allow time for all commentary to finish
   };
 
   // Start new race
@@ -982,6 +994,8 @@ const HorseRacing = ({ currentUser }) => {
     setError(null);
     setShowResultModal(false);
     setCurrentCommentary('');
+    // Reset race completion state
+    setRaceCompleting(false);
     // Reset comeback mechanics
     setComebackTriggered(false);
     setComebackHorse(null);
@@ -1593,12 +1607,13 @@ const HorseRacing = ({ currentUser }) => {
                 </button>
               )}
               
-              {(raceFinished || raceResults) && (
+              {(raceFinished || raceResults) && !raceCompleting && (
                 <button
                   onClick={newRace}
-                  className="w-full py-2 bg-blue-500 hover:bg-blue-600 rounded font-semibold transition-colors"
+                  disabled={raceCompleting || raceInProgress}
+                  className="w-full py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed rounded font-semibold transition-colors"
                 >
-                  🔄 New Race
+                  {raceCompleting ? 'Race Finishing...' : '🔄 New Race'}
                 </button>
               )}
             </div>
