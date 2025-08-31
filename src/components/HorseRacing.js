@@ -590,7 +590,7 @@ const HorseRacing = ({ currentUser }) => {
         if (finishedHorses.length === updatedHorses.length) {
           clearInterval(raceInterval);
           stopHoovesSound();
-          await playFinishSound();
+          playFinishSound(); // Remove await since we can't make setInterval callback async
           setTimeout(() => finishRace(updatedHorses), 1000);
         }
         
