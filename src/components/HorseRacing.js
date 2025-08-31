@@ -675,53 +675,25 @@ const HorseRacing = ({ currentUser }) => {
                     style={{
                       left: `${4 + (horse.position * 0.88)}%`,
                       bottom: `${3 + (index * 7.2)}%`,
-                      width: '40px',
-                      height: '30px'
+                      width: '50px',
+                      height: '40px'
                     }}
                   >
                     {/* Horse number */}
-                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-white text-black rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-white text-black rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shadow-md">
                       {horse.id + 1}
                     </div>
                     
-                    {/* Horse body */}
+                    {/* Horse SVG */}
                     <div className="relative w-full h-full">
-                      {/* Horse head */}
-                      <div 
-                        className="absolute right-0 top-1 w-4 h-3 rounded-full"
-                        style={{ backgroundColor: horse.color }}
-                      />
-                      {/* Horse body */}
-                      <div 
-                        className="absolute left-1 top-2 w-6 h-4 rounded-lg"
-                        style={{ backgroundColor: horse.color }}
-                      />
-                      {/* Horse legs */}
-                      <div 
-                        className="absolute left-2 bottom-0 w-1 h-3"
-                        style={{ backgroundColor: horse.color }}
-                      />
-                      <div 
-                        className="absolute left-4 bottom-0 w-1 h-3"
-                        style={{ backgroundColor: horse.color }}
-                      />
-                      <div 
-                        className="absolute left-6 bottom-0 w-1 h-3"
-                        style={{ backgroundColor: horse.color }}
-                      />
-                      <div 
-                        className="absolute left-8 bottom-0 w-1 h-3"
-                        style={{ backgroundColor: horse.color }}
-                      />
-                      {/* Horse mane */}
-                      <div 
-                        className="absolute right-2 top-0 w-2 h-2 rounded"
-                        style={{ backgroundColor: darkenColor(horse.color) }}
-                      />
-                      {/* Horse tail */}
-                      <div 
-                        className="absolute left-0 top-3 w-2 h-3 rounded"
-                        style={{ backgroundColor: darkenColor(horse.color) }}
+                      <img 
+                        src={`/h${horse.id + 1}.svg`}
+                        alt={`Horse ${horse.id + 1}`}
+                        className="w-full h-full object-contain"
+                        style={{
+                          filter: raceInProgress ? 'none' : 'brightness(0.9)',
+                          transform: 'scaleX(-1)' // Flip horse to face right direction
+                        }}
                       />
                     </div>
                   </div>
