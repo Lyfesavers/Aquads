@@ -28,7 +28,6 @@ const HorseRacing = ({ currentUser }) => {
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [volume, setVolume] = useState(0.7);
   const [currentCommentary, setCurrentCommentary] = useState('');
-  const [showCommentary, setShowCommentary] = useState(false);
   const audioContextRef = useRef(null);
   const crowdSoundRef = useRef(null);
   const hoovesSoundRef = useRef(null);
@@ -322,9 +321,8 @@ const HorseRacing = ({ currentUser }) => {
 
   const playCommentary = (message, delay = 0) => {
     setTimeout(() => {
-      // Show commentary text on screen
+      // Update commentary text on static board
       setCurrentCommentary(message);
-      setShowCommentary(true);
       
       // Play audio beeps if enabled
       if (audioEnabled) {
@@ -336,17 +334,16 @@ const HorseRacing = ({ currentUser }) => {
         });
       }
       
-      // Hide commentary after message duration (longer for important messages)
+      // Clear commentary after message duration (longer for important messages)
       let messageDuration = Math.max(4000, message.length * 120); // At least 4 seconds, longer for longer messages
       
       // Special timing for key messages
       if (message.includes('winner is') || message.includes('Congratulations') || message.includes('Better luck')) {
-        messageDuration = 5000; // Show winner/result messages longer
+        messageDuration = 6000; // Show winner/result messages longer
       }
       
       setTimeout(() => {
-        setShowCommentary(false);
-        setCurrentCommentary('');
+        setCurrentCommentary(''); // Clear message, board stays visible
       }, messageDuration);
     }, delay);
   };
@@ -786,7 +783,6 @@ const HorseRacing = ({ currentUser }) => {
     setRaceResults(null);
     setError(null);
     setShowResultModal(false);
-    setShowCommentary(false);
     setCurrentCommentary('');
     hasSubmittedRef.current = false;
     initializeHorses();
@@ -1057,17 +1053,24 @@ const HorseRacing = ({ currentUser }) => {
           {/* Race Track */}
           <div className="flex-1">
             <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-xl p-6">
-              {/* Commentary Display */}
-              {showCommentary && (
-                <div className="mb-4 bg-black bg-opacity-80 rounded-lg p-4 border-2 border-yellow-400 shadow-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="text-yellow-400 text-2xl animate-pulse">📢</div>
-                    <div className="text-white text-lg font-bold tracking-wide">
-                      {currentCommentary}
-                    </div>
+              {/* Race Commentary Board */}
+              <div className="mb-4 bg-gradient-to-r from-gray-900 to-black rounded-lg p-4 border-2 border-amber-500 shadow-xl">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="text-amber-400 text-xl">🎙️</div>
+                    <div className="text-amber-400 font-bold text-sm tracking-wider uppercase">Race Commentary</div>
+                  </div>
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                    <div className="text-red-500 text-xs font-bold">LIVE</div>
                   </div>
                 </div>
-              )}
+                <div className="bg-black bg-opacity-50 rounded p-3 min-h-[50px] flex items-center">
+                  <div className="text-white text-base font-medium leading-relaxed">
+                    {currentCommentary || "Welcome to the races! Place your bets and get ready for an exciting race!"}
+                  </div>
+                </div>
+              </div>
               
               <div 
                 ref={raceTrackRef}
