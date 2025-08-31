@@ -140,7 +140,6 @@ const HorseRacing = ({ currentUser }) => {
   const getAudioContext = () => {
     if (!audioContextRef.current) {
       audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-      console.log('🔊 Audio context created:', audioContextRef.current.state);
     }
     return audioContextRef.current;
   };
@@ -151,7 +150,6 @@ const HorseRacing = ({ currentUser }) => {
     
     try {
       const ctx = getAudioContext();
-      console.log('🔊 Playing race sound:', soundName);
       
       switch(soundName) {
         case 'startingBell':
@@ -282,7 +280,6 @@ const HorseRacing = ({ currentUser }) => {
   };
 
   const playHoovesSound = () => {
-    console.log('🐎 Starting hooves sound');
     // Play hooves sound repeatedly during race
     if (hoovesSoundRef.current) {
       clearInterval(hoovesSoundRef.current);
@@ -297,7 +294,6 @@ const HorseRacing = ({ currentUser }) => {
     if (hoovesSoundRef.current) {
       clearInterval(hoovesSoundRef.current);
       hoovesSoundRef.current = null;
-      console.log('🐎 Stopped hooves sound');
     }
   };
 
@@ -325,8 +321,6 @@ const HorseRacing = ({ currentUser }) => {
   ];
 
   const playCommentary = (message, delay = 0) => {
-    console.log('📢 Commentary:', message);
-    
     setTimeout(() => {
       // Show commentary text on screen
       setCurrentCommentary(message);
@@ -342,8 +336,14 @@ const HorseRacing = ({ currentUser }) => {
         });
       }
       
-      // Hide commentary after message duration
-      const messageDuration = Math.max(3000, message.length * 100); // At least 3 seconds
+      // Hide commentary after message duration (longer for important messages)
+      let messageDuration = Math.max(4000, message.length * 120); // At least 4 seconds, longer for longer messages
+      
+      // Special timing for key messages
+      if (message.includes('winner is') || message.includes('Congratulations') || message.includes('Better luck')) {
+        messageDuration = 5000; // Show winner/result messages longer
+      }
+      
       setTimeout(() => {
         setShowCommentary(false);
         setCurrentCommentary('');
@@ -527,21 +527,31 @@ const HorseRacing = ({ currentUser }) => {
     setRaceResults(results);
     resetHorsePositions();
     
-    // Play race start audio
-    console.log('🏁 Starting race animation with audio');
+    // Play race start audio with proper timing
     playCommentary("Ladies and gentlemen, the horses are at the starting line!");
     
     setTimeout(() => {
-      playCommentary("Get ready...", 0);
-    }, 1000);
+      playCommentary("Get ready...");
+    }, 3000);
     
     setTimeout(() => {
       playStartingBell();
-      playCommentary("And they're off!", 500);
       playHoovesSound();
-    }, 2000);
+    }, 5000);
     
-    // Animate horses to finish line based on backend results
+    setTimeout(() => {
+      playCommentary("And they're off!");
+    }, 5500);
+    
+    // Delay race animation to start after commentary
+    setTimeout(() => {
+      startRaceAnimation();
+    }, 6000);
+  };
+
+  // Separate function for race animation
+  const startRaceAnimation = () => {
+    const results = raceResults;
     let commentaryCounter = 0;
     const midRaceCommentary = [
       "It's a close race!",
@@ -578,16 +588,19 @@ const HorseRacing = ({ currentUser }) => {
           };
         });
         
-        // Add mid-race commentary
+        // Add mid-race commentary with better timing
         const maxPosition = Math.max(...updatedHorses.map(h => h.position));
-        if (maxPosition > 25 && commentaryCounter === 0) {
-          playCommentary(midRaceCommentary[0]);
+        if (maxPosition > 20 && commentaryCounter === 0) {
+          setTimeout(() => playCommentary(midRaceCommentary[0]), 500);
           commentaryCounter++;
-        } else if (maxPosition > 50 && commentaryCounter === 1) {
-          playCommentary(midRaceCommentary[1]);
+        } else if (maxPosition > 45 && commentaryCounter === 1) {
+          setTimeout(() => playCommentary(midRaceCommentary[1]), 500);
           commentaryCounter++;
-        } else if (maxPosition > 75 && commentaryCounter === 2) {
-          playCommentary(midRaceCommentary[2]);
+        } else if (maxPosition > 70 && commentaryCounter === 2) {
+          setTimeout(() => playCommentary(midRaceCommentary[2]), 500);
+          commentaryCounter++;
+        } else if (maxPosition > 90 && commentaryCounter === 3) {
+          setTimeout(() => playCommentary("Coming down the home stretch!"), 500);
           commentaryCounter++;
         }
         
@@ -600,26 +613,25 @@ const HorseRacing = ({ currentUser }) => {
           setRaceInProgress(false);
           setRaceFinished(true);
           
-          // Play winner commentary
+          // Play winner commentary with better timing
           const winner = results.winner;
           setTimeout(() => {
             playCommentary(`And the winner is horse number ${winner.id + 1}!`);
-            if (results.won) {
-              setTimeout(() => {
-                playCommentary("Congratulations! You won!");
-                playCrowdCheer();
-              }, 2000);
-            } else {
-              setTimeout(() => {
-                playCommentary("Better luck next time!");
-              }, 2000);
-            }
-          }, 500);
+          }, 1500);
           
-          // Show result modal after a brief delay
+          setTimeout(() => {
+            if (results.won) {
+              playCommentary("Congratulations! You won!");
+              setTimeout(() => playCrowdCheer(), 1000);
+            } else {
+              playCommentary("Better luck next time!");
+            }
+          }, 4000);
+          
+          // Show result modal after commentary finishes
           setTimeout(() => {
             setShowResultModal(true);
-          }, 1000);
+          }, 7000);
           
           // Update after race
           updateAfterRace();
@@ -1019,7 +1031,6 @@ const HorseRacing = ({ currentUser }) => {
               {audioEnabled && (
                 <button
                   onClick={() => {
-                    console.log('🔊 Testing audio...');
                     playRaceSound('startingBell');
                   }}
                   className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
