@@ -570,8 +570,18 @@ const HorseRacing = ({ currentUser }) => {
           const resultHorse = results.sortedHorses.find(h => h.id === horse.id);
           const finishPosition = results.sortedHorses.findIndex(h => h.id === horse.id);
           
-          // Speed based on finish position (winner finishes first)
-          const speed = 2.5 - (finishPosition * 0.3); // Winner gets 2.5, last gets ~0.4
+          // Much closer speeds for exciting races - smaller gaps between horses
+          let speed = 1.8 - (finishPosition * 0.1); // Winner gets 1.8, last gets ~1.1 (much closer!)
+          
+          // Add rubber band effect - trailing horses get slight speed boost to keep race close
+          const currentMaxPosition = Math.max(...prevHorses.map(h => h.position));
+          const positionGap = currentMaxPosition - horse.position;
+          if (positionGap > 15) {
+            speed += 0.3; // Boost for horses that are far behind
+          } else if (positionGap > 8) {
+            speed += 0.15; // Small boost for horses that are somewhat behind
+          }
+          
           const newPosition = horse.position + speed;
           
           if (newPosition >= 100) {
@@ -675,8 +685,17 @@ const HorseRacing = ({ currentUser }) => {
             speedMultiplier = 0.88;
           }
           
-          // Random speed variation with house edge applied
-          const randomSpeed = (Math.random() * 0.5 + 0.75) * horse.speed * speedMultiplier;
+          // More balanced random speed variation for closer races
+          let randomSpeed = (Math.random() * 0.4 + 0.8) * horse.speed * speedMultiplier;
+          
+          // Add catch-up mechanics for trailing horses in random races too
+          const currentMaxPosition = Math.max(...prevHorses.map(h => h.position));
+          const positionGap = currentMaxPosition - horse.position;
+          if (positionGap > 20) {
+            randomSpeed *= 1.2; // 20% speed boost for horses far behind
+          } else if (positionGap > 10) {
+            randomSpeed *= 1.1; // 10% speed boost for horses somewhat behind
+          }
           const newPosition = horse.position + randomSpeed;
           
           // Check if horse finished
