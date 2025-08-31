@@ -599,19 +599,19 @@ const HorseRacing = ({ currentUser }) => {
           };
         });
         
-        // Add mid-race commentary with better timing
+        // Add mid-race commentary with adjusted timing for slower races
         const maxPosition = Math.max(...updatedHorses.map(h => h.position));
-        if (maxPosition > 20 && commentaryCounter === 0) {
-          setTimeout(() => playCommentary(midRaceCommentary[0]), 500);
+        if (maxPosition > 18 && commentaryCounter === 0) {
+          setTimeout(() => playCommentary(midRaceCommentary[0]), 200);
           commentaryCounter++;
-        } else if (maxPosition > 45 && commentaryCounter === 1) {
-          setTimeout(() => playCommentary(midRaceCommentary[1]), 500);
+        } else if (maxPosition > 40 && commentaryCounter === 1) {
+          setTimeout(() => playCommentary(midRaceCommentary[1]), 200);
           commentaryCounter++;
-        } else if (maxPosition > 70 && commentaryCounter === 2) {
-          setTimeout(() => playCommentary(midRaceCommentary[2]), 500);
+        } else if (maxPosition > 65 && commentaryCounter === 2) {
+          setTimeout(() => playCommentary(midRaceCommentary[2]), 200);
           commentaryCounter++;
-        } else if (maxPosition > 90 && commentaryCounter === 3) {
-          setTimeout(() => playCommentary("Coming down the home stretch!"), 500);
+        } else if (maxPosition > 88 && commentaryCounter === 3) {
+          setTimeout(() => playCommentary("Coming down the home stretch!"), 200);
           commentaryCounter++;
         }
         
@@ -624,25 +624,25 @@ const HorseRacing = ({ currentUser }) => {
           setRaceInProgress(false);
           setRaceFinished(true);
           
-          // Play winner commentary with better timing
+          // Play winner commentary with slower, better timing
           const winner = results.winner;
           setTimeout(() => {
             playCommentary(`And the winner is horse number ${winner.id + 1}!`);
-          }, 1500);
+          }, 2500); // Increased from 1500ms to 2500ms
           
           setTimeout(() => {
             if (results.won) {
               playCommentary("Congratulations! You won!");
-              setTimeout(() => playCrowdCheer(), 1000);
+              setTimeout(() => playCrowdCheer(), 1500); // Increased from 1000ms
             } else {
               playCommentary("Better luck next time!");
             }
-          }, 4000);
+          }, 5500); // Increased from 4000ms to 5500ms
           
           // Show result modal after commentary finishes
           setTimeout(() => {
             setShowResultModal(true);
-          }, 7000);
+          }, 9000); // Increased from 7000ms to 9000ms
           
           // Update after race
           updateAfterRace();
@@ -714,15 +714,15 @@ const HorseRacing = ({ currentUser }) => {
           };
         });
         
-        // Add mid-race commentary
+        // Add mid-race commentary adjusted for slower race pace
         const maxPosition = Math.max(...updatedHorses.map(h => h.position));
-        if (maxPosition > 25 && commentaryCounter === 0) {
+        if (maxPosition > 22 && commentaryCounter === 0) {
           playCommentary(midRaceCommentary[0]);
           commentaryCounter++;
-        } else if (maxPosition > 50 && commentaryCounter === 1) {
+        } else if (maxPosition > 45 && commentaryCounter === 1) {
           playCommentary(midRaceCommentary[1]);
           commentaryCounter++;
-        } else if (maxPosition > 75 && commentaryCounter === 2) {
+        } else if (maxPosition > 70 && commentaryCounter === 2) {
           playCommentary(midRaceCommentary[2]);
           commentaryCounter++;
         }
@@ -755,20 +755,20 @@ const HorseRacing = ({ currentUser }) => {
     const playerHorse = finalHorses[currentBet.horseId];
     const won = winner.id === currentBet.horseId;
     
-    // Play winner commentary
+    // Play winner commentary with better timing for slower races
     setTimeout(() => {
       playCommentary(`And the winner is horse number ${winner.id + 1}!`);
       if (won) {
         setTimeout(() => {
           playCommentary("Congratulations! You won!");
           playCrowdCheer();
-        }, 2000);
+        }, 3000); // Increased from 2000ms to 3000ms
       } else {
         setTimeout(() => {
           playCommentary("Better luck next time!");
-        }, 2000);
+        }, 3000); // Increased from 2000ms to 3000ms
       }
-    }, 500);
+    }, 1000); // Increased from 500ms to 1000ms
     
     let payout = 0;
     if (won) {
@@ -843,7 +843,26 @@ const HorseRacing = ({ currentUser }) => {
         >
           {/* Header */}
           <div className="text-center mb-6">
-            <div className={`text-6xl mb-4 animate-bounce`}>
+            {/* Winning Horse Image */}
+            <div className="mb-4 flex justify-center">
+              <div className="relative">
+                <img 
+                  src={`/h${winner.id + 1}.svg`}
+                  alt={`Winner: ${winner.name}`}
+                  className="w-20 h-16 object-contain animate-bounce"
+                  style={{
+                    filter: 'drop-shadow(0 0 10px rgba(255, 215, 0, 0.8))', // Golden glow effect
+                    transform: 'scaleX(1)' // Normal orientation
+                  }}
+                />
+                {/* Winner badge */}
+                <div className="absolute -top-2 -right-2 bg-yellow-400 text-black rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold animate-pulse">
+                  #{winner.id + 1}
+                </div>
+              </div>
+            </div>
+            
+            <div className={`text-4xl mb-3 animate-bounce`}>
               {won ? '🏆' : '😔'}
             </div>
             <h2 className={`text-3xl font-bold ${won ? 'text-green-100' : 'text-red-100'} mb-2`}>
