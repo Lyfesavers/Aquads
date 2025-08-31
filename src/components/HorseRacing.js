@@ -134,102 +134,163 @@ const HorseRacing = ({ currentUser }) => {
     }
   };
 
-  // Audio System Functions
-  const initializeAudio = async () => {
+  // Audio System Functions (Duck Hunt style)
+  const getAudioContext = () => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      console.log('🔊 Audio context created:', audioContextRef.current.state);
+    }
+    return audioContextRef.current;
+  };
+
+  // Play sound using Duck Hunt pattern
+  const playRaceSound = (soundName) => {
     if (!audioEnabled) return;
     
     try {
-      // Initialize Web Audio Context for sound effects
-      if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-        console.log('🔊 Audio context created:', audioContextRef.current.state);
-      }
+      const ctx = getAudioContext();
+      console.log('🔊 Playing race sound:', soundName);
       
-      // Resume audio context if it's suspended (required by modern browsers)
-      if (audioContextRef.current.state === 'suspended') {
-        await audioContextRef.current.resume();
-        console.log('🔊 Audio context resumed:', audioContextRef.current.state);
+      switch(soundName) {
+        case 'startingBell':
+          playStartingBellSound(ctx);
+          break;
+        case 'hoofBeat':
+          playHoofBeatSound(ctx);
+          break;
+        case 'crowdCheer':
+          playCrowdCheerSound(ctx);
+          break;
+        case 'finishSound':
+          playFinishLineSound(ctx);
+          break;
+        case 'commentary':
+          playCommentaryBeep(ctx);
+          break;
+        default:
+          console.error('Unknown race sound:', soundName);
       }
     } catch (error) {
-      console.warn('Web Audio API not supported:', error);
+      console.error('Failed to play race sound:', soundName, error);
     }
   };
 
-  // Create synthetic sound effects using Web Audio API
-  const createTone = async (frequency, duration, type = 'sine') => {
-    if (!audioEnabled) {
-      console.log('🔇 Audio disabled');
-      return;
-    }
+  // Starting bell sound (Duck Hunt style)
+  const playStartingBellSound = (ctx) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
     
-    if (!audioContextRef.current) {
-      console.log('🔊 No audio context, initializing...');
-      await initializeAudio();
-    }
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(800, ctx.currentTime);
+    osc.frequency.setValueAtTime(600, ctx.currentTime + 0.1);
+    osc.frequency.setValueAtTime(800, ctx.currentTime + 0.2);
     
-    if (!audioContextRef.current) {
-      console.warn('🔇 Failed to create audio context');
-      return;
-    }
+    gain.gain.setValueAtTime(volume * 0.5, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
     
-    try {
-      // Ensure audio context is running
-      if (audioContextRef.current.state === 'suspended') {
-        await audioContextRef.current.resume();
-      }
-      
-      console.log(`🔊 Playing tone: ${frequency}Hz for ${duration}s (${type})`);
-      
-      const oscillator = audioContextRef.current.createOscillator();
-      const gainNode = audioContextRef.current.createGain();
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContextRef.current.destination);
-      
-      oscillator.frequency.setValueAtTime(frequency, audioContextRef.current.currentTime);
-      oscillator.type = type;
-      
-      gainNode.gain.setValueAtTime(0, audioContextRef.current.currentTime);
-      gainNode.gain.linearRampToValueAtTime(volume * 0.3, audioContextRef.current.currentTime + 0.01);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContextRef.current.currentTime + duration);
-      
-      oscillator.start(audioContextRef.current.currentTime);
-      oscillator.stop(audioContextRef.current.currentTime + duration);
-    } catch (error) {
-      console.error('🔇 Error playing tone:', error);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.start();
+    osc.stop(ctx.currentTime + 0.5);
+  };
+
+  // Hoof beat sound (Duck Hunt style)
+  const playHoofBeatSound = (ctx) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(200, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.05);
+    
+    gain.gain.setValueAtTime(volume * 0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.start();
+    osc.stop(ctx.currentTime + 0.05);
+  };
+
+  // Crowd cheer sound (Duck Hunt style)
+  const playCrowdCheerSound = (ctx) => {
+    for (let i = 0; i < 3; i++) {
+      setTimeout(() => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        
+        osc.type = 'sawtooth';
+        osc.frequency.value = Math.random() * 200 + 100;
+        
+        gain.gain.setValueAtTime(volume * 0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+        
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        
+        osc.start();
+        osc.stop(ctx.currentTime + 0.3);
+      }, i * 100);
     }
   };
 
-  // Play starting bell sound
-  const playStartingBell = async () => {
-    if (!audioEnabled) return;
-    console.log('🔔 Playing starting bell');
-    await createTone(800, 0.3, 'triangle');
-    setTimeout(async () => await createTone(600, 0.3, 'triangle'), 100);
-    setTimeout(async () => await createTone(800, 0.5, 'triangle'), 200);
+  // Finish line sound (Duck Hunt style)
+  const playFinishLineSound = (ctx) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(1000, ctx.currentTime);
+    osc.frequency.setValueAtTime(1200, ctx.currentTime + 0.1);
+    osc.frequency.setValueAtTime(800, ctx.currentTime + 0.2);
+    
+    gain.gain.setValueAtTime(volume * 0.6, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.start();
+    osc.stop(ctx.currentTime + 0.4);
   };
 
-  // Play horse hooves sound (rhythmic clicking)
+  // Commentary beep (Duck Hunt style)
+  const playCommentaryBeep = (ctx) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.type = 'triangle';
+    osc.frequency.value = 150 + Math.random() * 100;
+    
+    gain.gain.setValueAtTime(volume * 0.2, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.start();
+    osc.stop(ctx.currentTime + 0.1);
+  };
+
+  // Simplified audio functions using Duck Hunt pattern
+  const playStartingBell = () => {
+    playRaceSound('startingBell');
+  };
+
   const playHoovesSound = () => {
-    if (!audioEnabled) return;
     console.log('🐎 Starting hooves sound');
-    
-    const playHoofBeat = async () => {
-      await createTone(200, 0.05, 'square');
-      setTimeout(async () => await createTone(180, 0.05, 'square'), 50);
-      setTimeout(async () => await createTone(220, 0.05, 'square'), 100);
-      setTimeout(async () => await createTone(190, 0.05, 'square'), 150);
-    };
-    
     // Play hooves sound repeatedly during race
     if (hoovesSoundRef.current) {
       clearInterval(hoovesSoundRef.current);
     }
     
-    hoovesSoundRef.current = setInterval(playHoofBeat, 400);
+    hoovesSoundRef.current = setInterval(() => {
+      playRaceSound('hoofBeat');
+    }, 400);
   };
 
-  // Stop hooves sound
   const stopHoovesSound = () => {
     if (hoovesSoundRef.current) {
       clearInterval(hoovesSoundRef.current);
@@ -238,28 +299,13 @@ const HorseRacing = ({ currentUser }) => {
     }
   };
 
-  // Play crowd cheer sound
-  const playCrowdCheer = async (intensity = 1) => {
-    if (!audioEnabled) return;
-    console.log('👏 Playing crowd cheer');
-    
-    // Create crowd noise using white noise
-    const duration = 2 + (intensity * 2);
-    for (let i = 0; i < 5; i++) {
-      setTimeout(async () => {
-        await createTone(Math.random() * 200 + 100, 0.3, 'sawtooth');
-      }, i * 100);
-    }
+  const playCrowdCheer = () => {
+    playRaceSound('crowdCheer');
   };
 
-  // Play finish line sound
-  const playFinishSound = async () => {
-    if (!audioEnabled) return;
-    console.log('🏁 Playing finish sound');
-    await createTone(1000, 0.2, 'triangle');
-    setTimeout(async () => await createTone(1200, 0.3, 'triangle'), 100);
-    setTimeout(async () => await createTone(800, 0.4, 'triangle'), 200);
-    await playCrowdCheer(2);
+  const playFinishSound = () => {
+    playRaceSound('finishSound');
+    setTimeout(() => playRaceSound('crowdCheer'), 200);
   };
 
   // Dynamic race commentary
@@ -276,26 +322,23 @@ const HorseRacing = ({ currentUser }) => {
     "And the winner is horse number {winner}!"
   ];
 
-  const playCommentary = async (message, delay = 0) => {
+  const playCommentary = (message, delay = 0) => {
     if (!audioEnabled) return;
     console.log('📢 Commentary:', message);
     
-    setTimeout(async () => {
+    setTimeout(() => {
       // Create a simple beep pattern to simulate speech
       const words = message.split(' ');
-      for (let index = 0; index < words.length; index++) {
-        const word = words[index];
-        setTimeout(async () => {
-          const pitch = 150 + (word.length * 10);
-          await createTone(pitch, 0.1, 'triangle');
+      words.forEach((word, index) => {
+        setTimeout(() => {
+          playRaceSound('commentary');
         }, index * 200);
-      }
+      });
     }, delay);
   };
 
   // Initialize audio on component mount
   useEffect(() => {
-    initializeAudio();
     return () => {
       stopHoovesSound();
       if (commentaryTimeoutRef.current) {
@@ -387,7 +430,7 @@ const HorseRacing = ({ currentUser }) => {
   };
 
   // Start race
-  const startRace = async (forcedCurrentBet = null) => {
+  const startRace = (forcedCurrentBet = null) => {
     const bet = forcedCurrentBet || currentBet;
     
     if (!bet || !bet.placed || raceInProgress) {
@@ -399,16 +442,16 @@ const HorseRacing = ({ currentUser }) => {
     resetHorsePositions();
     
     // Play pre-race commentary
-    await playCommentary("Ladies and gentlemen, the horses are at the starting line!");
+    playCommentary("Ladies and gentlemen, the horses are at the starting line!");
     
     // Race countdown with audio
-    setTimeout(async () => {
-      await playCommentary("Get ready...", 0);
+    setTimeout(() => {
+      playCommentary("Get ready...", 0);
     }, 1000);
     
-    setTimeout(async () => {
-      await playStartingBell();
-      await playCommentary("And they're off!", 500);
+    setTimeout(() => {
+      playStartingBell();
+      playCommentary("And they're off!", 500);
       playHoovesSound();
       runRace();
     }, 3000);
@@ -600,7 +643,7 @@ const HorseRacing = ({ currentUser }) => {
   };
 
   // Finish race and calculate results
-  const finishRace = async (finalHorses) => {
+  const finishRace = (finalHorses) => {
     setRaceInProgress(false);
     setRaceFinished(true);
     
@@ -614,16 +657,16 @@ const HorseRacing = ({ currentUser }) => {
     const won = winner.id === currentBet.horseId;
     
     // Play winner commentary
-    setTimeout(async () => {
-      await playCommentary(`And the winner is horse number ${winner.id + 1}!`);
+    setTimeout(() => {
+      playCommentary(`And the winner is horse number ${winner.id + 1}!`);
       if (won) {
-        setTimeout(async () => {
-          await playCommentary("Congratulations! You won!");
-          await playCrowdCheer(3);
+        setTimeout(() => {
+          playCommentary("Congratulations! You won!");
+          playCrowdCheer();
         }, 2000);
       } else {
-        setTimeout(async () => {
-          await playCommentary("Better luck next time!");
+        setTimeout(() => {
+          playCommentary("Better luck next time!");
         }, 2000);
       }
     }, 500);
@@ -887,11 +930,12 @@ const HorseRacing = ({ currentUser }) => {
             <div className="flex items-center gap-4">
               <span className="text-gray-300 font-medium">🔊 Race Audio:</span>
               <button
-                onClick={async () => {
+                onClick={() => {
                   const newState = !audioEnabled;
                   setAudioEnabled(newState);
                   if (newState) {
-                    await initializeAudio();
+                    // Initialize audio context on first enable
+                    getAudioContext();
                   }
                 }}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -905,9 +949,9 @@ const HorseRacing = ({ currentUser }) => {
               
               {audioEnabled && (
                 <button
-                  onClick={async () => {
+                  onClick={() => {
                     console.log('🔊 Testing audio...');
-                    await createTone(800, 0.5, 'triangle');
+                    playRaceSound('startingBell');
                   }}
                   className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
                 >
