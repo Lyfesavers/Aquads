@@ -513,7 +513,29 @@ const HorseRacing = ({ currentUser }) => {
     setRaceResults(results);
     resetHorsePositions();
     
+    // Play race start audio
+    console.log('🏁 Starting race animation with audio');
+    playCommentary("Ladies and gentlemen, the horses are at the starting line!");
+    
+    setTimeout(() => {
+      playCommentary("Get ready...", 0);
+    }, 1000);
+    
+    setTimeout(() => {
+      playStartingBell();
+      playCommentary("And they're off!", 500);
+      playHoovesSound();
+    }, 2000);
+    
     // Animate horses to finish line based on backend results
+    let commentaryCounter = 0;
+    const midRaceCommentary = [
+      "It's a close race!",
+      "The horses are neck and neck!",
+      "What an exciting race we have here!",
+      "Coming around the final turn!"
+    ];
+    
     const raceInterval = setInterval(() => {
       setHorses(prevHorses => {
         const updatedHorses = prevHorses.map(horse => {
@@ -542,12 +564,43 @@ const HorseRacing = ({ currentUser }) => {
           };
         });
         
+        // Add mid-race commentary
+        const maxPosition = Math.max(...updatedHorses.map(h => h.position));
+        if (maxPosition > 25 && commentaryCounter === 0) {
+          playCommentary(midRaceCommentary[0]);
+          commentaryCounter++;
+        } else if (maxPosition > 50 && commentaryCounter === 1) {
+          playCommentary(midRaceCommentary[1]);
+          commentaryCounter++;
+        } else if (maxPosition > 75 && commentaryCounter === 2) {
+          playCommentary(midRaceCommentary[2]);
+          commentaryCounter++;
+        }
+        
         // Check if animation is complete
         const finishedCount = updatedHorses.filter(h => h.finished).length;
         if (finishedCount === updatedHorses.length) {
           clearInterval(raceInterval);
+          stopHoovesSound();
+          playFinishSound();
           setRaceInProgress(false);
           setRaceFinished(true);
+          
+          // Play winner commentary
+          const winner = results.winner;
+          setTimeout(() => {
+            playCommentary(`And the winner is horse number ${winner.id + 1}!`);
+            if (results.won) {
+              setTimeout(() => {
+                playCommentary("Congratulations! You won!");
+                playCrowdCheer();
+              }, 2000);
+            } else {
+              setTimeout(() => {
+                playCommentary("Better luck next time!");
+              }, 2000);
+            }
+          }, 500);
           
           // Show result modal after a brief delay
           setTimeout(() => {
