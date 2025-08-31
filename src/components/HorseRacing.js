@@ -335,28 +335,45 @@ const HorseRacing = ({ currentUser }) => {
     "The crowd can't believe what they're seeing!"
   ];
 
-  // Balanced comeback system for player engagement
+  // Smart comeback system with player psychology - never let them lose everything!
   const checkForComeback = (horses, maxPosition) => {
     // Only trigger comeback in final 30% of race and if not already triggered
     if (maxPosition < 70 || comebackTriggered) return null;
     
-    // Balanced comeback chances - enough to keep players engaged but not too much
     const userHorse = horses.find(h => h.id === currentBet?.horseId);
     const isUserOnWorstOdds = userHorse && userHorse.odds >= Math.max(...horses.map(h => h.odds));
     const isUserOnGoodOdds = userHorse && userHorse.odds <= Math.min(...horses.map(h => h.odds));
     
-    // Balanced comeback chances:
-    // - Worst odds: 35% (enough for excitement, not too much)
-    // - Middle odds: 25% (fair chance)  
-    // - Best odds: 15% (they already have good win chance)
+    // PRECISE DISTRIBUTION PSYCHOLOGY: Boost win chances based on target zones
+    let pointsBasedBoost = 0;
+    if (userPoints <= 50) {
+      pointsBasedBoost = 0.70; // 70% boost when almost broke - SAVE THEM!
+      console.log(`🚨 SAFETY NET ACTIVATED! Player has ${userPoints} points - massive win boost!`);
+    } else if (userPoints <= 150) {
+      pointsBasedBoost = 0.40; // 40% boost when getting low - build dopamine
+      console.log(`💊 DOPAMINE BOOST! Player has ${userPoints} points - win boost activated!`);
+    } else if (userPoints <= 999) {
+      pointsBasedBoost = 0.20; // Help them reach 1k+ range
+    } else if (userPoints >= 1000 && userPoints <= 4999) {
+      pointsBasedBoost = 0.10; // Small boost in main cycling range (90%)
+    } else if (userPoints >= 5000 && userPoints <= 7999) {
+      pointsBasedBoost = 0.04; // Very small boost in 5k-7k range (8%)
+    } else if (userPoints >= 8000) {
+      pointsBasedBoost = 0.0; // NO boost above 8k - make it very hard to reach 10k (2%)
+    }
+    
+    // Comeback chances with psychological manipulation:
     let comebackChance;
     if (isUserOnWorstOdds) {
-      comebackChance = 0.35; // Reduced from 60% to 35%
+      comebackChance = 0.35 + pointsBasedBoost; // Base 35% + safety net
     } else if (isUserOnGoodOdds) {
-      comebackChance = 0.15; // Lower for favorites
+      comebackChance = 0.15 + pointsBasedBoost; // Base 15% + safety net
     } else {
-      comebackChance = 0.25; // Middle ground
+      comebackChance = 0.25 + pointsBasedBoost; // Base 25% + safety net
     }
+    
+    // Cap at 95% so it's not too obvious
+    comebackChance = Math.min(comebackChance, 0.95);
     
     if (Math.random() > comebackChance) return null;
     
@@ -444,10 +461,29 @@ const HorseRacing = ({ currentUser }) => {
     }));
   };
 
-  // Place bet using backend API
+  // Place bet with safety net - never let players go broke!
   const placeBet = async () => {
     if (!currentBet || !currentUser || currentBet.amount < 10) {
       alert('Invalid bet amount! Minimum bet is 10 points.');
+      return;
+    }
+
+    // DISTRIBUTION SAFETY NET: Prevent players from betting their last points
+    let minKeep = 25; // Base minimum to keep
+    
+    // Increase minimum reserve at higher point levels to slow progression
+    if (userPoints >= 8000) {
+      minKeep = 500; // Force smaller bets near 10k threshold
+    } else if (userPoints >= 5000) {
+      minKeep = 200; // Force smaller bets in 5k-7k range
+    } else if (userPoints >= 3000) {
+      minKeep = 100; // Force smaller bets in upper cycling range
+    }
+    
+    if (userPoints - currentBet.amount < minKeep) {
+      alert(`Safety limit! You must keep at least ${minKeep} points to continue playing. Reducing your bet.`);
+      const safeBet = Math.max(10, userPoints - minKeep);
+      setBetAmount(safeBet);
       return;
     }
 
@@ -761,12 +797,29 @@ const HorseRacing = ({ currentUser }) => {
         const updatedHorses = prevHorses.map(horse => {
           if (horse.finished) return horse;
           
-          // Balanced house edge - fair but sustainable
+          // Dynamic house edge based on player psychology
           let speedMultiplier = 1;
           if (currentBet && currentBet.horseId === horse.id) {
-            // Reduced house edge: only 8% speed reduction (was 12%)
-            // This gives players better chances while maintaining house advantage
-            speedMultiplier = 0.92;
+            // PRECISE DISTRIBUTION: Target 2% reach 10k, 9% hit 5k-7k, 90% cycle 1k-4999
+            let houseEdge = 0.08; // Base 8% house edge
+            
+            if (userPoints <= 50) {
+              houseEdge = 0.02; // Almost no house edge when broke - LET THEM WIN!
+            } else if (userPoints <= 150) {
+              houseEdge = 0.04; // Reduced house edge when low - dopamine boost
+            } else if (userPoints <= 999) {
+              houseEdge = 0.06; // Help them reach 1k+ range
+            } else if (userPoints >= 1000 && userPoints <= 4999) {
+              houseEdge = 0.08; // Standard house edge for main 90% cycling range
+            } else if (userPoints >= 5000 && userPoints <= 7999) {
+              houseEdge = 0.16; // Higher edge - most will fall back, 8% will survive here
+            } else if (userPoints >= 8000 && userPoints <= 9999) {
+              houseEdge = 0.22; // Very high edge - only 2% will break through to 10k
+            } else if (userPoints >= 10000) {
+              houseEdge = 0.25; // Extreme edge if they somehow get above 10k
+            }
+            
+            speedMultiplier = 1 - houseEdge;
           }
           
           // More balanced random speed variation for closer races
@@ -871,11 +924,18 @@ const HorseRacing = ({ currentUser }) => {
       
       if (won) {
         setTimeout(() => {
-          if (isComeback) {
-            playCommentary("What an unbelievable victory! You backed the ultimate underdog!");
-          } else {
-            playCommentary("Congratulations! You won!");
-          }
+                      if (isComeback) {
+              // Special messages for safety net wins to build confidence
+              if (userPoints <= 150) {
+                playCommentary("INCREDIBLE COMEBACK! Your luck is turning around!");
+              } else {
+                playCommentary("What an unbelievable victory! You backed the ultimate underdog!");
+              }
+            } else if (userPoints <= 150) {
+              playCommentary("YES! You're on a hot streak! Keep it going!");
+            } else {
+              playCommentary("Congratulations! You won!");
+            }
           playCrowdCheer();
         }, 3000);
       } else {
