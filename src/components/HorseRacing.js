@@ -335,22 +335,37 @@ const HorseRacing = ({ currentUser }) => {
     "The crowd can't believe what they're seeing!"
   ];
 
-  // Check for random comeback opportunity (15% chance, only in final stretch)
+  // Check for random comeback opportunity - more generous for testing
   const checkForComeback = (horses, maxPosition) => {
-    // Only trigger comeback in final 25% of race and if not already triggered
-    if (maxPosition < 75 || comebackTriggered) return null;
+    // Only trigger comeback in final 30% of race and if not already triggered
+    if (maxPosition < 70 || comebackTriggered) return null;
     
-    // 15% chance for comeback to occur
-    if (Math.random() > 0.15) return null;
+    // Special boost if user bet on worst odds horse - 60% chance instead of 35%
+    const userHorse = horses.find(h => h.id === currentBet?.horseId);
+    const isUserOnWorstOdds = userHorse && userHorse.odds >= Math.max(...horses.map(h => h.odds));
+    const comebackChance = isUserOnWorstOdds ? 0.60 : 0.35;
+    
+    if (Math.random() > comebackChance) return null;
     
     // Find horses in last 3 positions who could make a comeback
     const sortedByPosition = [...horses].sort((a, b) => b.position - a.position);
     const lastThreeHorses = sortedByPosition.slice(-3);
-    const potentialComebackHorse = lastThreeHorses[Math.floor(Math.random() * lastThreeHorses.length)];
     
-    // Make sure comeback horse is significantly behind (at least 20 positions)
+    // If user bet on worst odds horse and it's in last 3, prioritize it
+    let potentialComebackHorse;
+    if (isUserOnWorstOdds && lastThreeHorses.includes(userHorse)) {
+      potentialComebackHorse = userHorse; // Give user's horse the comeback
+      console.log(`🎯 USER'S UNDERDOG COMEBACK! Horse #${potentialComebackHorse.id + 1} (${potentialComebackHorse.name}) with ${potentialComebackHorse.odds}:1 odds!`);
+    } else {
+      // Prioritize horses with worst odds (highest odds = worst chances)
+      const sortedByOdds = lastThreeHorses.sort((a, b) => b.odds - a.odds);
+      potentialComebackHorse = sortedByOdds[0]; // Pick worst odds horse first
+      console.log(`🏇 RANDOM COMEBACK! Horse #${potentialComebackHorse.id + 1} (${potentialComebackHorse.name}) with ${potentialComebackHorse.odds}:1 odds!`);
+    }
+    
+    // Reduced gap requirement - just need to be behind (at least 5 positions)
     const leadingPosition = sortedByPosition[0].position;
-    if (leadingPosition - potentialComebackHorse.position < 20) return null;
+    if (leadingPosition - potentialComebackHorse.position < 5) return null;
     
     return potentialComebackHorse;
   };
@@ -624,17 +639,17 @@ const HorseRacing = ({ currentUser }) => {
             if (comebackCandidate && comebackCandidate.id === horse.id) {
               setComebackTriggered(true);
               setComebackHorse(horse);
-              // Dramatic speed boost that might overcome predetermined results
-              speed += 1.5;
+              // MASSIVE speed boost that can overcome predetermined results
+              speed += 2.5; // Increased from 1.5 to 2.5
               // Play comeback commentary
               const commentaryIndex = Math.floor(Math.random() * comebackCommentary.length);
               setTimeout(() => playCommentary(comebackCommentary[commentaryIndex]), 300);
             }
           }
 
-          // Continue speed boost for comeback horse in backend races
+          // Continue massive speed boost for comeback horse in backend races
           if (comebackTriggered && comebackHorse && comebackHorse.id === horse.id) {
-            speed += 1.2; // Sustained dramatic speed boost
+            speed += 2.0; // Increased from 1.2 to 2.0 - sustained massive boost
           }
           
           const newPosition = horse.position + speed;
@@ -753,13 +768,13 @@ const HorseRacing = ({ currentUser }) => {
           }
 
           // Check for dramatic comeback opportunity
-          if (!comebackTriggered && currentMaxPosition > 75) {
+          if (!comebackTriggered && currentMaxPosition > 70) {
             const comebackCandidate = checkForComeback(prevHorses, currentMaxPosition);
             if (comebackCandidate && comebackCandidate.id === horse.id) {
               setComebackTriggered(true);
               setComebackHorse(horse);
-              // Massive speed boost for the comeback horse
-              randomSpeed *= 2.5;
+              // MASSIVE speed boost for the comeback horse
+              randomSpeed *= 3.5; // Increased from 2.5 to 3.5
               // Play comeback commentary
               const commentaryIndex = Math.floor(Math.random() * comebackCommentary.length);
               setTimeout(() => playCommentary(comebackCommentary[commentaryIndex]), 500);
@@ -768,7 +783,7 @@ const HorseRacing = ({ currentUser }) => {
 
           // Continue massive speed boost for comeback horse
           if (comebackTriggered && comebackHorse && comebackHorse.id === horse.id) {
-            randomSpeed *= 2.2; // Sustained speed boost
+            randomSpeed *= 3.0; // Increased from 2.2 to 3.0 - sustained massive boost
           }
           const newPosition = horse.position + randomSpeed;
           
