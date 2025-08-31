@@ -23,6 +23,14 @@ const HorseRacing = ({ currentUser }) => {
 
   const raceTrackRef = useRef(null);
   const hasSubmittedRef = useRef(false);
+  
+  // Audio system state
+  const [audioEnabled, setAudioEnabled] = useState(true);
+  const [volume, setVolume] = useState(0.7);
+  const audioContextRef = useRef(null);
+  const crowdSoundRef = useRef(null);
+  const hoovesSoundRef = useRef(null);
+  const commentaryTimeoutRef = useRef(null);
 
   // Initialize component
   useEffect(() => {
@@ -126,6 +134,138 @@ const HorseRacing = ({ currentUser }) => {
     }
   };
 
+  // Audio System Functions
+  const initializeAudio = () => {
+    if (!audioEnabled) return;
+    
+    try {
+      // Initialize Web Audio Context for sound effects
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    } catch (error) {
+      console.warn('Web Audio API not supported:', error);
+    }
+  };
+
+  // Create synthetic sound effects using Web Audio API
+  const createTone = (frequency, duration, type = 'sine') => {
+    if (!audioEnabled || !audioContextRef.current) return;
+    
+    const oscillator = audioContextRef.current.createOscillator();
+    const gainNode = audioContextRef.current.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContextRef.current.destination);
+    
+    oscillator.frequency.setValueAtTime(frequency, audioContextRef.current.currentTime);
+    oscillator.type = type;
+    
+    gainNode.gain.setValueAtTime(0, audioContextRef.current.currentTime);
+    gainNode.gain.linearRampToValueAtTime(volume * 0.3, audioContextRef.current.currentTime + 0.01);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContextRef.current.currentTime + duration);
+    
+    oscillator.start(audioContextRef.current.currentTime);
+    oscillator.stop(audioContextRef.current.currentTime + duration);
+  };
+
+  // Play starting bell sound
+  const playStartingBell = () => {
+    if (!audioEnabled) return;
+    createTone(800, 0.3, 'triangle');
+    setTimeout(() => createTone(600, 0.3, 'triangle'), 100);
+    setTimeout(() => createTone(800, 0.5, 'triangle'), 200);
+  };
+
+  // Play horse hooves sound (rhythmic clicking)
+  const playHoovesSound = () => {
+    if (!audioEnabled) return;
+    
+    const playHoofBeat = () => {
+      createTone(200, 0.05, 'square');
+      setTimeout(() => createTone(180, 0.05, 'square'), 50);
+      setTimeout(() => createTone(220, 0.05, 'square'), 100);
+      setTimeout(() => createTone(190, 0.05, 'square'), 150);
+    };
+    
+    // Play hooves sound repeatedly during race
+    if (hoovesSoundRef.current) {
+      clearInterval(hoovesSoundRef.current);
+    }
+    
+    hoovesSoundRef.current = setInterval(playHoofBeat, 400);
+  };
+
+  // Stop hooves sound
+  const stopHoovesSound = () => {
+    if (hoovesSoundRef.current) {
+      clearInterval(hoovesSoundRef.current);
+      hoovesSoundRef.current = null;
+    }
+  };
+
+  // Play crowd cheer sound
+  const playCrowdCheer = (intensity = 1) => {
+    if (!audioEnabled) return;
+    
+    // Create crowd noise using white noise
+    const duration = 2 + (intensity * 2);
+    for (let i = 0; i < 5; i++) {
+      setTimeout(() => {
+        createTone(Math.random() * 200 + 100, 0.3, 'sawtooth');
+      }, i * 100);
+    }
+  };
+
+  // Play finish line sound
+  const playFinishSound = () => {
+    if (!audioEnabled) return;
+    createTone(1000, 0.2, 'triangle');
+    setTimeout(() => createTone(1200, 0.3, 'triangle'), 100);
+    setTimeout(() => createTone(800, 0.4, 'triangle'), 200);
+    playCrowdCheer(2);
+  };
+
+  // Dynamic race commentary
+  const raceCommentary = [
+    "And they're off!",
+    "It's a close race!",
+    "Horse number {horse} is taking the lead!",
+    "What an exciting race we have here!",
+    "The horses are neck and neck!",
+    "Coming around the final turn!",
+    "It's anyone's race!",
+    "The crowd is on their feet!",
+    "What a finish!",
+    "And the winner is horse number {winner}!"
+  ];
+
+  const playCommentary = (message, delay = 0) => {
+    if (!audioEnabled) return;
+    
+    setTimeout(() => {
+      // Create a simple beep pattern to simulate speech
+      const words = message.split(' ');
+      words.forEach((word, index) => {
+        setTimeout(() => {
+          const pitch = 150 + (word.length * 10);
+          createTone(pitch, 0.1, 'triangle');
+        }, index * 200);
+      });
+    }, delay);
+  };
+
+  // Initialize audio on component mount
+  useEffect(() => {
+    initializeAudio();
+    return () => {
+      stopHoovesSound();
+      if (commentaryTimeoutRef.current) {
+        clearTimeout(commentaryTimeoutRef.current);
+      }
+    };
+  }, [audioEnabled]);
+
   // Select a horse for betting
   const selectHorse = (horseId) => {
     if (raceInProgress || !currentUser) return;
@@ -220,8 +360,18 @@ const HorseRacing = ({ currentUser }) => {
     setRaceFinished(false);
     resetHorsePositions();
     
-    // Race countdown
+    // Play pre-race commentary
+    playCommentary("Ladies and gentlemen, the horses are at the starting line!");
+    
+    // Race countdown with audio
     setTimeout(() => {
+      playCommentary("Get ready...", 0);
+    }, 1000);
+    
+    setTimeout(() => {
+      playStartingBell();
+      playCommentary("And they're off!", 500);
+      playHoovesSound();
       runRace();
     }, 3000);
   };
@@ -344,6 +494,14 @@ const HorseRacing = ({ currentUser }) => {
 
   // Run the race with house edge algorithm
   const runRace = () => {
+    let commentaryCounter = 0;
+    const midRaceCommentary = [
+      "It's a close race!",
+      "The horses are neck and neck!",
+      "What an exciting race we have here!",
+      "Coming around the final turn!"
+    ];
+    
     const raceInterval = setInterval(() => {
       setHorses(prevHorses => {
         const updatedHorses = prevHorses.map(horse => {
@@ -376,10 +534,25 @@ const HorseRacing = ({ currentUser }) => {
           };
         });
         
+        // Add mid-race commentary
+        const maxPosition = Math.max(...updatedHorses.map(h => h.position));
+        if (maxPosition > 25 && commentaryCounter === 0) {
+          playCommentary(midRaceCommentary[0]);
+          commentaryCounter++;
+        } else if (maxPosition > 50 && commentaryCounter === 1) {
+          playCommentary(midRaceCommentary[1]);
+          commentaryCounter++;
+        } else if (maxPosition > 75 && commentaryCounter === 2) {
+          playCommentary(midRaceCommentary[2]);
+          commentaryCounter++;
+        }
+        
         // Check if race is finished
         const finishedHorses = updatedHorses.filter(h => h.finished);
         if (finishedHorses.length === updatedHorses.length) {
           clearInterval(raceInterval);
+          stopHoovesSound();
+          playFinishSound();
           setTimeout(() => finishRace(updatedHorses), 1000);
         }
         
@@ -401,6 +574,21 @@ const HorseRacing = ({ currentUser }) => {
     const winner = sortedHorses[0];
     const playerHorse = finalHorses[currentBet.horseId];
     const won = winner.id === currentBet.horseId;
+    
+    // Play winner commentary
+    setTimeout(() => {
+      playCommentary(`And the winner is horse number ${winner.id + 1}!`);
+      if (won) {
+        setTimeout(() => {
+          playCommentary("Congratulations! You won!");
+          playCrowdCheer(3);
+        }, 2000);
+      } else {
+        setTimeout(() => {
+          playCommentary("Better luck next time!");
+        }, 2000);
+      }
+    }, 500);
     
     let payout = 0;
     if (won) {
@@ -608,6 +796,26 @@ const HorseRacing = ({ currentUser }) => {
               transform: translateY(0) scale(1);
             }
           }
+          
+          /* Volume slider styling */
+          .slider::-webkit-slider-thumb {
+            appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #10b981;
+            cursor: pointer;
+            border: 2px solid #065f46;
+          }
+          
+          .slider::-moz-range-thumb {
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #10b981;
+            cursor: pointer;
+            border: 2px solid #065f46;
+          }
         `
       }} />
       
@@ -632,6 +840,41 @@ const HorseRacing = ({ currentUser }) => {
           <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
             <div className="text-sm text-gray-400">Affiliate Points</div>
             <div className="text-2xl font-bold text-emerald-400">{userPoints}</div>
+          </div>
+        </div>
+
+        {/* Audio Controls */}
+        <div className="mb-6 bg-gray-800 rounded-lg p-4 border border-gray-700">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-4">
+              <span className="text-gray-300 font-medium">🔊 Race Audio:</span>
+              <button
+                onClick={() => setAudioEnabled(!audioEnabled)}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  audioEnabled 
+                    ? 'bg-green-600 hover:bg-green-700 text-white' 
+                    : 'bg-gray-600 hover:bg-gray-700 text-gray-300'
+                }`}
+              >
+                {audioEnabled ? '🔊 ON' : '🔇 OFF'}
+              </button>
+            </div>
+            
+            {audioEnabled && (
+              <div className="flex items-center gap-3">
+                <span className="text-gray-400 text-sm">Volume:</span>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value={volume}
+                  onChange={(e) => setVolume(parseFloat(e.target.value))}
+                  className="w-20 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer slider"
+                />
+                <span className="text-gray-400 text-sm w-8">{Math.round(volume * 100)}%</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -692,7 +935,7 @@ const HorseRacing = ({ currentUser }) => {
                         className="w-full h-full object-contain"
                         style={{
                           filter: raceInProgress ? 'none' : 'brightness(0.9)',
-                          transform: 'scaleX(-1)' // Flip horse to face right direction
+                          transform: 'scaleX(1)' // Normal orientation
                         }}
                       />
                     </div>
