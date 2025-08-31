@@ -27,6 +27,8 @@ const HorseRacing = ({ currentUser }) => {
   // Audio system state
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [volume, setVolume] = useState(0.7);
+  const [currentCommentary, setCurrentCommentary] = useState('');
+  const [showCommentary, setShowCommentary] = useState(false);
   const audioContextRef = useRef(null);
   const crowdSoundRef = useRef(null);
   const hoovesSoundRef = useRef(null);
@@ -323,17 +325,29 @@ const HorseRacing = ({ currentUser }) => {
   ];
 
   const playCommentary = (message, delay = 0) => {
-    if (!audioEnabled) return;
     console.log('📢 Commentary:', message);
     
     setTimeout(() => {
-      // Create a simple beep pattern to simulate speech
-      const words = message.split(' ');
-      words.forEach((word, index) => {
-        setTimeout(() => {
-          playRaceSound('commentary');
-        }, index * 200);
-      });
+      // Show commentary text on screen
+      setCurrentCommentary(message);
+      setShowCommentary(true);
+      
+      // Play audio beeps if enabled
+      if (audioEnabled) {
+        const words = message.split(' ');
+        words.forEach((word, index) => {
+          setTimeout(() => {
+            playRaceSound('commentary');
+          }, index * 200);
+        });
+      }
+      
+      // Hide commentary after message duration
+      const messageDuration = Math.max(3000, message.length * 100); // At least 3 seconds
+      setTimeout(() => {
+        setShowCommentary(false);
+        setCurrentCommentary('');
+      }, messageDuration);
     }, delay);
   };
 
@@ -756,6 +770,8 @@ const HorseRacing = ({ currentUser }) => {
     setRaceResults(null);
     setError(null);
     setShowResultModal(false);
+    setShowCommentary(false);
+    setCurrentCommentary('');
     hasSubmittedRef.current = false;
     initializeHorses();
   };
@@ -1035,6 +1051,18 @@ const HorseRacing = ({ currentUser }) => {
           {/* Race Track */}
           <div className="flex-1">
             <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-xl p-6">
+              {/* Commentary Display */}
+              {showCommentary && (
+                <div className="mb-4 bg-black bg-opacity-80 rounded-lg p-4 border-2 border-yellow-400 shadow-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="text-yellow-400 text-2xl animate-pulse">📢</div>
+                    <div className="text-white text-lg font-bold tracking-wide">
+                      {currentCommentary}
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <div 
                 ref={raceTrackRef}
                 className="relative bg-gradient-to-b from-sky-200 to-green-400 rounded-lg overflow-hidden"
