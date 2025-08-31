@@ -33,6 +33,10 @@ const HorseRacing = ({ currentUser }) => {
   const hoovesSoundRef = useRef(null);
   const commentaryTimeoutRef = useRef(null);
 
+  // Comeback mechanics state
+  const [comebackTriggered, setComebackTriggered] = useState(false);
+  const [comebackHorse, setComebackHorse] = useState(null);
+
   // Initialize component
   useEffect(() => {
     loadUserPoints();
@@ -319,6 +323,38 @@ const HorseRacing = ({ currentUser }) => {
     "And the winner is horse number {winner}!"
   ];
 
+  // Comeback-specific commentary
+  const comebackCommentary = [
+    "Wait! Something's happening at the back!",
+    "An incredible surge from behind!",
+    "This is unbelievable! Look at that comeback!",
+    "The underdog is making a charge!",
+    "What a dramatic turn of events!",
+    "This is why we love horse racing!",
+    "Against all odds, they're catching up!",
+    "The crowd can't believe what they're seeing!"
+  ];
+
+  // Check for random comeback opportunity (15% chance, only in final stretch)
+  const checkForComeback = (horses, maxPosition) => {
+    // Only trigger comeback in final 25% of race and if not already triggered
+    if (maxPosition < 75 || comebackTriggered) return null;
+    
+    // 15% chance for comeback to occur
+    if (Math.random() > 0.15) return null;
+    
+    // Find horses in last 3 positions who could make a comeback
+    const sortedByPosition = [...horses].sort((a, b) => b.position - a.position);
+    const lastThreeHorses = sortedByPosition.slice(-3);
+    const potentialComebackHorse = lastThreeHorses[Math.floor(Math.random() * lastThreeHorses.length)];
+    
+    // Make sure comeback horse is significantly behind (at least 20 positions)
+    const leadingPosition = sortedByPosition[0].position;
+    if (leadingPosition - potentialComebackHorse.position < 20) return null;
+    
+    return potentialComebackHorse;
+  };
+
   const playCommentary = (message, delay = 0) => {
     setTimeout(() => {
       // Update commentary text on static board
@@ -581,6 +617,25 @@ const HorseRacing = ({ currentUser }) => {
           } else if (positionGap > 8) {
             speed += 0.15; // Small boost for horses that are somewhat behind
           }
+
+          // Check for dramatic comeback opportunity in backend races too
+          if (!comebackTriggered && currentMaxPosition > 70) {
+            const comebackCandidate = checkForComeback(prevHorses, currentMaxPosition);
+            if (comebackCandidate && comebackCandidate.id === horse.id) {
+              setComebackTriggered(true);
+              setComebackHorse(horse);
+              // Dramatic speed boost that might overcome predetermined results
+              speed += 1.5;
+              // Play comeback commentary
+              const commentaryIndex = Math.floor(Math.random() * comebackCommentary.length);
+              setTimeout(() => playCommentary(comebackCommentary[commentaryIndex]), 300);
+            }
+          }
+
+          // Continue speed boost for comeback horse in backend races
+          if (comebackTriggered && comebackHorse && comebackHorse.id === horse.id) {
+            speed += 1.2; // Sustained dramatic speed boost
+          }
           
           const newPosition = horse.position + speed;
           
@@ -696,6 +751,25 @@ const HorseRacing = ({ currentUser }) => {
           } else if (positionGap > 10) {
             randomSpeed *= 1.1; // 10% speed boost for horses somewhat behind
           }
+
+          // Check for dramatic comeback opportunity
+          if (!comebackTriggered && currentMaxPosition > 75) {
+            const comebackCandidate = checkForComeback(prevHorses, currentMaxPosition);
+            if (comebackCandidate && comebackCandidate.id === horse.id) {
+              setComebackTriggered(true);
+              setComebackHorse(horse);
+              // Massive speed boost for the comeback horse
+              randomSpeed *= 2.5;
+              // Play comeback commentary
+              const commentaryIndex = Math.floor(Math.random() * comebackCommentary.length);
+              setTimeout(() => playCommentary(comebackCommentary[commentaryIndex]), 500);
+            }
+          }
+
+          // Continue massive speed boost for comeback horse
+          if (comebackTriggered && comebackHorse && comebackHorse.id === horse.id) {
+            randomSpeed *= 2.2; // Sustained speed boost
+          }
           const newPosition = horse.position + randomSpeed;
           
           // Check if horse finished
@@ -757,18 +831,34 @@ const HorseRacing = ({ currentUser }) => {
     
     // Play winner commentary with better timing for slower races
     setTimeout(() => {
-      playCommentary(`And the winner is horse number ${winner.id + 1}!`);
+      // Check if the winner was the comeback horse for special commentary
+      const isComeback = comebackHorse && winner.id === comebackHorse.id;
+      
+      if (isComeback) {
+        playCommentary(`INCREDIBLE! Against all odds, horse number ${winner.id + 1} wins in a stunning comeback!`);
+      } else {
+        playCommentary(`And the winner is horse number ${winner.id + 1}!`);
+      }
+      
       if (won) {
         setTimeout(() => {
-          playCommentary("Congratulations! You won!");
+          if (isComeback) {
+            playCommentary("What an unbelievable victory! You backed the ultimate underdog!");
+          } else {
+            playCommentary("Congratulations! You won!");
+          }
           playCrowdCheer();
-        }, 3000); // Increased from 2000ms to 3000ms
+        }, 3000);
       } else {
         setTimeout(() => {
-          playCommentary("Better luck next time!");
-        }, 3000); // Increased from 2000ms to 3000ms
+          if (isComeback) {
+            playCommentary("What a race! Nobody saw that comeback coming!");
+          } else {
+            playCommentary("Better luck next time!");
+          }
+        }, 3000);
       }
-    }, 1000); // Increased from 500ms to 1000ms
+    }, 1000);
     
     let payout = 0;
     if (won) {
@@ -803,6 +893,9 @@ const HorseRacing = ({ currentUser }) => {
     setError(null);
     setShowResultModal(false);
     setCurrentCommentary('');
+    // Reset comeback mechanics
+    setComebackTriggered(false);
+    setComebackHorse(null);
     hasSubmittedRef.current = false;
     initializeHorses();
   };
