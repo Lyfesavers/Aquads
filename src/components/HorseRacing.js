@@ -545,13 +545,17 @@ const HorseRacing = ({ currentUser }) => {
     
     // Delay race animation to start after commentary
     setTimeout(() => {
-      startRaceAnimation();
+      startRaceAnimation(results);
     }, 6000);
   };
 
   // Separate function for race animation
-  const startRaceAnimation = () => {
-    const results = raceResults;
+  const startRaceAnimation = (results) => {
+    if (!results || !results.sortedHorses) {
+      console.error('Race results not available for animation');
+      return;
+    }
+    
     let commentaryCounter = 0;
     const midRaceCommentary = [
       "It's a close race!",
