@@ -100,24 +100,34 @@ const calculateCasinoPsychology = (userPoints) => {
       phase = 'emergency_pullback';
     }
   } else if (userPoints <= 8500) {
-    // BRUTAL DRAIN ZONE - Extreme resistance
-    phase = 'brutal_drain_zone';
-    winRate = 0.20; // 20% win rate - Extreme house edge
+    // ELITE TERRITORY - Significant challenge
+    phase = 'elite_zone';
+    winRate = 0.35; // 35% win rate - Much more aggressive house edge
     
-    // Brutal pullback if they somehow get this high
-    if (userPoints > getCeilingThreshold(8200, 0.01)) {
-      winRate = 0.10; // BRUTAL pullback
-      phase = 'brutal_pullback';
+    // Tighter ceiling control around 8000-8300
+    if (userPoints > getCeilingThreshold(8150, 0.05)) {
+      winRate = 0.25; // Very strong pullback
+      phase = 'ceiling_pullback';
+    }
+  } else if (userPoints <= 9200) {
+    // GATEKEEPER LEVEL - Heavy resistance
+    phase = 'gatekeeper';
+    winRate = 0.30; // 30% win rate - Much more aggressive house edge
+    
+    // Very tight ceiling control around 8800-9000
+    if (userPoints > getCeilingThreshold(8900, 0.04)) {
+      winRate = 0.20; // Brutal pullback
+      phase = 'ceiling_pullback';
     }
   } else {
-    // IMPOSSIBLE ZONE - Should never reach here
-    phase = 'impossible_zone';
-    winRate = 0.15; // 15% win rate - Nearly impossible
+    // FINAL GUARDIAN - Maximum resistance before 10k
+    phase = 'final_guardian';
+    winRate = 0.25; // 25% win rate - Much more aggressive house edge
     
     // Emergency pullback if approaching 10k
     if (userPoints > 9500) {
-      winRate = 0.05; // IMPOSSIBLE pullback
-      phase = 'impossible_pullback';
+      winRate = 0.15; // EMERGENCY pullback - Much more aggressive
+      phase = 'emergency_pullback';
     }
   }
   
@@ -149,16 +159,11 @@ const simulateRace = (horses, playerBetHorseId, userPoints, betAmount) => {
   let adjustedWinRate = psychology.winRate;
   const betPercentage = betAmount / userPoints;
   
-  // DRAIN CYCLE: Actively try to bring players back down to 1k when above 5k
+  // SUBTLE DRAIN CYCLE: Gently bring players back down when above 5k
   if (userPoints > 5000) {
-    // Above 5k - start aggressive draining back to 1k
-    adjustedWinRate *= 0.6; // 40% penalty for being above 5k
+    adjustedWinRate *= 0.7; // 30% penalty for being above 5k
   } else if (userPoints > 4000) {
-    // Above 4k - moderate draining
-    adjustedWinRate *= 0.8; // 20% penalty
-  } else if (userPoints > 3000) {
-    // Above 3k - light draining
-    adjustedWinRate *= 0.9; // 10% penalty
+    adjustedWinRate *= 0.85; // 15% penalty for being above 4k
   }
   
   if (userPoints > 5000 && betPercentage > 0.1) { // Bet > 10% of points
@@ -174,9 +179,9 @@ const simulateRace = (horses, playerBetHorseId, userPoints, betAmount) => {
   // Determine if player should win based on adjusted psychology
   const shouldPlayerWin = Math.random() < adjustedWinRate;
   
-  // Enhanced logging for drain cycle and bet size penalties
-  if (userPoints > 3000) {
-    console.log(`🎰 DRAIN CYCLE: ${req?.user?.username || 'Unknown'} - Points: ${userPoints}, Bet: ${betAmount}, Phase: ${psychology.phase}, Base Win Rate: ${(psychology.winRate * 100).toFixed(1)}%, Final: ${(adjustedWinRate * 100).toFixed(1)}%`);
+  // Enhanced logging for bet size penalties
+  if (userPoints > 5000 && betPercentage > 0.1) {
+    console.log(`🎰 BET SIZE PENALTY: Points: ${userPoints}, Bet: ${betAmount} (${(betPercentage * 100).toFixed(1)}%), Base Win Rate: ${(psychology.winRate * 100).toFixed(1)}%, Adjusted: ${(adjustedWinRate * 100).toFixed(1)}%`);
   }
   
   // Psychology system active: [phase: ${psychology.phase}, winRate: ${(psychology.winRate * 100).toFixed(1)}%, adjustedWinRate: ${(adjustedWinRate * 100).toFixed(1)}%, result: ${shouldPlayerWin ? 'WIN' : 'LOSS'}]
