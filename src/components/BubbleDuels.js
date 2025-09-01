@@ -29,15 +29,7 @@ const BubbleDuels = ({ currentUser }) => {
   const [showFighterSelect, setShowFighterSelect] = useState(false);
   const [selectingFor, setSelectingFor] = useState(null); // 'fighter1' or 'fighter2'
 
-  // Debug logging
-  useEffect(() => {
-    console.log('BubbleDuels state:', {
-      showFighterSelect,
-      selectingFor,
-      selectedProjects: selectedProjects.length,
-      adsLoaded: ads.length
-    });
-  }, [showFighterSelect, selectingFor, selectedProjects, ads]);
+
 
   // Fetch bubble ads (same as main page)
   useEffect(() => {
@@ -52,7 +44,6 @@ const BubbleDuels = ({ currentUser }) => {
             ad.logo &&
             ad.title
           );
-          console.log('Loaded ads for Bubble Duels:', validAds.length);
           setAds(validAds);
         }
       } catch (error) {
@@ -83,7 +74,6 @@ const BubbleDuels = ({ currentUser }) => {
   }, [activeBattle, timeRemaining]);
 
   const openFighterSelect = (position) => {
-    console.log('Opening fighter select for:', position);
     setSelectingFor(position);
     setShowFighterSelect(true);
   };
@@ -120,11 +110,17 @@ const BubbleDuels = ({ currentUser }) => {
 
     try {
       // Create battle first
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Please login to create battles!');
+        return;
+      }
+
       const createResponse = await fetch(`${API_URL}/api/bubble-duels/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           project1AdId: selectedProjects[0].id,
@@ -142,7 +138,7 @@ const BubbleDuels = ({ currentUser }) => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${token}`
           }
         });
 
@@ -159,7 +155,11 @@ const BubbleDuels = ({ currentUser }) => {
           alert(startData.error || 'Failed to start battle');
         }
       } else {
-        alert(battleData.error || 'Failed to create battle');
+        if (createResponse.status === 401) {
+          alert('Authentication failed. Please login again.');
+        } else {
+          alert(battleData.error || 'Failed to create battle');
+        }
       }
     } catch (error) {
       console.error('Error starting battle:', error);
@@ -215,11 +215,17 @@ const BubbleDuels = ({ currentUser }) => {
     if (!activeBattle) return;
 
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Please login to vote!');
+        return;
+      }
+
       const response = await fetch(`${API_URL}/api/bubble-duels/${activeBattle.battleId}/vote`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ 
           projectSide: projectSide === 'project1Votes' ? 'project1' : 'project2' 
@@ -254,7 +260,11 @@ const BubbleDuels = ({ currentUser }) => {
           alert(`Vote counted! You earned ${data.pointsAwarded} points! 🎉`);
         }
       } else {
-        alert(data.error || 'Failed to vote');
+        if (response.status === 401) {
+          alert('Authentication failed. Please login again.');
+        } else {
+          alert(data.error || 'Failed to vote');
+        }
       }
     } catch (error) {
       console.error('Error voting:', error);
@@ -335,6 +345,7 @@ const BubbleDuels = ({ currentUser }) => {
           onOpenFighterSelect={openFighterSelect}
           onRemoveProject={removeProject}
           onStartBattle={startBattle}
+          currentUser={currentUser}
         />
       )}
 
@@ -344,7 +355,6 @@ const BubbleDuels = ({ currentUser }) => {
           ads={ads}
           onSelectProject={selectProject}
           onClose={() => {
-            console.log('Closing fighter select modal');
             setShowFighterSelect(false);
             setSelectingFor(null);
           }}
@@ -353,59 +363,24 @@ const BubbleDuels = ({ currentUser }) => {
         />
       )}
 
-      {/* Debug info */}
-      <div className="fixed bottom-4 right-4 bg-black/80 text-white p-2 rounded text-xs z-[9999]">
-        <div>Show Modal: {showFighterSelect.toString()}</div>
-        <div>Selecting For: {selectingFor || 'null'}</div>
-        <div>Ads: {ads.length}</div>
-        <div>Selected: {selectedProjects.length}</div>
-        <button 
-          onClick={() => {
-            console.log('Test button clicked - opening modal');
-            setSelectingFor('fighter1');
-            setShowFighterSelect(true);
-          }}
-          className="bg-red-600 hover:bg-red-700 px-2 py-1 rounded mt-2 text-white"
-        >
-          Test Modal
-        </button>
-      </div>
+
     </div>
   );
 };
 
 // Battle Setup Component
-const BattleSetup = ({ selectedProjects, onOpenFighterSelect, onRemoveProject, onStartBattle }) => {
+const BattleSetup = ({ selectedProjects, onOpenFighterSelect, onRemoveProject, onStartBattle, currentUser }) => {
   
   const handleFighter1Click = () => {
-    console.log('=== FIGHTER 1 CLICK HANDLER CALLED ===');
     onOpenFighterSelect('fighter1');
   };
 
   const handleFighter2Click = () => {
-    console.log('=== FIGHTER 2 CLICK HANDLER CALLED ===');
     onOpenFighterSelect('fighter2');
   };
 
   return (
     <div className="container mx-auto px-4 pb-12">
-      {/* TEST BUTTONS FIRST */}
-      <div className="text-center mb-8 bg-yellow-500/20 p-4 rounded">
-        <h2 className="text-2xl font-bold mb-4">🔧 CLICK TEST AREA</h2>
-        <button 
-          onClick={handleFighter1Click}
-          className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded mr-4 text-white"
-        >
-          Test Fighter 1 Click
-        </button>
-        <button 
-          onClick={handleFighter2Click}
-          className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white"
-        >
-          Test Fighter 2 Click
-        </button>
-      </div>
-
       {/* Selection Area */}
       <div className="grid md:grid-cols-3 gap-8 mb-12">
         {/* Project 1 Slot */}
@@ -420,11 +395,11 @@ const BattleSetup = ({ selectedProjects, onOpenFighterSelect, onRemoveProject, o
           ) : (
             <button 
               onClick={handleFighter1Click}
-              className="h-40 w-full border-4 border-dashed border-red-500/50 rounded-lg flex items-center justify-center cursor-pointer hover:border-red-400 transition-colors bg-transparent"
+              className="h-40 w-full border-4 border-dashed border-red-500/50 rounded-lg flex items-center justify-center cursor-pointer hover:border-red-400 hover:bg-red-500/10 transition-all duration-300 bg-transparent group"
             >
               <div className="text-center">
-                <div className="text-4xl mb-2">🥊</div>
-                <span className="text-red-300">Click to Select Fighter 1</span>
+                <div className="text-4xl mb-2 group-hover:scale-110 transition-transform duration-300">🥊</div>
+                <span className="text-red-300 group-hover:text-red-200">Click to Select Fighter 1</span>
               </div>
             </button>
           )}
@@ -462,11 +437,11 @@ const BattleSetup = ({ selectedProjects, onOpenFighterSelect, onRemoveProject, o
           ) : (
             <button 
               onClick={handleFighter2Click}
-              className="h-40 w-full border-4 border-dashed border-blue-500/50 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-400 transition-colors bg-transparent"
+              className="h-40 w-full border-4 border-dashed border-blue-500/50 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-500/10 transition-all duration-300 bg-transparent group"
             >
               <div className="text-center">
-                <div className="text-4xl mb-2">🥊</div>
-                <span className="text-blue-300">Click to Select Fighter 2</span>
+                <div className="text-4xl mb-2 group-hover:scale-110 transition-transform duration-300">🥊</div>
+                <span className="text-blue-300 group-hover:text-blue-200">Click to Select Fighter 2</span>
               </div>
             </button>
           )}
@@ -481,7 +456,13 @@ const BattleSetup = ({ selectedProjects, onOpenFighterSelect, onRemoveProject, o
           animate={{ opacity: 1, y: 0 }}
         >
           <button
-            onClick={onStartBattle}
+            onClick={() => {
+              if (!currentUser) {
+                alert('Please login to start battles!');
+                return;
+              }
+              onStartBattle();
+            }}
             className="bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-700 hover:to-blue-700 px-12 py-4 rounded-lg text-2xl font-bold shadow-2xl transform hover:scale-105 transition-all duration-300"
           >
             🚀 START EPIC BATTLE! 🚀
@@ -493,6 +474,11 @@ const BattleSetup = ({ selectedProjects, onOpenFighterSelect, onRemoveProject, o
       <div className="text-center text-gray-300">
         <p className="text-lg mb-2">🥊 Click on the fighter slots above to select your warriors!</p>
         <p className="text-sm opacity-75">Choose 2 bubble projects to battle in epic 1-hour duels</p>
+        {!currentUser && (
+          <div className="mt-4 p-3 bg-yellow-500/20 border border-yellow-500/50 rounded-lg">
+            <p className="text-yellow-300 font-bold">⚠️ Please login to create and participate in battles!</p>
+          </div>
+        )}
       </div>
     </div>
   );
