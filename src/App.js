@@ -62,6 +62,7 @@ import './App.css';
 import FilterControls from './components/FilterControls';
 import DotsAndBoxes from './components/DotsAndBoxes';
 import HorseRacing from './components/HorseRacing';
+import BubbleDuels from './components/BubbleDuels';
 import ServicePage from './components/ServicePage';
 
 // Simple debounce function implementation
@@ -2625,6 +2626,7 @@ function App() {
           } />
           <Route path="/games/dots-and-boxes" element={<DotsAndBoxes currentUser={currentUser} />} />
           <Route path="/games/horse-racing" element={<HorseRacing currentUser={currentUser} />} />
+          <Route path="/games/bubble-duels" element={<BubbleDuels currentUser={currentUser} />} />
           <Route path="/games" element={
             <GameHub 
               currentUser={currentUser}
