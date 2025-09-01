@@ -918,40 +918,18 @@ const HorseRacing = ({ currentUser }) => {
                 playCommentary("What an unbelievable victory! You backed the ultimate underdog!");
               }
             } else {
-              // Psychology-based winning messages
-              const psychologyData = calculateCasinoPsychology(userPoints);
+              // Simple winning messages (backend handles psychology)
               let winMessage = "Congratulations! You won!";
               
-              switch (psychologyData.phase) {
-                case 'safety_net':
-                  winMessage = "INCREDIBLE COMEBACK! You're back in the game! Never give up!";
-                  break;
-                case 'building':
-                  winMessage = "YES! You're really getting the hang of this! Keep building!";
-                  break;
-                case 'early_hook':
-                  winMessage = "Fantastic! You're on fire! This is your lucky streak!";
-                  break;
-                case 'addiction_zone':
-                  winMessage = "Excellent win! You're in the zone now!";
-                  break;
-                case 'mid_challenge':
-                  winMessage = "Outstanding! You're proving you can handle the big leagues!";
-                  break;
-                case 'high_stakes':
-                  winMessage = "Impressive! High stakes, high rewards!";
-                  break;
-                case 'elite_zone':
-                  winMessage = "Remarkable! Elite level performance!";
-                  break;
-                case 'gatekeeper':
-                  winMessage = "LEGENDARY! You're among the top players now!";
-                  break;
-                case 'final_guardian':
-                  winMessage = "UNBELIEVABLE! You're at the pinnacle of success!";
-                  break;
-                default:
-                  winMessage = "Congratulations! You won!";
+              // Basic point-based messages for encouragement
+              if (userPoints < 1000) {
+                winMessage = "GREAT WIN! You're building back up!";
+              } else if (userPoints < 3000) {
+                winMessage = "Excellent! You're on a roll!";
+              } else if (userPoints < 6000) {
+                winMessage = "Outstanding! High stakes victory!";
+              } else if (userPoints >= 8000) {
+                winMessage = "LEGENDARY WIN! Elite level performance!";
               }
               
               playCommentary(winMessage);
@@ -1269,65 +1247,10 @@ const HorseRacing = ({ currentUser }) => {
             </p>
           </div>
           
-          {/* Smart Points Display with Psychology Phase */}
+          {/* Points Display */}
           <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
             <div className="text-sm text-gray-400">Affiliate Points</div>
             <div className="text-2xl font-bold text-emerald-400">{userPoints}</div>
-            {(() => {
-              const psychologyData = calculateCasinoPsychology(userPoints);
-              let statusColor = "text-gray-400";
-              let statusText = "";
-              
-              switch (psychologyData.phase) {
-                case 'safety_net':
-                  statusColor = "text-red-400";
-                  statusText = "🆘 Recovery Mode";
-                  break;
-                case 'building':
-                  statusColor = "text-green-400";
-                  statusText = "🌱 Building Up";
-                  break;
-                case 'early_hook':
-                  statusColor = "text-blue-400";
-                  statusText = "🎣 On Fire";
-                  break;
-                case 'addiction_zone':
-                  statusColor = "text-purple-400";
-                  statusText = "⚡ In The Zone";
-                  break;
-                case 'mid_challenge':
-                  statusColor = "text-yellow-400";
-                  statusText = "🔥 Rising Star";
-                  break;
-                case 'high_stakes':
-                  statusColor = "text-orange-400";
-                  statusText = "💎 High Stakes";
-                  break;
-                case 'elite_zone':
-                  statusColor = "text-pink-400";
-                  statusText = "👑 Elite Player";
-                  break;
-                case 'gatekeeper':
-                  statusColor = "text-indigo-400";
-                  statusText = "🏆 Champion";
-                  break;
-                case 'final_guardian':
-                  statusColor = "text-amber-400";
-                  statusText = "🌟 Legend";
-                  break;
-                default:
-                  statusText = "";
-              }
-              
-              if (statusText) {
-                return (
-                  <div className={`text-xs ${statusColor} mt-1 font-medium`}>
-                    {statusText}
-                  </div>
-                );
-              }
-              return null;
-            })()}
           </div>
         </div>
 
@@ -1699,42 +1622,7 @@ const HorseRacing = ({ currentUser }) => {
                 <li>• Win affiliate points based on the horse's odds!</li>
                 <li>• Higher odds = higher payout multiplier</li>
               </ul>
-              {(() => {
-                const psychologyData = calculateCasinoPsychology(userPoints);
-                
-                if (psychologyData.phase === 'safety_net') {
-                  return (
-                    <div className="mt-2 text-red-400 text-xs">
-                      🆘 Recovery mode active! The odds are in your favor - now's your chance to bounce back above 1000!
-                    </div>
-                  );
-                } else if (psychologyData.phase === 'building' || psychologyData.phase === 'early_hook') {
-                  return (
-                    <div className="mt-2 text-green-400 text-xs">
-                      🍀 You're in the lucky zone! Perfect time to build your points with confidence!
-                    </div>
-                  );
-                } else if (psychologyData.phase === 'addiction_zone') {
-                  return (
-                    <div className="mt-2 text-purple-400 text-xs">
-                      ⚡ You're in the zone! Riding the wave perfectly - keep the momentum going!
-                    </div>
-                  );
-                } else if (psychologyData.phase === 'gatekeeper' || psychologyData.phase === 'final_guardian') {
-                  return (
-                    <div className="mt-2 text-amber-400 text-xs">
-                      👑 Elite territory! You're playing with the champions now - every bet counts!
-                    </div>
-                  );
-                } else if (psychologyData.pullbackActive) {
-                  return (
-                    <div className="mt-2 text-orange-400 text-xs">
-                      🎯 Challenging zone! Sometimes you need to take a step back to leap forward!
-                    </div>
-                  );
-                }
-                return null;
-              })()}
+
             </div>
           </div>
         </div>
