@@ -29,6 +29,16 @@ const BubbleDuels = ({ currentUser }) => {
   const [showFighterSelect, setShowFighterSelect] = useState(false);
   const [selectingFor, setSelectingFor] = useState(null); // 'fighter1' or 'fighter2'
 
+  // Debug logging
+  useEffect(() => {
+    console.log('BubbleDuels state:', {
+      showFighterSelect,
+      selectingFor,
+      selectedProjects: selectedProjects.length,
+      adsLoaded: ads.length
+    });
+  }, [showFighterSelect, selectingFor, selectedProjects, ads]);
+
   // Fetch bubble ads (same as main page)
   useEffect(() => {
     const fetchAds = async () => {
@@ -73,6 +83,7 @@ const BubbleDuels = ({ currentUser }) => {
   }, [activeBattle, timeRemaining]);
 
   const openFighterSelect = (position) => {
+    console.log('Opening fighter select for:', position);
     setSelectingFor(position);
     setShowFighterSelect(true);
   };
@@ -416,6 +427,7 @@ const BubbleDuels = ({ currentUser }) => {
             ads={ads}
             onSelectProject={selectProject}
             onClose={() => {
+              console.log('Closing fighter select modal');
               setShowFighterSelect(false);
               setSelectingFor(null);
             }}
@@ -424,6 +436,26 @@ const BubbleDuels = ({ currentUser }) => {
           />
         )}
       </AnimatePresence>
+
+      {/* Debug info - remove this later */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="fixed bottom-4 right-4 bg-black/80 text-white p-2 rounded text-xs">
+          <div>Show Modal: {showFighterSelect.toString()}</div>
+          <div>Selecting For: {selectingFor || 'null'}</div>
+          <div>Ads: {ads.length}</div>
+          <div>Selected: {selectedProjects.length}</div>
+          <button 
+            onClick={() => {
+              console.log('Test button clicked - opening modal');
+              setSelectingFor('fighter1');
+              setShowFighterSelect(true);
+            }}
+            className="bg-red-600 hover:bg-red-700 px-2 py-1 rounded mt-2 text-white"
+          >
+            Test Modal
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -448,7 +480,10 @@ const BattleSetup = ({ selectedProjects, onOpenFighterSelect, onRemoveProject, o
               className="h-40 border-4 border-dashed border-red-500/50 rounded-lg flex items-center justify-center cursor-pointer hover:border-red-400 transition-colors"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => onOpenFighterSelect('fighter1')}
+              onClick={() => {
+                console.log('Fighter 1 slot clicked');
+                onOpenFighterSelect('fighter1');
+              }}
             >
               <div className="text-center">
                 <div className="text-4xl mb-2">🥊</div>
@@ -492,7 +527,10 @@ const BattleSetup = ({ selectedProjects, onOpenFighterSelect, onRemoveProject, o
               className="h-40 border-4 border-dashed border-blue-500/50 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-400 transition-colors"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => onOpenFighterSelect('fighter2')}
+              onClick={() => {
+                console.log('Fighter 2 slot clicked');
+                onOpenFighterSelect('fighter2');
+              }}
             >
               <div className="text-center">
                 <div className="text-4xl mb-2">🥊</div>
