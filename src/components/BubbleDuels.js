@@ -29,11 +29,7 @@ const BubbleDuels = ({ currentUser }) => {
   const [showFighterSelect, setShowFighterSelect] = useState(false);
   const [selectingFor, setSelectingFor] = useState(null); // 'fighter1' or 'fighter2'
 
-  // Debug current user
-  useEffect(() => {
-    console.log('BubbleDuels received currentUser:', currentUser);
-    console.log('Token in localStorage:', !!localStorage.getItem('token'));
-  }, [currentUser]);
+
 
 
 
@@ -116,8 +112,7 @@ const BubbleDuels = ({ currentUser }) => {
 
     try {
       // Create battle first
-      const token = localStorage.getItem('token');
-      if (!token) {
+      if (!currentUser || !currentUser.token) {
         alert('Please login to create battles!');
         return;
       }
@@ -126,7 +121,7 @@ const BubbleDuels = ({ currentUser }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${currentUser.token}`
         },
         body: JSON.stringify({
           project1AdId: selectedProjects[0].id,
@@ -144,7 +139,7 @@ const BubbleDuels = ({ currentUser }) => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${currentUser.token}`
           }
         });
 
@@ -221,8 +216,7 @@ const BubbleDuels = ({ currentUser }) => {
     if (!activeBattle) return;
 
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
+      if (!currentUser || !currentUser.token) {
         alert('Please login to vote!');
         return;
       }
@@ -231,7 +225,7 @@ const BubbleDuels = ({ currentUser }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${currentUser.token}`
         },
         body: JSON.stringify({ 
           projectSide: projectSide === 'project1Votes' ? 'project1' : 'project2' 
@@ -463,12 +457,7 @@ const BattleSetup = ({ selectedProjects, onOpenFighterSelect, onRemoveProject, o
         >
           <button
             onClick={() => {
-              console.log('Start battle clicked. Current user:', currentUser);
-              console.log('Token in localStorage:', localStorage.getItem('token'));
-              
-              // Check token instead of currentUser for now
-              const token = localStorage.getItem('token');
-              if (!token) {
+              if (!currentUser) {
                 alert('Please login to start battles!');
                 return;
               }
@@ -486,7 +475,7 @@ const BattleSetup = ({ selectedProjects, onOpenFighterSelect, onRemoveProject, o
       <div className="text-center text-gray-300">
         <p className="text-lg mb-2">🥊 Click on the fighter slots above to select your warriors!</p>
         <p className="text-sm opacity-75">Choose 2 bubble projects to battle in epic 1-hour duels</p>
-        {!localStorage.getItem('token') && (
+        {!currentUser && (
           <div className="mt-4 p-3 bg-yellow-500/20 border border-yellow-500/50 rounded-lg">
             <p className="text-yellow-300 font-bold">⚠️ Please login to create and participate in battles!</p>
           </div>
