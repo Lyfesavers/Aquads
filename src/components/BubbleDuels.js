@@ -40,9 +40,10 @@ const BubbleDuels = ({ currentUser }) => {
         const response = await fetch(`${API_URL}/api/ads`);
         if (response.ok) {
           const adsData = await response.json();
-          // Filter all active/approved ads with logos (not just bumped ones)
+          // Filter only bumped ads that are eligible for battles
           const validAds = adsData.filter(ad => 
-            (ad.status === 'approved' || ad.status === 'active') && 
+            ad.status === 'approved' && 
+            ad.isBumped &&
             ad.logo &&
             ad.title
           );
@@ -950,7 +951,16 @@ const FighterSelectModal = ({ ads, onSelectProject, onClose, selectingFor, alrea
 
         {/* Fighter Grid - Street Fighter Style */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
-          {ads.map((ad, index) => {
+          {ads.length === 0 ? (
+            <div className="col-span-full text-center py-12">
+              <div className="text-gray-400 text-lg mb-4">
+                🚫 No eligible projects found
+              </div>
+              <div className="text-gray-500 text-sm">
+                Only bumped and approved projects can participate in battles
+              </div>
+            </div>
+          ) : ads.map((ad, index) => {
             const isAlreadySelected = alreadySelected.find(p => p && p.id === ad.id);
             const isDisabled = isAlreadySelected;
             
