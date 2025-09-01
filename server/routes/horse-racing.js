@@ -21,7 +21,114 @@ const HORSE_DATA = [
 // Constants for game balance
 const MIN_BET = 10;
 const MAX_BET = 1000;
-const HOUSE_EDGE = 0.12; // 12% house edge by reducing player horse speed
+
+// Advanced Casino Psychology System - Backend Implementation
+const calculateCasinoPsychology = (userPoints) => {
+  // Dynamic ceiling detection with randomization to prevent exploitation
+  const getCeilingThreshold = (basePoints, variance = 0.06) => {
+    return basePoints + (Math.random() - 0.5) * basePoints * variance;
+  };
+  
+  // Phase identification with sophisticated psychological targeting
+  let phase = 'unknown';
+  let winRate = 0.5; // Base 50% win rate
+  let psychologyBonus = 0;
+  
+  // CRITICAL: 1K SAFETY NET - Never let them stay below 1000 points
+  if (userPoints < 1000) {
+    phase = 'safety_net';
+    winRate = 0.78; // 78% win rate - FORCE THEM BACK ABOVE 1K!
+    psychologyBonus = 0.12; // Extra 12% boost
+  } else if (userPoints <= 500) {
+    // HONEYMOON PHASE - Hook new players (this won't trigger due to 1k safety net, but keep for logic)
+    phase = 'honeymoon';
+    winRate = 0.70; // 70% win rate - Very generous
+    psychologyBonus = 0.08; // Extra 8% boost for confidence
+  } else if (userPoints <= 1500) {
+    // BUILDING CONFIDENCE - Just above safety net
+    phase = 'building';
+    winRate = 0.62; // 62% win rate - Still very positive
+    psychologyBonus = 0.05; // 5% confidence boost
+  } else if (userPoints <= 2500) {
+    // EARLY HOOK - Keep them engaged
+    phase = 'early_hook';
+    winRate = 0.58; // 58% win rate - Positive bias
+    
+    // Dynamic ceiling check around 2200-2400
+    if (userPoints > getCeilingThreshold(2300, 0.08)) {
+      winRate = 0.45; // Pullback mode
+      phase = 'ceiling_pullback';
+    }
+  } else if (userPoints <= 4000) {
+    // MAIN ADDICTION ZONE - Balanced to keep them cycling
+    phase = 'addiction_zone';
+    winRate = 0.52; // 52% win rate - Slight positive bias
+    
+    // Dynamic ceiling check around 3600-3800
+    if (userPoints > getCeilingThreshold(3700, 0.08)) {
+      winRate = 0.43; // Pullback mode
+      phase = 'ceiling_pullback';
+    }
+  } else if (userPoints <= 6000) {
+    // MID-TIER CHALLENGE - Introduce more resistance
+    phase = 'mid_challenge';
+    winRate = 0.48; // 48% win rate - Slight house edge
+    
+    // Dynamic ceiling check around 5500-5800
+    if (userPoints > getCeilingThreshold(5650, 0.07)) {
+      winRate = 0.40; // Stronger pullback
+      phase = 'ceiling_pullback';
+    }
+  } else if (userPoints <= 7500) {
+    // HIGH STAKES ZONE - Noticeable difficulty
+    phase = 'high_stakes';
+    winRate = 0.45; // 45% win rate - Clear house edge
+    
+    // Dynamic ceiling check around 7000-7300
+    if (userPoints > getCeilingThreshold(7150, 0.06)) {
+      winRate = 0.37; // Strong pullback
+      phase = 'ceiling_pullback';
+    }
+  } else if (userPoints <= 8500) {
+    // ELITE TERRITORY - Significant challenge
+    phase = 'elite_zone';
+    winRate = 0.42; // 42% win rate - Significant house edge
+    
+    // Tighter ceiling control around 8000-8300
+    if (userPoints > getCeilingThreshold(8150, 0.05)) {
+      winRate = 0.34; // Very strong pullback
+      phase = 'ceiling_pullback';
+    }
+  } else if (userPoints <= 9200) {
+    // GATEKEEPER LEVEL - Heavy resistance
+    phase = 'gatekeeper';
+    winRate = 0.38; // 38% win rate - Heavy house edge
+    
+    // Very tight ceiling control around 8800-9000
+    if (userPoints > getCeilingThreshold(8900, 0.04)) {
+      winRate = 0.30; // Brutal pullback
+      phase = 'ceiling_pullback';
+    }
+  } else {
+    // FINAL GUARDIAN - Maximum resistance before 10k
+    phase = 'final_guardian';
+    winRate = 0.35; // 35% win rate - Maximum house edge
+    
+    // Emergency pullback if approaching 10k
+    if (userPoints > 9600) {
+      winRate = 0.25; // EMERGENCY pullback
+      phase = 'emergency_pullback';
+    }
+  }
+  
+  return {
+    phase,
+    winRate,
+    psychologyBonus,
+    safetyNetActive: phase === 'safety_net',
+    pullbackActive: phase.includes('pullback') || phase.includes('emergency')
+  };
+};
 
 // Generate race data with slight randomization
 const generateRaceData = () => {
@@ -33,29 +140,66 @@ const generateRaceData = () => {
   }));
 };
 
-// Calculate race outcome with house edge
-const simulateRace = (horses, playerBetHorseId) => {
-  const raceHorses = horses.map(horse => {
-    let speed = horse.baseSpeed;
+// Smart race simulation with psychology system
+const simulateRace = (horses, playerBetHorseId, userPoints) => {
+  // Get psychology data for this player
+  const psychology = calculateCasinoPsychology(userPoints);
+  
+  // Determine if player should win based on psychology
+  const shouldPlayerWin = Math.random() < psychology.winRate;
+  
+  // Psychology system active: [phase: ${psychology.phase}, winRate: ${(psychology.winRate * 100).toFixed(1)}%, result: ${shouldPlayerWin ? 'WIN' : 'LOSS'}]
+  
+  let raceResults;
+  
+  if (shouldPlayerWin) {
+    // Player wins - arrange results so their horse comes first
+    const playerHorse = horses.find(h => h.id === playerBetHorseId);
+    const otherHorses = horses.filter(h => h.id !== playerBetHorseId);
     
-    // Apply house edge - if player bet on this horse, reduce its speed
-    if (horse.id === playerBetHorseId) {
-      speed *= (1 - HOUSE_EDGE);
+    // Shuffle other horses randomly for 2nd, 3rd, etc.
+    for (let i = otherHorses.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [otherHorses[i], otherHorses[j]] = [otherHorses[j], otherHorses[i]];
     }
     
-    // Add randomness to the race outcome
-    const randomFactor = Math.random() * 0.4 + 0.8; // 0.8 to 1.2 multiplier
-    const finalSpeed = speed * randomFactor;
+    // Create race results with player horse winning
+    raceResults = [
+      { ...playerHorse, finalSpeed: 1.0, finishTime: 1000 + Math.random() * 50 },
+      ...otherHorses.map((horse, index) => ({
+        ...horse,
+        finalSpeed: 0.95 - (index * 0.05),
+        finishTime: 1050 + (index * 100) + Math.random() * 80
+      }))
+    ];
+  } else {
+    // Player loses - pick a random winner from other horses
+    const playerHorse = horses.find(h => h.id === playerBetHorseId);
+    const otherHorses = horses.filter(h => h.id !== playerBetHorseId);
     
-    return {
+    // Pick random winner from other horses
+    const winnerIndex = Math.floor(Math.random() * otherHorses.length);
+    const winner = otherHorses[winnerIndex];
+    const remainingHorses = otherHorses.filter((_, index) => index !== winnerIndex);
+    
+    // Shuffle remaining horses
+    for (let i = remainingHorses.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [remainingHorses[i], remainingHorses[j]] = [remainingHorses[j], remainingHorses[i]];
+    }
+    
+    // Insert player horse at random position (not first)
+    const playerPosition = Math.floor(Math.random() * remainingHorses.length) + 1;
+    const allHorses = [winner, ...remainingHorses];
+    allHorses.splice(playerPosition, 0, playerHorse);
+    
+    // Create race results with times
+    raceResults = allHorses.map((horse, index) => ({
       ...horse,
-      finalSpeed,
-      finishTime: 1000 / finalSpeed + Math.random() * 200 // Base time + random variance
-    };
-  });
-  
-  // Sort by finish time to determine race order
-  const raceResults = raceHorses.sort((a, b) => a.finishTime - b.finishTime);
+      finalSpeed: 1.0 - (index * 0.08),
+      finishTime: 1000 + (index * 120) + Math.random() * 80
+    }));
+  }
   
   return raceResults;
 };
@@ -111,8 +255,10 @@ router.post('/place-bet', auth, requireEmailVerification, async (req, res) => {
     
     await user.save();
     
-    // Simulate the race
-    const raceResults = simulateRace(horses, horseId);
+    // Simulate the race with psychology system (use points BEFORE deduction for psychology calculation)
+    const userPointsBeforeBet = user.points + betAmount;
+    const psychology = calculateCasinoPsychology(userPointsBeforeBet);
+    const raceResults = simulateRace(horses, horseId, userPointsBeforeBet);
     const winner = raceResults[0];
     const playerHorse = raceResults.find(h => h.id === horseId);
     const won = winner.id === horseId;
@@ -132,7 +278,7 @@ router.post('/place-bet', auth, requireEmailVerification, async (req, res) => {
       await user.save();
     }
     
-    // Save race result to database
+    // Save race result to database with psychology data
     const raceResult = new HorseRaceResult({
       userId: req.user.userId,
       username: req.user.username,
@@ -144,7 +290,11 @@ router.post('/place-bet', auth, requireEmailVerification, async (req, res) => {
       payout: payout,
       winnerHorseId: winner.id,
       winnerHorseName: winner.name,
-      raceData: raceResults
+      raceData: raceResults,
+      // Psychology analytics data
+      psychologyPhase: psychology.phase,
+      psychologyWinRate: psychology.winRate,
+      userPointsAtBet: userPointsBeforeBet
     });
     
     await raceResult.save();

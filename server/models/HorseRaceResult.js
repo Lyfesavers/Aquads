@@ -72,6 +72,20 @@ const horseRaceResultSchema = new Schema({
     finishTime: Number
   }],
   
+  // Psychology data for analytics (optional)
+  psychologyPhase: {
+    type: String,
+    required: false
+  },
+  psychologyWinRate: {
+    type: Number,
+    required: false
+  },
+  userPointsAtBet: {
+    type: Number,
+    required: false
+  },
+  
   // Timestamps
   createdAt: {
     type: Date,
