@@ -290,97 +290,15 @@ const BubbleDuels = ({ currentUser }) => {
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 text-white relative overflow-hidden ${lightningFlash ? 'brightness-200' : ''}`}>
-      {/* Lightning Flash Overlay */}
-      <AnimatePresence>
-        {lightningFlash && (
-          <motion.div
-            className="fixed inset-0 bg-white/30 pointer-events-none z-50"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.1 }}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Floating Particles */}
-      <div className="fixed inset-0 pointer-events-none z-40">
-        {particles.map(particle => (
-          <motion.div
-            key={particle.id}
-            className="absolute rounded-full"
-            style={{
-              left: particle.x,
-              top: particle.y,
-              width: particle.size,
-              height: particle.size,
-              backgroundColor: particle.color,
-              boxShadow: `0 0 ${particle.size * 2}px ${particle.color}`
-            }}
-            animate={{
-              x: [0, particle.vx * 20],
-              y: [0, particle.vy * 20],
-              opacity: [1, 0],
-              scale: [1, 0]
-            }}
-            transition={{ duration: 2, ease: "easeOut" }}
-          />
-        ))}
-      </div>
-
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        {/* Electric sparks */}
-        <motion.div
-          className="absolute top-1/4 left-1/4 text-yellow-400 text-6xl opacity-20"
-          animate={{
-            rotate: [0, 360],
-            scale: [1, 1.5, 1],
-            opacity: [0.2, 0.8, 0.2]
-          }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-        >
-          ⚡
-        </motion.div>
-        <motion.div
-          className="absolute top-3/4 right-1/4 text-blue-400 text-4xl opacity-30"
-          animate={{
-            rotate: [360, 0],
-            scale: [1, 1.3, 1],
-            opacity: [0.3, 0.7, 0.3]
-          }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        >
-          🔥
-        </motion.div>
-        <motion.div
-          className="absolute top-1/2 left-3/4 text-purple-400 text-5xl opacity-25"
-          animate={{
-            y: [-20, 20, -20],
-            rotate: [0, 180, 360],
-            opacity: [0.25, 0.6, 0.25]
-          }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-        >
-          💫
-        </motion.div>
-      </div>
-
-      {/* Header */}
-      <div className="relative overflow-hidden py-12 z-10">
-        <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 to-blue-600/20"></div>
-        <div className="relative container mx-auto px-4 text-center">
-          <motion.h1 
-            className="text-6xl font-bold mb-4"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 260, damping: 20 }}
-          >
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 text-white">
+      {/* Simplified Header */}
+      <div className="py-12">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-6xl font-bold mb-4">
             <span className="bg-gradient-to-r from-red-400 via-yellow-400 to-blue-400 text-transparent bg-clip-text">
               🥊 BUBBLE DUELS 🥊
             </span>
-          </motion.h1>
+          </h1>
           <p className="text-xl text-gray-300 mb-8">
             Street Fighter Style Crypto Project Battles! ⚡
           </p>
@@ -421,49 +339,73 @@ const BubbleDuels = ({ currentUser }) => {
       )}
 
       {/* Street Fighter Style Character Select */}
-      <AnimatePresence>
-        {showFighterSelect && (
-          <FighterSelectModal
-            ads={ads}
-            onSelectProject={selectProject}
-            onClose={() => {
-              console.log('Closing fighter select modal');
-              setShowFighterSelect(false);
-              setSelectingFor(null);
-            }}
-            selectingFor={selectingFor}
-            alreadySelected={selectedProjects}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Debug info - remove this later */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="fixed bottom-4 right-4 bg-black/80 text-white p-2 rounded text-xs">
-          <div>Show Modal: {showFighterSelect.toString()}</div>
-          <div>Selecting For: {selectingFor || 'null'}</div>
-          <div>Ads: {ads.length}</div>
-          <div>Selected: {selectedProjects.length}</div>
-          <button 
-            onClick={() => {
-              console.log('Test button clicked - opening modal');
-              setSelectingFor('fighter1');
-              setShowFighterSelect(true);
-            }}
-            className="bg-red-600 hover:bg-red-700 px-2 py-1 rounded mt-2 text-white"
-          >
-            Test Modal
-          </button>
-        </div>
+      {showFighterSelect && (
+        <FighterSelectModal
+          ads={ads}
+          onSelectProject={selectProject}
+          onClose={() => {
+            console.log('Closing fighter select modal');
+            setShowFighterSelect(false);
+            setSelectingFor(null);
+          }}
+          selectingFor={selectingFor}
+          alreadySelected={selectedProjects}
+        />
       )}
+
+      {/* Debug info */}
+      <div className="fixed bottom-4 right-4 bg-black/80 text-white p-2 rounded text-xs z-[9999]">
+        <div>Show Modal: {showFighterSelect.toString()}</div>
+        <div>Selecting For: {selectingFor || 'null'}</div>
+        <div>Ads: {ads.length}</div>
+        <div>Selected: {selectedProjects.length}</div>
+        <button 
+          onClick={() => {
+            console.log('Test button clicked - opening modal');
+            setSelectingFor('fighter1');
+            setShowFighterSelect(true);
+          }}
+          className="bg-red-600 hover:bg-red-700 px-2 py-1 rounded mt-2 text-white"
+        >
+          Test Modal
+        </button>
+      </div>
     </div>
   );
 };
 
 // Battle Setup Component
 const BattleSetup = ({ selectedProjects, onOpenFighterSelect, onRemoveProject, onStartBattle }) => {
+  
+  const handleFighter1Click = () => {
+    console.log('=== FIGHTER 1 CLICK HANDLER CALLED ===');
+    onOpenFighterSelect('fighter1');
+  };
+
+  const handleFighter2Click = () => {
+    console.log('=== FIGHTER 2 CLICK HANDLER CALLED ===');
+    onOpenFighterSelect('fighter2');
+  };
+
   return (
     <div className="container mx-auto px-4 pb-12">
+      {/* TEST BUTTONS FIRST */}
+      <div className="text-center mb-8 bg-yellow-500/20 p-4 rounded">
+        <h2 className="text-2xl font-bold mb-4">🔧 CLICK TEST AREA</h2>
+        <button 
+          onClick={handleFighter1Click}
+          className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded mr-4 text-white"
+        >
+          Test Fighter 1 Click
+        </button>
+        <button 
+          onClick={handleFighter2Click}
+          className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white"
+        >
+          Test Fighter 2 Click
+        </button>
+      </div>
+
       {/* Selection Area */}
       <div className="grid md:grid-cols-3 gap-8 mb-12">
         {/* Project 1 Slot */}
@@ -476,20 +418,15 @@ const BattleSetup = ({ selectedProjects, onOpenFighterSelect, onRemoveProject, o
               onRemove={() => onRemoveProject(0)}
             />
           ) : (
-            <motion.div 
-              className="h-40 border-4 border-dashed border-red-500/50 rounded-lg flex items-center justify-center cursor-pointer hover:border-red-400 transition-colors"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => {
-                console.log('Fighter 1 slot clicked');
-                onOpenFighterSelect('fighter1');
-              }}
+            <button 
+              onClick={handleFighter1Click}
+              className="h-40 w-full border-4 border-dashed border-red-500/50 rounded-lg flex items-center justify-center cursor-pointer hover:border-red-400 transition-colors bg-transparent"
             >
               <div className="text-center">
                 <div className="text-4xl mb-2">🥊</div>
-                <span className="text-red-300">Select Fighter 1</span>
+                <span className="text-red-300">Click to Select Fighter 1</span>
               </div>
-            </motion.div>
+            </button>
           )}
         </div>
 
@@ -523,20 +460,15 @@ const BattleSetup = ({ selectedProjects, onOpenFighterSelect, onRemoveProject, o
               onRemove={() => onRemoveProject(1)}
             />
           ) : (
-            <motion.div 
-              className="h-40 border-4 border-dashed border-blue-500/50 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-400 transition-colors"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => {
-                console.log('Fighter 2 slot clicked');
-                onOpenFighterSelect('fighter2');
-              }}
+            <button 
+              onClick={handleFighter2Click}
+              className="h-40 w-full border-4 border-dashed border-blue-500/50 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-400 transition-colors bg-transparent"
             >
               <div className="text-center">
                 <div className="text-4xl mb-2">🥊</div>
-                <span className="text-blue-300">Select Fighter 2</span>
+                <span className="text-blue-300">Click to Select Fighter 2</span>
               </div>
-            </motion.div>
+            </button>
           )}
         </div>
       </div>
@@ -995,18 +927,12 @@ const FighterDisplay = ({ project, votes, health, color, position, onVote, curre
 // Street Fighter Style Character Select Modal
 const FighterSelectModal = ({ ads, onSelectProject, onClose, selectingFor, alreadySelected }) => {
   return (
-    <motion.div
-      className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+    <div
+      className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[9999] flex items-center justify-center"
       onClick={onClose}
     >
-      <motion.div
+      <div
         className="bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 rounded-xl p-8 max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto"
-        initial={{ scale: 0.8, y: 50 }}
-        animate={{ scale: 1, y: 0 }}
-        exit={{ scale: 0.8, y: 50 }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -1129,8 +1055,8 @@ const FighterSelectModal = ({ ads, onSelectProject, onClose, selectingFor, alrea
           <p>💡 Click on any fighter to select them for battle!</p>
           <p className="text-sm mt-2">Total Available Fighters: {ads.length}</p>
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 };
 
