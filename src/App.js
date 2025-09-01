@@ -63,6 +63,7 @@ import FilterControls from './components/FilterControls';
 import DotsAndBoxes from './components/DotsAndBoxes';
 import HorseRacing from './components/HorseRacing';
 import ServicePage from './components/ServicePage';
+import DemoLanding from './components/DemoLanding';
 
 // Simple debounce function implementation
 const debounce = (func, wait) => {
@@ -2709,6 +2710,12 @@ function App() {
                         >
                           Why List?
                         </Link>
+                        <Link
+                          to="/interactive-landing"
+                          className="bg-gradient-to-r from-pink-500/80 to-rose-600/80 hover:from-pink-600/80 hover:to-rose-700/80 px-3 py-1.5 rounded text-sm shadow-lg hover:shadow-pink-500/50 transition-all duration-300 backdrop-blur-sm"
+                        >
+                          Interactive Demo
+                        </Link>
 
                         {currentUser ? (
                           <>
@@ -2836,6 +2843,12 @@ function App() {
                           className="bg-gradient-to-r from-purple-500/80 to-pink-600/80 hover:from-purple-600/80 hover:to-pink-700/80 px-4 py-2 rounded shadow-lg hover:shadow-purple-500/50 transition-all duration-300 backdrop-blur-sm text-center"
                         >
                           Why List?
+                        </Link>
+                        <Link
+                          to="/interactive-landing"
+                          className="bg-gradient-to-r from-pink-500/80 to-rose-600/80 hover:from-pink-600/80 hover:to-pink-700/80 px-4 py-2 rounded shadow-lg hover:shadow-pink-500/50 transition-all duration-300 backdrop-blur-sm text-center"
+                        >
+                          Interactive Demo
                         </Link>
                         {currentUser ? (
                           <>
@@ -3662,6 +3675,7 @@ function App() {
             <Route path="/embed/aquaswap" element={<AquaSwapEmbed />} />
             <Route path="/why-list" element={<ProjectInfo currentUser={currentUser} ads={ads} onLogin={() => setShowLoginModal(true)} onCreateAccount={() => setShowCreateAccountModal(true)} />} />
             <Route path="/freelancer-benefits" element={<FreelancerBenefits currentUser={currentUser} />} />
+            <Route path="/interactive-landing" element={<DemoLanding />} />
         </Routes>
       </Router>
     </AuthContext.Provider>
