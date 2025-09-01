@@ -29,6 +29,12 @@ const BubbleDuels = ({ currentUser }) => {
   const [showFighterSelect, setShowFighterSelect] = useState(false);
   const [selectingFor, setSelectingFor] = useState(null); // 'fighter1' or 'fighter2'
 
+  // Debug current user
+  useEffect(() => {
+    console.log('BubbleDuels received currentUser:', currentUser);
+    console.log('Token in localStorage:', !!localStorage.getItem('token'));
+  }, [currentUser]);
+
 
 
   // Fetch bubble ads (same as main page)
@@ -457,10 +463,16 @@ const BattleSetup = ({ selectedProjects, onOpenFighterSelect, onRemoveProject, o
         >
           <button
             onClick={() => {
-              if (!currentUser) {
+              console.log('Start battle clicked. Current user:', currentUser);
+              console.log('Token in localStorage:', localStorage.getItem('token'));
+              
+              // Check token instead of currentUser for now
+              const token = localStorage.getItem('token');
+              if (!token) {
                 alert('Please login to start battles!');
                 return;
               }
+              
               onStartBattle();
             }}
             className="bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-700 hover:to-blue-700 px-12 py-4 rounded-lg text-2xl font-bold shadow-2xl transform hover:scale-105 transition-all duration-300"
@@ -474,7 +486,7 @@ const BattleSetup = ({ selectedProjects, onOpenFighterSelect, onRemoveProject, o
       <div className="text-center text-gray-300">
         <p className="text-lg mb-2">🥊 Click on the fighter slots above to select your warriors!</p>
         <p className="text-sm opacity-75">Choose 2 bubble projects to battle in epic 1-hour duels</p>
-        {!currentUser && (
+        {!localStorage.getItem('token') && (
           <div className="mt-4 p-3 bg-yellow-500/20 border border-yellow-500/50 rounded-lg">
             <p className="text-yellow-300 font-bold">⚠️ Please login to create and participate in battles!</p>
           </div>
