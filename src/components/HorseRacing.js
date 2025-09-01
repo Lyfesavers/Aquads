@@ -52,19 +52,24 @@ const HorseRacing = ({ currentUser }) => {
     let winRate = 0.5; // Base 50% win rate
     let psychologyBonus = 0;
     
-    // CRITICAL: 1K SAFETY NET - Never let them stay below 1000 points
-    if (points < 1000) {
-      phase = 'safety_net';
-      winRate = 0.78; // 78% win rate - FORCE THEM BACK ABOVE 1K!
-      psychologyBonus = 0.12; // Extra 12% boost
-      // Safety net active - boosting win chances
+    // EMERGENCY SAFETY NET - Only for very low points
+    if (points <= 100) {
+      phase = 'emergency_safety';
+      winRate = 0.85; // 85% win rate - EMERGENCY RECOVERY!
+      psychologyBonus = 0.15; // Massive 15% boost
+      // Emergency recovery active
     } else if (points <= 500) {
-      // HONEYMOON PHASE - Hook new players (this won't trigger due to 1k safety net, but keep for logic)
+      // HONEYMOON PHASE - Hook new players with generous wins
       phase = 'honeymoon';
-      winRate = 0.70; // 70% win rate - Very generous
-      psychologyBonus = 0.08; // Extra 8% boost for confidence
+      winRate = 0.70; // 70% win rate - Very generous to build them up
+      psychologyBonus = 0.10; // Extra 10% boost for confidence
+    } else if (points < 1000) {
+      // SAFETY NET - Prevent dropping below 1k, but less aggressive
+      phase = 'safety_net';
+      winRate = 0.65; // 65% win rate - Good boost to get above 1k
+      psychologyBonus = 0.08; // 8% boost
     } else if (points <= 1500) {
-      // BUILDING CONFIDENCE - Just above safety net
+      // BUILDING CONFIDENCE - Just above 1k
       phase = 'building';
       winRate = 0.62; // 62% win rate - Still very positive
       psychologyBonus = 0.05; // 5% confidence boost
@@ -469,12 +474,20 @@ const HorseRacing = ({ currentUser }) => {
     
     // Psychology-based comeback boosts
     switch (psychologyData.phase) {
+      case 'emergency_safety':
+        pointsBasedBoost = 0.75; // Massive boost when almost broke
+        // Emergency comeback active
+        break;
+      case 'honeymoon':
+        pointsBasedBoost = 0.50; // Large boost for new players
+        // Honeymoon comeback active
+        break;
       case 'safety_net':
-        pointsBasedBoost = 0.70; // Massive boost when below 1k
+        pointsBasedBoost = 0.45; // Good boost when below 1k
         // Safety net comeback active
         break;
       case 'building':
-        pointsBasedBoost = 0.45; // Large boost for confidence building
+        pointsBasedBoost = 0.35; // Boost for confidence building
         break;
       case 'early_hook':
         pointsBasedBoost = 0.35; // Good boost in early hook phase
@@ -613,7 +626,7 @@ const HorseRacing = ({ currentUser }) => {
     const psychologyData = calculateCasinoPsychology(userPoints);
     let minKeep = 15; // Base minimum to keep
     
-    // Dynamic reserves based on psychology phases and 1k safety net
+    // Dynamic reserves based on psychology phases
     if (psychologyData.phase === 'final_guardian' || psychologyData.phase === 'emergency_pullback') {
       minKeep = 400; // Heavy restriction near 10k
     } else if (psychologyData.phase === 'gatekeeper') {
@@ -622,8 +635,12 @@ const HorseRacing = ({ currentUser }) => {
       minKeep = 150; // Moderate restriction in elite zone
     } else if (psychologyData.phase === 'high_stakes') {
       minKeep = 100; // Some restriction in high stakes
+    } else if (psychologyData.phase === 'emergency_safety') {
+      minKeep = 5; // Minimal restriction when almost broke - let them recover
+    } else if (psychologyData.phase === 'honeymoon') {
+      minKeep = 10; // Low restriction for new players to build up
     } else if (psychologyData.phase === 'safety_net') {
-      minKeep = 10; // Minimal restriction when below 1k - let them try to recover
+      minKeep = 15; // Small restriction when below 1k
     } else if (psychologyData.phase === 'building' || psychologyData.phase === 'early_hook') {
       minKeep = 20; // Lower restriction for building confidence
     }
@@ -1074,8 +1091,14 @@ const HorseRacing = ({ currentUser }) => {
               let winMessage = "Congratulations! You won!";
               
               switch (psychologyData.phase) {
+                case 'emergency_safety':
+                  winMessage = "AMAZING RECOVERY! You're back from the brink! What a comeback!";
+                  break;
+                case 'honeymoon':
+                  winMessage = "FANTASTIC! You're a natural at this! Keep the winning streak going!";
+                  break;
                 case 'safety_net':
-                  winMessage = "INCREDIBLE COMEBACK! You're back in the game! Never give up!";
+                  winMessage = "GREAT WIN! You're building back up! Keep the momentum!";
                   break;
                 case 'building':
                   winMessage = "YES! You're really getting the hang of this! Keep building!";
