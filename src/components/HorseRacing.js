@@ -57,7 +57,7 @@ const HorseRacing = ({ currentUser }) => {
       phase = 'safety_net';
       winRate = 0.78; // 78% win rate - FORCE THEM BACK ABOVE 1K!
       psychologyBonus = 0.12; // Extra 12% boost
-      console.log(`🚨 SAFETY NET ACTIVE! Player at ${points} points - forcing wins to get above 1k!`);
+      // Safety net active - boosting win chances
     } else if (points <= 500) {
       // HONEYMOON PHASE - Hook new players (this won't trigger due to 1k safety net, but keep for logic)
       phase = 'honeymoon';
@@ -137,7 +137,7 @@ const HorseRacing = ({ currentUser }) => {
       if (points > 9600) {
         winRate = 0.25; // EMERGENCY pullback
         phase = 'emergency_pullback';
-        console.log(`⚠️ EMERGENCY PULLBACK! Player at ${points} points - preventing 10k breakthrough!`);
+        // Emergency pullback active
       }
     }
     
@@ -471,7 +471,7 @@ const HorseRacing = ({ currentUser }) => {
     switch (psychologyData.phase) {
       case 'safety_net':
         pointsBasedBoost = 0.70; // Massive boost when below 1k
-        console.log(`🚨 SAFETY NET COMEBACK! Player below 1k - massive boost!`);
+        // Safety net comeback active
         break;
       case 'building':
         pointsBasedBoost = 0.45; // Large boost for confidence building
@@ -629,11 +629,7 @@ const HorseRacing = ({ currentUser }) => {
     }
     
     if (userPoints - currentBet.amount < minKeep) {
-      const phaseMessage = psychologyData.phase === 'safety_net' 
-        ? "Smart betting! Let's get you back above 1000 points."
-        : psychologyData.phase === 'final_guardian'
-        ? "Elite territory! Bet responsibly near the 10k goal."
-        : `Smart betting limit! You must keep at least ${minKeep} points to continue playing.`;
+      const phaseMessage = `Smart betting limit! You must keep at least ${minKeep} points to continue playing.`;
       
       alert(phaseMessage);
       const safeBet = Math.max(10, userPoints - minKeep); // Keep minimum bet at 10
@@ -959,14 +955,7 @@ const HorseRacing = ({ currentUser }) => {
             const psychologyResult = calculateCasinoPsychology(userPoints);
             speedMultiplier = psychologyResult.speedMultiplier;
             
-            // Log important psychology events
-            if (psychologyResult.safetyNetActive) {
-              console.log(`🚨 1K SAFETY NET: Boosting player win chances - ${userPoints} points`);
-            } else if (psychologyResult.phase === 'building' || psychologyResult.phase === 'early_hook') {
-              console.log(`🎣 HOOKING PLAYER: ${psychologyResult.phase} phase - ${(psychologyResult.winRate * 100).toFixed(1)}% win rate`);
-            } else if (psychologyResult.pullbackActive) {
-              console.log(`⬇️ PULLBACK ACTIVE: ${psychologyResult.phase} - ${(psychologyResult.winRate * 100).toFixed(1)}% win rate`);
-            }
+            // Psychology system running in background
           }
           
           // More balanced random speed variation for closer races
@@ -1431,65 +1420,10 @@ const HorseRacing = ({ currentUser }) => {
             </p>
           </div>
           
-          {/* Smart Points Display with Psychology Phase */}
+          {/* Points Display */}
           <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
             <div className="text-sm text-gray-400">Affiliate Points</div>
             <div className="text-2xl font-bold text-emerald-400">{userPoints}</div>
-            {(() => {
-              const psychologyData = calculateCasinoPsychology(userPoints);
-              let statusColor = "text-gray-400";
-              let statusText = "";
-              
-              switch (psychologyData.phase) {
-                case 'safety_net':
-                  statusColor = "text-red-400";
-                  statusText = "🆘 Recovery Mode";
-                  break;
-                case 'building':
-                  statusColor = "text-green-400";
-                  statusText = "🌱 Building Up";
-                  break;
-                case 'early_hook':
-                  statusColor = "text-blue-400";
-                  statusText = "🎣 On Fire";
-                  break;
-                case 'addiction_zone':
-                  statusColor = "text-purple-400";
-                  statusText = "⚡ In The Zone";
-                  break;
-                case 'mid_challenge':
-                  statusColor = "text-yellow-400";
-                  statusText = "🔥 Rising Star";
-                  break;
-                case 'high_stakes':
-                  statusColor = "text-orange-400";
-                  statusText = "💎 High Stakes";
-                  break;
-                case 'elite_zone':
-                  statusColor = "text-pink-400";
-                  statusText = "👑 Elite Player";
-                  break;
-                case 'gatekeeper':
-                  statusColor = "text-indigo-400";
-                  statusText = "🏆 Champion";
-                  break;
-                case 'final_guardian':
-                  statusColor = "text-amber-400";
-                  statusText = "🌟 Legend";
-                  break;
-                default:
-                  statusText = "";
-              }
-              
-              if (statusText) {
-                return (
-                  <div className={`text-xs ${statusColor} mt-1 font-medium`}>
-                    {statusText}
-                  </div>
-                );
-              }
-              return null;
-            })()}
           </div>
         </div>
 
@@ -1851,7 +1785,7 @@ const HorseRacing = ({ currentUser }) => {
 
 
 
-            {/* Smart Game Instructions with Psychology Tips */}
+            {/* Game Instructions */}
             <div className="mt-4 p-3 bg-gray-800/50 rounded text-xs text-gray-400">
               <div className="font-semibold mb-1">How to Play:</div>
               <ul className="space-y-1">
@@ -1861,42 +1795,6 @@ const HorseRacing = ({ currentUser }) => {
                 <li>• Win affiliate points based on the horse's odds!</li>
                 <li>• Higher odds = higher payout multiplier</li>
               </ul>
-              {(() => {
-                const psychologyData = calculateCasinoPsychology(userPoints);
-                
-                if (psychologyData.phase === 'safety_net') {
-                  return (
-                    <div className="mt-2 text-red-400 text-xs">
-                      🆘 Recovery mode active! The odds are in your favor - now's your chance to bounce back above 1000!
-                    </div>
-                  );
-                } else if (psychologyData.phase === 'building' || psychologyData.phase === 'early_hook') {
-                  return (
-                    <div className="mt-2 text-green-400 text-xs">
-                      🍀 You're in the lucky zone! Perfect time to build your points with confidence!
-                    </div>
-                  );
-                } else if (psychologyData.phase === 'addiction_zone') {
-                  return (
-                    <div className="mt-2 text-purple-400 text-xs">
-                      ⚡ You're in the zone! Riding the wave perfectly - keep the momentum going!
-                    </div>
-                  );
-                } else if (psychologyData.phase === 'gatekeeper' || psychologyData.phase === 'final_guardian') {
-                  return (
-                    <div className="mt-2 text-amber-400 text-xs">
-                      👑 Elite territory! You're playing with the champions now - every bet counts!
-                    </div>
-                  );
-                } else if (psychologyData.pullbackActive) {
-                  return (
-                    <div className="mt-2 text-orange-400 text-xs">
-                      🎯 Challenging zone! Sometimes you need to take a step back to leap forward!
-                    </div>
-                  );
-                }
-                return null;
-              })()}
             </div>
           </div>
         </div>
