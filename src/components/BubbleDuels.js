@@ -26,6 +26,8 @@ const BubbleDuels = ({ currentUser }) => {
   const [particles, setParticles] = useState([]);
   const [lightningFlash, setLightningFlash] = useState(false);
   const [lastVoteEffect, setLastVoteEffect] = useState(null);
+  const [showFighterSelect, setShowFighterSelect] = useState(false);
+  const [selectingFor, setSelectingFor] = useState(null); // 'fighter1' or 'fighter2'
 
   // Fetch bubble ads (same as main page)
   useEffect(() => {
@@ -34,12 +36,13 @@ const BubbleDuels = ({ currentUser }) => {
         const response = await fetch(`${API_URL}/api/ads`);
         if (response.ok) {
           const adsData = await response.json();
-          // Filter only approved and bumped ads like main page
+          // Filter all active/approved ads with logos (not just bumped ones)
           const validAds = adsData.filter(ad => 
-            ad.status === 'approved' && 
-            ad.isBumped === true &&
-            ad.logo
+            (ad.status === 'approved' || ad.status === 'active') && 
+            ad.logo &&
+            ad.title
           );
+          console.log('Loaded ads for Bubble Duels:', validAds.length);
           setAds(validAds);
         }
       } catch (error) {
@@ -69,14 +72,36 @@ const BubbleDuels = ({ currentUser }) => {
     return () => clearInterval(interval);
   }, [activeBattle, timeRemaining]);
 
-  const selectProject = (project) => {
-    if (selectedProjects.length < 2 && !selectedProjects.find(p => p.id === project.id)) {
-      setSelectedProjects([...selectedProjects, project]);
-    }
+  const openFighterSelect = (position) => {
+    setSelectingFor(position);
+    setShowFighterSelect(true);
   };
 
-  const removeProject = (projectId) => {
-    setSelectedProjects(selectedProjects.filter(p => p.id !== projectId));
+  const selectProject = (project) => {
+    if (selectingFor === 'fighter1') {
+      // Replace fighter 1 or add if empty
+      const newSelected = selectedProjects.length > 0 ? 
+        [project, selectedProjects[1]].filter(Boolean) : [project];
+      setSelectedProjects(newSelected);
+    } else if (selectingFor === 'fighter2') {
+      // Replace fighter 2 or add if empty
+      const newSelected = selectedProjects.length > 0 ? 
+        [selectedProjects[0], project].filter(Boolean) : [undefined, project].filter(Boolean);
+      setSelectedProjects(newSelected);
+    }
+    
+    setShowFighterSelect(false);
+    setSelectingFor(null);
+  };
+
+  const removeProject = (position) => {
+    if (position === 0) {
+      // Remove fighter 1
+      setSelectedProjects(selectedProjects.slice(1));
+    } else {
+      // Remove fighter 2
+      setSelectedProjects(selectedProjects.slice(0, 1));
+    }
   };
 
   const startBattle = async () => {
@@ -377,19 +402,34 @@ const BubbleDuels = ({ currentUser }) => {
         />
       ) : (
         <BattleSetup 
-          ads={ads}
           selectedProjects={selectedProjects}
-          onSelectProject={selectProject}
+          onOpenFighterSelect={openFighterSelect}
           onRemoveProject={removeProject}
           onStartBattle={startBattle}
         />
       )}
+
+      {/* Street Fighter Style Character Select */}
+      <AnimatePresence>
+        {showFighterSelect && (
+          <FighterSelectModal
+            ads={ads}
+            onSelectProject={selectProject}
+            onClose={() => {
+              setShowFighterSelect(false);
+              setSelectingFor(null);
+            }}
+            selectingFor={selectingFor}
+            alreadySelected={selectedProjects}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
 
 // Battle Setup Component
-const BattleSetup = ({ ads, selectedProjects, onSelectProject, onRemoveProject, onStartBattle }) => {
+const BattleSetup = ({ selectedProjects, onOpenFighterSelect, onRemoveProject, onStartBattle }) => {
   return (
     <div className="container mx-auto px-4 pb-12">
       {/* Selection Area */}
@@ -401,12 +441,20 @@ const BattleSetup = ({ ads, selectedProjects, onSelectProject, onRemoveProject, 
             <SelectedProjectDisplay 
               project={selectedProjects[0]} 
               color="red"
-              onRemove={() => onRemoveProject(selectedProjects[0].id)}
+              onRemove={() => onRemoveProject(0)}
             />
           ) : (
-            <div className="h-40 border-4 border-dashed border-red-500/50 rounded-lg flex items-center justify-center">
-              <span className="text-red-300">Select a project to battle</span>
-            </div>
+            <motion.div 
+              className="h-40 border-4 border-dashed border-red-500/50 rounded-lg flex items-center justify-center cursor-pointer hover:border-red-400 transition-colors"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => onOpenFighterSelect('fighter1')}
+            >
+              <div className="text-center">
+                <div className="text-4xl mb-2">🥊</div>
+                <span className="text-red-300">Select Fighter 1</span>
+              </div>
+            </motion.div>
           )}
         </div>
 
@@ -437,12 +485,20 @@ const BattleSetup = ({ ads, selectedProjects, onSelectProject, onRemoveProject, 
             <SelectedProjectDisplay 
               project={selectedProjects[1]} 
               color="blue"
-              onRemove={() => onRemoveProject(selectedProjects[1].id)}
+              onRemove={() => onRemoveProject(1)}
             />
           ) : (
-            <div className="h-40 border-4 border-dashed border-blue-500/50 rounded-lg flex items-center justify-center">
-              <span className="text-blue-300">Select a project to battle</span>
-            </div>
+            <motion.div 
+              className="h-40 border-4 border-dashed border-blue-500/50 rounded-lg flex items-center justify-center cursor-pointer hover:border-blue-400 transition-colors"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => onOpenFighterSelect('fighter2')}
+            >
+              <div className="text-center">
+                <div className="text-4xl mb-2">🥊</div>
+                <span className="text-blue-300">Select Fighter 2</span>
+              </div>
+            </motion.div>
           )}
         </div>
       </div>
@@ -463,20 +519,10 @@ const BattleSetup = ({ ads, selectedProjects, onSelectProject, onRemoveProject, 
         </motion.div>
       )}
 
-      {/* Available Projects Grid */}
-      <div>
-        <h2 className="text-3xl font-bold mb-8 text-center">Choose Your Fighters</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-          {ads.map(ad => (
-            <ProjectBubble 
-              key={ad.id}
-              project={ad}
-              isSelected={selectedProjects.find(p => p.id === ad.id)}
-              onSelect={() => onSelectProject(ad)}
-              disabled={selectedProjects.length >= 2}
-            />
-          ))}
-        </div>
+      {/* Instructions */}
+      <div className="text-center text-gray-300">
+        <p className="text-lg mb-2">🥊 Click on the fighter slots above to select your warriors!</p>
+        <p className="text-sm opacity-75">Choose 2 bubble projects to battle in epic 1-hour duels</p>
       </div>
     </div>
   );
@@ -556,7 +602,12 @@ const SelectedProjectDisplay = ({ project, color, onRemove }) => {
       <img 
         src={project.logo} 
         alt={project.title}
-        className="w-20 h-20 object-contain mx-auto mb-2 rounded-full border-2 border-white/30"
+        className="w-24 h-24 object-contain mx-auto mb-2 rounded-full border-2 border-white/30"
+        style={{
+          objectFit: 'contain',
+          maxWidth: '100%',
+          maxHeight: '100%'
+        }}
       />
       <h4 className="font-bold text-white truncate">{project.title}</h4>
       <p className="text-sm opacity-75">🗳️ {project.bullishVotes || 0} votes</p>
@@ -804,7 +855,12 @@ const FighterDisplay = ({ project, votes, health, color, position, onVote, curre
           <img 
             src={project.logo} 
             alt={project.title}
-            className={`w-24 h-24 object-contain mx-auto mb-4 rounded-full border-4 border-white/30 ${isPowerful ? 'shadow-lg ' + classes.glow : ''}`}
+            className={`w-32 h-32 object-contain mx-auto mb-4 rounded-full border-4 border-white/30 ${isPowerful ? 'shadow-lg ' + classes.glow : ''}`}
+            style={{
+              objectFit: 'contain',
+              maxWidth: '95%',
+              maxHeight: '95%'
+            }}
           />
         </motion.div>
         <h3 className={`text-2xl font-bold ${classes.text} mb-2`}>{project.title}</h3>
@@ -894,6 +950,148 @@ const FighterDisplay = ({ project, votes, health, color, position, onVote, curre
           {currentUser ? '🗳️ VOTE!' : 'Login to Vote'}
         </span>
       </motion.button>
+    </motion.div>
+  );
+};
+
+// Street Fighter Style Character Select Modal
+const FighterSelectModal = ({ ads, onSelectProject, onClose, selectingFor, alreadySelected }) => {
+  return (
+    <motion.div
+      className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div
+        className="bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 rounded-xl p-8 max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+        initial={{ scale: 0.8, y: 50 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.8, y: 50 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="text-center mb-8">
+          <motion.h2 
+            className="text-4xl font-bold mb-4"
+            animate={{
+              textShadow: ['0 0 20px #fff', '0 0 30px #fff', '0 0 20px #fff']
+            }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            <span className="bg-gradient-to-r from-red-400 via-yellow-400 to-blue-400 text-transparent bg-clip-text">
+              SELECT YOUR {selectingFor === 'fighter1' ? 'RED' : 'BLUE'} FIGHTER
+            </span>
+          </motion.h2>
+          <p className="text-lg text-gray-300">
+            Choose a bubble project to represent the {selectingFor === 'fighter1' ? 'Red Corner' : 'Blue Corner'}
+          </p>
+        </div>
+
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 bg-red-600 hover:bg-red-700 rounded-full w-10 h-10 flex items-center justify-center text-white font-bold"
+        >
+          ×
+        </button>
+
+        {/* Fighter Grid - Street Fighter Style */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+          {ads.map((ad, index) => {
+            const isAlreadySelected = alreadySelected.find(p => p && p.id === ad.id);
+            const isDisabled = isAlreadySelected;
+            
+            return (
+              <motion.div
+                key={ad.id}
+                className={`
+                  relative group cursor-pointer
+                  ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'}
+                `}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                whileHover={!isDisabled ? { scale: 1.05, y: -5 } : {}}
+                whileTap={!isDisabled ? { scale: 0.95 } : {}}
+                onClick={() => !isDisabled && onSelectProject(ad)}
+              >
+                {/* Fighter Portrait */}
+                <div className={`
+                  bg-gradient-to-br ${selectingFor === 'fighter1' ? 'from-red-600 to-red-800' : 'from-blue-600 to-blue-800'} 
+                  rounded-lg p-4 border-2 
+                  ${selectingFor === 'fighter1' ? 'border-red-400' : 'border-blue-400'}
+                  ${!isDisabled ? 'group-hover:shadow-lg group-hover:shadow-' + (selectingFor === 'fighter1' ? 'red' : 'blue') + '-500/50' : ''}
+                  transition-all duration-300
+                `}>
+                  
+                  {/* Project Logo */}
+                  <div className="aspect-square mb-3 bg-white/10 rounded-lg p-1 flex items-center justify-center">
+                    <img 
+                      src={ad.logo} 
+                      alt={ad.title}
+                      className="w-full h-full object-contain rounded"
+                      style={{
+                        objectFit: 'contain',
+                        maxWidth: '95%',
+                        maxHeight: '95%'
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Project Name */}
+                  <h3 className="text-white font-bold text-sm text-center truncate mb-2">
+                    {ad.title}
+                  </h3>
+                  
+                  {/* Stats */}
+                  <div className="text-xs text-center text-gray-300">
+                    <div>🗳️ {ad.bullishVotes || 0} votes</div>
+                    {ad.isBumped && (
+                      <div className="text-yellow-400 font-bold mt-1">⭐ BUMPED</div>
+                    )}
+                  </div>
+                  
+                  {/* Selection Indicator */}
+                  {!isDisabled && (
+                    <motion.div
+                      className={`
+                        absolute inset-0 rounded-lg border-4 
+                        ${selectingFor === 'fighter1' ? 'border-red-400' : 'border-blue-400'} 
+                        opacity-0 group-hover:opacity-100
+                      `}
+                      animate={{
+                        boxShadow: [
+                          `0 0 20px ${selectingFor === 'fighter1' ? '#ef4444' : '#3b82f6'}`,
+                          `0 0 30px ${selectingFor === 'fighter1' ? '#ef4444' : '#3b82f6'}`,
+                          `0 0 20px ${selectingFor === 'fighter1' ? '#ef4444' : '#3b82f6'}`
+                        ]
+                      }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    />
+                  )}
+                  
+                  {/* Already Selected Overlay */}
+                  {isDisabled && (
+                    <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
+                      <div className="text-white font-bold text-xs text-center">
+                        ALREADY<br/>SELECTED
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* Footer */}
+        <div className="text-center mt-8 text-gray-400">
+          <p>💡 Click on any fighter to select them for battle!</p>
+          <p className="text-sm mt-2">Total Available Fighters: {ads.length}</p>
+        </div>
+      </motion.div>
     </motion.div>
   );
 };
