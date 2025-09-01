@@ -36,6 +36,7 @@ const HorseRacing = ({ currentUser }) => {
   // Comeback mechanics state
   const [comebackTriggered, setComebackTriggered] = useState(false);
   const [comebackHorse, setComebackHorse] = useState(null);
+  const [lastMinuteComebackTriggered, setLastMinuteComebackTriggered] = useState(false);
 
   // Race completion state management
   const [raceCompleting, setRaceCompleting] = useState(false); // Prevents spam during race end sequence
@@ -837,6 +838,26 @@ const HorseRacing = ({ currentUser }) => {
           if (comebackTriggered && comebackHorse && comebackHorse.id === horse.id) {
             randomSpeed *= 1.8; // Reduced from 3.0 for balance
           }
+
+          // EXCITING LAST-MINUTE COMEBACK: Make winning horse seem like it's going to lose
+          if (horse.id === currentBet.horseId && horse.position > 85 && !horse.finished) {
+            // Check if this is the winning horse (from backend results)
+            const isWinningHorse = raceResults && raceResults[0] && raceResults[0].id === horse.id;
+            
+            if (isWinningHorse) {
+              // Create dramatic tension - slow down the winning horse near the end
+              if (horse.position > 90 && horse.position < 98) {
+                randomSpeed *= 0.6; // Slow down to create tension
+              } else if (horse.position >= 98) {
+                // Final sprint to victory!
+                randomSpeed *= 2.5; // Dramatic final burst
+                if (!lastMinuteComebackTriggered) {
+                  setLastMinuteComebackTriggered(true);
+                  setTimeout(() => playCommentary("INCREDIBLE FINISH! HE'S PULLING IT OFF AT THE LAST SECOND!"), 200);
+                }
+              }
+            }
+          }
           const newPosition = horse.position + randomSpeed;
           
           // Check if horse finished
@@ -991,6 +1012,7 @@ const HorseRacing = ({ currentUser }) => {
     // Reset comeback mechanics
     setComebackTriggered(false);
     setComebackHorse(null);
+    setLastMinuteComebackTriggered(false);
     hasSubmittedRef.current = false;
     initializeHorses();
   };
