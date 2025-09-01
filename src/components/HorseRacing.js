@@ -40,6 +40,122 @@ const HorseRacing = ({ currentUser }) => {
   // Race completion state management
   const [raceCompleting, setRaceCompleting] = useState(false); // Prevents spam during race end sequence
 
+  // Advanced Casino Psychology System - Complete Addiction Machine
+  const calculateCasinoPsychology = (points) => {
+    // Dynamic ceiling detection with randomization to prevent exploitation
+    const getCeilingThreshold = (basePoints, variance = 0.06) => {
+      return basePoints + (Math.random() - 0.5) * basePoints * variance;
+    };
+    
+    // Phase identification with sophisticated psychological targeting
+    let phase = 'unknown';
+    let winRate = 0.5; // Base 50% win rate
+    let psychologyBonus = 0;
+    
+    // CRITICAL: 1K SAFETY NET - Never let them stay below 1000 points
+    if (points < 1000) {
+      phase = 'safety_net';
+      winRate = 0.78; // 78% win rate - FORCE THEM BACK ABOVE 1K!
+      psychologyBonus = 0.12; // Extra 12% boost
+      console.log(`🚨 SAFETY NET ACTIVE! Player at ${points} points - forcing wins to get above 1k!`);
+    } else if (points <= 500) {
+      // HONEYMOON PHASE - Hook new players (this won't trigger due to 1k safety net, but keep for logic)
+      phase = 'honeymoon';
+      winRate = 0.70; // 70% win rate - Very generous
+      psychologyBonus = 0.08; // Extra 8% boost for confidence
+    } else if (points <= 1500) {
+      // BUILDING CONFIDENCE - Just above safety net
+      phase = 'building';
+      winRate = 0.62; // 62% win rate - Still very positive
+      psychologyBonus = 0.05; // 5% confidence boost
+    } else if (points <= 2500) {
+      // EARLY HOOK - Keep them engaged
+      phase = 'early_hook';
+      winRate = 0.58; // 58% win rate - Positive bias
+      
+      // Dynamic ceiling check around 2200-2400
+      if (points > getCeilingThreshold(2300, 0.08)) {
+        winRate = 0.45; // Pullback mode
+        phase = 'ceiling_pullback';
+      }
+    } else if (points <= 4000) {
+      // MAIN ADDICTION ZONE - Balanced to keep them cycling
+      phase = 'addiction_zone';
+      winRate = 0.52; // 52% win rate - Slight positive bias
+      
+      // Dynamic ceiling check around 3600-3800
+      if (points > getCeilingThreshold(3700, 0.08)) {
+        winRate = 0.43; // Pullback mode
+        phase = 'ceiling_pullback';
+      }
+    } else if (points <= 6000) {
+      // MID-TIER CHALLENGE - Introduce more resistance
+      phase = 'mid_challenge';
+      winRate = 0.48; // 48% win rate - Slight house edge
+      
+      // Dynamic ceiling check around 5500-5800
+      if (points > getCeilingThreshold(5650, 0.07)) {
+        winRate = 0.40; // Stronger pullback
+        phase = 'ceiling_pullback';
+      }
+    } else if (points <= 7500) {
+      // HIGH STAKES ZONE - Noticeable difficulty
+      phase = 'high_stakes';
+      winRate = 0.45; // 45% win rate - Clear house edge
+      
+      // Dynamic ceiling check around 7000-7300
+      if (points > getCeilingThreshold(7150, 0.06)) {
+        winRate = 0.37; // Strong pullback
+        phase = 'ceiling_pullback';
+      }
+    } else if (points <= 8500) {
+      // ELITE TERRITORY - Significant challenge
+      phase = 'elite_zone';
+      winRate = 0.42; // 42% win rate - Significant house edge
+      
+      // Tighter ceiling control around 8000-8300
+      if (points > getCeilingThreshold(8150, 0.05)) {
+        winRate = 0.34; // Very strong pullback
+        phase = 'ceiling_pullback';
+      }
+    } else if (points <= 9200) {
+      // GATEKEEPER LEVEL - Heavy resistance
+      phase = 'gatekeeper';
+      winRate = 0.38; // 38% win rate - Heavy house edge
+      
+      // Very tight ceiling control around 8800-9000
+      if (points > getCeilingThreshold(8900, 0.04)) {
+        winRate = 0.30; // Brutal pullback
+        phase = 'ceiling_pullback';
+      }
+    } else {
+      // FINAL GUARDIAN - Maximum resistance before 10k
+      phase = 'final_guardian';
+      winRate = 0.35; // 35% win rate - Maximum house edge
+      
+      // Emergency pullback if approaching 10k
+      if (points > 9600) {
+        winRate = 0.25; // EMERGENCY pullback
+        phase = 'emergency_pullback';
+        console.log(`⚠️ EMERGENCY PULLBACK! Player at ${points} points - preventing 10k breakthrough!`);
+      }
+    }
+    
+    // Convert win rate to speed multiplier (affects how fast player's horse runs)
+    // Win rate of 50% = 1.0 multiplier, 25% = 0.5 multiplier, 75% = 1.5 multiplier
+    const baseMultiplier = 0.4 + (winRate * 1.2); // More dramatic range
+    const finalMultiplier = Math.min(1.6, Math.max(0.3, baseMultiplier + psychologyBonus));
+    
+    return {
+      phase,
+      winRate,
+      speedMultiplier: finalMultiplier,
+      pullbackActive: phase.includes('pullback') || phase.includes('emergency'),
+      psychologyBonus,
+      safetyNetActive: phase === 'safety_net'
+    };
+  };
+
   // Initialize component
   useEffect(() => {
     loadUserPoints();
@@ -338,7 +454,7 @@ const HorseRacing = ({ currentUser }) => {
     "The crowd can't believe what they're seeing!"
   ];
 
-  // Smart comeback system with player psychology - never let them lose everything!
+  // Advanced comeback system with sophisticated psychology
   const checkForComeback = (horses, maxPosition) => {
     // Only trigger comeback in final 30% of race and if not already triggered
     if (maxPosition < 70 || comebackTriggered) return null;
@@ -347,36 +463,58 @@ const HorseRacing = ({ currentUser }) => {
     const isUserOnWorstOdds = userHorse && userHorse.odds >= Math.max(...horses.map(h => h.odds));
     const isUserOnGoodOdds = userHorse && userHorse.odds <= Math.min(...horses.map(h => h.odds));
     
-    // PRECISE DISTRIBUTION PSYCHOLOGY: Boost win chances based on target zones
+    // Use our sophisticated psychology system for comeback chances
+    const psychologyData = calculateCasinoPsychology(userPoints);
     let pointsBasedBoost = 0;
-    if (userPoints <= 50) {
-      pointsBasedBoost = 0.70; // 70% boost when almost broke - SAVE THEM!
-      console.log(`🚨 SAFETY NET ACTIVATED! Player has ${userPoints} points - massive win boost!`);
-    } else if (userPoints <= 150) {
-      pointsBasedBoost = 0.40; // 40% boost when getting low - build dopamine
-      console.log(`💊 DOPAMINE BOOST! Player has ${userPoints} points - win boost activated!`);
-    } else if (userPoints <= 999) {
-      pointsBasedBoost = 0.20; // Help them reach 1k+ range
-    } else if (userPoints >= 1000 && userPoints <= 4999) {
-      pointsBasedBoost = 0.10; // Small boost in main cycling range (90%)
-    } else if (userPoints >= 5000 && userPoints <= 7999) {
-      pointsBasedBoost = 0.04; // Very small boost in 5k-7k range (8%)
-    } else if (userPoints >= 8000) {
-      pointsBasedBoost = 0.0; // NO boost above 8k - make it very hard to reach 10k (2%)
+    
+    // Psychology-based comeback boosts
+    switch (psychologyData.phase) {
+      case 'safety_net':
+        pointsBasedBoost = 0.70; // Massive boost when below 1k
+        console.log(`🚨 SAFETY NET COMEBACK! Player below 1k - massive boost!`);
+        break;
+      case 'building':
+        pointsBasedBoost = 0.45; // Large boost for confidence building
+        break;
+      case 'early_hook':
+        pointsBasedBoost = 0.35; // Good boost in early hook phase
+        break;
+      case 'addiction_zone':
+        pointsBasedBoost = 0.25; // Moderate boost in addiction zone
+        break;
+      case 'mid_challenge':
+        pointsBasedBoost = 0.15; // Small boost in mid challenge
+        break;
+      case 'high_stakes':
+        pointsBasedBoost = 0.08; // Tiny boost in high stakes
+        break;
+      case 'elite_zone':
+        pointsBasedBoost = 0.04; // Very small boost for elites
+        break;
+      case 'gatekeeper':
+      case 'final_guardian':
+        pointsBasedBoost = 0.02; // Minimal boost at top levels
+        break;
+      case 'ceiling_pullback':
+      case 'emergency_pullback':
+        pointsBasedBoost = 0.0; // No boost during pullbacks
+        break;
+      default:
+        pointsBasedBoost = 0.1; // Default small boost
     }
     
-    // Comeback chances with psychological manipulation:
+    // Base comeback chances with psychological manipulation
     let comebackChance;
     if (isUserOnWorstOdds) {
-      comebackChance = 0.35 + pointsBasedBoost; // Base 35% + safety net
+      comebackChance = 0.30 + pointsBasedBoost; // Base 30% + psychology boost
     } else if (isUserOnGoodOdds) {
-      comebackChance = 0.15 + pointsBasedBoost; // Base 15% + safety net
+      comebackChance = 0.12 + pointsBasedBoost; // Base 12% + psychology boost
     } else {
-      comebackChance = 0.25 + pointsBasedBoost; // Base 25% + safety net
+      comebackChance = 0.20 + pointsBasedBoost; // Base 20% + psychology boost
     }
     
-    // Cap at 95% so it's not too obvious
-    comebackChance = Math.min(comebackChance, 0.95);
+    // Cap at 85% so it's not too obvious
+    comebackChance = Math.min(comebackChance, 0.85);
     
     if (Math.random() > comebackChance) return null;
     
@@ -471,21 +609,34 @@ const HorseRacing = ({ currentUser }) => {
       return;
     }
 
-    // DISTRIBUTION SAFETY NET: Prevent players from betting their last points
-    let minKeep = 25; // Base minimum to keep
+    // SMART SAFETY NET: Psychology-based with 1k floor protection
+    const psychologyData = calculateCasinoPsychology(userPoints);
+    let minKeep = 15; // Base minimum to keep
     
-    // Increase minimum reserve at higher point levels to slow progression
-    if (userPoints >= 8000) {
-      minKeep = 500; // Force smaller bets near 10k threshold
-    } else if (userPoints >= 5000) {
-      minKeep = 200; // Force smaller bets in 5k-7k range
-    } else if (userPoints >= 3000) {
-      minKeep = 100; // Force smaller bets in upper cycling range
+    // Dynamic reserves based on psychology phases and 1k safety net
+    if (psychologyData.phase === 'final_guardian' || psychologyData.phase === 'emergency_pullback') {
+      minKeep = 400; // Heavy restriction near 10k
+    } else if (psychologyData.phase === 'gatekeeper') {
+      minKeep = 250; // Significant restriction in gatekeeper zone
+    } else if (psychologyData.phase === 'elite_zone') {
+      minKeep = 150; // Moderate restriction in elite zone
+    } else if (psychologyData.phase === 'high_stakes') {
+      minKeep = 100; // Some restriction in high stakes
+    } else if (psychologyData.phase === 'safety_net') {
+      minKeep = 10; // Minimal restriction when below 1k - let them try to recover
+    } else if (psychologyData.phase === 'building' || psychologyData.phase === 'early_hook') {
+      minKeep = 20; // Lower restriction for building confidence
     }
     
     if (userPoints - currentBet.amount < minKeep) {
-      alert(`Safety limit! You must keep at least ${minKeep} points to continue playing. Reducing your bet.`);
-      const safeBet = Math.max(10, userPoints - minKeep);
+      const phaseMessage = psychologyData.phase === 'safety_net' 
+        ? "Smart betting! Let's get you back above 1000 points."
+        : psychologyData.phase === 'final_guardian'
+        ? "Elite territory! Bet responsibly near the 10k goal."
+        : `Smart betting limit! You must keep at least ${minKeep} points to continue playing.`;
+      
+      alert(phaseMessage);
+      const safeBet = Math.max(10, userPoints - minKeep); // Keep minimum bet at 10
       setBetAmount(safeBet);
       return;
     }
@@ -802,29 +953,20 @@ const HorseRacing = ({ currentUser }) => {
         const updatedHorses = prevHorses.map(horse => {
           if (horse.finished) return horse;
           
-          // Dynamic house edge based on player psychology
+          // Advanced casino psychology system with 1k safety net
           let speedMultiplier = 1;
           if (currentBet && currentBet.horseId === horse.id) {
-            // PRECISE DISTRIBUTION: Target 2% reach 10k, 9% hit 5k-7k, 90% cycle 1k-4999
-            let houseEdge = 0.08; // Base 8% house edge
+            const psychologyResult = calculateCasinoPsychology(userPoints);
+            speedMultiplier = psychologyResult.speedMultiplier;
             
-            if (userPoints <= 50) {
-              houseEdge = 0.02; // Almost no house edge when broke - LET THEM WIN!
-            } else if (userPoints <= 150) {
-              houseEdge = 0.04; // Reduced house edge when low - dopamine boost
-            } else if (userPoints <= 999) {
-              houseEdge = 0.06; // Help them reach 1k+ range
-            } else if (userPoints >= 1000 && userPoints <= 4999) {
-              houseEdge = 0.08; // Standard house edge for main 90% cycling range
-            } else if (userPoints >= 5000 && userPoints <= 7999) {
-              houseEdge = 0.16; // Higher edge - most will fall back, 8% will survive here
-            } else if (userPoints >= 8000 && userPoints <= 9999) {
-              houseEdge = 0.22; // Very high edge - only 2% will break through to 10k
-            } else if (userPoints >= 10000) {
-              houseEdge = 0.25; // Extreme edge if they somehow get above 10k
+            // Log important psychology events
+            if (psychologyResult.safetyNetActive) {
+              console.log(`🚨 1K SAFETY NET: Boosting player win chances - ${userPoints} points`);
+            } else if (psychologyResult.phase === 'building' || psychologyResult.phase === 'early_hook') {
+              console.log(`🎣 HOOKING PLAYER: ${psychologyResult.phase} phase - ${(psychologyResult.winRate * 100).toFixed(1)}% win rate`);
+            } else if (psychologyResult.pullbackActive) {
+              console.log(`⬇️ PULLBACK ACTIVE: ${psychologyResult.phase} - ${(psychologyResult.winRate * 100).toFixed(1)}% win rate`);
             }
-            
-            speedMultiplier = 1 - houseEdge;
           }
           
           // More balanced random speed variation for closer races
@@ -937,10 +1079,44 @@ const HorseRacing = ({ currentUser }) => {
               } else {
                 playCommentary("What an unbelievable victory! You backed the ultimate underdog!");
               }
-            } else if (userPoints <= 150) {
-              playCommentary("YES! You're on a hot streak! Keep it going!");
             } else {
-              playCommentary("Congratulations! You won!");
+              // Psychology-based winning messages
+              const psychologyData = calculateCasinoPsychology(userPoints);
+              let winMessage = "Congratulations! You won!";
+              
+              switch (psychologyData.phase) {
+                case 'safety_net':
+                  winMessage = "INCREDIBLE COMEBACK! You're back in the game! Never give up!";
+                  break;
+                case 'building':
+                  winMessage = "YES! You're really getting the hang of this! Keep building!";
+                  break;
+                case 'early_hook':
+                  winMessage = "Fantastic! You're on fire! This is your lucky streak!";
+                  break;
+                case 'addiction_zone':
+                  winMessage = "Excellent win! You're in the zone now!";
+                  break;
+                case 'mid_challenge':
+                  winMessage = "Outstanding! You're proving you can handle the big leagues!";
+                  break;
+                case 'high_stakes':
+                  winMessage = "Impressive! High stakes, high rewards!";
+                  break;
+                case 'elite_zone':
+                  winMessage = "Remarkable! Elite level performance!";
+                  break;
+                case 'gatekeeper':
+                  winMessage = "LEGENDARY! You're among the top players now!";
+                  break;
+                case 'final_guardian':
+                  winMessage = "UNBELIEVABLE! You're at the pinnacle of success!";
+                  break;
+                default:
+                  winMessage = "Congratulations! You won!";
+              }
+              
+              playCommentary(winMessage);
             }
           playCrowdCheer();
         }, 3000);
@@ -1255,10 +1431,65 @@ const HorseRacing = ({ currentUser }) => {
             </p>
           </div>
           
-          {/* Points Display */}
+          {/* Smart Points Display with Psychology Phase */}
           <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
             <div className="text-sm text-gray-400">Affiliate Points</div>
             <div className="text-2xl font-bold text-emerald-400">{userPoints}</div>
+            {(() => {
+              const psychologyData = calculateCasinoPsychology(userPoints);
+              let statusColor = "text-gray-400";
+              let statusText = "";
+              
+              switch (psychologyData.phase) {
+                case 'safety_net':
+                  statusColor = "text-red-400";
+                  statusText = "🆘 Recovery Mode";
+                  break;
+                case 'building':
+                  statusColor = "text-green-400";
+                  statusText = "🌱 Building Up";
+                  break;
+                case 'early_hook':
+                  statusColor = "text-blue-400";
+                  statusText = "🎣 On Fire";
+                  break;
+                case 'addiction_zone':
+                  statusColor = "text-purple-400";
+                  statusText = "⚡ In The Zone";
+                  break;
+                case 'mid_challenge':
+                  statusColor = "text-yellow-400";
+                  statusText = "🔥 Rising Star";
+                  break;
+                case 'high_stakes':
+                  statusColor = "text-orange-400";
+                  statusText = "💎 High Stakes";
+                  break;
+                case 'elite_zone':
+                  statusColor = "text-pink-400";
+                  statusText = "👑 Elite Player";
+                  break;
+                case 'gatekeeper':
+                  statusColor = "text-indigo-400";
+                  statusText = "🏆 Champion";
+                  break;
+                case 'final_guardian':
+                  statusColor = "text-amber-400";
+                  statusText = "🌟 Legend";
+                  break;
+                default:
+                  statusText = "";
+              }
+              
+              if (statusText) {
+                return (
+                  <div className={`text-xs ${statusColor} mt-1 font-medium`}>
+                    {statusText}
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
         </div>
 
@@ -1620,7 +1851,7 @@ const HorseRacing = ({ currentUser }) => {
 
 
 
-            {/* Game Instructions */}
+            {/* Smart Game Instructions with Psychology Tips */}
             <div className="mt-4 p-3 bg-gray-800/50 rounded text-xs text-gray-400">
               <div className="font-semibold mb-1">How to Play:</div>
               <ul className="space-y-1">
@@ -1630,6 +1861,42 @@ const HorseRacing = ({ currentUser }) => {
                 <li>• Win affiliate points based on the horse's odds!</li>
                 <li>• Higher odds = higher payout multiplier</li>
               </ul>
+              {(() => {
+                const psychologyData = calculateCasinoPsychology(userPoints);
+                
+                if (psychologyData.phase === 'safety_net') {
+                  return (
+                    <div className="mt-2 text-red-400 text-xs">
+                      🆘 Recovery mode active! The odds are in your favor - now's your chance to bounce back above 1000!
+                    </div>
+                  );
+                } else if (psychologyData.phase === 'building' || psychologyData.phase === 'early_hook') {
+                  return (
+                    <div className="mt-2 text-green-400 text-xs">
+                      🍀 You're in the lucky zone! Perfect time to build your points with confidence!
+                    </div>
+                  );
+                } else if (psychologyData.phase === 'addiction_zone') {
+                  return (
+                    <div className="mt-2 text-purple-400 text-xs">
+                      ⚡ You're in the zone! Riding the wave perfectly - keep the momentum going!
+                    </div>
+                  );
+                } else if (psychologyData.phase === 'gatekeeper' || psychologyData.phase === 'final_guardian') {
+                  return (
+                    <div className="mt-2 text-amber-400 text-xs">
+                      👑 Elite territory! You're playing with the champions now - every bet counts!
+                    </div>
+                  );
+                } else if (psychologyData.pullbackActive) {
+                  return (
+                    <div className="mt-2 text-orange-400 text-xs">
+                      🎯 Challenging zone! Sometimes you need to take a step back to leap forward!
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
           </div>
         </div>
