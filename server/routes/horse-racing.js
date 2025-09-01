@@ -92,31 +92,31 @@ const calculateCasinoPsychology = (userPoints) => {
   } else if (userPoints <= 8500) {
     // ELITE TERRITORY - Significant challenge
     phase = 'elite_zone';
-    winRate = 0.42; // 42% win rate - Significant house edge
+    winRate = 0.35; // 35% win rate - Much more aggressive house edge
     
     // Tighter ceiling control around 8000-8300
     if (userPoints > getCeilingThreshold(8150, 0.05)) {
-      winRate = 0.34; // Very strong pullback
+      winRate = 0.25; // Very strong pullback
       phase = 'ceiling_pullback';
     }
   } else if (userPoints <= 9200) {
     // GATEKEEPER LEVEL - Heavy resistance
     phase = 'gatekeeper';
-    winRate = 0.38; // 38% win rate - Heavy house edge
+    winRate = 0.30; // 30% win rate - Much more aggressive house edge
     
     // Very tight ceiling control around 8800-9000
     if (userPoints > getCeilingThreshold(8900, 0.04)) {
-      winRate = 0.30; // Brutal pullback
+      winRate = 0.20; // Brutal pullback
       phase = 'ceiling_pullback';
     }
   } else {
     // FINAL GUARDIAN - Maximum resistance before 10k
     phase = 'final_guardian';
-    winRate = 0.35; // 35% win rate - Maximum house edge
+    winRate = 0.25; // 25% win rate - Much more aggressive house edge
     
     // Emergency pullback if approaching 10k
-    if (userPoints > 9600) {
-      winRate = 0.25; // EMERGENCY pullback
+    if (userPoints > 9500) {
+      winRate = 0.15; // EMERGENCY pullback - Much more aggressive
       phase = 'emergency_pullback';
     }
   }
@@ -141,14 +141,33 @@ const generateRaceData = () => {
 };
 
 // Smart race simulation with psychology system
-const simulateRace = (horses, playerBetHorseId, userPoints) => {
+const simulateRace = (horses, playerBetHorseId, userPoints, betAmount) => {
   // Get psychology data for this player
   const psychology = calculateCasinoPsychology(userPoints);
   
-  // Determine if player should win based on psychology
-  const shouldPlayerWin = Math.random() < psychology.winRate;
+  // BET SIZE PENALTY: Large bets are much riskier at high levels
+  let adjustedWinRate = psychology.winRate;
+  const betPercentage = betAmount / userPoints;
   
-  // Psychology system active: [phase: ${psychology.phase}, winRate: ${(psychology.winRate * 100).toFixed(1)}%, result: ${shouldPlayerWin ? 'WIN' : 'LOSS'}]
+  if (userPoints > 5000 && betPercentage > 0.1) { // Bet > 10% of points
+    if (betPercentage > 0.3) { // Bet > 30% of points
+      adjustedWinRate *= 0.6; // 40% penalty for very large bets
+    } else if (betPercentage > 0.2) { // Bet > 20% of points
+      adjustedWinRate *= 0.75; // 25% penalty for large bets
+    } else { // Bet > 10% of points
+      adjustedWinRate *= 0.85; // 15% penalty for medium-large bets
+    }
+  }
+  
+  // Determine if player should win based on adjusted psychology
+  const shouldPlayerWin = Math.random() < adjustedWinRate;
+  
+  // Enhanced logging for bet size penalties
+  if (userPoints > 5000 && betPercentage > 0.1) {
+    console.log(`🎰 BET SIZE PENALTY: ${req?.user?.username || 'Unknown'} - Points: ${userPoints}, Bet: ${betAmount} (${(betPercentage * 100).toFixed(1)}%), Base Win Rate: ${(psychology.winRate * 100).toFixed(1)}%, Adjusted: ${(adjustedWinRate * 100).toFixed(1)}%`);
+  }
+  
+  // Psychology system active: [phase: ${psychology.phase}, winRate: ${(psychology.winRate * 100).toFixed(1)}%, adjustedWinRate: ${(adjustedWinRate * 100).toFixed(1)}%, result: ${shouldPlayerWin ? 'WIN' : 'LOSS'}]
   
   let raceResults;
   
@@ -258,7 +277,7 @@ router.post('/place-bet', auth, requireEmailVerification, async (req, res) => {
     // Simulate the race with psychology system (use points BEFORE deduction for psychology calculation)
     const userPointsBeforeBet = user.points + betAmount;
     const psychology = calculateCasinoPsychology(userPointsBeforeBet);
-    const raceResults = simulateRace(horses, horseId, userPointsBeforeBet);
+    const raceResults = simulateRace(horses, horseId, userPointsBeforeBet, betAmount);
     const winner = raceResults[0];
     const playerHorse = raceResults.find(h => h.id === horseId);
     const won = winner.id === horseId;
