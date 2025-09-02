@@ -29,6 +29,7 @@ const BubbleDuels = ({ currentUser }) => {
   const [liveFeed, setLiveFeed] = useState([]);
   const [isStartingBattle, setIsStartingBattle] = useState(false); // Prevent double-clicking
   const [gifAnimation, setGifAnimation] = useState(null); // Separate state for GIF animations
+  const [notification, setNotification] = useState(null); // For bottom-left notifications
 
 
 
@@ -472,9 +473,13 @@ const BubbleDuels = ({ currentUser }) => {
 
 
 
-        // Show success message if points awarded
+        // Show notification if points awarded
         if (data.pointsAwarded > 0) {
-          alert(`Vote counted! You earned ${data.pointsAwarded} points! 🎉`);
+          setNotification({
+            message: `+${data.pointsAwarded} points! 🎉`,
+            type: 'success'
+          });
+          setTimeout(() => setNotification(null), 3000);
         }
       } else {
         if (response.status === 401) {
@@ -594,8 +599,14 @@ const BubbleDuels = ({ currentUser }) => {
            alreadySelected={selectedProjects}
            isStartingBattle={isStartingBattle}
          />
-       )}
+               )}
 
+        {/* Bottom-left notification */}
+        {notification && (
+          <div className="fixed bottom-4 left-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-[9999] animate-pulse">
+            {notification.message}
+          </div>
+        )}
 
     </div>
   );
