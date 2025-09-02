@@ -609,7 +609,7 @@ const BubbleDuels = ({ currentUser }) => {
             </span>
           </h1>
           <p className="text-xl text-gray-300 mb-8">
-            Street Fighter Style Crypto Project Battles! ⚡
+            Bubble Wars Style Crypto Project Battles! The strongest community will rise ⚡
           </p>
           <div className="flex justify-center space-x-8 text-lg">
             <div className="flex items-center space-x-2">
