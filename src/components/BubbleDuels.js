@@ -56,12 +56,26 @@ const BubbleDuels = ({ currentUser }) => {
           });
           
           // Filter all active ads that are eligible for battles (not already battling)
-          const validAds = adsData.filter(ad => 
-            ad.status === 'active' && 
-            ad.logo &&
-            ad.title &&
-            !activeBattleBubbleIds.has(ad.id) // Exclude bubbles already in battles
-          );
+          const validAds = adsData.filter(ad => {
+            const hasLogo = ad.logo;
+            const hasTitle = ad.title;
+            const isActive = ad.status === 'active';
+            const notInBattle = !activeBattleBubbleIds.has(ad.id);
+            
+            // Debug logging for filtered out bubbles
+            if (!isActive || !hasLogo || !hasTitle) {
+              console.log('Bubble filtered out:', {
+                id: ad.id,
+                title: ad.title,
+                status: ad.status,
+                hasLogo: hasLogo,
+                hasTitle: hasTitle,
+                reason: !isActive ? 'not active' : !hasLogo ? 'no logo' : 'no title'
+              });
+            }
+            
+            return isActive && hasLogo && hasTitle && notInBattle;
+          });
           
           console.log('Bubble Duels - Available bubbles:', {
             totalAds: adsData.length,
@@ -69,6 +83,18 @@ const BubbleDuels = ({ currentUser }) => {
             excludedBubbleIds: Array.from(activeBattleBubbleIds),
             availableBubbles: validAds.length
           });
+          
+          // Debug: Show all status values
+          const statusCounts = {};
+          adsData.forEach(ad => {
+            statusCounts[ad.status] = (statusCounts[ad.status] || 0) + 1;
+          });
+          console.log('Status breakdown:', statusCounts);
+          
+          // Debug: Show bubbles without logo or title
+          const noLogo = adsData.filter(ad => !ad.logo).length;
+          const noTitle = adsData.filter(ad => !ad.title).length;
+          console.log('Missing properties:', { noLogo, noTitle });
           
           setAds(validAds);
         }
