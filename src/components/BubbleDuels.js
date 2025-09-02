@@ -29,7 +29,7 @@ const BubbleDuels = ({ currentUser }) => {
   const [liveFeed, setLiveFeed] = useState([]);
   const [isStartingBattle, setIsStartingBattle] = useState(false); // Prevent double-clicking
   const [gifAnimation, setGifAnimation] = useState(null); // Separate state for GIF animations
-  const [previousHealth, setPreviousHealth] = useState({}); // Track previous health for each battle
+
 
 
 
@@ -1466,15 +1466,11 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
     const health1Value = Math.max(0, maxHealth - (battle.project2.votes * 2));
     const health2Value = Math.max(0, maxHealth - (battle.project1.votes * 2));
     
-    // Get previous health values for this battle
-    const battleKey = battle.battleId;
-    const prevHealth = previousHealth[battleKey] || { health1: 100, health2: 100 };
-    
-    // Check if health decreased (attack happened)
-    if (health1Value < prevHealth.health1 || health2Value < prevHealth.health2) {
+    // Check if health decreased (attack happened) by comparing with current state
+    if (health1Value < health1 || health2Value < health2) {
       // Determine which fighter was attacked
-      const attacker = health1Value < prevHealth.health1 ? 'project2' : 'project1';
-      const target = health1Value < prevHealth.health1 ? 'project1' : 'project2';
+      const attacker = health1Value < health1 ? 'project2' : 'project1';
+      const target = health1Value < health1 ? 'project1' : 'project2';
       
       // Trigger attack GIF animation
       setLocalAttackAnimation({ battleId: battle.battleId, attacker, target });
@@ -1490,13 +1486,7 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
     // Update current health
     setHealth1(health1Value);
     setHealth2(health2Value);
-    
-    // Update previous health for next comparison
-    setPreviousHealth(prev => ({
-      ...prev,
-      [battleKey]: { health1: health1Value, health2: health2Value }
-    }));
-  }, [battle.project1.votes, battle.project2.votes, battle.battleId, previousHealth]);
+  }, [battle.project1.votes, battle.project2.votes, battle.battleId, health1, health2]);
 
 
 
