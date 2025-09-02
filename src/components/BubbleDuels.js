@@ -74,37 +74,59 @@ const BubbleDuels = ({ currentUser }) => {
     fetchAds();
   }, []); // Only fetch once on mount, not on every battle change
 
-  // Fetch all active battles
+  // Memoize expensive calculations
+  const eligibleAds = useMemo(() => {
+    return ads.filter(ad => {
+      const activeBattleBubbleIds = new Set();
+      allActiveBattles.forEach(battle => {
+        if (battle.status === 'active' || battle.status === 'waiting') {
+          activeBattleBubbleIds.add(battle.project1.adId);
+          activeBattleBubbleIds.add(battle.project2.adId);
+        }
+      });
+      return !activeBattleBubbleIds.has(ad.id);
+    });
+  }, [ads, allActiveBattles]);
+
+  // Fetch all active battles with caching
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchActiveBattles = async () => {
       try {
         const response = await fetch(`${API_URL}/api/bubble-duels`);
-        if (response.ok) {
+        if (response.ok && isMounted) {
           const battles = await response.json();
           setAllActiveBattles(battles);
         }
-             } catch (error) {
-         // Error fetching active battles
-       }
+      } catch (error) {
+        // Error fetching active battles
+      }
     };
 
     fetchActiveBattles();
-    // Refresh active battles every 30 seconds
-    const interval = setInterval(fetchActiveBattles, 30000);
-    return () => clearInterval(interval);
+    // Refresh active battles every 60 seconds (reduced from 30)
+    const interval = setInterval(fetchActiveBattles, 60000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   // Refresh active battle data periodically to stay in sync
   useEffect(() => {
     if (!activeBattle) return;
 
+    let isMounted = true;
+    
     const refreshActiveBattle = async () => {
       try {
         const response = await fetch(`${API_URL}/api/bubble-duels/${activeBattle.battleId}`);
-        if (response.ok) {
+        if (response.ok && isMounted) {
           const battleData = await response.json();
           setActiveBattle(battleData);
           setBattleStats({
+            project1Votes: battleData.project1.votes,
             project1Votes: battleData.project1.votes,
             project2Votes: battleData.project2.votes
           });
@@ -115,21 +137,56 @@ const BubbleDuels = ({ currentUser }) => {
       }
     };
 
-    // Refresh every 15 seconds for active battles
-    const interval = setInterval(refreshActiveBattle, 15000);
-    return () => clearInterval(interval);
+    // Refresh every 30 seconds for active battles (reduced from 15)
+    const interval = setInterval(refreshActiveBattle, 30000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, [activeBattle?.battleId]);
 
-  // Socket.io for real-time updates
+  // Socket.io for real-time updates with optimization
   useEffect(() => {
-    const socket = io(API_URL);
+    const socket = io(API_URL, {
+      transports: ['websocket'], // Force WebSocket for better performance
+      upgrade: false,
+      rememberUpgrade: false
+    });
+
+    // Batch updates to reduce re-renders
+    let updateQueue = [];
+    let updateTimeout = null;
+
+    const processUpdateQueue = () => {
+      if (updateQueue.length > 0) {
+        setAllActiveBattles(prev => {
+          const newBattles = [...prev];
+          updateQueue.forEach(update => {
+            const index = newBattles.findIndex(b => b.battleId === update.battleId);
+            if (index !== -1) {
+              newBattles[index] = { ...newBattles[index], ...update };
+            }
+          });
+          return newBattles;
+        });
+        updateQueue = [];
+        updateTimeout = null;
+      }
+    };
 
     socket.on('bubbleDuelUpdate', (data) => {
       if (data.type === 'vote') {
-        // Update the specific battle
-        setAllActiveBattles(prev => prev.map(battle => 
-          battle.battleId === data.battle.battleId ? data.battle : battle
-        ));
+        // Queue battle updates for batch processing
+        updateQueue.push({
+          battleId: data.battle.battleId,
+          project1: { votes: data.battle.project1.votes },
+          project2: { votes: data.battle.project2.votes }
+        });
+        
+        // Process updates every 500ms instead of immediately
+        if (!updateTimeout) {
+          updateTimeout = setTimeout(processUpdateQueue, 500);
+        }
         
         // Update active battle if it matches
         if (activeBattle && activeBattle.battleId === data.battle.battleId) {
@@ -255,7 +312,12 @@ const BubbleDuels = ({ currentUser }) => {
       }
     });
 
-    return () => socket.disconnect();
+    return () => {
+      if (updateTimeout) {
+        clearTimeout(updateTimeout);
+      }
+      socket.disconnect();
+    };
   }, [activeBattle, battleStats]);
 
   // Battle timer countdown
@@ -282,12 +344,12 @@ const BubbleDuels = ({ currentUser }) => {
     };
   }, [selectedProjects]);
 
-  const openFighterSelect = (position) => {
+  const openFighterSelect = useCallback((position) => {
     setSelectingFor(position);
     setShowFighterSelect(true);
-  };
+  }, []);
 
-  const selectProject = (project) => {
+  const selectProject = useCallback((project) => {
     if (selectingFor === 'fighter1') {
       // Replace fighter 1 or add if empty
       const newSelected = selectedProjects.length > 0 ? 
@@ -302,9 +364,9 @@ const BubbleDuels = ({ currentUser }) => {
     
     setShowFighterSelect(false);
     setSelectingFor(null);
-  };
+  }, [selectingFor, selectedProjects]);
 
-  const removeProject = (position) => {
+  const removeProject = useCallback((position) => {
     if (position === 0) {
       // Remove fighter 1
       setSelectedProjects(selectedProjects.slice(1));
@@ -312,9 +374,9 @@ const BubbleDuels = ({ currentUser }) => {
       // Remove fighter 2
       setSelectedProjects(selectedProjects.slice(0, 1));
     }
-  };
+  }, [selectedProjects]);
 
-  const startBattle = async () => {
+  const startBattle = useCallback(async () => {
     if (selectedProjects.length !== 2) return;
     
     // Prevent double-clicking
@@ -393,9 +455,9 @@ const BubbleDuels = ({ currentUser }) => {
       alert('Failed to start battle. Please try again.');
       setIsStartingBattle(false);
     }
-  };
+  }, [selectedProjects, isStartingBattle, currentUser]);
 
-  const endBattle = () => {
+  const endBattle = useCallback(() => {
     const winner = battleStats.project1Votes > battleStats.project2Votes ? 
       activeBattle.project1 : activeBattle.project2;
     
@@ -405,9 +467,9 @@ const BubbleDuels = ({ currentUser }) => {
     setActiveBattle(null);
     setSelectedProjects([]);
     setBattleStats({ project1Votes: 0, project2Votes: 0 });
-  };
+  }, [battleStats, activeBattle]);
 
-  const cancelBattle = async () => {
+  const cancelBattle = useCallback(async () => {
     if (activeBattle) {
       try {
         // Cancel the battle on the server
@@ -434,10 +496,10 @@ const BubbleDuels = ({ currentUser }) => {
     setBattleStats({ project1Votes: 0, project2Votes: 0 });
     setAttackAnimation(null);
     setIsStartingBattle(false); // Reset loading state
-  };
+  }, [activeBattle, currentUser]);
 
   // Cancel any battle from live battles section
-  const cancelAnyBattle = async (battleId) => {
+  const cancelAnyBattle = useCallback(async (battleId) => {
     if (!currentUser || !currentUser.token) {
       alert('Please login to cancel battles!');
       return;
@@ -475,30 +537,30 @@ const BubbleDuels = ({ currentUser }) => {
       // Error cancelling battle
       alert('Failed to cancel battle. Please try again.');
     }
-  };
+  }, [currentUser, activeBattle]);
 
-  const startNewGame = () => {
+  const startNewGame = useCallback(() => {
     setActiveBattle(null);
     setSelectedProjects([]);
     setTimeRemaining(0);
     setBattleStats({ project1Votes: 0, project2Votes: 0 });
     setAttackAnimation(null);
     setIsStartingBattle(false); // Reset loading state
-  };
+  }, []);
 
-  const selectBattle = (battle) => {
+  const selectBattle = useCallback((battle) => {
     setActiveBattle(battle);
     setTimeRemaining(battle.remainingTime || 0);
     setBattleStats({ 
       project1Votes: battle.project1.votes || 0,
       project2Votes: battle.project2.votes || 0
     });
-  };
+  }, []);
 
 
 
   // Vote in any battle (for active battles section)
-  const voteInBattle = async (battleId, projectSide) => {
+  const voteInBattle = useCallback(async (battleId, projectSide) => {
     
     if (!currentUser || !currentUser.token) {
       alert('Please login to vote!');
@@ -543,9 +605,9 @@ const BubbleDuels = ({ currentUser }) => {
       // Error voting in battle
       alert('Failed to vote. Please try again.');
     }
-  };
+  }, [currentUser]);
 
-  const vote = async (projectSide) => {
+  const vote = useCallback(async (projectSide) => {
     if (!currentUser) {
       alert('Please login to vote!');
       return;
@@ -604,9 +666,9 @@ const BubbleDuels = ({ currentUser }) => {
       // Error voting
       alert('Failed to vote. Please try again.');
     }
-  };
+  }, [currentUser, activeBattle]);
 
-  const shareToSocial = (platform) => {
+  const shareToSocial = useCallback((platform) => {
     const battleUrl = window.location.href;
     const text = `🥊 EPIC BUBBLE BATTLE! ${activeBattle.project1.title} VS ${activeBattle.project2.title} - Vote now! ⚡`;
     
@@ -616,14 +678,14 @@ const BubbleDuels = ({ currentUser }) => {
     };
     
     window.open(urls[platform], '_blank');
-  };
+  }, [activeBattle]);
 
-  const formatTime = (seconds) => {
+  const formatTime = useCallback((seconds) => {
     const hours = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
     return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+  }, []);
 
   if (loading) {
     return (
