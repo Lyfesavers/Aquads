@@ -849,6 +849,11 @@ const BattleArena = ({ battle, timeRemaining, battleStats, onVote, onShare, curr
   const project1Health = Math.max(0, 100 - (battleStats.project2Votes * 2));
   const project2Health = Math.max(0, 100 - (battleStats.project1Votes * 2));
   
+  // Check if user has already voted in this battle
+  const hasVoted = currentUser && battle.voters && battle.voters.some(voter => 
+    voter.userId === currentUser.userId
+  );
+  
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
@@ -879,6 +884,7 @@ const BattleArena = ({ battle, timeRemaining, battleStats, onVote, onShare, curr
           position="left"
           onVote={() => onVote('project1Votes')}
           currentUser={currentUser}
+          hasVoted={hasVoted}
         />
 
         {/* Center Battle Info */}
@@ -977,6 +983,7 @@ const BattleArena = ({ battle, timeRemaining, battleStats, onVote, onShare, curr
           position="right"
           onVote={() => onVote('project2Votes')}
           currentUser={currentUser}
+          hasVoted={hasVoted}
         />
       </div>
 
@@ -1041,7 +1048,7 @@ const BattleArena = ({ battle, timeRemaining, battleStats, onVote, onShare, curr
 };
 
 // Fighter Display Component
-const FighterDisplay = ({ project, votes, health, color, position, onVote, currentUser }) => {
+const FighterDisplay = ({ project, votes, health, color, position, onVote, currentUser, hasVoted }) => {
   const colorClasses = {
     red: {
       bg: 'from-red-900/50 to-red-700/30',
@@ -1193,35 +1200,41 @@ const FighterDisplay = ({ project, votes, health, color, position, onVote, curre
         )}
       </div>
 
-      {/* Vote Button */}
-      <motion.button
-        onClick={onVote}
-        disabled={!currentUser}
-        className={`w-full bg-gradient-to-r ${classes.button} px-6 py-3 rounded-lg font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden`}
-        whileHover={{ scale: currentUser ? 1.05 : 1 }}
-        whileTap={{ scale: currentUser ? 0.95 : 1 }}
-        animate={{
-          boxShadow: isPowerful ? 
-            [`0 0 20px ${color === 'red' ? '#ef4444' : '#3b82f6'}`, `0 0 30px ${color === 'red' ? '#ef4444' : '#3b82f6'}`, `0 0 20px ${color === 'red' ? '#ef4444' : '#3b82f6'}`] :
-            `0 0 10px ${color === 'red' ? '#ef4444' : '#3b82f6'}`
-        }}
-        transition={{ duration: 1.5, repeat: Infinity }}
-      >
-        {/* Button energy effect */}
-        {isPowerful && (
-          <motion.div
-            className="absolute inset-0 bg-white/10"
-            animate={{
-              x: [-100, 200],
-              opacity: [0, 0.5, 0]
-            }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          />
-        )}
-        <span className="relative z-10">
-          {currentUser ? '🗳️ VOTE!' : 'Login to Vote'}
-        </span>
-      </motion.button>
+      {/* Vote Button or Voted Message */}
+      {!hasVoted ? (
+        <motion.button
+          onClick={onVote}
+          disabled={!currentUser}
+          className={`w-full bg-gradient-to-r ${classes.button} px-6 py-3 rounded-lg font-bold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden`}
+          whileHover={{ scale: currentUser ? 1.05 : 1 }}
+          whileTap={{ scale: currentUser ? 0.95 : 1 }}
+          animate={{
+            boxShadow: isPowerful ? 
+              [`0 0 20px ${color === 'red' ? '#ef4444' : '#3b82f6'}`, `0 0 30px ${color === 'red' ? '#ef4444' : '#3b82f6'}`, `0 0 20px ${color === 'red' ? '#ef4444' : '#3b82f6'}`] :
+              `0 0 10px ${color === 'red' ? '#ef4444' : '#3b82f6'}`
+          }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+        >
+          {/* Button energy effect */}
+          {isPowerful && (
+            <motion.div
+              className="absolute inset-0 bg-white/10"
+              animate={{
+                x: [-100, 200],
+                opacity: [0, 0.5, 0]
+              }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            />
+          )}
+          <span className="relative z-10">
+            {currentUser ? '🗳️ VOTE!' : 'Login to Vote'}
+          </span>
+        </motion.button>
+      ) : (
+        <div className="text-center text-green-400 font-bold text-sm py-3">
+          ✅ You voted in this battle!
+        </div>
+      )}
     </motion.div>
   );
 };
