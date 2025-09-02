@@ -1443,8 +1443,20 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
 
   useEffect(() => {
     const calculateTimeLeft = () => {
+      if (!battle.endTime) {
+        setTimeLeft(0);
+        return;
+      }
+      
       const now = new Date().getTime();
       const endTime = new Date(battle.endTime).getTime();
+      
+      // Check if endTime is valid
+      if (isNaN(endTime)) {
+        setTimeLeft(0);
+        return;
+      }
+      
       const difference = endTime - now;
       setTimeLeft(Math.max(0, Math.floor(difference / 1000)));
     };
@@ -1504,6 +1516,11 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
   };
 
   const formatTime = (seconds) => {
+    // Safety check for NaN or invalid values
+    if (!seconds || isNaN(seconds) || seconds < 0) {
+      return '00:00:00';
+    }
+    
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
