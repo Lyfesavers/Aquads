@@ -1530,13 +1530,13 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
       {localAttackAnimation && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center">
           <div className="relative max-w-4xl max-h-[90vh] w-full mx-4">
-                         <img 
-               src="/attack.gif" 
-               alt="Attack Animation"
-               className="w-full h-full object-contain rounded-xl shadow-2xl"
-               onLoad={() => console.log('✅ Attack GIF loaded successfully')}
-               onError={(e) => console.error('❌ Failed to load attack GIF:', e)}
-             />
+            <img 
+              src="/attack.gif" 
+              alt="Attack Animation"
+              className="w-full h-full object-contain rounded-xl shadow-2xl"
+              onLoad={() => console.log('✅ Attack GIF loaded successfully')}
+              onError={(e) => console.error('❌ Failed to load attack GIF:', e)}
+            />
             <div className="absolute top-4 right-4 text-white text-2xl font-bold bg-black/50 px-4 py-2 rounded-lg">
               💥 ATTACK! 💥
             </div>
@@ -1548,13 +1548,13 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
       {showKOAnimation && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center">
           <div className="relative max-w-4xl max-h-[90vh] w-full mx-4">
-                         <img 
-               src="/ko.gif" 
-               alt="KO Animation"
-               className="w-full h-full object-contain rounded-xl shadow-2xl"
-               onLoad={() => console.log('✅ KO GIF loaded successfully')}
-               onError={(e) => console.error('❌ Failed to load KO GIF:', e)}
-             />
+            <img 
+              src="/ko.gif" 
+              alt="KO Animation"
+              className="w-full h-full object-contain rounded-xl shadow-2xl"
+              onLoad={() => console.log('✅ KO GIF loaded successfully')}
+              onError={(e) => console.error('❌ Failed to load KO GIF:', e)}
+            />
             <div className="absolute top-4 right-4 text-white text-2xl font-bold bg-black/50 px-4 py-2 rounded-lg">
               💀 KNOCKOUT! 💀
             </div>
