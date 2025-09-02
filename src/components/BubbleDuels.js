@@ -451,8 +451,8 @@ const BubbleDuels = ({ currentUser }) => {
         
         setAttackAnimation({ battleId, attacker, target });
         
-        // Clear animation after duration
-        setTimeout(() => setAttackAnimation(null), 3000);
+        // Clear animation after 5 seconds
+        setTimeout(() => setAttackAnimation(null), 5000);
         
         // Update the battle in allActiveBattles
         setAllActiveBattles(prev => prev.map(battle => 
@@ -1451,6 +1451,7 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
   const [health1, setHealth1] = useState(100);
   const [health2, setHealth2] = useState(100);
   const [showKOAnimation, setShowKOAnimation] = useState(false);
+  const [localAttackAnimation, setLocalAttackAnimation] = useState(null);
 
   useEffect(() => {
     const calculateTimeLeft = () => {
@@ -1477,9 +1478,17 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
     // Show KO animation if health reaches 0
     if (health1Value <= 0 || health2Value <= 0) {
       setShowKOAnimation(true);
-      setTimeout(() => setShowKOAnimation(false), 3000); // Reset after KO animation
+      setTimeout(() => setShowKOAnimation(false), 5000); // Reset after KO animation
     }
   }, [battle.project1.votes, battle.project2.votes]);
+
+  // Handle attack animation for this specific battle
+  useEffect(() => {
+    if (attackAnimation && attackAnimation.battleId === battle.battleId) {
+      setLocalAttackAnimation(attackAnimation);
+      setTimeout(() => setLocalAttackAnimation(null), 5000);
+    }
+  }, [attackAnimation, battle.battleId]);
 
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
@@ -1499,12 +1508,12 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
   return (
     <div className={`bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl p-6 border transition-all duration-300 relative overflow-visible ${
       showKOAnimation ? 'border-red-500 shadow-2xl shadow-red-500/50 z-20' :
-      attackAnimation ? 'border-yellow-400 shadow-2xl shadow-yellow-400/30 z-10' : 
+      localAttackAnimation ? 'border-yellow-400 shadow-2xl shadow-yellow-400/30 z-10' : 
       'border-gray-700 hover:border-gray-600'
     }`}>
       
       {/* Attack Animation GIF */}
-      {attackAnimation && (
+      {localAttackAnimation && (
         <div className="absolute inset-0 flex items-center justify-center z-50">
           <img 
             src="/attack.gif" 
@@ -1564,7 +1573,7 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
               alt={battle.project1.title}
               className={`w-full h-full object-contain rounded-full border-4 ${
                 showKOAnimation ? 'border-red-500 shadow-2xl shadow-red-500/50' :
-                attackAnimation && attackAnimation.attacker === 'project1' ? 'border-yellow-400 shadow-2xl shadow-yellow-400/50' : 
+                localAttackAnimation && localAttackAnimation.attacker === 'project1' ? 'border-yellow-400 shadow-2xl shadow-yellow-400/50' : 
                 health1 <= 20 ? 'border-red-500 shadow-lg shadow-red-500/30' : 'border-red-400'
               }`}
             />
@@ -1595,7 +1604,7 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
         {/* VS */}
         <div className="px-4">
           <div className="text-yellow-400 font-bold text-2xl">
-            {showKOAnimation ? '💀' : attackAnimation ? '💥' : '⚔️'}
+            {showKOAnimation ? '💀' : localAttackAnimation ? '💥' : '⚔️'}
           </div>
           
           {/* Health Warning Indicator */}
@@ -1614,7 +1623,7 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
               alt={battle.project2.title}
               className={`w-full h-full object-contain rounded-full border-4 ${
                 showKOAnimation ? 'border-red-500 shadow-2xl shadow-red-500/50' :
-                attackAnimation && attackAnimation.attacker === 'project2' ? 'border-yellow-400 shadow-2xl shadow-yellow-400/50' : 
+                localAttackAnimation && localAttackAnimation.attacker === 'project2' ? 'border-yellow-400 shadow-2xl shadow-yellow-400/50' : 
                 health2 <= 20 ? 'border-red-500 shadow-lg shadow-red-500/30' : 'border-blue-400'
               }`}
             />
@@ -1633,7 +1642,7 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
             </div>
             <div className="w-full bg-gray-700 rounded-full h-2">
               <div 
-                className={`h-2 rounded-full transition-all duration-500 ${
+                className={`h-full rounded-full transition-all duration-500 ${
                   health2 > 50 ? 'bg-green-500' : health2 > 25 ? 'bg-yellow-500' : 'bg-red-500'
                 }`}
                 style={{ width: `${health2}%` }}
