@@ -433,10 +433,20 @@ const BubbleDuels = ({ currentUser }) => {
 
   // Vote in any battle (for active battles section)
   const voteInBattle = async (battleId, projectSide) => {
+    console.log('🗳️ voteInBattle called with:', { battleId, projectSide, currentUser: !!currentUser, hasToken: !!currentUser?.token });
+    
     if (!currentUser || !currentUser.token) {
       alert('Please login to vote!');
       return;
     }
+
+    const requestBody = { 
+      projectSide: projectSide === 'project1Votes' ? 'project1' : 'project2' 
+    };
+    
+    console.log('📡 Sending vote request to:', `${API_URL}/api/bubble-duels/${battleId}/vote`);
+    console.log('📡 Request body:', requestBody);
+    console.log('📡 Authorization header:', `Bearer ${currentUser.token.substring(0, 20)}...`);
 
     try {
       const response = await fetch(`${API_URL}/api/bubble-duels/${battleId}/vote`, {
@@ -445,12 +455,13 @@ const BubbleDuels = ({ currentUser }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentUser.token}`
         },
-        body: JSON.stringify({ 
-          projectSide: projectSide === 'project1Votes' ? 'project1' : 'project2' 
-        })
+        body: JSON.stringify(requestBody)
       });
 
+      console.log('📡 Response status:', response.status, response.statusText);
+      
       const data = await response.json();
+      console.log('📡 Response data:', data);
 
       if (response.ok) {
         // Trigger GIF animation independently after vote flow completes
@@ -483,6 +494,8 @@ const BubbleDuels = ({ currentUser }) => {
         const randomMessage = attackMessages[Math.floor(Math.random() * attackMessages.length)];
         alert(randomMessage);
       } else {
+        console.log('❌ Vote failed with status:', response.status);
+        console.log('❌ Error data:', data);
         if (response.status === 401) {
           alert('Authentication failed. Please login again.');
         } else {
@@ -490,7 +503,7 @@ const BubbleDuels = ({ currentUser }) => {
         }
       }
     } catch (error) {
-      console.error('Error voting in battle:', error);
+      console.error('❌ Error voting in battle:', error);
       alert('Failed to vote. Please try again.');
     }
   };
