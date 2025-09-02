@@ -45,12 +45,16 @@ const BubbleDuels = ({ currentUser }) => {
 
   // Use React Query hooks for data fetching
   const { data: allActiveBattles = [], isLoading: battlesLoading } = useBubbleDuels();
-  const { ads, isLoading: adsLoading } = useEligibleAds(allActiveBattles);
+  const { ads = [], isLoading: adsLoading } = useEligibleAds(allActiveBattles || []);
   
   // Set loading state based on both queries
   useEffect(() => {
     setLoading(battlesLoading || adsLoading);
   }, [battlesLoading, adsLoading]);
+
+  // Ensure we have valid data
+  const safeAllActiveBattles = Array.isArray(allActiveBattles) ? allActiveBattles : [];
+  const safeAds = Array.isArray(ads) ? ads : [];
 
   // React Query handles all the data fetching automatically
 
@@ -62,12 +66,15 @@ const BubbleDuels = ({ currentUser }) => {
     if (activeBattleData && activeBattle?.battleId === activeBattleData.battleId) {
       setActiveBattle(activeBattleData);
       setBattleStats({
-        project1Votes: activeBattleData.project1.votes,
-        project2Votes: activeBattleData.project2.votes
+        project1Votes: activeBattleData.project1?.votes || 0,
+        project2Votes: activeBattleData.project2?.votes || 0
       });
       setTimeRemaining(activeBattleData.remainingTime || 0);
     }
   }, [activeBattleData, activeBattle?.battleId]);
+
+  // Additional safety check for active battle data
+  const safeActiveBattle = activeBattle && activeBattle.project1 && activeBattle.project2 ? activeBattle : null;
 
   // Use custom socket hook for real-time updates
   const { socket, isConnected: socketConnected, on, off } = useSocket(API_URL);
@@ -77,44 +84,44 @@ const BubbleDuels = ({ currentUser }) => {
     if (!socket) return;
 
     const handleBubbleDuelUpdate = (data) => {
-      if (data.type === 'vote') {
+      if (data.type === 'vote' && data.battle) {
         // Update active battle if it matches (immediate for user experience)
         if (activeBattle && activeBattle.battleId === data.battle.battleId) {
           setActiveBattle(data.battle);
           setBattleStats({
-            project1Votes: data.battle.project1.votes,
-            project2Votes: data.battle.project2.votes
+            project1Votes: data.battle.project1?.votes || 0,
+            project2Votes: data.battle.project2?.votes || 0
           });
         }
 
         // Add to live feed
         const voteData = data.battle;
-        const votedFor = data.projectSide || (voteData.project1.votes > battleStats.project1Votes ? 'project1' : 'project2');
-        const projectName = votedFor === 'project1' ? voteData.project1.title : voteData.project2.title;
+        const votedFor = data.projectSide || (voteData.project1?.votes > battleStats.project1Votes ? 'project1' : 'project2');
+        const projectName = votedFor === 'project1' ? voteData.project1?.title : voteData.project2?.title;
         const color = votedFor === 'project1' ? 'text-red-400' : 'text-blue-400';
         
         setLiveFeed(prev => [{
           id: Date.now(),
-          message: `⚡ ${projectName} gains a vote!`,
+          message: `⚡ ${projectName || 'Unknown'} gains a vote!`,
           color: color,
           timestamp: new Date().toLocaleTimeString()
         }, ...prev.slice(0, 9)]);
       }
       
-      if (data.type === 'start') {
+      if (data.type === 'start' && data.battle) {
         setLiveFeed(prev => [{
           id: Date.now(),
-          message: `🚀 New battle started: ${data.battle.project1.title} vs ${data.battle.project2.title}`,
+          message: `🚀 New battle started: ${data.battle.project1?.title || 'Unknown'} vs ${data.battle.project2?.title || 'Unknown'}`,
           color: 'text-yellow-400',
           timestamp: new Date().toLocaleTimeString()
         }, ...prev.slice(0, 9)]);
       }
       
-      if (data.type === 'end') {
+      if (data.type === 'end' && data.battle) {
         const winner = data.battle.winner;
         setLiveFeed(prev => [{
           id: Date.now(),
-          message: `🏆 ${winner.title} wins the battle!`,
+          message: `🏆 ${winner?.title || 'Unknown'} wins the battle!`,
           color: 'text-green-400',
           timestamp: new Date().toLocaleTimeString()
         }, ...prev.slice(0, 9)]);
@@ -123,7 +130,7 @@ const BubbleDuels = ({ currentUser }) => {
       if (data.type === 'cancel') {
         setLiveFeed(prev => [{
           id: Date.now(),
-          message: `🚫 Battle cancelled by ${data.cancelledBy}`,
+          message: `🚫 Battle cancelled by ${data.cancelledBy || 'Unknown'}`,
           color: 'text-orange-400',
           timestamp: new Date().toLocaleTimeString()
         }, ...prev.slice(0, 9)]);
@@ -286,10 +293,10 @@ const BubbleDuels = ({ currentUser }) => {
   const cancelBattleMutation = useCancelBubbleDuel();
   
   const cancelBattle = useCallback(async () => {
-    if (activeBattle) {
+    if (safeActiveBattle) {
       try {
         await cancelBattleMutation.mutateAsync({
-          battleId: activeBattle.battleId,
+          battleId: safeActiveBattle.battleId,
           token: currentUser.token
         });
       } catch (error) {
@@ -304,7 +311,7 @@ const BubbleDuels = ({ currentUser }) => {
     setBattleStats({ project1Votes: 0, project2Votes: 0 });
     setAttackAnimation(null);
     setIsStartingBattle(false); // Reset loading state
-  }, [activeBattle, currentUser, cancelBattleMutation]);
+  }, [safeActiveBattle, currentUser, cancelBattleMutation]);
 
   // Cancel any battle from live battles section
   const cancelAnyBattle = useCallback(async (battleId) => {
@@ -320,7 +327,7 @@ const BubbleDuels = ({ currentUser }) => {
       });
       
       // If this was the active battle, clear it
-      if (activeBattle && activeBattle.battleId === battleId) {
+      if (safeActiveBattle && safeActiveBattle.battleId === battleId) {
         setActiveBattle(null);
         setSelectedProjects([]);
         setTimeRemaining(0);
@@ -333,7 +340,7 @@ const BubbleDuels = ({ currentUser }) => {
     } catch (error) {
       alert(error.message || 'Failed to cancel battle. Please try again.');
     }
-  }, [currentUser, activeBattle, cancelBattleMutation]);
+  }, [currentUser, safeActiveBattle, cancelBattleMutation]);
 
   const startNewGame = useCallback(() => {
     setActiveBattle(null);
@@ -345,11 +352,13 @@ const BubbleDuels = ({ currentUser }) => {
   }, []);
 
   const selectBattle = useCallback((battle) => {
+    if (!battle || !battle.project1 || !battle.project2) return;
+    
     setActiveBattle(battle);
     setTimeRemaining(battle.remainingTime || 0);
     setBattleStats({ 
-      project1Votes: battle.project1.votes || 0,
-      project2Votes: battle.project2.votes || 0
+      project1Votes: battle.project1?.votes || 0,
+      project2Votes: battle.project2?.votes || 0
     });
   }, []);
 
@@ -392,7 +401,7 @@ const BubbleDuels = ({ currentUser }) => {
       return;
     }
 
-    if (!activeBattle) return;
+    if (!safeActiveBattle) return;
 
     try {
       if (!currentUser || !currentUser.token) {
@@ -401,7 +410,7 @@ const BubbleDuels = ({ currentUser }) => {
       }
 
       const data = await voteMutation.mutateAsync({
-        battleId: activeBattle.battleId,
+        battleId: safeActiveBattle.battleId,
         projectSide,
         token: currentUser.token
       });
@@ -434,8 +443,10 @@ const BubbleDuels = ({ currentUser }) => {
   }, [currentUser, activeBattle, voteMutation]);
 
   const shareToSocial = useCallback((platform) => {
+    if (!safeActiveBattle) return;
+    
     const battleUrl = window.location.href;
-    const text = `🥊 EPIC BUBBLE BATTLE! ${activeBattle.project1.title} VS ${activeBattle.project2.title} - Vote now! ⚡`;
+    const text = `🥊 EPIC BUBBLE BATTLE! ${safeActiveBattle.project1?.title || 'Unknown'} VS ${safeActiveBattle.project2?.title || 'Unknown'} - Vote now! ⚡`;
     
     const urls = {
       twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(battleUrl)}`,
@@ -443,7 +454,7 @@ const BubbleDuels = ({ currentUser }) => {
     };
     
     window.open(urls[platform], '_blank');
-  }, [activeBattle]);
+  }, [safeActiveBattle]);
 
   const formatTime = useCallback((seconds) => {
     const hours = Math.floor(seconds / 3600);
@@ -504,9 +515,9 @@ const BubbleDuels = ({ currentUser }) => {
       </div>
 
       {/* Battle Arena or Setup */}
-      {activeBattle ? (
+      {safeActiveBattle ? (
         <BattleArena 
-          battle={activeBattle}
+          battle={safeActiveBattle}
           timeRemaining={timeRemaining}
           battleStats={battleStats}
           onVote={vote}
@@ -523,15 +534,15 @@ const BubbleDuels = ({ currentUser }) => {
           onRemoveProject={removeProject}
           onStartBattle={startBattle}
           currentUser={currentUser}
-          ads={ads}
+          ads={safeAds}
           isStartingBattle={isStartingBattle}
         />
       )}
 
                      {/* Active Battles Section */}
-                 {allActiveBattles.length > 0 && (
+                                    {safeAllActiveBattles.length > 0 && (
            <ActiveBattlesSection 
-             battles={allActiveBattles} 
+             battles={safeAllActiveBattles} 
              currentUser={currentUser}
              onBattleVote={(battleId, projectSide) => voteInBattle(battleId, projectSide)}
              onCancelBattle={cancelAnyBattle}
@@ -542,7 +553,7 @@ const BubbleDuels = ({ currentUser }) => {
              {/* Street Fighter Style Character Select */}
        {showFighterSelect && (
          <FighterSelectModal
-           ads={ads}
+           ads={safeAds}
            onSelectProject={selectProject}
            onClose={() => {
              setShowFighterSelect(false);
@@ -686,7 +697,7 @@ const BattleSetup = ({ selectedProjects, onOpenFighterSelect, onRemoveProject, o
       <div className="text-center text-gray-300">
         <p className="text-lg mb-2">🥊 Click on the fighter slots above to select your warriors!</p>
         <p className="text-sm opacity-75">Choose 2 bubble projects to battle in epic 1-hour duels</p>
-        {ads.length === 0 && (
+        {safeAds.length === 0 && (
           <div className="mt-4 p-3 bg-blue-500/20 border border-blue-500/50 rounded-lg">
             <p className="text-blue-300 font-bold">⏳ All eligible bubbles are currently in battles!</p>
             <p className="text-blue-200 text-sm">Wait for battles to end or check the Live Battles section below</p>

@@ -31,14 +31,15 @@ export const useEligibleAds = (allActiveBattles = []) => {
   // Get IDs of bubbles already in active battles
   const activeBattleBubbleIds = new Set();
   allActiveBattles.forEach(battle => {
-    if (battle.status === 'active' || battle.status === 'waiting') {
-      activeBattleBubbleIds.add(battle.project1.adId);
-      activeBattleBubbleIds.add(battle.project2.adId);
+    if (battle && (battle.status === 'active' || battle.status === 'waiting')) {
+      if (battle.project1?.adId) activeBattleBubbleIds.add(battle.project1.adId);
+      if (battle.project2?.adId) activeBattleBubbleIds.add(battle.project2.adId);
     }
   });
   
   // Filter all eligible ads that are eligible for battles (not already battling)
   const eligibleAds = ads.filter(ad => {
+    if (!ad) return false;
     const hasLogo = ad.logo;
     const hasTitle = ad.title;
     const isEligible = ad.status === 'active' || ad.status === 'approved';
