@@ -58,46 +58,31 @@ const BubbleDuels = ({ currentUser }) => {
             const isEligible = ad.status === 'active' || ad.status === 'approved';
             const notInBattle = !activeBattleBubbleIds.has(ad.id);
             
-            // Debug logging for filtered out bubbles
-            if (!isEligible || !hasLogo || !hasTitle) {
-              console.log('Bubble filtered out:', {
-                id: ad.id,
-                title: ad.title,
-                status: ad.status,
-                hasLogo: hasLogo,
-                hasTitle: hasTitle,
-                reason: !isEligible ? 'not eligible status' : !hasLogo ? 'no logo' : 'no title'
-              });
-            }
+                       // Debug logging for filtered out bubbles
+           if (!isEligible || !hasLogo || !hasTitle) {
+             // Filtered out bubble
+           }
             
             return isEligible && hasLogo && hasTitle && notInBattle;
           });
           
-          console.log('Bubble Duels - Available bubbles:', {
-            totalAds: adsData.length,
-            activeBattles: allActiveBattles.length,
-            excludedBubbleIds: Array.from(activeBattleBubbleIds),
-            availableBubbles: validAds.length
-          });
           
-          // Debug: Show all status values
-          const statusCounts = {};
-          adsData.forEach(ad => {
-            statusCounts[ad.status] = (statusCounts[ad.status] || 0) + 1;
-          });
-          console.log('Status breakdown:', statusCounts);
-          console.log('Eligible statuses: active + approved =', (statusCounts.active || 0) + (statusCounts.approved || 0));
           
-          // Debug: Show bubbles without logo or title
-          const noLogo = adsData.filter(ad => !ad.logo).length;
-          const noTitle = adsData.filter(ad => !ad.title).length;
-          console.log('Missing properties:', { noLogo, noTitle });
+                     // Debug: Show all status values
+           const statusCounts = {};
+           adsData.forEach(ad => {
+             statusCounts[ad.status] = (statusCounts[ad.status] || 0) + 1;
+           });
+           
+           // Debug: Show bubbles without logo or title
+           const noLogo = adsData.filter(ad => !ad.logo).length;
+           const noTitle = adsData.filter(ad => !ad.title).length;
           
           setAds(validAds);
         }
-      } catch (error) {
-        console.error('Error fetching ads:', error);
-      } finally {
+             } catch (error) {
+         // Error fetching ads
+       } finally {
         setLoading(false);
       }
     };
@@ -114,9 +99,9 @@ const BubbleDuels = ({ currentUser }) => {
           const battles = await response.json();
           setAllActiveBattles(battles);
         }
-      } catch (error) {
-        console.error('Error fetching active battles:', error);
-      }
+             } catch (error) {
+         // Error fetching active battles
+       }
     };
 
     fetchActiveBattles();
@@ -325,7 +310,7 @@ const BubbleDuels = ({ currentUser }) => {
       }
     } catch (error) {
       clearTimeout(safetyTimeout);
-      console.error('Error starting battle:', error);
+      // Error starting battle
       alert('Failed to start battle. Please try again.');
       setIsStartingBattle(false);
     }
@@ -360,7 +345,7 @@ const BubbleDuels = ({ currentUser }) => {
           setAllActiveBattles(prev => prev.filter(battle => battle.battleId !== activeBattle.battleId));
         }
       } catch (error) {
-        console.error('Error cancelling battle:', error);
+        // Error cancelling battle
       }
     }
     
@@ -408,7 +393,7 @@ const BubbleDuels = ({ currentUser }) => {
         alert(data.error || 'Failed to cancel battle');
       }
     } catch (error) {
-      console.error('Error cancelling battle:', error);
+      // Error cancelling battle
       alert('Failed to cancel battle. Please try again.');
     }
   };
@@ -471,7 +456,7 @@ const BubbleDuels = ({ currentUser }) => {
         }
       }
     } catch (error) {
-      console.error('Error voting in battle:', error);
+      // Error voting in battle
       alert('Failed to vote. Please try again.');
     }
   };
@@ -524,7 +509,7 @@ const BubbleDuels = ({ currentUser }) => {
         }
       }
     } catch (error) {
-      console.error('Error voting:', error);
+      // Error voting
       alert('Failed to vote. Please try again.');
     }
   };
@@ -1466,21 +1451,24 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
     const health1Value = Math.max(0, maxHealth - (battle.project2.votes * 2));
     const health2Value = Math.max(0, maxHealth - (battle.project1.votes * 2));
     
-    // Check if health decreased (attack happened) by comparing with current state
-    if (health1Value < health1 || health2Value < health2) {
-      // Determine which fighter was attacked
-      const attacker = health1Value < health1 ? 'project2' : 'project1';
-      const target = health1Value < health1 ? 'project1' : 'project2';
+    // Only trigger animations if this is not the initial load (health1 and health2 are not 100)
+    if (health1 !== 100 || health2 !== 100) {
+      // Check if health decreased (attack happened) by comparing with current state
+      if (health1Value < health1 || health2Value < health2) {
+        // Determine which fighter was attacked
+        const attacker = health1Value < health1 ? 'project2' : 'project1';
+        const target = health1Value < health1 ? 'project1' : 'project2';
+        
+        // Trigger attack GIF animation
+        setLocalAttackAnimation({ battleId: battle.battleId, attacker, target });
+        setTimeout(() => setLocalAttackAnimation(null), 5000);
+      }
       
-      // Trigger attack GIF animation
-      setLocalAttackAnimation({ battleId: battle.battleId, attacker, target });
-      setTimeout(() => setLocalAttackAnimation(null), 5000);
-    }
-    
-    // Check if health reached 0 (KO happened)
-    if (health1Value <= 0 || health2Value <= 0) {
-      setShowKOAnimation(true);
-      setTimeout(() => setShowKOAnimation(false), 5000);
+      // Check if health reached 0 (KO happened)
+      if (health1Value <= 0 || health2Value <= 0) {
+        setShowKOAnimation(true);
+        setTimeout(() => setShowKOAnimation(false), 5000);
+      }
     }
     
     // Update current health
@@ -1498,7 +1486,7 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
     try {
       await onBattleVote(battle.battleId, projectSide);
     } catch (error) {
-      console.error('Error in handleVote:', error);
+      // Error in handleVote
     } finally {
       // Reset voting state after a short delay to prevent immediate re-clicks
       setTimeout(() => setIsVoting(false), 1000);
