@@ -427,12 +427,15 @@ const BubbleDuels = ({ currentUser }) => {
 
   // Vote in any battle (for active battles section)
   const voteInBattle = async (battleId, projectSide) => {
+    console.log('🗳️ voteInBattle called with:', { battleId, projectSide });
+    
     if (!currentUser || !currentUser.token) {
       alert('Please login to vote!');
       return;
     }
 
     try {
+      console.log('📡 Sending vote request...');
       const response = await fetch(`${API_URL}/api/bubble-duels/${battleId}/vote`, {
         method: 'POST',
         headers: {
@@ -445,9 +448,23 @@ const BubbleDuels = ({ currentUser }) => {
       });
 
       const data = await response.json();
+      console.log('📡 Vote response received:', data);
 
       if (response.ok) {
-        // Update the battle in allActiveBattles first
+        // Trigger attack animation
+        const attacker = projectSide === 'project1Votes' ? 'project1' : 'project2';
+        const target = projectSide === 'project1Votes' ? 'project2' : 'project1';
+        
+        console.log('🎯 Setting attack animation for battle:', battleId, { attacker, target });
+        setAttackAnimation({ battleId, attacker, target });
+        
+        // Clear animation after duration (5 seconds to match component)
+        setTimeout(() => {
+          console.log('🔄 Clearing attack animation after 5 seconds');
+          setAttackAnimation(null);
+        }, 5000);
+        
+        // Update the battle in allActiveBattles
         setAllActiveBattles(prev => prev.map(battle => 
           battle.battleId === battleId ? data.battle : battle
         ));
@@ -461,21 +478,6 @@ const BubbleDuels = ({ currentUser }) => {
         ];
         const randomMessage = attackMessages[Math.floor(Math.random() * attackMessages.length)];
         alert(randomMessage);
-        
-        // Trigger attack animation AFTER vote flow is complete
-        setTimeout(() => {
-          const attacker = projectSide === 'project1Votes' ? 'project1' : 'project2';
-          const target = projectSide === 'project1Votes' ? 'project2' : 'project1';
-          
-          console.log('🎯 Setting attack animation for battle:', battleId, { attacker, target });
-          setAttackAnimation({ battleId, attacker, target });
-          
-          // Clear animation after duration (5 seconds to match component)
-          setTimeout(() => {
-            console.log('🔄 Clearing attack animation after 5 seconds');
-            setAttackAnimation(null);
-          }, 5000);
-        }, 500); // Wait 500ms for vote flow to complete
       } else {
         if (response.status === 401) {
           alert('Authentication failed. Please login again.');
