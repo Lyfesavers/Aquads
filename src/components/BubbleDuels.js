@@ -1443,7 +1443,10 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
 
   useEffect(() => {
     const calculateTimeLeft = () => {
+      console.log('battle.endTime:', battle.endTime);
+      
       if (!battle.endTime) {
+        console.log('No endTime found');
         setTimeLeft(0);
         return;
       }
@@ -1451,14 +1454,23 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
       const now = new Date().getTime();
       const endTime = new Date(battle.endTime).getTime();
       
+      console.log('now:', now, 'endTime:', endTime);
+      
       // Check if endTime is valid
       if (isNaN(endTime)) {
+        console.log('Invalid endTime:', battle.endTime);
         setTimeLeft(0);
         return;
       }
       
       const difference = endTime - now;
-      setTimeLeft(Math.max(0, Math.floor(difference / 1000)));
+      const timeLeftSeconds = Math.max(0, Math.floor(difference / 1000));
+      setTimeLeft(timeLeftSeconds);
+      
+      // Debug logging
+      if (timeLeftSeconds > 0) {
+        console.log('Time left:', timeLeftSeconds, 'seconds');
+      }
     };
 
     calculateTimeLeft();
@@ -1517,7 +1529,7 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
 
   const formatTime = (seconds) => {
     // Safety check for NaN or invalid values
-    if (!seconds || isNaN(seconds) || seconds < 0) {
+    if (seconds === null || seconds === undefined || isNaN(seconds) || seconds < 0) {
       return '00:00:00';
     }
     
