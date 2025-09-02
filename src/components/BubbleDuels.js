@@ -30,7 +30,6 @@ const BubbleDuels = ({ currentUser }) => {
   const [isStartingBattle, setIsStartingBattle] = useState(false); // Prevent double-clicking
   const [gifAnimation, setGifAnimation] = useState(null); // Separate state for GIF animations
   const [notification, setNotification] = useState(null); // For bottom-left notifications
-  const [socketConnected, setSocketConnected] = useState(false);
 
 
 
@@ -125,59 +124,12 @@ const BubbleDuels = ({ currentUser }) => {
   useEffect(() => {
     const socket = io(API_URL);
 
-    // Socket connection events
-    socket.on('connect', () => {
-      console.log('Socket connected to Bubble Duels');
-      setSocketConnected(true);
-    });
-
-    socket.on('disconnect', () => {
-      console.log('Socket disconnected from Bubble Duels');
-      setSocketConnected(false);
-    });
-
-    socket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
-      setSocketConnected(false);
-    });
-
     socket.on('bubbleDuelUpdate', (data) => {
-      console.log('Received bubbleDuelUpdate:', data);
       if (data.type === 'vote') {
-        // Update the specific battle and add to live feed
-        setAllActiveBattles(prev => {
-          const updatedBattles = prev.map(battle => 
-            battle.battleId === data.battle.battleId ? data.battle : battle
-          );
-          
-          // Find the battle to determine which project gained the vote
-          const battle = updatedBattles.find(b => b.battleId === data.battle.battleId);
-          if (battle) {
-            // Determine which project gained a vote by comparing with previous state
-            const prevBattle = prev.find(b => b.battleId === data.battle.battleId);
-            if (prevBattle) {
-              if (battle.project1.votes > prevBattle.project1.votes) {
-                console.log(`Vote detected for ${battle.project1.title} via bubbleDuelUpdate`);
-                setLiveFeed(prevFeed => [{
-                  id: Date.now(),
-                  message: `⚡ ${battle.project1.title} gains a vote!`,
-                  color: 'text-red-400',
-                  timestamp: new Date().toLocaleTimeString()
-                }, ...prevFeed.slice(0, 9)]); // Keep only last 10 entries
-              } else if (battle.project2.votes > prevBattle.project2.votes) {
-                console.log(`Vote detected for ${battle.project2.title} via bubbleDuelUpdate`);
-                setLiveFeed(prevFeed => [{
-                  id: Date.now(),
-                  message: `⚡ ${battle.project2.title} gains a vote!`,
-                  color: 'text-blue-400',
-                  timestamp: new Date().toLocaleTimeString()
-                }, ...prevFeed.slice(0, 9)]); // Keep only last 10 entries
-              }
-            }
-          }
-          
-          return updatedBattles;
-        });
+        // Update the specific battle
+        setAllActiveBattles(prev => prev.map(battle => 
+          battle.battleId === data.battle.battleId ? data.battle : battle
+        ));
         
         // Update active battle if it matches
         if (activeBattle && activeBattle.battleId === data.battle.battleId) {
@@ -187,6 +139,19 @@ const BubbleDuels = ({ currentUser }) => {
             project2Votes: data.battle.project2.votes
           });
         }
+
+        // Add to live feed
+        const voteData = data.battle;
+        const votedFor = data.projectSide || (voteData.project1.votes > battleStats.project1Votes ? 'project1' : 'project2');
+        const projectName = votedFor === 'project1' ? voteData.project1.title : voteData.project2.title;
+        const color = votedFor === 'project1' ? 'text-red-400' : 'text-blue-400';
+        
+        setLiveFeed(prev => [{
+          id: Date.now(),
+          message: `⚡ ${projectName} gains a vote!`,
+          color: color,
+          timestamp: new Date().toLocaleTimeString()
+        }, ...prev.slice(0, 9)]); // Keep only last 10 entries
       }
       
       if (data.type === 'start') {
@@ -223,7 +188,6 @@ const BubbleDuels = ({ currentUser }) => {
 
     // Listen for battle vote updates specifically
     socket.on('battleVoteUpdate', (data) => {
-      console.log('Received battleVoteUpdate:', data);
       // Update active battle if it matches
       if (activeBattle && activeBattle.battleId === data.battleId) {
         setActiveBattle(prev => ({
@@ -244,104 +208,38 @@ const BubbleDuels = ({ currentUser }) => {
         setTimeRemaining(data.remainingTime);
       }
       
+      // Update in allActiveBattles as well
+      setAllActiveBattles(prev => prev.map(battle => 
+        battle.battleId === data.battleId ? {
+          ...battle,
+          project1: { ...battle.project1, votes: data.project1Votes },
+          project2: { ...battle.project2, votes: data.project2Votes },
+          totalVotes: data.totalVotes,
+          remainingTime: data.remainingTime
+        } : battle
+      ));
 
-
-      // Add to live feed - determine which project gained the vote
-      setAllActiveBattles(prev => {
-        const battle = prev.find(b => b.battleId === data.battleId);
-        if (battle) {
-          const prevProject1Votes = battle.project1.votes;
-          const prevProject2Votes = battle.project2.votes;
-          
-          // Determine which project gained a vote by comparing previous vs current vote counts
-          if (data.project1Votes > prevProject1Votes) {
-            console.log(`Vote detected for ${battle.project1.title} via battleVoteUpdate`);
-            setLiveFeed(prevFeed => [{
-              id: Date.now(),
-              message: `⚡ ${battle.project1.title} gains a vote!`,
-              color: 'text-red-400',
-              timestamp: new Date().toLocaleTimeString()
-            }, ...prevFeed.slice(0, 9)]); // Keep only last 10 entries
-          } else if (data.project2Votes > prevProject2Votes) {
-            console.log(`Vote detected for ${battle.project2.title} via battleVoteUpdate`);
-            setLiveFeed(prevFeed => [{
-              id: Date.now(),
-              message: `⚡ ${battle.project2.title} gains a vote!`,
-              color: 'text-blue-400',
-              timestamp: new Date().toLocaleTimeString()
-            }, ...prevFeed.slice(0, 9)]); // Keep only last 10 entries
-          }
-        }
+      // Add to live feed - find which project gained a vote
+      const battle = allActiveBattles.find(b => b.battleId === data.battleId);
+      if (battle) {
+        const prevProject1Votes = battle.project1.votes;
+        const prevProject2Votes = battle.project2.votes;
         
-        // Return the updated battles array
-        return prev.map(battle => 
-          battle.battleId === data.battleId ? {
-            ...battle,
-            project1: { ...battle.project1, votes: data.project1Votes },
-            project2: { ...battle.project2, votes: data.project2Votes },
-            totalVotes: data.totalVotes,
-            remainingTime: data.remainingTime
-          } : battle
-        );
-      });
-    });
-
-    // Listen for battle created events
-    socket.on('battleCreated', (battle) => {
-      console.log('Received battleCreated:', battle);
-      setAllActiveBattles(prev => [battle, ...prev]);
-      setLiveFeed(prev => [{
-        id: Date.now(),
-        message: `⚔️ New battle created: ${battle.project1.title} vs ${battle.project2.title}`,
-        color: 'text-purple-400',
-        timestamp: new Date().toLocaleTimeString()
-      }, ...prev.slice(0, 9)]); // Keep only last 10 entries
-    });
-
-    // Listen for battle started events
-    socket.on('battleStarted', (data) => {
-      console.log('Received battleStarted:', data);
-      setAllActiveBattles(prev => {
-        const updatedBattles = prev.map(battle => 
-          battle.battleId === data.battleId ? { ...battle, status: 'active' } : battle
-        );
-        
-        // Find the battle to get project titles for the live feed
-        const battle = updatedBattles.find(b => b.battleId === data.battleId);
-        if (battle) {
-          setLiveFeed(prevFeed => [{
+        if (data.project1Votes > prevProject1Votes) {
+          setLiveFeed(prev => [{
             id: Date.now(),
-            message: `🚀 Battle started: ${battle.project1.title} vs ${battle.project2.title}`,
-            color: 'text-yellow-400',
+            message: `⚡ ${battle.project1.title} gains a vote!`,
+            color: 'text-red-400',
             timestamp: new Date().toLocaleTimeString()
-          }, ...prevFeed.slice(0, 9)]); // Keep only last 10 entries
+          }, ...prev.slice(0, 9)]);
+        } else if (data.project2Votes > prevProject2Votes) {
+          setLiveFeed(prev => [{
+            id: Date.now(),
+            message: `⚡ ${battle.project2.title} gains a vote!`,
+            color: 'text-blue-400',
+            timestamp: new Date().toLocaleTimeString()
+          }, ...prev.slice(0, 9)]);
         }
-        
-        return updatedBattles;
-      });
-    });
-
-    // Listen for battle ended events
-    socket.on('battleEnded', (data) => {
-      console.log('Received battleEnded:', data);
-      // Update allActiveBattles to remove the ended battle
-      setAllActiveBattles(prev => prev.filter(battle => battle.battleId !== data.battleId));
-      
-      // If this was the active battle, clear it
-      if (activeBattle && activeBattle.battleId === data.battleId) {
-        setActiveBattle(null);
-        setBattleStats({ project1Votes: 0, project2Votes: 0 });
-        setTimeRemaining(0);
-      }
-      
-      // Add to live feed
-      if (data.winner) {
-        setLiveFeed(prev => [{
-          id: Date.now(),
-          message: `🏆 ${data.winner.title} wins the battle!`,
-          color: 'text-green-400',
-          timestamp: new Date().toLocaleTimeString()
-        }, ...prev.slice(0, 9)]); // Keep only last 10 entries
       }
     });
 
@@ -1197,14 +1095,9 @@ const BattleArena = ({ battle, timeRemaining, battleStats, onVote, onShare, curr
 
       {/* Live Vote Feed */}
       <div className="bg-black/50 rounded-lg p-6 max-h-40 overflow-y-auto">
-        <h3 className="text-xl font-bold mb-4 flex items-center justify-between">
-          <div className="flex items-center">
-            <Users className="mr-2" />
-            Live Vote Feed
-          </div>
-          <div className={`text-xs px-2 py-1 rounded-full ${socketConnected ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-            {socketConnected ? '🟢 Connected' : '🔴 Disconnected'}
-          </div>
+        <h3 className="text-xl font-bold mb-4 flex items-center">
+          <Users className="mr-2" />
+          Live Vote Feed
         </h3>
         <div className="space-y-2 text-sm">
           {liveFeed.length > 0 ? (
