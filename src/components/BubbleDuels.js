@@ -72,7 +72,7 @@ const BubbleDuels = ({ currentUser }) => {
     };
 
     fetchAds();
-  }, [allActiveBattles]); // Re-fetch when battles change
+  }, []); // Only fetch once on mount, not on every battle change
 
   // Fetch all active battles
   useEffect(() => {
@@ -89,8 +89,8 @@ const BubbleDuels = ({ currentUser }) => {
     };
 
     fetchActiveBattles();
-    // Refresh active battles every 10 seconds
-    const interval = setInterval(fetchActiveBattles, 10000);
+    // Refresh active battles every 30 seconds
+    const interval = setInterval(fetchActiveBattles, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -115,8 +115,8 @@ const BubbleDuels = ({ currentUser }) => {
       }
     };
 
-    // Refresh every 5 seconds for active battles
-    const interval = setInterval(refreshActiveBattle, 5000);
+    // Refresh every 15 seconds for active battles
+    const interval = setInterval(refreshActiveBattle, 15000);
     return () => clearInterval(interval);
   }, [activeBattle?.battleId]);
 
@@ -140,49 +140,61 @@ const BubbleDuels = ({ currentUser }) => {
           });
         }
 
-        // Add to live feed
+        // Add to live feed with debouncing
         const voteData = data.battle;
         const votedFor = data.projectSide || (voteData.project1.votes > battleStats.project1Votes ? 'project1' : 'project2');
         const projectName = votedFor === 'project1' ? voteData.project1.title : voteData.project2.title;
         const color = votedFor === 'project1' ? 'text-red-400' : 'text-blue-400';
         
-        setLiveFeed(prev => [{
-          id: Date.now(),
-          message: `⚡ ${projectName} gains a vote!`,
-          color: color,
-          timestamp: new Date().toLocaleTimeString()
-        }, ...prev.slice(0, 9)]); // Keep only last 10 entries
+        // Debounce live feed updates to prevent rapid state changes
+        setTimeout(() => {
+          setLiveFeed(prev => [{
+            id: Date.now(),
+            message: `⚡ ${projectName} gains a vote!`,
+            color: color,
+            timestamp: new Date().toLocaleTimeString()
+          }, ...prev.slice(0, 9)]); // Keep only last 10 entries
+        }, 100);
       }
       
       if (data.type === 'start') {
         setAllActiveBattles(prev => [...prev, data.battle]);
-        setLiveFeed(prev => [{
-          id: Date.now(),
-          message: `🚀 New battle started: ${data.battle.project1.title} vs ${data.battle.project2.title}`,
-          color: 'text-yellow-400',
-          timestamp: new Date().toLocaleTimeString()
-        }, ...prev.slice(0, 9)]);
+        // Debounce live feed updates
+        setTimeout(() => {
+          setLiveFeed(prev => [{
+            id: Date.now(),
+            message: `🚀 New battle started: ${data.battle.project1.title} vs ${data.battle.project2.title}`,
+            color: 'text-yellow-400',
+            timestamp: new Date().toLocaleTimeString()
+          }, ...prev.slice(0, 9)]);
+        }, 100);
       }
       
       if (data.type === 'end') {
         setAllActiveBattles(prev => prev.filter(battle => battle.battleId !== data.battle.battleId));
         const winner = data.battle.winner;
-        setLiveFeed(prev => [{
-          id: Date.now(),
-          message: `🏆 ${winner.title} wins the battle!`,
-          color: 'text-green-400',
-          timestamp: new Date().toLocaleTimeString()
-        }, ...prev.slice(0, 9)]);
+        // Debounce live feed updates
+        setTimeout(() => {
+          setLiveFeed(prev => [{
+            id: Date.now(),
+            message: `🏆 ${winner.title} wins the battle!`,
+            color: 'text-green-400',
+            timestamp: new Date().toLocaleTimeString()
+          }, ...prev.slice(0, 9)]);
+        }, 100);
       }
       
       if (data.type === 'cancel') {
         setAllActiveBattles(prev => prev.filter(battle => battle.battleId !== data.battle.battleId));
-        setLiveFeed(prev => [{
-          id: Date.now(),
-          message: `🚫 Battle cancelled by ${data.cancelledBy}`,
-          color: 'text-orange-400',
-          timestamp: new Date().toLocaleTimeString()
-        }, ...prev.slice(0, 9)]);
+        // Debounce live feed updates
+        setTimeout(() => {
+          setLiveFeed(prev => [{
+            id: Date.now(),
+            message: `🚫 Battle cancelled by ${data.cancelledBy}`,
+            color: 'text-orange-400',
+            timestamp: new Date().toLocaleTimeString()
+          }, ...prev.slice(0, 9)]);
+        }, 100);
       }
     });
 
