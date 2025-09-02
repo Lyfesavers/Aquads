@@ -33,6 +33,7 @@ const BubbleDuels = ({ currentUser }) => {
   const [allActiveBattles, setAllActiveBattles] = useState([]);
   const [attackAnimation, setAttackAnimation] = useState(null); // { battleId, attacker: 'project1'|'project2', target: 'project1'|'project2' }
   const [liveFeed, setLiveFeed] = useState([]);
+  const [isStartingBattle, setIsStartingBattle] = useState(false); // Prevent double-clicking
 
 
 
@@ -215,6 +216,13 @@ const BubbleDuels = ({ currentUser }) => {
     return () => clearInterval(interval);
   }, [activeBattle, timeRemaining]);
 
+  // Reset loading state when component unmounts or when selected projects change
+  useEffect(() => {
+    return () => {
+      setIsStartingBattle(false);
+    };
+  }, [selectedProjects]);
+
   const openFighterSelect = (position) => {
     setSelectingFor(position);
     setShowFighterSelect(true);
@@ -249,11 +257,23 @@ const BubbleDuels = ({ currentUser }) => {
 
   const startBattle = async () => {
     if (selectedProjects.length !== 2) return;
+    
+    // Prevent double-clicking
+    if (isStartingBattle) return;
+    
+    setIsStartingBattle(true);
 
     try {
+      // Safety timeout to prevent loading state from getting stuck
+      const safetyTimeout = setTimeout(() => {
+        setIsStartingBattle(false);
+      }, 30000); // 30 seconds timeout
+      
       // Create battle first
       if (!currentUser || !currentUser.token) {
+        clearTimeout(safetyTimeout);
         alert('Please login to create battles!');
+        setIsStartingBattle(false);
         return;
       }
 
@@ -292,19 +312,27 @@ const BubbleDuels = ({ currentUser }) => {
             project1Votes: startData.battle.project1.votes,
             project2Votes: startData.battle.project2.votes
           });
+          // Reset loading state on success
+          setIsStartingBattle(false);
         } else {
+          clearTimeout(safetyTimeout);
           alert(startData.error || 'Failed to start battle');
+          setIsStartingBattle(false);
         }
       } else {
+        clearTimeout(safetyTimeout);
         if (createResponse.status === 401) {
           alert('Authentication failed. Please login again.');
         } else {
           alert(battleData.error || 'Failed to create battle');
         }
+        setIsStartingBattle(false);
       }
     } catch (error) {
+      clearTimeout(safetyTimeout);
       console.error('Error starting battle:', error);
       alert('Failed to start battle. Please try again.');
+      setIsStartingBattle(false);
     }
   };
 
@@ -346,6 +374,7 @@ const BubbleDuels = ({ currentUser }) => {
     setTimeRemaining(0);
     setBattleStats({ project1Votes: 0, project2Votes: 0 });
     setAttackAnimation(null);
+    setIsStartingBattle(false); // Reset loading state
   };
 
   // Cancel any battle from live battles section
@@ -375,6 +404,7 @@ const BubbleDuels = ({ currentUser }) => {
           setTimeRemaining(0);
           setBattleStats({ project1Votes: 0, project2Votes: 0 });
           setAttackAnimation(null);
+          setIsStartingBattle(false); // Reset loading state
         }
 
         alert('Battle cancelled successfully!');
@@ -394,6 +424,7 @@ const BubbleDuels = ({ currentUser }) => {
     setTimeRemaining(0);
     setBattleStats({ project1Votes: 0, project2Votes: 0 });
     setAttackAnimation(null);
+    setIsStartingBattle(false); // Reset loading state
   };
 
   // Particle effect creation
@@ -744,19 +775,31 @@ const BattleSetup = ({ selectedProjects, onOpenFighterSelect, onRemoveProject, o
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <button
-            onClick={() => {
-              if (!currentUser) {
-                alert('Please login to start battles!');
-                return;
-              }
-              
-              onStartBattle();
-            }}
-            className="bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-700 hover:to-blue-700 px-12 py-4 rounded-lg text-2xl font-bold shadow-2xl transform hover:scale-105 transition-all duration-300"
-          >
-            🚀 START EPIC BATTLE! 🚀
-          </button>
+                     <button
+             onClick={() => {
+               if (!currentUser) {
+                 alert('Please login to start battles!');
+                 return;
+               }
+               
+               onStartBattle();
+             }}
+             disabled={isStartingBattle}
+             className={`bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-700 hover:to-blue-700 px-12 py-4 rounded-lg text-2xl font-bold shadow-2xl transform transition-all duration-300 ${
+               isStartingBattle 
+                 ? 'opacity-50 cursor-not-allowed' 
+                 : 'hover:scale-105 cursor-pointer'
+             }`}
+           >
+             {isStartingBattle ? (
+               <>
+                 <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-2"></div>
+                 STARTING BATTLE...
+               </>
+             ) : (
+               '🚀 START EPIC BATTLE! 🚀'
+             )}
+           </button>
         </motion.div>
       )}
 
@@ -1387,11 +1430,19 @@ const FighterSelectModal = ({ ads, onSelectProject, onClose, selectingFor, alrea
           })}
         </div>
 
-        {/* Footer */}
-        <div className="text-center mt-8 text-gray-400">
-          <p>💡 Click on any fighter to select them for battle!</p>
-          <p className="text-sm mt-2">Total Available Fighters: {ads.length}</p>
-        </div>
+                 {/* Footer */}
+         <div className="text-center mt-8 text-gray-400">
+           <p>💡 Click on any fighter to select them for battle!</p>
+           <p className="text-sm mt-2">Total Available Fighters: {ads.length}</p>
+           {isStartingBattle && (
+             <div className="mt-4 p-3 bg-blue-500/20 border border-blue-500/50 rounded-lg">
+               <div className="flex items-center justify-center space-x-2">
+                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400"></div>
+                 <span className="text-blue-300 text-sm">Starting battle...</span>
+               </div>
+             </div>
+           )}
+         </div>
       </div>
     </div>
   );
