@@ -451,8 +451,8 @@ const BubbleDuels = ({ currentUser }) => {
         
         setAttackAnimation({ battleId, attacker, target });
         
-        // Clear animation after 5 seconds
-        setTimeout(() => setAttackAnimation(null), 5000);
+        // Clear animation after duration
+        setTimeout(() => setAttackAnimation(null), 4000);
         
         // Update the battle in allActiveBattles
         setAllActiveBattles(prev => prev.map(battle => 
@@ -1452,6 +1452,7 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
   const [health2, setHealth2] = useState(100);
   const [showKOAnimation, setShowKOAnimation] = useState(false);
   const [localAttackAnimation, setLocalAttackAnimation] = useState(null);
+  const [isVoting, setIsVoting] = useState(false);
 
   useEffect(() => {
     const calculateTimeLeft = () => {
@@ -1490,6 +1491,18 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
     }
   }, [attackAnimation, battle.battleId]);
 
+  const handleVote = async (projectSide) => {
+    if (isVoting) return; // Prevent multiple clicks
+    
+    setIsVoting(true);
+    try {
+      await onBattleVote(battle.battleId, projectSide);
+    } finally {
+      // Reset voting state after a short delay to prevent immediate re-clicks
+      setTimeout(() => setIsVoting(false), 1000);
+    }
+  };
+
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -1506,201 +1519,234 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
   );
 
   return (
-    <div className={`bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl p-6 border transition-all duration-300 relative overflow-visible ${
-      showKOAnimation ? 'border-red-500 shadow-2xl shadow-red-500/50 z-20' :
-      localAttackAnimation ? 'border-yellow-400 shadow-2xl shadow-yellow-400/30 z-10' : 
-      'border-gray-700 hover:border-gray-600'
-    }`}>
-      
-      {/* Attack Animation GIF */}
+    <>
+      {/* Attack Animation Modal */}
       {localAttackAnimation && (
-        <div className="absolute inset-0 flex items-center justify-center z-50">
-          <img 
-            src="/attack.gif" 
-            alt="Attack Animation"
-            className="w-full h-full object-cover rounded-xl"
-          />
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center">
+          <div className="relative max-w-4xl max-h-[90vh] w-full mx-4">
+            <img 
+              src="/attack.gif" 
+              alt="Attack Animation"
+              className="w-full h-full object-contain rounded-xl shadow-2xl"
+            />
+            <div className="absolute top-4 right-4 text-white text-2xl font-bold bg-black/50 px-4 py-2 rounded-lg">
+              💥 ATTACK! 💥
+            </div>
+          </div>
         </div>
       )}
 
-      {/* KO Animation GIF */}
+      {/* KO Animation Modal */}
       {showKOAnimation && (
-        <div className="absolute inset-0 flex items-center justify-center z-50">
-          <img 
-            src="/ko.gif" 
-            alt="KO Animation"
-            className="w-full h-full object-cover rounded-xl"
-          />
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center">
+          <div className="relative max-w-4xl max-h-[90vh] w-full mx-4">
+            <img 
+              src="/ko.gif" 
+              alt="KO Animation"
+              className="w-full h-full object-contain rounded-xl shadow-2xl"
+            />
+            <div className="absolute top-4 right-4 text-white text-2xl font-bold bg-black/50 px-4 py-2 rounded-lg">
+              💀 KNOCKOUT! 💀
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Health-based Visual Effects */}
-      {(health1 <= 20 || health2 <= 20) && (
-        <div className="absolute inset-0 border-4 border-red-500/50 rounded-xl pointer-events-none">
-        </div>
-      )}
-
-      {/* Battle Header */}
-      <div className="text-center mb-4 relative">
-        {/* Cancel Button - Only for battle creator */}
-        {currentUser && battle.createdBy === currentUser.userId && (
-          <button
-            onClick={() => {
-              if (window.confirm('Are you sure you want to cancel this battle?')) {
-                onCancelBattle(battle.battleId);
-              }
-            }}
-            className="absolute top-0 right-0 w-8 h-8 bg-red-500/20 hover:bg-red-500/40 border border-red-500/50 hover:border-red-500 rounded-full flex items-center justify-center text-red-400 hover:text-red-300 transition-all duration-200 z-10"
-            title="Cancel Battle (Only you can cancel battles you created)"
-          >
-            <X size={16} />
-          </button>
-        )}
+      {/* Battle Card */}
+      <div className={`bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl p-6 border transition-all duration-300 relative overflow-visible ${
+        showKOAnimation ? 'border-red-500 shadow-2xl shadow-red-500/50 z-20' :
+        localAttackAnimation ? 'border-yellow-400 shadow-2xl shadow-yellow-400/30 z-10' : 
+        'border-gray-700 hover:border-gray-600'
+      }`}>
         
-        <div className="text-red-400 font-bold text-sm mb-1">⚔️ LIVE BATTLE</div>
-        <div className="text-white font-mono text-lg">
-          ⏰ {formatTime(timeLeft)}
-        </div>
-      </div>
+        {/* Health-based Visual Effects */}
+        {(health1 <= 20 || health2 <= 20) && (
+          <div className="absolute inset-0 border-4 border-red-500/50 rounded-xl pointer-events-none">
+          </div>
+        )}
 
-      {/* Fighters */}
-      <div className="flex items-center justify-between mb-4">
-        {/* Fighter 1 */}
-        <div className="flex-1 text-center">
-          <div className="w-16 h-16 mx-auto mb-2 relative">
-            <img 
-              src={battle.project1.logo} 
-              alt={battle.project1.title}
-              className={`w-full h-full object-contain rounded-full border-4 ${
-                showKOAnimation ? 'border-red-500 shadow-2xl shadow-red-500/50' :
-                localAttackAnimation && localAttackAnimation.attacker === 'project1' ? 'border-yellow-400 shadow-2xl shadow-yellow-400/50' : 
-                health1 <= 20 ? 'border-red-500 shadow-lg shadow-red-500/30' : 'border-red-400'
-              }`}
-            />
-            <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-xs font-bold text-white">
-              1
-            </div>
-          </div>
-          <h4 className="text-white font-bold text-sm truncate">{battle.project1.title}</h4>
-          <div className="text-red-400 font-bold">{battle.project1.votes} votes</div>
-          
-          {/* Health Bar for Fighter 1 */}
-          <div className="mt-2">
-            <div className="flex justify-between text-xs text-gray-400 mb-1">
-              <span>HP</span>
-              <span className={health1 <= 20 ? 'text-red-400 font-bold' : 'text-gray-400'}>{health1}%</span>
-            </div>
-            <div className="w-full bg-gray-700 rounded-full h-2">
-              <div 
-                className={`h-2 rounded-full transition-all duration-500 ${
-                  health1 > 50 ? 'bg-green-500' : health1 > 25 ? 'bg-yellow-500' : 'bg-red-500'
-                }`}
-                style={{ width: `${health1}%` }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* VS */}
-        <div className="px-4">
-          <div className="text-yellow-400 font-bold text-2xl">
-            {showKOAnimation ? '💀' : localAttackAnimation ? '💥' : '⚔️'}
-          </div>
-          
-          {/* Health Warning Indicator */}
-          {(health1 <= 20 || health2 <= 20) && (
-            <div className="text-red-400 text-xs font-bold mt-2">
-              ⚠️ LOW HP! ⚠️
-            </div>
+        {/* Battle Header */}
+        <div className="text-center mb-4 relative">
+          {/* Cancel Button - Only for battle creator */}
+          {currentUser && battle.createdBy === currentUser.userId && (
+            <button
+              onClick={() => {
+                if (window.confirm('Are you sure you want to cancel this battle?')) {
+                  onCancelBattle(battle.battleId);
+                }
+              }}
+              className="absolute top-0 right-0 w-8 h-8 bg-red-500/20 hover:bg-red-500/40 border border-red-500/50 hover:border-red-500 rounded-full flex items-center justify-center text-red-400 hover:text-red-300 transition-all duration-200 z-10"
+              title="Cancel Battle (Only you can cancel battles you created)"
+            >
+              <X size={16} />
+            </button>
           )}
-        </div>
-
-        {/* Fighter 2 */}
-        <div className="flex-1 text-center">
-          <div className="w-16 h-16 mx-auto mb-2 relative">
-            <img 
-              src={battle.project2.logo} 
-              alt={battle.project2.title}
-              className={`w-full h-full object-contain rounded-full border-4 ${
-                showKOAnimation ? 'border-red-500 shadow-2xl shadow-red-500/50' :
-                localAttackAnimation && localAttackAnimation.attacker === 'project2' ? 'border-yellow-400 shadow-2xl shadow-yellow-400/50' : 
-                health2 <= 20 ? 'border-red-500 shadow-lg shadow-red-500/30' : 'border-blue-400'
-              }`}
-            />
-            <div className="absolute -top-1 -right-1 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-xs font-bold text-white">
-              2
-            </div>
-          </div>
-          <h4 className="text-white font-bold text-sm truncate">{battle.project2.title}</h4>
-          <div className="text-blue-400 font-bold">{battle.project2.votes} votes</div>
           
-          {/* Health Bar for Fighter 2 */}
-          <div className="mt-2">
-            <div className="flex justify-between text-xs text-gray-400 mb-1">
-              <span>HP</span>
-              <span className={health2 <= 20 ? 'text-red-400 font-bold' : 'text-gray-400'}>{health2}%</span>
-            </div>
-            <div className="w-full bg-gray-700 rounded-full h-2">
-              <div 
-                className={`h-full rounded-full transition-all duration-500 ${
-                  health2 > 50 ? 'bg-green-500' : health2 > 25 ? 'bg-yellow-500' : 'bg-red-500'
+          <div className="text-red-400 font-bold text-sm mb-1">⚔️ LIVE BATTLE</div>
+          <div className="text-white font-mono text-lg">
+            ⏰ {formatTime(timeLeft)}
+          </div>
+        </div>
+
+        {/* Fighters */}
+        <div className="flex items-center justify-between mb-4">
+          {/* Fighter 1 */}
+          <div className="flex-1 text-center">
+            <div className="w-16 h-16 mx-auto mb-2 relative">
+              <img 
+                src={battle.project1.logo} 
+                alt={battle.project1.title}
+                className={`w-full h-full object-contain rounded-full border-4 ${
+                  showKOAnimation ? 'border-red-500 shadow-2xl shadow-red-500/50' :
+                  localAttackAnimation && localAttackAnimation.attacker === 'project1' ? 'border-yellow-400 shadow-2xl shadow-yellow-400/50' : 
+                  health1 <= 20 ? 'border-red-500 shadow-lg shadow-red-500/30' : 'border-red-400'
                 }`}
-                style={{ width: `${health2}%` }}
               />
+              <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-xs font-bold text-white">
+                1
+              </div>
+            </div>
+            <h4 className="text-white font-bold text-sm truncate">{battle.project1.title}</h4>
+            <div className="text-red-400 font-bold">{battle.project1.votes} votes</div>
+            
+            {/* Health Bar for Fighter 1 */}
+            <div className="mt-2">
+              <div className="flex justify-between text-xs text-gray-400 mb-1">
+                <span>HP</span>
+                <span className={health1 <= 20 ? 'text-red-400 font-bold' : 'text-gray-400'}>{health1}%</span>
+              </div>
+              <div className="w-full bg-gray-700 rounded-full h-2">
+                <div 
+                  className={`h-2 rounded-full transition-all duration-500 ${
+                    health1 > 50 ? 'bg-green-500' : health1 > 25 ? 'bg-yellow-500' : 'bg-red-500'
+                  }`}
+                  style={{ width: `${health1}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* VS */}
+          <div className="px-4">
+            <div className="text-yellow-400 font-bold text-2xl">
+              {showKOAnimation ? '💀' : localAttackAnimation ? '💥' : '⚔️'}
+            </div>
+            
+            {/* Health Warning Indicator */}
+            {(health1 <= 20 || health2 <= 20) && (
+              <div className="text-red-400 text-xs font-bold mt-2">
+                ⚠️ LOW HP! ⚠️
+              </div>
+            )}
+          </div>
+
+          {/* Fighter 2 */}
+          <div className="flex-1 text-center">
+            <div className="w-16 h-16 mx-auto mb-2 relative">
+              <img 
+                src={battle.project2.logo} 
+                alt={battle.project2.title}
+                className={`w-full h-full object-contain rounded-full border-4 ${
+                  showKOAnimation ? 'border-red-500 shadow-2xl shadow-red-500/50' :
+                  localAttackAnimation && localAttackAnimation.attacker === 'project2' ? 'border-yellow-400 shadow-2xl shadow-yellow-400/50' : 
+                  health2 <= 20 ? 'border-red-500 shadow-lg shadow-red-500/30' : 'border-blue-400'
+                }`}
+              />
+              <div className="absolute -top-1 -right-1 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-xs font-bold text-white">
+                2
+              </div>
+            </div>
+            <h4 className="text-white font-bold text-sm truncate">{battle.project2.title}</h4>
+            <div className="text-blue-400 font-bold">{battle.project2.votes} votes</div>
+            
+            {/* Health Bar for Fighter 2 */}
+            <div className="mt-2">
+              <div className="flex justify-between text-xs text-gray-400 mb-1">
+                <span>HP</span>
+                <span className={health2 <= 20 ? 'text-red-400 font-bold' : 'text-gray-400'}>{health2}%</span>
+              </div>
+              <div className="w-full bg-gray-700 rounded-full h-2">
+                <div 
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    health2 > 50 ? 'bg-green-500' : health2 > 25 ? 'bg-yellow-500' : 'bg-red-500'
+                  }`}
+                  style={{ width: `${health2}%` }}
+                />
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Progress Bar */}
-      <div className="mb-4">
-        <div className="flex h-3 bg-gray-700 rounded-full overflow-hidden">
-          <div 
-            className="bg-gradient-to-r from-red-500 to-red-600 transition-all duration-500"
-            style={{ width: `${project1Percentage}%` }}
-          />
-          <div 
-            className="bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500"
-            style={{ width: `${project2Percentage}%` }}
-          />
+        {/* Progress Bar */}
+        <div className="mb-4">
+          <div className="flex h-3 bg-gray-700 rounded-full overflow-hidden">
+            <div 
+              className="bg-gradient-to-r from-red-500 to-red-600 transition-all duration-500"
+              style={{ width: `${project1Percentage}%` }}
+            />
+            <div 
+              className="bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500"
+              style={{ width: `${project2Percentage}%` }}
+            />
+          </div>
+          <div className="flex justify-between text-xs text-gray-400 mt-1">
+            <span>{project1Percentage.toFixed(1)}%</span>
+            <span>{project2Percentage.toFixed(1)}%</span>
+          </div>
         </div>
-        <div className="flex justify-between text-xs text-gray-400 mt-1">
-          <span>{project1Percentage.toFixed(1)}%</span>
-          <span>{project2Percentage.toFixed(1)}%</span>
+
+        {/* Vote Buttons */}
+        {currentUser && !hasVoted ? (
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleVote('project1Votes')}
+              disabled={isVoting}
+              className={`flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200 text-sm ${
+                isVoting ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            >
+              {isVoting ? (
+                <>
+                  <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Voting...
+                </>
+              ) : (
+                'Vote 1'
+              )}
+            </button>
+            <button
+              onClick={() => handleVote('project2Votes')}
+              disabled={isVoting}
+              className={`flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200 text-sm ${
+                isVoting ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            >
+              {isVoting ? (
+                <>
+                  <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Voting...
+                </>
+              ) : (
+                'Vote 2'
+              )}
+            </button>
+          </div>
+        ) : hasVoted ? (
+          <div className="text-center text-green-400 font-bold text-sm">
+            ✅ You voted in this battle!
+          </div>
+        ) : (
+          <div className="text-center text-gray-500 text-sm">
+            Login to vote in this battle
+          </div>
+        )}
+
+        {/* Target Progress */}
+        <div className="mt-3 text-center text-xs text-gray-400">
+          Target: {battle.targetVotes} votes • Total: {totalVotes}
         </div>
       </div>
-
-      {/* Vote Buttons */}
-      {currentUser && !hasVoted ? (
-        <div className="flex gap-2">
-          <button
-            onClick={() => onBattleVote(battle.battleId, 'project1Votes')}
-            className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200 text-sm"
-          >
-            Vote 1
-          </button>
-          <button
-            onClick={() => onBattleVote(battle.battleId, 'project2Votes')}
-            className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200 text-sm"
-          >
-            Vote 2
-          </button>
-        </div>
-      ) : hasVoted ? (
-        <div className="text-center text-green-400 font-bold text-sm">
-          ✅ You voted in this battle!
-        </div>
-      ) : (
-        <div className="text-center text-gray-500 text-sm">
-          Login to vote in this battle
-        </div>
-      )}
-
-      {/* Target Progress */}
-      <div className="mt-3 text-center text-xs text-gray-400">
-        Target: {battle.targetVotes} votes • Total: {totalVotes}
-      </div>
-    </div>
+    </>
   );
 };
 
