@@ -81,6 +81,10 @@ const BubbleDuels = ({ currentUser }) => {
         const response = await fetch(`${API_URL}/api/bubble-duels`);
         if (response.ok) {
           const battles = await response.json();
+          console.log('Fetched battles:', battles);
+          if (battles.length > 0) {
+            console.log('First battle structure:', battles[0]);
+          }
           setAllActiveBattles(battles);
         }
              } catch (error) {
@@ -1443,7 +1447,16 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
 
   useEffect(() => {
     const calculateTimeLeft = () => {
+      console.log('battle object:', battle);
       console.log('battle.endTime:', battle.endTime);
+      console.log('battle.remainingTime:', battle.remainingTime);
+      
+      // Try to use remainingTime first, then fall back to endTime calculation
+      if (battle.remainingTime && typeof battle.remainingTime === 'number') {
+        console.log('Using remainingTime:', battle.remainingTime);
+        setTimeLeft(battle.remainingTime);
+        return;
+      }
       
       if (!battle.endTime) {
         console.log('No endTime found');
@@ -1476,7 +1489,7 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
     calculateTimeLeft();
     const interval = setInterval(calculateTimeLeft, 1000);
     return () => clearInterval(interval);
-  }, [battle.endTime]);
+  }, [battle.endTime, battle.remainingTime]);
 
   // Calculate health based on votes and track changes for GIF animations
   useEffect(() => {
