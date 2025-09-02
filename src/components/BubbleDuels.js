@@ -58,31 +58,14 @@ const BubbleDuels = ({ currentUser }) => {
             const isEligible = ad.status === 'active' || ad.status === 'approved';
             const notInBattle = !activeBattleBubbleIds.has(ad.id);
             
-                       // Debug logging for filtered out bubbles
-           if (!isEligible || !hasLogo || !hasTitle) {
-             // Filtered out bubble
-           }
-            
             return isEligible && hasLogo && hasTitle && notInBattle;
           });
           
-          
-          
-                     // Debug: Show all status values
-           const statusCounts = {};
-           adsData.forEach(ad => {
-             statusCounts[ad.status] = (statusCounts[ad.status] || 0) + 1;
-           });
-           
-           // Debug: Show bubbles without logo or title
-           const noLogo = adsData.filter(ad => !ad.logo).length;
-           const noTitle = adsData.filter(ad => !ad.title).length;
-          
           setAds(validAds);
         }
-             } catch (error) {
-         // Error fetching ads
-       } finally {
+      } catch (error) {
+        // Error fetching ads
+      } finally {
         setLoading(false);
       }
     };
@@ -1451,10 +1434,19 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
     const health1Value = Math.max(0, maxHealth - (battle.project2.votes * 2));
     const health2Value = Math.max(0, maxHealth - (battle.project1.votes * 2));
     
-    // Only trigger animations if this is not the initial load (health1 and health2 are not 100)
+    console.log('Health check:', { 
+      health1Value, 
+      health2Value, 
+      currentHealth1: health1, 
+      currentHealth2: health2,
+      project1Votes: battle.project1.votes,
+      project2Votes: battle.project2.votes
+    });
+    
+    // Check if health decreased (attack happened) by comparing with current state
     if (health1 !== 100 || health2 !== 100) {
-      // Check if health decreased (attack happened) by comparing with current state
       if (health1Value < health1 || health2Value < health2) {
+        console.log('Attack detected! Triggering GIF');
         // Determine which fighter was attacked
         const attacker = health1Value < health1 ? 'project2' : 'project1';
         const target = health1Value < health1 ? 'project1' : 'project2';
@@ -1463,12 +1455,13 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
         setLocalAttackAnimation({ battleId: battle.battleId, attacker, target });
         setTimeout(() => setLocalAttackAnimation(null), 5000);
       }
-      
-      // Check if health reached 0 (KO happened)
-      if (health1Value <= 0 || health2Value <= 0) {
-        setShowKOAnimation(true);
-        setTimeout(() => setShowKOAnimation(false), 5000);
-      }
+    }
+    
+    // Check if health reached 0 (KO happened) - always check this
+    if (health1Value <= 0 || health2Value <= 0) {
+      console.log('KO detected! Triggering KO GIF');
+      setShowKOAnimation(true);
+      setTimeout(() => setShowKOAnimation(false), 5000);
     }
     
     // Update current health
