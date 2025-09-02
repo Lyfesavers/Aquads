@@ -1530,13 +1530,13 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
       {localAttackAnimation && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center">
           <div className="relative max-w-4xl max-h-[90vh] w-full mx-4">
-            <img 
-              src="/attack.gif" 
-              alt="Attack Animation"
-              className="w-full h-full object-contain rounded-xl shadow-2xl"
-              onLoad={() => console.log('✅ Attack GIF loaded successfully')}
-              onError={(e) => console.error('❌ Failed to load attack GIF:', e)}
-            />
+                         <img 
+               src="/attack.gif" 
+               alt="Attack Animation"
+               className="w-full h-full object-contain rounded-xl shadow-2xl"
+               onLoad={() => console.log('✅ Attack GIF loaded successfully')}
+               onError={(e) => console.error('❌ Failed to load attack GIF:', e)}
+             />
             <div className="absolute top-4 right-4 text-white text-2xl font-bold bg-black/50 px-4 py-2 rounded-lg">
               💥 ATTACK! 💥
             </div>
@@ -1548,19 +1548,36 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
       {showKOAnimation && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center">
           <div className="relative max-w-4xl max-h-[90vh] w-full mx-4">
-            <img 
-              src="/ko.gif" 
-              alt="KO Animation"
-              className="w-full h-full object-contain rounded-xl shadow-2xl"
-              onLoad={() => console.log('✅ KO GIF loaded successfully')}
-              onError={(e) => console.error('❌ Failed to load KO GIF:', e)}
-            />
+                         <img 
+               src="/ko.gif" 
+               alt="KO Animation"
+               className="w-full h-full object-contain rounded-xl shadow-2xl"
+               onLoad={() => console.log('✅ KO GIF loaded successfully')}
+               onError={(e) => console.error('❌ Failed to load KO GIF:', e)}
+             />
             <div className="absolute top-4 right-4 text-white text-2xl font-bold bg-black/50 px-4 py-2 rounded-lg">
               💀 KNOCKOUT! 💀
             </div>
           </div>
         </div>
       )}
+
+      {/* Debug Info */}
+      <div style={{ position: 'fixed', top: 0, left: 0, background: 'black', color: 'white', padding: '10px', zIndex: 10000, fontSize: '12px' }}>
+        <div>localAttackAnimation: {JSON.stringify(localAttackAnimation)}</div>
+        <div>showKOAnimation: {showKOAnimation.toString()}</div>
+        <div>health1: {health1}, health2: {health2}</div>
+        <button 
+          onClick={() => {
+            console.log('🧪 Test button clicked - setting local attack animation');
+            setLocalAttackAnimation({ battleId: battle.battleId, attacker: 'project1', target: 'project2' });
+            setTimeout(() => setLocalAttackAnimation(null), 5000);
+          }}
+          style={{ background: 'red', color: 'white', border: 'none', padding: '5px', marginTop: '5px' }}
+        >
+          🧪 Test Attack GIF
+        </button>
+      </div>
 
       {/* Battle Card */}
       <div className={`bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl p-6 border transition-all duration-300 relative overflow-visible ${
