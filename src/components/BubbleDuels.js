@@ -29,16 +29,9 @@ const BubbleDuels = ({ currentUser }) => {
   const [liveFeed, setLiveFeed] = useState([]);
   const [isStartingBattle, setIsStartingBattle] = useState(false); // Prevent double-clicking
   const [gifAnimation, setGifAnimation] = useState(null); // Separate state for GIF animations
+  const [previousHealth, setPreviousHealth] = useState({}); // Track previous health for each battle
 
-  // Debug attack animation changes
-  useEffect(() => {
-    console.log('🎬 Main component attack animation changed:', attackAnimation);
-  }, [attackAnimation]);
 
-  // Debug GIF animation changes
-  useEffect(() => {
-    console.log('🎬 GIF animation changed:', gifAnimation);
-  }, [gifAnimation]);
 
 
   // Fetch bubble ads (same as main page)
@@ -433,8 +426,6 @@ const BubbleDuels = ({ currentUser }) => {
 
   // Vote in any battle (for active battles section)
   const voteInBattle = async (battleId, projectSide) => {
-    console.log('🚨 TEST: voteInBattle function reached!');
-    console.log('🗳️ voteInBattle called with:', { battleId, projectSide, currentUser: !!currentUser, hasToken: !!currentUser?.token });
     
     if (!currentUser || !currentUser.token) {
       alert('Please login to vote!');
@@ -444,10 +435,6 @@ const BubbleDuels = ({ currentUser }) => {
     const requestBody = { 
       projectSide: projectSide === 'project1Votes' ? 'project1' : 'project2' 
     };
-    
-    console.log('📡 Sending vote request to:', `${API_URL}/api/bubble-duels/${battleId}/vote`);
-    console.log('📡 Request body:', requestBody);
-    console.log('📡 Authorization header:', `Bearer ${currentUser.token.substring(0, 20)}...`);
 
     try {
       const response = await fetch(`${API_URL}/api/bubble-duels/${battleId}/vote`, {
@@ -459,27 +446,9 @@ const BubbleDuels = ({ currentUser }) => {
         body: JSON.stringify(requestBody)
       });
 
-      console.log('📡 Response status:', response.status, response.statusText);
-      
       const data = await response.json();
-      console.log('📡 Response data:', data);
 
       if (response.ok) {
-        // Trigger GIF animation independently after vote flow completes
-        setTimeout(() => {
-          const attacker = projectSide === 'project1Votes' ? 'project1' : 'project2';
-          const target = projectSide === 'project1Votes' ? 'project2' : 'project1';
-          
-          console.log('🎯 Setting GIF animation for battle:', battleId, { attacker, target });
-          setGifAnimation({ battleId, attacker, target });
-          
-          // Clear GIF animation after 5 seconds
-          setTimeout(() => {
-            console.log('🔄 Clearing GIF animation after 5 seconds');
-            setGifAnimation(null);
-          }, 5000);
-        }, 1000); // Wait 1 second for vote flow to complete
-        
         // Update the battle in allActiveBattles
         setAllActiveBattles(prev => prev.map(battle => 
           battle.battleId === battleId ? data.battle : battle
@@ -495,8 +464,6 @@ const BubbleDuels = ({ currentUser }) => {
         const randomMessage = attackMessages[Math.floor(Math.random() * attackMessages.length)];
         alert(randomMessage);
       } else {
-        console.log('❌ Vote failed with status:', response.status);
-        console.log('❌ Error data:', data);
         if (response.status === 401) {
           alert('Authentication failed. Please login again.');
         } else {
@@ -504,7 +471,7 @@ const BubbleDuels = ({ currentUser }) => {
         }
       }
     } catch (error) {
-      console.error('❌ Error voting in battle:', error);
+      console.error('Error voting in battle:', error);
       alert('Failed to vote. Please try again.');
     }
   };
@@ -644,16 +611,15 @@ const BubbleDuels = ({ currentUser }) => {
           />
       )}
 
-             {/* Active Battles Section */}
-       {allActiveBattles.length > 0 && (
-         <ActiveBattlesSection 
-           battles={allActiveBattles} 
-           currentUser={currentUser}
-           onBattleVote={(battleId, projectSide) => voteInBattle(battleId, projectSide)}
-           onCancelBattle={cancelAnyBattle}
-           attackAnimation={gifAnimation}
-         />
-       )}
+                     {/* Active Battles Section */}
+        {allActiveBattles.length > 0 && (
+          <ActiveBattlesSection 
+            battles={allActiveBattles} 
+            currentUser={currentUser}
+            onBattleVote={(battleId, projectSide) => voteInBattle(battleId, projectSide)}
+            onCancelBattle={cancelAnyBattle}
+          />
+        )}
 
              {/* Street Fighter Style Character Select */}
        {showFighterSelect && (
@@ -1436,7 +1402,7 @@ const FighterSelectModal = ({ ads, onSelectProject, onClose, selectingFor, alrea
 };
 
 // Active Battles Section Component
-const ActiveBattlesSection = ({ battles, onBattleVote, currentUser, attackAnimation, onCancelBattle }) => {
+const ActiveBattlesSection = ({ battles, onBattleVote, currentUser, onCancelBattle }) => {
   const activeBattles = battles.filter(battle => battle.status === 'active');
 
   if (activeBattles.length === 0) return null;
@@ -1457,24 +1423,23 @@ const ActiveBattlesSection = ({ battles, onBattleVote, currentUser, attackAnimat
       </motion.div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {activeBattles.map((battle, index) => (
-          <ActiveBattleCard 
-            key={battle.battleId} 
-            battle={battle} 
-            onBattleVote={onBattleVote} 
-            onCancelBattle={onCancelBattle}
-            currentUser={currentUser}
-            index={index}
-            attackAnimation={attackAnimation && attackAnimation.battleId === battle.battleId ? attackAnimation : null}
-          />
-        ))}
+                 {activeBattles.map((battle, index) => (
+           <ActiveBattleCard 
+             key={battle.battleId} 
+             battle={battle} 
+             onBattleVote={onBattleVote} 
+             onCancelBattle={onCancelBattle}
+             currentUser={currentUser}
+             index={index}
+           />
+         ))}
       </div>
     </div>
   );
 };
 
 // Individual Active Battle Card Component
-const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, index, attackAnimation }) => {
+const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, index }) => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [health1, setHealth1] = useState(100);
   const [health2, setHealth2] = useState(100);
@@ -1495,49 +1460,55 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
     return () => clearInterval(interval);
   }, [battle.endTime]);
 
-  // Calculate health based on votes
+  // Calculate health based on votes and track changes for GIF animations
   useEffect(() => {
     const maxHealth = 100;
     const health1Value = Math.max(0, maxHealth - (battle.project2.votes * 2));
     const health2Value = Math.max(0, maxHealth - (battle.project1.votes * 2));
     
-    setHealth1(health1Value);
-    setHealth2(health2Value);
-
-    // Show KO animation if health reaches 0
+    // Get previous health values for this battle
+    const battleKey = battle.battleId;
+    const prevHealth = previousHealth[battleKey] || { health1: 100, health2: 100 };
+    
+    // Check if health decreased (attack happened)
+    if (health1Value < prevHealth.health1 || health2Value < prevHealth.health2) {
+      // Determine which fighter was attacked
+      const attacker = health1Value < prevHealth.health1 ? 'project2' : 'project1';
+      const target = health1Value < prevHealth.health1 ? 'project1' : 'project2';
+      
+      // Trigger attack GIF animation
+      setLocalAttackAnimation({ battleId: battle.battleId, attacker, target });
+      setTimeout(() => setLocalAttackAnimation(null), 5000);
+    }
+    
+    // Check if health reached 0 (KO happened)
     if (health1Value <= 0 || health2Value <= 0) {
       setShowKOAnimation(true);
-      setTimeout(() => setShowKOAnimation(false), 5000); // Reset after KO animation
+      setTimeout(() => setShowKOAnimation(false), 5000);
     }
-  }, [battle.project1.votes, battle.project2.votes]);
+    
+    // Update current health
+    setHealth1(health1Value);
+    setHealth2(health2Value);
+    
+    // Update previous health for next comparison
+    setPreviousHealth(prev => ({
+      ...prev,
+      [battleKey]: { health1: health1Value, health2: health2Value }
+    }));
+  }, [battle.project1.votes, battle.project2.votes, battle.battleId, previousHealth]);
 
-  // Handle attack animation for this specific battle
-  useEffect(() => {
-    if (attackAnimation && attackAnimation.battleId === battle.battleId) {
-      console.log('🎬 ActiveBattleCard received attack animation:', attackAnimation);
-      setLocalAttackAnimation(attackAnimation);
-      setTimeout(() => {
-        console.log('🔄 ActiveBattleCard clearing local attack animation');
-        setLocalAttackAnimation(null);
-      }, 5000);
-    }
-  }, [attackAnimation, battle.battleId]);
+
 
   const handleVote = async (projectSide) => {
-    console.log('🚨 TEST: handleVote function reached!');
-    console.log('🎯 handleVote called with:', { projectSide, battleId: battle.battleId, isVoting });
-    console.log('🔍 onBattleVote function:', onBattleVote);
-    
     if (isVoting) return; // Prevent multiple clicks
     
     setIsVoting(true);
-    console.log('📡 Calling onBattleVote with:', { battleId: battle.battleId, projectSide });
     
     try {
       await onBattleVote(battle.battleId, projectSide);
-      console.log('✅ onBattleVote completed successfully');
     } catch (error) {
-      console.error('❌ Error in handleVote:', error);
+      console.error('Error in handleVote:', error);
     } finally {
       // Reset voting state after a short delay to prevent immediate re-clicks
       setTimeout(() => setIsVoting(false), 1000);
@@ -1565,13 +1536,11 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
       {localAttackAnimation && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center">
           <div className="relative max-w-4xl max-h-[90vh] w-full mx-4">
-                         <img 
-               src="/attack.gif" 
-               alt="Attack Animation"
-               className="w-full h-full object-contain rounded-xl shadow-2xl"
-               onLoad={() => console.log('✅ Attack GIF loaded successfully')}
-               onError={(e) => console.error('❌ Failed to load attack GIF:', e)}
-             />
+                                                   <img 
+                src="/attack.gif" 
+                alt="Attack Animation"
+                className="w-full h-full object-contain rounded-xl shadow-2xl"
+              />
             <div className="absolute top-4 right-4 text-white text-2xl font-bold bg-black/50 px-4 py-2 rounded-lg">
               💥 ATTACK! 💥
             </div>
@@ -1583,13 +1552,11 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
       {showKOAnimation && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center">
           <div className="relative max-w-4xl max-h-[90vh] w-full mx-4">
-                         <img 
-               src="/ko.gif" 
-               alt="KO Animation"
-               className="w-full h-full object-contain rounded-xl shadow-2xl"
-               onLoad={() => console.log('✅ KO GIF loaded successfully')}
-               onError={(e) => console.error('❌ Failed to load KO GIF:', e)}
-             />
+                                                   <img 
+                src="/ko.gif" 
+                alt="KO Animation"
+                className="w-full h-full object-contain rounded-xl shadow-2xl"
+              />
             <div className="absolute top-4 right-4 text-white text-2xl font-bold bg-black/50 px-4 py-2 rounded-lg">
               💀 KNOCKOUT! 💀
             </div>
