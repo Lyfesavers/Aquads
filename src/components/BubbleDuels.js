@@ -1523,11 +1523,19 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
   }, [attackAnimation, battle.battleId]);
 
   const handleVote = async (projectSide) => {
+    console.log('🎯 handleVote called with:', { projectSide, battleId: battle.battleId, isVoting });
+    console.log('🔍 onBattleVote function:', onBattleVote);
+    
     if (isVoting) return; // Prevent multiple clicks
     
     setIsVoting(true);
+    console.log('📡 Calling onBattleVote with:', { battleId: battle.battleId, projectSide });
+    
     try {
       await onBattleVote(battle.battleId, projectSide);
+      console.log('✅ onBattleVote completed successfully');
+    } catch (error) {
+      console.error('❌ Error in handleVote:', error);
     } finally {
       // Reset voting state after a short delay to prevent immediate re-clicks
       setTimeout(() => setIsVoting(false), 1000);
