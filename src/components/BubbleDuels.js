@@ -12,7 +12,8 @@ import {
   Share2,
   ExternalLink,
   Play,
-  Pause
+  Pause,
+  X
 } from 'lucide-react';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
@@ -133,6 +134,16 @@ const BubbleDuels = ({ currentUser }) => {
           id: Date.now(),
           message: `🏆 ${winner.title} wins the battle!`,
           color: 'text-green-400',
+          timestamp: new Date().toLocaleTimeString()
+        }, ...prev.slice(0, 9)]);
+      }
+      
+      if (data.type === 'cancel') {
+        setAllActiveBattles(prev => prev.filter(battle => battle.battleId !== data.battle.battleId));
+        setLiveFeed(prev => [{
+          id: Date.now(),
+          message: `🚫 Battle cancelled by ${data.cancelledBy}`,
+          color: 'text-orange-400',
           timestamp: new Date().toLocaleTimeString()
         }, ...prev.slice(0, 9)]);
       }
@@ -263,12 +274,72 @@ const BubbleDuels = ({ currentUser }) => {
     setBattleStats({ project1Votes: 0, project2Votes: 0 });
   };
 
-  const cancelBattle = () => {
+  const cancelBattle = async () => {
+    if (activeBattle) {
+      try {
+        // Cancel the battle on the server
+        const response = await fetch(`${API_URL}/api/bubble-duels/${activeBattle.battleId}/cancel`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentUser.token}`
+          }
+        });
+
+        if (response.ok) {
+          // Remove from active battles list
+          setAllActiveBattles(prev => prev.filter(battle => battle.battleId !== activeBattle.battleId));
+        }
+      } catch (error) {
+        console.error('Error cancelling battle:', error);
+      }
+    }
+    
     setActiveBattle(null);
     setSelectedProjects([]);
     setTimeRemaining(0);
     setBattleStats({ project1Votes: 0, project2Votes: 0 });
     setAttackAnimation(null);
+  };
+
+  // Cancel any battle from live battles section
+  const cancelAnyBattle = async (battleId) => {
+    if (!currentUser || !currentUser.token) {
+      alert('Please login to cancel battles!');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/bubble-duels/${battleId}/cancel`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        }
+      });
+
+      if (response.ok) {
+        // Remove from active battles list
+        setAllActiveBattles(prev => prev.filter(battle => battle.battleId !== battleId));
+        
+        // If this was the active battle, clear it
+        if (activeBattle && activeBattle.battleId === battleId) {
+          setActiveBattle(null);
+          setSelectedProjects([]);
+          setTimeRemaining(0);
+          setBattleStats({ project1Votes: 0, project2Votes: 0 });
+          setAttackAnimation(null);
+        }
+
+        alert('Battle cancelled successfully!');
+      } else {
+        const data = await response.json();
+        alert(data.error || 'Failed to cancel battle');
+      }
+    } catch (error) {
+      console.error('Error cancelling battle:', error);
+      alert('Failed to cancel battle. Please try again.');
+    }
   };
 
   const startNewGame = () => {
@@ -515,6 +586,7 @@ const BubbleDuels = ({ currentUser }) => {
           battles={allActiveBattles} 
           currentUser={currentUser}
           onBattleVote={(battleId, projectSide) => voteInBattle(battleId, projectSide)}
+          onCancelBattle={cancelAnyBattle}
           attackAnimation={attackAnimation}
         />
       )}
@@ -907,17 +979,20 @@ const BattleArena = ({ battle, timeRemaining, battleStats, onVote, onShare, curr
 
       {/* Battle Control Buttons */}
       <div className="flex gap-4 mt-6">
-        <button
-          onClick={() => {
-            if (window.confirm('Are you sure you want to cancel this battle?')) {
-              onCancelBattle();
-            }
-          }}
-          className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center"
-        >
-          <ExternalLink className="mr-2" size={20} />
-          Cancel Battle
-        </button>
+        {/* Cancel Button - Only for battle creator */}
+        {currentUser && battle.createdBy === currentUser.userId && (
+          <button
+            onClick={() => {
+              if (window.confirm('Are you sure you want to cancel this battle?')) {
+                onCancelBattle();
+              }
+            }}
+            className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center"
+          >
+            <ExternalLink className="mr-2" size={20} />
+            Cancel Battle
+          </button>
+        )}
         
         <button
           onClick={() => {
@@ -925,7 +1000,7 @@ const BattleArena = ({ battle, timeRemaining, battleStats, onVote, onShare, curr
               onNewGame();
             }
           }}
-          className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center"
+          className={`${currentUser && battle.createdBy === currentUser.userId ? 'flex-1' : 'w-full'} bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center`}
         >
           <Play className="mr-2" size={20} />
           New Game
@@ -1267,7 +1342,7 @@ const FighterSelectModal = ({ ads, onSelectProject, onClose, selectingFor, alrea
 };
 
 // Active Battles Section Component
-const ActiveBattlesSection = ({ battles, onBattleVote, currentUser, attackAnimation }) => {
+const ActiveBattlesSection = ({ battles, onBattleVote, currentUser, attackAnimation, onCancelBattle }) => {
   const activeBattles = battles.filter(battle => battle.status === 'active');
 
   if (activeBattles.length === 0) return null;
@@ -1293,6 +1368,7 @@ const ActiveBattlesSection = ({ battles, onBattleVote, currentUser, attackAnimat
             key={battle.battleId} 
             battle={battle} 
             onBattleVote={onBattleVote} 
+            onCancelBattle={onCancelBattle}
             currentUser={currentUser}
             index={index}
             attackAnimation={attackAnimation && attackAnimation.battleId === battle.battleId ? attackAnimation : null}
@@ -1304,7 +1380,7 @@ const ActiveBattlesSection = ({ battles, onBattleVote, currentUser, attackAnimat
 };
 
 // Individual Active Battle Card Component
-const ActiveBattleCard = ({ battle, onBattleVote, currentUser, index, attackAnimation }) => {
+const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, index, attackAnimation }) => {
   const [timeLeft, setTimeLeft] = useState(0);
 
   useEffect(() => {
@@ -1445,7 +1521,22 @@ const ActiveBattleCard = ({ battle, onBattleVote, currentUser, index, attackAnim
         />
       )}
       {/* Battle Header */}
-      <div className="text-center mb-4">
+      <div className="text-center mb-4 relative">
+        {/* Cancel Button - Only for battle creator */}
+        {currentUser && battle.createdBy === currentUser.userId && (
+          <button
+            onClick={() => {
+              if (window.confirm('Are you sure you want to cancel this battle?')) {
+                onCancelBattle(battle.battleId);
+              }
+            }}
+            className="absolute top-0 right-0 w-8 h-8 bg-red-500/20 hover:bg-red-500/40 border border-red-500/50 hover:border-red-500 rounded-full flex items-center justify-center text-red-400 hover:text-red-300 transition-all duration-200 z-10"
+            title="Cancel Battle (Only you can cancel battles you created)"
+          >
+            <X size={16} />
+          </button>
+        )}
+        
         <div className="text-red-400 font-bold text-sm mb-1">⚔️ LIVE BATTLE</div>
         <div className="text-white font-mono text-lg">
           ⏰ {formatTime(timeLeft)}

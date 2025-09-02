@@ -361,4 +361,39 @@ router.get('/stats/global', async (req, res) => {
   }
 });
 
+// POST /api/bubble-duels/:id/cancel - Cancel a battle
+router.post('/:id/cancel', auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.userId;
+
+    const battle = await BubbleDuel.findOne({ battleId: id });
+    if (!battle) {
+      return res.status(404).json({ error: 'Battle not found' });
+    }
+
+    // Check if user has permission to cancel (only battle creator)
+    if (battle.createdBy.toString() !== userId) {
+      return res.status(403).json({ error: 'Only the battle creator can cancel this battle' });
+    }
+
+    // Update battle status to cancelled
+    battle.status = 'cancelled';
+    battle.endTime = new Date();
+    await battle.save();
+
+    // Emit socket event
+    socket.getIO().emit('bubbleDuelUpdate', { 
+      type: 'cancel', 
+      battle: battle,
+      cancelledBy: user.username 
+    });
+
+    res.json({ message: 'Battle cancelled successfully', battle: battle });
+  } catch (error) {
+    console.error('Error cancelling battle:', error);
+    res.status(500).json({ error: 'Failed to cancel battle' });
+  }
+});
+
 module.exports = router;
