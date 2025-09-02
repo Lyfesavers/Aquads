@@ -28,11 +28,17 @@ const BubbleDuels = ({ currentUser }) => {
   const [attackAnimation, setAttackAnimation] = useState(null); // { battleId, attacker: 'project1'|'project2', target: 'project1'|'project2' }
   const [liveFeed, setLiveFeed] = useState([]);
   const [isStartingBattle, setIsStartingBattle] = useState(false); // Prevent double-clicking
+  const [gifAnimation, setGifAnimation] = useState(null); // Separate state for GIF animations
 
   // Debug attack animation changes
   useEffect(() => {
     console.log('🎬 Main component attack animation changed:', attackAnimation);
   }, [attackAnimation]);
+
+  // Debug GIF animation changes
+  useEffect(() => {
+    console.log('🎬 GIF animation changed:', gifAnimation);
+  }, [gifAnimation]);
 
 
   // Fetch bubble ads (same as main page)
@@ -427,15 +433,12 @@ const BubbleDuels = ({ currentUser }) => {
 
   // Vote in any battle (for active battles section)
   const voteInBattle = async (battleId, projectSide) => {
-    console.log('🗳️ voteInBattle called with:', { battleId, projectSide });
-    
     if (!currentUser || !currentUser.token) {
       alert('Please login to vote!');
       return;
     }
 
     try {
-      console.log('📡 Sending vote request...');
       const response = await fetch(`${API_URL}/api/bubble-duels/${battleId}/vote`, {
         method: 'POST',
         headers: {
@@ -448,21 +451,22 @@ const BubbleDuels = ({ currentUser }) => {
       });
 
       const data = await response.json();
-      console.log('📡 Vote response received:', data);
 
       if (response.ok) {
-        // Trigger attack animation
-        const attacker = projectSide === 'project1Votes' ? 'project1' : 'project2';
-        const target = projectSide === 'project1Votes' ? 'project2' : 'project1';
-        
-        console.log('🎯 Setting attack animation for battle:', battleId, { attacker, target });
-        setAttackAnimation({ battleId, attacker, target });
-        
-        // Clear animation after duration (5 seconds to match component)
+        // Trigger GIF animation independently after vote flow completes
         setTimeout(() => {
-          console.log('🔄 Clearing attack animation after 5 seconds');
-          setAttackAnimation(null);
-        }, 5000);
+          const attacker = projectSide === 'project1Votes' ? 'project1' : 'project2';
+          const target = projectSide === 'project1Votes' ? 'project2' : 'project1';
+          
+          console.log('🎯 Setting GIF animation for battle:', battleId, { attacker, target });
+          setGifAnimation({ battleId, attacker, target });
+          
+          // Clear GIF animation after 5 seconds
+          setTimeout(() => {
+            console.log('🔄 Clearing GIF animation after 5 seconds');
+            setGifAnimation(null);
+          }, 5000);
+        }, 1000); // Wait 1 second for vote flow to complete
         
         // Update the battle in allActiveBattles
         setAllActiveBattles(prev => prev.map(battle => 
@@ -626,16 +630,16 @@ const BubbleDuels = ({ currentUser }) => {
           />
       )}
 
-      {/* Active Battles Section */}
-      {allActiveBattles.length > 0 && (
-        <ActiveBattlesSection 
-          battles={allActiveBattles} 
-          currentUser={currentUser}
-          onBattleVote={(battleId, projectSide) => voteInBattle(battleId, projectSide)}
-          onCancelBattle={cancelAnyBattle}
-          attackAnimation={attackAnimation}
-        />
-      )}
+             {/* Active Battles Section */}
+       {allActiveBattles.length > 0 && (
+         <ActiveBattlesSection 
+           battles={allActiveBattles} 
+           currentUser={currentUser}
+           onBattleVote={(battleId, projectSide) => voteInBattle(battleId, projectSide)}
+           onCancelBattle={cancelAnyBattle}
+           attackAnimation={gifAnimation}
+         />
+       )}
 
              {/* Street Fighter Style Character Select */}
        {showFighterSelect && (
