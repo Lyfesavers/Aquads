@@ -55,26 +55,26 @@ const BubbleDuels = ({ currentUser }) => {
             }
           });
           
-          // Filter all active ads that are eligible for battles (not already battling)
+          // Filter all eligible ads that are eligible for battles (not already battling)
           const validAds = adsData.filter(ad => {
             const hasLogo = ad.logo;
             const hasTitle = ad.title;
-            const isActive = ad.status === 'active';
+            const isEligible = ad.status === 'active' || ad.status === 'approved';
             const notInBattle = !activeBattleBubbleIds.has(ad.id);
             
             // Debug logging for filtered out bubbles
-            if (!isActive || !hasLogo || !hasTitle) {
+            if (!isEligible || !hasLogo || !hasTitle) {
               console.log('Bubble filtered out:', {
                 id: ad.id,
                 title: ad.title,
                 status: ad.status,
                 hasLogo: hasLogo,
                 hasTitle: hasTitle,
-                reason: !isActive ? 'not active' : !hasLogo ? 'no logo' : 'no title'
+                reason: !isEligible ? 'not eligible status' : !hasLogo ? 'no logo' : 'no title'
               });
             }
             
-            return isActive && hasLogo && hasTitle && notInBattle;
+            return isEligible && hasLogo && hasTitle && notInBattle;
           });
           
           console.log('Bubble Duels - Available bubbles:', {
@@ -90,6 +90,7 @@ const BubbleDuels = ({ currentUser }) => {
             statusCounts[ad.status] = (statusCounts[ad.status] || 0) + 1;
           });
           console.log('Status breakdown:', statusCounts);
+          console.log('Eligible statuses: active + approved =', (statusCounts.active || 0) + (statusCounts.approved || 0));
           
           // Debug: Show bubbles without logo or title
           const noLogo = adsData.filter(ad => !ad.logo).length;
@@ -763,12 +764,12 @@ const BattleSetup = ({ selectedProjects, onOpenFighterSelect, onRemoveProject, o
        <div className="text-center text-gray-300">
          <p className="text-lg mb-2">🥊 Click on the fighter slots above to select your warriors!</p>
          <p className="text-sm opacity-75">Choose 2 bubble projects to battle in epic 1-hour duels</p>
-         {ads.length === 0 && (
-           <div className="mt-4 p-3 bg-blue-500/20 border border-blue-500/50 rounded-lg">
-             <p className="text-blue-300 font-bold">⏳ All bubbles are currently in battles!</p>
-             <p className="text-blue-200 text-sm">Wait for battles to end or check the Live Battles section below</p>
-           </div>
-         )}
+                   {ads.length === 0 && (
+            <div className="mt-4 p-3 bg-blue-500/20 border border-blue-500/50 rounded-lg">
+              <p className="text-blue-300 font-bold">⏳ All eligible bubbles are currently in battles!</p>
+              <p className="text-blue-200 text-sm">Wait for battles to end or check the Live Battles section below</p>
+            </div>
+          )}
          {!currentUser && (
            <div className="mt-4 p-3 bg-yellow-500/20 border border-yellow-500/50 rounded-lg">
              <p className="text-yellow-300 font-bold">⚠️ Please login to create and participate in battles!</p>
