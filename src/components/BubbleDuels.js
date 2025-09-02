@@ -428,7 +428,11 @@ const BubbleDuels = ({ currentUser }) => {
         if (response.status === 401) {
           alert('Authentication failed. Please login again.');
         } else {
-          alert(data.error || 'Failed to vote');
+          setNotification({
+            message: data.error || 'Failed to vote',
+            type: 'error'
+          });
+          setTimeout(() => setNotification(null), 3000);
         }
       }
     } catch (error) {
@@ -485,7 +489,11 @@ const BubbleDuels = ({ currentUser }) => {
         if (response.status === 401) {
           alert('Authentication failed. Please login again.');
         } else {
-          alert(data.error || 'Failed to vote');
+          setNotification({
+            message: data.error || 'Failed to vote',
+            type: 'error'
+          });
+          setTimeout(() => setNotification(null), 3000);
         }
       }
     } catch (error) {
@@ -601,9 +609,11 @@ const BubbleDuels = ({ currentUser }) => {
          />
                )}
 
-        {/* Bottom-left notification */}
+        {/* Bottom-right notification */}
         {notification && (
-          <div className="fixed bottom-4 left-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-[9999] animate-pulse">
+          <div className={`fixed bottom-4 right-4 text-white px-4 py-2 rounded-lg shadow-lg z-[9999] animate-pulse ${
+            notification.type === 'error' ? 'bg-red-600' : 'bg-green-600'
+          }`}>
             {notification.message}
           </div>
         )}
