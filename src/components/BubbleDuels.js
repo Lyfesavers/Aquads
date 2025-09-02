@@ -669,19 +669,20 @@ const BubbleDuels = ({ currentUser }) => {
         />
       )}
 
-      {/* Street Fighter Style Character Select */}
-      {showFighterSelect && (
-        <FighterSelectModal
-          ads={ads}
-          onSelectProject={selectProject}
-          onClose={() => {
-            setShowFighterSelect(false);
-            setSelectingFor(null);
-          }}
-          selectingFor={selectingFor}
-          alreadySelected={selectedProjects}
-        />
-      )}
+             {/* Street Fighter Style Character Select */}
+       {showFighterSelect && (
+         <FighterSelectModal
+           ads={ads}
+           onSelectProject={selectProject}
+           onClose={() => {
+             setShowFighterSelect(false);
+             setSelectingFor(null);
+           }}
+           selectingFor={selectingFor}
+           alreadySelected={selectedProjects}
+           isStartingBattle={isStartingBattle}
+         />
+       )}
 
 
     </div>
@@ -1293,7 +1294,7 @@ const FighterDisplay = ({ project, votes, health, color, position, onVote, curre
 };
 
 // Street Fighter Style Character Select Modal
-const FighterSelectModal = ({ ads, onSelectProject, onClose, selectingFor, alreadySelected }) => {
+const FighterSelectModal = ({ ads, onSelectProject, onClose, selectingFor, alreadySelected, isStartingBattle }) => {
   return (
     <div
       className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[9999] flex items-center justify-center"
