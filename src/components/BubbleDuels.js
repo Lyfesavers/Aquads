@@ -422,15 +422,7 @@ const BubbleDuels = ({ currentUser }) => {
           battle.battleId === battleId ? data.battle : battle
         ));
         
-        // Show success message with attack flavor
-        const attackMessages = [
-          `💥 Direct hit! You earned ${data.pointsAwarded || 20} points!`,
-          `⚔️ Critical strike! You earned ${data.pointsAwarded || 20} points!`,
-          `🔥 Devastating blow! You earned ${data.pointsAwarded || 20} points!`,
-          `⚡ Lightning attack! You earned ${data.pointsAwarded || 20} points!`
-        ];
-        const randomMessage = attackMessages[Math.floor(Math.random() * attackMessages.length)];
-        alert(randomMessage);
+        // Points awarded silently - no popup needed
       } else {
         if (response.status === 401) {
           alert('Authentication failed. Please login again.');
@@ -1434,18 +1426,11 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
     const health1Value = Math.max(0, maxHealth - (battle.project2.votes * 2));
     const health2Value = Math.max(0, maxHealth - (battle.project1.votes * 2));
     
-    console.log('Health check:', { 
-      health1Value, 
-      health2Value, 
-      currentHealth1: health1, 
-      currentHealth2: health2,
-      project1Votes: battle.project1.votes,
-      project2Votes: battle.project2.votes
-    });
+
     
     // Check if health decreased (attack happened) by comparing with current state
     if (health1Value < health1 || health2Value < health2) {
-      console.log('Attack detected! Triggering GIF');
+
       // Determine which fighter was attacked
       const attacker = health1Value < health1 ? 'project2' : 'project1';
       const target = health1Value < health1 ? 'project1' : 'project2';
@@ -1457,7 +1442,7 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
     
     // Check if health reached 0 (KO happened) - always check this
     if (health1Value <= 0 || health2Value <= 0) {
-      console.log('KO detected! Triggering KO GIF');
+
       setShowKOAnimation(true);
       setTimeout(() => setShowKOAnimation(false), 5000);
     }
