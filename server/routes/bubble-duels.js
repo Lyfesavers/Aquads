@@ -90,13 +90,13 @@ router.post('/create', auth, requireEmailVerification, async (req, res) => {
       return res.status(404).json({ error: 'One or both projects not found' });
     }
     
-    // Check if projects are eligible (active status)
-    if (ad1.status !== 'active') {
-      return res.status(400).json({ error: `${ad1.title} is not eligible for battle (must be active)` });
+    // Check if projects are eligible (allow both 'active' and 'approved' statuses)
+    if (ad1.status !== 'active' && ad1.status !== 'approved') {
+      return res.status(400).json({ error: `${ad1.title} is not eligible for battle (must be active or approved)` });
     }
     
-    if (ad2.status !== 'active') {
-      return res.status(400).json({ error: `${ad2.title} is not eligible for battle (must be active)` });
+    if (ad2.status !== 'active' && ad2.status !== 'approved') {
+      return res.status(400).json({ error: `${ad2.title} is not eligible for battle (must be active or approved)` });
     }
     
     // Check if either project is already in an active battle
