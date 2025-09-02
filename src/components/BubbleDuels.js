@@ -590,13 +590,14 @@ const BubbleDuels = ({ currentUser }) => {
           onNewGame={startNewGame}
         />
       ) : (
-        <BattleSetup 
-          selectedProjects={selectedProjects}
-          onOpenFighterSelect={openFighterSelect}
-          onRemoveProject={removeProject}
-          onStartBattle={startBattle}
-          currentUser={currentUser}
-        />
+                 <BattleSetup 
+           selectedProjects={selectedProjects}
+           onOpenFighterSelect={openFighterSelect}
+           onRemoveProject={removeProject}
+           onStartBattle={startBattle}
+           currentUser={currentUser}
+           ads={ads}
+         />
       )}
 
       {/* Active Battles Section */}
@@ -630,7 +631,7 @@ const BubbleDuels = ({ currentUser }) => {
 };
 
 // Battle Setup Component
-const BattleSetup = ({ selectedProjects, onOpenFighterSelect, onRemoveProject, onStartBattle, currentUser }) => {
+const BattleSetup = ({ selectedProjects, onOpenFighterSelect, onRemoveProject, onStartBattle, currentUser, ads }) => {
   
   const handleFighter1Click = () => {
     onOpenFighterSelect('fighter1');
