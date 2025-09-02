@@ -45,12 +45,31 @@ const BubbleDuels = ({ currentUser }) => {
         const response = await fetch(`${API_URL}/api/ads`);
         if (response.ok) {
           const adsData = await response.json();
-          // Filter all active ads that are eligible for battles
+          
+          // Get IDs of bubbles already in active battles
+          const activeBattleBubbleIds = new Set();
+          allActiveBattles.forEach(battle => {
+            if (battle.status === 'active' || battle.status === 'waiting') {
+              activeBattleBubbleIds.add(battle.project1.adId);
+              activeBattleBubbleIds.add(battle.project2.adId);
+            }
+          });
+          
+          // Filter all active ads that are eligible for battles (not already battling)
           const validAds = adsData.filter(ad => 
             ad.status === 'active' && 
             ad.logo &&
-            ad.title
+            ad.title &&
+            !activeBattleBubbleIds.has(ad.id) // Exclude bubbles already in battles
           );
+          
+          console.log('Bubble Duels - Available bubbles:', {
+            totalAds: adsData.length,
+            activeBattles: allActiveBattles.length,
+            excludedBubbleIds: Array.from(activeBattleBubbleIds),
+            availableBubbles: validAds.length
+          });
+          
           setAds(validAds);
         }
       } catch (error) {
@@ -61,7 +80,7 @@ const BubbleDuels = ({ currentUser }) => {
     };
 
     fetchAds();
-  }, []);
+  }, [allActiveBattles]); // Re-fetch when battles change
 
   // Fetch all active battles
   useEffect(() => {
@@ -713,16 +732,22 @@ const BattleSetup = ({ selectedProjects, onOpenFighterSelect, onRemoveProject, o
         </motion.div>
       )}
 
-      {/* Instructions */}
-      <div className="text-center text-gray-300">
-        <p className="text-lg mb-2">🥊 Click on the fighter slots above to select your warriors!</p>
-        <p className="text-sm opacity-75">Choose 2 bubble projects to battle in epic 1-hour duels</p>
-        {!currentUser && (
-          <div className="mt-4 p-3 bg-yellow-500/20 border border-yellow-500/50 rounded-lg">
-            <p className="text-yellow-300 font-bold">⚠️ Please login to create and participate in battles!</p>
-          </div>
-        )}
-      </div>
+             {/* Instructions */}
+       <div className="text-center text-gray-300">
+         <p className="text-lg mb-2">🥊 Click on the fighter slots above to select your warriors!</p>
+         <p className="text-sm opacity-75">Choose 2 bubble projects to battle in epic 1-hour duels</p>
+         {ads.length === 0 && (
+           <div className="mt-4 p-3 bg-blue-500/20 border border-blue-500/50 rounded-lg">
+             <p className="text-blue-300 font-bold">⏳ All bubbles are currently in battles!</p>
+             <p className="text-blue-200 text-sm">Wait for battles to end or check the Live Battles section below</p>
+           </div>
+         )}
+         {!currentUser && (
+           <div className="mt-4 p-3 bg-yellow-500/20 border border-yellow-500/50 rounded-lg">
+             <p className="text-yellow-300 font-bold">⚠️ Please login to create and participate in battles!</p>
+           </div>
+         )}
+       </div>
     </div>
   );
 };
@@ -1235,16 +1260,19 @@ const FighterSelectModal = ({ ads, onSelectProject, onClose, selectingFor, alrea
 
         {/* Fighter Grid - Street Fighter Style */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
-          {ads.length === 0 ? (
-            <div className="col-span-full text-center py-12">
-              <div className="text-gray-400 text-lg mb-4">
-                🚫 No eligible projects found
-              </div>
-              <div className="text-gray-500 text-sm">
-                Only active projects can participate in battles
-              </div>
-            </div>
-          ) : ads.map((ad, index) => {
+                     {ads.length === 0 ? (
+             <div className="col-span-full text-center py-12">
+               <div className="text-gray-400 text-lg mb-4">
+                 🚫 No available projects for battle
+               </div>
+               <div className="text-gray-500 text-sm">
+                 All active projects are currently in battles or waiting to start
+               </div>
+               <div className="text-gray-400 text-xs mt-2">
+                 Check back later or wait for current battles to end
+               </div>
+             </div>
+           ) : ads.map((ad, index) => {
             const isAlreadySelected = alreadySelected.find(p => p && p.id === ad.id);
             const isDisabled = isAlreadySelected;
             
