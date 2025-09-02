@@ -81,10 +81,6 @@ const BubbleDuels = ({ currentUser }) => {
         const response = await fetch(`${API_URL}/api/bubble-duels`);
         if (response.ok) {
           const battles = await response.json();
-          console.log('Fetched battles:', battles);
-          if (battles.length > 0) {
-            console.log('First battle structure:', battles[0]);
-          }
           setAllActiveBattles(battles);
         }
              } catch (error) {
@@ -1447,49 +1443,18 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
 
   useEffect(() => {
     const calculateTimeLeft = () => {
-      console.log('battle object:', battle);
-      console.log('battle.endTime:', battle.endTime);
-      console.log('battle.remainingTime:', battle.remainingTime);
-      
-      // Try to use remainingTime first, then fall back to endTime calculation
+      // Use the remainingTime field from the battle object
       if (battle.remainingTime && typeof battle.remainingTime === 'number') {
-        console.log('Using remainingTime:', battle.remainingTime);
         setTimeLeft(battle.remainingTime);
-        return;
-      }
-      
-      if (!battle.endTime) {
-        console.log('No endTime found');
+      } else {
         setTimeLeft(0);
-        return;
-      }
-      
-      const now = new Date().getTime();
-      const endTime = new Date(battle.endTime).getTime();
-      
-      console.log('now:', now, 'endTime:', endTime);
-      
-      // Check if endTime is valid
-      if (isNaN(endTime)) {
-        console.log('Invalid endTime:', battle.endTime);
-        setTimeLeft(0);
-        return;
-      }
-      
-      const difference = endTime - now;
-      const timeLeftSeconds = Math.max(0, Math.floor(difference / 1000));
-      setTimeLeft(timeLeftSeconds);
-      
-      // Debug logging
-      if (timeLeftSeconds > 0) {
-        console.log('Time left:', timeLeftSeconds, 'seconds');
       }
     };
 
     calculateTimeLeft();
     const interval = setInterval(calculateTimeLeft, 1000);
     return () => clearInterval(interval);
-  }, [battle.endTime, battle.remainingTime]);
+  }, [battle.remainingTime]);
 
   // Calculate health based on votes and track changes for GIF animations
   useEffect(() => {
@@ -1541,11 +1506,6 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
   };
 
   const formatTime = (seconds) => {
-    // Safety check for NaN or invalid values
-    if (seconds === null || seconds === undefined || isNaN(seconds) || seconds < 0) {
-      return '00:00:00';
-    }
-    
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
