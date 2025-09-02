@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import io from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Zap, 
@@ -30,6 +31,7 @@ const BubbleDuels = ({ currentUser }) => {
   const [selectingFor, setSelectingFor] = useState(null); // 'fighter1' or 'fighter2'
   const [allActiveBattles, setAllActiveBattles] = useState([]);
   const [attackAnimation, setAttackAnimation] = useState(null); // { battleId, attacker: 'project1'|'project2', target: 'project1'|'project2' }
+  const [liveFeed, setLiveFeed] = useState([]);
 
 
 
@@ -79,6 +81,65 @@ const BubbleDuels = ({ currentUser }) => {
     const interval = setInterval(fetchActiveBattles, 10000);
     return () => clearInterval(interval);
   }, []);
+
+  // Socket.io for real-time updates
+  useEffect(() => {
+    const socket = io(API_URL);
+
+    socket.on('bubbleDuelUpdate', (data) => {
+      if (data.type === 'vote') {
+        // Update the specific battle
+        setAllActiveBattles(prev => prev.map(battle => 
+          battle.battleId === data.battle.battleId ? data.battle : battle
+        ));
+        
+        // Update active battle if it matches
+        if (activeBattle && activeBattle.battleId === data.battle.battleId) {
+          setActiveBattle(data.battle);
+          setBattleStats({
+            project1Votes: data.battle.project1.votes,
+            project2Votes: data.battle.project2.votes
+          });
+        }
+
+        // Add to live feed
+        const voteData = data.battle;
+        const votedFor = data.projectSide || (voteData.project1.votes > battleStats.project1Votes ? 'project1' : 'project2');
+        const projectName = votedFor === 'project1' ? voteData.project1.title : voteData.project2.title;
+        const color = votedFor === 'project1' ? 'text-red-400' : 'text-blue-400';
+        
+        setLiveFeed(prev => [{
+          id: Date.now(),
+          message: `⚡ ${projectName} gains a vote!`,
+          color: color,
+          timestamp: new Date().toLocaleTimeString()
+        }, ...prev.slice(0, 9)]); // Keep only last 10 entries
+      }
+      
+      if (data.type === 'start') {
+        setAllActiveBattles(prev => [...prev, data.battle]);
+        setLiveFeed(prev => [{
+          id: Date.now(),
+          message: `🚀 New battle started: ${data.battle.project1.title} vs ${data.battle.project2.title}`,
+          color: 'text-yellow-400',
+          timestamp: new Date().toLocaleTimeString()
+        }, ...prev.slice(0, 9)]);
+      }
+      
+      if (data.type === 'end') {
+        setAllActiveBattles(prev => prev.filter(battle => battle.battleId !== data.battle.battleId));
+        const winner = data.battle.winner;
+        setLiveFeed(prev => [{
+          id: Date.now(),
+          message: `🏆 ${winner.title} wins the battle!`,
+          color: 'text-green-400',
+          timestamp: new Date().toLocaleTimeString()
+        }, ...prev.slice(0, 9)]);
+      }
+    });
+
+    return () => socket.disconnect();
+  }, [activeBattle, battleStats]);
 
   // Battle timer countdown
   useEffect(() => {
@@ -202,6 +263,22 @@ const BubbleDuels = ({ currentUser }) => {
     setBattleStats({ project1Votes: 0, project2Votes: 0 });
   };
 
+  const cancelBattle = () => {
+    setActiveBattle(null);
+    setSelectedProjects([]);
+    setTimeRemaining(0);
+    setBattleStats({ project1Votes: 0, project2Votes: 0 });
+    setAttackAnimation(null);
+  };
+
+  const startNewGame = () => {
+    setActiveBattle(null);
+    setSelectedProjects([]);
+    setTimeRemaining(0);
+    setBattleStats({ project1Votes: 0, project2Votes: 0 });
+    setAttackAnimation(null);
+  };
+
   // Particle effect creation
   const createParticleEffect = useCallback((x, y, color) => {
     const newParticles = Array.from({ length: 15 }, (_, i) => ({
@@ -258,7 +335,7 @@ const BubbleDuels = ({ currentUser }) => {
         setAttackAnimation({ battleId, attacker, target });
         
         // Clear animation after duration
-        setTimeout(() => setAttackAnimation(null), 2000);
+        setTimeout(() => setAttackAnimation(null), 4000);
         
         // Update the battle in allActiveBattles
         setAllActiveBattles(prev => prev.map(battle => 
@@ -418,6 +495,9 @@ const BubbleDuels = ({ currentUser }) => {
           onVote={vote}
           onShare={shareToSocial}
           currentUser={currentUser}
+          liveFeed={liveFeed}
+          onCancelBattle={cancelBattle}
+          onNewGame={startNewGame}
         />
       ) : (
         <BattleSetup 
@@ -663,7 +743,7 @@ const SelectedProjectDisplay = ({ project, color, onRemove }) => {
 };
 
 // Battle Arena Component
-const BattleArena = ({ battle, timeRemaining, battleStats, onVote, onShare, currentUser }) => {
+const BattleArena = ({ battle, timeRemaining, battleStats, onVote, onShare, currentUser, liveFeed, onCancelBattle, onNewGame }) => {
   const project1Health = Math.max(0, 100 - (battleStats.project2Votes * 2));
   const project2Health = Math.max(0, 100 - (battleStats.project1Votes * 2));
   
@@ -805,11 +885,51 @@ const BattleArena = ({ battle, timeRemaining, battleStats, onVote, onShare, curr
           Live Vote Feed
         </h3>
         <div className="space-y-2 text-sm">
-          <div className="text-green-400">🔥 Battle is HEATING UP! Keep voting!</div>
-          <div className="text-blue-400">💫 {battle.project2.title} supporter just voted!</div>
-          <div className="text-red-400">⚡ {battle.project1.title} gains ground!</div>
-          <div className="text-yellow-400">🚀 Vote velocity increasing!</div>
+          {liveFeed.length > 0 ? (
+            liveFeed.map((entry) => (
+              <motion.div
+                key={entry.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className={`${entry.color} flex justify-between items-center`}
+              >
+                <span>{entry.message}</span>
+                <span className="text-gray-500 text-xs">{entry.timestamp}</span>
+              </motion.div>
+            ))
+          ) : (
+            <div className="text-gray-400 text-center">
+              🔥 Battle is starting! Votes will appear here...
+            </div>
+          )}
         </div>
+      </div>
+
+      {/* Battle Control Buttons */}
+      <div className="flex gap-4 mt-6">
+        <button
+          onClick={() => {
+            if (window.confirm('Are you sure you want to cancel this battle?')) {
+              onCancelBattle();
+            }
+          }}
+          className="flex-1 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center"
+        >
+          <ExternalLink className="mr-2" size={20} />
+          Cancel Battle
+        </button>
+        
+        <button
+          onClick={() => {
+            if (window.confirm('Start a new battle? This will end the current battle.')) {
+              onNewGame();
+            }
+          }}
+          className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center"
+        >
+          <Play className="mr-2" size={20} />
+          New Game
+        </button>
       </div>
     </div>
   );
@@ -1215,66 +1335,115 @@ const ActiveBattleCard = ({ battle, onBattleVote, currentUser, index, attackAnim
     voter.userId === currentUser.userId
   );
 
-  // Attack Animation Components
-  const AttackProjectile = ({ attacker, target }) => {
-    const isAttackingRight = attacker === 'project1';
+  // Card Attack Animation - The entire card moves and attacks
+  const CardAttackAnimation = ({ attacker, target }) => {
     return (
-      <motion.div
-        className={`absolute top-1/2 ${isAttackingRight ? 'left-1/4' : 'right-1/4'} w-8 h-8 z-50`}
-        initial={{ 
-          x: 0, 
-          y: 0, 
-          scale: 0.5,
-          rotate: isAttackingRight ? 0 : 180
-        }}
-        animate={{ 
-          x: isAttackingRight ? 200 : -200, 
-          y: 0,
-          scale: 1.2,
-          rotate: isAttackingRight ? 360 : -180
-        }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-      >
-        <div className="text-4xl">🔥</div>
-      </motion.div>
-    );
-  };
+      <>
+        {/* Screen Shake Effect */}
+        <motion.div
+          className="absolute inset-0 pointer-events-none z-40"
+          animate={{
+            x: [0, -10, 10, -5, 5, 0],
+            y: [0, -5, 5, -3, 3, 0]
+          }}
+          transition={{ duration: 0.8, delay: 0.5 }}
+        />
+        
+        {/* Impact Explosion at center */}
+        <motion.div
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50"
+          initial={{ scale: 0, opacity: 0, rotate: 0 }}
+          animate={{ 
+            scale: [0, 4, 2, 0], 
+            opacity: [0, 1, 1, 0],
+            rotate: [0, 180, 360]
+          }}
+          transition={{ duration: 1.5, delay: 0.8 }}
+        >
+          <div className="text-9xl">💥</div>
+          {/* Shockwave rings */}
+          <motion.div 
+            className="absolute inset-0 border-4 border-yellow-400 rounded-full"
+            animate={{ 
+              scale: [0, 8], 
+              opacity: [1, 0],
+            }}
+            transition={{ duration: 1, delay: 0.8 }}
+          />
+          <motion.div 
+            className="absolute inset-0 border-4 border-red-400 rounded-full"
+            animate={{ 
+              scale: [0, 6], 
+              opacity: [1, 0],
+            }}
+            transition={{ duration: 0.8, delay: 1 }}
+          />
+        </motion.div>
 
-  const ImpactEffect = ({ target }) => {
-    const isTargetRight = target === 'project2';
-    return (
-      <motion.div
-        className={`absolute top-1/2 ${isTargetRight ? 'right-1/4' : 'left-1/4'} w-16 h-16 z-50`}
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: [0, 2, 1], opacity: [0, 1, 0] }}
-        transition={{ duration: 1, delay: 0.8 }}
-      >
-        <div className="text-6xl">💥</div>
-      </motion.div>
-    );
-  };
-
-  const DamageNumber = ({ target }) => {
-    const isTargetRight = target === 'project2';
-    return (
-      <motion.div
-        className={`absolute top-1/4 ${isTargetRight ? 'right-1/4' : 'left-1/4'} z-50`}
-        initial={{ y: 0, opacity: 0, scale: 0.5 }}
-        animate={{ y: -50, opacity: [0, 1, 0], scale: [0.5, 1.5, 1] }}
-        transition={{ duration: 1.5, delay: 0.9 }}
-      >
-        <div className="text-3xl font-bold text-red-500 drop-shadow-lg">-1 HP</div>
-      </motion.div>
+        {/* Flying Impact Text */}
+        <motion.div
+          className="absolute top-1/4 left-1/2 transform -translate-x-1/2 z-50"
+          initial={{ y: 0, opacity: 0, scale: 0.3, rotate: -45 }}
+          animate={{ 
+            y: [-20, -100, -150], 
+            opacity: [0, 1, 1, 0], 
+            scale: [0.3, 2.5, 2, 1],
+            rotate: [-45, 15, -15, 0]
+          }}
+          transition={{ duration: 2.5, delay: 0.9 }}
+        >
+          <div className="text-8xl font-bold text-yellow-400 drop-shadow-2xl animate-pulse">
+            SMASH!
+          </div>
+          <div className="text-5xl font-bold text-red-400 text-center mt-2 animate-bounce">
+            💀 CRITICAL HIT! 💀
+          </div>
+        </motion.div>
+      </>
     );
   };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1 }}
-      className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl p-6 border border-gray-700 hover:border-gray-600 transition-all duration-300"
+      animate={{ 
+        opacity: 1, 
+        y: 0,
+        // Card Attack Movement - The entire card moves to attack
+        x: attackAnimation && attackAnimation.attacker === (battle.project1.adId === attackAnimation.battleId ? 'project1' : 'project2') ? 
+          [0, attackAnimation.attacker === 'project1' ? 50 : -50, 0] : 
+          attackAnimation && attackAnimation.target === (battle.project1.adId === attackAnimation.battleId ? 'project1' : 'project2') ?
+          [0, attackAnimation.target === 'project1' ? -20 : 20, 0] : 0,
+        scale: attackAnimation && attackAnimation.attacker === (battle.project1.adId === attackAnimation.battleId ? 'project1' : 'project2') ? 
+          [1, 1.1, 1] : 
+          attackAnimation && attackAnimation.target === (battle.project1.adId === attackAnimation.battleId ? 'project1' : 'project2') ?
+          [1, 0.95, 1] : 1,
+        rotate: attackAnimation && attackAnimation.attacker === (battle.project1.adId === attackAnimation.battleId ? 'project1' : 'project2') ? 
+          [0, attackAnimation.attacker === 'project1' ? 5 : -5, 0] : 0,
+        backgroundColor: attackAnimation ? 
+          ['rgba(31, 41, 55, 0.8)', 'rgba(255, 0, 0, 0.3)', 'rgba(255, 255, 0, 0.2)', 'rgba(31, 41, 55, 0.8)'] : 
+          'rgba(31, 41, 55, 0.8)'
+      }}
+      transition={{ 
+        delay: index * 0.1,
+        x: { duration: 0.8, ease: "easeInOut" },
+        scale: { duration: 0.8, ease: "easeInOut" },
+        rotate: { duration: 0.8, ease: "easeInOut" },
+        backgroundColor: { duration: attackAnimation ? 2 : 0.3, repeat: attackAnimation ? 2 : 0 }
+      }}
+      className={`bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl p-6 border transition-all duration-300 relative overflow-visible ${
+        attackAnimation ? 'border-yellow-400 shadow-2xl shadow-yellow-400/30 z-10' : 'border-gray-700 hover:border-gray-600'
+      }`}
     >
+      {/* Battle Flash Effect */}
+      {attackAnimation && (
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-r from-red-500/20 via-yellow-500/30 to-blue-500/20 rounded-xl"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0, 0.8, 0.4, 0] }}
+          transition={{ duration: 2, repeat: 1 }}
+        />
+      )}
       {/* Battle Header */}
       <div className="text-center mb-4">
         <div className="text-red-400 font-bold text-sm mb-1">⚔️ LIVE BATTLE</div>
@@ -1291,11 +1460,23 @@ const ActiveBattleCard = ({ battle, onBattleVote, currentUser, index, attackAnim
             <motion.img 
               src={battle.project1.logo} 
               alt={battle.project1.title}
-              className="w-full h-full object-contain rounded-full border-2 border-red-400"
+              className={`w-full h-full object-contain rounded-full border-4 ${
+                attackAnimation && attackAnimation.attacker === 'project1' ? 'border-yellow-400 shadow-2xl shadow-yellow-400/50' : 'border-red-400'
+              }`}
               animate={attackAnimation && attackAnimation.attacker === 'project1' ? 
-                { scale: [1, 1.2, 1], rotate: [0, 10, 0] } : {}
+                { 
+                  scale: [1, 1.5, 1.3, 1], 
+                  rotate: [0, 20, -10, 0],
+                  boxShadow: ['0 0 0 rgba(255,255,0,0)', '0 0 30px rgba(255,255,0,0.8)', '0 0 0 rgba(255,255,0,0)']
+                } : 
+                attackAnimation && attackAnimation.target === 'project1' ?
+                { 
+                  x: [-5, 5, -5, 5, 0],
+                  scale: [1, 0.9, 1.1, 0.95, 1],
+                  filter: ['hue-rotate(0deg)', 'hue-rotate(180deg)', 'hue-rotate(0deg)']
+                } : {}
               }
-              transition={{ duration: 0.5 }}
+              transition={{ duration: attackAnimation ? 1.5 : 0.5 }}
             />
             <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-xs font-bold text-white">
               1
@@ -1328,11 +1509,23 @@ const ActiveBattleCard = ({ battle, onBattleVote, currentUser, index, attackAnim
             <motion.img 
               src={battle.project2.logo} 
               alt={battle.project2.title}
-              className="w-full h-full object-contain rounded-full border-2 border-blue-400"
+              className={`w-full h-full object-contain rounded-full border-4 ${
+                attackAnimation && attackAnimation.attacker === 'project2' ? 'border-yellow-400 shadow-2xl shadow-yellow-400/50' : 'border-blue-400'
+              }`}
               animate={attackAnimation && attackAnimation.attacker === 'project2' ? 
-                { scale: [1, 1.2, 1], rotate: [0, -10, 0] } : {}
+                { 
+                  scale: [1, 1.5, 1.3, 1], 
+                  rotate: [0, -20, 10, 0],
+                  boxShadow: ['0 0 0 rgba(255,255,0,0)', '0 0 30px rgba(255,255,0,0.8)', '0 0 0 rgba(255,255,0,0)']
+                } : 
+                attackAnimation && attackAnimation.target === 'project2' ?
+                { 
+                  x: [5, -5, 5, -5, 0],
+                  scale: [1, 0.9, 1.1, 0.95, 1],
+                  filter: ['hue-rotate(0deg)', 'hue-rotate(180deg)', 'hue-rotate(0deg)']
+                } : {}
               }
-              transition={{ duration: 0.5 }}
+              transition={{ duration: attackAnimation ? 1.5 : 0.5 }}
             />
             <div className="absolute -top-1 -right-1 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-xs font-bold text-white">
               2
@@ -1345,11 +1538,7 @@ const ActiveBattleCard = ({ battle, onBattleVote, currentUser, index, attackAnim
 
       {/* Attack Animations */}
       {attackAnimation && (
-        <div className="relative">
-          <AttackProjectile attacker={attackAnimation.attacker} target={attackAnimation.target} />
-          <ImpactEffect target={attackAnimation.target} />
-          <DamageNumber target={attackAnimation.target} />
-        </div>
+        <CardAttackAnimation attacker={attackAnimation.attacker} target={attackAnimation.target} />
       )}
 
       {/* Fighter Shake Effect */}
