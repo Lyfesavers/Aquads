@@ -391,6 +391,15 @@ const BubbleDuels = ({ currentUser }) => {
     setIsStartingBattle(false); // Reset loading state
   };
 
+  const selectBattle = (battle) => {
+    setActiveBattle(battle);
+    setTimeRemaining(battle.remainingTime || 0);
+    setBattleStats({ 
+      project1Votes: battle.project1.votes || 0,
+      project2Votes: battle.project2.votes || 0
+    });
+  };
+
 
 
   // Vote in any battle (for active battles section)
@@ -585,14 +594,15 @@ const BubbleDuels = ({ currentUser }) => {
       )}
 
                      {/* Active Battles Section */}
-        {allActiveBattles.length > 0 && (
-          <ActiveBattlesSection 
-            battles={allActiveBattles} 
-            currentUser={currentUser}
-            onBattleVote={(battleId, projectSide) => voteInBattle(battleId, projectSide)}
-            onCancelBattle={cancelAnyBattle}
-          />
-        )}
+                 {allActiveBattles.length > 0 && (
+           <ActiveBattlesSection 
+             battles={allActiveBattles} 
+             currentUser={currentUser}
+             onBattleVote={(battleId, projectSide) => voteInBattle(battleId, projectSide)}
+             onCancelBattle={cancelAnyBattle}
+             onSelectBattle={selectBattle}
+           />
+         )}
 
              {/* Street Fighter Style Character Select */}
        {showFighterSelect && (
@@ -1396,7 +1406,7 @@ const FighterSelectModal = ({ ads, onSelectProject, onClose, selectingFor, alrea
 };
 
 // Active Battles Section Component
-const ActiveBattlesSection = ({ battles, onBattleVote, currentUser, onCancelBattle }) => {
+const ActiveBattlesSection = ({ battles, onBattleVote, currentUser, onCancelBattle, onSelectBattle }) => {
   const activeBattles = battles.filter(battle => battle.status === 'active');
 
   if (activeBattles.length === 0) return null;
@@ -1417,23 +1427,24 @@ const ActiveBattlesSection = ({ battles, onBattleVote, currentUser, onCancelBatt
       </motion.div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                 {activeBattles.map((battle, index) => (
-           <ActiveBattleCard 
-             key={battle.battleId} 
-             battle={battle} 
-             onBattleVote={onBattleVote} 
-             onCancelBattle={onCancelBattle}
-             currentUser={currentUser}
-             index={index}
-           />
-         ))}
+                                   {activeBattles.map((battle, index) => (
+            <ActiveBattleCard 
+              key={battle.battleId} 
+              battle={battle} 
+              onBattleVote={onBattleVote} 
+              onCancelBattle={onCancelBattle}
+              currentUser={currentUser}
+              index={index}
+              onSelectBattle={onSelectBattle}
+            />
+          ))}
       </div>
     </div>
   );
 };
 
 // Individual Active Battle Card Component
-const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, index }) => {
+const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, index, onSelectBattle }) => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [health1, setHealth1] = useState(100);
   const [health2, setHealth2] = useState(100);
@@ -1555,11 +1566,14 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
       )}
 
       {/* Battle Card */}
-      <div className={`bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl p-6 border transition-all duration-300 relative overflow-visible ${
-        showKOAnimation ? 'border-red-500 shadow-2xl shadow-red-500/50 z-20' :
-        localAttackAnimation ? 'border-yellow-400 shadow-2xl shadow-yellow-400/30 z-10' : 
-        'border-gray-700 hover:border-gray-600'
-      }`}>
+      <div 
+        className={`bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl p-6 border transition-all duration-300 relative overflow-visible cursor-pointer hover:scale-105 ${
+          showKOAnimation ? 'border-red-500 shadow-2xl shadow-red-500/50 z-20' :
+          localAttackAnimation ? 'border-yellow-400 shadow-2xl shadow-yellow-400/30 z-10' : 
+          'border-gray-700 hover:border-gray-600'
+        }`}
+        onClick={() => onSelectBattle(battle)}
+      >
         
         {/* Health-based Visual Effects */}
         {(health1 <= 20 || health2 <= 20) && (
