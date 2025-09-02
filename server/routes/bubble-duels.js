@@ -250,6 +250,20 @@ router.post('/:battleId/vote', auth, requireEmailVerification, async (req, res) 
     // Save battle
     await battle.save();
     
+    // Increment bullish votes for the voted project in the main ads database
+    try {
+      const Ad = require('../models/Ad');
+      const projectAdId = projectSide === 'project1' ? battle.project1.adId : battle.project2.adId;
+      
+      await Ad.findOneAndUpdate(
+        { id: projectAdId },
+        { $inc: { bullishVotes: 1 } }
+      );
+    } catch (error) {
+      // Log error but don't fail the vote - this is bonus functionality
+      console.error('Error updating project bullish votes:', error);
+    }
+    
     // Award points for voting (same as bubble voting)
     const alreadyReceivedPoints = user.pointsHistory.some(
       entry => entry.reason === `Bubble Duel vote: ${battleId}`
