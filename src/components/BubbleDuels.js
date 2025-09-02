@@ -1595,13 +1595,14 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
     <>
       {/* Attack Animation Modal */}
       {localAttackAnimation && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center">
-          <div className="relative max-w-4xl max-h-[90vh] w-full mx-4">
-                                                   <img 
-                src="/attack.gif" 
-                alt="Attack Animation"
-                className="w-full h-full object-contain rounded-xl shadow-2xl"
-              />
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+          <div className="relative w-full max-w-5xl max-h-[85vh] flex items-center justify-center">
+            <img 
+              src="/attack.gif" 
+              alt="Attack Animation"
+              className="w-full h-full object-contain rounded-xl shadow-2xl"
+              style={{ maxWidth: '100%', maxHeight: '100%' }}
+            />
             <div className="absolute top-4 right-4 text-white text-2xl font-bold bg-black/50 px-4 py-2 rounded-lg">
               💥 ATTACK! 💥
             </div>
@@ -1611,13 +1612,14 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
 
       {/* KO Animation Modal */}
       {showKOAnimation && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center">
-          <div className="relative max-w-4xl max-h-[90vh] w-full mx-4">
-                                                   <img 
-                src="/ko.gif" 
-                alt="KO Animation"
-                className="w-full h-full object-contain rounded-xl shadow-2xl"
-              />
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
+          <div className="relative w-full max-w-5xl max-h-[85vh] flex items-center justify-center">
+            <img 
+              src="/ko.gif" 
+              alt="KO Animation"
+              className="w-full h-full object-contain rounded-xl shadow-2xl"
+              style={{ maxWidth: '100%', maxHeight: '100%' }}
+            />
             <div className="absolute top-4 right-4 text-white text-2xl font-bold bg-black/50 px-4 py-2 rounded-lg">
               💀 KNOCKOUT! 💀
             </div>
