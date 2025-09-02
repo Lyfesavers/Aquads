@@ -386,7 +386,7 @@ router.post('/:id/cancel', auth, async (req, res) => {
     socket.getIO().emit('bubbleDuelUpdate', { 
       type: 'cancel', 
       battle: battle,
-      cancelledBy: user.username 
+      cancelledBy: req.user.username 
     });
 
     res.json({ message: 'Battle cancelled successfully', battle: battle });

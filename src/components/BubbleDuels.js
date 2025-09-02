@@ -1,18 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
-  Zap, 
   Trophy, 
   Timer, 
   Users, 
   Target, 
-  Swords, 
-  Crown, 
   Share2,
   ExternalLink,
   Play,
-  Pause,
   X
 } from 'lucide-react';
 
@@ -25,9 +21,7 @@ const BubbleDuels = ({ currentUser }) => {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [battleStats, setBattleStats] = useState({ project1Votes: 0, project2Votes: 0 });
   const [loading, setLoading] = useState(true);
-  const [particles, setParticles] = useState([]);
-  const [lightningFlash, setLightningFlash] = useState(false);
-  const [lastVoteEffect, setLastVoteEffect] = useState(null);
+
   const [showFighterSelect, setShowFighterSelect] = useState(false);
   const [selectingFor, setSelectingFor] = useState(null); // 'fighter1' or 'fighter2'
   const [allActiveBattles, setAllActiveBattles] = useState([]);
@@ -427,32 +421,7 @@ const BubbleDuels = ({ currentUser }) => {
     setIsStartingBattle(false); // Reset loading state
   };
 
-  // Particle effect creation
-  const createParticleEffect = useCallback((x, y, color) => {
-    const newParticles = Array.from({ length: 15 }, (_, i) => ({
-      id: Date.now() + i,
-      x: x + (Math.random() - 0.5) * 100,
-      y: y + (Math.random() - 0.5) * 100,
-      vx: (Math.random() - 0.5) * 10,
-      vy: (Math.random() - 0.5) * 10,
-      life: 1,
-      color,
-      size: Math.random() * 8 + 4
-    }));
-    
-    setParticles(prev => [...prev, ...newParticles]);
-    
-    // Remove particles after animation
-    setTimeout(() => {
-      setParticles(prev => prev.filter(p => !newParticles.includes(p)));
-    }, 2000);
-  }, []);
 
-  // Lightning flash effect
-  const triggerLightning = useCallback(() => {
-    setLightningFlash(true);
-    setTimeout(() => setLightningFlash(false), 200);
-  }, []);
 
   // Vote in any battle (for active battles section)
   const voteInBattle = async (battleId, projectSide) => {
@@ -546,19 +515,7 @@ const BubbleDuels = ({ currentUser }) => {
           project2Votes: data.battle.project2Votes
         });
 
-        // Trigger epic effects
-        const isProject1 = projectSide === 'project1Votes';
-        setLastVoteEffect({ side: isProject1 ? 'left' : 'right', timestamp: Date.now() });
-        
-        // Lightning flash
-        triggerLightning();
-        
-        // Particle explosion
-        createParticleEffect(
-          isProject1 ? 200 : window.innerWidth - 200, 
-          300, 
-          isProject1 ? '#ef4444' : '#3b82f6'
-        );
+
 
         // Show success message if points awarded
         if (data.pointsAwarded > 0) {
@@ -1491,6 +1448,9 @@ const ActiveBattlesSection = ({ battles, onBattleVote, currentUser, attackAnimat
 // Individual Active Battle Card Component
 const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, index, attackAnimation }) => {
   const [timeLeft, setTimeLeft] = useState(0);
+  const [health1, setHealth1] = useState(100);
+  const [health2, setHealth2] = useState(100);
+  const [isExploding, setIsExploding] = useState(false);
 
   useEffect(() => {
     const calculateTimeLeft = () => {
@@ -1504,6 +1464,22 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
     const interval = setInterval(calculateTimeLeft, 1000);
     return () => clearInterval(interval);
   }, [battle.endTime]);
+
+  // Calculate health based on votes
+  useEffect(() => {
+    const maxHealth = 100;
+    const health1Value = Math.max(0, maxHealth - (battle.project2.votes * 2));
+    const health2Value = Math.max(0, maxHealth - (battle.project1.votes * 2));
+    
+    setHealth1(health1Value);
+    setHealth2(health2Value);
+
+    // Trigger explosion if health reaches 0
+    if (health1Value <= 0 || health2Value <= 0) {
+      setIsExploding(true);
+      setTimeout(() => setIsExploding(false), 3000); // Reset after explosion
+    }
+  }, [battle.project1.votes, battle.project2.votes]);
 
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
@@ -1522,50 +1498,70 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
 
   // Card Attack Animation - The entire card moves and attacks
   const CardAttackAnimation = ({ attacker, target }) => {
+    const isTarget1 = target === 'project1';
+    const targetHealth = isTarget1 ? health1 : health2;
+    const isCriticalHit = targetHealth <= 20; // Critical hit when health is low
+    const isFatalHit = targetHealth <= 0; // Fatal hit when health reaches 0
+
     return (
       <>
-        {/* Screen Shake Effect */}
+        {/* Screen Shake Effect - More intense for low health */}
         <motion.div
           className="absolute inset-0 pointer-events-none z-40"
           animate={{
-            x: [0, -10, 10, -5, 5, 0],
-            y: [0, -5, 5, -3, 3, 0]
+            x: isCriticalHit ? [0, -15, 15, -8, 8, -4, 4, 0] : [0, -10, 10, -5, 5, 0],
+            y: isCriticalHit ? [0, -8, 8, -4, 4, -2, 2, 0] : [0, -5, 5, -3, 3, 0]
           }}
-          transition={{ duration: 0.8, delay: 0.5 }}
+          transition={{ duration: isCriticalHit ? 1.2 : 0.8, delay: 0.5 }}
         />
         
-        {/* Impact Explosion at center */}
+        {/* Impact Explosion at center - Bigger for critical hits */}
         <motion.div
           className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50"
           initial={{ scale: 0, opacity: 0, rotate: 0 }}
           animate={{ 
-            scale: [0, 4, 2, 0], 
+            scale: isCriticalHit ? [0, 6, 3, 0] : [0, 4, 2, 0], 
             opacity: [0, 1, 1, 0],
             rotate: [0, 180, 360]
           }}
-          transition={{ duration: 1.5, delay: 0.8 }}
+          transition={{ duration: isCriticalHit ? 2 : 1.5, delay: 0.8 }}
         >
-          <div className="text-9xl">💥</div>
-          {/* Shockwave rings */}
+          <div className={`${isCriticalHit ? 'text-[12rem]' : 'text-9xl'}`}>
+            {isFatalHit ? '💀' : '💥'}
+          </div>
+          
+          {/* Shockwave rings - More intense for critical hits */}
           <motion.div 
             className="absolute inset-0 border-4 border-yellow-400 rounded-full"
             animate={{ 
-              scale: [0, 8], 
+              scale: [0, isCriticalHit ? 12 : 8], 
               opacity: [1, 0],
             }}
-            transition={{ duration: 1, delay: 0.8 }}
+            transition={{ duration: isCriticalHit ? 1.5 : 1, delay: 0.8 }}
           />
           <motion.div 
             className="absolute inset-0 border-4 border-red-400 rounded-full"
             animate={{ 
-              scale: [0, 6], 
+              scale: [0, isCriticalHit ? 10 : 6], 
               opacity: [1, 0],
             }}
-            transition={{ duration: 0.8, delay: 1 }}
+            transition={{ duration: isCriticalHit ? 1.2 : 0.8, delay: 1 }}
           />
+          
+          {/* Additional rings for critical hits */}
+          {isCriticalHit && (
+            <motion.div 
+              className="absolute inset-0 border-4 border-purple-400 rounded-full"
+              animate={{ 
+                scale: [0, 14], 
+                opacity: [1, 0],
+              }}
+              transition={{ duration: 1.8, delay: 1.2 }}
+            />
+          )}
         </motion.div>
 
-        {/* Flying Impact Text */}
+        {/* Flying Impact Text - Different messages based on health */}
         <motion.div
           className="absolute top-1/4 left-1/2 transform -translate-x-1/2 z-50"
           initial={{ y: 0, opacity: 0, scale: 0.3, rotate: -45 }}
@@ -1577,11 +1573,21 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
           }}
           transition={{ duration: 2.5, delay: 0.9 }}
         >
-          <div className="text-8xl font-bold text-yellow-400 drop-shadow-2xl animate-pulse">
-            SMASH!
+          <div className={`font-bold drop-shadow-2xl animate-pulse ${
+            isFatalHit ? 'text-[10rem] text-red-500' : 
+            isCriticalHit ? 'text-8xl text-orange-400' : 
+            'text-8xl text-yellow-400'
+          }`}>
+            {isFatalHit ? 'DEATH!' : isCriticalHit ? 'CRITICAL!' : 'SMASH!'}
           </div>
-          <div className="text-5xl font-bold text-red-400 text-center mt-2 animate-bounce">
-            💀 CRITICAL HIT! 💀
+          <div className={`font-bold text-center mt-2 animate-bounce ${
+            isFatalHit ? 'text-6xl text-red-400' : 
+            isCriticalHit ? 'text-5xl text-orange-400' : 
+            'text-5xl text-red-400'
+          }`}>
+            {isFatalHit ? '💀 FATAL BLOW! 💀' : 
+             isCriticalHit ? '🔥 CRITICAL HIT! 🔥' : 
+             '💀 CRITICAL HIT! 💀'}
           </div>
         </motion.div>
       </>
@@ -1592,32 +1598,38 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ 
-        opacity: 1, 
+        opacity: isExploding ? 0 : 1, 
         y: 0,
         // Card Attack Movement - The entire card moves to attack
         x: attackAnimation && attackAnimation.attacker === (battle.project1.adId === attackAnimation.battleId ? 'project1' : 'project2') ? 
           [0, attackAnimation.attacker === 'project1' ? 50 : -50, 0] : 
           attackAnimation && attackAnimation.target === (battle.project1.adId === attackAnimation.battleId ? 'project1' : 'project2') ?
           [0, attackAnimation.target === 'project1' ? -20 : 20, 0] : 0,
-        scale: attackAnimation && attackAnimation.attacker === (battle.project1.adId === attackAnimation.battleId ? 'project1' : 'project2') ? 
+        scale: isExploding ? [1, 1.5, 0] : 
+          attackAnimation && attackAnimation.attacker === (battle.project1.adId === attackAnimation.battleId ? 'project1' : 'project2') ? 
           [1, 1.1, 1] : 
           attackAnimation && attackAnimation.target === (battle.project1.adId === attackAnimation.battleId ? 'project1' : 'project2') ?
           [1, 0.95, 1] : 1,
-        rotate: attackAnimation && attackAnimation.attacker === (battle.project1.adId === attackAnimation.battleId ? 'project1' : 'project2') ? 
+        rotate: isExploding ? [0, 45, 90, 180, 270, 360] :
+          attackAnimation && attackAnimation.attacker === (battle.project1.adId === attackAnimation.battleId ? 'project1' : 'project2') ? 
           [0, attackAnimation.attacker === 'project1' ? 5 : -5, 0] : 0,
-        backgroundColor: attackAnimation ? 
+        backgroundColor: isExploding ? 
+          ['rgba(31, 41, 55, 0.8)', 'rgba(255, 0, 0, 0.8)', 'rgba(255, 165, 0, 0.8)', 'rgba(255, 255, 0, 0.8)', 'rgba(31, 41, 55, 0.8)'] :
+          attackAnimation ? 
           ['rgba(31, 41, 55, 0.8)', 'rgba(255, 0, 0, 0.3)', 'rgba(255, 255, 0, 0.2)', 'rgba(31, 41, 55, 0.8)'] : 
           'rgba(31, 41, 55, 0.8)'
       }}
       transition={{ 
         delay: index * 0.1,
         x: { duration: 0.8, ease: "easeInOut" },
-        scale: { duration: 0.8, ease: "easeInOut" },
-        rotate: { duration: 0.8, ease: "easeInOut" },
-        backgroundColor: { duration: attackAnimation ? 2 : 0.3, repeat: attackAnimation ? 2 : 0 }
+        scale: { duration: isExploding ? 2 : 0.8, ease: "easeInOut" },
+        rotate: { duration: isExploding ? 2 : 0.8, ease: "easeInOut" },
+        backgroundColor: { duration: isExploding ? 2 : (attackAnimation ? 2 : 0.3), repeat: isExploding ? 0 : (attackAnimation ? 2 : 0) }
       }}
       className={`bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-sm rounded-xl p-6 border transition-all duration-300 relative overflow-visible ${
-        attackAnimation ? 'border-yellow-400 shadow-2xl shadow-yellow-400/30 z-10' : 'border-gray-700 hover:border-gray-600'
+        isExploding ? 'border-red-500 shadow-2xl shadow-red-500/50 z-20' :
+        attackAnimation ? 'border-yellow-400 shadow-2xl shadow-yellow-400/30 z-10' : 
+        'border-gray-700 hover:border-gray-600'
       }`}
     >
       {/* Battle Flash Effect */}
@@ -1627,6 +1639,82 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
           initial={{ opacity: 0 }}
           animate={{ opacity: [0, 0.8, 0.4, 0] }}
           transition={{ duration: 2, repeat: 1 }}
+        />
+      )}
+
+      {/* Explosion Effect Overlay */}
+      {isExploding && (
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-r from-red-500/80 via-orange-500/80 to-yellow-500/80 rounded-xl z-30"
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{ 
+            opacity: [0, 1, 1, 0], 
+            scale: [0, 1.2, 1.5, 2],
+            rotate: [0, 180, 360]
+          }}
+          transition={{ duration: 2 }}
+        >
+          {/* Explosion particles */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <motion.div
+              className="text-[8rem] text-white drop-shadow-2xl"
+              animate={{ 
+                scale: [0, 1.5, 0],
+                rotate: [0, 360],
+                opacity: [0, 1, 0]
+              }}
+              transition={{ duration: 1.5, delay: 0.5 }}
+            >
+              💥
+            </motion.div>
+          </div>
+          
+          {/* Flying debris particles */}
+          {[...Array(8)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-2 h-2 bg-yellow-400 rounded-full"
+              style={{
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -50%)'
+              }}
+              animate={{
+                x: [0, (i % 2 === 0 ? 1 : -1) * (100 + Math.random() * 50)],
+                y: [0, (i % 3 === 0 ? 1 : -1) * (80 + Math.random() * 40)],
+                scale: [0, 1, 0],
+                opacity: [0, 1, 0]
+              }}
+              transition={{
+                duration: 2,
+                delay: i * 0.1,
+                ease: "easeOut"
+              }}
+            />
+          ))}
+          
+          {/* Smoke effect */}
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-r from-gray-600/60 via-gray-500/60 to-gray-400/60 rounded-xl"
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ 
+              opacity: [0, 0.8, 0.4, 0], 
+              scale: [0.5, 1.5, 2, 2.5]
+            }}
+            transition={{ duration: 2.5, delay: 0.5 }}
+          />
+        </motion.div>
+      )}
+
+      {/* Health-based Visual Effects */}
+      {(health1 <= 20 || health2 <= 20) && (
+        <motion.div
+          className="absolute inset-0 border-4 border-red-500/50 rounded-xl pointer-events-none"
+          animate={{ 
+            opacity: [0.3, 0.8, 0.3],
+            scale: [1, 1.02, 1]
+          }}
+          transition={{ duration: 1, repeat: Infinity }}
         />
       )}
       {/* Battle Header */}
@@ -1654,86 +1742,162 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
 
       {/* Fighters */}
       <div className="flex items-center justify-between mb-4">
-        {/* Fighter 1 */}
-        <div className="flex-1 text-center">
-          <div className={`w-16 h-16 mx-auto mb-2 relative ${attackAnimation && attackAnimation.target === 'project1' ? 'fighter-shake' : ''}`}>
-            <motion.img 
-              src={battle.project1.logo} 
-              alt={battle.project1.title}
-              className={`w-full h-full object-contain rounded-full border-4 ${
-                attackAnimation && attackAnimation.attacker === 'project1' ? 'border-yellow-400 shadow-2xl shadow-yellow-400/50' : 'border-red-400'
-              }`}
-              animate={attackAnimation && attackAnimation.attacker === 'project1' ? 
-                { 
-                  scale: [1, 1.5, 1.3, 1], 
-                  rotate: [0, 20, -10, 0],
-                  boxShadow: ['0 0 0 rgba(255,255,0,0)', '0 0 30px rgba(255,255,0,0.8)', '0 0 0 rgba(255,255,0,0)']
-                } : 
-                attackAnimation && attackAnimation.target === 'project1' ?
-                { 
-                  x: [-5, 5, -5, 5, 0],
-                  scale: [1, 0.9, 1.1, 0.95, 1],
-                  filter: ['hue-rotate(0deg)', 'hue-rotate(180deg)', 'hue-rotate(0deg)']
-                } : {}
-              }
-              transition={{ duration: attackAnimation ? 1.5 : 0.5 }}
-            />
-            <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-xs font-bold text-white">
-              1
-            </div>
-          </div>
-          <h4 className="text-white font-bold text-sm truncate">{battle.project1.title}</h4>
-          <div className="text-red-400 font-bold">{battle.project1.votes} votes</div>
-        </div>
+                 {/* Fighter 1 */}
+         <div className="flex-1 text-center">
+           <div className="w-16 h-16 mx-auto mb-2 relative">
+             <motion.img 
+               src={battle.project1.logo} 
+               alt={battle.project1.title}
+               className={`w-full h-full object-contain rounded-full border-4 ${
+                 isExploding ? 'border-red-500 shadow-2xl shadow-red-500/50' :
+                 attackAnimation && attackAnimation.attacker === 'project1' ? 'border-yellow-400 shadow-2xl shadow-yellow-400/50' : 
+                 health1 <= 20 ? 'border-red-500 shadow-lg shadow-red-500/30' : 'border-red-400'
+               }`}
+               animate={isExploding ? 
+                 { 
+                   scale: [1, 1.3, 0], 
+                   rotate: [0, 180, 360],
+                   filter: ['hue-rotate(0deg)', 'hue-rotate(90deg)', 'hue-rotate(180deg)']
+                 } :
+                 attackAnimation && attackAnimation.attacker === 'project1' ? 
+                 { 
+                   scale: [1, 1.5, 1.3, 1], 
+                   rotate: [0, 20, -10, 0],
+                   boxShadow: ['0 0 0 rgba(255,255,0,0)', '0 0 30px rgba(255,255,0,0.8)', '0 0 0 rgba(255,255,0,0)']
+                 } : 
+                 attackAnimation && attackAnimation.target === 'project1' ?
+                 { 
+                   x: health1 <= 20 ? [-8, 8, -8, 8, 0] : [-5, 5, -5, 5, 0],
+                   scale: health1 <= 20 ? [1, 0.85, 1.15, 0.9, 1] : [1, 0.9, 1.1, 0.95, 1],
+                   filter: ['hue-rotate(0deg)', 'hue-rotate(180deg)', 'hue-rotate(0deg)']
+                 } : 
+                 health1 <= 20 ? {
+                   scale: [1, 1.05, 1],
+                   filter: ['hue-rotate(0deg)', 'hue-rotate(10deg)', 'hue-rotate(0deg)']
+                 } : {}
+               }
+               transition={{ duration: isExploding ? 2 : (attackAnimation ? 1.5 : 0.5) }}
+             />
+             <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-xs font-bold text-white">
+               1
+             </div>
+           </div>
+           <h4 className="text-white font-bold text-sm truncate">{battle.project1.title}</h4>
+           <div className="text-red-400 font-bold">{battle.project1.votes} votes</div>
+           
+           {/* Health Bar for Fighter 1 */}
+           <div className="mt-2">
+             <div className="flex justify-between text-xs text-gray-400 mb-1">
+               <span>HP</span>
+               <span className={health1 <= 20 ? 'text-red-400 font-bold' : 'text-gray-400'}>{health1}%</span>
+             </div>
+             <div className="w-full bg-gray-700 rounded-full h-2">
+               <motion.div 
+                 className={`h-2 rounded-full transition-all duration-500 ${
+                   health1 > 50 ? 'bg-green-500' : health1 > 25 ? 'bg-yellow-500' : 'bg-red-500'
+                 }`}
+                 style={{ width: `${health1}%` }}
+                 animate={{ width: `${health1}%` }}
+               />
+             </div>
+           </div>
+         </div>
 
-        {/* VS */}
-        <div className="px-4">
-          <motion.div 
-            className="text-yellow-400 font-bold text-2xl"
-            animate={attackAnimation ? 
-              { scale: [1, 1.5, 1], rotate: [0, 180, 360] } : 
-              { rotate: [0, 10, -10, 0] }
-            }
-            transition={attackAnimation ? 
-              { duration: 1.5, repeat: 0 } : 
-              { duration: 2, repeat: Infinity }
-            }
-          >
-            {attackAnimation ? '💥' : '⚔️'}
-          </motion.div>
-        </div>
+                 {/* VS */}
+         <div className="px-4">
+           <motion.div 
+             className="text-yellow-400 font-bold text-2xl"
+             animate={isExploding ? 
+               { scale: [1, 2, 0], rotate: [0, 360] } :
+               attackAnimation ? 
+               { scale: [1, 1.5, 1], rotate: [0, 180, 360] } : 
+               { rotate: [0, 10, -10, 0] }
+             }
+             transition={isExploding ? 
+               { duration: 2 } :
+               attackAnimation ? 
+               { duration: 1.5, repeat: 0 } : 
+               { duration: 2, repeat: Infinity }
+             }
+           >
+             {isExploding ? '💀' : attackAnimation ? '💥' : '⚔️'}
+           </motion.div>
+           
+           {/* Health Warning Indicator */}
+           {(health1 <= 20 || health2 <= 20) && (
+             <motion.div
+               className="text-red-400 text-xs font-bold mt-2"
+               animate={{ 
+                 opacity: [0.5, 1, 0.5],
+                 scale: [0.9, 1.1, 0.9]
+               }}
+               transition={{ duration: 1, repeat: Infinity }}
+             >
+               ⚠️ LOW HP! ⚠️
+             </motion.div>
+           )}
+         </div>
 
-        {/* Fighter 2 */}
-        <div className="flex-1 text-center">
-          <div className={`w-16 h-16 mx-auto mb-2 relative ${attackAnimation && attackAnimation.target === 'project2' ? 'fighter-shake' : ''}`}>
-            <motion.img 
-              src={battle.project2.logo} 
-              alt={battle.project2.title}
-              className={`w-full h-full object-contain rounded-full border-4 ${
-                attackAnimation && attackAnimation.attacker === 'project2' ? 'border-yellow-400 shadow-2xl shadow-yellow-400/50' : 'border-blue-400'
-              }`}
-              animate={attackAnimation && attackAnimation.attacker === 'project2' ? 
-                { 
-                  scale: [1, 1.5, 1.3, 1], 
-                  rotate: [0, -20, 10, 0],
-                  boxShadow: ['0 0 0 rgba(255,255,0,0)', '0 0 30px rgba(255,255,0,0.8)', '0 0 0 rgba(255,255,0,0)']
-                } : 
-                attackAnimation && attackAnimation.target === 'project2' ?
-                { 
-                  x: [5, -5, 5, -5, 0],
-                  scale: [1, 0.9, 1.1, 0.95, 1],
-                  filter: ['hue-rotate(0deg)', 'hue-rotate(180deg)', 'hue-rotate(0deg)']
-                } : {}
-              }
-              transition={{ duration: attackAnimation ? 1.5 : 0.5 }}
-            />
-            <div className="absolute -top-1 -right-1 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-xs font-bold text-white">
-              2
-            </div>
-          </div>
-          <h4 className="text-white font-bold text-sm truncate">{battle.project2.title}</h4>
-          <div className="text-blue-400 font-bold">{battle.project2.votes} votes</div>
-        </div>
+                 {/* Fighter 2 */}
+         <div className="flex-1 text-center">
+           <div className="w-16 h-16 mx-auto mb-2 relative">
+             <motion.img 
+               src={battle.project2.logo} 
+               alt={battle.project2.title}
+               className={`w-full h-full object-contain rounded-full border-4 ${
+                 isExploding ? 'border-red-500 shadow-2xl shadow-red-500/50' :
+                 attackAnimation && attackAnimation.attacker === 'project2' ? 'border-yellow-400 shadow-2xl shadow-yellow-400/50' : 
+                 health2 <= 20 ? 'border-red-500 shadow-lg shadow-red-500/30' : 'border-blue-400'
+               }`}
+               animate={isExploding ? 
+                 { 
+                   scale: [1, 1.3, 0], 
+                   rotate: [0, -180, -360],
+                   filter: ['hue-rotate(0deg)', 'hue-rotate(-90deg)', 'hue-rotate(-180deg)']
+                 } :
+                 attackAnimation && attackAnimation.attacker === 'project2' ? 
+                 { 
+                   scale: [1, 1.5, 1.3, 1], 
+                   rotate: [0, -20, 10, 0],
+                   boxShadow: ['0 0 0 rgba(255,255,0,0)', '0 0 30px rgba(255,255,0,0.8)', '0 0 0 rgba(255,255,0,0)']
+                 } : 
+                 attackAnimation && attackAnimation.target === 'project2' ?
+                 { 
+                   x: health2 <= 20 ? [8, -8, 8, -8, 0] : [5, -5, 5, -5, 0],
+                   scale: health2 <= 20 ? [1, 0.85, 1.15, 0.9, 1] : [1, 0.9, 1.1, 0.95, 1],
+                   filter: ['hue-rotate(0deg)', 'hue-rotate(180deg)', 'hue-rotate(0deg)']
+                 } : 
+                 health2 <= 20 ? {
+                   scale: [1, 1.05, 1],
+                   filter: ['hue-rotate(0deg)', 'hue-rotate(-10deg)', 'hue-rotate(0deg)']
+                 } : {}
+               }
+               transition={{ duration: isExploding ? 2 : (attackAnimation ? 1.5 : 0.5) }}
+             />
+             <div className="absolute -top-1 -right-1 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-xs font-bold text-white">
+               2
+             </div>
+           </div>
+           <h4 className="text-white font-bold text-sm truncate">{battle.project2.title}</h4>
+           <div className="text-blue-400 font-bold">{battle.project2.votes} votes</div>
+           
+           {/* Health Bar for Fighter 2 */}
+           <div className="mt-2">
+             <div className="flex justify-between text-xs text-gray-400 mb-1">
+               <span>HP</span>
+               <span className={health2 <= 20 ? 'text-red-400 font-bold' : 'text-gray-400'}>{health2}%</span>
+             </div>
+             <div className="w-full bg-gray-700 rounded-full h-2">
+               <motion.div 
+                 className={`h-2 rounded-full transition-all duration-500 ${
+                   health2 > 50 ? 'bg-green-500' : health2 > 25 ? 'bg-yellow-500' : 'bg-red-500'
+                 }`}
+                 style={{ width: `${health2}%` }}
+                 animate={{ width: `${health2}%` }}
+               />
+             </div>
+           </div>
+         </div>
       </div>
 
       {/* Attack Animations */}
@@ -1741,18 +1905,7 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
         <CardAttackAnimation attacker={attackAnimation.attacker} target={attackAnimation.target} />
       )}
 
-      {/* Fighter Shake Effect */}
-      <style jsx>{`
-        .fighter-shake {
-          animation: shake 0.5s ease-in-out;
-        }
-        
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-5px); }
-          75% { transform: translateX(5px); }
-        }
-      `}</style>
+      
 
       {/* Progress Bar */}
       <div className="mb-4">
