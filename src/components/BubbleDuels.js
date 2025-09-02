@@ -600,8 +600,21 @@ const BubbleDuels = ({ currentUser }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 text-white">
+      {/* Aquads Logo Header */}
+      <div className="pt-8 pb-4">
+        <div className="container mx-auto px-4 text-center">
+          <a href="/" className="inline-block">
+            <img 
+              src="/Aquadsnewlogo.png" 
+              alt="Aquads" 
+              className="h-20 mx-auto hover:scale-105 transition-transform duration-300"
+            />
+          </a>
+        </div>
+      </div>
+      
       {/* Simplified Header */}
-      <div className="py-12">
+      <div className="py-8">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-6xl font-bold mb-4">
             <span className="bg-gradient-to-r from-red-400 via-yellow-400 to-blue-400 text-transparent bg-clip-text">
