@@ -94,6 +94,32 @@ const BubbleDuels = ({ currentUser }) => {
     return () => clearInterval(interval);
   }, []);
 
+  // Refresh active battle data periodically to stay in sync
+  useEffect(() => {
+    if (!activeBattle) return;
+
+    const refreshActiveBattle = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/bubble-duels/${activeBattle.battleId}`);
+        if (response.ok) {
+          const battleData = await response.json();
+          setActiveBattle(battleData);
+          setBattleStats({
+            project1Votes: battleData.project1.votes,
+            project2Votes: battleData.project2.votes
+          });
+          setTimeRemaining(battleData.remainingTime || 0);
+        }
+      } catch (error) {
+        // Error refreshing active battle
+      }
+    };
+
+    // Refresh every 5 seconds for active battles
+    const interval = setInterval(refreshActiveBattle, 5000);
+    return () => clearInterval(interval);
+  }, [activeBattle?.battleId]);
+
   // Socket.io for real-time updates
   useEffect(() => {
     const socket = io(API_URL);
@@ -158,6 +184,40 @@ const BubbleDuels = ({ currentUser }) => {
           timestamp: new Date().toLocaleTimeString()
         }, ...prev.slice(0, 9)]);
       }
+    });
+
+    // Listen for battle vote updates specifically
+    socket.on('battleVoteUpdate', (data) => {
+      // Update active battle if it matches
+      if (activeBattle && activeBattle.battleId === data.battleId) {
+        setActiveBattle(prev => ({
+          ...prev,
+          project1: { ...prev.project1, votes: data.project1Votes },
+          project2: { ...prev.project2, votes: data.project2Votes },
+          totalVotes: data.totalVotes,
+          remainingTime: data.remainingTime
+        }));
+        
+        // Update battle stats
+        setBattleStats({
+          project1Votes: data.project1Votes,
+          project2Votes: data.project2Votes
+        });
+        
+        // Update time remaining
+        setTimeRemaining(data.remainingTime);
+      }
+      
+      // Update in allActiveBattles as well
+      setAllActiveBattles(prev => prev.map(battle => 
+        battle.battleId === data.battleId ? {
+          ...battle,
+          project1: { ...battle.project1, votes: data.project1Votes },
+          project2: { ...battle.project2, votes: data.project2Votes },
+          totalVotes: data.totalVotes,
+          remainingTime: data.remainingTime
+        } : battle
+      ));
     });
 
     return () => socket.disconnect();
