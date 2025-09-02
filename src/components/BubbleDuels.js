@@ -29,8 +29,10 @@ const BubbleDuels = ({ currentUser }) => {
   const [liveFeed, setLiveFeed] = useState([]);
   const [isStartingBattle, setIsStartingBattle] = useState(false); // Prevent double-clicking
 
-
-
+  // Debug attack animation changes
+  useEffect(() => {
+    console.log('🎬 Main component attack animation changed:', attackAnimation);
+  }, [attackAnimation]);
 
 
   // Fetch bubble ads (same as main page)
@@ -451,8 +453,8 @@ const BubbleDuels = ({ currentUser }) => {
         
         setAttackAnimation({ battleId, attacker, target });
         
-        // Clear animation after duration
-        setTimeout(() => setAttackAnimation(null), 4000);
+        // Clear animation after duration (5 seconds to match component)
+        setTimeout(() => setAttackAnimation(null), 5000);
         
         // Update the battle in allActiveBattles
         setAllActiveBattles(prev => prev.map(battle => 
@@ -1486,8 +1488,12 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
   // Handle attack animation for this specific battle
   useEffect(() => {
     if (attackAnimation && attackAnimation.battleId === battle.battleId) {
+      console.log('🎬 ActiveBattleCard received attack animation:', attackAnimation);
       setLocalAttackAnimation(attackAnimation);
-      setTimeout(() => setLocalAttackAnimation(null), 5000);
+      setTimeout(() => {
+        console.log('🔄 ActiveBattleCard clearing local attack animation');
+        setLocalAttackAnimation(null);
+      }, 5000);
     }
   }, [attackAnimation, battle.battleId]);
 
@@ -1524,11 +1530,13 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
       {localAttackAnimation && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center">
           <div className="relative max-w-4xl max-h-[90vh] w-full mx-4">
-            <img 
-              src="/attack.gif" 
-              alt="Attack Animation"
-              className="w-full h-full object-contain rounded-xl shadow-2xl"
-            />
+                         <img 
+               src="/attack.gif" 
+               alt="Attack Animation"
+               className="w-full h-full object-contain rounded-xl shadow-2xl"
+               onLoad={() => console.log('✅ Attack GIF loaded successfully')}
+               onError={(e) => console.error('❌ Failed to load attack GIF:', e)}
+             />
             <div className="absolute top-4 right-4 text-white text-2xl font-bold bg-black/50 px-4 py-2 rounded-lg">
               💥 ATTACK! 💥
             </div>
@@ -1540,11 +1548,13 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
       {showKOAnimation && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center">
           <div className="relative max-w-4xl max-h-[90vh] w-full mx-4">
-            <img 
-              src="/ko.gif" 
-              alt="KO Animation"
-              className="w-full h-full object-contain rounded-xl shadow-2xl"
-            />
+                         <img 
+               src="/ko.gif" 
+               alt="KO Animation"
+               className="w-full h-full object-contain rounded-xl shadow-2xl"
+               onLoad={() => console.log('✅ KO GIF loaded successfully')}
+               onError={(e) => console.error('❌ Failed to load KO GIF:', e)}
+             />
             <div className="absolute top-4 right-4 text-white text-2xl font-bold bg-black/50 px-4 py-2 rounded-lg">
               💀 KNOCKOUT! 💀
             </div>
