@@ -433,6 +433,7 @@ const BubbleDuels = ({ currentUser }) => {
 
   // Vote in any battle (for active battles section)
   const voteInBattle = async (battleId, projectSide) => {
+    console.log('🚨 TEST: voteInBattle function reached!');
     console.log('🗳️ voteInBattle called with:', { battleId, projectSide, currentUser: !!currentUser, hasToken: !!currentUser?.token });
     
     if (!currentUser || !currentUser.token) {
@@ -1523,6 +1524,7 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
   }, [attackAnimation, battle.battleId]);
 
   const handleVote = async (projectSide) => {
+    console.log('🚨 TEST: handleVote function reached!');
     console.log('🎯 handleVote called with:', { projectSide, battleId: battle.battleId, isVoting });
     console.log('🔍 onBattleVote function:', onBattleVote);
     
