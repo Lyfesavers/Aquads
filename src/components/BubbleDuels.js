@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import io from 'socket.io-client';
 import { motion } from 'framer-motion';
 import { 
@@ -732,7 +732,7 @@ const BubbleDuels = ({ currentUser }) => {
             </div>
             <div className="flex items-center space-x-2">
               <Trophy className="text-gold-400" />
-              <span>Winner Gets Trending</span>
+              <span>Winner Gets Trending/Volume/Bubble Bump plus more to come</span>
             </div>
           </div>
         </div>
