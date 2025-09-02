@@ -1444,17 +1444,15 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
     });
     
     // Check if health decreased (attack happened) by comparing with current state
-    if (health1 !== 100 || health2 !== 100) {
-      if (health1Value < health1 || health2Value < health2) {
-        console.log('Attack detected! Triggering GIF');
-        // Determine which fighter was attacked
-        const attacker = health1Value < health1 ? 'project2' : 'project1';
-        const target = health1Value < health1 ? 'project1' : 'project2';
-        
-        // Trigger attack GIF animation
-        setLocalAttackAnimation({ battleId: battle.battleId, attacker, target });
-        setTimeout(() => setLocalAttackAnimation(null), 5000);
-      }
+    if (health1Value < health1 || health2Value < health2) {
+      console.log('Attack detected! Triggering GIF');
+      // Determine which fighter was attacked
+      const attacker = health1Value < health1 ? 'project2' : 'project1';
+      const target = health1Value < health1 ? 'project1' : 'project2';
+      
+      // Trigger attack GIF animation
+      setLocalAttackAnimation({ battleId: battle.battleId, attacker, target });
+      setTimeout(() => setLocalAttackAnimation(null), 5000);
     }
     
     // Check if health reached 0 (KO happened) - always check this
