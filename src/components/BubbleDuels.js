@@ -39,10 +39,6 @@ const BubbleDuels = ({ currentUser }) => {
   const [gifAnimation, setGifAnimation] = useState(null); // Separate state for GIF animations
   const [notification, setNotification] = useState(null); // For bottom-left notifications
 
-
-
-
-
   // Use React Query hooks for data fetching
   const { data: allActiveBattles = [], isLoading: battlesLoading } = useBubbleDuels();
   
@@ -110,11 +106,77 @@ const BubbleDuels = ({ currentUser }) => {
   // Use custom socket hook for real-time updates
   const { socket, isConnected: socketConnected, on, off } = useSocket(API_URL);
 
+  // Fetch bubble ads (same as main page)
+  useEffect(() => {
+    const fetchAds = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/ads`);
+        if (response.ok) {
+          const adsData = await response.json();
+          
+          // Get IDs of bubbles already in active battles
+          const activeBattleBubbleIds = new Set();
+          allActiveBattles.forEach(battle => {
+            if (battle.status === 'active' || battle.status === 'waiting') {
+              activeBattleBubbleIds.add(battle.project1.adId);
+              activeBattleBubbleIds.add(battle.project2.adId);
+            }
+          });
+          
+          // Filter all eligible ads that are eligible for battles (not already battling)
+          const validAds = adsData.filter(ad => {
+            const hasLogo = ad.logo;
+            const hasTitle = ad.title;
+            const isEligible = ad.status === 'active' || ad.status === 'approved';
+            const notInBattle = !activeBattleBubbleIds.has(ad.id);
+            
+            return isEligible && hasLogo && hasTitle && notInBattle;
+          });
+          
+          setAds(validAds);
+        }
+      } catch (error) {
+        // Error fetching ads
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAds();
+  }, [allActiveBattles]); // Re-fetch when battles change
+
+  // Refresh active battle data periodically to stay in sync
+  useEffect(() => {
+    if (!activeBattle) return;
+
+    const refreshActiveBattle = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/bubble-duels/${activeBattle.battleId}`);
+        if (response.ok) {
+          const battleData = await response.json();
+          setActiveBattle(battleData);
+          setBattleStats({
+            project1Votes: battleData.project1.votes,
+            project2Votes: battleData.project2.votes
+          });
+          setTimeRemaining(battleData.remainingTime || 0);
+        }
+      } catch (error) {
+        // Error refreshing active battle
+      }
+    };
+
+    // Refresh every 5 seconds for active battles
+    const interval = setInterval(refreshActiveBattle, 5000);
+    return () => clearInterval(interval);
+  }, [activeBattle?.battleId]);
+
   // Set up socket event listeners for real-time updates
   useEffect(() => {
     if (!socket) return;
 
     const handleBubbleDuelUpdate = (data) => {
+      console.log('Received bubbleDuelUpdate:', data);
       if (data.type === 'vote' && data.battle) {
         // Update active battle if it matches (immediate for user experience)
         if (activeBattle && activeBattle.battleId === data.battle.battleId) {
@@ -169,6 +231,8 @@ const BubbleDuels = ({ currentUser }) => {
     };
 
     const handleBattleVoteUpdate = (data) => {
+      console.log('Received battleVoteUpdate:', data);
+      
       // Update active battle if it matches
       if (activeBattle && activeBattle.battleId === data.battleId) {
         setActiveBattle(prev => ({
@@ -199,8 +263,6 @@ const BubbleDuels = ({ currentUser }) => {
     };
   }, [socket, activeBattle, battleStats, on, off]);
 
-  // React Query handles fallback automatically with retries and caching
-
   // Battle timer countdown
   useEffect(() => {
     let interval;
@@ -225,12 +287,12 @@ const BubbleDuels = ({ currentUser }) => {
     };
   }, [selectedProjects]);
 
-  const openFighterSelect = useCallback((position) => {
+  const openFighterSelect = (position) => {
     setSelectingFor(position);
     setShowFighterSelect(true);
-  }, []);
+  };
 
-  const selectProject = useCallback((project) => {
+  const selectProject = (project) => {
     if (selectingFor === 'fighter1') {
       // Replace fighter 1 or add if empty
       const newSelected = selectedProjects.length > 0 ? 
@@ -245,9 +307,9 @@ const BubbleDuels = ({ currentUser }) => {
     
     setShowFighterSelect(false);
     setSelectingFor(null);
-  }, [selectingFor, selectedProjects]);
+  };
 
-  const removeProject = useCallback((position) => {
+  const removeProject = (position) => {
     if (position === 0) {
       // Remove fighter 1
       setSelectedProjects(selectedProjects.slice(1));
@@ -255,25 +317,26 @@ const BubbleDuels = ({ currentUser }) => {
       // Remove fighter 2
       setSelectedProjects(selectedProjects.slice(0, 1));
     }
-  }, [selectedProjects]);
+  };
 
-  // Use React Query mutation for creating battles
-  const createBattleMutation = useCreateBubbleDuel();
-  
-  const startBattle = useCallback(async () => {
+  const startBattle = async () => {
     if (selectedProjects.length !== 2) return;
     
     // Prevent double-clicking
     if (isStartingBattle) return;
     
     setIsStartingBattle(true);
+    
+    // Declare safetyTimeout at function scope so it can be accessed in cleanup
+    let safetyTimeout;
 
     try {
       // Safety timeout to prevent loading state from getting stuck
-      const safetyTimeout = setTimeout(() => {
+      safetyTimeout = setTimeout(() => {
         setIsStartingBattle(false);
       }, 30000); // 30 seconds timeout
       
+      // Create battle first
       if (!currentUser || !currentUser.token) {
         clearTimeout(safetyTimeout);
         alert('Please login to create battles!');
@@ -281,34 +344,66 @@ const BubbleDuels = ({ currentUser }) => {
         return;
       }
 
-      const battleData = await createBattleMutation.mutateAsync({
-        project1AdId: selectedProjects[0].id,
-        project2AdId: selectedProjects[1].id,
-        duration: 3600,
-        targetVotes: 100,
-        token: currentUser.token
+      const createResponse = await fetch(`${API_URL}/api/bubble-duels/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({
+          project1AdId: selectedProjects[0].id,
+          project2AdId: selectedProjects[1].id,
+          duration: 3600,
+          targetVotes: 100
+        })
       });
 
-      // Start the battle
-      setActiveBattle(battleData.battle);
-      setSelectedProjects([]);
-      setBattleStats({
-        project1Votes: battleData.battle.project1.votes,
-        project2Votes: battleData.battle.project2.votes
-      });
-      setTimeRemaining(battleData.battle.remainingTime || 3600);
-      setAttackAnimation(null);
-      setIsStartingBattle(false);
-      clearTimeout(safetyTimeout);
-      
+      const battleData = await createResponse.json();
+
+      if (createResponse.ok) {
+        // Start the battle
+        const startResponse = await fetch(`${API_URL}/api/bubble-duels/${battleData.battleId}/start`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentUser.token}`
+          }
+        });
+
+        const startData = await startResponse.json();
+
+        if (startResponse.ok) {
+          setActiveBattle(startData.battle);
+          setTimeRemaining(startData.battle.remainingTime);
+          setBattleStats({ 
+            project1Votes: startData.battle.project1.votes,
+            project2Votes: startData.battle.project2.votes
+          });
+          // Reset loading state on success
+          setIsStartingBattle(false);
+        } else {
+          clearTimeout(safetyTimeout);
+          alert(startData.error || 'Failed to start battle');
+          setIsStartingBattle(false);
+        }
+      } else {
+        clearTimeout(safetyTimeout);
+        if (createResponse.status === 401) {
+          alert('Authentication failed. Please login again.');
+        } else {
+          alert(battleData.error || 'Failed to create battle');
+        }
+        setIsStartingBattle(false);
+      }
     } catch (error) {
       clearTimeout(safetyTimeout);
-      alert(error.message || 'Failed to start battle. Please try again.');
+      // Error starting battle
+      alert('Failed to start battle. Please try again.');
       setIsStartingBattle(false);
     }
-  }, [selectedProjects, isStartingBattle, currentUser, createBattleMutation]);
+  };
 
-  const endBattle = useCallback(() => {
+  const endBattle = () => {
     const winner = battleStats.project1Votes > battleStats.project2Votes ? 
       activeBattle.project1 : activeBattle.project2;
     
@@ -318,21 +413,26 @@ const BubbleDuels = ({ currentUser }) => {
     setActiveBattle(null);
     setSelectedProjects([]);
     setBattleStats({ project1Votes: 0, project2Votes: 0 });
-  }, [battleStats, activeBattle]);
+  };
 
-  // Use React Query mutation for cancelling battles
-  const cancelBattleMutation = useCancelBubbleDuel();
-  
-  const cancelBattle = useCallback(async () => {
-    if (safeActiveBattle) {
+  const cancelBattle = async () => {
+    if (activeBattle) {
       try {
-        await cancelBattleMutation.mutateAsync({
-          battleId: safeActiveBattle.battleId,
-          token: currentUser.token
+        // Cancel the battle on the server
+        const response = await fetch(`${API_URL}/api/bubble-duels/${activeBattle.battleId}/cancel`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentUser.token}`
+          }
         });
+
+        if (response.ok) {
+          // Remove from active battles list
+          setAllActiveBattles(prev => prev.filter(battle => battle.battleId !== activeBattle.battleId));
+        }
       } catch (error) {
         // Error cancelling battle
-        console.error('Failed to cancel battle:', error);
       }
     }
     
@@ -342,97 +442,124 @@ const BubbleDuels = ({ currentUser }) => {
     setBattleStats({ project1Votes: 0, project2Votes: 0 });
     setAttackAnimation(null);
     setIsStartingBattle(false); // Reset loading state
-  }, [safeActiveBattle, currentUser, cancelBattleMutation]);
+  };
 
   // Cancel any battle from live battles section
-  const cancelAnyBattle = useCallback(async (battleId) => {
+  const cancelAnyBattle = async (battleId) => {
     if (!currentUser || !currentUser.token) {
       alert('Please login to cancel battles!');
       return;
     }
 
     try {
-      await cancelBattleMutation.mutateAsync({
-        battleId,
-        token: currentUser.token
+      const response = await fetch(`${API_URL}/api/bubble-duels/${battleId}/cancel`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        }
       });
-      
-      // If this was the active battle, clear it
-      if (safeActiveBattle && safeActiveBattle.battleId === battleId) {
-        setActiveBattle(null);
-        setSelectedProjects([]);
-        setTimeRemaining(0);
-        setBattleStats({ project1Votes: 0, project2Votes: 0 });
-        setAttackAnimation(null);
-        setIsStartingBattle(false); // Reset loading state
+
+      if (response.ok) {
+        // Remove from active battles list
+        setAllActiveBattles(prev => prev.filter(battle => battle.battleId !== battleId));
+        
+        // If this was the active battle, clear it
+        if (activeBattle && activeBattle.battleId === battleId) {
+          setActiveBattle(null);
+          setSelectedProjects([]);
+          setTimeRemaining(0);
+          setBattleStats({ project1Votes: 0, project2Votes: 0 });
+          setAttackAnimation(null);
+          setIsStartingBattle(false); // Reset loading state
+        }
+
+        alert('Battle cancelled successfully!');
+      } else {
+        const data = await response.json();
+        alert(data.error || 'Failed to cancel battle');
       }
-
-      alert('Battle cancelled successfully!');
     } catch (error) {
-      alert(error.message || 'Failed to cancel battle. Please try again.');
+      // Error cancelling battle
+      alert('Failed to cancel battle. Please try again.');
     }
-  }, [currentUser, safeActiveBattle, cancelBattleMutation]);
+  };
 
-  const startNewGame = useCallback(() => {
+  const startNewGame = () => {
     setActiveBattle(null);
     setSelectedProjects([]);
     setTimeRemaining(0);
     setBattleStats({ project1Votes: 0, project2Votes: 0 });
     setAttackAnimation(null);
     setIsStartingBattle(false); // Reset loading state
-  }, []);
+  };
 
-  const selectBattle = useCallback((battle) => {
-    if (!battle || !battle.project1 || !battle.project2) return;
-    
+  const selectBattle = (battle) => {
     setActiveBattle(battle);
     setTimeRemaining(battle.remainingTime || 0);
     setBattleStats({ 
-      project1Votes: battle.project1?.votes || 0,
-      project2Votes: battle.project2?.votes || 0
+      project1Votes: battle.project1.votes || 0,
+      project2Votes: battle.project2.votes || 0
     });
-  }, []);
+  };
 
 
 
-  // Use React Query mutation for voting
-  const voteMutation = useVoteInBubbleDuel();
-  
   // Vote in any battle (for active battles section)
-  const voteInBattle = useCallback(async (battleId, projectSide) => {
+  const voteInBattle = async (battleId, projectSide) => {
+    
     if (!currentUser || !currentUser.token) {
       alert('Please login to vote!');
       return;
     }
 
-    try {
-      await voteMutation.mutateAsync({
-        battleId,
-        projectSide,
-        token: currentUser.token
-      });
-      
-      // Points awarded silently - no popup needed
-    } catch (error) {
-      if (error.message.includes('Authentication failed')) {
-        alert('Authentication failed. Please login again.');
-      } else {
-        setNotification({
-          message: error.message || 'Failed to vote',
-          type: 'error'
-        });
-        setTimeout(() => setNotification(null), 3000);
-      }
-    }
-  }, [currentUser, voteMutation]);
+    const requestBody = { 
+      projectSide: projectSide === 'project1Votes' ? 'project1' : 'project2' 
+    };
 
-  const vote = useCallback(async (projectSide) => {
+    try {
+      const response = await fetch(`${API_URL}/api/bubble-duels/${battleId}/vote`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Update the battle in allActiveBattles
+        setAllActiveBattles(prev => prev.map(battle => 
+          battle.battleId === battleId ? data.battle : battle
+        ));
+        
+        // Points awarded silently - no popup needed
+      } else {
+        if (response.status === 401) {
+          alert('Authentication failed. Please login again.');
+        } else {
+          setNotification({
+            message: data.error || 'Failed to vote',
+            type: 'error'
+          });
+          setTimeout(() => setNotification(null), 3000);
+        }
+      }
+    } catch (error) {
+      // Error voting in battle
+      alert('Failed to vote. Please try again.');
+    }
+  };
+
+  const vote = async (projectSide) => {
     if (!currentUser) {
       alert('Please login to vote!');
       return;
     }
 
-    if (!safeActiveBattle) return;
+    if (!activeBattle) return;
 
     try {
       if (!currentUser || !currentUser.token) {
@@ -440,44 +567,56 @@ const BubbleDuels = ({ currentUser }) => {
         return;
       }
 
-      const data = await voteMutation.mutateAsync({
-        battleId: safeActiveBattle.battleId,
-        projectSide,
-        token: currentUser.token
+      const response = await fetch(`${API_URL}/api/bubble-duels/${activeBattle.battleId}/vote`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentUser.token}`
+        },
+        body: JSON.stringify({ 
+          projectSide: projectSide === 'project1Votes' ? 'project1' : 'project2' 
+        })
       });
 
-      // Update local state with server response
-      setBattleStats({
-        project1Votes: data.battle.project1Votes,
-        project2Votes: data.battle.project2Votes
-      });
+      const data = await response.json();
 
-      // Show notification if points awarded
-      if (data.pointsAwarded > 0) {
-        setNotification({
-          message: `+${data.pointsAwarded} points! 🎉`,
-          type: 'success'
+      if (response.ok) {
+        // Update local state with server response
+        setBattleStats({
+          project1Votes: data.battle.project1Votes,
+          project2Votes: data.battle.project2Votes
         });
-        setTimeout(() => setNotification(null), 3000);
+
+
+
+        // Show notification if points awarded
+        if (data.pointsAwarded > 0) {
+          setNotification({
+            message: `+${data.pointsAwarded} points! 🎉`,
+            type: 'success'
+          });
+          setTimeout(() => setNotification(null), 3000);
+        }
+      } else {
+        if (response.status === 401) {
+          alert('Authentication failed. Please login again.');
+        } else {
+          setNotification({
+            message: data.error || 'Failed to vote',
+            type: 'error'
+          });
+          setTimeout(() => setNotification(null), 3000);
+        }
       }
     } catch (error) {
-      if (error.message.includes('Authentication failed')) {
-        alert('Authentication failed. Please login again.');
-      } else {
-        setNotification({
-          message: error.message || 'Failed to vote',
-          type: 'error'
-        });
-        setTimeout(() => setNotification(null), 3000);
-      }
+      // Error voting
+      alert('Failed to vote. Please try again.');
     }
-  }, [currentUser, activeBattle, voteMutation]);
+  };
 
-  const shareToSocial = useCallback((platform) => {
-    if (!safeActiveBattle) return;
-    
+  const shareToSocial = (platform) => {
     const battleUrl = window.location.href;
-    const text = `🥊 EPIC BUBBLE BATTLE! ${safeActiveBattle.project1?.title || 'Unknown'} VS ${safeActiveBattle.project2?.title || 'Unknown'} - Vote now! ⚡`;
+    const text = `🥊 EPIC BUBBLE BATTLE! ${activeBattle.project1.title} VS ${activeBattle.project2.title} - Vote now! ⚡`;
     
     const urls = {
       twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(battleUrl)}`,
@@ -485,14 +624,14 @@ const BubbleDuels = ({ currentUser }) => {
     };
     
     window.open(urls[platform], '_blank');
-  }, [safeActiveBattle]);
+  };
 
-  const formatTime = useCallback((seconds) => {
+  const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
     return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  }, []);
+  };
 
   if (loading) {
     return (
@@ -539,16 +678,16 @@ const BubbleDuels = ({ currentUser }) => {
             </div>
             <div className="flex items-center space-x-2">
               <Trophy className="text-gold-400" />
-              <span>Winner Gets Trending/Volume/Bubble Bump plus more to come</span>
+              <span>Winner Gets Trending</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Battle Arena or Setup */}
-      {safeActiveBattle ? (
+      {activeBattle ? (
         <BattleArena 
-          battle={safeActiveBattle}
+          battle={activeBattle}
           timeRemaining={timeRemaining}
           battleStats={battleStats}
           onVote={vote}
@@ -559,19 +698,19 @@ const BubbleDuels = ({ currentUser }) => {
           onNewGame={startNewGame}
         />
       ) : (
-        <BattleSetup 
-          selectedProjects={selectedProjects}
-          onOpenFighterSelect={openFighterSelect}
-          onRemoveProject={removeProject}
-          onStartBattle={startBattle}
-          currentUser={currentUser}
-          ads={ads}
-          isStartingBattle={isStartingBattle}
-        />
+                                   <BattleSetup 
+            selectedProjects={selectedProjects}
+            onOpenFighterSelect={openFighterSelect}
+            onRemoveProject={removeProject}
+            onStartBattle={startBattle}
+            currentUser={currentUser}
+            ads={ads}
+            isStartingBattle={isStartingBattle}
+          />
       )}
 
                      {/* Active Battles Section */}
-                                    {allActiveBattles.length > 0 && (
+                 {allActiveBattles.length > 0 && (
            <ActiveBattlesSection 
              battles={allActiveBattles} 
              currentUser={currentUser}
@@ -604,15 +743,12 @@ const BubbleDuels = ({ currentUser }) => {
             {notification.message}
           </div>
         )}
-
     </div>
   );
 };
 
 // Battle Setup Component
 const BattleSetup = ({ selectedProjects, onOpenFighterSelect, onRemoveProject, onStartBattle, currentUser, ads, isStartingBattle }) => {
-  // Safety check for ads
-  const safeAds = Array.isArray(ads) ? ads : [];
   
   const handleFighter1Click = () => {
     onOpenFighterSelect('fighter1');
@@ -698,50 +834,50 @@ const BattleSetup = ({ selectedProjects, onOpenFighterSelect, onRemoveProject, o
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <button
-            onClick={() => {
-              if (!currentUser) {
-                alert('Please login to start battles!');
-                return;
-              }
-              
-              onStartBattle();
-            }}
-            disabled={isStartingBattle}
-            className={`bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-700 hover:to-blue-700 px-12 py-4 rounded-lg text-2xl font-bold shadow-2xl transform transition-all duration-300 ${
-              isStartingBattle 
-                ? 'opacity-50 cursor-not-allowed' 
-                : 'hover:scale-105 cursor-pointer'
-            }`}
-          >
-            {isStartingBattle ? (
-              <>
-                <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-2"></div>
-                STARTING BATTLE...
-              </>
-            ) : (
-              '🚀 START EPIC BATTLE! 🚀'
-            )}
-          </button>
+                     <button
+             onClick={() => {
+               if (!currentUser) {
+                 alert('Please login to start battles!');
+                 return;
+               }
+               
+               onStartBattle();
+             }}
+             disabled={isStartingBattle}
+             className={`bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-700 hover:to-blue-700 px-12 py-4 rounded-lg text-2xl font-bold shadow-2xl transform transition-all duration-300 ${
+               isStartingBattle 
+                 ? 'opacity-50 cursor-not-allowed' 
+                 : 'hover:scale-105 cursor-pointer'
+             }`}
+           >
+             {isStartingBattle ? (
+               <>
+                 <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-2"></div>
+                 STARTING BATTLE...
+               </>
+             ) : (
+               '🚀 START EPIC BATTLE! 🚀'
+             )}
+           </button>
         </motion.div>
       )}
 
-      {/* Instructions */}
-      <div className="text-center text-gray-300">
-        <p className="text-lg mb-2">🥊 Click on the fighter slots above to select your warriors!</p>
-        <p className="text-sm opacity-75">Choose 2 bubble projects to battle in epic 1-hour duels</p>
-        {safeAds.length === 0 && (
-          <div className="mt-4 p-3 bg-blue-500/20 border border-blue-500/50 rounded-lg">
-            <p className="text-blue-300 font-bold">⏳ All eligible bubbles are currently in battles!</p>
-            <p className="text-blue-200 text-sm">Wait for battles to end or check the Live Battles section below</p>
-          </div>
-        )}
-        {!currentUser && (
-          <div className="mt-4 p-3 bg-yellow-500/20 border border-yellow-500/50 rounded-lg">
-            <p className="text-yellow-300 font-bold">⚠️ Please login to create and participate in battles!</p>
-          </div>
-        )}
-      </div>
+             {/* Instructions */}
+       <div className="text-center text-gray-300">
+         <p className="text-lg mb-2">🥊 Click on the fighter slots above to select your warriors!</p>
+         <p className="text-sm opacity-75">Choose 2 bubble projects to battle in epic 1-hour duels</p>
+                   {ads.length === 0 && (
+            <div className="mt-4 p-3 bg-blue-500/20 border border-blue-500/50 rounded-lg">
+              <p className="text-blue-300 font-bold">⏳ All eligible bubbles are currently in battles!</p>
+              <p className="text-blue-200 text-sm">Wait for battles to end or check the Live Battles section below</p>
+            </div>
+          )}
+         {!currentUser && (
+           <div className="mt-4 p-3 bg-yellow-500/20 border border-yellow-500/50 rounded-lg">
+             <p className="text-yellow-300 font-bold">⚠️ Please login to create and participate in battles!</p>
+           </div>
+         )}
+       </div>
     </div>
   );
 };
@@ -1230,8 +1366,6 @@ const FighterDisplay = ({ project, votes, health, color, position, onVote, curre
 
 // Street Fighter Style Character Select Modal
 const FighterSelectModal = ({ ads, onSelectProject, onClose, selectingFor, alreadySelected, isStartingBattle }) => {
-  // Safety check for ads
-  const safeAds = Array.isArray(ads) ? ads : [];
   return (
     <div
       className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[9999] flex items-center justify-center"
@@ -1269,19 +1403,19 @@ const FighterSelectModal = ({ ads, onSelectProject, onClose, selectingFor, alrea
 
         {/* Fighter Grid - Street Fighter Style */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
-          {safeAds.length === 0 ? (
-            <div className="col-span-full text-center py-12">
-              <div className="text-gray-400 text-lg mb-4">
-                🚫 No available projects for battle
-              </div>
-              <div className="text-gray-500 text-sm">
-                All active projects are currently in battles or waiting to start
-              </div>
-              <div className="text-gray-400 text-xs mt-2">
-                Check back later or wait for current battles to end
-              </div>
-            </div>
-          ) : safeAds.map((ad, index) => {
+                     {ads.length === 0 ? (
+             <div className="col-span-full text-center py-12">
+               <div className="text-gray-400 text-lg mb-4">
+                 🚫 No available projects for battle
+               </div>
+               <div className="text-gray-500 text-sm">
+                 All active projects are currently in battles or waiting to start
+               </div>
+               <div className="text-gray-400 text-xs mt-2">
+                 Check back later or wait for current battles to end
+               </div>
+             </div>
+           ) : ads.map((ad, index) => {
             const isAlreadySelected = alreadySelected.find(p => p && p.id === ad.id);
             const isDisabled = isAlreadySelected;
             
