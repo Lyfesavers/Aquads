@@ -43,10 +43,8 @@ const BubbleDuels = ({ currentUser }) => {
   const liveFeedUpdateTimeoutRef = useRef(null);
   const pendingLiveFeedUpdates = useRef([]);
 
-  // Use React Query hooks for data fetching
+    // Use React Query hooks for data fetching
   const { data: allActiveBattles = [], isLoading: battlesLoading } = useBubbleDuels();
-  
-
   
   // Ensure we have valid data before calling useEligibleAds
   // Handle case where data might be nested (e.g., { battles: [...] })
@@ -65,8 +63,6 @@ const BubbleDuels = ({ currentUser }) => {
       battle != null && typeof battle === 'object'
     );
   }
-  
-
   
   const { ads = [], isLoading: adsLoading } = useEligibleAds(safeAllActiveBattlesForHook);
   
@@ -100,7 +96,7 @@ const BubbleDuels = ({ currentUser }) => {
         ]);
         pendingLiveFeedUpdates.current = [];
       }
-    }, 100); // 100ms debounce for smooth updates
+    }, 25); // 25ms debounce for faster response
   }, []);
 
   // Use React Query for active battle data
@@ -184,8 +180,8 @@ const BubbleDuels = ({ currentUser }) => {
       }
     };
 
-    // Refresh every 5 seconds for active battles
-    const interval = setInterval(refreshActiveBattle, 5000);
+    // Refresh every 2 seconds for active battles for faster updates
+    const interval = setInterval(refreshActiveBattle, 2000);
     return () => clearInterval(interval);
   }, [activeBattle?.battleId]);
 
@@ -1663,14 +1659,14 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
       
       // Trigger attack GIF animation
       setLocalAttackAnimation({ battleId: battle.battleId, attacker, target });
-      setTimeout(() => setLocalAttackAnimation(null), 5000);
+      setTimeout(() => setLocalAttackAnimation(null), 2000); // Reduced from 5s to 2s for faster response
     }
     
     // Check if health reached 0 (KO happened) - always check this
     if (health1Value <= 0 || health2Value <= 0) {
 
       setShowKOAnimation(true);
-      setTimeout(() => setShowKOAnimation(false), 5000);
+      setTimeout(() => setShowKOAnimation(false), 2000); // Reduced from 5s to 2s for faster response
     }
     
     // Update current health
