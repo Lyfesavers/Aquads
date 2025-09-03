@@ -58,13 +58,11 @@ const userSchema = new Schema({
   },
   deviceFingerprint: {
     type: String,
-    default: null,
-    index: true
+    default: null
   },
   telegramId: {
     type: String,
-    default: null,
-    index: true
+    default: null
   },
   twitterUsername: {
     type: String,
@@ -428,5 +426,12 @@ userSchema.methods.useFreeRaid = async function() {
     raidsUsedToday: this.freeRaidsUsedToday 
   };
 };
+
+// Add indexes for better query performance (only add indexes not already defined in schema)
+userSchema.index({ isAdmin: 1 }); // For admin checks
+userSchema.index({ userType: 1 }); // For user type filtering
+userSchema.index({ isOnline: 1, lastActivity: 1 }); // For online status queries
+userSchema.index({ referredBy: 1 }); // For affiliate queries
+userSchema.index({ isFreeRaidProject: 1 }); // For free raid eligibility
 
 module.exports = mongoose.model('User', userSchema); 

@@ -210,6 +210,7 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/discount-codes', require('./routes/discountCodes'));
 app.use('/api/skill-tests', require('./routes/skillTests'));
 app.use('/api/workshop', require('./routes/workshop'));
+app.use('/api/dashboard', require('./routes/dashboard'));
 
 
 // Special route for blog sharing metadata (outside the API namespace)

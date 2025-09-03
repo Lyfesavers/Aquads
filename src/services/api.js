@@ -536,7 +536,8 @@ export const pingServer = async () => {
 // Service endpoints
 export const fetchServices = async () => {
   try {
-    const response = await fetch(`${API_URL}/services?limit=100`);
+    // Use the new optimized route that eliminates N+1 problem
+    const response = await fetch(`${API_URL}/services/optimized/with-reviews?limit=100`);
     if (!response.ok) {
       throw new Error(`Failed to fetch services: ${response.status} ${response.statusText}`);
     }
@@ -610,6 +611,26 @@ export const fetchPendingServices = async () => {
     return response.json();
   } catch (error) {
     logger.error('Error fetching pending services:', error);
+    throw error;
+  }
+};
+
+// NEW: Fetch batched dashboard data (eliminates multiple API calls)
+export const fetchBatchedDashboardData = async () => {
+  try {
+    const response = await fetch(`${API_URL}/dashboard/batched-data`, {
+      headers: {
+        ...getAuthHeader()
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch dashboard data: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    logger.error('Error fetching batched dashboard data:', error);
     throw error;
   }
 };

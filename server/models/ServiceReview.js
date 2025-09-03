@@ -34,4 +34,10 @@ const serviceReviewSchema = new mongoose.Schema({
 // Ensure one review per service per user
 serviceReviewSchema.index({ serviceId: 1, userId: 1 }, { unique: true });
 
+// Add performance indexes
+serviceReviewSchema.index({ serviceId: 1, createdAt: -1 }); // For service reviews by date
+serviceReviewSchema.index({ userId: 1, createdAt: -1 }); // For user's reviews
+serviceReviewSchema.index({ rating: 1 }); // For rating-based queries
+serviceReviewSchema.index({ serviceId: 1, rating: 1 }); // For service rating aggregation
+
 module.exports = mongoose.model('ServiceReview', serviceReviewSchema); 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchBumpRequests, API_URL, fetchPendingAds, approveAd, rejectAd, fetchPendingServices, approveService, rejectService } from '../services/api';
+import { fetchBumpRequests, API_URL, fetchPendingAds, approveAd, rejectAd, fetchPendingServices, approveService, rejectService, fetchBatchedDashboardData } from '../services/api';
 import BookingManagement from './BookingManagement';
 import ServiceReviews from './ServiceReviews';
 import JobList from './JobList';
@@ -103,61 +103,69 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
     }
   }, [initialActiveTab]);
 
-  // Fetch bump requests and banner ads when dashboard opens
-  useEffect(() => {
-    if (currentUser?.isAdmin) {
-      fetchBumpRequests()
-        .then(data => {
-          setBumpRequests(data);
-        })
-        .catch(error => {
-          // Error fetching bump requests
-        });
-
-      // Fetch banner ads
-      fetchBannerAds();
-    }
-  }, [currentUser]);
-
-  useEffect(() => {
-    if (currentUser?.token) {
-      fetchAffiliateInfo();
-    }
-  }, [currentUser]);
-
-  useEffect(() => {
-    if (currentUser?.isAdmin) {
-      fetch(`${process.env.REACT_APP_API_URL}/api/points/redemptions/pending`, {
-        headers: {
-          'Authorization': `Bearer ${currentUser.token}`
-        }
-      })
-        .then(response => {
-          if (!response.ok) {
-            if (response.status === 403) {
-              throw new Error('Not authorized to view redemptions');
-            }
-            throw new Error('Failed to fetch redemptions');
-          }
-          return response.json();
-        })
-        .then(data => {
-          // Ensure we always set an array
-          setPendingRedemptions(Array.isArray(data) ? data : []);
-        })
-        .catch(error => {
-          setPendingRedemptions([]); // Set empty array on error
-        });
-
-
-    }
-  }, [currentUser]);
-
+  // NEW: Single optimized useEffect that fetches all dashboard data in one call
   useEffect(() => {
     if (currentUser) {
-      fetchBookings();
+      const loadDashboardData = async () => {
+        try {
+          // Use the new batched API call
+          const dashboardData = await fetchBatchedDashboardData();
+          
+          // Set all the data from the single response
+          if (dashboardData.data) {
+            setBumpRequests(dashboardData.data.bumpRequests || []);
+            setBannerAds(dashboardData.data.bannerAds || []);
+            setBookings(dashboardData.data.bookings || []);
+            setAffiliateEarnings(dashboardData.data.affiliateEarnings || []);
+            setPendingServices(dashboardData.data.pendingServices || []);
+            setPendingTwitterRaids(dashboardData.data.twitterRaids || []);
+            setPendingFacebookRaids(dashboardData.data.facebookRaids || []);
+            setPendingListings(dashboardData.data.pendingServices || []);
+          }
+          
+          // Set user stats if available
+          if (dashboardData.stats) {
+            // Update any stats-related state here
+          }
+          
+          // Set affiliate info if available
+          if (dashboardData.data.affiliateEarnings && dashboardData.data.affiliateEarnings.length > 0) {
+            setAffiliateInfo({
+              earnings: dashboardData.data.affiliateEarnings,
+              referredUsers: dashboardData.data.data.referredUsers || []
+            });
+          }
+          
+        } catch (error) {
+          console.error('Error loading dashboard data:', error);
+          // Fallback to individual API calls if the batched call fails
+          if (currentUser?.isAdmin) {
+            fetchBumpRequests()
+              .then(data => setBumpRequests(data))
+              .catch(err => console.error('Error fetching bump requests:', err));
+            
+            fetchBannerAds();
+          }
+          
+          if (currentUser?.token) {
+            fetchAffiliateInfo();
+          }
+          
+          if (currentUser) {
+            fetchBookings();
+          }
+        }
+      };
+      
+      loadDashboardData();
     }
   }, [currentUser]);
+
+
+
+
+
+
 
   useEffect(() => {
     if (currentUser?.token) {
