@@ -36,7 +36,11 @@ export const useEligibleAds = (allActiveBattles = []) => {
   
   // Ensure allActiveBattles is an array and safely iterate
   if (Array.isArray(allActiveBattles)) {
-    allActiveBattles.forEach((battle, index) => {
+    // Filter out undefined/null elements first
+    const validBattles = allActiveBattles.filter(battle => battle != null);
+    console.log('Valid battles after filtering:', validBattles);
+    
+    validBattles.forEach((battle, index) => {
       // Debug logging for each battle
       console.log(`Battle ${index}:`, battle);
       

@@ -47,18 +47,34 @@ const BubbleDuels = ({ currentUser }) => {
   const { data: allActiveBattles = [], isLoading: battlesLoading } = useBubbleDuels();
   
   // Debug logging to see what we're getting
-  console.log('useBubbleDuels returned:', { allActiveBattles, battlesLoading });
+  console.log('useBubbleDuels returned:', { 
+    allActiveBattles, 
+    battlesLoading,
+    type: typeof allActiveBattles,
+    isArray: Array.isArray(allActiveBattles),
+    length: allActiveBattles?.length,
+    keys: allActiveBattles && typeof allActiveBattles === 'object' ? Object.keys(allActiveBattles) : 'N/A'
+  });
   
   // Ensure we have valid data before calling useEligibleAds
   // Handle case where data might be nested (e.g., { battles: [...] })
   let safeAllActiveBattlesForHook = [];
   if (Array.isArray(allActiveBattles)) {
-    safeAllActiveBattlesForHook = allActiveBattles;
+    // Filter out undefined/null elements and ensure all elements are valid objects
+    safeAllActiveBattlesForHook = allActiveBattles.filter(battle => 
+      battle != null && typeof battle === 'object'
+    );
   } else if (allActiveBattles && Array.isArray(allActiveBattles.battles)) {
-    safeAllActiveBattlesForHook = allActiveBattles.battles;
+    safeAllActiveBattlesForHook = allActiveBattles.battles.filter(battle => 
+      battle != null && typeof battle === 'object'
+    );
   } else if (allActiveBattles && Array.isArray(allActiveBattles.data)) {
-    safeAllActiveBattlesForHook = allActiveBattles.data;
+    safeAllActiveBattlesForHook = allActiveBattles.data.filter(battle => 
+      battle != null && typeof battle === 'object'
+    );
   }
+  
+  console.log('Filtered battles for hook:', safeAllActiveBattlesForHook);
   
   const { ads = [], isLoading: adsLoading } = useEligibleAds(safeAllActiveBattlesForHook);
   
