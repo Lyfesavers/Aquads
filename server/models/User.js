@@ -429,4 +429,11 @@ userSchema.methods.useFreeRaid = async function() {
   };
 };
 
+// Add performance indexes for better query performance
+userSchema.index({ isAdmin: 1 }); // For admin checks
+userSchema.index({ userType: 1 }); // For user type filtering
+userSchema.index({ isOnline: 1, lastActivity: 1 }); // For online status queries
+userSchema.index({ referredBy: 1 }); // For affiliate queries
+userSchema.index({ isFreeRaidProject: 1 }); // For free raid eligibility
+
 module.exports = mongoose.model('User', userSchema); 

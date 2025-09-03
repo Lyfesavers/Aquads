@@ -78,4 +78,11 @@ bookingSchema.pre('save', function(next) {
   next();
 });
 
+// Performance indexes for better query performance
+bookingSchema.index({ buyerId: 1, createdAt: -1 }); // For user's bookings
+bookingSchema.index({ sellerId: 1, createdAt: -1 }); // For seller's bookings
+bookingSchema.index({ status: 1, createdAt: -1 }); // For status-based queries
+bookingSchema.index({ serviceId: 1, status: 1 }); // For service-specific bookings
+bookingSchema.index({ buyerId: 1, sellerId: 1 }); // For user-to-user booking queries
+
 module.exports = mongoose.model('Booking', bookingSchema); 
