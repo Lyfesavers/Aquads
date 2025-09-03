@@ -95,6 +95,9 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   
   // Free raid eligibility state
   const [freeRaidEligibility, setFreeRaidEligibility] = useState(null);
+  
+  // Loading state for main dashboard tab
+  const [isLoadingMainTab, setIsLoadingMainTab] = useState(true);
 
   // Update activeTab when initialActiveTab changes
   useEffect(() => {
@@ -102,6 +105,15 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       setActiveTab(initialActiveTab);
     }
   }, [initialActiveTab]);
+  
+  // Simulate loading for main dashboard tab
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoadingMainTab(false);
+    }, 1000); // Show loading for 1 second
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   // Fetch bump requests and banner ads when dashboard opens
   useEffect(() => {
@@ -1821,7 +1833,15 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
         <div className="overflow-y-auto">
           {activeTab === 'ads' && (
             <div className="space-y-6">
-              {renderAffiliateEarnings()}
+              {isLoadingMainTab ? (
+                <div className="text-center py-12">
+                  <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+                  <p className="text-gray-400 text-lg">Loading dashboard...</p>
+                  <p className="text-gray-500 text-sm mt-2">Preparing your data</p>
+                </div>
+              ) : (
+                <>
+                  {renderAffiliateEarnings()}
 
               {/* Affiliate Section */}
               <div className="bg-gray-700 rounded-lg p-6">
@@ -2059,6 +2079,8 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
                   </div>
                 )}
               </div>
+                </>
+              )}
             </div>
           )}
 
