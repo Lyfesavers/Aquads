@@ -1348,7 +1348,14 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
                 </div>
               ) : (
                 <>
-                  {filteredServices.length > 0 ? (
+                  {isLoading?.services ? (
+                    <div className="col-span-3">
+                      <div className="text-center py-12">
+                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
+                        <p className="text-gray-400 text-lg">Loading freelancer services...</p>
+                      </div>
+                    </div>
+                  ) : filteredServices.length > 0 ? (
                     filteredServices.map((service) => (
                       <div 
                         key={service._id} 
