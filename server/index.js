@@ -149,6 +149,21 @@ const limiter = rateLimit({
 app.use('/api/login', limiter);
 app.use('/api/register', limiter);
 
+// Add CSRF protection
+const csrf = require('csrf');
+
+// CSRF protection for all routes
+app.use(csrf({ cookie: true }));
+
+// Add CSRF error handler
+app.use((err, req, res, next) => {
+  if (err.code === 'EBADCSRFTOKEN') {
+    res.status(403).json({ error: 'CSRF token invalid' });
+  } else {
+    next(err);
+  }
+});
+
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
   serverSelectionTimeoutMS: 10000, // Increased to 10s for better mobile connectivity
