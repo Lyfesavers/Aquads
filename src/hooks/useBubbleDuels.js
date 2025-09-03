@@ -89,6 +89,17 @@ export const useBubbleDuels = () => {
     gcTime: 300000, // 5 minutes
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    select: (data) => {
+      // Ensure we never return arrays with undefined elements
+      if (Array.isArray(data)) {
+        const filteredData = data.filter(battle => battle != null);
+        if (filteredData.length !== data.length) {
+          console.warn('Filtered out undefined elements from bubble duels data');
+        }
+        return filteredData;
+      }
+      return data;
+    },
   });
 };
 
@@ -111,15 +122,27 @@ export const useCreateBubbleDuel = () => {
   return useMutation({
     mutationFn: createBubbleDuel,
     onSuccess: (data) => {
+      console.log('Battle created successfully:', data);
+      
       // Invalidate and refetch bubble duels
       queryClient.invalidateQueries({ queryKey: ['bubble-duels'] });
       
-      // Add the new battle to the cache
+      // Add the new battle to the cache with safety checks
       queryClient.setQueryData(['bubble-duels'], (oldData) => {
-        if (oldData) {
-          return [data.battle, ...oldData];
+        // Ensure we have valid battle data
+        if (!data || !data.battle) {
+          console.warn('No valid battle data to add to cache');
+          return oldData || [];
         }
-        return [data.battle];
+        
+        // Filter out any undefined elements from old data
+        const validOldData = Array.isArray(oldData) ? oldData.filter(battle => battle != null) : [];
+        
+        // Add new battle to the beginning
+        const newData = [data.battle, ...validOldData];
+        
+        console.log('Updated cache with new battle:', newData);
+        return newData;
       });
     },
     onError: (error) => {
@@ -137,14 +160,20 @@ export const useVoteInBubbleDuel = () => {
       // Update the specific battle in the cache
       queryClient.setQueryData(['bubble-duel', variables.battleId], data.battle);
       
-      // Update the battle in the list
+      // Update the battle in the list with safety checks
       queryClient.setQueryData(['bubble-duels'], (oldData) => {
-        if (oldData) {
-          return oldData.map(battle => 
+        if (!oldData || !Array.isArray(oldData)) {
+          return oldData || [];
+        }
+        
+        // Filter out undefined elements and update the matching battle
+        const updatedData = oldData
+          .filter(battle => battle != null)
+          .map(battle => 
             battle.battleId === variables.battleId ? data.battle : battle
           );
-        }
-        return oldData;
+        
+        return updatedData;
       });
     },
     onError: (error) => {
@@ -159,12 +188,17 @@ export const useCancelBubbleDuel = () => {
   return useMutation({
     mutationFn: cancelBubbleDuel,
     onSuccess: (data, variables) => {
-      // Remove the battle from the list
+      // Remove the battle from the list with safety checks
       queryClient.setQueryData(['bubble-duels'], (oldData) => {
-        if (oldData) {
-          return oldData.filter(battle => battle.battleId !== variables.battleId);
+        if (!oldData || !Array.isArray(oldData)) {
+          return oldData || [];
         }
-        return oldData;
+        
+        // Filter out undefined elements and remove the matching battle
+        const filteredData = oldData
+          .filter(battle => battle != null && battle.battleId !== variables.battleId);
+        
+        return filteredData;
       });
       
       // Remove the individual battle cache
