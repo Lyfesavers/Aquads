@@ -45,7 +45,22 @@ const BubbleDuels = ({ currentUser }) => {
 
   // Use React Query hooks for data fetching
   const { data: allActiveBattles = [], isLoading: battlesLoading } = useBubbleDuels();
-  const { ads = [], isLoading: adsLoading } = useEligibleAds(allActiveBattles || []);
+  
+  // Debug logging to see what we're getting
+  console.log('useBubbleDuels returned:', { allActiveBattles, battlesLoading });
+  
+  // Ensure we have valid data before calling useEligibleAds
+  // Handle case where data might be nested (e.g., { battles: [...] })
+  let safeAllActiveBattlesForHook = [];
+  if (Array.isArray(allActiveBattles)) {
+    safeAllActiveBattlesForHook = allActiveBattles;
+  } else if (allActiveBattles && Array.isArray(allActiveBattles.battles)) {
+    safeAllActiveBattlesForHook = allActiveBattles.battles;
+  } else if (allActiveBattles && Array.isArray(allActiveBattles.data)) {
+    safeAllActiveBattlesForHook = allActiveBattles.data;
+  }
+  
+  const { ads = [], isLoading: adsLoading } = useEligibleAds(safeAllActiveBattlesForHook);
   
   // Set loading state based on both queries
   useEffect(() => {
@@ -53,7 +68,7 @@ const BubbleDuels = ({ currentUser }) => {
   }, [battlesLoading, adsLoading]);
 
   // Ensure we have valid data
-  const safeAllActiveBattles = Array.isArray(allActiveBattles) ? allActiveBattles : [];
+  const safeAllActiveBattles = safeAllActiveBattlesForHook;
   const safeAds = Array.isArray(ads) ? ads : [];
 
   // React Query handles all the data fetching automatically

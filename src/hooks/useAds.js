@@ -28,22 +28,48 @@ export const useAds = () => {
 export const useEligibleAds = (allActiveBattles = []) => {
   const { data: ads = [], isLoading, error } = useAds();
   
+  // Debug logging to help identify the issue
+  console.log('useEligibleAds called with:', { allActiveBattles, ads });
+  
   // Get IDs of bubbles already in active battles
   const activeBattleBubbleIds = new Set();
-  allActiveBattles.forEach(battle => {
-    if (battle && (battle.status === 'active' || battle.status === 'waiting')) {
-      if (battle.project1?.adId) activeBattleBubbleIds.add(battle.project1.adId);
-      if (battle.project2?.adId) activeBattleBubbleIds.add(battle.project2.adId);
-    }
-  });
+  
+  // Ensure allActiveBattles is an array and safely iterate
+  if (Array.isArray(allActiveBattles)) {
+    allActiveBattles.forEach((battle, index) => {
+      // Debug logging for each battle
+      console.log(`Battle ${index}:`, battle);
+      
+      // Comprehensive safety check for battle object
+      if (battle && 
+          typeof battle === 'object' && 
+          battle.status && 
+          (battle.status === 'active' || battle.status === 'waiting') &&
+          battle.project1 && 
+          battle.project2) {
+        
+        // Safely add project IDs if they exist
+        if (battle.project1.adId && typeof battle.project1.adId === 'string') {
+          activeBattleBubbleIds.add(battle.project1.adId);
+        }
+        if (battle.project2.adId && typeof battle.project2.adId === 'string') {
+          activeBattleBubbleIds.add(battle.project2.adId);
+        }
+      }
+    });
+  }
   
   // Filter all eligible ads that are eligible for battles (not already battling)
   const eligibleAds = ads.filter(ad => {
-    if (!ad) return false;
-    const hasLogo = ad.logo;
-    const hasTitle = ad.title;
-    const isEligible = ad.status === 'active' || ad.status === 'approved';
-    const notInBattle = !activeBattleBubbleIds.has(ad.id);
+    // Comprehensive safety check for ad object
+    if (!ad || typeof ad !== 'object') return false;
+    
+    const hasLogo = ad.logo && typeof ad.logo === 'string';
+    const hasTitle = ad.title && typeof ad.title === 'string';
+    const hasStatus = ad.status && typeof ad.status === 'string';
+    const isEligible = hasStatus && (ad.status === 'active' || ad.status === 'approved');
+    const hasId = ad.id && typeof ad.id === 'string';
+    const notInBattle = hasId && !activeBattleBubbleIds.has(ad.id);
     
     return isEligible && hasLogo && hasTitle && notInBattle;
   });
