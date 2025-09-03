@@ -96,7 +96,7 @@ const BubbleDuels = ({ currentUser }) => {
         ]);
         pendingLiveFeedUpdates.current = [];
       }
-    }, 25); // 25ms debounce for faster response
+    }, 10); // 10ms debounce for instant response
   }, []);
 
   // Use React Query for active battle data
@@ -180,8 +180,8 @@ const BubbleDuels = ({ currentUser }) => {
       }
     };
 
-    // Refresh every 2 seconds for active battles for faster updates
-    const interval = setInterval(refreshActiveBattle, 2000);
+    // Refresh every 1 second for active battles for maximum responsiveness
+    const interval = setInterval(refreshActiveBattle, 1000);
     return () => clearInterval(interval);
   }, [activeBattle?.battleId]);
 
@@ -200,6 +200,11 @@ const BubbleDuels = ({ currentUser }) => {
           });
         }
 
+        // ALSO update the battle in allActiveBattles for immediate list updates
+        setAllActiveBattles(prev => prev.map(battle => 
+          battle.battleId === data.battle.battleId ? data.battle : battle
+        ));
+
         // Add to live feed immediately - use projectSide from data for instant detection
         const voteData = data.battle;
         const votedFor = data.projectSide || 'project1'; // Default to project1 if not specified
@@ -216,6 +221,9 @@ const BubbleDuels = ({ currentUser }) => {
       }
       
       if (data.type === 'start' && data.battle) {
+        // Add new battle to the list immediately
+        setAllActiveBattles(prev => [data.battle, ...prev]);
+        
         updateLiveFeedDebounced({
           id: Date.now(),
           message: `🚀 New battle started: ${data.battle.project1?.title || 'Unknown'} vs ${data.battle.project2?.title || 'Unknown'}`,
@@ -225,6 +233,11 @@ const BubbleDuels = ({ currentUser }) => {
       }
       
       if (data.type === 'end' && data.battle) {
+        // Update battle status in the list immediately
+        setAllActiveBattles(prev => prev.map(battle => 
+          battle.battleId === data.battle.battleId ? data.battle : battle
+        ));
+        
         const winner = data.battle.winner;
         updateLiveFeedDebounced({
           id: Date.now(),
@@ -235,6 +248,9 @@ const BubbleDuels = ({ currentUser }) => {
       }
       
       if (data.type === 'cancel') {
+        // Remove cancelled battle from the list immediately
+        setAllActiveBattles(prev => prev.filter(battle => battle.battleId !== data.battle?.battleId));
+        
         updateLiveFeedDebounced({
           id: Date.now(),
           message: `🚫 Battle cancelled by ${data.cancelledBy || 'Unknown'}`,
@@ -274,6 +290,17 @@ const BubbleDuels = ({ currentUser }) => {
           timestamp: new Date().toLocaleTimeString()
         });
       }
+      
+      // ALSO update the battle in allActiveBattles for immediate list updates
+      setAllActiveBattles(prev => prev.map(battle => 
+        battle.battleId === data.battleId ? {
+          ...battle,
+          project1: { ...battle.project1, votes: data.project1Votes },
+          project2: { ...battle.project2, votes: data.project2Votes },
+          totalVotes: data.totalVotes,
+          remainingTime: data.remainingTime
+        } : battle
+      ));
     };
 
     // Set up event listeners
@@ -568,6 +595,29 @@ const BubbleDuels = ({ currentUser }) => {
           battle.battleId === battleId ? data.battle : battle
         ));
         
+        // Force immediate health recalculation for instant GIF animation
+        const maxHealth = 100;
+        const newHealth1 = Math.max(0, maxHealth - (data.battle.project2Votes * 2));
+        const newHealth2 = Math.max(0, maxHealth - (data.battle.project1Votes * 2));
+        
+        // Find the current battle to compare health
+        const currentBattle = allActiveBattles.find(b => b.battleId === battleId);
+        if (currentBattle) {
+          const currentHealth1 = Math.max(0, maxHealth - (currentBattle.project2.votes * 2));
+          const currentHealth2 = Math.max(0, maxHealth - (currentBattle.project1.votes * 2));
+          
+          // Check if health decreased to trigger immediate GIF
+          if (newHealth1 < currentHealth1 || newHealth2 < currentHealth2) {
+            // Determine which fighter was attacked
+            const attacker = newHealth1 < currentHealth1 ? 'project2' : 'project1';
+            const target = newHealth1 < currentHealth1 ? 'project1' : 'project2';
+            
+            // Trigger attack GIF animation IMMEDIATELY
+            setAttackAnimation({ battleId: battleId, attacker, target });
+            setTimeout(() => setAttackAnimation(null), 1500);
+          }
+        }
+        
         // Add immediate vote feedback to live feed for better UX
         const battle = data.battle;
         const projectName = projectSide === 'project1Votes' ? battle.project1?.title : battle.project2?.title;
@@ -637,6 +687,24 @@ const BubbleDuels = ({ currentUser }) => {
           project1Votes: data.battle.project1Votes,
           project2Votes: data.battle.project2Votes
         });
+        
+        // Force immediate health recalculation for instant GIF animation
+        const maxHealth = 100;
+        const newHealth1 = Math.max(0, maxHealth - (data.battle.project2Votes * 2));
+        const newHealth2 = Math.max(0, maxHealth - (data.battle.project1Votes * 2));
+        
+        // Check if health decreased to trigger immediate GIF
+        if (newHealth1 < (battleStats.project1Votes ? Math.max(0, maxHealth - (battleStats.project1Votes * 2)) : 100) ||
+            newHealth2 < (battleStats.project2Votes ? Math.max(0, maxHealth - (battleStats.project2Votes * 2)) : 100)) {
+          
+          // Determine which fighter was attacked
+          const attacker = newHealth1 < (battleStats.project1Votes ? Math.max(0, maxHealth - (battleStats.project1Votes * 2)) : 100) ? 'project2' : 'project1';
+          const target = newHealth1 < (battleStats.project1Votes ? Math.max(0, maxHealth - (battleStats.project1Votes * 2)) : 100) ? 'project1' : 'project2';
+          
+          // Trigger attack GIF animation IMMEDIATELY
+          setAttackAnimation({ battleId: activeBattle.battleId, attacker, target });
+          setTimeout(() => setAttackAnimation(null), 1500);
+        }
 
         // Add immediate vote feedback to live feed
         const projectName = projectSide === 'project1Votes' ? activeBattle.project1?.title : activeBattle.project2?.title;
@@ -1648,25 +1716,21 @@ const ActiveBattleCard = ({ battle, onBattleVote, onCancelBattle, currentUser, i
     const health1Value = Math.max(0, maxHealth - (battle.project2.votes * 2));
     const health2Value = Math.max(0, maxHealth - (battle.project1.votes * 2));
     
-
-    
     // Check if health decreased (attack happened) by comparing with current state
     if (health1Value < health1 || health2Value < health2) {
-
       // Determine which fighter was attacked
       const attacker = health1Value < health1 ? 'project2' : 'project1';
       const target = health1Value < health1 ? 'project1' : 'project2';
       
-      // Trigger attack GIF animation
+      // Trigger attack GIF animation IMMEDIATELY
       setLocalAttackAnimation({ battleId: battle.battleId, attacker, target });
-      setTimeout(() => setLocalAttackAnimation(null), 2000); // Reduced from 5s to 2s for faster response
+      setTimeout(() => setLocalAttackAnimation(null), 1500); // Reduced to 1.5s for faster response
     }
     
     // Check if health reached 0 (KO happened) - always check this
     if (health1Value <= 0 || health2Value <= 0) {
-
       setShowKOAnimation(true);
-      setTimeout(() => setShowKOAnimation(false), 2000); // Reduced from 5s to 2s for faster response
+      setTimeout(() => setShowKOAnimation(false), 1500); // Reduced to 1.5s for faster response
     }
     
     // Update current health
