@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import CreateServiceModal from './CreateServiceModal';
 import ServiceReviews from './ServiceReviews';
@@ -7,7 +7,7 @@ import { API_URL } from '../services/api';
 import ProfileModal from './ProfileModal';
 import BannerDisplay from './BannerDisplay';
 import CreateBannerModal from './CreateBannerModal';
-import { Button } from 'react-bootstrap';
+
 import LoginModal from './LoginModal';
 import CreateAccountModal from './CreateAccountModal';
 import EditServiceModal from './EditServiceModal';
