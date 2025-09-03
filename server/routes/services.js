@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Service = require('../models/Service');
+const ServiceReview = require('../models/ServiceReview');
 const Booking = require('../models/Booking');
 const auth = require('../middleware/auth');
 const requireEmailVerification = require('../middleware/emailVerification');
@@ -47,10 +48,32 @@ router.get('/', async (req, res) => {
       .skip((parseInt(page) - 1) * parseInt(limit))
       .populate('seller', 'username image rating reviews country isOnline lastSeen lastActivity skillBadges cv userType');
 
+    // Add review data to each service (fixes N+1 problem)
+    const servicesWithReviews = await Promise.all(services.map(async (service) => {
+      try {
+        const reviews = await ServiceReview.find({ serviceId: service._id });
+        const totalRating = reviews.reduce((sum, review) => sum + Number(review.rating), 0);
+        const avgRating = reviews.length > 0 ? totalRating / reviews.length : 0;
+        
+        return {
+          ...service.toObject(),
+          rating: avgRating,
+          reviews: reviews.length
+        };
+      } catch (error) {
+        console.error(`Error fetching reviews for service ${service._id}:`, error);
+        return {
+          ...service.toObject(),
+          rating: 0,
+          reviews: 0
+        };
+      }
+    }));
+
     const total = await Service.countDocuments(query);
 
     res.json({
-      services,
+      services: servicesWithReviews,
       pagination: {
         total,
         pages: Math.ceil(total / limit),

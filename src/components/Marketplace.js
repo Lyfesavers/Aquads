@@ -320,24 +320,8 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
         servicesArray = [];
       }
       
-      // Fetch initial review data for each service
-      const servicesWithReviews = await Promise.all(servicesArray.map(async (service) => {
-        try {
-          const response = await fetch(`${API_URL}/service-reviews/${service._id}`);
-          if (!response.ok) return service;
-          
-          const reviews = await response.json();
-          if (reviews && reviews.length > 0) {
-            const totalRating = reviews.reduce((sum, review) => sum + Number(review.rating), 0);
-            const avgRating = totalRating / reviews.length;
-            return { ...service, rating: avgRating, reviews: reviews.length };
-          }
-          return { ...service, rating: 0, reviews: 0 };
-        } catch (error) {
-          logger.error(`Error fetching reviews for service ${service._id}:`, error);
-          return service;
-        }
-      }));
+      // Backend now provides review data, no need for individual API calls
+      const servicesWithReviews = servicesArray;
 
       setServices(servicesWithReviews);
       setOriginalServices(servicesWithReviews);
