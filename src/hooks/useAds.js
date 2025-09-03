@@ -28,8 +28,7 @@ export const useAds = () => {
 export const useEligibleAds = (allActiveBattles = []) => {
   const { data: ads = [], isLoading, error } = useAds();
   
-  // Debug logging to help identify the issue
-  console.log('useEligibleAds called with:', { allActiveBattles, ads });
+
   
   // Get IDs of bubbles already in active battles
   const activeBattleBubbleIds = new Set();
@@ -38,11 +37,8 @@ export const useEligibleAds = (allActiveBattles = []) => {
   if (Array.isArray(allActiveBattles)) {
     // Filter out undefined/null elements first
     const validBattles = allActiveBattles.filter(battle => battle != null);
-    console.log('Valid battles after filtering:', validBattles);
     
     validBattles.forEach((battle, index) => {
-      // Debug logging for each battle
-      console.log(`Battle ${index}:`, battle);
       
       // Comprehensive safety check for battle object
       if (battle && 

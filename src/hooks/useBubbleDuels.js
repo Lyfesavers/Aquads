@@ -122,8 +122,6 @@ export const useCreateBubbleDuel = () => {
   return useMutation({
     mutationFn: createBubbleDuel,
     onSuccess: (data) => {
-      console.log('Battle created successfully:', data);
-      
       // Invalidate and refetch bubble duels
       queryClient.invalidateQueries({ queryKey: ['bubble-duels'] });
       
@@ -131,7 +129,6 @@ export const useCreateBubbleDuel = () => {
       queryClient.setQueryData(['bubble-duels'], (oldData) => {
         // Ensure we have valid battle data
         if (!data || !data.battle) {
-          console.warn('No valid battle data to add to cache');
           return oldData || [];
         }
         
@@ -141,7 +138,6 @@ export const useCreateBubbleDuel = () => {
         // Add new battle to the beginning
         const newData = [data.battle, ...validOldData];
         
-        console.log('Updated cache with new battle:', newData);
         return newData;
       });
     },

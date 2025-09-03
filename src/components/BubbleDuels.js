@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Trophy, 
@@ -38,19 +38,15 @@ const BubbleDuels = ({ currentUser }) => {
   const [isStartingBattle, setIsStartingBattle] = useState(false); // Prevent double-clicking
   const [gifAnimation, setGifAnimation] = useState(null); // Separate state for GIF animations
   const [notification, setNotification] = useState(null); // For bottom-left notifications
+  
+  // Debounced live feed update for better performance
+  const liveFeedUpdateTimeoutRef = useRef(null);
+  const pendingLiveFeedUpdates = useRef([]);
 
   // Use React Query hooks for data fetching
   const { data: allActiveBattles = [], isLoading: battlesLoading } = useBubbleDuels();
   
-  // Debug logging to see what we're getting
-  console.log('useBubbleDuels returned:', { 
-    allActiveBattles, 
-    battlesLoading,
-    type: typeof allActiveBattles,
-    isArray: Array.isArray(allActiveBattles),
-    length: allActiveBattles?.length,
-    keys: allActiveBattles && typeof allActiveBattles === 'object' ? Object.keys(allActiveBattles) : 'N/A'
-  });
+
   
   // Ensure we have valid data before calling useEligibleAds
   // Handle case where data might be nested (e.g., { battles: [...] })
@@ -70,7 +66,7 @@ const BubbleDuels = ({ currentUser }) => {
     );
   }
   
-  console.log('Filtered battles for hook:', safeAllActiveBattlesForHook);
+
   
   const { ads = [], isLoading: adsLoading } = useEligibleAds(safeAllActiveBattlesForHook);
   
@@ -84,6 +80,28 @@ const BubbleDuels = ({ currentUser }) => {
   const safeAds = Array.isArray(ads) ? ads : [];
 
   // React Query handles all the data fetching automatically
+
+  // Debounced live feed update function for better performance
+  const updateLiveFeedDebounced = useCallback((newEntry) => {
+    // Add to pending updates
+    pendingLiveFeedUpdates.current.push(newEntry);
+    
+    // Clear existing timeout
+    if (liveFeedUpdateTimeoutRef.current) {
+      clearTimeout(liveFeedUpdateTimeoutRef.current);
+    }
+    
+    // Set new timeout for batch update
+    liveFeedUpdateTimeoutRef.current = setTimeout(() => {
+      if (pendingLiveFeedUpdates.current.length > 0) {
+        setLiveFeed(prev => [
+          ...pendingLiveFeedUpdates.current,
+          ...prev.slice(0, Math.max(0, 9 - pendingLiveFeedUpdates.current.length))
+        ]);
+        pendingLiveFeedUpdates.current = [];
+      }
+    }, 100); // 100ms debounce for smooth updates
+  }, []);
 
   // Use React Query for active battle data
   const { data: activeBattleData } = useBubbleDuel(activeBattle?.battleId);
@@ -176,7 +194,6 @@ const BubbleDuels = ({ currentUser }) => {
     if (!socket) return;
 
     const handleBubbleDuelUpdate = (data) => {
-      console.log('Received bubbleDuelUpdate:', data);
       if (data.type === 'vote' && data.battle) {
         // Update active battle if it matches (immediate for user experience)
         if (activeBattle && activeBattle.battleId === data.battle.battleId) {
@@ -187,51 +204,51 @@ const BubbleDuels = ({ currentUser }) => {
           });
         }
 
-        // Add to live feed
+        // Add to live feed immediately - use projectSide from data for instant detection
         const voteData = data.battle;
-        const votedFor = data.projectSide || (voteData.project1?.votes > battleStats.project1Votes ? 'project1' : 'project2');
+        const votedFor = data.projectSide || 'project1'; // Default to project1 if not specified
         const projectName = votedFor === 'project1' ? voteData.project1?.title : voteData.project2?.title;
         const color = votedFor === 'project1' ? 'text-red-400' : 'text-blue-400';
         
-        setLiveFeed(prev => [{
+        // Update live feed immediately without waiting for battleStats
+        updateLiveFeedDebounced({
           id: Date.now(),
           message: `⚡ ${projectName || 'Unknown'} gains a vote!`,
           color: color,
           timestamp: new Date().toLocaleTimeString()
-        }, ...prev.slice(0, 9)]);
+        });
       }
       
       if (data.type === 'start' && data.battle) {
-        setLiveFeed(prev => [{
+        updateLiveFeedDebounced({
           id: Date.now(),
           message: `🚀 New battle started: ${data.battle.project1?.title || 'Unknown'} vs ${data.battle.project2?.title || 'Unknown'}`,
           color: 'text-yellow-400',
           timestamp: new Date().toLocaleTimeString()
-        }, ...prev.slice(0, 9)]);
+        });
       }
       
       if (data.type === 'end' && data.battle) {
         const winner = data.battle.winner;
-        setLiveFeed(prev => [{
+        updateLiveFeedDebounced({
           id: Date.now(),
           message: `🏆 ${winner?.title || 'Unknown'} wins the battle!`,
           color: 'text-green-400',
           timestamp: new Date().toLocaleTimeString()
-        }, ...prev.slice(0, 9)]);
+        });
       }
       
       if (data.type === 'cancel') {
-        setLiveFeed(prev => [{
+        updateLiveFeedDebounced({
           id: Date.now(),
           message: `🚫 Battle cancelled by ${data.cancelledBy || 'Unknown'}`,
           color: 'text-orange-400',
           timestamp: new Date().toLocaleTimeString()
-        }, ...prev.slice(0, 9)]);
+        });
       }
     };
 
     const handleBattleVoteUpdate = (data) => {
-      console.log('Received battleVoteUpdate:', data);
       
       // Update active battle if it matches
       if (activeBattle && activeBattle.battleId === data.battleId) {
@@ -249,6 +266,17 @@ const BubbleDuels = ({ currentUser }) => {
         });
         
         setTimeRemaining(data.remainingTime);
+        
+        // Add immediate vote update to live feed for better UX
+        const project1Name = activeBattle?.project1?.title || 'Project 1';
+        const project2Name = activeBattle?.project2?.title || 'Project 2';
+        
+        updateLiveFeedDebounced({
+          id: Date.now(),
+          message: `⚡ Vote updated: ${project1Name} (${data.project1Votes}) vs ${project2Name} (${data.project2Votes})`,
+          color: 'text-purple-400',
+          timestamp: new Date().toLocaleTimeString()
+        });
       }
     };
 
@@ -261,7 +289,7 @@ const BubbleDuels = ({ currentUser }) => {
       off('bubbleDuelUpdate', handleBubbleDuelUpdate);
       off('battleVoteUpdate', handleBattleVoteUpdate);
     };
-  }, [socket, activeBattle, battleStats, on, off]);
+  }, [socket, activeBattle, on, off]);
 
   // Battle timer countdown
   useEffect(() => {
@@ -286,6 +314,15 @@ const BubbleDuels = ({ currentUser }) => {
       setIsStartingBattle(false);
     };
   }, [selectedProjects]);
+
+  // Cleanup live feed update timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (liveFeedUpdateTimeoutRef.current) {
+        clearTimeout(liveFeedUpdateTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const openFighterSelect = (position) => {
     setSelectingFor(position);
@@ -535,6 +572,18 @@ const BubbleDuels = ({ currentUser }) => {
           battle.battleId === battleId ? data.battle : battle
         ));
         
+        // Add immediate vote feedback to live feed for better UX
+        const battle = data.battle;
+        const projectName = projectSide === 'project1Votes' ? battle.project1?.title : battle.project2?.title;
+        const color = projectSide === 'project1Votes' ? 'text-red-400' : 'text-blue-400';
+        
+        updateLiveFeedDebounced({
+          id: Date.now(),
+          message: `⚡ You voted for ${projectName || 'Unknown'} in ${battle.project1?.title || 'Unknown'} vs ${battle.project2?.title || 'Unknown'}!`,
+          color: color,
+          timestamp: new Date().toLocaleTimeString()
+        });
+        
         // Points awarded silently - no popup needed
       } else {
         if (response.status === 401) {
@@ -581,13 +630,28 @@ const BubbleDuels = ({ currentUser }) => {
       const data = await response.json();
 
       if (response.ok) {
-        // Update local state with server response
+        // Update local state immediately for instant feedback
+        setActiveBattle(prev => ({
+          ...prev,
+          project1: { ...prev.project1, votes: data.battle.project1Votes },
+          project2: { ...prev.project2, votes: data.battle.project2Votes }
+        }));
+        
         setBattleStats({
           project1Votes: data.battle.project1Votes,
           project2Votes: data.battle.project2Votes
         });
 
-
+        // Add immediate vote feedback to live feed
+        const projectName = projectSide === 'project1Votes' ? activeBattle.project1?.title : activeBattle.project2?.title;
+        const color = projectSide === 'project1Votes' ? 'text-red-400' : 'text-blue-400';
+        
+        updateLiveFeedDebounced({
+          id: Date.now(),
+          message: `⚡ You voted for ${projectName || 'Unknown'}!`,
+          color: color,
+          timestamp: new Date().toLocaleTimeString()
+        });
 
         // Show notification if points awarded
         if (data.pointsAwarded > 0) {

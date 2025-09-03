@@ -23,14 +23,12 @@ const useSocket = (url) => {
       });
 
       socketRef.current.on('connect', () => {
-        console.log('Socket connected successfully');
         setIsConnected(true);
         setConnectionError(null);
         reconnectAttemptsRef.current = 0;
       });
 
       socketRef.current.on('connect_error', (error) => {
-        console.log('Socket connection error:', error);
         setIsConnected(false);
         setConnectionError(error.message);
         
@@ -46,7 +44,6 @@ const useSocket = (url) => {
       });
 
       socketRef.current.on('disconnect', (reason) => {
-        console.log('Socket disconnected:', reason);
         setIsConnected(false);
         
         // Only attempt reconnection if it wasn't intentional
