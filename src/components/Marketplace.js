@@ -302,6 +302,7 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
 
   const loadServices = async () => {
     try {
+      setIsLoading(prevState => ({ ...prevState, services: true }));
       const data = await fetchServices();
       
       // Check data structure and extract services array properly
@@ -348,10 +349,12 @@ const Marketplace = ({ currentUser, onLogin, onLogout, onCreateAccount, onBanner
       bulkUpdateUserStatuses(sellers);
       
       setLoading(false);
+      setIsLoading(prevState => ({ ...prevState, services: false }));
     } catch (error) {
       logger.error('Error loading services:', error);
       setError('Failed to load services');
       setLoading(false);
+      setIsLoading(prevState => ({ ...prevState, services: false }));
     }
   };
 
