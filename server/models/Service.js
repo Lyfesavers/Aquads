@@ -158,13 +158,6 @@ serviceSchema.index({ category: 1 });
 serviceSchema.index({ seller: 1 });
 serviceSchema.index({ title: 'text', description: 'text' }); // For text search
 
-// Add missing critical indexes for performance
-serviceSchema.index({ status: 1, category: 1, rating: -1 }); // For main services query
-serviceSchema.index({ status: 1, createdAt: -1 }); // For newest services
-serviceSchema.index({ status: 1, rating: -1 }); // For rating-based sorting
-serviceSchema.index({ seller: 1, status: 1 }); // For user's services
-serviceSchema.index({ category: 1, status: 1, rating: -1 }); // For category + rating queries
-
 // Add method to calculate badge
 serviceSchema.methods.calculateBadge = function() {
   if (this.reviews >= 100 && this.rating >= 4.8) {
