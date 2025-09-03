@@ -534,15 +534,15 @@ const BubbleDuels = ({ currentUser }) => {
           onRemoveProject={removeProject}
           onStartBattle={startBattle}
           currentUser={currentUser}
-          ads={safeAds}
+          ads={ads}
           isStartingBattle={isStartingBattle}
         />
       )}
 
                      {/* Active Battles Section */}
-                                    {safeAllActiveBattles.length > 0 && (
+                                    {allActiveBattles.length > 0 && (
            <ActiveBattlesSection 
-             battles={safeAllActiveBattles} 
+             battles={allActiveBattles} 
              currentUser={currentUser}
              onBattleVote={(battleId, projectSide) => voteInBattle(battleId, projectSide)}
              onCancelBattle={cancelAnyBattle}
@@ -553,7 +553,7 @@ const BubbleDuels = ({ currentUser }) => {
              {/* Street Fighter Style Character Select */}
        {showFighterSelect && (
          <FighterSelectModal
-           ads={safeAds}
+           ads={ads}
            onSelectProject={selectProject}
            onClose={() => {
              setShowFighterSelect(false);
@@ -580,6 +580,8 @@ const BubbleDuels = ({ currentUser }) => {
 
 // Battle Setup Component
 const BattleSetup = ({ selectedProjects, onOpenFighterSelect, onRemoveProject, onStartBattle, currentUser, ads, isStartingBattle }) => {
+  // Safety check for ads
+  const safeAds = Array.isArray(ads) ? ads : [];
   
   const handleFighter1Click = () => {
     onOpenFighterSelect('fighter1');
@@ -1197,6 +1199,8 @@ const FighterDisplay = ({ project, votes, health, color, position, onVote, curre
 
 // Street Fighter Style Character Select Modal
 const FighterSelectModal = ({ ads, onSelectProject, onClose, selectingFor, alreadySelected, isStartingBattle }) => {
+  // Safety check for ads
+  const safeAds = Array.isArray(ads) ? ads : [];
   return (
     <div
       className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[9999] flex items-center justify-center"
@@ -1234,19 +1238,19 @@ const FighterSelectModal = ({ ads, onSelectProject, onClose, selectingFor, alrea
 
         {/* Fighter Grid - Street Fighter Style */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
-                     {ads.length === 0 ? (
-             <div className="col-span-full text-center py-12">
-               <div className="text-gray-400 text-lg mb-4">
-                 🚫 No available projects for battle
-               </div>
-               <div className="text-gray-500 text-sm">
-                 All active projects are currently in battles or waiting to start
-               </div>
-               <div className="text-gray-400 text-xs mt-2">
-                 Check back later or wait for current battles to end
-               </div>
-             </div>
-           ) : ads.map((ad, index) => {
+          {safeAds.length === 0 ? (
+            <div className="col-span-full text-center py-12">
+              <div className="text-gray-400 text-lg mb-4">
+                🚫 No available projects for battle
+              </div>
+              <div className="text-gray-500 text-sm">
+                All active projects are currently in battles or waiting to start
+              </div>
+              <div className="text-gray-400 text-xs mt-2">
+                Check back later or wait for current battles to end
+              </div>
+            </div>
+          ) : safeAds.map((ad, index) => {
             const isAlreadySelected = alreadySelected.find(p => p && p.id === ad.id);
             const isDisabled = isAlreadySelected;
             
