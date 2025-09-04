@@ -662,10 +662,29 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
   };
 
   const handleShowReviews = (service, booking = null, viewOnly = false) => {
+    console.log('Dashboard: handleShowReviews called with:', {
+      service,
+      serviceId: service?._id,
+      serviceTitle: service?.title,
+      booking,
+      viewOnly
+    });
+
+    if (!service || !service._id) {
+      console.error('Dashboard: Invalid service object:', service);
+      return;
+    }
+
     setSelectedService(service);
     setSelectedBooking(booking);
     setSelectedViewOnly(viewOnly);
     setShowReviews(true);
+
+    console.log('Dashboard: State updated:', {
+      showReviews: true,
+      selectedService: service,
+      selectedViewOnly: viewOnly
+    });
   };
 
   const handleCloseReviews = () => {
@@ -3633,11 +3652,18 @@ const Dashboard = ({ ads, currentUser, onClose, onDeleteAd, onBumpAd, onEditAd, 
       {showReviews && selectedService && (
         <ServiceReviews
           service={selectedService}
-          booking={selectedBooking}
           onClose={handleCloseReviews}
           currentUser={currentUser}
           showNotification={(message, type) => {
             alert(message);
+          }}
+          onReviewsUpdate={(updatedService) => {
+            // Update the service data with new rating and review count
+            setSelectedService(prevService => ({
+              ...prevService,
+              rating: updatedService.rating,
+              reviews: updatedService.reviews
+            }));
           }}
           viewOnly={selectedViewOnly}
         />

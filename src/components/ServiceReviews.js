@@ -26,11 +26,15 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
   };
 
   useEffect(() => {
+    if (!service || !service._id) {
+      console.error('ServiceReviews: service or service._id is missing:', service);
+      return;
+    }
     fetchReviews();
     if (currentUser) {
       checkReviewEligibility();
     }
-  }, [service._id, currentUser]);
+  }, [service?._id, currentUser]);
 
   const checkReviewEligibility = async () => {
     // Temporary: Allow reviews without backend check
@@ -57,6 +61,10 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
 
   const fetchReviews = async () => {
     try {
+      if (!service || !service._id) {
+        console.error('fetchReviews: service or service._id is missing:', service);
+        return;
+      }
       setIsLoading(true);
       const response = await fetch(`${API_URL}/service-reviews/${service._id}`);
       if (!response.ok) throw new Error('Failed to fetch reviews');
@@ -103,12 +111,15 @@ const ServiceReviews = ({ service, onClose, currentUser, showNotification, onRev
 
   // Add polling for review updates
   useEffect(() => {
+    if (!service || !service._id) {
+      return;
+    }
     const pollInterval = setInterval(() => {
       fetchReviews();
     }, 30000); // Poll every 30 seconds
 
     return () => clearInterval(pollInterval);
-  }, [service._id]);
+  }, [service?._id]);
 
   const verifyReferralCode = async () => {
     if (!newReview.referralCode.trim()) {
