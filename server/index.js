@@ -152,13 +152,7 @@ app.use('/api/register', limiter);
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
   serverSelectionTimeoutMS: 10000, // Increased to 10s for better mobile connectivity
-  socketTimeoutMS: 45000, // Close sockets after 45s
-  maxPoolSize: 10, // Maximum number of connections in the pool
-  minPoolSize: 2, // Minimum number of connections in the pool
-  maxIdleTimeMS: 30000, // Close connections after 30 seconds of inactivity
-  bufferCommands: true, // Buffer commands when disconnected
-  bufferMaxEntries: 0, // No limit on buffered commands
-  connectTimeoutMS: 10000 // Timeout for initial connection
+  socketTimeoutMS: 45000 // Close sockets after 45s
 }).then(() => {
   console.log('Connected to MongoDB');
   // Initialize skill tests if they don't exist
