@@ -78,6 +78,6 @@ invoiceSchema.index({ buyerId: 1, createdAt: -1 }); // For buyer's invoices
 invoiceSchema.index({ status: 1, createdAt: -1 }); // For status-based queries
 invoiceSchema.index({ bookingId: 1 }); // For booking-specific queries
 invoiceSchema.index({ dueDate: 1, status: 1 }); // For due date queries
-invoiceSchema.index({ invoiceNumber: 1 }); // For invoice number lookups
+// Note: invoiceNumber already has unique: true which creates an index automatically
 
 module.exports = mongoose.model('Invoice', invoiceSchema); 
