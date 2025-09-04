@@ -98,10 +98,13 @@ const horseRaceResultSchema = new Schema({
 });
 
 // Indexes for efficient querying
-horseRaceResultSchema.index({ userId: 1, createdAt: -1 });
-horseRaceResultSchema.index({ won: 1, payout: -1 }); // For leaderboards
-horseRaceResultSchema.index({ createdAt: -1 }); // For global queries
-horseRaceResultSchema.index({ userId: 1, won: 1 }); // For user win/loss stats
+horseRaceResultSchema.index({ userId: 1, createdAt: -1 }); // For user's race history
+horseRaceResultSchema.index({ won: 1, createdAt: -1 }); // For wins by date
+horseRaceResultSchema.index({ horseId: 1, won: 1 }); // For horse performance
+horseRaceResultSchema.index({ betAmount: -1, createdAt: -1 }); // For bet size sorting
+horseRaceResultSchema.index({ payout: -1, createdAt: -1 }); // For payout sorting
+horseRaceResultSchema.index({ username: 1, createdAt: -1 }); // For username + date queries
+horseRaceResultSchema.index({ winnerHorseId: 1, createdAt: -1 }); // For winning horses
 
 // Virtual for calculating net profit for this race
 horseRaceResultSchema.virtual('netProfit').get(function() {

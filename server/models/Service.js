@@ -165,6 +165,12 @@ serviceSchema.index({ status: 1, rating: -1 }); // For rating-based sorting
 serviceSchema.index({ seller: 1, status: 1 }); // For user's services
 serviceSchema.index({ category: 1, status: 1, rating: -1 }); // For category + rating queries
 
+// Compound indexes for complex queries
+serviceSchema.index({ status: 1, category: 1, createdAt: -1 }); // For category + newest
+serviceSchema.index({ status: 1, price: 1 }); // For price-based sorting
+serviceSchema.index({ status: 1, isPremium: 1, rating: -1 }); // For premium services
+serviceSchema.index({ status: 1, views: -1 }); // For popular services
+
 // Add method to calculate badge
 serviceSchema.methods.calculateBadge = function() {
   if (this.reviews >= 100 && this.rating >= 4.8) {

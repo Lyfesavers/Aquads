@@ -47,6 +47,13 @@ const bumpRequestSchema = new mongoose.Schema({
   }
 });
 
+// Performance indexes for common queries
+bumpRequestSchema.index({ adId: 1 }); // For ad-specific bump requests
+bumpRequestSchema.index({ owner: 1, createdAt: -1 }); // For owner's bump requests
+bumpRequestSchema.index({ status: 1, createdAt: -1 }); // For status-based queries
+bumpRequestSchema.index({ status: 1, processedAt: 1 }); // For processing status queries
+bumpRequestSchema.index({ createdAt: -1 }); // For creation date sorting
+bumpRequestSchema.index({ processedAt: -1 }); // For processing date sorting
 
 
 module.exports = mongoose.model('BumpRequest', bumpRequestSchema); 

@@ -75,4 +75,15 @@ invoiceSchema.pre('save', function(next) {
 
 invoiceSchema.index({ invoiceNumber: 1 }); // For invoice number lookups
 
+// Add performance indexes for common queries
+invoiceSchema.index({ sellerId: 1 }); // For seller's invoices
+invoiceSchema.index({ buyerId: 1 }); // For buyer's invoices
+invoiceSchema.index({ status: 1 }); // For status filtering
+invoiceSchema.index({ dueDate: 1 }); // For due date queries
+invoiceSchema.index({ createdAt: -1 }); // For creation date sorting
+invoiceSchema.index({ updatedAt: -1 }); // For update date sorting
+invoiceSchema.index({ status: 1, dueDate: 1 }); // For status + due date queries
+invoiceSchema.index({ sellerId: 1, status: 1 }); // For seller + status queries
+invoiceSchema.index({ buyerId: 1, status: 1 }); // For buyer + status queries
+
 module.exports = mongoose.model('Invoice', invoiceSchema); 

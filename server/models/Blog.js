@@ -48,6 +48,12 @@ blogSchema.pre('save', function(next) {
   next();
 });
 
+// Performance indexes for common queries
+blogSchema.index({ title: 'text', content: 'text' }); // For text search
+blogSchema.index({ author: 1, createdAt: -1 }); // For author's blogs by date
+blogSchema.index({ createdAt: -1 }); // For blogs by creation date
+blogSchema.index({ updatedAt: -1 }); // For blogs by update date
+blogSchema.index({ authorUsername: 1 }); // For author username lookups
 
 
 module.exports = mongoose.model('Blog', blogSchema); 

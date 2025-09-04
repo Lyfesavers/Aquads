@@ -136,6 +136,16 @@ const facebookRaidSchema = new Schema({
   }
 });
 
+// Add performance indexes for common queries
+facebookRaidSchema.index({ active: 1, createdAt: -1 }); // For main raids listing
+facebookRaidSchema.index({ createdBy: 1 }); // For user's raids
+facebookRaidSchema.index({ postId: 1 }); // For post ID lookups
+facebookRaidSchema.index({ paymentStatus: 1 }); // For payment status filtering
+facebookRaidSchema.index({ isPaid: 1 }); // For paid/unpaid filtering
+facebookRaidSchema.index({ 'completions.userId': 1 }); // For user completion lookups
+facebookRaidSchema.index({ 'completions.verified': 1 }); // For verified completions
+facebookRaidSchema.index({ 'completions.approvalStatus': 1 }); // For approval status filtering
+
 // Extract post ID from URL if only URL is provided
 facebookRaidSchema.pre('save', function(next) {
   if (!this.postId && this.postUrl) {

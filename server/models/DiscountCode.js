@@ -130,4 +130,12 @@ discountCodeSchema.statics.findValidCode = async function(code, applicableTo = n
   return discountCode;
 };
 
+// Performance indexes for common queries
+discountCodeSchema.index({ code: 1 }); // For code lookups (already unique)
+discountCodeSchema.index({ isActive: 1, validUntil: 1 }); // For valid codes
+discountCodeSchema.index({ applicableTo: 1, isActive: 1 }); // For applicable codes
+discountCodeSchema.index({ createdBy: 1, createdAt: -1 }); // For creator's codes
+discountCodeSchema.index({ isActive: 1, createdAt: -1 }); // For active codes by date
+discountCodeSchema.index({ validFrom: 1, validUntil: 1 }); // For validity period queries
+
 module.exports = mongoose.model('DiscountCode', discountCodeSchema); 

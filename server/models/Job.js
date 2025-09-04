@@ -29,6 +29,13 @@ const jobSchema = new mongoose.Schema({
   }
 });
 
+// Performance indexes for common queries
+jobSchema.index({ title: 'text', description: 'text', requirements: 'text' }); // For text search
+jobSchema.index({ status: 1, createdAt: -1 }); // For active jobs by date
+jobSchema.index({ owner: 1 }); // For user's jobs
+jobSchema.index({ jobType: 1, status: 1 }); // For job type filtering
+jobSchema.index({ payAmount: -1, status: 1 }); // For salary-based sorting
+jobSchema.index({ status: 1, jobType: 1 }); // For status + job type queries
 
 
 module.exports = mongoose.model('Job', jobSchema);

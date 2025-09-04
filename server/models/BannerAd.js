@@ -51,6 +51,12 @@ const bannerAdSchema = new mongoose.Schema({
   rejectionReason: String
 });
 
+// Performance indexes for common queries
+bannerAdSchema.index({ status: 1, createdAt: -1 }); // For active banner ads by date
+bannerAdSchema.index({ owner: 1 }); // For user's banner ads
+bannerAdSchema.index({ status: 1, expiresAt: 1 }); // For active + expiration queries
+bannerAdSchema.index({ expiresAt: 1 }); // For expiration date queries
+bannerAdSchema.index({ status: 1, paymentChain: 1 }); // For status + chain queries
 
 
 module.exports = mongoose.model('BannerAd', bannerAdSchema); 

@@ -78,6 +78,15 @@ const tokenPurchaseSchema = new mongoose.Schema({
   }
 });
 
+// Performance indexes for common queries
+tokenPurchaseSchema.index({ userId: 1, createdAt: -1 }); // For user's purchases by date
+tokenPurchaseSchema.index({ status: 1, createdAt: -1 }); // For status-based queries
+tokenPurchaseSchema.index({ paymentMethod: 1, status: 1 }); // For payment method + status
+tokenPurchaseSchema.index({ approvedBy: 1, createdAt: -1 }); // For admin approval queries
+tokenPurchaseSchema.index({ txSignature: 1 }); // For transaction signature lookups
+tokenPurchaseSchema.index({ amount: -1, createdAt: -1 }); // For amount-based sorting
+tokenPurchaseSchema.index({ cost: -1, createdAt: -1 }); // For cost-based sorting
+tokenPurchaseSchema.index({ completedAt: -1 }); // For completion date sorting
 
 
 module.exports = mongoose.model('TokenPurchase', tokenPurchaseSchema); 

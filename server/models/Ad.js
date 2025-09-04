@@ -156,6 +156,15 @@ const adSchema = new mongoose.Schema({
 // Remove the pre-save middleware as it's causing issues
 // We'll handle validation in the route instead
 
+// Performance indexes for common queries
+adSchema.index({ status: 1, createdAt: -1 }); // For active ads by date
+adSchema.index({ owner: 1 }); // For user's ads
+adSchema.index({ blockchain: 1, status: 1 }); // For blockchain filtering
+adSchema.index({ isBumped: 1, bumpExpiresAt: -1 }); // For bumped ads
+adSchema.index({ status: 1, isBumped: 1 }); // For status + bump queries
+adSchema.index({ pairAddress: 1 }); // For pair address lookups
+adSchema.index({ bullishVotes: -1, status: 1 }); // For top voted ads
+adSchema.index({ bearishVotes: -1, status: 1 }); // For bearish voted ads
 
 
 // Fix the double export

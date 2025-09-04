@@ -16,6 +16,13 @@ const LeaderboardEntrySchema = new mongoose.Schema(
 
 LeaderboardEntrySchema.index({ game: 1, createdAt: -1 });
 
+// Performance indexes for common queries
+LeaderboardEntrySchema.index({ userId: 1, createdAt: -1 }); // For user's entries by date
+LeaderboardEntrySchema.index({ game: 1, difficulty: 1 }); // For game + difficulty queries
+LeaderboardEntrySchema.index({ game: 1, result: 1 }); // For game + result queries
+LeaderboardEntrySchema.index({ username: 1 }); // For username lookups
+LeaderboardEntrySchema.index({ createdAt: -1 }); // For entries by date
+
 module.exports = mongoose.model('LeaderboardEntry', LeaderboardEntrySchema);
 
 

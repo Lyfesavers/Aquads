@@ -136,6 +136,16 @@ const twitterRaidSchema = new Schema({
   }
 });
 
+// Add performance indexes for common queries
+twitterRaidSchema.index({ active: 1, createdAt: -1 }); // For main raids listing
+twitterRaidSchema.index({ createdBy: 1 }); // For user's raids
+twitterRaidSchema.index({ tweetId: 1 }); // For tweet ID lookups
+twitterRaidSchema.index({ paymentStatus: 1 }); // For payment status filtering
+twitterRaidSchema.index({ isPaid: 1 }); // For paid/unpaid filtering
+twitterRaidSchema.index({ 'completions.userId': 1 }); // For user completion lookups
+twitterRaidSchema.index({ 'completions.verified': 1 }); // For verified completions
+twitterRaidSchema.index({ 'completions.approvalStatus': 1 }); // For approval status filtering
+
 // Extract tweet ID from URL if only URL is provided
 twitterRaidSchema.pre('save', function(next) {
   if (!this.tweetId && this.tweetUrl) {

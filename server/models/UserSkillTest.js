@@ -65,4 +65,12 @@ const userSkillTestSchema = new Schema({
 // Compound index to ensure one completion record per user per test
 userSkillTestSchema.index({ userId: 1, testId: 1 }, { unique: true });
 
+// Performance indexes for common queries
+userSkillTestSchema.index({ userId: 1, completedAt: -1 }); // For user's test history
+userSkillTestSchema.index({ testId: 1, score: -1 }); // For test leaderboards
+userSkillTestSchema.index({ passed: 1, completedAt: -1 }); // For passed tests by date
+userSkillTestSchema.index({ userId: 1, passed: 1 }); // For user's pass/fail stats
+userSkillTestSchema.index({ completedAt: -1 }); // For completion date sorting
+userSkillTestSchema.index({ score: -1, completedAt: -1 }); // For score + date sorting
+
 module.exports = mongoose.model('UserSkillTest', userSkillTestSchema);

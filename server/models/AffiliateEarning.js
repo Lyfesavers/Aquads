@@ -77,6 +77,14 @@ affiliateEarningSchema.statics.calculateCommissionRate = async function(affiliat
   return rate;
 };
 
+// Performance indexes for common queries
+affiliateEarningSchema.index({ affiliateId: 1, createdAt: -1 }); // For affiliate's earnings by date
+affiliateEarningSchema.index({ referredUserId: 1 }); // For referred user lookups
+affiliateEarningSchema.index({ adId: 1 }); // For ad-specific earnings
+affiliateEarningSchema.index({ status: 1, createdAt: -1 }); // For pending/paid earnings
+affiliateEarningSchema.index({ affiliateId: 1, status: 1 }); // For affiliate + status queries
+affiliateEarningSchema.index({ createdAt: -1 }); // For earnings by date
+affiliateEarningSchema.index({ paidAt: -1 }); // For paid earnings by date
 
 
 module.exports = mongoose.model('AffiliateEarning', affiliateEarningSchema); 
